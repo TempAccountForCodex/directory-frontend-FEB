@@ -972,5 +972,3 @@ const InsightData = [
     ],
   },
 ];
-
-export default { InsightData, BlogHeroData };
