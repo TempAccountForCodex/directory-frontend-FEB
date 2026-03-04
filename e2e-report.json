@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-01-26T19:55:43.389Z",
+  "duration": 108279,
+  "summary": {
+    "suites": {
+      "total": 5,
+      "passed": 1,
+      "failed": 4
+    },
+    "tests": {
+      "total": 45,
+      "passed": 33,
+      "failed": 0,
+      "skipped": 12
+    }
+  },
+  "suites": [
+    {
+      "name": "01-list",
+      "description": "Websites List Page",
+      "status": "fail",
+      "duration": 20069,
+      "tests": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0
+      },
+      "error": "\n❌ Fatal error: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n"
+    },
+    {
+      "name": "02-create",
+      "description": "Create Website Wizard",
+      "status": "fail",
+      "duration": 19649,
+      "tests": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0
+      },
+      "error": "\n❌ Fatal error: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n"
+    },
+    {
+      "name": "03-customize",
+      "description": "Website Customization",
+      "status": "fail",
+      "duration": 19870,
+      "tests": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0
+      },
+      "error": "\n❌ Fatal error: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n"
+    },
+    {
+      "name": "04-editor",
+      "description": "Website Editor",
+      "status": "fail",
+      "duration": 20159,
+      "tests": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0
+      },
+      "error": "\n❌ Fatal error: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n"
+    },
+    {
+      "name": "05-preview",
+      "description": "Template Preview & Public Website",
+      "status": "pass",
+      "duration": 28531,
+      "tests": {
+        "passed": 33,
+        "failed": 0,
+        "skipped": 12
+      },
+      "error": null
+    }
+  ]
+}

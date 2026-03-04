@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Clear Auth Data</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0b0f10 0%, #1a2332 50%, #0b0f10 100%);
+        color: white;
+      }
+      .container {
+        text-align: center;
+        padding: 40px;
+        background: rgba(15, 15, 22, 0.92);
+        border-radius: 20px;
+        border: 1px solid rgba(55, 140, 146, 0.12);
+      }
+      button {
+        padding: 15px 30px;
+        font-size: 16px;
+        background: linear-gradient(135deg, #378c92 0%, #2c6f74 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+      button:hover {
+        transform: translateY(-2px);
+      }
+      .success {
+        color: #66bb6a;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Clear Authentication Data</h1>
+      <p>This will clear all localStorage and cookies to fix authentication issues.</p>
+      <button onclick="clearAuth()">Clear Auth Data</button>
+      <div id="message"></div>
+    </div>
+
+    <script>
+      function clearAuth() {
+        // Clear localStorage
+        localStorage.clear();
+
+        // Clear all cookies
+        document.cookie.split(';').forEach(function (c) {
+          document.cookie = c
+            .replace(/^ +/, '')
+            .replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
+        });
+
+        const message = document.getElementById('message');
+        message.className = 'success';
+        message.innerHTML =
+          '<p>✓ Auth data cleared successfully!</p><p>You can now close this page and refresh your app.</p>';
+
+        // Auto-redirect after 2 seconds
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      }
+    </script>
+  </body>
+</html>

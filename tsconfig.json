@@ -1,0 +1,17 @@
+// tsconfig.json (or tsconfig.app.json if that's your primary config)
+{
+  "compilerOptions": {
+    // ... existing compiler options ...
+
+    // 👇 ADD THESE TWO LINES 👇
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"] // The alias needed by shadcn/ui
+    }
+    // 👆 ADD THESE TWO LINES 👆
+
+    // ... other compiler options ...
+  },
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+}
