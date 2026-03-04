@@ -1,5 +1,6 @@
+*.zip
 node_modules
 dist
 .env
-
-          
+Archive.zip
+Archive 2.zip
