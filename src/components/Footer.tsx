@@ -1,26 +1,21 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Container,
   Typography,
-  Button,
   IconButton,
-  TextField,
   useTheme,
 } from "@mui/material";
-import { SnackbarProvider, useSnackbar } from "notistack";
 import MailIcon from "@mui/icons-material/Mail";
 import CallIcon from "@mui/icons-material/Call";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import YouTubeIcon from "@mui/icons-material/YouTube";
 import PinterestIcon from "@mui/icons-material/Pinterest";
 import CompanyContactData from "./Data/CompanyContactInfo";
 const header = "/WhiteLogo.png";
-import RotatingButton from "./UI/Rotatingbutton";
 import { useCookieConsent } from "../context/PreferencesContext";
 
 const { email, phone, OfficeLocation } = CompanyContactData[0];
@@ -40,10 +35,7 @@ const forumSupport = [
 const Footer = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { openPreferences } = useCookieConsent();
-  const [formemail, setFormEmail] = useState("");
-  const [error, setError] = useState("");
   const location = useLocation();
   const isDashboardRoute = location.pathname.startsWith("/dashboard");
 
@@ -54,32 +46,6 @@ const Footer = () => {
   ) {
     return null;
   }
-
-  const validateEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setFormEmail(e.target.value);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formemail) return setError("Email is required");
-    if (!validateEmail(formemail))
-      return setError("Please enter a valid email address");
-
-    enqueueSnackbar("Subscribed successfully!", {
-      variant: "success",
-      autoHideDuration: 3000,
-      action: (key) => (
-        <Button color="inherit" size="small" onClick={() => closeSnackbar(key)}>
-          Close
-        </Button>
-      ),
-    });
-
-    setFormEmail("");
-    setError("");
-  };
 
   // ✅ Handle footer link clicks
   const handleFooterLinkClick = (data: {
@@ -345,7 +311,14 @@ const Footer = () => {
               pr: { md: 6 },
             }}
           >
-            <img src={header} alt="Techietribe" width={220} />
+            <img
+              src={header}
+              alt="Techietribe"
+              width={220}
+              height={47}
+              loading="eager"
+              decoding="async"
+            />
             <Typography
               sx={{
                 fontSize: "16px",
@@ -595,15 +568,4 @@ const Footer = () => {
   );
 };
 
-// ✅ Snackbar Wrapper
-const EnhancedNewsletterForm = () => (
-  <SnackbarProvider
-    maxSnack={3}
-    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-    autoHideDuration={3000}
-  >
-    <Footer />
-  </SnackbarProvider>
-);
-
-export default EnhancedNewsletterForm;
+export default Footer;

@@ -168,6 +168,8 @@ const PlanHeader = ({ plan, index, max, onPrev, onNext, billing }: any) => {
         <Button
           onClick={onPrev}
           disabled={index === 0}
+          aria-label={`Previous ${plan.label} plan`}
+          title={`Previous ${plan.label} plan`}
           sx={{ color: "white", minWidth: 40 }}
         >
           <ChevronLeftIcon />
@@ -176,6 +178,8 @@ const PlanHeader = ({ plan, index, max, onPrev, onNext, billing }: any) => {
         <Button
           onClick={onNext}
           disabled={index === max - 1}
+          aria-label={`Next ${plan.label} plan`}
+          title={`Next ${plan.label} plan`}
           sx={{ color: "white", minWidth: 40 }}
         >
           <ChevronRightIcon />
@@ -188,7 +192,7 @@ const PlanHeader = ({ plan, index, max, onPrev, onNext, billing }: any) => {
           /{billing === "annual" ? "year" : "month"}
         </Box>
       </Typography>
-      <Typography sx={{ opacity: 0.6, mt: 0.5 }}>{plan.sites} Sites</Typography>
+      <Typography sx={{ opacity: 0.78, mt: 0.5 }}>{plan.sites} Sites</Typography>
     </Box>
   );
 };

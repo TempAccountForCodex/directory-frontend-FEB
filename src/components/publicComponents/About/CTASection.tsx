@@ -221,6 +221,7 @@ export default function AboutUsHeroScroll() {
                         sx={{
                           width: "100%",
                           maxWidth: 300,
+                          aspectRatio: "3 / 4",
                           mx: "auto",
                           borderRadius: "22px",
                           overflow: "hidden",
@@ -235,6 +236,8 @@ export default function AboutUsHeroScroll() {
                           component="img"
                           src={src}
                           alt=""
+                          loading="lazy"
+                          decoding="async"
                           sx={{
                             width: "100%",
                             height: "100%",

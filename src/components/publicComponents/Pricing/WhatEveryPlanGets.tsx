@@ -450,6 +450,7 @@ export default function PricingFeaturesSection() {
             >
               <Box sx={{ position: "relative" }}>
                 <Avatar
+                  alt={person.name}
                   src={person.img}
                   sx={{
                     width: 55,
@@ -552,7 +553,7 @@ export default function PricingFeaturesSection() {
             <Typography
               sx={{
                 fontSize: "16px",
-                color: "#777",
+                color: "#595959",
                 maxWidth: "320px",
                 lineHeight: 1.7,
                 fontWeight: 400,
@@ -655,7 +656,7 @@ export default function PricingFeaturesSection() {
                 <Typography
                   sx={{
                     fontSize: "15px",
-                    color: "#888",
+                    color: "#595959",
                     lineHeight: 1.75,
                     fontWeight: 400,
                   }}

@@ -65,9 +65,7 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
   };
 
   const truncateDesc = (desc: string, maxLength: number): string => {
-    const tempElement = document.createElement("div");
-    tempElement.innerHTML = desc;
-    const text = tempElement.textContent || "";
+    const text = desc.replace(/<[^>]*>/g, "").trim();
     return text.length > maxLength
       ? text.substring(0, maxLength) + "..."
       : text;
@@ -143,6 +141,8 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
             }
             alt={item.title}
             onError={handleImageError}
+            loading="lazy"
+            decoding="async"
           />
 
           {/* Edit/Delete buttons */}
@@ -236,6 +236,10 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
               }
               alt={item.title}
               onError={handleImageError}
+              loading="lazy"
+              decoding="async"
+              width={63}
+              height={63}
             />
 
             {/* Title */}

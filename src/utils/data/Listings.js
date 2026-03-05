@@ -1,6 +1,6 @@
 // Inside ./../../utils/data/Listings
 export const ListingsData = {
-  bg: "/assets/publicAssets/images/listings/heroBanner.png",
+  bg: "/assets/publicAssets/images/listings/heroBanner.jpg",
   accent: "#388d91",
   eyebrow: "Built for Businesses",
   title: ["Find the Trusted Providers"],

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Grid, Typography, Box, useTheme } from "@mui/material";
 import CheckboxFilter from "./CheckboxFilter";
 
@@ -18,8 +18,6 @@ const SideFilter: React.FC<SideFilterProps> = ({
   setItems,
   items = [],
 }) => {
-  const [loading, setLoading] = useState(false);
-
   /* ---------------- Categories ---------------- */
   const categories: string[] = [
     "Accounting and Bookkeeping",
@@ -33,14 +31,8 @@ const SideFilter: React.FC<SideFilterProps> = ({
     "Others",
   ];
 
-  /* ---------------- Unique Areas from items ---------------- */
-  const uniqueAreas: string[] = [
-    ...new Set(items.map((item) => item.area).filter(Boolean)),
-  ];
-
   /* ---------------- Filtering Logic ---------------- */
   useEffect(() => {
-    setLoading(true);
     let filtered = [...items];
 
     // filter by categories
@@ -51,8 +43,7 @@ const SideFilter: React.FC<SideFilterProps> = ({
     }
 
     setItems(filtered);
-    setLoading(false);
-  }, [selectedCategories]);
+  }, [items, selectedCategories, setItems]);
 
   /* ---------------- Handlers ---------------- */
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,8 +69,9 @@ const SideFilter: React.FC<SideFilterProps> = ({
                 lineHeight: "22px",
                 fontSize: "20px",
                 color: (theme.palette.primary as any).hover,
-                fontFamily: "poppins",
                 marginBottom: "10px",
+                paddingLeft: "25px",
+                paddingTop: "20px",
               },
             }}
           >

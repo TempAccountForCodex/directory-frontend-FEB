@@ -38,7 +38,7 @@ export const useCookieConsent = () => {
 };
 
 export const CookieConsentProvider = ({ children }) => {
-  const [showBanner, setShowBanner] = useState(false);
+  const [showBanner, setShowBanner] = useState(() => !hasUserConsented());
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferences, setPreferences] = useState(() => getCookiePreferences());
 
@@ -46,11 +46,7 @@ export const CookieConsentProvider = ({ children }) => {
     // Check if user has already consented
     const hasConsented = hasUserConsented();
 
-    if (!hasConsented) {
-      // Show banner after a brief delay for better UX
-      const timer = setTimeout(() => setShowBanner(true), 1000);
-      return () => clearTimeout(timer);
-    } else {
+    if (hasConsented) {
       // Load analytics if user has consented
       const savedPrefs = getCookiePreferences();
       if (savedPrefs?.categories[COOKIE_CATEGORIES.ANALYTICS]) {

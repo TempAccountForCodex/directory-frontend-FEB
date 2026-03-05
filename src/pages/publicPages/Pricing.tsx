@@ -47,11 +47,7 @@ const Pricing = () => {
 
       <PricingDetail />
 
-      <FAQSection
-        title="Landing Page FAQ"
-        items={pricingFAQs}
-        defaultOpenIndex={0}
-      />
+      <FAQSection title="Landing Page FAQ" items={pricingFAQs} />
 
       <Team />
     </Box>

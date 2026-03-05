@@ -16,14 +16,12 @@ export default defineConfig({
       "@emotion/styled",
       "@mui/material/Tooltip",
       "@mui/material/Unstable_Grid2",
-      "framer-motion",
       "react-router-dom",
       "leaflet",
       "react-leaflet",
       "swiper",
       "swiper/react",
       "@emailjs/browser",
-      "notistack",
     ],
   },
 
@@ -76,11 +74,6 @@ export default defineConfig({
 
           // Heavy feature libraries (only loaded when needed)
           maps: ["leaflet", "react-leaflet", "react-simple-maps"],
-          animations: [
-            "framer-motion",
-            "@tsparticles/react",
-            "@tsparticles/engine",
-          ],
         },
       },
     },

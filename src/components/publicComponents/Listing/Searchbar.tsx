@@ -546,7 +546,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                           color: theme.palette.common.white,
                           opacity: 0.9,
                         },
-                        ml: { md: "auto", sm: "-15px", xs: "-10px" },
+                        ml: { md: "auto", sm: 0, xs: 0 },
                       }}
                     >
                       {loading ? (
@@ -562,20 +562,16 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                 </Grid>
 
                 {/* ===== Advanced Search Section (Conditional) ===== */}
-                <div
-                  style={{
-                    display: isAdvancedSearchVisible ? "block" : "none",
-                  }}
-                  id="advanceSearch"
-                >
-                  <Grid
-                    container
-                    spacing={2}
-                    style={{
-                      marginTop: "20px",
-                      display: "flex",
-                    }}
-                  >
+                {isAdvancedSearchVisible && (
+                  <Box id="advanceSearch">
+                    <Grid
+                      container
+                      spacing={2}
+                      style={{
+                        marginTop: "20px",
+                        display: "flex",
+                      }}
+                    >
                     {/* --- Price Range Dropdown --- */}
                     <Grid
                       item
@@ -730,8 +726,9 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                         </Select>
                       </FormControl>
                     </Grid>
-                  </Grid>
-                </div>
+                    </Grid>
+                  </Box>
+                )}
               </Paper>
             </Grid>
           </Grid>

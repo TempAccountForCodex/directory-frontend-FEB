@@ -160,7 +160,6 @@
 
 import React from "react";
 import { Box, Container, Typography, Button, Stack, Chip } from "@mui/material";
-import Orb from "./../../ReactBits/Orb";
 import { ResponsiveBr } from "./../../UI/ResponsiveBr";
 
 const star = "/assets/publicAssets/images/common/star.svg";
@@ -170,7 +169,7 @@ const HeroSection: React.FC = () => {
     <Box
       sx={{
         width: "100%",
-        minHeight: "100vh",
+        minHeight: "70vh",
         position: "relative",
         display: "flex",
         alignItems: "center",
@@ -178,7 +177,11 @@ const HeroSection: React.FC = () => {
         bgcolor: "#020303",
         overflow: "hidden",
 
-        backgroundImage: `url(${star})`,
+        backgroundImage: `
+          radial-gradient(circle at 20% 30%, rgba(55,140,146,0.35) 0%, rgba(2,3,3,0) 45%),
+          radial-gradient(circle at 80% 70%, rgba(45,212,191,0.24) 0%, rgba(2,3,3,0) 42%),
+          url(${star})
+        `,
         backgroundSize: "cover",
         backgroundPosition: "center",
 
@@ -196,23 +199,6 @@ const HeroSection: React.FC = () => {
         },
       }}
     >
-      {/* ORB BACKGROUND */}
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 0,
-        }}
-      >
-        <Orb
-          backgroundColor="#071c1e"
-          hoverIntensity={0.5}
-          rotateOnHover={true}
-          hue={30}
-          forceHoverState={false}
-        />
-      </Box>
-
       {/* ✅ GLASS BLUR OVERLAY */}
 
       {/* CONTENT */}
@@ -319,6 +305,3 @@ const HeroSection: React.FC = () => {
 };
 
 export default HeroSection;
-function useEffect(arg0: () => void, arg1: never[]) {
-  throw new Error("Function not implemented.");
-}

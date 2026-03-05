@@ -18,7 +18,7 @@ const BlogImage17 = "/assets/images/insights/blog_17.webp";
 const BlogImage18 = "/assets/images/insights/blog_18.webp";
 
 export const BlogHeroData = {
-  bg: "/assets/publicAssets/images/blog/hero.png",
+  bg: "/assets/publicAssets/images/blog/hero.jpg",
   accent: "#388d91",
   category: "Business Strategy",
   title: ["The Ultimate Guide to Finding Trusted Providers"],

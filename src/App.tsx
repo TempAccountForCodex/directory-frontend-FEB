@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -23,11 +23,16 @@ const TermsConditions = lazy(
   () => import("../src/pages/publicPages/TermsConditions"),
 );
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
-const PrivacyPolicy = lazy(() => import("../src/pages/publicPages/PrivacyPolicy"));
-const CookiePolicy = lazy(() => import("../src/pages/publicPages/CookiePolicy"));
+const PrivacyPolicy = lazy(
+  () => import("../src/pages/publicPages/PrivacyPolicy"),
+);
+const CookiePolicy = lazy(
+  () => import("../src/pages/publicPages/CookiePolicy"),
+);
 import { DashboardProvider } from "./context/DashboardContext";
 import { PendingCounterProvider } from "./context/pending-counter";
 import { ListingsProvider } from "./context/ListingsContext.js";
+import { useCookieConsent } from "./context/PreferencesContext";
 const PublicWebsite = lazy(() => import("./pages/PublicWebsite"));
 const TemplatePreview = lazy(() => import("./pages/TemplatePreview"));
 const CreateStoreWizard = lazy(() => import("./pages/CreateStoreWizard"));
@@ -35,7 +40,7 @@ const About = lazy(() => import("../src/pages/publicPages/About"));
 const Pricing = lazy(() => import("../src/pages/publicPages/Pricing"));
 
 const InsightsPage = lazy(() => import("./pages/publicPages/Blog.js"));
-const Footer = lazy(() => import("./components/Footer"));
+import Footer from "./components/Footer";
 const MoveUpBtn = lazy(() => import("./components/UI/MoveUpBtn"));
 const CookieBanner = lazy(
   () => import("./components/UserPreferences/PreferenceBanner.jsx"),
@@ -45,22 +50,163 @@ const CookiePreferences = lazy(
 );
 // import InsightDetails from "./pages/InsightsDetails";
 
+const PricingPageFallback = () => (
+  <div style={{ width: "100%", background: "#020303" }}>
+    <div style={{ minHeight: "100vh" }} />
+    <div style={{ minHeight: "220vh", background: "#ffffff" }} />
+  </div>
+);
+
+const ContactPageFallback = () => (
+  <div style={{ width: "100%", background: "#020303" }}>
+    <div style={{ minHeight: "100vh" }} />
+    <div style={{ minHeight: "240vh", background: "#ffffff" }} />
+  </div>
+);
+
+const ListingsPageFallback = () => (
+  <div style={{ width: "100%", background: "#041e18" }}>
+    <div style={{ minHeight: "100vh" }} />
+    <div style={{ minHeight: "220vh", background: "#ffffff" }} />
+  </div>
+);
+
+const BlogPageFallback = () => (
+  <div style={{ width: "100%", background: "#041e18" }}>
+    <div style={{ minHeight: "70vh" }} />
+    <div style={{ minHeight: "230vh", background: "#ffffff" }} />
+  </div>
+);
+
 const MainLayout = () => (
   <>
+    <a
+      href="#main-content"
+      style={{
+        position: "absolute",
+        left: "-9999px",
+        top: "auto",
+        width: "1px",
+        height: "1px",
+        overflow: "hidden",
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.left = "12px";
+        e.currentTarget.style.top = "12px";
+        e.currentTarget.style.width = "auto";
+        e.currentTarget.style.height = "auto";
+        e.currentTarget.style.padding = "10px 14px";
+        e.currentTarget.style.borderRadius = "8px";
+        e.currentTarget.style.background = "#ffffff";
+        e.currentTarget.style.color = "#000000";
+        e.currentTarget.style.zIndex = "10000";
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.left = "-9999px";
+        e.currentTarget.style.top = "auto";
+        e.currentTarget.style.width = "1px";
+        e.currentTarget.style.height = "1px";
+        e.currentTarget.style.padding = "0";
+      }}
+    >
+      Skip to main content
+    </a>
     <GoogleAnalyticsTracker />
-    <Suspense fallback={null}>
-      <CookieBanner />
-      <CookiePreferences />
-    </Suspense>
+    <CookieBannerMount />
+    <CookiePreferencesMount />
     <Navbar />
     <ScrollToTop />
-    <Outlet />
-    <Suspense fallback={null}>
-      <Footer />
-      <MoveUpBtn />
-    </Suspense>
+    <main id="main-content">
+      <Outlet />
+    </main>
+    <Footer />
+    <MoveUpBtnMount />
   </>
 );
+
+const CookieBannerMount = () => {
+  const { showBanner } = useCookieConsent();
+
+  if (!showBanner) {
+    return null;
+  }
+
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: "140px",
+          zIndex: 9998,
+          pointerEvents: "none",
+        }}
+      />
+      <Suspense fallback={null}>
+        <CookieBanner />
+      </Suspense>
+    </>
+  );
+};
+
+const CookiePreferencesMount = () => {
+  const { showPreferences } = useCookieConsent();
+
+  if (!showPreferences) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <CookiePreferences />
+    </Suspense>
+  );
+};
+
+const MoveUpBtnMount = () => {
+  const [shouldMount, setShouldMount] = useState(false);
+
+  useEffect(() => {
+    if (shouldMount) {
+      return;
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const onScroll = () => {
+      if (window.scrollY > 100) {
+        setShouldMount(true);
+        window.removeEventListener("scroll", onScroll);
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    timeoutId = setTimeout(() => {
+      setShouldMount(true);
+      window.removeEventListener("scroll", onScroll);
+    }, 1800);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [shouldMount]);
+
+  if (!shouldMount) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <MoveUpBtn />
+    </Suspense>
+  );
+};
 
 const AuthDashboardLayout = () => (
   <>
@@ -165,11 +311,19 @@ const AppRoutes = () => {
         },
         {
           path: "/pricing",
-          element: suspense(<Pricing />),
+          element: (
+            <Suspense fallback={<PricingPageFallback />}>
+              <Pricing />
+            </Suspense>
+          ),
         },
         {
           path: "/listings",
-          element: suspense(<Listings />),
+          element: (
+            <Suspense fallback={<ListingsPageFallback />}>
+              <Listings />
+            </Suspense>
+          ),
         },
         {
           path: "/directory",
@@ -177,7 +331,11 @@ const AppRoutes = () => {
         },
         {
           path: "/contact",
-          element: suspense(<Contact />),
+          element: (
+            <Suspense fallback={<ContactPageFallback />}>
+              <Contact />
+            </Suspense>
+          ),
         },
         // {
         //   path: "/business/:slug",
@@ -195,7 +353,11 @@ const AppRoutes = () => {
 
         {
           path: "/blog",
-          element: suspense(<InsightsPage />),
+          element: (
+            <Suspense fallback={<BlogPageFallback />}>
+              <InsightsPage />
+            </Suspense>
+          ),
         },
 
         {

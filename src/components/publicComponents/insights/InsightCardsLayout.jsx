@@ -6,13 +6,10 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {
   Box,
-  Divider,
-  TextField,
   Typography,
   Pagination,
   Stack,
   PaginationItem,
-  InputAdornment,
   useMediaQuery,
   Button,
   InputBase,
@@ -22,7 +19,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Search } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
-import { transform } from "framer-motion";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -144,7 +140,7 @@ const styles = {
   },
   publishDate: {
     fontSize: "0.85rem",
-    fontFamily: "Barlow",
+    fontFamily: "Poppins, sans-serif",
     fontWeight: "500",
     color: "#888",
     display: "flex",
@@ -234,7 +230,7 @@ const styles = {
   },
   sidebarHeading: {
     fontSize: "22px",
-    fontFamily: "Barlow",
+    fontFamily: "Poppins, sans-serif",
     fontWeight: "600",
     color: "#313431",
     marginBottom: "1rem",
@@ -266,7 +262,7 @@ const styles = {
   },
   recentPostTitle: {
     fontSize: "15px",
-    fontFamily: "Barlow",
+    fontFamily: "Poppins, sans-serif",
     fontWeight: "600",
     color: "#313431",
     lineHeight: 1.4,
@@ -279,7 +275,7 @@ const styles = {
   },
   recentPostDate: {
     fontSize: "12px",
-    fontFamily: "Barlow",
+    fontFamily: "Poppins, sans-serif",
     fontWeight: "400",
     color: "#888",
     marginTop: "4px",
@@ -287,7 +283,7 @@ const styles = {
 
   blogHeadingRecent: {
     fontSize: "14px",
-    fontFamily: "Barlow",
+    fontFamily: "Poppins, sans-serif",
     fontWeight: "400",
     color: "#313431",
     width: "80%",
@@ -555,7 +551,7 @@ const InsightCards = () => {
             <Typography
               sx={{
                 fontSize: { xs: "24px", md: "28px" },
-                fontFamily: "Barlow",
+                fontFamily: "Poppins, sans-serif",
                 fontWeight: "600",
                 color: "#313431",
                 textAlign: "center",
@@ -614,7 +610,7 @@ const InsightCards = () => {
                 marginTop: 1,
                 backgroundColor: '#378C92',
                 color: '#ffffff',
-                fontFamily: 'Barlow',
+                fontFamily: "Poppins, sans-serif",
                 fontWeight: 600,
                 textTransform: 'none',
                 fontSize: '16px',
@@ -650,7 +646,7 @@ const InsightCards = () => {
           </Box>
         ) : blogsData.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', flexDirection: 'column', gap: 2 }}>
-            <Typography sx={{ fontSize: "24px", fontFamily: "Barlow", fontWeight: "500", color: "#313431", textAlign: "center" }}>
+            <Typography sx={{ fontSize: "24px", fontFamily: "Poppins, sans-serif", fontWeight: "500", color: "#313431", textAlign: "center" }}>
               No Insights Found
             </Typography>
             <Typography sx={{ fontSize: "16px", fontFamily: "Questrial", color: "#616161", textAlign: "center" }}>
@@ -675,6 +671,10 @@ const InsightCards = () => {
                       src={getImageUrl(card.image)}
                       alt={`blog-image-${index}`}
                       style={styles.blogImage}
+                      loading="lazy"
+                      decoding="async"
+                      width={720}
+                      height={250}
                     />
                   </Box>
                   <Box sx={styles.blogContentContainer}>
@@ -787,6 +787,7 @@ const InsightCards = () => {
             background: "#f7f5f3",
             padding: "20px",
             borderRadius: "2px",
+            minHeight: "280px",
           }}
         >
           <Typography sx={styles.sidebarHeading}>Recent Posts</Typography>
@@ -816,6 +817,7 @@ const InsightCards = () => {
             background: "#f7f5f3",
             padding: "20px",
             borderRadius: "2px",
+            minHeight: "360px",
           }}
         >
           <Typography sx={styles.sidebarHeading}>Categories</Typography>

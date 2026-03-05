@@ -2,9 +2,7 @@ import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import { ABOUT_HERO } from "./../../utils/data/AboutPageData";
 import AboutModern from "../../components/publicComponents/About/AboutHeroModern";
-const WhyChooseUs = lazy(
-  () => import("../../components/publicComponents/About/WhyChooseUs"),
-);
+import WhyChooseUs from "../../components/publicComponents/About/WhyChooseUs";
 const CTASection = lazy(
   () => import("../../components/publicComponents/About/CTASection"),
 );
@@ -30,7 +28,7 @@ const ReachOut = lazy(
   () => import("../../components/publicComponents/About/ReachOut"),
 );
 
-const DeferredSection = ({ children, minHeight = "85vh" }) => {
+const DeferredSection = ({ children }) => {
   const [visible, setVisible] = useState(false);
   const ref = useRef(null);
 
@@ -44,14 +42,19 @@ const DeferredSection = ({ children, minHeight = "85vh" }) => {
           observer.disconnect();
         }
       },
-      { rootMargin: "420px 0px" },
+      { rootMargin: "60px 0px" },
     );
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <Box ref={ref} sx={{ minHeight }}>
+    <Box
+      ref={ref}
+      sx={{
+        overflow: "clip",
+      }}
+    >
       {visible ? <Suspense fallback={null}>{children}</Suspense> : null}
     </Box>
   );
@@ -62,15 +65,13 @@ export default function About() {
     <Box sx={{}}>
       <AboutModern {...ABOUT_HERO} />
 
-      <Suspense fallback={null}>
-        <WhyChooseUs />
-      </Suspense>
+      <WhyChooseUs />
 
       <DeferredSection minHeight="90vh">
         <CTASection />
       </DeferredSection>
 
-      <DeferredSection minHeight="85vh">
+      <DeferredSection>
         <CTAVideo />
       </DeferredSection>
 
@@ -79,12 +80,12 @@ export default function About() {
       </DeferredSection>
 
       <Box id="ABOUT_STICKY_SCROLL">
-        <DeferredSection minHeight="85vh">
+        <DeferredSection>
           <AboutStickyBlock />
         </DeferredSection>
       </Box>
 
-      <DeferredSection minHeight="70vh">
+      <DeferredSection>
         <DarkMinimalistRibbon />
       </DeferredSection>
 

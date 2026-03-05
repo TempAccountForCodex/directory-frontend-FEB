@@ -246,14 +246,14 @@ const GoogleButton = styled(Button)(({ theme }) => ({
 }));
 
 const SecondaryButton = styled(Button)(({ theme }) => ({
-  color: "#378C92",
+  color: "#ffffffe7",
   fontSize: "14px",
   fontWeight: 600,
   textTransform: "none",
   transition: "all 0.2s ease",
   "&:hover": {
     color: "#3a98a0",
-    backgroundColor: "rgba(55, 140, 146, 0.06)",
+    backgroundColor: "transparent",
   },
 }));
 
@@ -277,7 +277,7 @@ const IconWrapper = styled(Box)(({ theme }) => ({
   border: "1px solid rgba(55, 140, 146, 0.15)",
   transition: "all 0.3s ease",
   "& svg": {
-    color: "#378C92",
+    color: "#ffffff",
     fontSize: 22,
   },
 }));
@@ -1437,7 +1437,7 @@ const Auth = () => {
       <Typography
         variant="body2"
         sx={{
-          color: "rgba(255, 255, 255, 0.55)",
+          color: "rgba(255, 255, 255, 0.92)",
           fontSize: "14px",
           mb: 4,
           lineHeight: 1.5,
@@ -1477,7 +1477,7 @@ const Auth = () => {
         sx={{
           display: "block",
           textAlign: "center",
-          color: "rgba(255, 255, 255, 0.4)",
+          color: "rgba(255, 255, 255, 0.92)",
           fontSize: "12px",
           mb: 3,
           mt: -2,
@@ -1491,7 +1491,7 @@ const Auth = () => {
         <Typography
           variant="body2"
           sx={{
-            color: "rgba(255, 255, 255, 0.45)",
+            color: "rgba(255, 255, 255, 0.92)",
             fontSize: "12px",
             px: 2,
           }}

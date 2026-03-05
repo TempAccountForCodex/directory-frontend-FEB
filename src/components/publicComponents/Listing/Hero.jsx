@@ -157,7 +157,7 @@
 // }
 
 import { Box, Container, Grid, Typography, Stack, Chip } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
+import { alpha } from "@mui/material/styles";
 import { keyframes } from "@mui/system";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -177,11 +177,6 @@ const fadeUp = keyframes`
 const pulseGlow = keyframes`
   0%, 100% { box-shadow: 0 0 0px 0px rgba(56,141,145,0.4); }
   50%       { box-shadow: 0 0 18px 6px rgba(56,141,145,0.25); }
-`;
-
-const tickerSlide = keyframes`
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
 `;
 
 // ── Static data ──────────────────────────────────────────────────────────────
@@ -213,7 +208,6 @@ const TRUST_BADGES = [
 
 // ── Component ────────────────────────────────────────────────────────────────
 export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
-  const theme = useTheme();
   const ACCENT = accent || "#388d91";
 
   return (
@@ -258,6 +252,10 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
       <Box
         component="img"
         src={bg}
+        alt="Directory network map"
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
         sx={{
           position: "absolute",
           top: { xs: "0%", lg: "0%" },
@@ -330,6 +328,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
               sx={{
                 animation: `${fadeUp} 0.6s ease both`,
                 animationDelay: "0.1s",
+                "@media (max-width: 899px)": {
+                  animation: "none",
+                },
               }}
             >
               {TRUST_BADGES.map((b) => (
@@ -345,6 +346,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
                     py: 0.5,
                     backdropFilter: "blur(6px)",
                     backgroundColor: alpha(ACCENT, 0.06),
+                    "@media (max-width: 899px)": {
+                      backdropFilter: "none",
+                    },
                   }}
                 >
                   <Box
@@ -385,6 +389,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
                 textShadow: `0 0 30px ${alpha(ACCENT, 0.2)}`,
                 animation: `${fadeUp} 0.7s ease both`,
                 animationDelay: "0.2s",
+                "@media (max-width: 899px)": {
+                  animation: "none",
+                },
               }}
             >
               {title}
@@ -399,6 +406,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
               sx={{
                 animation: `${fadeUp} 0.7s ease both`,
                 animationDelay: "0.3s",
+                "@media (max-width: 899px)": {
+                  animation: "none",
+                },
               }}
             >
               <Box
@@ -407,6 +417,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
                   height: "2px",
                   backgroundColor: "white",
                   animation: `${pulseGlow} 2.5s ease-in-out infinite`,
+                  "@media (max-width: 899px)": {
+                    animation: "none",
+                  },
                 }}
               />
               <Typography
@@ -431,6 +444,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
                 maxWidth: 460,
                 animation: `${fadeUp} 0.7s ease both`,
                 animationDelay: "0.38s",
+                "@media (max-width: 899px)": {
+                  animation: "none",
+                },
               }}
             >
               Connect with pre-vetted service providers across every industry —
@@ -443,6 +459,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
                 pr: { xs: "0%", md: "15%" },
                 animation: `${fadeUp} 0.7s ease both`,
                 animationDelay: "0.45s",
+                "@media (max-width: 899px)": {
+                  animation: "none",
+                },
               }}
             >
               <HomeSearch />
@@ -454,6 +473,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
                 mt: 3,
                 animation: `${fadeUp} 0.7s ease both`,
                 animationDelay: "0.55s",
+                "@media (max-width: 899px)": {
+                  animation: "none",
+                },
               }}
             >
               <Typography
@@ -511,6 +533,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
               sx={{
                 animation: `${fadeUp} 0.7s ease both`,
                 animationDelay: "0.65s",
+                "@media (max-width: 899px)": {
+                  animation: "none",
+                },
               }}
             >
               {STATS.map((s) => (

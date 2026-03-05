@@ -5,7 +5,6 @@ import { useTheme } from "@mui/material/styles";
 
 const star = "/assets/publicAssets/images/common/star.svg";
 const platform = "/assets/publicAssets/images/home/platform.webp";
-const platformSm = "/assets/publicAssets/images/home/platform-sm.jpg";
 
 const UniqueSellingSection = () => {
   const theme = useTheme();
@@ -218,7 +217,7 @@ const UniqueSellingSection = () => {
                 component="img"
                 // src={COMPOSITE_HERO_IMAGE}
                 src={platform}
-                srcSet={`${platformSm} 1200w, ${platform} 1920w`}
+                srcSet={`${platform} 1200w, ${platform} 1920w`}
                 sizes="(max-width: 900px) 95vw, 800px"
                 alt="Business Landing Page Interface"
                 loading="lazy"
@@ -230,7 +229,6 @@ const UniqueSellingSection = () => {
                   display: "block",
                 }}
               />
-
             </Box>
           </Grid>
         </Grid>

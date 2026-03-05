@@ -53,7 +53,7 @@ const DeferredSection = ({
     if (isMobile) {
       // Defer non-critical home sections on mobile so above-the-fold content
       // stays fast without changing the desktop rendering path.
-      const timer = window.setTimeout(() => setVisible(true), delayMs + 7000);
+      const timer = window.setTimeout(() => setVisible(true), delayMs);
       return () => window.clearTimeout(timer);
     }
 

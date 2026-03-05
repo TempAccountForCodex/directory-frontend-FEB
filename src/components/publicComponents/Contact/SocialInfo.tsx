@@ -5,10 +5,10 @@ const earthImage = "/assets/publicAssets/images/ContactUs/earth.avif";
 const star = "/assets/publicAssets/images/common/star.svg";
 const darkhole = "/assets/publicAssets/images/common/darkhole.svg";
 
-const instagramImage = "/assets/publicAssets/images/ContactUs/instagram.png";
-const github = "/assets/publicAssets/images/ContactUs/github.png";
-const linkedin = "/assets/publicAssets/images/ContactUs/linkedin.png";
-const facebook = "/assets/publicAssets/images/ContactUs/facebook.png";
+const instagramImage = "/assets/publicAssets/images/ContactUs/instagram.webp";
+const github = "/assets/publicAssets/images/ContactUs/github.webp";
+const linkedin = "/assets/publicAssets/images/ContactUs/linkedin.webp";
+const facebook = "/assets/publicAssets/images/ContactUs/facebook.webp";
 
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
