@@ -1,66 +1,104 @@
-import React from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Box } from "@mui/material";
-import {
-  ABOUT_HERO,
-  default as AboutStickyScrollData,
-} from "./../../utils/data/AboutPageData";
-import ContentCard from "../../components/common/ContentCard";
-import StickyLeftScrollableRightSection from "../../components/common/StickyLeftScrollableRightSection";
+import { ABOUT_HERO } from "./../../utils/data/AboutPageData";
 import AboutModern from "../../components/publicComponents/About/AboutHeroModern";
-import CTASection from "../../components/publicComponents/About/CTASection";
-import CTAVideo from "../../components/publicComponents/About/CTAVideo";
-import FeaturePromo from "../../components/publicComponents/About/FeaturePromo";
-import FounderSection from "../../components/publicComponents/About/FounderSection";
-import WhyWeBuiltThis from "../../components/publicComponents/About/WhyWeBuiltThis";
-import ReachOut from "../../components/publicComponents/About/ReachOut";
-import WhyChooseUs from "../../components/publicComponents/About/WhyChooseUs";
-import DarkMinimalistRibbon from "../../components/publicComponents/About/DarkMinimalistRibbon";
+const WhyChooseUs = lazy(
+  () => import("../../components/publicComponents/About/WhyChooseUs"),
+);
+const CTASection = lazy(
+  () => import("../../components/publicComponents/About/CTASection"),
+);
+const CTAVideo = lazy(
+  () => import("../../components/publicComponents/About/CTAVideo"),
+);
+const FeaturePromo = lazy(
+  () => import("../../components/publicComponents/About/FeaturePromo"),
+);
+const AboutStickyBlock = lazy(
+  () => import("../../components/publicComponents/About/AboutStickyBlock"),
+);
+const DarkMinimalistRibbon = lazy(
+  () => import("../../components/publicComponents/About/DarkMinimalistRibbon"),
+);
+const WhyWeBuiltThis = lazy(
+  () => import("../../components/publicComponents/About/WhyWeBuiltThis"),
+);
+const FounderSection = lazy(
+  () => import("../../components/publicComponents/About/FounderSection"),
+);
+const ReachOut = lazy(
+  () => import("../../components/publicComponents/About/ReachOut"),
+);
 
-const sticky = AboutStickyScrollData;
+const DeferredSection = ({ children, minHeight = "85vh" }) => {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef(null);
 
-const rightContent = sticky.processContentData.map((item, index) => (
-  <ContentCard
-    key={index}
-    title={item.title}
-    icon={sticky.ICONS[item.title]}
-    isLast={index === sticky.processContentData.length - 1}
-    accentColor="#378C92"
-  >
-    {item.description}
-  </ContentCard>
-));
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "420px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <Box ref={ref} sx={{ minHeight }}>
+      {visible ? <Suspense fallback={null}>{children}</Suspense> : null}
+    </Box>
+  );
+};
 
 export default function About() {
   return (
     <Box sx={{}}>
       <AboutModern {...ABOUT_HERO} />
 
-      <WhyChooseUs />
+      <Suspense fallback={null}>
+        <WhyChooseUs />
+      </Suspense>
 
-      <CTASection />
+      <DeferredSection minHeight="90vh">
+        <CTASection />
+      </DeferredSection>
 
-      <CTAVideo />
+      <DeferredSection minHeight="85vh">
+        <CTAVideo />
+      </DeferredSection>
 
-      <FeaturePromo />
+      <DeferredSection minHeight="70vh">
+        <FeaturePromo />
+      </DeferredSection>
 
       <Box id="ABOUT_STICKY_SCROLL">
-        <StickyLeftScrollableRightSection
-          title={sticky.title}
-          subtitle={sticky.subtitle}
-          callToActionText={sticky.callToActionText}
-          callToActionLink={sticky.callToActionLink}
-          rightContent={rightContent}
-          speedFactor={1}
-        />
+        <DeferredSection minHeight="85vh">
+          <AboutStickyBlock />
+        </DeferredSection>
       </Box>
 
-      <DarkMinimalistRibbon />
+      <DeferredSection minHeight="70vh">
+        <DarkMinimalistRibbon />
+      </DeferredSection>
 
-      <WhyWeBuiltThis />
+      <DeferredSection minHeight="80vh">
+        <WhyWeBuiltThis />
+      </DeferredSection>
 
-      <FounderSection />
+      <DeferredSection minHeight="70vh">
+        <FounderSection />
+      </DeferredSection>
 
-      <ReachOut />
+      <DeferredSection minHeight="80vh">
+        <ReachOut />
+      </DeferredSection>
     </Box>
   );
 }

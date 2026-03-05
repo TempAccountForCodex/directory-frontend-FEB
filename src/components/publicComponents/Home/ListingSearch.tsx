@@ -128,7 +128,7 @@ const SearchDiscoverSection: React.FC = () => {
 
                 <Typography
                   sx={{
-                    color: alpha("#fff", 0.65),
+                    color: alpha("#fff", 0.86),
                     fontSize: { xs: "1rem", md: "1.1rem" },
                     lineHeight: 1.6,
                     maxWidth: 480,
@@ -153,6 +153,7 @@ const SearchDiscoverSection: React.FC = () => {
                         <Avatar
                           key={index}
                           src={src}
+                          alt={`User avatar ${index + 1}`}
                           sx={{
                             width: 32,
                             height: 32,

@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from "react";
+import React, { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -6,7 +6,7 @@ import { CookieConsentProvider } from "./context/PreferencesContext";
 import { Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import ScrollToTop from "./components/ScrollToTop";
-import Home from "../src/pages/publicPages/Home";
+const Home = lazy(() => import("../src/pages/publicPages/Home"));
 const Listings = lazy(() => import("../src/pages/publicPages/Listings"));
 const Directory = lazy(() => import("./pages/Directory"));
 const Contact = lazy(() => import("../src/pages/publicPages/Contact"));
@@ -45,49 +45,20 @@ const CookiePreferences = lazy(
 );
 // import InsightDetails from "./pages/InsightsDetails";
 
-const DeferredRender = ({ children }: { children: React.ReactNode }) => {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const start = () => {
-      if (!cancelled) setReady(true);
-    };
-
-    const isMobile = window.matchMedia("(max-width: 900px)").matches;
-    const mobileDelay = 10000;
-    const desktopDelay = 600;
-    const timer = window.setTimeout(
-      start,
-      isMobile ? mobileDelay : desktopDelay,
-    );
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, []);
-
-  return ready ? <>{children}</> : null;
-};
-
 const MainLayout = () => (
   <>
     <GoogleAnalyticsTracker />
-    <DeferredRender>
-      <Suspense fallback={null}>
-        <CookieBanner />
-        <CookiePreferences />
-      </Suspense>
-    </DeferredRender>
+    <Suspense fallback={null}>
+      <CookieBanner />
+      <CookiePreferences />
+    </Suspense>
     <Navbar />
     <ScrollToTop />
     <Outlet />
-    <DeferredRender>
-      <Suspense fallback={null}>
-        <Footer />
-        <MoveUpBtn />
-      </Suspense>
-    </DeferredRender>
+    <Suspense fallback={null}>
+      <Footer />
+      <MoveUpBtn />
+    </Suspense>
   </>
 );
 

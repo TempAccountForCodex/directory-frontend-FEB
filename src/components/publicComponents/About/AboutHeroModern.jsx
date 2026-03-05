@@ -49,6 +49,9 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
       <Box
         component="img"
         src={bg}
+        alt="About page hero graphic"
+        decoding="async"
+        fetchPriority="high"
         sx={{
           position: "absolute",
           top: { xs: "0%", lg: "-10%" },

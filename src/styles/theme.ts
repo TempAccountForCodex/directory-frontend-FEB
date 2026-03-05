@@ -95,6 +95,26 @@ const theme = createTheme({
     body1: { fontSize: "1rem", lineHeight: 1.6 },
     button: { textTransform: "none", fontWeight: 600 },
   },
+  components: {
+    MuiTypography: {
+      defaultProps: {
+        // Keep visual variants, but avoid accidental heading-level jumps.
+        variantMapping: {
+          h1: "h1",
+          h2: "h2",
+          h3: "p",
+          h4: "p",
+          h5: "p",
+          h6: "p",
+          subtitle1: "p",
+          subtitle2: "p",
+          body1: "p",
+          body2: "p",
+          inherit: "p",
+        },
+      },
+    },
+  },
   palette: {
     primary: {
       main: "#F2F3EB",

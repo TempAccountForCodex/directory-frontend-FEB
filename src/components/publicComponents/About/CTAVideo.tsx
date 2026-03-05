@@ -7,14 +7,42 @@ import {
   Stack,
   Paper,
   alpha,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import { useEffect, useRef, useState } from "react";
 const CTAVideo = "/assets/publicAssets/videos/About/aboutCTA.mp4";
+const CTAPoster = "/assets/publicAssets/images/about/aboutUsCta.webp";
 const uniqueLinesbg = "/assets/publicAssets/images/common/uniqueLinesbg.webp";
 
 export default function VideoHeroOverlay() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [isVisible, setIsVisible] = useState(false);
+  const [shouldPlay, setShouldPlay] = useState(false);
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setIsVisible(true);
+          if (!isMobile) setShouldPlay(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isMobile]);
+
   return (
     <Box
+      ref={sectionRef}
       sx={{
         bgcolor: "#F8F9FA",
         pt: { xs: 10, md: 15 },
@@ -117,17 +145,19 @@ export default function VideoHeroOverlay() {
           }}
         >
           <video
-            autoPlay
+            autoPlay={shouldPlay}
             muted
             loop
             playsInline
+            preload="none"
+            poster={CTAPoster}
             style={{
               width: "100%",
               height: "100%",
               objectFit: "cover",
             }}
           >
-            <source src={CTAVideo} type="video/mp4" />
+            {isVisible ? <source src={CTAVideo} type="video/mp4" /> : null}
           </video>
 
           {/* Play Button Overlay */}
@@ -142,6 +172,7 @@ export default function VideoHeroOverlay() {
             }}
           >
             <Box
+              onClick={() => setShouldPlay(true)}
               sx={{
                 width: 80,
                 height: 80,

@@ -1599,6 +1599,7 @@ const FAQSection: React.FC<FAQSectionProps> = ({ items }) => {
                         key={u}
                         component="img"
                         src={`https://i.pravatar.cc/150?u=${u}`}
+                        alt={`Trusted user ${i + 1}`}
                         sx={{
                           width: 24,
                           height: 24,
@@ -1610,7 +1611,7 @@ const FAQSection: React.FC<FAQSectionProps> = ({ items }) => {
                       />
                     ))}
                   </Box>
-                  <Typography sx={{ fontSize: "11px", color: "#94a3b8" }}>
+                  <Typography sx={{ fontSize: "11px", color: "#64748b" }}>
                     <Box
                       component="span"
                       sx={{ fontWeight: 700, color: "#475569" }}

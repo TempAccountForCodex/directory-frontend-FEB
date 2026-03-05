@@ -11,7 +11,7 @@ import { AutoGraphRounded } from "@mui/icons-material";
 import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlined";
 
 export const ABOUT_HERO = {
-  bg: "/assets/publicAssets/images/about/newHero2.png",
+  bg: "/assets/publicAssets/images/about/newHero2.webp",
   accent: "#388d91",
   eyebrow: "Built for Businesses",
   title: ["Helping Businesses Get Online Instantly"],

@@ -117,14 +117,17 @@ const Footer = () => {
     {
       icon: FacebookIcon,
       href: "https://www.facebook.com/thetechietribe.official",
+      label: "Follow us on Facebook",
     },
     {
       icon: InstagramIcon,
       href: "https://www.instagram.com/thetechietribe_/",
+      label: "Follow us on Instagram",
     },
     {
       icon: LinkedInIcon,
       href: "https://www.linkedin.com/company/techietribe",
+      label: "Follow us on LinkedIn",
     },
     // {
     //   icon: YouTubeIcon,
@@ -133,6 +136,7 @@ const Footer = () => {
     {
       icon: PinterestIcon,
       href: "https://www.pinterest.com/thetechietribe_/",
+      label: "Follow us on Pinterest",
     },
   ];
 
@@ -369,13 +373,15 @@ const Footer = () => {
                 width: "fit-content",
               }}
             >
-              {socialLinks.map(({ icon: Icon, href }, index) => (
+              {socialLinks.map(({ icon: Icon, href, label }, index) => (
                 <IconButton
                   key={index}
                   component="a"
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={label}
+                  title={label}
                   sx={{
                     color: "#ffffff",
                     transition: "all 0.3s ease",
@@ -557,7 +563,7 @@ const Footer = () => {
           <Typography
             variant="subtitle2"
             sx={(t) => ({
-              color: (t.palette.text as any).gray,
+              color: "rgba(255,255,255,0.86)",
               fontFamily: "system-ui",
               fontWeight: 400,
               textAlign: "center",
@@ -572,7 +578,7 @@ const Footer = () => {
                 key={index}
                 onClick={() => handleFooterLinkClick(data)}
                 sx={(t) => ({
-                  color: (t.palette.text as any).gray,
+                  color: "rgba(255,255,255,0.86)",
                   fontFamily: "system-ui",
                   fontWeight: 500,
                   cursor: "pointer",

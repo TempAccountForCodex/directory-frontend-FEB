@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from "react";
-import { Box, Typography, useTheme } from "@mui/material";
+import React, { useRef, useEffect, useState } from "react";
+import { Box, Typography } from "@mui/material";
 import { styled } from "@mui/system";
 import SectionHeader from "../../UI/SectionHeader";
 
@@ -105,11 +105,16 @@ const MaskedVideoText = styled(Box)({
 
 // ===== main =====
 export default function WhyChooseUs(): JSX.Element {
-  const theme = useTheme();
+  const [videoActive, setVideoActive] = useState(false);
+  const [isInViewport, setIsInViewport] = useState(false);
+  const sectionRef = useRef<HTMLDivElement | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const textContainerRef = useRef<HTMLDivElement | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const frameCbRef = useRef<number | null>(null);
+  const metricsRef = useRef({ width: 0, height: 0, fontSize: "16px" });
 
   const letters: {
     char: string;
@@ -130,6 +135,36 @@ export default function WhyChooseUs(): JSX.Element {
   ];
 
   useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVideoActive(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "220px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setIsInViewport(Boolean(entries[0]?.isIntersecting));
+      },
+      { threshold: 0.05, rootMargin: "120px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!videoActive || !isInViewport) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const wrap = textContainerRef.current;
@@ -138,7 +173,7 @@ export default function WhyChooseUs(): JSX.Element {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const DPR = Math.max(1, window.devicePixelRatio || 1);
+    const dpr = Math.min(1.5, Math.max(1, window.devicePixelRatio || 1));
 
     const sizeCanvas = () => {
       const rect = wrap.getBoundingClientRect();
@@ -146,30 +181,68 @@ export default function WhyChooseUs(): JSX.Element {
       canvas.style.height = `${rect.height}px`;
       canvas.style.marginLeft = `-30px`;
 
-      canvas.width = rect.width * DPR;
-      canvas.height = rect.height * DPR;
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
 
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      metricsRef.current = {
+        width: rect.width,
+        height: rect.height,
+        fontSize: window.getComputedStyle(wrap).fontSize,
+      };
     };
 
-    const draw = () => {
+    const drawFrame = () => {
+      const { width, height, fontSize } = metricsRef.current;
+      if (!width || !height) return;
       if (video.readyState >= 2) {
-        const rect = wrap.getBoundingClientRect();
-        ctx.clearRect(0, 0, rect.width, rect.height);
+        ctx.clearRect(0, 0, width, height);
 
-        ctx.drawImage(video, 0, 0, rect.width, rect.height);
+        ctx.drawImage(video, 0, 0, width, height);
 
         ctx.globalCompositeOperation = "destination-in";
-        const fs = window.getComputedStyle(wrap).fontSize;
-        ctx.font = `900 ${fs} Sora, Arial, system-ui`;
+        ctx.font = `900 ${fontSize} Sora, Arial, system-ui`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillStyle = "#000";
 
-        ctx.fillText("TECHIETRIBE", rect.width / 2, rect.height / 2);
+        ctx.fillText("TECHIETRIBE", width / 2, height / 2);
         ctx.globalCompositeOperation = "source-over";
       }
-      requestAnimationFrame(draw);
+    };
+
+    const schedule = () => {
+      if (typeof video.requestVideoFrameCallback === "function") {
+        frameCbRef.current = video.requestVideoFrameCallback(() => {
+          drawFrame();
+          schedule();
+        });
+        return;
+      }
+
+      let lastTs = 0;
+      const tick = (ts: number) => {
+        if (ts - lastTs >= 33) {
+          lastTs = ts;
+          drawFrame();
+        }
+        frameRef.current = requestAnimationFrame(tick);
+      };
+      frameRef.current = requestAnimationFrame(tick);
+    };
+
+    const stop = () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+      if (
+        frameCbRef.current &&
+        typeof video.cancelVideoFrameCallback === "function"
+      ) {
+        video.cancelVideoFrameCallback(frameCbRef.current);
+        frameCbRef.current = null;
+      }
     };
 
     sizeCanvas();
@@ -177,43 +250,50 @@ export default function WhyChooseUs(): JSX.Element {
     ro.observe(wrap);
 
     video.play().catch(() => {});
-    requestAnimationFrame(draw);
+    schedule();
 
-    return () => ro.disconnect();
-  }, []);
+    return () => {
+      stop();
+      ro.disconnect();
+    };
+  }, [videoActive, isInViewport]);
 
   return (
-    <Wrapper>
-      <Box
-        component="video"
-        src={bgVideoSrc}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        sx={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          zIndex: 0,
-          opacity: 0.25,
-        }}
-      />
+    <Wrapper ref={sectionRef}>
+      {videoActive && (
+        <Box
+          component="video"
+          src={bgVideoSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex: 0,
+            opacity: 0.25,
+          }}
+        />
+      )}
 
-      <video
-        ref={videoRef}
-        src={videoSrc}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        crossOrigin="anonymous"
-        style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
-      />
+      {videoActive && (
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          crossOrigin="anonymous"
+          style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
+        />
+      )}
 
       <SectionHeader
         text="Empowering Businesses with Powerful Online Presence"
@@ -230,15 +310,17 @@ export default function WhyChooseUs(): JSX.Element {
       />
 
       <MaskedVideoText>
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 2,
-            pointerEvents: "none",
-          }}
-        />
+        {videoActive && (
+          <canvas
+            ref={canvasRef}
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 2,
+              pointerEvents: "none",
+            }}
+          />
+        )}
 
         <WordWrapper ref={textContainerRef}>
           {letters.map(({ char, word, position }, index) => (

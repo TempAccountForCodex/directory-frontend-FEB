@@ -3874,6 +3874,7 @@ const HighPerformanceSection: React.FC = () => {
 
                   <IconWrapper>
                     <Button
+                      aria-label={`Toggle details for ${card.title}`}
                       sx={{
                         minWidth: 40,
                         height: 40,

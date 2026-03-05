@@ -116,6 +116,7 @@ const HomeSearch: React.FC = () => {
               <Box
                 component="input"
                 placeholder="What are you looking for?"
+                aria-label="Search businesses"
                 onKeyUp={handleKeyUp}
                 sx={{
                   width: "100%",
@@ -137,6 +138,7 @@ const HomeSearch: React.FC = () => {
               <FormControl fullWidth>
                 <Select
                   value={selectRegion}
+                  inputProps={{ "aria-label": "Select region" }}
                   onChange={handleRegionOptionSelect}
                   MenuProps={{
                     PaperProps: {
@@ -202,6 +204,7 @@ const HomeSearch: React.FC = () => {
               >
                 <Select
                   value={selectedOption}
+                  inputProps={{ "aria-label": "Select category" }}
                   onChange={handleOptionSelect}
                   MenuProps={{
                     PaperProps: {
@@ -264,6 +267,7 @@ const HomeSearch: React.FC = () => {
               <Button
                 variant="contained"
                 onClick={getInputData}
+                aria-label="Search listings"
                 sx={{
                   background: theme.palette.primary.focus,
                   color: theme.palette.primary.main,
@@ -321,6 +325,7 @@ const HomeSearch: React.FC = () => {
             <FormControl fullWidth>
               <Select
                 value={selectRegion}
+                inputProps={{ "aria-label": "Select region" }}
                 onChange={handleRegionOptionSelect}
                 MenuProps={{
                   PaperProps: {
@@ -393,6 +398,7 @@ const HomeSearch: React.FC = () => {
             <FormControl fullWidth>
               <Select
                 value={selectedOption}
+                inputProps={{ "aria-label": "Select category" }}
                 onChange={handleOptionSelect}
                 MenuProps={{
                   PaperProps: {

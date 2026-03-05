@@ -47,24 +47,14 @@ const DeferredSection = ({
   delayMs?: number;
 }) => {
   const [visible, setVisible] = useState(false);
-  const sectionRef = React.useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const isMobile = window.matchMedia("(max-width: 900px)").matches;
     if (isMobile) {
-      const node = sectionRef.current;
-      if (!node) return;
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0]?.isIntersecting) {
-            setVisible(true);
-            observer.disconnect();
-          }
-        },
-        { rootMargin: "220px 0px" },
-      );
-      observer.observe(node);
-      return () => observer.disconnect();
+      // Defer non-critical home sections on mobile so above-the-fold content
+      // stays fast without changing the desktop rendering path.
+      const timer = window.setTimeout(() => setVisible(true), delayMs + 7000);
+      return () => window.clearTimeout(timer);
     }
 
     const effectiveDelay = delayMs + 500;
@@ -72,11 +62,7 @@ const DeferredSection = ({
     return () => window.clearTimeout(timer);
   }, [delayMs]);
 
-  return (
-    <div ref={sectionRef} style={{ minHeight: visible ? 0 : 1 }}>
-      {visible ? children : null}
-    </div>
-  );
+  return visible ? <>{children}</> : null;
 };
 
 const Home: React.FC = () => {
@@ -109,7 +95,7 @@ const Home: React.FC = () => {
         </Suspense>
       </DeferredSection>
 
-      <DeferredSection delayMs={1200}>
+      <DeferredSection delayMs={500}>
         <Suspense fallback={null}>
           <WhyChooseUs />
         </Suspense>
@@ -173,7 +159,10 @@ const Home: React.FC = () => {
       <section id="faq">
         <DeferredSection delayMs={9200}>
           <Suspense fallback={null}>
-            <FAQSection title="Frequently Asked Questions" items={homeFAQs} />{" "}
+            <FAQSection
+              title="Frequently Asked Questions"
+              items={homeFAQs}
+            />{" "}
           </Suspense>
         </DeferredSection>
       </section>

@@ -3,6 +3,7 @@ import React from "react";
 const Gardening = "/assets/publicAssets/videos/Home/Gardening.mp4";
 const Consulting = "/assets/publicAssets/videos/Home/Consulting.mp4";
 const Education = "/assets/publicAssets/videos/Home/Education.mp4";
+const HeroMobile = "/assets/publicAssets/videos/Home/hero7.mp4";
 const Restaurant = "/assets/publicAssets/videos/Home/Restaurant.mp4";
 const Plumbing = "/assets/publicAssets/videos/Home/Plumbing.mp4";
 
@@ -98,15 +99,16 @@ export default function HeroDepthCarousel() {
   const next = () => setIndex((i) => (i + 1) % SLIDES.length);
   const prev = () => setIndex((i) => (i - 1 + SLIDES.length) % SLIDES.length);
   const shouldRenderVideo = !prefersReducedMotion;
+  const heroVideoSrc = isMobile ? HeroMobile : SLIDES[0].video;
 
   return (
     <section
       style={{
         position: "relative",
-        minHeight: "100vh",
+        minHeight: "auto",
         overflow: "hidden",
         backgroundColor: "#0a0a0a",
-        paddingBottom: 70,
+        paddingBottom: 40,
       }}
     >
       {shouldRenderVideo && (
@@ -127,7 +129,7 @@ export default function HeroDepthCarousel() {
             opacity: 0.85,
           }}
         >
-          <source src={SLIDES[0].video} />
+          <source src={heroVideoSrc} />
         </video>
       )}
 
@@ -215,49 +217,49 @@ export default function HeroDepthCarousel() {
             overflow: "visible",
           }}
         >
-            <button
-              type="button"
-              onClick={prev}
-              aria-label="Previous slide"
-              style={{
-                position: "absolute",
-                left: 10,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "#fff",
-                background: "rgba(0,0,0,.5)",
-                zIndex: 10,
-                border: "none",
-                borderRadius: 999,
-                width: 40,
-                height: 40,
-                cursor: "pointer",
-              }}
-            >
-              ‹
-            </button>
+          <button
+            type="button"
+            onClick={prev}
+            aria-label="Previous slide"
+            style={{
+              position: "absolute",
+              left: 10,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#fff",
+              background: "rgba(0,0,0,.5)",
+              zIndex: 10,
+              border: "none",
+              borderRadius: 999,
+              width: 40,
+              height: 40,
+              cursor: "pointer",
+            }}
+          >
+            ‹
+          </button>
 
-            <button
-              type="button"
-              onClick={next}
-              aria-label="Next slide"
-              style={{
-                position: "absolute",
-                right: 10,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "#fff",
-                background: "rgba(0,0,0,.5)",
-                zIndex: 10,
-                border: "none",
-                borderRadius: 999,
-                width: 40,
-                height: 40,
-                cursor: "pointer",
-              }}
-            >
-              ›
-            </button>
+          <button
+            type="button"
+            onClick={next}
+            aria-label="Next slide"
+            style={{
+              position: "absolute",
+              right: 10,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#fff",
+              background: "rgba(0,0,0,.5)",
+              zIndex: 10,
+              border: "none",
+              borderRadius: 999,
+              width: 40,
+              height: 40,
+              cursor: "pointer",
+            }}
+          >
+            ›
+          </button>
 
           {SLIDES.map((it, i) => {
             let off = i - index;
