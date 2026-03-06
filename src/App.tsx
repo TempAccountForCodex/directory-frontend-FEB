@@ -78,6 +78,13 @@ const BlogPageFallback = () => (
   </div>
 );
 
+const LegalPageFallback = () => (
+  <div style={{ width: "100%", background: "#070c10" }}>
+    <div style={{ minHeight: "80vh" }} />
+    <div style={{ minHeight: "260vh", background: "#ffffff" }} />
+  </div>
+);
+
 const MainLayout = () => (
   <>
     <a
@@ -366,15 +373,27 @@ const AppRoutes = () => {
         },
         {
           path: "/terms-and-conditions",
-          element: suspense(<TermsConditions />),
+          element: (
+            <Suspense fallback={<LegalPageFallback />}>
+              <TermsConditions />
+            </Suspense>
+          ),
         },
         {
           path: "/privacy-policy",
-          element: suspense(<PrivacyPolicy />),
+          element: (
+            <Suspense fallback={<LegalPageFallback />}>
+              <PrivacyPolicy />
+            </Suspense>
+          ),
         },
         {
           path: "/cookie-policy",
-          element: suspense(<CookiePolicy />),
+          element: (
+            <Suspense fallback={<LegalPageFallback />}>
+              <CookiePolicy />
+            </Suspense>
+          ),
         },
         {
           path: "/checkout/:storeId",

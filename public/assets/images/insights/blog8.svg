@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg8" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#101828"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <radialGradient id="glowL8" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(140 120) rotate(30) scale(520 420)">
+      <stop stop-color="#22d3ee" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowR8" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1460 760) rotate(-20) scale(480 380)">
+      <stop stop-color="#14b8a6" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#14b8a6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="planet8" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(820 450) rotate(90) scale(180 180)">
+      <stop stop-color="#6ee7f9" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#164e63" stop-opacity="0.96"/>
+    </radialGradient>
+    <pattern id="dot8" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+    <circle cx="3" cy="3" r="1.5" fill="#7dd3fc" fill-opacity="0.13" />
+  </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg8)"/>
+  <rect width="1600" height="900" fill="url(#glowL8)"/>
+  <rect width="1600" height="900" fill="url(#glowR8)"/>
+
+  <!-- world-map like dotted texture -->
+  <path d="M40 170C160 70 330 48 470 90C590 128 670 208 670 292C670 356 608 382 510 386C392 390 276 364 192 348C126 336 84 346 56 372C24 400 8 460 20 518C36 594 98 646 184 668C264 688 366 676 470 646C614 602 724 592 838 620C960 648 1060 716 1230 734C1368 748 1498 722 1572 660L1572 760L20 760Z" fill="url(#dot8)" opacity="0.8"/>
+  <path d="M920 120C1038 70 1180 72 1290 122C1408 176 1478 280 1468 364C1458 446 1378 486 1240 490C1128 494 1028 470 956 430C886 392 838 340 834 286C828 228 858 178 920 120Z" fill="url(#dot8)" opacity="0.75"/>
+
+  <!-- platform -->
+  <ellipse cx="800" cy="620" rx="520" ry="170" fill="#f4f7fb" fill-opacity="0.94"/>
+  <ellipse cx="800" cy="620" rx="520" ry="170" stroke="#d9eef8" stroke-opacity="0.5" stroke-width="3"/>
+
+  <!-- central globe -->
+  <circle cx="820" cy="450" r="145" fill="url(#planet8)"/>
+  <path d="M760 366C788 386 820 386 846 366C868 350 888 344 904 348C884 372 878 396 884 426C856 446 818 462 776 468C760 438 756 400 760 366Z" fill="#0f766e" fill-opacity="0.75"/>
+  <path d="M836 518C872 500 904 490 930 492C910 526 876 548 838 558C818 548 808 534 806 518C814 524 824 524 836 518Z" fill="#115e59" fill-opacity="0.75"/>
+  <circle cx="820" cy="450" r="145" stroke="#7dd3fc" stroke-opacity="0.25" stroke-width="3"/>
+
+  <!-- device blocks -->
+  <g transform="translate(480 560) rotate(-18)">
+    <rect x="0" y="0" width="180" height="120" rx="10" fill="#1f2937"/>
+    <rect x="12" y="12" width="156" height="86" rx="6" fill="#0e7490"/>
+    <rect x="58" y="98" width="64" height="10" rx="5" fill="#0f172a"/>
+  </g>
+  <g transform="translate(960 560) rotate(12)">
+    <rect x="0" y="0" width="180" height="120" rx="10" fill="#1f2937"/>
+    <rect x="12" y="12" width="156" height="86" rx="6" fill="#0e7490"/>
+    <rect x="58" y="98" width="64" height="10" rx="5" fill="#0f172a"/>
+  </g>
+  <g transform="translate(760 700)">
+    <rect x="0" y="0" width="80" height="120" rx="14" fill="#334155"/>
+    <rect x="10" y="14" width="60" height="78" rx="8" fill="#0e7490"/>
+    <circle cx="40" cy="102" r="6" fill="#cbd5e1"/>
+  </g>
+
+  <!-- network ring + nodes -->
+  <circle cx="820" cy="450" r="230" stroke="#2dd4bf" stroke-opacity="0.35" stroke-width="2"/>
+  <line x1="807" y1="284" x2="987" y2="316" stroke="#14b8a6" stroke-opacity="0.5" stroke-width="2"/><line x1="807" y1="284" x2="1014" y2="555" stroke="#14b8a6" stroke-opacity="0.25" stroke-width="1.6"/><line x1="987" y1="316" x2="1081" y2="422" stroke="#14b8a6" stroke-opacity="0.5" stroke-width="2"/><line x1="1081" y1="422" x2="1014" y2="555" stroke="#14b8a6" stroke-opacity="0.5" stroke-width="2"/><line x1="1081" y1="422" x2="698" y2="588" stroke="#14b8a6" stroke-opacity="0.25" stroke-width="1.6"/><line x1="1014" y1="555" x2="852" y2="623" stroke="#14b8a6" stroke-opacity="0.5" stroke-width="2"/><line x1="852" y1="623" x2="698" y2="588" stroke="#14b8a6" stroke-opacity="0.5" stroke-width="2"/><line x1="852" y1="623" x2="658" y2="329" stroke="#14b8a6" stroke-opacity="0.25" stroke-width="1.6"/><line x1="698" y1="588" x2="615" y2="456" stroke="#14b8a6" stroke-opacity="0.5" stroke-width="2"/><line x1="615" y1="456" x2="658" y2="329" stroke="#14b8a6" stroke-opacity="0.5" stroke-width="2"/><line x1="615" y1="456" x2="987" y2="316" stroke="#14b8a6" stroke-opacity="0.25" stroke-width="1.6"/><line x1="658" y1="329" x2="807" y2="284" stroke="#14b8a6" stroke-opacity="0.5" stroke-width="2"/><circle cx="807" cy="284" r="20" fill="#22d3ee" fill-opacity="0.85" stroke="#d1f7ff" stroke-opacity="0.4" stroke-width="2"/><circle cx="987" cy="316" r="16" fill="#22d3ee" fill-opacity="0.85" stroke="#d1f7ff" stroke-opacity="0.4" stroke-width="2"/><circle cx="1081" cy="422" r="16" fill="#22d3ee" fill-opacity="0.85" stroke="#d1f7ff" stroke-opacity="0.4" stroke-width="2"/><circle cx="1014" cy="555" r="20" fill="#22d3ee" fill-opacity="0.85" stroke="#d1f7ff" stroke-opacity="0.4" stroke-width="2"/><circle cx="852" cy="623" r="16" fill="#22d3ee" fill-opacity="0.85" stroke="#d1f7ff" stroke-opacity="0.4" stroke-width="2"/><circle cx="698" cy="588" r="16" fill="#22d3ee" fill-opacity="0.85" stroke="#d1f7ff" stroke-opacity="0.4" stroke-width="2"/><circle cx="615" cy="456" r="20" fill="#22d3ee" fill-opacity="0.85" stroke="#d1f7ff" stroke-opacity="0.4" stroke-width="2"/><circle cx="658" cy="329" r="16" fill="#22d3ee" fill-opacity="0.85" stroke="#d1f7ff" stroke-opacity="0.4" stroke-width="2"/>
+
+  <!-- soft vignette -->
+  <rect x="0" y="0" width="1600" height="900" fill="black" fill-opacity="0.18"/>
+</svg>

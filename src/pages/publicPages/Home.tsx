@@ -41,32 +41,50 @@ import { homeFAQs } from "../../utils/data/Home";
 
 const DeferredSection = ({
   children,
-  delayMs = 0,
+  enabled = true,
 }: {
   children: React.ReactNode;
-  delayMs?: number;
+  enabled?: boolean;
 }) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const isMobile = window.matchMedia("(max-width: 900px)").matches;
-    if (isMobile) {
-      // Defer non-critical home sections on mobile so above-the-fold content
-      // stays fast without changing the desktop rendering path.
-      const timer = window.setTimeout(() => setVisible(true), delayMs);
-      return () => window.clearTimeout(timer);
+    if (!enabled) {
+      setVisible(false);
+      return;
     }
 
-    const effectiveDelay = delayMs + 500;
-    const timer = window.setTimeout(() => setVisible(true), effectiveDelay);
-    return () => window.clearTimeout(timer);
-  }, [delayMs]);
+    setVisible(true);
+  }, [enabled]);
 
   return visible ? <>{children}</> : null;
 };
 
 const Home: React.FC = () => {
   const location = useLocation();
+  const [enableBelowFoldSections, setEnableBelowFoldSections] = useState(false);
+
+  useEffect(() => {
+    // Hash-based deep links must render all content immediately.
+    if (location.hash) {
+      setEnableBelowFoldSections(true);
+      return;
+    }
+
+    const unlock = () => setEnableBelowFoldSections(true);
+
+    window.addEventListener("scroll", unlock, { passive: true, once: true });
+    window.addEventListener("wheel", unlock, { passive: true, once: true });
+    window.addEventListener("touchstart", unlock, { passive: true, once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+
+    return () => {
+      window.removeEventListener("scroll", unlock);
+      window.removeEventListener("wheel", unlock);
+      window.removeEventListener("touchstart", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, [location.hash]);
 
   useEffect(() => {
     if (location.hash) {
@@ -89,45 +107,45 @@ const Home: React.FC = () => {
     <>
       <Hero />
 
-      <DeferredSection delayMs={600}>
+      <DeferredSection enabled={true}>
         <Suspense fallback={null}>
           <WhatMakesUsDifferentV2 />
         </Suspense>
       </DeferredSection>
 
-      <DeferredSection delayMs={500}>
+      <DeferredSection enabled={true}>
         <Suspense fallback={null}>
           <WhyChooseUs />
         </Suspense>
       </DeferredSection>
 
       <section id="how-it-works">
-        <DeferredSection delayMs={1800}>
+        <DeferredSection enabled={enableBelowFoldSections}>
           <Suspense fallback={null}>
             <HowItWorks />
           </Suspense>
         </DeferredSection>
       </section>
 
-      <DeferredSection delayMs={2400}>
+      <DeferredSection enabled={enableBelowFoldSections}>
         <Suspense fallback={null}>
           <DirectoryFeatures />
         </Suspense>
       </DeferredSection>
 
-      <DeferredSection delayMs={3200}>
+      <DeferredSection enabled={enableBelowFoldSections}>
         <Suspense fallback={null}>
           <SearchDiscoverSection />
         </Suspense>
       </DeferredSection>
 
-      <DeferredSection delayMs={4200}>
+      <DeferredSection enabled={enableBelowFoldSections}>
         <Suspense fallback={null}>
           <TemplatesStackSlider />
         </Suspense>
       </DeferredSection>
       <section id="pricing">
-        <DeferredSection delayMs={5200}>
+        <DeferredSection enabled={enableBelowFoldSections}>
           <Suspense fallback={null}>
             <PricingSection />
           </Suspense>
@@ -135,7 +153,7 @@ const Home: React.FC = () => {
       </section>
 
       <section id="explore-listings">
-        <DeferredSection delayMs={6200}>
+        <DeferredSection enabled={enableBelowFoldSections}>
           <Suspense fallback={null}>
             <FeatureListing />
           </Suspense>
@@ -143,21 +161,21 @@ const Home: React.FC = () => {
       </section>
 
       <section id="ai-tools">
-        <DeferredSection delayMs={7200}>
+        <DeferredSection enabled={enableBelowFoldSections}>
           <Suspense fallback={null}>
             <WebsiteWorksSection />
           </Suspense>
         </DeferredSection>
       </section>
 
-      <DeferredSection delayMs={8200}>
+      <DeferredSection enabled={enableBelowFoldSections}>
         <Suspense fallback={null}>
           <TestimonialSlider />
         </Suspense>
       </DeferredSection>
 
       <section id="faq">
-        <DeferredSection delayMs={9200}>
+        <DeferredSection enabled={enableBelowFoldSections}>
           <Suspense fallback={null}>
             <FAQSection
               title="Frequently Asked Questions"
@@ -167,7 +185,7 @@ const Home: React.FC = () => {
         </DeferredSection>
       </section>
 
-      <DeferredSection delayMs={10200}>
+      <DeferredSection enabled={enableBelowFoldSections}>
         <Suspense fallback={null}>
           <HighPerformanceSection />
         </Suspense>

@@ -6,6 +6,8 @@ const Education = "/assets/publicAssets/videos/Home/Education.mp4";
 const HeroMobile = "/assets/publicAssets/videos/Home/hero7.mp4";
 const Restaurant = "/assets/publicAssets/videos/Home/Restaurant.mp4";
 const Plumbing = "/assets/publicAssets/videos/Home/Plumbing.mp4";
+const TRANSPARENT_PIXEL =
+  "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
 
 const SLIDES = [
   {
@@ -265,6 +267,7 @@ export default function HeroDepthCarousel() {
             let off = i - index;
             if (off > SLIDES.length / 2) off -= SLIDES.length;
             if (off < -SLIDES.length / 2) off += SLIDES.length;
+            const shouldLoadImage = Math.abs(off) <= 1;
 
             return (
               <div
@@ -288,10 +291,11 @@ export default function HeroDepthCarousel() {
                 }}
               >
                 <img
-                  src={it.image}
+                  src={shouldLoadImage ? it.image : TRANSPARENT_PIXEL}
                   alt={it.title}
-                  loading="lazy"
+                  loading={off === 0 ? "eager" : "lazy"}
                   decoding="async"
+                  fetchPriority={off === 0 ? "high" : "low"}
                   width={isMobile ? 320 : 740}
                   height={isMobile ? 300 : 520}
                   style={{

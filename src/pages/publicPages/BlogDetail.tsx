@@ -16,6 +16,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Helmet } from "react-helmet";
+import { getFallbackInsightByIdentifier } from "../../utils/data/Insights";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
@@ -58,14 +59,30 @@ const InsightsDetailsNew = () => {
       const response = await axios.get(`${API_URL}/insights/public/${id}`);
       // Support both 'insight' and 'blog' keys for backward compatibility
       const insight = response.data.insight || response.data.blog;
-      setBlog(insight);
+      if (insight) {
+        setBlog(insight);
+      } else {
+        const fallbackInsight = getFallbackInsightByIdentifier(id);
+        if (fallbackInsight) {
+          setBlog(fallbackInsight);
+        } else {
+          setError("Insight not found");
+          setBlog(null);
+        }
+      }
       setLoading(false);
     } catch (error: any) {
       console.error("Error fetching insight details:", error);
-      const errorMsg =
-        error.response?.data?.message || error.message || "Insight not found";
-      setError(errorMsg);
-      setBlog(null);
+      const fallbackInsight = getFallbackInsightByIdentifier(id);
+      if (fallbackInsight) {
+        setBlog(fallbackInsight);
+        setError(null);
+      } else {
+        const errorMsg =
+          error.response?.data?.message || error.message || "Insight not found";
+        setError(errorMsg);
+        setBlog(null);
+      }
       setLoading(false);
     }
   };
