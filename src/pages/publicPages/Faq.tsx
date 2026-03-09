@@ -3,34 +3,30 @@ import {
   Box,
   Container,
   Typography,
-  useTheme,
   Button,
   Grid,
   TextField,
+  Chip,
+  Stack,
+  alpha,
+  Divider,
 } from "@mui/material";
-import HeroBannerSection from "../utils/commons/HeroImageSectionV2";
-// import faqImage from "/assets/images/FooterResources/faqImage.svg";
-import FAQCardLayout from "../components/faq/FAQAccordion";
-const messageIcon = "/assets/images/FooterResources/paper-plane.png";
-const pointerImage = "/assets/images/FooterResources/pointerImage.svg";
-const SquareBG = "/assets/images/square-bg.svg";
-const FAQ_BG = "/assets/images/FooterResources/FAQBanner.png";
-const LeftCard = "/assets/images/careers/form-bg-first.jpg";
+import HeroBannerSection from "../../utils/commons/HeroImageSectionV2";
+import FAQCardLayout from "../../components/publicComponents/faq/FAQAccordion";
 
-const faqImage = "http://appbiquity.com/assets/images/home/we-happiness.png";
+const FAQ_BG = "/assets/publicAssets/images/blog/hero.jpg";
+const LeftCard = "/assets/publicAssets/images/blog/form-bg-first.jpg";
 
 const Faq = () => {
-  const theme = useTheme();
-
-  // State to manage form fields
   const [formData, setFormData] = useState({
     challenge: "",
     name: "",
     email: "",
   });
 
-  // Handle input changes
-  const handleInputChange = (e) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -38,33 +34,31 @@ const Faq = () => {
     }));
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted with data:", formData);
-    // Here you would typically send the data to a backend API
-    // e.g., using fetch or axios
-    // fetch('/api/contact', { method: 'POST', body: JSON.stringify(formData) })
-    // .then(...)
   };
 
   return (
     <Box sx={{ width: "100%" }}>
       <HeroBannerSection
-        imageSrc={FAQ_BG}
-        fullscreen={true}
+        // imageSrc={FAQ_BG}
+        fullscreen
         dynamicTitle={true}
-        dynamicPhrases={["FAQs", "Your Questions", "Get Answers"]}
-        subText="Leveraging a diverse range of development technologies since our inception, we consistently align with the latest trends and evolving demands."
-        showCTA={true}
-        ctaLabel="Request a Call"
-        ctaLink="/contact-us#request-call"
+        dynamicPhrases={["FAQ", "Get Answers", "Need Help?"]}
+        subText="Clear answers for listing setup, pricing, approvals, profile visibility, and support to help you get started quickly and confidently."
+        showCTA={false}
+        ctaLabel="Contact Support"
+        ctaLink="/contact"
+        imageSrc={undefined}
+        children={undefined}
       />
 
       <Box
         sx={{
-          pt: { xs: 6, md: 10 },
-          backgroundImage: `url(${SquareBG})`,
+          pt: { xs: 5, md: 10 },
+          pb: { xs: 8, md: 12 },
+          background:
+            "radial-gradient(circle at 12% 4%, rgba(55,140,146,0.09), transparent 36%), linear-gradient(180deg, #f7fafb 0%, #ffffff 60%)",
         }}
       >
         <Container
@@ -73,8 +67,8 @@ const Faq = () => {
             display: "flex",
             flexDirection: { xs: "column", lg: "row" },
             alignItems: "flex-start",
-            gap: { xs: 6, md: 0, lg: 10 },
-            padding: { sm: "20px 80px", md: "20px 130px", xl: "0px" },
+            gap: { xs: 5, md: 6, lg: 8 },
+            px: { xs: 2, sm: 4, md: 8, xl: 0 },
           }}
         >
           <Box
@@ -82,224 +76,149 @@ const Faq = () => {
               width: { xs: "100%", lg: "30%" },
               display: "flex",
               flexDirection: "column",
-              alignItems: { xs: "center", md: "flex-start" },
-              textAlign: { xs: "center", md: "left" },
+              alignItems: "flex-start",
+              textAlign: "left",
               position: { lg: "sticky" },
-              top: { md: "180px" },
-              marginBottom: { md: "77px" },
+              top: { md: "110px" },
               zIndex: 2,
               backgroundImage: `url(${LeftCard})`,
-              backgroundSize: { xs: "cover", lg: "auto" },
-              borderRadius: 4,
-              px: { xs: 2, md: 0 },
-              py: { xs: 2, md: 0 },
-              backdropFilter: "blur(3px)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              borderRadius: 5,
+              px: { xs: 2.5, md: 3 },
+              py: { xs: 2.5, md: 3 },
+              border: "1px solid rgba(255,255,255,0.18)",
+              boxShadow: "0 18px 42px rgba(6, 18, 24, 0.28)",
+              overflow: "hidden",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(145deg, rgba(5,12,17,0.78), rgba(6,15,21,0.48))",
+                zIndex: 0,
+              },
             }}
           >
-            <Box
-              component="img"
-              src={faqImage}
-              alt="FAQ Illustration"
-              sx={{ width: "100%", borderRadius: "15px" }}
-            />
-            <Box sx={{ padding: "30px" }}>
-              <Typography variant="h5" fontWeight={700} mt={3} color="white">
+            <Box sx={{ pt: 1.2, pb: 1.2, position: "relative", zIndex: 1 }}>
+              <Chip
+                label="Support Center"
+                sx={{
+                  mb: 1.8,
+                  backgroundColor: "rgba(127, 211, 218, 0.18)",
+                  color: "#d8fbff",
+                  fontWeight: 700,
+                  letterSpacing: "0.04em",
+                  border: "1px solid rgba(127, 211, 218, 0.35)",
+                }}
+              />
+              <Typography variant="h5" fontWeight={700} color="white">
                 Have Questions?
               </Typography>
               <Typography
                 variant="body1"
-                mt={1}
-                color="white"
+                mt={1.2}
+                color={alpha("#fff", 0.88)}
                 sx={{
                   maxWidth: { xs: "100%", lg: 360 },
-                  paddingBottom: "20px",
+                  pb: 2,
+                  lineHeight: 1.7,
                 }}
               >
-                We’ve gathered answers to some of the most common queries our
-                clients ask before getting started. If your question isn’t
-                listed, feel free to contact us directly.
+                Find clear answers for onboarding, listings, approvals, billing,
+                and profile visibility.
               </Typography>
+              <Divider
+                sx={{ borderColor: "rgba(255,255,255,0.2)", mb: 2, mt: 0.6 }}
+              />
+              <Stack spacing={1.1} sx={{ mb: 2.2 }}>
+                {[
+                  "Typical response time under 24 hours",
+                  "Step-by-step guidance for setup",
+                  "Direct help for account and billing",
+                ].map((point) => (
+                  <Typography
+                    key={point}
+                    sx={{
+                      color: alpha("#fff", 0.92),
+                      fontSize: "0.92rem",
+                      lineHeight: 1.55,
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{
+                        mt: "8px",
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        backgroundColor: "#7fd3da",
+                        flexShrink: 0,
+                      }}
+                    />
+                    {point}
+                  </Typography>
+                ))}
+              </Stack>
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                {["Listings", "Publishing", "Support", "Billing"].map((tag) => (
+                  <Chip
+                    key={tag}
+                    label={tag}
+                    size="small"
+                    sx={{
+                      backgroundColor: "rgba(255,255,255,0.16)",
+                      color: "#fff",
+                      border: "1px solid rgba(255,255,255,0.16)",
+                      fontWeight: 600,
+                    }}
+                  />
+                ))}
+              </Stack>
+              <Button
+                href="/contact"
+                sx={{
+                  mt: 2.6,
+                  px: 2.6,
+                  py: 1.2,
+                  borderRadius: "999px",
+                  backgroundColor: "rgba(255,255,255,0.16)",
+                  color: "#fff",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.24)",
+                  },
+                }}
+              >
+                Talk to Support
+              </Button>
             </Box>
           </Box>
 
-          {/* Right FAQ cards */}
-          <Box sx={{ width: { xs: "100%", lg: "70%" }, paddingBottom: "80px" }}>
+          <Box sx={{ width: { xs: "100%", lg: "70%" } }}>
             <Typography
-              variant="h4"
-              fontWeight={700}
-              mb={4}
-              color="text.primary"
+              variant="h3"
+              fontWeight={800}
+              mb={1.5}
+              color="#0f1720"
+              sx={{ fontSize: { xs: "2rem", md: "2.6rem" }, lineHeight: 1.1 }}
             >
               Frequently Asked Questions
             </Typography>
-            <FAQCardLayout />
-
-            {/* In-page form section */}
-            <Box
-              sx={{
-                mt: 8,
-                p: { xs: 3, sm: 5 },
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderRadius: 4,
-                backgroundColor: theme.palette.background.paper,
-                boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.1)",
-                border: `1px solid ${theme.palette.divider}`,
-                flexDirection: { xs: "column", md: "row" },
-                textAlign: { xs: "center", md: "left" },
-              }}
+            <Typography
+              variant="body1"
+              color="#4b5563"
+              sx={{ mb: 4, maxWidth: "760px", lineHeight: 1.8 }}
             >
-              {/* Form Content */}
-              <Box sx={{ flex: 1, mr: { xs: 0, md: 4 } }}>
-                <Typography
-                  variant="h5"
-                  fontWeight={700}
-                  color="text.primary"
-                  gutterBottom
-                >
-                  Can't find what you're looking for?
-                </Typography>
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{ mb: 3 }}
-                >
-                  Send us a message and we'll get back to you promptly.
-                </Typography>
-
-                <Box
-                  component="form"
-                  onSubmit={handleSubmit}
-                  sx={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 3,
-                    alignItems: "flex-start",
-                  }}
-                >
-                  {/* Your challenge/goal field */}
-                  <TextField
-                    fullWidth
-                    label="Your challenge/goal *"
-                    name="challenge"
-                    value={formData.challenge}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={2}
-                    variant="standard"
-                    required
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                  />
-
-                  {/* Name and Corporate email fields */}
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Name *"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        variant="standard"
-                        required
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Corporate email *"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        variant="standard"
-                        required
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                      />
-                    </Grid>
-                  </Grid>
-
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    sx={{
-                      mt: 2,
-                      backgroundColor: "#378C92",
-                      color: "#fff",
-                      fontWeight: 400,
-                      textTransform: "none",
-                      padding: "16px 50px",
-                      fontSize: "0.875rem",
-                      transition: "all 0.4s ease-in-out",
-                      boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
-                      fontFamily: "Plus Jakarta Sans",
-                      border: "none",
-                      borderRadius: "5px",
-                      width: "auto",
-                      display: "inline-block",
-                      "&:hover": {
-                        backgroundColor: "#378C92",
-                        boxShadow:
-                          "0 8px 25px rgba(0, 0, 0, 0.21), 0 0 20px rgba(44, 74, 96, 0.19)",
-                        transform: "translateY(-3px) scale(1.02)",
-                      },
-                    }}
-                  >
-                    Send Message
-                  </Button>
-                </Box>
-              </Box>
-
-              {/* Right Icon/Image (unchanged) */}
-              <Box
-                sx={{
-                  flexShrink: 0,
-                  ml: { xs: 0, md: 4 },
-                  mt: { xs: 3, md: 0 },
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  position: "relative",
-                  width: { xs: "100%", md: "auto" },
-                }}
-              >
-                <Box
-                  component="img"
-                  src={pointerImage}
-                  alt="Pointer Icon"
-                  sx={{
-                    width: "69%",
-                    left: "-178px",
-                    top: "-135px",
-                    transform: "rotate(180deg)",
-                    position: "relative",
-                    display: { xs: "none", lg: "block" },
-                  }}
-                />
-
-                <Box
-                  component="img"
-                  src={messageIcon}
-                  alt="Message Icon"
-                  sx={{
-                    width: "120px",
-                    height: "auto",
-                    left: "-44px",
-                    position: "relative",
-                    display: { xs: "none", lg: "block" },
-                  }}
-                />
-              </Box>
-            </Box>
+              Browse quick answers below. If you still need help, send your
+              details and our team will respond shortly.
+            </Typography>
+            <FAQCardLayout />
           </Box>
         </Container>
       </Box>

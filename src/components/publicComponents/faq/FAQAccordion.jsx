@@ -1,100 +1,115 @@
 import React, { useState } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
+  Chip,
   Typography,
-  Grid,
-  Card,
-  CardContent,
-  useTheme,
-  SvgIcon,
 } from "@mui/material";
-import QuestionMarkIcon from "@mui/icons-material/HelpOutline";
-import ChatIcon from "@mui/icons-material/ChatBubbleOutline";
-import InfoIcon from "@mui/icons-material/InfoOutlined";
-import SchoolIcon from "@mui/icons-material/School";
-import SecurityIcon from "@mui/icons-material/Security";
-import faqData from "../../utils/data/FAQs.js";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import faqData from "../../../utils/data/FAQs.js";
 
-const iconMap = [
-  QuestionMarkIcon,
-  ChatIcon,
-  InfoIcon,
-  SchoolIcon,
-  SecurityIcon,
-];
+const FAQAccordion = () => {
+  const [expanded, setExpanded] = useState("faq-panel-0");
 
-const FAQCardLayout = () => {
-  const theme = useTheme();
-  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const handleChange = (panel) => (_event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
+  };
 
   return (
-    <Grid container spacing={4} sx={{ position: "relative" }}>
+    <Box sx={{ display: "grid", gap: 1.4 }}>
       {faqData.map((faq, index) => {
-        const IconComponent = iconMap[index % iconMap.length];
-        const isHovered = index === hoveredIndex;
+        const panelId = `faq-panel-${index}`;
+        const questionId = `faq-question-${index}`;
+        const answerId = `faq-answer-${index}`;
 
         return (
-          <Grid item xs={12} md={6} key={index}>
-            <Card
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              elevation={isHovered ? 10 : 3}
+          <Accordion
+            key={questionId}
+            expanded={expanded === panelId}
+            onChange={handleChange(panelId)}
+            disableGutters
+            sx={{
+              borderRadius: "16px !important",
+              overflow: "hidden",
+              border: "1px solid rgba(15, 23, 32, 0.10)",
+              backgroundColor: "#ffffff",
+              boxShadow:
+                expanded === panelId
+                  ? "0 14px 28px rgba(13, 31, 40, 0.12)"
+                  : "0 3px 10px rgba(15, 23, 42, 0.05)",
+              transition: "all 0.25s ease",
+              "&::before": { display: "none" },
+            }}
+          >
+            <AccordionSummary
+              expandIcon={
+                <ExpandMoreIcon sx={{ color: "#378C92", fontSize: "1.7rem" }} />
+              }
+              aria-controls={answerId}
+              id={questionId}
               sx={{
-                position: "relative",
-                minHeight: "200px",
-                display: "flex",
-                flexDirection: "column",
-                borderRadius: 4,
-                p: { xs: 2.5, sm: 3 },
-                bgcolor: "#fff",
-                // transition: "all 0.2s ease-in-out",
-                cursor: "pointer",
-                zIndex: isHovered ? 10 : 1,
+                px: { xs: 2, sm: 2.5 },
+                py: 0.45,
+                minHeight: { xs: 74, sm: 82 },
+                "& .MuiAccordionSummary-content": {
+                  margin: "14px 0",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "12px",
+                },
               }}
             >
-              <CardContent sx={{ p: 0, flexGrow: 1 }}>
-                <Box display="flex" alignItems="center" mb={2} gap={2}>
-                  <SvgIcon
-                    component={IconComponent}
-                    sx={{
-                      fontSize: "2rem",
-                      color: "#378C92",
-                      flexShrink: 0,
-                    }}
-                  />
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    sx={{ color: theme.palette.text.primary }}
-                  >
-                    {faq.question}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    overflow: "hidden",
-                    transition: "max-height 0.2s ease-in-out",
-                    maxHeight: isHovered ? "200px" : "73px",
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: theme.palette.text.secondary,
-                      fontSize: "0.95rem",
-                      lineHeight: 1.75,
-                    }}
-                  >
-                    {faq.answer}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+              <Chip
+                icon={<HelpOutlineIcon sx={{ fontSize: "1rem !important" }} />}
+                label={`Q${index + 1}`}
+                size="small"
+                sx={{
+                  mt: "2px",
+                  backgroundColor: "rgba(55, 140, 146, 0.12)",
+                  color: "#1f5f66",
+                  fontWeight: 700,
+                  borderRadius: "8px",
+                }}
+              />
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  color: "#0f1720",
+                  fontSize: { xs: "1rem", sm: "1.08rem" },
+                  lineHeight: 1.45,
+                  pr: 1,
+                }}
+              >
+                {faq.question}
+              </Typography>
+            </AccordionSummary>
+
+            <AccordionDetails
+              id={answerId}
+              sx={{
+                px: { xs: 2, sm: 2.5 },
+                pt: 0,
+                pb: 2.2,
+              }}
+            >
+              <Typography
+                sx={{
+                  color: "#4b5563",
+                  fontSize: "0.98rem",
+                  lineHeight: 1.82,
+                }}
+              >
+                {faq.answer}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
         );
       })}
-    </Grid>
+    </Box>
   );
 };
 
-export default FAQCardLayout;
+export default FAQAccordion;

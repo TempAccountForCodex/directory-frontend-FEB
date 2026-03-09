@@ -22,6 +22,9 @@ import GoogleAnalyticsTracker from "./utils/commons/GoogleAnalyticsTracker";
 const TermsConditions = lazy(
   () => import("../src/pages/publicPages/TermsConditions"),
 );
+
+const Faq = lazy(() => import("../src/pages/publicPages/Faq"));
+
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const PrivacyPolicy = lazy(
   () => import("../src/pages/publicPages/PrivacyPolicy"),
@@ -376,6 +379,14 @@ const AppRoutes = () => {
           element: (
             <Suspense fallback={<LegalPageFallback />}>
               <TermsConditions />
+            </Suspense>
+          ),
+        },
+        {
+          path: "/faq",
+          element: (
+            <Suspense fallback={<LegalPageFallback />}>
+              <Faq />
             </Suspense>
           ),
         },
