@@ -1,0 +1,210 @@
+import { BusinessData } from "../../../../landingTemplates/types/BusinessData";
+
+export const educationData: BusinessData = {
+  name: "Bright Minds Academy",
+  tagline: "Empowering learners of every age to reach their full potential.",
+  description: "A premier education center offering expert tutoring, enrichment programs, and skill development for students K-12 and beyond.",
+  primaryColor: "#2563eb",
+  secondaryColor: "#60a5fa",
+  services: [
+    { name: "Math & Science Tutoring", description: "One-on-one and group sessions with certified educators.", price: "From $50/hr" },
+    { name: "SAT/ACT Prep", description: "Comprehensive test prep with proven score improvements.", price: "From $299" },
+    { name: "College Application Coaching", description: "End-to-end guidance from essays to interviews.", price: "From $499" },
+    { name: "Coding Bootcamp", description: "Hands-on programming courses for ages 10–18.", price: "From $199" },
+    { name: "Public Speaking", description: "Build confidence and communication skills.", price: "From $79/session" },
+    { name: "Online Learning", description: "Flexible virtual classes from anywhere in the world.", price: "From $39/month" },
+  ],
+  gallery: [
+    { url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800", caption: "Classroom learning" },
+    { url: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800", caption: "Group study" },
+    { url: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800", caption: "One-on-one tutoring" },
+    { url: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=800", caption: "Science lab" },
+    { url: "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?w=800", caption: "Graduation day" },
+    { url: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800", caption: "Online session" },
+  ],
+  reviews: [
+    { author: "Sarah T.", rating: 5, text: "My daughter's grades improved dramatically in just 3 months. The tutors are incredibly patient and knowledgeable.", date: "Jan 2026" },
+    { author: "James M.", rating: 5, text: "The SAT prep program is exceptional. My son went from a 1150 to a 1420 score!", date: "Dec 2025" },
+    { author: "Priya K.", rating: 5, text: "Outstanding college counseling. We had no idea where to start and they guided us every step of the way.", date: "Nov 2025" },
+  ],
+  contact: {
+    phone: "(555) 280-4100",
+    email: "hello@brightminds.edu",
+    address: "400 Learning Lane, Suite 200, Boston, MA 02101",
+  },
+  location: {
+    address: "400 Learning Lane, Boston, MA 02101",
+    embedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2948.0!2d-71.0589!3d42.3601!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDLCsDIxJzM2LjQiTiA3McKwMDMnMzIuMCJX!5e0!3m2!1sen!2sus!4v1",
+  },
+  socialLinks: { facebook: "#", instagram: "#", twitter: "#" },
+  workingHours: [
+    { day: "Monday – Friday", hours: "8:00 AM – 8:00 PM" },
+    { day: "Saturday", hours: "9:00 AM – 5:00 PM" },
+    { day: "Sunday", hours: "Closed" },
+  ],
+};
+
+export const gardeningData: BusinessData = {
+  name: "Green Roots Garden Co.",
+  tagline: "Crafting beautiful outdoor spaces that grow with you.",
+  description: "Professional landscaping, garden design, and lawn care services for residential and commercial properties across the region.",
+  primaryColor: "#3f8f2f",
+  secondaryColor: "#7fd453",
+  services: [
+    { name: "Garden Design", description: "Custom landscape plans tailored to your property and lifestyle.", price: "From $350" },
+    { name: "Lawn Care & Maintenance", description: "Regular mowing, edging, fertilization, and seasonal cleanup.", price: "From $80/visit" },
+    { name: "Planting & Mulching", description: "Seasonal planting, bed edging, and premium mulch installation.", price: "From $200" },
+    { name: "Irrigation Systems", description: "Smart sprinkler installation and water-efficient drip systems.", price: "From $1,200" },
+    { name: "Tree Trimming & Removal", description: "Safe, professional arborist services for any size tree.", price: "From $150" },
+    { name: "Hardscaping", description: "Patios, walkways, retaining walls, and outdoor living areas.", price: "From $2,500" },
+  ],
+  gallery: [
+    { url: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800", caption: "English garden" },
+    { url: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800", caption: "Patio design" },
+    { url: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800", caption: "Plant selection" },
+    { url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800", caption: "Lawn care" },
+    { url: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800", caption: "Flower beds" },
+    { url: "https://images.unsplash.com/photo-1505471768190-275e2ad7b3f9?w=800", caption: "Irrigation" },
+  ],
+  reviews: [
+    { author: "Linda R.", rating: 5, text: "Our backyard has been completely transformed. Green Roots turned a neglected space into a stunning garden retreat.", date: "Feb 2026" },
+    { author: "Tom B.", rating: 5, text: "Reliable, professional, and the results speak for themselves. Our lawn has never looked better.", date: "Jan 2026" },
+    { author: "Maria C.", rating: 5, text: "The hardscaping project exceeded all expectations. Beautiful stonework and delivered right on schedule.", date: "Dec 2025" },
+  ],
+  contact: {
+    phone: "(555) 390-6200",
+    email: "info@greenrootsco.com",
+    address: "55 Oak Street, Portland, OR 97201",
+  },
+  location: { address: "55 Oak Street, Portland, OR 97201" },
+  socialLinks: { facebook: "#", instagram: "#" },
+  workingHours: [
+    { day: "Monday – Friday", hours: "7:00 AM – 6:00 PM" },
+    { day: "Saturday", hours: "8:00 AM – 4:00 PM" },
+    { day: "Sunday", hours: "Closed" },
+  ],
+};
+
+export const consultingData: BusinessData = {
+  name: "Meridian Advisory",
+  tagline: "Strategic insight that drives measurable business growth.",
+  description: "A boutique management consulting firm specializing in business strategy, digital transformation, and organizational excellence for mid-market companies.",
+  primaryColor: "#7c3aed",
+  secondaryColor: "#a78bfa",
+  services: [
+    { name: "Business Strategy", description: "Develop competitive strategies that drive sustainable growth and market leadership.", price: "From $5,000" },
+    { name: "Digital Transformation", description: "Modernize operations with technology-driven process optimization.", price: "From $8,000" },
+    { name: "Financial Restructuring", description: "Optimize capital structure and improve financial performance.", price: "From $6,500" },
+    { name: "Market Expansion", description: "Identify and enter new markets with confidence and precision.", price: "From $4,500" },
+    { name: "M&A Advisory", description: "End-to-end support for mergers, acquisitions, and divestitures.", price: "Custom" },
+    { name: "Executive Coaching", description: "One-on-one coaching for senior leaders and high-potential managers.", price: "From $800/session" },
+  ],
+  gallery: [
+    { url: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800", caption: "Strategy session" },
+    { url: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800", caption: "Financial analysis" },
+    { url: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800", caption: "Executive meeting" },
+    { url: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800", caption: "Team workshop" },
+    { url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800", caption: "Data-driven decisions" },
+    { url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800", caption: "Leadership coaching" },
+  ],
+  reviews: [
+    { author: "David L., CEO", rating: 5, text: "Meridian Advisory transformed how we approach strategy. Within 12 months, our EBITDA improved by 34%. Exceptional work.", date: "Feb 2026" },
+    { author: "Jessica W., COO", rating: 5, text: "Their digital transformation roadmap gave us the clarity and confidence to modernize our entire operation.", date: "Jan 2026" },
+    { author: "Robert K., CFO", rating: 5, text: "The M&A advisory team is world class. They navigated a highly complex deal with professionalism and precision.", date: "Dec 2025" },
+  ],
+  contact: {
+    phone: "(555) 740-9900",
+    email: "contact@meridianadvisory.com",
+    address: "One Financial Plaza, 21st Floor, New York, NY 10005",
+  },
+  location: { address: "One Financial Plaza, 21st Floor, New York, NY 10005" },
+  socialLinks: { linkedin: "#", twitter: "#" },
+  workingHours: [
+    { day: "Monday – Thursday", hours: "8:00 AM – 7:00 PM" },
+    { day: "Friday", hours: "8:00 AM – 5:00 PM" },
+    { day: "Weekend", hours: "By appointment" },
+  ],
+};
+
+export const restaurantData: BusinessData = {
+  name: "Casa Bella Ristorante",
+  tagline: "Authentic Italian cuisine crafted with passion and the finest ingredients.",
+  description: "A family-owned Italian restaurant bringing the flavors of Rome and Tuscany to your table. Fresh pasta made daily, wood-fired pizzas, and an award-winning wine list.",
+  primaryColor: "#c0392b",
+  secondaryColor: "#e74c3c",
+  services: [
+    { name: "Dine-In Experience", description: "Intimate, candlelit dining in our beautifully appointed restaurant.", price: "Avg $45/person" },
+    { name: "Private Events", description: "Exclusive dining room for birthdays, anniversaries, and corporate events.", price: "From $800" },
+    { name: "Catering Services", description: "Full-service catering for weddings, corporate events, and private parties.", price: "From $35/person" },
+    { name: "Pasta Cooking Classes", description: "Learn to make authentic pasta from our head chef.", price: "$95/person" },
+    { name: "Wine Pairing Dinners", description: "Monthly curated tasting menus with sommelier-selected Italian wines.", price: "$120/person" },
+    { name: "Takeout & Delivery", description: "Enjoy Casa Bella at home with our full takeout menu.", price: "From $12" },
+  ],
+  gallery: [
+    { url: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800", caption: "Signature pasta" },
+    { url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800", caption: "Wood-fired pizza" },
+    { url: "https://images.unsplash.com/photo-1551183053-bf91798d047e?w=800", caption: "Dining atmosphere" },
+    { url: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800", caption: "Wine selection" },
+    { url: "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=800", caption: "Seasonal menu" },
+    { url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800", caption: "Chef's special" },
+  ],
+  reviews: [
+    { author: "Emma S.", rating: 5, text: "Absolutely the finest Italian food I've had outside of Italy. The handmade tagliatelle is simply divine.", date: "Feb 2026" },
+    { author: "Marco R.", rating: 5, text: "From the warm bread to the tiramisu, every course was perfection. Casa Bella is our family's special occasion restaurant.", date: "Jan 2026" },
+    { author: "Anne P.", rating: 5, text: "We hosted our anniversary dinner here and it was magical. The private room, the food, the service — all flawless.", date: "Dec 2025" },
+  ],
+  contact: {
+    phone: "(555) 620-8800",
+    email: "reservations@casabella.com",
+    address: "218 Via Roma, Little Italy, San Francisco, CA 94133",
+  },
+  location: { address: "218 Via Roma, San Francisco, CA 94133" },
+  socialLinks: { facebook: "#", instagram: "#" },
+  workingHours: [
+    { day: "Tuesday – Thursday", hours: "5:00 PM – 10:00 PM" },
+    { day: "Friday – Saturday", hours: "5:00 PM – 11:00 PM" },
+    { day: "Sunday", hours: "4:00 PM – 9:00 PM" },
+    { day: "Monday", hours: "Closed" },
+  ],
+};
+
+export const plumbingData: BusinessData = {
+  name: "ProFlow Plumbing",
+  tagline: "Fast, reliable plumbing you can trust — available 24/7.",
+  description: "Licensed and insured plumbing professionals serving the greater metro area. From emergency repairs to full bathroom remodels, we handle every job with skill and integrity.",
+  primaryColor: "#1f4f9d",
+  secondaryColor: "#4fa0ff",
+  services: [
+    { name: "Emergency Repairs", description: "24/7 rapid response for burst pipes, flooding, and urgent issues.", price: "From $150" },
+    { name: "Drain Cleaning", description: "Professional hydro-jetting and snaking for all drain types.", price: "From $99" },
+    { name: "Water Heater Services", description: "Installation, repair, and replacement of all water heater brands.", price: "From $200" },
+    { name: "Bathroom Remodels", description: "Complete bathroom plumbing for renovations and new builds.", price: "From $1,500" },
+    { name: "Pipe Inspection & Repair", description: "Camera inspection and trenchless pipe repair technology.", price: "From $175" },
+    { name: "Fixture Installation", description: "Faucets, toilets, sinks, showers, and more.", price: "From $85" },
+  ],
+  gallery: [
+    { url: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800", caption: "Pipe installation" },
+    { url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800", caption: "Bathroom remodel" },
+    { url: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800", caption: "Water heater" },
+    { url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800", caption: "Drain service" },
+    { url: "https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=800", caption: "Inspection" },
+    { url: "https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?w=800", caption: "Fixture install" },
+  ],
+  reviews: [
+    { author: "Kevin H.", rating: 5, text: "Called ProFlow at midnight for a burst pipe. They arrived within the hour and had everything fixed before morning. Truly exceptional service.", date: "Feb 2026" },
+    { author: "Sandra L.", rating: 5, text: "Fair pricing, clean work, and they explained everything clearly. Won't use anyone else for plumbing ever again.", date: "Jan 2026" },
+    { author: "Mike D.", rating: 5, text: "Handled our full bathroom remodel plumbing perfectly. On time, on budget, and zero issues since completion.", date: "Dec 2025" },
+  ],
+  contact: {
+    phone: "(555) 770-2400",
+    email: "service@proflowplumbing.com",
+    address: "800 Trade Center Blvd, Chicago, IL 60601",
+  },
+  location: { address: "800 Trade Center Blvd, Chicago, IL 60601" },
+  socialLinks: { facebook: "#", instagram: "#" },
+  workingHours: [
+    { day: "Monday – Friday", hours: "7:00 AM – 7:00 PM" },
+    { day: "Saturday", hours: "8:00 AM – 5:00 PM" },
+    { day: "Sunday / Emergency", hours: "24/7 Available" },
+  ],
+};

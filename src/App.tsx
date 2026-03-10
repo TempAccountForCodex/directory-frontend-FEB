@@ -38,9 +38,11 @@ import { ListingsProvider } from "./context/ListingsContext.js";
 import { useCookieConsent } from "./context/PreferencesContext";
 const PublicWebsite = lazy(() => import("./pages/PublicWebsite"));
 const TemplatePreview = lazy(() => import("./pages/TemplatePreview"));
+const LandingPreview = lazy(() => import("./pages/LandingPreview"));
 const CreateStoreWizard = lazy(() => import("./pages/CreateStoreWizard"));
 const About = lazy(() => import("../src/pages/publicPages/About"));
 const Pricing = lazy(() => import("../src/pages/publicPages/Pricing"));
+const Templates = lazy(() => import("../src/pages/publicPages/Templates"));
 
 const InsightsPage = lazy(() => import("./pages/publicPages/Blog.js"));
 import Footer from "./components/Footer";
@@ -328,6 +330,10 @@ const AppRoutes = () => {
           ),
         },
         {
+          path: "/templates",
+          element: suspense(<Templates />),
+        },
+        {
           path: "/listings",
           element: (
             <Suspense fallback={<ListingsPageFallback />}>
@@ -447,6 +453,10 @@ const AppRoutes = () => {
         {
           path: "/template-preview/:templateId",
           element: suspense(<TemplatePreview />),
+        },
+        {
+          path: "/landing-preview/:templateId",
+          element: suspense(<LandingPreview />),
         },
       ],
     },

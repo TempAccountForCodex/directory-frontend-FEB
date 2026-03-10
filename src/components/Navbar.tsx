@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 const WhiteLogo = "/WhiteLogo.png";
 
 const tabs = [
+  { label: "Templates", path: "/templates" },
   { label: "Listings", path: "/listings" },
   { label: "Blog", path: "/blog" },
   { label: "About", path: "/about" },

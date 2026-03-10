@@ -1,4 +1,6 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 
 const Gardening = "/assets/publicAssets/videos/Home/Gardening.mp4";
 const Consulting = "/assets/publicAssets/videos/Home/Consulting.mp4";
@@ -51,6 +53,7 @@ function styleFor(offset: number, isMobile: boolean): React.CSSProperties {
       transform: "translateX(-50%) translateZ(0) scale(1)",
       zIndex: 5,
       opacity: 1,
+      cursor: "pointer",
     };
   }
 
@@ -66,7 +69,7 @@ function styleFor(offset: number, isMobile: boolean): React.CSSProperties {
     zIndex: 5 - depth,
     opacity: depth === 2 ? 0.55 : 0.8,
     filter: "brightness(0.75)",
-    pointerEvents: "none",
+    cursor: "pointer",
   };
 }
 
@@ -74,6 +77,7 @@ export default function HeroDepthCarousel() {
   const [index, setIndex] = React.useState(0);
   const [isMobile, setIsMobile] = React.useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 900);
@@ -100,6 +104,19 @@ export default function HeroDepthCarousel() {
 
   const next = () => setIndex((i) => (i + 1) % SLIDES.length);
   const prev = () => setIndex((i) => (i - 1 + SLIDES.length) % SLIDES.length);
+
+  const handleCardClick = (i: number, off: number) => {
+    if (off !== 0) {
+      // Navigate to center first, then after animation navigate to preview
+      setIndex(i);
+      setTimeout(() => {
+        navigate(`/landing-preview/${SLIDES[i].title.toLowerCase()}`);
+      }, 320);
+    } else {
+      navigate(`/landing-preview/${SLIDES[i].title.toLowerCase()}`);
+    }
+  };
+
   const shouldRenderVideo = !prefersReducedMotion;
   const heroVideoSrc = isMobile ? HeroMobile : SLIDES[0].video;
 
@@ -268,10 +285,12 @@ export default function HeroDepthCarousel() {
             if (off > SLIDES.length / 2) off -= SLIDES.length;
             if (off < -SLIDES.length / 2) off += SLIDES.length;
             const shouldLoadImage = Math.abs(off) <= 1;
+            const isCenter = off === 0;
 
             return (
               <div
                 key={it.id}
+                onClick={() => handleCardClick(i, off)}
                 style={{
                   position: "absolute",
                   top: 0,
@@ -306,6 +325,90 @@ export default function HeroDepthCarousel() {
                     objectFit: "cover",
                   }}
                 />
+
+                {/* Center card info bar */}
+                {isCenter && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background:
+                        "linear-gradient(to top, rgba(0,0,0,0.85), transparent)",
+                      padding: "40px 24px 24px",
+                      display: "flex",
+                      alignItems: "flex-end",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 18,
+                        fontFamily: "system-ui, sans-serif",
+                      }}
+                    >
+                      {it.title}
+                    </span>
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        color: "#fff",
+                        background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(8px)",
+                        borderRadius: 999,
+                        padding: "6px 14px",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        fontFamily: "system-ui, sans-serif",
+                        border: "1px solid rgba(255,255,255,0.3)",
+                      }}
+                    >
+                      <OpenInFullIcon style={{ fontSize: 14 }} />
+                      Preview Template
+                    </span>
+                  </div>
+                )}
+
+                {/* Side card hover label */}
+                {!isCenter && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "rgba(0,0,0,0.3)",
+                      opacity: 0,
+                      transition: "opacity 0.25s",
+                    }}
+                    onMouseEnter={(e) =>
+                      ((e.currentTarget as HTMLDivElement).style.opacity = "1")
+                    }
+                    onMouseLeave={(e) =>
+                      ((e.currentTarget as HTMLDivElement).style.opacity = "0")
+                    }
+                  >
+                    <span
+                      style={{
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 15,
+                        fontFamily: "system-ui, sans-serif",
+                        background: "rgba(0,0,0,0.5)",
+                        borderRadius: 999,
+                        padding: "8px 18px",
+                      }}
+                    >
+                      {it.title}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}
