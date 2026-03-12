@@ -76,6 +76,17 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
   },
   {
+    id: "static-blog-premium",
+    slug: "blog-premium",
+    name: "Blog Premium",
+    description:
+      "Premium multi-page editorial magazine template with dedicated article detail layouts.",
+    type: "website",
+    category: "saas",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+  },
+  {
     id: "static-portfolio-creative",
     slug: "portfolio-creative",
     name: "Portfolio Creative",
@@ -529,7 +540,7 @@ const Templates: React.FC = () => {
                 top: { md: 90 },
               }}
             >
-              <Typography
+              {/* <Typography
                 sx={{
                   fontWeight: 700,
                   color: "#0f172a",
@@ -567,7 +578,7 @@ const Templates: React.FC = () => {
                     />
                   ),
                 )}
-              </Stack>
+              </Stack> */}
 
               <Typography
                 sx={{

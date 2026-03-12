@@ -8,6 +8,7 @@ const PremiumTemplate = lazy(() => import("../templates/premium/PremiumTemplate"
 
 // Blog
 const BlogTemplate = lazy(() => import("../templates/blog/BlogTemplate"));
+const PremiumBlogTemplate = lazy(() => import("../templates/blog/PremiumBlogTemplate"));
 
 // Portfolio
 const PortfolioCreativeTemplate = lazy(() => import("../templates/portfolio/PortfolioCreativeTemplate"));
@@ -25,7 +26,7 @@ const templateRegistry: Record<string, TemplateDefinition> = {
   modern: {
     id: "modern",
     name: "Modern",
-    description: "Clean, professional design with gradient hero and card-based layout.",
+    description: "Clean, professional design with full-bleed photo hero and card-based layout.",
     tags: ["service", "professional", "colorful"],
     component: ModernTemplate,
   },
@@ -51,6 +52,13 @@ const templateRegistry: Record<string, TemplateDefinition> = {
     description: "Editorial blog layout that fetches live articles from the insights API.",
     tags: ["blog", "editorial", "insights"],
     component: BlogTemplate,
+  },
+  "blog-premium": {
+    id: "blog-premium",
+    name: "Blog – Premium",
+    description: "Premium multi-page editorial magazine with dedicated article detail experience.",
+    tags: ["blog", "premium", "editorial", "magazine"],
+    component: PremiumBlogTemplate,
   },
 
   // --- Portfolio ---
