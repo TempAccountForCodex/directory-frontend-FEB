@@ -455,7 +455,8 @@ const STORE_DATA: BusinessData = {
       category: "Desk",
       price: "$48",
       originalPrice: "$65",
-      image: "https://images.unsplash.com/photo-1547949003-9792a18a2601?w=600",
+      image:
+        "https://img.freepik.com/free-photo/interior-lifestyle-decoration-room-white_1203-4467.jpg?uid=R205766258&ga=GA1.1.355267885.1764683677&semt=ais_rp_progressive&w=740&q=80",
       badge: "Sale",
       rating: 4.8,
       reviewCount: 124,
@@ -467,7 +468,7 @@ const STORE_DATA: BusinessData = {
       category: "Lighting",
       price: "$89",
       image:
-        "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600",
+        "https://img.freepik.com/free-photo/desk-lamp-lit_1203-252.jpg?uid=R205766258&ga=GA1.1.355267885.1764683677&semt=ais_rp_progressive&w=740&q=80",
       badge: "New",
       rating: 4.9,
       reviewCount: 89,
@@ -478,7 +479,7 @@ const STORE_DATA: BusinessData = {
       name: "Cable Management Box",
       category: "Storage",
       price: "$34",
-      image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600",
+      image: "https://img.freepik.com/free-photo/wingback-couch_1203-346.jpg",
       rating: 4.6,
       reviewCount: 203,
       description: "Clean cable box to hide power strips and cables.",
@@ -547,7 +548,8 @@ const STORE_DATA: BusinessData = {
 
 const COMPANY_DATA: BusinessData = {
   name: "Atelier North",
-  tagline: "Interior studio for residential, hospitality, and workplace projects",
+  tagline:
+    "Interior studio for residential, hospitality, and workplace projects",
   description:
     "Atelier North creates calm interior environments with a focus on materials, proportion, and everyday usability across homes, hospitality spaces, and modern workplaces.",
   primaryColor: "#111111",
@@ -646,9 +648,6 @@ const TEMPLATE_DATA_MAP: Record<
   string,
   { templateId: string; data: BusinessData }
 > = {
-  modern: { templateId: "modern", data: SERVICE_DATA },
-  minimal: { templateId: "minimal", data: SERVICE_DATA },
-  premium: { templateId: "premium", data: SERVICE_DATA },
   blog: { templateId: "blog", data: BLOG_PREMIUM_DATA },
   "blog-premium": { templateId: "blog-premium", data: BLOG_DATA },
   "portfolio-creative": {
@@ -656,20 +655,23 @@ const TEMPLATE_DATA_MAP: Record<
     data: PORTFOLIO_DATA,
   },
   "portfolio-agency": { templateId: "portfolio-agency", data: PORTFOLIO_DATA },
-  "store-grid": { templateId: "store-grid", data: STORE_DATA },
-  "store-catalog": { templateId: "store-catalog", data: STORE_DATA },
+  "store-basic": { templateId: "store-basic", data: STORE_DATA },
   company: { templateId: "company", data: COMPANY_DATA },
+  "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
 };
 
 const ALL_TEMPLATE_SLUGS = Object.keys(TEMPLATE_DATA_MAP);
 
 // Groups for the preview bar switcher
 const TEMPLATE_GROUPS = [
-  { label: "Service", slugs: ["modern", "minimal", "premium"] },
   { label: "Blog", slugs: ["blog", "blog-premium"] },
+  {
+    label: "Services",
+    slugs: getIndustryKeys().map((key) => key.toLowerCase()),
+  },
   { label: "Portfolio", slugs: ["portfolio-creative", "portfolio-agency"] },
-  { label: "Store", slugs: ["store-grid", "store-catalog"] },
-  { label: "Company", slugs: ["company"] },
+  { label: "Store", slugs: ["store-basic"] },
+  { label: "Company", slugs: ["company", "company-premium"] },
 ];
 
 function resolveSlug(slug: string): { templateId: string; data: BusinessData } {
@@ -687,7 +689,7 @@ function resolveSlug(slug: string): { templateId: string; data: BusinessData } {
   }
 
   // 3. Fallback
-  return { templateId: "modern", data: SERVICE_DATA };
+  return { templateId: "company", data: COMPANY_DATA };
 }
 
 // ─── Preview top bar ──────────────────────────────────────────────────────────
@@ -701,8 +703,8 @@ const PreviewBar: React.FC<{
 }> = ({ slug, device, onDeviceChange }) => {
   const navigate = useNavigate();
   const industryKeys = getIndustryKeys();
-  const isIndustry = industryKeys.some(
-    (k) => k.toLowerCase() === slug.toLowerCase(),
+  const industryLabelMap = new Map(
+    industryKeys.map((key) => [key.toLowerCase(), key]),
   );
 
   return (
@@ -779,98 +781,66 @@ const PreviewBar: React.FC<{
         </IconButton>
       </Stack>
 
-      {/* Industry chips (only when viewing an industry) */}
-      {isIndustry && (
-        <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-          {industryKeys.map((k) => (
-            <Chip
-              key={k}
-              label={k}
-              size="small"
-              onClick={() =>
-                navigate(`/landing-preview/${k.toLowerCase()}`, {
-                  replace: true,
-                })
-              }
+      <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+        {TEMPLATE_GROUPS.map((group) => (
+          <Box
+            key={group.label}
+            sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+          >
+            <Typography
+              variant="caption"
               sx={{
-                bgcolor:
-                  k.toLowerCase() === slug
-                    ? "#378C92"
-                    : "rgba(255,255,255,0.08)",
-                color:
-                  k.toLowerCase() === slug ? "#fff" : "rgba(255,255,255,0.55)",
-                fontWeight: k.toLowerCase() === slug ? 700 : 400,
-                cursor: "pointer",
-                "&:hover": {
-                  bgcolor:
-                    k.toLowerCase() === slug
-                      ? "#378C92"
-                      : "rgba(255,255,255,0.15)",
-                },
+                color: "rgba(255,255,255,0.35)",
+                mr: 0.5,
+                letterSpacing: 1,
+                fontSize: "0.6rem",
+                textTransform: "uppercase",
               }}
-            />
-          ))}
-        </Stack>
-      )}
-
-      {/* Template group switcher */}
-      {!isIndustry && (
-        <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-          {TEMPLATE_GROUPS.map((group) => (
-            <Box
-              key={group.label}
-              sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
             >
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "rgba(255,255,255,0.35)",
-                  mr: 0.5,
-                  letterSpacing: 1,
-                  fontSize: "0.6rem",
-                  textTransform: "uppercase",
-                }}
-              >
-                {group.label}
-              </Typography>
-              {group.slugs.map((s) => {
-                const shortLabel = s
-                  .replace(`${group.label.toLowerCase()}-`, "")
-                  .replace("portfolio-", "");
-                return (
-                  <Chip
-                    key={s}
-                    label={
-                      s === "blog"
-                        ? "Blog"
-                        : s === "company"
-                          ? "Company"
-                          : shortLabel.charAt(0).toUpperCase() +
-                            shortLabel.slice(1)
-                    }
-                    size="small"
-                    onClick={() =>
-                      navigate(`/landing-preview/${s}`, { replace: true })
-                    }
-                    sx={{
+              {group.label}
+            </Typography>
+            {group.slugs.map((s) => {
+              const shortLabel = s
+                .replace(`${group.label.toLowerCase()}-`, "")
+                .replace("portfolio-", "");
+              const chipLabel =
+                industryLabelMap.get(s) ||
+                (s === "blog"
+                  ? "Blog"
+                  : s === "blog-premium"
+                    ? "Premium"
+                    : s === "company"
+                      ? "Company"
+                      : s === "company-premium"
+                        ? "Premium"
+                        : shortLabel.charAt(0).toUpperCase() +
+                          shortLabel.slice(1));
+
+              return (
+                <Chip
+                  key={s}
+                  label={chipLabel}
+                  size="small"
+                  onClick={() =>
+                    navigate(`/landing-preview/${s}`, { replace: true })
+                  }
+                  sx={{
+                    bgcolor: s === slug ? "#378C92" : "rgba(255,255,255,0.08)",
+                    color: s === slug ? "#fff" : "rgba(255,255,255,0.55)",
+                    fontWeight: s === slug ? 700 : 400,
+                    cursor: "pointer",
+                    "&:hover": {
                       bgcolor:
-                        s === slug ? "#378C92" : "rgba(255,255,255,0.08)",
-                      color: s === slug ? "#fff" : "rgba(255,255,255,0.55)",
-                      fontWeight: s === slug ? 700 : 400,
-                      cursor: "pointer",
-                      "&:hover": {
-                        bgcolor:
-                          s === slug ? "#378C92" : "rgba(255,255,255,0.15)",
-                      },
-                      fontSize: "0.7rem",
-                    }}
-                  />
-                );
-              })}
-            </Box>
-          ))}
-        </Stack>
-      )}
+                        s === slug ? "#378C92" : "rgba(255,255,255,0.15)",
+                    },
+                    fontSize: "0.7rem",
+                  }}
+                />
+              );
+            })}
+          </Box>
+        ))}
+      </Stack>
     </Box>
   );
 };
@@ -879,7 +849,7 @@ const PreviewBar: React.FC<{
 
 const LandingPreview: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const { templateId: slug = "modern" } = useParams<{ templateId: string }>();
+  const { templateId: slug = "company" } = useParams<{ templateId: string }>();
   const isEmbeddedPreview = searchParams.get("embed") === "1";
   const { templateId, data } = resolveSlug(slug);
   const [device, setDevice] = React.useState<PreviewDevice>("desktop");

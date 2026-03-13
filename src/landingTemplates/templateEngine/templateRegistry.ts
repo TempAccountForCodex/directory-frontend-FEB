@@ -15,11 +15,11 @@ const PortfolioCreativeTemplate = lazy(() => import("../templates/portfolio/Port
 const PortfolioAgencyTemplate = lazy(() => import("../templates/portfolio/PortfolioAgencyTemplate"));
 
 // Store
-const StoreGridTemplate = lazy(() => import("../templates/store/StoreGridTemplate"));
-const StoreCatalogTemplate = lazy(() => import("../templates/store/StoreCatalogTemplate"));
+const StoreBasicTemplate = lazy(() => import("../templates/store/StoreBasicTemplate"));
 
 // Company / Product site
 const CompanySiteTemplate = lazy(() => import("../templates/company/CompanySiteTemplate"));
+const CompanyPremiumTemplate = lazy(() => import("../templates/company/CompanyPremiumTemplate"));
 
 const templateRegistry: Record<string, TemplateDefinition> = {
   // --- Service business ---
@@ -78,19 +78,12 @@ const templateRegistry: Record<string, TemplateDefinition> = {
   },
 
   // --- Store ---
-  "store-grid": {
-    id: "store-grid",
-    name: "Store – Grid",
-    description: "E-commerce product grid with categories, wishlist, and add-to-cart.",
-    tags: ["store", "shop", "ecommerce"],
-    component: StoreGridTemplate,
-  },
-  "store-catalog": {
-    id: "store-catalog",
-    name: "Store – Catalog",
-    description: "Sidebar category navigation with featured product and catalog rows.",
-    tags: ["store", "catalog", "ecommerce"],
-    component: StoreCatalogTemplate,
+  "store-basic": {
+    id: "store-basic",
+    name: "Store – Basic",
+    description: "Bold editorial food store with hero oval, featured flavors, and campaign storytelling.",
+    tags: ["store", "basic", "editorial", "food"],
+    component: StoreBasicTemplate,
   },
 
   // --- Company / Product ---
@@ -100,6 +93,13 @@ const templateRegistry: Record<string, TemplateDefinition> = {
     description: "Full company site with features, pricing tiers, team, and reviews.",
     tags: ["company", "saas", "product"],
     component: CompanySiteTemplate,
+  },
+  "company-premium": {
+    id: "company-premium",
+    name: "Company / Product – Premium",
+    description: "Premium editorial company site with luxury storytelling and lead-generation sections.",
+    tags: ["company", "premium", "editorial"],
+    component: CompanyPremiumTemplate,
   },
 };
 
