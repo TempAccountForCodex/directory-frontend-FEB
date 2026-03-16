@@ -16,6 +16,7 @@ const PortfolioAgencyTemplate = lazy(() => import("../templates/portfolio/Portfo
 
 // Store
 const StoreBasicTemplate = lazy(() => import("../templates/store/StoreBasicTemplate"));
+const StorePremiumTemplate = lazy(() => import("../templates/store/StorePremiumTemplate"));
 
 // Company / Product site
 const CompanySiteTemplate = lazy(() => import("../templates/company/CompanySiteTemplate"));
@@ -84,6 +85,13 @@ const templateRegistry: Record<string, TemplateDefinition> = {
     description: "Bold editorial food store with hero oval, featured flavors, and campaign storytelling.",
     tags: ["store", "basic", "editorial", "food"],
     component: StoreBasicTemplate,
+  },
+  "store-premium": {
+    id: "store-premium",
+    name: "Store – Premium",
+    description: "Soft premium collection store with elegant merchandising, editorial about section, and enquiry-first contact layout.",
+    tags: ["store", "premium", "editorial", "luxury"],
+    component: StorePremiumTemplate,
   },
 
   // --- Company / Product ---

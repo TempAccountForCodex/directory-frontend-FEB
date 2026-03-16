@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "tw-init": "tailwindcss init -p",
-    "dev": "vite --open",
-    "dev:https": "VITE_HTTPS=true vite --open",
+    "dev": "vite --force --open",
+    "dev:https": "VITE_HTTPS=true vite --force --open",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "preview:https": "VITE_HTTPS=true vite preview --host 0.0.0.0 --port 4173",

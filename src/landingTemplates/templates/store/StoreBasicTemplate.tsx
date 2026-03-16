@@ -108,15 +108,35 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
     ),
   );
 
-  const navItems = ["Shop", "Recipes", "About", "Contact"];
+  const navItems = [
+    { label: "Shop", id: "products" },
+    { label: "About", id: "about" },
+    { label: "Contact", id: "contact" },
+  ];
+  const logoSrc =
+    data.logoUrl || "https://cdn-icons-png.freepik.com/128/1198/1198419.png";
   const tickerText = makeTicker([
     "Modern sofas for calm interiors",
     "Built for any furniture brand story",
     "Comfort shaped with contemporary lines",
   ]);
 
+  const scrollToSection = (sectionId: string) => {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
-    <Box sx={{ bgcolor: "#8c6d5a", color: "#f7f1ea", fontFamily: bodyFont }}>
+    <Box
+      sx={{
+        bgcolor: "#8c6d5a",
+        color: "#f7f1ea",
+        fontFamily: bodyFont,
+        scrollBehavior: "smooth",
+      }}
+    >
       <Box sx={{ maxWidth: 1240, mx: "auto", px: { xs: 2, md: 4 } }}>
         <Box
           component="header"
@@ -128,30 +148,61 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
             gap: 2,
           }}
         >
-          <Typography sx={{ fontWeight: 700, fontSize: "1rem" }}>
-            {data.name}
-          </Typography>
+          <Box
+            component="button"
+            type="button"
+            onClick={() => scrollToSection("hero")}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: "transparent",
+              border: 0,
+              p: 0,
+              cursor: "pointer",
+            }}
+          >
+            <Box
+              component="img"
+              src={logoSrc}
+              alt={`${data.name} logo`}
+              sx={{
+                height: { xs: 34, md: 42 },
+                width: "auto",
+                maxWidth: { xs: 120, md: 170 },
+                objectFit: "contain",
+                display: "block",
+                filter: data.logoUrl ? "none" : "brightness(0) invert(1)",
+              }}
+            />
+          </Box>
           <Stack
             direction="row"
             spacing={2.5}
             sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}
           >
             {navItems.map((item) => (
-              <Typography
-                key={item}
+              <Box
+                key={item.label}
+                component="button"
+                type="button"
+                onClick={() => scrollToSection(item.id)}
                 sx={{
                   fontSize: "0.78rem",
                   color: "rgba(247,241,234,0.88)",
                   cursor: "pointer",
+                  background: "transparent",
+                  border: 0,
+                  p: 0,
+                  fontFamily: bodyFont,
                 }}
               >
-                {item}
-              </Typography>
+                {item.label}
+              </Box>
             ))}
           </Stack>
         </Box>
 
-        <Box sx={{ pt: { xs: 4, md: 3 }, pb: { xs: 7, md: 9 } }}>
+        <Box id="hero" sx={{ pt: { xs: 4, md: 3 }, pb: { xs: 7, md: 9 } }}>
           <Typography
             sx={{
               fontFamily: headingFont,
@@ -273,6 +324,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
       </Box>
 
       <Box
+        id="products"
         sx={{
           maxWidth: 1240,
           mx: "auto",
@@ -427,7 +479,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         />
       </Box>
 
-      <Box sx={{ bgcolor: "white", color: "#8c6d5a" }}>
+      <Box id="journal" sx={{ bgcolor: "white", color: "#8c6d5a" }}>
         <Box
           sx={{
             maxWidth: 1240,
@@ -492,7 +544,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box sx={{ bgcolor: "#171312", color: "#f3efe9" }}>
+      <Box id="about" sx={{ bgcolor: "#171312", color: "#f3efe9" }}>
         <Box
           sx={{
             maxWidth: 1240,
@@ -507,9 +559,25 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         >
           <Box>
             {navItems.map((item) => (
-              <Typography key={item} sx={{ mb: 1.1, fontSize: "0.95rem" }}>
-                {item}
-              </Typography>
+              <Box
+                key={item.label}
+                component="button"
+                type="button"
+                onClick={() => scrollToSection(item.id)}
+                sx={{
+                  mb: 1.1,
+                  fontSize: "0.95rem",
+                  display: "block",
+                  color: "inherit",
+                  background: "transparent",
+                  border: 0,
+                  p: 0,
+                  cursor: "pointer",
+                  fontFamily: bodyFont,
+                }}
+              >
+                {item.label}
+              </Box>
             ))}
           </Box>
           <Box>
@@ -541,7 +609,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
               ))}
             </Stack>
           </Box>
-          <Box>
+          <Box id="contact">
             <Typography
               sx={{ fontSize: "0.85rem", color: "rgba(243,239,233,0.64)" }}
             >

@@ -546,6 +546,83 @@ const STORE_DATA: BusinessData = {
   ],
 };
 
+const STORE_PREMIUM_DATA: BusinessData = {
+  name: "D. Valera",
+  tagline: "Natural delights for cats",
+  description:
+    "D. Valera is demo content for a reusable premium store template. The structure works for pet products today, but can be adapted to beauty, fashion, home, wellness, gifting, or any curated product brand.",
+  primaryColor: "#f0bc3f",
+  secondaryColor: "#efe6d6",
+  logoUrl: "https://cdn-icons-png.freepik.com/128/616/616408.png",
+  contact: {
+    email: "hello@dvalera.co",
+    phone: "(555) 840-2211",
+    address: "58 Mercer Street, Manhattan, New York",
+  },
+  socialLinks: { instagram: "#", facebook: "#", twitter: "#" },
+  gallery: [
+    {
+      url: "https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=2000&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=1400&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1548247416-ec66f4900b2e?auto=format&fit=crop&w=2000&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?auto=format&fit=crop&w=900&q=80",
+    },
+  ],
+  products: [
+    {
+      id: "sp1",
+      name: "Chicken & Salmon Feast",
+      category: "Dry Food",
+      price: "$29",
+      badge: "Best seller",
+      image:
+        "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      id: "sp2",
+      name: "Healthy Crunch Blend",
+      category: "Dry Food",
+      price: "$24",
+      badge: "New",
+      image:
+        "https://images.unsplash.com/photo-1604542031658-5799ca5d7936?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      id: "sp3",
+      name: "Ocean Protein Mix",
+      category: "Nutrition",
+      price: "$37",
+      badge: "Top pick",
+      image:
+        "https://images.unsplash.com/photo-1571566882372-1598d88abd90?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      id: "sp4",
+      name: "Indoor Balance Formula",
+      category: "Wellness",
+      price: "$35",
+      badge: "New",
+      image:
+        "https://images.unsplash.com/photo-1548681528-6a5c45b66b42?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      id: "sp5",
+      name: "Daily Vitality Bites",
+      category: "Daily Use",
+      price: "$31",
+      badge: "Sale",
+      image:
+        "https://images.unsplash.com/photo-1511044568932-338cba0ad803?auto=format&fit=crop&w=900&q=80",
+    },
+  ],
+};
+
 const COMPANY_DATA: BusinessData = {
   name: "Atelier North",
   tagline:
@@ -656,6 +733,7 @@ const TEMPLATE_DATA_MAP: Record<
   },
   "portfolio-agency": { templateId: "portfolio-agency", data: PORTFOLIO_DATA },
   "store-basic": { templateId: "store-basic", data: STORE_DATA },
+  "store-premium": { templateId: "store-premium", data: STORE_PREMIUM_DATA },
   company: { templateId: "company", data: COMPANY_DATA },
   "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
 };
@@ -670,7 +748,7 @@ const TEMPLATE_GROUPS = [
     slugs: getIndustryKeys().map((key) => key.toLowerCase()),
   },
   { label: "Portfolio", slugs: ["portfolio-creative", "portfolio-agency"] },
-  { label: "Store", slugs: ["store-basic"] },
+  { label: "Store", slugs: ["store-basic", "store-premium"] },
   { label: "Company", slugs: ["company", "company-premium"] },
 ];
 
