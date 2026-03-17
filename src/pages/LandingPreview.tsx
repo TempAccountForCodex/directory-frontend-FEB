@@ -547,78 +547,78 @@ const STORE_DATA: BusinessData = {
 };
 
 const STORE_PREMIUM_DATA: BusinessData = {
-  name: "D. Valera",
-  tagline: "Natural delights for cats",
+  name: "Maison Elara",
+  tagline: "Modern handbags for every day",
   description:
-    "D. Valera is demo content for a reusable premium store template. The structure works for pet products today, but can be adapted to beauty, fashion, home, wellness, gifting, or any curated product brand.",
+    "Maison Elara is demo content for a reusable premium handbag store template. The same structure can also support fashion accessories, footwear, beauty, gifting, or other curated product brands.",
   primaryColor: "#f0bc3f",
   secondaryColor: "#efe6d6",
-  logoUrl: "https://cdn-icons-png.freepik.com/128/616/616408.png",
+  logoUrl: "https://cdn-icons-png.freepik.com/128/3081/3081559.png",
   contact: {
-    email: "hello@dvalera.co",
+    email: "hello@maisonelara.co",
     phone: "(555) 840-2211",
     address: "58 Mercer Street, Manhattan, New York",
   },
   socialLinks: { instagram: "#", facebook: "#", twitter: "#" },
   gallery: [
     {
-      url: "https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=2000&q=80",
+      url: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=2000&q=80",
     },
     {
-      url: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=1400&q=80",
+      url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1400&q=80",
     },
     {
-      url: "https://images.unsplash.com/photo-1548247416-ec66f4900b2e?auto=format&fit=crop&w=2000&q=80",
+      url: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=2000&q=80",
     },
     {
-      url: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?auto=format&fit=crop&w=900&q=80",
+      url: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80",
     },
   ],
   products: [
     {
       id: "sp1",
-      name: "Chicken & Salmon Feast",
-      category: "Dry Food",
-      price: "$29",
+      name: "Luna Leather Tote",
+      category: "Signature Tote",
+      price: "$189",
       badge: "Best seller",
       image:
-        "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=80",
     },
     {
       id: "sp2",
-      name: "Healthy Crunch Blend",
-      category: "Dry Food",
-      price: "$24",
+      name: "Sienna Shoulder Bag",
+      category: "Shoulder Bag",
+      price: "$164",
       badge: "New",
       image:
-        "https://images.unsplash.com/photo-1604542031658-5799ca5d7936?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=80",
     },
     {
       id: "sp3",
-      name: "Ocean Protein Mix",
-      category: "Nutrition",
-      price: "$37",
+      name: "Noir Mini Crossbody",
+      category: "Crossbody",
+      price: "$142",
       badge: "Top pick",
       image:
-        "https://images.unsplash.com/photo-1571566882372-1598d88abd90?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80",
     },
     {
       id: "sp4",
-      name: "Indoor Balance Formula",
-      category: "Wellness",
-      price: "$35",
+      name: "Studio Bucket Bag",
+      category: "Bucket Bag",
+      price: "$171",
       badge: "New",
       image:
-        "https://images.unsplash.com/photo-1548681528-6a5c45b66b42?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=80",
     },
     {
       id: "sp5",
-      name: "Daily Vitality Bites",
-      category: "Daily Use",
-      price: "$31",
+      name: "Atelier Evening Clutch",
+      category: "Clutch",
+      price: "$128",
       badge: "Sale",
       image:
-        "https://images.unsplash.com/photo-1511044568932-338cba0ad803?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?auto=format&fit=crop&w=900&q=80",
     },
   ],
 };
