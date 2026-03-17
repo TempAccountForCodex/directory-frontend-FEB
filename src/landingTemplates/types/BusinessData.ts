@@ -121,6 +121,7 @@ export interface BusinessData {
   tagline?: string;
   description: string;
   logoUrl?: string;
+  heroBannerUrl?: string;
   primaryColor: string;
   secondaryColor?: string;
 

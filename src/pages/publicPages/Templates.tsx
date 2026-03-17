@@ -77,6 +77,17 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
   },
   {
+    id: "static-portfolio-photo-studio",
+    slug: "portfolio-photo-studio",
+    name: "Portfolio Photo Studio",
+    description:
+      "Bold editorial photo studio template with cinematic hero, service list, works showcase, FAQ, and image-led storytelling.",
+    type: "website",
+    category: "portfolio",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+  },
+  {
     id: "static-store-basic",
     slug: "store-basic",
     name: "Store Basic",

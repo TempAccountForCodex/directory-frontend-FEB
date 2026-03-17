@@ -418,6 +418,99 @@ const PORTFOLIO_DATA: BusinessData = {
   ],
 };
 
+const PHOTO_STUDIO_DATA: BusinessData = {
+  name: "Tim Joel",
+  tagline: "Portrait and lifestyle photography",
+  description:
+    "Tim Joel is a portrait and lifestyle photographer focused on expressive editorial imagery, family storytelling, and premium studio sessions with clean visual direction.",
+  heroBannerUrl:
+    "https://framerusercontent.com/images/prLWrousqsCtNYW0tDFZqBVBBY.png?width=1320&height=992",
+  primaryColor: "#111111",
+  secondaryColor: "#ff7a1a",
+  contact: {
+    email: "hello@timjoel.com",
+    phone: "(555) 240-8818",
+    address: "233 Spring Street, New York, NY 10013",
+  },
+  socialLinks: { instagram: "#", twitter: "#" },
+  services: [
+    { name: "Portrait Photography", description: "Editorial and personal portrait sessions with a clean modern feel." },
+    { name: "Brand Shoots", description: "Photography for founders, campaigns, and visual brand systems." },
+    { name: "Family Sessions", description: "Warm and expressive storytelling for families and milestones." },
+    { name: "Fashion Editorial", description: "Creative direction, lighting, and imagery for premium fashion stories." },
+    { name: "Retouching & Finishing", description: "Color, skin, and detail refinement with a natural finish." },
+  ],
+  stats: [
+    { label: "Projects", value: "240+" },
+    { label: "Client rating", value: "5★" },
+    { label: "Years", value: "10+" },
+  ],
+  reviews: [
+    {
+      author: "Editorial client",
+      rating: 5,
+      text: "Tim brought clarity, energy, and a strong visual mood to the shoot. The final images felt premium and very alive.",
+      date: "March 2026",
+    },
+  ],
+  gallery: [
+    { url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=1200&q=80" },
+    { url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80" },
+    { url: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80" },
+  ],
+  portfolioItems: [
+    {
+      title: "Winter Veiling",
+      description: "Portrait story built around texture, shadow, and strong eye contact.",
+      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      title: "Newborn Soft Light",
+      description: "A calm newborn session with delicate tones and intimate composition.",
+      image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      title: "Morning Bloom",
+      description: "Lifestyle portrait with floral framing and soft natural highlights.",
+      image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      title: "Cinematic Skincare",
+      description: "Product-focused campaign imagery with warm studio color and detail.",
+      image: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      title: "Landscape Story",
+      image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      title: "Editorial Ensemble",
+      image: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      title: "Night City",
+      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      title: "Street Mood",
+      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
+    },
+  ],
+};
+
 const STORE_DATA: BusinessData = {
   name: "Forma Shop",
   tagline: "Curated essentials for the modern workspace.",
@@ -732,6 +825,10 @@ const TEMPLATE_DATA_MAP: Record<
     data: PORTFOLIO_DATA,
   },
   "portfolio-agency": { templateId: "portfolio-agency", data: PORTFOLIO_DATA },
+  "portfolio-photo-studio": {
+    templateId: "portfolio-photo-studio",
+    data: PHOTO_STUDIO_DATA,
+  },
   "store-basic": { templateId: "store-basic", data: STORE_DATA },
   "store-premium": { templateId: "store-premium", data: STORE_PREMIUM_DATA },
   company: { templateId: "company", data: COMPANY_DATA },
@@ -747,7 +844,7 @@ const TEMPLATE_GROUPS = [
     label: "Services",
     slugs: getIndustryKeys().map((key) => key.toLowerCase()),
   },
-  { label: "Portfolio", slugs: ["portfolio-creative", "portfolio-agency"] },
+  { label: "Portfolio", slugs: ["portfolio-creative", "portfolio-agency", "portfolio-photo-studio"] },
   { label: "Store", slugs: ["store-basic", "store-premium"] },
   { label: "Company", slugs: ["company", "company-premium"] },
 ];

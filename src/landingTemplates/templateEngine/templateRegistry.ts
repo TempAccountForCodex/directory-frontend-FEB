@@ -13,6 +13,7 @@ const PremiumBlogTemplate = lazy(() => import("../templates/blog/PremiumBlogTemp
 // Portfolio
 const PortfolioCreativeTemplate = lazy(() => import("../templates/portfolio/PortfolioCreativeTemplate"));
 const PortfolioAgencyTemplate = lazy(() => import("../templates/portfolio/PortfolioAgencyTemplate"));
+const PortfolioPhotoStudioTemplate = lazy(() => import("../templates/portfolio/PortfolioPhotoStudioTemplate"));
 
 // Store
 const StoreBasicTemplate = lazy(() => import("../templates/store/StoreBasicTemplate"));
@@ -76,6 +77,13 @@ const templateRegistry: Record<string, TemplateDefinition> = {
     description: "Dark agency portfolio with numbered work list and gold accents.",
     tags: ["portfolio", "agency", "dark"],
     component: PortfolioAgencyTemplate,
+  },
+  "portfolio-photo-studio": {
+    id: "portfolio-photo-studio",
+    name: "Portfolio – Photo Studio",
+    description: "Editorial photographer portfolio with bold hero typography, collaboration logos, works grid, FAQ, and cinematic footer CTA.",
+    tags: ["portfolio", "photography", "editorial", "studio"],
+    component: PortfolioPhotoStudioTemplate,
   },
 
   // --- Store ---
