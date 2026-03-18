@@ -434,11 +434,30 @@ const PHOTO_STUDIO_DATA: BusinessData = {
   },
   socialLinks: { instagram: "#", twitter: "#" },
   services: [
-    { name: "Portrait Photography", description: "Editorial and personal portrait sessions with a clean modern feel." },
-    { name: "Brand Shoots", description: "Photography for founders, campaigns, and visual brand systems." },
-    { name: "Family Sessions", description: "Warm and expressive storytelling for families and milestones." },
-    { name: "Fashion Editorial", description: "Creative direction, lighting, and imagery for premium fashion stories." },
-    { name: "Retouching & Finishing", description: "Color, skin, and detail refinement with a natural finish." },
+    {
+      name: "Portrait Photography",
+      description:
+        "Editorial and personal portrait sessions with a clean modern feel.",
+    },
+    {
+      name: "Brand Shoots",
+      description:
+        "Photography for founders, campaigns, and visual brand systems.",
+    },
+    {
+      name: "Family Sessions",
+      description:
+        "Warm and expressive storytelling for families and milestones.",
+    },
+    {
+      name: "Fashion Editorial",
+      description:
+        "Creative direction, lighting, and imagery for premium fashion stories.",
+    },
+    {
+      name: "Retouching & Finishing",
+      description: "Color, skin, and detail refinement with a natural finish.",
+    },
   ],
   stats: [
     { label: "Projects", value: "240+" },
@@ -454,59 +473,103 @@ const PHOTO_STUDIO_DATA: BusinessData = {
     },
   ],
   gallery: [
-    { url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=1200&q=80" },
-    { url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80" },
-    { url: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80" },
+    {
+      url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://thanksfortoday.studio/veren/wp-content/uploads/sites/95/2026/02/beauty-in-red-attractive-young-lady-with-glamorou-2026-01-09-00-22-56-utc-1.jpg",
+    },
+    {
+      url: "https://thanksfortoday.studio/veren/wp-content/uploads/sites/95/2026/02/portrait-fashion-and-mock-up-with-a-woman-on-a-re-2026-01-09-10-10-22-utc-1.jpg",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=1200&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80",
+    },
   ],
   portfolioItems: [
     {
       title: "Winter Veiling",
-      description: "Portrait story built around texture, shadow, and strong eye contact.",
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+      description:
+        "Portrait story built around texture, shadow, and strong eye contact.",
+      image:
+        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
     },
     {
       title: "Newborn Soft Light",
-      description: "A calm newborn session with delicate tones and intimate composition.",
-      image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80",
+      description:
+        "A calm newborn session with delicate tones and intimate composition.",
+      image:
+        "https://static.wixstatic.com/media/960c32_3f98285ed5d746af9ae48fa0f82100b5~mv2.jpg",
     },
     {
       title: "Morning Bloom",
-      description: "Lifestyle portrait with floral framing and soft natural highlights.",
-      image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
+      description:
+        "Lifestyle portrait with floral framing and soft natural highlights.",
+      image:
+        "https://img.freepik.com/free-photo/chromatic-glow-portrait-medium-shot_23-2151911132.jpg",
     },
     {
       title: "Cinematic Skincare",
-      description: "Product-focused campaign imagery with warm studio color and detail.",
-      image: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80",
+      description:
+        "Product-focused campaign imagery with warm studio color and detail.",
+      image:
+        "https://img.freepik.com/free-photo/beautiful-portrait-teenager-woman_23-2149453480.jpg",
     },
     {
       title: "Landscape Story",
-      image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+      image:
+        "https://img.freepik.com/free-photo/beautiful-young-woman-wearing-professional-makeup_23-2150165293.jpg",
     },
     {
       title: "Editorial Ensemble",
-      image: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80",
+      image:
+        "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80",
     },
     {
       title: "Night City",
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+      image:
+        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
     },
     {
       title: "Street Mood",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
+      image:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
     },
   ],
 };
@@ -844,7 +907,10 @@ const TEMPLATE_GROUPS = [
     label: "Services",
     slugs: getIndustryKeys().map((key) => key.toLowerCase()),
   },
-  { label: "Portfolio", slugs: ["portfolio-creative", "portfolio-agency", "portfolio-photo-studio"] },
+  {
+    label: "Portfolio",
+    slugs: ["portfolio-creative", "portfolio-agency", "portfolio-photo-studio"],
+  },
   { label: "Store", slugs: ["store-basic", "store-premium"] },
   { label: "Company", slugs: ["company", "company-premium"] },
 ];
