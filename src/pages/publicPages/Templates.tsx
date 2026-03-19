@@ -34,6 +34,39 @@ type StaticTemplate = {
 
 const STATIC_TEMPLATES: StaticTemplate[] = [
   {
+    id: "static-modern",
+    slug: "modern",
+    name: "Modern",
+    description:
+      "Clean, professional design with a full-bleed hero and card-based service layout.",
+    type: "website",
+    category: "business",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+  },
+  {
+    id: "static-minimal",
+    slug: "minimal",
+    name: "Minimal",
+    description:
+      "Elegant serif website template with refined spacing and a typography-first layout.",
+    type: "website",
+    category: "business",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+  },
+  {
+    id: "static-premium",
+    slug: "premium",
+    name: "Premium",
+    description:
+      "Dark luxury service template with cinematic sections and premium presentation.",
+    type: "website",
+    category: "business",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+  },
+  {
     id: "static-blog",
     slug: "blog",
     name: "Blog",
@@ -42,7 +75,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+    previewImage: "/assets/templateAssets/images/dummy/blog.png",
   },
   {
     id: "static-blog-premium",
@@ -53,7 +86,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+    previewImage: "/assets/templateAssets/images/dummy/blog-premium.png",
   },
   {
     id: "static-portfolio-creative",
@@ -85,13 +118,15 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "portfolio",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+    previewImage:
+      "/assets/templateAssets/images/dummy/portfolio-photo-studio.png",
   },
   {
     id: "static-store-basic",
     slug: "store-basic",
     name: "Store Basic",
-    description: "Editorial store template with bold campaign layout and reusable product storytelling.",
+    description:
+      "Editorial store template with bold campaign layout and reusable product storytelling.",
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
@@ -128,7 +163,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/company.png",
+    previewImage: "/assets/templateAssets/images/dummy/company-premium.png",
   },
   {
     id: "static-gardening",
