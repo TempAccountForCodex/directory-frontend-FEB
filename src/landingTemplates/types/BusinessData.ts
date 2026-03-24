@@ -85,6 +85,7 @@ export interface Product {
   badge?: string;
   rating?: number;
   reviewCount?: number;
+  url?: string;
 }
 
 // --- Company / Product Site ---

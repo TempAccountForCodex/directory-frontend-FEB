@@ -455,7 +455,7 @@ const AppRoutes = () => {
           element: suspense(<TemplatePreview />),
         },
         {
-          path: "/landing-preview/:templateId",
+          path: "/landing-preview/:templateId/:pageId?",
           element: suspense(<LandingPreview />),
         },
       ],

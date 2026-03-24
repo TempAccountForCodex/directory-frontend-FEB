@@ -936,6 +936,236 @@ function resolveSlug(slug: string): { templateId: string; data: BusinessData } {
 // ─── Preview top bar ──────────────────────────────────────────────────────────
 
 type PreviewDevice = "desktop" | "mobile";
+type PreviewSection = {
+  id: string;
+  label: string;
+};
+
+const PREVIEW_SECTION_MAP: Record<string, PreviewSection[]> = {
+  "store-premium:home": [
+    { id: "home-hero", label: "Hero" },
+    { id: "home-featured", label: "Featured" },
+    { id: "home-story", label: "Story" },
+    { id: "home-newsletter", label: "Newsletter" },
+  ],
+  "store-premium:shop": [
+    { id: "shop-hero", label: "Banner" },
+    { id: "shop-products", label: "Products" },
+  ],
+  "store-premium:about": [
+    { id: "about-intro", label: "Intro" },
+    { id: "about-why", label: "Why Choose Us" },
+    { id: "about-process", label: "How We Curate" },
+    { id: "about-cta", label: "CTA" },
+  ],
+  "store-premium:contact": [{ id: "contact-form", label: "Contact Form" }],
+};
+
+const createPreviewSectionId = (label: string, index: number) =>
+  `preview-section-${
+    label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") || "section"
+  }-${index}`;
+
+const formatSectionLabel = (value: string) =>
+  value
+    .replace(/^preview-section-/, "")
+    .replace(/-\d+$/, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const shortenSectionLabel = (label: string, fallbackIndex: number) => {
+  const compact = label.replace(/\s+/g, " ").trim();
+  const lower = compact.toLowerCase();
+
+  const commonMatches = [
+    "hero",
+    "about",
+    "contact",
+    "products",
+    "product",
+    "services",
+    "service",
+    "portfolio",
+    "gallery",
+    "journal",
+    "reviews",
+    "testimonials",
+    "pricing",
+    "faq",
+    "features",
+    "feature",
+    "work",
+    "projects",
+    "project",
+    "team",
+    "story",
+    "newsletter",
+    "banner",
+    "shop",
+    "why choose us",
+    "why us",
+  ];
+
+  const matched = commonMatches.find((item) => lower.includes(item));
+  if (matched) {
+    return formatSectionLabel(matched);
+  }
+
+  const words = compact.split(" ").filter(Boolean).slice(0, 3);
+
+  if (words.length) {
+    return words.join(" ");
+  }
+
+  return `Section ${fallbackIndex + 1}`;
+};
+
+const getLikelySectionLabel = (node: HTMLElement, index: number) => {
+  const explicitLabel = node.dataset.previewLabel?.trim();
+  if (explicitLabel) return shortenSectionLabel(explicitLabel, index);
+
+  if (node.id) {
+    return shortenSectionLabel(formatSectionLabel(node.id), index);
+  }
+
+  const headingText = node
+    .querySelector("h1, h2, h3, h4")
+    ?.textContent?.trim()
+    ?.replace(/\s+/g, " ");
+  if (headingText) return shortenSectionLabel(headingText, index);
+
+  const textSample = node.textContent?.trim()?.replace(/\s+/g, " ");
+  if (textSample) return shortenSectionLabel(textSample.slice(0, 36), index);
+
+  return `Section ${index + 1}`;
+};
+
+const getBranchingContainer = (doc: Document) => {
+  let current = doc.getElementById("root") as HTMLElement | null;
+  if (!current) return null;
+
+  while (current && current.children.length === 1) {
+    const next: Element | null = current.firstElementChild;
+    if (!(next instanceof HTMLElement)) break;
+    current = next;
+  }
+
+  return current;
+};
+
+const extractPreviewSections = (doc: Document): PreviewSection[] => {
+  const explicitNodes = Array.from(
+    doc.querySelectorAll<HTMLElement>("[data-preview-section='true']"),
+  );
+
+  if (explicitNodes.length) {
+    return explicitNodes
+      .map((node, index) => {
+        const label = getLikelySectionLabel(node, index);
+        if (!node.id) node.id = createPreviewSectionId(label, index);
+        return { id: node.id, label };
+      })
+      .filter((section) => Boolean(section.id && section.label))
+      .slice(0, 12);
+  }
+
+  const headingNodes = Array.from(
+    doc.querySelectorAll<HTMLElement>(
+      "main h1, main h2, main h3, [role='main'] h1, [role='main'] h2, [role='main'] h3, body h1, body h2, body h3",
+    ),
+  ).filter((node) => {
+    const text = node.textContent?.trim() || "";
+    if (!text || text.length < 3 || text.length > 60) return false;
+    if (node.closest("header, nav, footer")) return false;
+    return true;
+  });
+
+  const headingSections = headingNodes
+    .map((node, index) => {
+      const label = getLikelySectionLabel(node, index);
+      if (!node.id) node.id = createPreviewSectionId(label, index);
+      return { id: node.id, label };
+    })
+    .filter(
+      (section, index, array) =>
+        array.findIndex((item) => item.label === section.label) === index,
+    )
+    .slice(0, 12);
+
+  if (headingSections.length > 1) {
+    return headingSections;
+  }
+
+  const branchingContainer = getBranchingContainer(doc);
+  const topLevelCandidates = branchingContainer
+    ? Array.from(branchingContainer.children).filter(
+        (child): child is HTMLElement => child instanceof HTMLElement,
+      )
+    : [];
+
+  return topLevelCandidates
+    .filter((node) => {
+      const tagName = node.tagName.toLowerCase();
+      if (tagName === "script" || tagName === "style") return false;
+      if (tagName === "header" || tagName === "footer") return false;
+      const rect = node.getBoundingClientRect();
+      return rect.height >= 140 && rect.width >= 220;
+    })
+    .map((node, index) => {
+      const label = getLikelySectionLabel(node, index);
+      if (!node.id) node.id = createPreviewSectionId(label, index);
+      return { id: node.id, label };
+    })
+    .filter(
+      (section, index, array) =>
+        Boolean(section.label) &&
+        array.findIndex((item) => item.label === section.label) === index,
+    )
+    .slice(0, 12);
+};
+
+const EmbeddedPreviewBridge: React.FC<{ slug: string; pageId?: string }> = ({
+  slug,
+  pageId,
+}) => {
+  React.useEffect(() => {
+    const publishSections = () => {
+      const sections = extractPreviewSections(document);
+      window.parent.postMessage(
+        {
+          type: "preview-sections",
+          slug,
+          pageId: pageId || "home",
+          sections,
+        },
+        window.location.origin,
+      );
+    };
+
+    const timer = window.setTimeout(publishSections, 300);
+    const observer = new MutationObserver(() => {
+      window.setTimeout(publishSections, 100);
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    });
+
+    return () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [pageId, slug]);
+
+  return null;
+};
 
 const PreviewBar: React.FC<{
   slug: string;
@@ -1090,13 +1320,116 @@ const PreviewBar: React.FC<{
 
 const LandingPreview: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const { templateId: slug = "company" } = useParams<{ templateId: string }>();
+  const { templateId: slug = "company", pageId } = useParams<{
+    templateId: string;
+    pageId?: string;
+  }>();
   const isEmbeddedPreview = searchParams.get("embed") === "1";
   const { templateId, data } = resolveSlug(slug);
   const [device, setDevice] = React.useState<PreviewDevice>("desktop");
+  const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
+  const currentPreviewPage = pageId || "home";
+  const fallbackSections = React.useMemo(
+    () => PREVIEW_SECTION_MAP[`${slug}:${currentPreviewPage}`] || [],
+    [currentPreviewPage, slug],
+  );
+  const [sections, setSections] =
+    React.useState<PreviewSection[]>(fallbackSections);
+
+  const collectIframeSections = React.useCallback(() => {
+    const iframe = iframeRef.current;
+    const iframeWindow = iframe?.contentWindow;
+    const iframeDocument = iframeWindow?.document;
+
+    if (!iframeDocument) return false;
+
+    const foundSections = extractPreviewSections(iframeDocument);
+    if (foundSections.length) {
+      setSections(foundSections);
+      return true;
+    }
+
+    return false;
+  }, []);
+
+  const scrollIframeToSection = React.useCallback((sectionId: string) => {
+    const iframe = iframeRef.current;
+    const iframeWindow = iframe?.contentWindow;
+    const iframeDocument = iframeWindow?.document;
+    const target = iframeDocument?.getElementById(sectionId);
+
+    if (!iframeWindow || !target) return;
+
+    const targetTop =
+      target.getBoundingClientRect().top + iframeWindow.scrollY - 84;
+
+    iframeWindow.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: "smooth",
+    });
+  }, []);
+
+  React.useEffect(() => {
+    setSections(fallbackSections);
+  }, [fallbackSections]);
+
+  React.useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      const payload = event.data as
+        | {
+            type?: string;
+            slug?: string;
+            pageId?: string;
+            sections?: PreviewSection[];
+          }
+        | undefined;
+
+      if (
+        payload?.type !== "preview-sections" ||
+        payload.slug !== slug ||
+        payload.pageId !== currentPreviewPage
+      ) {
+        return;
+      }
+
+      if (payload.sections?.length) {
+        setSections(payload.sections);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [currentPreviewPage, slug]);
+
+  React.useEffect(() => {
+    if (device !== "mobile") return;
+
+    let attempts = 0;
+    const maxAttempts = 12;
+
+    const tryCollect = () => {
+      const found = collectIframeSections();
+      attempts += 1;
+
+      if (!found && attempts < maxAttempts) {
+        window.setTimeout(tryCollect, 350);
+      }
+    };
+
+    const timer = window.setTimeout(tryCollect, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [collectIframeSections, device, slug, pageId]);
 
   if (isEmbeddedPreview) {
-    return <TemplateEngine templateId={templateId} data={data} />;
+    return (
+      <>
+        <EmbeddedPreviewBridge slug={slug} pageId={pageId} />
+        <TemplateEngine templateId={templateId} data={data} />
+      </>
+    );
   }
 
   return (
@@ -1115,10 +1448,85 @@ const LandingPreview: React.FC = () => {
             display: "flex",
             alignItems: "flex-start",
             justifyContent: "center",
-            px: 2,
+            gap: { xs: 2, lg: 5 },
+            px: { xs: 2, md: 3 },
             pb: 3,
+            flexDirection: { xs: "column", lg: "row" },
           }}
         >
+          <Box
+            sx={{
+              width: { xs: "100%", lg: 220 },
+              maxWidth: { xs: 390, lg: 220 },
+              color: "#fff",
+              pt: { xs: 0.5, lg: 7 },
+              flexShrink: 0,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: "0.72rem",
+                letterSpacing: "0.3em",
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.46)",
+              }}
+            >
+              Sections
+            </Typography>
+            <Stack
+              direction={{ xs: "row", lg: "column" }}
+              spacing={1}
+              sx={{
+                mt: 1.5,
+                flexWrap: "wrap",
+              }}
+            >
+              {sections.length ? (
+                sections.map((section) => (
+                  <Box
+                    key={section.id}
+                    component="button"
+                    type="button"
+                    onClick={() => scrollIframeToSection(section.id)}
+                    sx={{
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      bgcolor: "rgba(255,255,255,0.04)",
+                      color: "rgba(255,255,255,0.82)",
+                      px: 1.4,
+                      py: 0.9,
+                      borderRadius: 999,
+                      cursor: "pointer",
+                      textAlign: "left",
+                      fontSize: "0.74rem",
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      transition:
+                        "background-color 180ms ease, border-color 180ms ease, color 180ms ease",
+                      "&:hover": {
+                        bgcolor: "rgba(255,255,255,0.10)",
+                        borderColor: "rgba(255,255,255,0.28)",
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    {section.label}
+                  </Box>
+                ))
+              ) : (
+                <Typography
+                  sx={{
+                    color: "rgba(255,255,255,0.45)",
+                    fontSize: "0.9rem",
+                    lineHeight: 1.7,
+                    maxWidth: 180,
+                  }}
+                >
+                  Tabs current page ke sections ke sath yahan show hongi.
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+
           <Box
             sx={{
               width: 390,
@@ -1133,9 +1541,15 @@ const LandingPreview: React.FC = () => {
           >
             <Box
               component="iframe"
+              ref={iframeRef}
               title="Mobile template preview"
-              src={`/landing-preview/${slug}?embed=1`}
+              src={`/landing-preview/${slug}${pageId ? `/${pageId}` : ""}?embed=1`}
               loading="eager"
+              onLoad={() => {
+                window.setTimeout(() => {
+                  collectIframeSections();
+                }, 300);
+              }}
               sx={{
                 border: 0,
                 width: "100%",
