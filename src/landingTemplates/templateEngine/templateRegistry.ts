@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { TemplateDefinition } from "./types";
 
 // Service templates
+const EducationTemplate = lazy(() => import("../templates/education/EducationTemplate"));
 const ModernTemplate = lazy(() => import("../templates/modern/ModernTemplate"));
 const MinimalTemplate = lazy(() => import("../templates/minimal/MinimalTemplate"));
 const PremiumTemplate = lazy(() => import("../templates/premium/PremiumTemplate"));
@@ -25,6 +26,13 @@ const CompanyPremiumTemplate = lazy(() => import("../templates/company/CompanyPr
 
 const templateRegistry: Record<string, TemplateDefinition> = {
   // --- Service business ---
+  education: {
+    id: "education",
+    name: "Education",
+    description: "Academic-focused design with admissions hero, program highlights, parent trust blocks, and a school-specific contact flow.",
+    tags: ["service", "education", "academic"],
+    component: EducationTemplate,
+  },
   modern: {
     id: "modern",
     name: "Modern",

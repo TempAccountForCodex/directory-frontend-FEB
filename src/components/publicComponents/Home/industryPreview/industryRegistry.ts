@@ -16,7 +16,7 @@ export interface IndustryEntry {
 
 const industryRegistry: Record<string, IndustryEntry> = {
   Education: {
-    templateId: "modern",
+    templateId: "education",
     data: educationData,
     accentColor: "#2563eb",
     label: "Education",
