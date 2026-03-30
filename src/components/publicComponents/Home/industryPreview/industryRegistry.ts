@@ -22,7 +22,7 @@ const industryRegistry: Record<string, IndustryEntry> = {
     label: "Education",
   },
   Gardening: {
-    templateId: "modern",
+    templateId: "gardening",
     data: gardeningData,
     accentColor: "#58b74e",
     label: "Gardening",
@@ -34,7 +34,7 @@ const industryRegistry: Record<string, IndustryEntry> = {
     label: "Consulting",
   },
   Restaurant: {
-    templateId: "modern",
+    templateId: "restaurant",
     data: restaurantData,
     accentColor: "#c0392b",
     label: "Restaurant",

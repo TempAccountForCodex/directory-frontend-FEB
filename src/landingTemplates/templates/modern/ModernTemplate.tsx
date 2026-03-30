@@ -69,7 +69,7 @@ function getHeaderConfig(
   if (name.includes("green roots")) {
     return {
       logoType: "image",
-            logoSrc: data.logoUrl || fallbackLogo,
+      logoSrc: data.logoUrl || fallbackLogo,
 
       logoBadgeBg: "linear-gradient(135deg, #1f5b2c 0%, #3f8f2f 100%)",
       brand: "Green Roots",
@@ -80,9 +80,9 @@ function getHeaderConfig(
         { label: "Reviews", id: "reviews" },
         { label: "Contact", id: "contact" },
       ],
-      headerBg: "rgba(13, 25, 17, 0.74)",
+      headerBg: "rgb(255, 255, 255)",
       borderColor: "rgba(255,255,255,0.12)",
-      textColor: "#f7fbf5",
+      textColor: "#000000",
       ctaBg: "#3f8f2f",
       ctaText: "#ffffff",
       ctaLabel: "Book Visit",
@@ -133,8 +133,8 @@ function getHeaderConfig(
   }
 
   return {
-      logoType: "image",
-      logoSrc: data.logoUrl || fallbackLogo,
+    logoType: "image",
+    logoSrc: data.logoUrl || fallbackLogo,
     brand: data.name,
     navItems: [
       { label: "Services", id: "services" },
@@ -150,7 +150,13 @@ function getHeaderConfig(
   };
 }
 
-function ModernHeader({ data, theme }: { data: TemplateProps["data"]; theme: ModernThemeType }) {
+function ModernHeader({
+  data,
+  theme,
+}: {
+  data: TemplateProps["data"];
+  theme: ModernThemeType;
+}) {
   const header = getHeaderConfig(data, theme);
 
   const scrollToSection = (sectionId: string) => {
@@ -189,7 +195,12 @@ function ModernHeader({ data, theme }: { data: TemplateProps["data"]; theme: Mod
           gap: 2,
         }}
       >
-        <Stack direction="row" spacing={1.2} alignItems="center" sx={{ minWidth: 0 }}>
+        <Stack
+          direction="row"
+          spacing={1.2}
+          alignItems="center"
+          sx={{ minWidth: 0 }}
+        >
           {header.logoType === "image" ? (
             <Box
               component="img"
@@ -225,7 +236,6 @@ function ModernHeader({ data, theme }: { data: TemplateProps["data"]; theme: Mod
               {header.brand.charAt(0)}
             </Box>
           )}
-       
         </Stack>
 
         <Stack
@@ -298,23 +308,42 @@ function ModernHeader({ data, theme }: { data: TemplateProps["data"]; theme: Mod
   );
 }
 
-function ModernFooter({ data, theme }: { data: TemplateProps["data"]; theme: ReturnType<typeof buildModernTheme> }) {
+function ModernFooter({
+  data,
+  theme,
+}: {
+  data: TemplateProps["data"];
+  theme: ReturnType<typeof buildModernTheme>;
+}) {
   const social = data.socialLinks;
   return (
     <Box sx={{ bgcolor: "#1a202c", py: 6, px: 3, textAlign: "center" }}>
       <Typography
         variant="h6"
-        sx={{ fontFamily: theme.fontFamily, fontWeight: 800, color: "#fff", mb: 1 }}
+        sx={{
+          fontFamily: theme.fontFamily,
+          fontWeight: 800,
+          color: "#fff",
+          mb: 1,
+        }}
       >
         {data.name}
       </Typography>
       {data.contact.address && (
-        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.6)", mb: 3 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: "rgba(255,255,255,0.6)", mb: 3 }}
+        >
           {data.contact.address}
         </Typography>
       )}
       {social && (
-        <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 3 }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          justifyContent="center"
+          sx={{ mb: 3 }}
+        >
           {social.facebook && (
             <IconButton size="small" sx={{ color: "rgba(255,255,255,0.6)" }}>
               <Facebook size={18} />

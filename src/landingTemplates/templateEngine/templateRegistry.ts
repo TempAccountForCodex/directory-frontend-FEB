@@ -3,6 +3,8 @@ import { TemplateDefinition } from "./types";
 
 // Service templates
 const EducationTemplate = lazy(() => import("../templates/education/EducationTemplate"));
+const GardeningTemplate = lazy(() => import("../templates/gardening/GardeningTemplate"));
+const RestaurantTemplate = lazy(() => import("../templates/restaurant/RestaurantTemplate"));
 const ModernTemplate = lazy(() => import("../templates/modern/ModernTemplate"));
 const MinimalTemplate = lazy(() => import("../templates/minimal/MinimalTemplate"));
 const PremiumTemplate = lazy(() => import("../templates/premium/PremiumTemplate"));
@@ -32,6 +34,20 @@ const templateRegistry: Record<string, TemplateDefinition> = {
     description: "Academic-focused design with admissions hero, program highlights, parent trust blocks, and a school-specific contact flow.",
     tags: ["service", "education", "academic"],
     component: EducationTemplate,
+  },
+  gardening: {
+    id: "gardening",
+    name: "Gardening",
+    description: "Soft editorial garden studio layout with large imagery, portfolio mosaic, alternating service storytelling, and a calm contact experience.",
+    tags: ["service", "gardening", "editorial", "nature"],
+    component: GardeningTemplate,
+  },
+  restaurant: {
+    id: "restaurant",
+    name: "Restaurant",
+    description: "Dark-and-warm editorial restaurant layout with cinematic food imagery, story sections, promo strip, and reservation-focused contact area.",
+    tags: ["service", "restaurant", "editorial", "food"],
+    component: RestaurantTemplate,
   },
   modern: {
     id: "modern",

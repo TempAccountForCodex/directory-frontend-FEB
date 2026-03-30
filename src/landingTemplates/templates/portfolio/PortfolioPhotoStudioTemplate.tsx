@@ -484,7 +484,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         bgcolor: "transparent",
                         cursor: "pointer",
                         color: "#fff",
-                        textDecoration: "underline",
+                        // textDecoration: "underline",
                         textUnderlineOffset: "8px",
                         fontFamily: headingFont,
                         fontSize: { xs: "1.3rem", md: "1.05rem" },
@@ -538,7 +538,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           mt: { xs: 0, md: -6 },
           position: "relative",
           zIndex: 2,
-          bgcolor: "#f3f3f3",
+          bgcolor: "black",
           borderTopLeftRadius: { md: 28 },
           borderTopRightRadius: { md: 28 },
           boxShadow: { md: "0 -22px 60px rgba(8,8,8,0.18)" },
@@ -862,6 +862,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontSize: { xs: "4rem", md: "7.2rem" },
                   lineHeight: 0.9,
                   letterSpacing: "-0.06em",
+                  color: "rgb(255, 255, 255)",
                 }}
               >
                 About
@@ -887,7 +888,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   maxWidth: 350,
                   fontSize: { xs: "1rem", md: "1.02rem" },
                   lineHeight: 1.65,
-                  color: "rgba(17,17,17,0.68)",
+                  color: "rgb(255, 255, 255)",
                 }}
               >
                 We are a fashion-focused creative studio dedicated to delivering
@@ -901,8 +902,8 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 endIcon={<ArrowUpRight size={16} />}
                 sx={{
                   mt: 3,
-                  bgcolor: "#111",
-                  color: "#fff",
+                  bgcolor: "#fff",
+                  color: "#111",
                   borderRadius: 0,
                   boxShadow: "none",
                   px: 3.2,
@@ -910,7 +911,11 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontSize: "0.92rem",
                   fontWeight: 600,
                   textTransform: "none",
-                  "&:hover": { bgcolor: "#111", boxShadow: "none" },
+                  "&:hover": {
+                    bgcolor: "#111",
+                    color: "white",
+                    boxShadow: "none",
+                  },
                 }}
               >
                 More about us
@@ -924,7 +929,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   ml: { md: "auto" },
                   fontSize: { xs: "1.1rem", md: "1.18rem" },
                   lineHeight: 1.45,
-                  color: "rgba(17,17,17,0.72)",
+                  color: "rgb(255, 255, 255)",
                 }}
               >
                 Specializing in high-end fashion photography and model
@@ -975,7 +980,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: "0.78rem",
                     letterSpacing: "0.28em",
                     textTransform: "uppercase",
-                    color: "rgba(17,17,17,0.5)",
+                    color: "rgb(255, 255, 255)",
                   }}
                 />
                 <Box sx={{ mt: 1, maxWidth: 260 }}>
@@ -986,6 +991,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       fontSize: { xs: "3rem", md: "5.1rem" },
                       lineHeight: 0.88,
                       letterSpacing: "-0.05em",
+                      color: "rgb(255, 255, 255)",
                     }}
                   />
                 </Box>
@@ -1006,7 +1012,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 430,
                     fontSize: { xs: "0.98rem", md: "1rem" },
                     lineHeight: 1.8,
-                    color: "rgba(17,17,17,0.66)",
+                    color: "rgb(255, 255, 255)",
                   }}
                 />
                 <Button
@@ -1014,8 +1020,8 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   onClick={() => scrollToSection("contact")}
                   endIcon={<ArrowUpRight size={16} />}
                   sx={{
-                    bgcolor: "#111",
-                    color: "#fff",
+                    bgcolor: "#fff",
+                    color: "#111",
                     borderRadius: 0,
                     boxShadow: "none",
                     px: 3,
@@ -1023,7 +1029,11 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: "0.88rem",
                     fontWeight: 600,
                     textTransform: "none",
-                    "&:hover": { bgcolor: "#111", boxShadow: "none" },
+                    "&:hover": {
+                      bgcolor: "#111",
+                      color: "white",
+                      boxShadow: "none",
+                    },
                   }}
                 >
                   Start a project

@@ -327,6 +327,8 @@ export const restaurantData: BusinessData = {
   secondaryColor: "#e74c3c",
   logoUrl:
     "https://img.freepik.com/free-vector/restaurant-logo-template_23-2149493636.jpg",
+    heroBannerUrl:
+    "https://img.freepik.com/free-photo/side-view-woman-eating-beef-meat-salad-with-vegetables-corns_141793-3020.jpg?t=st=1774473113~exp=1774476713~hmac=37093ae62703d58a25d07df73dd4c4df407ca49838c0eeb4de8623e07e38fe3d&w=1480",
 
   services: [
     {
