@@ -436,6 +436,11 @@ export const plumbingData: BusinessData = {
     "Licensed and insured plumbing professionals serving the greater metro area. From emergency repairs to full bathroom remodels, we handle every job with skill and integrity.",
   primaryColor: "#1f4f9d",
   secondaryColor: "#4fa0ff",
+   heroBannerUrl:
+    "https://cdn.prod.website-files.com/68ce363cc9e814fa40d285fd/68ceeb8c65230295abdded06_hero-images.jpg",
+    logoUrl:
+    "https://cdn.prod.website-files.com/6547936d846495322411f845/6639f018ff54046206362fdb_Plumco.svg",
+
   services: [
     {
       name: "Emergency Repairs",
@@ -473,7 +478,7 @@ export const plumbingData: BusinessData = {
   ],
   gallery: [
     {
-      url: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800",
+      url: "https://cdn.prod.website-files.com/68ce363cc9e814fa40d285fd/68d0b4823eb502d9b0fda318_about-image.jpg",
       caption: "Pipe installation",
     },
     {

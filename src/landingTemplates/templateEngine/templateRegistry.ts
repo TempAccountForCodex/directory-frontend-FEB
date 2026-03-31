@@ -4,6 +4,7 @@ import { TemplateDefinition } from "./types";
 // Service templates
 const EducationTemplate = lazy(() => import("../templates/education/EducationTemplate"));
 const GardeningTemplate = lazy(() => import("../templates/gardening/GardeningTemplate"));
+const PlumbingTemplate = lazy(() => import("../templates/plumbing/PlumbingTemplate"));
 const RestaurantTemplate = lazy(() => import("../templates/restaurant/RestaurantTemplate"));
 const ModernTemplate = lazy(() => import("../templates/modern/ModernTemplate"));
 const MinimalTemplate = lazy(() => import("../templates/minimal/MinimalTemplate"));
@@ -41,6 +42,13 @@ const templateRegistry: Record<string, TemplateDefinition> = {
     description: "Soft editorial garden studio layout with large imagery, portfolio mosaic, alternating service storytelling, and a calm contact experience.",
     tags: ["service", "gardening", "editorial", "nature"],
     component: GardeningTemplate,
+  },
+  plumbing: {
+    id: "plumbing",
+    name: "Plumbing",
+    description: "Editorial plumbing layout with oversized hero typography, dark service storytelling, and image-led project presentation.",
+    tags: ["service", "plumbing", "editorial", "repair"],
+    component: PlumbingTemplate,
   },
   restaurant: {
     id: "restaurant",

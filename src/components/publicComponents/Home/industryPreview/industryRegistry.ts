@@ -40,7 +40,7 @@ const industryRegistry: Record<string, IndustryEntry> = {
     label: "Restaurant",
   },
   Plumbing: {
-    templateId: "premium",
+    templateId: "plumbing",
     data: plumbingData,
     accentColor: "#3c86d9",
     label: "Plumbing",
