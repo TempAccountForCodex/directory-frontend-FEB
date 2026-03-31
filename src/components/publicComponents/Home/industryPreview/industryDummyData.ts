@@ -7,6 +7,8 @@ export const educationData: BusinessData = {
     "A premier education center offering expert tutoring, enrichment programs, and skill development for students K-12 and beyond.",
   primaryColor: "#2563eb",
   secondaryColor: "#60a5fa",
+  heroBannerUrl:
+    "https://img.freepik.com/free-photo/entrepreneurs-meeting-office_23-2148898688.jpg?t=st=1774906209~exp=1774909809~hmac=f5e98a3859cfd04f6ffd4a2221e316ec55909dd4a8c0f73fa3c9a7c0bc083bea&w=1480",
   logoUrl:
     "https://img.freepik.com/free-vector/vector-education-logo_779267-2059.jpg",
   services: [

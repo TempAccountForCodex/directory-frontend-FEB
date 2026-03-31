@@ -44,16 +44,10 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
     { label: "Contact", id: "contact" },
   ];
 
-  const heroImage = data.heroBannerUrl || data.gallery?.[0]?.url;
+  const heroImage = data.heroBannerUrl;
   const gallery = data.gallery ?? [];
   const reviews = data.reviews ?? [];
   const services = data.services ?? [];
-  const stats = [
-    { value: "12+", label: "years of guided learning" },
-    { value: `${reviews.length * 100}+`, label: "families supported" },
-    { value: "96%", label: "student confidence uplift" },
-    { value: "1:1", label: "mentorship available" },
-  ];
 
   return (
     <Box sx={{ bgcolor: theme.bgPrimary, fontFamily: theme.fontFamily }}>
@@ -194,201 +188,147 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         sx={{
           position: "relative",
           overflow: "hidden",
-          background: "linear-gradient(180deg, #f4f8ff 0%, #ffffff 100%)",
+          minHeight: { xs: "auto", md: "88vh" },
+          display: "flex",
+          alignItems: "stretch",
+          backgroundColor: "#0f2450",
+          backgroundImage: heroImage
+            ? `linear-gradient(110deg, rgba(7, 20, 47, 0.88) 0%, rgba(7, 20, 47, 0.76) 34%, rgba(7, 20, 47, 0.42) 58%, rgba(7, 20, 47, 0.72) 100%), url(${heroImage})`
+            : "linear-gradient(135deg, #0f2450 0%, #1f4c9f 100%)",
+          backgroundPosition: "center",
+          backgroundSize: "cover",
         }}
       >
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(circle at top right, rgba(96,165,250,0.24), transparent 28%), radial-gradient(circle at bottom left, rgba(59,130,246,0.2), transparent 34%)",
+            pointerEvents: "none",
+          }}
+        />
         <Container
           maxWidth="xl"
-          sx={{ px: { xs: 2, md: 4 }, py: { xs: 5, md: 8 } }}
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            px: { xs: 2, md: 4 },
+            py: { xs: 6, md: 8 },
+            display: "flex",
+            alignItems: "center",
+          }}
         >
-          <Grid container spacing={{ xs: 4, md: 5 }} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <FadeIn>
-                <Box
-                  sx={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 1,
-                    px: 1.5,
-                    py: 0.9,
-                    mb: 2.5,
-                    borderRadius: 999,
-                    bgcolor: "rgba(37,99,235,0.08)",
-                    color: theme.primaryColor,
-                    fontWeight: 700,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    fontSize: "0.72rem",
-                  }}
-                >
-                  Admissions open for new term
-                </Box>
-              </FadeIn>
-              <FadeIn delay={0.08}>
-                <Typography
-                  sx={{
-                    color: "#11254d",
-                    fontSize: { xs: "2.6rem", md: "4.9rem" },
-                    lineHeight: 0.98,
-                    fontWeight: 900,
-                    letterSpacing: "-0.04em",
-                    maxWidth: 680,
-                  }}
-                >
-                  A brighter learning journey starts here.
-                </Typography>
-              </FadeIn>
-              <FadeIn delay={0.14}>
-                <Typography
-                  sx={{
-                    mt: 2.5,
-                    maxWidth: 560,
-                    color: "#5a6b8f",
-                    fontSize: { xs: "1rem", md: "1.12rem" },
-                    lineHeight: 1.8,
-                  }}
-                >
-                  {data.description}
-                </Typography>
-              </FadeIn>
-              <FadeIn delay={0.2}>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={2}
-                  sx={{ mt: 4 }}
-                >
-                  <Button
-                    variant="contained"
-                    endIcon={<ArrowForwardIcon />}
-                    onClick={() => scrollToSection("programs")}
-                    sx={{
-                      bgcolor: theme.primaryColor,
-                      color: "#fff",
-                      borderRadius: 999,
-                      px: 4,
-                      py: 1.5,
-                      fontWeight: 700,
-                      "&:hover": {
-                        bgcolor: theme.primaryColor,
-                        color: "#fff",
-                        filter: "brightness(0.94)",
-                      },
-                    }}
-                  >
-                    Explore Programs
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={() => scrollToSection("contact")}
-                    sx={{
-                      borderColor: "rgba(37,99,235,0.28)",
-                      color: "#1b3266",
-                      borderRadius: 999,
-                      px: 4,
-                      py: 1.5,
-                      fontWeight: 700,
-                    }}
-                  >
-                    Talk to Admissions
-                  </Button>
-                </Stack>
-              </FadeIn>
-            </Grid>
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: 700,
+              px: { xs: 1.5, sm: 2, md: 0 },
+              py: { xs: 2, md: 3 },
+            }}
+          >
+            <FadeIn>
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1.6,
+                  py: 0.9,
+                  mb: 2.5,
+                  borderRadius: 999,
+                  bgcolor: "rgba(255,255,255,0.14)",
+                  color: "#e8f1ff",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  fontSize: "0.72rem",
+                }}
+              >
+                Admissions open for new term
+              </Box>
+            </FadeIn>
 
-            <Grid item xs={12} md={6}>
-              <FadeIn delay={0.12}>
-                <Box
+            <FadeIn delay={0.08}>
+              <Typography
+                sx={{
+                  color: "#ffffff",
+                  fontSize: { xs: "2.6rem", md: "5.2rem" },
+                  lineHeight: { xs: 1, md: 0.95 },
+                  fontWeight: 900,
+                  letterSpacing: "-0.05em",
+                  maxWidth: 680,
+                  textShadow: "0 10px 28px rgba(0,0,0,0.24)",
+                }}
+              >
+                A brighter learning journey starts here.
+              </Typography>
+            </FadeIn>
+
+            <FadeIn delay={0.14}>
+              <Typography
+                sx={{
+                  mt: 2.5,
+                  maxWidth: 600,
+                  color: "rgba(235, 243, 255, 0.88)",
+                  fontSize: { xs: "1rem", md: "1.12rem" },
+                  lineHeight: 1.8,
+                }}
+              >
+                {data.description}
+              </Typography>
+            </FadeIn>
+
+            <FadeIn delay={0.2}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                sx={{ mt: 4 }}
+              >
+                <Button
+                  variant="contained"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={() => scrollToSection("programs")}
                   sx={{
-                    position: "relative",
-                    maxWidth: 640,
-                    ml: { md: "auto" },
+                    bgcolor: "#ffffff",
+                    color: "#10244c",
+                    borderRadius: 999,
+                    px: 4,
+                    py: 1.55,
+                    fontWeight: 800,
+                    "&:hover": {
+                      bgcolor: "#ffffff",
+                      color: "#10244c",
+                      filter: "brightness(0.94)",
+                    },
                   }}
                 >
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      inset: "auto auto -32px -28px",
-                      width: 180,
-                      height: 180,
-                      borderRadius: "32px",
-                      background:
-                        "linear-gradient(135deg, rgba(96,165,250,0.22), rgba(37,99,235,0.08))",
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: -20,
-                      right: -12,
-                      width: 120,
-                      height: 120,
-                      borderRadius: "28px",
-                      background:
-                        "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(191,219,254,0.6))",
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      position: "relative",
-                      overflow: "hidden",
-                      borderRadius: "30px",
-                      minHeight: { xs: 360, md: 620 },
-                      boxShadow: "0 40px 90px rgba(34, 67, 144, 0.18)",
-                    }}
-                  >
-                    {heroImage && (
-                      <Box
-                        component="img"
-                        src={heroImage}
-                        alt={data.name}
-                        sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    )}
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        inset: 0,
-                        background:
-                          "linear-gradient(180deg, rgba(18,42,91,0.1) 0%, rgba(18,42,91,0.55) 100%)",
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        left: 20,
-                        right: 20,
-                        bottom: 20,
-                        borderRadius: 4,
-                        p: 2.5,
-                        bgcolor: "rgba(255,255,255,0.88)",
-                        backdropFilter: "blur(10px)",
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          color: "#1b3266",
-                          fontWeight: 800,
-                          fontSize: "1.05rem",
-                        }}
-                      >
-                        Personal guidance. Measurable progress.
-                      </Typography>
-                      <Typography
-                        sx={{ mt: 0.6, color: "#60708f", lineHeight: 1.7 }}
-                      >
-                        Structured support across academics, exams, and
-                        confidence-building.
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              </FadeIn>
-            </Grid>
-          </Grid>
+                  Explore Programs
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => scrollToSection("contact")}
+                  sx={{
+                    borderColor: "rgba(255,255,255,0.4)",
+                    color: "#ffffff",
+                    borderRadius: 999,
+                    px: 4,
+                    py: 1.55,
+                    fontWeight: 700,
+                    bgcolor: "rgba(255,255,255,0.04)",
+                    "&:hover": {
+                      borderColor: "rgba(255,255,255,0.7)",
+                      bgcolor: "rgba(255,255,255,0.08)",
+                    },
+                  }}
+                >
+                  Talk to Admissions
+                </Button>
+              </Stack>
+            </FadeIn>
+
+           
+          </Box>
         </Container>
       </Box>
 

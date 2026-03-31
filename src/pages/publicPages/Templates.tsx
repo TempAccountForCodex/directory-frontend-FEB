@@ -34,28 +34,6 @@ type StaticTemplate = {
 
 const STATIC_TEMPLATES: StaticTemplate[] = [
   {
-    id: "static-modern",
-    slug: "modern",
-    name: "Modern",
-    description:
-      "Clean, professional design with a full-bleed hero and card-based service layout.",
-    type: "website",
-    category: "business",
-    version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
-  },
-  {
-    id: "static-minimal",
-    slug: "minimal",
-    name: "Minimal",
-    description:
-      "Elegant serif website template with refined spacing and a typography-first layout.",
-    type: "website",
-    category: "business",
-    version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
-  },
-  {
     id: "static-premium",
     slug: "premium",
     name: "Premium",
@@ -97,7 +75,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "portfolio",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+    previewImage: "/assets/templateAssets/images/dummy/portfolioCreative.png",
   },
   {
     id: "static-portfolio-agency",
@@ -130,7 +108,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+    previewImage: "/assets/templateAssets/images/dummy/storeBasic.png",
   },
   {
     id: "static-store-premium",
@@ -141,7 +119,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+    previewImage: "/assets/templateAssets/images/dummy/storePremium.png",
   },
   {
     id: "static-company",
@@ -174,7 +152,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "business",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+    previewImage: "/assets/templateAssets/images/dummy/gardening.png",
   },
   {
     id: "static-education",
@@ -278,7 +256,7 @@ const Templates: React.FC = () => {
       <Box
         sx={{
           width: "100%",
-          minHeight: "70vh",
+          minHeight: {xs:"100vh",md:"70vh"},
           position: "relative",
           display: "flex",
           alignItems: "center",

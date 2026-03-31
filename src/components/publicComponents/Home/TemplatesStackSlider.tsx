@@ -6,46 +6,47 @@ const columns = [
   {
     speed: 1.1,
     images: [
-      "https://media-www.sqspcdn.com/images/pages/homepage-2025/hero/basketball-2-500w.jpg",
+      "/assets/publicAssets/images/home/TemplatesDisplay/1.webp",
 
-      "https://media-www.sqspcdn.com/images/pages/homepage-2025/hero/plants-500w.jpg",
+      "/assets/publicAssets/images/home/TemplatesDisplay/2.webp",
 
-      "https://img.freepik.com/free-vector/financial-accounting-landing-page-template_23-2150789435.jpg?t=st=1765400369~exp=1765403969~hmac=8a0042ab99466c931fed851c1cc3bd9ae7f0772fde0e52ed42e249afc9071d2d&w=2000",
+        "/assets/publicAssets/images/home/TemplatesDisplay/4.webp",
+
     ],
   },
 
   {
     speed: 1.3,
     images: [
-      "https://10web.io/wp-content/uploads/tenweb-theme/images/home/new/examples/example_artboard_14.png",
+      "/assets/publicAssets/images/home/TemplatesDisplay/3.webp",
 
-      "https://10web.io/wp-content/uploads/tenweb-theme/images/home/new/examples/example_artboard_4.jpg",
+      "/assets/publicAssets/images/home/TemplatesDisplay/6.webp",
 
-      "https://10web.io/wp-content/uploads/tenweb-theme/images/home/new/examples/example_artboard_8.jpg",
+      "/assets/publicAssets/images/home/TemplatesDisplay/7.webp",
 
-      "https://img.freepik.com/free-vector/hand-drawn-gardening-landing-page-template_23-2149363082.jpg?t=st=1765400324~exp=1765403924~hmac=21c01a8ece2f08bff9125daf3138166c1cf1d625344da9ed771a503e0c0a8f21&w=2000",
+      "/assets/publicAssets/images/home/TemplatesDisplay/8.webp",
     ],
   },
 
   {
     speed: 1.3,
     images: [
-      "https://files.cdn-files-a.com/admin/websitesPluginsManager/800_686e5e9b941d7.png",
+      "/assets/publicAssets/images/home/TemplatesDisplay/11.webp",
 
-      "https://media-www.sqspcdn.com/images/pages/homepage-2025/hero/barber-2-500w.jpg",
+      "/assets/publicAssets/images/home/TemplatesDisplay/10.webp",
 
-      "https://media-www.sqspcdn.com/images/pages/homepage-2025/hero/ceramics-2-2500w.webp",
+      "/assets/publicAssets/images/home/TemplatesDisplay/13.webp",
 
-      "https://media-www.sqspcdn.com/images/pages/homepage-2025/hero/piano-2-2500w.webp",
+      "/assets/publicAssets/images/home/TemplatesDisplay/12.webp",
     ],
   },
 
   {
     speed: 1.3,
     images: [
-      "https://10web.io/wp-content/uploads/tenweb-theme/images/home/new/examples/example_artboard_13.png",
+      "/assets/publicAssets/images/home/TemplatesDisplay/14.webp",
 
-      "https://10web.io/wp-content/uploads/tenweb-theme/images/home/new/examples/example_artboard_12.png",
+      "/assets/publicAssets/images/home/TemplatesDisplay/15.webp",
 
       "https://10web.io/wp-content/uploads/tenweb-theme/images/home/new/examples/example_artboard_2.png",
 

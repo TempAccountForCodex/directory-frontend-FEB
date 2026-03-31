@@ -27,6 +27,7 @@ const editorialImages = {
 const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
   const primary = data.primaryColor || "#161616";
   const services = data.features?.slice(0, 4) || [];
+  const heroImage = data.gallery?.[0]?.url || editorialImages.hero;
   
   const socialIcons = [
     { key: "twitter", icon: Twitter },
@@ -129,59 +130,80 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Box
           id="projects"
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "1fr 1.05fr" },
-            gap: { xs: 3, md: 6 },
-            alignItems: "end",
+            position: "relative",
+            minHeight: { xs: 460, md: 660 },
+            borderRadius: 3,
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "flex-end",
+            px: { xs: 3, md: 5 },
+            py: { xs: 4, md: 5 },
+            backgroundImage: `linear-gradient(180deg, rgba(9, 12, 18, 0.12) 0%, rgba(9, 12, 18, 0.56) 72%, rgba(9, 12, 18, 0.78) 100%), url(${heroImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            boxShadow: "0 24px 60px rgba(17, 17, 17, 0.12)",
           }}
         >
-          <Box>
+          <Box sx={{ maxWidth: 620 }}>
             <Typography
               sx={{
-                maxWidth: 620,
-                fontSize: { xs: "3.2rem", md: "6rem" },
-                lineHeight: 0.92,
-                letterSpacing: "-0.06em",
+                color: "#ffffff",
+                fontSize: { xs: "3rem", md: "6.2rem" },
+                lineHeight: 0.9,
+                letterSpacing: "-0.07em",
                 fontWeight: 900,
                 textTransform: "uppercase",
+                textShadow: "0 12px 30px rgba(0,0,0,0.18)",
               }}
             >
               {data.name}
             </Typography>
             <Typography
               sx={{
-                mt: 2,
-                maxWidth: 480,
-                color: "#4a4a4a",
-                fontSize: { xs: "1rem", md: "1.08rem" },
-                lineHeight: 1.8,
+                mt: 1.6,
+                maxWidth: 360,
+                color: "rgba(255,255,255,0.82)",
+                fontSize: { xs: "0.95rem", md: "1rem" },
+                lineHeight: 1.7,
               }}
             >
-              {data.description}
+              Calm spaces. Strong identity.
             </Typography>
-          </Box>
-
-          <Box>
-            <Box
-              sx={{
-                height: { xs: 280, md: 360 },
-                borderRadius: 1,
-                backgroundImage: `url(${editorialImages.hero})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            />
-            <Typography
-              sx={{
-                mt: 1.5,
-                fontSize: { xs: "1.05rem", md: "1.2rem" },
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "-0.03em",
-              }}
-            >
-              Feature project 01 <Box component="span" sx={{ color: "#7a7a7a" }}>Workplace Interiors</Box>
-            </Typography>
+            <Stack direction="row" spacing={1.2} sx={{ mt: 3 }}>
+              <Button
+                variant="contained"
+                onClick={() => scrollToSection("studio")}
+                sx={{
+                  bgcolor: "#ffffff",
+                  color: "#111111",
+                  px: 2.6,
+                  py: 1.05,
+                  borderRadius: 999,
+                  textTransform: "none",
+                  fontWeight: 700,
+                  boxShadow: "none",
+                  "&:hover": { bgcolor: "#f0f0f0", boxShadow: "none" },
+                }}
+              >
+                View Studio
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => scrollToSection("contact")}
+                sx={{
+                  color: "#ffffff",
+                  borderColor: "rgba(255,255,255,0.55)",
+                  px: 2.6,
+                  py: 1.05,
+                  borderRadius: 999,
+                  textTransform: "none",
+                  fontWeight: 700,
+                  "&:hover": { borderColor: "#ffffff", bgcolor: "rgba(255,255,255,0.08)" },
+                }}
+              >
+                Contact
+              </Button>
+            </Stack>
           </Box>
         </Box>
 

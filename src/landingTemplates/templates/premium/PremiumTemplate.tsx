@@ -1,8 +1,23 @@
 import React from "react";
 import { Box, Typography, Stack, IconButton, Grid, Button } from "@mui/material";
-import { Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Facebook,
+  Instagram,
+  Landmark,
+  Linkedin,
+  Mail,
+  MapPin,
+  PhoneCall,
+  ShieldCheck,
+  Twitter,
+  TrendingUp,
+} from "lucide-react";
 import { TemplateProps } from "../../templateEngine/types";
 import { buildPremiumTheme } from "./premiumTheme";
+import ConsultingStudioTemplate from "./ConsultingStudioTemplate";
 import {
   HeroBlock,
   ServicesBlock,
@@ -793,21 +808,390 @@ function PremiumFooter({
   );
 }
 
+function ConsultingReferenceHeader({
+  data,
+}: {
+  data: TemplateProps["data"];
+}) {
+  const navItems = [
+    { label: "About", id: "about" },
+    { label: "Services", id: "services" },
+    { label: "Projects", id: "projects" },
+    { label: "Contact", id: "contact" },
+  ];
+
+  return (
+    <Box
+      component="header"
+      sx={{
+        position: "sticky",
+        top: 0,
+        zIndex: 140,
+        px: { xs: 2, md: 4 },
+        py: 1.6,
+        bgcolor: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(18px)",
+        borderBottom: "1px solid rgba(26, 42, 92, 0.08)",
+      }}
+    >
+      <Box
+        sx={{
+          maxWidth: 1180,
+          mx: "auto",
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr auto", md: "220px 1fr auto" },
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
+        <Stack direction="row" spacing={1.2} alignItems="center">
+          <Box
+            sx={{
+              width: 42,
+              height: 42,
+              borderRadius: 2.5,
+              display: "grid",
+              placeItems: "center",
+              bgcolor: "#3f57ff",
+              color: "#ffffff",
+              fontWeight: 800,
+              fontSize: "1rem",
+              boxShadow: "0 14px 30px rgba(63, 87, 255, 0.26)",
+            }}
+          >
+            M
+          </Box>
+          <Box>
+            <Typography sx={{ color: "#172041", fontWeight: 800, fontSize: "1rem", lineHeight: 1 }}>
+              {data.name}
+            </Typography>
+            <Typography sx={{ color: "#7d86a7", fontSize: "0.78rem", mt: 0.35 }}>
+              Consulting Agency
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Stack direction="row" spacing={3.5} justifyContent="center" sx={{ display: { xs: "none", md: "flex" } }}>
+          {navItems.map((item) => (
+            <Typography
+              key={item.id}
+              onClick={() => scrollToSection(item.id)}
+              sx={{
+                color: "#44507a",
+                cursor: "pointer",
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                "&:hover": { color: "#1f2b59" },
+              }}
+            >
+              {item.label}
+            </Typography>
+          ))}
+        </Stack>
+
+        <Button
+          variant="contained"
+          onClick={() => scrollToSection("contact")}
+          sx={{
+            bgcolor: "#3f57ff",
+            color: "#ffffff",
+            borderRadius: 999,
+            px: 2.6,
+            py: 1.05,
+            fontSize: "0.86rem",
+            fontWeight: 700,
+            textTransform: "none",
+            boxShadow: "0 16px 34px rgba(63, 87, 255, 0.24)",
+            "&:hover": {
+              bgcolor: "#3248df",
+              boxShadow: "0 18px 36px rgba(63, 87, 255, 0.28)",
+            },
+          }}
+        >
+          Free Consultation
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
+function ConsultingReferenceHero({
+  data,
+}: {
+  data: TemplateProps["data"];
+}) {
+  return <Box sx={{ display: "none" }}>{data.name}</Box>;
+}
+
+function ConsultingReferenceBody({
+  data,
+}: {
+  data: TemplateProps["data"];
+}) {
+  const services = (data.services ?? []).slice(0, 4);
+  const serviceIcons = [BriefcaseBusiness, TrendingUp, Landmark, ShieldCheck];
+  const team = (data.reviews ?? []).slice(0, 3).map((review, index) => ({
+    name: review.author,
+    role: ["Managing Director", "Operations Partner", "Advisory Lead"][index] || "Advisor",
+    text: review.text,
+    image: data.gallery?.[index + 2]?.url ?? data.gallery?.[0]?.url,
+  }));
+  const postCards = (data.gallery ?? []).slice(3, 6);
+
+  return (
+    <>
+      <Box id="services" sx={{ px: { xs: 2.5, md: 4.5 }, py: { xs: 8, md: 10 }, bgcolor: "#ffffff" }}>
+        <Box sx={{ maxWidth: 1180, mx: "auto" }}>
+          <FadeIn>
+            <Stack spacing={1.5} textAlign="center" alignItems="center">
+              <Typography sx={{ color: "#0a6665", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.22em", textTransform: "uppercase" }}>
+                Services We Provide
+              </Typography>
+              <Typography sx={{ color: "#163332", fontWeight: 800, fontSize: { xs: "2rem", md: "3rem" }, lineHeight: 1.02, maxWidth: 740 }}>
+                Advisory products built for control, reporting, and growth.
+              </Typography>
+            </Stack>
+          </FadeIn>
+
+          <Grid container spacing={2.5} sx={{ mt: 3.5 }}>
+            {services.map((service, index) => {
+              const Icon = serviceIcons[index % serviceIcons.length];
+              return (
+                <Grid item xs={12} sm={6} md={3} key={service.name}>
+                  <FadeIn delay={index * 0.08}>
+                    <Box sx={{ height: "100%", p: 2.4, borderRadius: 3, border: "1px solid rgba(10,102,101,0.1)", boxShadow: "0 18px 40px rgba(19,53,51,0.06)" }}>
+                      <Box sx={{ width: 52, height: 52, borderRadius: 2.5, display: "grid", placeItems: "center", bgcolor: "rgba(10,102,101,0.1)", color: "#0a6665" }}>
+                        <Icon size={22} />
+                      </Box>
+                      <Typography sx={{ mt: 2, color: "#143230", fontWeight: 800, fontSize: "1.1rem" }}>{service.name}</Typography>
+                      <Typography sx={{ mt: 1.1, color: "#6c8482", lineHeight: 1.75 }}>{service.description}</Typography>
+                    </Box>
+                  </FadeIn>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Box>
+      </Box>
+
+      <Box id="about" sx={{ px: { xs: 2.5, md: 4.5 }, py: { xs: 8, md: 10 }, bgcolor: "#eaf6f3" }}>
+        <Box sx={{ maxWidth: 1180, mx: "auto" }}>
+          <Grid container spacing={{ xs: 4, md: 5 }} alignItems="center">
+            <Grid item xs={12} md={5}>
+              <FadeIn>
+                <Typography sx={{ color: "#0a6665", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.22em", textTransform: "uppercase" }}>
+                  About Company
+                </Typography>
+                <Typography sx={{ mt: 1.5, color: "#143230", fontWeight: 800, fontSize: { xs: "2rem", md: "3rem" }, lineHeight: 1.02 }}>
+                  Trusted finance strategy for ambitious operators.
+                </Typography>
+                <Typography sx={{ mt: 2, color: "#5f7675", lineHeight: 1.9 }}>
+                  {data.tagline || data.description}
+                </Typography>
+                <Stack spacing={1.1} sx={{ mt: 3 }}>
+                  {[
+                    "Board-ready reporting and KPI narratives",
+                    "Capital planning with scenario visibility",
+                    "Transaction preparation before diligence pressure hits",
+                  ].map((item) => (
+                    <Stack key={item} direction="row" spacing={1.2} alignItems="center">
+                      <CheckCircle2 size={18} color="#0a6665" />
+                      <Typography sx={{ color: "#5f7675", lineHeight: 1.6 }}>{item}</Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </FadeIn>
+            </Grid>
+            <Grid item xs={12} md={7}>
+              <FadeIn delay={0.08}>
+                <Grid container spacing={2.2}>
+                  <Grid item xs={12} sm={7}>
+                    <Box sx={{ borderRadius: 4, overflow: "hidden", minHeight: { xs: 280, md: 420 }, boxShadow: "0 22px 55px rgba(17,46,45,0.12)" }}>
+                      {data.gallery?.[1]?.url && (
+                        <Box component="img" src={data.gallery[1].url} alt={data.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      )}
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={5}>
+                    <Stack spacing={2.2} sx={{ height: "100%" }}>
+                      <Box sx={{ borderRadius: 4, overflow: "hidden", minHeight: 200, flex: 1, boxShadow: "0 22px 55px rgba(17,46,45,0.12)" }}>
+                        {data.gallery?.[2]?.url && (
+                          <Box component="img" src={data.gallery[2].url} alt={data.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        )}
+                      </Box>
+                      <Box sx={{ p: 2.4, borderRadius: 4, bgcolor: "#0c5a59", color: "#eff8f6" }}>
+                        <Typography sx={{ fontWeight: 800, fontSize: "2.1rem" }}>30+</Typography>
+                        <Typography sx={{ mt: 0.5, color: "rgba(239,248,246,0.78)", lineHeight: 1.7 }}>
+                          Years of combined transaction, FP&A, and CFO advisory experience.
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Grid>
+                </Grid>
+              </FadeIn>
+            </Grid>
+          </Grid>
+        </Box>
+      </Box>
+
+      <Box id="team" sx={{ px: { xs: 2.5, md: 4.5 }, py: { xs: 8, md: 10 }, bgcolor: "#ffffff" }}>
+        <Box sx={{ maxWidth: 1180, mx: "auto" }}>
+          <FadeIn>
+            <Stack spacing={1.5} textAlign="center" alignItems="center">
+              <Typography sx={{ color: "#0a6665", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.22em", textTransform: "uppercase" }}>
+                Meet Our Team
+              </Typography>
+              <Typography sx={{ color: "#163332", fontWeight: 800, fontSize: { xs: "2rem", md: "3rem" } }}>
+                Senior operators with finance and transaction depth.
+              </Typography>
+            </Stack>
+          </FadeIn>
+
+          <Grid container spacing={2.5} sx={{ mt: 3.5 }}>
+            {team.map((member, index) => (
+              <Grid item xs={12} md={4} key={member.name}>
+                <FadeIn delay={index * 0.08}>
+                  <Box sx={{ height: "100%", borderRadius: 4, overflow: "hidden", border: "1px solid rgba(10,102,101,0.1)" }}>
+                    <Box sx={{ height: 280, bgcolor: "#dceae7" }}>
+                      {member.image && (
+                        <Box component="img" src={member.image} alt={member.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      )}
+                    </Box>
+                    <Box sx={{ p: 2.5 }}>
+                      <Typography sx={{ color: "#153130", fontWeight: 800, fontSize: "1.12rem" }}>{member.name}</Typography>
+                      <Typography sx={{ mt: 0.35, color: "#0a6665", fontSize: "0.8rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                        {member.role}
+                      </Typography>
+                      <Typography sx={{ mt: 1.2, color: "#6b8381", lineHeight: 1.75 }}>{member.text}</Typography>
+                    </Box>
+                  </Box>
+                </FadeIn>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </Box>
+
+      <Box sx={{ px: { xs: 2.5, md: 4.5 }, py: { xs: 8, md: 10 }, bgcolor: "#eaf6f3" }}>
+        <Box sx={{ maxWidth: 1180, mx: "auto" }}>
+          <Grid container spacing={{ xs: 4, md: 5 }} alignItems="stretch">
+            <Grid item xs={12} md={7}>
+              <FadeIn>
+                <Box sx={{ p: { xs: 3, md: 4 }, borderRadius: 4, bgcolor: "#0b5556", color: "#eff8f6", height: "100%" }}>
+                  <Typography sx={{ color: "#d8f2ed", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.22em", textTransform: "uppercase" }}>
+                    Case Study Highlight
+                  </Typography>
+                  <Typography sx={{ mt: 1.5, fontWeight: 800, fontSize: { xs: "2rem", md: "3rem" }, lineHeight: 1.02, maxWidth: 620 }}>
+                    Clear reporting, tighter forecasts, and executive decision support.
+                  </Typography>
+                  <Typography sx={{ mt: 2, color: "rgba(239,248,246,0.76)", lineHeight: 1.85, maxWidth: 640 }}>
+                    We build finance systems leadership can actually use: board packs, planning models, lender-ready narratives, and margin visibility that drives action.
+                  </Typography>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2.5} sx={{ mt: 3.5 }}>
+                    {[
+                      { label: "Forecast Accuracy", value: "30%" },
+                      { label: "Margin Visibility", value: "90%" },
+                    ].map((item) => (
+                      <Box key={item.label} sx={{ minWidth: 160 }}>
+                        <Typography sx={{ fontWeight: 800, fontSize: "2rem" }}>{item.value}</Typography>
+                        <Typography sx={{ mt: 0.4, color: "rgba(239,248,246,0.7)", textTransform: "uppercase", fontSize: "0.8rem", letterSpacing: "0.12em" }}>
+                          {item.label}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              </FadeIn>
+            </Grid>
+            <Grid item xs={12} md={5}>
+              <FadeIn delay={0.08}>
+                <Box sx={{ borderRadius: 4, overflow: "hidden", minHeight: { xs: 320, md: "100%" }, boxShadow: "0 24px 60px rgba(14,43,41,0.12)" }}>
+                  {data.gallery?.[4]?.url && (
+                    <Box component="img" src={data.gallery[4].url} alt={data.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  )}
+                </Box>
+              </FadeIn>
+            </Grid>
+          </Grid>
+        </Box>
+      </Box>
+
+      <Box id="contact" sx={{ px: { xs: 2.5, md: 4.5 }, py: { xs: 8, md: 10 }, bgcolor: "#083a39" }}>
+        <Box sx={{ maxWidth: 1180, mx: "auto" }}>
+          <Grid container spacing={{ xs: 4, md: 5 }} alignItems="stretch">
+            <Grid item xs={12} md={5}>
+              <FadeIn>
+                <Typography sx={{ color: "#d8f2ed", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.22em", textTransform: "uppercase" }}>
+                  Get In Touch
+                </Typography>
+                <Typography sx={{ mt: 1.5, color: "#f4faf8", fontWeight: 800, fontSize: { xs: "2rem", md: "3rem" }, lineHeight: 1.02 }}>
+                  Start the conversation with our advisory team.
+                </Typography>
+                <Stack spacing={1.4} sx={{ mt: 3 }}>
+                  {data.contact.phone && (
+                    <Stack direction="row" spacing={1.2} alignItems="center">
+                      <PhoneCall size={18} color="#d8f2ed" />
+                      <Typography sx={{ color: "rgba(244,250,248,0.82)" }}>{data.contact.phone}</Typography>
+                    </Stack>
+                  )}
+                  {data.contact.email && (
+                    <Stack direction="row" spacing={1.2} alignItems="center">
+                      <Mail size={18} color="#d8f2ed" />
+                      <Typography sx={{ color: "rgba(244,250,248,0.82)" }}>{data.contact.email}</Typography>
+                    </Stack>
+                  )}
+                  {data.contact.address && (
+                    <Stack direction="row" spacing={1.2} alignItems="flex-start">
+                      <MapPin size={18} color="#d8f2ed" />
+                      <Typography sx={{ color: "rgba(244,250,248,0.82)", lineHeight: 1.7 }}>{data.contact.address}</Typography>
+                    </Stack>
+                  )}
+                </Stack>
+              </FadeIn>
+            </Grid>
+            <Grid item xs={12} md={7}>
+              <FadeIn delay={0.08}>
+                <Grid container spacing={2.2}>
+                  {postCards.map((card, index) => (
+                    <Grid item xs={12} sm={4} key={card.url}>
+                      <Box sx={{ height: "100%", borderRadius: 4, overflow: "hidden", bgcolor: "#ffffff" }}>
+                        <Box sx={{ height: 150 }}>
+                          <Box component="img" src={card.url} alt={card.caption || data.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </Box>
+                        <Box sx={{ p: 2 }}>
+                          <Typography sx={{ color: "#123231", fontWeight: 800, fontSize: "1rem", lineHeight: 1.35 }}>
+                            {[
+                              "Forecasting discipline",
+                              "Board reporting clarity",
+                              "Diligence readiness",
+                            ][index]}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </FadeIn>
+            </Grid>
+          </Grid>
+        </Box>
+      </Box>
+    </>
+  );
+}
+
 const PremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
   const theme = buildPremiumTheme(data.primaryColor, data.secondaryColor);
   const consulting = isConsultingTemplate(data);
+
+  if (consulting) {
+    return <ConsultingStudioTemplate data={data} />;
+  }
+
   return (
     <Box sx={{ fontFamily: theme.fontFamily, bgcolor: theme.bgPrimary }}>
-      {consulting ? (
-        <ConsultingHeader data={data} theme={theme} />
-      ) : (
-        <PremiumHeader data={data} theme={theme} />
-      )}
-      {consulting ? (
-        <ConsultingHero data={data} theme={theme} />
-      ) : (
-        <HeroBlock data={data} theme={theme} variant="dark" />
-      )}
+      <PremiumHeader data={data} theme={theme} />
+      <HeroBlock data={data} theme={theme} variant="dark" />
       <Box id="overview">
         <ExecutiveOverview data={data} theme={theme} />
       </Box>
