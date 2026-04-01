@@ -14,9 +14,6 @@ import {
   ArrowRight,
   Facebook,
   Instagram,
-  Mail,
-  MapPin,
-  Phone,
 } from "lucide-react";
 import { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
@@ -178,6 +175,8 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             Taste the Difference
           </Typography>
+        </FadeIn>
+        <FadeIn delay={0.08}>
           <Typography
             sx={{
               mt: 1.5,
@@ -190,6 +189,8 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
             Bold comfort food, warm atmosphere, and dishes built to leave a
             lasting impression at every table.
           </Typography>
+        </FadeIn>
+        <FadeIn delay={0.16}>
           <Button
             variant="contained"
             sx={{
@@ -213,17 +214,19 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
       </Box>
 
       <Box sx={{ height: { xs: 120, md: 500 }, overflow: "hidden" }}>
-        <Box
-          component="img"
-          src={heroBannerImage}
-          alt={data.name}
-          sx={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            backgroundAttachment: "fixed",
-          }}
-        />
+        <FadeIn direction="up">
+          <Box
+            component="img"
+            src={heroBannerImage}
+            alt={data.name}
+            sx={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              backgroundAttachment: "fixed",
+            }}
+          />
+        </FadeIn>
       </Box>
 
       <Box id="story" data-preview-section="Story" sx={{ bgcolor: black }}>
@@ -254,6 +257,8 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   Our Story
                 </Typography>
+              </FadeIn>
+              <FadeIn delay={0.08}>
                 <Typography
                   sx={{
                     color: "rgba(255,255,255,0.76)",
@@ -263,10 +268,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   {data.description}
                 </Typography>
-                <Stack spacing={2.6} sx={{ mt: 4.5, maxWidth: 360 }}>
-                  {["Our Mission", "Our Vision", "Our Promise"].map(
-                    (title, index) => (
-                      <Box key={title}>
+              </FadeIn>
+              <Stack spacing={2.6} sx={{ mt: 4.5, maxWidth: 360 }}>
+                {["Our Mission", "Our Vision", "Our Promise"].map(
+                  (title, index) => (
+                    <FadeIn key={title} delay={0.16 + index * 0.08} direction="right">
+                      <Box>
                         <Typography
                           sx={{
                             color: cream,
@@ -292,14 +299,14 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                             "Fresh ingredients, bold flavors, and hospitality that remains personal."}
                         </Typography>
                       </Box>
-                    ),
-                  )}
-                </Stack>
-              </FadeIn>
+                    </FadeIn>
+                  ),
+                )}
+              </Stack>
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <FadeIn delay={0.08}>
+              <FadeIn delay={0.08} direction="left">
                 <Box sx={{ overflow: "hidden", height: { xs: 340, md: 580 } }}>
                   <Box
                     component="img"
@@ -312,7 +319,7 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <FadeIn delay={0.12}>
+              <FadeIn delay={0.12} direction="up">
                 <Box sx={{ overflow: "hidden", height: { xs: 280, md: 320 } }}>
                   <Box
                     component="img"
@@ -324,7 +331,7 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
               </FadeIn>
             </Grid>
             <Grid item xs={12} md={6}>
-              <FadeIn delay={0.16}>
+              <FadeIn delay={0.16} direction="up">
                 <Box sx={{ overflow: "hidden", height: { xs: 280, md: 320 } }}>
                   <Box
                     component="img"
@@ -347,29 +354,35 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 3, md: 5 }}>
             <Grid item xs={12} md={3}>
-              <Typography sx={{ fontFamily: serifFont, fontSize: "2rem" }}>
-                Location
-              </Typography>
+              <FadeIn>
+                <Typography sx={{ fontFamily: serifFont, fontSize: "2rem" }}>
+                  Location
+                </Typography>
+              </FadeIn>
             </Grid>
             <Grid item xs={12} md={4.5}>
-              <Typography
-                sx={{ lineHeight: 1.85, color: "rgba(255,255,255,0.82)" }}
-              >
-                Find us in the heart of the city where warm interiors,
-                open-grill cooking, and late-evening energy come together in one
-                memorable dining room.
-              </Typography>
+              <FadeIn delay={0.08}>
+                <Typography
+                  sx={{ lineHeight: 1.85, color: "rgba(255,255,255,0.82)" }}
+                >
+                  Find us in the heart of the city where warm interiors,
+                  open-grill cooking, and late-evening energy come together in one
+                  memorable dining room.
+                </Typography>
+              </FadeIn>
             </Grid>
             <Grid item xs={12} md={4.5}>
-              <Typography
-                sx={{ lineHeight: 1.85, color: "rgba(255,255,255,0.82)" }}
-              >
-                {data.contact.address}
-                <br />
-                {data.contact.phone}
-                <br />
-                {data.contact.email}
-              </Typography>
+              <FadeIn delay={0.16}>
+                <Typography
+                  sx={{ lineHeight: 1.85, color: "rgba(255,255,255,0.82)" }}
+                >
+                  {data.contact.address}
+                  <br />
+                  {data.contact.phone}
+                  <br />
+                  {data.contact.email}
+                </Typography>
+              </FadeIn>
             </Grid>
           </Grid>
         </Container>
@@ -419,6 +432,8 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                 Enjoy 25% off our menu for a limited time because great burgers
                 taste even better with a deal.
               </Typography>
+            </FadeIn>
+            <FadeIn delay={0.1}>
               <Button
                 variant="outlined"
                 sx={{
@@ -436,14 +451,16 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Box>
         </Grid>
         <Grid item xs={12} md={7}>
-          <Box sx={{ height: { xs: 320, md: 360 }, overflow: "hidden" }}>
-            <Box
-              component="img"
-              src={promoImage}
-              alt="Burger offer"
-              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          </Box>
+          <FadeIn delay={0.08} direction="left">
+            <Box sx={{ height: { xs: 320, md: 360 }, overflow: "hidden" }}>
+              <Box
+                component="img"
+                src={promoImage}
+                alt="Burger offer"
+                sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            </Box>
+          </FadeIn>
         </Grid>
       </Grid>
 
@@ -465,29 +482,31 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   Why Us
                 </Typography>
-                {[
-                  [
-                    "Quality Ingredients",
-                    "We use fresh ingredients and bold seasoning to deliver full flavor in every dish.",
-                  ],
-                  [
-                    "Unique Flavors",
-                    "Our menu balances comfort favorites with recipes that feel distinctive and memorable.",
-                  ],
-                  [
-                    "Exceptional Service",
-                    "Fast, warm, and attentive hospitality is part of the experience from arrival to last bite.",
-                  ],
-                  [
-                    "Customer Satisfaction",
-                    "Guests return because the food, service, and atmosphere consistently deliver.",
-                  ],
-                  [
-                    "Crafted In-House",
-                    "From sauces to signature specials, much of what you taste is prepared with care in-house.",
-                  ],
-                ].map(([title, text]) => (
-                  <Box key={title} sx={{ mb: 2.3 }}>
+              </FadeIn>
+              {[
+                [
+                  "Quality Ingredients",
+                  "We use fresh ingredients and bold seasoning to deliver full flavor in every dish.",
+                ],
+                [
+                  "Unique Flavors",
+                  "Our menu balances comfort favorites with recipes that feel distinctive and memorable.",
+                ],
+                [
+                  "Exceptional Service",
+                  "Fast, warm, and attentive hospitality is part of the experience from arrival to last bite.",
+                ],
+                [
+                  "Customer Satisfaction",
+                  "Guests return because the food, service, and atmosphere consistently deliver.",
+                ],
+                [
+                  "Crafted In-House",
+                  "From sauces to signature specials, much of what you taste is prepared with care in-house.",
+                ],
+              ].map(([title, text], index) => (
+                <FadeIn key={title} delay={0.08 + index * 0.08} direction="right">
+                  <Box sx={{ mb: 2.3 }}>
                     <Typography
                       sx={{
                         fontFamily: serifFont,
@@ -508,27 +527,31 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                       {text}
                     </Typography>
                   </Box>
-                ))}
-              </FadeIn>
+                </FadeIn>
+              ))}
             </Grid>
             <Grid item xs={12} md={5}>
               <Stack spacing={2.2}>
-                <Box sx={{ overflow: "hidden", height: 170 }}>
-                  <Box
-                    component="img"
-                    src={whyTopImage}
-                    alt="Restaurant seating"
-                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                </Box>
-                <Box sx={{ overflow: "hidden", height: 170 }}>
-                  <Box
-                    component="img"
-                    src={whyBottomImage}
-                    alt="Restaurant dish"
-                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                </Box>
+                <FadeIn delay={0.08} direction="left">
+                  <Box sx={{ overflow: "hidden", height: 170 }}>
+                    <Box
+                      component="img"
+                      src={whyTopImage}
+                      alt="Restaurant seating"
+                      sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </Box>
+                </FadeIn>
+                <FadeIn delay={0.16} direction="left">
+                  <Box sx={{ overflow: "hidden", height: 170 }}>
+                    <Box
+                      component="img"
+                      src={whyBottomImage}
+                      alt="Restaurant dish"
+                      sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </Box>
+                </FadeIn>
               </Stack>
             </Grid>
           </Grid>
@@ -592,20 +615,22 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 5 }} alignItems="stretch">
             <Grid item xs={12} md={6}>
-              <Box
-                sx={{
-                  overflow: "hidden",
-                  minHeight: { xs: 260, md: 400 },
-                  bgcolor: "#111",
-                }}
-              >
+              <FadeIn direction="right">
                 <Box
-                  component="img"
-                  src={contactImage}
-                  alt="Restaurant interior"
-                  sx={{ width: "100%", height: "100%" }}
-                />
-              </Box>
+                  sx={{
+                    overflow: "hidden",
+                    minHeight: { xs: 260, md: 400 },
+                    bgcolor: "#111",
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={contactImage}
+                    alt="Restaurant interior"
+                    sx={{ width: "100%", height: "100%" }}
+                  />
+                </Box>
+              </FadeIn>
             </Grid>
             <Grid item xs={12} md={6}>
               <FadeIn>
@@ -618,17 +643,18 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   Get in Touch Today
                 </Typography>
-                <Stack spacing={2}>
-                  {[
-                    "Full Name",
-                    "Email Address",
-                    "Phone",
-                    "Date",
-                    "Time",
-                    "Message",
-                  ].map((label, index) => (
+              </FadeIn>
+              <Stack spacing={2}>
+                {[
+                  "Full Name",
+                  "Email Address",
+                  "Phone",
+                  "Date",
+                  "Time",
+                  "Message",
+                ].map((label, index) => (
+                  <FadeIn key={label} delay={0.08 + index * 0.06} direction="left">
                     <TextField
-                      key={label}
                       fullWidth
                       multiline={label === "Message"}
                       minRows={label === "Message" ? 3 : undefined}
@@ -646,8 +672,10 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                       inputProps={{ sx: { color: "#fff" } }}
                     />
-                  ))}
-                </Stack>
+                  </FadeIn>
+                ))}
+              </Stack>
+              <FadeIn delay={0.46}>
                 <Button
                   variant="contained"
                   sx={{
@@ -684,115 +712,125 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Container maxWidth="lg">
           <Grid container spacing={4}>
             <Grid item xs={12} md={3}>
-              <Typography
-                sx={{ fontFamily: serifFont, fontSize: "1.8rem", mb: 1 }}
-              >
-                B. Morgan
-              </Typography>
-              <Typography
-                sx={{ color: "rgba(255,255,255,0.76)", lineHeight: 1.8 }}
-              >
-                Restaurant operator focused on bold flavor, honest hospitality,
-                and a memorable dining room.
-              </Typography>
-              <Stack direction="row" spacing={1.2} sx={{ mt: 2 }}>
-                {[Facebook, Instagram].map((Icon, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      width: 34,
-                      height: 34,
-                      display: "grid",
-                      placeItems: "center",
-                      border: "1px solid rgba(255,255,255,0.16)",
-                    }}
-                  >
-                    <Icon size={15} />
-                  </Box>
-                ))}
-              </Stack>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography sx={{ color: cream, fontWeight: 700, mb: 1.2 }}>
-                Say Hello
-              </Typography>
-              <Typography
-                sx={{ color: "rgba(255,255,255,0.8)", lineHeight: 1.8 }}
-              >
-                {data.contact.address}
-              </Typography>
-              <Typography
-                sx={{ color: "rgba(255,255,255,0.8)", lineHeight: 1.8, mt: 1 }}
-              >
-                {data.contact.phone}
-              </Typography>
-              <Typography
-                sx={{ color: "rgba(255,255,255,0.8)", lineHeight: 1.8 }}
-              >
-                {data.contact.email}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography sx={{ color: cream, fontWeight: 700, mb: 1.2 }}>
-                Opening Hours
-              </Typography>
-              {data.workingHours?.map((item) => (
+              <FadeIn>
                 <Typography
-                  key={item.day}
+                  sx={{ fontFamily: serifFont, fontSize: "1.8rem", mb: 1 }}
+                >
+                  B. Morgan
+                </Typography>
+                <Typography
+                  sx={{ color: "rgba(255,255,255,0.76)", lineHeight: 1.8 }}
+                >
+                  Restaurant operator focused on bold flavor, honest hospitality,
+                  and a memorable dining room.
+                </Typography>
+                <Stack direction="row" spacing={1.2} sx={{ mt: 2 }}>
+                  {[Facebook, Instagram].map((Icon, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        width: 34,
+                        height: 34,
+                        display: "grid",
+                        placeItems: "center",
+                        border: "1px solid rgba(255,255,255,0.16)",
+                      }}
+                    >
+                      <Icon size={15} />
+                    </Box>
+                  ))}
+                </Stack>
+              </FadeIn>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <FadeIn delay={0.08}>
+                <Typography sx={{ color: cream, fontWeight: 700, mb: 1.2 }}>
+                  Say Hello
+                </Typography>
+                <Typography
                   sx={{ color: "rgba(255,255,255,0.8)", lineHeight: 1.8 }}
                 >
-                  {item.day}: {item.hours}
+                  {data.contact.address}
                 </Typography>
-              ))}
+                <Typography
+                  sx={{ color: "rgba(255,255,255,0.8)", lineHeight: 1.8, mt: 1 }}
+                >
+                  {data.contact.phone}
+                </Typography>
+                <Typography
+                  sx={{ color: "rgba(255,255,255,0.8)", lineHeight: 1.8 }}
+                >
+                  {data.contact.email}
+                </Typography>
+              </FadeIn>
             </Grid>
             <Grid item xs={12} md={3}>
-              <Typography sx={{ color: cream, fontWeight: 700, mb: 1.2 }}>
-                Stay Connected
-              </Typography>
-              <TextField
-                fullWidth
-                placeholder="Enter email address"
-                variant="outlined"
-                size="small"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "rgba(255,255,255,0.1)",
-                    color: "#fff",
-                    "& fieldset": { borderColor: "rgba(255,255,255,0.16)" },
-                  },
-                }}
-              />
-              <Button
-                variant="contained"
-                endIcon={<ArrowRight size={16} />}
-                sx={{
-                  mt: 1.6,
-                  bgcolor: "#fff",
-                  color: black,
-                  borderRadius: 0,
-                  px: 3,
-                  py: 0.9,
-                  fontWeight: 700,
-                  "&:hover": {
+              <FadeIn delay={0.16}>
+                <Typography sx={{ color: cream, fontWeight: 700, mb: 1.2 }}>
+                  Opening Hours
+                </Typography>
+                {data.workingHours?.map((item) => (
+                  <Typography
+                    key={item.day}
+                    sx={{ color: "rgba(255,255,255,0.8)", lineHeight: 1.8 }}
+                  >
+                    {item.day}: {item.hours}
+                  </Typography>
+                ))}
+              </FadeIn>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <FadeIn delay={0.24}>
+                <Typography sx={{ color: cream, fontWeight: 700, mb: 1.2 }}>
+                  Stay Connected
+                </Typography>
+                <TextField
+                  fullWidth
+                  placeholder="Enter email address"
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "rgba(255,255,255,0.1)",
+                      color: "#fff",
+                      "& fieldset": { borderColor: "rgba(255,255,255,0.16)" },
+                    },
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  endIcon={<ArrowRight size={16} />}
+                  sx={{
+                    mt: 1.6,
                     bgcolor: "#fff",
                     color: black,
-                    filter: "brightness(0.96)",
-                  },
-                }}
-              >
-                Join
-              </Button>
+                    borderRadius: 0,
+                    px: 3,
+                    py: 0.9,
+                    fontWeight: 700,
+                    "&:hover": {
+                      bgcolor: "#fff",
+                      color: black,
+                      filter: "brightness(0.96)",
+                    },
+                  }}
+                >
+                  Join
+                </Button>
+              </FadeIn>
             </Grid>
           </Grid>
-          <Typography
-            sx={{
-              mt: 4.5,
-              color: "rgba(255,255,255,0.72)",
-              fontSize: "0.82rem",
-            }}
-          >
-            © 2026 B. Morgan. Restaurant demo template.
-          </Typography>
+          <FadeIn delay={0.32}>
+            <Typography
+              sx={{
+                mt: 4.5,
+                color: "rgba(255,255,255,0.72)",
+                fontSize: "0.82rem",
+              }}
+            >
+              © 2026 B. Morgan. Restaurant demo template.
+            </Typography>
+          </FadeIn>
         </Container>
       </Box>
     </Box>

@@ -649,17 +649,17 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Box>
         </FadeIn>
 
-        <FadeIn delay={0.22}>
-          <Box
-            id="blog-contact"
-            sx={{
-              pt: { xs: 7, md: 10 },
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "0.95fr 1.05fr" },
-              gap: { xs: 3, md: 4 },
-              alignItems: "stretch",
-            }}
-          >
+        <Box
+          id="blog-contact"
+          sx={{
+            pt: { xs: 7, md: 10 },
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "0.95fr 1.05fr" },
+            gap: { xs: 3, md: 4 },
+            alignItems: "stretch",
+          }}
+        >
+          <FadeIn delay={0.22}>
             <Box
               sx={{
                 borderRadius: 4,
@@ -692,7 +692,9 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Typography>
               </Stack>
             </Box>
+          </FadeIn>
 
+          <FadeIn delay={0.3} direction="left">
             <Box
               sx={{
                 borderRadius: 4,
@@ -754,8 +756,8 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Button>
               </Stack>
             </Box>
-          </Box>
-        </FadeIn>
+          </FadeIn>
+        </Box>
       </Box>
 
       <Box sx={{ bgcolor: "#171f2d", color: "#fff", mt: { xs: 1, md: 3 } }}>
@@ -767,7 +769,8 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               gap: 4,
             }}
           >
-            <Box>
+            <FadeIn>
+              <Box>
               <Stack direction="row" spacing={1.1} alignItems="center" sx={{ mb: 1.8 }}>
                 <Box
                   component="img"
@@ -790,11 +793,13 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Typography sx={{ color: "rgba(255,255,255,0.68)" }}>
                 {data.contact.email || "hello@agrob.com"}
               </Typography>
-            </Box>
+              </Box>
+            </FadeIn>
 
-            <Box>
-              <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Navigation</Typography>
-              <Stack spacing={1.1}>
+            <FadeIn delay={0.08}>
+              <Box>
+                <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Navigation</Typography>
+                <Stack spacing={1.1}>
                 {[
                   { label: "Home", id: "blog-home" },
                   { label: "About", id: "blog-about" },
@@ -809,92 +814,97 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                     {item.label}
                   </Typography>
                 ))}
-              </Stack>
-            </Box>
+                </Stack>
+              </Box>
+            </FadeIn>
 
-            <Box>
-              <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Quick Info</Typography>
-              <Stack spacing={1.1}>
-                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
-                  Weekly insights and featured articles
-                </Typography>
-                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
-                  Expert answers and field guidance
-                </Typography>
-                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
-                  Direct contact for partnerships
-                </Typography>
-                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
-                  Smooth single-page navigation
-                </Typography>
-              </Stack>
-            </Box>
+            <FadeIn delay={0.16}>
+              <Box>
+                <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Quick Info</Typography>
+                <Stack spacing={1.1}>
+                  <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
+                    Weekly insights and featured articles
+                  </Typography>
+                  <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
+                    Expert answers and field guidance
+                  </Typography>
+                  <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
+                    Direct contact for partnerships
+                  </Typography>
+                  <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
+                    Smooth single-page navigation
+                  </Typography>
+                </Stack>
+              </Box>
+            </FadeIn>
 
-            <Box>
-              <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Newsletter</Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  bgcolor: "rgba(255,255,255,0.04)",
-                  px: 1.8,
-                  py: 0.7,
-                  mb: 2,
-                }}
-              >
-                <MailOutlineIcon sx={{ color: "rgba(255,255,255,0.45)", fontSize: 18 }} />
-                <InputBase
-                  placeholder="Enter your email here"
-                  sx={{
-                    flex: 1,
-                    color: "#fff",
-                    "& input::placeholder": { color: "rgba(255,255,255,0.45)", opacity: 1 },
-                  }}
-                />
+            <FadeIn delay={0.24}>
+              <Box>
+                <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Newsletter</Typography>
                 <Box
                   sx={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: "50%",
-                    bgcolor: primary,
-                    color: "#fff",
-                    display: "grid",
-                    placeItems: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    bgcolor: "rgba(255,255,255,0.04)",
+                    px: 1.8,
+                    py: 0.7,
+                    mb: 2,
                   }}
                 >
-                  <ArrowForwardIcon sx={{ fontSize: 16 }} />
+                  <MailOutlineIcon sx={{ color: "rgba(255,255,255,0.45)", fontSize: 18 }} />
+                  <InputBase
+                    placeholder="Enter your email here"
+                    sx={{
+                      flex: 1,
+                      color: "#fff",
+                      "& input::placeholder": { color: "rgba(255,255,255,0.45)", opacity: 1 },
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: "50%",
+                      bgcolor: primary,
+                      color: "#fff",
+                      display: "grid",
+                      placeItems: "center",
+                    }}
+                  >
+                    <ArrowForwardIcon sx={{ fontSize: 16 }} />
+                  </Box>
                 </Box>
-              </Box>
 
-              <Stack direction="row" spacing={1}>
-                {[
-                  data.socialLinks?.twitter ? <Twitter size={16} /> : null,
-                  data.socialLinks?.facebook ? <Facebook size={16} /> : null,
-                  data.socialLinks?.instagram ? <Instagram size={16} /> : null,
-                  data.socialLinks?.linkedin ? <Linkedin size={16} /> : null,
-                ]
-                  .filter(Boolean)
-                  .map((icon, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        width: 34,
-                        height: 34,
-                        borderRadius: "50%",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        display: "grid",
-                        placeItems: "center",
-                        color: "rgba(255,255,255,0.75)",
-                      }}
-                    >
-                      {icon}
-                    </Box>
-                  ))}
-              </Stack>
-            </Box>
+                <Stack direction="row" spacing={1}>
+                  {[
+                    data.socialLinks?.twitter ? <Twitter size={16} /> : null,
+                    data.socialLinks?.facebook ? <Facebook size={16} /> : null,
+                    data.socialLinks?.instagram ? <Instagram size={16} /> : null,
+                    data.socialLinks?.linkedin ? <Linkedin size={16} /> : null,
+                  ]
+                    .filter(Boolean)
+                    .map((icon, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: "50%",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                          display: "grid",
+                          placeItems: "center",
+                          color: "rgba(255,255,255,0.75)",
+                        }}
+                      >
+                        {icon}
+                      </Box>
+                    ))}
+                </Stack>
+              </Box>
+            </FadeIn>
           </Box>
 
           <Box
@@ -908,12 +918,16 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               flexWrap: "wrap",
             }}
           >
-            <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
+            <FadeIn>
+              <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
               © {new Date().getFullYear()} {data.name || "Agrob"} | All right reserved.
             </Typography>
-            <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
+            </FadeIn>
+            <FadeIn delay={0.08}>
+              <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
               Terms of Service
             </Typography>
+            </FadeIn>
           </Box>
         </Box>
       </Box>

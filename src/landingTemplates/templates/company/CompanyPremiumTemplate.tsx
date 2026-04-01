@@ -11,6 +11,7 @@ import {
   Quote,
   Twitter,
 } from "lucide-react";
+import FadeIn from "../../blocks/FadeIn";
 import { TemplateProps } from "../../templateEngine/types";
 
 const editorialImages = {
@@ -138,18 +139,19 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           borderBottom: "1px solid rgba(20,20,20,0.08)",
         }}
       >
-        <Box
-          sx={{
-            maxWidth: 1280,
-            mx: "auto",
-            px: { xs: 2, md: 4 },
-            py: 1.75,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 2,
-          }}
-        >
+        <FadeIn direction="down">
+          <Box
+            sx={{
+              maxWidth: 1280,
+              mx: "auto",
+              px: { xs: 2, md: 4 },
+              py: 1.75,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+            }}
+          >
           <Stack
             direction="row"
             spacing={2.5}
@@ -205,7 +207,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             Book a consultation
           </Button>
-        </Box>
+          </Box>
+        </FadeIn>
       </Box>
 
       <Box
@@ -216,23 +219,30 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "1.15fr 0.85fr" },
           alignItems: "stretch",
+          "& > .company-premium-hero-left": {
+            height: "100%",
+          },
+          "& > .company-premium-hero-right": {
+            height: "100%",
+          },
         }}
       >
-        <Box
-          sx={{
-            position: "relative",
-            minHeight: { xs: 540, md: "78vh" },
-            display: "flex",
-            alignItems: "center",
-            px: { xs: 2, sm: 4, md: 7 },
-            py: { xs: 8, md: 10 },
-            color: "#f9f6ef",
-            backgroundImage: `linear-gradient(90deg, rgba(19,19,19,0.5) 0%, rgba(19,19,19,0.18) 46%, rgba(19,19,19,0.1) 100%), url(${data.gallery?.[0]?.url || editorialImages.hero})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
-          <Box sx={{ maxWidth: 560 }}>
+        <FadeIn className="company-premium-hero-left">
+          <Box
+            sx={{
+              position: "relative",
+              minHeight: { xs: 540, md: "78vh" },
+              display: "flex",
+              alignItems: "center",
+              px: { xs: 2, sm: 4, md: 7 },
+              py: { xs: 8, md: 10 },
+              color: "#f9f6ef",
+              backgroundImage: `linear-gradient(90deg, rgba(19,19,19,0.5) 0%, rgba(19,19,19,0.18) 46%, rgba(19,19,19,0.1) 100%), url(${data.gallery?.[0]?.url || editorialImages.hero})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            <Box sx={{ maxWidth: 560 }}>
             <Typography
               sx={{
                 fontSize: "0.74rem",
@@ -289,8 +299,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               Explore our work
             </Button>
+            </Box>
           </Box>
-        </Box>
+        </FadeIn>
 
         <Box
           sx={{
@@ -300,32 +311,41 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             overflow: "hidden",
           }}
         >
-          <Box
-            component="img"
-            src={data.gallery?.[1]?.url || editorialImages.heroAccent}
-            alt={data.name}
-            sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
+            <Box sx={{ width: "100%", height: "100%" }}>
+   
+            <Box sx={{ width: "100%", height: "100%" }}>
+              <Box
+                component="img"
+                src={data.gallery?.[1]?.url || editorialImages.heroAccent}
+                alt={data.name}
+                sx={{
+                  width: "100%",
+                  minHeight: { xs: 360, md: "78vh" },
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            </Box>
+      
+              </Box>
         </Box>
       </Box>
 
       <Box sx={{ bgcolor: "#40461c", color: "#f6f1e8" }}>
-        <Box
-          sx={{
-            maxWidth: 1280,
-            mx: "auto",
-            px: { xs: 2, md: 4 },
-            py: { xs: 3, md: 3.5 },
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "120px 1fr auto" },
-            gap: 3,
-            alignItems: "center",
-          }}
-        >
+        <FadeIn>
+          <Box
+            sx={{
+              maxWidth: 1280,
+              mx: "auto",
+              px: { xs: 2, md: 4 },
+              py: { xs: 3, md: 3.5 },
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "120px 1fr auto" },
+              gap: 3,
+              alignItems: "center",
+            }}
+          >
           <Typography
             sx={{
               fontFamily: serifFont,
@@ -344,7 +364,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             shaping premium brand experiences, spaces, and presentation systems
             with detail, restraint, and a polished editorial point of view.
           </Typography>
-        </Box>
+          </Box>
+        </FadeIn>
       </Box>
 
       <Box
@@ -359,7 +380,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           gap: { xs: 4, md: 6 },
         }}
       >
-        <Box>
+        <FadeIn>
+          <Box>
           <Typography
             sx={{
               fontFamily: serifFont,
@@ -377,30 +399,31 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             A premium showcase for signature offerings, designed to feel
             elevated and editorial without turning the page into a storefront.
           </Typography>
-          <Button
-            onClick={() => scrollToSection("contact")}
-            variant="contained"
-            sx={{
-              mt: 4,
-              borderRadius: 0,
-              bgcolor: "#0f1110",
-              color: "#fff",
-              px: 3,
-              py: 1.4,
-              fontSize: "0.76rem",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              boxShadow: "none",
-              "&:hover": {
+            <Button
+              onClick={() => scrollToSection("contact")}
+              variant="contained"
+              sx={{
+                mt: 4,
+                borderRadius: 0,
                 bgcolor: "#0f1110",
+                color: "#fff",
+                px: 3,
+                py: 1.4,
+                fontSize: "0.76rem",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
                 boxShadow: "none",
-                opacity: 0.92,
-              },
-            }}
-          >
-            Start a project
-          </Button>
-        </Box>
+                "&:hover": {
+                  bgcolor: "#0f1110",
+                  boxShadow: "none",
+                  opacity: 0.92,
+                },
+              }}
+            >
+              Start a project
+            </Button>
+          </Box>
+        </FadeIn>
 
         <Box
           sx={{
@@ -410,7 +433,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           }}
         >
           {featuredCards.map((card, index) => (
-            <Box key={card.title}>
+            <FadeIn key={card.title} delay={index * 0.08}>
+              <Box>
               <Box
                 component="img"
                 src={card.image}
@@ -433,7 +457,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 {card.description}
               </Typography>
-            </Box>
+              </Box>
+            </FadeIn>
           ))}
         </Box>
       </Box>
@@ -451,19 +476,22 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             alignItems: "center",
           }}
         >
-          <Box
-            component="img"
-            src={data.gallery?.[3]?.url || editorialImages.occasion}
-            alt="Editorial composition"
-            sx={{
-              width: "100%",
-              minHeight: { xs: 320, md: 520 },
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
+          <FadeIn direction="right">
+            <Box
+              component="img"
+              src={data.gallery?.[3]?.url || editorialImages.occasion}
+              alt="Editorial composition"
+              sx={{
+                width: "100%",
+                minHeight: { xs: 320, md: 520 },
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          </FadeIn>
 
-          <Box>
+          <FadeIn delay={0.08}>
+            <Box>
             <Typography
               sx={{
                 fontSize: "0.74rem",
@@ -509,7 +537,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               appointments, or company capabilities without introducing any
               checkout or add-to-cart flow.
             </Typography>
-          </Box>
+            </Box>
+          </FadeIn>
         </Box>
       </Box>
 
@@ -523,28 +552,32 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           textAlign: "center",
         }}
       >
-        <Typography
-          sx={{
-            fontFamily: serifFont,
-            fontSize: { xs: "3rem", md: "4.4rem" },
-            lineHeight: 0.95,
-          }}
-        >
-          What we do
-        </Typography>
-        <Typography
-          sx={{
-            mt: 1.5,
-            maxWidth: 720,
-            mx: "auto",
-            color: "rgba(20,20,20,0.68)",
-            lineHeight: 1.85,
-          }}
-        >
-          A premium multi-section template for company storytelling, services,
-          and trust-building. It is structured around enquiries, not e-commerce
-          actions.
-        </Typography>
+        <FadeIn>
+          <Typography
+            sx={{
+              fontFamily: serifFont,
+              fontSize: { xs: "3rem", md: "4.4rem" },
+              lineHeight: 0.95,
+            }}
+          >
+            What we do
+          </Typography>
+        </FadeIn>
+        <FadeIn delay={0.08}>
+          <Typography
+            sx={{
+              mt: 1.5,
+              maxWidth: 720,
+              mx: "auto",
+              color: "rgba(20,20,20,0.68)",
+              lineHeight: 1.85,
+            }}
+          >
+            A premium multi-section template for company storytelling, services,
+            and trust-building. It is structured around enquiries, not e-commerce
+            actions.
+          </Typography>
+        </FadeIn>
 
         <Box
           sx={{
@@ -554,8 +587,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             gap: 3,
           }}
         >
-          {serviceTiles.map((tile) => (
-            <Box key={tile.title}>
+          {serviceTiles.map((tile, index) => (
+            <FadeIn key={tile.title} delay={index * 0.08}>
+              <Box>
               <Box
                 component="img"
                 src={tile.image}
@@ -581,7 +615,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 {tile.description}
               </Typography>
-            </Box>
+              </Box>
+            </FadeIn>
           ))}
         </Box>
       </Box>
@@ -605,7 +640,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             alignItems: "start",
           }}
         >
-          <Box>
+          <FadeIn>
+            <Box>
             <Typography
               sx={{
                 fontSize: "0.74rem",
@@ -627,31 +663,39 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               Let&apos;s shape something memorable.
             </Typography>
 
-            <Stack spacing={1.4} sx={{ mt: 3.5 }}>
-              {data.contact.address && (
-                <Stack direction="row" spacing={1.4} alignItems="flex-start">
-                  <MapPin size={18} />
-                  <Typography sx={{ lineHeight: 1.8 }}>
-                    {data.contact.address}
-                  </Typography>
-                </Stack>
-              )}
-              {data.contact.email && (
-                <Stack direction="row" spacing={1.4} alignItems="center">
-                  <Mail size={18} />
-                  <Typography>{data.contact.email}</Typography>
-                </Stack>
-              )}
-              {data.contact.phone && (
-                <Stack direction="row" spacing={1.4} alignItems="center">
-                  <Phone size={18} />
-                  <Typography>{data.contact.phone}</Typography>
-                </Stack>
-              )}
-            </Stack>
-          </Box>
+              <Stack spacing={1.4} sx={{ mt: 3.5 }}>
+                {data.contact.address && (
+                  <FadeIn delay={0.08}>
+                    <Stack direction="row" spacing={1.4} alignItems="flex-start">
+                      <MapPin size={18} />
+                      <Typography sx={{ lineHeight: 1.8 }}>
+                        {data.contact.address}
+                      </Typography>
+                    </Stack>
+                  </FadeIn>
+                )}
+                {data.contact.email && (
+                  <FadeIn delay={0.14}>
+                    <Stack direction="row" spacing={1.4} alignItems="center">
+                      <Mail size={18} />
+                      <Typography>{data.contact.email}</Typography>
+                    </Stack>
+                  </FadeIn>
+                )}
+                {data.contact.phone && (
+                  <FadeIn delay={0.2}>
+                    <Stack direction="row" spacing={1.4} alignItems="center">
+                      <Phone size={18} />
+                      <Typography>{data.contact.phone}</Typography>
+                    </Stack>
+                  </FadeIn>
+                )}
+              </Stack>
+            </Box>
+          </FadeIn>
 
-          <Box>
+          <FadeIn delay={0.08}>
+            <Box>
             <Typography
               sx={{
                 fontSize: "0.74rem",
@@ -662,75 +706,77 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               Join the mailing list
             </Typography>
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1.25}
-              sx={{ mt: 2.5, alignItems: "stretch" }}
-            >
-              <TextField
-                fullWidth
-                placeholder="Email address"
-                variant="outlined"
-                size="small"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    minHeight: 58,
-                    borderRadius: 0,
-                    bgcolor: "#f7f2e8",
-                    "& fieldset": {
-                      borderColor: "rgba(20,20,20,0.14)",
-                    },
-                  },
-                  "& .MuiOutlinedInput-input": {
-                    px: 2,
-                    py: 2,
-                  },
-                }}
-              />
-              <Button
-                variant="contained"
-                sx={{
-                  minHeight: 58,
-                  px: 3.2,
-                  borderRadius: 0,
-                  bgcolor: "#111",
-                  color: "#fff",
-                  boxShadow: "none",
-                  fontSize: "0.76rem",
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  "&:hover": {
-                    bgcolor: "#111",
-                    boxShadow: "none",
-                    opacity: 0.92,
-                  },
-                }}
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.25}
+                sx={{ mt: 2.5, alignItems: "stretch" }}
               >
-                Sign up
-              </Button>
-            </Stack>
-
-            {socialIcons.length > 0 && (
-              <Stack direction="row" spacing={1.1} sx={{ mt: 3 }}>
-                {socialIcons.map(({ key, icon: Icon }) => (
-                  <Box
-                    key={key}
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "1px solid rgba(20,20,20,0.14)",
+                <TextField
+                  fullWidth
+                  placeholder="Email address"
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      minHeight: 58,
+                      borderRadius: 0,
                       bgcolor: "#f7f2e8",
-                    }}
-                  >
-                    <Icon size={16} />
-                  </Box>
-                ))}
+                      "& fieldset": {
+                        borderColor: "rgba(20,20,20,0.14)",
+                      },
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      px: 2,
+                      py: 2,
+                    },
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  sx={{
+                    minHeight: 58,
+                    px: 3.2,
+                    borderRadius: 0,
+                    bgcolor: "#111",
+                    color: "#fff",
+                    boxShadow: "none",
+                    fontSize: "0.76rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    "&:hover": {
+                      bgcolor: "#111",
+                      boxShadow: "none",
+                      opacity: 0.92,
+                    },
+                  }}
+                >
+                  Sign up
+                </Button>
               </Stack>
-            )}
-          </Box>
+
+              {socialIcons.length > 0 && (
+                <Stack direction="row" spacing={1.1} sx={{ mt: 3 }}>
+                  {socialIcons.map(({ key, icon: Icon }, index) => (
+                    <FadeIn key={key} delay={index * 0.06}>
+                      <Box
+                        sx={{
+                          width: 42,
+                          height: 42,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "1px solid rgba(20,20,20,0.14)",
+                          bgcolor: "#f7f2e8",
+                        }}
+                      >
+                        <Icon size={16} />
+                      </Box>
+                    </FadeIn>
+                  ))}
+                </Stack>
+              )}
+            </Box>
+          </FadeIn>
         </Box>
       </Box>
     </Box>

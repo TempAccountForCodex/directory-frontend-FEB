@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { Facebook, Instagram, Mail, Twitter } from "lucide-react";
 import { TemplateProps } from "../../templateEngine/types";
+import FadeIn from "../../blocks/FadeIn";
 
 const visualAssets = {
   hero: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
@@ -203,38 +204,42 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
 
         <Box id="hero" sx={{ pt: { xs: 4, md: 3 }, pb: { xs: 7, md: 9 } }}>
-          <Typography
-            sx={{
-              fontFamily: headingFont,
-              fontSize: { xs: "4.8rem", sm: "6.6rem", md: "8.8rem" },
-              lineHeight: 0.88,
-              letterSpacing: "-0.06em",
-              textTransform: "uppercase",
-              textAlign: "center",
-              color: "#f7f1ea",
-            }}
-          >
-            Live softer
-          </Typography>
+          <FadeIn>
+            <Typography
+              sx={{
+                fontFamily: headingFont,
+                fontSize: { xs: "4.8rem", sm: "6.6rem", md: "8.8rem" },
+                lineHeight: 0.88,
+                letterSpacing: "-0.06em",
+                textTransform: "uppercase",
+                textAlign: "center",
+                color: "#f7f1ea",
+              }}
+            >
+              Live softer
+            </Typography>
+          </FadeIn>
 
-          <Box
-            sx={{
-              mt: { xs: -0.5, md: -1.5 },
-              mx: "auto",
-              width: { xs: "100%", md: "78%" },
-              aspectRatio: "1.9 / 1",
-              overflow: "hidden",
-              borderRadius: "50%",
-              bgcolor: "#735746",
-            }}
-          >
+          <FadeIn delay={0.08} direction="up">
             <Box
-              component="img"
-              src={visualAssets.hero}
-              alt={data.name}
-              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          </Box>
+              sx={{
+                mt: { xs: -0.5, md: -1.5 },
+                mx: "auto",
+                width: { xs: "100%", md: "78%" },
+                aspectRatio: "1.9 / 1",
+                overflow: "hidden",
+                borderRadius: "50%",
+                bgcolor: "#735746",
+              }}
+            >
+              <Box
+                component="img"
+                src={visualAssets.hero}
+                alt={data.name}
+                sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            </Box>
+          </FadeIn>
 
           <Box
             sx={{
@@ -245,30 +250,34 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
               alignItems: "start",
             }}
           >
-            <Typography
-              sx={{
-                fontFamily: headingFont,
-                fontSize: { xs: "2.5rem", md: "3.25rem" },
-                lineHeight: 0.92,
-                textTransform: "none",
-                maxWidth: 360,
-              }}
-            >
-              Modern Sofas.
-              <br />
-              Styled Better.
-            </Typography>
-            <Typography
-              sx={{
-                maxWidth: 520,
-                color: "rgba(247,241,234,0.88)",
-                lineHeight: 1.8,
-                fontSize: "0.98rem",
-              }}
-            >
-              {data.description ||
-                "This layout is structured to work across industries, but the default demo content now presents a modern sofa brand with editorial storytelling, product highlights, and design-led merchandising."}
-            </Typography>
+            <FadeIn>
+              <Typography
+                sx={{
+                  fontFamily: headingFont,
+                  fontSize: { xs: "2.5rem", md: "3.25rem" },
+                  lineHeight: 0.92,
+                  textTransform: "none",
+                  maxWidth: 360,
+                }}
+              >
+                Modern Sofas.
+                <br />
+                Styled Better.
+              </Typography>
+            </FadeIn>
+            <FadeIn delay={0.12}>
+              <Typography
+                sx={{
+                  maxWidth: 520,
+                  color: "rgba(247,241,234,0.88)",
+                  lineHeight: 1.8,
+                  fontSize: "0.98rem",
+                }}
+              >
+                {data.description ||
+                  "This layout is structured to work across industries, but the default demo content now presents a modern sofa brand with editorial storytelling, product highlights, and design-led merchandising."}
+              </Typography>
+            </FadeIn>
           </Box>
         </Box>
       </Box>
@@ -332,20 +341,22 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
           py: { xs: 7, md: 9 },
         }}
       >
-        <Typography
-          sx={{
-            fontFamily: headingFont,
-            fontSize: { xs: "3rem", md: "4.4rem" },
-            lineHeight: 0.92,
-            textTransform: "uppercase",
-            maxWidth: 620,
-            mb: 5,
-          }}
-        >
-          Discover our
-          <br />
-          top sofas.
-        </Typography>
+        <FadeIn>
+          <Typography
+            sx={{
+              fontFamily: headingFont,
+              fontSize: { xs: "3rem", md: "4.4rem" },
+              lineHeight: 0.92,
+              textTransform: "uppercase",
+              maxWidth: 620,
+              mb: 5,
+            }}
+          >
+            Discover our
+            <br />
+            top sofas.
+          </Typography>
+        </FadeIn>
 
         <Box
           sx={{
@@ -354,8 +365,9 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
             gap: { xs: 4, md: 5 },
           }}
         >
-          {featuredProducts.map((product) => (
-            <Box key={product.id}>
+          {featuredProducts.map((product, index) => (
+            <FadeIn key={product.id} delay={0.06 * index} direction={index % 2 === 0 ? "up" : "left"}>
+              <Box>
               <Box
                 sx={{
                   bgcolor: "#f2ede8",
@@ -443,7 +455,8 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 View details
               </Button>
-            </Box>
+              </Box>
+            </FadeIn>
           ))}
         </Box>
       </Box>
@@ -497,49 +510,55 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <Box>
-              <Typography
-                sx={{
-                  fontFamily: headingFont,
-                  fontSize: { xs: "3rem", md: "4.3rem" },
-                  lineHeight: 0.92,
-                  textTransform: "uppercase",
-                  maxWidth: 340,
-                }}
-              >
-                About
-                <br />
-                The Brand
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 2.5,
-                  maxWidth: 420,
-                  lineHeight: 1.9,
-                  color: "#8c6d5a",
-                }}
-              >
-                {data.tagline ||
-                  "Tell the founder or company story here. The layout stays flexible for any product-led brand, while this version demonstrates a clean modern sofa collection."}
-              </Typography>
+              <FadeIn>
+                <Typography
+                  sx={{
+                    fontFamily: headingFont,
+                    fontSize: { xs: "3rem", md: "4.3rem" },
+                    lineHeight: 0.92,
+                    textTransform: "uppercase",
+                    maxWidth: 340,
+                  }}
+                >
+                  About
+                  <br />
+                  The Brand
+                </Typography>
+              </FadeIn>
+              <FadeIn delay={0.08}>
+                <Typography
+                  sx={{
+                    mt: 2.5,
+                    maxWidth: 420,
+                    lineHeight: 1.9,
+                    color: "#8c6d5a",
+                  }}
+                >
+                  {data.tagline ||
+                    "Tell the founder or company story here. The layout stays flexible for any product-led brand, while this version demonstrates a clean modern sofa collection."}
+                </Typography>
+              </FadeIn>
             </Box>
-            <Box
-              sx={{
-                width: { xs: "100%", md: 420 },
-                maxWidth: "100%",
-                ml: { md: "auto" },
-                aspectRatio: "0.82 / 1",
-                borderRadius: "46% 46% 0 0",
-                overflow: "hidden",
-                bgcolor: "#735746",
-              }}
-            >
+            <FadeIn delay={0.12} direction="left">
               <Box
-                component="img"
-                src={visualAssets.about}
-                alt="Founder portrait"
-                sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </Box>
+                sx={{
+                  width: { xs: "100%", md: 420 },
+                  maxWidth: "100%",
+                  ml: { md: "auto" },
+                  aspectRatio: "0.82 / 1",
+                  borderRadius: "46% 46% 0 0",
+                  overflow: "hidden",
+                  bgcolor: "#735746",
+                }}
+              >
+                <Box
+                  component="img"
+                  src={visualAssets.about}
+                  alt="Founder portrait"
+                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </Box>
+            </FadeIn>
           </Box>
         </Box>
       </Box>
@@ -557,111 +576,117 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
             gap: 4,
           }}
         >
-          <Box>
-            {navItems.map((item) => (
-              <Box
-                key={item.label}
-                component="button"
-                type="button"
-                onClick={() => scrollToSection(item.id)}
-                sx={{
-                  mb: 1.1,
-                  fontSize: "0.95rem",
-                  display: "block",
-                  color: "inherit",
-                  background: "transparent",
-                  border: 0,
-                  p: 0,
-                  cursor: "pointer",
-                  fontFamily: bodyFont,
-                }}
-              >
-                {item.label}
-              </Box>
-            ))}
-          </Box>
-          <Box>
-            <Typography
-              sx={{
-                mb: 1.3,
-                fontSize: "0.85rem",
-                color: "rgba(243,239,233,0.64)",
-              }}
-            >
-              Connect with us
-            </Typography>
-            <Stack direction="row" spacing={1.2}>
-              {socialLinks.map(({ key, icon: Icon }) => (
+          <FadeIn>
+            <Box>
+              {navItems.map((item) => (
                 <Box
-                  key={key}
+                  key={item.label}
+                  component="button"
+                  type="button"
+                  onClick={() => scrollToSection(item.id)}
                   sx={{
-                    width: 30,
-                    height: 30,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "1px solid rgba(243,239,233,0.2)",
-                    borderRadius: "50%",
+                    mb: 1.1,
+                    fontSize: "0.95rem",
+                    display: "block",
+                    color: "inherit",
+                    background: "transparent",
+                    border: 0,
+                    p: 0,
+                    cursor: "pointer",
+                    fontFamily: bodyFont,
                   }}
                 >
-                  <Icon size={14} />
+                  {item.label}
                 </Box>
               ))}
-            </Stack>
-          </Box>
-          <Box id="contact">
-            <Typography
-              sx={{ fontSize: "0.85rem", color: "rgba(243,239,233,0.64)" }}
-            >
-              Newsletter
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1,
-                maxWidth: 420,
-                lineHeight: 1.8,
-                color: "rgba(243,239,233,0.78)",
-              }}
-            >
-              Drop your email below for new launches, product updates, and
-              campaign announcements.
-            </Typography>
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1.25}
-              sx={{ mt: 2.5 }}
-            >
-              <TextField
-                fullWidth
-                placeholder="Email Address"
-                size="small"
+            </Box>
+          </FadeIn>
+          <FadeIn delay={0.08}>
+            <Box>
+              <Typography
                 sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 0,
-                    bgcolor: "#f3efe9",
-                    minHeight: 48,
-                  },
-                }}
-              />
-              <Button
-                variant="outlined"
-                startIcon={<Mail size={14} />}
-                sx={{
-                  minWidth: 120,
-                  borderRadius: 999,
-                  color: "#f3efe9",
-                  borderColor: "rgba(243,239,233,0.6)",
-                  textTransform: "none",
-                  "&:hover": {
-                    borderColor: "#f3efe9",
-                    bgcolor: "rgba(243,239,233,0.06)",
-                  },
+                  mb: 1.3,
+                  fontSize: "0.85rem",
+                  color: "rgba(243,239,233,0.64)",
                 }}
               >
-                Sign Up
-              </Button>
-            </Stack>
-          </Box>
+                Connect with us
+              </Typography>
+              <Stack direction="row" spacing={1.2}>
+                {socialLinks.map(({ key, icon: Icon }) => (
+                  <Box
+                    key={key}
+                    sx={{
+                      width: 30,
+                      height: 30,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "1px solid rgba(243,239,233,0.2)",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    <Icon size={14} />
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          </FadeIn>
+          <FadeIn delay={0.16}>
+            <Box id="contact">
+              <Typography
+                sx={{ fontSize: "0.85rem", color: "rgba(243,239,233,0.64)" }}
+              >
+                Newsletter
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1,
+                  maxWidth: 420,
+                  lineHeight: 1.8,
+                  color: "rgba(243,239,233,0.78)",
+                }}
+              >
+                Drop your email below for new launches, product updates, and
+                campaign announcements.
+              </Typography>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.25}
+                sx={{ mt: 2.5 }}
+              >
+                <TextField
+                  fullWidth
+                  placeholder="Email Address"
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 0,
+                      bgcolor: "#f3efe9",
+                      minHeight: 48,
+                    },
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={<Mail size={14} />}
+                  sx={{
+                    minWidth: 120,
+                    borderRadius: 999,
+                    color: "#f3efe9",
+                    borderColor: "rgba(243,239,233,0.6)",
+                    textTransform: "none",
+                    "&:hover": {
+                      borderColor: "#f3efe9",
+                      bgcolor: "rgba(243,239,233,0.06)",
+                    },
+                  }}
+                >
+                  Sign Up
+                </Button>
+              </Stack>
+            </Box>
+          </FadeIn>
         </Box>
 
         <Box
@@ -672,18 +697,20 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
             pb: { xs: 3, md: 4 },
           }}
         >
-          <Typography
-            sx={{
-              fontFamily: headingFont,
-              fontSize: { xs: "4rem", md: "7.4rem" },
-              lineHeight: 0.9,
-              letterSpacing: "-0.06em",
-              color: "#f3efe9",
-              textTransform: "none",
-            }}
-          >
-            Take A Seat.
-          </Typography>
+          <FadeIn>
+            <Typography
+              sx={{
+                fontFamily: headingFont,
+                fontSize: { xs: "4rem", md: "7.4rem" },
+                lineHeight: 0.9,
+                letterSpacing: "-0.06em",
+                color: "#f3efe9",
+                textTransform: "none",
+              }}
+            >
+              Take A Seat.
+            </Typography>
+          </FadeIn>
         </Box>
       </Box>
 

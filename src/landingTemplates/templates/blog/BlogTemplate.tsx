@@ -17,6 +17,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { TemplateProps } from "../../templateEngine/types";
 import type { BlogPost } from "../../types/BusinessData";
+import FadeIn from "../../blocks/FadeIn";
 
 const LOCAL_DEMO_POSTS: BlogPost[] = [
   {
@@ -157,17 +158,18 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
           py: { xs: 2, md: 3 },
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 2,
-            flexWrap: "wrap",
-            py: 1.5,
-            borderBottom: "1px solid rgba(17,17,17,0.08)",
-          }}
-        >
+        <FadeIn>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+              flexWrap: "wrap",
+              py: 1.5,
+              borderBottom: "1px solid rgba(17,17,17,0.08)",
+            }}
+          >
           <Typography
             sx={{ fontSize: { xs: "1.6rem", md: "1.8rem" }, fontWeight: 800 }}
           >
@@ -215,7 +217,8 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               Subscribe
             </Button>
           </Stack>
-        </Box>
+          </Box>
+        </FadeIn>
 
         <Box
           id="blog-home"
@@ -228,76 +231,88 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
           }}
         >
           <Box>
-            <Chip
-              label={heroPost?.category || "Business"}
-              sx={{ bgcolor: "#eaf7ec", color: "#1f5a2a", fontWeight: 700 }}
-            />
-            <Typography
-              sx={{
-                mt: 2,
-                fontSize: { xs: "2.5rem", md: "4rem" },
-                fontWeight: 800,
-                lineHeight: 0.95,
-                letterSpacing: "-0.04em",
-                maxWidth: 520,
-              }}
-            >
-              {heroPost?.title}
-            </Typography>
-            <Typography
-              sx={{
-                mt: 2,
-                color: "rgba(17,17,17,0.68)",
-                lineHeight: 1.8,
-                maxWidth: 520,
-              }}
-            >
-              {heroPost?.description || data.tagline}
-            </Typography>
-            <Stack
-              direction="row"
-              spacing={1.2}
-              flexWrap="wrap"
-              useFlexGap
-              sx={{ mt: 2.5 }}
-            >
+            <FadeIn>
               <Chip
-                label={formatDate(heroPost?.publishedAt)}
-                variant="outlined"
+                label={heroPost?.category || "Business"}
+                sx={{ bgcolor: "#eaf7ec", color: "#1f5a2a", fontWeight: 700 }}
               />
-              <Chip
-                label={getReadTime(heroPost || posts[0])}
-                variant="outlined"
-              />
-            </Stack>
-            <Button
-              onClick={() => heroPost && setSelectedPost(heroPost)}
-              endIcon={<ArrowForwardIcon />}
-              sx={{
-                mt: 2.5,
-                borderRadius: "999px",
-                bgcolor: "#111111",
-                color: "#fff",
-                px: 2.2,
-                textTransform: "none",
-                "&:hover": { bgcolor: "#111111" },
-              }}
-            >
-              Read article
-            </Button>
+            </FadeIn>
+            <FadeIn delay={0.08}>
+              <Typography
+                sx={{
+                  mt: 2,
+                  fontSize: { xs: "2.5rem", md: "4rem" },
+                  fontWeight: 800,
+                  lineHeight: 0.95,
+                  letterSpacing: "-0.04em",
+                  maxWidth: 520,
+                }}
+              >
+                {heroPost?.title}
+              </Typography>
+            </FadeIn>
+            <FadeIn delay={0.16}>
+              <Typography
+                sx={{
+                  mt: 2,
+                  color: "rgba(17,17,17,0.68)",
+                  lineHeight: 1.8,
+                  maxWidth: 520,
+                }}
+              >
+                {heroPost?.description || data.tagline}
+              </Typography>
+            </FadeIn>
+            <FadeIn delay={0.24}>
+              <Stack
+                direction="row"
+                spacing={1.2}
+                flexWrap="wrap"
+                useFlexGap
+                sx={{ mt: 2.5 }}
+              >
+                <Chip
+                  label={formatDate(heroPost?.publishedAt)}
+                  variant="outlined"
+                />
+                <Chip
+                  label={getReadTime(heroPost || posts[0])}
+                  variant="outlined"
+                />
+              </Stack>
+            </FadeIn>
+            <FadeIn delay={0.32}>
+              <Button
+                onClick={() => heroPost && setSelectedPost(heroPost)}
+                endIcon={<ArrowForwardIcon />}
+                sx={{
+                  mt: 2.5,
+                  borderRadius: "999px",
+                  bgcolor: "#111111",
+                  color: "#fff",
+                  px: 2.2,
+                  textTransform: "none",
+                  "&:hover": { bgcolor: "#111111" },
+                }}
+              >
+                Read article
+              </Button>
+            </FadeIn>
           </Box>
 
-          <Box
-            onClick={() => heroPost && setSelectedPost(heroPost)}
-            sx={{
-              minHeight: { xs: 280, md: 420 },
-              borderRadius: 4,
-              cursor: "pointer",
-              backgroundImage: `url(${heroPost?.image || ""})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
+          <FadeIn delay={0.12} direction="left">
+            <Box
+              onClick={() => heroPost && setSelectedPost(heroPost)}
+              sx={{
+                minHeight: { xs: 280, md: 420 },
+                borderRadius: 4,
+                cursor: "pointer",
+                backgroundImage: `url(${heroPost?.image || ""})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            />
+          </FadeIn>
         </Box>
 
         <Box id="blog-articles" sx={{ pb: { xs: 4, md: 5 } }}>
@@ -327,72 +342,73 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               gap: 2,
             }}
           >
-            {gridPosts.map((post) => (
-              <Box
-                key={post.id}
-                onClick={() => setSelectedPost(post)}
-                sx={{
-                  bgcolor: "#fff",
-                  border: "1px solid rgba(17,17,17,0.08)",
-                  borderRadius: 4,
-                  overflow: "hidden",
-                  cursor: "pointer",
-                }}
-              >
+            {gridPosts.map((post, index) => (
+              <FadeIn key={post.id} delay={0.06 * index} direction={index % 2 === 0 ? "up" : "left"}>
                 <Box
-                  component="img"
-                  src={post.image}
-                  alt={post.title}
+                  onClick={() => setSelectedPost(post)}
                   sx={{
-                    width: "100%",
-                    height: 220,
-                    objectFit: "cover",
-                    display: "block",
+                    bgcolor: "#fff",
+                    border: "1px solid rgba(17,17,17,0.08)",
+                    borderRadius: 4,
+                    overflow: "hidden",
+                    cursor: "pointer",
                   }}
-                />
-                <Box sx={{ p: 2.2 }}>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    flexWrap="wrap"
-                    useFlexGap
-                    sx={{ mb: 1.2 }}
-                  >
-                    <Chip
-                      label={post.category || "Article"}
-                      size="small"
-                      sx={{ bgcolor: "#f3f3f3" }}
-                    />
+                >
+                  <Box
+                    component="img"
+                    src={post.image}
+                    alt={post.title}
+                    sx={{
+                      width: "100%",
+                      height: 220,
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                  <Box sx={{ p: 2.2 }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      useFlexGap
+                      sx={{ mb: 1.2 }}
+                    >
+                      <Chip
+                        label={post.category || "Article"}
+                        size="small"
+                        sx={{ bgcolor: "#f3f3f3" }}
+                      />
+                      <Typography
+                        sx={{
+                          fontSize: "0.82rem",
+                          color: "rgba(17,17,17,0.55)",
+                          alignSelf: "center",
+                        }}
+                      >
+                        {formatDate(post.publishedAt)}
+                      </Typography>
+                    </Stack>
                     <Typography
                       sx={{
-                        fontSize: "0.82rem",
-                        color: "rgba(17,17,17,0.55)",
-                        alignSelf: "center",
+                        fontSize: "1.35rem",
+                        fontWeight: 700,
+                        lineHeight: 1.12,
                       }}
                     >
-                      {formatDate(post.publishedAt)}
+                      {post.title}
                     </Typography>
-                  </Stack>
-                  <Typography
-                    sx={{
-                      fontSize: "1.35rem",
-                      fontWeight: 700,
-                      lineHeight: 1.12,
-                    }}
-                  >
-                    {post.title}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      mt: 1,
-                      color: "rgba(17,17,17,0.68)",
-                      lineHeight: 1.75,
-                    }}
-                  >
-                    {post.description}
-                  </Typography>
+                    <Typography
+                      sx={{
+                        mt: 1,
+                        color: "rgba(17,17,17,0.68)",
+                        lineHeight: 1.75,
+                      }}
+                    >
+                      {post.description}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
+              </FadeIn>
             ))}
           </Box>
         </Box>
@@ -405,41 +421,45 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
             pb: 2,
           }}
         >
-          <Typography
-            sx={{ fontSize: { xs: "1.5rem", md: "1.8rem" }, fontWeight: 800 }}
-          >
-            Subscribe for updates
-          </Typography>
-          <Box
-            sx={{
-              mt: 1.6,
-              maxWidth: 420,
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              border: "1px solid rgba(17,17,17,0.12)",
-              borderRadius: "999px",
-              p: 0.5,
-              bgcolor: "#fff",
-            }}
-          >
-            <InputBase
-              placeholder="Enter your email"
-              sx={{ flex: 1, px: 1.5 }}
-            />
-            <Button
+          <FadeIn>
+            <Typography
+              sx={{ fontSize: { xs: "1.5rem", md: "1.8rem" }, fontWeight: 800 }}
+            >
+              Subscribe for updates
+            </Typography>
+          </FadeIn>
+          <FadeIn delay={0.08}>
+            <Box
               sx={{
+                mt: 1.6,
+                maxWidth: 420,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                border: "1px solid rgba(17,17,17,0.12)",
                 borderRadius: "999px",
-                bgcolor: "#111111",
-                color: "#fff",
-                px: 2,
-                textTransform: "none",
-                "&:hover": { bgcolor: "#111111" },
+                p: 0.5,
+                bgcolor: "#fff",
               }}
             >
-              Subscribe
-            </Button>
-          </Box>
+              <InputBase
+                placeholder="Enter your email"
+                sx={{ flex: 1, px: 1.5 }}
+              />
+              <Button
+                sx={{
+                  borderRadius: "999px",
+                  bgcolor: "#111111",
+                  color: "#fff",
+                  px: 2,
+                  textTransform: "none",
+                  "&:hover": { bgcolor: "#111111" },
+                }}
+              >
+                Subscribe
+              </Button>
+            </Box>
+          </FadeIn>
         </Box>
 
         <Box

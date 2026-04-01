@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import { TemplateProps } from "../../templateEngine/types";
+import FadeIn from "../../blocks/FadeIn";
 
 const plumbingHeroImage =
   "https://cdn.prod.website-files.com/68ce363cc9e814fa40d285fd/68ceeb8c65230295abdded06_hero-images.jpg";
@@ -245,53 +246,61 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Grid container alignItems="end" sx={{ minHeight: { xs: 520, md: 650 } }}>
             <Grid xs={12} md={8}>
               <Box sx={{ maxWidth: 840 }}>
-                <Typography
-                  sx={{
-                    fontSize: { xs: "4.4rem", md: "8.2rem" },
-                    lineHeight: 0.9,
-                    letterSpacing: "-0.08em",
-                    fontWeight: 400,
-                    color: "#ffffff",
-                  }}
-                >
-                  Fast
-                </Typography>
-                <Typography
-                  sx={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
-                    fontStyle: "italic",
-                    fontSize: { xs: "3.5rem", md: "7.2rem" },
-                    lineHeight: 0.88,
-                    letterSpacing: "-0.06em",
-                    fontWeight: 400,
-                    color: "#ffffff",
-                    ml: { xs: 6, md: 22 },
-                    mt: { xs: -1.5, md: -2.5 },
-                  }}
-                >
-                  Reliable
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: { xs: "4.4rem", md: "8.2rem" },
-                    lineHeight: 0.9,
-                    letterSpacing: "-0.08em",
-                    fontWeight: 400,
-                    color: "#ffffff",
-                    mt: { xs: -1.5, md: -3 },
-                  }}
-                >
-                  Repairs
-                </Typography>
+                <FadeIn>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "4.4rem", md: "8.2rem" },
+                      lineHeight: 0.9,
+                      letterSpacing: "-0.08em",
+                      fontWeight: 400,
+                      color: "#ffffff",
+                    }}
+                  >
+                    Fast
+                  </Typography>
+                </FadeIn>
+                <FadeIn delay={0.08}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Playfair Display", Georgia, serif',
+                      fontStyle: "italic",
+                      fontSize: { xs: "3.5rem", md: "7.2rem" },
+                      lineHeight: 0.88,
+                      letterSpacing: "-0.06em",
+                      fontWeight: 400,
+                      color: "#ffffff",
+                      ml: { xs: 6, md: 22 },
+                      mt: { xs: -1.5, md: -2.5 },
+                    }}
+                  >
+                    Reliable
+                  </Typography>
+                </FadeIn>
+                <FadeIn delay={0.16}>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "4.4rem", md: "8.2rem" },
+                      lineHeight: 0.9,
+                      letterSpacing: "-0.08em",
+                      fontWeight: 400,
+                      color: "#ffffff",
+                      mt: { xs: -1.5, md: -3 },
+                    }}
+                  >
+                    Repairs
+                  </Typography>
+                </FadeIn>
               </Box>
             </Grid>
           </Grid>
 
           <Grid container spacing={3} sx={{ mt: { xs: 1, md: 2 } }}>
             <Grid xs={12} md={4.5}>
-              <Typography sx={{ maxWidth: 360, color: "rgba(255,255,255,0.92)", fontSize: { xs: "1rem", md: "1.02rem" }, lineHeight: 1.6 , mt: 2 }}>
-                Home service overview. Trusted experts delivering fast, reliable, and professional home repair solutions.
-              </Typography>
+              <FadeIn delay={0.24}>
+                <Typography sx={{ maxWidth: 360, color: "rgba(255,255,255,0.92)", fontSize: { xs: "1rem", md: "1.02rem" }, lineHeight: 1.6 , mt: 2 }}>
+                  Home service overview. Trusted experts delivering fast, reliable, and professional home repair solutions.
+                </Typography>
+              </FadeIn>
             </Grid>
             <Grid xs={12} md={3} />
             
@@ -301,53 +310,59 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Container id="about" maxWidth="lg" sx={{ pt: { xs: 7, md: 20 }, pb: { xs: 7, md: 10 } }}>
         <Grid container spacing={{ xs: 5, md: 10 }} alignItems="center">
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Box
-              sx={{
-                width: "100%",
-                maxWidth: 320,
-                mx: { xs: "auto", md: 0 },
-                height: { xs: 360, md: 420 },
-                borderRadius: 3,
-                overflow: "hidden",
-                boxShadow: "0 20px 48px rgba(16,24,40,0.12)",
-              }}
-            >
+          <Grid xs={12} md={4}>
+            <FadeIn direction="right">
               <Box
-                component="img"
-                src={aboutImage}
-                alt="Plumbing specialist"
-                sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-              />
-            </Box>
+                sx={{
+                  width: "100%",
+                  maxWidth: 320,
+                  mx: { xs: "auto", md: 0 },
+                  height: { xs: 360, md: 420 },
+                  borderRadius: 3,
+                  overflow: "hidden",
+                  boxShadow: "0 20px 48px rgba(16,24,40,0.12)",
+                }}
+              >
+                <Box
+                  component="img"
+                  src={aboutImage}
+                  alt="Plumbing specialist"
+                  sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </Box>
+            </FadeIn>
           </Grid>
           <Grid xs={12} md={8} sx={{ pl: { md: 5 } }}>
-            <Typography
-              sx={{
-                color: "#111111",
-                fontSize: "0.95rem",
-                fontWeight: 500,
-                mb: 2.5,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              About Us
-              <Box sx={{ width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "9px solid #f26a2e" }} />
-            </Typography>
-            <Typography
-              sx={{
-                color: "#050505",
-                fontSize: { xs: "2.2rem", md: "4rem" },
-                lineHeight: { xs: 1.16, md: 1.18 },
-                letterSpacing: "-0.05em",
-                fontWeight: 400,
-                maxWidth: 920,
-              }}
-            >
-              From plumbing leaks to full-system fixes, {data.name} delivers dependable maintenance with a cleaner, calmer service experience.
-            </Typography>
+            <FadeIn>
+              <Typography
+                sx={{
+                  color: "#111111",
+                  fontSize: "0.95rem",
+                  fontWeight: 500,
+                  mb: 2.5,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                About Us
+                <Box sx={{ width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "9px solid #f26a2e" }} />
+              </Typography>
+            </FadeIn>
+            <FadeIn delay={0.08}>
+              <Typography
+                sx={{
+                  color: "#050505",
+                  fontSize: { xs: "2.2rem", md: "4rem" },
+                  lineHeight: { xs: 1.16, md: 1.18 },
+                  letterSpacing: "-0.05em",
+                  fontWeight: 400,
+                  maxWidth: 920,
+                }}
+              >
+                From plumbing leaks to full-system fixes, {data.name} delivers dependable maintenance with a cleaner, calmer service experience.
+              </Typography>
+            </FadeIn>
           </Grid>
         </Grid>
 
@@ -358,63 +373,67 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
             textAlign: "center",
           }}
         >
-          <Typography
-            sx={{
-              color: "#080808",
-              fontSize: { xs: "2.2rem", md: "4.2rem" },
-              lineHeight: { xs: 1.18, md: 1.2 },
-              letterSpacing: "-0.05em",
-              fontWeight: 400,
-              maxWidth: 980,
-              mx: "auto",
-            }}
-          >
-            <Box
-              component="span"
+          <FadeIn>
+            <Typography
               sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
-                fontStyle: "italic",
-                mr: 1.5,
+                color: "#080808",
+                fontSize: { xs: "2.2rem", md: "4.2rem" },
+                lineHeight: { xs: 1.18, md: 1.2 },
+                letterSpacing: "-0.05em",
+                fontWeight: 400,
+                maxWidth: 980,
+                mx: "auto",
               }}
             >
-              Reliable,
-            </Box>
-            Professional Home
-            <br />
-            Repair Solutions Delivering
-            <br />
-            Proven
-            <Box
-              component="span"
-              sx={{
-                fontFamily: '"Playfair Display", Georgia, serif',
-                fontStyle: "italic",
-                mx: 1.5,
-              }}
-            >
-              Results Every
-            </Box>
-            Time
-          </Typography>
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontStyle: "italic",
+                  mr: 1.5,
+                }}
+              >
+                Reliable,
+              </Box>
+              Professional Home
+              <br />
+              Repair Solutions Delivering
+              <br />
+              Proven
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontStyle: "italic",
+                  mx: 1.5,
+                }}
+              >
+                Results Every
+              </Box>
+              Time
+            </Typography>
+          </FadeIn>
 
-          <Button
-            variant="contained"
-            onClick={() => scrollToSection("contact")}
-            sx={{
-              mt: { xs: 4, md: 5 },
-              borderRadius: 999,
-              px: 3.4,
-              py: 1.25,
-              bgcolor: "#ff6b1a",
-              color: "#ffffff",
-              fontWeight: 700,
-              fontSize: "1rem",
-              boxShadow: "none",
-              "&:hover": { bgcolor: "#ea5f14", boxShadow: "none" },
-            }}
-          >
-            About Us
-          </Button>
+          <FadeIn delay={0.12}>
+            <Button
+              variant="contained"
+              onClick={() => scrollToSection("contact")}
+              sx={{
+                mt: { xs: 4, md: 5 },
+                borderRadius: 999,
+                px: 3.4,
+                py: 1.25,
+                bgcolor: "#ff6b1a",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: "1rem",
+                boxShadow: "none",
+                "&:hover": { bgcolor: "#ea5f14", boxShadow: "none" },
+              }}
+            >
+              About Us
+            </Button>
+          </FadeIn>
         </Box>
       </Container>
 
@@ -429,153 +448,167 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
             alignItems="stretch"
           >
             <Grid xs={12} md={6}>
-              <Typography
-                sx={{
-                  color: "#2b2b2b",
-                  fontSize: "0.95rem",
-                  fontWeight: 500,
-                  mb: 1.8,
-                }}
-              >
-                /Why Choose us
-              </Typography>
-              <Typography
-                sx={{
-                  color: "#101010",
-                  fontSize: { xs: "2.2rem", md: "3.2rem" },
-                  lineHeight: 1.12,
-                  letterSpacing: "-0.05em",
-                  fontWeight: 600,
-                  maxWidth: 620,
-                  mb: 2.2,
-                }}
-              >
-                Why choose our Services
-              </Typography>
-              <Typography
-                sx={{
-                  color: "#2f2f2f",
-                  fontSize: { xs: "1rem", md: "1.05rem" },
-                  lineHeight: 1.7,
-                  maxWidth: 520,
-                  mb: 3.5,
-                }}
-              >
-                We combine expertise, reliability, and care to deliver the best experience every time.
-              </Typography>
+              <FadeIn>
+                <Typography
+                  sx={{
+                    color: "#2b2b2b",
+                    fontSize: "0.95rem",
+                    fontWeight: 500,
+                    mb: 1.8,
+                  }}
+                >
+                  /Why Choose us
+                </Typography>
+              </FadeIn>
+              <FadeIn delay={0.08}>
+                <Typography
+                  sx={{
+                    color: "#101010",
+                    fontSize: { xs: "2.2rem", md: "3.2rem" },
+                    lineHeight: 1.12,
+                    letterSpacing: "-0.05em",
+                    fontWeight: 600,
+                    maxWidth: 620,
+                    mb: 2.2,
+                  }}
+                >
+                  Why choose our Services
+                </Typography>
+              </FadeIn>
+              <FadeIn delay={0.16}>
+                <Typography
+                  sx={{
+                    color: "#2f2f2f",
+                    fontSize: { xs: "1rem", md: "1.05rem" },
+                    lineHeight: 1.7,
+                    maxWidth: 520,
+                    mb: 3.5,
+                  }}
+                >
+                  We combine expertise, reliability, and care to deliver the best experience every time.
+                </Typography>
+              </FadeIn>
 
               <Grid container spacing={2.2}>
                 <Grid xs={12} sm={6}>
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: { xs: 2.6, md: 3 },
-                      borderRadius: 3,
-                      border: "1px solid #e6e1d8",
-                      bgcolor: "#ffffff",
-                      height: "100%",
-                    }}
-                  >
-                    <Users size={28} color="#111111" />
-                    <Typography sx={{ color: "#111111", fontSize: { xs: "1.5rem", md: "1.15rem" }, fontWeight: 700, mt: 3, mb: 1.6 }}>
-                      Insured Professionals
-                    </Typography>
-                    <Typography sx={{ color: "#2f2f2f", fontSize: "0.98rem", lineHeight: 1.65, maxWidth: 240 }}>
-                      Our plumbers are trained experts who follow industry standards on every job.
-                    </Typography>
-                  </Paper>
+                  <FadeIn delay={0.22} direction="right">
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: { xs: 2.6, md: 3 },
+                        borderRadius: 3,
+                        border: "1px solid #e6e1d8",
+                        bgcolor: "#ffffff",
+                        height: "100%",
+                      }}
+                    >
+                      <Users size={28} color="#111111" />
+                      <Typography sx={{ color: "#111111", fontSize: { xs: "1.5rem", md: "1.15rem" }, fontWeight: 700, mt: 3, mb: 1.6 }}>
+                        Insured Professionals
+                      </Typography>
+                      <Typography sx={{ color: "#2f2f2f", fontSize: "0.98rem", lineHeight: 1.65, maxWidth: 240 }}>
+                        Our plumbers are trained experts who follow industry standards on every job.
+                      </Typography>
+                    </Paper>
+                  </FadeIn>
                 </Grid>
                 <Grid xs={12} sm={6}>
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: { xs: 2.6, md: 3 },
-                      borderRadius: 3,
-                      border: "1px solid #e6e1d8",
-                      bgcolor: "#ffffff",
-                      height: "100%",
-                    }}
-                  >
-                    <BadgeDollarSign size={28} color="#111111" />
-                    <Typography sx={{ color: "#111111", fontSize: { xs: "1.5rem", md: "1.15rem" }, fontWeight: 700, mt: 3, mb: 1.6 }}>
-                      Transparent Pricing
-                    </Typography>
-                    <Typography sx={{ color: "#2f2f2f", fontSize: "0.98rem", lineHeight: 1.65, maxWidth: 240 }}>
-                      We believe in honesty. Every service comes with upfront pricing before work begins.
-                    </Typography>
-                  </Paper>
+                  <FadeIn delay={0.3} direction="right">
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: { xs: 2.6, md: 3 },
+                        borderRadius: 3,
+                        border: "1px solid #e6e1d8",
+                        bgcolor: "#ffffff",
+                        height: "100%",
+                      }}
+                    >
+                      <BadgeDollarSign size={28} color="#111111" />
+                      <Typography sx={{ color: "#111111", fontSize: { xs: "1.5rem", md: "1.15rem" }, fontWeight: 700, mt: 3, mb: 1.6 }}>
+                        Transparent Pricing
+                      </Typography>
+                      <Typography sx={{ color: "#2f2f2f", fontSize: "0.98rem", lineHeight: 1.65, maxWidth: 240 }}>
+                        We believe in honesty. Every service comes with upfront pricing before work begins.
+                      </Typography>
+                    </Paper>
+                  </FadeIn>
                 </Grid>
               </Grid>
 
-              <Box
-                sx={{
-                  mt: 2.2,
-                  p: { xs: 2.6, md: 3 },
-                  borderRadius: 3,
-                  bgcolor: "#111312",
-                  color: "#ffffff",
-                }}
-              >
-                <Typography sx={{ fontSize: { xs: "1.4rem", md: "1.1rem" }, fontWeight: 700, mb: 1.5 }}>
-                  Work Backed by Customer Satisfaction
-                </Typography>
-                <Typography sx={{ color: "rgba(255,255,255,0.9)", fontSize: "1rem", lineHeight: 1.7, maxWidth: 520, mb: 3 }}>
-                  We ensure everything works perfectly and you&apos;re completely satisfied before we leave.
-                </Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => scrollToSection("contact")}
-                  endIcon={<ArrowRight size={18} />}
+              <FadeIn delay={0.38}>
+                <Box
                   sx={{
-                    borderRadius: 999,
-                    pl: 2.4,
-                    pr: 1.2,
-                    py: 1.1,
-                    bgcolor: "#ffffff",
-                    color: "#111111",
-                    fontWeight: 600,
-                    boxShadow: "none",
-                    "&:hover": { bgcolor: "#f2f2f2", boxShadow: "none" },
-                    "& .MuiButton-endIcon": {
-                      ml: 1.5,
-                      bgcolor: "#111111",
-                      color: "#ffffff",
-                      width: 32,
-                      height: 32,
-                      borderRadius: "50%",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    },
+                    mt: 2.2,
+                    p: { xs: 2.6, md: 3 },
+                    borderRadius: 3,
+                    bgcolor: "#111312",
+                    color: "#ffffff",
                   }}
                 >
-                  Explore all our services
-                </Button>
-              </Box>
+                  <Typography sx={{ fontSize: { xs: "1.4rem", md: "1.1rem" }, fontWeight: 700, mb: 1.5 }}>
+                    Work Backed by Customer Satisfaction
+                  </Typography>
+                  <Typography sx={{ color: "rgba(255,255,255,0.9)", fontSize: "1rem", lineHeight: 1.7, maxWidth: 520, mb: 3 }}>
+                    We ensure everything works perfectly and you&apos;re completely satisfied before we leave.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    onClick={() => scrollToSection("contact")}
+                    endIcon={<ArrowRight size={18} />}
+                    sx={{
+                      borderRadius: 999,
+                      pl: 2.4,
+                      pr: 1.2,
+                      py: 1.1,
+                      bgcolor: "#ffffff",
+                      color: "#111111",
+                      fontWeight: 600,
+                      boxShadow: "none",
+                      "&:hover": { bgcolor: "#f2f2f2", boxShadow: "none" },
+                      "& .MuiButton-endIcon": {
+                        ml: 1.5,
+                        bgcolor: "#111111",
+                        color: "#ffffff",
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      },
+                    }}
+                  >
+                    Explore all our services
+                  </Button>
+                </Box>
+              </FadeIn>
             </Grid>
 
             <Grid xs={12} md={6} sx={{ pl: { md: 2 } }}>
-              <Box
-                sx={{
-                  height: "100%",
-                  minHeight: { xs: 420, md: "100%" },
-                  borderRadius: 3,
-                  overflow: "hidden",
-                }}
-              >
+              <FadeIn delay={0.12} direction="left">
                 <Box
-                  component="img"
-                  src={plumbingWhyChooseImage}
-                  alt="Professional worker"
                   sx={{
-                    width: "100%",
-                    height: { xs: 420, md: "100%" },
-                    minHeight: { md: 640 },
-                    objectFit: "cover",
-                    display: "block",
+                    height: "100%",
+                    minHeight: { xs: 420, md: "100%" },
+                    borderRadius: 3,
+                    overflow: "hidden",
                   }}
-                />
-              </Box>
+                >
+                  <Box
+                    component="img"
+                    src={plumbingWhyChooseImage}
+                    alt="Professional worker"
+                    sx={{
+                      width: "100%",
+                      height: { xs: 420, md: "100%" },
+                      minHeight: { md: 640 },
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                </Box>
+              </FadeIn>
             </Grid>
           </Grid>
         </Container>
@@ -602,19 +635,21 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Container maxWidth="lg">
             <Grid container columnSpacing={{ xs: 0, md: 8 }} rowSpacing={{ xs: 5, md: 0 }} alignItems="center">
               <Grid xs={12} md={6}>
-                <Typography
-                  sx={{
-                    color: "#101010",
-                    fontSize: { xs: "2.2rem", md: "4rem" },
-                    lineHeight: { xs: 1.12, md: 1.08 },
-                    letterSpacing: "-0.05em",
-                    fontWeight: 500,
-                    maxWidth: 560,
-                    mb: { xs: 4, md: 5 },
-                  }}
-                >
-                  Delivering dependable home repair services with a personal touch
-                </Typography>
+                <FadeIn>
+                  <Typography
+                    sx={{
+                      color: "#101010",
+                      fontSize: { xs: "2.2rem", md: "4rem" },
+                      lineHeight: { xs: 1.12, md: 1.08 },
+                      letterSpacing: "-0.05em",
+                      fontWeight: 500,
+                      maxWidth: 560,
+                      mb: { xs: 4, md: 5 },
+                    }}
+                  >
+                    Delivering dependable home repair services with a personal touch
+                  </Typography>
+                </FadeIn>
 
                 <Grid container spacing={3} alignItems="stretch">
                   <Grid xs={12} sm={4.5}>
@@ -660,69 +695,72 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                   </Grid>
 
                   <Grid xs={12} sm={7.5}>
-                    <Box
-                      sx={{
-                        pl: { sm: 3.5, md: 4 },
-                        borderLeft: { sm: "1px solid #ddd3c4" },
-                        height: "100%",
-                      }}
-                    >
-                      <Typography
+                    <FadeIn delay={0.12} direction="left">
+                      <Box
                         sx={{
-                          color: "#111111",
-                          fontSize: { xs: "1.8rem", md: "2rem" },
-                          lineHeight: 1.12,
-                          letterSpacing: "-0.04em",
-                          fontWeight: 500,
-                          mb: 1.8,
-                          maxWidth: 360,
+                          pl: { sm: 3.5, md: 4 },
+                          borderLeft: { sm: "1px solid #ddd3c4" },
+                          height: "100%",
                         }}
                       >
-                        We treat your home like our own
-                      </Typography>
-                      <Typography
-                        sx={{
-                          color: "#555555",
-                          fontSize: { xs: "1rem", md: "1.02rem" },
-                          lineHeight: 1.75,
-                          maxWidth: 420,
-                          mb: 3.2,
-                        }}
-                      >
-                        Careful repairs, cleaner finishes, and a more dependable service rhythm from first call to final check.
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        onClick={() => scrollToSection("contact")}
-                        sx={{
-                          borderRadius: 999,
-                          px: 3.4,
-                          py: 1.25,
-                          bgcolor: "#49592f",
-                          color: "#ffffff",
-                          fontWeight: 700,
-                          fontSize: "0.98rem",
-                          boxShadow: "none",
-                          "&:hover": { bgcolor: "#3f4d28", boxShadow: "none" },
-                        }}
-                      >
-                        More About Us
-                      </Button>
-                    </Box>
+                        <Typography
+                          sx={{
+                            color: "#111111",
+                            fontSize: { xs: "1.8rem", md: "2rem" },
+                            lineHeight: 1.12,
+                            letterSpacing: "-0.04em",
+                            fontWeight: 500,
+                            mb: 1.8,
+                            maxWidth: 360,
+                          }}
+                        >
+                          We treat your home like our own
+                        </Typography>
+                        <Typography
+                          sx={{
+                            color: "#555555",
+                            fontSize: { xs: "1rem", md: "1.02rem" },
+                            lineHeight: 1.75,
+                            maxWidth: 420,
+                            mb: 3.2,
+                          }}
+                        >
+                          Careful repairs, cleaner finishes, and a more dependable service rhythm from first call to final check.
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          onClick={() => scrollToSection("contact")}
+                          sx={{
+                            borderRadius: 999,
+                            px: 3.4,
+                            py: 1.25,
+                            bgcolor: "#49592f",
+                            color: "#ffffff",
+                            fontWeight: 700,
+                            fontSize: "0.98rem",
+                            boxShadow: "none",
+                            "&:hover": { bgcolor: "#3f4d28", boxShadow: "none" },
+                          }}
+                        >
+                          More About Us
+                        </Button>
+                      </Box>
+                    </FadeIn>
                   </Grid>
                 </Grid>
               </Grid>
 
               <Grid xs={12} md={6}>
-                <Box
-                  sx={{
-                    position: "relative",
-                    ml: { md: 3 },
-                    height: { xs: 520, md: 620 },
-                    maxWidth: { xs: 420, md: 540 },
-                    mx: { xs: "auto", md: 0 },
-                  }}
-                >
+                <FadeIn delay={0.08} direction="left">
+                  <Box
+                    sx={{
+                      position: "relative",
+                      ml: { md: 3 },
+                      height: { xs: 520, md: 620 },
+                      maxWidth: { xs: 420, md: 540 },
+                      mx: { xs: "auto", md: 0 },
+                    }}
+                  >
                   <Box
                     sx={{
                       position: "absolute",
@@ -796,6 +834,7 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                     />
                   </Box>
                 </Box>
+                </FadeIn>
               </Grid>
             </Grid>
           </Container>
@@ -806,53 +845,67 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Container maxWidth="lg" sx={{ py: { xs: 7, md: 9 } }}>
           <Grid container columnSpacing={{ xs: 0, md: 8 }} rowSpacing={{ xs: 4, md: 0 }} alignItems="start">
             <Grid xs={12} md={6} sx={{ pt: { md: 1.5 }, pr: { md: 3 } }}>
-              <Typography sx={{ color: "#9f5f3c", fontSize: "0.74rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", mb: 1.3 }}>
-                Professional Home Plumbing
-              </Typography>
-              <Typography sx={{ color: "#f6efe5", fontSize: { xs: "2rem", md: "3rem" }, lineHeight: 1.04, letterSpacing: "-0.04em", fontWeight: 800, mb: 3.4 }}>
-                Working Hours
-              </Typography>
+              <FadeIn>
+                <Typography sx={{ color: "#9f5f3c", fontSize: "0.74rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", mb: 1.3 }}>
+                  Professional Home Plumbing
+                </Typography>
+              </FadeIn>
+              <FadeIn delay={0.08}>
+                <Typography sx={{ color: "#f6efe5", fontSize: { xs: "2rem", md: "3rem" }, lineHeight: 1.04, letterSpacing: "-0.04em", fontWeight: 800, mb: 3.4 }}>
+                  Working Hours
+                </Typography>
+              </FadeIn>
               <Stack spacing={1.6} sx={{ maxWidth: 520 }}>
-                {hours.map((item) => (
-                  <Stack key={item.day} direction="row" justifyContent="space-between" sx={{ py: 1.3, gap: 2, borderBottom: "1px solid rgba(246,239,229,0.12)" }}>
-                    <Typography sx={{ color: "#f6efe5", fontWeight: 600, fontSize: "1.02rem" }}>{item.day}</Typography>
-                    <Typography sx={{ color: "rgba(246,239,229,0.68)", fontSize: "0.98rem", textAlign: "right" }}>{item.hours}</Typography>
-                  </Stack>
+                {hours.map((item, index) => (
+                  <FadeIn key={item.day} delay={0.14 + index * 0.06} direction="right">
+                    <Stack direction="row" justifyContent="space-between" sx={{ py: 1.3, gap: 2, borderBottom: "1px solid rgba(246,239,229,0.12)" }}>
+                      <Typography sx={{ color: "#f6efe5", fontWeight: 600, fontSize: "1.02rem" }}>{item.day}</Typography>
+                      <Typography sx={{ color: "rgba(246,239,229,0.68)", fontSize: "0.98rem", textAlign: "right" }}>{item.hours}</Typography>
+                    </Stack>
+                  </FadeIn>
                 ))}
               </Stack>
             </Grid>
             <Grid id="contact" xs={12} md={6} sx={{ display: "flex", justifyContent: { xs: "stretch", md: "flex-end" } }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  width: "100%",
-                  maxWidth: 520,
-                  p: { xs: 2.4, md: 3.2 },
-                  borderRadius: 0,
-                  bgcolor: "#ffffff",
-                  color: "#121722",
-                }}
-              >
-                <Typography sx={{ color: "#b36c46", fontSize: "0.74rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", mb: 1.1 }}>
-                  Repair Form
-                </Typography>
-                <Typography sx={{ color: "#161b24", fontSize: { xs: "1.8rem", md: "2rem" }, lineHeight: 1.08, fontWeight: 800, mb: 2.6 }}>
-                  Get A Repair Quote
-                </Typography>
-                <Stack spacing={1.6}>
-                  {["Your Name", "Phone Number", "Service Needed"].map((label) => (
-                    <Box key={label} sx={{ px: 1.8, py: 1.55, border: "1px solid #e8dfd4", color: "#6d7078", fontSize: "0.98rem" }}>
-                      {label}
-                    </Box>
-                  ))}
-                  <Box sx={{ px: 1.8, py: 1.55, minHeight: 120, border: "1px solid #e8dfd4", color: "#6d7078", fontSize: "0.98rem" }}>
-                    Message
-                  </Box>
-                </Stack>
-                <Button variant="contained" sx={{ mt: 2.8, borderRadius: 0, px: 2.8, py: 1.2, bgcolor: "#111418", color: "#ffffff", fontWeight: 800, "&:hover": { bgcolor: "#000000" } }}>
-                  Submit
-                </Button>
-              </Paper>
+              <FadeIn delay={0.08} direction="left">
+                <Paper
+                  elevation={0}
+                  sx={{
+                    width: "100%",
+                    maxWidth: 520,
+                    p: { xs: 2.4, md: 3.2 },
+                    borderRadius: 0,
+                    bgcolor: "#ffffff",
+                    color: "#121722",
+                  }}
+                >
+                  <Typography sx={{ color: "#b36c46", fontSize: "0.74rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", mb: 1.1 }}>
+                    Repair Form
+                  </Typography>
+                  <Typography sx={{ color: "#161b24", fontSize: { xs: "1.8rem", md: "2rem" }, lineHeight: 1.08, fontWeight: 800, mb: 2.6 }}>
+                    Get A Repair Quote
+                  </Typography>
+                  <Stack spacing={1.6}>
+                    {["Your Name", "Phone Number", "Service Needed"].map((label, index) => (
+                      <FadeIn key={label} delay={0.14 + index * 0.06} direction="left">
+                        <Box sx={{ px: 1.8, py: 1.55, border: "1px solid #e8dfd4", color: "#6d7078", fontSize: "0.98rem" }}>
+                          {label}
+                        </Box>
+                      </FadeIn>
+                    ))}
+                    <FadeIn delay={0.34} direction="left">
+                      <Box sx={{ px: 1.8, py: 1.55, minHeight: 120, border: "1px solid #e8dfd4", color: "#6d7078", fontSize: "0.98rem" }}>
+                        Message
+                      </Box>
+                    </FadeIn>
+                  </Stack>
+                  <FadeIn delay={0.42}>
+                    <Button variant="contained" sx={{ mt: 2.8, borderRadius: 0, px: 2.8, py: 1.2, bgcolor: "#111418", color: "#ffffff", fontWeight: 800, "&:hover": { bgcolor: "#000000" } }}>
+                      Submit
+                    </Button>
+                  </FadeIn>
+                </Paper>
+              </FadeIn>
             </Grid>
           </Grid>
         </Container>
@@ -862,44 +915,58 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Container maxWidth="md">
           <Grid container spacing={3} alignItems="center">
             <Grid xs={12} md={7}>
-              <Typography sx={{ color: "#131823", fontSize: { xs: "1.7rem", md: "2.4rem" }, lineHeight: 1.08, letterSpacing: "-0.04em", fontWeight: 800, mb: 1.2 }}>
-                Repairs your home can depend on.
-              </Typography>
-              <Typography sx={{ color: "#6d7078", maxWidth: 440, lineHeight: 1.8 }}>
-                Minimal hassle, faster scheduling, and a cleaner finish from quote to repair.
-              </Typography>
+              <FadeIn>
+                <Typography sx={{ color: "#131823", fontSize: { xs: "1.7rem", md: "2.4rem" }, lineHeight: 1.08, letterSpacing: "-0.04em", fontWeight: 800, mb: 1.2 }}>
+                  Repairs your home can depend on.
+                </Typography>
+              </FadeIn>
+              <FadeIn delay={0.08}>
+                <Typography sx={{ color: "#6d7078", maxWidth: 440, lineHeight: 1.8 }}>
+                  Minimal hassle, faster scheduling, and a cleaner finish from quote to repair.
+                </Typography>
+              </FadeIn>
             </Grid>
             <Grid xs={12} md={5}>
-              <Stack direction="row" spacing={1.5} justifyContent={{ xs: "flex-start", md: "flex-end" }}>
-                {[0, 1].map((index) => (
-                  <Box key={index} sx={{ width: 112, height: 112, borderRadius: 2, overflow: "hidden", boxShadow: "0 14px 28px rgba(16,24,40,0.09)" }}>
-                    <Box component="img" src={projectImages[index]?.url || plumbingAboutImages[index]} alt="Plumbing detail" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  </Box>
-                ))}
-              </Stack>
+              <FadeIn delay={0.12} direction="left">
+                <Stack direction="row" spacing={1.5} justifyContent={{ xs: "flex-start", md: "flex-end" }}>
+                  {[0, 1].map((index) => (
+                    <Box key={index} sx={{ width: 112, height: 112, borderRadius: 2, overflow: "hidden", boxShadow: "0 14px 28px rgba(16,24,40,0.09)" }}>
+                      <Box component="img" src={projectImages[index]?.url || plumbingAboutImages[index]} alt="Plumbing detail" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    </Box>
+                  ))}
+                </Stack>
+              </FadeIn>
             </Grid>
           </Grid>
         </Container>
       </Box>
 
       <Box sx={{ bgcolor: "#0a0a0a", py: 6, px: 3, textAlign: "center" }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: "#fff", mb: 1 }}>
-          {data.name}
-        </Typography>
-        {data.contact.address && (
-          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.54)", mb: 3 }}>
-            {data.contact.address}
+        <FadeIn>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: "#fff", mb: 1 }}>
+            {data.name}
           </Typography>
+        </FadeIn>
+        {data.contact.address && (
+          <FadeIn delay={0.08}>
+            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.54)", mb: 3 }}>
+              {data.contact.address}
+            </Typography>
+          </FadeIn>
         )}
-        <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 3 }}>
+        <FadeIn delay={0.16}>
+          <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 3 }}>
           {data.socialLinks?.facebook && <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}><Facebook size={18} /></IconButton>}
           {data.socialLinks?.instagram && <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}><Instagram size={18} /></IconButton>}
           {data.socialLinks?.twitter && <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}><Twitter size={18} /></IconButton>}
           {data.socialLinks?.linkedin && <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}><Linkedin size={18} /></IconButton>}
-        </Stack>
-        <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.38)" }}>
+          </Stack>
+        </FadeIn>
+        <FadeIn delay={0.24}>
+          <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.38)" }}>
           © {new Date().getFullYear()} {data.name}. All rights reserved.
         </Typography>
+        </FadeIn>
       </Box>
     </Box>
   );

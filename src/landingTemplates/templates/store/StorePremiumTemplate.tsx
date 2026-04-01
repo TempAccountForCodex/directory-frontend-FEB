@@ -14,6 +14,7 @@ import {
   Twitter,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import FadeIn from "../../blocks/FadeIn";
 import { TemplateProps } from "../../templateEngine/types";
 
 const headingFont = '"Poppins", "Avenir Next", "Segoe UI", sans-serif';
@@ -239,12 +240,13 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Hero"
         sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 4 } }}
       >
-        <Box
-          sx={{
-            py: { xs: 7, md: 8 },
-            textAlign: "center",
-          }}
-        >
+        <FadeIn>
+          <Box
+            sx={{
+              py: { xs: 7, md: 8 },
+              textAlign: "center",
+            }}
+          >
           <Typography
             sx={{
               fontSize: "0.7rem",
@@ -271,38 +273,41 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             <br />
             Selection
           </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigateToPage("shop")}
-            sx={{
-              mt: 2.4,
-              bgcolor: palette.accent,
-              color: palette.ink,
-              borderRadius: 999,
-              border: `1px solid ${palette.border}`,
-              boxShadow: "none",
-              px: 3,
-              py: 0.85,
-              fontSize: "0.72rem",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
-            }}
-          >
-            Shop now
-          </Button>
-        </Box>
+            <Button
+              variant="contained"
+              onClick={() => navigateToPage("shop")}
+              sx={{
+                mt: 2.4,
+                bgcolor: palette.accent,
+                color: palette.ink,
+                borderRadius: 999,
+                border: `1px solid ${palette.border}`,
+                boxShadow: "none",
+                px: 3,
+                py: 0.85,
+                fontSize: "0.72rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
+              }}
+            >
+              Shop now
+            </Button>
+          </Box>
+        </FadeIn>
       </Box>
 
-      <Box
-        sx={{
-          height: { xs: 260, md: 420 },
-          backgroundImage: `url(${heroImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundAttachment: "fixed",
-        }}
-      />
+      <FadeIn delay={0.08}>
+        <Box
+          sx={{
+            height: { xs: 260, md: 420 },
+            backgroundImage: `url(${heroImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundAttachment: "fixed",
+          }}
+        />
+      </FadeIn>
 
       <Box
         id="home-featured"
@@ -324,13 +329,14 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             mb: 4,
           }}
         >
-          <Box
-            sx={{
-              p: { xs: 2.5, md: 3 },
-              border: `1px solid rgba(17,17,17,0.14)`,
-              bgcolor: "rgba(255,255,255,0.28)",
-            }}
-          >
+          <FadeIn>
+            <Box
+              sx={{
+                p: { xs: 2.5, md: 3 },
+                border: `1px solid rgba(17,17,17,0.14)`,
+                bgcolor: "rgba(255,255,255,0.28)",
+              }}
+            >
             <Typography
               sx={{
                 fontSize: "0.7rem",
@@ -368,22 +374,25 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               Discover signature handbags designed to move between work, travel,
               evening plans, and everyday styling with ease.
             </Typography>
-          </Box>
+            </Box>
+          </FadeIn>
 
-          <Typography
-            sx={{
-              textAlign: { xs: "left", md: "right" },
-              fontFamily: headingFont,
-              fontWeight: 700,
-              fontSize: { xs: "2rem", md: "4rem" },
-              letterSpacing: "-0.06em",
-              lineHeight: 0.94,
-            }}
-          >
-            Bestsellers
-            <br />
-            This Week
-          </Typography>
+          <FadeIn delay={0.08}>
+            <Typography
+              sx={{
+                textAlign: { xs: "left", md: "right" },
+                fontFamily: headingFont,
+                fontWeight: 700,
+                fontSize: { xs: "2rem", md: "4rem" },
+                letterSpacing: "-0.06em",
+                lineHeight: 0.94,
+              }}
+            >
+              Bestsellers
+              <br />
+              This Week
+            </Typography>
+          </FadeIn>
         </Box>
 
         <Box
@@ -398,9 +407,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             gap: { xs: 2, md: 2.2 },
           }}
         >
-          {products.slice(0, 3).map((product) => (
-            <Box
-              key={product.id}
+          {products.slice(0, 3).map((product, index) => (
+            <FadeIn key={product.id} delay={index * 0.08}>
+              <Box
               sx={{
                 minWidth: 0,
                 p: { xs: 1.4, md: 1.6 },
@@ -474,37 +483,40 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 {product.name}
               </Typography>
-              <Typography
-                sx={{ mt: 1.1, fontSize: "0.95rem", fontWeight: 700 }}
-              >
-                {product.price}
-              </Typography>
-            </Box>
+                <Typography
+                  sx={{ mt: 1.1, fontSize: "0.95rem", fontWeight: 700 }}
+                >
+                  {product.price}
+                </Typography>
+              </Box>
+            </FadeIn>
           ))}
         </Box>
 
-        <Stack direction="row" justifyContent="center">
-          <Button
-            variant="contained"
-            onClick={() => navigateToPage("shop")}
-            sx={{
-              mt: 3.2,
-              bgcolor: palette.accent,
-              color: palette.ink,
-              borderRadius: 999,
-              border: `1px solid ${palette.border}`,
-              boxShadow: "none",
-              px: 3,
-              py: 0.85,
-              fontSize: "0.7rem",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
-            }}
-          >
-            View all products
-          </Button>
-        </Stack>
+        <FadeIn delay={0.12}>
+          <Stack direction="row" justifyContent="center">
+            <Button
+              variant="contained"
+              onClick={() => navigateToPage("shop")}
+              sx={{
+                mt: 3.2,
+                bgcolor: palette.accent,
+                color: palette.ink,
+                borderRadius: 999,
+                border: `1px solid ${palette.border}`,
+                boxShadow: "none",
+                px: 3,
+                py: 0.85,
+                fontSize: "0.7rem",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
+              }}
+            >
+              View all products
+            </Button>
+          </Stack>
+        </FadeIn>
       </Box>
 
       <Box
@@ -529,25 +541,28 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             overflow: "hidden",
           }}
         >
-          <Box
-            component="img"
-            src={aboutImage}
-            alt="Store story"
-            sx={{
-              width: "100%",
-              height: "100%",
-              minHeight: { xs: 300, md: 460 },
-              objectFit: "cover",
-            }}
-          />
-          <Box
-            sx={{
-              p: { xs: 3, md: 5 },
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
+          <FadeIn direction="right">
+            <Box
+              component="img"
+              src={aboutImage}
+              alt="Store story"
+              sx={{
+                width: "100%",
+                height: "100%",
+                minHeight: { xs: 300, md: 460 },
+                objectFit: "cover",
+              }}
+            />
+          </FadeIn>
+          <FadeIn delay={0.08}>
+            <Box
+              sx={{
+                p: { xs: 3, md: 5 },
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
             <Typography
               sx={{
                 fontSize: "0.7rem",
@@ -583,28 +598,29 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               {data.description ||
                 "This premium handbag store template balances editorial storytelling, structured product presentation, and clean enquiry-focused sections for luxury fashion brands."}
             </Typography>
-            <Button
-              variant="contained"
-              onClick={() => navigateToPage("about")}
-              sx={{
-                mt: 2.5,
-                alignSelf: "flex-start",
-                bgcolor: palette.accent,
-                color: palette.ink,
-                borderRadius: 999,
-                border: `1px solid ${palette.border}`,
-                boxShadow: "none",
-                px: 3,
-                py: 0.85,
-                fontSize: "0.7rem",
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
-              }}
-            >
-              Read about us
-            </Button>
-          </Box>
+              <Button
+                variant="contained"
+                onClick={() => navigateToPage("about")}
+                sx={{
+                  mt: 2.5,
+                  alignSelf: "flex-start",
+                  bgcolor: palette.accent,
+                  color: palette.ink,
+                  borderRadius: 999,
+                  border: `1px solid ${palette.border}`,
+                  boxShadow: "none",
+                  px: 3,
+                  py: 0.85,
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
+                }}
+              >
+                Read about us
+              </Button>
+            </Box>
+          </FadeIn>
         </Box>
       </Box>
 
@@ -630,7 +646,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             alignItems: "center",
           }}
         >
-          <Box>
+          <FadeIn>
+            <Box>
             <Typography
               sx={{
                 fontSize: "0.72rem",
@@ -668,43 +685,46 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               early access moments designed for customers who love premium
               pieces.
             </Typography>
-          </Box>
+            </Box>
+          </FadeIn>
 
-          <Box
-            sx={{
-              maxWidth: 560,
-              width: "100%",
-              justifySelf: "end",
-            }}
-          >
-            <Stack spacing={1.4}>
-              <TextField
-                label="Email address"
-                variant="outlined"
-                fullWidth
-                sx={fieldStyles}
-              />
-              <Button
-                variant="contained"
-                sx={{
-                  alignSelf: { xs: "stretch", sm: "flex-start" },
-                  bgcolor: palette.accent,
-                  color: palette.ink,
-                  borderRadius: 999,
-                  border: `1px solid ${palette.border}`,
-                  boxShadow: "none",
-                  px: 3.2,
-                  py: 0.95,
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
-                }}
-              >
-                Subscribe
-              </Button>
-            </Stack>
-          </Box>
+          <FadeIn delay={0.08}>
+            <Box
+              sx={{
+                maxWidth: 560,
+                width: "100%",
+                justifySelf: "end",
+              }}
+            >
+              <Stack spacing={1.4}>
+                <TextField
+                  label="Email address"
+                  variant="outlined"
+                  fullWidth
+                  sx={fieldStyles}
+                />
+                <Button
+                  variant="contained"
+                  sx={{
+                    alignSelf: { xs: "stretch", sm: "flex-start" },
+                    bgcolor: palette.accent,
+                    color: palette.ink,
+                    borderRadius: 999,
+                    border: `1px solid ${palette.border}`,
+                    boxShadow: "none",
+                    px: 3.2,
+                    py: 0.95,
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
+                  }}
+                >
+                  Subscribe
+                </Button>
+              </Stack>
+            </Box>
+          </FadeIn>
         </Box>
       </Box>
     </>
@@ -760,7 +780,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               py: { xs: 5, md: 6 },
             }}
           >
-            <Box sx={{ maxWidth: 620 }}>
+            <FadeIn>
+              <Box sx={{ maxWidth: 620 }}>
               <Typography
                 sx={{
                   fontSize: "0.72rem",
@@ -798,26 +819,27 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 Explore refined handbags designed for everyday elegance,
                 polished styling, and premium wardrobe essentials.
               </Typography>
-              <Button
-                variant="contained"
-                sx={{
-                  mt: 2.5,
-                  bgcolor: palette.accent,
-                  color: palette.ink,
-                  borderRadius: 999,
-                  border: `1px solid ${palette.border}`,
-                  boxShadow: "none",
-                  px: 3,
-                  py: 0.85,
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
-                }}
-              >
-                Shop now
-              </Button>
-            </Box>
+                <Button
+                  variant="contained"
+                  sx={{
+                    mt: 2.5,
+                    bgcolor: palette.accent,
+                    color: palette.ink,
+                    borderRadius: 999,
+                    border: `1px solid ${palette.border}`,
+                    boxShadow: "none",
+                    px: 3,
+                    py: 0.85,
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
+                  }}
+                >
+                  Shop now
+                </Button>
+              </Box>
+            </FadeIn>
           </Box>
         </Box>
       </Box>
@@ -844,9 +866,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             gap: { xs: 2, md: 2.4 },
           }}
         >
-          {products.map((product) => (
-            <Box
-              key={product.id}
+          {products.map((product, index) => (
+            <FadeIn key={product.id} delay={index * 0.06}>
+              <Box
               sx={{
                 p: { xs: 1.4, md: 1.6 },
                 border: `1px solid rgba(17,17,17,0.12)`,
@@ -928,30 +950,31 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>
                   {product.price}
                 </Typography>
-                <Button
-                  variant="contained"
-                  component={product.url ? "a" : "button"}
-                  href={product.url || undefined}
-                  target={product.url ? "_blank" : undefined}
-                  rel={product.url ? "noreferrer" : undefined}
-                  sx={{
-                    bgcolor: palette.accent,
-                    color: palette.ink,
-                    borderRadius: 999,
-                    border: `1px solid ${palette.border}`,
-                    boxShadow: "none",
-                    px: 2.2,
-                    py: 0.72,
-                    fontSize: "0.66rem",
-                    letterSpacing: "0.16em",
-                    textTransform: "uppercase",
-                    "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
-                  }}
-                >
-                  Visit product
-                </Button>
-              </Stack>
-            </Box>
+                  <Button
+                    variant="contained"
+                    component={product.url ? "a" : "button"}
+                    href={product.url || undefined}
+                    target={product.url ? "_blank" : undefined}
+                    rel={product.url ? "noreferrer" : undefined}
+                    sx={{
+                      bgcolor: palette.accent,
+                      color: palette.ink,
+                      borderRadius: 999,
+                      border: `1px solid ${palette.border}`,
+                      boxShadow: "none",
+                      px: 2.2,
+                      py: 0.72,
+                      fontSize: "0.66rem",
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
+                    }}
+                  >
+                    Visit product
+                  </Button>
+                </Stack>
+              </Box>
+            </FadeIn>
           ))}
         </Box>
       </Box>
@@ -976,25 +999,28 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             alignItems: "stretch",
           }}
         >
-          <Box
-            component="img"
-            src={aboutImage}
-            alt="About"
-            sx={{
-              width: "100%",
-              height: "100%",
-              minHeight: { xs: 320, md: 520 },
-              objectFit: "cover",
-            }}
-          />
-          <Box
-            sx={{
-              p: { xs: 3, md: 6 },
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
+          <FadeIn direction="right">
+            <Box
+              component="img"
+              src={aboutImage}
+              alt="About"
+              sx={{
+                width: "100%",
+                height: "100%",
+                minHeight: { xs: 320, md: 520 },
+                objectFit: "cover",
+              }}
+            />
+          </FadeIn>
+          <FadeIn delay={0.08}>
+            <Box
+              sx={{
+                p: { xs: 3, md: 6 },
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
             <Typography
               sx={{
                 fontSize: "0.7rem",
@@ -1018,18 +1044,19 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               Designed for customers who want elegance without excess.
             </Typography>
-            <Typography
-              sx={{
-                mt: 2.2,
-                fontSize: { xs: "0.95rem", md: "1rem" },
-                lineHeight: 1.9,
-                maxWidth: 460,
-              }}
-            >
-              {data.description ||
-                "This premium handbag store template balances editorial storytelling, structured product presentation, and clean enquiry-focused sections for luxury fashion brands."}
-            </Typography>
-          </Box>
+              <Typography
+                sx={{
+                  mt: 2.2,
+                  fontSize: { xs: "0.95rem", md: "1rem" },
+                  lineHeight: 1.9,
+                  maxWidth: 460,
+                }}
+              >
+                {data.description ||
+                  "This premium handbag store template balances editorial storytelling, structured product presentation, and clean enquiry-focused sections for luxury fashion brands."}
+              </Typography>
+            </Box>
+          </FadeIn>
         </Box>
       </Box>
 
@@ -1044,13 +1071,14 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           py: { xs: 7, md: 8 },
         }}
       >
-        <Box
-          sx={{
-            textAlign: "center",
-            maxWidth: 1140,
-            mx: "auto",
-          }}
-        >
+        <FadeIn>
+          <Box
+            sx={{
+              textAlign: "center",
+              maxWidth: 1140,
+              mx: "auto",
+            }}
+          >
           <Box
             sx={{
               display: "flex",
@@ -1099,7 +1127,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             real-world wearability, so each piece feels elegant, practical, and
             premium from first look to everyday use.
           </Typography>
-        </Box>
+          </Box>
+        </FadeIn>
       </Box>
 
       <Box
@@ -1121,7 +1150,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             alignItems: "center",
           }}
         >
-          <Box>
+          <FadeIn>
+            <Box>
             <Typography
               sx={{
                 fontSize: "0.72rem",
@@ -1151,51 +1181,54 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 "Materials and hardware are reviewed for texture, weight, and how they elevate the final look in person.",
                 "The assortment stays intentionally tight so the shopping experience feels calm, premium, and focused.",
               ].map((text, index) => (
-                <Box
-                  key={text}
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "44px 1fr",
-                    gap: 1.8,
-                    alignItems: "start",
-                  }}
-                >
+                <FadeIn key={text} delay={index * 0.08}>
                   <Box
                     sx={{
-                      width: 44,
-                      height: 44,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderRadius: "50%",
-                      border: `1px solid rgba(17,17,17,0.16)`,
-                      fontSize: "0.78rem",
-                      letterSpacing: "0.12em",
+                      display: "grid",
+                      gridTemplateColumns: "44px 1fr",
+                      gap: 1.8,
+                      alignItems: "start",
                     }}
                   >
-                    0{index + 1}
+                    <Box
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "50%",
+                        border: `1px solid rgba(17,17,17,0.16)`,
+                        fontSize: "0.78rem",
+                        letterSpacing: "0.12em",
+                      }}
+                    >
+                      0{index + 1}
+                    </Box>
+                    <Typography
+                      sx={{
+                        color: palette.muted,
+                        fontSize: "0.95rem",
+                        lineHeight: 1.9,
+                      }}
+                    >
+                      {text}
+                    </Typography>
                   </Box>
-                  <Typography
-                    sx={{
-                      color: palette.muted,
-                      fontSize: "0.95rem",
-                      lineHeight: 1.9,
-                    }}
-                  >
-                    {text}
-                  </Typography>
-                </Box>
+                </FadeIn>
               ))}
             </Stack>
-          </Box>
+            </Box>
+          </FadeIn>
 
-          <Box
-            sx={{
-              p: { xs: 2.5, md: 3 },
-              border: `1px solid rgba(17,17,17,0.12)`,
-              bgcolor: "#f4ebdd",
-            }}
-          >
+          <FadeIn delay={0.08}>
+            <Box
+              sx={{
+                p: { xs: 2.5, md: 3 },
+                border: `1px solid rgba(17,17,17,0.12)`,
+                bgcolor: "#f4ebdd",
+              }}
+            >
             <Typography
               sx={{
                 fontSize: "0.72rem",
@@ -1220,35 +1253,37 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   "Wearable palettes",
                   "Color choices designed to work across wardrobe staples and seasonal looks.",
                 ],
-              ].map(([title, text]) => (
-                <Box
-                  key={title}
-                  sx={{ pb: 2.2, borderBottom: `1px solid rgba(17,17,17,0.1)` }}
-                >
-                  <Typography
-                    sx={{
-                      fontFamily: headingFont,
-                      fontWeight: 700,
-                      fontSize: "1.2rem",
-                      letterSpacing: "-0.03em",
-                    }}
+              ].map(([title, text], index) => (
+                <FadeIn key={title} delay={index * 0.08}>
+                  <Box
+                    sx={{ pb: 2.2, borderBottom: `1px solid rgba(17,17,17,0.1)` }}
                   >
-                    {title}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      mt: 0.8,
-                      color: palette.muted,
-                      fontSize: "0.93rem",
-                      lineHeight: 1.8,
-                    }}
-                  >
-                    {text}
-                  </Typography>
-                </Box>
+                    <Typography
+                      sx={{
+                        fontFamily: headingFont,
+                        fontWeight: 700,
+                        fontSize: "1.2rem",
+                        letterSpacing: "-0.03em",
+                      }}
+                    >
+                      {title}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        mt: 0.8,
+                        color: palette.muted,
+                        fontSize: "0.93rem",
+                        lineHeight: 1.8,
+                      }}
+                    >
+                      {text}
+                    </Typography>
+                  </Box>
+                </FadeIn>
               ))}
             </Stack>
-          </Box>
+            </Box>
+          </FadeIn>
         </Box>
       </Box>
 
@@ -1274,7 +1309,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             alignItems: "center",
           }}
         >
-          <Box>
+          <FadeIn>
+            <Box>
             <Typography
               sx={{
                 fontSize: "0.72rem",
@@ -1299,13 +1335,15 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               Explore the full range of premium handbags and curated seasonal
               edits.
             </Typography>
-          </Box>
+            </Box>
+          </FadeIn>
 
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1.4}
-            justifyContent={{ md: "flex-end" }}
-          >
+          <FadeIn delay={0.08}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.4}
+              justifyContent={{ md: "flex-end" }}
+            >
             <Button
               variant="contained"
               onClick={() => navigateToPage("shop")}
@@ -1345,7 +1383,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               Contact us
             </Button>
-          </Stack>
+            </Stack>
+          </FadeIn>
         </Box>
       </Box>
     </>
@@ -1371,11 +1410,12 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           alignItems: "start",
         }}
       >
-        <Box
-          sx={{
-            pr: { md: 3 },
-          }}
-        >
+        <FadeIn>
+          <Box
+            sx={{
+              pr: { md: 3 },
+            }}
+          >
           <Typography
             sx={{
               fontSize: "0.72rem",
@@ -1412,41 +1452,45 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             personal styling support for your next handbag selection.
           </Typography>
 
+          </Box>
+          <FadeIn delay={0.08} direction="right">
+            <Box
+              sx={{
+                mt: 3.2,
+                width: { xs: 220, md: 280 },
+                p: 1.2,
+                bgcolor: "rgba(255,255,255,0.28)",
+                border: `1px solid rgba(17,17,17,0.12)`,
+                boxShadow: "0 16px 40px rgba(48,34,8,0.06)",
+              }}
+            >
+              <Box
+                component="img"
+                src={touchImage}
+                alt="Contact"
+                sx={{
+                  width: "100%",
+                  aspectRatio: "0.92 / 1",
+                  objectFit: "cover",
+                }}
+              />
+            </Box>
+          </FadeIn>
+        </FadeIn>
+
+        <FadeIn delay={0.08}>
           <Box
             sx={{
-              mt: 3.2,
-              width: { xs: 220, md: 280 },
-              p: 1.2,
-              bgcolor: "rgba(255,255,255,0.28)",
-              border: `1px solid rgba(17,17,17,0.12)`,
-              boxShadow: "0 16px 40px rgba(48,34,8,0.06)",
+              maxWidth: 560,
+              justifySelf: "end",
+              width: "100%",
+              p: { xs: 2.5, md: 3.2 },
+              border: `1px solid rgba(17,17,17,0.18)`,
+              bgcolor: "#f4ebdd",
+              boxShadow: "0 22px 50px rgba(48,34,8,0.07)",
+              position: "relative",
             }}
           >
-            <Box
-              component="img"
-              src={touchImage}
-              alt="Contact"
-              sx={{
-                width: "100%",
-                aspectRatio: "0.92 / 1",
-                objectFit: "cover",
-              }}
-            />
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            maxWidth: 560,
-            justifySelf: "end",
-            width: "100%",
-            p: { xs: 2.5, md: 3.2 },
-            border: `1px solid rgba(17,17,17,0.18)`,
-            bgcolor: "#f4ebdd",
-            boxShadow: "0 22px 50px rgba(48,34,8,0.07)",
-            position: "relative",
-          }}
-        >
           <Box
             sx={{
               position: "absolute",
@@ -1511,26 +1555,27 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             minRows={4}
             sx={{ mt: 1.6, ...fieldStyles }}
           />
-          <Button
-            variant="contained"
-            sx={{
-              mt: 2.2,
-              width: "100%",
-              bgcolor: palette.accent,
-              color: palette.ink,
-              borderRadius: 999,
-              border: `1px solid ${palette.border}`,
-              boxShadow: "none",
-              py: 1,
-              fontSize: "0.72rem",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
-            }}
-          >
-            Ask
-          </Button>
-        </Box>
+            <Button
+              variant="contained"
+              sx={{
+                mt: 2.2,
+                width: "100%",
+                bgcolor: palette.accent,
+                color: palette.ink,
+                borderRadius: 999,
+                border: `1px solid ${palette.border}`,
+                boxShadow: "none",
+                py: 1,
+                fontSize: "0.72rem",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
+              }}
+            >
+              Ask
+            </Button>
+          </Box>
+        </FadeIn>
       </Box>
     </Box>
   );
@@ -1562,18 +1607,19 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           backdropFilter: "blur(12px)",
         }}
       >
-        <Box
-          sx={{
-            maxWidth: 1280,
-            mx: "auto",
-            px: { xs: 2, md: 4 },
-            py: 1.8,
-            display: "grid",
-            gridTemplateColumns: { xs: "auto 1fr auto", md: "220px 1fr 120px" },
-            alignItems: "center",
-            gap: 2,
-          }}
-        >
+        <FadeIn direction="down">
+          <Box
+            sx={{
+              maxWidth: 1280,
+              mx: "auto",
+              px: { xs: 2, md: 4 },
+              py: 1.8,
+              display: "grid",
+              gridTemplateColumns: { xs: "auto 1fr auto", md: "220px 1fr 120px" },
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
           <Stack direction="row" spacing={1.2} alignItems="center">
             <Box
               component="button"
@@ -1655,7 +1701,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Box>
             ))}
           </Stack>
-        </Box>
+          </Box>
+        </FadeIn>
       </Box>
 
       {renderActivePage()}
@@ -1664,17 +1711,19 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         sx={{ borderTop: `1px solid ${palette.border}`, py: { xs: 5, md: 6 } }}
       >
         <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 4 } }}>
-          <Typography
-            sx={{
-              fontFamily: headingFont,
-              fontWeight: 700,
-              fontSize: { xs: "3rem", md: "5rem" },
-              letterSpacing: "-0.07em",
-              lineHeight: 0.9,
-            }}
-          >
-            {data.name}
-          </Typography>
+          <FadeIn>
+            <Typography
+              sx={{
+                fontFamily: headingFont,
+                fontWeight: 700,
+                fontSize: { xs: "3rem", md: "5rem" },
+                letterSpacing: "-0.07em",
+                lineHeight: 0.9,
+              }}
+            >
+              {data.name}
+            </Typography>
+          </FadeIn>
 
           <Box
             sx={{
@@ -1686,7 +1735,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               gap: 3,
             }}
           >
-            <Box>
+            <FadeIn>
+              <Box>
               <Typography
                 sx={{
                   fontSize: "0.7rem",
@@ -1696,7 +1746,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 Quick links
               </Typography>
-              <Stack spacing={0.7} sx={{ mt: 1.3 }}>
+                <Stack spacing={0.7} sx={{ mt: 1.3 }}>
                 {navItems.map((item) => (
                   <Box
                     key={item.label}
@@ -1716,10 +1766,12 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     {item.label}
                   </Box>
                 ))}
-              </Stack>
-            </Box>
+                </Stack>
+              </Box>
+            </FadeIn>
 
-            <Box>
+            <FadeIn delay={0.08}>
+              <Box>
               <Typography
                 sx={{
                   fontSize: "0.7rem",
@@ -1729,21 +1781,23 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 Contact
               </Typography>
-              <Typography
-                sx={{
-                  mt: 1.3,
-                  color: palette.muted,
-                  fontSize: "0.9rem",
-                  lineHeight: 1.9,
-                }}
-              >
-                {data.contact?.email || "hello@brandstore.co"}
-                <br />
-                {data.contact?.phone || "+1 (555) 420 1188"}
-              </Typography>
-            </Box>
+                <Typography
+                  sx={{
+                    mt: 1.3,
+                    color: palette.muted,
+                    fontSize: "0.9rem",
+                    lineHeight: 1.9,
+                  }}
+                >
+                  {data.contact?.email || "hello@brandstore.co"}
+                  <br />
+                  {data.contact?.phone || "+1 (555) 420 1188"}
+                </Typography>
+              </Box>
+            </FadeIn>
 
-            <Box>
+            <FadeIn delay={0.16}>
+              <Box>
               <Typography
                 sx={{
                   fontSize: "0.7rem",
@@ -1764,7 +1818,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 {data.contact?.address || "245 Mercer Street, New York, NY"}
               </Typography>
 
-              <Stack direction="row" spacing={1.2} sx={{ mt: 1.8 }}>
+                <Stack direction="row" spacing={1.2} sx={{ mt: 1.8 }}>
                 {socialLinks.map((item) => {
                   const Icon = item.icon;
                   const href =
@@ -1794,8 +1848,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Mail size={16} />
                   </Box>
                 ) : null}
-              </Stack>
-            </Box>
+                </Stack>
+              </Box>
+            </FadeIn>
           </Box>
         </Box>
       </Box>

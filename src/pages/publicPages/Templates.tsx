@@ -33,17 +33,7 @@ type StaticTemplate = {
 };
 
 const STATIC_TEMPLATES: StaticTemplate[] = [
-  {
-    id: "static-premium",
-    slug: "premium",
-    name: "Premium",
-    description:
-      "Dark luxury service template with cinematic sections and premium presentation.",
-    type: "website",
-    category: "business",
-    version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
-  },
+
   {
     id: "static-blog",
     slug: "blog",
@@ -85,7 +75,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "agency",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/templateFeature.png",
+    previewImage: "/assets/templateAssets/images/dummy/portfolioAgency.png",
   },
   {
     id: "static-portfolio-photo-studio",

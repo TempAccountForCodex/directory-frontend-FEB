@@ -3,18 +3,11 @@ import { Box, Button, Grid, IconButton, Stack, Typography } from "@mui/material"
 import {
   ArrowRight,
   BriefcaseBusiness,
-  CheckCircle2,
   Facebook,
   Instagram,
-  Landmark,
   Linkedin,
-  Mail,
-  MapPin,
-  PhoneCall,
   Play,
-  ShieldCheck,
   Twitter,
-  TrendingUp,
 } from "lucide-react";
 import FadeIn from "../../blocks/FadeIn";
 import { TemplateProps } from "../../templateEngine/types";
@@ -233,32 +226,12 @@ function ConsultingStudioHero({ data }: { data: TemplateProps["data"] }) {
 }
 
 function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
-  const services = (data.services ?? []).slice(0, 4);
-  const serviceIcons = [BriefcaseBusiness, TrendingUp, Landmark, ShieldCheck];
   const aboutImages = (data.gallery ?? []).slice(0, 3);
-
-  const aboutBullets = [
-    "Strategy and operations",
-    "Growth and performance",
-    "Clear leadership support",
-  ];
-  const team = (data.reviews ?? []).slice(0, 3).map((review, index) => ({
-    name: review.author,
-    role: ["Lead Consultant", "Growth Strategist", "Operations Advisor"][index] || "Consultant",
-    text: review.text,
-    image: data.gallery?.[index + 1]?.url ?? data.gallery?.[0]?.url,
-  }));
   const projectCards = (data.gallery ?? []).slice(2, 5);
   const processSteps = [
     "Discovery workshop and business audit",
     "Custom roadmap with measurable milestones",
     "Weekly execution support and performance reporting",
-  ];
-  const faqItems = [
-    "Strategy support",
-    "Execution planning",
-    "Team alignment",
-    "Flexible engagement",
   ];
   const spotlightImages = (data.gallery ?? []).slice(1, 3);
 
@@ -290,6 +263,8 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                 >
                   About Us
                 </Typography>
+              </FadeIn>
+              <FadeIn delay={0.08}>
                 <Typography
                   sx={{
                     mt: 1.2,
@@ -302,15 +277,17 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                 >
                   We help businesses make sharper decisions and move with more confidence.
                 </Typography>
+              </FadeIn>
+              <FadeIn delay={0.16}>
                 <Typography sx={{ mt: 1.8, color: "#6f7898", lineHeight: 1.75, maxWidth: 520 }}>
                   Clean strategy, strong positioning, and practical support for growing brands.
                 </Typography>
               </FadeIn>
             </Grid>
             <Grid item xs={12} md={6}>
-              <FadeIn delay={0.08}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={7}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={7}>
+                  <FadeIn delay={0.06} direction="left">
                     <Box
                       sx={{
                         minHeight: { xs: 260, md: 360 },
@@ -329,9 +306,11 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                         />
                       )}
                     </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={5}>
-                    <Stack spacing={2} sx={{ height: "100%" }}>
+                  </FadeIn>
+                </Grid>
+                <Grid item xs={12} sm={5}>
+                  <Stack spacing={2} sx={{ height: "100%" }}>
+                    <FadeIn delay={0.14} direction="left">
                       <Box
                         sx={{
                           flex: 1,
@@ -351,6 +330,8 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                           />
                         )}
                       </Box>
+                    </FadeIn>
+                    <FadeIn delay={0.22}>
                       <Box
                         sx={{
                           p: 2.4,
@@ -370,10 +351,10 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                           Built for reusable consulting brands.
                         </Typography>
                       </Box>
-                    </Stack>
-                  </Grid>
+                    </FadeIn>
+                  </Stack>
                 </Grid>
-              </FadeIn>
+              </Grid>
             </Grid>
           </Grid>
         </Box>
@@ -412,6 +393,8 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                 >
                   Just A Consultancy
                 </Typography>
+              </FadeIn>
+              <FadeIn delay={0.08}>
                 <Typography
                   sx={{
                     mt: 1.6,
@@ -425,19 +408,21 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                 >
                   We know how to manage business globally
                 </Typography>
+              </FadeIn>
 
-                <Stack spacing={3.2} sx={{ mt: 4.2, maxWidth: 520 }}>
-                  {[
-                    {
-                      title: "Best Business Consulting",
-                      text: "We help brands unlock better positioning, operations, and growth decisions.",
-                    },
-                    {
-                      title: "24/7 Customer Support",
-                      text: "Flexible support and practical consulting for teams moving through change.",
-                    },
-                  ].map((item) => (
-                    <Stack key={item.title} direction="row" spacing={2}>
+              <Stack spacing={3.2} sx={{ mt: 4.2, maxWidth: 520 }}>
+                {[
+                  {
+                    title: "Best Business Consulting",
+                    text: "We help brands unlock better positioning, operations, and growth decisions.",
+                  },
+                  {
+                    title: "24/7 Customer Support",
+                    text: "Flexible support and practical consulting for teams moving through change.",
+                  },
+                ].map((item, index) => (
+                  <FadeIn key={item.title} delay={0.16 + index * 0.08} direction="right">
+                    <Stack direction="row" spacing={2}>
                       <Box
                         sx={{
                           width: 56,
@@ -462,9 +447,11 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                         </Typography>
                       </Box>
                     </Stack>
-                  ))}
-                </Stack>
+                  </FadeIn>
+                ))}
+              </Stack>
 
+              <FadeIn delay={0.34}>
                 <Stack direction="row" spacing={2.2} alignItems="center" sx={{ mt: 4.5 }}>
                   <Button
                     variant="contained"
@@ -514,8 +501,8 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <FadeIn delay={0.08}>
-                <Box sx={{ position: "relative", minHeight: { xs: 420, md: 610 } }}>
+              <Box sx={{ position: "relative", minHeight: { xs: 420, md: 610 } }}>
+                <FadeIn delay={0.08} direction="left">
                   <Box
                     sx={{
                       position: "absolute",
@@ -537,7 +524,9 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                       />
                     )}
                   </Box>
+                </FadeIn>
 
+                <FadeIn delay={0.18} direction="right">
                   <Box
                     sx={{
                       position: "absolute",
@@ -561,8 +550,8 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                       />
                     )}
                   </Box>
-                </Box>
-              </FadeIn>
+                </FadeIn>
+              </Box>
             </Grid>
           </Grid>
         </Box>
@@ -578,26 +567,30 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                 <Typography sx={{ color: "#3f57ff", fontWeight: 800, fontSize: "0.8rem", letterSpacing: "0.14em", textTransform: "uppercase" }}>
                   Proven Process
                 </Typography>
+              </FadeIn>
+              <FadeIn delay={0.08}>
                 <Typography sx={{ mt: 1.4, color: "#172041", fontWeight: 800, fontSize: { xs: "2rem", md: "3rem" }, lineHeight: 1.03, maxWidth: 460 }}>
                   A simple path to delivery.
                 </Typography>
-                <Stack spacing={2.2} sx={{ mt: 3 }}>
-                  {processSteps.map((step, index) => (
-                    <Stack key={step} direction="row" spacing={1.6} alignItems="flex-start">
+              </FadeIn>
+              <Stack spacing={2.2} sx={{ mt: 3 }}>
+                {processSteps.map((step, index) => (
+                  <FadeIn key={step} delay={0.16 + index * 0.08} direction="right">
+                    <Stack direction="row" spacing={1.6} alignItems="flex-start">
                       <Box sx={{ width: 34, height: 34, borderRadius: "50%", display: "grid", placeItems: "center", bgcolor: "#3f57ff", color: "#ffffff", fontWeight: 800, fontSize: "0.9rem", flexShrink: 0, mt: 0.2 }}>
                         {index + 1}
                       </Box>
                       <Typography sx={{ color: "#667092", lineHeight: 1.8 }}>{step}</Typography>
                     </Stack>
-                  ))}
-                </Stack>
-              </FadeIn>
+                  </FadeIn>
+                ))}
+              </Stack>
             </Grid>
             <Grid item xs={12} md={7}>
-              <FadeIn delay={0.08}>
-                <Grid container spacing={2.2}>
-                  {projectCards.map((card, index) => (
-                    <Grid item xs={12} sm={index === 0 ? 12 : 6} key={card.url}>
+              <Grid container spacing={2.2}>
+                {projectCards.map((card, index) => (
+                  <Grid item xs={12} sm={index === 0 ? 12 : 6} key={card.url}>
+                    <FadeIn delay={0.08 + index * 0.08} direction="left">
                       <Box sx={{ height: "100%", borderRadius: 4, overflow: "hidden", bgcolor: "#f6f8ff", border: "1px solid rgba(29, 43, 100, 0.08)" }}>
                         <Box sx={{ height: index === 0 ? 300 : 220 }}>
                           <Box component="img" src={card.url} alt={card.caption || data.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -611,10 +604,10 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                           </Typography>
                         </Box>
                       </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-              </FadeIn>
+                    </FadeIn>
+                  </Grid>
+                ))}
+              </Grid>
             </Grid>
           </Grid>
         </Box>
@@ -635,8 +628,8 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
         >
           <Grid container spacing={{ xs: 4, md: 5 }} alignItems="stretch">
             <Grid item xs={12} md={7}>
-              <FadeIn>
-                <Box sx={{ position: "relative", pr: { md: 2 } }}>
+              <Box sx={{ position: "relative", pr: { md: 2 } }}>
+                <FadeIn>
                   <Typography
                     sx={{
                       position: "absolute",
@@ -653,16 +646,22 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                   >
                     Hello
                   </Typography>
+                </FadeIn>
 
+                <FadeIn delay={0.06}>
                   <Typography sx={{ color: "#3f57ff", fontWeight: 800, fontSize: "0.84rem", letterSpacing: "0.18em", textTransform: "uppercase" }}>
                     Make An Appointment
                   </Typography>
+                </FadeIn>
+                <FadeIn delay={0.12}>
                   <Typography sx={{ mt: 1.4, color: "#172041", fontWeight: 800, fontSize: { xs: "2.3rem", md: "3.6rem" }, lineHeight: 1.02, letterSpacing: "-0.04em" }}>
                     Request a free quote
                   </Typography>
+                </FadeIn>
 
-                  <Grid container spacing={2} sx={{ mt: 3.5 }}>
-                    <Grid item xs={12} sm={6}>
+                <Grid container spacing={2} sx={{ mt: 3.5 }}>
+                  <Grid item xs={12} sm={6}>
+                    <FadeIn delay={0.18} direction="right">
                       <Box
                         component="input"
                         placeholder="Your Name"
@@ -678,8 +677,10 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                           outline: "none",
                         }}
                       />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
+                    </FadeIn>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FadeIn delay={0.24} direction="right">
                       <Box
                         component="input"
                         placeholder="Number"
@@ -695,8 +696,10 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                           outline: "none",
                         }}
                       />
-                    </Grid>
-                    <Grid item xs={12}>
+                    </FadeIn>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FadeIn delay={0.3} direction="right">
                       <Box
                         component="input"
                         placeholder="Email"
@@ -712,8 +715,10 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                           outline: "none",
                         }}
                       />
-                    </Grid>
-                    <Grid item xs={12}>
+                    </FadeIn>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FadeIn delay={0.36} direction="right">
                       <Box
                         component="textarea"
                         placeholder="Type Your Message"
@@ -732,9 +737,11 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                           fontFamily: "inherit",
                         }}
                       />
-                    </Grid>
+                    </FadeIn>
                   </Grid>
+                </Grid>
 
+                <FadeIn delay={0.42}>
                   <Button
                     variant="contained"
                     sx={{
@@ -753,12 +760,12 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                   >
                     Submit Message
                   </Button>
-                </Box>
-              </FadeIn>
+                </FadeIn>
+              </Box>
             </Grid>
 
             <Grid item xs={12} md={5}>
-              <FadeIn delay={0.08}>
+              <FadeIn delay={0.12} direction="left">
                 <Box
                   sx={{
                     position: "relative",
@@ -811,57 +818,65 @@ function ConsultingStudioFooter({ data }: { data: TemplateProps["data"] }) {
       <Box sx={{ maxWidth: 1180, mx: "auto" }}>
         <Grid container spacing={4} alignItems="center">
           <Grid item xs={12} md={5}>
-            <Stack direction="row" spacing={1.2} alignItems="center">
-              <Box sx={{ width: 42, height: 42, borderRadius: 2.5, display: "grid", placeItems: "center", bgcolor: "#3f57ff", color: "#ffffff", fontWeight: 800 }}>
-                M
-              </Box>
-              <Box>
-                <Typography sx={{ color: "#ffffff", fontWeight: 800 }}>{data.name}</Typography>
-                <Typography sx={{ color: "rgba(224, 229, 255, 0.62)", fontSize: "0.86rem" }}>
-                  Modern consulting for ambitious teams.
-                </Typography>
-              </Box>
-            </Stack>
+            <FadeIn>
+              <Stack direction="row" spacing={1.2} alignItems="center">
+                <Box sx={{ width: 42, height: 42, borderRadius: 2.5, display: "grid", placeItems: "center", bgcolor: "#3f57ff", color: "#ffffff", fontWeight: 800 }}>
+                  M
+                </Box>
+                <Box>
+                  <Typography sx={{ color: "#ffffff", fontWeight: 800 }}>{data.name}</Typography>
+                  <Typography sx={{ color: "rgba(224, 229, 255, 0.62)", fontSize: "0.86rem" }}>
+                    Modern consulting for ambitious teams.
+                  </Typography>
+                </Box>
+              </Stack>
+            </FadeIn>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Stack direction="row" spacing={2.4} justifyContent={{ xs: "flex-start", md: "center" }} flexWrap="wrap">
-              {links.map((item) => (
-                <Typography key={item} sx={{ color: "rgba(224, 229, 255, 0.76)", fontWeight: 600, fontSize: "0.92rem" }}>
-                  {item}
-                </Typography>
-              ))}
-            </Stack>
+            <FadeIn delay={0.08}>
+              <Stack direction="row" spacing={2.4} justifyContent={{ xs: "flex-start", md: "center" }} flexWrap="wrap">
+                {links.map((item) => (
+                  <Typography key={item} sx={{ color: "rgba(224, 229, 255, 0.76)", fontWeight: 600, fontSize: "0.92rem" }}>
+                    {item}
+                  </Typography>
+                ))}
+              </Stack>
+            </FadeIn>
           </Grid>
           <Grid item xs={12} md={3}>
-            <Stack direction="row" spacing={1.1} justifyContent={{ xs: "flex-start", md: "flex-end" }}>
-              {socials.map(({ icon: Icon, url }) => (
-                <IconButton
-                  key={url}
-                  component="a"
-                  href={url}
-                  target="_blank"
-                  rel="noreferrer"
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2.5,
-                    bgcolor: "rgba(255,255,255,0.08)",
-                    color: "#ffffff",
-                    "&:hover": { bgcolor: "#3f57ff" },
-                  }}
-                >
-                  <Icon size={18} />
-                </IconButton>
-              ))}
-            </Stack>
+            <FadeIn delay={0.16}>
+              <Stack direction="row" spacing={1.1} justifyContent={{ xs: "flex-start", md: "flex-end" }}>
+                {socials.map(({ icon: Icon, url }) => (
+                  <IconButton
+                    key={url}
+                    component="a"
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2.5,
+                      bgcolor: "rgba(255,255,255,0.08)",
+                      color: "#ffffff",
+                      "&:hover": { bgcolor: "#3f57ff" },
+                    }}
+                  >
+                    <Icon size={18} />
+                  </IconButton>
+                ))}
+              </Stack>
+            </FadeIn>
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: 4, pt: 2.6, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-          <Typography sx={{ color: "rgba(224, 229, 255, 0.56)", fontSize: "0.86rem" }}>
-            © {new Date().getFullYear()} {data.name}. All rights reserved.
-          </Typography>
-        </Box>
+        <FadeIn delay={0.22}>
+          <Box sx={{ mt: 4, pt: 2.6, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            <Typography sx={{ color: "rgba(224, 229, 255, 0.56)", fontSize: "0.86rem" }}>
+              © {new Date().getFullYear()} {data.name}. All rights reserved.
+            </Typography>
+          </Box>
+        </FadeIn>
       </Box>
     </Box>
   );
@@ -879,5 +894,3 @@ const ConsultingStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 };
 
 export default ConsultingStudioTemplate;
-
-
