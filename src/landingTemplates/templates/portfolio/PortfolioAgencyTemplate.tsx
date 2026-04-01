@@ -25,6 +25,8 @@ const SURFACE2 = "#161616";
 const TEXT_DIM = "rgba(255,255,255,0.45)";
 const TEXT_DIMMER = "rgba(255,255,255,0.2)";
 const BORDER = "rgba(255,255,255,0.07)";
+const HERO_BG =
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1800&q=80";
 
 /* ─── Marquee ─────────────────────────────────────────────────── */
 function Marquee({ items, speed = 30 }: { items: string[]; speed?: number }) {
@@ -253,14 +255,36 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
       {/* ── 2. HERO ───────────────────────────────────────────── */}
       <Box
         sx={{
-          px: { xs: 4, md: 10 }, pt: { xs: 14, md: 24 }, pb: { xs: 10, md: 16 },
-          maxWidth: 1400, mx: "auto",
+          position: "relative",
+          overflow: "hidden",
+          px: { xs: 4, md: 10 }, pt: { xs: 14, md: 20 }, pb: { xs: 10, md: 12 },
+          width: "100%",
+          minHeight: { xs: "auto", md: "88vh" },
           display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 420px" },
           gap: 8, alignItems: "flex-end",
+          backgroundImage: `
+            linear-gradient(90deg, rgba(6,6,6,0.95) 0%, rgba(6,6,6,0.84) 38%, rgba(6,6,6,0.54) 68%, rgba(6,6,6,0.82) 100%),
+            linear-gradient(180deg, rgba(6,6,6,0.14) 0%, rgba(6,6,6,0.42) 100%),
+            url(${HERO_BG})
+          `,
+          backgroundSize: "cover",
+          backgroundPosition: { xs: "62% center", md: "center center" },
+          backgroundRepeat: "no-repeat",
+          borderRadius: { xs: 0, md: 4 },
         }}
       >
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(circle at 18% 68%, rgba(201,168,76,0.16) 0%, rgba(201,168,76,0) 36%)",
+            pointerEvents: "none",
+          }}
+        />
+
         {/* Left */}
-        <Box>
+        <Box sx={{ position: "relative", zIndex: 1, maxWidth: 760 }}>
           <FadeIn>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 5 }}>
               <Box sx={{ width: 40, height: 1, bgcolor: accent }} />
@@ -279,6 +303,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
                 lineHeight: 0.92,
                 letterSpacing: "-0.03em",
                 mb: 0,
+                textShadow: "0 12px 30px rgba(0,0,0,0.38)",
               }}
             >
               <Box component="span" sx={{ color: "#fff", display: "block" }}>We</Box>
@@ -311,7 +336,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Button>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#22c55e", boxShadow: "0 0 0 3px rgba(34,197,94,0.2)" }} />
-                <Typography variant="caption" sx={{ color: TEXT_DIM, letterSpacing: 1 }}>Available for projects</Typography>
+                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)", letterSpacing: 1 }}>Available for projects</Typography>
               </Box>
             </Box>
           </FadeIn>
@@ -319,11 +344,25 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Right — tagline + contact info */}
         <FadeIn delay={0.24} direction="right">
-          <Box>
+          <Box
+            sx={{
+              position: "relative",
+              zIndex: 1,
+              alignSelf: "end",
+              maxWidth: 420,
+              ml: { lg: "auto" },
+              p: { xs: 0, md: 3.5 },
+              borderRadius: 3,
+              border: { md: `1px solid rgba(255,255,255,0.08)` },
+              bgcolor: { md: "rgba(6,6,6,0.34)" },
+              backdropFilter: { md: "blur(14px)" },
+              boxShadow: { md: "0 18px 60px rgba(0,0,0,0.2)" },
+            }}
+          >
             <Typography
               sx={{
-                color: TEXT_DIM, fontSize: { xs: "1rem", md: "1.1rem" },
-                lineHeight: 1.9, mb: 6, borderLeft: `2px solid ${BORDER}`, pl: 3,
+                color: "rgba(255,255,255,0.72)", fontSize: { xs: "1rem", md: "1.1rem" },
+                lineHeight: 1.9, mb: 6, borderLeft: `2px solid rgba(255,255,255,0.12)`, pl: 3,
               }}
             >
               {data.tagline || data.description}
@@ -332,13 +371,13 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
             {data.contact?.email && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
                 <Mail size={14} color={accent} />
-                <Typography sx={{ color: TEXT_DIM, fontSize: "0.85rem" }}>{data.contact.email}</Typography>
+                <Typography sx={{ color: "rgba(255,255,255,0.72)", fontSize: "0.85rem" }}>{data.contact.email}</Typography>
               </Box>
             )}
             {data.contact?.phone && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Phone size={14} color={accent} />
-                <Typography sx={{ color: TEXT_DIM, fontSize: "0.85rem" }}>{data.contact.phone}</Typography>
+                <Typography sx={{ color: "rgba(255,255,255,0.72)", fontSize: "0.85rem" }}>{data.contact.phone}</Typography>
               </Box>
             )}
           </Box>

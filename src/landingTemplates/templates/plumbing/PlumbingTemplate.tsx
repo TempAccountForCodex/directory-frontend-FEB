@@ -243,7 +243,7 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
 
         <Container maxWidth="xl" sx={{ pt: { xs: 0, md: 1 }, pb: { xs: 7, md: 6 }, px: { xs: 2, md: 4 } }}>
           <Grid container alignItems="end" sx={{ minHeight: { xs: 520, md: 650 } }}>
-            <Grid size={{ xs: 12, md: 8 }}>
+            <Grid xs={12} md={8}>
               <Box sx={{ maxWidth: 840 }}>
                 <Typography
                   sx={{
@@ -288,12 +288,12 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Grid>
 
           <Grid container spacing={3} sx={{ mt: { xs: 1, md: 2 } }}>
-            <Grid size={{ xs: 12, md: 4.5 }}>
+            <Grid xs={12} md={4.5}>
               <Typography sx={{ maxWidth: 360, color: "rgba(255,255,255,0.92)", fontSize: { xs: "1rem", md: "1.02rem" }, lineHeight: 1.6 , mt: 2 }}>
                 Home service overview. Trusted experts delivering fast, reliable, and professional home repair solutions.
               </Typography>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }} />
+            <Grid xs={12} md={3} />
             
           </Grid>
         </Container>
