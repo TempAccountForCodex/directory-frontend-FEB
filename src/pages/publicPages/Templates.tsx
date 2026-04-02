@@ -112,6 +112,17 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     previewImage: "/assets/templateAssets/images/dummy/storePremium.png",
   },
   {
+    id: "static-store-performance",
+    slug: "store-performance",
+    name: "Store Performance",
+    description:
+      "High-contrast neon performance store template inspired by gym campaigns and bold sports retail visuals.",
+    type: "store",
+    category: "ecommerce",
+    version: "1.0.0",
+    previewImage: "",
+  },
+  {
     id: "static-company",
     slug: "company",
     name: "Company",

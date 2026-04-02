@@ -779,6 +779,110 @@ const STORE_PREMIUM_DATA: BusinessData = {
   ],
 };
 
+const STORE_PERFORMANCE_DATA: BusinessData = {
+  name: "Boost Lab",
+  tagline: "Built for output. Designed for stronger sessions.",
+  description:
+    "A high-intensity store template for performance brands selling gym equipment, conditioning tools, and training accessories with a bold campaign feel.",
+  primaryColor: "#46ff16",
+  secondaryColor: "#050505",
+
+    heroBannerUrl:
+    "https://img.freepik.com/free-photo/modern-urban-gym_23-2151917998.jpg?t=st=1775147042~exp=1775150642~hmac=7d71d3d245434e72f31f7f4525eff0bdfd8886903c6b858ad427df9fe1821938&w=2000",
+  
+  contact: {
+    email: "hello@boostlabfit.com",
+    phone: "(555) 510-9988",
+    address: "812 Performance Blvd, Los Angeles, CA",
+  },
+  socialLinks: { instagram: "#", facebook: "#", twitter: "#" },
+  gallery: [
+    {
+      url: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1800&q=80",
+    },
+    {
+      url: "https://img.freepik.com/free-photo/kettlebell-gym-equipment-still-life_23-2151739249.jpg?t=st=1775148995~exp=1775152595~hmac=c821028786cee3a563c8d0ab004cc2abbe0c61a0ec739f152a1b3b12a8cb2246&w=2000",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=1600&q=80",
+    },
+  ],
+  products: [
+    {
+      id: "spf-1",
+      name: "Loop Resistance Bands",
+      category: "Accessories",
+      price: "$25.00",
+      image:
+        "https://lifefitnesspk.com/wp-content/uploads/2022/05/1-PC-APOLLO-CUSTOM-STYLE-RUBBER-DUMBBELL-2.jpg",
+      description: "Portable loop bands for mobility, warmups, and strength sessions.",
+    },
+    {
+      id: "spf-2",
+      name: "Cast Iron Kettlebell",
+      category: "Equipment",
+      price: "$70.00",
+      image:
+        "https://lifefitnesspk.com/wp-content/uploads/2025/10/5161wevyd8L._AC_SL1001_-1-510x510.jpg",
+      description: "Competition-style kettlebell for full-body power work.",
+    },
+    {
+      id: "spf-3",
+      name: "Handle Resistance Bands",
+      category: "Conditioning",
+      price: "$40.00",
+      image:
+        "https://lifefitnesspk.com/wp-content/uploads/2020/09/33_c8de602d-e4e4-40f9-b742-60cc97b5fb07_1024x1024@2x.png",
+      description: "Heavy training rope for cardio intervals and explosive conditioning.",
+    },
+    {
+      id: "spf-4",
+      name: "Adjustable Dumbbells Set",
+      category: "Accessories",
+      price: "$150.00",
+      image:
+        "https://lifefitnesspk.com/wp-content/uploads/2024/03/S2c431265c8974034b5c72711acc8575bi.webp",
+      description: "Adjustable speed rope for intense conditioning and agility work.",
+    },
+    {
+      id: "spf-5",
+      name: "Olympic Weight Plate",
+      category: "Strength",
+      price: "$95.00",
+      image:
+        "https://lifefitnesspk.com/wp-content/uploads/2020/06/American-Fitness-UPRIGHT-BIKE-BU-5901-1-510x510.jpg",
+      description: "Durable weight plate for compound lifts and progressive overload work.",
+    },
+    {
+      id: "spf-6",
+      name: "Pull-Up Assist Bands",
+      category: "Accessories",
+      price: "$35.00",
+      image:
+        "https://lifefitnesspk.com/wp-content/uploads/2022/04/Agility-Hurdles-3-510x510.png",
+      description: "Support bands for mobility work, pull-up progressions, and recovery sessions.",
+    },
+    {
+      id: "spf-7",
+      name: "Training Bench",
+      category: "Equipment",
+      price: "$210.00",
+      image:
+        "https://lifefitnesspk.com/wp-content/uploads/2021/06/Back-Support-2223-3-600x600-1-510x510.jpg",
+      description: "Compact heavy-duty bench designed for presses, rows, and strength circuits.",
+    },
+    {
+      id: "spf-8",
+      name: "Foam Roller Pro",
+      category: "Recovery",
+      price: "$28.00",
+      image:
+        "https://lifefitnesspk.com/wp-content/uploads/2022/03/XD-2228-Jumping-Rope-510x510.png",
+      description: "High-density roller for cooldowns, muscle prep, and day-to-day recovery.",
+    },
+  ],
+};
+
 const COMPANY_DATA: BusinessData = {
   name: "Atelier North",
   tagline:
@@ -894,6 +998,10 @@ const TEMPLATE_DATA_MAP: Record<
   },
   "store-basic": { templateId: "store-basic", data: STORE_DATA },
   "store-premium": { templateId: "store-premium", data: STORE_PREMIUM_DATA },
+  "store-performance": {
+    templateId: "store-performance",
+    data: STORE_PERFORMANCE_DATA,
+  },
   company: { templateId: "company", data: COMPANY_DATA },
   "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
 };
@@ -911,7 +1019,7 @@ const TEMPLATE_GROUPS = [
     label: "Portfolio",
     slugs: ["portfolio-creative", "portfolio-agency", "portfolio-photo-studio"],
   },
-  { label: "Store", slugs: ["store-basic", "store-premium"] },
+  { label: "Store", slugs: ["store-basic", "store-premium", "store-performance"] },
   { label: "Company", slugs: ["company", "company-premium"] },
 ];
 
@@ -1284,6 +1392,8 @@ const PreviewBar: React.FC<{
                       ? "Company"
                       : s === "company-premium"
                         ? "Premium"
+                        : s === "store-performance"
+                          ? "Performance"
                         : shortLabel.charAt(0).toUpperCase() +
                           shortLabel.slice(1));
 

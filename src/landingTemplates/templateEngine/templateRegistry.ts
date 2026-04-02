@@ -22,6 +22,7 @@ const PortfolioPhotoStudioTemplate = lazy(() => import("../templates/portfolio/P
 // Store
 const StoreBasicTemplate = lazy(() => import("../templates/store/StoreBasicTemplate"));
 const StorePremiumTemplate = lazy(() => import("../templates/store/StorePremiumTemplate"));
+const StorePerformanceTemplate = lazy(() => import("../templates/store/StorePerformanceTemplate"));
 
 // Company / Product site
 const CompanySiteTemplate = lazy(() => import("../templates/company/CompanySiteTemplate"));
@@ -132,6 +133,13 @@ const templateRegistry: Record<string, TemplateDefinition> = {
     description: "Soft premium collection store with elegant merchandising, editorial about section, and enquiry-first contact layout.",
     tags: ["store", "premium", "editorial", "luxury"],
     component: StorePremiumTemplate,
+  },
+  "store-performance": {
+    id: "store-performance",
+    name: "Store – Performance",
+    description: "Neon black athletic gear store with campaign-style promo sections, fitness products, and high-contrast product storytelling.",
+    tags: ["store", "performance", "fitness", "campaign"],
+    component: StorePerformanceTemplate,
   },
 
   // --- Company / Product ---
