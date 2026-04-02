@@ -7,7 +7,7 @@
     "tw-init": "tailwindcss init -p",
     "dev": "vite --force --open",
     "dev:https": "VITE_HTTPS=true vite --force --open",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/generate-sitemap.js",
     "preview": "vite preview",
     "preview:https": "VITE_HTTPS=true vite preview --host 0.0.0.0 --port 4173",
     "test": "vitest run",
