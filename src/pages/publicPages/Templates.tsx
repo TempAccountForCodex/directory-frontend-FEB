@@ -123,6 +123,17 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     previewImage: "",
   },
   {
+    id: "static-store-fit",
+    slug: "store-fit",
+    name: "Store Fit",
+    description:
+      "Bold cobalt sports-fashion store template with oversized typography, editorial product rows, and a campaign-style contact finish.",
+    type: "store",
+    category: "ecommerce",
+    version: "1.0.0",
+    previewImage: "",
+  },
+  {
     id: "static-company",
     slug: "company",
     name: "Company",

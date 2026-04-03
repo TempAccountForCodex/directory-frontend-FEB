@@ -145,6 +145,13 @@ const productRows = [
   },
 ];
 
+const navItems = [
+  { label: "About", sectionId: "about-us" },
+  { label: "Products", sectionId: "products" },
+  { label: "FAQs", sectionId: "faqs" },
+  { label: "Contact", sectionId: "contact" },
+];
+
 const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
   const products = data.products?.length ? data.products : fallbackProducts;
   const heroImage = data.heroBannerUrl || fallbackHero;
@@ -157,6 +164,19 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
     offset: ["start end", "end start"],
   });
   const aboutImageScale = useTransform(aboutScrollProgress, [0, 0.45, 1], [1.18, 1.08, 1]);
+
+  const scrollToSection = (sectionId: string) => {
+    const target = document.getElementById(sectionId);
+    if (!target) return;
+
+    const headerOffset = 92;
+    const targetTop = target.getBoundingClientRect().top + window.scrollY - headerOffset;
+
+    window.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: "smooth",
+    });
+  };
 
   const scrollProducts = (direction: "left" | "right") => {
     const slider = sliderRef.current;
@@ -212,9 +232,11 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
               gap: 2,
             }}
           >
-            <Typography sx={{ fontWeight: 800, letterSpacing: "0.18em", fontSize: "0.85rem" }}>
-              {data.name.toUpperCase()}
-            </Typography>
+            <FadeIn direction="right" delay={0.04}>
+              <Typography sx={{ fontWeight: 800, letterSpacing: "0.18em", fontSize: "0.85rem" }}>
+                {data.name.toUpperCase()}
+              </Typography>
+            </FadeIn>
 
             <Stack
               direction="row"
@@ -222,38 +244,54 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
               justifyContent="center"
               sx={{
                 display: { xs: "none", md: "flex" },
-                "& .MuiTypography-root": {
-                  color: muted,
-                  fontSize: "0.72rem",
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                },
+                alignItems: "center",
               }}
             >
-              <Typography>About</Typography>
-              <Typography>Products</Typography>
-              <Typography>FAQs</Typography>
-              <Typography>Contact</Typography>
+              {navItems.map((item) => (
+                <Typography
+                  key={item.label}
+                  onClick={() => scrollToSection(item.sectionId)}
+                  sx={{
+                    color: muted,
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    transition: "color 180ms ease, transform 180ms ease",
+                    "&:hover": {
+                      color: neon,
+                      transform: "translateY(-1px)",
+                    },
+                  }}
+                >
+                  {item.label}
+                </Typography>
+              ))}
             </Stack>
 
-            <Button
-              onClick={handlePrimaryAction}
-              sx={{
-                minWidth: 0,
-                borderRadius: 999,
-                bgcolor: neon,
-                color: "#000",
-                px: 2.2,
-                py: 0.55,
-                fontSize: "0.72rem",
-                fontWeight: 800,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                "&:hover": { bgcolor: neon },
-              }}
-            >
-              Shop
-            </Button>
+            <FadeIn direction="left" delay={0.14}>
+              <Button
+                component={motion.button}
+                whileHover={{ y: -2, scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => scrollToSection("featured-products")}
+                sx={{
+                  minWidth: 0,
+                  borderRadius: 999,
+                  bgcolor: neon,
+                  color: "#000",
+                  px: 2.2,
+                  py: 0.55,
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  "&:hover": { bgcolor: neon },
+                }}
+              >
+                Shop
+              </Button>
+            </FadeIn>
           </Box>
         </FadeIn>
       </Box>
@@ -387,36 +425,43 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
                  <Container maxWidth="xl" >
-            <Typography
-              sx={{
-                maxWidth: 860,
-                fontSize: { xs: "1.02rem", md: "1.18rem" },
-                lineHeight: 1.55,
-                fontFamily: '"Inter", Arial, sans-serif',
-              }}
-            >
-              Welcome to {data.name}, your ultimate destination for high-quality gym
-              equipment. Start your fitness journey today with our top-notch products.
-            </Typography>
+            <FadeIn direction="right" delay={0.06}>
+              <Typography
+                sx={{
+                  maxWidth: 860,
+                  fontSize: { xs: "1.02rem", md: "1.18rem" },
+                  lineHeight: 1.55,
+                  fontFamily: '"Inter", Arial, sans-serif',
+                }}
+              >
+                Welcome to {data.name}, your ultimate destination for high-quality gym
+                equipment. Start your fitness journey today with our top-notch products.
+              </Typography>
+            </FadeIn>
 
-            <Button
-              onClick={handlePrimaryAction}
-              sx={{
-                justifySelf: { xs: "flex-start", md: "flex-end" },
-                minWidth: 0,
-                borderRadius: 999,
-                bgcolor: "#000",
-                color: neon,
-                px: 3.2,
-                py: 0.95,
-                fontSize: "0.9rem",
-                fontWeight: 700,
-                textTransform: "none",
-                "&:hover": { bgcolor: "#000" },
-              }}
-            >
-              Shop Now
-            </Button>
+            <FadeIn direction="left" delay={0.14}>
+              <Button
+                component={motion.button}
+                whileHover={{ y: -2, scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handlePrimaryAction}
+                sx={{
+                  justifySelf: { xs: "flex-start", md: "flex-end" },
+                  minWidth: 0,
+                  borderRadius: 999,
+                  bgcolor: "#000",
+                  color: neon,
+                  px: 3.2,
+                  py: 0.95,
+                  fontSize: "0.9rem",
+                  fontWeight: 700,
+                  textTransform: "none",
+                  "&:hover": { bgcolor: "#000" },
+                }}
+              >
+                Shop Now
+              </Button>
+            </FadeIn>
             </Container>
           </Box>
         </FadeIn>
@@ -438,6 +483,9 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
 
               <Stack direction="row" spacing={1}>
                 <Button
+                  component={motion.button}
+                  whileHover={{ y: -2, scale: 1.05 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => scrollProducts("left")}
                   sx={{
                     minWidth: 0,
@@ -451,6 +499,9 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <ChevronLeftIcon fontSize="small" />
                 </Button>
                 <Button
+                  component={motion.button}
+                  whileHover={{ y: -2, scale: 1.05 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => scrollProducts("right")}
                   sx={{
                     minWidth: 0,
@@ -482,6 +533,8 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
             {products.map((product, index) => (
               <FadeIn key={product.id} delay={index * 0.07}>
                 <Box
+                  component={motion.div}
+                  whileHover={{ y: -6 }}
                   sx={{
                     flex: "0 0 auto",
                     width: { xs: "82vw", sm: 320, md: 420 },
@@ -670,6 +723,9 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Typography>
 
             <Button
+              component={motion.button}
+              whileHover={{ y: -2, scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
               sx={{
                 minWidth: 0,
                 borderRadius: 999,
@@ -785,6 +841,10 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <FadeIn direction="none">
           <Box
+            component={motion.div}
+            whileInView={{ scale: [1.04, 1] }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 1.1, ease: [0.22, 0.61, 0.36, 1] }}
             sx={{
               position: "relative",
               minHeight: { xs: 260, md: 420 },
@@ -880,22 +940,109 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
               gap: 0,
             }}
           >
-            <Box sx={{ px: { xs: 3, md: 20 }, py: { xs: 3, md: 4 }, borderRight: { md: "1px solid rgba(0,0,0,0.15)" } }}>
-              <Typography sx={{ fontSize: { xs: "1.5rem", md: "4rem" }, fontWeight: 700 }}>
-                Promotions
-              </Typography>
-              <Typography sx={{ mt: 1, maxWidth: 420, lineHeight: 1.8, fontFamily: '"Inter", Arial, sans-serif' }}>
-                Limited drops, high-output essentials, and special pricing on selected gear bundles.
-              </Typography>
-            </Box>
-            <Box sx={{ minHeight: 220 }}>
-              <Box
-                component="img"
-                src={promoImage}
-                alt="Promotion"
-                sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-              />
-            </Box>
+              <FadeIn direction="right">
+                <Box sx={{ px: { xs: 3, md: 20 }, py: { xs: 3, md: 4 }, borderRight: { md: "1px solid rgba(0,0,0,0.15)" } }}>
+                  <Typography sx={{ fontSize: { xs: "1.5rem", md: "4rem" }, fontWeight: 700 }}>
+                    Contact Us
+                  </Typography>
+                  <Box
+                    component="form"
+                    sx={{
+                      mt: 2.5,
+                      maxWidth: 520,
+                      display: "grid",
+                      gap: 1.5,
+                    }}
+                  >
+                    <Box
+                      component="input"
+                      type="text"
+                      placeholder="Your Name"
+                      sx={{
+                        width: "100%",
+                        border: "1px solid rgba(0,0,0,0.25)",
+                        bgcolor: "rgba(255,255,255,0.12)",
+                        color: "#000",
+                        px: 1.8,
+                        py: 1.4,
+                        fontSize: "0.98rem",
+                        fontFamily: '"Inter", Arial, sans-serif',
+                        outline: "none",
+                        "&::placeholder": { color: "rgba(0,0,0,0.62)", opacity: 1 },
+                      }}
+                    />
+                    <Box
+                      component="input"
+                      type="email"
+                      placeholder="Email Address"
+                      sx={{
+                        width: "100%",
+                        border: "1px solid rgba(0,0,0,0.25)",
+                        bgcolor: "rgba(255,255,255,0.12)",
+                        color: "#000",
+                        px: 1.8,
+                        py: 1.4,
+                        fontSize: "0.98rem",
+                        fontFamily: '"Inter", Arial, sans-serif',
+                        outline: "none",
+                        "&::placeholder": { color: "rgba(0,0,0,0.62)", opacity: 1 },
+                      }}
+                    />
+                    <Box
+                      component="textarea"
+                      placeholder="Tell us what gear you need"
+                      rows={5}
+                      sx={{
+                        width: "100%",
+                        border: "1px solid rgba(0,0,0,0.25)",
+                        bgcolor: "rgba(255,255,255,0.12)",
+                        color: "#000",
+                        px: 1.8,
+                        py: 1.4,
+                        fontSize: "0.98rem",
+                        lineHeight: 1.6,
+                        fontFamily: '"Inter", Arial, sans-serif',
+                        outline: "none",
+                        resize: "vertical",
+                        "&::placeholder": { color: "rgba(0,0,0,0.62)", opacity: 1 },
+                      }}
+                    />
+                    <Box sx={{ pt: 0.6 }}>
+                      <Button
+                        component={motion.button}
+                        whileHover={{ y: -2, scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        sx={{
+                          minWidth: 0,
+                          borderRadius: 999,
+                          bgcolor: "#000",
+                          color: neon,
+                          px: 3.4,
+                          py: 1,
+                          fontSize: "0.9rem",
+                          fontWeight: 700,
+                          textTransform: "none",
+                          "&:hover": { bgcolor: "#000" },
+                        }}
+                      >
+                        Send Inquiry
+                      </Button>
+                    </Box>
+                  </Box>
+                </Box>
+              </FadeIn>
+            <FadeIn direction="left" delay={0.08}>
+              <Box sx={{ minHeight: 220, overflow: "hidden" }}>
+                <Box
+                  component={motion.img}
+                  whileHover={{ scale: 1.04 }}
+                  transition={{ duration: 0.5, ease: [0.22, 0.61, 0.36, 1] }}
+                  src={promoImage}
+                  alt="Promotion"
+                  sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </Box>
+            </FadeIn>
           </Box>
         </FadeIn>
       </Box>
@@ -916,6 +1063,10 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <FadeIn>
           <Box
+            component={motion.div}
+            whileInView={{ y: [26, 0], opacity: [0, 1] }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1] }}
             sx={{
               minHeight: { xs: 220, md: 500 },
               px: { xs: 3, md: 4 },
@@ -973,6 +1124,9 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                 Contact our team for product help and gym setup guidance.
               </Typography>
               <Button
+                component={motion.button}
+                whileHover={{ y: -2, scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handlePrimaryAction}
                 endIcon={<ArrowOutwardIcon sx={{ fontSize: 16 }} />}
                 sx={{
@@ -1032,13 +1186,25 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
               alignItems="center"
               sx={{ px: { xs: 3, md: 4 }, py: 3 }}
             >
-              <Box sx={{ p: 1, border: `1px solid ${gridLine}`, display: "flex" }}>
+              <Box
+                component={motion.div}
+                whileHover={{ y: -3, scale: 1.06 }}
+                sx={{ p: 1, border: `1px solid ${gridLine}`, display: "flex" }}
+              >
                 <Instagram size={16} color={neon} />
               </Box>
-              <Box sx={{ p: 1, border: `1px solid ${gridLine}`, display: "flex" }}>
+              <Box
+                component={motion.div}
+                whileHover={{ y: -3, scale: 1.06 }}
+                sx={{ p: 1, border: `1px solid ${gridLine}`, display: "flex" }}
+              >
                 <Facebook size={16} color={neon} />
               </Box>
-              <Box sx={{ p: 1, border: `1px solid ${gridLine}`, display: "flex" }}>
+              <Box
+                component={motion.div}
+                whileHover={{ y: -3, scale: 1.06 }}
+                sx={{ p: 1, border: `1px solid ${gridLine}`, display: "flex" }}
+              >
                 <Twitter size={16} color={neon} />
               </Box>
             </Stack>

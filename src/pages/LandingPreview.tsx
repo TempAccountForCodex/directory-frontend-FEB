@@ -883,6 +883,104 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
   ],
 };
 
+const STORE_FIT_DATA: BusinessData = {
+  name: "Grind Out Skate",
+  tagline: "Premium boards, parts, and street-ready essentials.",
+  description:
+    "A minimal skateboard storefront template with oversized editorial typography, isolated product presentation, and a clean contact flow.",
+  primaryColor: "#020202",
+  secondaryColor: "#ecefe7",
+  heroBannerUrl:
+    "https://c.pxhere.com/photos/8d/e4/skate_skateboard_skateboarder_board_skateboarding_park_black_close_up-977847.jpg!d",
+  contact: {
+    email: "contact@grindoutskate.com",
+    phone: "(310) 555-0146",
+    address: "123 Skate Street, Los Angeles, CA 90012",
+  },
+  socialLinks: { instagram: "#", facebook: "#", twitter: "#" },
+  gallery: [
+    {
+      url: "https://c.pxhere.com/photos/8d/e4/skate_skateboard_skateboarder_board_skateboarding_park_black_close_up-977847.jpg!d",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1547447134-cd3f5c716030?auto=format&fit=crop&w=1000&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1518459031867-a89b944bffe4?auto=format&fit=crop&w=1000&q=80",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1400&q=80",
+    },
+  ],
+  products: [
+    {
+      id: "sft-1",
+      name: "Dual Torque Truck",
+      category: "Truck",
+      price: "$45.00",
+      image:
+        "https://images.unsplash.com/photo-1547447134-cd3f5c716030?auto=format&fit=crop&w=900&q=80",
+      description: "Precision truck designed for balanced carving and stable landings.",
+    },
+    {
+      id: "sft-2",
+      name: "Street Energy Deck",
+      category: "Deck",
+      price: "$75.00",
+      image:
+        "https://c.pxhere.com/photos/8d/e4/skate_skateboard_skateboarder_board_skateboarding_park_black_close_up-977847.jpg!d",
+      description: "Responsive maple deck shaped for technical skating and everyday sessions.",
+    },
+    {
+      id: "sft-3",
+      name: "Reflex 52mm Wheel",
+      category: "Wheel",
+      price: "$25.00",
+      image:
+        "https://images.unsplash.com/photo-1518459031867-a89b944bffe4?auto=format&fit=crop&w=900&q=80",
+      description: "Fast-rolling wheel with a smooth core built for city surfaces.",
+    },
+    {
+      id: "sft-4",
+      name: "Black Hex Pack",
+      category: "Hardware",
+      price: "$10.00",
+      image:
+        "https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=900&q=80",
+      description: "Low-profile hardware set to lock your setup in cleanly.",
+    },
+  ],
+  reviews: [
+    {
+      author: "Marco D.",
+      rating: 5,
+      text: "The product presentation feels sharp and the layout makes the whole collection easy to scan.",
+      date: "March 2026",
+      avatarUrl:
+        "https://images.unsplash.com/photo-1494790108755-2616b612b786?auto=format&fit=crop&w=200&q=80",
+    },
+    {
+      author: "Alyssa R.",
+      rating: 5,
+      text: "Exactly the kind of minimal skate shop presentation that feels premium without being overdesigned.",
+      date: "February 2026",
+      avatarUrl:
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80",
+    },
+    {
+      author: "Derek N.",
+      rating: 5,
+      text: "The isolated product images and oversized hero headline land very close to a real brand campaign site.",
+      date: "January 2026",
+      avatarUrl:
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+    },
+  ],
+};
+
 const COMPANY_DATA: BusinessData = {
   name: "Atelier North",
   tagline:
@@ -1002,6 +1100,10 @@ const TEMPLATE_DATA_MAP: Record<
     templateId: "store-performance",
     data: STORE_PERFORMANCE_DATA,
   },
+  "store-fit": {
+    templateId: "store-fit",
+    data: STORE_FIT_DATA,
+  },
   company: { templateId: "company", data: COMPANY_DATA },
   "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
 };
@@ -1019,7 +1121,7 @@ const TEMPLATE_GROUPS = [
     label: "Portfolio",
     slugs: ["portfolio-creative", "portfolio-agency", "portfolio-photo-studio"],
   },
-  { label: "Store", slugs: ["store-basic", "store-premium", "store-performance"] },
+  { label: "Store", slugs: ["store-basic", "store-premium", "store-performance", "store-fit"] },
   { label: "Company", slugs: ["company", "company-premium"] },
 ];
 
