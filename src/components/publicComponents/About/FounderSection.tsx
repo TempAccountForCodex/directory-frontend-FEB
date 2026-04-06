@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Typography, styled, keyframes } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { styled, keyframes } from "@mui/material/styles";
 import { PrimaryActionButton } from "./../../UI/PrimaryActionButton";
 const star = "/assets/publicAssets/images/common/star.svg";
 const thinkingPerson = "/assets/publicAssets/images/about/thinkingPerson.webp";

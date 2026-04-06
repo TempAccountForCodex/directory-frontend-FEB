@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700;800;900&family=Kanit:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Questrial&family=Sacramento&family=Space+Mono:wght@400;700&display=swap");
+
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
@@ -99,6 +101,7 @@
 html,
 body {
   font-family:
+    "Inter",
     "Barlow",
     -apple-system,
     BlinkMacSystemFont,

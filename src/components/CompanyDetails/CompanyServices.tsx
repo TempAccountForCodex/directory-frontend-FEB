@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Grid, Typography, Stack, styled } from "@mui/material";
+import { Box, Grid, Typography, Stack } from "@mui/material";
+import { styled } from "@mui/material/styles";
 import Arrow from "../../assets/images/line-arrow.png";
 
 /* ---------------- Types ---------------- */

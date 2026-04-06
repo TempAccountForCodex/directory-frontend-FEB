@@ -149,6 +149,7 @@ export interface BusinessData {
   // Store
   products?: Product[];
   storeCategories?: string[];
+  aboutImageUrl?: string;
 
   // Company / product site
   team?: TeamMember[];

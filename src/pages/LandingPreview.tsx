@@ -890,6 +890,174 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
   ],
 };
 
+const STORE_FIT_DATA: BusinessData = {
+  name: "Fabrix",
+  tagline: "Performance runners and lifestyle silhouettes with a campaign-led look.",
+  description:
+    "Fabrix is a dark sports retail template built for footwear brands that want bold hero imagery, stacked product promos, seasonal stories, and strong sale messaging.",
+  primaryColor: "#f4efe8",
+  secondaryColor: "#050505",
+
+
+  heroBannerUrl:
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1800&q=80",
+  aboutImageUrl:
+    "https://img.freepik.com/free-psd/shoes-sale-social-media-post-template-design_505751-4476.jpg?t=st=1775504164~exp=1775507764~hmac=0d073937f43978582252151c414b4b1a4234fc56f0beb9a7484c38c3b49709b0&w=1480",
+
+  contact: {
+    email: "hello@fabrixrun.com",
+    phone: "(555) 320-7711",
+    address: "214 Mercer Street, New York, NY 10012",
+  },
+  socialLinks: { instagram: "#", facebook: "#", twitter: "#" },
+  gallery: [
+    {
+      url: "https://img.freepik.com/free-photo/white-sneakers-woman-model_53876-97149.jpg?t=st=1775502852~exp=1775506452~hmac=fdd81633b43601069df4bc962744d408a857be2bd57016dfbb2c48a401fdfa10&w=1480",
+    },
+    {
+      url: "https://img.freepik.com/free-photo/pair-brown-leather-boots_1150-6005.jpg?t=st=1775502887~exp=1775506487~hmac=a29e845a583e41b6177f1f195b9cba86593bb0f430263dca4c5e71f362537143&w=1480",
+    },
+    {
+      url: "https://img.freepik.com/free-photo/close-up-basketball-shoes_23-2150847290.jpg?t=st=1775503016~exp=1775506616~hmac=fd3dfa5436a72c6f4956ddc495fbdc8a514df2f81356642956006ae7ae806dd7&w=1480",
+    },
+  ],
+  products: [
+    {
+      id: "sf-1",
+      name: "Aero Sprint Runner",
+      category: "Road",
+      price: "$129",
+      badge: "New",
+      image:
+        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80",
+      description: "Responsive road runner with weather-ready traction.",
+    },
+    {
+      id: "sf-2",
+      name: "Cloud Pace Pink",
+      category: "Women",
+      price: "$118",
+      badge: "Drop",
+      image:
+        "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=1200&q=80",
+      description: "Soft-cushion daily trainer with a clean lifestyle finish.",
+    },
+    {
+      id: "sf-3",
+      name: "Velocity Blue",
+      category: "Men",
+      price: "$124",
+      badge: "Core",
+      image:
+        "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=1200&q=80",
+      description: "Breathable mesh runner shaped for pace and stability.",
+    },
+    {
+      id: "sf-4",
+      name: "Night Track Pro",
+      category: "Training",
+      price: "$139",
+      badge: "Sale",
+      image:
+        "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=1200&q=80",
+      description: "High-grip black trainer with durable tread for hard sessions.",
+    },
+    {
+      id: "sf-5",
+      name: "Studio White",
+      category: "Lifestyle",
+      price: "$112",
+      badge: "Fresh",
+      image:
+        "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1200&q=80",
+      description: "Minimal low-top for off-duty wear and clean wardrobes.",
+    },
+  ],
+};
+
+const STORE_PAWS_DATA: BusinessData = {
+  name: "Paws Atelier",
+  tagline:
+    "Luxury-inspired essentials for dogs, styled for modern homes and everyday routines.",
+  description:
+    "Paws Atelier is a dog-products store template with a cinematic hero, premium merchandising, soft editorial spacing, and product sections made for collars, harnesses, beds, feeding accessories, and curated pet bundles.",
+  primaryColor: "#7f4f3d",
+  secondaryColor: "#f4e4d3",
+  heroBannerUrl:
+    "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1800&q=80",
+  aboutImageUrl:
+    "https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?auto=format&fit=crop&w=1600&q=80",
+  contact: {
+    email: "hello@pawsatelier.co",
+    phone: "(555) 290-4411",
+    address: "14 Crosby Street, New York, NY 10013",
+  },
+  socialLinks: { instagram: "#", facebook: "#", twitter: "#" },
+  storeCategories: ["Harnesses", "Beds", "Walk Sets", "Bowls", "Travel", "Apparel"],
+  products: [
+    {
+      id: "spw-1",
+      name: "Walnut Walk Set",
+      category: "Harness",
+      price: "$48",
+      badge: "Best Seller",
+      image:
+        "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1200&q=80",
+      description: "Premium harness and leash pairing for polished daily walks.",
+    },
+    {
+      id: "spw-2",
+      name: "Cloud Nest Bed",
+      category: "Rest",
+      price: "$96",
+      badge: "New",
+      image:
+        "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&q=80",
+      description: "Soft neutral dog bed with structured support and calm styling.",
+    },
+    {
+      id: "spw-3",
+      name: "Treat Pantry Jar",
+      category: "Feeding",
+      price: "$28",
+      badge: "Gift Pick",
+      image:
+        "https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?auto=format&fit=crop&w=1200&q=80",
+      description: "Counter-friendly jar for daily treats and training rewards.",
+    },
+    {
+      id: "spw-4",
+      name: "Weekend Rain Coat",
+      category: "Apparel",
+      price: "$54",
+      badge: "Seasonal",
+      image:
+        "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80",
+      description: "Reflective dog coat for rainy city walks and outdoor errands.",
+    },
+    {
+      id: "spw-5",
+      name: "Travel Water Bowl",
+      category: "Travel",
+      price: "$22",
+      badge: "Everyday",
+      image:
+        "https://images.unsplash.com/photo-1537151625747-768eb6cf92b2?auto=format&fit=crop&w=1200&q=80",
+      description: "Foldable bowl for road trips, cafes, and park sessions.",
+    },
+    {
+      id: "spw-6",
+      name: "Heritage Collar",
+      category: "Collars",
+      price: "$34",
+      badge: "Core",
+      image:
+        "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1200&q=80",
+      description: "Leather collar with warm hardware and a refined finish.",
+    },
+  ],
+};
+
 const COMPANY_DATA: BusinessData = {
   name: "Atelier North",
   tagline:
@@ -1009,6 +1177,14 @@ const TEMPLATE_DATA_MAP: Record<
     templateId: "store-performance",
     data: STORE_PERFORMANCE_DATA,
   },
+  "store-fit": {
+    templateId: "store-fit",
+    data: STORE_FIT_DATA,
+  },
+  "store-paws": {
+    templateId: "store-paws",
+    data: STORE_PAWS_DATA,
+  },
   company: { templateId: "company", data: COMPANY_DATA },
   "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
 };
@@ -1028,7 +1204,13 @@ const TEMPLATE_GROUPS = [
   },
   {
     label: "Store",
-    slugs: ["store-basic", "store-premium", "store-performance"],
+    slugs: [
+      "store-basic",
+      "store-premium",
+      "store-performance",
+      "store-fit",
+      "store-paws",
+    ],
   },
   { label: "Company", slugs: ["company", "company-premium"] },
 ];

@@ -32,7 +32,7 @@ const columns = [
     images: [
       "/assets/publicAssets/images/home/TemplatesDisplay/11.webp",
 
-      "/assets/publicAssets/images/home/TemplatesDisplay/10.webp",
+      "/assets/publicAssets/images/home/TemplatesDisplay/17.webp",
 
       "/assets/publicAssets/images/home/TemplatesDisplay/13.webp",
 
@@ -56,11 +56,11 @@ const columns = [
   {
     speed: 1.1,
     images: [
-      "https://10web.io/wp-content/uploads/tenweb-theme/images/home/new/examples/example_artboard_4.jpg",
+      "/assets/publicAssets/images/home/TemplatesDisplay/9.webp",
 
-      "https://10web.io/wp-content/uploads/tenweb-theme/images/home/new/examples/example_artboard_10.png",
+      "/assets/publicAssets/images/home/TemplatesDisplay/16.webp",
 
-      "https://img.freepik.com/free-vector/flat-repair-shop-business-landing-page-template_23-2149545708.jpg",
+      "/assets/publicAssets/images/home/TemplatesDisplay/10.webp",
     ],
   },
 ];

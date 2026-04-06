@@ -3,10 +3,8 @@ import {
   Box,
   Stack,
   Typography,
-  styled,
-  keyframes,
-  useTheme,
 } from "@mui/material";
+import { styled, keyframes, useTheme } from "@mui/material/styles";
 import BlogHeaderPic from "../../assets/images/BlogHeader.avif";
 import { Link } from "react-router-dom";
 

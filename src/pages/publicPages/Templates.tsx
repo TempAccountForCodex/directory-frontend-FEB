@@ -119,7 +119,29 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "",
+    previewImage: "/assets/templateAssets/images/dummy/storePerformance.png",
+  },
+  {
+    id: "static-store-fit",
+    slug: "store-fit",
+    name: "Store Fit",
+    description:
+      "Dark footwear store template modeled on stacked mobile retail cards, campaign imagery, and sale-first sports merchandising.",
+    type: "store",
+    category: "ecommerce",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/storefit.png",
+  },
+  {
+    id: "static-store-paws",
+    slug: "store-paws",
+    name: "Store Paws",
+    description:
+      "Editorial dog-products store template with a video hero, premium pet merchandising, curated sections, and a soft luxury look.",
+    type: "store",
+    category: "ecommerce",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/storePaws.png",
   },
   {
     id: "static-company",
@@ -687,7 +709,7 @@ const Templates: React.FC = () => {
                         component={RouterLink}
                         to={previewPath}
                         sx={{
-                          "--preview-height": "280px",
+                          "--preview-height": "480px",
                           border: "1px solid #dbe3ec",
                           borderRadius: 3,
                           overflow: "hidden",

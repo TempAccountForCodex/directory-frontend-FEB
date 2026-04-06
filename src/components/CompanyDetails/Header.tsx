@@ -1,5 +1,6 @@
 import React from "react";
-import { Grid, Typography, Stack, styled, useTheme } from "@mui/material";
+import { Grid, Typography, Stack } from "@mui/material";
+import { styled, useTheme } from "@mui/material/styles";
 import Image from "../../assets/images/your-background-image.jpeg";
 import { keyframes } from "@emotion/react";
 import Arrow from "../../assets/images/line-arrow.png";
