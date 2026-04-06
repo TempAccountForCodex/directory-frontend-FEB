@@ -1,8 +1,8 @@
-import { TemplateTheme } from "../../templateEngine/types";
+import type { TemplateTheme } from "../../templateEngine/types";
 
 export const buildMinimalTheme = (
   primaryColor: string,
-  secondaryColor?: string
+  secondaryColor?: string,
 ): TemplateTheme => ({
   primaryColor,
   secondaryColor: secondaryColor ?? primaryColor,
@@ -13,6 +13,6 @@ export const buildMinimalTheme = (
   bgSecondary: "#fafafa",
   surfaceColor: "#ffffff",
   borderColor: "#ebebeb",
-  fontFamily:
-    "'Georgia', 'Times New Roman', serif",
+  bgWhite: "#ffffff",
+  fontFamily: "'Georgia', 'Times New Roman', serif",
 });

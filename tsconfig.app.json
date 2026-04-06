@@ -33,5 +33,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src/components/Dashboard/**/*", "src/pages/Dashboard/**/*", "src/vite-env.d.ts", "src/declarations.d.ts"]
+  "include": [
+    "src/**/*",
+    "src/vite-env.d.ts",
+    "src/declarations.d.ts",
+    "src/test/vitest.d.ts"
+  ]
 }

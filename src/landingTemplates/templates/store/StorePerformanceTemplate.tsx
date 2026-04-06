@@ -13,10 +13,17 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
+import {
+  Facebook,
+  Instagram,
+  Mail,
+  MapPin,
+  Phone,
+  Twitter,
+} from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import FadeIn from "../../blocks/FadeIn";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 
 const neon = "#46ff16";
 const bg = "#050505";
@@ -39,7 +46,8 @@ const fallbackProducts = [
     price: "$25.00",
     image:
       "https://images.unsplash.com/photo-1598289431512-b97b0917affc?auto=format&fit=crop&w=800&q=80",
-    description: "Portable loop bands for mobility, warmups, and strength sessions.",
+    description:
+      "Portable loop bands for mobility, warmups, and strength sessions.",
   },
   {
     id: "perf-2",
@@ -48,7 +56,8 @@ const fallbackProducts = [
     price: "$70.00",
     image:
       "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
-    description: "Powder-coated competition-style kettlebell for powerful full-body work.",
+    description:
+      "Powder-coated competition-style kettlebell for powerful full-body work.",
   },
   {
     id: "perf-3",
@@ -57,7 +66,8 @@ const fallbackProducts = [
     price: "$40.00",
     image:
       "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80",
-    description: "Heavy training rope built for HIIT circuits and high-output sessions.",
+    description:
+      "Heavy training rope built for HIIT circuits and high-output sessions.",
   },
   {
     id: "perf-4",
@@ -66,7 +76,8 @@ const fallbackProducts = [
     price: "$150.00",
     image:
       "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=800&q=80",
-    description: "Adjustable speed rope for cardio, agility, and endurance training.",
+    description:
+      "Adjustable speed rope for cardio, agility, and endurance training.",
   },
   {
     id: "perf-5",
@@ -75,7 +86,8 @@ const fallbackProducts = [
     price: "$95.00",
     image:
       "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=800&q=80",
-    description: "Durable plate for barbell work, deadlifts, and progressive overload sessions.",
+    description:
+      "Durable plate for barbell work, deadlifts, and progressive overload sessions.",
   },
   {
     id: "perf-6",
@@ -84,7 +96,8 @@ const fallbackProducts = [
     price: "$35.00",
     image:
       "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80",
-    description: "Supportive resistance bands for pull-up progressions, mobility, and recovery.",
+    description:
+      "Supportive resistance bands for pull-up progressions, mobility, and recovery.",
   },
   {
     id: "perf-7",
@@ -93,7 +106,8 @@ const fallbackProducts = [
     price: "$210.00",
     image:
       "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
-    description: "Stable flat bench built for dumbbell presses, rows, and core-focused sessions.",
+    description:
+      "Stable flat bench built for dumbbell presses, rows, and core-focused sessions.",
   },
   {
     id: "perf-8",
@@ -102,7 +116,8 @@ const fallbackProducts = [
     price: "$28.00",
     image:
       "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80",
-    description: "High-density recovery roller for warm-ups, cooldowns, and muscle release.",
+    description:
+      "High-density recovery roller for warm-ups, cooldowns, and muscle release.",
   },
 ];
 
@@ -163,14 +178,19 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
     target: aboutSectionRef,
     offset: ["start end", "end start"],
   });
-  const aboutImageScale = useTransform(aboutScrollProgress, [0, 0.45, 1], [1.18, 1.08, 1]);
+  const aboutImageScale = useTransform(
+    aboutScrollProgress,
+    [0, 0.45, 1],
+    [1.18, 1.08, 1],
+  );
 
   const scrollToSection = (sectionId: string) => {
     const target = document.getElementById(sectionId);
     if (!target) return;
 
     const headerOffset = 92;
-    const targetTop = target.getBoundingClientRect().top + window.scrollY - headerOffset;
+    const targetTop =
+      target.getBoundingClientRect().top + window.scrollY - headerOffset;
 
     window.scrollTo({
       top: Math.max(0, targetTop),
@@ -233,7 +253,13 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <FadeIn direction="right" delay={0.04}>
-              <Typography sx={{ fontWeight: 800, letterSpacing: "0.18em", fontSize: "0.85rem" }}>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  letterSpacing: "0.18em",
+                  fontSize: "0.85rem",
+                }}
+              >
                 {data.name.toUpperCase()}
               </Typography>
             </FadeIn>
@@ -307,7 +333,6 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
           borderRight: `1px solid ${gridLine}`,
         }}
       >
-   
         <FadeIn direction="none">
           <Box
             sx={{
@@ -327,73 +352,72 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   "linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.28) 58%, rgba(0,0,0,0.62) 100%)",
               }}
             />
-               <Container maxWidth="xl" >
-            <Box
-              sx={{
-                position: "relative",
-                zIndex: 1,
-                minHeight: { xs: 420, md: 620 },
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                alignItems: "flex-start",
-                px: { xs: 2.5, md: 4 },
-                pb: { xs: 3, md: 4 },
-                pt: { xs: 7, md: 10 },
-                maxWidth: 1120,
-              }}
-            >
-              <Typography
+            <Container maxWidth="xl">
+              <Box
                 sx={{
-                  color: muted,
-                  fontSize: "0.72rem",
-                  letterSpacing: "0.26em",
-                  textTransform: "uppercase",
+                  position: "relative",
+                  zIndex: 1,
+                  minHeight: { xs: 420, md: 620 },
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                  alignItems: "flex-start",
+                  px: { xs: 2.5, md: 4 },
+                  pb: { xs: 3, md: 4 },
+                  pt: { xs: 7, md: 10 },
+                  maxWidth: 1120,
                 }}
               >
-                Performance gear
-              </Typography>
-              <FadeIn direction="right" delay={0.1}>
                 <Typography
                   sx={{
-                    mt: 1.2,
-                    color: neon,
-                    fontWeight: 900,
-                    fontStyle: "italic",
-                    lineHeight: 0.82,
-                    letterSpacing: "-0.07em",
+                    color: muted,
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.26em",
                     textTransform: "uppercase",
-                    fontSize: { xs: "3.5rem", sm: "5.4rem", md: "8.4rem" },
-                    textShadow: "0 0 30px rgba(70,255,22,0.16)",
-                    transform: "skewX(-10deg)",
-                    transformOrigin: "left center",
                   }}
                 >
-                  Boost
-                  <br />
-                  Performance
+                  Performance gear
                 </Typography>
-              </FadeIn>
-              <FadeIn direction="right" delay={0.18}>
-                <Typography
-                  sx={{
-                    mt: 1.4,
-                    maxWidth: 430,
-                    color: "rgba(255,255,255,0.78)",
-                    fontSize: "0.82rem",
-                    lineHeight: 1.7,
-                    fontFamily: '"Inter", Arial, sans-serif',
-                  }}
-                >
-                  {data.description ||
-                    "High-output training essentials for serious lifters, home gyms, and performance spaces that want a sharper edge."}
-                </Typography>
-              </FadeIn>
-            </Box>
+                <FadeIn direction="right" delay={0.1}>
+                  <Typography
+                    sx={{
+                      mt: 1.2,
+                      color: neon,
+                      fontWeight: 900,
+                      fontStyle: "italic",
+                      lineHeight: 0.82,
+                      letterSpacing: "-0.07em",
+                      textTransform: "uppercase",
+                      fontSize: { xs: "3.5rem", sm: "5.4rem", md: "8.4rem" },
+                      textShadow: "0 0 30px rgba(70,255,22,0.16)",
+                      transform: "skewX(-10deg)",
+                      transformOrigin: "left center",
+                    }}
+                  >
+                    Boost
+                    <br />
+                    Performance
+                  </Typography>
+                </FadeIn>
+                <FadeIn direction="right" delay={0.18}>
+                  <Typography
+                    sx={{
+                      mt: 1.4,
+                      maxWidth: 430,
+                      color: "rgba(255,255,255,0.78)",
+                      fontSize: "0.82rem",
+                      lineHeight: 1.7,
+                      fontFamily: '"Inter", Arial, sans-serif',
+                    }}
+                  >
+                    {data.description ||
+                      "High-output training essentials for serious lifters, home gyms, and performance spaces that want a sharper edge."}
+                  </Typography>
+                </FadeIn>
+              </Box>
             </Container>
           </Box>
         </FadeIn>
-      
       </Box>
 
       <Box
@@ -409,7 +433,6 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
           borderBottom: `1px solid ${gridLine}`,
         }}
       >
-     
         <FadeIn>
           <Box
             sx={{
@@ -424,44 +447,45 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
               borderBottom: `1px solid ${gridLine}`,
             }}
           >
-                 <Container maxWidth="xl" >
-            <FadeIn direction="right" delay={0.06}>
-              <Typography
-                sx={{
-                  maxWidth: 860,
-                  fontSize: { xs: "1.02rem", md: "1.18rem" },
-                  lineHeight: 1.55,
-                  fontFamily: '"Inter", Arial, sans-serif',
-                }}
-              >
-                Welcome to {data.name}, your ultimate destination for high-quality gym
-                equipment. Start your fitness journey today with our top-notch products.
-              </Typography>
-            </FadeIn>
+            <Container maxWidth="xl">
+              <FadeIn direction="right" delay={0.06}>
+                <Typography
+                  sx={{
+                    maxWidth: 860,
+                    fontSize: { xs: "1.02rem", md: "1.18rem" },
+                    lineHeight: 1.55,
+                    fontFamily: '"Inter", Arial, sans-serif',
+                  }}
+                >
+                  Welcome to {data.name}, your ultimate destination for
+                  high-quality gym equipment. Start your fitness journey today
+                  with our top-notch products.
+                </Typography>
+              </FadeIn>
 
-            <FadeIn direction="left" delay={0.14}>
-              <Button
-                component={motion.button}
-                whileHover={{ y: -2, scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handlePrimaryAction}
-                sx={{
-                  justifySelf: { xs: "flex-start", md: "flex-end" },
-                  minWidth: 0,
-                  borderRadius: 999,
-                  bgcolor: "#000",
-                  color: neon,
-                  px: 3.2,
-                  py: 0.95,
-                  fontSize: "0.9rem",
-                  fontWeight: 700,
-                  textTransform: "none",
-                  "&:hover": { bgcolor: "#000" },
-                }}
-              >
-                Shop Now
-              </Button>
-            </FadeIn>
+              <FadeIn direction="left" delay={0.14}>
+                <Button
+                  component={motion.button}
+                  whileHover={{ y: -2, scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handlePrimaryAction}
+                  sx={{
+                    justifySelf: { xs: "flex-start", md: "flex-end" },
+                    minWidth: 0,
+                    borderRadius: 999,
+                    bgcolor: "#000",
+                    color: neon,
+                    px: 3.2,
+                    py: 0.95,
+                    fontSize: "0.9rem",
+                    fontWeight: 700,
+                    textTransform: "none",
+                    "&:hover": { bgcolor: "#000" },
+                  }}
+                >
+                  Shop Now
+                </Button>
+              </FadeIn>
             </Container>
           </Box>
         </FadeIn>
@@ -477,7 +501,12 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                 mb: 3,
               }}
             >
-              <Typography sx={{ fontSize: { xs: "1.8rem", md: "2.15rem" }, fontWeight: 500 }}>
+              <Typography
+                sx={{
+                  fontSize: { xs: "1.8rem", md: "2.15rem" },
+                  fontWeight: 500,
+                }}
+              >
                 All Products
               </Typography>
 
@@ -554,7 +583,10 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   >
                     <Box
                       component="img"
-                      src={product.image || fallbackProducts[index % fallbackProducts.length].image}
+                      src={
+                        product.image ||
+                        fallbackProducts[index % fallbackProducts.length].image
+                      }
                       alt={product.name}
                       sx={{
                         width: "100%",
@@ -582,10 +614,14 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   </Box>
 
                   <Box sx={{ pt: 2 }}>
-                    <Typography sx={{ color: neon, fontSize: "1rem", fontWeight: 500 }}>
+                    <Typography
+                      sx={{ color: neon, fontSize: "1rem", fontWeight: 500 }}
+                    >
                       {product.name}
                     </Typography>
-                    <Typography sx={{ mt: 0.5, color: neon, fontSize: "0.95rem" }}>
+                    <Typography
+                      sx={{ mt: 0.5, color: neon, fontSize: "0.95rem" }}
+                    >
                       {product.price}
                     </Typography>
                   </Box>
@@ -651,9 +687,10 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   maxWidth: 520,
                 }}
               >
-                At {data.name}, we are dedicated to providing premium gym equipment for
-                both home and commercial use. Our focus is to offer durable products and
-                expert advice to help you achieve your fitness goals effectively.
+                At {data.name}, we are dedicated to providing premium gym
+                equipment for both home and commercial use. Our focus is to
+                offer durable products and expert advice to help you achieve
+                your fitness goals effectively.
               </Typography>
             </Box>
           </FadeIn>
@@ -751,7 +788,9 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                 display: "grid",
                 gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
                 borderBottom:
-                  index < productRows.length - 1 ? `1px solid ${gridLine}` : "none",
+                  index < productRows.length - 1
+                    ? `1px solid ${gridLine}`
+                    : "none",
               }}
             >
               <Box
@@ -904,11 +943,21 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   "&::before": { display: "none" },
                 }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: neon }} />}>
-                  <Typography sx={{ fontWeight: 600 }}>{item.question}</Typography>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ color: neon }} />}
+                >
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {item.question}
+                  </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <Typography sx={{ color: muted, lineHeight: 1.8, fontFamily: '"Inter", Arial, sans-serif' }}>
+                  <Typography
+                    sx={{
+                      color: muted,
+                      lineHeight: 1.8,
+                      fontFamily: '"Inter", Arial, sans-serif',
+                    }}
+                  >
                     {item.answer}
                   </Typography>
                 </AccordionDetails>
@@ -940,97 +989,117 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
               gap: 0,
             }}
           >
-              <FadeIn direction="right">
-                <Box sx={{ px: { xs: 3, md: 20 }, py: { xs: 3, md: 4 }, borderRight: { md: "1px solid rgba(0,0,0,0.15)" } }}>
-                  <Typography sx={{ fontSize: { xs: "1.5rem", md: "4rem" }, fontWeight: 700 }}>
-                    Contact Us
-                  </Typography>
+            <FadeIn direction="right">
+              <Box
+                sx={{
+                  px: { xs: 3, md: 20 },
+                  py: { xs: 3, md: 4 },
+                  borderRight: { md: "1px solid rgba(0,0,0,0.15)" },
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: { xs: "1.5rem", md: "4rem" },
+                    fontWeight: 700,
+                  }}
+                >
+                  Contact Us
+                </Typography>
+                <Box
+                  component="form"
+                  sx={{
+                    mt: 2.5,
+                    maxWidth: 520,
+                    display: "grid",
+                    gap: 1.5,
+                  }}
+                >
                   <Box
-                    component="form"
+                    component="input"
+                    type="text"
+                    placeholder="Your Name"
                     sx={{
-                      mt: 2.5,
-                      maxWidth: 520,
-                      display: "grid",
-                      gap: 1.5,
+                      width: "100%",
+                      border: "1px solid rgba(0,0,0,0.25)",
+                      bgcolor: "rgba(255,255,255,0.12)",
+                      color: "#000",
+                      px: 1.8,
+                      py: 1.4,
+                      fontSize: "0.98rem",
+                      fontFamily: '"Inter", Arial, sans-serif',
+                      outline: "none",
+                      "&::placeholder": {
+                        color: "rgba(0,0,0,0.62)",
+                        opacity: 1,
+                      },
                     }}
-                  >
-                    <Box
-                      component="input"
-                      type="text"
-                      placeholder="Your Name"
+                  />
+                  <Box
+                    component="input"
+                    type="email"
+                    placeholder="Email Address"
+                    sx={{
+                      width: "100%",
+                      border: "1px solid rgba(0,0,0,0.25)",
+                      bgcolor: "rgba(255,255,255,0.12)",
+                      color: "#000",
+                      px: 1.8,
+                      py: 1.4,
+                      fontSize: "0.98rem",
+                      fontFamily: '"Inter", Arial, sans-serif',
+                      outline: "none",
+                      "&::placeholder": {
+                        color: "rgba(0,0,0,0.62)",
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                  <Box
+                    component="textarea"
+                    placeholder="Tell us what gear you need"
+                    rows={5}
+                    sx={{
+                      width: "100%",
+                      border: "1px solid rgba(0,0,0,0.25)",
+                      bgcolor: "rgba(255,255,255,0.12)",
+                      color: "#000",
+                      px: 1.8,
+                      py: 1.4,
+                      fontSize: "0.98rem",
+                      lineHeight: 1.6,
+                      fontFamily: '"Inter", Arial, sans-serif',
+                      outline: "none",
+                      resize: "vertical",
+                      "&::placeholder": {
+                        color: "rgba(0,0,0,0.62)",
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                  <Box sx={{ pt: 0.6 }}>
+                    <Button
+                      component={motion.button}
+                      whileHover={{ y: -2, scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       sx={{
-                        width: "100%",
-                        border: "1px solid rgba(0,0,0,0.25)",
-                        bgcolor: "rgba(255,255,255,0.12)",
-                        color: "#000",
-                        px: 1.8,
-                        py: 1.4,
-                        fontSize: "0.98rem",
-                        fontFamily: '"Inter", Arial, sans-serif',
-                        outline: "none",
-                        "&::placeholder": { color: "rgba(0,0,0,0.62)", opacity: 1 },
+                        minWidth: 0,
+                        borderRadius: 999,
+                        bgcolor: "#000",
+                        color: neon,
+                        px: 3.4,
+                        py: 1,
+                        fontSize: "0.9rem",
+                        fontWeight: 700,
+                        textTransform: "none",
+                        "&:hover": { bgcolor: "#000" },
                       }}
-                    />
-                    <Box
-                      component="input"
-                      type="email"
-                      placeholder="Email Address"
-                      sx={{
-                        width: "100%",
-                        border: "1px solid rgba(0,0,0,0.25)",
-                        bgcolor: "rgba(255,255,255,0.12)",
-                        color: "#000",
-                        px: 1.8,
-                        py: 1.4,
-                        fontSize: "0.98rem",
-                        fontFamily: '"Inter", Arial, sans-serif',
-                        outline: "none",
-                        "&::placeholder": { color: "rgba(0,0,0,0.62)", opacity: 1 },
-                      }}
-                    />
-                    <Box
-                      component="textarea"
-                      placeholder="Tell us what gear you need"
-                      rows={5}
-                      sx={{
-                        width: "100%",
-                        border: "1px solid rgba(0,0,0,0.25)",
-                        bgcolor: "rgba(255,255,255,0.12)",
-                        color: "#000",
-                        px: 1.8,
-                        py: 1.4,
-                        fontSize: "0.98rem",
-                        lineHeight: 1.6,
-                        fontFamily: '"Inter", Arial, sans-serif',
-                        outline: "none",
-                        resize: "vertical",
-                        "&::placeholder": { color: "rgba(0,0,0,0.62)", opacity: 1 },
-                      }}
-                    />
-                    <Box sx={{ pt: 0.6 }}>
-                      <Button
-                        component={motion.button}
-                        whileHover={{ y: -2, scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        sx={{
-                          minWidth: 0,
-                          borderRadius: 999,
-                          bgcolor: "#000",
-                          color: neon,
-                          px: 3.4,
-                          py: 1,
-                          fontSize: "0.9rem",
-                          fontWeight: 700,
-                          textTransform: "none",
-                          "&:hover": { bgcolor: "#000" },
-                        }}
-                      >
-                        Send Inquiry
-                      </Button>
-                    </Box>
+                    >
+                      Send Inquiry
+                    </Button>
                   </Box>
                 </Box>
-              </FadeIn>
+              </Box>
+            </FadeIn>
             <FadeIn direction="left" delay={0.08}>
               <Box sx={{ minHeight: 220, overflow: "hidden" }}>
                 <Box
@@ -1039,7 +1108,12 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   transition={{ duration: 0.5, ease: [0.22, 0.61, 0.36, 1] }}
                   src={promoImage}
                   alt="Promotion"
-                  sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
                 />
               </Box>
             </FadeIn>
@@ -1116,11 +1190,31 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
           }}
         >
           <FadeIn>
-            <Box sx={{ px: { xs: 3, md: 4 }, py: 3, borderRight: { md: `1px solid ${gridLine}` }, borderBottom: { xs: `1px solid ${gridLine}`, md: "none" } }}>
-              <Typography sx={{ fontSize: "0.82rem", color: muted, letterSpacing: "0.2em", textTransform: "uppercase" }}>
+            <Box
+              sx={{
+                px: { xs: 3, md: 4 },
+                py: 3,
+                borderRight: { md: `1px solid ${gridLine}` },
+                borderBottom: { xs: `1px solid ${gridLine}`, md: "none" },
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "0.82rem",
+                  color: muted,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                }}
+              >
                 Need assistance?
               </Typography>
-              <Typography sx={{ mt: 1.2, fontSize: { xs: "1.3rem", md: "1.8rem" }, fontWeight: 700 }}>
+              <Typography
+                sx={{
+                  mt: 1.2,
+                  fontSize: { xs: "1.3rem", md: "1.8rem" },
+                  fontWeight: 700,
+                }}
+              >
                 Contact our team for product help and gym setup guidance.
               </Typography>
               <Button
@@ -1160,20 +1254,36 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Phone size={16} color={neon} />
-                <Typography sx={{ color: muted, fontFamily: '"Inter", Arial, sans-serif' }}>
+                <Typography
+                  sx={{
+                    color: muted,
+                    fontFamily: '"Inter", Arial, sans-serif',
+                  }}
+                >
                   {data.contact?.phone || "(555) 240-8800"}
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Mail size={16} color={neon} />
-                <Typography sx={{ color: muted, fontFamily: '"Inter", Arial, sans-serif' }}>
+                <Typography
+                  sx={{
+                    color: muted,
+                    fontFamily: '"Inter", Arial, sans-serif',
+                  }}
+                >
                   {data.contact?.email || "hello@boostperformance.co"}
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <MapPin size={16} color={neon} />
-                <Typography sx={{ color: muted, fontFamily: '"Inter", Arial, sans-serif' }}>
-                  {data.contact?.address || "122 Performance Ave, Los Angeles, CA"}
+                <Typography
+                  sx={{
+                    color: muted,
+                    fontFamily: '"Inter", Arial, sans-serif',
+                  }}
+                >
+                  {data.contact?.address ||
+                    "122 Performance Ave, Los Angeles, CA"}
                 </Typography>
               </Box>
             </Stack>

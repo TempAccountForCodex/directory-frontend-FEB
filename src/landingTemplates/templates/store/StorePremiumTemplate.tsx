@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import FadeIn from "../../blocks/FadeIn";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 
 const headingFont = '"Poppins", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Manrope", "Avenir Next", "Segoe UI", sans-serif';
@@ -247,32 +247,32 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               textAlign: "center",
             }}
           >
-          <Typography
-            sx={{
-              fontSize: "0.7rem",
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              color: palette.muted,
-            }}
-          >
-            {data.tagline || "Modern handbag collection"}
-          </Typography>
-          <Typography
-            sx={{
-              mt: 1.5,
-              fontFamily: headingFont,
-              fontWeight: 700,
-              fontSize: { xs: "2.2rem", md: "3.9rem" },
-              lineHeight: 0.94,
-              letterSpacing: "-0.06em",
-              maxWidth: 720,
-              mx: "auto",
-            }}
-          >
-            Unique Handbag
-            <br />
-            Selection
-          </Typography>
+            <Typography
+              sx={{
+                fontSize: "0.7rem",
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                color: palette.muted,
+              }}
+            >
+              {data.tagline || "Modern handbag collection"}
+            </Typography>
+            <Typography
+              sx={{
+                mt: 1.5,
+                fontFamily: headingFont,
+                fontWeight: 700,
+                fontSize: { xs: "2.2rem", md: "3.9rem" },
+                lineHeight: 0.94,
+                letterSpacing: "-0.06em",
+                maxWidth: 720,
+                mx: "auto",
+              }}
+            >
+              Unique Handbag
+              <br />
+              Selection
+            </Typography>
             <Button
               variant="contained"
               onClick={() => navigateToPage("shop")}
@@ -337,43 +337,43 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 bgcolor: "rgba(255,255,255,0.28)",
               }}
             >
-            <Typography
-              sx={{
-                fontSize: "0.7rem",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-                color: palette.muted,
-              }}
-            >
-              Featured arrivals
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.2,
-                fontFamily: headingFont,
-                fontWeight: 700,
-                fontSize: { xs: "1.65rem", md: "2.2rem" },
-                lineHeight: 0.98,
-                letterSpacing: "-0.05em",
-                maxWidth: 300,
-              }}
-            >
-              Crafted silhouettes
-              <br />
-              for daily elegance.
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.5,
-                maxWidth: 320,
-                color: palette.muted,
-                fontSize: "0.92rem",
-                lineHeight: 1.8,
-              }}
-            >
-              Discover signature handbags designed to move between work, travel,
-              evening plans, and everyday styling with ease.
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
+                  color: palette.muted,
+                }}
+              >
+                Featured arrivals
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.2,
+                  fontFamily: headingFont,
+                  fontWeight: 700,
+                  fontSize: { xs: "1.65rem", md: "2.2rem" },
+                  lineHeight: 0.98,
+                  letterSpacing: "-0.05em",
+                  maxWidth: 300,
+                }}
+              >
+                Crafted silhouettes
+                <br />
+                for daily elegance.
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.5,
+                  maxWidth: 320,
+                  color: palette.muted,
+                  fontSize: "0.92rem",
+                  lineHeight: 1.8,
+                }}
+              >
+                Discover signature handbags designed to move between work,
+                travel, evening plans, and everyday styling with ease.
+              </Typography>
             </Box>
           </FadeIn>
 
@@ -410,79 +410,79 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           {products.slice(0, 3).map((product, index) => (
             <FadeIn key={product.id} delay={index * 0.08}>
               <Box
-              sx={{
-                minWidth: 0,
-                p: { xs: 1.4, md: 1.6 },
-                border: `1px solid rgba(17,17,17,0.12)`,
-                bgcolor: "#f4ebdd",
-                textAlign: "center",
-                position: "relative",
-                overflow: "hidden",
-                boxShadow: "0 10px 30px rgba(48,34,8,0.04)",
-                transition:
-                  "transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease",
-                "&:hover": {
-                  transform: "translateY(-8px)",
-                  boxShadow: "0 24px 50px rgba(48,34,8,0.10)",
-                  borderColor: "rgba(17,17,17,0.22)",
-                },
-              }}
-            >
-              {product.badge ? (
-                <Box
+                sx={{
+                  minWidth: 0,
+                  p: { xs: 1.4, md: 1.6 },
+                  border: `1px solid rgba(17,17,17,0.12)`,
+                  bgcolor: "#f4ebdd",
+                  textAlign: "center",
+                  position: "relative",
+                  overflow: "hidden",
+                  boxShadow: "0 10px 30px rgba(48,34,8,0.04)",
+                  transition:
+                    "transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease",
+                  "&:hover": {
+                    transform: "translateY(-8px)",
+                    boxShadow: "0 24px 50px rgba(48,34,8,0.10)",
+                    borderColor: "rgba(17,17,17,0.22)",
+                  },
+                }}
+              >
+                {product.badge ? (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 14,
+                      left: 14,
+                      zIndex: 2,
+                      px: 1.1,
+                      py: 0.5,
+                      borderRadius: 999,
+                      bgcolor: "rgba(17,17,17,0.88)",
+                      color: "#fff",
+                      fontSize: "0.62rem",
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {product.badge}
+                  </Box>
+                ) : null}
+                <Box sx={{ aspectRatio: "0.8 / 1", overflow: "hidden" }}>
+                  <Box
+                    component="img"
+                    src={product.image}
+                    alt={product.name}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                </Box>
+                <Typography
                   sx={{
-                    position: "absolute",
-                    top: 14,
-                    left: 14,
-                    zIndex: 2,
-                    px: 1.1,
-                    py: 0.5,
-                    borderRadius: 999,
-                    bgcolor: "rgba(17,17,17,0.88)",
-                    color: "#fff",
-                    fontSize: "0.62rem",
-                    letterSpacing: "0.18em",
+                    mt: 1.4,
+                    fontSize: "0.68rem",
+                    color: palette.muted,
                     textTransform: "uppercase",
+                    letterSpacing: "0.22em",
                   }}
                 >
-                  {product.badge}
-                </Box>
-              ) : null}
-              <Box sx={{ aspectRatio: "0.8 / 1", overflow: "hidden" }}>
-                <Box
-                  component="img"
-                  src={product.image}
-                  alt={product.name}
+                  {product.category}
+                </Typography>
+                <Typography
                   sx={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
+                    mt: 0.8,
+                    fontFamily: headingFont,
+                    fontWeight: 700,
+                    fontSize: { xs: "1.15rem", md: "1.35rem" },
+                    lineHeight: 1.02,
+                    letterSpacing: "-0.04em",
                   }}
-                />
-              </Box>
-              <Typography
-                sx={{
-                  mt: 1.4,
-                  fontSize: "0.68rem",
-                  color: palette.muted,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.22em",
-                }}
-              >
-                {product.category}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.8,
-                  fontFamily: headingFont,
-                  fontWeight: 700,
-                  fontSize: { xs: "1.15rem", md: "1.35rem" },
-                  lineHeight: 1.02,
-                  letterSpacing: "-0.04em",
-                }}
-              >
-                {product.name}
-              </Typography>
+                >
+                  {product.name}
+                </Typography>
                 <Typography
                   sx={{ mt: 1.1, fontSize: "0.95rem", fontWeight: 700 }}
                 >
@@ -563,41 +563,41 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 justifyContent: "center",
               }}
             >
-            <Typography
-              sx={{
-                fontSize: "0.7rem",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-                color: palette.muted,
-              }}
-            >
-              Brand story
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.2,
-                fontFamily: headingFont,
-                fontWeight: 700,
-                fontSize: { xs: "1.9rem", md: "3rem" },
-                lineHeight: 0.95,
-                letterSpacing: "-0.05em",
-                maxWidth: 520,
-              }}
-            >
-              Premium essentials designed with a softer luxury point of view.
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.8,
-                maxWidth: 520,
-                color: palette.muted,
-                fontSize: "0.95rem",
-                lineHeight: 1.9,
-              }}
-            >
-              {data.description ||
-                "This premium handbag store template balances editorial storytelling, structured product presentation, and clean enquiry-focused sections for luxury fashion brands."}
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
+                  color: palette.muted,
+                }}
+              >
+                Brand story
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.2,
+                  fontFamily: headingFont,
+                  fontWeight: 700,
+                  fontSize: { xs: "1.9rem", md: "3rem" },
+                  lineHeight: 0.95,
+                  letterSpacing: "-0.05em",
+                  maxWidth: 520,
+                }}
+              >
+                Premium essentials designed with a softer luxury point of view.
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.8,
+                  maxWidth: 520,
+                  color: palette.muted,
+                  fontSize: "0.95rem",
+                  lineHeight: 1.9,
+                }}
+              >
+                {data.description ||
+                  "This premium handbag store template balances editorial storytelling, structured product presentation, and clean enquiry-focused sections for luxury fashion brands."}
+              </Typography>
               <Button
                 variant="contained"
                 onClick={() => navigateToPage("about")}
@@ -648,43 +648,43 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         >
           <FadeIn>
             <Box>
-            <Typography
-              sx={{
-                fontSize: "0.72rem",
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: palette.muted,
-              }}
-            >
-              Newsletter
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.1,
-                fontFamily: headingFont,
-                fontWeight: 700,
-                fontSize: { xs: "1.9rem", md: "3rem" },
-                lineHeight: 0.95,
-                letterSpacing: "-0.05em",
-                maxWidth: 520,
-              }}
-            >
-              Join for new arrivals, seasonal edits, and private collection
-              updates.
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.6,
-                maxWidth: 520,
-                color: palette.muted,
-                fontSize: "0.95rem",
-                lineHeight: 1.9,
-              }}
-            >
-              Stay close to the latest handbag drops, curated selections, and
-              early access moments designed for customers who love premium
-              pieces.
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.3em",
+                  textTransform: "uppercase",
+                  color: palette.muted,
+                }}
+              >
+                Newsletter
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.1,
+                  fontFamily: headingFont,
+                  fontWeight: 700,
+                  fontSize: { xs: "1.9rem", md: "3rem" },
+                  lineHeight: 0.95,
+                  letterSpacing: "-0.05em",
+                  maxWidth: 520,
+                }}
+              >
+                Join for new arrivals, seasonal edits, and private collection
+                updates.
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.6,
+                  maxWidth: 520,
+                  color: palette.muted,
+                  fontSize: "0.95rem",
+                  lineHeight: 1.9,
+                }}
+              >
+                Stay close to the latest handbag drops, curated selections, and
+                early access moments designed for customers who love premium
+                pieces.
+              </Typography>
             </Box>
           </FadeIn>
 
@@ -782,43 +782,43 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <FadeIn>
               <Box sx={{ maxWidth: 620 }}>
-              <Typography
-                sx={{
-                  fontSize: "0.72rem",
-                  letterSpacing: "0.34em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.76)",
-                }}
-              >
-                Shop the full collection
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 1.4,
-                  fontFamily: headingFont,
-                  fontWeight: 700,
-                  fontSize: { xs: "2.4rem", md: "4.6rem" },
-                  lineHeight: 0.92,
-                  letterSpacing: "-0.06em",
-                  color: "#fff",
-                }}
-              >
-                Discover every
-                <br />
-                signature piece
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 1.8,
-                  maxWidth: 520,
-                  color: "rgba(255,255,255,0.82)",
-                  fontSize: { xs: "0.96rem", md: "1rem" },
-                  lineHeight: 1.85,
-                }}
-              >
-                Explore refined handbags designed for everyday elegance,
-                polished styling, and premium wardrobe essentials.
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.34em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.76)",
+                  }}
+                >
+                  Shop the full collection
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1.4,
+                    fontFamily: headingFont,
+                    fontWeight: 700,
+                    fontSize: { xs: "2.4rem", md: "4.6rem" },
+                    lineHeight: 0.92,
+                    letterSpacing: "-0.06em",
+                    color: "#fff",
+                  }}
+                >
+                  Discover every
+                  <br />
+                  signature piece
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1.8,
+                    maxWidth: 520,
+                    color: "rgba(255,255,255,0.82)",
+                    fontSize: { xs: "0.96rem", md: "1rem" },
+                    lineHeight: 1.85,
+                  }}
+                >
+                  Explore refined handbags designed for everyday elegance,
+                  polished styling, and premium wardrobe essentials.
+                </Typography>
                 <Button
                   variant="contained"
                   sx={{
@@ -869,87 +869,87 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           {products.map((product, index) => (
             <FadeIn key={product.id} delay={index * 0.06}>
               <Box
-              sx={{
-                p: { xs: 1.4, md: 1.6 },
-                border: `1px solid rgba(17,17,17,0.12)`,
-                bgcolor: "#f4ebdd",
-                boxShadow: "0 10px 30px rgba(48,34,8,0.04)",
-              }}
-            >
-              <Box sx={{ position: "relative", overflow: "hidden" }}>
-                {product.badge ? (
+                sx={{
+                  p: { xs: 1.4, md: 1.6 },
+                  border: `1px solid rgba(17,17,17,0.12)`,
+                  bgcolor: "#f4ebdd",
+                  boxShadow: "0 10px 30px rgba(48,34,8,0.04)",
+                }}
+              >
+                <Box sx={{ position: "relative", overflow: "hidden" }}>
+                  {product.badge ? (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 14,
+                        left: 14,
+                        zIndex: 2,
+                        px: 1.1,
+                        py: 0.5,
+                        borderRadius: 999,
+                        bgcolor: "rgba(17,17,17,0.88)",
+                        color: "#fff",
+                        fontSize: "0.62rem",
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {product.badge}
+                    </Box>
+                  ) : null}
                   <Box
+                    component="img"
+                    src={product.image}
+                    alt={product.name}
                     sx={{
-                      position: "absolute",
-                      top: 14,
-                      left: 14,
-                      zIndex: 2,
-                      px: 1.1,
-                      py: 0.5,
-                      borderRadius: 999,
-                      bgcolor: "rgba(17,17,17,0.88)",
-                      color: "#fff",
-                      fontSize: "0.62rem",
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
+                      width: "100%",
+                      aspectRatio: "0.84 / 1",
+                      objectFit: "cover",
                     }}
-                  >
-                    {product.badge}
-                  </Box>
-                ) : null}
-                <Box
-                  component="img"
-                  src={product.image}
-                  alt={product.name}
+                  />
+                </Box>
+                <Typography
                   sx={{
-                    width: "100%",
-                    aspectRatio: "0.84 / 1",
-                    objectFit: "cover",
+                    mt: 1.35,
+                    fontSize: "0.68rem",
+                    color: palette.muted,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.22em",
                   }}
-                />
-              </Box>
-              <Typography
-                sx={{
-                  mt: 1.35,
-                  fontSize: "0.68rem",
-                  color: palette.muted,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.22em",
-                }}
-              >
-                {product.category}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.8,
-                  fontFamily: headingFont,
-                  fontWeight: 700,
-                  fontSize: { xs: "1.2rem", md: "1.45rem" },
-                  lineHeight: 1.02,
-                  letterSpacing: "-0.04em",
-                }}
-              >
-                {product.name}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 1,
-                  color: palette.muted,
-                  fontSize: "0.92rem",
-                  lineHeight: 1.8,
-                }}
-              >
-                {product.description}
-              </Typography>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ mt: 1.8 }}
-              >
-                <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>
-                  {product.price}
+                >
+                  {product.category}
                 </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.8,
+                    fontFamily: headingFont,
+                    fontWeight: 700,
+                    fontSize: { xs: "1.2rem", md: "1.45rem" },
+                    lineHeight: 1.02,
+                    letterSpacing: "-0.04em",
+                  }}
+                >
+                  {product.name}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1,
+                    color: palette.muted,
+                    fontSize: "0.92rem",
+                    lineHeight: 1.8,
+                  }}
+                >
+                  {product.description}
+                </Typography>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ mt: 1.8 }}
+                >
+                  <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>
+                    {product.price}
+                  </Typography>
                   <Button
                     variant="contained"
                     component={product.url ? "a" : "button"}
@@ -1021,29 +1021,29 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 justifyContent: "center",
               }}
             >
-            <Typography
-              sx={{
-                fontSize: "0.7rem",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-                color: "rgba(17,17,17,0.72)",
-              }}
-            >
-              About our store
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.2,
-                fontFamily: headingFont,
-                fontWeight: 700,
-                fontSize: { xs: "2rem", md: "3.2rem" },
-                letterSpacing: "-0.05em",
-                lineHeight: 0.95,
-                maxWidth: 460,
-              }}
-            >
-              Designed for customers who want elegance without excess.
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
+                  color: "rgba(17,17,17,0.72)",
+                }}
+              >
+                About our store
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.2,
+                  fontFamily: headingFont,
+                  fontWeight: 700,
+                  fontSize: { xs: "2rem", md: "3.2rem" },
+                  letterSpacing: "-0.05em",
+                  lineHeight: 0.95,
+                  maxWidth: 460,
+                }}
+              >
+                Designed for customers who want elegance without excess.
+              </Typography>
               <Typography
                 sx={{
                   mt: 2.2,
@@ -1079,54 +1079,54 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               mx: "auto",
             }}
           >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              mb: 2.4,
-            }}
-          >
             <Box
-              component="img"
-              src={logoSrc}
-              alt={`${data.name} logo`}
               sx={{
-                width: { xs: 42, md: 70 },
-                height: { xs: 42, md: 70 },
-                objectFit: "contain",
-                filter: data.logoUrl ? "none" : "brightness(0)",
+                display: "flex",
+                justifyContent: "center",
+                mb: 2.4,
               }}
-            />
-          </Box>
+            >
+              <Box
+                component="img"
+                src={logoSrc}
+                alt={`${data.name} logo`}
+                sx={{
+                  width: { xs: 42, md: 70 },
+                  height: { xs: 42, md: 70 },
+                  objectFit: "contain",
+                  filter: data.logoUrl ? "none" : "brightness(0)",
+                }}
+              />
+            </Box>
 
-          <Typography
-            sx={{
-              fontSize: "0.8rem",
-              letterSpacing: "0.24em",
-              textTransform: "uppercase",
-              color: palette.ink,
-            }}
-          >
-            Why Choose Us
-          </Typography>
+            <Typography
+              sx={{
+                fontSize: "0.8rem",
+                letterSpacing: "0.24em",
+                textTransform: "uppercase",
+                color: palette.ink,
+              }}
+            >
+              Why Choose Us
+            </Typography>
 
-          <Typography
-            sx={{
-              mt: 2.2,
-              fontFamily: headingFont,
-              fontWeight: 500,
-              fontSize: { xs: "1.9rem", md: "3rem" },
-              lineHeight: { xs: 1.14, md: 1.08 },
-              letterSpacing: "-0.05em",
-              color: palette.ink,
-              maxWidth: 1120,
-              mx: "auto",
-            }}
-          >
-            At {data.name}, we curate every handbag around quality, balance, and
-            real-world wearability, so each piece feels elegant, practical, and
-            premium from first look to everyday use.
-          </Typography>
+            <Typography
+              sx={{
+                mt: 2.2,
+                fontFamily: headingFont,
+                fontWeight: 500,
+                fontSize: { xs: "1.9rem", md: "3rem" },
+                lineHeight: { xs: 1.14, md: 1.08 },
+                letterSpacing: "-0.05em",
+                color: palette.ink,
+                maxWidth: 1120,
+                mx: "auto",
+              }}
+            >
+              At {data.name}, we curate every handbag around quality, balance,
+              and real-world wearability, so each piece feels elegant,
+              practical, and premium from first look to everyday use.
+            </Typography>
           </Box>
         </FadeIn>
       </Box>
@@ -1152,72 +1152,72 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         >
           <FadeIn>
             <Box>
-            <Typography
-              sx={{
-                fontSize: "0.72rem",
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: palette.muted,
-              }}
-            >
-              How we curate
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.1,
-                fontFamily: headingFont,
-                fontWeight: 700,
-                fontSize: { xs: "2rem", md: "3rem" },
-                lineHeight: 0.95,
-                letterSpacing: "-0.05em",
-                maxWidth: 520,
-              }}
-            >
-              A premium edit shaped by silhouette, utility, and finish.
-            </Typography>
-            <Stack spacing={2} sx={{ mt: 2.5, maxWidth: 560 }}>
-              {[
-                "We start with shape and proportion so every piece feels elegant before styling even begins.",
-                "Materials and hardware are reviewed for texture, weight, and how they elevate the final look in person.",
-                "The assortment stays intentionally tight so the shopping experience feels calm, premium, and focused.",
-              ].map((text, index) => (
-                <FadeIn key={text} delay={index * 0.08}>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: "44px 1fr",
-                      gap: 1.8,
-                      alignItems: "start",
-                    }}
-                  >
+              <Typography
+                sx={{
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.3em",
+                  textTransform: "uppercase",
+                  color: palette.muted,
+                }}
+              >
+                How we curate
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.1,
+                  fontFamily: headingFont,
+                  fontWeight: 700,
+                  fontSize: { xs: "2rem", md: "3rem" },
+                  lineHeight: 0.95,
+                  letterSpacing: "-0.05em",
+                  maxWidth: 520,
+                }}
+              >
+                A premium edit shaped by silhouette, utility, and finish.
+              </Typography>
+              <Stack spacing={2} sx={{ mt: 2.5, maxWidth: 560 }}>
+                {[
+                  "We start with shape and proportion so every piece feels elegant before styling even begins.",
+                  "Materials and hardware are reviewed for texture, weight, and how they elevate the final look in person.",
+                  "The assortment stays intentionally tight so the shopping experience feels calm, premium, and focused.",
+                ].map((text, index) => (
+                  <FadeIn key={text} delay={index * 0.08}>
                     <Box
                       sx={{
-                        width: 44,
-                        height: 44,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: "50%",
-                        border: `1px solid rgba(17,17,17,0.16)`,
-                        fontSize: "0.78rem",
-                        letterSpacing: "0.12em",
+                        display: "grid",
+                        gridTemplateColumns: "44px 1fr",
+                        gap: 1.8,
+                        alignItems: "start",
                       }}
                     >
-                      0{index + 1}
+                      <Box
+                        sx={{
+                          width: 44,
+                          height: 44,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: "50%",
+                          border: `1px solid rgba(17,17,17,0.16)`,
+                          fontSize: "0.78rem",
+                          letterSpacing: "0.12em",
+                        }}
+                      >
+                        0{index + 1}
+                      </Box>
+                      <Typography
+                        sx={{
+                          color: palette.muted,
+                          fontSize: "0.95rem",
+                          lineHeight: 1.9,
+                        }}
+                      >
+                        {text}
+                      </Typography>
                     </Box>
-                    <Typography
-                      sx={{
-                        color: palette.muted,
-                        fontSize: "0.95rem",
-                        lineHeight: 1.9,
-                      }}
-                    >
-                      {text}
-                    </Typography>
-                  </Box>
-                </FadeIn>
-              ))}
-            </Stack>
+                  </FadeIn>
+                ))}
+              </Stack>
             </Box>
           </FadeIn>
 
@@ -1229,59 +1229,62 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 bgcolor: "#f4ebdd",
               }}
             >
-            <Typography
-              sx={{
-                fontSize: "0.72rem",
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: palette.muted,
-              }}
-            >
-              Signature standards
-            </Typography>
-            <Stack spacing={2.2} sx={{ mt: 2.4 }}>
-              {[
-                [
-                  "Structured forms",
-                  "Balanced silhouettes that keep a polished shape throughout the day.",
-                ],
-                [
-                  "Premium hardware",
-                  "Metal details chosen to add subtle contrast and a more elevated finish.",
-                ],
-                [
-                  "Wearable palettes",
-                  "Color choices designed to work across wardrobe staples and seasonal looks.",
-                ],
-              ].map(([title, text], index) => (
-                <FadeIn key={title} delay={index * 0.08}>
-                  <Box
-                    sx={{ pb: 2.2, borderBottom: `1px solid rgba(17,17,17,0.1)` }}
-                  >
-                    <Typography
+              <Typography
+                sx={{
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.3em",
+                  textTransform: "uppercase",
+                  color: palette.muted,
+                }}
+              >
+                Signature standards
+              </Typography>
+              <Stack spacing={2.2} sx={{ mt: 2.4 }}>
+                {[
+                  [
+                    "Structured forms",
+                    "Balanced silhouettes that keep a polished shape throughout the day.",
+                  ],
+                  [
+                    "Premium hardware",
+                    "Metal details chosen to add subtle contrast and a more elevated finish.",
+                  ],
+                  [
+                    "Wearable palettes",
+                    "Color choices designed to work across wardrobe staples and seasonal looks.",
+                  ],
+                ].map(([title, text], index) => (
+                  <FadeIn key={title} delay={index * 0.08}>
+                    <Box
                       sx={{
-                        fontFamily: headingFont,
-                        fontWeight: 700,
-                        fontSize: "1.2rem",
-                        letterSpacing: "-0.03em",
+                        pb: 2.2,
+                        borderBottom: `1px solid rgba(17,17,17,0.1)`,
                       }}
                     >
-                      {title}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        mt: 0.8,
-                        color: palette.muted,
-                        fontSize: "0.93rem",
-                        lineHeight: 1.8,
-                      }}
-                    >
-                      {text}
-                    </Typography>
-                  </Box>
-                </FadeIn>
-              ))}
-            </Stack>
+                      <Typography
+                        sx={{
+                          fontFamily: headingFont,
+                          fontWeight: 700,
+                          fontSize: "1.2rem",
+                          letterSpacing: "-0.03em",
+                        }}
+                      >
+                        {title}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          mt: 0.8,
+                          color: palette.muted,
+                          fontSize: "0.93rem",
+                          lineHeight: 1.8,
+                        }}
+                      >
+                        {text}
+                      </Typography>
+                    </Box>
+                  </FadeIn>
+                ))}
+              </Stack>
             </Box>
           </FadeIn>
         </Box>
@@ -1311,30 +1314,30 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         >
           <FadeIn>
             <Box>
-            <Typography
-              sx={{
-                fontSize: "0.72rem",
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: palette.muted,
-              }}
-            >
-              Visit the collection
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.1,
-                fontFamily: headingFont,
-                fontWeight: 700,
-                fontSize: { xs: "1.9rem", md: "2.7rem" },
-                lineHeight: 0.96,
-                letterSpacing: "-0.05em",
-                maxWidth: 520,
-              }}
-            >
-              Explore the full range of premium handbags and curated seasonal
-              edits.
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.3em",
+                  textTransform: "uppercase",
+                  color: palette.muted,
+                }}
+              >
+                Visit the collection
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.1,
+                  fontFamily: headingFont,
+                  fontWeight: 700,
+                  fontSize: { xs: "1.9rem", md: "2.7rem" },
+                  lineHeight: 0.96,
+                  letterSpacing: "-0.05em",
+                  maxWidth: 520,
+                }}
+              >
+                Explore the full range of premium handbags and curated seasonal
+                edits.
+              </Typography>
             </Box>
           </FadeIn>
 
@@ -1344,45 +1347,45 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               spacing={1.4}
               justifyContent={{ md: "flex-end" }}
             >
-            <Button
-              variant="contained"
-              onClick={() => navigateToPage("shop")}
-              sx={{
-                bgcolor: palette.accent,
-                color: palette.ink,
-                borderRadius: 999,
-                border: `1px solid ${palette.border}`,
-                boxShadow: "none",
-                px: 3,
-                py: 0.9,
-                fontSize: "0.7rem",
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
-              }}
-            >
-              Shop collection
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => navigateToPage("contact")}
-              sx={{
-                color: palette.ink,
-                borderColor: "rgba(17,17,17,0.26)",
-                borderRadius: 999,
-                px: 3,
-                py: 0.9,
-                fontSize: "0.7rem",
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                "&:hover": {
-                  borderColor: palette.border,
-                  bgcolor: "rgba(17,17,17,0.03)",
-                },
-              }}
-            >
-              Contact us
-            </Button>
+              <Button
+                variant="contained"
+                onClick={() => navigateToPage("shop")}
+                sx={{
+                  bgcolor: palette.accent,
+                  color: palette.ink,
+                  borderRadius: 999,
+                  border: `1px solid ${palette.border}`,
+                  boxShadow: "none",
+                  px: 3,
+                  py: 0.9,
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
+                }}
+              >
+                Shop collection
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => navigateToPage("contact")}
+                sx={{
+                  color: palette.ink,
+                  borderColor: "rgba(17,17,17,0.26)",
+                  borderRadius: 999,
+                  px: 3,
+                  py: 0.9,
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  "&:hover": {
+                    borderColor: palette.border,
+                    bgcolor: "rgba(17,17,17,0.03)",
+                  },
+                }}
+              >
+                Contact us
+              </Button>
             </Stack>
           </FadeIn>
         </Box>
@@ -1416,42 +1419,41 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               pr: { md: 3 },
             }}
           >
-          <Typography
-            sx={{
-              fontSize: "0.72rem",
-              letterSpacing: "0.3em",
-              textTransform: "uppercase",
-              color: palette.muted,
-            }}
-          >
-            Contact atelier
-          </Typography>
-          <Typography
-            sx={{
-              mt: 1,
-              fontFamily: headingFont,
-              fontWeight: 700,
-              fontSize: { xs: "2.4rem", md: "4rem" },
-              letterSpacing: "-0.06em",
-              lineHeight: 0.92,
-              maxWidth: 420,
-            }}
-          >
-            Get In Touch
-          </Typography>
-          <Typography
-            sx={{
-              mt: 1.8,
-              maxWidth: 360,
-              color: palette.muted,
-              fontSize: "0.95rem",
-              lineHeight: 1.85,
-            }}
-          >
-            Request availability, custom color options, wholesale details, or
-            personal styling support for your next handbag selection.
-          </Typography>
-
+            <Typography
+              sx={{
+                fontSize: "0.72rem",
+                letterSpacing: "0.3em",
+                textTransform: "uppercase",
+                color: palette.muted,
+              }}
+            >
+              Contact atelier
+            </Typography>
+            <Typography
+              sx={{
+                mt: 1,
+                fontFamily: headingFont,
+                fontWeight: 700,
+                fontSize: { xs: "2.4rem", md: "4rem" },
+                letterSpacing: "-0.06em",
+                lineHeight: 0.92,
+                maxWidth: 420,
+              }}
+            >
+              Get In Touch
+            </Typography>
+            <Typography
+              sx={{
+                mt: 1.8,
+                maxWidth: 360,
+                color: palette.muted,
+                fontSize: "0.95rem",
+                lineHeight: 1.85,
+              }}
+            >
+              Request availability, custom color options, wholesale details, or
+              personal styling support for your next handbag selection.
+            </Typography>
           </Box>
           <FadeIn delay={0.08} direction="right">
             <Box
@@ -1491,70 +1493,70 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               position: "relative",
             }}
           >
-          <Box
-            sx={{
-              position: "absolute",
-              top: -12,
-              left: 24,
-              px: 1.2,
-              py: 0.4,
-              bgcolor: palette.page,
-              border: `1px solid rgba(17,17,17,0.14)`,
-              fontSize: "0.66rem",
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: palette.muted,
-            }}
-          >
-            Contact form
-          </Box>
+            <Box
+              sx={{
+                position: "absolute",
+                top: -12,
+                left: 24,
+                px: 1.2,
+                py: 0.4,
+                bgcolor: palette.page,
+                border: `1px solid rgba(17,17,17,0.14)`,
+                fontSize: "0.66rem",
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: palette.muted,
+              }}
+            >
+              Contact form
+            </Box>
 
-          <Typography
-            sx={{
-              mb: 2.1,
-              fontFamily: headingFont,
-              fontWeight: 700,
-              fontSize: { xs: "1.4rem", md: "1.75rem" },
-              letterSpacing: "-0.04em",
-            }}
-          >
-            Start your enquiry
-          </Typography>
+            <Typography
+              sx={{
+                mb: 2.1,
+                fontFamily: headingFont,
+                fontWeight: 700,
+                fontSize: { xs: "1.4rem", md: "1.75rem" },
+                letterSpacing: "-0.04em",
+              }}
+            >
+              Start your enquiry
+            </Typography>
 
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-              gap: 1.6,
-            }}
-          >
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                gap: 1.6,
+              }}
+            >
+              <TextField
+                label="Name"
+                variant="outlined"
+                fullWidth
+                sx={fieldStyles}
+              />
+              <TextField
+                label="Email"
+                variant="outlined"
+                fullWidth
+                sx={fieldStyles}
+              />
+            </Box>
             <TextField
-              label="Name"
+              label="Phone"
               variant="outlined"
               fullWidth
-              sx={fieldStyles}
+              sx={{ mt: 1.6, ...fieldStyles }}
             />
             <TextField
-              label="Email"
+              label="Message"
               variant="outlined"
               fullWidth
-              sx={fieldStyles}
+              multiline
+              minRows={4}
+              sx={{ mt: 1.6, ...fieldStyles }}
             />
-          </Box>
-          <TextField
-            label="Phone"
-            variant="outlined"
-            fullWidth
-            sx={{ mt: 1.6, ...fieldStyles }}
-          />
-          <TextField
-            label="Message"
-            variant="outlined"
-            fullWidth
-            multiline
-            minRows={4}
-            sx={{ mt: 1.6, ...fieldStyles }}
-          />
             <Button
               variant="contained"
               sx={{
@@ -1615,92 +1617,95 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               px: { xs: 2, md: 4 },
               py: 1.8,
               display: "grid",
-              gridTemplateColumns: { xs: "auto 1fr auto", md: "220px 1fr 120px" },
+              gridTemplateColumns: {
+                xs: "auto 1fr auto",
+                md: "220px 1fr 120px",
+              },
               alignItems: "center",
               gap: 2,
             }}
           >
-          <Stack direction="row" spacing={1.2} alignItems="center">
-            <Box
-              component="button"
-              type="button"
-              onClick={() => navigateToPage("home")}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                border: 0,
-                p: 0,
-                bgcolor: "transparent",
-                cursor: "pointer",
-                color: palette.ink,
-              }}
-            >
+            <Stack direction="row" spacing={1.2} alignItems="center">
               <Box
-                component="img"
-                src={logoSrc}
-                alt={`${data.name} logo`}
-                sx={{
-                  width: 24,
-                  height: 24,
-                  objectFit: "contain",
-                  filter: data.logoUrl ? "none" : "brightness(0)",
-                }}
-              />
-              <Typography
-                sx={{
-                  display: { xs: "none", sm: "block" },
-                  fontFamily: headingFont,
-                  fontWeight: 700,
-                  fontSize: "0.92rem",
-                  letterSpacing: "-0.03em",
-                }}
-              >
-                {data.name}
-              </Typography>
-            </Box>
-          </Stack>
-
-          <Stack
-            direction="row"
-            spacing={{ xs: 1.5, md: 3.5 }}
-            justifyContent="center"
-            sx={{
-              overflowX: "auto",
-              "&::-webkit-scrollbar": { display: "none" },
-            }}
-          >
-            {navItems.map((item) => (
-              <Box
-                key={item.label}
                 component="button"
                 type="button"
-                onClick={() => navigateToPage(item.page)}
+                onClick={() => navigateToPage("home")}
                 sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
                   border: 0,
                   p: 0,
                   bgcolor: "transparent",
                   cursor: "pointer",
-                  color:
-                    activePage === item.page
-                      ? palette.ink
-                      : "rgba(17,17,17,0.62)",
-                  fontSize: { xs: "0.72rem", md: "0.74rem" },
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                  whiteSpace: "nowrap",
-                  fontFamily: bodyFont,
-                  borderBottom:
-                    activePage === item.page
-                      ? `1px solid ${palette.ink}`
-                      : "1px solid transparent",
-                  pb: 0.35,
+                  color: palette.ink,
                 }}
               >
-                {item.label}
+                <Box
+                  component="img"
+                  src={logoSrc}
+                  alt={`${data.name} logo`}
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    objectFit: "contain",
+                    filter: data.logoUrl ? "none" : "brightness(0)",
+                  }}
+                />
+                <Typography
+                  sx={{
+                    display: { xs: "none", sm: "block" },
+                    fontFamily: headingFont,
+                    fontWeight: 700,
+                    fontSize: "0.92rem",
+                    letterSpacing: "-0.03em",
+                  }}
+                >
+                  {data.name}
+                </Typography>
               </Box>
-            ))}
-          </Stack>
+            </Stack>
+
+            <Stack
+              direction="row"
+              spacing={{ xs: 1.5, md: 3.5 }}
+              justifyContent="center"
+              sx={{
+                overflowX: "auto",
+                "&::-webkit-scrollbar": { display: "none" },
+              }}
+            >
+              {navItems.map((item) => (
+                <Box
+                  key={item.label}
+                  component="button"
+                  type="button"
+                  onClick={() => navigateToPage(item.page)}
+                  sx={{
+                    border: 0,
+                    p: 0,
+                    bgcolor: "transparent",
+                    cursor: "pointer",
+                    color:
+                      activePage === item.page
+                        ? palette.ink
+                        : "rgba(17,17,17,0.62)",
+                    fontSize: { xs: "0.72rem", md: "0.74rem" },
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    whiteSpace: "nowrap",
+                    fontFamily: bodyFont,
+                    borderBottom:
+                      activePage === item.page
+                        ? `1px solid ${palette.ink}`
+                        : "1px solid transparent",
+                    pb: 0.35,
+                  }}
+                >
+                  {item.label}
+                </Box>
+              ))}
+            </Stack>
           </Box>
         </FadeIn>
       </Box>
@@ -1737,50 +1742,50 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <FadeIn>
               <Box>
-              <Typography
-                sx={{
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Quick links
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Quick links
+                </Typography>
                 <Stack spacing={0.7} sx={{ mt: 1.3 }}>
-                {navItems.map((item) => (
-                  <Box
-                    key={item.label}
-                    component="button"
-                    type="button"
-                    onClick={() => navigateToPage(item.page)}
-                    sx={{
-                      border: 0,
-                      p: 0,
-                      bgcolor: "transparent",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      color: palette.muted,
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {item.label}
-                  </Box>
-                ))}
+                  {navItems.map((item) => (
+                    <Box
+                      key={item.label}
+                      component="button"
+                      type="button"
+                      onClick={() => navigateToPage(item.page)}
+                      sx={{
+                        border: 0,
+                        p: 0,
+                        bgcolor: "transparent",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        color: palette.muted,
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {item.label}
+                    </Box>
+                  ))}
                 </Stack>
               </Box>
             </FadeIn>
 
             <FadeIn delay={0.08}>
               <Box>
-              <Typography
-                sx={{
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Contact
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Contact
+                </Typography>
                 <Typography
                   sx={{
                     mt: 1.3,
@@ -1798,56 +1803,56 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
             <FadeIn delay={0.16}>
               <Box>
-              <Typography
-                sx={{
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Visit
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 1.3,
-                  color: palette.muted,
-                  fontSize: "0.9rem",
-                  lineHeight: 1.9,
-                }}
-              >
-                {data.contact?.address || "245 Mercer Street, New York, NY"}
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Visit
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1.3,
+                    color: palette.muted,
+                    fontSize: "0.9rem",
+                    lineHeight: 1.9,
+                  }}
+                >
+                  {data.contact?.address || "245 Mercer Street, New York, NY"}
+                </Typography>
 
                 <Stack direction="row" spacing={1.2} sx={{ mt: 1.8 }}>
-                {socialLinks.map((item) => {
-                  const Icon = item.icon;
-                  const href =
-                    data.socialLinks?.[
-                      item.key as keyof typeof data.socialLinks
-                    ] || "#";
+                  {socialLinks.map((item) => {
+                    const Icon = item.icon;
+                    const href =
+                      data.socialLinks?.[
+                        item.key as keyof typeof data.socialLinks
+                      ] || "#";
 
-                  return (
+                    return (
+                      <Box
+                        key={item.key}
+                        component="a"
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        sx={{ color: palette.ink, display: "flex" }}
+                      >
+                        <Icon size={16} />
+                      </Box>
+                    );
+                  })}
+                  {data.contact?.email ? (
                     <Box
-                      key={item.key}
                       component="a"
-                      href={href}
-                      target="_blank"
-                      rel="noreferrer"
+                      href={`mailto:${data.contact.email}`}
                       sx={{ color: palette.ink, display: "flex" }}
                     >
-                      <Icon size={16} />
+                      <Mail size={16} />
                     </Box>
-                  );
-                })}
-                {data.contact?.email ? (
-                  <Box
-                    component="a"
-                    href={`mailto:${data.contact.email}`}
-                    sx={{ color: palette.ink, display: "flex" }}
-                  >
-                    <Mail size={16} />
-                  </Box>
-                ) : null}
+                  ) : null}
                 </Stack>
               </Box>
             </FadeIn>

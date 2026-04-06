@@ -33,7 +33,7 @@ import {
   getStoreTemplates,
   refreshTemplateCache,
   type TemplateSummary,
-} from "../templates";
+} from "../templates/templateApi";
 import { useStoreWebsiteCreation } from "../hooks/useStoreWebsiteCreation";
 import {
   generateTemplatePlaceholder,

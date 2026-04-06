@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import axios from 'axios';
 import {
   Box,
@@ -14,6 +15,7 @@ import {
   Grid,
   CircularProgress,
   Skeleton,
+  MenuItem,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { MessageSquareText, X, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -22,6 +24,8 @@ import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
 import DashboardCard from './DashboardCard';
 import DashboardTable, { DashboardTableHeadCell, DashboardTableRow } from './DashboardTable';
 import DashboardActionButton from './DashboardActionButton';
+import DashboardSelect from './DashboardSelect';
+import SearchBar from './SearchBar';
 import EmptyState from './EmptyState';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -82,6 +86,11 @@ const InvoiceHistory = () => {
     hasPrevPage: false,
   });
 
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+  const [statusFilter, setStatusFilter] = useState('all');
+
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -91,11 +100,11 @@ const InvoiceHistory = () => {
     setError(null);
 
     try {
+      const params = { page, limit: ITEMS_PER_PAGE };
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      if (statusFilter !== 'all') params.status = statusFilter;
       const response = await axios.get(`${API_URL}/invoices`, {
-        params: {
-          page,
-          limit: ITEMS_PER_PAGE,
-        },
+        params,
       });
 
       setInvoices(response.data.invoices || []);
@@ -115,10 +124,15 @@ const InvoiceHistory = () => {
     }
   }, []);
 
-  // Initial fetch
+  // Initial fetch and re-fetch on search/filter change
   useEffect(() => {
     fetchInvoices(1);
   }, [fetchInvoices]);
+
+  // Reset to page 1 on search/filter change
+  useEffect(() => {
+    fetchInvoices(1);
+  }, [debouncedSearch, statusFilter]);
 
   const handlePageChange = useCallback((newPage) => {
     fetchInvoices(newPage);
@@ -173,6 +187,29 @@ const InvoiceHistory = () => {
         title="Invoice history"
         subtitle="If you've just made a payment, it may take a few hours for it to appear in the table below."
       >
+        {/* Search and Status Filter */}
+        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2} mb={2}>
+          <Box sx={{ flex: 1, maxWidth: { xs: '100%', sm: 300 } }}>
+            <SearchBar
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search invoices..."
+            />
+          </Box>
+          <DashboardSelect
+            size="small"
+            label="Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            containerSx={{ minWidth: 130 }}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="paid">Paid</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+            <MenuItem value="failed">Failed</MenuItem>
+          </DashboardSelect>
+        </Box>
+
         {loading ? (
           renderSkeleton()
         ) : error ? (

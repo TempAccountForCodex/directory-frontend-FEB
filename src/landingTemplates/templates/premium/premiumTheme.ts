@@ -1,4 +1,4 @@
-import { TemplateTheme } from "../../templateEngine/types";
+import type { TemplateTheme } from "../../templateEngine/types";
 
 export const buildPremiumTheme = (
   primaryColor: string,
@@ -14,6 +14,5 @@ export const buildPremiumTheme = (
   bgWhite: "#fff",
   surfaceColor: "rgba(255,255,255,0.04)",
   borderColor: "rgba(255,255,255,0.1)",
-  fontFamily:
-    "'Plus Jakarta Sans', 'Inter', 'Barlow', 'Segoe UI', sans-serif",
+  fontFamily: "'Plus Jakarta Sans', 'Inter', 'Barlow', 'Segoe UI', sans-serif",
 });

@@ -21,6 +21,8 @@ import {
   Container,
   Skeleton,
   Stack,
+  Tooltip,
+  IconButton,
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import {
@@ -28,7 +30,9 @@ import {
   CircleCheck,
   CircleUser,
   CreditCard,
+  Crown,
   Gauge,
+  Gift,
   Globe,
   Info,
   Lock,
@@ -36,9 +40,12 @@ import {
   Plug,
   Save,
   Shield,
+  Trash2,
   TriangleAlert,
   Upload,
+  UserPlus,
   Users,
+  Clock,
 } from 'lucide-react';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
@@ -57,12 +64,19 @@ import {
   LoginHistoryCard,
   ChangePlanCard,
   AuditLogCard,
+  ConfirmationDialog,
+  BillingHistoryCard,
 } from './shared';
+import AccountDelegateInviteModal from './AccountDelegateInviteModal';
+import ReferralDashboard from './settings/ReferralDashboard';
 import DashboardActionButton from './shared/DashboardActionButton';
 import DashboardCancelButton from './shared/DashboardCancelButton';
 import DashboardConfirmButton from './shared/DashboardConfirmButton';
 import BasicDetailsCard from './BasicDetailsCard';
 import { isAdmin } from '../../constants/roles';
+import { useBilling } from '../../hooks/useBilling';
+import CancellationFlow from '../Settings/CancellationFlow';
+import NotificationPreferences from './settings/NotificationPreferences';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -91,6 +105,7 @@ const SETTINGS_NAV_SECTIONS = [
     title: 'Organization',
     items: [
       { id: 'billing', label: 'Billing & plans', icon: CreditCard },
+      { id: 'referrals', label: 'Referrals', icon: Gift },
       { id: 'team', label: 'Team', icon: Users },
       { id: 'integrations', label: 'Integrations', icon: Plug },
     ],
@@ -155,6 +170,67 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
   const [unlinkLoading, setUnlinkLoading] = useState(false);
   const [activeSection, setActiveSection] = useState(subtab || 'account');
 
+  // Billing hook — for cancel subscription and billing history
+  const {
+    billingDetails: billingData,
+    cancelSubscription: cancelBillingSubscription,
+    fetchBillingHistory,
+    refetch: refetchBilling,
+    subscriptionStatus: billingSubscriptionStatus,
+    cancelledAt: billingCancelledAt,
+    currentPeriodEnd: billingCurrentPeriodEnd,
+  } = useBilling();
+
+  // Cancellation flow state
+  const [showCancellationFlow, setShowCancellationFlow] = useState(false);
+
+  const isFreePlan = useMemo(
+    () =>
+      !planSummary?.websitePlan?.code ||
+      planSummary.websitePlan.code === 'website_free',
+    [planSummary]
+  );
+
+  const isCancellingState = useMemo(
+    () => billingSubscriptionStatus === 'cancelled' && !!billingCancelledAt,
+    [billingSubscriptionStatus, billingCancelledAt]
+  );
+
+  const showCancelButton = useMemo(
+    () => !isFreePlan && !isCancellingState,
+    [isFreePlan, isCancellingState]
+  );
+
+  const handleCancelSubscription = useCallback(
+    async (options) => {
+      const result = await cancelBillingSubscription(options);
+      if (result) {
+        setShowCancellationFlow(false);
+        await refetchBilling();
+      }
+      return result;
+    },
+    [cancelBillingSubscription, refetchBilling]
+  );
+
+  const handleCloseCancellationFlow = useCallback(() => {
+    setShowCancellationFlow(false);
+  }, []);
+
+  const handleShowCancellationFlow = useCallback(() => {
+    setShowCancellationFlow(true);
+  }, []);
+
+  // Delegate management state (Step 7.15.1)
+  const [delegates, setDelegates] = useState([]);
+  const [delegatesLoading, setDelegatesLoading] = useState(false);
+  const [delegatesError, setDelegatesError] = useState(null);
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
+  const [delegateToRevoke, setDelegateToRevoke] = useState(null);
+  const [revoking, setRevoking] = useState(false);
+
   // Update active section when subtab changes (e.g. from URL or profile dropdown)
   useEffect(() => {
     if (subtab && subtab !== activeSection) {
@@ -205,6 +281,88 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
       return () => clearTimeout(timer);
     }
   }, [passwordCooldown]);
+
+  // ── Delegate Management (Step 7.15.1) ──────────────────────────────────────
+
+  const fetchDelegates = useCallback(async () => {
+    setDelegatesLoading(true);
+    setDelegatesError(null);
+    try {
+      const [delegateRes, inviteRes] = await Promise.all([
+        axios.get(`${API_URL}/account/delegates`),
+        axios.get(`${API_URL}/account/delegates/invites/pending`),
+      ]);
+      setDelegates(delegateRes.data?.delegates || []);
+      setPendingInvites(inviteRes.data?.invites || []);
+    } catch (err) {
+      setDelegatesError(err.response?.data?.message || 'Failed to load delegates');
+    } finally {
+      setDelegatesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeSection === 'team') {
+      fetchDelegates();
+    }
+  }, [activeSection, fetchDelegates]);
+
+  const handleOpenInviteModal = useCallback(() => {
+    setInviteModalOpen(true);
+  }, []);
+
+  const handleCloseInviteModal = useCallback(() => {
+    setInviteModalOpen(false);
+  }, []);
+
+  const handleInviteSuccess = useCallback(() => {
+    fetchDelegates();
+  }, [fetchDelegates]);
+
+  const handleOpenRevokeDialog = useCallback((delegate) => {
+    setDelegateToRevoke(delegate);
+    setRevokeDialogOpen(true);
+  }, []);
+
+  const handleCancelRevoke = useCallback(() => {
+    setRevokeDialogOpen(false);
+    setDelegateToRevoke(null);
+  }, []);
+
+  const handleConfirmRevoke = useCallback(async () => {
+    if (!delegateToRevoke) return;
+    setRevoking(true);
+    try {
+      await axios.delete(`${API_URL}/account/delegates/${delegateToRevoke.id}`);
+      setRevokeDialogOpen(false);
+      setDelegateToRevoke(null);
+      fetchDelegates();
+    } catch (err) {
+      setDelegatesError(err.response?.data?.message || 'Failed to revoke delegate');
+      setRevokeDialogOpen(false);
+      setDelegateToRevoke(null);
+    } finally {
+      setRevoking(false);
+    }
+  }, [delegateToRevoke, fetchDelegates]);
+
+  // isFreePlan already declared above (line ~187) — reuse it for delegation section
+
+  const delegateRoleLabel = useCallback((role) => {
+    switch (role) {
+      case 'ACCOUNT_ADMIN': return 'Account Admin';
+      case 'ACCOUNT_COLLABORATOR': return 'Account Collaborator';
+      default: return role;
+    }
+  }, []);
+
+  const delegateRoleColor = useCallback((role) => {
+    switch (role) {
+      case 'ACCOUNT_ADMIN': return '#2196f3';
+      case 'ACCOUNT_COLLABORATOR': return '#4caf50';
+      default: return '#9e9e9e';
+    }
+  }, []);
 
   // Memoized styles for better scroll performance
   const cardStyles = useMemo(
@@ -1177,30 +1335,355 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
                 )}
                 </DashboardCard>
               </Box>
+              {/* Cancel Subscription button — only on paid plans, not when already cancelling */}
+              {showCancelButton && (
+                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                  <DashboardCancelButton
+                    onClick={handleShowCancellationFlow}
+                    size="small"
+                  >
+                    Cancel Subscription
+                  </DashboardCancelButton>
+                </Box>
+              )}
+
+              {/* Inline CancellationFlow — shown below Plan & Limits */}
+              {showCancellationFlow && (
+                <CancellationFlow
+                  currentPlan={planSummary?.websitePlan?.code || 'website_free'}
+                  currentPeriodEnd={billingCurrentPeriodEnd}
+                  onCancel={handleCancelSubscription}
+                  onClose={handleCloseCancellationFlow}
+                  accountCreditCents={billingData?.accountCreditCents || null}
+                />
+              )}
+
               <Box sx={{ mt: 3 }}>
                 <InvoiceHistory />
+              </Box>
+
+              <Box sx={{ mt: 3 }}>
+                <BillingHistoryCard fetchBillingHistory={fetchBillingHistory} />
               </Box>
             </Box>
           )}
 
           {activeSection === 'notifications' && (
-            <Paper elevation={0} sx={{ ...cardStyles, mb: 0 }}>
-              <EmptyState
-                icon={<Bell size={24} color={colors.text} />}
-                title="Notification preferences"
-                subtitle="Manage notification settings here once they are available."
-              />
-            </Paper>
+            <NotificationPreferences />
           )}
 
           {activeSection === 'team' && (
-            <Paper elevation={0} sx={{ ...cardStyles, mb: 0 }}>
-              <EmptyState
-                icon={<Users size={24} color={colors.text} />}
-                title="Team settings"
-                subtitle="Invite teammates and manage roles from here."
+            <Box>
+              {/* Header with Invite Button */}
+              <Paper elevation={0} sx={{ ...cardStyles, mb: 3 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 2,
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{ color: colors.text, fontWeight: 700 }}
+                    >
+                      Team & Delegates
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: colors.textSecondary, mt: 0.5 }}
+                    >
+                      Manage who can access and manage your account
+                    </Typography>
+                  </Box>
+                  {isFreePlan ? (
+                    <Chip
+                      label="Upgrade to invite delegates"
+                      size="small"
+                      icon={<Crown size={14} />}
+                      sx={{
+                        bgcolor: alpha('#f59e0b', 0.15),
+                        color: '#f59e0b',
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => setActiveSection('billing')}
+                      aria-label="Upgrade your plan to invite delegates"
+                    />
+                  ) : (
+                    <DashboardGradientButton
+                      startIcon={<UserPlus size={16} />}
+                      onClick={handleOpenInviteModal}
+                      aria-label="Invite Delegate"
+                      sx={{ minHeight: 44 }}
+                    >
+                      Invite Delegate
+                    </DashboardGradientButton>
+                  )}
+                </Box>
+              </Paper>
+
+              {/* Delegate List */}
+              {delegatesLoading ? (
+                <Box
+                  aria-label="Loading delegates"
+                  aria-busy="true"
+                  sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                >
+                  {[1, 2, 3].map((i) => (
+                    <Paper key={i} elevation={0} sx={{ ...cardStyles, mb: 0 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Skeleton variant="circular" width={44} height={44} />
+                        <Box sx={{ flex: 1 }}>
+                          <Skeleton variant="text" width="60%" height={24} />
+                          <Skeleton variant="text" width="40%" height={18} />
+                        </Box>
+                        <Skeleton variant="rectangular" width={100} height={28} sx={{ borderRadius: 1 }} />
+                      </Box>
+                    </Paper>
+                  ))}
+                </Box>
+              ) : delegatesError ? (
+                <Alert severity="error" role="alert" sx={{ mb: 2 }}>
+                  {delegatesError}
+                </Alert>
+              ) : delegates.length === 0 && pendingInvites.length === 0 ? (
+                <Paper elevation={0} sx={{ ...cardStyles, mb: 0 }}>
+                  <EmptyState
+                    icon={<Users size={24} color={colors.text} />}
+                    title="No delegates yet"
+                    subtitle="Invite team members to help manage your account."
+                    action={
+                      !isFreePlan ? (
+                        <DashboardGradientButton
+                          startIcon={<UserPlus size={16} />}
+                          onClick={handleOpenInviteModal}
+                          aria-label="Invite Delegate"
+                        >
+                          Invite Delegate
+                        </DashboardGradientButton>
+                      ) : null
+                    }
+                  />
+                </Paper>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {/* Active Delegates */}
+                  {delegates.map((delegate) => {
+                    const user = delegate.delegateUser;
+                    const initials = (user?.name || user?.email || '?')
+                      .split(' ')
+                      .map((w) => w[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2);
+                    const roleColor = delegateRoleColor(delegate.role);
+
+                    return (
+                      <Paper key={delegate.id} elevation={0} sx={{ ...cardStyles, mb: 0 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2,
+                            flexWrap: { xs: 'wrap', md: 'nowrap' },
+                          }}
+                        >
+                          <Avatar
+                            sx={{
+                              width: 44,
+                              height: 44,
+                              bgcolor: alpha(roleColor, 0.2),
+                              color: roleColor,
+                              fontWeight: 600,
+                              fontSize: '0.875rem',
+                            }}
+                            aria-hidden="true"
+                          >
+                            {initials}
+                          </Avatar>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                color: colors.text,
+                                fontWeight: 600,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {user?.name || 'Unknown User'}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: colors.textSecondary,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {user?.email || ''}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={delegateRoleLabel(delegate.role)}
+                            size="small"
+                            sx={{
+                              bgcolor: alpha(roleColor, 0.15),
+                              color: roleColor,
+                              fontWeight: 600,
+                              fontSize: '0.7rem',
+                            }}
+                          />
+                          {delegate.serviceScopes && delegate.serviceScopes.length > 0 && (
+                            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5 }}>
+                              {delegate.serviceScopes.map((scope) => (
+                                <Chip
+                                  key={scope}
+                                  label={scope}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{
+                                    fontSize: '0.65rem',
+                                    height: 22,
+                                    color: colors.textSecondary,
+                                    borderColor: colors.border,
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          )}
+                          <Tooltip title="Revoke delegate access" arrow>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenRevokeDialog(delegate)}
+                              sx={{
+                                color: '#f44336',
+                                minWidth: 44,
+                                minHeight: 44,
+                                '&:hover': { bgcolor: alpha('#f44336', 0.1) },
+                              }}
+                              aria-label={`Revoke access for ${user?.name || 'delegate'}`}
+                            >
+                              <Trash2 size={16} />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </Paper>
+                    );
+                  })}
+
+                  {/* Pending Invites */}
+                  {pendingInvites.length > 0 && (
+                    <>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ color: colors.textSecondary, fontWeight: 600, mt: 1 }}
+                      >
+                        Pending Invites ({pendingInvites.length})
+                      </Typography>
+                      {pendingInvites.map((invite) => (
+                        <Paper
+                          key={invite.id}
+                          elevation={0}
+                          sx={{
+                            ...cardStyles,
+                            mb: 0,
+                            border: `1px dashed ${alpha('#ff9800', 0.3)}`,
+                            bgcolor: alpha('#ff9800', 0.04),
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box
+                              sx={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                bgcolor: alpha('#ff9800', 0.1),
+                                flexShrink: 0,
+                              }}
+                            >
+                              <Clock size={18} color="#ff9800" />
+                            </Box>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: colors.text,
+                                  fontWeight: 500,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {invite.email}
+                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Chip
+                                  label="PENDING"
+                                  size="small"
+                                  sx={{
+                                    bgcolor: alpha('#ff9800', 0.15),
+                                    color: '#ff9800',
+                                    fontWeight: 600,
+                                    fontSize: '0.65rem',
+                                    height: 18,
+                                  }}
+                                />
+                                <Chip
+                                  label={delegateRoleLabel(invite.role)}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: alpha(delegateRoleColor(invite.role), 0.15),
+                                    color: delegateRoleColor(invite.role),
+                                    fontWeight: 600,
+                                    fontSize: '0.65rem',
+                                    height: 18,
+                                  }}
+                                />
+                              </Box>
+                            </Box>
+                          </Box>
+                        </Paper>
+                      ))}
+                    </>
+                  )}
+                </Box>
+              )}
+
+              {/* Invite Delegate Modal */}
+              <AccountDelegateInviteModal
+                open={inviteModalOpen}
+                onClose={handleCloseInviteModal}
+                onSuccess={handleInviteSuccess}
               />
-            </Paper>
+
+              {/* Revoke Confirmation Dialog */}
+              <ConfirmationDialog
+                open={revokeDialogOpen}
+                onConfirm={handleConfirmRevoke}
+                onCancel={handleCancelRevoke}
+                title="Revoke Delegate Access"
+                message={`Are you sure you want to revoke access for ${delegateToRevoke?.delegateUser?.name || delegateToRevoke?.delegateUser?.email || 'this delegate'}? They will no longer be able to manage your account.`}
+                confirmLabel="Revoke"
+                cancelLabel="Cancel"
+                variant="danger"
+                loading={revoking}
+              />
+            </Box>
+          )}
+
+          {activeSection === 'referrals' && (
+            <ReferralDashboard colors={colors} />
           )}
 
           {activeSection === 'integrations' && (

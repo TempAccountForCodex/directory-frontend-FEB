@@ -20,8 +20,13 @@ import {
   BadgeDollarSign,
   ArrowRight,
 } from "lucide-react";
-import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
-import { TemplateProps } from "../../templateEngine/types";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  type MotionValue,
+} from "framer-motion";
+import type { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
 
 const plumbingHeroImage =
@@ -77,7 +82,11 @@ function StackCard({
 }: StackCardProps) {
   const x = useTransform(scrollYProgress, [start, end], [baseX, baseX - 180]);
   const y = useTransform(scrollYProgress, [start, end], [baseY, baseY + 160]);
-  const opacity = useTransform(scrollYProgress, [start, end - 0.05, end], [1, 1, 0]);
+  const opacity = useTransform(
+    scrollYProgress,
+    [start, end - 0.05, end],
+    [1, 1, 0],
+  );
   const scale = useTransform(scrollYProgress, [start, end], [1, 0.9]);
   const rotate = useTransform(scrollYProgress, [start, end], [0, -6]);
 
@@ -127,7 +136,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
     { day: "Saturday", hours: "Emergency only" },
   ];
   const projectImages = (
-    galleryItems.length ? galleryItems : plumbingAboutImages.map((url) => ({ url }))
+    galleryItems.length
+      ? galleryItems
+      : plumbingAboutImages.map((url) => ({ url }))
   ).slice(0, 5);
   const stackImages = [
     galleryItems[1]?.url || plumbingScrollStackImages[0],
@@ -153,7 +164,11 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
         <AppBar
           position="absolute"
           elevation={0}
-          sx={{ top: { xs: 64, md: 28 }, bgcolor: "transparent", boxShadow: "none" }}
+          sx={{
+            top: { xs: 64, md: 28 },
+            bgcolor: "transparent",
+            boxShadow: "none",
+          }}
         >
           <Toolbar
             sx={{
@@ -165,45 +180,47 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
               minHeight: "auto !important",
             }}
           >
+            <Box
+              sx={{
+                width: "100%",
+                px: 0,
+                py: 0.5,
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr auto", md: "260px 1fr 56px" },
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
               <Box
-                sx={{
-                  width: "100%",
-                  px: 0,
-                  py: 0.5,
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr auto", md: "260px 1fr 56px" },
-                  alignItems: "center",
-                  gap: 2,
-                }}
+                sx={{ display: "flex", alignItems: "center", minHeight: 44 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", minHeight: 44 }}>
-                  {data.logoUrl ? (
-                    <Box
-                      component="img"
-                      src={data.logoUrl}
-                      alt={`${data.name} logo`}
-                      sx={{
-                        height: { xs: 34, md: 42 },
-                        width: "auto",
-                        maxWidth: { xs: 140, md: 180 },
-                        objectFit: "contain",
-                        display: "block",
-                        filter: "brightness(0) invert(1)",
-                      }}
-                    />
-                  ) : (
-                    <Typography
-                      sx={{
-                        color: "#ffffff",
-                        fontSize: { xs: "1.6rem", md: "2rem" },
-                        fontWeight: 800,
-                        letterSpacing: "-0.04em",
-                      }}
-                    >
-                      {data.name}
-                    </Typography>
-                  )}
-                </Box>
+                {data.logoUrl ? (
+                  <Box
+                    component="img"
+                    src={data.logoUrl}
+                    alt={`${data.name} logo`}
+                    sx={{
+                      height: { xs: 34, md: 42 },
+                      width: "auto",
+                      maxWidth: { xs: 140, md: 180 },
+                      objectFit: "contain",
+                      display: "block",
+                      filter: "brightness(0) invert(1)",
+                    }}
+                  />
+                ) : (
+                  <Typography
+                    sx={{
+                      color: "#ffffff",
+                      fontSize: { xs: "1.6rem", md: "2rem" },
+                      fontWeight: 800,
+                      letterSpacing: "-0.04em",
+                    }}
+                  >
+                    {data.name}
+                  </Typography>
+                )}
+              </Box>
 
               <Stack
                 direction="row"
@@ -234,16 +251,48 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Stack>
 
               <Stack spacing={0.7} alignItems="flex-end" sx={{ pr: { md: 1 } }}>
-                <Box sx={{ width: 32, height: 2, bgcolor: "#ffffff", borderRadius: 999 }} />
-                <Box sx={{ width: 32, height: 2, bgcolor: "#ffffff", borderRadius: 999 }} />
-                <Box sx={{ width: 32, height: 2, bgcolor: "#ffffff", borderRadius: 999 }} />
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 2,
+                    bgcolor: "#ffffff",
+                    borderRadius: 999,
+                  }}
+                />
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 2,
+                    bgcolor: "#ffffff",
+                    borderRadius: 999,
+                  }}
+                />
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 2,
+                    bgcolor: "#ffffff",
+                    borderRadius: 999,
+                  }}
+                />
               </Stack>
             </Box>
           </Toolbar>
         </AppBar>
 
-        <Container maxWidth="xl" sx={{ pt: { xs: 0, md: 1 }, pb: { xs: 7, md: 6 }, px: { xs: 2, md: 4 } }}>
-          <Grid container alignItems="end" sx={{ minHeight: { xs: 520, md: 650 } }}>
+        <Container
+          maxWidth="xl"
+          sx={{
+            pt: { xs: 0, md: 1 },
+            pb: { xs: 7, md: 6 },
+            px: { xs: 2, md: 4 },
+          }}
+        >
+          <Grid
+            container
+            alignItems="end"
+            sx={{ minHeight: { xs: 520, md: 650 } }}
+          >
             <Grid xs={12} md={8}>
               <Box sx={{ maxWidth: 840 }}>
                 <FadeIn>
@@ -297,18 +346,30 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Grid container spacing={3} sx={{ mt: { xs: 1, md: 2 } }}>
             <Grid xs={12} md={4.5}>
               <FadeIn delay={0.24}>
-                <Typography sx={{ maxWidth: 360, color: "rgba(255,255,255,0.92)", fontSize: { xs: "1rem", md: "1.02rem" }, lineHeight: 1.6 , mt: 2 }}>
-                  Home service overview. Trusted experts delivering fast, reliable, and professional home repair solutions.
+                <Typography
+                  sx={{
+                    maxWidth: 360,
+                    color: "rgba(255,255,255,0.92)",
+                    fontSize: { xs: "1rem", md: "1.02rem" },
+                    lineHeight: 1.6,
+                    mt: 2,
+                  }}
+                >
+                  Home service overview. Trusted experts delivering fast,
+                  reliable, and professional home repair solutions.
                 </Typography>
               </FadeIn>
             </Grid>
             <Grid xs={12} md={3} />
-            
           </Grid>
         </Container>
       </Box>
 
-      <Container id="about" maxWidth="lg" sx={{ pt: { xs: 7, md: 20 }, pb: { xs: 7, md: 10 } }}>
+      <Container
+        id="about"
+        maxWidth="lg"
+        sx={{ pt: { xs: 7, md: 20 }, pb: { xs: 7, md: 10 } }}
+      >
         <Grid container spacing={{ xs: 5, md: 10 }} alignItems="center">
           <Grid xs={12} md={4}>
             <FadeIn direction="right">
@@ -327,7 +388,12 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                   component="img"
                   src={aboutImage}
                   alt="Plumbing specialist"
-                  sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
                 />
               </Box>
             </FadeIn>
@@ -346,7 +412,15 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                 }}
               >
                 About Us
-                <Box sx={{ width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "9px solid #f26a2e" }} />
+                <Box
+                  sx={{
+                    width: 0,
+                    height: 0,
+                    borderLeft: "6px solid transparent",
+                    borderRight: "6px solid transparent",
+                    borderTop: "9px solid #f26a2e",
+                  }}
+                />
               </Typography>
             </FadeIn>
             <FadeIn delay={0.08}>
@@ -360,7 +434,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                   maxWidth: 920,
                 }}
               >
-                From plumbing leaks to full-system fixes, {data.name} delivers dependable maintenance with a cleaner, calmer service experience.
+                From plumbing leaks to full-system fixes, {data.name} delivers
+                dependable maintenance with a cleaner, calmer service
+                experience.
               </Typography>
             </FadeIn>
           </Grid>
@@ -437,8 +513,6 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Container>
 
-   
-
       <Box sx={{ bgcolor: "#fbfaf7", py: { xs: 7, md: 10 } }}>
         <Container maxWidth="lg">
           <Grid
@@ -485,7 +559,8 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mb: 3.5,
                   }}
                 >
-                  We combine expertise, reliability, and care to deliver the best experience every time.
+                  We combine expertise, reliability, and care to deliver the
+                  best experience every time.
                 </Typography>
               </FadeIn>
 
@@ -503,11 +578,27 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     >
                       <Users size={28} color="#111111" />
-                      <Typography sx={{ color: "#111111", fontSize: { xs: "1.5rem", md: "1.15rem" }, fontWeight: 700, mt: 3, mb: 1.6 }}>
+                      <Typography
+                        sx={{
+                          color: "#111111",
+                          fontSize: { xs: "1.5rem", md: "1.15rem" },
+                          fontWeight: 700,
+                          mt: 3,
+                          mb: 1.6,
+                        }}
+                      >
                         Insured Professionals
                       </Typography>
-                      <Typography sx={{ color: "#2f2f2f", fontSize: "0.98rem", lineHeight: 1.65, maxWidth: 240 }}>
-                        Our plumbers are trained experts who follow industry standards on every job.
+                      <Typography
+                        sx={{
+                          color: "#2f2f2f",
+                          fontSize: "0.98rem",
+                          lineHeight: 1.65,
+                          maxWidth: 240,
+                        }}
+                      >
+                        Our plumbers are trained experts who follow industry
+                        standards on every job.
                       </Typography>
                     </Paper>
                   </FadeIn>
@@ -525,11 +616,27 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     >
                       <BadgeDollarSign size={28} color="#111111" />
-                      <Typography sx={{ color: "#111111", fontSize: { xs: "1.5rem", md: "1.15rem" }, fontWeight: 700, mt: 3, mb: 1.6 }}>
+                      <Typography
+                        sx={{
+                          color: "#111111",
+                          fontSize: { xs: "1.5rem", md: "1.15rem" },
+                          fontWeight: 700,
+                          mt: 3,
+                          mb: 1.6,
+                        }}
+                      >
                         Transparent Pricing
                       </Typography>
-                      <Typography sx={{ color: "#2f2f2f", fontSize: "0.98rem", lineHeight: 1.65, maxWidth: 240 }}>
-                        We believe in honesty. Every service comes with upfront pricing before work begins.
+                      <Typography
+                        sx={{
+                          color: "#2f2f2f",
+                          fontSize: "0.98rem",
+                          lineHeight: 1.65,
+                          maxWidth: 240,
+                        }}
+                      >
+                        We believe in honesty. Every service comes with upfront
+                        pricing before work begins.
                       </Typography>
                     </Paper>
                   </FadeIn>
@@ -546,11 +653,26 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                     color: "#ffffff",
                   }}
                 >
-                  <Typography sx={{ fontSize: { xs: "1.4rem", md: "1.1rem" }, fontWeight: 700, mb: 1.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "1.4rem", md: "1.1rem" },
+                      fontWeight: 700,
+                      mb: 1.5,
+                    }}
+                  >
                     Work Backed by Customer Satisfaction
                   </Typography>
-                  <Typography sx={{ color: "rgba(255,255,255,0.9)", fontSize: "1rem", lineHeight: 1.7, maxWidth: 520, mb: 3 }}>
-                    We ensure everything works perfectly and you&apos;re completely satisfied before we leave.
+                  <Typography
+                    sx={{
+                      color: "rgba(255,255,255,0.9)",
+                      fontSize: "1rem",
+                      lineHeight: 1.7,
+                      maxWidth: 520,
+                      mb: 3,
+                    }}
+                  >
+                    We ensure everything works perfectly and you&apos;re
+                    completely satisfied before we leave.
                   </Typography>
                   <Button
                     variant="contained"
@@ -633,7 +755,12 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
           }}
         >
           <Container maxWidth="lg">
-            <Grid container columnSpacing={{ xs: 0, md: 8 }} rowSpacing={{ xs: 5, md: 0 }} alignItems="center">
+            <Grid
+              container
+              columnSpacing={{ xs: 0, md: 8 }}
+              rowSpacing={{ xs: 5, md: 0 }}
+              alignItems="center"
+            >
               <Grid xs={12} md={6}>
                 <FadeIn>
                   <Typography
@@ -647,7 +774,8 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                       mb: { xs: 4, md: 5 },
                     }}
                   >
-                    Delivering dependable home repair services with a personal touch
+                    Delivering dependable home repair services with a personal
+                    touch
                   </Typography>
                 </FadeIn>
 
@@ -664,10 +792,24 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                     >
                       85k
                     </Typography>
-                    <Typography sx={{ color: "#f3a515", fontSize: "1.4rem", lineHeight: 1, mt: 1.8 }}>
+                    <Typography
+                      sx={{
+                        color: "#f3a515",
+                        fontSize: "1.4rem",
+                        lineHeight: 1,
+                        mt: 1.8,
+                      }}
+                    >
                       ★★★★★
                     </Typography>
-                    <Typography sx={{ color: "#4d4d4d", fontSize: "1rem", mt: 1.2, mb: 2.8 }}>
+                    <Typography
+                      sx={{
+                        color: "#4d4d4d",
+                        fontSize: "1rem",
+                        mt: 1.2,
+                        mb: 2.8,
+                      }}
+                    >
                       Clients worldwide
                     </Typography>
                     <Stack direction="row" spacing={-1.2}>
@@ -687,7 +829,12 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                             component="img"
                             src={src}
                             alt="Customer avatar"
-                            sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                            sx={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              display: "block",
+                            }}
                           />
                         </Box>
                       ))}
@@ -725,7 +872,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                             mb: 3.2,
                           }}
                         >
-                          Careful repairs, cleaner finishes, and a more dependable service rhythm from first call to final check.
+                          Careful repairs, cleaner finishes, and a more
+                          dependable service rhythm from first call to final
+                          check.
                         </Typography>
                         <Button
                           variant="contained"
@@ -739,7 +888,10 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                             fontWeight: 700,
                             fontSize: "0.98rem",
                             boxShadow: "none",
-                            "&:hover": { bgcolor: "#3f4d28", boxShadow: "none" },
+                            "&:hover": {
+                              bgcolor: "#3f4d28",
+                              boxShadow: "none",
+                            },
                           }}
                         >
                           More About Us
@@ -761,79 +913,79 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                       mx: { xs: "auto", md: 0 },
                     }}
                   >
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 12,
-                      right: 10,
-                      width: { xs: "74%", md: "78%" },
-                      height: { xs: 340, md: 460 },
-                      borderRadius: 4,
-                      bgcolor: "#d8ecff",
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 42,
-                      right: 36,
-                      width: { xs: "80%", md: "82%" },
-                      height: { xs: 360, md: 490 },
-                    }}
-                  >
                     <Box
                       sx={{
                         position: "absolute",
-                        inset: 0,
+                        top: 12,
+                        right: 10,
+                        width: { xs: "74%", md: "78%" },
+                        height: { xs: 340, md: 460 },
                         borderRadius: 4,
-                        overflow: "hidden",
-                        boxShadow: "0 28px 70px rgba(17,19,18,0.18)",
+                        bgcolor: "#d8ecff",
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 42,
+                        right: 36,
+                        width: { xs: "80%", md: "82%" },
+                        height: { xs: 360, md: 490 },
                       }}
                     >
                       <Box
-                        component="img"
-                        src={stackImages[0]}
-                        alt="Featured repair work"
                         sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
+                          position: "absolute",
+                          inset: 0,
+                          borderRadius: 4,
+                          overflow: "hidden",
+                          boxShadow: "0 28px 70px rgba(17,19,18,0.18)",
                         }}
+                      >
+                        <Box
+                          component="img"
+                          src={stackImages[0]}
+                          alt="Featured repair work"
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      </Box>
+                      <StackCard
+                        src={stackImages[1]}
+                        alt="Repair specialist one"
+                        scrollYProgress={scrollYProgress}
+                        start={0.08}
+                        end={0.34}
+                        baseX={-30}
+                        baseY={70}
+                        zIndex={4}
+                      />
+                      <StackCard
+                        src={stackImages[2]}
+                        alt="Repair specialist two"
+                        scrollYProgress={scrollYProgress}
+                        start={0.34}
+                        end={0.62}
+                        baseX={-60}
+                        baseY={34}
+                        zIndex={3}
+                      />
+                      <StackCard
+                        src={stackImages[3]}
+                        alt="Repair specialist three"
+                        scrollYProgress={scrollYProgress}
+                        start={0.62}
+                        end={0.88}
+                        baseX={-92}
+                        baseY={0}
+                        zIndex={2}
                       />
                     </Box>
-                    <StackCard
-                      src={stackImages[1]}
-                      alt="Repair specialist one"
-                      scrollYProgress={scrollYProgress}
-                      start={0.08}
-                      end={0.34}
-                      baseX={-30}
-                      baseY={70}
-                      zIndex={4}
-                    />
-                    <StackCard
-                      src={stackImages[2]}
-                      alt="Repair specialist two"
-                      scrollYProgress={scrollYProgress}
-                      start={0.34}
-                      end={0.62}
-                      baseX={-60}
-                      baseY={34}
-                      zIndex={3}
-                    />
-                    <StackCard
-                      src={stackImages[3]}
-                      alt="Repair specialist three"
-                      scrollYProgress={scrollYProgress}
-                      start={0.62}
-                      end={0.88}
-                      baseX={-92}
-                      baseY={0}
-                      zIndex={2}
-                    />
                   </Box>
-                </Box>
                 </FadeIn>
               </Grid>
             </Grid>
@@ -843,30 +995,89 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box sx={{ bgcolor: "#090909", color: "#f6efe5", mt: { xs: 0, md: 0 } }}>
         <Container maxWidth="lg" sx={{ py: { xs: 7, md: 9 } }}>
-          <Grid container columnSpacing={{ xs: 0, md: 8 }} rowSpacing={{ xs: 4, md: 0 }} alignItems="start">
+          <Grid
+            container
+            columnSpacing={{ xs: 0, md: 8 }}
+            rowSpacing={{ xs: 4, md: 0 }}
+            alignItems="start"
+          >
             <Grid xs={12} md={6} sx={{ pt: { md: 1.5 }, pr: { md: 3 } }}>
               <FadeIn>
-                <Typography sx={{ color: "#9f5f3c", fontSize: "0.74rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", mb: 1.3 }}>
+                <Typography
+                  sx={{
+                    color: "#9f5f3c",
+                    fontSize: "0.74rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    mb: 1.3,
+                  }}
+                >
                   Professional Home Plumbing
                 </Typography>
               </FadeIn>
               <FadeIn delay={0.08}>
-                <Typography sx={{ color: "#f6efe5", fontSize: { xs: "2rem", md: "3rem" }, lineHeight: 1.04, letterSpacing: "-0.04em", fontWeight: 800, mb: 3.4 }}>
+                <Typography
+                  sx={{
+                    color: "#f6efe5",
+                    fontSize: { xs: "2rem", md: "3rem" },
+                    lineHeight: 1.04,
+                    letterSpacing: "-0.04em",
+                    fontWeight: 800,
+                    mb: 3.4,
+                  }}
+                >
                   Working Hours
                 </Typography>
               </FadeIn>
               <Stack spacing={1.6} sx={{ maxWidth: 520 }}>
                 {hours.map((item, index) => (
-                  <FadeIn key={item.day} delay={0.14 + index * 0.06} direction="right">
-                    <Stack direction="row" justifyContent="space-between" sx={{ py: 1.3, gap: 2, borderBottom: "1px solid rgba(246,239,229,0.12)" }}>
-                      <Typography sx={{ color: "#f6efe5", fontWeight: 600, fontSize: "1.02rem" }}>{item.day}</Typography>
-                      <Typography sx={{ color: "rgba(246,239,229,0.68)", fontSize: "0.98rem", textAlign: "right" }}>{item.hours}</Typography>
+                  <FadeIn
+                    key={item.day}
+                    delay={0.14 + index * 0.06}
+                    direction="right"
+                  >
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      sx={{
+                        py: 1.3,
+                        gap: 2,
+                        borderBottom: "1px solid rgba(246,239,229,0.12)",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          color: "#f6efe5",
+                          fontWeight: 600,
+                          fontSize: "1.02rem",
+                        }}
+                      >
+                        {item.day}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: "rgba(246,239,229,0.68)",
+                          fontSize: "0.98rem",
+                          textAlign: "right",
+                        }}
+                      >
+                        {item.hours}
+                      </Typography>
                     </Stack>
                   </FadeIn>
                 ))}
               </Stack>
             </Grid>
-            <Grid id="contact" xs={12} md={6} sx={{ display: "flex", justifyContent: { xs: "stretch", md: "flex-end" } }}>
+            <Grid
+              id="contact"
+              xs={12}
+              md={6}
+              sx={{
+                display: "flex",
+                justifyContent: { xs: "stretch", md: "flex-end" },
+              }}
+            >
               <FadeIn delay={0.08} direction="left">
                 <Paper
                   elevation={0}
@@ -879,28 +1090,80 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                     color: "#121722",
                   }}
                 >
-                  <Typography sx={{ color: "#b36c46", fontSize: "0.74rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", mb: 1.1 }}>
+                  <Typography
+                    sx={{
+                      color: "#b36c46",
+                      fontSize: "0.74rem",
+                      fontWeight: 800,
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                      mb: 1.1,
+                    }}
+                  >
                     Repair Form
                   </Typography>
-                  <Typography sx={{ color: "#161b24", fontSize: { xs: "1.8rem", md: "2rem" }, lineHeight: 1.08, fontWeight: 800, mb: 2.6 }}>
+                  <Typography
+                    sx={{
+                      color: "#161b24",
+                      fontSize: { xs: "1.8rem", md: "2rem" },
+                      lineHeight: 1.08,
+                      fontWeight: 800,
+                      mb: 2.6,
+                    }}
+                  >
                     Get A Repair Quote
                   </Typography>
                   <Stack spacing={1.6}>
-                    {["Your Name", "Phone Number", "Service Needed"].map((label, index) => (
-                      <FadeIn key={label} delay={0.14 + index * 0.06} direction="left">
-                        <Box sx={{ px: 1.8, py: 1.55, border: "1px solid #e8dfd4", color: "#6d7078", fontSize: "0.98rem" }}>
-                          {label}
-                        </Box>
-                      </FadeIn>
-                    ))}
+                    {["Your Name", "Phone Number", "Service Needed"].map(
+                      (label, index) => (
+                        <FadeIn
+                          key={label}
+                          delay={0.14 + index * 0.06}
+                          direction="left"
+                        >
+                          <Box
+                            sx={{
+                              px: 1.8,
+                              py: 1.55,
+                              border: "1px solid #e8dfd4",
+                              color: "#6d7078",
+                              fontSize: "0.98rem",
+                            }}
+                          >
+                            {label}
+                          </Box>
+                        </FadeIn>
+                      ),
+                    )}
                     <FadeIn delay={0.34} direction="left">
-                      <Box sx={{ px: 1.8, py: 1.55, minHeight: 120, border: "1px solid #e8dfd4", color: "#6d7078", fontSize: "0.98rem" }}>
+                      <Box
+                        sx={{
+                          px: 1.8,
+                          py: 1.55,
+                          minHeight: 120,
+                          border: "1px solid #e8dfd4",
+                          color: "#6d7078",
+                          fontSize: "0.98rem",
+                        }}
+                      >
                         Message
                       </Box>
                     </FadeIn>
                   </Stack>
                   <FadeIn delay={0.42}>
-                    <Button variant="contained" sx={{ mt: 2.8, borderRadius: 0, px: 2.8, py: 1.2, bgcolor: "#111418", color: "#ffffff", fontWeight: 800, "&:hover": { bgcolor: "#000000" } }}>
+                    <Button
+                      variant="contained"
+                      sx={{
+                        mt: 2.8,
+                        borderRadius: 0,
+                        px: 2.8,
+                        py: 1.2,
+                        bgcolor: "#111418",
+                        color: "#ffffff",
+                        fontWeight: 800,
+                        "&:hover": { bgcolor: "#000000" },
+                      }}
+                    >
                       Submit
                     </Button>
                   </FadeIn>
@@ -916,22 +1179,60 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Grid container spacing={3} alignItems="center">
             <Grid xs={12} md={7}>
               <FadeIn>
-                <Typography sx={{ color: "#131823", fontSize: { xs: "1.7rem", md: "2.4rem" }, lineHeight: 1.08, letterSpacing: "-0.04em", fontWeight: 800, mb: 1.2 }}>
+                <Typography
+                  sx={{
+                    color: "#131823",
+                    fontSize: { xs: "1.7rem", md: "2.4rem" },
+                    lineHeight: 1.08,
+                    letterSpacing: "-0.04em",
+                    fontWeight: 800,
+                    mb: 1.2,
+                  }}
+                >
                   Repairs your home can depend on.
                 </Typography>
               </FadeIn>
               <FadeIn delay={0.08}>
-                <Typography sx={{ color: "#6d7078", maxWidth: 440, lineHeight: 1.8 }}>
-                  Minimal hassle, faster scheduling, and a cleaner finish from quote to repair.
+                <Typography
+                  sx={{ color: "#6d7078", maxWidth: 440, lineHeight: 1.8 }}
+                >
+                  Minimal hassle, faster scheduling, and a cleaner finish from
+                  quote to repair.
                 </Typography>
               </FadeIn>
             </Grid>
             <Grid xs={12} md={5}>
               <FadeIn delay={0.12} direction="left">
-                <Stack direction="row" spacing={1.5} justifyContent={{ xs: "flex-start", md: "flex-end" }}>
+                <Stack
+                  direction="row"
+                  spacing={1.5}
+                  justifyContent={{ xs: "flex-start", md: "flex-end" }}
+                >
                   {[0, 1].map((index) => (
-                    <Box key={index} sx={{ width: 112, height: 112, borderRadius: 2, overflow: "hidden", boxShadow: "0 14px 28px rgba(16,24,40,0.09)" }}>
-                      <Box component="img" src={projectImages[index]?.url || plumbingAboutImages[index]} alt="Plumbing detail" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    <Box
+                      key={index}
+                      sx={{
+                        width: 112,
+                        height: 112,
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        boxShadow: "0 14px 28px rgba(16,24,40,0.09)",
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={
+                          projectImages[index]?.url ||
+                          plumbingAboutImages[index]
+                        }
+                        alt="Plumbing detail"
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
                     </Box>
                   ))}
                 </Stack>
@@ -943,29 +1244,59 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box sx={{ bgcolor: "#0a0a0a", py: 6, px: 3, textAlign: "center" }}>
         <FadeIn>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: "#fff", mb: 1 }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 800, color: "#fff", mb: 1 }}
+          >
             {data.name}
           </Typography>
         </FadeIn>
         {data.contact.address && (
           <FadeIn delay={0.08}>
-            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.54)", mb: 3 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "rgba(255,255,255,0.54)", mb: 3 }}
+            >
               {data.contact.address}
             </Typography>
           </FadeIn>
         )}
         <FadeIn delay={0.16}>
-          <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 3 }}>
-          {data.socialLinks?.facebook && <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}><Facebook size={18} /></IconButton>}
-          {data.socialLinks?.instagram && <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}><Instagram size={18} /></IconButton>}
-          {data.socialLinks?.twitter && <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}><Twitter size={18} /></IconButton>}
-          {data.socialLinks?.linkedin && <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}><Linkedin size={18} /></IconButton>}
+          <Stack
+            direction="row"
+            spacing={1}
+            justifyContent="center"
+            sx={{ mb: 3 }}
+          >
+            {data.socialLinks?.facebook && (
+              <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}>
+                <Facebook size={18} />
+              </IconButton>
+            )}
+            {data.socialLinks?.instagram && (
+              <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}>
+                <Instagram size={18} />
+              </IconButton>
+            )}
+            {data.socialLinks?.twitter && (
+              <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}>
+                <Twitter size={18} />
+              </IconButton>
+            )}
+            {data.socialLinks?.linkedin && (
+              <IconButton size="small" sx={{ color: "rgba(255,255,255,0.62)" }}>
+                <Linkedin size={18} />
+              </IconButton>
+            )}
           </Stack>
         </FadeIn>
         <FadeIn delay={0.24}>
-          <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.38)" }}>
-          © {new Date().getFullYear()} {data.name}. All rights reserved.
-        </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: "rgba(255,255,255,0.38)" }}
+          >
+            © {new Date().getFullYear()} {data.name}. All rights reserved.
+          </Typography>
         </FadeIn>
       </Box>
     </Box>

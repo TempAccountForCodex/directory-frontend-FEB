@@ -282,25 +282,35 @@ const NotificationPopup = () => {
     return notifDate.toLocaleDateString();
   };
 
-  // Get notification icon color based on type
+  // Get notification icon color based on type — full color mapping (step 10.10)
   const getNotificationColor = (type) => {
-    switch (type) {
-      case 'BLOG_APPROVED':
-        return colors.panelAccent;
-      case 'BLOG_REJECTED':
-        return colors.panelDanger;
-      case 'BLOG_SUBMITTED':
-      case 'BLOG_EDITED':
-        return colors.panelWarning;
-      case 'USER_CREATED':
-        return colors.panelInfo;
-      case 'USER_BLOCKED':
-        return colors.panelDanger;
-      case 'USER_UNBLOCKED':
-        return colors.panelAccent;
-      default:
-        return colors.panelAccent;
-    }
+    // Accent — positive / success
+    const accentTypes = [
+      'TEMPLATE_APPROVED', 'WEBSITE_CREATED', 'WEBSITE_PUBLISHED',
+      'AI_GENERATION_COMPLETE', 'COLLABORATOR_INVITED', 'COLLABORATOR_JOINED',
+      'APPROVAL_APPROVED', 'ACCOUNT_DELEGATE_ACCEPTED', 'DOMAIN_VERIFIED',
+      'LISTING_PUBLISHED', 'PAYMENT_SUCCEEDED', 'PLAN_CHANGED',
+      'INCIDENT_RESOLVED', 'REFERRAL_REWARD_EARNED', 'USER_UNBLOCKED',
+    ];
+    // Warning — attention needed
+    const warningTypes = [
+      'TEMPLATE_SUBMITTED', 'TEMPLATE_EDITED', 'WEBSITE_UNPUBLISHED',
+      'AUTOSAVE_CONFLICT', 'COLLABORATOR_DECLINED', 'INVITE_EXPIRED',
+      'APPROVAL_REQUESTED', 'ACCOUNT_DELEGATE_REVOKED',
+      'SUBSCRIPTION_TRIAL_ENDING', 'DORMANT_RENEWAL_WARNING',
+    ];
+    // Danger — critical / negative
+    const dangerTypes = [
+      'TEMPLATE_REJECTED', 'AI_GENERATION_FAILED', 'APPROVAL_REJECTED',
+      'ACCOUNT_RESTRICTION', 'DOMAIN_FAILED', 'PAYMENT_FAILED',
+      'SUBSCRIPTION_CANCELLED', 'INCIDENT_STARTED', 'USER_BLOCKED',
+    ];
+
+    if (accentTypes.includes(type)) return colors.panelAccent;
+    if (warningTypes.includes(type)) return colors.panelWarning;
+    if (dangerTypes.includes(type)) return colors.panelDanger;
+    // Info — everything else (BLOG_*, USER_CREATED, SYSTEM, FORM_SUBMISSION, etc.)
+    return colors.panelInfo || colors.panelAccent;
   };
 
   return (
@@ -599,6 +609,36 @@ const NotificationPopup = () => {
             </Box>
           )}
         </List>
+
+        {/* View All link */}
+        {notifications.length > 0 && (
+          <Box
+            sx={{
+              p: 1.5,
+              borderTop: `1px solid ${colors.panelBorder}`,
+              textAlign: 'center',
+            }}
+          >
+            <Button
+              size="small"
+              onClick={() => {
+                handleClose();
+                navigate('/dashboard/settings?tab=notifications');
+              }}
+              sx={{
+                fontSize: '0.813rem',
+                color: colors.panelAccent,
+                textTransform: 'none',
+                fontWeight: 500,
+                '&:hover': {
+                  background: alpha(colors.panelAccent, 0.08),
+                },
+              }}
+            >
+              Manage Notification Preferences
+            </Button>
+          </Box>
+        )}
       </Popover>
     </>
   );

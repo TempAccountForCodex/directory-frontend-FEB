@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Box,
   Modal,
@@ -19,116 +19,39 @@ import {
   Search as SearchIcon,
   FileText as ArticleIcon,
   Users as PeopleIcon,
-  Tag as CategoryIcon,
-  LayoutDashboard as DashboardIcon,
-  Settings as SettingsIcon,
-  TrendingUp as TrendingIcon,
+  Globe as WebsiteIcon,
+  Store as StoreIcon,
+  Palette as TemplateIcon,
   History as HistoryIcon,
-  Zap as QuickIcon,
   ArrowRight as ArrowIcon,
-  Plus as AddIcon,
-  ChartBar as AnalyticsIcon,
-  Bell as NotificationsIcon,
   X as CloseIcon,
 } from 'lucide-react';
 import axios from 'axios';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useNavigate } from 'react-router-dom';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { DashboardInput } from './shared';
+import { getSearchableFeatures, getQuickActions } from './searchConfig';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
-// Searchable pages/features configuration
-const SEARCHABLE_FEATURES = [
-  {
-    id: 'overview',
-    title: 'Overview Dashboard',
-    description: 'View analytics and statistics',
-    icon: DashboardIcon,
-    path: '/dashboard',
-    keywords: ['dashboard', 'overview', 'home', 'analytics', 'stats'],
-    category: 'Pages',
-  },
-  {
-    id: 'insights',
-    title: 'Manage Insights',
-    description: 'Create and manage blog posts',
-    icon: ArticleIcon,
-    path: '/dashboard',
-    action: () => 'insights',
-    keywords: ['insights', 'blogs', 'posts', 'articles', 'content'],
-    category: 'Pages',
-  },
-  {
-    id: 'users',
-    title: 'User Management',
-    description: 'Manage users and permissions',
-    icon: PeopleIcon,
-    path: '/dashboard',
-    action: () => 'users',
-    keywords: ['users', 'team', 'members', 'permissions', 'roles'],
-    category: 'Pages',
-  },
-  {
-    id: 'settings',
-    title: 'Settings',
-    description: 'Configure dashboard settings',
-    icon: SettingsIcon,
-    path: '/dashboard',
-    action: () => 'settings',
-    keywords: ['settings', 'configuration', 'preferences', 'account'],
-    category: 'Pages',
-  },
-  {
-    id: 'notifications',
-    title: 'Notifications',
-    description: 'View all notifications',
-    icon: NotificationsIcon,
-    path: '/dashboard',
-    keywords: ['notifications', 'alerts', 'updates'],
-    category: 'Pages',
-  },
-  {
-    id: 'analytics',
-    title: 'Analytics Overview',
-    description: 'Google Analytics data',
-    icon: AnalyticsIcon,
-    path: '/dashboard',
-    action: () => 'overview',
-    keywords: ['analytics', 'google', 'metrics', 'traffic', 'visitors'],
-    category: 'Pages',
-  },
-];
-
-// Quick actions
-const QUICK_ACTIONS = [
-  {
-    id: 'create-insight',
-    title: 'Create New Insight',
-    description: 'Start writing a new blog post',
-    icon: AddIcon,
-    action: 'create-insight',
-    keywords: ['create', 'new', 'insight', 'blog', 'post', 'write'],
-    category: 'Quick Actions',
-  },
-  {
-    id: 'create-user',
-    title: 'Create New User',
-    description: 'Add a new team member',
-    icon: PeopleIcon,
-    action: 'create-user',
-    keywords: ['create', 'new', 'user', 'member', 'team', 'add'],
-    category: 'Quick Actions',
-  },
-];
 
 const SearchPopup = ({ open, onClose }) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userRole = user?.role;
+
+  // Role-gated features and quick actions (memoized, recomputed only when role changes)
+  const roleFeatures = useMemo(() => getSearchableFeatures(userRole), [userRole]);
+  const roleQuickActions = useMemo(() => getQuickActions(userRole), [userRole]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState({
+    websites: [],
+    stores: [],
+    templates: [],
     insights: [],
     users: [],
     categories: [],
@@ -159,17 +82,22 @@ const SearchPopup = ({ open, onClose }) => {
   }, [open]);
 
   // Save recent search
-  const saveRecentSearch = (query) => {
+  const saveRecentSearch = useCallback((query) => {
     if (!query.trim()) return;
-    const updated = [query, ...recentSearches.filter((s) => s !== query)].slice(0, 5);
-    setRecentSearches(updated);
-    localStorage.setItem('recentSearches', JSON.stringify(updated));
-  };
+    setRecentSearches((prev) => {
+      const updated = [query, ...prev.filter((s) => s !== query)].slice(0, 5);
+      localStorage.setItem('recentSearches', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   // Debounced search
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults({
+        websites: [],
+        stores: [],
+        templates: [],
         insights: [],
         users: [],
         categories: [],
@@ -191,44 +119,39 @@ const SearchPopup = ({ open, onClose }) => {
     try {
       const lowerQuery = query.toLowerCase();
 
-      // Search features and quick actions locally
-      const matchingFeatures = SEARCHABLE_FEATURES.filter(
+      // Search features and quick actions locally (instant, no API call)
+      const matchingFeatures = roleFeatures.filter(
         (feature) =>
           feature.title.toLowerCase().includes(lowerQuery) ||
           feature.description.toLowerCase().includes(lowerQuery) ||
           feature.keywords.some((kw) => kw.includes(lowerQuery))
       );
 
-      const matchingQuickActions = QUICK_ACTIONS.filter(
+      const matchingQuickActions = roleQuickActions.filter(
         (action) =>
           action.title.toLowerCase().includes(lowerQuery) ||
           action.description.toLowerCase().includes(lowerQuery) ||
           action.keywords.some((kw) => kw.includes(lowerQuery))
       );
 
-      // Search backend for insights, users, and categories
-      const [insightsRes, usersRes, categoriesRes] = await Promise.all([
-        axios
-          .get(`${API_URL}/insights?search=${query}&limit=5`, {
-            headers: {},
-          })
-          .catch(() => ({ data: { insights: [] } })),
-        axios
-          .get(`${API_URL}/users?search=${query}&limit=5`, {
-            headers: {},
-          })
-          .catch(() => ({ data: { users: [] } })),
-        axios
-          .get(`${API_URL}/categories?search=${query}`, {
-            headers: {},
-          })
-          .catch(() => ({ data: [] })),
-      ]);
+      // Single unified backend search call
+      const searchRes = await axios
+        .get(`${API_URL}/search?q=${encodeURIComponent(query)}&limit=5`, {
+          withCredentials: true,
+        })
+        .catch(() => ({
+          data: { websites: [], stores: [], templates: [], insights: [], users: [], categories: [] },
+        }));
+
+      const data = searchRes.data;
 
       setSearchResults({
-        insights: insightsRes.data.insights || [],
-        users: usersRes.data.users || [],
-        categories: Array.isArray(categoriesRes.data) ? categoriesRes.data.slice(0, 5) : [],
+        websites: data.websites || [],
+        stores: data.stores || [],
+        templates: data.templates || [],
+        insights: data.insights || [],
+        users: data.users || [],
+        categories: data.categories || [],
         features: matchingFeatures,
         quickActions: matchingQuickActions,
       });
@@ -255,6 +178,21 @@ const SearchPopup = ({ open, onClose }) => {
       searchResults.features.forEach((item) => results.push({ type: 'feature', data: item }));
     }
 
+    if (searchResults.websites.length > 0) {
+      results.push({ type: 'header', label: 'Websites' });
+      searchResults.websites.forEach((item) => results.push({ type: 'website', data: item }));
+    }
+
+    if (searchResults.stores.length > 0) {
+      results.push({ type: 'header', label: 'Stores' });
+      searchResults.stores.forEach((item) => results.push({ type: 'store', data: item }));
+    }
+
+    if (searchResults.templates.length > 0) {
+      results.push({ type: 'header', label: 'Templates' });
+      searchResults.templates.forEach((item) => results.push({ type: 'template', data: item }));
+    }
+
     if (searchResults.insights.length > 0) {
       results.push({ type: 'header', label: 'Insights' });
       searchResults.insights.forEach((item) => results.push({ type: 'insight', data: item }));
@@ -263,11 +201,6 @@ const SearchPopup = ({ open, onClose }) => {
     if (searchResults.users.length > 0) {
       results.push({ type: 'header', label: 'Users' });
       searchResults.users.forEach((item) => results.push({ type: 'user', data: item }));
-    }
-
-    if (searchResults.categories.length > 0) {
-      results.push({ type: 'header', label: 'Categories' });
-      searchResults.categories.forEach((item) => results.push({ type: 'category', data: item }));
     }
 
     return results;
@@ -300,22 +233,36 @@ const SearchPopup = ({ open, onClose }) => {
     }
   }, [selectedIndex]);
 
-  const handleResultClick = (result) => {
+  const handleResultClick = useCallback((result) => {
     saveRecentSearch(searchQuery);
 
     switch (result.type) {
-      case 'feature':
-        if (result.data.action) {
-          // Trigger tab change in Dashboard
-          const tab = result.data.action();
-          navigate('/dashboard', { state: { activeTab: tab } });
-        } else {
-          navigate(result.data.path);
+      case 'feature': {
+        const nav = result.data.navigation;
+        if (nav.path) {
+          navigate(nav.path);
+        } else if (nav.activeTab) {
+          const state = { activeTab: nav.activeTab };
+          if (nav.subtab) state.subtab = nav.subtab;
+          navigate('/dashboard', { state });
         }
         break;
+      }
       case 'quick-action':
-        // Handle quick actions
         handleQuickAction(result.data.action);
+        break;
+      case 'website':
+        navigate('/dashboard', {
+          state: { activeTab: 'websites', websiteId: result.data.id },
+        });
+        break;
+      case 'store':
+        navigate('/dashboard', {
+          state: { activeTab: 'stores', storeId: result.data.id },
+        });
+        break;
+      case 'template':
+        navigate(`/dashboard/websites/templates?highlight=${result.data.id}`);
         break;
       case 'insight':
         navigate('/dashboard', {
@@ -327,57 +274,75 @@ const SearchPopup = ({ open, onClose }) => {
           state: { activeTab: 'users', userId: result.data.id },
         });
         break;
-      case 'category':
-        navigate('/dashboard', {
-          state: { activeTab: 'insights', category: result.data.slug },
-        });
-        break;
       default:
         break;
     }
 
     onClose();
-  };
+  }, [searchQuery, saveRecentSearch, navigate, onClose]);
 
-  const handleQuickAction = (action) => {
+  const handleQuickAction = useCallback((action) => {
     switch (action) {
+      case 'create-website':
+        navigate('/dashboard/websites/templates');
+        break;
+      case 'create-store':
+        navigate('/dashboard', { state: { activeTab: 'stores', action: 'create' } });
+        break;
       case 'create-insight':
         navigate('/dashboard', { state: { activeTab: 'insights', action: 'create' } });
+        break;
+      case 'create-template':
+        navigate('/dashboard', { state: { activeTab: 'websites/create-template' } });
         break;
       case 'create-user':
         navigate('/dashboard', { state: { activeTab: 'users', action: 'create' } });
         break;
+      case 'pending-insights':
+        navigate('/dashboard', { state: { activeTab: 'insights', subtab: 'pending' } });
+        break;
+      case 'communications':
+        navigate('/dashboard/communications');
+        break;
       default:
         break;
     }
-  };
+  }, [navigate]);
 
-  const getResultIcon = (result) => {
+  const getResultIcon = useCallback((result) => {
     switch (result.type) {
+      case 'website':
+        return <WebsiteIcon size={18} color={colors.panelAccent} />;
+      case 'store':
+        return <StoreIcon size={18} color={colors.panelAccent} />;
+      case 'template':
+        return <TemplateIcon size={18} color={colors.panelAccent} />;
       case 'insight':
         return <ArticleIcon size={18} color={colors.panelAccent} />;
       case 'user':
         return <PeopleIcon size={18} color={colors.panelInfo} />;
-      case 'category':
-        return <CategoryIcon size={18} color={colors.panelWarning} />;
-      case 'feature':
+      case 'feature': {
         const Icon = result.data.icon;
         return <Icon size={18} color={colors.panelAccent} />;
-      case 'quick-action':
+      }
+      case 'quick-action': {
         const QIcon = result.data.icon;
         return <QIcon size={18} color={colors.panelAccent} />;
+      }
       default:
         return <SearchIcon size={18} color={colors.panelIcon} />;
     }
-  };
+  }, [colors]);
 
-  const getResultTitle = (result) => {
+  const getResultTitle = useCallback((result) => {
     switch (result.type) {
+      case 'website':
+      case 'store':
+      case 'template':
+        return result.data.title;
       case 'insight':
         return result.data.title;
       case 'user':
-        return result.data.name;
-      case 'category':
         return result.data.name;
       case 'feature':
       case 'quick-action':
@@ -385,23 +350,25 @@ const SearchPopup = ({ open, onClose }) => {
       default:
         return '';
     }
-  };
+  }, []);
 
-  const getResultDescription = (result) => {
+  const getResultDescription = useCallback((result) => {
     switch (result.type) {
+      case 'website':
+      case 'store':
+      case 'template':
+        return result.data.subtitle;
       case 'insight':
-        return result.data.content?.substring(0, 80) + '...';
+        return result.data.description || result.data.content?.substring(0, 80) + '...';
       case 'user':
         return result.data.username || result.data.email;
-      case 'category':
-        return result.data.description || `Category: ${result.data.name}`;
       case 'feature':
       case 'quick-action':
         return result.data.description;
       default:
         return '';
     }
-  };
+  }, []);
 
   const handleRecentSearchClick = (query) => {
     setSearchQuery(query);

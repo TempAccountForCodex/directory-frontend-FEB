@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { motion, cubicBezier } from "framer-motion";
 import FadeIn from "../../blocks/FadeIn";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 
 const headingFont = '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Inter", "Segoe UI", sans-serif';

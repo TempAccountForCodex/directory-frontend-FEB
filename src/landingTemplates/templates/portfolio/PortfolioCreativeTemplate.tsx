@@ -28,11 +28,12 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
-import { TemplateProps } from "../../templateEngine/types";
-import { PortfolioItem } from "../../types/BusinessData";
+import type { TemplateProps } from "../../templateEngine/types";
+import type { PortfolioItem } from "../../types/BusinessData";
 
 const MotionBox = motion(Box);
 const MotionTypography = motion(Typography);
+const MotionImg = motion.img;
 
 /* ── Marquee ticker ─────────────────────────────────────────────────────────── */
 function Marquee({ items, speed = 30 }: { items: string[]; speed?: number }) {
@@ -92,17 +93,16 @@ function ParallaxHeroImage({ src }: { src: string }) {
       ref={ref}
       sx={{ overflow: "hidden", borderRadius: 4, height: { xs: 280, md: 500 } }}
     >
-      <MotionBox
-        style={{ y }}
-        component="img"
-        src={src}
-        alt="Featured work"
-        sx={{
+      <MotionImg
+        style={{
+          y,
           width: "100%",
           height: "120%",
           objectFit: "cover",
           display: "block",
         }}
+        src={src}
+        alt="Featured work"
       />
     </Box>
   );

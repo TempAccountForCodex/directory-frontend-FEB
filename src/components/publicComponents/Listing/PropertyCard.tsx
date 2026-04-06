@@ -1,7 +1,7 @@
 import React from "react";
 import { Grid, Typography, Box, Pagination, useTheme } from "@mui/material";
 import PropertyItemCard from "../Listing/PropertyCardItem";
-import type { Place } from "../../types/place";
+import type { Place } from "../../../types/place";
 
 /* ---------------- Types ---------------- */
 interface PropertyCardProps {

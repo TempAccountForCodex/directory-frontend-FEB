@@ -1,4 +1,4 @@
-import { BusinessData } from "../../../../landingTemplates/types/BusinessData";
+import type { BusinessData } from "../../../../landingTemplates/types/BusinessData";
 import {
   educationData,
   gardeningData,

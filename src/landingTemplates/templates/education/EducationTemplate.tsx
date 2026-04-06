@@ -14,7 +14,7 @@ import {
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 import { buildModernTheme } from "../modern/modernTheme";
 import { FadeIn } from "../../blocks";
 
@@ -326,8 +326,6 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Button>
               </Stack>
             </FadeIn>
-
-           
           </Box>
         </Container>
       </Box>

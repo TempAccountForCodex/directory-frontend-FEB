@@ -3,7 +3,7 @@ import { Grid, Typography, Stack, styled, useTheme } from "@mui/material";
 import Image from "../../assets/images/your-background-image.jpeg";
 import { keyframes } from "@emotion/react";
 import Arrow from "../../assets/images/line-arrow.png";
-import HomeSearch from "../Home/HomeSearch";
+import HomeSearch from "../publicComponents/Home/HomeSearch";
 
 const fadeInBottom = keyframes`
   from {

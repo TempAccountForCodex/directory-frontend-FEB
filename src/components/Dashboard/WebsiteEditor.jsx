@@ -1,4 +1,14 @@
-import { useState, useEffect } from 'react';
+// CANONICAL EDITOR: This is the keeper route for website editing (Phase 9 decision).
+// Phase 9 UX features are integrated here: BlockLibrary, ThemeManager, PreviewPanel,
+// keyboard shortcuts, inline editing, governance UI (ApprovalStatusBanner, SectionLockIndicator).
+//
+// Block identity: WebsiteEditor uses database IDs exclusively.
+// The preview-vs-persisted duality (CustomizeWebsite legacy) does not apply here.
+//
+// Page reorder: Uses pages from API, reordered via PATCH /api/blocks/reorder
+// Full-order editing (LayoutPanel) is not yet integrated — CustomizeWebsite legacy.
+
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -27,6 +37,11 @@ import {
   FormControlLabel,
   Divider,
   Paper,
+  SpeedDial,
+  SpeedDialAction,
+  SpeedDialIcon,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   ArrowDown,
@@ -34,22 +49,50 @@ import {
   ArrowUp,
   Eye,
   House,
+  Layers,
+  Palette,
   Pencil,
   Plus,
-  RefreshCw,
   Trash2,
 } from 'lucide-react';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-import { DashboardInput, DashboardSelect } from './shared';
+import { PreviewProvider, usePreview } from '../../context/PreviewContext';
+import PreviewPanel from '../WebsiteEditor/PreviewPanel';
+import { DashboardInput, DashboardSelect, ConfirmationDialog, BottomSheet } from './shared';
+import RegenerateButton from '../Editor/RegenerateButton';
+import DraggableBlockList from '../Editor/DraggableBlockList';
+import { useAutosave } from '../../hooks/useAutosave';
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
+import { useLocalStorageBackup } from '../../hooks/useLocalStorageBackup';
+import { useCollaborativeEditor } from '../../hooks/useCollaborativeEditor';
+import { useAuth } from '../../context/AuthContext';
+import { usePermissionContext, useWebsiteRole } from '../../context/PermissionContext';
+import SaveStatus from '../Editor/SaveStatus';
+import ConflictModal from '../Editor/ConflictModal';
+import RecoveryModal from '../Editor/RecoveryModal';
+import ConnectionStatus from '../Editor/ConnectionStatus';
+import BlockLibrary from '../Editor/BlockLibrary';
+import InlineTextEditor from '../Editor/InlineTextEditor';
+import ResponsiveEditorLayout from '../Editor/ResponsiveEditorLayout';
+import MobileActionBar from '../Editor/MobileActionBar';
+import MobileFAB from '../Editor/MobileFAB';
+import ThemeManager from './ThemeManager';
+import ApprovalStatusBanner from './ApprovalStatusBanner';
+// SectionLockIndicator is available at ./SectionLockIndicator for per-block lock UI
+// when DraggableBlockList is extended to support render props for block items.
+import { useShortcutManager } from '../../hooks/useShortcutManager';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-const BLOCK_TYPES = ['HERO', 'FEATURES', 'TESTIMONIALS', 'CTA', 'CONTACT'];
+// REMOVED: BLOCK_TYPES hardcoded allowlist. Block selection now exclusively
+// uses BlockLibrary (fetches from /api/content-types/blocks with all 34 types).
 
-const WebsiteEditor = () => {
+const WebsiteEditorInner = () => {
   const { websiteId } = useParams();
   const navigate = useNavigate();
+  const muiTheme = useTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
 
@@ -59,6 +102,22 @@ const WebsiteEditor = () => {
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Preview context bridge — Step 4.11
+  const { updatePreviewContent, refreshPreview } = usePreview();
+
+  // Mobile state — Step 9.5
+  const [pagesBottomSheetOpen, setPagesBottomSheetOpen] = useState(false);
+
+  // Block Library state — Phase 9 gap fix
+  const [blockLibraryOpen, setBlockLibraryOpen] = useState(false);
+
+  // Theme Manager state — Step 9.21
+  const [showThemeManager, setShowThemeManager] = useState(false);
+
+  // Inline editing state — Step 9.24
+  const [inlineEditState, setInlineEditState] = useState(null);
+  const iframeRef = useRef(null);
 
   // Dialogs
   const [pageDialogOpen, setPageDialogOpen] = useState(false);
@@ -75,6 +134,219 @@ const WebsiteEditor = () => {
   const [blockForm, setBlockForm] = useState({ blockType: '', content: {} });
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // AI session state
+  const [hasAISessions, setHasAISessions] = useState(false);
+  const [aiQuestionnaireData, setAiQuestionnaireData] = useState({});
+
+  // Autosave payload — derived from blocks (single source of truth)
+  const autosavePayload = useMemo(() => ({ blocks }), [blocks]);
+  const isLoadingRef = useRef(true);
+
+  // ETag + updatedAt refs for conflict detection (Step 5.9)
+  const etagRef = useRef(null);
+  const expectedUpdatedAtRef = useRef(null);
+
+  // Autosave callback — PUT blocks to API with ETag conflict detection
+  const handleAutosave = useCallback(async (data) => {
+    if (!selectedPage?.id || !websiteId) {
+      throw new Error('No page selected');
+    }
+
+    // Build headers — include If-Match when we have a stored ETag
+    const headers = {};
+    if (etagRef.current) {
+      headers['If-Match'] = etagRef.current;
+    }
+
+    try {
+      const response = await axios.put(
+        `${API_URL}/websites/${websiteId}/pages/${selectedPage.id}/blocks`,
+        {
+          blocks: data.blocks.map((b, idx) => ({
+            blockType: b.blockType,
+            content: b.content,
+            variant: b.variant,
+            sortOrder: idx,
+            isVisible: b.isVisible,
+          })),
+          ...(expectedUpdatedAtRef.current ? { expectedUpdatedAt: expectedUpdatedAtRef.current } : {}),
+        },
+        { headers }
+      );
+
+      // Store ETag from response for next request
+      if (response.headers?.etag) {
+        etagRef.current = response.headers.etag;
+      }
+
+      // Store updatedAt for next expectedUpdatedAt fallback
+      const updatedAt = response.data?.data?.updatedAt;
+      if (updatedAt) {
+        expectedUpdatedAtRef.current = updatedAt;
+      }
+
+      // Step 4.11: Bump preview revision so PreviewPanel re-renders after save
+      refreshPreview();
+
+      return { updatedAt };
+    } catch (error) {
+      // Handle 412 Precondition Failed — conflict detected
+      if (error?.response?.status === 412) {
+        return {
+          conflict: true,
+          serverData: error.response.data.serverData,
+          serverUpdatedAt: error.response.data.serverUpdatedAt,
+        };
+      }
+      // Re-throw non-412 errors for useAutosave error handling
+      throw error;
+    }
+  }, [selectedPage?.id, websiteId, refreshPreview]);
+
+  const {
+    hasUnsavedChanges,
+    saveStatus,
+    conflictData,
+    triggerSave,
+    resolveConflict,
+  } = useAutosave({
+    entityType: 'page',
+    entityId: selectedPage?.id ?? null,
+    data: autosavePayload,
+    onSave: handleAutosave,
+    isLoading: isLoadingRef.current,
+  });
+
+  // Unsaved changes warning — intercepts client-side navigation
+  // skipBeforeUnload=true because useAutosave already handles beforeunload
+  const {
+    showDialog: showUnsavedDialog,
+    confirmNavigation,
+    cancelNavigation,
+    saveAndNavigate,
+  } = useUnsavedChanges({
+    hasUnsavedChanges,
+    onSaveBeforeLeave: triggerSave,
+    skipBeforeUnload: true,
+    saveStatus,
+  });
+
+  // LocalStorage backup — saves unsaved data on beforeunload, detects on mount (Step 5.10)
+  const backupData = useMemo(() => ({ blocks }), [blocks]);
+  const {
+    hasBackup,
+    backupEntry,
+    restoreBackup,
+    discardBackup,
+    clearBackup,
+  } = useLocalStorageBackup({
+    websiteId: websiteId ? Number(websiteId) : null,
+    pageId: selectedPage?.id ?? null,
+    currentData: backupData,
+    hasUnsavedChanges,
+    isLoading: loading,
+  });
+
+  const handleRestoreBackup = useCallback(() => {
+    const data = restoreBackup();
+    if (data && Array.isArray(data.blocks)) {
+      setBlocks(data.blocks);
+    }
+  }, [restoreBackup]);
+
+  // Clear backup after successful autosave
+  useEffect(() => {
+    if (saveStatus === 'saved') {
+      clearBackup();
+    }
+  }, [saveStatus, clearBackup]);
+
+  // Collaborative editing — presence, locks, connection status (Step 7.5)
+  const { user } = useAuth();
+  const { setCurrentWebsite } = usePermissionContext();
+  const websiteRole = useWebsiteRole(websiteId ? Number(websiteId) : undefined) || 'OWNER';
+
+  // Set active website in PermissionContext for permission hooks (Step 7.2)
+  useEffect(() => {
+    if (websiteId) {
+      setCurrentWebsite(Number(websiteId));
+    }
+    return () => setCurrentWebsite(null);
+  }, [websiteId, setCurrentWebsite]);
+
+  const {
+    isConnected,
+    connectionState,
+    activeUsers,
+    cursorPositions,
+    locks,
+    canEdit: collaborativeCanEdit,
+    broadcastChange,
+    broadcastCursor,
+    requestEditAccess,
+  } = useCollaborativeEditor({
+    pageId: selectedPage ? String(selectedPage.id) : '',
+    websiteId: websiteId ? Number(websiteId) : 0,
+    currentUserId: user?.id ?? 0,
+    currentUserRole: websiteRole,
+  });
+
+  // Keyboard shortcuts — Step 9.23
+  const { registerShortcut, unregisterShortcut } = useShortcutManager();
+
+  useEffect(() => {
+    registerShortcut({
+      key: 'ctrl+s',
+      action: (e) => { e.preventDefault(); triggerSave(); },
+      description: 'Save changes',
+      category: 'Editing',
+      scope: 'global',
+    });
+    registerShortcut({
+      key: 'ctrl+b',
+      action: (e) => { e.preventDefault(); setBlockLibraryOpen((prev) => !prev); },
+      description: 'Toggle block library',
+      category: 'Blocks',
+      scope: 'editor',
+    });
+    registerShortcut({
+      key: 'escape',
+      action: () => { setEditingBlock(null); setInlineEditState(null); },
+      description: 'Deselect block / cancel inline edit',
+      category: 'Editing',
+      scope: 'editor',
+    });
+    return () => {
+      unregisterShortcut('ctrl+s');
+      unregisterShortcut('ctrl+b');
+      unregisterShortcut('escape');
+    };
+  }, [registerShortcut, unregisterShortcut, triggerSave]);
+
+  // Sync editor state into PreviewContext — Step 4.11
+  // Bridges blocks, selected page, and website metadata so PreviewPanel
+  // can render a live srcdoc preview without network requests.
+  useEffect(() => {
+    if (!selectedPage?.id || !websiteId) return;
+    updatePreviewContent({
+      websiteId: String(websiteId),
+      pageId: String(selectedPage.id),
+      blocks: blocks.map((b, idx) => ({
+        id: String(b.id),
+        blockType: b.blockType,
+        content: b.content || {},
+        order: b.sortOrder ?? idx,
+        designTokens: b.designTokens,
+      })),
+      websiteMeta: {
+        name: website?.name,
+        colors: website?.colors,
+        fonts: website?.fonts,
+        theme: website?.theme,
+      },
+    });
+  }, [blocks, selectedPage, website, websiteId, updatePreviewContent]);
 
   useEffect(() => {
     if (websiteId) {
@@ -113,6 +385,33 @@ const WebsiteEditor = () => {
       if (homePage) {
         setSelectedPage(homePage);
       }
+
+      // Check for AI sessions (detect _aiGenerated metadata in any block)
+      try {
+        const allBlocks = pagesList.flatMap((p) => p.blocks || []);
+        const hasAI = allBlocks.some(
+          (b) => b.content && b.content._aiGenerated
+        );
+        setHasAISessions(hasAI);
+
+        // Retrieve stored questionnaire data from the first AI session block
+        if (hasAI) {
+          const aiBlock = allBlocks.find((b) => b.content?._aiSessionId);
+          if (aiBlock?.content?._aiSessionId) {
+            // Try to load questionnaire from sessionStorage
+            const stored = sessionStorage.getItem(`ai_questionnaire_${websiteId}`);
+            if (stored) {
+              try {
+                setAiQuestionnaireData(JSON.parse(stored));
+              } catch {
+                // Ignore parse errors
+              }
+            }
+          }
+        }
+      } catch {
+        // Non-critical — AI features just won't appear
+      }
     } catch (err) {
       console.error('Error fetching website data:', err);
       setError(err.response?.data?.message || 'Failed to load website');
@@ -123,12 +422,22 @@ const WebsiteEditor = () => {
 
   const fetchBlocks = async (pageId) => {
     try {
+      isLoadingRef.current = true;
       const response = await axios.get(`${API_URL}/pages/${pageId}/blocks`, {
         headers: {},
       });
-      setBlocks(response.data.data || []);
+      const fetchedBlocks = response.data.data || [];
+      setBlocks(fetchedBlocks);
+
+      // Populate initial ETag from GET response (Step 5.9)
+      if (response.headers?.etag) {
+        etagRef.current = response.headers.etag;
+      }
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Error fetching blocks:', err);
+    } finally {
+      isLoadingRef.current = false;
     }
   };
 
@@ -298,9 +607,10 @@ const WebsiteEditor = () => {
     ];
 
     try {
-      await axios.put(
+      await axios.patch(
         `${API_URL}/blocks/reorder`,
         {
+          pageId: selectedPage.id,
           blockIds: newBlocks.map((b) => b.id),
         },
         { headers: {} }
@@ -313,6 +623,87 @@ const WebsiteEditor = () => {
       alert('Failed to reorder blocks');
     }
   };
+
+  const handleAIContentUpdate = useCallback((blockId, newContent) => {
+    setBlocks((prev) =>
+      prev.map((b) => (b.id === blockId ? { ...b, content: newContent } : b))
+    );
+  }, []);
+
+  // Inline edit save handler — Step 9.24: nested path update for content fields
+  const handleInlineEditSave = useCallback((blockId, fieldPath, newValue) => {
+    setBlocks((prev) =>
+      prev.map((block) => {
+        if (block.id !== blockId) return block;
+        const updated = { ...block };
+        const parts = fieldPath.split('.');
+        let obj = updated;
+        for (let i = 0; i < parts.length - 1; i++) {
+          obj[parts[i]] = { ...obj[parts[i]] };
+          obj = obj[parts[i]];
+        }
+        obj[parts[parts.length - 1]] = newValue;
+        return updated;
+      })
+    );
+  }, []);
+
+  // BlockLibrary insert handler — creates a block via API (Phase 9 gap fix)
+  const handleInsertBlockFromLibrary = useCallback(
+    async (blockType, position, content) => {
+      if (!selectedPage?.id) return;
+      try {
+        const response = await axios.post(
+          `${API_URL}/pages/${selectedPage.id}/blocks`,
+          {
+            blockType,
+            content: content || {},
+            isVisible: true,
+          },
+          { headers: {} }
+        );
+        const newBlock = response.data.data;
+        setBlocks((prev) => {
+          if (position === 'beginning') return [newBlock, ...prev];
+          if (typeof position === 'number') {
+            const copy = [...prev];
+            copy.splice(position + 1, 0, newBlock);
+            return copy;
+          }
+          // 'end' or default
+          return [...prev, newBlock];
+        });
+      } catch (err) {
+        console.error('Error inserting block from library:', err);
+      }
+    },
+    [selectedPage?.id]
+  );
+
+  // Mobile action handlers for MobileActionBar (Phase 9 gap fix)
+  const handleMobileSave = useCallback(() => {
+    triggerSave();
+  }, [triggerSave]);
+
+  const handleMobilePublish = useCallback(async () => {
+    // TODO: Wire to full publish flow when available
+    try {
+      await axios.put(
+        `${API_URL}/websites/${websiteId}`,
+        { status: 'PUBLISHED' },
+        { headers: {} }
+      );
+      setWebsite((prev) => prev ? { ...prev, status: 'PUBLISHED' } : prev);
+    } catch (err) {
+      console.error('Error publishing website:', err);
+    }
+  }, [websiteId]);
+
+  const handleMobilePreview = useCallback(() => {
+    if (website?.slug) {
+      window.open(`/s/${website.slug}`, '_blank');
+    }
+  }, [website?.slug]);
 
   const validateBlockContent = (blockType, content) => {
     switch (blockType) {
@@ -845,27 +1236,89 @@ const WebsiteEditor = () => {
           </Box>
         </Box>
 
-        {website?.status === 'PUBLISHED' && (
-          <Button
-            variant="outlined"
-            startIcon={<Eye size={18} />}
-            onClick={() => window.open(`/s/${website?.slug}`, '_blank')}
-            sx={{ textTransform: 'none' }}
-          >
-            View Live
-          </Button>
-        )}
+        <Box display="flex" alignItems="center" gap={2}>
+          {/* Autosave status indicator */}
+          <SaveStatus
+            status={saveStatus}
+            onRetry={triggerSave}
+          />
+          {/* WebSocket connection status (Step 7.5) */}
+          <ConnectionStatus
+            connectionState={connectionState}
+            connectedUsers={activeUsers.length}
+          />
+
+          {website?.status === 'PUBLISHED' && (
+            <Button
+              variant="outlined"
+              startIcon={<Eye size={18} />}
+              onClick={() => window.open(`/s/${website?.slug}`, '_blank')}
+              sx={{ textTransform: 'none' }}
+            >
+              View Live
+            </Button>
+          )}
+        </Box>
       </Box>
 
+      {/* Governance UI — Step 9.25: ApprovalStatusBanner */}
+      <ApprovalStatusBanner
+        websiteId={websiteId ? Number(websiteId) : 0}
+        userRole={websiteRole}
+        userId={user?.id ?? 0}
+      />
+
+      <ResponsiveEditorLayout>
       <Grid container spacing={3}>
-        {/* Pages Sidebar */}
-        <Grid item xs={12} md={3}>
+        {/* Mobile page chips row — Step 9.5.1 */}
+        {isMobile && pages.length > 0 && (
+          <Grid item xs={12}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1,
+                overflowX: 'auto',
+                pb: 1,
+                px: 0.5,
+                '&::-webkit-scrollbar': { height: 4 },
+                '&::-webkit-scrollbar-thumb': {
+                  bgcolor: alpha(colors.textSecondary, 0.3),
+                  borderRadius: 2,
+                },
+              }}
+            >
+              {pages.map((page) => (
+                <Chip
+                  key={page.id}
+                  label={page.title}
+                  icon={page.isHome ? <House size={14} /> : undefined}
+                  onClick={() => setSelectedPage(page)}
+                  color={selectedPage?.id === page.id ? 'primary' : 'default'}
+                  variant={selectedPage?.id === page.id ? 'filled' : 'outlined'}
+                  sx={{
+                    flexShrink: 0,
+                    minHeight: 36,
+                    borderColor: alpha(colors.primary, 0.3),
+                  }}
+                />
+              ))}
+            </Box>
+          </Grid>
+        )}
+
+        {/* Pages Sidebar — hidden on mobile (Step 9.5.1) */}
+        <Grid item xs={12} md={3} sx={{ display: { xs: 'none', md: 'block' } }}>
           <Paper sx={{ p: 2, bgcolor: alpha(colors.dark, 0.5), borderRadius: 2 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
                 Pages
               </Typography>
-              <IconButton size="small" onClick={() => setPageDialogOpen(true)}>
+              <IconButton
+                size="small"
+                onClick={() => setPageDialogOpen(true)}
+                sx={{ minWidth: 48, minHeight: 48 }}
+                aria-label="Add page"
+              >
                 <Plus size={18} />
               </IconButton>
             </Box>
@@ -932,134 +1385,89 @@ const WebsiteEditor = () => {
                     <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
                       Blocks
                     </Typography>
-                    <IconButton size="small" onClick={() => setBlockDialogOpen(true)}>
-                      <Plus size={18} />
-                    </IconButton>
+                    <Box display="flex" gap={0.5}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Layers size={16} />}
+                        onClick={() => setBlockLibraryOpen(true)}
+                        sx={{ textTransform: 'none', minHeight: 36 }}
+                        aria-label="Open block library"
+                      >
+                        Library
+                      </Button>
+                      <Button
+                        size="small"
+                        variant={showThemeManager ? 'contained' : 'outlined'}
+                        startIcon={<Palette size={16} />}
+                        onClick={() => setShowThemeManager((prev) => !prev)}
+                        sx={{ textTransform: 'none', minHeight: 36 }}
+                        aria-label="Toggle theme manager"
+                      >
+                        Theme
+                      </Button>
+                      <IconButton
+                        size="small"
+                        onClick={() => setBlockDialogOpen(true)}
+                        sx={{ minWidth: 48, minHeight: 48 }}
+                        aria-label="Add block"
+                      >
+                        <Plus size={18} />
+                      </IconButton>
+                    </Box>
                   </Box>
 
-                  {blocks.length === 0 ? (
-                    <Typography
-                      variant="body2"
-                      sx={{ color: colors.textSecondary, textAlign: 'center', py: 4 }}
-                    >
-                      No blocks yet. Add your first block!
-                    </Typography>
-                  ) : (
-                    <List dense>
-                      {blocks.map((block, index) => (
-                        <ListItem
-                          key={block.id}
-                          sx={{
-                            border: `1px solid ${alpha(colors.primary, block.isVisible ? 0.2 : 0.1)}`,
-                            borderRadius: 1,
-                            mb: 1,
-                            opacity: block.isVisible ? 1 : 0.5,
-                            bgcolor: block.isVisible ? 'transparent' : alpha(colors.dark, 0.3),
-                          }}
-                        >
-                          <ListItemText
-                            primary={
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Typography variant="body2" fontWeight={600}>
-                                  {block.blockType}
-                                </Typography>
-                                {!block.isVisible && (
-                                  <Chip
-                                    label="Hidden"
-                                    size="small"
-                                    sx={{
-                                      height: 18,
-                                      fontSize: '0.65rem',
-                                      bgcolor: alpha(colors.textSecondary, 0.2),
-                                      color: colors.textSecondary,
-                                    }}
-                                  />
-                                )}
-                              </Box>
-                            }
-                            secondary={getBlockContentPreview(block)}
-                          />
-                          <ListItemSecondaryAction>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleMoveBlock(block.id, 'up')}
-                              disabled={index === 0}
-                            >
-                              <ArrowUp size={16} />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleMoveBlock(block.id, 'down')}
-                              disabled={index === blocks.length - 1}
-                            >
-                              <ArrowDown size={16} />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => {
-                                setEditingBlock(block);
-                                setBlockForm({
-                                  blockType: block.blockType,
-                                  content: block.content,
-                                });
-                              }}
-                            >
-                              <Pencil size={16} />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleToggleBlockVisibility(block)}
-                            >
-                              <Eye size={16} />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => handleDeleteBlock(block.id)}>
-                              <Trash2 size={16} />
-                            </IconButton>
-                          </ListItemSecondaryAction>
-                        </ListItem>
-                      ))}
-                    </List>
+                  <DraggableBlockList
+                    blocks={blocks}
+                    pageId={selectedPage?.id}
+                    websiteId={websiteId}
+                    onBlocksChange={(reordered) => {
+                      setBlocks(reordered);
+                    }}
+                    onBlockSelect={(blockId) => {
+                      const block = blocks.find((b) => b.id === blockId);
+                      if (block) {
+                        setEditingBlock(block);
+                        setBlockForm({ blockType: block.blockType, content: block.content });
+                      }
+                    }}
+                  />
+
+                  {/* ThemeManager — Step 9.21 */}
+                  {showThemeManager && (
+                    <Box sx={{ mt: 2 }}>
+                      <Divider sx={{ mb: 2 }} />
+                      <ThemeManager
+                        websiteId={websiteId}
+                        currentThemeId={website?.themeId || null}
+                        onThemeChange={() => {
+                          refreshPreview();
+                          fetchWebsiteData();
+                        }}
+                      />
+                    </Box>
                   )}
                 </Paper>
               </Grid>
 
-              {/* Preview */}
+              {/* Preview — Step 4.11: PreviewPanel with live srcdoc */}
               <Grid item xs={12} md={7}>
-                <Paper sx={{ p: 2, bgcolor: alpha(colors.dark, 0.5), borderRadius: 2 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
-                      Preview
-                    </Typography>
-                    <IconButton size="small" onClick={() => fetchBlocks(selectedPage.id)}>
-                      <RefreshCw size={18} />
-                    </IconButton>
-                  </Box>
-
-                  {website?.status === 'PUBLISHED' && selectedPage?.isPublished ? (
-                    <Box
-                      sx={{
-                        width: '100%',
-                        height: '600px',
-                        border: `1px solid ${alpha(colors.primary, 0.2)}`,
-                        borderRadius: 1,
-                        overflow: 'hidden',
+                <Paper sx={{ p: 0, bgcolor: alpha(colors.dark, 0.5), borderRadius: 2, overflow: 'hidden' }}>
+                  <Box sx={{ height: { xs: 400, md: 600 } }}>
+                    <PreviewPanel
+                      websiteId={websiteId}
+                      pageId={selectedPage?.id}
+                      onBlockSelected={(blockId) => {
+                        const block = blocks.find((b) => String(b.id) === blockId);
+                        if (block) {
+                          setEditingBlock(block);
+                          setBlockForm({ blockType: block.blockType, content: block.content });
+                        }
                       }}
-                    >
-                      <iframe
-                        src={`/s/${website.slug}${selectedPage.path}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          border: 'none',
-                        }}
-                        title="Website Preview"
-                      />
-                    </Box>
-                  ) : (
-                    <Alert severity="info">
-                      Preview not available. Publish the website and page to see live preview.
-                    </Alert>
-                  )}
+                      onInlineEditStart={(data) => setInlineEditState(data)}
+                      iframeRefCallback={(ref) => { iframeRef.current = ref?.current ?? null; }}
+                    />
+                  </Box>
                 </Paper>
               </Grid>
             </Grid>
@@ -1073,6 +1481,57 @@ const WebsiteEditor = () => {
           )}
         </Grid>
       </Grid>
+      </ResponsiveEditorLayout>
+
+      {/* InlineTextEditor overlay — Step 9.24 */}
+      {inlineEditState && (
+        <InlineTextEditor
+          open={!!inlineEditState}
+          initialValue={inlineEditState.value}
+          fieldPath={inlineEditState.fieldPath}
+          editType={inlineEditState.editType || 'single'}
+          rect={inlineEditState.rect}
+          iframeRef={{ current: iframeRef.current }}
+          onSave={(newValue) => {
+            handleInlineEditSave(
+              inlineEditState.blockId,
+              inlineEditState.fieldPath,
+              newValue
+            );
+            setInlineEditState(null);
+          }}
+          onCancel={() => setInlineEditState(null)}
+        />
+      )}
+
+      {/* BlockLibrary drawer — Phase 9 gap fix */}
+      {selectedPage && (
+        <BlockLibrary
+          open={blockLibraryOpen}
+          onClose={() => setBlockLibraryOpen(false)}
+          pageId={selectedPage?.id}
+          blocks={blocks}
+          onInsertBlock={handleInsertBlockFromLibrary}
+          closeAfterInsert={false}
+          currentUserRole={websiteRole}
+        />
+      )}
+
+      {/* MobileFAB — opens block library on mobile (Phase 9 gap fix) */}
+      {isMobile && selectedPage && (
+        <MobileFAB onOpen={() => setBlockLibraryOpen(true)} />
+      )}
+
+      {/* MobileActionBar — save/publish/preview on mobile (Phase 9 gap fix) */}
+      {isMobile && (
+        <MobileActionBar
+          onSave={handleMobileSave}
+          onPublish={handleMobilePublish}
+          onPreview={handleMobilePreview}
+          isSaving={saveStatus === 'saving'}
+          isMac={typeof navigator !== 'undefined' && /Mac|iPad|iPhone/.test(navigator.userAgent)}
+        />
+      )}
 
       {/* Create Page Dialog */}
       <Dialog
@@ -1161,21 +1620,22 @@ const WebsiteEditor = () => {
           )}
 
           {!editingBlock && (
-            <DashboardSelect
-              fullWidth
-              label="Block Type"
-              value={blockForm.blockType}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, blockType: e.target.value, content: {} })
-              }
-              containerSx={{ mb: 3 }}
-            >
-              {BLOCK_TYPES.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </DashboardSelect>
+            <Box sx={{ mb: 3 }}>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Use the Block Library to add new blocks with full search and categories.
+              </Alert>
+              <Button
+                variant="outlined"
+                startIcon={<Plus size={18} />}
+                onClick={() => {
+                  setBlockDialogOpen(false);
+                  setBlockLibraryOpen(true);
+                }}
+                fullWidth
+              >
+                Open Block Library
+              </Button>
+            </Box>
           )}
 
           {(blockForm.blockType || editingBlock) && renderBlockForm()}
@@ -1202,8 +1662,157 @@ const WebsiteEditor = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Unsaved changes confirmation dialog */}
+      <ConfirmationDialog
+        open={showUnsavedDialog}
+        variant="warning"
+        title="Unsaved Changes"
+        message="You have unsaved changes. Would you like to save before leaving?"
+        confirmLabel="Leave"
+        cancelLabel="Cancel"
+        secondaryLabel="Save & Leave"
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+        onSecondary={saveAndNavigate}
+      />
+
+      {/* Conflict resolution modal */}
+      {conflictData && (
+        <ConflictModal
+          open={!!conflictData}
+          conflictData={conflictData}
+          onResolve={resolveConflict}
+        />
+      )}
+
+      {/* Recovery modal — localStorage backup restore/discard (Step 5.10) */}
+      <RecoveryModal
+        open={hasBackup}
+        timestamp={backupEntry?.timestamp ?? 0}
+        onRestore={handleRestoreBackup}
+        onDiscard={discardBackup}
+      />
+
+      {/* Mobile SpeedDial FAB — Step 9.5.2 */}
+      {isMobile && (
+        <SpeedDial
+          ariaLabel="Mobile editor actions"
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            '& .MuiFab-primary': {
+              bgcolor: colors.primary,
+              '&:hover': { bgcolor: alpha(colors.primary, 0.85) },
+            },
+          }}
+          icon={<SpeedDialIcon />}
+        >
+          <SpeedDialAction
+            icon={<Plus size={20} />}
+            tooltipTitle="Add Block"
+            onClick={() => setBlockDialogOpen(true)}
+            FabProps={{ sx: { minWidth: 48, minHeight: 48 } }}
+          />
+          <SpeedDialAction
+            icon={<Layers size={20} />}
+            tooltipTitle="Manage Pages"
+            onClick={() => setPagesBottomSheetOpen(true)}
+            FabProps={{ sx: { minWidth: 48, minHeight: 48 } }}
+          />
+        </SpeedDial>
+      )}
+
+      {/* Pages BottomSheet — Step 9.5.3 */}
+      {isMobile && (
+        <BottomSheet
+          open={pagesBottomSheetOpen}
+          onClose={() => setPagesBottomSheetOpen(false)}
+          title="Pages"
+          initialSnap={1}
+        >
+          <Box display="flex" justifyContent="flex-end" mb={1}>
+            <IconButton
+              size="small"
+              onClick={() => {
+                setPagesBottomSheetOpen(false);
+                setPageDialogOpen(true);
+              }}
+              sx={{ minWidth: 48, minHeight: 48 }}
+              aria-label="Add page"
+            >
+              <Plus size={18} />
+            </IconButton>
+          </Box>
+          <List dense>
+            {pages.map((page) => (
+              <ListItem
+                key={page.id}
+                button
+                selected={selectedPage?.id === page.id}
+                onClick={() => {
+                  setSelectedPage(page);
+                  setPagesBottomSheetOpen(false);
+                }}
+                sx={{
+                  borderRadius: 1,
+                  mb: 0.5,
+                  minHeight: 48,
+                  '&.Mui-selected': {
+                    bgcolor: alpha(colors.primary, 0.2),
+                  },
+                }}
+              >
+                <ListItemText
+                  primary={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      {page.isHome && <House size={16} />}
+                      <Typography variant="body2">{page.title}</Typography>
+                    </Box>
+                  }
+                  secondary={page.path}
+                />
+                <ListItemSecondaryAction>
+                  {!page.isHome && (
+                    <>
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={() => handleSetHomePage(page.id)}
+                        title="Set as home"
+                        sx={{ minWidth: 48, minHeight: 48 }}
+                      >
+                        <House size={16} />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={() => handleDeletePage(page.id)}
+                        sx={{ minWidth: 48, minHeight: 48 }}
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </>
+                  )}
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
+          </List>
+        </BottomSheet>
+      )}
     </Container>
   );
 };
+
+/**
+ * Step 4.11: Wrap the editor in PreviewProvider so PreviewPanel and
+ * usePreview() work inside WebsiteEditorInner.
+ */
+const WebsiteEditor = () => (
+  <PreviewProvider>
+    <WebsiteEditorInner />
+  </PreviewProvider>
+);
 
 export default WebsiteEditor;

@@ -397,8 +397,8 @@
 // export default ListingCompanyDetails;
 
 import React, { useContext } from "react";
-import ContactUs from "../components/CompanyDetails/ContactUs";
-import CompanyTopbar from "../components/CompanyDetails/CompanyTopbar";
+import ContactUs from "../../components/CompanyDetails/ContactUs";
+import CompanyTopbar from "../../components/CompanyDetails/CompanyTopbar";
 import {
   AppBar,
   Box,
@@ -414,19 +414,19 @@ import {
 import { Drawer, List } from "@mui/material";
 import ReplayIcon from "@mui/icons-material/Replay";
 import { Link, useParams } from "react-router-dom";
-import Header from "../components/CompanyDetails/Header";
-import CompanyContactCrd from "../components/CompanyDetails/CompanyContactCrd";
-import CompanyAboutUs from "../components/CompanyDetails/CompanyAboutUs";
-import CompanyCopyRight from "../components/CompanyDetails/CompanyCopyRight";
-import CompanyServices from "../components/CompanyDetails/CompanyServices";
-import CompanyLatestProject from "../components/CompanyDetails/CompanyLatestProject";
+import Header from "../../components/CompanyDetails/Header";
+import CompanyContactCrd from "../../components/CompanyDetails/CompanyContactCrd";
+import CompanyAboutUs from "../../components/CompanyDetails/CompanyAboutUs";
+import CompanyCopyRight from "../../components/CompanyDetails/CompanyCopyRight";
+import CompanyServices from "../../components/CompanyDetails/CompanyServices";
+import CompanyLatestProject from "../../components/CompanyDetails/CompanyLatestProject";
 import MenuIcon from "@mui/icons-material/Menu";
-import CompanyAboutService from "../components/CompanyDetails/CompanyAboutService";
-import CompanyBanText from "../components/CompanyDetails/CompanyBanText";
-import CompanyCount from "../components/CompanyDetails/CompanyCount";
-import useFormattedPhoneNo from "../hooks/useFormattedPhoneNo";
-import { useAuth } from "../context/AuthContext";
-import { useListings } from "../context/ListingsContext";
+import CompanyAboutService from "../../components/CompanyDetails/CompanyAboutService";
+import CompanyBanText from "../../components/CompanyDetails/CompanyBanText";
+import CompanyCount from "../../components/CompanyDetails/CompanyCount";
+import useFormattedPhoneNo from "../../hooks/useFormattedPhoneNo";
+import { useAuth } from "../../context/AuthContext";
+import { useListings } from "../../context/ListingsContext";
 
 /* ---------------- Scroll Helper ---------------- */
 const scrollToElement = (elementId: string, offset: number = -80) => {

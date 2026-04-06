@@ -42,6 +42,7 @@ import {
   FileText as ArticleIcon,
   FilePlus as NewInsightIcon,
   FolderPlus as NewCategoryIcon,
+  FolderOpen as ProjectsIcon,
   Clock as PendingIcon,
   Tag as CategoryIcon,
   Search as SearchIcon,
@@ -147,6 +148,16 @@ const ManageInsights = ({
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
 
+  // Project state
+  const [projects, setProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [openProjectsDialog, setOpenProjectsDialog] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectSlug, setNewProjectSlug] = useState('');
+  const [projectActionLoading, setProjectActionLoading] = useState(false);
+  const [revealedApiKey, setRevealedApiKey] = useState(null);
+
   // Add Category Dialog state (for when not on categories tab)
   const [openAddCategoryDialog, setOpenAddCategoryDialog] = useState(false);
   const [categoryFormData, setCategoryFormData] = useState({ name: '', description: '' });
@@ -222,11 +233,19 @@ const ManageInsights = ({
   const isAdmin = checkIsAdmin(user.role);
   const isSuperAdmin = checkIsSuperAdmin(user.role);
 
+  // Fetch projects and categories on mount only
   useEffect(() => {
-    fetchInsights();
-    fetchStats();
+    fetchProjects();
     fetchCategories();
-  }, [page, rowsPerPage]);
+  }, []);
+
+  // Re-fetch insights when project, page, or rowsPerPage changes
+  useEffect(() => {
+    if (selectedProjectId !== null) {
+      fetchInsights();
+      fetchStats();
+    }
+  }, [page, rowsPerPage, selectedProjectId]);
 
   // Persist rowsPerPage to localStorage
   useEffect(() => {
@@ -352,6 +371,35 @@ const ManageInsights = ({
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     });
 
+  const fetchProjects = async () => {
+    try {
+      setProjectsLoading(true);
+      const response = await axios.get(`${API_URL}/projects`);
+      if (response.data.success) {
+        const projectList = response.data.projects;
+        setProjects(projectList);
+        setSelectedProjectId((prev) => {
+          if (projectList.length === 0) return null;
+          const defaultProj =
+            projectList.find((p) => p.slug === 'techietribe-directory') || projectList[0];
+          if (prev === null) {
+            // Initial load — pick the default project
+            return defaultProj.id;
+          }
+          // Refresh after add/delete — keep current selection if it still exists
+          const stillExists = projectList.some((p) => p.id === prev);
+          return stillExists ? prev : defaultProj.id;
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      // Ensure insights don't stay in infinite loading state if projects fail to load
+      setLoading(false);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
   const fetchCategories = async () => {
     try {
       const response = await axios.get(`${API_URL}/categories`);
@@ -393,7 +441,7 @@ const ManageInsights = ({
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API_URL}/blogs/stats`);
+      const response = await axios.get(`${API_URL}/insights/stats`);
 
       setStats({
         total: response.data.total || 0,
@@ -414,7 +462,10 @@ const ManageInsights = ({
 
   const fetchInsights = async () => {
     try {
-      const response = await axios.get(`${API_URL}/blogs?page=${page}&limit=${rowsPerPage}`);
+      const projectParam = selectedProjectId ? `&projectId=${selectedProjectId}` : '';
+      const response = await axios.get(
+        `${API_URL}/insights?page=${page}&limit=${rowsPerPage}${projectParam}`
+      );
 
       setInsights(response.data.insights || []);
       setTotalPages(response.data.pagination?.totalPages || 1);
@@ -834,6 +885,9 @@ const ManageInsights = ({
       formDataToSend.append('metaDescription', formData.metaDescription || formData.content);
       formDataToSend.append('keywords', formData.keywords || formData.category);
       formDataToSend.append('publishDate', formData.publishDate);
+      if (selectedProjectId) {
+        formDataToSend.append('projectId', selectedProjectId.toString());
+      }
 
       // Append image file if new one is selected
       if (imageFile) {
@@ -1024,6 +1078,15 @@ const ManageInsights = ({
               }}
             />
           )}
+          {isAdmin && (
+            <DashboardIconButton
+              icon={<ProjectsIcon size={20} />}
+              label="Projects"
+              tooltip="Manage Projects"
+              variant="outlined"
+              onClick={() => setOpenProjectsDialog(true)}
+            />
+          )}
         </Box>
       </Box>
 
@@ -1113,6 +1176,27 @@ const ManageInsights = ({
         </Box>
 
         <Stack direction="row" spacing={2} alignItems="center" sx={{ flexShrink: 0 }}>
+          {!projectsLoading && projects.length > 0 && (
+            <DashboardSelect
+              size="small"
+              label="Project"
+              value={selectedProjectId || ''}
+              onChange={(e) => {
+                setSelectedProjectId(e.target.value ? parseInt(e.target.value) : null);
+                setPage(1);
+              }}
+              containerSx={{
+                minWidth: 180,
+                width: { xs: '100%', sm: 'auto' },
+              }}
+            >
+              {projects.map((proj) => (
+                <MenuItem key={proj.id} value={proj.id}>
+                  {proj.name}
+                </MenuItem>
+              ))}
+            </DashboardSelect>
+          )}
           <DashboardSelect
             size="small"
             label="View"
@@ -2184,6 +2268,177 @@ const ManageInsights = ({
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Manage Projects Dialog — Admin Only */}
+      <Dialog
+        open={openProjectsDialog}
+        onClose={() => {
+          setOpenProjectsDialog(false);
+          setNewProjectName('');
+          setNewProjectSlug('');
+          setRevealedApiKey(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: colors.bgCard,
+            borderRadius: 3,
+            border: `1px solid ${colors.border}`,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            color: colors.text,
+            fontWeight: 700,
+            borderBottom: `1px solid ${colors.border}`,
+          }}
+        >
+          Manage Projects
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" sx={{ color: colors.textSecondary, mb: 1.5 }}>
+            Projects
+          </Typography>
+          {projects.map((proj) => (
+            <Box
+              key={proj.id}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                p: 1.5,
+                mb: 1,
+                border: `1px solid ${colors.border}`,
+                borderRadius: 2,
+              }}
+            >
+              <Box>
+                <Typography sx={{ color: colors.text, fontWeight: 600 }}>{proj.name}</Typography>
+                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                  /{proj.slug}
+                </Typography>
+              </Box>
+              <Box display="flex" gap={1}>
+                <Tooltip title="Reveal API Key">
+                  <span>
+                    <DashboardIconButton
+                      icon={<ViewIcon size={16} />}
+                      size="small"
+                      onClick={async () => {
+                        try {
+                          const res = await axios.get(`${API_URL}/projects/${proj.id}/apikey`);
+                          setRevealedApiKey({ projectId: proj.id, key: res.data.project.apiKey });
+                        } catch {
+                          setSnackbar({ open: true, message: 'Failed to fetch API key', severity: 'error' });
+                        }
+                      }}
+                    />
+                  </span>
+                </Tooltip>
+                <Tooltip title="Delete Project">
+                  <span>
+                    <DashboardIconButton
+                      icon={<DeleteIcon size={16} />}
+                      size="small"
+                      onClick={async () => {
+                        if (!window.confirm(`Delete project "${proj.name}"? Blogs will become unassigned.`)) return;
+                        try {
+                          await axios.delete(`${API_URL}/projects/${proj.id}`);
+                          await fetchProjects();
+                          setSnackbar({ open: true, message: 'Project deleted', severity: 'success' });
+                        } catch (err) {
+                          setSnackbar({
+                            open: true,
+                            message: err.response?.data?.message || 'Failed to delete project',
+                            severity: 'error',
+                          });
+                        }
+                      }}
+                    />
+                  </span>
+                </Tooltip>
+              </Box>
+            </Box>
+          ))}
+
+          {revealedApiKey && (
+            <Alert severity="info" sx={{ mt: 1, mb: 2 }}>
+              <Typography variant="caption" component="pre" sx={{ fontFamily: 'monospace', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>
+                {revealedApiKey.key}
+              </Typography>
+            </Alert>
+          )}
+
+          <Divider sx={{ my: 2, borderColor: colors.border }}>
+            <Typography sx={{ color: colors.textSecondary, fontSize: '0.8rem' }}>
+              Add New Project
+            </Typography>
+          </Divider>
+
+          <DashboardInput
+            fullWidth
+            label="Project Name"
+            value={newProjectName}
+            onChange={(e) => {
+              setNewProjectName(e.target.value);
+              setNewProjectSlug(
+                e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+              );
+            }}
+            containerSx={{ mb: 1.5 }}
+          />
+          <DashboardInput
+            fullWidth
+            label="Slug"
+            value={newProjectSlug}
+            onChange={(e) =>
+              setNewProjectSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+            }
+            helperText="Lowercase letters, numbers, and hyphens only"
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: `1px solid ${colors.border}` }}>
+          <Button
+            onClick={() => {
+              setOpenProjectsDialog(false);
+              setNewProjectName('');
+              setNewProjectSlug('');
+              setRevealedApiKey(null);
+            }}
+            sx={{ color: colors.textSecondary }}
+          >
+            Close
+          </Button>
+          <DashboardActionButton
+            disabled={!newProjectName.trim() || !newProjectSlug.trim() || projectActionLoading}
+            onClick={async () => {
+              setProjectActionLoading(true);
+              try {
+                await axios.post(`${API_URL}/projects`, {
+                  name: newProjectName.trim(),
+                  slug: newProjectSlug.trim(),
+                });
+                await fetchProjects();
+                setNewProjectName('');
+                setNewProjectSlug('');
+                setSnackbar({ open: true, message: 'Project created successfully', severity: 'success' });
+              } catch (err) {
+                setSnackbar({
+                  open: true,
+                  message: err.response?.data?.message || 'Failed to create project',
+                  severity: 'error',
+                });
+              } finally {
+                setProjectActionLoading(false);
+              }
+            }}
+          >
+            {projectActionLoading ? 'Creating...' : 'Create Project'}
+          </DashboardActionButton>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

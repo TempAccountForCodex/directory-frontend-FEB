@@ -192,7 +192,9 @@ const PlanHeader = ({ plan, index, max, onPrev, onNext, billing }: any) => {
           /{billing === "annual" ? "year" : "month"}
         </Box>
       </Typography>
-      <Typography sx={{ opacity: 0.78, mt: 0.5 }}>{plan.sites} Sites</Typography>
+      <Typography sx={{ opacity: 0.78, mt: 0.5 }}>
+        {plan.sites} Sites
+      </Typography>
     </Box>
   );
 };

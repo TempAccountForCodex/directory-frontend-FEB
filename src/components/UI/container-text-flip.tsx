@@ -19,7 +19,7 @@ export function ContainerTextFlip({
   const theme = useTheme();
 
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [width, setWidth] = useState("auto");
+  const [width, setWidth] = useState<string | number>("auto");
 
   const textRef = React.useRef<HTMLDivElement>(null);
 
@@ -103,7 +103,7 @@ export function ContainerTextFlip({
 
   return (
     <MotionTypography
-      component={motion.p}
+      {...({ component: motion.p } as any)}
       layout
       layoutId={`flip-${id}`}
       animate={{ width }}

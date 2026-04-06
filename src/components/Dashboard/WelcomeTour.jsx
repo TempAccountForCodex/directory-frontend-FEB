@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -142,6 +142,18 @@ const WelcomeTour = () => {
     searchParams.delete('tour');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
+
+  /**
+   * Restart the welcome tour programmatically.
+   * Resets the completed state and re-opens the dialog.
+   * Called from outside via `restartWelcomeTour()` utility or the
+   * OnboardingProvider's reset flow.
+   */
+  const handleRestartTour = useCallback(() => {
+    setTourCompleted(false);
+    setActiveStep(0);
+    setOpen(true);
+  }, [setTourCompleted]);
 
   const progress = ((activeStep + 1) / tourSteps.length) * 100;
 
@@ -383,3 +395,22 @@ const WelcomeTour = () => {
 };
 
 export default WelcomeTour;
+
+/**
+ * restartWelcomeTour
+ *
+ * Utility function that clears the localStorage persistence key used by
+ * WelcomeTour so the tour will re-open on the next render cycle.
+ *
+ * Usage:
+ *   import { restartWelcomeTour } from './WelcomeTour';
+ *   restartWelcomeTour(); // call before navigating to ?tour=welcome
+ */
+export function restartWelcomeTour() {
+  try {
+    // The key mirrors usePersistentState('tour:welcome:v1') with the 'ttdir' namespace prefix
+    localStorage.removeItem('ttdir:tour:welcome:v1');
+  } catch {
+    // localStorage may not be available in SSR or restricted environments
+  }
+}

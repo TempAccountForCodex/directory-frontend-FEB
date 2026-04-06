@@ -1,8 +1,8 @@
-import { TemplateTheme } from "../../templateEngine/types";
+import type { TemplateTheme } from "../../templateEngine/types";
 
 export const buildModernTheme = (
   primaryColor: string,
-  secondaryColor?: string
+  secondaryColor?: string,
 ): TemplateTheme => ({
   primaryColor,
   secondaryColor: secondaryColor ?? "#D3EB63",
@@ -13,6 +13,7 @@ export const buildModernTheme = (
   bgSecondary: "#f7fafc",
   surfaceColor: "#ffffff",
   borderColor: "#e2e8f0",
+  bgWhite: "#ffffff",
   fontFamily:
     "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 });

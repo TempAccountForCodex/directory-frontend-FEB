@@ -20,7 +20,7 @@ import {
   Phone,
   Twitter,
 } from "lucide-react";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 import { buildModernTheme } from "../modern/modernTheme";
 import FadeIn from "../../blocks/FadeIn";
 

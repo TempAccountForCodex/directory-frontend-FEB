@@ -15,7 +15,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 import type { BlogPost } from "../../types/BusinessData";
 import FadeIn from "../../blocks/FadeIn";
 
@@ -170,53 +170,53 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               borderBottom: "1px solid rgba(17,17,17,0.08)",
             }}
           >
-          <Typography
-            sx={{ fontSize: { xs: "1.6rem", md: "1.8rem" }, fontWeight: 800 }}
-          >
-            {brandTitle}
-            <Box component="span" sx={{ color: primary }}>
-              .
-            </Box>
-          </Typography>
+            <Typography
+              sx={{ fontSize: { xs: "1.6rem", md: "1.8rem" }, fontWeight: 800 }}
+            >
+              {brandTitle}
+              <Box component="span" sx={{ color: primary }}>
+                .
+              </Box>
+            </Typography>
 
-          <Stack
-            direction="row"
-            spacing={3}
-            sx={{
-              display: { xs: "none", md: "flex" },
-              color: "rgba(17,17,17,0.68)",
-            }}
-          >
-            {[
-              ["Home", "blog-home"],
-              ["Articles", "blog-articles"],
-              ["Subscribe", "blog-contact"],
-            ].map(([label, id]) => (
-              <Typography
-                key={label}
-                onClick={() => scrollToSection(id)}
-                sx={{ cursor: "pointer", fontSize: "0.95rem" }}
-              >
-                {label}
-              </Typography>
-            ))}
-          </Stack>
-
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Button
-              onClick={() => scrollToSection("blog-contact")}
+            <Stack
+              direction="row"
+              spacing={3}
               sx={{
-                borderRadius: "999px",
-                bgcolor: "#111111",
-                color: "#fff",
-                px: 2.2,
-                textTransform: "none",
-                "&:hover": { bgcolor: "#111111" },
+                display: { xs: "none", md: "flex" },
+                color: "rgba(17,17,17,0.68)",
               }}
             >
-              Subscribe
-            </Button>
-          </Stack>
+              {[
+                ["Home", "blog-home"],
+                ["Articles", "blog-articles"],
+                ["Subscribe", "blog-contact"],
+              ].map(([label, id]) => (
+                <Typography
+                  key={label}
+                  onClick={() => scrollToSection(id)}
+                  sx={{ cursor: "pointer", fontSize: "0.95rem" }}
+                >
+                  {label}
+                </Typography>
+              ))}
+            </Stack>
+
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Button
+                onClick={() => scrollToSection("blog-contact")}
+                sx={{
+                  borderRadius: "999px",
+                  bgcolor: "#111111",
+                  color: "#fff",
+                  px: 2.2,
+                  textTransform: "none",
+                  "&:hover": { bgcolor: "#111111" },
+                }}
+              >
+                Subscribe
+              </Button>
+            </Stack>
           </Box>
         </FadeIn>
 
@@ -343,7 +343,11 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             {gridPosts.map((post, index) => (
-              <FadeIn key={post.id} delay={0.06 * index} direction={index % 2 === 0 ? "up" : "left"}>
+              <FadeIn
+                key={post.id}
+                delay={0.06 * index}
+                direction={index % 2 === 0 ? "up" : "left"}
+              >
                 <Box
                   onClick={() => setSelectedPost(post)}
                   sx={{

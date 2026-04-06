@@ -95,7 +95,7 @@ const HeroImageSection = ({
       {bg && (
         <img
           src={bg}
-          fetchpriority="high"
+          fetchPriority="high"
           alt=""
           aria-hidden="true"
           style={{ display: "none" }}

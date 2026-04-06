@@ -10,8 +10,7 @@ const columns = [
 
       "/assets/publicAssets/images/home/TemplatesDisplay/2.webp",
 
-        "/assets/publicAssets/images/home/TemplatesDisplay/4.webp",
-
+      "/assets/publicAssets/images/home/TemplatesDisplay/4.webp",
     ],
   },
 

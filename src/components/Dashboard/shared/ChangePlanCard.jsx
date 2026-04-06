@@ -24,6 +24,8 @@ import DashboardActionButton from './DashboardActionButton';
 import DashboardCancelButton from './DashboardCancelButton';
 import DashboardConfirmButton from './DashboardConfirmButton';
 import CardManagementDialog from './CardManagementDialog';
+import BillingPreview from '../../Settings/BillingPreview';
+import SubscriptionBanners from '../../Settings/SubscriptionBanners';
 
 /**
  * Layered diamond icon component
@@ -222,8 +224,13 @@ const ChangePlanCard = () => {
     loading,
     paymentMethodsLoading,
     error: billingError,
+    subscriptionStatus,
+    cancelledAt,
+    currentPeriodEnd,
     updateBillingDetails,
     updatePlan,
+    getPlanPreview,
+    reactivateSubscription,
     createSetupIntent,
     addPaymentMethod,
     setDefaultPaymentMethod,
@@ -235,6 +242,7 @@ const ChangePlanCard = () => {
   const [editBillingOpen, setEditBillingOpen] = useState(false);
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // Form states
   const [billingForm, setBillingForm] = useState({
@@ -262,10 +270,17 @@ const ChangePlanCard = () => {
     setSelectedPlan(planCode);
   }, []);
 
-  // Handle upgrade click
+  // Handle upgrade click — show BillingPreview for paid plan upgrades
   const handleUpgrade = useCallback(async () => {
     if (!selectedPlan || selectedPlan === currentPlanCode) return;
 
+    // For paid plan upgrades, show the preview dialog first
+    if (selectedPlan !== 'website_free') {
+      setPreviewOpen(true);
+      return;
+    }
+
+    // Free plan (shouldn't normally reach here due to useCancel guard, but handle gracefully)
     setActionLoading(true);
     const result = await updatePlan(selectedPlan);
     setActionLoading(false);
@@ -273,10 +288,25 @@ const ChangePlanCard = () => {
     if (result.success) {
       setSelectedPlan(null);
     } else if (result.requiresPaymentMethod) {
-      // Open card dialog if payment method is required
       setCardDialogOpen(true);
     }
   }, [selectedPlan, currentPlanCode, updatePlan]);
+
+  // Handle confirmed upgrade from BillingPreview dialog
+  const handleConfirmUpgrade = useCallback(async () => {
+    if (!selectedPlan) return;
+
+    const result = await updatePlan(selectedPlan);
+
+    if (result.success) {
+      setSelectedPlan(null);
+      setPreviewOpen(false);
+    } else if (result.requiresPaymentMethod) {
+      setPreviewOpen(false);
+      setCardDialogOpen(true);
+    }
+    // On other errors, BillingPreview stays open — error will show in the card via billingError
+  }, [selectedPlan, updatePlan]);
 
   // Handle edit billing open
   const handleEditBillingOpen = useCallback(() => {
@@ -366,6 +396,14 @@ const ChangePlanCard = () => {
 
   return (
     <>
+      <SubscriptionBanners
+        subscriptionStatus={subscriptionStatus}
+        cancelledAt={cancelledAt}
+        currentPeriodEnd={currentPeriodEnd}
+        onReactivate={reactivateSubscription}
+        onManagePayment={() => setCardDialogOpen(true)}
+      />
+
       <DashboardCard
         icon={CreditCard}
         title="Change plan"
@@ -670,6 +708,16 @@ const ChangePlanCard = () => {
           </DashboardConfirmButton>
         </DialogActions>
       </Dialog>
+
+      {/* Billing Preview Dialog — shown before confirming paid plan upgrade */}
+      <BillingPreview
+        open={previewOpen}
+        planCode={selectedPlan}
+        planLabel={DISPLAY_PLANS.find((p) => p.code === selectedPlan)?.displayName || selectedPlan}
+        onConfirm={handleConfirmUpgrade}
+        onCancel={() => setPreviewOpen(false)}
+        getPlanPreview={getPlanPreview}
+      />
     </>
   );
 };

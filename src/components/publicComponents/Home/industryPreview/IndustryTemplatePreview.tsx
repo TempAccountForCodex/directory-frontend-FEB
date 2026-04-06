@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Box, Chip, IconButton, Typography, Stack } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import TemplateEngine from "../../../../landingTemplates/templateEngine/TemplateEngine";
 import { getIndustryEntry, getIndustryKeys } from "./industryRegistry";
 
@@ -12,7 +12,7 @@ interface IndustryTemplatePreviewProps {
   onIndustryChange: (industry: string) => void;
 }
 
-const overlayVariants = {
+const overlayVariants: Variants = {
   hidden: { y: "100%", opacity: 0 },
   visible: {
     y: "0%",
@@ -22,11 +22,14 @@ const overlayVariants = {
   exit: {
     y: "100%",
     opacity: 0,
-    transition: { duration: 0.35, ease: [0.22, 0.61, 0.36, 1] },
+    transition: {
+      duration: 0.35,
+      ease: [0.22, 0.61, 0.36, 1] as [number, number, number, number],
+    },
   },
 };
 
-const contentVariants = {
+const contentVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   exit: { opacity: 0, y: -20, transition: { duration: 0.2 } },
@@ -105,7 +108,13 @@ const IndustryTemplatePreview: React.FC<IndustryTemplatePreviewProps> = ({
             >
               Preview
             </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ flex: 1 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              flexWrap="wrap"
+              useFlexGap
+              sx={{ flex: 1 }}
+            >
               {industries.map((ind) => (
                 <Chip
                   key={ind}
@@ -113,13 +122,19 @@ const IndustryTemplatePreview: React.FC<IndustryTemplatePreviewProps> = ({
                   size="small"
                   onClick={() => onIndustryChange(ind)}
                   sx={{
-                    bgcolor: ind === industry ? entry.accentColor : "rgba(255,255,255,0.08)",
+                    bgcolor:
+                      ind === industry
+                        ? entry.accentColor
+                        : "rgba(255,255,255,0.08)",
                     color: ind === industry ? "#000" : "rgba(255,255,255,0.7)",
                     fontWeight: ind === industry ? 700 : 400,
                     border: "none",
                     cursor: "pointer",
                     "&:hover": {
-                      bgcolor: ind === industry ? entry.accentColor : "rgba(255,255,255,0.15)",
+                      bgcolor:
+                        ind === industry
+                          ? entry.accentColor
+                          : "rgba(255,255,255,0.15)",
                     },
                     transition: "all 0.2s",
                   }}
@@ -127,7 +142,10 @@ const IndustryTemplatePreview: React.FC<IndustryTemplatePreviewProps> = ({
               ))}
             </Stack>
             <Chip
-              label={entry.templateId.charAt(0).toUpperCase() + entry.templateId.slice(1)}
+              label={
+                entry.templateId.charAt(0).toUpperCase() +
+                entry.templateId.slice(1)
+              }
               size="small"
               sx={{
                 bgcolor: "rgba(255,255,255,0.06)",
@@ -139,7 +157,11 @@ const IndustryTemplatePreview: React.FC<IndustryTemplatePreviewProps> = ({
             <IconButton
               onClick={onClose}
               size="small"
-              sx={{ color: "rgba(255,255,255,0.7)", "&:hover": { color: "#fff" }, flexShrink: 0 }}
+              sx={{
+                color: "rgba(255,255,255,0.7)",
+                "&:hover": { color: "#fff" },
+                flexShrink: 0,
+              }}
             >
               <CloseIcon fontSize="small" />
             </IconButton>
@@ -167,7 +189,10 @@ const IndustryTemplatePreview: React.FC<IndustryTemplatePreviewProps> = ({
                 animate="visible"
                 exit="exit"
               >
-                <TemplateEngine templateId={entry.templateId} data={entry.data} />
+                <TemplateEngine
+                  templateId={entry.templateId}
+                  data={entry.data}
+                />
               </motion.div>
             </AnimatePresence>
           </Box>

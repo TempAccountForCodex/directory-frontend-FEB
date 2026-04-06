@@ -5,7 +5,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DesktopWindowsOutlinedIcon from "@mui/icons-material/DesktopWindowsOutlined";
 import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
 import TemplateEngine from "../landingTemplates/templateEngine/TemplateEngine";
-import { BusinessData } from "../landingTemplates/types/BusinessData";
+import type { BusinessData } from "../landingTemplates/types/BusinessData";
 import {
   getIndustryEntry,
   getIndustryKeys,
@@ -787,9 +787,9 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
   primaryColor: "#46ff16",
   secondaryColor: "#050505",
 
-    heroBannerUrl:
+  heroBannerUrl:
     "https://img.freepik.com/free-photo/modern-urban-gym_23-2151917998.jpg?t=st=1775147042~exp=1775150642~hmac=7d71d3d245434e72f31f7f4525eff0bdfd8886903c6b858ad427df9fe1821938&w=2000",
-  
+
   contact: {
     email: "hello@boostlabfit.com",
     phone: "(555) 510-9988",
@@ -815,7 +815,8 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
       price: "$25.00",
       image:
         "https://lifefitnesspk.com/wp-content/uploads/2022/05/1-PC-APOLLO-CUSTOM-STYLE-RUBBER-DUMBBELL-2.jpg",
-      description: "Portable loop bands for mobility, warmups, and strength sessions.",
+      description:
+        "Portable loop bands for mobility, warmups, and strength sessions.",
     },
     {
       id: "spf-2",
@@ -833,7 +834,8 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
       price: "$40.00",
       image:
         "https://lifefitnesspk.com/wp-content/uploads/2020/09/33_c8de602d-e4e4-40f9-b742-60cc97b5fb07_1024x1024@2x.png",
-      description: "Heavy training rope for cardio intervals and explosive conditioning.",
+      description:
+        "Heavy training rope for cardio intervals and explosive conditioning.",
     },
     {
       id: "spf-4",
@@ -842,7 +844,8 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
       price: "$150.00",
       image:
         "https://lifefitnesspk.com/wp-content/uploads/2024/03/S2c431265c8974034b5c72711acc8575bi.webp",
-      description: "Adjustable speed rope for intense conditioning and agility work.",
+      description:
+        "Adjustable speed rope for intense conditioning and agility work.",
     },
     {
       id: "spf-5",
@@ -851,7 +854,8 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
       price: "$95.00",
       image:
         "https://lifefitnesspk.com/wp-content/uploads/2020/06/American-Fitness-UPRIGHT-BIKE-BU-5901-1-510x510.jpg",
-      description: "Durable weight plate for compound lifts and progressive overload work.",
+      description:
+        "Durable weight plate for compound lifts and progressive overload work.",
     },
     {
       id: "spf-6",
@@ -860,7 +864,8 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
       price: "$35.00",
       image:
         "https://lifefitnesspk.com/wp-content/uploads/2022/04/Agility-Hurdles-3-510x510.png",
-      description: "Support bands for mobility work, pull-up progressions, and recovery sessions.",
+      description:
+        "Support bands for mobility work, pull-up progressions, and recovery sessions.",
     },
     {
       id: "spf-7",
@@ -869,7 +874,8 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
       price: "$210.00",
       image:
         "https://lifefitnesspk.com/wp-content/uploads/2021/06/Back-Support-2223-3-600x600-1-510x510.jpg",
-      description: "Compact heavy-duty bench designed for presses, rows, and strength circuits.",
+      description:
+        "Compact heavy-duty bench designed for presses, rows, and strength circuits.",
     },
     {
       id: "spf-8",
@@ -878,105 +884,8 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
       price: "$28.00",
       image:
         "https://lifefitnesspk.com/wp-content/uploads/2022/03/XD-2228-Jumping-Rope-510x510.png",
-      description: "High-density roller for cooldowns, muscle prep, and day-to-day recovery.",
-    },
-  ],
-};
-
-const STORE_FIT_DATA: BusinessData = {
-  name: "Grind Out Skate",
-  tagline: "Premium boards, parts, and street-ready essentials.",
-  description:
-    "A minimal skateboard storefront template with oversized editorial typography, isolated product presentation, and a clean contact flow.",
-  primaryColor: "#020202",
-  secondaryColor: "#ecefe7",
-  heroBannerUrl:
-    "https://c.pxhere.com/photos/8d/e4/skate_skateboard_skateboarder_board_skateboarding_park_black_close_up-977847.jpg!d",
-  contact: {
-    email: "contact@grindoutskate.com",
-    phone: "(310) 555-0146",
-    address: "123 Skate Street, Los Angeles, CA 90012",
-  },
-  socialLinks: { instagram: "#", facebook: "#", twitter: "#" },
-  gallery: [
-    {
-      url: "https://c.pxhere.com/photos/8d/e4/skate_skateboard_skateboarder_board_skateboarding_park_black_close_up-977847.jpg!d",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1547447134-cd3f5c716030?auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1518459031867-a89b944bffe4?auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1400&q=80",
-    },
-  ],
-  products: [
-    {
-      id: "sft-1",
-      name: "Dual Torque Truck",
-      category: "Truck",
-      price: "$45.00",
-      image:
-        "https://images.unsplash.com/photo-1547447134-cd3f5c716030?auto=format&fit=crop&w=900&q=80",
-      description: "Precision truck designed for balanced carving and stable landings.",
-    },
-    {
-      id: "sft-2",
-      name: "Street Energy Deck",
-      category: "Deck",
-      price: "$75.00",
-      image:
-        "https://c.pxhere.com/photos/8d/e4/skate_skateboard_skateboarder_board_skateboarding_park_black_close_up-977847.jpg!d",
-      description: "Responsive maple deck shaped for technical skating and everyday sessions.",
-    },
-    {
-      id: "sft-3",
-      name: "Reflex 52mm Wheel",
-      category: "Wheel",
-      price: "$25.00",
-      image:
-        "https://images.unsplash.com/photo-1518459031867-a89b944bffe4?auto=format&fit=crop&w=900&q=80",
-      description: "Fast-rolling wheel with a smooth core built for city surfaces.",
-    },
-    {
-      id: "sft-4",
-      name: "Black Hex Pack",
-      category: "Hardware",
-      price: "$10.00",
-      image:
-        "https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=900&q=80",
-      description: "Low-profile hardware set to lock your setup in cleanly.",
-    },
-  ],
-  reviews: [
-    {
-      author: "Marco D.",
-      rating: 5,
-      text: "The product presentation feels sharp and the layout makes the whole collection easy to scan.",
-      date: "March 2026",
-      avatarUrl:
-        "https://images.unsplash.com/photo-1494790108755-2616b612b786?auto=format&fit=crop&w=200&q=80",
-    },
-    {
-      author: "Alyssa R.",
-      rating: 5,
-      text: "Exactly the kind of minimal skate shop presentation that feels premium without being overdesigned.",
-      date: "February 2026",
-      avatarUrl:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80",
-    },
-    {
-      author: "Derek N.",
-      rating: 5,
-      text: "The isolated product images and oversized hero headline land very close to a real brand campaign site.",
-      date: "January 2026",
-      avatarUrl:
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+      description:
+        "High-density roller for cooldowns, muscle prep, and day-to-day recovery.",
     },
   ],
 };
@@ -1100,10 +1009,6 @@ const TEMPLATE_DATA_MAP: Record<
     templateId: "store-performance",
     data: STORE_PERFORMANCE_DATA,
   },
-  "store-fit": {
-    templateId: "store-fit",
-    data: STORE_FIT_DATA,
-  },
   company: { templateId: "company", data: COMPANY_DATA },
   "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
 };
@@ -1121,7 +1026,10 @@ const TEMPLATE_GROUPS = [
     label: "Portfolio",
     slugs: ["portfolio-creative", "portfolio-agency", "portfolio-photo-studio"],
   },
-  { label: "Store", slugs: ["store-basic", "store-premium", "store-performance", "store-fit"] },
+  {
+    label: "Store",
+    slugs: ["store-basic", "store-premium", "store-performance"],
+  },
   { label: "Company", slugs: ["company", "company-premium"] },
 ];
 
@@ -1496,8 +1404,8 @@ const PreviewBar: React.FC<{
                         ? "Premium"
                         : s === "store-performance"
                           ? "Performance"
-                        : shortLabel.charAt(0).toUpperCase() +
-                          shortLabel.slice(1));
+                          : shortLabel.charAt(0).toUpperCase() +
+                            shortLabel.slice(1));
 
               return (
                 <Chip

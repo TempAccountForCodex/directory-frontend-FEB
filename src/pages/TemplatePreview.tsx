@@ -17,7 +17,11 @@ import {
   Alert,
   Chip,
 } from "@mui/material";
-import { getTemplateById, CATEGORY_LABELS, type Template } from "../templates";
+import {
+  getTemplateById,
+  CATEGORY_LABELS,
+  type Template,
+} from "../templates/templateApi";
 import BlockRenderer from "../components/PublicWebsite/BlockRenderer";
 import { processTemplatePlaceholders } from "../utils/templatePlaceholderText";
 

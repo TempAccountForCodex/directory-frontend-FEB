@@ -1,3 +1,6 @@
+// DEPRECATED: This component is no longer routed. The canonical editor is WebsiteEditor.jsx.
+// Advanced Phase 9 features (undo/redo, selection, property panels) remain here as reference
+// but are NOT part of the production user journey. See WebsiteEditor.jsx for the keeper path.
 /**
  * CustomizeWebsite - Step 2 of Website Creation
  *
@@ -9,45 +12,64 @@
  * - Live preview
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
   Container,
   Typography,
-  TextField,
   Button,
   Paper,
   Grid,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
-  Divider,
   Alert,
   CircularProgress,
-  Card,
-  CardContent,
   Stack,
   Chip,
-  Tooltip,
+  Snackbar,
   alpha,
 } from "@mui/material";
 import {
   ArrowBack as BackIcon,
-  ArrowUpward as UpIcon,
-  ArrowDownward as DownIcon,
   CheckCircle as CheckIcon,
-  InfoOutlined as InfoIcon,
-  Warning as WarningIcon,
 } from "@mui/icons-material";
 import axios from "axios";
-import { getTemplateById, type Template } from "../templates";
+import { getTemplateById, type Template } from "../templates/templateApi";
 // @ts-ignore - dashboardTheme is a JS file
 import { getDashboardColors } from "../styles/dashboardTheme";
 import { useTheme as useCustomTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import BlockRenderer from "../components/PublicWebsite/BlockRenderer";
-import ColorPickerWithAlpha from "../components/UI/ColorPickerWithAlpha";
+import type { Block } from "../components/BlockEditor/BlockList";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useAutosave } from "../hooks/useAutosave";
+import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
+import { useHistory } from "../hooks/useHistory";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useShortcutManager } from "../hooks/useShortcutManager";
+import UndoRedoToolbar from "../components/Editor/UndoRedoToolbar";
+import ConflictModal from "../components/Editor/ConflictModal";
+import RecoveryModal from "../components/Editor/RecoveryModal";
+// @ts-ignore - ConfirmationDialog is a JS component
+import { ConfirmationDialog } from "../components/Dashboard/shared";
+import { useLocalStorageBackup } from "../hooks/useLocalStorageBackup";
+import EditorTabs from "../components/Editor/EditorTabs";
+import AppearancePanel from "../components/Editor/AppearancePanel";
+import LayoutPanel from "../components/Editor/LayoutPanel";
+import SimpleCustomPanel from "../components/Editor/SimpleCustomPanel";
+import DetailedCustomPanel from "../components/Editor/DetailedCustomPanel";
+import KeyboardShortcutsHelp from "../components/Editor/KeyboardShortcutsHelp";
+import SelectionOverlay from "../components/Editor/SelectionOverlay";
+import PropertyPanel from "../components/Editor/PropertyPanel";
+import InlineTextEditor from "../components/Editor/InlineTextEditor";
+import type { SelectedBlockInfo } from "../components/Editor/SelectionOverlay";
+import type { InlineEditStartData } from "../components/WebsiteEditor/PreviewPanel";
+import HelpIcon from "../components/Docs/HelpIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
@@ -69,6 +91,34 @@ interface SectionToggle {
   sectionIndex: number;
   sectionName: string;
   enabled: boolean;
+}
+
+/**
+ * EditorSnapshot captures the full editor state for undo/redo (Step 9.2.2)
+ * Exported so tests and RESULT.json documentation can reference the type.
+ */
+export interface EditorSnapshot {
+  websiteName: string;
+  slug: string;
+  pages: PageSelection[];
+  editorBlocks: Block[];
+  primaryColor: string;
+  secondaryColor: string;
+  headingColor: string;
+  bodyColor: string;
+  sections: SectionToggle[];
+  simpleSettings: Record<string, boolean>;
+}
+
+/** Counter for generating stable block IDs within this module */
+let blockIdCounter = 0;
+
+/** Assign a stable _blockId to each block in an array (for React key + selection) */
+function assignBlockIds(blocks: Record<string, any>[]): Record<string, any>[] {
+  return blocks.map((block) => {
+    if ((block as Record<string, unknown>)._blockId) return block;
+    return { ...block, _blockId: `blk-${++blockIdCounter}` };
+  });
 }
 
 /**
@@ -155,6 +205,57 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
     undefined,
   );
 
+  // Tab navigation state (Step 9.13.6)
+  const [activeTab, setActiveTab] = useState("appearance");
+
+  // Keyboard shortcuts UI state (Step 9.6)
+  const [shortcutHelpOpen, setShortcutHelpOpen] = useState(false);
+  const [blockLibraryOpen, setBlockLibraryOpen] = useState(false);
+  const [previewScale, setPreviewScale] = useState(100);
+
+  // Block selection state (Step 9.14.4)
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
+
+  // Inline text editing state (Step 9.16.3)
+  const [inlineEditState, setInlineEditState] =
+    useState<InlineEditStartData | null>(null);
+  const previewIframeRef = useRef<React.RefObject<HTMLIFrameElement> | null>(
+    null,
+  );
+
+  // Simple settings state (Step 9.13.6)
+  const [simpleSettings, setSimpleSettings] = useState<Record<string, boolean>>(
+    {
+      showNavigation: true,
+      showFooter: true,
+      showSocialLinks: true,
+      enableAnimations: true,
+    },
+  );
+
+  // Block Editor State
+  const [editorBlocks, setEditorBlocks] = useState<Block[]>([]);
+  const [blockEditorWebsiteId, setBlockEditorWebsiteId] = useState<
+    number | null
+  >(null);
+  const [blockEditorPageId, setBlockEditorPageId] = useState<number | null>(
+    null,
+  );
+  const debouncedBlocks = useDebouncedValue(editorBlocks, 1000);
+  const blocksInitializedRef = useRef(false);
+  const previousDebouncedBlocksRef = useRef<string>("");
+
+  // ETag + updatedAt refs for conflict detection (Step 5.9)
+  const etagRef = useRef<string | null>(null);
+  const expectedUpdatedAtRef = useRef<string | null>(null);
+
+  // Undo/Redo history (Step 9.2.2)
+  const history = useHistory<EditorSnapshot>();
+  const SESSION_HISTORY_KEY = templateId
+    ? `editor-history-${templateId}`
+    : null;
+
   /**
    * Validates if a string is a valid hex color code
    * Accepts formats: #RGB, #RRGGBB, #RRGGBBAA
@@ -223,7 +324,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
           isHome: page.isHome,
           selected: true, // All pages selected by default
           sortOrder: page.sortOrder,
-          blocks: page.blocks,
+          blocks: assignBlockIds(page.blocks),
         }),
       );
       setPages(initialPages);
@@ -308,7 +409,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
         return page;
       }),
     );
-    markAsModified();
+    markAsModified("Toggled page");
   };
 
   // Handle page reordering
@@ -355,7 +456,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
     newPages[targetIndex].sortOrder = targetIndex;
 
     setPages(newPages);
-    markAsModified();
+    markAsModified("Reordered pages");
   };
 
   // Handle section toggle
@@ -367,7 +468,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
           : section,
       ),
     );
-    markAsModified();
+    markAsModified("Toggled section");
   };
 
   // Get selected pages with enabled sections
@@ -482,6 +583,29 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
 
       if (response.data.success) {
         setSuccess(true);
+
+        // Clear sessionStorage history on successful creation (Step 9.2.2)
+        if (SESSION_HISTORY_KEY) {
+          try {
+            sessionStorage.removeItem(SESSION_HISTORY_KEY);
+          } catch {
+            // Ignore storage errors during cleanup
+          }
+        }
+        history.clear();
+
+        // If the response includes website data with pages, enable block editor
+        const createdWebsite = response.data.data || response.data.website;
+        if (createdWebsite?.id && createdWebsite?.pages?.length > 0) {
+          const homePage = createdWebsite.pages.find(
+            (p: { isHome: boolean }) => p.isHome,
+          );
+          if (homePage) {
+            setBlockEditorWebsiteId(createdWebsite.id);
+            setBlockEditorPageId(homePage.id);
+          }
+        }
+
         setTimeout(() => {
           navigate("/dashboard/websites");
         }, 1500);
@@ -504,44 +628,924 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
     }
   };
 
-  // Track if form has been modified by user interaction
+  // Track if form has been modified by user interaction (kept for back-navigation guard)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Helper to mark form as modified (call this on user input)
-  const markAsModified = () => {
-    if (!initializing) {
+  /**
+   * Capture the current editor state as a snapshot for history.
+   * Called inside markAsModified so all existing onChange handlers
+   * automatically push to the undo stack.
+   */
+  const captureSnapshot = useCallback(
+    (description: string) => {
+      if (initializing) return;
+      const snapshot: EditorSnapshot = {
+        websiteName,
+        slug,
+        pages,
+        editorBlocks,
+        primaryColor,
+        secondaryColor,
+        headingColor,
+        bodyColor,
+        sections,
+        simpleSettings,
+      };
+      history.push(snapshot, description);
+
+      // Persist to sessionStorage keyed by templateId
+      if (SESSION_HISTORY_KEY) {
+        try {
+          const stackData = {
+            stack: [
+              {
+                state: snapshot,
+                description,
+                timestamp: Date.now(),
+              },
+            ],
+            currentIndex: 0,
+          };
+          sessionStorage.setItem(
+            SESSION_HISTORY_KEY,
+            JSON.stringify(stackData),
+          );
+        } catch {
+          // QuotaExceededError — gracefully degrade (keep in-memory history working)
+        }
+      }
+    },
+    [
+      initializing,
+      websiteName,
+      slug,
+      pages,
+      editorBlocks,
+      primaryColor,
+      secondaryColor,
+      headingColor,
+      bodyColor,
+      sections,
+      simpleSettings,
+      history,
+      SESSION_HISTORY_KEY,
+    ],
+  );
+
+  /**
+   * Helper to mark form as modified (for back button navigation guard)
+   * Enhanced (Step 9.2.2): also pushes snapshot to useHistory
+   */
+  const markAsModified = useCallback(
+    (description = "Edited content") => {
+      if (!initializing) {
+        setHasUnsavedChanges(true);
+        captureSnapshot(description);
+      }
+    },
+    [initializing, captureSnapshot],
+  );
+
+  /**
+   * Restore all state fields from a history snapshot (Step 9.2.2)
+   */
+  const restoreSnapshot = useCallback((snapshot: EditorSnapshot) => {
+    setWebsiteName(snapshot.websiteName);
+    setSlug(snapshot.slug);
+    setPages(snapshot.pages);
+    setEditorBlocks(snapshot.editorBlocks);
+    setPrimaryColor(snapshot.primaryColor);
+    setSecondaryColor(snapshot.secondaryColor);
+    setHeadingColor(snapshot.headingColor);
+    setBodyColor(snapshot.bodyColor);
+    setSections(snapshot.sections);
+    if (snapshot.simpleSettings) {
+      setSimpleSettings(snapshot.simpleSettings);
+    }
+  }, []);
+
+  /**
+   * Undo: go back one history step and restore state (Step 9.2.2)
+   */
+  const handleUndo = useCallback(() => {
+    const snapshot = history.undo();
+    if (snapshot) {
+      restoreSnapshot(snapshot);
+    }
+  }, [history, restoreSnapshot]);
+
+  /**
+   * Redo: go forward one history step and restore state (Step 9.2.2)
+   */
+  const handleRedo = useCallback(() => {
+    const snapshot = history.redo();
+    if (snapshot) {
+      restoreSnapshot(snapshot);
+    }
+  }, [history, restoreSnapshot]);
+
+  // Keyboard shortcuts (Step 9.2.3) — Ctrl+Z/Cmd+Z for undo, Ctrl+Shift+Z/Cmd+Shift+Z for redo
+  const { isMac, toastOpen, toastMessage, closeToast } = useKeyboardShortcuts({
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+    enabled: !initializing,
+    undoDescription: history.lastActionDescription,
+  });
+
+  // Shortcut manager (Step 9.6) — new registry-based system for all other shortcuts
+  const { registerShortcut, unregisterShortcut, shortcuts } =
+    useShortcutManager();
+
+  // Stable refs for callbacks used inside shortcut registrations
+  const triggerBlockSaveRef = useRef<(() => void) | null>(null);
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+  const pagesRef = useRef(pages);
+  pagesRef.current = pages;
+  const setActiveTabRef = useRef(setActiveTab);
+  setActiveTabRef.current = setActiveTab;
+
+  // Register page-level shortcuts after autosave is set up
+  // (triggerBlockSave is defined later — use a ref approach via useEffect)
+  const shortcutsEnabled = !initializing;
+
+  // Register page-level shortcuts
+  useEffect(() => {
+    if (!shortcutsEnabled) return;
+
+    // Ctrl+S / Cmd+S → Save (prevents browser Save dialog)
+    registerShortcut({
+      key: "ctrl+s",
+      action: () => {
+        if (triggerBlockSaveRef.current) triggerBlockSaveRef.current();
+      },
+      description: "Save changes",
+      category: "Editing",
+      scope: "global",
+    });
+
+    // Ctrl+Enter → Quick save
+    registerShortcut({
+      key: "ctrl+enter",
+      action: () => {
+        if (triggerBlockSaveRef.current) triggerBlockSaveRef.current();
+      },
+      description: "Quick save",
+      category: "Editing",
+      scope: "global",
+    });
+
+    // Ctrl+Shift+P → Open preview in new tab
+    registerShortcut({
+      key: "ctrl+shift+p",
+      action: () => {
+        const url = window.location.href.replace("/customize", "/preview");
+        window.open(url, "_blank", "noopener,noreferrer");
+      },
+      description: "Open preview",
+      category: "Navigation",
+      scope: "global",
+    });
+
+    // Ctrl+B → Toggle block library sidebar
+    registerShortcut({
+      key: "ctrl+b",
+      action: () => setBlockLibraryOpen((prev) => !prev),
+      description: "Toggle block library",
+      category: "Blocks",
+      scope: "global",
+    });
+
+    // Ctrl+\ → Toggle block library (alias)
+    registerShortcut({
+      key: "ctrl+\\",
+      action: () => setBlockLibraryOpen((prev) => !prev),
+      description: "Toggle sidebar",
+      category: "UI",
+      scope: "global",
+    });
+
+    // Ctrl+Shift+? → Open keyboard shortcuts help (Shift required to type '?')
+    registerShortcut({
+      key: "ctrl+shift+?",
+      action: () => setShortcutHelpOpen(true),
+      description: "Show keyboard shortcuts",
+      category: "UI",
+      scope: "global",
+    });
+
+    // Ctrl+T → Navigate to theme/appearance tab
+    registerShortcut({
+      key: "ctrl+t",
+      action: () => setActiveTabRef.current("appearance"),
+      description: "Go to theme / appearance",
+      category: "Navigation",
+      scope: "editor",
+    });
+
+    // Ctrl+] → Next page
+    registerShortcut({
+      key: "ctrl+]",
+      action: () => {
+        const selectedPages = pagesRef.current.filter((p) => p.selected);
+        if (selectedPages.length < 2) return;
+        // Find current active page index (we use pages array order)
+        const currentIdx = 0; // First selected page is "current" — stub for navigation
+        const nextIdx = (currentIdx + 1) % selectedPages.length;
+        const nextPage = selectedPages[nextIdx];
+        if (nextPage) {
+          console.info("[Shortcut] Next page:", nextPage.title);
+        }
+      },
+      description: "Next page",
+      category: "Navigation",
+      scope: "editor",
+    });
+
+    // Ctrl+[ → Previous page
+    registerShortcut({
+      key: "ctrl+[",
+      action: () => {
+        const selectedPages = pagesRef.current.filter((p) => p.selected);
+        if (selectedPages.length < 2) return;
+        const currentIdx = 0;
+        const prevIdx =
+          (currentIdx - 1 + selectedPages.length) % selectedPages.length;
+        const prevPage = selectedPages[prevIdx];
+        if (prevPage) {
+          console.info("[Shortcut] Previous page:", prevPage.title);
+        }
+      },
+      description: "Previous page",
+      category: "Navigation",
+      scope: "editor",
+    });
+
+    // Ctrl+H → Jump to home page
+    registerShortcut({
+      key: "ctrl+h",
+      action: () => {
+        const homePage = pagesRef.current.find((p) => p.isHome && p.selected);
+        if (homePage) {
+          console.info("[Shortcut] Jump to home page:", homePage.title);
+        }
+      },
+      description: "Jump to home page",
+      category: "Navigation",
+      scope: "editor",
+    });
+
+    // Ctrl+= → Zoom in preview (Ctrl+= is standard zoom-in; avoids '+' delimiter conflict)
+    registerShortcut({
+      key: "ctrl+=",
+      action: () => setPreviewScale((prev) => Math.min(200, prev + 10)),
+      description: "Zoom in preview",
+      category: "UI",
+      scope: "editor",
+    });
+
+    // Ctrl+- → Zoom out preview
+    registerShortcut({
+      key: "ctrl+-",
+      action: () => setPreviewScale((prev) => Math.max(25, prev - 10)),
+      description: "Zoom out preview",
+      category: "UI",
+      scope: "editor",
+    });
+
+    // Ctrl+0 → Reset zoom to 100%
+    registerShortcut({
+      key: "ctrl+0",
+      action: () => setPreviewScale(100),
+      description: "Reset preview zoom",
+      category: "UI",
+      scope: "editor",
+    });
+
+    return () => {
+      unregisterShortcut("ctrl+s");
+      unregisterShortcut("ctrl+enter");
+      unregisterShortcut("ctrl+shift+p");
+      unregisterShortcut("ctrl+b");
+      unregisterShortcut("ctrl+\\");
+      unregisterShortcut("ctrl+shift+?");
+      unregisterShortcut("ctrl+t");
+      unregisterShortcut("ctrl+]");
+      unregisterShortcut("ctrl+[");
+      unregisterShortcut("ctrl+h");
+      unregisterShortcut("ctrl+=");
+      unregisterShortcut("ctrl+-");
+      unregisterShortcut("ctrl+0");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shortcutsEnabled, registerShortcut, unregisterShortcut]);
+
+  // Autosave callback — PUT blocks to API with ETag conflict detection (Step 5.9)
+  const handleAutosaveBlocks = useCallback(
+    async (data: Record<string, unknown>) => {
+      if (!blockEditorWebsiteId || !blockEditorPageId) {
+        throw new Error("No website/page selected");
+      }
+      const blocks = data.blocks as Block[];
+
+      // Build headers — include If-Match when we have a stored ETag
+      const headers: Record<string, string> = {};
+      if (etagRef.current) {
+        headers["If-Match"] = etagRef.current;
+      }
+
+      try {
+        const response = await axios.put(
+          `${API_URL}/websites/${blockEditorWebsiteId}/pages/${blockEditorPageId}/blocks`,
+          {
+            blocks: blocks.map((b, idx) => ({
+              blockType: b.blockType,
+              content: b.content,
+              variant: b.variant,
+              sortOrder: idx,
+              isVisible: b.isVisible,
+            })),
+            ...(expectedUpdatedAtRef.current
+              ? { expectedUpdatedAt: expectedUpdatedAtRef.current }
+              : {}),
+          },
+          { headers },
+        );
+
+        // Store ETag from response for next request
+        if (response.headers?.etag) {
+          etagRef.current = response.headers.etag;
+        }
+
+        // Store updatedAt for next expectedUpdatedAt fallback
+        const updatedAt = (response.data?.data as { updatedAt?: string })
+          ?.updatedAt;
+        if (updatedAt) {
+          expectedUpdatedAtRef.current = updatedAt;
+        }
+
+        return { updatedAt };
+      } catch (error: any) {
+        // Handle 412 Precondition Failed — conflict detected
+        if (error?.response?.status === 412) {
+          return {
+            conflict: true,
+            serverData: error.response.data.serverData,
+            serverUpdatedAt: error.response.data.serverUpdatedAt,
+          };
+        }
+        // Re-throw non-412 errors for useAutosave error handling
+        throw error;
+      }
+    },
+    [blockEditorWebsiteId, blockEditorPageId],
+  );
+
+  // Autosave data object (blocks wrapped in object for useAutosave)
+  const autosaveBlocks = useMemo(
+    () => ({ blocks: editorBlocks }),
+    [editorBlocks],
+  );
+
+  // LocalStorage backup for unsaved changes (Step 5.10)
+  const {
+    hasBackup: hasLocalBackup,
+    backupEntry: localBackupEntry,
+    restoreBackup: restoreLocalBackup,
+    discardBackup: discardLocalBackup,
+    clearBackup: clearLocalBackup,
+  } = useLocalStorageBackup({
+    websiteId: blockEditorWebsiteId,
+    pageId: blockEditorPageId,
+    currentData: autosaveBlocks,
+    hasUnsavedChanges: hasUnsavedChanges,
+    isLoading: !blocksInitializedRef.current,
+  });
+
+  const {
+    hasUnsavedChanges: autosaveHasChanges,
+    saveStatus: blockSaveStatusFromHook,
+    conflictData: blockConflictData,
+    triggerSave: triggerBlockSave,
+    resolveConflict: resolveBlockConflict,
+  } = useAutosave({
+    entityType: "page",
+    entityId: blockEditorPageId,
+    data: autosaveBlocks,
+    onSave: handleAutosaveBlocks,
+    isLoading: !blocksInitializedRef.current,
+    onSaveSuccess: clearLocalBackup,
+  });
+
+  // Sync triggerBlockSave into ref so shortcut registrations can call it
+  triggerBlockSaveRef.current = triggerBlockSave;
+
+  // Sync hasUnsavedChanges from autosave hook
+  useEffect(() => {
+    setHasUnsavedChanges(autosaveHasChanges);
+  }, [autosaveHasChanges]);
+
+  // Use blockSaveStatus from hook (replaces old local state)
+  const blockSaveStatus = blockSaveStatusFromHook;
+
+  // Unsaved changes warning — replaces old window.confirm() navigation guard
+  // Uses React Router useBlocker for client-side navigation + ConfirmationDialog
+  // skipBeforeUnload=true because useAutosave already handles beforeunload
+  const {
+    showDialog: showUnsavedDialog,
+    confirmNavigation,
+    cancelNavigation,
+    saveAndNavigate,
+  } = useUnsavedChanges({
+    hasUnsavedChanges: hasUnsavedChanges && !success,
+    onSaveBeforeLeave: triggerBlockSave,
+    skipBeforeUnload: true,
+    saveStatus: blockSaveStatus,
+  });
+
+  // Recovery from localStorage backup (Step 5.10)
+  const handleRestoreBackup = useCallback(() => {
+    const data = restoreLocalBackup();
+    if (data && Array.isArray(data.blocks)) {
+      setEditorBlocks(data.blocks as Block[]);
       setHasUnsavedChanges(true);
     }
-  };
+  }, [restoreLocalBackup]);
 
-  // Warn user before leaving page with unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges && !success) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
+  const handleDiscardBackup = useCallback(() => {
+    discardLocalBackup();
+  }, [discardLocalBackup]);
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [hasUnsavedChanges, success]);
-
-  // Handle back with confirmation
+  // Navigate back to template selection (useBlocker will intercept if dirty)
   const handleBack = () => {
-    if (hasUnsavedChanges && !success) {
-      const confirmLeave = window.confirm(
-        "You have unsaved changes. Are you sure you want to leave? All customizations will be lost.",
-      );
-      if (!confirmLeave) {
-        return;
-      }
-    }
-    // Navigate back to template selection
     navigate(
       `/dashboard/websites/create${templateId ? `?selected=${templateId}` : ""}`,
     );
   };
+
+  // Block Editor onChange handler
+  const handleBlockEditorChange = useCallback((newBlocks: Block[]) => {
+    setEditorBlocks(newBlocks);
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Panel callback handlers (Step 9.13.6)
+  // ---------------------------------------------------------------------------
+
+  // AppearancePanel color change handlers — wrap validateColor + markAsModified
+  const handlePrimaryColorChange = useCallback(
+    (color: string) => {
+      setPrimaryColor(color);
+      validateColor(color, setPrimaryColorError);
+      markAsModified("Changed primary color");
+    },
+    [markAsModified],
+  );
+
+  const handleSecondaryColorChange = useCallback(
+    (color: string) => {
+      setSecondaryColor(color);
+      validateColor(color, setSecondaryColorError);
+      markAsModified("Changed secondary color");
+    },
+    [markAsModified],
+  );
+
+  const handleHeadingColorChange = useCallback(
+    (color: string) => {
+      setHeadingColor(color);
+      validateColor(color, setHeadingColorError);
+      markAsModified("Changed heading color");
+    },
+    [markAsModified],
+  );
+
+  const handleBodyColorChange = useCallback(
+    (color: string) => {
+      setBodyColor(color);
+      validateColor(color, setBodyColorError);
+      markAsModified("Changed body color");
+    },
+    [markAsModified],
+  );
+
+  // DetailedCustomPanel handlers
+  const handleWebsiteNameChange = useCallback(
+    (name: string) => {
+      setWebsiteName(name);
+      markAsModified("Changed website name");
+    },
+    [markAsModified],
+  );
+
+  const handleSlugChangeFromPanel = useCallback(
+    (newSlug: string) => {
+      setSlug(newSlug);
+      setSlugTouched(true);
+      markAsModified("Changed slug");
+    },
+    [markAsModified],
+  );
+
+  // SimpleCustomPanel handlers
+  const handleSettingChange = useCallback(
+    (key: string, value: boolean) => {
+      setSimpleSettings((prev) => ({ ...prev, [key]: value }));
+      markAsModified(`Changed setting: ${key}`);
+    },
+    [markAsModified],
+  );
+
+  const handlePresetSelect = useCallback(
+    (presetColors: {
+      primaryColor: string;
+      secondaryColor: string;
+      headingColor: string;
+      bodyColor: string;
+    }) => {
+      // Validate all preset color values before applying (PAT-004)
+      if (isValidHexColor(presetColors.primaryColor)) {
+        setPrimaryColor(presetColors.primaryColor);
+        setPrimaryColorError(undefined);
+      }
+      if (isValidHexColor(presetColors.secondaryColor)) {
+        setSecondaryColor(presetColors.secondaryColor);
+        setSecondaryColorError(undefined);
+      }
+      if (isValidHexColor(presetColors.headingColor)) {
+        setHeadingColor(presetColors.headingColor);
+        setHeadingColorError(undefined);
+      }
+      if (isValidHexColor(presetColors.bodyColor)) {
+        setBodyColor(presetColors.bodyColor);
+        setBodyColorError(undefined);
+      }
+      markAsModified("Applied color preset");
+    },
+    [markAsModified],
+  );
+
+  // LayoutPanel page reorder handler — merges reordered selected pages back
+  const handlePagesChange = useCallback(
+    (
+      reorderedSelected: Array<{
+        id: string;
+        title: string;
+        path: string;
+        isHome: boolean;
+        selected: boolean;
+        sortOrder: number;
+      }>,
+    ) => {
+      const selectedIds = new Set(reorderedSelected.map((p) => p.id));
+      setPages((prev) => {
+        // Rebuild full PageSelection objects by merging reordered data with existing blocks
+        const reorderedFull = reorderedSelected.map((rp) => {
+          const existing = prev.find((p) => p.id === rp.id);
+          return existing
+            ? { ...existing, sortOrder: rp.sortOrder }
+            : { ...rp, blocks: [] };
+        });
+        const unselected = prev.filter((p) => !selectedIds.has(p.id));
+        return [...reorderedFull, ...unselected];
+      });
+      markAsModified("Reordered pages");
+    },
+    [markAsModified],
+  );
+
+  // Tab change handler
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Block selection callbacks (Step 9.14.4)
+  // ---------------------------------------------------------------------------
+
+  /** Derive the selected block info from editorBlocks + previewData */
+  const selectedBlock: SelectedBlockInfo | null = useMemo(() => {
+    if (!selectedBlockId) return null;
+
+    // Try editorBlocks first (when block editor is active)
+    const editorBlock = editorBlocks.find((b) => b.id === selectedBlockId);
+    if (editorBlock) {
+      return {
+        id: editorBlock.id,
+        blockType: editorBlock.blockType,
+        content: editorBlock.content,
+        isVisible: editorBlock.isVisible,
+      };
+    }
+
+    // Fall back to previewData blocks (template preview — blocks use _blockId)
+    if (previewData) {
+      const block = previewData.blocks.find(
+        (b: Record<string, unknown>) => String(b._blockId) === selectedBlockId,
+      );
+      if (block) {
+        return {
+          id: selectedBlockId,
+          blockType: (block as Record<string, unknown>).type as string,
+          content: (block as Record<string, unknown>).content as Record<
+            string,
+            unknown
+          >,
+        };
+      }
+    }
+
+    return null;
+  }, [selectedBlockId, editorBlocks, previewData]);
+
+  /** Derive block index and total blocks for PropertyPanel position controls (Step 9.15.1) */
+  const { selectedBlockIndex, totalBlockCount } = useMemo(() => {
+    if (!selectedBlockId || !previewData)
+      return { selectedBlockIndex: 0, totalBlockCount: 0 };
+    const blocks = previewData.blocks;
+    const idx = blocks.findIndex(
+      (b: Record<string, unknown>) => String(b._blockId) === selectedBlockId,
+    );
+    return {
+      selectedBlockIndex: idx >= 0 ? idx : 0,
+      totalBlockCount: blocks.length,
+    };
+  }, [selectedBlockId, previewData]);
+
+  const handleBlockSelected = useCallback((blockId: string) => {
+    setSelectedBlockId(blockId);
+  }, []);
+
+  const handleBlockDeselect = useCallback(() => {
+    setSelectedBlockId(null);
+  }, []);
+
+  const handleBlockHover = useCallback((blockId: string | null) => {
+    setHoveredBlockId(blockId);
+  }, []);
+
+  const handlePropertyChange = useCallback(
+    (blockId: string, partialContent: Record<string, unknown>) => {
+      // Update editorBlocks (block editor mode)
+      setEditorBlocks((prev) =>
+        prev.map((b) =>
+          b.id === blockId
+            ? { ...b, content: { ...b.content, ...partialContent } }
+            : b,
+        ),
+      );
+      // Also update pages blocks (template preview mode — blocks identified by _blockId)
+      setPages((prev) =>
+        prev.map((page) => ({
+          ...page,
+          blocks: page.blocks.map((b: Record<string, unknown>) =>
+            String(b._blockId) === blockId
+              ? {
+                  ...b,
+                  content: {
+                    ...(b.content as Record<string, unknown>),
+                    ...partialContent,
+                  },
+                }
+              : b,
+          ),
+        })),
+      );
+      markAsModified("Edited block property");
+    },
+    [markAsModified],
+  );
+
+  /** Toggle block-level isVisible (separate from content properties) */
+  const handleToggleBlockVisibility = useCallback(
+    (blockId: string, isVisible: boolean) => {
+      setEditorBlocks((prev) =>
+        prev.map((b) => (b.id === blockId ? { ...b, isVisible } : b)),
+      );
+      markAsModified("Toggled block visibility");
+    },
+    [markAsModified],
+  );
+
+  // ---------------------------------------------------------------------------
+  // Inline text editing handlers (Step 9.16.3)
+  // ---------------------------------------------------------------------------
+
+  /** Start inline editing — called from PreviewPanel EDIT_START relay */
+  const handleInlineEditStart = useCallback(
+    (data: InlineEditStartData) => {
+      setInlineEditState(data);
+      // Auto-select the block being edited
+      if (data.blockId && data.blockId !== selectedBlockId) {
+        setSelectedBlockId(data.blockId);
+      }
+    },
+    [selectedBlockId],
+  );
+
+  /** Save inline edit — updates block content and pushes to undo */
+  const handleInlineEditSave = useCallback(
+    (newValue: string) => {
+      if (!inlineEditState) return;
+      const { blockId, fieldPath } = inlineEditState;
+
+      // Update via handlePropertyChange to keep both editorBlocks and pages in sync
+      handlePropertyChange(blockId, { [fieldPath]: newValue });
+
+      // Push to undo history with descriptive action
+      markAsModified(`Edited ${fieldPath} inline`);
+
+      // Send EDIT_COMPLETE to iframe to remove editing indicator (Step 9.16.3)
+      try {
+        const iframe = previewIframeRef.current?.current;
+        if (iframe?.contentWindow) {
+          iframe.contentWindow.postMessage(
+            { type: "EDIT_COMPLETE", blockId, fieldPath },
+            window.location.origin,
+          );
+        }
+      } catch {
+        /* silent */
+      }
+
+      // Clear inline edit state
+      setInlineEditState(null);
+    },
+    [inlineEditState, handlePropertyChange, markAsModified],
+  );
+
+  /** Cancel inline edit — clears state without saving */
+  const handleInlineEditCancel = useCallback(() => {
+    setInlineEditState(null);
+  }, []);
+
+  /** Capture iframe ref from PreviewPanel for InlineTextEditor positioning */
+  const handleIframeRefCallback = useCallback(
+    (ref: React.RefObject<HTMLIFrameElement>) => {
+      previewIframeRef.current = ref;
+    },
+    [],
+  );
+
+  const handleQuickDuplicate = useCallback(() => {
+    if (!selectedBlockId) return;
+
+    // For template preview blocks — duplicate in pages state
+    setPages((prev) => {
+      return prev.map((page) => {
+        if (!page.isHome || !page.selected) return page;
+        const idx = page.blocks.findIndex(
+          (b: Record<string, unknown>) =>
+            String(b._blockId) === selectedBlockId,
+        );
+        if (idx < 0) return page;
+        const block = page.blocks[idx];
+        const newBlocks = [...page.blocks];
+        newBlocks.splice(idx + 1, 0, {
+          ...block,
+          _blockId: `blk-${++blockIdCounter}`,
+        });
+        return { ...page, blocks: newBlocks };
+      });
+    });
+    markAsModified("Duplicated block");
+  }, [selectedBlockId, markAsModified]);
+
+  const handleQuickDelete = useCallback(() => {
+    if (!selectedBlockId) return;
+
+    setPages((prev) => {
+      return prev.map((page) => {
+        if (!page.isHome || !page.selected) return page;
+        const newBlocks = page.blocks.filter(
+          (b: Record<string, unknown>) =>
+            String(b._blockId) !== selectedBlockId,
+        );
+        if (newBlocks.length === page.blocks.length) return page;
+        return { ...page, blocks: newBlocks };
+      });
+    });
+    setSelectedBlockId(null);
+    markAsModified("Deleted block");
+  }, [selectedBlockId, markAsModified]);
+
+  const handleQuickMoveUp = useCallback(() => {
+    if (!selectedBlockId) return;
+
+    setPages((prev) => {
+      return prev.map((page) => {
+        if (!page.isHome || !page.selected) return page;
+        const idx = page.blocks.findIndex(
+          (b: Record<string, unknown>) =>
+            String(b._blockId) === selectedBlockId,
+        );
+        if (idx <= 0) return page;
+        const newBlocks = [...page.blocks];
+        [newBlocks[idx - 1], newBlocks[idx]] = [
+          newBlocks[idx],
+          newBlocks[idx - 1],
+        ];
+        return { ...page, blocks: newBlocks };
+      });
+    });
+    // selectedBlockId stays the same — it follows the block, not the position
+    markAsModified("Moved block up");
+  }, [selectedBlockId, markAsModified]);
+
+  const handleQuickMoveDown = useCallback(() => {
+    if (!selectedBlockId) return;
+
+    setPages((prev) => {
+      return prev.map((page) => {
+        if (!page.isHome || !page.selected) return page;
+        const idx = page.blocks.findIndex(
+          (b: Record<string, unknown>) =>
+            String(b._blockId) === selectedBlockId,
+        );
+        if (idx < 0 || idx >= page.blocks.length - 1) return page;
+        const newBlocks = [...page.blocks];
+        [newBlocks[idx], newBlocks[idx + 1]] = [
+          newBlocks[idx + 1],
+          newBlocks[idx],
+        ];
+        return { ...page, blocks: newBlocks };
+      });
+    });
+    // selectedBlockId stays the same — it follows the block, not the position
+    markAsModified("Moved block down");
+  }, [selectedBlockId, markAsModified]);
+
+  // Escape key to deselect (Step 9.14.4) — guarded for inline editor (Step 9.16.3)
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      // Do NOT deselect when inline editor is open — Escape cancels the inline edit instead
+      if (inlineEditState) return;
+      if (e.key === "Escape" && selectedBlockId) {
+        setSelectedBlockId(null);
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [selectedBlockId, inlineEditState]);
+
+  // Reset selection on undo/redo restore (UI-only state)
+  const restoreSnapshotOriginal = restoreSnapshot;
+  const restoreSnapshotWithDeselect = useCallback(
+    (snapshot: EditorSnapshot) => {
+      restoreSnapshotOriginal(snapshot);
+      setSelectedBlockId(null);
+    },
+    [restoreSnapshotOriginal],
+  );
+
+  // Fetch blocks when websiteId and pageId are set
+  useEffect(() => {
+    if (!blockEditorWebsiteId || !blockEditorPageId) return;
+
+    let cancelled = false;
+    axios
+      .get(
+        `${API_URL}/websites/${blockEditorWebsiteId}/pages/${blockEditorPageId}/blocks`,
+      )
+      .then((res) => {
+        if (!cancelled && res.data.blocks) {
+          const fetchedBlocks: Block[] = res.data.blocks.map(
+            (b: {
+              id: number;
+              blockType: string;
+              content: Record<string, unknown>;
+              isVisible: boolean;
+              sortOrder: number;
+              variant?: string;
+            }) => ({
+              id: String(b.id),
+              blockType: b.blockType,
+              content: b.content,
+              isVisible: b.isVisible,
+              sortOrder: b.sortOrder,
+              variant: b.variant,
+            }),
+          );
+          setEditorBlocks(fetchedBlocks);
+          previousDebouncedBlocksRef.current = JSON.stringify(fetchedBlocks);
+          blocksInitializedRef.current = true;
+
+          // Populate initial ETag from GET response (Step 5.9)
+          if (res.headers?.etag) {
+            etagRef.current = res.headers.etag;
+          }
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error("Failed to fetch blocks:", err);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [blockEditorWebsiteId, blockEditorPageId]);
 
   // Countdown for auto-redirect
   const [redirectCountdown, setRedirectCountdown] = useState(3);
@@ -728,12 +1732,30 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
         >
           Back to Templates
         </Button>
-        <Typography
-          variant="h4"
-          sx={{ color: colors.text, fontWeight: 700, mb: 1 }}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 1,
+            mb: 1,
+          }}
         >
-          Customize Your Website
-        </Typography>
+          <Typography variant="h4" sx={{ color: colors.text, fontWeight: 700 }}>
+            Customize Your Website
+          </Typography>
+          {/* Undo/Redo Toolbar (Step 9.2.4) */}
+          <UndoRedoToolbar
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            undoDescription={history.lastActionDescription}
+            redoDescription=""
+            isMac={isMac}
+          />
+        </Box>
         <Typography
           variant="body1"
           component="div"
@@ -767,397 +1789,80 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
         {/* Left Panel - Configuration */}
         <Grid item xs={12} lg={6}>
           <Stack spacing={3}>
-            {/* Basic Info Card */}
-            <Paper
-              sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}
-            >
-              <Typography
-                variant="h6"
-                sx={{ color: colors.text, fontWeight: 600, mb: 3 }}
-              >
-                Basic Information
-              </Typography>
-
-              <TextField
-                fullWidth
-                label="Website Name *"
-                value={websiteName}
-                onChange={(e) => {
-                  setWebsiteName(e.target.value);
-                  markAsModified();
-                }}
-                sx={{ mb: 2 }}
-                placeholder="e.g., My Professional Services"
-              />
-
-              <TextField
-                fullWidth
-                label="URL Slug *"
-                value={slug}
-                onChange={(e) => {
-                  setSlug(e.target.value);
-                  setSlugTouched(true);
-                  markAsModified();
-                }}
-                error={!!slugError}
-                helperText={
-                  slugError ||
-                  `Your website will be accessible at: /site/${slug || "your-slug"}`
-                }
-                sx={{ mb: 3 }}
-                placeholder="e.g., my-services"
-              />
-
-              <Divider sx={{ my: 3 }} />
-
-              <Typography
-                variant="subtitle2"
-                sx={{ color: colors.text, fontWeight: 600, mb: 2 }}
-              >
-                Colors
-              </Typography>
-
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <ColorPickerWithAlpha
-                    value={primaryColor}
-                    onChange={(color) => {
-                      setPrimaryColor(color);
-                      validateColor(color, setPrimaryColorError);
-                      markAsModified();
-                    }}
-                    label="Primary Color"
-                    error={primaryColorError}
-                    showAlpha={true}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <ColorPickerWithAlpha
-                    value={secondaryColor}
-                    onChange={(color) => {
-                      setSecondaryColor(color);
-                      validateColor(color, setSecondaryColorError);
-                      markAsModified();
-                    }}
-                    label="Secondary Color"
-                    error={secondaryColorError}
-                    showAlpha={true}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <ColorPickerWithAlpha
-                    value={headingColor}
-                    onChange={(color) => {
-                      setHeadingColor(color);
-                      validateColor(color, setHeadingColorError);
-                      markAsModified();
-                    }}
-                    label="Heading Text"
-                    error={headingColorError}
-                    showAlpha={false}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <ColorPickerWithAlpha
-                    value={bodyColor}
-                    onChange={(color) => {
-                      setBodyColor(color);
-                      validateColor(color, setBodyColorError);
-                      markAsModified();
-                    }}
-                    label="Body Text"
-                    error={bodyColorError}
-                    showAlpha={false}
-                  />
-                </Grid>
-              </Grid>
-            </Paper>
-
-            {/* Pages Selection Card */}
-            <Paper
-              sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}
-            >
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{ color: colors.text, fontWeight: 600 }}
-                >
-                  Select Pages
-                </Typography>
-                <Tooltip
-                  title={`Your current plan allows up to ${MAX_PAGES_PER_WEBSITE} pages per website. Upgrade your plan to add more pages.`}
-                  arrow
-                >
-                  <InfoIcon
-                    sx={{
-                      fontSize: 18,
-                      color: colors.textSecondary,
-                      cursor: "help",
-                    }}
-                  />
-                </Tooltip>
+            {/* EditorTabs — tab navigation (Step 9.13.6) */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ flex: 1 }}>
+                <EditorTabs activeTab={activeTab} onChange={handleTabChange} />
               </Box>
-              <Typography
-                variant="caption"
-                sx={{ color: colors.textSecondary, mb: 1, display: "block" }}
-              >
-                Choose which pages to include. Home page is required.
-              </Typography>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color:
-                      pages.filter((p) => p.selected).length >=
-                      MAX_PAGES_PER_WEBSITE
-                        ? colors.warning
-                        : colors.textSecondary,
-                    fontWeight: 600,
-                  }}
-                >
-                  {pages.filter((p) => p.selected).length} /{" "}
-                  {MAX_PAGES_PER_WEBSITE} pages selected
-                </Typography>
-                {pages.filter((p) => p.selected).length >=
-                  MAX_PAGES_PER_WEBSITE && (
-                  <Chip
-                    icon={<WarningIcon />}
-                    label="Maximum reached"
-                    size="small"
-                    color="warning"
-                    sx={{ height: 20, fontSize: "0.7rem" }}
-                  />
-                )}
-              </Box>
-
-              {pages.filter((p) => p.selected).length >=
-                MAX_PAGES_PER_WEBSITE && (
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  You've reached the maximum of {MAX_PAGES_PER_WEBSITE} pages.
-                  To add more pages, deselect an existing page first.
-                </Alert>
+              {activeTab === "appearance" && (
+                <HelpIcon
+                  slug="customize-design"
+                  tooltip="Learn about theme customization"
+                />
               )}
+            </Box>
 
-              <Stack spacing={1}>
-                {pages.map((page, index) => {
-                  const selectedCount = pages.filter((p) => p.selected).length;
-                  const isMaxReached = selectedCount >= MAX_PAGES_PER_WEBSITE;
-                  const isDisabled =
-                    page.isHome || (!page.selected && isMaxReached);
+            {/* Conditional panel rendering based on activeTab */}
+            {activeTab === "appearance" && (
+              <AppearancePanel
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                headingColor={headingColor}
+                bodyColor={bodyColor}
+                onPrimaryColorChange={handlePrimaryColorChange}
+                onSecondaryColorChange={handleSecondaryColorChange}
+                onHeadingColorChange={handleHeadingColorChange}
+                onBodyColorChange={handleBodyColorChange}
+                primaryColorError={primaryColorError}
+                secondaryColorError={secondaryColorError}
+                headingColorError={headingColorError}
+                bodyColorError={bodyColorError}
+                websiteId={blockEditorWebsiteId}
+                colors={colors}
+              />
+            )}
 
-                  // Determine tooltip message
-                  const getTooltipMessage = () => {
-                    if (page.isHome) {
-                      return "Home page is required and cannot be deselected";
-                    }
-                    if (!page.selected && isMaxReached) {
-                      return `Maximum of ${MAX_PAGES_PER_WEBSITE} pages reached. Deselect another page to enable this one.`;
-                    }
-                    return "";
-                  };
+            {activeTab === "layout" && (
+              <LayoutPanel
+                pages={pages}
+                sections={sections}
+                maxPagesPerWebsite={MAX_PAGES_PER_WEBSITE}
+                onTogglePage={togglePage}
+                onMovePage={movePage}
+                onPagesChange={handlePagesChange}
+                onToggleSection={toggleSection}
+                colors={colors}
+              />
+            )}
 
-                  return (
-                    <Card
-                      key={page.id}
-                      sx={{
-                        bgcolor: page.selected
-                          ? alpha(colors.primary, 0.1)
-                          : alpha(colors.dark, 0.3),
-                        border: `1px solid ${page.selected ? colors.primary : "transparent"}`,
-                        opacity: isDisabled && !page.isHome ? 0.5 : 1,
-                        cursor:
-                          isDisabled && !page.isHome
-                            ? "not-allowed"
-                            : "default",
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      <CardContent
-                        sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}
-                      >
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Tooltip
-                            title={getTooltipMessage()}
-                            arrow
-                            placement="top"
-                            disableHoverListener={!isDisabled}
-                          >
-                            <Box>
-                              <Checkbox
-                                checked={page.selected}
-                                disabled={isDisabled}
-                                onChange={() => togglePage(page.id)}
-                                size="small"
-                              />
-                            </Box>
-                          </Tooltip>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography
-                              variant="body2"
-                              component="div"
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {page.title}
-                              {page.isHome && (
-                                <Chip
-                                  label="Required"
-                                  size="small"
-                                  color="primary"
-                                  sx={{ ml: 1, height: 18 }}
-                                />
-                              )}
-                              {!page.selected &&
-                                isMaxReached &&
-                                !page.isHome && (
-                                  <Chip
-                                    label="Limit reached"
-                                    size="small"
-                                    color="warning"
-                                    sx={{ ml: 1, height: 18 }}
-                                  />
-                                )}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{ color: colors.textSecondary }}
-                            >
-                              {page.path}
-                            </Typography>
-                          </Box>
-                          {page.selected && (
-                            <Box>
-                              <IconButton
-                                size="small"
-                                onClick={() => movePage(index, "up")}
-                                disabled={
-                                  !pages.slice(0, index).some((p) => p.selected)
-                                }
-                              >
-                                <UpIcon fontSize="small" />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                onClick={() => movePage(index, "down")}
-                                disabled={
-                                  !pages
-                                    .slice(index + 1)
-                                    .some((p) => p.selected)
-                                }
-                              >
-                                <DownIcon fontSize="small" />
-                              </IconButton>
-                            </Box>
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </Stack>
-            </Paper>
+            {activeTab === "simple" && (
+              <SimpleCustomPanel
+                settings={simpleSettings}
+                onSettingChange={handleSettingChange}
+                onPresetSelect={handlePresetSelect}
+                colors={colors}
+              />
+            )}
 
-            {/* Sections Selection Card */}
-            <Paper
-              sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}
-            >
-              <Typography
-                variant="h6"
-                sx={{ color: colors.text, fontWeight: 600, mb: 1 }}
-              >
-                Customize Sections
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{ color: colors.textSecondary, mb: 3, display: "block" }}
-              >
-                Enable or disable specific sections for Home and Services pages.
-              </Typography>
+            {activeTab === "detailed" && (
+              <DetailedCustomPanel
+                websiteName={websiteName}
+                slug={slug}
+                slugError={slugError}
+                onWebsiteNameChange={handleWebsiteNameChange}
+                onSlugChange={handleSlugChangeFromPanel}
+                editorBlocks={editorBlocks}
+                onBlockEditorChange={handleBlockEditorChange}
+                blockEditorWebsiteId={blockEditorWebsiteId}
+                blockEditorPageId={blockEditorPageId}
+                blockSaveStatus={blockSaveStatus}
+                onTriggerBlockSave={triggerBlockSave}
+                disabled={loading}
+                colors={colors}
+              />
+            )}
 
-              {/* Home Sections */}
-              {sections.filter((s) => s.pageTitle === "Home").length > 0 && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ color: colors.text, fontWeight: 600, mb: 1 }}
-                  >
-                    Home Page Sections
-                  </Typography>
-                  <Stack spacing={0.5}>
-                    {sections
-                      .filter((s) => s.pageTitle === "Home")
-                      .map((section, idx) => (
-                        <FormControlLabel
-                          key={`home-${idx}`}
-                          control={
-                            <Checkbox
-                              checked={section.enabled}
-                              onChange={() =>
-                                toggleSection(
-                                  section.pageTitle,
-                                  section.sectionIndex,
-                                )
-                              }
-                              size="small"
-                            />
-                          }
-                          label={
-                            <Typography variant="body2">
-                              {section.sectionName}
-                            </Typography>
-                          }
-                        />
-                      ))}
-                  </Stack>
-                </Box>
-              )}
-
-              {/* Services Sections */}
-              {sections.filter((s) => s.pageTitle === "Services").length >
-                0 && (
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ color: colors.text, fontWeight: 600, mb: 1 }}
-                  >
-                    Services Page Sections
-                  </Typography>
-                  <Stack spacing={0.5}>
-                    {sections
-                      .filter((s) => s.pageTitle === "Services")
-                      .map((section, idx) => (
-                        <FormControlLabel
-                          key={`services-${idx}`}
-                          control={
-                            <Checkbox
-                              checked={section.enabled}
-                              onChange={() =>
-                                toggleSection(
-                                  section.pageTitle,
-                                  section.sectionIndex,
-                                )
-                              }
-                              size="small"
-                            />
-                          }
-                          label={
-                            <Typography variant="body2">
-                              {section.sectionName}
-                            </Typography>
-                          }
-                        />
-                      ))}
-                  </Stack>
-                </Box>
-              )}
-            </Paper>
-
-            {/* Action Buttons */}
+            {/* Action Buttons — always visible below tabs */}
             <Paper
               sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}
             >
@@ -1171,12 +1876,28 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
                   Back
                 </Button>
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   onClick={handleCreateWebsite}
-                  disabled={!canCreate}
+                  disabled={!canCreate || loading}
                   fullWidth
                 >
-                  {loading ? <CircularProgress size={24} /> : "Create Website"}
+                  {loading ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    "Create Without AI"
+                  )}
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() =>
+                    navigate(
+                      `/dashboard/websites/create/questionnaire?template=${templateId}`,
+                    )
+                  }
+                  disabled={!canCreate || loading}
+                  fullWidth
+                >
+                  Next: AI Content
                 </Button>
               </Stack>
             </Paper>
@@ -1189,12 +1910,41 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
             <Paper
               sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}
             >
-              <Typography
-                variant="h6"
-                sx={{ color: colors.text, fontWeight: 600, mb: 3 }}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 3,
+                }}
               >
-                Live Preview
-              </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{ color: colors.text, fontWeight: 600 }}
+                >
+                  Live Preview
+                </Typography>
+                {previewScale !== 100 && (
+                  <Typography
+                    variant="caption"
+                    sx={{ color: colors.textSecondary }}
+                  >
+                    {previewScale}%
+                  </Typography>
+                )}
+              </Box>
+
+              {/* Selection Overlay — between header and preview (Step 9.14.4) */}
+              <SelectionOverlay
+                selectedBlock={selectedBlock}
+                onEdit={() => setActiveTab("detailed")}
+                onDuplicate={handleQuickDuplicate}
+                onDelete={handleQuickDelete}
+                onMoveUp={handleQuickMoveUp}
+                onMoveDown={handleQuickMoveDown}
+                onDeselect={handleBlockDeselect}
+                colors={colors}
+              />
 
               {/* Preview Container */}
               <Box
@@ -1205,6 +1955,12 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
                   border: `1px solid ${alpha(colors.primary, 0.2)}`,
                   maxHeight: "70vh",
                   overflowY: "auto",
+                  transform:
+                    previewScale !== 100
+                      ? `scale(${previewScale / 100})`
+                      : undefined,
+                  transformOrigin: "top left",
+                  transition: "transform 0.2s ease",
                 }}
               >
                 {/* Preview Navigation */}
@@ -1248,24 +2004,49 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
                   </Box>
                 </Box>
 
-                {/* Preview Content */}
+                {/* Preview Content — clickable block wrappers (Step 9.14.4) */}
                 <Box>
                   {previewData && previewData.blocks.length > 0 ? (
-                    previewData.blocks.map((block, idx) => (
-                      <BlockRenderer
-                        key={idx}
-                        block={{
-                          id: idx,
-                          blockType: block.type,
-                          content: block.content,
-                          sortOrder: block.sortOrder,
-                        }}
-                        primaryColor={primaryColor}
-                        secondaryColor={secondaryColor}
-                        headingColor={headingColor}
-                        bodyColor={bodyColor}
-                      />
-                    ))
+                    previewData.blocks.map((block, idx) => {
+                      const blockId = (block as Record<string, unknown>)
+                        ._blockId
+                        ? String((block as Record<string, unknown>)._blockId)
+                        : `blk-fallback-${idx}`;
+                      const isSelected = selectedBlockId === blockId;
+                      const isHovered = hoveredBlockId === blockId;
+                      return (
+                        <Box
+                          key={blockId}
+                          data-block-wrapper={blockId}
+                          onClick={() => handleBlockSelected(blockId)}
+                          onMouseEnter={() => handleBlockHover(blockId)}
+                          onMouseLeave={() => handleBlockHover(null)}
+                          sx={{
+                            cursor: "pointer",
+                            position: "relative",
+                            transition: "border-color 0.15s ease",
+                            border: isSelected
+                              ? "2px solid #1976d2"
+                              : isHovered
+                                ? "2px dashed rgba(25, 118, 210, 0.5)"
+                                : "2px solid transparent",
+                          }}
+                        >
+                          <BlockRenderer
+                            block={{
+                              id: idx,
+                              blockType: block.type,
+                              content: block.content,
+                              sortOrder: block.sortOrder,
+                            }}
+                            primaryColor={primaryColor}
+                            secondaryColor={secondaryColor}
+                            headingColor={headingColor}
+                            bodyColor={bodyColor}
+                          />
+                        </Box>
+                      );
+                    })
                   ) : (
                     <Box sx={{ py: 8, textAlign: "center", color: "#64748b" }}>
                       <Typography variant="body1">
@@ -1295,6 +2076,81 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
           </Box>
         </Grid>
       </Grid>
+
+      {/* Property Panel for inline block editing (Step 9.14.4) */}
+      <PropertyPanel
+        open={!!selectedBlockId}
+        selectedBlock={selectedBlock}
+        onClose={handleBlockDeselect}
+        onChange={handlePropertyChange}
+        onToggleVisibility={handleToggleBlockVisibility}
+        onMoveUp={handleQuickMoveUp}
+        onMoveDown={handleQuickMoveDown}
+        blockIndex={selectedBlockIndex}
+        totalBlocks={totalBlockCount}
+        colors={colors}
+      />
+
+      {/* Inline Text Editor overlay (Step 9.16.3) */}
+      <InlineTextEditor
+        open={!!inlineEditState}
+        initialValue={inlineEditState?.value || ""}
+        fieldPath={inlineEditState?.fieldPath || ""}
+        editType={inlineEditState?.editType || "single"}
+        rect={inlineEditState?.rect || { top: 0, left: 0, width: 0, height: 0 }}
+        onSave={handleInlineEditSave}
+        onCancel={handleInlineEditCancel}
+        iframeRef={{ current: null }}
+      />
+
+      {/* Recovery modal for localStorage backup (Step 5.10) */}
+      <RecoveryModal
+        open={hasLocalBackup}
+        timestamp={localBackupEntry?.timestamp ?? 0}
+        onRestore={handleRestoreBackup}
+        onDiscard={handleDiscardBackup}
+      />
+
+      {/* Unsaved changes confirmation dialog */}
+      <ConfirmationDialog
+        open={showUnsavedDialog}
+        variant="warning"
+        title="Unsaved Changes"
+        message="You have unsaved changes. Would you like to save before leaving?"
+        confirmLabel="Leave"
+        cancelLabel="Cancel"
+        secondaryLabel="Save & Leave"
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+        onSecondary={saveAndNavigate}
+      />
+
+      {/* Conflict resolution modal for block editor */}
+      {blockConflictData && (
+        <ConflictModal
+          open={!!blockConflictData}
+          conflictData={blockConflictData}
+          onResolve={resolveBlockConflict}
+        />
+      )}
+
+      {/* Keyboard shortcut undo/redo toast feedback (Step 9.2.3) */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={2000}
+        onClose={closeToast}
+        message={toastMessage}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
+
+      {/* Keyboard Shortcuts Help Modal (Step 9.6.4) */}
+      <KeyboardShortcutsHelp
+        open={shortcutHelpOpen}
+        onClose={() => setShortcutHelpOpen(false)}
+        shortcuts={shortcuts}
+        isMac={isMac}
+        showFirstTimeHint={true}
+      />
     </>
   );
 

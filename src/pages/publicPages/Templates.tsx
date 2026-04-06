@@ -33,7 +33,6 @@ type StaticTemplate = {
 };
 
 const STATIC_TEMPLATES: StaticTemplate[] = [
-
   {
     id: "static-blog",
     slug: "blog",
@@ -117,17 +116,6 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     name: "Store Performance",
     description:
       "High-contrast neon performance store template inspired by gym campaigns and bold sports retail visuals.",
-    type: "store",
-    category: "ecommerce",
-    version: "1.0.0",
-    previewImage: "",
-  },
-  {
-    id: "static-store-fit",
-    slug: "store-fit",
-    name: "Store Fit",
-    description:
-      "Bold cobalt sports-fashion store template with oversized typography, editorial product rows, and a campaign-style contact finish.",
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
@@ -268,7 +256,7 @@ const Templates: React.FC = () => {
       <Box
         sx={{
           width: "100%",
-          minHeight: {xs:"100vh",md:"70vh"},
+          minHeight: { xs: "100vh", md: "70vh" },
           position: "relative",
           display: "flex",
           alignItems: "center",

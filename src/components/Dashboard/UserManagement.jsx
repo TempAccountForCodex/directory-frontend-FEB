@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import {
   Box,
   Button,
@@ -30,6 +31,13 @@ import {
   CircularProgress,
   InputAdornment,
   Stack,
+  Tabs,
+  Tab,
+  Divider,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormLabel,
 } from '@mui/material';
 import {
   Plus as AddIcon,
@@ -45,6 +53,13 @@ import {
   Search as SearchIcon,
   Eye,
   EyeOff,
+  CreditCard,
+  ReceiptText,
+  Clock,
+  DollarSign,
+  Undo2,
+  Gift,
+  ShieldAlert,
 } from 'lucide-react';
 import PeopleIcon from '@mui/icons-material/People';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -60,6 +75,10 @@ import {
   DashboardRoleSelect,
   DashboardSelect,
   DashboardMetricCard,
+  DashboardConfirmButton,
+  DashboardGradientButton,
+  DashboardDateField,
+  ConfirmationDialog,
   PageHeader,
   DashboardIconButton,
   getTrendProps,
@@ -69,6 +88,736 @@ import RowActionButtonGroup from './shared/RowActionButtonGroup';
 import { ROLES, isSuperAdmin as checkIsSuperAdmin } from '../../constants/roles';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
+// ── Plan display config ─────────────────────────────────────────────────
+const PLAN_DISPLAY = {
+  website_free: { label: 'Free', color: '#6b7280' },
+  website_core: { label: 'Core', color: '#3b82f6' },
+  website_growth: { label: 'Growth', color: '#8b5cf6' },
+  website_agency: { label: 'Agency', color: '#f59e0b' },
+};
+
+const SUB_STATUS_CONFIG = {
+  active: { label: 'Active', color: '#22c55e' },
+  cancelled: { label: 'Cancelling', color: '#eab308' },
+  past_due: { label: 'Past Due', color: '#ef4444' },
+  none: { label: 'Free', color: '#6b7280' },
+};
+
+const DURATION_OPTIONS = [
+  { value: 'permanent', label: 'Permanent' },
+  { value: '30', label: '30 days' },
+  { value: '60', label: '60 days' },
+  { value: '90', label: '90 days' },
+  { value: 'custom', label: 'Custom' },
+];
+
+const CONSENT_ACTION_ICONS = {
+  admin_plan_override: ShieldAlert,
+  admin_plan_override_revoked: Undo2,
+  admin_plan_override_extended: Clock,
+  admin_credit_granted: Gift,
+  admin_refund: Undo2,
+  plan_upgrade: CreditCard,
+  plan_downgrade: CreditCard,
+  subscription_cancel: BlockIcon,
+  subscription_reactivate: ActiveIcon,
+};
+
+// ── BillingTab subcomponent ─────────────────────────────────────────────
+const BillingTab = memo(function BillingTab({ userId, colors, showSnackbar }) {
+  const [billingData, setBillingData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Credit form state
+  const [showCreditForm, setShowCreditForm] = useState(false);
+  const [creditAmount, setCreditAmount] = useState('');
+  const [creditReason, setCreditReason] = useState('');
+
+  // Plan override form state
+  const [overridePlanCode, setOverridePlanCode] = useState('website_core');
+  const [overrideReason, setOverrideReason] = useState('');
+  const [overrideDuration, setOverrideDuration] = useState('30');
+  const [overrideCustomDate, setOverrideCustomDate] = useState('');
+
+  // Refund dialog state
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [refundInvoice, setRefundInvoice] = useState(null);
+  const [refundType, setRefundType] = useState('full');
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+  const [refundConfirmStep, setRefundConfirmStep] = useState(0);
+
+  const fetchBillingData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/admin/users/${userId}/billing-history`);
+      setBillingData(response.data.data);
+    } catch (err) {
+      showSnackbar('Failed to load billing data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, showSnackbar]);
+
+  useEffect(() => {
+    fetchBillingData();
+  }, [fetchBillingData]);
+
+  const handleApplyOverride = useCallback(async () => {
+    if (!overrideReason.trim()) {
+      showSnackbar('Reason is required', 'error');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      let expiresAt = null;
+      if (overrideDuration !== 'permanent') {
+        if (overrideDuration === 'custom') {
+          expiresAt = overrideCustomDate || null;
+        } else {
+          const days = parseInt(overrideDuration, 10);
+          expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+        }
+      }
+      await axios.post(`${API_URL}/admin/users/${userId}/plan-override`, {
+        planCode: overridePlanCode,
+        reason: overrideReason,
+        expiresAt,
+      });
+      showSnackbar('Plan override applied', 'success');
+      setOverrideReason('');
+      await fetchBillingData();
+    } catch (err) {
+      showSnackbar(err.response?.data?.message || 'Failed to apply override', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  }, [userId, overridePlanCode, overrideReason, overrideDuration, overrideCustomDate, showSnackbar, fetchBillingData]);
+
+  const handleRevokeOverride = useCallback(async () => {
+    setActionLoading(true);
+    try {
+      await axios.delete(`${API_URL}/admin/users/${userId}/plan-override`);
+      showSnackbar('Plan override revoked', 'success');
+      await fetchBillingData();
+    } catch (err) {
+      showSnackbar(err.response?.data?.message || 'Failed to revoke override', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  }, [userId, showSnackbar, fetchBillingData]);
+
+  const handleQuickPreset = useCallback((planCode, days) => {
+    setOverridePlanCode(planCode);
+    setOverrideDuration(String(days));
+    setOverrideReason(`Quick preset: ${PLAN_DISPLAY[planCode]?.label || planCode} for ${days} days`);
+  }, []);
+
+  const handleGrantCredits = useCallback(async () => {
+    const cents = Math.round(parseFloat(creditAmount) * 100);
+    if (isNaN(cents) || cents <= 0) {
+      showSnackbar('Enter a valid credit amount', 'error');
+      return;
+    }
+    if (cents > 1000000) {
+      showSnackbar('Maximum credit amount is $10,000', 'error');
+      return;
+    }
+    if (!creditReason.trim()) {
+      showSnackbar('Reason is required', 'error');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await axios.post(`${API_URL}/admin/users/${userId}/credits`, {
+        amountCents: cents,
+        reason: creditReason,
+      });
+      showSnackbar('Credits granted', 'success');
+      setCreditAmount('');
+      setCreditReason('');
+      setShowCreditForm(false);
+      await fetchBillingData();
+    } catch (err) {
+      showSnackbar(err.response?.data?.message || 'Failed to grant credits', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  }, [userId, creditAmount, creditReason, showSnackbar, fetchBillingData]);
+
+  const handleOpenRefundDialog = useCallback((invoice) => {
+    setRefundInvoice(invoice);
+    setRefundType('full');
+    setRefundAmount('');
+    setRefundReason('');
+    setRefundConfirmStep(0);
+    setRefundDialogOpen(true);
+  }, []);
+
+  const handleProcessRefund = useCallback(async () => {
+    if (refundConfirmStep === 0) {
+      setRefundConfirmStep(1);
+      return;
+    }
+    if (!refundReason.trim()) {
+      showSnackbar('Refund reason is required', 'error');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const isFull = refundType === 'full';
+      const body = {
+        reason: refundReason,
+        isFull,
+      };
+      if (!isFull) {
+        body.amountCents = Math.round(parseFloat(refundAmount) * 100);
+      }
+      await axios.post(`${API_URL}/admin/invoices/${refundInvoice.id}/refund`, body);
+      showSnackbar('Refund processed', 'success');
+      setRefundDialogOpen(false);
+      await fetchBillingData();
+    } catch (err) {
+      showSnackbar(err.response?.data?.message || 'Failed to process refund', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  }, [refundConfirmStep, refundType, refundAmount, refundReason, refundInvoice, showSnackbar, fetchBillingData]);
+
+  const activeOverride = useMemo(
+    () => billingData?.planOverrides?.find((o) => o.isActive),
+    [billingData]
+  );
+
+  const creditBalanceDisplay = useMemo(() => {
+    const cents = billingData?.user?.accountCreditCents || 0;
+    return `$${(cents / 100).toFixed(2)}`;
+  }, [billingData]);
+
+  const planConfig = useMemo(
+    () => PLAN_DISPLAY[billingData?.user?.websitePlan] || PLAN_DISPLAY.website_free,
+    [billingData]
+  );
+
+  const subStatusConfig = useMemo(
+    () => SUB_STATUS_CONFIG[billingData?.user?.subscriptionStatus] || SUB_STATUS_CONFIG.none,
+    [billingData]
+  );
+
+  const invoiceColumns = useMemo(
+    () => [
+      {
+        header: 'Date',
+        accessorKey: 'createdAt',
+        size: 110,
+        Cell: ({ cell }) => (
+          <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+            {new Date(cell.getValue()).toLocaleDateString()}
+          </Typography>
+        ),
+      },
+      {
+        header: 'Invoice #',
+        accessorKey: 'invoiceNumber',
+        size: 120,
+        Cell: ({ cell }) => (
+          <Typography variant="body2" sx={{ color: colors.text, fontWeight: 500 }}>
+            {cell.getValue()}
+          </Typography>
+        ),
+      },
+      {
+        header: 'Amount',
+        accessorKey: 'totalCents',
+        size: 100,
+        Cell: ({ cell }) => (
+          <Typography variant="body2" sx={{ color: colors.text }}>
+            ${(cell.getValue() / 100).toFixed(2)}
+          </Typography>
+        ),
+      },
+      {
+        header: 'Status',
+        accessorKey: 'status',
+        size: 130,
+        Cell: ({ cell }) => {
+          const statusColors = {
+            paid: '#22c55e',
+            refunded: '#6b7280',
+            partially_refunded: '#eab308',
+            pending: '#3b82f6',
+            failed: '#ef4444',
+          };
+          const c = statusColors[cell.getValue()] || '#6b7280';
+          return (
+            <Chip
+              label={cell.getValue()?.replace('_', ' ')}
+              size="small"
+              sx={{
+                background: alpha(c, 0.15),
+                color: c,
+                fontWeight: 600,
+                fontSize: '0.65rem',
+                textTransform: 'capitalize',
+              }}
+            />
+          );
+        },
+      },
+    ],
+    [colors]
+  );
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress size={32} />
+      </Box>
+    );
+  }
+
+  if (!billingData) {
+    return (
+      <Typography sx={{ color: colors.textSecondary, py: 2 }}>
+        No billing data available.
+      </Typography>
+    );
+  }
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      {/* Status Row */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+        <Chip
+          label={planConfig.label}
+          size="small"
+          sx={{
+            background: alpha(planConfig.color, 0.15),
+            color: planConfig.color,
+            fontWeight: 700,
+            border: `1px solid ${alpha(planConfig.color, 0.3)}`,
+          }}
+        />
+        <Chip
+          label={subStatusConfig.label}
+          size="small"
+          sx={{
+            background: alpha(subStatusConfig.color, 0.15),
+            color: subStatusConfig.color,
+            fontWeight: 700,
+            border: `1px solid ${alpha(subStatusConfig.color, 0.3)}`,
+          }}
+        />
+        {billingData.user.currentPeriodEnd && (
+          <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+            Next billing: {new Date(billingData.user.currentPeriodEnd).toLocaleDateString()}
+          </Typography>
+        )}
+      </Box>
+
+      {/* Credit Balance */}
+      <Box
+        sx={{
+          p: 2,
+          borderRadius: 2,
+          border: `1px solid ${colors.border}`,
+          background: alpha(colors.bgCard, 0.5),
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <DollarSign size={18} color={colors.primary} />
+            <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 600 }}>
+              Account Credits
+            </Typography>
+          </Box>
+          <Typography variant="h6" sx={{ color: colors.primary, fontWeight: 700 }}>
+            {creditBalanceDisplay}
+          </Typography>
+        </Box>
+
+        {!showCreditForm ? (
+          <DashboardGradientButton
+            size="small"
+            onClick={() => setShowCreditForm(true)}
+            sx={{ mt: 0.5 }}
+          >
+            Add Credits
+          </DashboardGradientButton>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
+            <DashboardInput
+              label="Amount ($)"
+              type="number"
+              size="small"
+              value={creditAmount}
+              onChange={(e) => setCreditAmount(e.target.value)}
+              inputProps={{ min: 1, max: 10000, step: 0.01 }}
+            />
+            <DashboardInput
+              label="Reason"
+              size="small"
+              value={creditReason}
+              onChange={(e) => setCreditReason(e.target.value)}
+              required
+            />
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <DashboardConfirmButton
+                size="small"
+                onClick={handleGrantCredits}
+                disabled={actionLoading || !creditAmount || !creditReason.trim()}
+              >
+                {actionLoading ? <CircularProgress size={16} /> : 'Grant Credits'}
+              </DashboardConfirmButton>
+              <Button
+                size="small"
+                onClick={() => setShowCreditForm(false)}
+                sx={{ color: colors.textSecondary }}
+              >
+                Cancel
+              </Button>
+            </Box>
+          </Box>
+        )}
+      </Box>
+
+      {/* Active Plan Override */}
+      {activeOverride && (
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            border: `1px solid ${alpha('#f59e0b', 0.3)}`,
+            background: alpha('#f59e0b', 0.05),
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box>
+              <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 600 }}>
+                Active Override: {PLAN_DISPLAY[activeOverride.planCode]?.label || activeOverride.planCode}
+              </Typography>
+              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                {activeOverride.expiresAt
+                  ? `Expires: ${new Date(activeOverride.expiresAt).toLocaleDateString()}`
+                  : 'Permanent'}
+                {' - '}{activeOverride.reason}
+              </Typography>
+            </Box>
+            <DashboardConfirmButton
+              size="small"
+              onClick={handleRevokeOverride}
+              disabled={actionLoading}
+              sx={{
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                '&:hover': { background: 'linear-gradient(135deg, #dc2626, #b91c1c)' },
+              }}
+            >
+              {actionLoading ? <CircularProgress size={16} color="inherit" /> : 'Revoke'}
+            </DashboardConfirmButton>
+          </Box>
+        </Box>
+      )}
+
+      {/* Override Plan Section */}
+      <Box
+        sx={{
+          p: 2,
+          borderRadius: 2,
+          border: `1px solid ${colors.border}`,
+          background: alpha(colors.bgCard, 0.5),
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 600, mb: 1.5 }}>
+          Override Plan
+        </Typography>
+
+        {/* Quick Presets */}
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => handleQuickPreset('website_core', 30)}
+            sx={{ color: colors.text, borderColor: colors.border, textTransform: 'none', fontSize: '0.75rem' }}
+          >
+            Free Core 30d
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => handleQuickPreset('website_growth', 30)}
+            sx={{ color: colors.text, borderColor: colors.border, textTransform: 'none', fontSize: '0.75rem' }}
+          >
+            Free Growth 30d
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => handleQuickPreset('website_agency', 14)}
+            sx={{ color: colors.text, borderColor: colors.border, textTransform: 'none', fontSize: '0.75rem' }}
+          >
+            Free Agency 14d
+          </Button>
+        </Box>
+
+        <Grid container spacing={1.5}>
+          <Grid item xs={12} sm={6}>
+            <DashboardSelect
+              label="Plan"
+              size="small"
+              value={overridePlanCode}
+              onChange={(e) => setOverridePlanCode(e.target.value)}
+            >
+              <MenuItem value="website_free">Free</MenuItem>
+              <MenuItem value="website_core">Core ($19/mo)</MenuItem>
+              <MenuItem value="website_growth">Growth ($49/mo)</MenuItem>
+              <MenuItem value="website_agency">Agency ($149/mo)</MenuItem>
+            </DashboardSelect>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <DashboardSelect
+              label="Duration"
+              size="small"
+              value={overrideDuration}
+              onChange={(e) => setOverrideDuration(e.target.value)}
+            >
+              {DURATION_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </DashboardSelect>
+          </Grid>
+          {overrideDuration === 'custom' && (
+            <Grid item xs={12}>
+              <DashboardDateField
+                label="Custom Expiry Date"
+                size="small"
+                value={overrideCustomDate}
+                onChange={(e) => setOverrideCustomDate(e.target.value)}
+              />
+            </Grid>
+          )}
+          <Grid item xs={12}>
+            <DashboardInput
+              label="Reason"
+              size="small"
+              value={overrideReason}
+              onChange={(e) => setOverrideReason(e.target.value)}
+              required
+              multiline
+              rows={2}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <DashboardConfirmButton
+              size="small"
+              onClick={handleApplyOverride}
+              disabled={actionLoading || !overrideReason.trim()}
+            >
+              {actionLoading ? <CircularProgress size={16} color="inherit" /> : 'Apply Override'}
+            </DashboardConfirmButton>
+          </Grid>
+        </Grid>
+      </Box>
+
+      {/* Invoices */}
+      {billingData.recentInvoices?.length > 0 && (
+        <Box
+          sx={{
+            borderRadius: 2,
+            border: `1px solid ${colors.border}`,
+            overflow: 'hidden',
+          }}
+        >
+          <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 600 }}>
+              Recent Invoices
+            </Typography>
+          </Box>
+          <Box sx={{ overflowX: 'auto' }}>
+            <DashboardDataGrid
+              gridId="billing-invoices"
+              rowData={billingData.recentInvoices}
+              columnDefs={invoiceColumns}
+              actionColumn={{
+                width: 100,
+                actions: (invoice) => [
+                  {
+                    label: 'Refund',
+                    icon: <Undo2 size={16} />,
+                    onClick: () => handleOpenRefundDialog(invoice),
+                    color: '#ef4444',
+                    show: invoice.status === 'paid' || invoice.status === 'partially_refunded',
+                  },
+                ],
+              }}
+              paginationPageSize={5}
+              rowHeight={48}
+            />
+          </Box>
+        </Box>
+      )}
+
+      {/* Consent Ledger Timeline */}
+      {billingData.consentLedger?.length > 0 && (
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            border: `1px solid ${colors.border}`,
+            background: alpha(colors.bgCard, 0.5),
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 600, mb: 1 }}>
+            Audit Trail
+          </Typography>
+          <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+            {billingData.consentLedger.map((entry, idx) => {
+              const IconComp = CONSENT_ACTION_ICONS[entry.action] || Clock;
+              return (
+                <Box
+                  key={entry.id || idx}
+                  sx={{
+                    display: 'flex',
+                    gap: 1.5,
+                    py: 1,
+                    borderBottom: idx < billingData.consentLedger.length - 1 ? `1px solid ${alpha(colors.border, 0.5)}` : 'none',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      background: alpha(colors.primary, 0.1),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      mt: 0.25,
+                    }}
+                  >
+                    <IconComp size={14} color={colors.primary} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ color: colors.text, fontWeight: 500, fontSize: '0.8rem' }}>
+                      {entry.action?.replace(/_/g, ' ')}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: colors.textSecondary, display: 'block' }}>
+                      {new Date(entry.createdAt).toLocaleString()}
+                      {entry.planFrom && entry.planTo && ` - ${entry.planFrom} -> ${entry.planTo}`}
+                    </Typography>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+      )}
+
+      {/* Refund Dialog — double-confirmation */}
+      <Dialog
+        open={refundDialogOpen}
+        onClose={() => setRefundDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: colors.bgCard,
+            borderRadius: 3,
+            border: `1px solid ${colors.border}`,
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: colors.text, fontWeight: 700 }}>
+          {refundConfirmStep === 0 ? 'Process Refund' : 'Confirm Refund'}
+        </DialogTitle>
+        <DialogContent>
+          {refundConfirmStep === 1 && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              This action is irreversible. Confirm you want to process this refund.
+            </Alert>
+          )}
+          {refundInvoice && (
+            <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 2 }}>
+              Invoice: {refundInvoice.invoiceNumber} - ${((refundInvoice.totalCents || 0) / 100).toFixed(2)}
+            </Typography>
+          )}
+          <FormControl component="fieldset" sx={{ mb: 2, width: '100%' }}>
+            <FormLabel sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>Refund Type</FormLabel>
+            <RadioGroup
+              value={refundType}
+              onChange={(e) => setRefundType(e.target.value)}
+            >
+              <FormControlLabel
+                value="full"
+                control={<Radio size="small" />}
+                label="Full refund"
+                sx={{ color: colors.text }}
+              />
+              <FormControlLabel
+                value="partial"
+                control={<Radio size="small" />}
+                label="Partial refund"
+                sx={{ color: colors.text }}
+              />
+            </RadioGroup>
+          </FormControl>
+          {refundType === 'partial' && (
+            <DashboardInput
+              label="Refund Amount ($)"
+              type="number"
+              size="small"
+              value={refundAmount}
+              onChange={(e) => setRefundAmount(e.target.value)}
+              inputProps={{ min: 0.01, step: 0.01 }}
+              sx={{ mb: 2 }}
+            />
+          )}
+          <DashboardInput
+            label="Reason"
+            size="small"
+            value={refundReason}
+            onChange={(e) => setRefundReason(e.target.value)}
+            required
+            multiline
+            rows={2}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: `1px solid ${colors.border}` }}>
+          <Button
+            onClick={() => setRefundDialogOpen(false)}
+            sx={{ color: colors.textSecondary }}
+          >
+            Cancel
+          </Button>
+          <DashboardConfirmButton
+            onClick={handleProcessRefund}
+            disabled={
+              actionLoading ||
+              !refundReason.trim() ||
+              (refundType === 'partial' && (!refundAmount || parseFloat(refundAmount) <= 0))
+            }
+            sx={{
+              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+              '&:hover': { background: 'linear-gradient(135deg, #dc2626, #b91c1c)' },
+            }}
+          >
+            {actionLoading ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : refundConfirmStep === 0 ? (
+              'Continue'
+            ) : (
+              'Process Refund'
+            )}
+          </DashboardConfirmButton>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+});
 
 const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
   const { actualTheme } = useCustomTheme();
@@ -101,6 +850,7 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
   const [sortDirection, setSortDirection] = useState('desc');
   const [roleFilter, setRoleFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [dialogTab, setDialogTab] = useState(0);
 
   const [stats, setStats] = useState({
     total: 0,
@@ -125,10 +875,30 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
 
   const isSuperAdmin = checkIsSuperAdmin(currentUser.role);
 
+  // Debounce search for server-side filtering
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  // Map UI filter values to API params
+  const roleApiValue = useMemo(() => {
+    const roleMap = { 'User': ROLES.USER, 'Content Creator': ROLES.CONTENT_CREATOR, 'Admin': ROLES.ADMIN, 'Super Admin': ROLES.SUPER_ADMIN };
+    return roleMap[roleFilter] || '';
+  }, [roleFilter]);
+
+  const blockedApiValue = useMemo(() => {
+    if (statusFilter === 'Active') return 'false';
+    if (statusFilter === 'Blocked') return 'true';
+    return '';
+  }, [statusFilter]);
+
   useEffect(() => {
     fetchUsers();
     fetchStats();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, debouncedSearch, roleApiValue, blockedApiValue]);
+
+  // Reset page to 1 on search/filter change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, roleApiValue, blockedApiValue]);
 
   // Persist rowsPerPage to localStorage
   useEffect(() => {
@@ -168,15 +938,21 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API_URL}/users?page=${page}&limit=${rowsPerPage}`);
+      setLoading(true);
+      const params = new URLSearchParams({ page: String(page), limit: String(rowsPerPage) });
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
+      if (roleApiValue) params.set('role', roleApiValue);
+      if (blockedApiValue) params.set('blocked', blockedApiValue);
+
+      const response = await axios.get(`${API_URL}/users?${params.toString()}`);
 
       setUsers(response.data.users || []);
       setTotalPages(response.data.pagination?.totalPages || 1);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching users:', error);
       setUsers([]);
       showSnackbar('Failed to fetch users', 'error');
+    } finally {
       setLoading(false);
     }
   };
@@ -186,6 +962,7 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
   };
 
   const handleOpenDialog = (user = null) => {
+    setDialogTab(0);
     if (user) {
       setIsEditing(true);
       setCurrentEditUser(user);
@@ -436,38 +1213,8 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
     }
   };
 
-  // Filter users based on search query, role, and status
-  const filteredUsers = users.filter((user) => {
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const matchesSearch =
-        user.name?.toLowerCase().includes(query) ||
-        user.username?.toLowerCase().includes(query) ||
-        user.email?.toLowerCase().includes(query) ||
-        user.role?.toLowerCase().includes(query);
-      if (!matchesSearch) return false;
-    }
-
-    // Role filter
-    if (roleFilter !== 'All') {
-      if (roleFilter === 'Admin' && user.role !== ROLES.ADMIN) return false;
-      if (roleFilter === 'Super Admin' && user.role !== ROLES.SUPER_ADMIN) return false;
-      if (roleFilter === 'Content Creator' && user.role !== ROLES.CONTENT_CREATOR) return false;
-      if (roleFilter === 'User' && user.role !== ROLES.USER) return false;
-    }
-
-    // Status filter
-    if (statusFilter !== 'All') {
-      if (statusFilter === 'Active' && user.blocked) return false;
-      if (statusFilter === 'Blocked' && !user.blocked) return false;
-    }
-
-    return true;
-  });
-
-  // Sort filtered users
-  const sortedAndFilteredUsers = [...filteredUsers].sort((a, b) => {
+  // Server-side search/filter is active — client-side sort only
+  const sortedAndFilteredUsers = [...users].sort((a, b) => {
     let aVal, bVal;
 
     switch (sortField) {
@@ -773,12 +1520,29 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
           sx={{
             color: colors.text,
             fontWeight: 700,
-            borderBottom: `0.5px solid ${colors.border}`,
+            borderBottom: isEditing && isSuperAdmin ? 'none' : `0.5px solid ${colors.border}`,
+            pb: isEditing && isSuperAdmin ? 1 : undefined,
           }}
         >
           {isEditing ? 'Edit User' : 'Create New User'}
         </DialogTitle>
-        <DialogContent dividers sx={{ borderColor: colors.border }}>
+        {isEditing && isSuperAdmin && (
+          <Tabs
+            value={dialogTab}
+            onChange={(_, v) => setDialogTab(v)}
+            sx={{
+              px: 2,
+              borderBottom: `1px solid ${colors.border}`,
+              '& .MuiTab-root': { color: colors.textSecondary, textTransform: 'none', minHeight: 40, fontSize: '0.85rem' },
+              '& .Mui-selected': { color: colors.primary },
+              '& .MuiTabs-indicator': { backgroundColor: colors.primary },
+            }}
+          >
+            <Tab label="Details" />
+            <Tab label="Billing" />
+          </Tabs>
+        )}
+        <DialogContent dividers sx={{ borderColor: colors.border, display: dialogTab === 0 ? 'block' : 'none' }}>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12}>
               <DashboardInput
@@ -930,6 +1694,17 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
             </Grid>
           </Grid>
         </DialogContent>
+        {/* Billing Tab — only visible for SUPER_ADMIN editing existing users */}
+        {isEditing && isSuperAdmin && dialogTab === 1 && (
+          <DialogContent dividers sx={{ borderColor: colors.border }}>
+            <BillingTab
+              userId={currentEditUser?.id}
+              colors={colors}
+              showSnackbar={showSnackbar}
+            />
+          </DialogContent>
+        )}
+        {dialogTab === 0 && (
         <DialogActions
           sx={{
             background: colors.bgCard,
@@ -957,6 +1732,7 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
             {submitting ? 'Processing...' : isEditing ? 'Update User' : 'Create User'}
           </DashboardActionButton>
         </DialogActions>
+        )}
       </Dialog>
 
       {/* Delete Confirmation Dialog */}

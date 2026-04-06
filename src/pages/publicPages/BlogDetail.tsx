@@ -30,7 +30,7 @@ interface Blog {
   ogImage?: string;
   canonicalUrl?: string;
   image?: string;
-  author?: string;
+  author?: string | { name?: string };
   createdAt?: string;
   publishedAt?: string;
   category?: string;
@@ -38,6 +38,9 @@ interface Blog {
   headings?: any[];
   [key: string]: any;
 }
+
+const getAuthorName = (author: Blog["author"]) =>
+  typeof author === "string" ? author : author?.name || "";
 
 const InsightsDetailsNew = () => {
   const [blog, setBlog] = useState<Blog | null>(null);
@@ -210,7 +213,9 @@ const InsightsDetailsNew = () => {
           name="description"
           content={blog.metaDescription || blog.content}
         />
-        {blog.keywords && <meta name="keywords" content={blog.keywords} />}
+        {blog.keywords && (
+          <meta name="keywords" content={blog.keywords.join(", ")} />
+        )}
         <meta property="og:title" content={blog.metaTitle || blog.title} />
         <meta
           property="og:description"
@@ -282,7 +287,7 @@ const InsightsDetailsNew = () => {
               {blog.author && (
                 <Chip
                   icon={<PersonIcon sx={{ fontSize: "1rem" }} />}
-                  label={`By ${blog.author.name}`}
+                  label={`By ${getAuthorName(blog.author)}`}
                   sx={{ backgroundColor: "#f0f0f0" }}
                 />
               )}
@@ -433,7 +438,7 @@ const InsightsDetailsNew = () => {
                     Author
                   </Typography>
                   <Typography variant="body1" fontWeight="600">
-                    {blog.author.name}
+                    {getAuthorName(blog.author)}
                   </Typography>
                 </Box>
               )}

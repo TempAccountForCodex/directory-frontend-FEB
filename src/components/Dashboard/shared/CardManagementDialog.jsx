@@ -22,9 +22,8 @@ import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
 import DashboardCancelButton from './DashboardCancelButton';
 import DashboardConfirmButton from './DashboardConfirmButton';
 
-// Initialize Stripe only when a valid publishable key is available.
-const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
+// Initialize Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 /**
  * Card brand icons using SVG paths

@@ -30,7 +30,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CodeInput from "../components/CodeInput";
 import { ResendLink } from "../components/auth/ResendLink";
 import { useResendTimer } from "../hooks/useResendTimer";
-import WhiteLogo from "/WhiteLogo.png";
+import WhiteLogo from "/assets/images/header/WhiteLogo.png";
 
 const star = "/assets/publicAssets/images/common/star.svg";
 const darkhole = "assets/publicAssets/images/common/darkhole.svg";
@@ -246,14 +246,14 @@ const GoogleButton = styled(Button)(({ theme }) => ({
 }));
 
 const SecondaryButton = styled(Button)(({ theme }) => ({
-  color: "#ffffffe7",
+  color: "#378C92",
   fontSize: "14px",
   fontWeight: 600,
   textTransform: "none",
   transition: "all 0.2s ease",
   "&:hover": {
     color: "#3a98a0",
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(55, 140, 146, 0.06)",
   },
 }));
 
@@ -277,7 +277,7 @@ const IconWrapper = styled(Box)(({ theme }) => ({
   border: "1px solid rgba(55, 140, 146, 0.15)",
   transition: "all 0.3s ease",
   "& svg": {
-    color: "#ffffff",
+    color: "#378C92",
     fontSize: 22,
   },
 }));
@@ -411,6 +411,28 @@ const Auth = () => {
     }
   }, [searchParams]);
 
+  // Step 10.35: Capture referral code from URL ?ref=CODE
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode && typeof refCode === "string" && refCode.trim()) {
+      const code = refCode.trim().toLowerCase();
+      // Store in localStorage (reliable) + cookie (30-day, for server reads)
+      localStorage.setItem("ref_code", code);
+      document.cookie = `ref_code=${encodeURIComponent(code)}; max-age=${30 * 86400}; path=/; SameSite=Lax`;
+
+      // Track click (non-blocking)
+      const apiUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+      fetch(`${apiUrl}/referral/track-click`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      }).catch(() => {
+        /* ignore tracking failures */
+      });
+    }
+  }, [searchParams]);
+
   // Handle Google OAuth errors (success now redirects directly to dashboard)
   useEffect(() => {
     const googleAuth = searchParams.get("google_auth");
@@ -521,8 +543,17 @@ const Auth = () => {
         formDataToSend.append("name", formData.name);
         formDataToSend.append("acceptTerms", acceptTerms.toString());
 
+        // Step 10.35: Include referral code if present
+        const refCode = localStorage.getItem("ref_code");
+        if (refCode) {
+          formDataToSend.append("referralCode", refCode);
+        }
+
         const result = await signup(formDataToSend);
         if (result.success) {
+          // Clear referral code after successful signup
+          localStorage.removeItem("ref_code");
+          document.cookie = "ref_code=; max-age=0; path=/";
           setVerificationEmail(formData.email);
           setShowEmailVerification(true);
         } else {
@@ -1437,7 +1468,7 @@ const Auth = () => {
       <Typography
         variant="body2"
         sx={{
-          color: "rgba(255, 255, 255, 0.92)",
+          color: "rgba(255, 255, 255, 0.55)",
           fontSize: "14px",
           mb: 4,
           lineHeight: 1.5,
@@ -1477,7 +1508,7 @@ const Auth = () => {
         sx={{
           display: "block",
           textAlign: "center",
-          color: "rgba(255, 255, 255, 0.92)",
+          color: "rgba(255, 255, 255, 0.4)",
           fontSize: "12px",
           mb: 3,
           mt: -2,
@@ -1491,7 +1522,7 @@ const Auth = () => {
         <Typography
           variant="body2"
           sx={{
-            color: "rgba(255, 255, 255, 0.92)",
+            color: "rgba(255, 255, 255, 0.45)",
             fontSize: "12px",
             px: 2,
           }}
@@ -1799,7 +1830,7 @@ const Auth = () => {
           <Typography
             variant="body1"
             sx={{
-              color: "rgb(255, 255, 255)",
+              color: "rgba(255, 255, 255, 0.65)",
               fontSize: "17px",
               lineHeight: 1.65,
               mb: 6,

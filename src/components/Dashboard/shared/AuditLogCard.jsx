@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Box, Typography, TableHead, TableBody, TableCell, Skeleton, MenuItem, Button } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { ScrollText, Download } from 'lucide-react';
@@ -16,27 +16,23 @@ import DashboardDateField from './DashboardDateField';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-const ACTION_OPTIONS = [
-  { value: 'create', label: 'Create' },
-  { value: 'update', label: 'Update' },
-  { value: 'delete', label: 'Delete' },
-  { value: 'publish', label: 'Publish' },
-  { value: 'unpublish', label: 'Unpublish' },
-  { value: 'archive', label: 'Archive' },
-  { value: 'restore', label: 'Restore' },
+/**
+ * Hardcoded fallbacks -- used only if /api/audit/meta fetch fails.
+ * The canonical source of truth is the backend endpoint.
+ */
+const FALLBACK_ACTIONS = [
+  'create', 'update', 'delete', 'publish', 'unpublish', 'archive', 'restore',
 ];
 
-const ENTITY_TYPE_OPTIONS = [
-  { value: 'Website', label: 'Website' },
-  { value: 'Page', label: 'Page' },
-  { value: 'Block', label: 'Block' },
-  { value: 'Template', label: 'Template' },
-  { value: 'Store', label: 'Store' },
-  { value: 'Product', label: 'Product' },
-  { value: 'Order', label: 'Order' },
-  { value: 'User', label: 'User' },
-  { value: 'Blog', label: 'Blog' },
+const FALLBACK_ENTITY_TYPES = [
+  'Website', 'Page', 'Block', 'Template', 'Store', 'Product', 'Order', 'User', 'Blog',
 ];
+
+/** Convert a raw value string to { value, label } for dropdowns */
+const toOption = (v) => ({
+  value: v,
+  label: v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' '),
+});
 
 const AuditLogCard = () => {
   const { actualTheme } = useCustomTheme();
@@ -54,6 +50,29 @@ const AuditLogCard = () => {
   const [entityTypeFilter, setEntityTypeFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  // Dynamic filter options from /api/audit/meta
+  const [actionOptions, setActionOptions] = useState(FALLBACK_ACTIONS.map(toOption));
+  const [entityTypeOptions, setEntityTypeOptions] = useState(FALLBACK_ENTITY_TYPES.map(toOption));
+  const metaFetched = useRef(false);
+
+  useEffect(() => {
+    if (metaFetched.current) return;
+    metaFetched.current = true;
+    axios
+      .get(`${API_URL}/audit/meta`)
+      .then(({ data }) => {
+        if (Array.isArray(data.actions) && data.actions.length > 0) {
+          setActionOptions(data.actions.map(toOption));
+        }
+        if (Array.isArray(data.entityTypes) && data.entityTypes.length > 0) {
+          setEntityTypeOptions(data.entityTypes.map(toOption));
+        }
+      })
+      .catch(() => {
+        // Keep fallback values -- already set in initial state
+      });
+  }, []);
 
   const tableColors = useMemo(
     () => ({
@@ -167,7 +186,7 @@ const AuditLogCard = () => {
           displayEmpty
         >
           <MenuItem value="">All actions</MenuItem>
-          {ACTION_OPTIONS.map((opt) => (
+          {actionOptions.map((opt) => (
             <MenuItem key={opt.value} value={opt.value}>
               {opt.label}
             </MenuItem>
@@ -183,7 +202,7 @@ const AuditLogCard = () => {
           displayEmpty
         >
           <MenuItem value="">All resources</MenuItem>
-          {ENTITY_TYPE_OPTIONS.map((opt) => (
+          {entityTypeOptions.map((opt) => (
             <MenuItem key={opt.value} value={opt.value}>
               {opt.label}
             </MenuItem>

@@ -10,12 +10,8 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import {
-  ArrowRight,
-  Facebook,
-  Instagram,
-} from "lucide-react";
-import { TemplateProps } from "../../templateEngine/types";
+import { ArrowRight, Facebook, Instagram } from "lucide-react";
+import type { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
 
 const serifFont = '"Cormorant Garamond", Georgia, serif';
@@ -272,7 +268,11 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Stack spacing={2.6} sx={{ mt: 4.5, maxWidth: 360 }}>
                 {["Our Mission", "Our Vision", "Our Promise"].map(
                   (title, index) => (
-                    <FadeIn key={title} delay={0.16 + index * 0.08} direction="right">
+                    <FadeIn
+                      key={title}
+                      delay={0.16 + index * 0.08}
+                      direction="right"
+                    >
                       <Box>
                         <Typography
                           sx={{
@@ -366,8 +366,8 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{ lineHeight: 1.85, color: "rgba(255,255,255,0.82)" }}
                 >
                   Find us in the heart of the city where warm interiors,
-                  open-grill cooking, and late-evening energy come together in one
-                  memorable dining room.
+                  open-grill cooking, and late-evening energy come together in
+                  one memorable dining room.
                 </Typography>
               </FadeIn>
             </Grid>
@@ -505,7 +505,11 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                   "From sauces to signature specials, much of what you taste is prepared with care in-house.",
                 ],
               ].map(([title, text], index) => (
-                <FadeIn key={title} delay={0.08 + index * 0.08} direction="right">
+                <FadeIn
+                  key={title}
+                  delay={0.08 + index * 0.08}
+                  direction="right"
+                >
                   <Box sx={{ mb: 2.3 }}>
                     <Typography
                       sx={{
@@ -653,7 +657,11 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                   "Time",
                   "Message",
                 ].map((label, index) => (
-                  <FadeIn key={label} delay={0.08 + index * 0.06} direction="left">
+                  <FadeIn
+                    key={label}
+                    delay={0.08 + index * 0.06}
+                    direction="left"
+                  >
                     <TextField
                       fullWidth
                       multiline={label === "Message"}
@@ -721,8 +729,8 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography
                   sx={{ color: "rgba(255,255,255,0.76)", lineHeight: 1.8 }}
                 >
-                  Restaurant operator focused on bold flavor, honest hospitality,
-                  and a memorable dining room.
+                  Restaurant operator focused on bold flavor, honest
+                  hospitality, and a memorable dining room.
                 </Typography>
                 <Stack direction="row" spacing={1.2} sx={{ mt: 2 }}>
                   {[Facebook, Instagram].map((Icon, index) => (
@@ -753,7 +761,11 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {data.contact.address}
                 </Typography>
                 <Typography
-                  sx={{ color: "rgba(255,255,255,0.8)", lineHeight: 1.8, mt: 1 }}
+                  sx={{
+                    color: "rgba(255,255,255,0.8)",
+                    lineHeight: 1.8,
+                    mt: 1,
+                  }}
                 >
                   {data.contact.phone}
                 </Typography>

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { Facebook, Instagram, Mail, Twitter } from "lucide-react";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
 
 const visualAssets = {
@@ -366,95 +366,99 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
           }}
         >
           {featuredProducts.map((product, index) => (
-            <FadeIn key={product.id} delay={0.06 * index} direction={index % 2 === 0 ? "up" : "left"}>
+            <FadeIn
+              key={product.id}
+              delay={0.06 * index}
+              direction={index % 2 === 0 ? "up" : "left"}
+            >
               <Box>
-              <Box
-                sx={{
-                  bgcolor: "#f2ede8",
-                  px: 3,
-                  pt: 2,
-                  pb: 3,
-                  minHeight: 230,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
                 <Box
-                  component="img"
-                  src={product.image}
-                  alt={product.name}
                   sx={{
-                    width: 120,
-                    height: 160,
-                    objectFit: "cover",
-                    borderRadius: 1.5,
+                    bgcolor: "#f2ede8",
+                    px: 3,
+                    pt: 2,
+                    pb: 3,
+                    minHeight: 230,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                />
-              </Box>
-              <Typography sx={{ mt: 1.7, fontWeight: 700, color: "#f7f1ea" }}>
-                {product.name}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.3,
-                  fontSize: "0.84rem",
-                  color: "rgba(247,241,234,0.8)",
-                }}
-              >
-                {product.price}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 1.3,
-                  color: "rgba(247,241,234,0.88)",
-                  lineHeight: 1.7,
-                  fontSize: "0.9rem",
-                }}
-              >
-                {product.description}
-              </Typography>
-              <Box
-                component="select"
-                value={sizes[product.id] || "8oz"}
-                onChange={(event) =>
-                  setSizes((current) => ({
-                    ...current,
-                    [product.id]: event.target.value,
-                  }))
-                }
-                sx={{
-                  mt: 2.2,
-                  width: "100%",
-                  height: 38,
-                  border: 0,
-                  bgcolor: "#f2ede8",
-                  color: "#2c231f",
-                  px: 1.5,
-                  fontFamily: bodyFont,
-                }}
-              >
-                <option value="Standard">Standard</option>
-                <option value="Performance Fabric">Performance Fabric</option>
-                <option value="Premium Linen">Premium Linen</option>
-              </Box>
-              <Button
-                fullWidth
-                variant="outlined"
-                sx={{
-                  mt: 1.25,
-                  borderRadius: 999,
-                  borderColor: "rgba(247,241,234,0.82)",
-                  color: "#f7f1ea",
-                  textTransform: "none",
-                  "&:hover": {
-                    borderColor: "#f7f1ea",
-                    bgcolor: "rgba(247,241,234,0.08)",
-                  },
-                }}
-              >
-                View details
-              </Button>
+                >
+                  <Box
+                    component="img"
+                    src={product.image}
+                    alt={product.name}
+                    sx={{
+                      width: 120,
+                      height: 160,
+                      objectFit: "cover",
+                      borderRadius: 1.5,
+                    }}
+                  />
+                </Box>
+                <Typography sx={{ mt: 1.7, fontWeight: 700, color: "#f7f1ea" }}>
+                  {product.name}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.3,
+                    fontSize: "0.84rem",
+                    color: "rgba(247,241,234,0.8)",
+                  }}
+                >
+                  {product.price}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1.3,
+                    color: "rgba(247,241,234,0.88)",
+                    lineHeight: 1.7,
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  {product.description}
+                </Typography>
+                <Box
+                  component="select"
+                  value={sizes[product.id] || "8oz"}
+                  onChange={(event) =>
+                    setSizes((current) => ({
+                      ...current,
+                      [product.id]: event.target.value,
+                    }))
+                  }
+                  sx={{
+                    mt: 2.2,
+                    width: "100%",
+                    height: 38,
+                    border: 0,
+                    bgcolor: "#f2ede8",
+                    color: "#2c231f",
+                    px: 1.5,
+                    fontFamily: bodyFont,
+                  }}
+                >
+                  <option value="Standard">Standard</option>
+                  <option value="Performance Fabric">Performance Fabric</option>
+                  <option value="Premium Linen">Premium Linen</option>
+                </Box>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  sx={{
+                    mt: 1.25,
+                    borderRadius: 999,
+                    borderColor: "rgba(247,241,234,0.82)",
+                    color: "#f7f1ea",
+                    textTransform: "none",
+                    "&:hover": {
+                      borderColor: "#f7f1ea",
+                      bgcolor: "rgba(247,241,234,0.08)",
+                    },
+                  }}
+                >
+                  View details
+                </Button>
               </Box>
             </FadeIn>
           ))}

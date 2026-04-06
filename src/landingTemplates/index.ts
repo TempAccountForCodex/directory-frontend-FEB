@@ -1,6 +1,9 @@
 // Public API for the landing template system
 export { default as TemplateEngine } from "./templateEngine/TemplateEngine";
-export { getAllTemplates, getTemplateById } from "./templateEngine/templateRegistry";
+export {
+  getAllTemplates,
+  getTemplateById,
+} from "./templateEngine/templateRegistry";
 
 // Types
 export type {
@@ -20,7 +23,11 @@ export type {
   PricingPlan,
   Stat,
 } from "./types/BusinessData";
-export type { TemplateTheme, TemplateProps, TemplateDefinition } from "./templateEngine/types";
+export type {
+  TemplateTheme,
+  TemplateProps,
+  TemplateDefinition,
+} from "./templateEngine/types";
 
 // Blocks
 export {

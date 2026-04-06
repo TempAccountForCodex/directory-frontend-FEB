@@ -23,8 +23,8 @@ const HorizontalPinScroll: React.FC<HorizontalPinScrollProps> = ({
   tailScreens = 1,
   pinOffset = 0,
 }) => {
-  const wrapperRef = useRef(null);
-  const trackRef = useRef(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const [workflowProgress, setWorkflowProgress] = useState(0);
 
   const panels = useMemo(() => React.Children.toArray(children), [children]);

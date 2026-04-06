@@ -9,8 +9,8 @@ import {
   Divider,
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { BusinessData } from "../types/BusinessData";
-import { TemplateTheme } from "../templateEngine/types";
+import type { BusinessData } from "../types/BusinessData";
+import type { TemplateTheme } from "../templateEngine/types";
 import FadeIn from "./FadeIn";
 
 export interface ServicesBlockProps {
@@ -87,7 +87,11 @@ function CardsServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
                   {s.description && (
                     <Typography
                       variant="body2"
-                      sx={{ mt: 1, color: theme.bodyColor, fontFamily: theme.fontFamily }}
+                      sx={{
+                        mt: 1,
+                        color: theme.bodyColor,
+                        fontFamily: theme.fontFamily,
+                      }}
                     >
                       {s.description}
                     </Typography>
@@ -135,10 +139,25 @@ function ListServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
         {services.map((s, i) => (
           <FadeIn key={i} delay={i * 0.07}>
             <>
-              <Box sx={{ display: "flex", gap: 2, py: 3, alignItems: "flex-start" }}>
-                <CheckCircleOutlineIcon sx={{ color: theme.primaryColor, mt: 0.5 }} />
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  py: 3,
+                  alignItems: "flex-start",
+                }}
+              >
+                <CheckCircleOutlineIcon
+                  sx={{ color: theme.primaryColor, mt: 0.5 }}
+                />
                 <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
                     <Typography
                       variant="h6"
                       sx={{
@@ -151,7 +170,11 @@ function ListServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
                     </Typography>
                     {s.price && (
                       <Typography
-                        sx={{ fontWeight: 700, color: theme.primaryColor, fontFamily: theme.fontFamily }}
+                        sx={{
+                          fontWeight: 700,
+                          color: theme.primaryColor,
+                          fontFamily: theme.fontFamily,
+                        }}
                       >
                         {s.price}
                       </Typography>
@@ -160,14 +183,20 @@ function ListServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
                   {s.description && (
                     <Typography
                       variant="body2"
-                      sx={{ mt: 0.5, color: theme.bodyColor, fontFamily: theme.fontFamily }}
+                      sx={{
+                        mt: 0.5,
+                        color: theme.bodyColor,
+                        fontFamily: theme.fontFamily,
+                      }}
                     >
                       {s.description}
                     </Typography>
                   )}
                 </Box>
               </Box>
-              {i < services.length - 1 && <Divider sx={{ borderColor: theme.borderColor }} />}
+              {i < services.length - 1 && (
+                <Divider sx={{ borderColor: theme.borderColor }} />
+              )}
             </>
           </FadeIn>
         ))}
@@ -246,7 +275,12 @@ function GridServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
                 {s.description && (
                   <Typography
                     variant="body2"
-                    sx={{ mt: 1, color: theme.bodyColor, fontFamily: theme.fontFamily, lineHeight: 1.7 }}
+                    sx={{
+                      mt: 1,
+                      color: theme.bodyColor,
+                      fontFamily: theme.fontFamily,
+                      lineHeight: 1.7,
+                    }}
                   >
                     {s.description}
                   </Typography>
@@ -260,7 +294,11 @@ function GridServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
   );
 }
 
-const ServicesBlock: React.FC<ServicesBlockProps> = ({ data, theme, variant = "cards" }) => {
+const ServicesBlock: React.FC<ServicesBlockProps> = ({
+  data,
+  theme,
+  variant = "cards",
+}) => {
   if (!data.services?.length) return null;
   if (variant === "list") return <ListServices data={data} theme={theme} />;
   if (variant === "grid") return <GridServices data={data} theme={theme} />;

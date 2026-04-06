@@ -1,5 +1,5 @@
 import { createTheme } from '@mui/material';
-import mainTheme from './Theme';
+import mainTheme from './theme';
 import dashboardStars from '../assets/common/star.svg';
 import dashboardDarkHole from '../assets/common/darkhole.svg';
 import lightModeBg from '../assets/dashboard/bg.jpeg';

@@ -29,8 +29,8 @@ import {
   CATEGORY_LABELS,
   refreshTemplateCache,
   type TemplateSummary,
-} from "../templates";
-import type { TemplateCategory } from "../templates";
+} from "../templates/templateApi";
+import type { TemplateCategory } from "../templates/templateApi";
 import {
   generateTemplatePlaceholder,
   isPlaceholderPath,

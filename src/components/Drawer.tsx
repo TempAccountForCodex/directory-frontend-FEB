@@ -15,8 +15,10 @@ import {
 import { Login, Input, Logout, Dashboard } from "@mui/icons-material";
 import Close from "@mui/icons-material/Close";
 import { Link, useLocation } from "react-router-dom";
-const header_scrolled = "/WhiteLogo.png";
+import header_scrolled from "/assets/images/header/WhiteLogo.png";
 import { useAuth } from "../context/AuthContext";
+
+console.log("header_scrolled", header_scrolled);
 
 interface NavItem {
   label: string;

@@ -21,7 +21,7 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import CloseIcon from "@mui/icons-material/Close";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 import type { BlogPost } from "../../types/BusinessData";
 import FadeIn from "../../blocks/FadeIn";
 
@@ -115,23 +115,19 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
 const FAQ_ITEMS = [
   {
     title: "Suppliers Mapping",
-    body:
-      "We document supply dependencies, seasonal risk, and sourcing continuity so teams can plan with clearer operational confidence. Mapping suppliers this way reduces late surprises and improves margin protection.",
+    body: "We document supply dependencies, seasonal risk, and sourcing continuity so teams can plan with clearer operational confidence. Mapping suppliers this way reduces late surprises and improves margin protection.",
   },
   {
     title: "Risk Assessment",
-    body:
-      "Risk assessment should combine field conditions, supplier timing, and labor constraints. When those signals are tracked together, leadership can act earlier and allocate resources with less friction.",
+    body: "Risk assessment should combine field conditions, supplier timing, and labor constraints. When those signals are tracked together, leadership can act earlier and allocate resources with less friction.",
   },
   {
     title: "Who is companies be impacted by EUDR?",
-    body:
-      "Any company with sourcing, traceability, or supply chain exposure to regulated categories should review its obligations early. The real issue is not only compliance, but operational readiness.",
+    body: "Any company with sourcing, traceability, or supply chain exposure to regulated categories should review its obligations early. The real issue is not only compliance, but operational readiness.",
   },
   {
     title: "Can small companies there for non-penalties?",
-    body:
-      "Smaller teams still benefit from structured preparation. Even when enforcement pressure differs, having basic documentation and internal clarity reduces business risk and improves buyer confidence.",
+    body: "Smaller teams still benefit from structured preparation. Even when enforcement pressure differs, having basic documentation and internal clarity reduces business risk and improves buyer confidence.",
   },
 ];
 
@@ -163,8 +159,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const activeHeroPost = heroPosts[activeHeroIndex] || featuredPost;
   const logoUrl =
-    data.logoUrl ||
-    "https://cdn-icons-png.flaticon.com/512/2909/2909762.png";
+    data.logoUrl || "https://cdn-icons-png.flaticon.com/512/2909/2909762.png";
 
   useEffect(() => {
     if (heroPosts.length <= 1) return;
@@ -190,7 +185,15 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
         scrollBehavior: "smooth",
       }}
     >
-      <Box sx={{ maxWidth: 1180, mx: "auto", px: { xs: 2, md: 4 }, pt: { xs: 3, md: 5 }, pb: { xs: 7, md: 9 } }}>
+      <Box
+        sx={{
+          maxWidth: 1180,
+          mx: "auto",
+          px: { xs: 2, md: 4 },
+          pt: { xs: 3, md: 5 },
+          pb: { xs: 7, md: 9 },
+        }}
+      >
         <FadeIn>
           <Box
             sx={{
@@ -219,12 +222,22 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   flexShrink: 0,
                 }}
               />
-              <Typography sx={{ fontSize: { xs: "1.2rem", md: "1.6rem" }, fontWeight: 900, color: primary }}>
+              <Typography
+                sx={{
+                  fontSize: { xs: "1.2rem", md: "1.6rem" },
+                  fontWeight: 900,
+                  color: primary,
+                }}
+              >
                 {data.name || "Agrob"}
               </Typography>
             </Stack>
 
-            <Stack direction="row" spacing={3.5} sx={{ display: { xs: "none", md: "flex" } }}>
+            <Stack
+              direction="row"
+              spacing={3.5}
+              sx={{ display: { xs: "none", md: "flex" } }}
+            >
               {[
                 { label: "Home", id: "blog-home" },
                 { label: "About", id: "blog-about" },
@@ -234,7 +247,11 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography
                   key={item.label}
                   onClick={() => scrollToSection(item.id)}
-                  sx={{ fontSize: "0.92rem", color: "#4b5563", cursor: "pointer" }}
+                  sx={{
+                    fontSize: "0.92rem",
+                    color: "#4b5563",
+                    cursor: "pointer",
+                  }}
                 >
                   {item.label}
                 </Typography>
@@ -252,7 +269,11 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 px: 2.2,
                 py: 1,
                 boxShadow: "none",
-                "&:hover": { bgcolor: primary, opacity: 0.92, boxShadow: "none" },
+                "&:hover": {
+                  bgcolor: primary,
+                  opacity: 0.92,
+                  boxShadow: "none",
+                },
               }}
             >
               Contact
@@ -286,7 +307,14 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Typography>
 
             <Box sx={{ maxWidth: 460, pt: { xs: 0, md: 1.2 } }}>
-              <Typography sx={{ color: "#667085", lineHeight: 1.8, fontSize: { xs: "1rem", md: "1.04rem" }, mb: 2 }}>
+              <Typography
+                sx={{
+                  color: "#667085",
+                  lineHeight: 1.8,
+                  fontSize: { xs: "1rem", md: "1.04rem" },
+                  mb: 2,
+                }}
+              >
                 {data.description ||
                   "We share common trends and strategies for improving your operation, making sure demand, efficiency, and visibility move together."}
               </Typography>
@@ -294,10 +322,14 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 direction="row"
                 spacing={1.2}
                 alignItems="center"
-                onClick={() => activeHeroPost && setSelectedPost(activeHeroPost)}
+                onClick={() =>
+                  activeHeroPost && setSelectedPost(activeHeroPost)
+                }
                 sx={{ cursor: "pointer", width: "fit-content" }}
               >
-                <Typography sx={{ color: primary, fontWeight: 700 }}>Learn More</Typography>
+                <Typography sx={{ color: primary, fontWeight: 700 }}>
+                  Learn More
+                </Typography>
                 <ArrowForwardIcon sx={{ color: primary, fontSize: 18 }} />
               </Stack>
             </Box>
@@ -386,7 +418,11 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                       px: 2.2,
                       py: 1.05,
                       boxShadow: "none",
-                      "&:hover": { bgcolor: primary, opacity: 0.92, boxShadow: "none" },
+                      "&:hover": {
+                        bgcolor: primary,
+                        opacity: 0.92,
+                        boxShadow: "none",
+                      },
                     }}
                   >
                     Learn More
@@ -394,7 +430,12 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Box>
               </Box>
 
-              <Stack direction="row" spacing={1.1} justifyContent="center" sx={{ pt: 2.2 }}>
+              <Stack
+                direction="row"
+                spacing={1.1}
+                justifyContent="center"
+                sx={{ pt: 2.2 }}
+              >
                 {heroPosts.map((_, item) => (
                   <Box
                     key={item}
@@ -405,8 +446,10 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                       borderRadius: "50%",
                       bgcolor: item === activeHeroIndex ? primary : "#d8d8d8",
                       cursor: "pointer",
-                      transition: "transform 0.2s ease, background-color 0.2s ease",
-                      transform: item === activeHeroIndex ? "scale(1.08)" : "scale(1)",
+                      transition:
+                        "transform 0.2s ease, background-color 0.2s ease",
+                      transform:
+                        item === activeHeroIndex ? "scale(1.08)" : "scale(1)",
                     }}
                   />
                 ))}
@@ -417,17 +460,30 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
 
         <FadeIn delay={0.12}>
           <Box id="blog-list" sx={{ pt: { xs: 4, md: 6 } }}>
-            <Typography sx={{ fontSize: { xs: "2rem", md: "3rem" }, fontWeight: 800, mb: 1.2 }}>
+            <Typography
+              sx={{
+                fontSize: { xs: "2rem", md: "3rem" },
+                fontWeight: 800,
+                mb: 1.2,
+              }}
+            >
               Our Trending Article
             </Typography>
-            <Typography sx={{ maxWidth: 760, color: "#6b7280", lineHeight: 1.8, mb: 4 }}>
-              Common trends, operational signals, and field insights designed for teams that want stronger planning and clearer visibility across the season.
+            <Typography
+              sx={{ maxWidth: 760, color: "#6b7280", lineHeight: 1.8, mb: 4 }}
+            >
+              Common trends, operational signals, and field insights designed
+              for teams that want stronger planning and clearer visibility
+              across the season.
             </Typography>
 
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "repeat(3, minmax(0, 1fr))",
+                },
                 gap: 3,
               }}
             >
@@ -464,16 +520,34 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                         fontWeight: 700,
                       }}
                     />
-                    <Typography sx={{ fontWeight: 700, fontSize: "1.28rem", lineHeight: 1.25, mb: 1.1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: "1.28rem",
+                        lineHeight: 1.25,
+                        mb: 1.1,
+                      }}
+                    >
                       {post.title}
                     </Typography>
-                    <Typography sx={{ color: "#6b7280", lineHeight: 1.75, fontSize: "0.95rem", mb: 1.5 }}>
+                    <Typography
+                      sx={{
+                        color: "#6b7280",
+                        lineHeight: 1.75,
+                        fontSize: "0.95rem",
+                        mb: 1.5,
+                      }}
+                    >
                       {post.description}
                     </Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Typography
                         onClick={() => setSelectedPost(post)}
-                        sx={{ color: "#4b5563", fontWeight: 600, cursor: "pointer" }}
+                        sx={{
+                          color: "#4b5563",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
                       >
                         Learn more
                       </Typography>
@@ -520,13 +594,26 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mb: 4,
                 }}
               >
-                <Typography sx={{ fontSize: { xs: "2.1rem", md: "3.2rem" }, lineHeight: 1.08, fontWeight: 800 }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "2.1rem", md: "3.2rem" },
+                    lineHeight: 1.08,
+                    fontWeight: 800,
+                  }}
+                >
                   Have a question?
                   <br />
                   We are here to answer.
                 </Typography>
-                <Typography sx={{ color: "#667085", lineHeight: 1.8, pt: { xs: 0, md: 1 } }}>
-                  We share common trends and strategies for improving your rental making sure in high demand of service unique.
+                <Typography
+                  sx={{
+                    color: "#667085",
+                    lineHeight: 1.8,
+                    pt: { xs: 0, md: 1 },
+                  }}
+                >
+                  We share common trends and strategies for improving your
+                  rental making sure in high demand of service unique.
                 </Typography>
               </Box>
 
@@ -559,11 +646,18 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                         },
                       }}
                     >
-                      <Typography sx={{ fontSize: { xs: "1.1rem", md: "1.3rem" }, fontWeight: 700 }}>
+                      <Typography
+                        sx={{
+                          fontSize: { xs: "1.1rem", md: "1.3rem" },
+                          fontWeight: 700,
+                        }}
+                      >
                         {item.title}
                       </Typography>
                     </AccordionSummary>
-                    <AccordionDetails sx={{ px: 0, pb: 2.6, color: "#6b7280", lineHeight: 1.9 }}>
+                    <AccordionDetails
+                      sx={{ px: 0, pb: 2.6, color: "#6b7280", lineHeight: 1.9 }}
+                    >
                       {item.body}
                     </AccordionDetails>
                   </Accordion>
@@ -583,8 +677,15 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Box
                   component="img"
                   src={posts[2]?.image || featuredPost?.image}
-                  alt={posts[2]?.title || featuredPost?.title || "Featured article"}
-                  sx={{ width: "100%", height: 220, objectFit: "cover", display: "block" }}
+                  alt={
+                    posts[2]?.title || featuredPost?.title || "Featured article"
+                  }
+                  sx={{
+                    width: "100%",
+                    height: 220,
+                    objectFit: "cover",
+                    display: "block",
+                  }}
                 />
               </Box>
 
@@ -599,11 +700,16 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography sx={{ color: primary, fontWeight: 800, mb: 1 }}>
                   Newsletter
                 </Typography>
-                <Typography sx={{ fontWeight: 700, fontSize: "1.25rem", mb: 1.2 }}>
+                <Typography
+                  sx={{ fontWeight: 700, fontSize: "1.25rem", mb: 1.2 }}
+                >
                   Get field insights in your inbox.
                 </Typography>
-                <Typography sx={{ color: "#6b7280", lineHeight: 1.75, mb: 2.2 }}>
-                  Weekly notes on crop planning, operational discipline, and better agricultural visibility.
+                <Typography
+                  sx={{ color: "#6b7280", lineHeight: 1.75, mb: 2.2 }}
+                >
+                  Weekly notes on crop planning, operational discipline, and
+                  better agricultural visibility.
                 </Typography>
                 <Box
                   sx={{
@@ -673,11 +779,25 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               }}
             >
               <Box>
-                <Typography sx={{ fontSize: { xs: "2rem", md: "2.6rem" }, fontWeight: 800, lineHeight: 1.08, mb: 1.5 }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "2rem", md: "2.6rem" },
+                    fontWeight: 800,
+                    lineHeight: 1.08,
+                    mb: 1.5,
+                  }}
+                >
                   Contact Us
                 </Typography>
-                <Typography sx={{ color: "rgba(255,255,255,0.86)", lineHeight: 1.8, mb: 3 }}>
-                  Reach out for partnership questions, blog collaborations, or agriculture growth strategy discussions.
+                <Typography
+                  sx={{
+                    color: "rgba(255,255,255,0.86)",
+                    lineHeight: 1.8,
+                    mb: 3,
+                  }}
+                >
+                  Reach out for partnership questions, blog collaborations, or
+                  agriculture growth strategy discussions.
                 </Typography>
               </Box>
               <Stack spacing={1.5}>
@@ -687,7 +807,9 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography sx={{ color: "rgba(255,255,255,0.9)" }}>
                   {data.contact.email || "hello@agrob.com"}
                 </Typography>
-                <Typography sx={{ color: "rgba(255,255,255,0.9)", maxWidth: 260 }}>
+                <Typography
+                  sx={{ color: "rgba(255,255,255,0.9)", maxWidth: 260 }}
+                >
                   {data.contact.address || "55 Oak Street, Portland, OR 97201"}
                 </Typography>
               </Stack>
@@ -704,7 +826,9 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 boxShadow: "0 16px 38px rgba(15,23,42,0.06)",
               }}
             >
-              <Typography sx={{ fontSize: "1.35rem", fontWeight: 700, mb: 2.2 }}>
+              <Typography
+                sx={{ fontSize: "1.35rem", fontWeight: 700, mb: 2.2 }}
+              >
                 Send us a message
               </Typography>
               <Stack spacing={2}>
@@ -713,21 +837,36 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   variant="standard"
                   fullWidth
                   InputProps={{ disableUnderline: true }}
-                  sx={{ "& .MuiInputBase-root": { borderBottom: "1px solid #d0d5dd", pb: 1 } }}
+                  sx={{
+                    "& .MuiInputBase-root": {
+                      borderBottom: "1px solid #d0d5dd",
+                      pb: 1,
+                    },
+                  }}
                 />
                 <TextField
                   placeholder="Email address"
                   variant="standard"
                   fullWidth
                   InputProps={{ disableUnderline: true }}
-                  sx={{ "& .MuiInputBase-root": { borderBottom: "1px solid #d0d5dd", pb: 1 } }}
+                  sx={{
+                    "& .MuiInputBase-root": {
+                      borderBottom: "1px solid #d0d5dd",
+                      pb: 1,
+                    },
+                  }}
                 />
                 <TextField
                   placeholder="Subject"
                   variant="standard"
                   fullWidth
                   InputProps={{ disableUnderline: true }}
-                  sx={{ "& .MuiInputBase-root": { borderBottom: "1px solid #d0d5dd", pb: 1 } }}
+                  sx={{
+                    "& .MuiInputBase-root": {
+                      borderBottom: "1px solid #d0d5dd",
+                      pb: 1,
+                    },
+                  }}
                 />
                 <TextField
                   placeholder="Tell us about your inquiry"
@@ -736,7 +875,12 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   multiline
                   minRows={5}
                   InputProps={{ disableUnderline: true }}
-                  sx={{ "& .MuiInputBase-root": { borderBottom: "1px solid #d0d5dd", pb: 1 } }}
+                  sx={{
+                    "& .MuiInputBase-root": {
+                      borderBottom: "1px solid #d0d5dd",
+                      pb: 1,
+                    },
+                  }}
                 />
                 <Button
                   variant="contained"
@@ -749,7 +893,11 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                     px: 3,
                     py: 1.15,
                     boxShadow: "none",
-                    "&:hover": { bgcolor: primary, opacity: 0.92, boxShadow: "none" },
+                    "&:hover": {
+                      bgcolor: primary,
+                      opacity: 0.92,
+                      boxShadow: "none",
+                    },
                   }}
                 >
                   Send Message
@@ -761,7 +909,14 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
       </Box>
 
       <Box sx={{ bgcolor: "#171f2d", color: "#fff", mt: { xs: 1, md: 3 } }}>
-        <Box sx={{ maxWidth: 1180, mx: "auto", px: { xs: 2, md: 4 }, py: { xs: 5, md: 6 } }}>
+        <Box
+          sx={{
+            maxWidth: 1180,
+            mx: "auto",
+            px: { xs: 2, md: 4 },
+            py: { xs: 5, md: 6 },
+          }}
+        >
           <Box
             sx={{
               display: "grid",
@@ -771,56 +926,75 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <FadeIn>
               <Box>
-              <Stack direction="row" spacing={1.1} alignItems="center" sx={{ mb: 1.8 }}>
-                <Box
-                  component="img"
-                  src={logoUrl}
-                  alt={`${data.name || "Agrob"} logo`}
+                <Stack
+                  direction="row"
+                  spacing={1.1}
+                  alignItems="center"
+                  sx={{ mb: 1.8 }}
+                >
+                  <Box
+                    component="img"
+                    src={logoUrl}
+                    alt={`${data.name || "Agrob"} logo`}
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      objectFit: "contain",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    sx={{ fontSize: "1.5rem", fontWeight: 900, color: primary }}
+                  >
+                    {data.name || "Agrob"}
+                  </Typography>
+                </Stack>
+                <Typography
                   sx={{
-                    width: 36,
-                    height: 36,
-                    objectFit: "contain",
-                    flexShrink: 0,
+                    color: "rgba(255,255,255,0.72)",
+                    maxWidth: 280,
+                    lineHeight: 1.8,
+                    mb: 2,
                   }}
-                />
-                <Typography sx={{ fontSize: "1.5rem", fontWeight: 900, color: primary }}>
-                  {data.name || "Agrob"}
+                >
+                  Your one-stop solution to practical insight, planning, and
+                  field-ready growth ideas.
                 </Typography>
-              </Stack>
-              <Typography sx={{ color: "rgba(255,255,255,0.72)", maxWidth: 280, lineHeight: 1.8, mb: 2 }}>
-                Your one-stop solution to practical insight, planning, and field-ready growth ideas.
-              </Typography>
-              <Typography sx={{ color: "rgba(255,255,255,0.68)" }}>
-                {data.contact.email || "hello@agrob.com"}
-              </Typography>
+                <Typography sx={{ color: "rgba(255,255,255,0.68)" }}>
+                  {data.contact.email || "hello@agrob.com"}
+                </Typography>
               </Box>
             </FadeIn>
 
             <FadeIn delay={0.08}>
               <Box>
-                <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Navigation</Typography>
+                <Typography sx={{ fontWeight: 700, mb: 1.5 }}>
+                  Navigation
+                </Typography>
                 <Stack spacing={1.1}>
-                {[
-                  { label: "Home", id: "blog-home" },
-                  { label: "About", id: "blog-about" },
-                  { label: "Blog", id: "blog-list" },
-                  { label: "Contact", id: "blog-contact" },
-                ].map((item) => (
-                  <Typography
-                    key={item.label}
-                    onClick={() => scrollToSection(item.id)}
-                    sx={{ color: "rgba(255,255,255,0.7)", cursor: "pointer" }}
-                  >
-                    {item.label}
-                  </Typography>
-                ))}
+                  {[
+                    { label: "Home", id: "blog-home" },
+                    { label: "About", id: "blog-about" },
+                    { label: "Blog", id: "blog-list" },
+                    { label: "Contact", id: "blog-contact" },
+                  ].map((item) => (
+                    <Typography
+                      key={item.label}
+                      onClick={() => scrollToSection(item.id)}
+                      sx={{ color: "rgba(255,255,255,0.7)", cursor: "pointer" }}
+                    >
+                      {item.label}
+                    </Typography>
+                  ))}
                 </Stack>
               </Box>
             </FadeIn>
 
             <FadeIn delay={0.16}>
               <Box>
-                <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Quick Info</Typography>
+                <Typography sx={{ fontWeight: 700, mb: 1.5 }}>
+                  Quick Info
+                </Typography>
                 <Stack spacing={1.1}>
                   <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
                     Weekly insights and featured articles
@@ -840,7 +1014,9 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
 
             <FadeIn delay={0.24}>
               <Box>
-                <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Newsletter</Typography>
+                <Typography sx={{ fontWeight: 700, mb: 1.5 }}>
+                  Newsletter
+                </Typography>
                 <Box
                   sx={{
                     display: "flex",
@@ -854,13 +1030,18 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mb: 2,
                   }}
                 >
-                  <MailOutlineIcon sx={{ color: "rgba(255,255,255,0.45)", fontSize: 18 }} />
+                  <MailOutlineIcon
+                    sx={{ color: "rgba(255,255,255,0.45)", fontSize: 18 }}
+                  />
                   <InputBase
                     placeholder="Enter your email here"
                     sx={{
                       flex: 1,
                       color: "#fff",
-                      "& input::placeholder": { color: "rgba(255,255,255,0.45)", opacity: 1 },
+                      "& input::placeholder": {
+                        color: "rgba(255,255,255,0.45)",
+                        opacity: 1,
+                      },
                     }}
                   />
                   <Box
@@ -882,7 +1063,9 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {[
                     data.socialLinks?.twitter ? <Twitter size={16} /> : null,
                     data.socialLinks?.facebook ? <Facebook size={16} /> : null,
-                    data.socialLinks?.instagram ? <Instagram size={16} /> : null,
+                    data.socialLinks?.instagram ? (
+                      <Instagram size={16} />
+                    ) : null,
                     data.socialLinks?.linkedin ? <Linkedin size={16} /> : null,
                   ]
                     .filter(Boolean)
@@ -919,14 +1102,19 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <FadeIn>
-              <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
-              © {new Date().getFullYear()} {data.name || "Agrob"} | All right reserved.
-            </Typography>
+              <Typography
+                sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}
+              >
+                © {new Date().getFullYear()} {data.name || "Agrob"} | All right
+                reserved.
+              </Typography>
             </FadeIn>
             <FadeIn delay={0.08}>
-              <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
-              Terms of Service
-            </Typography>
+              <Typography
+                sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}
+              >
+                Terms of Service
+              </Typography>
             </FadeIn>
           </Box>
         </Box>
@@ -972,19 +1160,35 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <CloseIcon />
               </IconButton>
             </Box>
-            <DialogContent sx={{ px: { xs: 2.5, md: 4 }, py: { xs: 3, md: 4 } }}>
-              <Stack direction="row" spacing={1.2} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+            <DialogContent
+              sx={{ px: { xs: 2.5, md: 4 }, py: { xs: 3, md: 4 } }}
+            >
+              <Stack
+                direction="row"
+                spacing={1.2}
+                flexWrap="wrap"
+                useFlexGap
+                sx={{ mb: 2 }}
+              >
                 <Chip
                   label={selectedPost.category || "Article"}
                   sx={{ bgcolor: secondary, color: "#334155", fontWeight: 700 }}
                 />
                 <Chip
                   label={formatDate(selectedPost.publishedAt)}
-                  sx={{ bgcolor: "#fff", color: "#475467", border: "1px solid rgba(17,24,39,0.08)" }}
+                  sx={{
+                    bgcolor: "#fff",
+                    color: "#475467",
+                    border: "1px solid rgba(17,24,39,0.08)",
+                  }}
                 />
                 <Chip
                   label={selectedPost.author || "Agro Insight Team"}
-                  sx={{ bgcolor: "#fff", color: "#475467", border: "1px solid rgba(17,24,39,0.08)" }}
+                  sx={{
+                    bgcolor: "#fff",
+                    color: "#475467",
+                    border: "1px solid rgba(17,24,39,0.08)",
+                  }}
                 />
               </Stack>
               <Typography
@@ -997,10 +1201,23 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 {selectedPost.title}
               </Typography>
-              <Typography sx={{ color: "#475467", lineHeight: 1.8, fontSize: { xs: "1rem", md: "1.06rem" }, mb: 2 }}>
+              <Typography
+                sx={{
+                  color: "#475467",
+                  lineHeight: 1.8,
+                  fontSize: { xs: "1rem", md: "1.06rem" },
+                  mb: 2,
+                }}
+              >
                 {selectedPost.description}
               </Typography>
-              <Typography sx={{ color: "#667085", lineHeight: 1.95, fontSize: { xs: "1rem", md: "1.02rem" } }}>
+              <Typography
+                sx={{
+                  color: "#667085",
+                  lineHeight: 1.95,
+                  fontSize: { xs: "1rem", md: "1.02rem" },
+                }}
+              >
                 {selectedPost.content}
               </Typography>
             </DialogContent>

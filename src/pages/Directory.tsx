@@ -785,7 +785,14 @@ const Directory: React.FC = () => {
             <h3>Map View</h3>
             <DirectoryMap
               listings={mappableBusinesses}
-              userLocation={userLocation.latitude ? userLocation : null}
+              userLocation={
+                userLocation.latitude != null && userLocation.longitude != null
+                  ? {
+                      latitude: userLocation.latitude,
+                      longitude: userLocation.longitude,
+                    }
+                  : null
+              }
             />
           </section>
         )}

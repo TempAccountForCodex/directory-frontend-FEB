@@ -1,8 +1,8 @@
 import React from "react";
-import TitleHeading from "../UI/TitleHeading";
+import TitleHeading from "../../UI/TitleHeading";
 import { Grid, Box, Typography, useTheme } from "@mui/material";
 import StarRateIcon from "@mui/icons-material/StarRate";
-import Form from "../UI/Form";
+import Form from "../../UI/Form";
 
 /* ---------------- Types ---------------- */
 interface Field {

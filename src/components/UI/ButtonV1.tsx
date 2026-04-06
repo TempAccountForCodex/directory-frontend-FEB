@@ -14,8 +14,11 @@ const SIZE_MAP = {
 
 const CustomButton = styled(Button, {
   shouldForwardProp: (prop) => prop !== "bgColor" && prop !== "btnSize",
-})(({ bgColor, btnSize }) => {
-  const sz = SIZE_MAP[btnSize] ?? SIZE_MAP.medium;
+})<{ bgColor?: string; btnSize?: keyof typeof SIZE_MAP }>(({
+  bgColor,
+  btnSize,
+}) => {
+  const sz = SIZE_MAP[btnSize ?? "medium"] ?? SIZE_MAP.medium;
 
   return {
     position: "relative",
@@ -72,12 +75,14 @@ function ButtonV1({
 
   return (
     <CustomButton
-      component={MotionRouterLink as any}
-      to={to}
-      variants={btnVariants}
-      initial="initial"
-      whileHover="hover"
-      whileTap="tap"
+      {...({
+        component: MotionRouterLink,
+        to,
+        variants: btnVariants,
+        initial: "initial",
+        whileHover: "hover",
+        whileTap: "tap",
+      } as any)}
       variant="contained"
       endIcon={<ArrowForwardOutlined />}
       bgColor={bgColor}

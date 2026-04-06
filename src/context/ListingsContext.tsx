@@ -78,7 +78,7 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "/api";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
   // -------------------- API Functions --------------------
 

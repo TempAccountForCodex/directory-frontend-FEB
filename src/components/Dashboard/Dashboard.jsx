@@ -1,5 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
 import axios from "axios";
+const DashboardOverview = lazy(() => import('./DashboardOverview'));
+const Finances = lazy(() => import('./Finances'));
+const Communications = lazy(() => import('./Communications'));
+const ReferralAnalytics = lazy(() => import('./admin/ReferralAnalytics'));
 import { useAuth } from "../../context/AuthContext";
 import { usePersistentState } from "../../hooks/usePersistentState";
 // Direct MUI imports for better tree-shaking (bundle size optimization)
@@ -11,7 +15,6 @@ import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import ThemeProvider from "@mui/material/styles/ThemeProvider";
 import CssBaseline from "@mui/material/CssBaseline";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
@@ -31,11 +34,6 @@ import {
   Users as PeopleOutlinedIcon,
   Settings as SettingsOutlinedIcon,
   ChartBar as AnalyticsOutlinedIcon,
-  TrendingUp as TrendingUpIcon,
-  ChartBarBig as AssessmentOutlinedIcon,
-  File as DescriptionOutlinedIcon,
-  CircleCheck as CheckCircleOutlinedIcon,
-  Hourglass as HourglassEmptyOutlinedIcon,
   RefreshCw as RefreshIcon,
   CircleAlert as ErrorOutlineIcon,
   Globe as LanguageOutlinedIcon,
@@ -48,13 +46,30 @@ import {
   Pencil as ModifyIcon,
   Heart as FavouritesIcon,
   Archive as ArchiveIcon,
+  UserPlus as AccountInvitesIcon,
+  Activity as SpeedOutlinedIcon,
+  BookOpen as BookOpenIcon,
+  DollarSign as DollarSignIcon,
+  Megaphone as CampaignIcon,
+  Tag as PromoDealsIcon,
+  Gift as GiftIcon,
 } from "lucide-react";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { useNavigate, useLocation } from "react-router-dom";
 import ManageInsights from "./ManageInsights";
+import ManageTemplates from "./ManageTemplates";
+import TemplateGalleryPage from "../../pages/Templates";
+import MyTemplates from "../../pages/MyTemplates";
 import Settings from "./Settings";
 import UserManagement from "./UserManagement";
 import Websites from "./Websites";
 import Stores from "./Stores";
+import AccountInvitesPage from "./AccountInvitesPage";
+import AccountSwitcher from "./AccountSwitcher";
+import ManageDocs from "./ManageDocs";
+import PromoDealManager from "./PromoDealManager";
+import WebsiteManagementDashboard from "./WebsiteManagementDashboard";
+import { AccountProvider } from "../../context/AccountContext";
 import {
   AllListings,
   ModifyListing,
@@ -63,6 +78,7 @@ import {
 } from "./listings";
 import SearchPopup from "./SearchPopup";
 import WelcomeTour from "./WelcomeTour";
+import OnboardingProvider from "./tours/OnboardingProvider";
 // Layout components for new collapsible sidebar
 import { CollapsibleSidebar, DashboardPageHeader } from "./layout";
 import ConversionMetrics from "./analytics/ConversionMetrics";
@@ -71,10 +87,12 @@ import EngagementTracking from "./analytics/EngagementTracking";
 import RealTimePanel from "./analytics/RealTimePanel";
 import CoreWebVitals from "./analytics/CoreWebVitals";
 import EventTimeline from "./analytics/EventTimeline";
+import PerformanceMonitoring from "../../pages/PerformanceMonitoring";
 import {
   DashboardActionButton,
   DashboardDateField,
   PageHeader,
+  DealBanner,
 } from "./shared";
 import {
   getDashboardTheme,
@@ -86,6 +104,7 @@ import dashboardDarkHole from "../../assets/common/darkhole.svg";
 import brandIcon from "../../assets/images/navbar/collapsedLogo.png";
 import {
   isAdmin,
+  isSuperAdmin,
   hasRole,
   isContentManager,
   ROLES,
@@ -138,23 +157,45 @@ const Dashboard = ({ user }) => {
     // /dashboard/websites/create-website -> segments = ['dashboard', 'websites', 'create-website']
     // /dashboard/insights/pending -> segments = ['dashboard', 'insights', 'pending']
 
+    // Handle /websites/:id/manage/:section pattern (Step 10.3)
+    if (
+      segments[1] === "websites" &&
+      segments[2] &&
+      !["create", "create-template", "stores", "recently-deleted", "templates"].includes(segments[2]) &&
+      segments[3] === "manage"
+    ) {
+      return {
+        tab: `websites/${segments[2]}/manage`,
+        subtab: segments[4] || "overview",
+      };
+    }
+
     // Handle nested website routes
     const websiteSubRoutes = [
       "create",
+      "create-website",
       "create-template",
       "stores",
       "recently-deleted",
+      "templates",
     ];
     if (
       segments[1] === "websites" &&
       segments[2] &&
       websiteSubRoutes.includes(segments[2])
     ) {
-      // Handle /websites/create/customize as a special nested route
-      if (segments[2] === "create" && segments[3] === "customize") {
+      // Legacy create/customize and create/questionnaire routes redirect to template gallery
+      if (segments[2] === "create" && (segments[3] === "customize" || segments[3] === "questionnaire")) {
         return {
-          tab: "websites/create/customize",
-          subtab: segments[4] || null,
+          tab: "websites/templates",
+          subtab: null,
+        };
+      }
+      // Legacy create-website route redirects to template gallery
+      if (segments[2] === "create-website") {
+        return {
+          tab: "websites/templates",
+          subtab: null,
         };
       }
       return {
@@ -214,17 +255,19 @@ const Dashboard = ({ user }) => {
     }
   }, [location.pathname, tab, setLastVisitedTab]);
 
-  // Auto-collapse sidebar for customize step (better view for the editor)
+  // Auto-collapse sidebar for customize step and website manage pages (better view)
   // Only auto-collapse once when entering the page, allow manual re-expansion
   useEffect(() => {
-    if (tab === "websites/create/customize") {
+    const isAutoCollapseRoute =
+      (tab && tab.startsWith("websites/") && tab.endsWith("/manage"));
+    if (isAutoCollapseRoute) {
       // Only auto-collapse if we haven't already done so for this session
       if (!hasAutoCollapsedRef.current && !sidebarCollapsed && !isMobile) {
         hasAutoCollapsedRef.current = true;
         setSidebarCollapsed(true);
       }
     } else {
-      // Reset when leaving customize page so it auto-collapses again next time
+      // Reset when leaving these pages so it auto-collapses again next time
       hasAutoCollapsedRef.current = false;
     }
   }, [tab, isMobile, setSidebarCollapsed, sidebarCollapsed]);
@@ -243,66 +286,88 @@ const Dashboard = ({ user }) => {
       super_admin: [
         "overview",
         "admin-analytics",
+        "finances",
         "insights",
+        "templates",
         "websites",
         "websites/create",
-        "websites/create/customize",
         "websites/create-template",
         "websites/recently-deleted",
         "websites/stores",
+        "websites/templates",
+        "websites/:id/manage",
         "listings",
         "listings/modify",
         "listings/favourites",
         "listings/archived",
         "users",
+        "performance",
+        "communications",
+        "referral-analytics",
+        "account-invites",
         "settings",
       ],
       "super admin": [
         "overview",
         "admin-analytics",
+        "finances",
         "insights",
+        "templates",
         "websites",
         "websites/create",
-        "websites/create/customize",
         "websites/create-template",
         "websites/recently-deleted",
         "websites/stores",
+        "websites/templates",
+        "websites/:id/manage",
         "listings",
         "listings/modify",
         "listings/favourites",
         "listings/archived",
         "users",
+        "performance",
+        "communications",
+        "promo-deals",
+        "referral-analytics",
+        "account-invites",
         "settings",
       ],
       admin: [
         "overview",
         "admin-analytics",
         "insights",
+        "templates",
         "websites",
         "websites/create",
-        "websites/create/customize",
         "websites/create-template",
         "websites/recently-deleted",
         "websites/stores",
+        "websites/templates",
+        "websites/:id/manage",
         "listings",
         "listings/modify",
         "listings/favourites",
         "listings/archived",
         "users",
+        "performance",
+        "communications",
+        "account-invites",
         "settings",
       ],
-      content_creator: ["insights", "websites/create-template", "settings"],
+      content_creator: ["insights", "templates", "websites/create-template", "communications", "account-invites", "settings"],
       user: [
         "overview",
         "websites",
         "websites/create",
-        "websites/create/customize",
         "websites/recently-deleted",
         "websites/stores",
+        "websites/templates",
+        "websites/:id/manage",
         "listings",
         "listings/modify",
         "listings/favourites",
         "listings/archived",
+        "account-invites",
         "settings",
       ],
     };
@@ -310,23 +375,17 @@ const Dashboard = ({ user }) => {
     const allowedTabs = rolePermissions[user.role] || ["settings"];
 
     // If current tab not allowed, redirect to first allowed tab
-    if (activeTab && !allowedTabs.includes(activeTab)) {
+    // Note: tabs matching pattern websites/:id/manage are allowed dynamically
+    const isManageTab = activeTab && /^websites\/[^/]+\/manage$/.test(activeTab);
+    if (activeTab && !allowedTabs.includes(activeTab) && !isManageTab && !allowedTabs.includes("websites/:id/manage")) {
       navigate(`/dashboard/${allowedTabs[0]}`, { replace: true });
     }
   }, [activeTab, user.role, navigate]);
 
   const [searchOpen, setSearchOpen] = useState(false);
-  const [overviewStats, setOverviewStats] = useState({
-    total: 0,
-    approved: 0,
-    pending: 0,
-    totalViews: 0,
-  });
   const [analyticsData, setAnalyticsData] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState(null);
-  const [advancedAnalyticsLoading, setAdvancedAnalyticsLoading] =
-    useState(true);
   const [dashboardReady, setDashboardReady] = useState(false);
 
   // Use persistent state for selected period (survives page reloads)
@@ -338,6 +397,12 @@ const Dashboard = ({ user }) => {
 
   const [hasNotificationParams, setHasNotificationParams] = useState(false);
   const [customDateDialogOpen, setCustomDateDialogOpen] = useState(false);
+  const [templatePendingCount, setTemplatePendingCount] = useState(null);
+  const [accountInvitesPendingCount, setAccountInvitesPendingCount] = useState(null);
+
+  // Active promo deal for DealBanner (step 10.36)
+  const [activeDeal, setActiveDeal] = useState(null);
+  const activeDealFetchedRef = useRef(false);
 
   // Use persistent state for custom date range (survives page reloads)
   const [customDateRange, setCustomDateRange] = usePersistentState(
@@ -439,46 +504,90 @@ const Dashboard = ({ user }) => {
     }
   };
 
+  // Fetch template pending count for admin badge
+  const fetchTemplatePendingCount = useCallback(async () => {
+    if (!isAdmin(user.role)) return;
+    try {
+      const response = await axios.get(`${API_URL}/templates/stats`);
+      const pending = response.data?.pending || 0;
+      setTemplatePendingCount(pending > 0 ? pending : null);
+    } catch {
+      // Non-fatal: badge just won't show
+    }
+  }, [user.role]);
+
+  // Fetch account invites pending count for sidebar badge
+  const fetchAccountInvitesPendingCount = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/account/account-invites/pending`);
+      const count = response.data?.invites?.length || 0;
+      setAccountInvitesPendingCount(count > 0 ? count : null);
+    } catch {
+      // Non-fatal: badge just won't show
+    }
+  }, []);
+
+  // Fetch on mount and listen for notifications:refresh events
+  useEffect(() => {
+    fetchTemplatePendingCount();
+    fetchAccountInvitesPendingCount();
+
+    const handleRefresh = () => {
+      fetchTemplatePendingCount();
+      fetchAccountInvitesPendingCount();
+    };
+    window.addEventListener("notifications:refresh", handleRefresh);
+    window.addEventListener("account-invites:refresh", handleRefresh);
+    return () => {
+      window.removeEventListener("notifications:refresh", handleRefresh);
+      window.removeEventListener("account-invites:refresh", handleRefresh);
+    };
+  }, [fetchTemplatePendingCount, fetchAccountInvitesPendingCount]);
+
+  // Fetch active promo deal on mount — 5-minute stale window (step 10.36)
+  // Silent fetch: no loading state, no error state — banner simply not shown on failure
+  useEffect(() => {
+    if (activeDealFetchedRef.current) return;
+    activeDealFetchedRef.current = true;
+
+    const STALE_MS = 5 * 60 * 1000;
+    const CACHE_KEY = "tt_active_deal_cache";
+
+    // Check in-memory/sessionStorage cache first
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, fetchedAt } = JSON.parse(cached);
+        if (Date.now() - fetchedAt < STALE_MS) {
+          setActiveDeal(data);
+          return;
+        }
+      }
+    } catch {
+      // Storage unavailable — proceed with fetch
+    }
+
+    axios
+      .get(`${API_URL}/promo/active`)
+      .then((response) => {
+        const deal = response.data?.deals?.[0] || null;
+        setActiveDeal(deal);
+        try {
+          sessionStorage.setItem(
+            CACHE_KEY,
+            JSON.stringify({ data: deal, fetchedAt: Date.now() }),
+          );
+        } catch {
+          // Storage unavailable
+        }
+      })
+      .catch(() => {
+        // Non-fatal: banner just won't show
+      });
+  }, []);
+
   // Note: Active tab, selected period, and custom date range are automatically
   // persisted by usePersistentState hook - no manual localStorage calls needed!
-
-  useEffect(() => {
-    if (activeTab === "overview") {
-      // Only fetch if we have valid data
-      if (
-        selectedPeriod === "custom" &&
-        (!customDateRange.startDate || !customDateRange.endDate)
-      ) {
-        return; // Don't fetch until custom dates are set
-      }
-
-      setAdvancedAnalyticsLoading(true);
-      // Run API calls in parallel to eliminate waterfall
-      Promise.all([fetchOverviewStats(), fetchAnalytics()]);
-
-      // Set a timeout to hide loader after components have had time to load
-      const timer = setTimeout(() => {
-        setAdvancedAnalyticsLoading(false);
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [activeTab, selectedPeriod]);
-
-  const fetchOverviewStats = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/blogs/stats`);
-
-      setOverviewStats({
-        total: response.data.total || 0,
-        approved: response.data.approved || 0,
-        pending: response.data.pending || 0,
-        totalViews: response.data.totalViews || 0,
-      });
-    } catch (error) {
-      console.error("Error fetching overview stats:", error);
-    }
-  };
 
   const fetchAnalytics = async () => {
     try {
@@ -569,12 +678,7 @@ const Dashboard = ({ user }) => {
       setCustomDateDialogOpen(false);
       // Manually trigger fetch after dialog closes
       setTimeout(() => {
-        setAdvancedAnalyticsLoading(true);
-        // Run API calls in parallel to eliminate waterfall
-        Promise.all([fetchOverviewStats(), fetchAnalytics()]);
-        setTimeout(() => {
-          setAdvancedAnalyticsLoading(false);
-        }, 2000);
+        fetchAnalytics();
       }, 100);
     }
   };
@@ -629,6 +733,13 @@ const Dashboard = ({ user }) => {
       badge: null,
       visible: userIsContentManager,
     },
+    {
+      id: "templates",
+      label: "Manage Templates",
+      icon: <TemplatesIcon size={20} />,
+      badge: userIsAdmin ? templatePendingCount : null,
+      visible: userIsContentManager,
+    },
     // Products section
     {
       type: "header",
@@ -653,9 +764,14 @@ const Dashboard = ({ user }) => {
             ]
           : []),
         {
-          id: "websites/create",
+          id: "websites/templates",
           label: "Create Website",
           icon: <PlusIcon size={18} />,
+        },
+        {
+          id: "websites/my-templates",
+          label: "My Templates",
+          icon: <FavouritesIcon size={18} />,
         },
         {
           id: "websites",
@@ -666,6 +782,16 @@ const Dashboard = ({ user }) => {
           id: "websites/stores",
           label: "Stores",
           icon: <StorefrontOutlinedIcon size={18} />,
+        },
+        {
+          id: "websites/events",
+          label: "Events",
+          icon: <CalendarMonthIcon sx={{ fontSize: 18 }} />,
+        },
+        {
+          id: "websites/blog",
+          label: "Blog Posts",
+          icon: <ArticleOutlinedIcon size={18} />,
         },
         {
           id: "websites/recently-deleted",
@@ -710,11 +836,64 @@ const Dashboard = ({ user }) => {
       visible: userIsAdmin,
     },
     {
+      id: "finances",
+      label: "Finances",
+      icon: <DollarSignIcon size={20} />,
+      badge: null,
+      visible: isSuperAdmin(user.role),
+    },
+    {
+      id: "promo-deals",
+      label: "Promo Deals",
+      icon: <PromoDealsIcon size={20} />,
+      badge: null,
+      visible: isSuperAdmin(user.role),
+    },
+    {
+      id: "referral-analytics",
+      label: "Referrals",
+      icon: <GiftIcon size={20} />,
+      badge: null,
+      visible: isSuperAdmin(user.role),
+    },
+    {
       id: "users",
       label: "User Management",
       icon: <PeopleOutlinedIcon size={20} />,
       badge: null,
       visible: userIsAdmin,
+    },
+    {
+      id: "performance",
+      label: "Performance",
+      icon: <SpeedOutlinedIcon size={20} />,
+      badge: null,
+      visible: userIsAdmin,
+    },
+    {
+      id: "docs",
+      label: "Documentation",
+      icon: <BookOpenIcon size={20} />,
+      badge: null,
+      visible: userIsAdmin,
+    },
+    {
+      id: "communications",
+      label: "Communications",
+      icon: <CampaignIcon size={20} />,
+      badge: null,
+      visible: userIsAdmin || userIsContentManager,
+    },
+    // Account delegation invites - visible to all roles
+    {
+      id: "account-invites",
+      label: "Account Invites",
+      icon: <AccountInvitesIcon size={20} />,
+      badge: accountInvitesPendingCount,
+      badgeAriaLabel: accountInvitesPendingCount
+        ? `${accountInvitesPendingCount} pending account invite${accountInvitesPendingCount !== 1 ? "s" : ""}`
+        : undefined,
+      visible: true,
     },
     // NOTE: Settings moved to bottomMenuItems for sidebar bottom section
   ];
@@ -743,21 +922,29 @@ const Dashboard = ({ user }) => {
       title: "Manage Insights",
       subtitle: "Create, edit, and manage all insights for your platform",
     },
+    templates: {
+      title: "Template Management",
+      subtitle: "Create, manage, and approve website templates",
+    },
     websites: {
       title: "All Websites",
       subtitle: "View and manage all your websites",
     },
     "websites/create": {
       title: "Create Website",
-      subtitle: "Choose a template to get started",
-    },
-    "websites/create/customize": {
-      title: "Customize Website",
-      subtitle: "Configure your website settings and pages",
+      subtitle: "Browse templates and create your website",
     },
     "websites/create-template": {
       title: "Create Template",
       subtitle: "Design and create new website templates",
+    },
+    "websites/templates": {
+      title: "Template Gallery",
+      subtitle: "Browse and preview website templates",
+    },
+    "websites/my-templates": {
+      title: "My Templates",
+      subtitle: "Your saved and recently used templates",
     },
     "websites/recently-deleted": {
       title: "Recently Deleted",
@@ -767,9 +954,33 @@ const Dashboard = ({ user }) => {
       title: "Stores",
       subtitle: "Manage your e-commerce websites and sell products online",
     },
+    finances: {
+      title: "Finances",
+      subtitle: "Platform revenue, subscriptions, and financial reports",
+    },
+    "promo-deals": {
+      title: "Promo Deals",
+      subtitle: "Create and manage time-limited flash deals for your platform users",
+    },
     users: {
       title: "User Management",
       subtitle: "Manage user accounts, roles, and permissions",
+    },
+    performance: {
+      title: "Performance Monitoring",
+      subtitle: "Real-time system health, metrics, and alerts",
+    },
+    docs: {
+      title: "Documentation Management",
+      subtitle: "Create, edit, and manage help articles and guides",
+    },
+    communications: {
+      title: "Communications",
+      subtitle: "Send broadcasts and targeted notifications",
+    },
+    "account-invites": {
+      title: "Account Invites",
+      subtitle: "View and manage pending account delegation invites",
     },
     settings: {
       title: "Settings",
@@ -797,19 +1008,22 @@ const Dashboard = ({ user }) => {
 
   // New collapsible sidebar content using layout components
   const sidebarContent = (
-    <CollapsibleSidebar
-      isCollapsed={sidebarCollapsed}
-      onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      menuItems={menuItems}
-      bottomMenuItems={bottomMenuItems}
-      activeTab={activeTab}
-      onTabChange={handleTabChange}
-      user={user}
-      onLogout={handleLogout}
-      isMobile={isMobile}
-      onMobileClose={() => setMobileOpen(false)}
-      colors={colors}
-    />
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <AccountSwitcher isCollapsed={sidebarCollapsed} colors={colors} />
+      <CollapsibleSidebar
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        menuItems={menuItems}
+        bottomMenuItems={bottomMenuItems}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        user={user}
+        onLogout={handleLogout}
+        isMobile={isMobile}
+        onMobileClose={() => setMobileOpen(false)}
+        colors={colors}
+      />
+    </Box>
   );
 
   const renderContent = () => {
@@ -828,6 +1042,17 @@ const Dashboard = ({ user }) => {
             pageSubtitle={currentPage.subtitle}
           />
         );
+      case "templates":
+        return (
+          <ManageTemplates
+            user={user}
+            highlightId={highlightId}
+            subtab={subtab}
+            onSubTabChange={clearNotificationParams}
+            pageTitle={currentPage.title}
+            pageSubtitle={currentPage.subtitle}
+          />
+        );
       case "overview":
         return (
           <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0 } }}>
@@ -835,194 +1060,9 @@ const Dashboard = ({ user }) => {
               title={currentPage.title}
               subtitle={currentPage.subtitle}
             />
-            <Box
-              sx={{
-                background: `linear-gradient(135deg, ${alpha(
-                  colors.primary,
-                  0.08,
-                )} 0%, ${alpha(colors.primaryDark, 0.05)} 100%)`,
-                backdropFilter: "blur(20px)",
-                borderRadius: 4,
-                p: 4,
-                border: `1px solid ${colors.border}`,
-                boxShadow: `0 2px 8px ${alpha(colors.darker, 0.2)}`,
-                mb: 3,
-              }}
-            >
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
-              >
-                <Box
-                  sx={{
-                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
-                    p: 2,
-                    borderRadius: 3,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: `0 2px 8px ${alpha(colors.primary, 0.25)}`,
-                  }}
-                >
-                  <TrendingUpIcon size={32} color="#F5F5F5" />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      color: colors.text,
-                      fontWeight: 700,
-                      letterSpacing: "-0.3px",
-                    }}
-                  >
-                    Quick Actions
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: colors.textSecondary, mt: 0.5 }}
-                  >
-                    Get started with these common tasks
-                  </Typography>
-                </Box>
-              </Box>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box
-                    onClick={() => navigate("/dashboard/websites/create")}
-                    sx={{
-                      p: 2.5,
-                      borderRadius: 2,
-                      border: `1px solid ${colors.border}`,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        borderColor: colors.primary,
-                        background: alpha(colors.primary, 0.05),
-                        transform: "translateY(-2px)",
-                      },
-                    }}
-                  >
-                    <LanguageOutlinedIcon
-                      size={24}
-                      style={{ color: colors.primary, marginBottom: 8 }}
-                    />
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: colors.text, fontWeight: 600 }}
-                    >
-                      Create Website
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: colors.textSecondary }}
-                    >
-                      Build a new website
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box
-                    onClick={() => navigate("/dashboard/websites")}
-                    sx={{
-                      p: 2.5,
-                      borderRadius: 2,
-                      border: `1px solid ${colors.border}`,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        borderColor: colors.primary,
-                        background: alpha(colors.primary, 0.05),
-                        transform: "translateY(-2px)",
-                      },
-                    }}
-                  >
-                    <DescriptionOutlinedIcon
-                      size={24}
-                      style={{ color: colors.primary, marginBottom: 8 }}
-                    />
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: colors.text, fontWeight: 600 }}
-                    >
-                      My Websites
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: colors.textSecondary }}
-                    >
-                      Manage your sites
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box
-                    onClick={() => navigate("/dashboard/websites/stores")}
-                    sx={{
-                      p: 2.5,
-                      borderRadius: 2,
-                      border: `1px solid ${colors.border}`,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        borderColor: colors.primary,
-                        background: alpha(colors.primary, 0.05),
-                        transform: "translateY(-2px)",
-                      },
-                    }}
-                  >
-                    <StorefrontOutlinedIcon
-                      size={24}
-                      style={{ color: colors.primary, marginBottom: 8 }}
-                    />
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: colors.text, fontWeight: 600 }}
-                    >
-                      My Stores
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: colors.textSecondary }}
-                    >
-                      E-commerce management
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box
-                    onClick={() => navigate("/dashboard/settings")}
-                    sx={{
-                      p: 2.5,
-                      borderRadius: 2,
-                      border: `1px solid ${colors.border}`,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        borderColor: colors.primary,
-                        background: alpha(colors.primary, 0.05),
-                        transform: "translateY(-2px)",
-                      },
-                    }}
-                  >
-                    <SettingsOutlinedIcon
-                      size={24}
-                      style={{ color: colors.primary, marginBottom: 8 }}
-                    />
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: colors.text, fontWeight: 600 }}
-                    >
-                      Settings
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: colors.textSecondary }}
-                    >
-                      Account preferences
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
+            <Suspense fallback={<CircularProgress sx={{ display: "block", mx: "auto", mt: 6 }} />}>
+              <DashboardOverview user={user} />
+            </Suspense>
           </Container>
         );
       case "admin-analytics":
@@ -1679,7 +1719,7 @@ const Dashboard = ({ user }) => {
                 </Typography>
 
                 {/* Advanced Analytics Loading State */}
-                {advancedAnalyticsLoading ? (
+                {analyticsLoading ? (
                   <Box
                     sx={{
                       display: "flex",
@@ -1761,6 +1801,16 @@ const Dashboard = ({ user }) => {
             )}
           </Container>
         );
+
+      case "websites/templates":
+        return (
+          <TemplateGalleryPage
+            pageTitle={currentPage.title}
+            pageSubtitle={currentPage.subtitle}
+          />
+        );
+      case "websites/my-templates":
+        return <MyTemplates />;
       case "websites":
         return (
           <Websites
@@ -1770,18 +1820,9 @@ const Dashboard = ({ user }) => {
         );
       case "websites/create":
         return (
-          <Websites
+          <TemplateGalleryPage
             pageTitle={currentPage.title}
             pageSubtitle={currentPage.subtitle}
-            initialView="create"
-          />
-        );
-      case "websites/create/customize":
-        return (
-          <Websites
-            pageTitle={currentPage.title}
-            pageSubtitle={currentPage.subtitle}
-            initialView="customize"
           />
         );
       case "websites/create-template":
@@ -1835,6 +1876,32 @@ const Dashboard = ({ user }) => {
             pageSubtitle={currentPage.subtitle}
           />
         );
+      case "finances":
+        return (
+          <Suspense fallback={<CircularProgress sx={{ display: "block", mx: "auto", mt: 6 }} />}>
+            <Finances
+              user={user}
+              pageTitle={currentPage.title}
+              pageSubtitle={currentPage.subtitle}
+              subtab={subtab}
+              onSubTabChange={clearNotificationParams}
+            />
+          </Suspense>
+        );
+      case "promo-deals":
+        return (
+          <PromoDealManager
+            user={user}
+            pageTitle={currentPage.title}
+            pageSubtitle={currentPage.subtitle}
+          />
+        );
+      case "referral-analytics":
+        return (
+          <Suspense fallback={<CircularProgress sx={{ display: "block", mx: "auto", mt: 6 }} />}>
+            <ReferralAnalytics />
+          </Suspense>
+        );
       case "users":
         return (
           <UserManagement
@@ -1843,6 +1910,28 @@ const Dashboard = ({ user }) => {
             pageSubtitle={currentPage.subtitle}
           />
         );
+      case "performance":
+        return <PerformanceMonitoring colors={colors} />;
+      case "docs":
+        return (
+          <ManageDocs
+            colors={colors}
+            pageTitle={currentPage.title}
+            pageSubtitle={currentPage.subtitle}
+          />
+        );
+      case "communications":
+        return (
+          <Suspense fallback={<CircularProgress sx={{ display: "block", mx: "auto", mt: 6 }} />}>
+            <Communications
+              user={user}
+              pageTitle={currentPage.title}
+              pageSubtitle={currentPage.subtitle}
+            />
+          </Suspense>
+        );
+      case "account-invites":
+        return <AccountInvitesPage />;
       case "settings":
         return (
           <Settings
@@ -1852,6 +1941,17 @@ const Dashboard = ({ user }) => {
           />
         );
       default:
+        // Per-website management dashboard (Step 10.3): /websites/:id/manage/:section
+        if (activeTab && /^websites\/[^/]+\/manage$/.test(activeTab)) {
+          const websiteId = activeTab.split("/")[1];
+          return (
+            <WebsiteManagementDashboard
+              websiteId={websiteId}
+              section={subtab || "overview"}
+              userPlan={user?.websitePlan || 'free'}
+            />
+          );
+        }
         return null;
     }
   };
@@ -1859,6 +1959,8 @@ const Dashboard = ({ user }) => {
   return (
     <ThemeProvider theme={dashboardTheme}>
       <CssBaseline />
+      <AccountProvider>
+      <OnboardingProvider>
 
       {/* Loading overlay - dark with stars, visible until dashboard is ready */}
       <Box
@@ -2125,6 +2227,11 @@ const Dashboard = ({ user }) => {
             colors={colors}
           />
 
+          {/* Active promo deal banner — sticky below nav (step 10.36) */}
+          {activeDeal && (
+            <DealBanner deal={activeDeal} userId={user?.id} />
+          )}
+
           <Box
             component="main"
             sx={{
@@ -2214,6 +2321,8 @@ const Dashboard = ({ user }) => {
           </DialogActions>
         </Dialog>
       </Box>
+      </OnboardingProvider>
+      </AccountProvider>
     </ThemeProvider>
   );
 };

@@ -1,137 +1,179 @@
-import React from "react";
-import { useCookieConsent } from "../../context/PreferencesContext";
+import React from 'react';
+import { Box, Typography, Button, Container, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import CookieIcon from '@mui/icons-material/Cookie';
+import { useCookieConsent } from '../../context/PreferencesContext';
 
-const bannerStyle = {
-  position: "fixed",
-  bottom: 0,
-  left: 0,
-  right: 0,
-  zIndex: 9999,
-  background: "rgba(0, 0, 0, 0.95)",
-  borderTop: "1px solid rgba(55, 140, 146, 0.3)",
-  backdropFilter: "blur(10px)",
-  boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.3)",
-  padding: "14px 16px",
-};
-
-const rowStyle = {
-  maxWidth: 1280,
-  margin: "0 auto",
-  display: "flex",
-  flexWrap: "wrap",
-  alignItems: "center",
-  gap: 12,
-  justifyContent: "space-between",
-};
-
-const textWrapStyle = {
-  display: "flex",
-  alignItems: "flex-start",
-  gap: 10,
-  flex: "1 1 500px",
-  minWidth: 0,
-};
-
-const titleStyle = {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: 700,
-  lineHeight: 1.2,
-  margin: 0,
-};
-
-const bodyStyle = {
-  color: "rgba(255,255,255,0.85)",
-  fontSize: 14,
-  lineHeight: 1.45,
-  margin: "4px 0 0",
-};
-
-const buttonsStyle = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-  justifyContent: "flex-end",
-  flex: "0 1 auto",
-};
-
-function makeBtn(base) {
-  return {
-    borderRadius: 8,
-    padding: "9px 14px",
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
-    border: "1px solid transparent",
-    background: "transparent",
-    ...base,
-  };
-}
-
-export default function CookieBanner() {
-  const {
-    showBanner,
-    handleAcceptAll,
-    handleRejectNonEssential,
-    openPreferences,
-  } = useCookieConsent();
+const CookieBanner = () => {
+  const { showBanner, handleAcceptAll, handleRejectNonEssential, openPreferences } =
+    useCookieConsent();
 
   if (!showBanner) return null;
 
   return (
-    <div style={bannerStyle} role="dialog" aria-label="Cookie consent banner">
-      <div style={rowStyle}>
-        <div style={textWrapStyle}>
-          <div style={{ color: "#378C92", fontSize: 20, lineHeight: 1 }}>🍪</div>
-          <div>
-            <p style={titleStyle}>We value your privacy</p>
-            <p style={bodyStyle}>
-              We use cookies to improve experience and analyze traffic. See{" "}
-              <a
-                href="/cookie-policy"
-                style={{ color: "#52b5bf", textDecoration: "underline" }}
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid rgba(55, 140, 146, 0.3)',
+        zIndex: 9999,
+        py: { xs: 2, sm: 2.5 },
+        px: { xs: 2, sm: 3 },
+        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.3)',
+      }}
+    >
+      <Container maxWidth="xl">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: { xs: 'flex-start', md: 'center' },
+            justifyContent: 'space-between',
+            gap: { xs: 2, md: 3 },
+          }}
+        >
+          {/* Icon & Text */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 2,
+              flex: 1,
+            }}
+          >
+            <CookieIcon
+              sx={{
+                color: '#378C92',
+                fontSize: { xs: 28, md: 32 },
+                flexShrink: 0,
+                mt: 0.5,
+              }}
+            />
+            <Box>
+              <Typography
+                sx={{
+                  color: '#fff',
+                  fontSize: { xs: '1rem', sm: '1.1rem' },
+                  fontWeight: 600,
+                  fontFamily: 'system-ui',
+                  mb: 0.5,
+                }}
               >
-                Cookie Policy
-              </a>
-              .
-            </p>
-          </div>
-        </div>
+                We value your privacy
+              </Typography>
+              <Typography
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  fontSize: { xs: '0.875rem', sm: '0.95rem' },
+                  fontFamily: 'system-ui',
+                  lineHeight: 1.5,
+                }}
+              >
+                We use cookies to enhance your experience, analyze site traffic, and personalize
+                content. By clicking "Accept All", you consent to our use of cookies.{' '}
+                <Typography
+                  component="a"
+                  href="/cookie-policy"
+                  sx={{
+                    color: '#378C92',
+                    textDecoration: 'underline',
+                    '&:hover': { color: '#4aa4ab' },
+                  }}
+                >
+                  Learn more
+                </Typography>
+              </Typography>
+            </Box>
+          </Box>
 
-        <div style={buttonsStyle}>
-          <button
-            type="button"
-            onClick={handleRejectNonEssential}
-            style={makeBtn({
-              color: "#fff",
-              borderColor: "rgba(255,255,255,0.3)",
-            })}
+          {/* Buttons */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 1.5, sm: 2 },
+              width: { xs: '100%', md: 'auto' },
+              flexShrink: 0,
+            }}
           >
-            Reject
-          </button>
-          <button
-            type="button"
-            onClick={openPreferences}
-            style={makeBtn({
-              color: "#52b5bf",
-              borderColor: "#378C92",
-            })}
-          >
-            Customize
-          </button>
-          <button
-            type="button"
-            onClick={handleAcceptAll}
-            style={makeBtn({
-              color: "#fff",
-              background: "#378C92",
-              borderColor: "#378C92",
-            })}
-          >
-            Accept All
-          </button>
-        </div>
-      </div>
-    </div>
+            <Button
+              onClick={handleRejectNonEssential}
+              variant="outlined"
+              sx={{
+                color: '#fff',
+                borderColor: 'rgba(255, 255, 255, 0.3)',
+                fontWeight: 500,
+                fontSize: { xs: '0.875rem', sm: '0.9rem' },
+                textTransform: 'none',
+                fontFamily: 'system-ui',
+                px: { xs: 2.5, sm: 3 },
+                py: 1,
+                borderRadius: '8px',
+                minWidth: { xs: '100%', sm: '120px' },
+                '&:hover': {
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                },
+              }}
+            >
+              Reject
+            </Button>
+
+            <Button
+              onClick={openPreferences}
+              variant="outlined"
+              sx={{
+                color: '#378C92',
+                borderColor: '#378C92',
+                fontWeight: 500,
+                fontSize: { xs: '0.875rem', sm: '0.9rem' },
+                textTransform: 'none',
+                fontFamily: 'system-ui',
+                px: { xs: 2.5, sm: 3 },
+                py: 1,
+                borderRadius: '8px',
+                minWidth: { xs: '100%', sm: '120px' },
+                '&:hover': {
+                  borderColor: '#4aa4ab',
+                  backgroundColor: 'rgba(55, 140, 146, 0.1)',
+                },
+              }}
+            >
+              Customize
+            </Button>
+
+            <Button
+              onClick={handleAcceptAll}
+              variant="contained"
+              sx={{
+                backgroundColor: '#378C92',
+                color: '#fff',
+                fontWeight: 600,
+                fontSize: { xs: '0.875rem', sm: '0.9rem' },
+                textTransform: 'none',
+                fontFamily: 'system-ui',
+                px: { xs: 2.5, sm: 3 },
+                py: 1,
+                borderRadius: '8px',
+                minWidth: { xs: '100%', sm: '120px' },
+                boxShadow: '0 4px 12px rgba(55, 140, 146, 0.3)',
+                '&:hover': {
+                  backgroundColor: '#4aa4ab',
+                  boxShadow: '0 6px 16px rgba(55, 140, 146, 0.4)',
+                },
+              }}
+            >
+              Accept All
+            </Button>
+          </Box>
+        </Box>
+      </Container>
+    </Box>
   );
-}
+};
+
+export default CookieBanner;

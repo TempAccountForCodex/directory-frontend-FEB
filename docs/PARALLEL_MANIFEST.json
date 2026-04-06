@@ -1,0 +1,76 @@
+{
+  "step": "3.4",
+  "title": "Template Gallery Frontend Component",
+  "gate_scope": "single_step",
+  "steps_validated": ["3.4"],
+  "tasks": [
+    {
+      "task_id": "t1",
+      "title": "TemplateCard + TemplateGallery components",
+      "qa_status": "PASSED",
+      "files_created": [
+        "frontend/src/components/Templates/TemplateCard.tsx",
+        "frontend/src/components/Templates/TemplateGallery.tsx"
+      ],
+      "files_modified": []
+    },
+    {
+      "task_id": "t2",
+      "title": "TemplateFilters + TemplatePreviewModal + useTemplates hook + Templates page",
+      "qa_status": "PASSED",
+      "files_created": [
+        "frontend/src/components/Templates/TemplateFilters.tsx",
+        "frontend/src/components/Templates/TemplatePreviewModal.tsx",
+        "frontend/src/hooks/useTemplates.ts",
+        "frontend/src/pages/Templates.tsx"
+      ],
+      "files_modified": [
+        "frontend/src/components/Dashboard/Dashboard.jsx"
+      ]
+    }
+  ],
+  "all_files_modified": [
+    "frontend/src/components/Templates/TemplateCard.tsx",
+    "frontend/src/components/Templates/TemplateGallery.tsx",
+    "frontend/src/components/Templates/TemplateFilters.tsx",
+    "frontend/src/components/Templates/TemplatePreviewModal.tsx",
+    "frontend/src/hooks/useTemplates.ts",
+    "frontend/src/pages/Templates.tsx",
+    "frontend/src/components/Dashboard/Dashboard.jsx"
+  ],
+  "frozen_files": [
+    "backend/**"
+  ],
+  "contracts": [
+    {
+      "symbol": "TemplateSummary",
+      "import_path": "frontend/src/templates/index.ts",
+      "exported_by": "pre-existing",
+      "consumed_by": ["t1", "t2"]
+    },
+    {
+      "symbol": "CATEGORY_LABELS",
+      "import_path": "frontend/src/templates/index.ts",
+      "exported_by": "pre-existing",
+      "consumed_by": ["t1", "t2"]
+    },
+    {
+      "symbol": "getDashboardColors",
+      "import_path": "frontend/src/styles/dashboardTheme.ts",
+      "exported_by": "pre-existing",
+      "consumed_by": ["t1", "t2"]
+    },
+    {
+      "symbol": "TemplateGallery",
+      "import_path": "frontend/src/components/Templates/TemplateGallery.tsx",
+      "exported_by": "t1",
+      "consumed_by": ["t2"]
+    },
+    {
+      "symbol": "useTemplates",
+      "import_path": "frontend/src/hooks/useTemplates.ts",
+      "exported_by": "t2",
+      "consumed_by": ["t2"]
+    }
+  ]
+}

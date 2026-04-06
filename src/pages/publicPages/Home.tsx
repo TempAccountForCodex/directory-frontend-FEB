@@ -75,7 +75,10 @@ const Home: React.FC = () => {
 
     window.addEventListener("scroll", unlock, { passive: true, once: true });
     window.addEventListener("wheel", unlock, { passive: true, once: true });
-    window.addEventListener("touchstart", unlock, { passive: true, once: true });
+    window.addEventListener("touchstart", unlock, {
+      passive: true,
+      once: true,
+    });
     window.addEventListener("keydown", unlock, { once: true });
 
     return () => {

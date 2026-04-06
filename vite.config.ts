@@ -1,48 +1,54 @@
 // vite.config.ts
 
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import basicSsl from "@vitejs/plugin-basic-ssl";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), basicSsl()],
+  plugins: [
+    react({
+      jsxImportSource: '@emotion/react',
+      babel: {
+        plugins: ['@emotion/babel-plugin'],
+      },
+    }),
+  ],
 
   // Pre-bundle heavy dependencies for faster dev server
   optimizeDeps: {
     include: [
-      "@emotion/react",
-      "@emotion/styled",
-      "@mui/material/Tooltip",
-      "@mui/material/Unstable_Grid2",
-      "react-router-dom",
-      "leaflet",
-      "react-leaflet",
-      "swiper",
-      "swiper/react",
-      "@emailjs/browser",
+      '@emotion/react',
+      '@emotion/styled',
+      '@mui/material/Tooltip',
+      '@mui/material/Unstable_Grid2',
+      'framer-motion',
+      'react-router-dom',
+      'leaflet',
+      'react-leaflet',
+      'swiper',
+      'swiper/react',
+      '@emailjs/browser',
+      'notistack',
     ],
   },
 
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
 
   // Development server configuration
   server: {
-    host: "0.0.0.0",
     port: 5173,
     open: true,
-    https: process.env.VITE_HTTPS === "true" ? {} : undefined,
     // Proxy API requests to backend (avoids CORS in dev)
     proxy: {
-      "/api": {
-        target: process.env.VITE_API_URL || "http://localhost:5001",
+      '/api': {
+        target: process.env.VITE_API_URL || 'http://localhost:5001',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, "/api"),
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
   },
@@ -51,16 +57,12 @@ export default defineConfig({
   preview: {
     port: 4173,
     open: true,
-    host: "0.0.0.0",
-    https: process.env.VITE_HTTPS === "true" ? {} : undefined,
   },
 
   // Production build optimizations
   build: {
-    modulePreload: false,
-
     // Generate sourcemaps for error tracking (hidden from users)
-    sourcemap: "hidden",
+    sourcemap: 'hidden',
 
     // Reasonable chunk size warning (helps catch bloat early)
     chunkSizeWarningLimit: 600,
@@ -70,10 +72,14 @@ export default defineConfig({
         // Split vendor code for better caching as you grow
         manualChunks: {
           // Core React libraries (changes rarely)
-          "react-core": ["react", "react-dom", "react-router-dom"],
+          'react-core': ['react', 'react-dom', 'react-router-dom'],
+
+          // MUI components (large, changes with updates)
+          mui: ['@mui/material', '@mui/icons-material', '@mui/x-date-pickers'],
 
           // Heavy feature libraries (only loaded when needed)
-          maps: ["leaflet", "react-leaflet", "react-simple-maps"],
+          maps: ['leaflet', 'react-leaflet', 'react-simple-maps'],
+          animations: ['framer-motion', '@tsparticles/react', '@tsparticles/engine'],
         },
       },
     },

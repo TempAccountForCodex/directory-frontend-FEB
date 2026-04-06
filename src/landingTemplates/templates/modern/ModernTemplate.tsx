@@ -9,7 +9,7 @@ import {
   IconButton,
 } from "@mui/material";
 import { Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 import { buildModernTheme } from "./modernTheme";
 import {
   HeroBlock,
@@ -173,7 +173,12 @@ function ModernHeader({
           gap: 2,
         }}
       >
-        <Stack direction="row" spacing={1.2} alignItems="center" sx={{ minWidth: 0 }}>
+        <Stack
+          direction="row"
+          spacing={1.2}
+          alignItems="center"
+          sx={{ minWidth: 0 }}
+        >
           {header.logoType === "image" ? (
             <Box
               component="img"
@@ -303,12 +308,20 @@ function ModernFooter({
         {data.name}
       </Typography>
       {data.contact.address && (
-        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.6)", mb: 3 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: "rgba(255,255,255,0.6)", mb: 3 }}
+        >
           {data.contact.address}
         </Typography>
       )}
       {social && (
-        <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 3 }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          justifyContent="center"
+          sx={{ mb: 3 }}
+        >
           {social.facebook && (
             <IconButton size="small" sx={{ color: "rgba(255,255,255,0.6)" }}>
               <Facebook size={18} />

@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
-
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
@@ -101,8 +99,6 @@
 html,
 body {
   font-family:
-    "Inter",
-    "Plus Jakarta Sans",
     "Barlow",
     -apple-system,
     BlinkMacSystemFont,
@@ -156,23 +152,6 @@ a {
 
 * {
   box-sizing: border-box;
-}
-
-body,
-button,
-input,
-textarea,
-select {
-  font-family:
-    "Inter",
-    "Plus Jakarta Sans",
-    "Barlow",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Arial,
-    sans-serif;
 }
 div#tsparticles > canvas {
   position: absolute !important;

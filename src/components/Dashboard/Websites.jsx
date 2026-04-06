@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import axios from 'axios';
 import {
   Box,
@@ -18,6 +19,7 @@ import {
   IconButton,
   alpha,
   Skeleton,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowLeft,
@@ -34,14 +36,16 @@ import {
   Trash,
   Trash2,
   Upload,
+  Users,
   X,
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import WebsiteAnalytics from './WebsiteAnalytics';
+import CollaboratorModal from './CollaboratorModal';
 import { useStoreWebsiteCreation } from '../../hooks/useStoreWebsiteCreation';
-import { getWebsiteTemplates, getStoreTemplates, refreshTemplateCache } from '../../templates';
+import { getWebsiteTemplates, getStoreTemplates, refreshTemplateCache } from '../../templates/templateApi';
 import ColorPickerWithAlpha from '../UI/ColorPickerWithAlpha';
 import {
   DashboardActionButton,
@@ -49,16 +53,36 @@ import {
   DashboardSelect,
   PageHeader,
   DashboardMetricCard,
+  EmptyState,
+  SearchBar,
   getTrendProps,
 } from './shared';
+import {
+  ROLE_PERMISSIONS,
+  WEBSITE_ACTIONS,
+} from '../../context/PermissionContext';
 import LanguageIcon from '@mui/icons-material/Language';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import PeopleIcon from '@mui/icons-material/People';
 
-// Lazy load wizard components for better performance
-const CreateWebsiteWizardContent = lazy(() => import('../../pages/CreateWebsiteWizard'));
-const CustomizeWebsiteContent = lazy(() => import('../../pages/CustomizeWebsite'));
+// ── Role badge colors (Step 7.4.2) ──────────────────────────────────────────
+const ROLE_COLORS = { OWNER: '#d4a017', ADMIN: '#2196f3', EDITOR: '#4caf50', VIEWER: '#9e9e9e' };
+
+/**
+ * Check if a given role can perform a specific action.
+ * Uses ROLE_PERMISSIONS from PermissionContext (frontend mirror of backend permissions).
+ */
+const canPerformAction = (role, action) => {
+  if (!role || !action) return false;
+  const perms = ROLE_PERMISSIONS[role];
+  return perms ? perms.has(action) : false;
+};
+
+// Legacy wizard imports removed (Step 4.15 — creation flow unification)
+// CreateWebsiteWizard, CustomizeWebsite, and AIQuestionnairePage are no longer used.
+// All website creation flows now go through Template Gallery -> CreateWebsiteModal.
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -250,6 +274,18 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
+  // Search state for server-side filtering
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  // Role filter state (Step 7.4.1)
+  const [roleFilter, setRoleFilter] = useState('all'); // 'all' | 'owned' | 'shared'
+
+  // Collaborator modal state (Step 7.4.4)
+  const [collaboratorModalOpen, setCollaboratorModalOpen] = useState(false);
+  const [collaboratorWebsiteId, setCollaboratorWebsiteId] = useState(null);
+  const [collaboratorWebsiteRole, setCollaboratorWebsiteRole] = useState('VIEWER');
+
   // Restore state
   const [restoring, setRestoring] = useState(false);
 
@@ -291,11 +327,10 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
         setActiveLoadingMore(true);
       }
       setError(null);
+      const params = { page, limit: PAGE_SIZE };
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       const response = await axios.get(`${API_URL}/websites`, {
-        params: {
-          page,
-          limit: PAGE_SIZE,
-        },
+        params,
       });
 
       const newData = response.data.data || [];
@@ -315,6 +350,16 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
       setActiveLoadingMore(false);
     }
   };
+
+  // Re-fetch from page 1 when search changes
+  useEffect(() => {
+    if (viewMode === 'active') {
+      setActivePage(1);
+      setWebsites([]);
+      setActiveHasMore(true);
+      fetchWebsites(1, true);
+    }
+  }, [debouncedSearch]);
 
   const fetchStats = async () => {
     try {
@@ -787,6 +832,29 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
     }
   };
 
+  // ── Multi-tenancy: filtered websites and stats (Step 7.4.1) ──────────────
+  const filteredWebsites = useMemo(() => {
+    if (roleFilter === 'owned') {
+      return websites.filter((w) => (w.role || 'VIEWER').toUpperCase() === 'OWNER');
+    }
+    if (roleFilter === 'shared') {
+      return websites.filter((w) => (w.role || 'VIEWER').toUpperCase() !== 'OWNER');
+    }
+    return websites;
+  }, [websites, roleFilter]);
+
+  const ownershipStats = useMemo(() => {
+    const owned = websites.filter((w) => (w.role || 'VIEWER').toUpperCase() === 'OWNER').length;
+    const shared = websites.filter((w) => (w.role || 'VIEWER').toUpperCase() !== 'OWNER').length;
+    return { owned, shared };
+  }, [websites]);
+
+  const handleOpenCollaboratorModal = useCallback((website) => {
+    setCollaboratorWebsiteId(website.id);
+    setCollaboratorWebsiteRole((website.role || 'OWNER').toUpperCase());
+    setCollaboratorModalOpen(true);
+  }, []);
+
   if (loading) {
     return (
       <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0 } }}>
@@ -802,27 +870,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
     <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0 } }}>
       <PageHeader title={pageTitle} subtitle={pageSubtitle} />
 
-      {/* Create Website Wizard - Template Selection */}
-      {initialView === 'create' && (
-        <Suspense fallback={
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-            <CircularProgress sx={{ color: colors.primary }} />
-          </Box>
-        }>
-          <CreateWebsiteWizardContent embedded />
-        </Suspense>
-      )}
-
-      {/* Customize Website - Configuration Step */}
-      {initialView === 'customize' && (
-        <Suspense fallback={
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-            <CircularProgress sx={{ color: colors.primary }} />
-          </Box>
-        }>
-          <CustomizeWebsiteContent embedded />
-        </Suspense>
-      )}
+      {/* Legacy wizard views removed (Step 4.15). All creation flows go through Template Gallery. */}
 
       {/* Create Template Empty State */}
       {initialView === 'create-template' && (
@@ -864,7 +912,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
               </Button>
               <Button
                 variant="outlined"
-                onClick={() => navigate('/dashboard/websites/create')}
+                onClick={() => navigate('/dashboard/websites/templates')}
                 sx={{
                   borderColor: colors.primary,
                   color: colors.primary,
@@ -884,7 +932,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
       )}
 
       {/* Statistics Cards */}
-      {viewMode === 'active' && !['create', 'customize', 'create-template'].includes(initialView) && (
+      {viewMode === 'active' && !['create-template'].includes(initialView) && (
         <Grid container spacing={{ xs: 2, sm: 2, md: 2 }} sx={{ mb: { xs: 2, md: 3 } }}>
           <Grid item xs={12} sm={6} md={3}>
             <DashboardMetricCard
@@ -925,19 +973,85 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
         </Grid>
       )}
 
-      {error && !['create', 'customize', 'create-template'].includes(initialView) && (
+      {/* Role Filter Tabs & Ownership Stats (Step 7.4.2) */}
+      {viewMode === 'active' && !['create-template'].includes(initialView) && websites.length > 0 && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: 2,
+            flexWrap: 'wrap',
+            gap: 1,
+          }}
+        >
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {[
+              { key: 'all', label: 'All' },
+              { key: 'owned', label: 'Owned' },
+              { key: 'shared', label: 'Shared with Me' },
+            ].map(({ key, label }) => (
+              <Chip
+                key={key}
+                label={label}
+                size="small"
+                onClick={() => setRoleFilter(key)}
+                data-testid={`filter-${key}`}
+                sx={{
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  bgcolor: roleFilter === key ? alpha(colors.primary, 0.15) : alpha(colors.textSecondary, 0.08),
+                  color: roleFilter === key ? colors.primary : colors.textSecondary,
+                  border: roleFilter === key ? `1px solid ${alpha(colors.primary, 0.4)}` : '1px solid transparent',
+                  '&:hover': {
+                    bgcolor: roleFilter === key ? alpha(colors.primary, 0.2) : alpha(colors.textSecondary, 0.12),
+                  },
+                }}
+              />
+            ))}
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+              Owned: {ownershipStats.owned}
+            </Typography>
+            {ownershipStats.shared > 0 && (
+              <>
+                <Typography variant="caption" sx={{ color: colors.textSecondary }}>|</Typography>
+                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                    <PeopleIcon sx={{ fontSize: 14 }} /> Shared: {ownershipStats.shared}
+                  </Box>
+                </Typography>
+              </>
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {error && !['create-template'].includes(initialView) && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
 
+      {/* Search Bar */}
+      {viewMode === 'active' && !['create-template'].includes(initialView) && (
+        <Box sx={{ mb: 3, maxWidth: { xs: '100%', md: 400 } }}>
+          <SearchBar
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search websites..."
+          />
+        </Box>
+      )}
+
       {/* Website Cards Grid */}
-      {viewMode === 'active' && !['create', 'customize', 'create-template'].includes(initialView) && (
+      {viewMode === 'active' && !['create-template'].includes(initialView) && (
         <Grid container spacing={3}>
           {/* Create New Website Card */}
           <Grid item xs={12} sm={6} md={4}>
             <Card
-              onClick={() => navigate('/dashboard/websites/create-website')}
+              onClick={() => navigate('/dashboard/websites/templates')}
               sx={{
                 aspectRatio: '16/10',
                 border: `2px dashed ${alpha(colors.textSecondary, 0.3)}`,
@@ -978,7 +1092,17 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
 
           {/* Existing Websites */}
           {!loading &&
-            websites.map((website) => (
+            filteredWebsites.map((website) => {
+              const websiteRole = (website.role || 'VIEWER').toUpperCase();
+              const canEdit = canPerformAction(websiteRole, WEBSITE_ACTIONS.EDIT_CONTENT);
+              const canEditSettings = canPerformAction(websiteRole, WEBSITE_ACTIONS.EDIT_SETTINGS);
+              const canPublish = canPerformAction(websiteRole, WEBSITE_ACTIONS.PUBLISH);
+              const canDelete = canPerformAction(websiteRole, WEBSITE_ACTIONS.DELETE);
+              const canViewAnalytics = canPerformAction(websiteRole, WEBSITE_ACTIONS.VIEW_ANALYTICS);
+              const canManageCollaborators = canPerformAction(websiteRole, WEBSITE_ACTIONS.MANAGE_COLLABORATORS);
+              const isShared = websiteRole !== 'OWNER';
+
+              return (
               <Grid item xs={12} sm={6} md={4} key={website.id}>
                 <Card
                   sx={{
@@ -1018,6 +1142,25 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                   >
                     <Globe size={64} color={alpha(colors.textSecondary, 0.2)} />
                   </Box>
+
+                  {/* Role Badge (Step 7.4.2) */}
+                  <Chip
+                    label={websiteRole}
+                    size="small"
+                    data-testid={`role-badge-${website.id}`}
+                    sx={{
+                      position: 'absolute',
+                      top: 12,
+                      left: 12,
+                      bgcolor: alpha(ROLE_COLORS[websiteRole] || colors.primary, 0.9),
+                      color: '#fff',
+                      fontWeight: 600,
+                      fontSize: '0.65rem',
+                      textTransform: 'uppercase',
+                      backdropFilter: 'blur(10px)',
+                      height: 22,
+                    }}
+                  />
 
                   {/* Status Badge */}
                   <Chip
@@ -1079,23 +1222,65 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                       /s/{website.slug}
                     </Typography>
                     <Box display="flex" gap={1} flexWrap="wrap">
+                      {/* Manage — always visible for EDITOR+ roles */}
                       <Button
                         size="small"
-                        startIcon={<Pencil size={18} />}
+                        startIcon={<Settings size={18} />}
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/dashboard/websites/${website.id}/editor`);
+                          navigate(`/dashboard/websites/${website.id}/manage/overview`);
                         }}
                         sx={{
                           color: colors.primary,
                           textTransform: 'none',
                           fontWeight: 600,
-                          '&:hover': { bgcolor: alpha(colors.primary, 0.1) },
+                          minHeight: 36,
+                          bgcolor: alpha(colors.primary, 0.08),
+                          '&:hover': { bgcolor: alpha(colors.primary, 0.15) },
                         }}
                       >
-                        Edit
+                        Manage
                       </Button>
 
+                      {/* Edit — requires EDIT_CONTENT */}
+                      {canEdit ? (
+                        <Button
+                          size="small"
+                          startIcon={<Pencil size={18} />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/dashboard/websites/${website.id}/editor`);
+                          }}
+                          sx={{
+                            color: colors.primary,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            minHeight: 36,
+                            '&:hover': { bgcolor: alpha(colors.primary, 0.1) },
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      ) : (
+                        <Tooltip title="You need EDITOR role to edit" arrow>
+                          <Box component="span" sx={{ display: 'inline-flex' }}>
+                            <Button
+                              size="small"
+                              startIcon={<Pencil size={18} />}
+                              disabled
+                              sx={{
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                minHeight: 36,
+                              }}
+                            >
+                              Edit
+                            </Button>
+                          </Box>
+                        </Tooltip>
+                      )}
+
+                      {/* Preview — always visible */}
                       <Button
                         size="small"
                         startIcon={<Eye size={18} />}
@@ -1107,103 +1292,143 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                           color: colors.primary,
                           textTransform: 'none',
                           fontWeight: 600,
+                          minHeight: 36,
                           '&:hover': { bgcolor: alpha(colors.primary, 0.1) },
                         }}
                       >
                         Preview
                       </Button>
 
-                      <Button
-                        size="small"
-                        startIcon={<Settings size={18} />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenSettings(website);
-                        }}
-                        sx={{
-                          color: colors.textSecondary,
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          '&:hover': { bgcolor: alpha(colors.textSecondary, 0.1) },
-                        }}
-                      >
-                        Settings
-                      </Button>
-
-                      <Button
-                        size="small"
-                        startIcon={<ChartBar size={18} />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenAnalytics(website);
-                        }}
-                        sx={{
-                          color: colors.primary,
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          '&:hover': { bgcolor: alpha(colors.primary, 0.1) },
-                        }}
-                      >
-                        Analytics
-                      </Button>
-
-                      {website.status === 'PUBLISHED' ? (
+                      {/* Settings — requires EDIT_SETTINGS (ADMIN+) */}
+                      {canEditSettings && (
                         <Button
                           size="small"
-                          startIcon={<EyeOff size={18} />}
+                          startIcon={<Settings size={18} />}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleUnpublish(website.id);
+                            handleOpenSettings(website);
                           }}
                           sx={{
                             color: colors.textSecondary,
                             textTransform: 'none',
                             fontWeight: 600,
+                            minHeight: 36,
                             '&:hover': { bgcolor: alpha(colors.textSecondary, 0.1) },
                           }}
                         >
-                          Unpublish
-                        </Button>
-                      ) : (
-                        <Button
-                          size="small"
-                          startIcon={<Eye size={18} />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePublish(website.id);
-                          }}
-                          sx={{
-                            color: '#4ade80',
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            '&:hover': { bgcolor: alpha('#4ade80', 0.1) },
-                          }}
-                        >
-                          Publish
+                          Settings
                         </Button>
                       )}
 
-                      <Button
-                        size="small"
-                        startIcon={<Trash2 size={18} />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenDeleteDialog(website);
-                        }}
-                        sx={{
-                          color: '#f44336',
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          '&:hover': { bgcolor: alpha('#f44336', 0.1) },
-                        }}
-                      >
-                        Delete
-                      </Button>
+                      {/* Analytics — requires VIEW_ANALYTICS */}
+                      {canViewAnalytics && (
+                        <Button
+                          size="small"
+                          startIcon={<ChartBar size={18} />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenAnalytics(website);
+                          }}
+                          sx={{
+                            color: colors.primary,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            minHeight: 36,
+                            '&:hover': { bgcolor: alpha(colors.primary, 0.1) },
+                          }}
+                        >
+                          Analytics
+                        </Button>
+                      )}
+
+                      {/* Collaborators — requires MANAGE_COLLABORATORS or is OWNER */}
+                      {(canManageCollaborators || websiteRole === 'OWNER') && (
+                        <Button
+                          size="small"
+                          startIcon={<Users size={18} />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenCollaboratorModal(website);
+                          }}
+                          sx={{
+                            color: colors.primary,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            minHeight: 36,
+                            '&:hover': { bgcolor: alpha(colors.primary, 0.1) },
+                          }}
+                        >
+                          Team
+                        </Button>
+                      )}
+
+                      {/* Publish/Unpublish — requires PUBLISH */}
+                      {canPublish && (
+                        website.status === 'PUBLISHED' ? (
+                          <Button
+                            size="small"
+                            startIcon={<EyeOff size={18} />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnpublish(website.id);
+                            }}
+                            sx={{
+                              color: colors.textSecondary,
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              minHeight: 36,
+                              '&:hover': { bgcolor: alpha(colors.textSecondary, 0.1) },
+                            }}
+                          >
+                            Unpublish
+                          </Button>
+                        ) : (
+                          <Button
+                            size="small"
+                            startIcon={<Eye size={18} />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePublish(website.id);
+                            }}
+                            sx={{
+                              color: '#4ade80',
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              minHeight: 36,
+                              '&:hover': { bgcolor: alpha('#4ade80', 0.1) },
+                            }}
+                          >
+                            Publish
+                          </Button>
+                        )
+                      )}
+
+                      {/* Delete — requires DELETE (OWNER/ADMIN only) */}
+                      {canDelete && (
+                        <Button
+                          size="small"
+                          startIcon={<Trash2 size={18} />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenDeleteDialog(website);
+                          }}
+                          sx={{
+                            color: '#f44336',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            minHeight: 36,
+                            '&:hover': { bgcolor: alpha('#f44336', 0.1) },
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      )}
                     </Box>
                   </Box>
                 </Card>
               </Grid>
-            ))}
+              );
+            })}
 
           {/* Loading More Skeletons */}
           {activeLoadingMore &&
@@ -1212,6 +1437,43 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                 <SkeletonCard />
               </Grid>
             ))}
+
+          {/* Empty State for Filtered Views (Step 7.4.5) */}
+          {!loading && filteredWebsites.length === 0 && websites.length > 0 && (
+            <Grid item xs={12}>
+              <EmptyState
+                icon={<Globe size={48} color={colors.textSecondary} />}
+                title={
+                  roleFilter === 'shared'
+                    ? 'No shared websites'
+                    : roleFilter === 'owned'
+                    ? 'No owned websites match'
+                    : 'No websites found'
+                }
+                subtitle={
+                  roleFilter === 'shared'
+                    ? 'When someone shares a website with you, it will appear here.'
+                    : 'Try changing your filter to see other websites.'
+                }
+                action={
+                  roleFilter !== 'all' && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => setRoleFilter('all')}
+                      sx={{
+                        textTransform: 'none',
+                        borderColor: colors.primary,
+                        color: colors.primary,
+                        fontWeight: 600,
+                      }}
+                    >
+                      Show All Websites
+                    </Button>
+                  )
+                }
+              />
+            </Grid>
+          )}
 
           {/* Observer Target for Infinite Scroll */}
           {!loading && activeHasMore && (
@@ -2485,6 +2747,17 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Collaborator Management Modal (Step 7.4.4) */}
+      <CollaboratorModal
+        websiteId={collaboratorWebsiteId}
+        open={collaboratorModalOpen}
+        onClose={() => {
+          setCollaboratorModalOpen(false);
+          setCollaboratorWebsiteId(null);
+        }}
+        currentUserRole={collaboratorWebsiteRole}
+      />
     </Container>
   );
 };

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import axios from "axios";
 import {
   Box,
@@ -21,7 +22,7 @@ import {
 import { CircleX, Eye, Receipt, X } from "lucide-react";
 import { getDashboardColors } from "../../styles/dashboardTheme";
 import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-import { DashboardSelect, DashboardTable } from "./shared";
+import { DashboardSelect, DashboardTable, SearchBar } from "./shared";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
@@ -71,6 +72,10 @@ const StoreOrders = ({
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
   // Order detail drawer state
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
@@ -79,19 +84,19 @@ const StoreOrders = ({
 
   useEffect(() => {
     fetchOrders();
-  }, [storeId, statusFilter]);
+  }, [storeId, statusFilter, debouncedSearch]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      let url = `${API_URL}/orders?storeId=${storeId}`;
-      if (statusFilter !== "ALL") {
-        url += `&status=${statusFilter}`;
-      }
+      const params: Record<string, string> = { storeId };
+      if (statusFilter !== "ALL") params.status = statusFilter;
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
 
-      const response = await axios.get(url, {
+      const response = await axios.get(`${API_URL}/orders`, {
+        params,
         headers: {},
       });
       setOrders(response.data.data || []);
@@ -201,6 +206,17 @@ const StoreOrders = ({
           {error}
         </Alert>
       )}
+
+      {/* Search */}
+      <Box sx={{ mb: 3, maxWidth: { xs: "100%", md: 350 } }}>
+        <SearchBar
+          value={searchQuery}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setSearchQuery(e.target.value)
+          }
+          placeholder="Search by customer email or name..."
+        />
+      </Box>
 
       {/* Filters */}
       <Box

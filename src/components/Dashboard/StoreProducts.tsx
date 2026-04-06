@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import axios from "axios";
 import {
   Box,
@@ -30,6 +31,9 @@ import {
   DashboardInput,
   DashboardSelect,
   DashboardTable,
+  SearchBar,
+  FilterBar,
+  EmptyState,
 } from "./shared";
 import type { PlanSummary } from "../../hooks/usePlanSummary";
 
@@ -69,6 +73,11 @@ const StoreProducts = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+  const [activeFilter, setActiveFilter] = useState("all"); // 'all' | 'true' | 'false'
+
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -86,18 +95,19 @@ const StoreProducts = ({
 
   useEffect(() => {
     fetchProducts();
-  }, [storeId]);
+  }, [storeId, debouncedSearch, activeFilter]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(
-        `${API_URL}/products?storeId=${storeId}`,
-        {
-          headers: {},
-        },
-      );
+      const params: Record<string, string> = { storeId };
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      if (activeFilter !== "all") params.isActive = activeFilter;
+      const response = await axios.get(`${API_URL}/products`, {
+        params,
+        headers: {},
+      });
       setProducts(response.data.data || []);
     } catch (err: any) {
       console.error("Error fetching products:", err);
@@ -299,6 +309,34 @@ const StoreProducts = ({
           {error}
         </Alert>
       )}
+
+      {/* Search and Filters */}
+      <Box
+        display="flex"
+        flexDirection={{ xs: "column", sm: "row" }}
+        gap={2}
+        mb={3}
+      >
+        <Box sx={{ flex: 1, maxWidth: { xs: "100%", md: 350 } }}>
+          <SearchBar
+            value={searchQuery}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearchQuery(e.target.value)
+            }
+            placeholder="Search by name or SKU..."
+          />
+        </Box>
+        <FilterBar
+          label="Status"
+          value={activeFilter}
+          onChange={(e: any) => setActiveFilter(e.target.value)}
+          options={[
+            { value: "all", label: "All" },
+            { value: "true", label: "Active" },
+            { value: "false", label: "Inactive" },
+          ]}
+        />
+      </Box>
 
       {/* Add Product Button */}
       <Box

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Box, Typography, Modal, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { BusinessData } from "../types/BusinessData";
-import { TemplateTheme } from "../templateEngine/types";
+import type { BusinessData } from "../types/BusinessData";
+import type { TemplateTheme } from "../templateEngine/types";
 import FadeIn from "./FadeIn";
 
 export interface GalleryBlockProps {
@@ -70,12 +70,20 @@ function Lightbox({
           <CloseIcon />
         </IconButton>
         {img && (
-          <Box onClick={(e) => e.stopPropagation()} sx={{ maxWidth: "90vw", maxHeight: "90vh" }}>
+          <Box
+            onClick={(e) => e.stopPropagation()}
+            sx={{ maxWidth: "90vw", maxHeight: "90vh" }}
+          >
             <Box
               component="img"
               src={img.url}
               alt={img.caption}
-              sx={{ maxWidth: "90vw", maxHeight: "80vh", borderRadius: 2, objectFit: "contain" }}
+              sx={{
+                maxWidth: "90vw",
+                maxHeight: "80vh",
+                borderRadius: 2,
+                objectFit: "contain",
+              }}
             />
             {img.caption && (
               <Typography sx={{ color: "#fff", textAlign: "center", mt: 2 }}>
@@ -119,13 +127,27 @@ function MasonryGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
       >
         {items.map((it, i) => (
           <FadeIn key={i} delay={i * 0.05}>
-            <Box sx={{ height: i % 3 === 0 ? 240 : 180, borderRadius: 2, overflow: "hidden" }}>
-              <GalleryTile url={it.url} alt={it.alt} onClick={() => setLightboxIdx(i)} />
+            <Box
+              sx={{
+                height: i % 3 === 0 ? 240 : 180,
+                borderRadius: 2,
+                overflow: "hidden",
+              }}
+            >
+              <GalleryTile
+                url={it.url}
+                alt={it.alt}
+                onClick={() => setLightboxIdx(i)}
+              />
             </Box>
           </FadeIn>
         ))}
       </Box>
-      <Lightbox images={items} index={lightboxIdx} onClose={() => setLightboxIdx(null)} />
+      <Lightbox
+        images={items}
+        index={lightboxIdx}
+        onClose={() => setLightboxIdx(null)}
+      />
     </Box>
   );
 }
@@ -134,7 +156,13 @@ function StripGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const items = data.gallery ?? [];
   return (
-    <Box sx={{ bgcolor: theme.bgSecondary, py: { xs: 6, md: 10 }, overflow: "hidden" }}>
+    <Box
+      sx={{
+        bgcolor: theme.bgSecondary,
+        py: { xs: 6, md: 10 },
+        overflow: "hidden",
+      }}
+    >
       <FadeIn>
         <Typography
           variant="h3"
@@ -159,19 +187,36 @@ function StripGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
           pb: 2,
           scrollbarWidth: "thin",
           "&::-webkit-scrollbar": { height: 4 },
-          "&::-webkit-scrollbar-thumb": { bgcolor: theme.borderColor, borderRadius: 999 },
+          "&::-webkit-scrollbar-thumb": {
+            bgcolor: theme.borderColor,
+            borderRadius: 999,
+          },
         }}
       >
         {items.map((it, i) => (
           <Box
             key={i}
-            sx={{ flexShrink: 0, width: 280, height: 200, borderRadius: 2, overflow: "hidden" }}
+            sx={{
+              flexShrink: 0,
+              width: 280,
+              height: 200,
+              borderRadius: 2,
+              overflow: "hidden",
+            }}
           >
-            <GalleryTile url={it.url} alt={it.alt} onClick={() => setLightboxIdx(i)} />
+            <GalleryTile
+              url={it.url}
+              alt={it.alt}
+              onClick={() => setLightboxIdx(i)}
+            />
           </Box>
         ))}
       </Box>
-      <Lightbox images={items} index={lightboxIdx} onClose={() => setLightboxIdx(null)} />
+      <Lightbox
+        images={items}
+        index={lightboxIdx}
+        onClose={() => setLightboxIdx(null)}
+      />
     </Box>
   );
 }
@@ -209,7 +254,12 @@ function CinemaGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
             }}
             onClick={() => setLightboxIdx(active)}
           >
-            <GalleryTile url={hero.url} alt={hero.alt} onClick={() => setLightboxIdx(active)} sx={{ borderRadius: 0 }} />
+            <GalleryTile
+              url={hero.url}
+              alt={hero.alt}
+              onClick={() => setLightboxIdx(active)}
+              sx={{ borderRadius: 0 }}
+            />
           </Box>
         )}
         <Box
@@ -227,22 +277,38 @@ function CinemaGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
                 borderRadius: 1.5,
                 overflow: "hidden",
                 cursor: "pointer",
-                border: i === active ? `2px solid ${theme.accentColor}` : "2px solid transparent",
+                border:
+                  i === active
+                    ? `2px solid ${theme.accentColor}`
+                    : "2px solid transparent",
                 transition: "border-color 0.2s",
               }}
               onClick={() => setActive(i)}
             >
-              <GalleryTile url={it.url} alt={it.alt} onClick={() => setActive(i)} sx={{ borderRadius: 0 }} />
+              <GalleryTile
+                url={it.url}
+                alt={it.alt}
+                onClick={() => setActive(i)}
+                sx={{ borderRadius: 0 }}
+              />
             </Box>
           ))}
         </Box>
       </Box>
-      <Lightbox images={items} index={lightboxIdx} onClose={() => setLightboxIdx(null)} />
+      <Lightbox
+        images={items}
+        index={lightboxIdx}
+        onClose={() => setLightboxIdx(null)}
+      />
     </Box>
   );
 }
 
-const GalleryBlock: React.FC<GalleryBlockProps> = ({ data, theme, variant = "masonry" }) => {
+const GalleryBlock: React.FC<GalleryBlockProps> = ({
+  data,
+  theme,
+  variant = "masonry",
+}) => {
   if (!data.gallery?.length) return null;
   if (variant === "strip") return <StripGallery data={data} theme={theme} />;
   if (variant === "cinema") return <CinemaGallery data={data} theme={theme} />;

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import axios from "axios";
 import {
   Box,
@@ -37,7 +38,7 @@ import {
   getStoreTemplates,
   refreshTemplateCache,
   type TemplateSummary,
-} from "../../templates";
+} from "../../templates/templateApi";
 import {
   DashboardActionButton,
   DashboardGradientButton,
@@ -45,6 +46,7 @@ import {
   DashboardMetricCard,
   DashboardSelect,
   PageHeader,
+  SearchBar,
 } from "./shared";
 import React from "react";
 
@@ -157,6 +159,10 @@ const Stores = ({
   // Selected store for detail view
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
   // Upgrade dialog state
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [planLimitMessage, setPlanLimitMessage] = useState("");
@@ -232,6 +238,14 @@ const Stores = ({
     fetchStores(1, true);
   }, []);
 
+  // Re-fetch from page 1 when search changes
+  useEffect(() => {
+    setActivePage(1);
+    setStores([]);
+    setActiveHasMore(true);
+    fetchStores(1, true);
+  }, [debouncedSearch]);
+
   useEffect(() => {
     if (createDialogOpen) {
       fetchWebsites();
@@ -246,12 +260,11 @@ const Stores = ({
         setActiveLoadingMore(true);
       }
       setError(null);
+      const params: Record<string, any> = { page, limit: PAGE_SIZE };
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       const response = await axios.get(`${API_URL}/stores`, {
         headers: {},
-        params: {
-          page,
-          limit: PAGE_SIZE,
-        },
+        params,
       });
 
       const newData = response.data.data || [];
@@ -611,6 +624,17 @@ const Stores = ({
           current plan. Upgrade to create more stores.
         </Alert>
       )}
+
+      {/* Search Bar */}
+      <Box sx={{ mb: 3, maxWidth: { xs: "100%", md: 400 } }}>
+        <SearchBar
+          value={searchQuery}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setSearchQuery(e.target.value)
+          }
+          placeholder="Search stores..."
+        />
+      </Box>
 
       {/* Stores Grid */}
       <Grid container spacing={3}>

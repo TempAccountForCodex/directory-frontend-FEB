@@ -572,160 +572,160 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                         display: "flex",
                       }}
                     >
-                    {/* --- Price Range Dropdown --- */}
-                    <Grid
-                      item
-                      xs={12}
-                      sm={3}
-                      sx={{ flex: 1 }}
-                      component="div"
-                      {...({} as any)}
-                    >
-                      <Typography
-                        sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
+                      {/* --- Price Range Dropdown --- */}
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        sx={{ flex: 1 }}
+                        component="div"
+                        {...({} as any)}
                       >
-                        Price Range
-                      </Typography>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel
-                          sx={{
-                            "&.Mui-focused": {
-                              color: "primary.focus",
-                            },
-                          }}
+                        <Typography
+                          sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
                         >
                           Price Range
-                        </InputLabel>
-                        <Select
-                          value={priceRange}
-                          onChange={handlePriceChange}
-                          label="Price Range"
-                        >
-                          {priceRangeOptions.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                              {option.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
+                        </Typography>
+                        <FormControl fullWidth variant="outlined">
+                          <InputLabel
+                            sx={{
+                              "&.Mui-focused": {
+                                color: "primary.focus",
+                              },
+                            }}
+                          >
+                            Price Range
+                          </InputLabel>
+                          <Select
+                            value={priceRange}
+                            onChange={handlePriceChange}
+                            label="Price Range"
+                          >
+                            {priceRangeOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
 
-                    {/* --- Region Dropdown --- */}
-                    <Grid
-                      item
-                      xs={12}
-                      sm={3}
-                      sx={{ flex: 1 }}
-                      component="div"
-                      {...({} as any)}
-                    >
-                      <Typography
-                        sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
+                      {/* --- Region Dropdown --- */}
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        sx={{ flex: 1 }}
+                        component="div"
+                        {...({} as any)}
                       >
-                        Region
-                      </Typography>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel
-                          sx={{
-                            "&.Mui-focused": {
-                              color: "primary.focus",
-                            },
-                          }}
+                        <Typography
+                          sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
                         >
                           Region
-                        </InputLabel>
-                        <Select
-                          value={region}
-                          onChange={handleRegionChange}
-                          label="Region"
-                        >
-                          {["Canada", "United Kingdom", "United States"].map(
-                            (option) => (
-                              <MenuItem key={option} value={option}>
-                                {option}
-                              </MenuItem>
-                            ),
-                          )}
-                        </Select>
-                      </FormControl>
-                    </Grid>
+                        </Typography>
+                        <FormControl fullWidth variant="outlined">
+                          <InputLabel
+                            sx={{
+                              "&.Mui-focused": {
+                                color: "primary.focus",
+                              },
+                            }}
+                          >
+                            Region
+                          </InputLabel>
+                          <Select
+                            value={region}
+                            onChange={handleRegionChange}
+                            label="Region"
+                          >
+                            {["Canada", "United Kingdom", "United States"].map(
+                              (option) => (
+                                <MenuItem key={option} value={option}>
+                                  {option}
+                                </MenuItem>
+                              ),
+                            )}
+                          </Select>
+                        </FormControl>
+                      </Grid>
 
-                    {/* --- Area Dropdown --- */}
-                    <Grid
-                      item
-                      xs={12}
-                      sm={3}
-                      sx={{ flex: 1 }}
-                      component="div"
-                      {...({} as any)}
-                    >
-                      <Typography
-                        sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
+                      {/* --- Area Dropdown --- */}
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        sx={{ flex: 1 }}
+                        component="div"
+                        {...({} as any)}
                       >
-                        Area
-                      </Typography>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel
-                          sx={{
-                            "&.Mui-focused": {
-                              color: "primary.focus",
-                            },
-                          }}
+                        <Typography
+                          sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
                         >
                           Area
-                        </InputLabel>
-                        <Select
-                          value={area}
-                          onChange={handleAreaChange}
-                          label="Area"
-                        >
-                          {areaOptions.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                              {option.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
+                        </Typography>
+                        <FormControl fullWidth variant="outlined">
+                          <InputLabel
+                            sx={{
+                              "&.Mui-focused": {
+                                color: "primary.focus",
+                              },
+                            }}
+                          >
+                            Area
+                          </InputLabel>
+                          <Select
+                            value={area}
+                            onChange={handleAreaChange}
+                            label="Area"
+                          >
+                            {areaOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
 
-                    {/* --- City Dropdown --- */}
-                    <Grid
-                      item
-                      xs={12}
-                      sm={3}
-                      sx={{ flex: 1 }}
-                      component="div"
-                      {...({} as any)}
-                    >
-                      <Typography
-                        sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
+                      {/* --- City Dropdown --- */}
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        sx={{ flex: 1 }}
+                        component="div"
+                        {...({} as any)}
                       >
-                        City
-                      </Typography>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel
-                          sx={{
-                            "&.Mui-focused": {
-                              color: "primary.focus",
-                            },
-                          }}
+                        <Typography
+                          sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
                         >
                           City
-                        </InputLabel>
-                        <Select
-                          value={city}
-                          onChange={handleCityChange}
-                          label="City"
-                          disabled={region === "" ? true : false}
-                        >
-                          {cityOptions.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                              {option.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
+                        </Typography>
+                        <FormControl fullWidth variant="outlined">
+                          <InputLabel
+                            sx={{
+                              "&.Mui-focused": {
+                                color: "primary.focus",
+                              },
+                            }}
+                          >
+                            City
+                          </InputLabel>
+                          <Select
+                            value={city}
+                            onChange={handleCityChange}
+                            label="City"
+                            disabled={region === "" ? true : false}
+                          >
+                            {cityOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
                     </Grid>
                   </Box>
                 )}

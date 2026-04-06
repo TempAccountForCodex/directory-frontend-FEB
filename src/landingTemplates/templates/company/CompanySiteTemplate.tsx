@@ -2,11 +2,10 @@ import React from "react";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import FadeIn from "../../blocks/FadeIn";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 
 const editorialImages = {
-  hero:
-    "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
+  hero: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
   projectOne:
     "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
   projectTwo:
@@ -29,13 +28,15 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
   const primary = data.primaryColor || "#161616";
   const services = data.features?.slice(0, 4) || [];
   const heroImage = data.gallery?.[0]?.url || editorialImages.hero;
-  
+
   const socialIcons = [
     { key: "twitter", icon: Twitter },
     { key: "linkedin", icon: Linkedin },
     { key: "instagram", icon: Instagram },
     { key: "facebook", icon: Facebook },
-  ].filter((item) => Boolean(data.socialLinks?.[item.key as keyof typeof data.socialLinks]));
+  ].filter((item) =>
+    Boolean(data.socialLinks?.[item.key as keyof typeof data.socialLinks]),
+  );
 
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
@@ -54,7 +55,14 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
         scrollBehavior: "smooth",
       }}
     >
-      <Box sx={{ maxWidth: 1180, mx: "auto", px: { xs: 2, md: 3 }, py: { xs: 2, md: 3 } }}>
+      <Box
+        sx={{
+          maxWidth: 1180,
+          mx: "auto",
+          px: { xs: 2, md: 3 },
+          py: { xs: 2, md: 3 },
+        }}
+      >
         <FadeIn direction="down">
           <Box
             component="header"
@@ -66,67 +74,73 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               mb: { xs: 4, md: 6 },
             }}
           >
-          <Typography sx={{ fontSize: "1.3rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
-            {data.name.toUpperCase()}
-          </Typography>
+            <Typography
+              sx={{
+                fontSize: "1.3rem",
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {data.name.toUpperCase()}
+            </Typography>
 
-          <Stack
-            direction="row"
-            spacing={3}
-            sx={{
-              display: { xs: "none", md: "flex" },
-              color: "#3b3b3b",
-              fontSize: "0.82rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            {[
-              { label: "Studio", href: "#studio" },
-              { label: "Projects", href: "#projects" },
-              { label: "Contact", href: "#contact" },
-            ].map((item) => (
-              <Box
-                key={item.label}
-                component="button"
-                type="button"
-                onClick={() => scrollToSection(item.href.replace("#", ""))}
-                sx={{
-                  fontSize: "0.82rem",
-                  color: "inherit",
-                  textDecoration: "none",
-                  background: "transparent",
-                  border: 0,
-                  p: 0,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  "&:hover": { opacity: 0.7 },
-                }}
-              >
-                {item.label}
-              </Box>
-            ))}
-          </Stack>
+            <Stack
+              direction="row"
+              spacing={3}
+              sx={{
+                display: { xs: "none", md: "flex" },
+                color: "#3b3b3b",
+                fontSize: "0.82rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {[
+                { label: "Studio", href: "#studio" },
+                { label: "Projects", href: "#projects" },
+                { label: "Contact", href: "#contact" },
+              ].map((item) => (
+                <Box
+                  key={item.label}
+                  component="button"
+                  type="button"
+                  onClick={() => scrollToSection(item.href.replace("#", ""))}
+                  sx={{
+                    fontSize: "0.82rem",
+                    color: "inherit",
+                    textDecoration: "none",
+                    background: "transparent",
+                    border: 0,
+                    p: 0,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    "&:hover": { opacity: 0.7 },
+                  }}
+                >
+                  {item.label}
+                </Box>
+              ))}
+            </Stack>
 
-          <Box
-            component="button"
-            type="button"
-            onClick={() => scrollToSection("contact")}
-            sx={{
-              fontSize: "0.9rem",
-              fontWeight: 700,
-              color: "#111111",
-              textDecoration: "none",
-              background: "transparent",
-              border: 0,
-              p: 0,
-              cursor: "pointer",
-              fontFamily: "inherit",
-              "&:hover": { opacity: 0.7 },
-            }}
-          >
-            Info
-          </Box>
+            <Box
+              component="button"
+              type="button"
+              onClick={() => scrollToSection("contact")}
+              sx={{
+                fontSize: "0.9rem",
+                fontWeight: 700,
+                color: "#111111",
+                textDecoration: "none",
+                background: "transparent",
+                border: 0,
+                p: 0,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                "&:hover": { opacity: 0.7 },
+              }}
+            >
+              Info
+            </Box>
           </Box>
         </FadeIn>
 
@@ -149,65 +163,68 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <Box sx={{ maxWidth: 620 }}>
-            <Typography
-              sx={{
-                color: "#ffffff",
-                fontSize: { xs: "3rem", md: "6.2rem" },
-                lineHeight: 0.9,
-                letterSpacing: "-0.07em",
-                fontWeight: 900,
-                textTransform: "uppercase",
-                textShadow: "0 12px 30px rgba(0,0,0,0.18)",
-              }}
-            >
-              {data.name}
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.6,
-                maxWidth: 360,
-                color: "rgba(255,255,255,0.82)",
-                fontSize: { xs: "0.95rem", md: "1rem" },
-                lineHeight: 1.7,
-              }}
-            >
-              Calm spaces. Strong identity.
-            </Typography>
-            <Stack direction="row" spacing={1.2} sx={{ mt: 3 }}>
-              <Button
-                variant="contained"
-                onClick={() => scrollToSection("studio")}
-                sx={{
-                  bgcolor: "#ffffff",
-                  color: "#111111",
-                  px: 2.6,
-                  py: 1.05,
-                  borderRadius: 999,
-                  textTransform: "none",
-                  fontWeight: 700,
-                  boxShadow: "none",
-                  "&:hover": { bgcolor: "#f0f0f0", boxShadow: "none" },
-                }}
-              >
-                View Studio
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => scrollToSection("contact")}
+              <Typography
                 sx={{
                   color: "#ffffff",
-                  borderColor: "rgba(255,255,255,0.55)",
-                  px: 2.6,
-                  py: 1.05,
-                  borderRadius: 999,
-                  textTransform: "none",
-                  fontWeight: 700,
-                  "&:hover": { borderColor: "#ffffff", bgcolor: "rgba(255,255,255,0.08)" },
+                  fontSize: { xs: "3rem", md: "6.2rem" },
+                  lineHeight: 0.9,
+                  letterSpacing: "-0.07em",
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  textShadow: "0 12px 30px rgba(0,0,0,0.18)",
                 }}
               >
-                Contact
-              </Button>
-            </Stack>
+                {data.name}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.6,
+                  maxWidth: 360,
+                  color: "rgba(255,255,255,0.82)",
+                  fontSize: { xs: "0.95rem", md: "1rem" },
+                  lineHeight: 1.7,
+                }}
+              >
+                Calm spaces. Strong identity.
+              </Typography>
+              <Stack direction="row" spacing={1.2} sx={{ mt: 3 }}>
+                <Button
+                  variant="contained"
+                  onClick={() => scrollToSection("studio")}
+                  sx={{
+                    bgcolor: "#ffffff",
+                    color: "#111111",
+                    px: 2.6,
+                    py: 1.05,
+                    borderRadius: 999,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: "#f0f0f0", boxShadow: "none" },
+                  }}
+                >
+                  View Studio
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => scrollToSection("contact")}
+                  sx={{
+                    color: "#ffffff",
+                    borderColor: "rgba(255,255,255,0.55)",
+                    px: 2.6,
+                    py: 1.05,
+                    borderRadius: 999,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    "&:hover": {
+                      borderColor: "#ffffff",
+                      bgcolor: "rgba(255,255,255,0.08)",
+                    },
+                  }}
+                >
+                  Contact
+                </Button>
+              </Stack>
             </Box>
           </Box>
         </FadeIn>
@@ -223,39 +240,43 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
         >
           <FadeIn>
             <Box>
-            <Box
-              sx={{
-                height: { xs: 420, md: 520 },
-                backgroundImage: `url(${editorialImages.projectOne})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            />
-            <Typography sx={{ mt: 1.2, fontSize: "0.82rem", color: "#222222" }}>
-              Hospitality interiors
-            </Typography>
-            <Typography sx={{ fontSize: "0.75rem", color: "#666666" }}>
-              Boutique lounge concept
-            </Typography>
+              <Box
+                sx={{
+                  height: { xs: 420, md: 520 },
+                  backgroundImage: `url(${editorialImages.projectOne})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              />
+              <Typography
+                sx={{ mt: 1.2, fontSize: "0.82rem", color: "#222222" }}
+              >
+                Hospitality interiors
+              </Typography>
+              <Typography sx={{ fontSize: "0.75rem", color: "#666666" }}>
+                Boutique lounge concept
+              </Typography>
             </Box>
           </FadeIn>
 
           <FadeIn delay={0.08}>
             <Box>
-            <Box
-              sx={{
-                height: { xs: 420, md: 680 },
-                backgroundImage: `url(${editorialImages.projectTwo})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            />
-            <Typography sx={{ mt: 1.2, fontSize: "0.82rem", color: "#222222" }}>
-              Residential styling
-            </Typography>
-            <Typography sx={{ fontSize: "0.75rem", color: "#666666" }}>
-              Warm minimal living
-            </Typography>
+              <Box
+                sx={{
+                  height: { xs: 420, md: 680 },
+                  backgroundImage: `url(${editorialImages.projectTwo})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              />
+              <Typography
+                sx={{ mt: 1.2, fontSize: "0.82rem", color: "#222222" }}
+              >
+                Residential styling
+              </Typography>
+              <Typography sx={{ fontSize: "0.75rem", color: "#666666" }}>
+                Warm minimal living
+              </Typography>
             </Box>
           </FadeIn>
         </Box>
@@ -284,29 +305,44 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
         >
           <FadeIn>
             <Box sx={{ pt: { md: 2 } }}>
-            <Typography
-              sx={{
-                fontSize: { xs: "2.8rem", md: "4.6rem" },
-                lineHeight: 0.94,
-                fontWeight: 900,
-                textTransform: "uppercase",
-                letterSpacing: "-0.06em",
-              }}
-            >
-              Studio
-            </Typography>
-            <Typography sx={{ mt: 1.5, maxWidth: 360, color: "#555555", lineHeight: 1.8 }}>
-              {data.tagline}
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: { xs: "2.8rem", md: "4.6rem" },
+                  lineHeight: 0.94,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "-0.06em",
+                }}
+              >
+                Studio
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.5,
+                  maxWidth: 360,
+                  color: "#555555",
+                  lineHeight: 1.8,
+                }}
+              >
+                {data.tagline}
+              </Typography>
 
               <Stack spacing={2} sx={{ mt: 4 }}>
                 {services.map((service, index) => (
                   <FadeIn key={service.title} delay={index * 0.08}>
                     <Box>
-                      <Typography sx={{ fontSize: "1.1rem", fontWeight: 800, textTransform: "uppercase" }}>
+                      <Typography
+                        sx={{
+                          fontSize: "1.1rem",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                        }}
+                      >
                         {service.title}
                       </Typography>
-                      <Typography sx={{ mt: 0.5, color: "#5f5f5f", lineHeight: 1.7 }}>
+                      <Typography
+                        sx={{ mt: 0.5, color: "#5f5f5f", lineHeight: 1.7 }}
+                      >
                         {service.description}
                       </Typography>
                     </Box>
@@ -329,8 +365,18 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box id="contact" sx={{ bgcolor: "#040404", color: "#ffffff", mt: { xs: 6, md: 8 } }}>
-        <Box sx={{ maxWidth: 1180, mx: "auto", px: { xs: 2, md: 3 }, py: { xs: 4, md: 5 } }}>
+      <Box
+        id="contact"
+        sx={{ bgcolor: "#040404", color: "#ffffff", mt: { xs: 6, md: 8 } }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1180,
+            mx: "auto",
+            px: { xs: 2, md: 3 },
+            py: { xs: 4, md: 5 },
+          }}
+        >
           <Box
             sx={{
               display: "grid",
@@ -343,12 +389,26 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <FadeIn>
               <Box>
-              <Typography sx={{ fontSize: "1.5rem", fontWeight: 800, textTransform: "uppercase" }}>
-                Newsletter Sign Up
-              </Typography>
-              <Typography sx={{ mt: 1, maxWidth: 500, color: "rgba(255,255,255,0.72)", lineHeight: 1.7 }}>
-                Occasional updates about projects, spaces, and the studio&apos;s latest work.
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "1.5rem",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Newsletter Sign Up
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1,
+                    maxWidth: 500,
+                    color: "rgba(255,255,255,0.72)",
+                    lineHeight: 1.7,
+                  }}
+                >
+                  Occasional updates about projects, spaces, and the
+                  studio&apos;s latest work.
+                </Typography>
               </Box>
             </FadeIn>
 
@@ -356,7 +416,12 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={1.2}
-                sx={{ width: "100%", maxWidth: 520, minWidth: { md: 420 }, alignItems: "stretch" }}
+                sx={{
+                  width: "100%",
+                  maxWidth: 520,
+                  minWidth: { md: 420 },
+                  alignItems: "stretch",
+                }}
               >
                 <TextField
                   placeholder="Email address"
@@ -390,7 +455,11 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontWeight: 700,
                     textTransform: "none",
                     boxShadow: "none",
-                    "&:hover": { bgcolor: "#6f6f6f", boxShadow: "none", opacity: 0.9 },
+                    "&:hover": {
+                      bgcolor: "#6f6f6f",
+                      boxShadow: "none",
+                      opacity: 0.9,
+                    },
                   }}
                 >
                   Sign Up
@@ -412,12 +481,24 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <FadeIn>
               <Box>
-              <Typography sx={{ fontSize: "1.15rem", fontWeight: 800, textTransform: "uppercase" }}>
-                {data.name}
-              </Typography>
-              <Typography sx={{ mt: 0.8, color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>
-                {data.contact.email} · {data.contact.phone}
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "1.15rem",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {data.name}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.8,
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  {data.contact.email} · {data.contact.phone}
+                </Typography>
               </Box>
             </FadeIn>
 
@@ -443,8 +524,6 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Stack>
             </FadeIn>
           </Box>
-
-
         </Box>
       </Box>
     </Box>

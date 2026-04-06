@@ -1,5 +1,5 @@
-import { ComponentType } from "react";
-import { BusinessData } from "../types/BusinessData";
+import type { ComponentType } from "react";
+import type { BusinessData } from "../types/BusinessData";
 
 export interface TemplateTheme {
   primaryColor: string;
@@ -12,7 +12,7 @@ export interface TemplateTheme {
   surfaceColor: string;
   borderColor: string;
   fontFamily: string;
-  bgWhite: string;
+  bgWhite?: string;
 }
 
 export interface TemplateProps {
@@ -26,3 +26,8 @@ export interface TemplateDefinition {
   tags: string[];
   component: ComponentType<TemplateProps>;
 }
+
+// Runtime compatibility exports for any stale dev-server value imports.
+export const TemplateTheme = undefined;
+export const TemplateProps = undefined;
+export const TemplateDefinition = undefined;

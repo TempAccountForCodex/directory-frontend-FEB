@@ -5,7 +5,6 @@
 
 const COOKIE_CONSENT_KEY = 'techietribe_cookie_consent';
 const CONSENT_VERSION = '1.0';
-const ANALYTICS_ENABLED = import.meta.env.VITE_ENABLE_ANALYTICS === 'true';
 
 export const COOKIE_CATEGORIES = {
   ESSENTIAL: 'essential',
@@ -113,10 +112,6 @@ export const clearCookiePreferences = () => {
  * Load Google Analytics if consent given
  */
 export const loadGoogleAnalytics = () => {
-  if (!ANALYTICS_ENABLED) {
-    return;
-  }
-
   if (!isCategoryAllowed(COOKIE_CATEGORIES.ANALYTICS)) {
     return;
   }

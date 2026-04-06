@@ -7,6 +7,7 @@ import {
 } from "react";
 import axios from "axios";
 import type { User } from "../types/user";
+import { isSentryEnabled, getSentry } from "../config/sentry";
 
 interface AuthResult {
   success: boolean;
@@ -60,7 +61,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -126,8 +127,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
+        const status = error.response?.status;
+
         // Only handle 401 errors (not 403 which could be permissions)
-        if (error.response?.status === 401) {
+        if (status === 401) {
           const errorMessage =
             error.response?.data?.message?.toLowerCase() || "";
 
@@ -147,6 +150,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setUser(null);
           }
         }
+
+        // Capture 5xx server errors to Sentry (Step 10.23)
+        if (status && status >= 500 && isSentryEnabled()) {
+          const sentry = getSentry();
+          if (sentry) {
+            sentry.captureException(error, {
+              extra: {
+                status,
+                url: error.config?.url,
+                method: error.config?.method,
+                responseData: error.response?.data,
+              },
+              tags: { source: "axios_interceptor" },
+            });
+          }
+        }
+
         return Promise.reject(error);
       },
     );
@@ -160,34 +180,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Check if user is authenticated on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const path = window.location.pathname;
-      const shouldBootstrapAuth =
-        path.startsWith("/dashboard") ||
-        path.startsWith("/auth") ||
-        path.startsWith("/checkout");
-
-      // Skip auth bootstrap on public pages for faster first paint.
-      if (!shouldBootstrapAuth) {
-        setLoading(false);
-        return;
-      }
-
       try {
         // Token is in httpOnly cookie - browser automatically sends it
         const response = await axios.get(`${API_URL}/auth/me`, {
           withCredentials: true, // Important: send httpOnly cookies
         });
 
-        setUser(response.data.user);
-      } catch (error: any) {
-        // Avoid noisy console errors when backend is offline during local frontend-only work.
-        const isNetworkError =
-          error?.code === "ERR_NETWORK" ||
-          error?.code === "ECONNREFUSED" ||
-          !error?.response;
-        if (!isNetworkError) {
-          console.error("Auth check failed:", error);
+        const currentUser = response.data.user;
+        setUser(currentUser);
+        // Associate authenticated user with Sentry on page load (Step 10.23)
+        if (isSentryEnabled() && currentUser) {
+          const sentry = getSentry();
+          sentry?.setUser({
+            id: String(currentUser.id),
+            email: currentUser.email,
+          });
         }
+      } catch (error) {
+        console.error("Auth check failed:", error);
         // Clear user state on auth failure
         setUser(null);
       } finally {
@@ -294,6 +304,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { user: newUser } = response.data;
       // Token is now in httpOnly cookie (no localStorage needed)
       setUser(newUser);
+      // Associate this user with Sentry error reports (Step 10.23)
+      if (isSentryEnabled() && newUser) {
+        const sentry = getSentry();
+        sentry?.setUser({ id: String(newUser.id), email: newUser.email });
+      }
       return { success: true };
     } catch (error: any) {
       return {
@@ -384,6 +399,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { user: newUser } = response.data;
       // Token is now in httpOnly cookie (no localStorage needed)
       setUser(newUser);
+      // Associate this user with Sentry error reports (Step 10.23)
+      if (isSentryEnabled() && newUser) {
+        const sentry = getSentry();
+        sentry?.setUser({ id: String(newUser.id), email: newUser.email });
+      }
       return { success: true };
     } catch (error: any) {
       return {
@@ -549,6 +569,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       localStorage.removeItem("superAdminExists");
       setUser(null);
       // httpOnly cookie will be cleared by the backend
+      // Clear Sentry user association (Step 10.23)
+      if (isSentryEnabled()) {
+        const sentry = getSentry();
+        sentry?.setUser(null);
+      }
     }
   };
 

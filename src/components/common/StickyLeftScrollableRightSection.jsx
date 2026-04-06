@@ -49,7 +49,6 @@ const StickyLeftSection = ({
     <Box
       sx={{
         position: "relative",
-
         "&::before": {
           content: '""',
           position: "absolute",
@@ -127,7 +126,7 @@ const StickyLeftSection = ({
               width: { xs: "100%", md: "60%", borderLeft: "1px solid #dee2e6" },
               pt: { xs: 5, md: 20 },
               ml: { xs: 3, md: 2 },
-              pb: 8,
+              mb: 8,
             }}
           >
             {rightContent.map((item, index) => (

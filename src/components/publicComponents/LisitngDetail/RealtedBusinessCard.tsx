@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Grid } from "@mui/material";
 import { data } from "../Listing/data.ts";
-import TitleHeading from "../UI/TitleHeading";
+import TitleHeading from "../../UI/TitleHeading";
 import PropertyItemCard from "../Listing/PropertyCardItem";
 
 /* ---------------- Types ---------------- */

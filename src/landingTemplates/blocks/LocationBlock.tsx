@@ -2,8 +2,8 @@ import React from "react";
 import { Box, Typography, Grid } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import { BusinessData } from "../types/BusinessData";
-import { TemplateTheme } from "../templateEngine/types";
+import type { BusinessData } from "../types/BusinessData";
+import type { TemplateTheme } from "../templateEngine/types";
 import FadeIn from "./FadeIn";
 
 export interface LocationBlockProps {
@@ -12,20 +12,50 @@ export interface LocationBlockProps {
   variant?: "map" | "compact";
 }
 
-function HoursTable({ data, theme }: { data: BusinessData; theme: TemplateTheme }) {
+function HoursTable({
+  data,
+  theme,
+}: {
+  data: BusinessData;
+  theme: TemplateTheme;
+}) {
   if (!data.workingHours?.length) return null;
   return (
     <Box>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
         <AccessTimeIcon sx={{ color: theme.primaryColor, fontSize: 20 }} />
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: theme.fontFamily, color: theme.headingColor }}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 700,
+            fontFamily: theme.fontFamily,
+            color: theme.headingColor,
+          }}
+        >
           Hours
         </Typography>
       </Box>
       {data.workingHours.map((h, i) => (
-        <Box key={i} sx={{ display: "flex", justifyContent: "space-between", py: 0.75 }}>
-          <Typography variant="body2" sx={{ color: theme.bodyColor, fontFamily: theme.fontFamily }}>{h.day}</Typography>
-          <Typography variant="body2" sx={{ fontWeight: 600, color: theme.headingColor, fontFamily: theme.fontFamily }}>{h.hours}</Typography>
+        <Box
+          key={i}
+          sx={{ display: "flex", justifyContent: "space-between", py: 0.75 }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: theme.bodyColor, fontFamily: theme.fontFamily }}
+          >
+            {h.day}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              color: theme.headingColor,
+              fontFamily: theme.fontFamily,
+            }}
+          >
+            {h.hours}
+          </Typography>
         </Box>
       ))}
     </Box>
@@ -40,12 +70,23 @@ function MapLocation({ data, theme }: Omit<LocationBlockProps, "variant">) {
       <FadeIn>
         <Typography
           variant="h3"
-          sx={{ textAlign: "center", fontFamily: theme.fontFamily, fontWeight: 800, color: theme.headingColor, mb: 6 }}
+          sx={{
+            textAlign: "center",
+            fontFamily: theme.fontFamily,
+            fontWeight: 800,
+            color: theme.headingColor,
+            mb: 6,
+          }}
         >
           Find Us
         </Typography>
       </FadeIn>
-      <Grid container spacing={4} sx={{ maxWidth: 1100, mx: "auto" }} alignItems="stretch">
+      <Grid
+        container
+        spacing={4}
+        sx={{ maxWidth: 1100, mx: "auto" }}
+        alignItems="stretch"
+      >
         <Grid item xs={12} md={7}>
           <FadeIn direction="left">
             <Box
@@ -79,7 +120,9 @@ function MapLocation({ data, theme }: Omit<LocationBlockProps, "variant">) {
                     bgcolor: theme.bgSecondary,
                   }}
                 >
-                  <LocationOnIcon sx={{ fontSize: 80, color: theme.borderColor }} />
+                  <LocationOnIcon
+                    sx={{ fontSize: 80, color: theme.borderColor }}
+                  />
                 </Box>
               )}
             </Box>
@@ -97,9 +140,22 @@ function MapLocation({ data, theme }: Omit<LocationBlockProps, "variant">) {
               }}
             >
               {contact.address && (
-                <Box sx={{ display: "flex", gap: 1.5, mb: 3, alignItems: "flex-start" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1.5,
+                    mb: 3,
+                    alignItems: "flex-start",
+                  }}
+                >
                   <LocationOnIcon sx={{ color: theme.primaryColor, mt: 0.3 }} />
-                  <Typography sx={{ color: theme.bodyColor, fontFamily: theme.fontFamily, lineHeight: 1.6 }}>
+                  <Typography
+                    sx={{
+                      color: theme.bodyColor,
+                      fontFamily: theme.fontFamily,
+                      lineHeight: 1.6,
+                    }}
+                  >
                     {contact.address}
                   </Typography>
                 </Box>
@@ -130,17 +186,34 @@ function CompactLocation({ data, theme }: Omit<LocationBlockProps, "variant">) {
           <Box>
             <Typography
               variant="h5"
-              sx={{ fontFamily: theme.fontFamily, fontWeight: 700, color: theme.headingColor, mb: 2 }}
+              sx={{
+                fontFamily: theme.fontFamily,
+                fontWeight: 700,
+                color: theme.headingColor,
+                mb: 2,
+              }}
             >
               Address
             </Typography>
             {contact.address && (
-              <Typography sx={{ color: theme.bodyColor, fontFamily: theme.fontFamily, lineHeight: 1.7 }}>
+              <Typography
+                sx={{
+                  color: theme.bodyColor,
+                  fontFamily: theme.fontFamily,
+                  lineHeight: 1.7,
+                }}
+              >
                 {contact.address}
               </Typography>
             )}
             {contact.phone && (
-              <Typography sx={{ color: theme.primaryColor, fontFamily: theme.fontFamily, mt: 1.5 }}>
+              <Typography
+                sx={{
+                  color: theme.primaryColor,
+                  fontFamily: theme.fontFamily,
+                  mt: 1.5,
+                }}
+              >
                 {contact.phone}
               </Typography>
             )}
@@ -154,9 +227,15 @@ function CompactLocation({ data, theme }: Omit<LocationBlockProps, "variant">) {
   );
 }
 
-const LocationBlock: React.FC<LocationBlockProps> = ({ data, theme, variant = "map" }) => {
-  if (!data.location && !data.contact?.address && !data.workingHours?.length) return null;
-  if (variant === "compact") return <CompactLocation data={data} theme={theme} />;
+const LocationBlock: React.FC<LocationBlockProps> = ({
+  data,
+  theme,
+  variant = "map",
+}) => {
+  if (!data.location && !data.contact?.address && !data.workingHours?.length)
+    return null;
+  if (variant === "compact")
+    return <CompactLocation data={data} theme={theme} />;
   return <MapLocation data={data} theme={theme} />;
 };
 

@@ -18,7 +18,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: "spring", damping: 10, stiffness: 100 },
+    transition: { type: "spring" as const, damping: 10, stiffness: 100 },
   },
 };
 
@@ -27,7 +27,7 @@ const buttonVariants = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { type: "spring", damping: 10, stiffness: 100 },
+    transition: { type: "spring" as const, damping: 10, stiffness: 100 },
   },
 };
 
@@ -114,7 +114,7 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
 
 const HeroSection = () => {
   const handleScrollToSection = (
-    e: React.MouseEvent<HTMLButtonElement>,
+    e: React.MouseEvent<HTMLElement>,
     targetId: string,
   ) => {
     e.preventDefault();

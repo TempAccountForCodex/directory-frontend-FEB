@@ -9,8 +9,8 @@ import {
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
-import { BusinessData } from "../types/BusinessData";
-import { TemplateTheme } from "../templateEngine/types";
+import type { BusinessData } from "../types/BusinessData";
+import type { TemplateTheme } from "../templateEngine/types";
 import FadeIn from "./FadeIn";
 
 export interface ReviewsBlockProps {
@@ -23,7 +23,10 @@ function StarRating({ rating, color }: { rating: number; color: string }) {
   return (
     <Box sx={{ display: "flex", gap: 0.25 }}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <StarIcon key={n} sx={{ fontSize: 18, color: n <= rating ? "#F59E0B" : color + "44" }} />
+        <StarIcon
+          key={n}
+          sx={{ fontSize: 18, color: n <= rating ? "#F59E0B" : color + "44" }}
+        />
       ))}
     </Box>
   );
@@ -74,22 +77,40 @@ function CardsReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                   >
                     "{r.text}"
                   </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 3 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      mt: 3,
+                    }}
+                  >
                     <Avatar
                       src={r.avatarUrl}
-                      sx={{ width: 40, height: 40, bgcolor: theme.primaryColor }}
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: theme.primaryColor,
+                      }}
                     >
                       {r.author[0]}
                     </Avatar>
                     <Box>
                       <Typography
                         variant="subtitle2"
-                        sx={{ fontFamily: theme.fontFamily, fontWeight: 700, color: theme.headingColor }}
+                        sx={{
+                          fontFamily: theme.fontFamily,
+                          fontWeight: 700,
+                          color: theme.headingColor,
+                        }}
                       >
                         {r.author}
                       </Typography>
                       {r.date && (
-                        <Typography variant="caption" sx={{ color: theme.bodyColor }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: theme.bodyColor }}
+                        >
                           {r.date}
                         </Typography>
                       )}
@@ -131,11 +152,19 @@ function QuotesReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                 gap: 3,
                 mb: 6,
                 pb: 6,
-                borderBottom: i < reviews.length - 1 ? `1px solid ${theme.borderColor}` : "none",
+                borderBottom:
+                  i < reviews.length - 1
+                    ? `1px solid ${theme.borderColor}`
+                    : "none",
               }}
             >
               <FormatQuoteIcon
-                sx={{ fontSize: 48, color: theme.primaryColor, flexShrink: 0, mt: -1 }}
+                sx={{
+                  fontSize: 48,
+                  color: theme.primaryColor,
+                  flexShrink: 0,
+                  mt: -1,
+                }}
               />
               <Box>
                 <StarRating rating={r.rating} color={theme.borderColor} />
@@ -188,7 +217,15 @@ function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
           Client Stories
         </Typography>
       </FadeIn>
-      <Box sx={{ maxWidth: 1100, mx: "auto", display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3 }}>
+      <Box
+        sx={{
+          maxWidth: 1100,
+          mx: "auto",
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+          gap: 3,
+        }}
+      >
         {featured && (
           <FadeIn>
             <Box
@@ -203,7 +240,10 @@ function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
               }}
             >
               <Box>
-                <StarRating rating={featured.rating} color="rgba(255,255,255,0.3)" />
+                <StarRating
+                  rating={featured.rating}
+                  color="rgba(255,255,255,0.3)"
+                />
                 <Typography
                   sx={{
                     mt: 3,
@@ -217,14 +257,26 @@ function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                   "{featured.text}"
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 4 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 4 }}
+              >
                 <Avatar
                   src={featured.avatarUrl}
-                  sx={{ width: 48, height: 48, bgcolor: "rgba(255,255,255,0.3)" }}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: "rgba(255,255,255,0.3)",
+                  }}
                 >
                   {featured.author[0]}
                 </Avatar>
-                <Typography sx={{ fontWeight: 700, color: "#fff", fontFamily: theme.fontFamily }}>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    color: "#fff",
+                    fontFamily: theme.fontFamily,
+                  }}
+                >
                   {featured.author}
                 </Typography>
               </Box>
@@ -255,7 +307,12 @@ function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                 </Typography>
                 <Typography
                   variant="caption"
-                  sx={{ mt: 1.5, display: "block", fontWeight: 700, color: theme.headingColor }}
+                  sx={{
+                    mt: 1.5,
+                    display: "block",
+                    fontWeight: 700,
+                    color: theme.headingColor,
+                  }}
                 >
                   — {r.author}
                 </Typography>
@@ -268,10 +325,15 @@ function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
   );
 }
 
-const ReviewsBlock: React.FC<ReviewsBlockProps> = ({ data, theme, variant = "cards" }) => {
+const ReviewsBlock: React.FC<ReviewsBlockProps> = ({
+  data,
+  theme,
+  variant = "cards",
+}) => {
   if (!data.reviews?.length) return null;
   if (variant === "quotes") return <QuotesReviews data={data} theme={theme} />;
-  if (variant === "featured") return <FeaturedReviews data={data} theme={theme} />;
+  if (variant === "featured")
+    return <FeaturedReviews data={data} theme={theme} />;
   return <CardsReviews data={data} theme={theme} />;
 };
 

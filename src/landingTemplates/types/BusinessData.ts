@@ -17,6 +17,10 @@ export interface Review {
   text: string;
   date?: string;
   avatarUrl?: string;
+  name?: string;
+  role?: string;
+  comment?: string;
+  avatar?: string;
 }
 
 export interface ContactInfo {
@@ -133,6 +137,7 @@ export interface BusinessData {
   contact: ContactInfo;
   location?: LocationInfo;
   socialLinks?: SocialLinks;
+  socials?: SocialLinks;
   workingHours?: WorkingHour[];
 
   // Blog / insights
@@ -151,3 +156,20 @@ export interface BusinessData {
   pricingPlans?: PricingPlan[];
   stats?: Stat[];
 }
+
+// Runtime compatibility exports for any stale dev-server value imports.
+export const Service = undefined;
+export const GalleryItem = undefined;
+export const Review = undefined;
+export const ContactInfo = undefined;
+export const LocationInfo = undefined;
+export const SocialLinks = undefined;
+export const WorkingHour = undefined;
+export const BlogPost = undefined;
+export const PortfolioItem = undefined;
+export const Product = undefined;
+export const TeamMember = undefined;
+export const Feature = undefined;
+export const PricingPlan = undefined;
+export const Stat = undefined;
+export const BusinessData = undefined;

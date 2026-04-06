@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography, Stack, IconButton } from "@mui/material";
 import { Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
-import { TemplateProps } from "../../templateEngine/types";
+import type { TemplateProps } from "../../templateEngine/types";
 import { buildMinimalTheme } from "./minimalTheme";
 import {
   HeroBlock,
@@ -13,7 +13,13 @@ import {
   CTASection,
 } from "../../blocks";
 
-function MinimalHeader({ data, theme }: { data: TemplateProps["data"]; theme: ReturnType<typeof buildMinimalTheme> }) {
+function MinimalHeader({
+  data,
+  theme,
+}: {
+  data: TemplateProps["data"];
+  theme: ReturnType<typeof buildMinimalTheme>;
+}) {
   return (
     <Box
       component="header"
@@ -42,7 +48,11 @@ function MinimalHeader({ data, theme }: { data: TemplateProps["data"]; theme: Re
       >
         {data.name}
       </Typography>
-      <Stack direction="row" spacing={3} sx={{ display: { xs: "none", md: "flex" } }}>
+      <Stack
+        direction="row"
+        spacing={3}
+        sx={{ display: { xs: "none", md: "flex" } }}
+      >
         {["Services", "Gallery", "Reviews", "Contact"].map((item) => (
           <Typography
             key={item}
@@ -63,7 +73,13 @@ function MinimalHeader({ data, theme }: { data: TemplateProps["data"]; theme: Re
   );
 }
 
-function MinimalFooter({ data, theme }: { data: TemplateProps["data"]; theme: ReturnType<typeof buildMinimalTheme> }) {
+function MinimalFooter({
+  data,
+  theme,
+}: {
+  data: TemplateProps["data"];
+  theme: ReturnType<typeof buildMinimalTheme>;
+}) {
   const social = data.socialLinks;
   return (
     <Box
@@ -81,7 +97,10 @@ function MinimalFooter({ data, theme }: { data: TemplateProps["data"]; theme: Re
         mx: "auto",
       }}
     >
-      <Typography variant="caption" sx={{ color: theme.bodyColor, fontFamily: theme.fontFamily }}>
+      <Typography
+        variant="caption"
+        sx={{ color: theme.bodyColor, fontFamily: theme.fontFamily }}
+      >
         © {new Date().getFullYear()} {data.name}
       </Typography>
       {social && (

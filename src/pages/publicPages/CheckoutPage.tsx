@@ -20,9 +20,9 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { getDashboardColors } from "../styles/dashboardTheme";
-import { useTheme as useCustomTheme } from "../context/ThemeContext";
-import StripeProviderWrapper from "../components/Checkout/StripeProviderWrapper";
+import { getDashboardColors } from "../../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import StripeProviderWrapper from "../../components/Checkout/StripeProviderWrapper";
 import {
   ArrowBack as BackIcon,
   CheckCircle as SuccessIcon,
