@@ -137,6 +137,45 @@ const reveal = {
   transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
 } as const;
 
+const staggerSection = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.04,
+    },
+  },
+} as const;
+
+const headingReveal = {
+  hidden: { opacity: 0, y: 34, filter: "blur(8px)" },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+  },
+} as const;
+
+const textReveal = {
+  hidden: { opacity: 0, y: 18 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.62, ease: [0.22, 1, 0.36, 1] },
+  },
+} as const;
+
+const imageReveal = {
+  hidden: { opacity: 0, scale: 0.94, y: 26 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+  },
+} as const;
+
 const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
   const products = data.products?.length ? data.products : fallbackProducts;
   const featured = products.slice(0, 3);
@@ -323,13 +362,15 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Container maxWidth="xl" sx={{ position: "relative", zIndex: 2, height: "100%" }}>
             <Stack
               component={motion.div}
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              variants={staggerSection}
+              initial="hidden"
+              animate="show"
               justifyContent="flex-end"
               sx={{ minHeight: { xs: "78vh", md: "92vh" }, pb: { xs: 5, md: 8 } }}
             >
               <Chip
+                component={motion.div}
+                variants={textReveal}
                 label="Store Template · Dog Products"
                 sx={{
                   alignSelf: "flex-start",
@@ -340,6 +381,8 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 }}
               />
               <Typography
+                component={motion.h1}
+                variants={headingReveal}
                 sx={{
                   maxWidth: 780,
                   color: palette.white,
@@ -354,6 +397,8 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 with calm luxury.
               </Typography>
               <Typography
+                component={motion.p}
+                variants={textReveal}
                 sx={{
                   mt: 2,
                   maxWidth: 520,
@@ -365,7 +410,13 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 {data.tagline ||
                   "An editorial pet store layout for harnesses, beds, treats, travel goods, and curated everyday accessories."}
               </Typography>
-              <Stack direction="row" spacing={1.5} sx={{ mt: 3, flexWrap: "wrap" }}>
+              <Stack
+                component={motion.div}
+                variants={textReveal}
+                direction="row"
+                spacing={1.5}
+                sx={{ mt: 3, flexWrap: "wrap" }}
+              >
                 <Button
                   onClick={() => scrollToSection("best-sellers")}
                   endIcon={<ArrowOutwardIcon />}
@@ -411,11 +462,23 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
           sx={{ py: { xs: 4, md: 5 } }}
         >
           <Stack
+            component={motion.div}
+            variants={staggerSection}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
             direction={{ xs: "column", lg: "row" }}
             spacing={2}
             justifyContent="space-between"
           >
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Stack
+              component={motion.div}
+              variants={textReveal}
+              direction="row"
+              spacing={1}
+              flexWrap="wrap"
+              useFlexGap
+            >
               {(data.storeCategories?.length
                 ? data.storeCategories
                 : ["Harnesses", "Beds", "Feeding", "Walk Sets", "Travel", "Apparel"]
@@ -436,6 +499,8 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
               {benefitItems.map((item) => (
                 <Stack
+                  component={motion.div}
+                  variants={imageReveal}
                   key={item.title}
                   direction="row"
                   spacing={1.2}
@@ -486,14 +551,21 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
           sx={{ py: { xs: 3, md: 4 } }}
         >
           <Stack
+            component={motion.div}
+            variants={staggerSection}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.18 }}
             direction={{ xs: "column", md: "row" }}
             justifyContent="space-between"
             alignItems={{ xs: "flex-start", md: "end" }}
             sx={{ mb: 3 }}
           >
-            <Box>
+            <Box component={motion.div} variants={textReveal}>
               <Typography sx={{ color: palette.muted, mb: 0.8 }}>Best sellers</Typography>
               <Typography
+                component={motion.h2}
+                variants={headingReveal}
                 sx={{
                   fontFamily: headingFont,
                   fontSize: { xs: "2rem", md: "3.5rem" },
@@ -506,7 +578,7 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 dogs and real homes.
               </Typography>
             </Box>
-            <Typography sx={{ maxWidth: 360, color: palette.muted, lineHeight: 1.7 }}>
+            <Typography component={motion.p} variants={textReveal} sx={{ maxWidth: 360, color: palette.muted, lineHeight: 1.7 }}>
               Hero products, warm editorial imagery, and high-conversion cards for dog
               accessories, beds, feeding, and walk essentials.
             </Typography>
@@ -523,8 +595,12 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Box
                 key={product.id}
                 component={motion.div}
-                whileHover={{ y: -6 }}
-                transition={{ duration: 0.25 }}
+                variants={imageReveal}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.18 }}
+                whileHover={{ y: -10, scale: 1.015 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                 sx={{
                   position: "relative",
                   minHeight: index === 0 ? 520 : 360,
@@ -532,13 +608,21 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   overflow: "hidden",
                   border: `1px solid ${palette.line}`,
                   gridRow: index === 0 ? { md: "span 2" } : undefined,
+                  "&:hover .product-media": { transform: "scale(1.08)" },
                 }}
               >
                 <Box
                   component="img"
+                  className="product-media"
                   src={product.image}
                   alt={product.name}
-                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transition: "transform 700ms ease",
+                    transform: "scale(1.02)",
+                  }}
                 />
                 <Box
                   sx={{
@@ -588,6 +672,11 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
           sx={{ py: { xs: 3, md: 4 } }}
         >
           <Box
+            component={motion.div}
+            variants={staggerSection}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.18 }}
             sx={{
               display: "grid",
               gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
@@ -595,6 +684,8 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <Box
+              component={motion.div}
+              variants={imageReveal}
               sx={{
                 borderRadius: "28px",
                 overflow: "hidden",
@@ -611,6 +702,8 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Box>
 
             <Box
+              component={motion.div}
+              variants={textReveal}
               sx={{
                 borderRadius: "28px",
                 border: `1px solid ${palette.line}`,
@@ -718,19 +811,30 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Box
                 key={product.id}
                 component={motion.div}
-                whileHover={{ y: -6 }}
+                variants={imageReveal}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.18 }}
+                whileHover={{ y: -8, scale: 1.012 }}
                 sx={{
                   borderRadius: "26px",
                   overflow: "hidden",
                   border: `1px solid ${palette.line}`,
                   bgcolor: palette.white,
+                  "&:hover .bundle-media": { transform: "scale(1.06)" },
                 }}
               >
                 <Box
                   component="img"
+                  className="bundle-media"
                   src={product.image}
                   alt={product.name}
-                  sx={{ width: "100%", height: 280, objectFit: "cover" }}
+                  sx={{
+                    width: "100%",
+                    height: 280,
+                    objectFit: "cover",
+                    transition: "transform 700ms ease",
+                  }}
                 />
                 <Box sx={{ p: 2 }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -814,6 +918,12 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             {reviews.map((review) => (
               <Box
                 key={review.author}
+                component={motion.div}
+                variants={textReveal}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.2 }}
+                whileHover={{ y: -6 }}
                 sx={{
                   borderRadius: "24px",
                   border: `1px solid ${palette.line}`,
