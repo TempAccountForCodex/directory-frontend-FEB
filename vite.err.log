@@ -148,3 +148,13 @@
       at step (C:\Users\TechBeast\Desktop\Directory\directory-frontend-FEB\node_modules\gensync\index.js:287:14)
       at C:\Users\TechBeast\Desktop\Directory\directory-frontend-FEB\node_modules\gensync\index.js:273:13
       at async.call.result.err.err (C:\Users\TechBeast\Desktop\Directory\directory-frontend-FEB\node_modules\gensync\index.js:223:11)
+[2m2:58:51 AM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "component" attribute in JSX element[33m
+365 |          animate={{ opacity: 1, y: 0 }}
+366 |          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+367 |          component={motion.header}
+    |          ^
+368 |          sx={{
+369 |            position: "fixed",
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/TechBeast/Desktop/Directory/directory-frontend-FEB/src/landingTemplates/templates/store/StoreFitTemplate.tsx[39m

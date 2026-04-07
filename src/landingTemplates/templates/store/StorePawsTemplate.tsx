@@ -648,9 +648,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 }}
               >
                 {[
-                  { value: "6-7", label: "Editable sections" },
-                  { value: "Video", label: "Hero background" },
-                  { value: "Dogs", label: "Product focus" },
+                  { value: "Premium Quality", label: "Comfort-first materials" },
+                  { value: "Fast Delivery", label: "Quick shipping on essentials" },
+                  { value: "Loved by Dogs", label: "Built for daily routines" },
                 ].map((item) => (
                   <Box
                     key={item.label}
@@ -977,13 +977,26 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Box>
               <Typography sx={{ fontWeight: 700, mb: 1 }}>Navigate</Typography>
               <Stack spacing={0.8}>
-                {["Hero", "Best sellers", "Story", "Bundles", "Reviews", "Contact"].map(
-                  (item) => (
-                    <Typography key={item} sx={{ color: palette.muted }}>
-                      {item}
-                    </Typography>
-                  ),
-                )}
+                {[
+                  { label: "Shop", id: "best-sellers" },
+                  { label: "Story", id: "brand-story" },
+                  { label: "Bundles", id: "care-bundles" },
+                  { label: "Reviews", id: "reviews" },
+                  { label: "Contact", id: "newsletter" },
+                ].map((item) => (
+                  <Typography
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    sx={{
+                      color: palette.muted,
+                      cursor: "pointer",
+                      transition: "color 180ms ease",
+                      "&:hover": { color: palette.ink },
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                ))}
               </Stack>
             </Box>
 
