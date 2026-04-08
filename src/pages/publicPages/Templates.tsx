@@ -166,6 +166,17 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     previewImage: "/assets/templateAssets/images/dummy/company-premium.png",
   },
   {
+    id: "static-company-executive",
+    slug: "company-executive",
+    name: "Company Executive",
+    description:
+      "Top-class editorial company template with premium service framing, trust-led storytelling, and a polished contact finish.",
+    type: "website",
+    category: "saas",
+    version: "1.0.0",
+    previewImage: "",
+  },
+  {
     id: "static-gardening",
     slug: "gardening",
     name: "Gardening",

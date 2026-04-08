@@ -1064,7 +1064,7 @@ const COMPANY_DATA: BusinessData = {
     "Interior studio for residential, hospitality, and workplace projects",
   description:
     "Atelier North creates calm interior environments with a focus on materials, proportion, and everyday usability across homes, hospitality spaces, and modern workplaces.",
-  primaryColor: "#111111",
+  primaryColor: "#124d4e",
   secondaryColor: "#ececec",
   contact: {
     email: "studio@ateliernorth.co",
@@ -1187,6 +1187,7 @@ const TEMPLATE_DATA_MAP: Record<
   },
   company: { templateId: "company", data: COMPANY_DATA },
   "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
+  "company-executive": { templateId: "company-executive", data: COMPANY_DATA },
 };
 
 const ALL_TEMPLATE_SLUGS = Object.keys(TEMPLATE_DATA_MAP);
@@ -1212,7 +1213,7 @@ const TEMPLATE_GROUPS = [
       "store-paws",
     ],
   },
-  { label: "Company", slugs: ["company", "company-premium"] },
+  { label: "Company", slugs: ["company", "company-premium", "company-executive"] },
 ];
 
 function resolveSlug(slug: string): { templateId: string; data: BusinessData } {
@@ -1584,6 +1585,8 @@ const PreviewBar: React.FC<{
                       ? "Company"
                       : s === "company-premium"
                         ? "Premium"
+                        : s === "company-executive"
+                          ? "Executive"
                         : s === "store-performance"
                           ? "Performance"
                           : shortLabel.charAt(0).toUpperCase() +
