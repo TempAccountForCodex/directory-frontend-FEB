@@ -174,7 +174,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "",
+    previewImage: "/assets/templateAssets/images/dummy/companyExecutive.png",
   },
   {
     id: "static-gardening",

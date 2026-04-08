@@ -43,11 +43,11 @@ const columns = [
   {
     speed: 1.3,
     images: [
-      "/assets/publicAssets/images/home/TemplatesDisplay/14.webp",
+      "/assets/publicAssets/images/home/TemplatesDisplay/18.webp",
 
       "/assets/publicAssets/images/home/TemplatesDisplay/15.webp",
 
-      "https://10web.io/wp-content/uploads/tenweb-theme/images/home/new/examples/example_artboard_2.png",
+      "/assets/publicAssets/images/home/TemplatesDisplay/14.webp",
 
       "https://img.freepik.com/free-vector/flat-autumn-landing-page-template_23-2149023348.jpg",
     ],

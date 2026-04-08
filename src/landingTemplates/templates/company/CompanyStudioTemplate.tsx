@@ -12,7 +12,7 @@ import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
 import EastIcon from "@mui/icons-material/East";
 import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
 
 const palette = {
@@ -24,7 +24,7 @@ const palette = {
   line: "rgba(21,17,15,0.1)",
   accent: "#14483f",
   accentSoft: "rgba(20,72,63,0.12)",
-  dark: "#0d1211",
+  dark: "#071f1f",
   white: "#fffdf9",
 };
 
@@ -39,7 +39,7 @@ const visualSet = {
   team:
     "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80",
   office:
-    "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1400&q=80",
+    "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1400&q=80",
   boardroom:
     "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80",
   avatarOne:
@@ -115,6 +115,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const themeStrong = rgba(themeColor, 0.9);
   const themeHeroBase = rgba(themeColor, 0.96);
   const themeHeroMid = rgba(themeColor, 0.68);
+  const whyChooseImageRef = React.useRef<HTMLDivElement | null>(null);
+  const { scrollYProgress: whyChooseImageProgress } = useScroll({
+    target: whyChooseImageRef,
+    offset: ["start end", "end start"],
+  });
+  const whyChooseImageScale = useTransform(
+    whyChooseImageProgress,
+    [0, 0.5, 1],
+    [1.16, 1.03, 1.16],
+  );
 
   const socialIcons = [
     { key: "instagram", icon: Instagram },
@@ -129,7 +139,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     { label: "Overview", id: "overview" },
     { label: "About", id: "about" },
     { label: "Why Us", id: "why-us" },
-    { label: "Work", id: "work" },
+    { label: "Process", id: "work" },
     { label: "Contact", id: "contact" },
   ];
 
@@ -181,7 +191,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   onClick={() => scrollToSection(item.id)}
                   sx={{
                     cursor: "pointer",
-                    color: palette.muted,
+                    color: "black",
                     fontWeight: 500,
                     transition: "color 180ms ease",
                     "&:hover": { color: palette.ink },
@@ -202,7 +212,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 borderRadius: 999,
               }}
             >
-              Start project
+             Contact Us
             </Button>
           </Stack>
         </Container>
@@ -707,13 +717,22 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           id="why-us"
           data-preview-section="true"
           data-preview-label="Why Choose Us"
-          sx={{ py: { xs: 1, md: 2 } }}
+          sx={{
+            py: { xs: 2, md: 3 },
+            px: { xs: 2, md: 3 },
+            mt: { xs: 1, md: 6 },
+                        mb: { xs: 1, md: 12 },
+            borderRadius: "36px",
+            bgcolor: themeColor,
+            color: palette.white,
+            overflow: "hidden",
+          }}
         >
           <Box
             sx={{
               display: "grid",
               gridTemplateColumns: { xs: "1fr", md: "0.95fr 1.05fr" },
-              gap: 2,
+              gap: 2.2,
               alignItems: "stretch",
             }}
           >
@@ -723,12 +742,14 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 p: { xs: 2.5, md: 4 },
                 borderRadius: "34px",
-                bgcolor: palette.dark,
+                bgcolor: "rgba(255,255,255,0.06)",
                 color: palette.white,
                 minHeight: 420,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
+                border: "1px solid rgba(255,255,255,0.12)",
+                backdropFilter: "blur(10px)",
               }}
             >
               <Box>
@@ -745,53 +766,83 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 480,
                   }}
                 >
-                  Advanced design without visual clutter.
+                  Built for business trust, clarity, and conversion.
                 </Typography>
               </Box>
 
-              <Stack spacing={1.2} sx={{ mt: 3 }}>
-                {["Wide hero", "Focused sections", "Smooth reveal", "Premium image flow"].map(
-                  (item) => (
-                    <Box
-                      key={item}
-                      sx={{
-                        px: 1.6,
-                        py: 1.4,
-                        borderRadius: "18px",
-                        bgcolor: "rgba(255,255,255,0.08)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                      }}
-                    >
-                      <Typography sx={{ fontWeight: 600 }}>{item}</Typography>
-                    </Box>
-                  ),
-                )}
-              </Stack>
+              <Typography
+                sx={{
+                  mt: 3,
+                  maxWidth: 420,
+                  color: "rgba(255,255,255,0.72)",
+                  lineHeight: 1.8,
+                  fontSize: { xs: "1rem", md: "1.08rem" },
+                }}
+              >
+                Built to showcase business services, executive credibility, and
+                client confidence in a clearer and more professional way.
+              </Typography>
             </Box>
 
             <Box
               component={motion.div}
               {...sectionReveal}
               whileHover={{ y: -8 }}
+              ref={whyChooseImageRef}
               sx={{
                 overflow: "hidden",
                 borderRadius: "34px",
                 minHeight: 420,
+                border: "1px solid rgba(255,255,255,0.12)",
+                position: "relative",
               }}
             >
               <Box
-                component="img"
+                component={motion.img}
                 src={visualSet.office}
-                alt="Why choose us"
+                alt="Business meeting room"
+                style={{ scale: whyChooseImageScale }}
                 sx={{
                   width: "100%",
                   height: "100%",
                   objectFit: "cover",
                   display: "block",
-                  transition: "transform 520ms ease",
-                  "&:hover": { transform: "scale(1.05)" },
+                  transformOrigin: "center center",
                 }}
               />
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.32))",
+                }}
+              />
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: 24,
+                  right: 24,
+                  bottom: 24,
+                }}
+              >
+                <Typography sx={{ color: "rgba(255,255,255,0.72)", mb: 0.8 }}>
+                  Business presentation
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: headingFont,
+                    fontSize: { xs: "1.55rem", md: "2.15rem" },
+                    lineHeight: 1,
+                    letterSpacing: "-0.04em",
+                    fontWeight: 800,
+                    color: palette.white,
+                    maxWidth: 340,
+                  }}
+                >
+                  Professional presentation for modern businesses.
+                </Typography>
+              </Box>
             </Box>
           </Box>
         </Box>
@@ -800,94 +851,194 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           id="work"
           data-preview-section="true"
           data-preview-label="Work"
-          sx={{ py: { xs: 2, md: 4 } }}
+          sx={{
+            py: { xs: 5, md: 15 },
+            px: { xs: 2, md: 4 },
+            mx: { xs: -2, md: "calc(-50vw + 50%)" },
+            mt: { xs: 2, md: 3 },
+                       bgcolor: "#071f1f",
+            color: palette.white,
+            overflow: "hidden",
+            position: "relative",
+          }}
         >
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "0.9fr 1.1fr" },
-              gap: 2,
-              alignItems: "stretch",
+              position: "absolute",
+              inset: 0,
+              opacity: 0.16,
+              backgroundImage:
+                "linear-gradient(100deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 16px)",
+              backgroundSize: "18px 100%",
+              backgroundPosition: "left top",
+              pointerEvents: "none",
+            }}
+          />
+          <Box
+            sx={{
+              position: "relative",
+              zIndex: 1,
+              maxWidth: "1320px",
+              mx: "auto",
             }}
           >
-            <Box
-              component={motion.div}
-              {...sectionReveal}
-              sx={{
-                p: { xs: 2.5, md: 4 },
-                borderRadius: "34px",
-                bgcolor: themeColor,
-                color: palette.white,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                minHeight: 420,
-              }}
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              justifyContent="space-between"
+              alignItems={{ xs: "flex-start", md: "center" }}
+              spacing={2}
+              sx={{ mb: 3.2 }}
             >
-              <Box>
-                <Typography sx={{ opacity: 0.72, mb: 1 }}>Design language</Typography>
+              <Box component={motion.div} {...sectionReveal}>
+                <Chip
+                  label="Our process"
+                  sx={{
+                    bgcolor: rgba(themeColor, 0.18),
+                    color: "#ffffff",
+                    borderRadius: "10px",
+                    fontWeight: 800,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    mb: 2.1,
+                  }}
+                />
                 <Typography
                   sx={{
                     fontFamily: headingFont,
-                    fontSize: { xs: "2.1rem", md: "4rem" },
+                    fontSize: { xs: "2.45rem", md: "4.5rem" },
                     lineHeight: 0.95,
                     letterSpacing: "-0.07em",
                     fontWeight: 800,
-                    maxWidth: 480,
+                    maxWidth: 680,
                   }}
                 >
-                  Full-width hero, bold images, and refined movement.
+                  Seamless process,
+                  <br />
+                  great
+                  <Box component="span" sx={{ color: "rgba(255,255,255,0.58)" }}>
+                    {" "}
+                    business results.
+                  </Box>
                 </Typography>
               </Box>
 
-              <Stack direction="row" spacing={1.2} sx={{ mt: 3, flexWrap: "wrap" }}>
-                {["Hero", "Images", "Motion"].map((item) => (
-                  <Chip
-                    key={item}
-                    label={item}
-                    sx={{
-                      bgcolor: "rgba(255,255,255,0.12)",
-                      color: palette.white,
-                      border: "1px solid rgba(255,255,255,0.18)",
-                    }}
-                  />
-                ))}
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                spacing={2}
+                alignItems={{ xs: "flex-start", md: "center" }}
+              >
+                <Typography
+                  component={motion.p}
+                  {...sectionReveal}
+                  sx={{
+                    maxWidth: 360,
+                    color: "rgba(255,255,255,0.7)",
+                    lineHeight: 1.7,
+                  }}
+                >
+                  A simple executive flow built to move from strategy to launch
+                  with clarity.
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  endIcon={<ArrowOutwardIcon />}
+                  sx={{
+                    bgcolor: themeColor,
+                    color: palette.white,
+                    borderRadius: 999,
+                    textTransform: "none",
+                    px: 2.6,
+                    py: 1.15,
+                    fontWeight: 800,
+                    boxShadow: "none",
+                    "&:hover": {
+                      bgcolor: themeColor,
+                      boxShadow: "none",
+                      opacity: 0.94,
+                    },
+                  }}
+                >
+                 Contact Us
+                </Button>
               </Stack>
-            </Box>
+            </Stack>
 
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
                 gap: 1.5,
+                alignItems: "stretch",
+                mt: 10.5,
               }}
             >
-              {[visualSet.office, visualSet.boardroom].map((image, index) => (
+              {[
+                {
+                  number: "01",
+                  title: "Discovery & planning",
+                  text: "We define the brand story, service positioning, and the sections that matter most for a professional company site.",
+                },
+                {
+                  number: "02",
+                  title: "Structure & delivery",
+                  text: "The design system, imagery, and motion are shaped into a clear website flow built for trust and executive presence.",
+                },
+                {
+                  number: "03",
+                  title: "Review & support",
+                  text: "The final experience is refined for readability, conversion, and easy reuse across different client brands.",
+                },
+              ].map((item, index) => (
                 <Box
-                  key={image}
+                  key={item.number}
                   component={motion.div}
                   {...sectionReveal}
                   transition={{ ...sectionReveal.transition, delay: index * 0.08 }}
-                  whileHover={{ y: -8 }}
                   sx={{
-                    overflow: "hidden",
                     borderRadius: "28px",
-                    minHeight: { xs: 260, md: 420 },
+                    minHeight: { xs: 240, md: 320 },
+                    bgcolor: palette.white,
+                    color: palette.ink,
+                    p: { xs: 2.3, md: 2.6 },
+                    position: "relative",
                   }}
                 >
-                  <Box
-                    component="img"
-                    src={image}
-                    alt="Company section"
+                  <Typography
                     sx={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      display: "block",
-                      transition: "transform 520ms ease",
-                      "&:hover": { transform: "scale(1.05)" },
+                      fontFamily: headingFont,
+                      fontSize: { xs: "4rem", md: "5.4rem" },
+                      lineHeight: 0.88,
+                      letterSpacing: "-0.08em",
+                      fontWeight: 800,
+                      color: rgba(themeColor, 0.38),
+                      mb: 2.2,
                     }}
-                  />
+                  >
+                    {item.number}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: headingFont,
+                      fontSize: { xs: "1.55rem", md: "1.85rem" },
+                      lineHeight: 1.02,
+                      letterSpacing: "-0.04em",
+                      fontWeight: 800,
+                      maxWidth: 280,
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 1.6,
+                      color: palette.muted,
+                      lineHeight: 1.65,
+                      maxWidth: 320,
+                    }}
+                  >
+                    {item.text}
+                  </Typography>
                 </Box>
               ))}
             </Box>
@@ -897,7 +1048,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Box
           data-preview-section="true"
           data-preview-label="Team"
-          sx={{ py: { xs: 4, md: 6 } }}
+          sx={{ py: { xs: 4, md: 12 } }}
         >
           <Box
             sx={{
@@ -1001,91 +1152,208 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           id="contact"
           data-preview-section="true"
           data-preview-label="Contact"
-          sx={{ pt: { xs: 2, md: 3 }, pb: { xs: 5, md: 6 } }}
+          sx={{
+            py: { xs: 5, md: 7 },
+            px: { xs: 2, md: 4 },
+            mx: { xs: -2, md: "calc(-50vw + 50%)" },
+            mt: { xs: 2, md: 3 },
+            bgcolor: "#071f1f",
+            color: palette.white,
+            overflow: "hidden",
+            position: "relative",
+          }}
         >
           <Box
             sx={{
-              p: { xs: 2.5, md: 4 },
-              borderRadius: "34px",
-              bgcolor: palette.surface,
-              border: `1px solid ${palette.line}`,
+              position: "absolute",
+              inset: 0,
+              opacity: 0.18,
+              backgroundImage:
+                "linear-gradient(100deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 16px)",
+              backgroundSize: "18px 100%",
+              backgroundPosition: "left top",
+              pointerEvents: "none",
+            }}
+          />
+          <Box
+            sx={{
+              position: "relative",
+              zIndex: 1,
+              maxWidth: "1320px",
+              mx: "auto",
             }}
           >
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "0.85fr 1.15fr" },
-                gap: 2,
+                gridTemplateColumns: { xs: "1fr", md: "1fr 0.9fr" },
+                gap: { xs: 2.5, md: 3 },
                 alignItems: "stretch",
               }}
             >
-              <Box component={motion.div} {...sectionReveal}>
-                <Typography sx={{ color: palette.muted, mb: 1 }}>Contact</Typography>
-                <Typography
+              <Box
+                component={motion.div}
+                {...sectionReveal}
+                sx={{
+                  minHeight: { xs: 360, md: 720 },
+                  borderRadius: "36px",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <Box
                   sx={{
-                    fontFamily: headingFont,
-                    fontSize: { xs: "2.2rem", md: "4rem" },
-                    lineHeight: 0.95,
-                    letterSpacing: "-0.07em",
-                    fontWeight: 800,
-                    maxWidth: 460,
+                    position: "absolute",
+                    inset: 0,
+                    backgroundImage:
+                      "url(https://themejunction.net/html/bexon/demo/assets/images/bg/map.svg)",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                    backgroundSize: "100% auto",
+                    opacity: 0.32,
+                    filter: "brightness(0) saturate(100%) invert(54%) sepia(74%) saturate(420%) hue-rotate(133deg) brightness(89%) contrast(89%)",
                   }}
-                >
-                  Built to look premium from the first scroll.
-                </Typography>
-                <Stack spacing={0.7} sx={{ mt: 2.5, color: palette.muted }}>
-                  {data.contact.email ? <Typography>{data.contact.email}</Typography> : null}
-                  {data.contact.phone ? <Typography>{data.contact.phone}</Typography> : null}
-                  {data.contact.address ? <Typography>{data.contact.address}</Typography> : null}
-                </Stack>
+                />
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: { xs: "26%", md: "28%" },
+                    top: { xs: "42%", md: "38%" },
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    bgcolor: palette.white,
+                    boxShadow: "0 0 0 6px rgba(255,255,255,0.18)",
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: { xs: "56%", md: "58%" },
+                    top: { xs: "33%", md: "36%" },
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    bgcolor: palette.white,
+                    boxShadow: "0 0 0 6px rgba(255,255,255,0.18)",
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: { xs: "42%", md: "43%" },
+                    bottom: { xs: "24%", md: "18%" },
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    bgcolor: palette.white,
+                    boxShadow: "0 0 0 6px rgba(255,255,255,0.18)",
+                  }}
+                />
               </Box>
 
               <Box
                 component={motion.div}
                 {...sectionReveal}
                 sx={{
-                  p: { xs: 2, md: 2.2 },
+                  p: { xs: 2.4, md: 3.2 },
                   borderRadius: "26px",
-                  bgcolor: palette.white,
-                  border: `1px solid ${palette.line}`,
+                  bgcolor: "rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  backdropFilter: "blur(16px)",
+                  alignSelf: { md: "center" },
                 }}
               >
-                <Stack spacing={1.2}>
+                <Chip
+                  label="Get in touch"
+                  sx={{
+                    bgcolor: "rgba(255,255,255,0.08)",
+                    color: palette.white,
+                    borderRadius: "10px",
+                    fontWeight: 700,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    mb: 2.2,
+                  }}
+                />
+
+                <Typography
+                  sx={{
+                    fontFamily: headingFont,
+                    fontSize: { xs: "2.1rem", md: "3.5rem" },
+                    lineHeight: 0.96,
+                    letterSpacing: "-0.07em",
+                    fontWeight: 800,
+                    mb: 2.5,
+                  }}
+                >
+                  Drop us a line.
+                </Typography>
+
+                <Stack spacing={1.6}>
+                  <Stack direction={{ xs: "column", md: "row" }} spacing={1.6}>
+                    <TextField
+                      placeholder="Full name *"
+                      size="small"
+                      fullWidth
+                      variant="standard"
+                      InputProps={{ disableUnderline: true }}
+                      sx={{
+                        "& .MuiInputBase-root": {
+                          color: palette.white,
+                          pb: 1,
+                          borderBottom: "1px solid rgba(255,255,255,0.18)",
+                        },
+                      }}
+                    />
+                    <TextField
+                      placeholder="Email address *"
+                      size="small"
+                      fullWidth
+                      variant="standard"
+                      InputProps={{ disableUnderline: true }}
+                      sx={{
+                        "& .MuiInputBase-root": {
+                          color: palette.white,
+                          pb: 1,
+                          borderBottom: "1px solid rgba(255,255,255,0.18)",
+                        },
+                      }}
+                    />
+                  </Stack>
+
+                  <Stack direction={{ xs: "column", md: "row" }} spacing={1.6}>
+                    <TextField
+                      placeholder="Phone number *"
+                      size="small"
+                      fullWidth
+                      variant="standard"
+                      InputProps={{ disableUnderline: true }}
+                      sx={{
+                        "& .MuiInputBase-root": {
+                          color: palette.white,
+                          pb: 1,
+                          borderBottom: "1px solid rgba(255,255,255,0.18)",
+                        },
+                      }}
+                    />
+                   
+                  </Stack>
+
                   <TextField
-                    placeholder="Your name"
-                    size="small"
-                    fullWidth
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        bgcolor: palette.surface,
-                        borderRadius: "16px",
-                        "& fieldset": { borderColor: palette.line },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="Email address"
-                    size="small"
-                    fullWidth
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        bgcolor: palette.surface,
-                        borderRadius: "16px",
-                        "& fieldset": { borderColor: palette.line },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="Project details"
+                    placeholder="Type message *"
                     size="small"
                     fullWidth
                     multiline
-                    minRows={4}
+                    minRows={6}
+                    variant="standard"
+                    InputProps={{ disableUnderline: true }}
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        bgcolor: palette.surface,
-                        borderRadius: "16px",
-                        "& fieldset": { borderColor: palette.line },
+                      "& .MuiInputBase-root": {
+                        color: palette.white,
+                        pb: 1,
+                        borderBottom: "1px solid rgba(255,255,255,0.18)",
                       },
                     }}
                   />
@@ -1094,22 +1362,22 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     endIcon={<EastIcon />}
                     sx={{
                       alignSelf: "flex-start",
-                      bgcolor: palette.dark,
+                      bgcolor: themeColor,
                       color: palette.white,
                       borderRadius: 999,
                       textTransform: "none",
                       px: 2.6,
-                      py: 1.08,
-                      fontWeight: 700,
+                      py: 1.15,
+                      fontWeight: 800,
                       boxShadow: "none",
                       "&:hover": {
-                        bgcolor: palette.dark,
+                        bgcolor: themeColor,
                         boxShadow: "none",
                         opacity: 0.94,
                       },
                     }}
                   >
-                    Send enquiry
+                    Send message
                   </Button>
                 </Stack>
               </Box>
@@ -1119,7 +1387,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 mt: 3,
                 pt: 2.2,
-                borderTop: `1px solid ${palette.line}`,
+                borderTop: "1px solid rgba(255,255,255,0.1)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: { xs: "flex-start", md: "center" },
@@ -1127,8 +1395,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 gap: 1.5,
               }}
             >
-              <Typography sx={{ color: palette.muted }}>
-                © 2026 {data.name}. Executive company presence.
+              <Typography sx={{ color: "rgba(255,255,255,0.68)" }}>
+                © 2026 {data.name}. Global business presence.
               </Typography>
               {socialIcons.length ? (
                 <Stack direction="row" spacing={1}>
@@ -1141,8 +1409,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         display: "grid",
                         placeItems: "center",
                         borderRadius: "50%",
-                        border: `1px solid ${palette.line}`,
-                        color: palette.ink,
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        color: palette.white,
                       }}
                     >
                       <Icon size={16} />
