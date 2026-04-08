@@ -545,8 +545,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     >
                       <Box
+                        component={motion.div}
+                        initial={{ width: 0 }}
+                        whileInView={{ width: item.value }}
+                        viewport={{ once: true, amount: 0.8 }}
+                        transition={{
+                          duration: 1,
+                          delay: item.label === "Revenue" ? 0.15 : 0.3,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
                         sx={{
-                          width: item.value,
                           height: "100%",
                           bgcolor: themeColor,
                           borderRadius: 999,
