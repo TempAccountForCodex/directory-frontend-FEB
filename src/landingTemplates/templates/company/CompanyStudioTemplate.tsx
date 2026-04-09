@@ -28,8 +28,8 @@ const palette = {
   white: "#fffdf9",
 };
 
-const headingFont = '"Plus Jakarta Sans", "Inter", sans-serif';
-const bodyFont = '"Inter", "Segoe UI", sans-serif';
+const defaultHeadingFont = '"Plus Jakarta Sans", "Inter", sans-serif';
+const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
 
 const visualSet = {
   heroPortrait:
@@ -102,12 +102,40 @@ const rgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+const blendHex = (base: string, target: string, amount: number) => {
+  const from = hexToRgb(base);
+  const to = hexToRgb(target);
+  const mix = (start: number, end: number) =>
+    Math.round(start + (end - start) * amount)
+      .toString(16)
+      .padStart(2, "0");
+
+  return `#${mix(from.r, to.r)}${mix(from.g, to.g)}${mix(from.b, to.b)}`;
+};
+
+const isLightColor = (hex: string) => {
+  const { r, g, b } = hexToRgb(hex);
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.72;
+};
+
 const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const headingFont =
+    data.themeSettings?.headingFont || defaultHeadingFont;
+  const bodyFont = data.themeSettings?.bodyFont || defaultBodyFont;
   const features = (data.features || []).slice(0, 4);
   const stats = (data.stats || []).slice(0, 3);
   const team = (data.team || []).slice(0, 2);
   const reviews = (data.reviews || []).slice(0, 1);
-  const themeColor = data.primaryColor || "#124d4e";
+  const themeColor =
+    data.themeSettings?.primaryColor || data.primaryColor || "#124d4e";
+  const rawSecondaryColor =
+    data.themeSettings?.secondaryColor ||
+    data.secondaryColor ||
+    palette.surfaceAlt;
+  const themeSecondary = isLightColor(rawSecondaryColor)
+    ? rawSecondaryColor
+    : palette.surfaceAlt;
   const themeSoft = rgba(themeColor, 0.12);
   const themeMuted = rgba(themeColor, 0.16);
   const themeBorder = rgba(themeColor, 0.2);
@@ -115,6 +143,15 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const themeStrong = rgba(themeColor, 0.9);
   const themeHeroBase = rgba(themeColor, 0.96);
   const themeHeroMid = rgba(themeColor, 0.68);
+  const themeHeroEnd = blendHex(themeColor, "#041012", 0.72);
+  const themeDeep = blendHex(themeColor, "#071213", 0.58);
+  const themeDeepest = blendHex(themeColor, "#020606", 0.8);
+  const themeHighlight = blendHex(themeColor, "#ffffff", 0.32);
+  const themeSurface = blendHex(themeSecondary, "#ffffff", 0.58);
+  const themeSurfaceStrong = blendHex(themeSecondary, "#ffffff", 0.34);
+  const themeLine = rgba(themeColor, 0.12);
+  const pageBackground = `linear-gradient(180deg, ${rgba(themeSecondary, 0.22)} 0%, ${palette.bg} 20%, ${palette.bg} 100%)`;
+  const headerBackground = rgba(themeSecondary, 0.72);
   const whyChooseImageRef = React.useRef<HTMLDivElement | null>(null);
   const { scrollYProgress: whyChooseImageProgress } = useScroll({
     target: whyChooseImageRef,
@@ -150,7 +187,15 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   };
 
   return (
-    <Box sx={{ bgcolor: palette.bg, color: palette.ink, fontFamily: bodyFont }}>
+    <Box
+      sx={{
+        background: pageBackground,
+        color: palette.ink,
+        fontFamily: bodyFont,
+        minHeight: "100vh",
+        overflowX: "hidden",
+      }}
+    >
       <Box
         component="header"
         sx={{
@@ -158,8 +203,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           top: 0,
           zIndex: 50,
           backdropFilter: "blur(18px)",
-          bgcolor: "rgba(244,239,231,0.78)",
-          borderBottom: `1px solid ${palette.line}`,
+          bgcolor: headerBackground,
+          borderBottom: `1px solid ${rgba(themeColor, 0.14)}`,
         }}
       >
         <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
@@ -191,10 +236,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   onClick={() => scrollToSection(item.id)}
                   sx={{
                     cursor: "pointer",
-                    color: "black",
+                    color: palette.ink,
                     fontWeight: 500,
                     transition: "color 180ms ease",
-                    "&:hover": { color: palette.ink },
+                    "&:hover": { color: themeColor },
                   }}
                 >
                   {item.label}
@@ -234,7 +279,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             position: "absolute",
             inset: 0,
             background:
-              `radial-gradient(circle at 12% 78%, ${rgba(themeColor, 0.52)}, transparent 30%), radial-gradient(circle at 78% 24%, ${rgba(themeColor, 0.32)}, transparent 24%), linear-gradient(135deg, ${themeHeroBase} 0%, ${themeHeroMid} 58%, rgba(10, 27, 29, 1) 100%)`,
+              `radial-gradient(circle at 12% 78%, ${rgba(themeColor, 0.52)}, transparent 30%), radial-gradient(circle at 78% 24%, ${rgba(themeColor, 0.32)}, transparent 24%), linear-gradient(135deg, ${themeHeroBase} 0%, ${themeHeroMid} 58%, ${themeHeroEnd} 100%)`,
           }}
         />
         <Box
@@ -303,7 +348,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               backdropFilter: "blur(10px)",
             }}
           >
-            <VerifiedUserRoundedIcon sx={{ color: "#dfffff", fontSize: { xs: 34, md: 44 } }} />
+            <VerifiedUserRoundedIcon
+              sx={{ color: palette.white, fontSize: { xs: 34, md: 44 } }}
+            />
           </Box>
         </Box>
 
@@ -443,7 +490,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Box>
                   <Typography
                     sx={{
-                      color: "#39d2d7",
+                      color: themeHighlight,
                       fontWeight: 800,
                       letterSpacing: "0.16em",
                       fontSize: "0.95rem",
@@ -513,7 +560,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   bottom: 20,
                   p: { xs: 2, md: 2.3 },
                   borderRadius: "20px",
-                  bgcolor: "rgba(22,22,22,0.58)",
+                  bgcolor: rgba(themeDeepest, 0.66),
                   color: palette.white,
                   backdropFilter: "blur(16px)",
                   border: "1px solid rgba(255,255,255,0.1)",
@@ -644,8 +691,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       sx={{
                         p: { xs: 2.2, md: 2.6 },
                         borderRadius: "22px",
-                        bgcolor: palette.white,
-                        border: `1px solid ${palette.line}`,
+                        bgcolor: themeSurface,
+                        border: `1px solid ${themeLine}`,
                       }}
                     >
                       <Typography
@@ -856,7 +903,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             px: { xs: 2, md: 4 },
             mx: { xs: -2, md: "calc(-50vw + 50%)" },
             mt: { xs: 2, md: 3 },
-                       bgcolor: "#071f1f",
+            background: `linear-gradient(180deg, ${themeDeep} 0%, ${themeDeepest} 100%)`,
             color: palette.white,
             overflow: "hidden",
             position: "relative",
@@ -894,7 +941,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   label="Our process"
                   sx={{
                     bgcolor: rgba(themeColor, 0.18),
-                    color: "#ffffff",
+                    color: palette.white,
                     borderRadius: "10px",
                     fontWeight: 800,
                     letterSpacing: "0.05em",
@@ -998,10 +1045,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     borderRadius: "28px",
                     minHeight: { xs: 240, md: 320 },
-                    bgcolor: palette.white,
+                    bgcolor: themeSurfaceStrong,
                     color: palette.ink,
                     p: { xs: 2.3, md: 2.6 },
                     position: "relative",
+                    border: `1px solid ${themeLine}`,
                   }}
                 >
                   <Typography
@@ -1087,8 +1135,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   p: { xs: 2.4, md: 3.2 },
                   borderRadius: "30px",
-                  bgcolor: palette.surface,
-                  border: `1px solid ${palette.line}`,
+                  bgcolor: themeSurface,
+                  border: `1px solid ${themeLine}`,
                 }}
               >
                 <Typography sx={{ color: palette.muted, mb: 1 }}>Team</Typography>
@@ -1121,7 +1169,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   p: { xs: 2.4, md: 3.2 },
                   borderRadius: "30px",
-                  bgcolor: palette.dark,
+                  background: `linear-gradient(180deg, ${themeDeep} 0%, ${themeDeepest} 100%)`,
                   color: palette.white,
                   display: "flex",
                   flexDirection: "column",
@@ -1157,7 +1205,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             px: { xs: 2, md: 4 },
             mx: { xs: -2, md: "calc(-50vw + 50%)" },
             mt: { xs: 2, md: 3 },
-            bgcolor: "#071f1f",
+            background: `linear-gradient(180deg, ${themeDeep} 0%, ${themeDeepest} 100%)`,
             color: palette.white,
             overflow: "hidden",
             position: "relative",
@@ -1205,13 +1253,18 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     position: "absolute",
                     inset: 0,
+                    bgcolor: rgba(themeHighlight, 0.48),
+                    opacity: 0.42,
                     backgroundImage:
                       "url(https://themejunction.net/html/bexon/demo/assets/images/bg/map.svg)",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "center",
-                    backgroundSize: "100% auto",
-                    opacity: 0.32,
-                    filter: "brightness(0) saturate(100%) invert(54%) sepia(74%) saturate(420%) hue-rotate(133deg) brightness(89%) contrast(89%)",
+                    maskImage:
+                      "url(https://themejunction.net/html/bexon/demo/assets/images/bg/map.svg)",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                    maskPosition: "center",
+                    WebkitMaskSize: "100% auto",
+                    maskSize: "100% auto",
                   }}
                 />
 

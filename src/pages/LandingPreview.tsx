@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Box, Chip, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, IconButton, Stack, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DesktopWindowsOutlinedIcon from "@mui/icons-material/DesktopWindowsOutlined";
 import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
@@ -1621,16 +1621,194 @@ const PreviewBar: React.FC<{
   );
 };
 
+type CompanyExecutivePalette = {
+  id: string;
+  name: string;
+  primary: string;
+  secondary: string;
+  swatches: string[];
+};
+
+type CompanyExecutiveFontPack = {
+  id: string;
+  name: string;
+  headingFont: string;
+  bodyFont: string;
+};
+
+const COMPANY_EXECUTIVE_PALETTES: CompanyExecutivePalette[] = [
+  {
+    id: "teal",
+    name: "Executive Teal",
+    primary: "#124d4e",
+    secondary: "#e8f3f2",
+    swatches: ["#f4f1e7", "#124d4e", "#2aa9ab", "#0d1211"],
+  },
+  {
+    id: "navy",
+    name: "Corporate Navy",
+    primary: "#19324a",
+    secondary: "#edf2f8",
+    swatches: ["#f5f7fb", "#19324a", "#6ea3d5", "#0b1016"],
+  },
+  {
+    id: "charcoal",
+    name: "Boardroom",
+    primary: "#2c2f36",
+    secondary: "#f2f1ee",
+    swatches: ["#f6f4ef", "#2c2f36", "#9da3ad", "#14161b"],
+  },
+  {
+    id: "forest",
+    name: "Modern Green",
+    primary: "#1d5447",
+    secondary: "#eef4ef",
+    swatches: ["#f3f7f2", "#1d5447", "#7fb49e", "#111716"],
+  },
+  {
+    id: "plum",
+    name: "Executive Plum",
+    primary: "#4e2f5f",
+    secondary: "#f4eef8",
+    swatches: ["#faf6fc", "#4e2f5f", "#a97fc1", "#15101a"],
+  },
+  {
+    id: "oxblood",
+    name: "Oxblood",
+    primary: "#6d2d36",
+    secondary: "#f7efef",
+    swatches: ["#fbf6f5", "#6d2d36", "#c07b84", "#160f11"],
+  },
+  {
+    id: "bronze",
+    name: "Bronze",
+    primary: "#775233",
+    secondary: "#f6f0ea",
+    swatches: ["#fbf7f2", "#775233", "#d1a274", "#17120f"],
+  },
+  {
+    id: "slate",
+    name: "Slate Blue",
+    primary: "#31465f",
+    secondary: "#eef2f7",
+    swatches: ["#f7f9fc", "#31465f", "#7d9bbb", "#10151b"],
+  },
+  {
+    id: "graphite",
+    name: "Graphite Mint",
+    primary: "#233536",
+    secondary: "#edf4f2",
+    swatches: ["#f7faf9", "#233536", "#79aea5", "#0d1112"],
+  },
+  {
+    id: "royal",
+    name: "Royal Indigo",
+    primary: "#2f3b78",
+    secondary: "#eff1fb",
+    swatches: ["#f7f8fe", "#2f3b78", "#8594e0", "#0e1120"],
+  },
+];
+
+const COMPANY_EXECUTIVE_FONT_PACKS: CompanyExecutiveFontPack[] = [
+  {
+    id: "jakarta",
+    name: "Modern Sans",
+    headingFont: '"Plus Jakarta Sans", "Inter", sans-serif',
+    bodyFont: '"Inter", "Segoe UI", sans-serif',
+  },
+  {
+    id: "poppins",
+    name: "Rounded Sans",
+    headingFont: '"Poppins", "Inter", sans-serif',
+    bodyFont: '"Inter", "Segoe UI", sans-serif',
+  },
+  {
+    id: "montserrat",
+    name: "Sharp Sans",
+    headingFont: '"Montserrat", "Inter", sans-serif',
+    bodyFont: '"Inter", "Segoe UI", sans-serif',
+  },
+  {
+    id: "editorial",
+    name: "Editorial",
+    headingFont: 'Georgia, "Times New Roman", serif',
+    bodyFont: '"DM Sans", "Inter", sans-serif',
+  },
+  {
+    id: "dm-sans",
+    name: "Clean Editorial",
+    headingFont: '"DM Sans", "Inter", sans-serif',
+    bodyFont: '"DM Sans", "Inter", sans-serif',
+  },
+  {
+    id: "questrial",
+    name: "Minimal Grotesk",
+    headingFont: '"Questrial", "Inter", sans-serif',
+    bodyFont: '"Inter", "Segoe UI", sans-serif',
+  },
+  {
+    id: "kanit",
+    name: "Tech Sans",
+    headingFont: '"Kanit", "Inter", sans-serif',
+    bodyFont: '"DM Sans", "Inter", sans-serif',
+  },
+  {
+    id: "montserrat-dm",
+    name: "Corporate Sharp",
+    headingFont: '"Montserrat", "Inter", sans-serif',
+    bodyFont: '"DM Sans", "Inter", sans-serif',
+  },
+  {
+    id: "poppins-dm",
+    name: "Soft Corporate",
+    headingFont: '"Poppins", "Inter", sans-serif',
+    bodyFont: '"DM Sans", "Inter", sans-serif',
+  },
+  {
+    id: "jakarta-mono",
+    name: "Modern Contrast",
+    headingFont: '"Plus Jakarta Sans", "Inter", sans-serif',
+    bodyFont: '"Space Mono", monospace',
+  },
+];
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 const LandingPreview: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { templateId: slug = "company", pageId } = useParams<{
     templateId: string;
     pageId?: string;
   }>();
   const isEmbeddedPreview = searchParams.get("embed") === "1";
-  const { templateId, data } = resolveSlug(slug);
+  const isCompanyExecutive = slug === "company-executive";
+  const previewMode = searchParams.get("mode");
+  const selectedPalette =
+    COMPANY_EXECUTIVE_PALETTES.find(
+      (palette) => palette.id === searchParams.get("palette"),
+    ) || COMPANY_EXECUTIVE_PALETTES[0];
+  const selectedFontPack =
+    COMPANY_EXECUTIVE_FONT_PACKS.find(
+      (pack) => pack.id === searchParams.get("font"),
+    ) || COMPANY_EXECUTIVE_FONT_PACKS[0];
+  const { templateId, data: resolvedData } = resolveSlug(slug);
+  const data = React.useMemo<BusinessData>(() => {
+    if (!isCompanyExecutive) return resolvedData;
+
+    return {
+      ...resolvedData,
+      primaryColor: selectedPalette.primary,
+      secondaryColor: selectedPalette.secondary,
+      themeSettings: {
+        ...resolvedData.themeSettings,
+        primaryColor: selectedPalette.primary,
+        secondaryColor: selectedPalette.secondary,
+        headingFont: selectedFontPack.headingFont,
+        bodyFont: selectedFontPack.bodyFont,
+      },
+    };
+  }, [isCompanyExecutive, resolvedData, selectedFontPack, selectedPalette]);
   const [device, setDevice] = React.useState<PreviewDevice>("desktop");
   const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
   const currentPreviewPage = pageId || "home";
@@ -1640,6 +1818,43 @@ const LandingPreview: React.FC = () => {
   );
   const [sections, setSections] =
     React.useState<PreviewSection[]>(fallbackSections);
+  const iframePreviewUrl = React.useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("embed", "1");
+    if (isCompanyExecutive) {
+      params.set("mode", "full");
+      params.set("palette", selectedPalette.id);
+      params.set("font", selectedFontPack.id);
+    }
+
+    return `/landing-preview/${slug}${pageId ? `/${pageId}` : ""}?${params.toString()}`;
+  }, [isCompanyExecutive, pageId, selectedFontPack.id, selectedPalette.id, slug]);
+  const fullPreviewUrl = React.useMemo(() => {
+    const params = new URLSearchParams();
+    if (isCompanyExecutive) {
+      params.set("mode", "full");
+      params.set("palette", selectedPalette.id);
+      params.set("font", selectedFontPack.id);
+    }
+
+    const query = params.toString();
+    return `/landing-preview/${slug}${pageId ? `/${pageId}` : ""}${query ? `?${query}` : ""}`;
+  }, [isCompanyExecutive, pageId, selectedFontPack.id, selectedPalette.id, slug]);
+
+  const updateCompanyExecutiveSearch = React.useCallback(
+    (updates: Record<string, string>) => {
+      const next = new URLSearchParams(searchParams);
+      Object.entries(updates).forEach(([key, value]) => {
+        next.set(key, value);
+      });
+      next.delete("embed");
+      if (next.get("mode") !== "full") {
+        next.delete("mode");
+      }
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
 
   const collectIframeSections = React.useCallback(() => {
     const iframe = iframeRef.current;
@@ -1733,6 +1948,396 @@ const LandingPreview: React.FC = () => {
       <>
         <EmbeddedPreviewBridge slug={slug} pageId={pageId} />
         <TemplateEngine templateId={templateId} data={data} />
+      </>
+    );
+  }
+
+  if (isCompanyExecutive && previewMode !== "full") {
+    return (
+      <>
+        <PreviewBar slug={slug} device={device} onDeviceChange={setDevice} />
+        <Box
+          sx={{
+            pt: "56px",
+            minHeight: "100vh",
+            background:
+              "radial-gradient(circle at top left, rgba(255,255,255,0.85), transparent 28%), linear-gradient(180deg, #f7f4ee 0%, #efe9df 100%)",
+            px: { xs: 2, md: 3 },
+            pb: 4,
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: -140,
+              right: -120,
+              width: 320,
+              height: 320,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(17,24,39,0.06) 0%, transparent 68%)",
+              pointerEvents: "none",
+            }}
+          />
+          <Box
+            sx={{
+              maxWidth: "100%",
+              mx: "auto",
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", xl: "minmax(0, 1.15fr) 360px" },
+              gap: 3,
+              alignItems: "start",
+            }}
+          >
+            <Box
+              sx={{
+                bgcolor: "rgba(255,255,255,0.42)",
+                borderRadius: "32px",
+                p: { xs: 2, md: 3 },
+                minHeight: { xs: 480, md: "calc(100vh - 120px)" },
+                height: { xs: "auto", md: "calc(100vh - 120px)" },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid rgba(15,23,42,0.06)",
+                boxShadow: "0 30px 80px rgba(15,23,42,0.08)",
+                backdropFilter: "blur(20px)",
+              }}
+            >
+              <Box
+                sx={{
+                  width: device === "mobile" ? 390 : "100%",
+                  maxWidth: "100%",
+                  height:
+                    device === "mobile"
+                      ? "calc(100vh - 180px)"
+                      : "calc(100vh - 180px)",
+                  minHeight: { xs: 560, md: 760 },
+                  bgcolor: "#ffffff",
+                  border: "1px solid rgba(15,23,42,0.08)",
+                  borderRadius: "24px",
+                  boxShadow: "0 26px 70px rgba(15,23,42,0.14)",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Box
+                  sx={{
+                    height: 20,
+                    px: 1.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.8,
+                    bgcolor: "#f8f6f1",
+                    borderBottom: "1px solid rgba(15,23,42,0.06)",
+                  }}
+                >
+                  {["#d5d5d5", "#d5d5d5", "#d5d5d5"].map((dot, index) => (
+                    <Box
+                      key={`${dot}-${index}`}
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        bgcolor: dot,
+                      }}
+                    />
+                  ))}
+                </Box>
+                <Box
+                  component="iframe"
+                  ref={iframeRef}
+                  title="Company executive customization preview"
+                  src={iframePreviewUrl}
+                  loading="eager"
+                  onLoad={() => {
+                    window.setTimeout(() => {
+                      collectIframeSections();
+                    }, 300);
+                  }}
+                  sx={{
+                    border: 0,
+                    width: "100%",
+                    height: "100%",
+                    flex: 1,
+                    display: "block",
+                    bgcolor: "#fff",
+                  }}
+                />
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                bgcolor: "rgba(255,255,255,0.82)",
+                borderRadius: "28px",
+                border: "1px solid rgba(15,23,42,0.08)",
+                boxShadow: "0 24px 64px rgba(15,23,42,0.08)",
+                backdropFilter: "blur(20px)",
+                p: 2.5,
+                position: { xl: "sticky" },
+                top: 72,
+                maxHeight: { xl: "calc(100vh - 88px)" },
+                overflowY: { xl: "auto" },
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "0.78rem",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "#6b7280",
+                }}
+              >
+                Company Executive
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1,
+                  fontSize: { xs: "1.8rem", md: "2.1rem" },
+                  fontWeight: 800,
+                  letterSpacing: "-0.05em",
+                  color: "#111827",
+                  lineHeight: 1,
+                }}
+              >
+                Customize before preview
+              </Typography>
+
+              <Box
+                sx={{
+                  mt: 1.8,
+                  p: 1.4,
+                  borderRadius: "18px",
+                  bgcolor: "rgba(248,250,252,0.9)",
+                  border: "1px solid rgba(15,23,42,0.06)",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "#64748b",
+                    mb: 0.8,
+                  }}
+                >
+                  Current selection
+                </Typography>
+                <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
+                  <Chip
+                    label={selectedPalette.name}
+                    size="small"
+                    sx={{
+                      bgcolor: "#fff",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                      color: "#111827",
+                      fontWeight: 600,
+                    }}
+                  />
+                  <Chip
+                    label={selectedFontPack.name}
+                    size="small"
+                    sx={{
+                      bgcolor: "#fff",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                      color: "#111827",
+                      fontWeight: 600,
+                    }}
+                  />
+                </Stack>
+              </Box>
+
+              <Box
+                sx={{
+                  mt: 3,
+                  p: 1.5,
+                  borderRadius: "20px",
+                  bgcolor: "rgba(255,255,255,0.72)",
+                  border: "1px solid rgba(15,23,42,0.06)",
+                }}
+              >
+                <Typography sx={{ fontWeight: 800, color: "#111827", mb: 0.3 }}>
+                  Color palettes
+                </Typography>
+                <Typography sx={{ color: "#64748b", fontSize: "0.85rem", mb: 1.2 }}>
+                  Pick the tone for dark sections, accents, and tinted surfaces.
+                </Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: 1.1,
+                  }}
+                >
+                  {COMPANY_EXECUTIVE_PALETTES.map((palette) => (
+                    <Box
+                      key={palette.id}
+                      component="button"
+                      type="button"
+                      onClick={() =>
+                        updateCompanyExecutiveSearch({ palette: palette.id, font: selectedFontPack.id })
+                      }
+                      sx={{
+                        border:
+                          selectedPalette.id === palette.id
+                            ? "1px solid #111827"
+                            : "1px solid #e5e7eb",
+                        bgcolor:
+                          selectedPalette.id === palette.id
+                            ? "rgba(17,24,39,0.04)"
+                            : "#fff",
+                        borderRadius: "16px",
+                        p: 1.05,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        transition: "all 180ms ease",
+                        boxShadow:
+                          selectedPalette.id === palette.id
+                            ? "0 10px 24px rgba(15,23,42,0.08)"
+                            : "none",
+                        "&:hover": {
+                          transform: "translateY(-1px)",
+                          borderColor: "rgba(17,24,39,0.3)",
+                        },
+                      }}
+                    >
+                      <Stack direction="row" spacing={0.6} sx={{ mb: 0.8 }}>
+                        {palette.swatches.map((color) => (
+                          <Box
+                            key={color}
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: "8px",
+                              bgcolor: color,
+                              border: "1px solid rgba(15,23,42,0.08)",
+                            }}
+                          />
+                        ))}
+                      </Stack>
+                      <Typography
+                        sx={{
+                          fontSize: "0.82rem",
+                          color: "#334155",
+                          fontWeight: selectedPalette.id === palette.id ? 700 : 500,
+                        }}
+                      >
+                        {palette.name}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 1.5,
+                  borderRadius: "20px",
+                  bgcolor: "rgba(255,255,255,0.72)",
+                  border: "1px solid rgba(15,23,42,0.06)",
+                }}
+              >
+                <Typography sx={{ fontWeight: 800, color: "#111827", mb: 0.3 }}>
+                  Font packs
+                </Typography>
+                <Typography sx={{ color: "#64748b", fontSize: "0.85rem", mb: 1.2 }}>
+                  Switch the tone between corporate, editorial, and modern styles.
+                </Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: 1.1,
+                  }}
+                >
+                  {COMPANY_EXECUTIVE_FONT_PACKS.map((pack) => (
+                    <Box
+                      key={pack.id}
+                      component="button"
+                      type="button"
+                      onClick={() =>
+                        updateCompanyExecutiveSearch({ font: pack.id, palette: selectedPalette.id })
+                      }
+                      sx={{
+                        border:
+                          selectedFontPack.id === pack.id
+                            ? "1px solid #111827"
+                            : "1px solid #e5e7eb",
+                        bgcolor:
+                          selectedFontPack.id === pack.id
+                            ? "rgba(17,24,39,0.04)"
+                            : "#fff",
+                        borderRadius: "16px",
+                        p: 1.1,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        minHeight: 96,
+                        transition: "all 180ms ease",
+                        boxShadow:
+                          selectedFontPack.id === pack.id
+                            ? "0 10px 24px rgba(15,23,42,0.08)"
+                            : "none",
+                        "&:hover": {
+                          transform: "translateY(-1px)",
+                          borderColor: "rgba(17,24,39,0.3)",
+                        },
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontFamily: pack.headingFont,
+                          fontSize: "1.2rem",
+                          lineHeight: 1,
+                          color: "#111827",
+                        }}
+                      >
+                        Heading
+                      </Typography>
+                      <Typography
+                        sx={{
+                          mt: 0.45,
+                          fontFamily: pack.bodyFont,
+                          color: "#475569",
+                          fontSize: "0.82rem",
+                        }}
+                      >
+                        Paragraph text
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => navigate(fullPreviewUrl)}
+                sx={{
+                  mt: 3,
+                  bgcolor: "#111827",
+                  color: "#fff",
+                  borderRadius: "16px",
+                  textTransform: "none",
+                  py: 1.35,
+                  fontWeight: 800,
+                  boxShadow: "0 16px 32px rgba(15,23,42,0.16)",
+                  "&:hover": {
+                    bgcolor: "#111827",
+                    boxShadow: "0 18px 36px rgba(15,23,42,0.2)",
+                    opacity: 0.94,
+                  },
+                }}
+              >
+                View full preview
+              </Button>
+            </Box>
+          </Box>
+        </Box>
       </>
     );
   }
@@ -1848,7 +2453,7 @@ const LandingPreview: React.FC = () => {
               component="iframe"
               ref={iframeRef}
               title="Mobile template preview"
-              src={`/landing-preview/${slug}${pageId ? `/${pageId}` : ""}?embed=1`}
+              src={iframePreviewUrl}
               loading="eager"
               onLoad={() => {
                 window.setTimeout(() => {

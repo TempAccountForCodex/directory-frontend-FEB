@@ -129,6 +129,12 @@ export interface BusinessData {
   heroBannerUrl?: string;
   primaryColor: string;
   secondaryColor?: string;
+  themeSettings?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    headingFont?: string;
+    bodyFont?: string;
+  };
 
   // Service business
   services?: Service[];
