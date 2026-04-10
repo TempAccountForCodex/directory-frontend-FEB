@@ -10,11 +10,11 @@
  * - Auto-dismisses after 30 seconds (calls onDiscard)
  * - Progress bar present
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
-import RecoveryModal from "../RecoveryModal";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import RecoveryModal from '../RecoveryModal';
 
-describe("RecoveryModal", () => {
+describe('RecoveryModal', () => {
   const defaultProps = {
     open: true,
     timestamp: Date.now() - 5 * 60 * 1000, // 5 minutes ago
@@ -31,19 +31,17 @@ describe("RecoveryModal", () => {
     vi.useRealTimers();
   });
 
-  it("renders dialog when open=true", () => {
+  it('renders dialog when open=true', () => {
     render(<RecoveryModal {...defaultProps} />);
-    expect(screen.getByText("Unsaved Changes Detected")).toBeInTheDocument();
+    expect(screen.getByText('Unsaved Changes Detected')).toBeInTheDocument();
   });
 
-  it("does not render dialog content when open=false", () => {
+  it('does not render dialog content when open=false', () => {
     render(<RecoveryModal {...defaultProps} open={false} />);
-    expect(
-      screen.queryByText("Unsaved Changes Detected"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Unsaved Changes Detected')).not.toBeInTheDocument();
   });
 
-  it("shows time-ago message", () => {
+  it('shows time-ago message', () => {
     render(<RecoveryModal {...defaultProps} />);
     expect(screen.getByText(/5 minutes ago/)).toBeInTheDocument();
   });
@@ -53,19 +51,19 @@ describe("RecoveryModal", () => {
     expect(screen.getByText(/just now/)).toBeInTheDocument();
   });
 
-  it("calls onRestore when Restore button clicked", () => {
+  it('calls onRestore when Restore button clicked', () => {
     render(<RecoveryModal {...defaultProps} />);
-    fireEvent.click(screen.getByTestId("recovery-restore"));
+    fireEvent.click(screen.getByTestId('recovery-restore'));
     expect(defaultProps.onRestore).toHaveBeenCalledTimes(1);
   });
 
-  it("calls onDiscard when Discard button clicked", () => {
+  it('calls onDiscard when Discard button clicked', () => {
     render(<RecoveryModal {...defaultProps} />);
-    fireEvent.click(screen.getByTestId("recovery-discard"));
+    fireEvent.click(screen.getByTestId('recovery-discard'));
     expect(defaultProps.onDiscard).toHaveBeenCalledTimes(1);
   });
 
-  it("auto-dismisses after 30 seconds by calling onDiscard", () => {
+  it('auto-dismisses after 30 seconds by calling onDiscard', () => {
     render(<RecoveryModal {...defaultProps} />);
 
     expect(defaultProps.onDiscard).not.toHaveBeenCalled();
@@ -77,10 +75,10 @@ describe("RecoveryModal", () => {
     expect(defaultProps.onDiscard).toHaveBeenCalledTimes(1);
   });
 
-  it("does NOT auto-dismiss if Restore was clicked before timeout", () => {
+  it('does NOT auto-dismiss if Restore was clicked before timeout', () => {
     render(<RecoveryModal {...defaultProps} />);
 
-    fireEvent.click(screen.getByTestId("recovery-restore"));
+    fireEvent.click(screen.getByTestId('recovery-restore'));
     expect(defaultProps.onRestore).toHaveBeenCalledTimes(1);
 
     act(() => {
@@ -91,12 +89,12 @@ describe("RecoveryModal", () => {
     expect(defaultProps.onDiscard).not.toHaveBeenCalled();
   });
 
-  it("renders progress bar", () => {
+  it('renders progress bar', () => {
     render(<RecoveryModal {...defaultProps} />);
-    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
-  it("shows auto-dismiss warning text", () => {
+  it('shows auto-dismiss warning text', () => {
     render(<RecoveryModal {...defaultProps} />);
     expect(screen.getByText(/30 seconds/)).toBeInTheDocument();
   });

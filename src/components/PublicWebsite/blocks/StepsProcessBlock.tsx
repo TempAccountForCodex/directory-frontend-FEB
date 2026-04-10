@@ -12,10 +12,10 @@
  * - React.memo for performance
  */
 
-import React from "react";
-import { Box, Container, Typography } from "@mui/material";
-import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
+import React from 'react';
+import { Box, Container, Typography } from '@mui/material';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 import {
   Business as BusinessIcon,
   Build as BuildIcon,
@@ -38,7 +38,7 @@ import {
   MenuBook as CertIcon,
   Web as WebIcon,
   Star as StarIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 // ---- Types ----
 
@@ -52,9 +52,11 @@ interface StepsProcessContent {
   heading?: string;
   description?: string;
   steps?: Step[];
-  layout?: "horizontal" | "vertical" | "alternating";
+  layout?: 'horizontal' | 'vertical' | 'alternating';
   showConnectors?: boolean;
   accentColor?: string;
+  startNumber?: number;
+  numberFormat?: 'padded' | 'plain';
 }
 
 interface Block {
@@ -120,36 +122,32 @@ const getIconComponent = (iconName: string) => {
 // ---- Step Circle component ----
 
 interface StepCircleProps {
-  number: number;
+  display: string;
   accentColor: string;
   icon?: string;
 }
 
-const StepCircle: React.FC<StepCircleProps> = ({
-  number,
-  accentColor,
-  icon,
-}) => {
+const StepCircle: React.FC<StepCircleProps> = ({ display, accentColor, icon }) => {
   const IconComponent = icon ? getIconComponent(icon) : null;
   return (
     <Box
       sx={{
         width: 56,
         height: 56,
-        borderRadius: "50%",
+        borderRadius: '50%',
         bgcolor: accentColor,
-        color: "white",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         flexShrink: 0,
         fontWeight: 700,
-        fontSize: "1.25rem",
+        fontSize: '1.25rem',
         boxShadow: `0 4px 14px ${accentColor}60`,
         zIndex: 1,
       }}
     >
-      {IconComponent ? <IconComponent /> : <span>{number}</span>}
+      {IconComponent ? <IconComponent /> : <span>{display}</span>}
     </Box>
   );
 };
@@ -157,21 +155,21 @@ const StepCircle: React.FC<StepCircleProps> = ({
 // ---- Connector ----
 
 interface ConnectorProps {
-  orientation: "horizontal" | "vertical";
+  orientation: 'horizontal' | 'vertical';
   accentColor: string;
 }
 
 const Connector: React.FC<ConnectorProps> = ({ orientation, accentColor }) => {
-  if (orientation === "horizontal") {
+  if (orientation === 'horizontal') {
     return (
       <Box
         sx={{
           flex: 1,
           height: 2,
           bgcolor: `${accentColor}40`,
-          alignSelf: "center",
+          alignSelf: 'center',
           mx: 1,
-          display: { xs: "none", md: "block" },
+          display: { xs: 'none', md: 'block' },
         }}
       />
     );
@@ -182,7 +180,7 @@ const Connector: React.FC<ConnectorProps> = ({ orientation, accentColor }) => {
         width: 2,
         height: 40,
         bgcolor: `${accentColor}40`,
-        ml: "27px", // center with 56px circle
+        ml: '27px', // center with 56px circle
         my: 0,
       }}
     />
@@ -194,11 +192,12 @@ const Connector: React.FC<ConnectorProps> = ({ orientation, accentColor }) => {
 interface StepCardProps {
   step: Step;
   index: number;
+  display: string;
   accentColor: string;
   headingColor: string;
   bodyColor: string;
   inView: boolean;
-  layout: "horizontal" | "vertical" | "alternating";
+  layout: 'horizontal' | 'vertical' | 'alternating';
   isLast: boolean;
   showConnectors: boolean;
 }
@@ -206,6 +205,7 @@ interface StepCardProps {
 const StepCard: React.FC<StepCardProps> = ({
   step,
   index,
+  display,
   accentColor,
   headingColor,
   bodyColor,
@@ -214,34 +214,30 @@ const StepCard: React.FC<StepCardProps> = ({
   isLast,
   showConnectors,
 }) => {
-  const isAlternatingRight = layout === "alternating" && index % 2 === 1;
+  const isAlternatingRight = layout === 'alternating' && index % 2 === 1;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-      transition={{ duration: 0.5, delay: index * 0.15, ease: "easeOut" }}
-      style={{ display: "contents" }}
+      transition={{ duration: 0.5, delay: index * 0.15, ease: 'easeOut' }}
+      style={{ display: 'contents' }}
     >
-      {layout === "horizontal" ? (
+      {layout === 'horizontal' ? (
         // Horizontal layout: stacks to column on mobile
         <Box
           component="li"
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
             flex: 1,
-            minWidth: { xs: "100%", md: 0 },
-            listStyle: "none",
+            minWidth: { xs: '100%', md: 0 },
+            listStyle: 'none',
           }}
         >
-          <StepCircle
-            number={index + 1}
-            accentColor={accentColor}
-            icon={step.icon}
-          />
+          <StepCircle display={display} accentColor={accentColor} icon={step.icon} />
           <Typography
             variant="h6"
             component="h3"
@@ -249,28 +245,15 @@ const StepCard: React.FC<StepCardProps> = ({
           >
             {step.title}
           </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: bodyColor, lineHeight: 1.7 }}
-          >
+          <Typography variant="body2" sx={{ color: bodyColor, lineHeight: 1.7 }}>
             {step.description}
           </Typography>
         </Box>
-      ) : layout === "vertical" ? (
+      ) : layout === 'vertical' ? (
         // Vertical layout: timeline style
-        <Box component="li" sx={{ display: "flex", gap: 2, listStyle: "none" }}>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <StepCircle
-              number={index + 1}
-              accentColor={accentColor}
-              icon={step.icon}
-            />
+        <Box component="li" sx={{ display: 'flex', gap: 2, listStyle: 'none' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <StepCircle display={display} accentColor={accentColor} icon={step.icon} />
             {!isLast && showConnectors && (
               <Connector orientation="vertical" accentColor={accentColor} />
             )}
@@ -283,10 +266,7 @@ const StepCard: React.FC<StepCardProps> = ({
             >
               {step.title}
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: bodyColor, lineHeight: 1.7 }}
-            >
+            <Typography variant="body2" sx={{ color: bodyColor, lineHeight: 1.7 }}>
               {step.description}
             </Typography>
           </Box>
@@ -296,32 +276,19 @@ const StepCard: React.FC<StepCardProps> = ({
         <Box
           component="li"
           sx={{
-            display: "flex",
-            flexDirection: {
-              xs: "column",
-              md: isAlternatingRight ? "row-reverse" : "row",
-            },
-            alignItems: { xs: "flex-start", md: "center" },
+            display: 'flex',
+            flexDirection: { xs: 'column', md: isAlternatingRight ? 'row-reverse' : 'row' },
+            alignItems: { xs: 'flex-start', md: 'center' },
             gap: 3,
-            listStyle: "none",
+            listStyle: 'none',
             mb: 4,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <StepCircle
-              number={index + 1}
-              accentColor={accentColor}
-              icon={step.icon}
-            />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <StepCircle display={display} accentColor={accentColor} icon={step.icon} />
           </Box>
           <Box
-            sx={{
-              flex: 1,
-              textAlign: {
-                xs: "left",
-                md: isAlternatingRight ? "right" : "left",
-              },
-            }}
+            sx={{ flex: 1, textAlign: { xs: 'left', md: isAlternatingRight ? 'right' : 'left' } }}
           >
             <Typography
               variant="h6"
@@ -330,10 +297,7 @@ const StepCard: React.FC<StepCardProps> = ({
             >
               {step.title}
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: bodyColor, lineHeight: 1.7 }}
-            >
+            <Typography variant="body2" sx={{ color: bodyColor, lineHeight: 1.7 }}>
               {step.description}
             </Typography>
           </Box>
@@ -347,25 +311,27 @@ const StepCard: React.FC<StepCardProps> = ({
 
 const StepsProcessBlock: React.FC<StepsProcessBlockProps> = ({
   block,
-  primaryColor = "#2563eb",
-  headingColor = "#1e293b",
-  bodyColor = "#475569",
+  primaryColor = '#2563eb',
+  headingColor = '#1e293b',
+  bodyColor = '#475569',
 }) => {
   const { content } = block;
   const steps = content.steps || [];
-  const layout = content.layout || "horizontal";
+  const layout = content.layout || 'horizontal';
   const showConnectors = content.showConnectors !== false;
   const accentColor = content.accentColor || primaryColor;
+  const startNumber = content.startNumber ?? 1;
+  const numberFormat = content.numberFormat ?? 'padded';
 
-  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1, rootMargin: '-60px 0px' });
 
   // Layout for horizontal: flex-row on desktop, column on mobile
   const listSx =
-    layout === "horizontal"
+    layout === 'horizontal'
       ? {
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          alignItems: { xs: "flex-start", md: "flex-start" },
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'flex-start', md: 'flex-start' },
           gap: 0,
           p: 0,
           m: 0,
@@ -377,7 +343,7 @@ const StepsProcessBlock: React.FC<StepsProcessBlockProps> = ({
       ref={ref}
       initial={{ opacity: 0, y: 30 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <Box sx={{ py: 8 }}>
         <Container maxWidth="lg">
@@ -407,12 +373,16 @@ const StepsProcessBlock: React.FC<StepsProcessBlockProps> = ({
           <Box component="ol" sx={listSx}>
             {steps.map((step, index) => {
               const isLast = index === steps.length - 1;
+              const num = startNumber + index;
+              const display =
+                numberFormat === 'plain' ? num.toString() : num.toString().padStart(2, '0');
 
               return (
                 <React.Fragment key={index}>
                   <StepCard
                     step={step}
                     index={index}
+                    display={display}
                     accentColor={accentColor}
                     headingColor={headingColor}
                     bodyColor={bodyColor}
@@ -422,11 +392,8 @@ const StepsProcessBlock: React.FC<StepsProcessBlockProps> = ({
                     showConnectors={showConnectors}
                   />
                   {/* Connector between steps (horizontal layout only) */}
-                  {layout === "horizontal" && !isLast && showConnectors && (
-                    <Connector
-                      orientation="horizontal"
-                      accentColor={accentColor}
-                    />
+                  {layout === 'horizontal' && !isLast && showConnectors && (
+                    <Connector orientation="horizontal" accentColor={accentColor} />
                   )}
                 </React.Fragment>
               );

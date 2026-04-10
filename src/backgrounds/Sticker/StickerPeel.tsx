@@ -1,7 +1,7 @@
 // @ts-nocheck
-import { useMemo } from "react";
-import { motion } from "framer-motion";
-import "./StickerPeel.css";
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import './StickerPeel.css';
 
 const StickerPeel = ({
   imageSrc,
@@ -12,20 +12,20 @@ const StickerPeel = ({
   shadowIntensity = 0.6,
   lightingIntensity = 0.1,
   peelDirection = 0,
-  className = "",
+  className = '',
 }) => {
   const defaultPadding = 10;
 
   const cssVars = useMemo(
     () => ({
-      "--sticker-rotate": `${rotate}deg`,
-      "--sticker-p": `${defaultPadding}px`,
-      "--sticker-peelback-hover": `${peelBackHoverPct}%`,
-      "--sticker-peelback-active": `${peelBackActivePct}%`,
-      "--sticker-width": `${width}px`,
-      "--sticker-shadow-opacity": shadowIntensity,
-      "--sticker-lighting-constant": lightingIntensity,
-      "--peel-direction": `${peelDirection}deg`,
+      '--sticker-rotate': `${rotate}deg`,
+      '--sticker-p': `${defaultPadding}px`,
+      '--sticker-peelback-hover': `${peelBackHoverPct}%`,
+      '--sticker-peelback-active': `${peelBackActivePct}%`,
+      '--sticker-width': `${width}px`,
+      '--sticker-shadow-opacity': shadowIntensity,
+      '--sticker-lighting-constant': lightingIntensity,
+      '--peel-direction': `${peelDirection}deg`,
     }),
     [
       rotate,
@@ -35,7 +35,7 @@ const StickerPeel = ({
       shadowIntensity,
       lightingIntensity,
       peelDirection,
-    ],
+    ]
   );
 
   return (

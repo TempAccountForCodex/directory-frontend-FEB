@@ -11,11 +11,11 @@
  * This avoids a circular-import temporal dead-zone that would arise if
  * registry.ts tried to import the field files (registry → field → registry).
  */
-import React from "react";
-import { Alert } from "@mui/material";
-import { FieldType } from "./types";
-import type { FieldRendererProps } from "./types";
-import { TokenPicker } from "./fields/TokenPicker";
+import React from 'react';
+import { Alert } from '@mui/material';
+import { FieldType } from './types';
+import type { FieldRendererProps } from './types';
+import { TokenPicker } from './fields/TokenPicker';
 
 // ---------------------------------------------------------------------------
 // Fallback — shown when no component is registered for a field type
@@ -29,11 +29,11 @@ import { TokenPicker } from "./fields/TokenPicker";
 export const FallbackField: React.FC<FieldRendererProps> = ({ field }) =>
   React.createElement(
     Alert,
-    { severity: "warning", sx: { mt: 1 } },
-    `Unsupported field type: ${field.type}`,
+    { severity: 'warning', sx: { mt: 1 } },
+    `Unsupported field type: ${field.type}`
   );
 
-FallbackField.displayName = "FallbackField";
+FallbackField.displayName = 'FallbackField';
 
 // ---------------------------------------------------------------------------
 // Registry map — FieldType → React component
@@ -61,12 +61,12 @@ const TokenPickerAdapter: React.FC<FieldRendererProps> = ({
   disabled,
   errors,
 }) => {
-  const tokenType = (field.ui?.props?.["tokenType"] as string) ?? "color";
+  const tokenType = (field.ui?.props?.['tokenType'] as string) ?? 'color';
   const defaultValue = field.defaultValue as string | undefined;
 
   return React.createElement(TokenPicker, {
-    tokenType: tokenType as Parameters<typeof TokenPicker>[0]["tokenType"],
-    value: (value as string) ?? "",
+    tokenType: tokenType as Parameters<typeof TokenPicker>[0]['tokenType'],
+    value: (value as string) ?? '',
     onChange: onChange as (v: string) => void,
     defaultValue,
     label: field.label,
@@ -76,7 +76,7 @@ const TokenPickerAdapter: React.FC<FieldRendererProps> = ({
   });
 };
 
-TokenPickerAdapter.displayName = "TokenPickerAdapter";
+TokenPickerAdapter.displayName = 'TokenPickerAdapter';
 
 // ---------------------------------------------------------------------------
 // Bootstrap default registrations
@@ -104,13 +104,10 @@ FIELD_COMPONENTS.set(FieldType.TOKEN, TokenPickerAdapter);
  * @param component - The React component to use when rendering this type
  * @throws {Error} If component is null or undefined (prevents silent render crashes)
  */
-export function registerFieldComponent(
-  type: FieldType,
-  component: FieldComponent,
-): void {
+export function registerFieldComponent(type: FieldType, component: FieldComponent): void {
   if (!component) {
     throw new Error(
-      `registerFieldComponent: component for type "${type}" must not be null or undefined`,
+      `registerFieldComponent: component for type "${type}" must not be null or undefined`
     );
   }
   FIELD_COMPONENTS.set(type, component);

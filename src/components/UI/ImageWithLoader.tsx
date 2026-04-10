@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Box, Skeleton } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import React, { useState, useEffect } from 'react';
+import { Box, Skeleton } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 
 interface ImageWithLoaderProps {
   src: string;
@@ -8,9 +8,9 @@ interface ImageWithLoaderProps {
   width?: string | number;
   height?: string | number;
   aspectRatio?: string;
-  objectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
   borderRadius?: string | number;
-  placeholder?: "wave" | "pulse" | "none";
+  placeholder?: 'wave' | 'pulse' | 'none';
   fallbackSrc?: string;
   onLoad?: () => void;
   onError?: () => void;
@@ -21,12 +21,12 @@ interface ImageWithLoaderProps {
 export const ImageWithLoader: React.FC<ImageWithLoaderProps> = ({
   src,
   alt,
-  width = "100%",
-  height = "auto",
+  width = '100%',
+  height = 'auto',
   aspectRatio,
-  objectFit = "cover",
+  objectFit = 'cover',
   borderRadius = 0,
-  placeholder = "wave",
+  placeholder = 'wave',
   fallbackSrc,
   onLoad,
   onError,
@@ -61,18 +61,18 @@ export const ImageWithLoader: React.FC<ImageWithLoaderProps> = ({
     onError?.();
   };
 
-  const skeletonVariant = placeholder === "none" ? undefined : placeholder;
+  const skeletonVariant = placeholder === 'none' ? undefined : placeholder;
 
   return (
     <Box
       sx={{
-        position: "relative",
+        position: 'relative',
         width,
-        height: aspectRatio ? "auto" : height,
+        height: aspectRatio ? 'auto' : height,
         aspectRatio,
         borderRadius,
-        overflow: "hidden",
-        bgcolor: alpha("#000", 0.05),
+        overflow: 'hidden',
+        bgcolor: alpha('#000', 0.05),
       }}
       className={className}
       style={style}
@@ -82,11 +82,11 @@ export const ImageWithLoader: React.FC<ImageWithLoaderProps> = ({
           variant="rectangular"
           animation={skeletonVariant}
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: 0,
             left: 0,
-            width: "100%",
-            height: "100%",
+            width: '100%',
+            height: '100%',
             borderRadius,
           }}
         />
@@ -99,10 +99,10 @@ export const ImageWithLoader: React.FC<ImageWithLoaderProps> = ({
           onLoad={handleLoad}
           onError={handleError}
           style={{
-            width: "100%",
-            height: "100%",
+            width: '100%',
+            height: '100%',
             objectFit,
-            display: loading ? "none" : "block",
+            display: loading ? 'none' : 'block',
             borderRadius,
           }}
         />
@@ -111,15 +111,15 @@ export const ImageWithLoader: React.FC<ImageWithLoaderProps> = ({
       {error && !fallbackSrc && (
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-            height: "100%",
-            bgcolor: alpha("#000", 0.05),
-            color: alpha("#000", 0.3),
-            fontSize: "0.875rem",
-            textAlign: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+            bgcolor: alpha('#000', 0.05),
+            color: alpha('#000', 0.3),
+            fontSize: '0.875rem',
+            textAlign: 'center',
             p: 2,
           }}
         >

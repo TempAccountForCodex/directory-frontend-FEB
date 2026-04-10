@@ -1,6 +1,6 @@
-import React from "react";
-import type { BlockRendererProps } from "../types";
-import { escapeHtml, escapeAttr } from "../utils";
+import React from 'react';
+import type { BlockRendererProps } from '../types';
+import { escapeHtml, escapeAttr } from '../utils';
 
 interface FormContent {
   title?: string;
@@ -12,20 +12,14 @@ interface FormContent {
 
 const FormBlock: React.FC<BlockRendererProps> = ({ block }) => {
   const c = (block.content || {}) as FormContent;
-  const title = c.title || "Contact Us";
-  const submitText = c.submitText || "Send Message";
+  const title = c.title || 'Contact Us';
+  const submitText = c.submitText || 'Send Message';
   const hasContactInfo = c.email || c.phone;
 
   return (
-    <section
-      className="block block--form block--contact"
-      data-block-type="FORM"
-    >
+    <section className="block block--form block--contact" data-block-type="FORM">
       <div className="form__inner">
-        <h2
-          className="form__title"
-          dangerouslySetInnerHTML={{ __html: escapeHtml(title) }}
-        />
+        <h2 className="form__title" dangerouslySetInnerHTML={{ __html: escapeHtml(title) }} />
         {c.description && (
           <p
             className="form__description"
@@ -35,21 +29,13 @@ const FormBlock: React.FC<BlockRendererProps> = ({ block }) => {
         {hasContactInfo && (
           <div className="form__contact-info">
             {c.email && (
-              <a
-                className="form__contact-link"
-                href={`mailto:${escapeAttr(c.email)}`}
-              >
+              <a className="form__contact-link" href={`mailto:${escapeAttr(c.email)}`}>
                 {escapeHtml(c.email)}
               </a>
             )}
-            {c.email && c.phone && (
-              <span className="form__contact-sep"> &middot; </span>
-            )}
+            {c.email && c.phone && <span className="form__contact-sep"> &middot; </span>}
             {c.phone && (
-              <a
-                className="form__contact-link"
-                href={`tel:${escapeAttr(c.phone)}`}
-              >
+              <a className="form__contact-link" href={`tel:${escapeAttr(c.phone)}`}>
                 {escapeHtml(c.phone)}
               </a>
             )}
@@ -58,30 +44,15 @@ const FormBlock: React.FC<BlockRendererProps> = ({ block }) => {
         <form className="form__fields" aria-label={title}>
           <div className="form__field">
             <label className="form__label">Name</label>
-            <input
-              className="form__input"
-              type="text"
-              placeholder="Your name"
-              disabled
-            />
+            <input className="form__input" type="text" placeholder="Your name" disabled />
           </div>
           <div className="form__field">
             <label className="form__label">Email</label>
-            <input
-              className="form__input"
-              type="email"
-              placeholder="your@email.com"
-              disabled
-            />
+            <input className="form__input" type="email" placeholder="your@email.com" disabled />
           </div>
           <div className="form__field">
             <label className="form__label">Message</label>
-            <textarea
-              className="form__textarea"
-              rows={4}
-              placeholder="Your message..."
-              disabled
-            />
+            <textarea className="form__textarea" rows={4} placeholder="Your message..." disabled />
           </div>
           <button className="form__submit" type="button" disabled>
             {escapeHtml(submitText)}

@@ -13,19 +13,14 @@
  * SECURITY: canEdit is UI-only — backend enforces real EDIT_CONTENT checks
  */
 
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { useWebSocket } from "./useWebSocket";
-import { usePreview } from "../context/PreviewContext";
-import type { WebSocketMessage, RoomStateMember } from "../types/websocket";
-import {
-  isContentUpdate,
-  isCursorMove,
-  isLockMessage,
-  isRoomState,
-} from "../types/websocket";
-import type { CursorPosition, LockInfo } from "./usePreviewSync";
-import { getUserColor } from "./usePreviewSync";
-import type { PresenceUser } from "../components/Editor/PresenceIndicator";
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useWebSocket } from './useWebSocket';
+import { usePreview } from '../context/PreviewContext';
+import type { WebSocketMessage, RoomStateMember } from '../types/websocket';
+import { isContentUpdate, isCursorMove, isLockMessage, isRoomState } from '../types/websocket';
+import type { CursorPosition, LockInfo } from './usePreviewSync';
+import { getUserColor } from './usePreviewSync';
+import type { PresenceUser } from '../components/Editor/PresenceIndicator';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -43,12 +38,12 @@ export interface UseCollaborativeEditorOptions {
   pageId: string;
   websiteId: number;
   currentUserId: number;
-  currentUserRole: "OWNER" | "ADMIN" | "EDITOR" | "VIEWER";
+  currentUserRole: 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
 }
 
 export interface UseCollaborativeEditorReturn {
   isConnected: boolean;
-  connectionState: import("../types/websocket").WebSocketConnectionState;
+  connectionState: import('../types/websocket').WebSocketConnectionState;
   activeUsers: PresenceUser[];
   cursorPositions: Map<number, CursorPosition>;
   locks: Map<number, LockInfo>;
@@ -63,7 +58,7 @@ export interface UseCollaborativeEditorReturn {
 // ---------------------------------------------------------------------------
 
 function canEditContent(role: string): boolean {
-  return role === "OWNER" || role === "ADMIN" || role === "EDITOR";
+  return role === 'OWNER' || role === 'ADMIN' || role === 'EDITOR';
 }
 
 // ---------------------------------------------------------------------------
@@ -71,25 +66,23 @@ function canEditContent(role: string): boolean {
 // ---------------------------------------------------------------------------
 
 export function useCollaborativeEditor(
-  options: UseCollaborativeEditorOptions,
+  options: UseCollaborativeEditorOptions
 ): UseCollaborativeEditorReturn {
   const { pageId, websiteId, currentUserId, currentUserRole } = options;
   const roomId = `page:${pageId}`;
 
   // ---- State ----------------------------------------------------------------
   const [activeUsers, setActiveUsers] = useState<PresenceUser[]>([]);
-  const [cursorPositions, setCursorPositions] = useState<
-    Map<number, CursorPosition>
-  >(() => new Map());
+  const [cursorPositions, setCursorPositions] = useState<Map<number, CursorPosition>>(
+    () => new Map()
+  );
   const [locks, setLocks] = useState<Map<number, LockInfo>>(() => new Map());
 
   // ---- Refs -----------------------------------------------------------------
   const mountedRef = useRef(true);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cursorThrottleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const cursorThrottleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUpdateRef = useRef<WebSocketMessage | null>(null);
   const sentTimestampsRef = useRef<Set<string>>(new Set());
   const lastBroadcastRef = useRef<number>(0);
@@ -103,10 +96,7 @@ export function useCollaborativeEditor(
   pageContentRef.current = currentPageContent;
 
   // ---- Permission -------------------------------------------------------
-  const canEdit = useMemo(
-    () => canEditContent(currentUserRole),
-    [currentUserRole],
-  );
+  const canEdit = useMemo(() => canEditContent(currentUserRole), [currentUserRole]);
 
   // ---- Message handler ------------------------------------------------------
   const onMessage = useCallback(
@@ -117,14 +107,11 @@ export function useCollaborativeEditor(
       if (isContentUpdate(msg)) {
         if (msg.userId === currentUserId) return;
         // Client-side dedup: read from data.timestamp (server overwrites top-level timestamp)
-        const msgDataTs = (msg.data as Record<string, unknown>)?.timestamp as
-          | string
-          | undefined;
+        const msgDataTs = (msg.data as Record<string, unknown>)?.timestamp as string | undefined;
         if (msgDataTs && sentTimestampsRef.current.has(msgDataTs)) return;
 
         pendingUpdateRef.current = msg;
-        if (debounceTimerRef.current !== null)
-          clearTimeout(debounceTimerRef.current);
+        if (debounceTimerRef.current !== null) clearTimeout(debounceTimerRef.current);
 
         debounceTimerRef.current = setTimeout(() => {
           if (!mountedRef.current) return;
@@ -137,7 +124,7 @@ export function useCollaborativeEditor(
           const { blockId, fieldPath, value } = pending.data;
           const updatedBlocks = content.blocks.map((block) => {
             if (String(block.id) === String(blockId)) {
-              const parts = fieldPath.split(".");
+              const parts = fieldPath.split('.');
               const updatedContent = { ...block.content };
               let target: Record<string, unknown> = updatedContent;
               for (let i = 0; i < parts.length - 1; i++) {
@@ -193,7 +180,7 @@ export function useCollaborativeEditor(
       if (isLockMessage(msg)) {
         const blockId = msg.data.blockId;
 
-        if (msg.type === "LOCK_ACQUIRE" || msg.type === "LOCK_ACQUIRED") {
+        if (msg.type === 'LOCK_ACQUIRE' || msg.type === 'LOCK_ACQUIRED') {
           const userId = msg.userId!;
           setLocks((prev) => {
             const newMap = new Map(prev);
@@ -226,7 +213,7 @@ export function useCollaborativeEditor(
           userId: m.userId,
           userName: m.username || `User ${m.userId}`,
           userAvatar: m.avatar || null,
-          role: m.role || "VIEWER",
+          role: m.role || 'VIEWER',
           color: m.color || getUserColor(m.userId),
         }));
         setActiveUsers(presenceUsers);
@@ -234,25 +221,22 @@ export function useCollaborativeEditor(
       }
 
       // ---- USER_JOINED (includes role + color) --------------------------------
-      if (msg.type === "USER_JOINED" && msg.userId) {
+      if (msg.type === 'USER_JOINED' && msg.userId) {
         const data = msg.data as Record<string, unknown> | undefined;
         const userName = (data?.username as string) || `User ${msg.userId}`;
         const userAvatar = (data?.avatar as string) || null;
-        const role = (data?.role as string) || "VIEWER";
+        const role = (data?.role as string) || 'VIEWER';
         const color = (data?.color as string) || getUserColor(msg.userId);
 
         setActiveUsers((prev) => {
           if (prev.some((u) => u.userId === msg.userId)) return prev;
-          return [
-            ...prev,
-            { userId: msg.userId!, userName, userAvatar, role, color },
-          ];
+          return [...prev, { userId: msg.userId!, userName, userAvatar, role, color }];
         });
         return;
       }
 
       // ---- USER_LEFT --------------------------------------------------------
-      if (msg.type === "USER_LEFT" && msg.userId) {
+      if (msg.type === 'USER_LEFT' && msg.userId) {
         setActiveUsers((prev) => prev.filter((u) => u.userId !== msg.userId));
         setCursorPositions((prev) => {
           if (!prev.has(msg.userId!)) return prev;
@@ -275,15 +259,12 @@ export function useCollaborativeEditor(
         return;
       }
     },
-    [currentUserId, updatePreviewContent],
+    [currentUserId, updatePreviewContent]
   );
 
   // ---- WebSocket connection -------------------------------------------------
-  const { connectionState, send, joinRoom, leaveRoom } = useWebSocket({
-    onMessage,
-    websiteId,
-  });
-  const isConnected = connectionState === "connected";
+  const { connectionState, send, joinRoom, leaveRoom } = useWebSocket({ onMessage, websiteId });
+  const isConnected = connectionState === 'connected';
 
   // ---- Room lifecycle -------------------------------------------------------
   useEffect(() => {
@@ -297,7 +278,7 @@ export function useCollaborativeEditor(
   // ---- Broadcast change (throttled) -----------------------------------------
   const broadcastChange = useCallback(
     (blockId: number, fieldPath: string, value: unknown) => {
-      if (connectionState !== "connected") return;
+      if (connectionState !== 'connected') return;
 
       const now = Date.now();
       const elapsed = now - lastBroadcastRef.current;
@@ -310,7 +291,7 @@ export function useCollaborativeEditor(
           sentTimestampsRef.current.delete(iter.next().value as string);
         }
         send({
-          type: "CONTENT_UPDATE",
+          type: 'CONTENT_UPDATE',
           roomId: roomIdRef.current,
           data: { blockId, fieldPath, value, timestamp: ts },
         });
@@ -320,61 +301,51 @@ export function useCollaborativeEditor(
       if (elapsed >= THROTTLE_MS) {
         doSend();
       } else {
-        if (throttleTimerRef.current !== null)
-          clearTimeout(throttleTimerRef.current);
+        if (throttleTimerRef.current !== null) clearTimeout(throttleTimerRef.current);
         throttleTimerRef.current = setTimeout(() => {
           if (mountedRef.current) doSend();
           throttleTimerRef.current = null;
         }, THROTTLE_MS - elapsed);
       }
     },
-    [connectionState, send],
+    [connectionState, send]
   );
 
   // ---- Broadcast cursor (throttled) -----------------------------------------
   const broadcastCursor = useCallback(
     (blockId: number, x: number, y: number) => {
-      if (connectionState !== "connected") return;
+      if (connectionState !== 'connected') return;
 
       const now = Date.now();
       const elapsed = now - lastCursorBroadcastRef.current;
 
       const doSend = () => {
-        send({
-          type: "CURSOR_MOVE",
-          roomId: roomIdRef.current,
-          data: { blockId, x, y },
-        });
+        send({ type: 'CURSOR_MOVE', roomId: roomIdRef.current, data: { blockId, x, y } });
         lastCursorBroadcastRef.current = Date.now();
       };
 
       if (elapsed >= THROTTLE_MS) {
         doSend();
       } else {
-        if (cursorThrottleTimerRef.current !== null)
-          clearTimeout(cursorThrottleTimerRef.current);
+        if (cursorThrottleTimerRef.current !== null) clearTimeout(cursorThrottleTimerRef.current);
         cursorThrottleTimerRef.current = setTimeout(() => {
           if (mountedRef.current) doSend();
           cursorThrottleTimerRef.current = null;
         }, THROTTLE_MS - elapsed);
       }
     },
-    [connectionState, send],
+    [connectionState, send]
   );
 
   // ---- Request edit access (VIEWER → sends notification to OWNER) ----------
   const requestEditAccess = useCallback(async () => {
     try {
-      const apiUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:5001/api";
-      await fetch(
-        `${apiUrl}/websites/${websiteId}/collaborators/request-edit`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      await fetch(`${apiUrl}/websites/${websiteId}/collaborators/request-edit`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
     } catch {
       // Non-critical — best effort
     }
@@ -385,12 +356,9 @@ export function useCollaborativeEditor(
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      if (debounceTimerRef.current !== null)
-        clearTimeout(debounceTimerRef.current);
-      if (throttleTimerRef.current !== null)
-        clearTimeout(throttleTimerRef.current);
-      if (cursorThrottleTimerRef.current !== null)
-        clearTimeout(cursorThrottleTimerRef.current);
+      if (debounceTimerRef.current !== null) clearTimeout(debounceTimerRef.current);
+      if (throttleTimerRef.current !== null) clearTimeout(throttleTimerRef.current);
+      if (cursorThrottleTimerRef.current !== null) clearTimeout(cursorThrottleTimerRef.current);
     };
   }, []);
 
@@ -417,7 +385,7 @@ export function useCollaborativeEditor(
       broadcastChange,
       broadcastCursor,
       requestEditAccess,
-    ],
+    ]
   );
 }
 

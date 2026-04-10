@@ -1,14 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
-import PropTypes from "prop-types";
-import { Box, Container, Typography, Link } from "@mui/material";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useReducedMotion,
-} from "framer-motion";
+import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
+import { Box, Container, Typography, Link } from '@mui/material';
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 
-const ACCENT = "#388d91";
+const ACCENT = '#388d91';
 
 const MotionBox = motion.create(Box);
 const MotionContainer = motion.create(Container);
@@ -33,22 +28,14 @@ const HeroImageSection = ({
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ["start start", "end start"],
+    offset: ['start start', 'end start'],
   });
 
-  const bgPosY = useTransform(scrollYProgress, [0, 1], ["0%", "28%"]);
+  const bgPosY = useTransform(scrollYProgress, [0, 1], ['0%', '28%']);
   const textOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
   const textY = useTransform(scrollYProgress, [0, 0.6], [0, -46]);
-  const shapeUp = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [0, prefersReduced ? 0 : -40],
-  );
-  const shapeDown = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [0, prefersReduced ? 0 : 32],
-  );
+  const shapeUp = useTransform(scrollYProgress, [0, 1], [0, prefersReduced ? 0 : -40]);
+  const shapeDown = useTransform(scrollYProgress, [0, 1], [0, prefersReduced ? 0 : 32]);
 
   return (
     <MotionBox
@@ -56,32 +43,32 @@ const HeroImageSection = ({
       component="section"
       /* hydration-safe parallax (no visual change) */
       style={{
-        backgroundPositionY: mounted ? bgPosY : "0%",
-        willChange: "background-position",
+        backgroundPositionY: mounted ? bgPosY : '0%',
+        willChange: 'background-position',
       }}
       sx={{
-        position: "relative",
+        position: 'relative',
         /* iOS-safe mobile height, desktop unchanged */
-        minHeight: { xs: "100dvh", md: "64vh" },
-        display: "flex",
-        alignItems: "center",
-        overflow: "hidden",
+        minHeight: { xs: '100dvh', md: '64vh' },
+        display: 'flex',
+        alignItems: 'center',
+        overflow: 'hidden',
         backgroundImage: bg ? `url(${bg})` : undefined,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "bottom",
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'bottom',
         ...(overlay && {
-          "&::before": {
+          '&::before': {
             content: '""',
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
-            pointerEvents: "none",
+            pointerEvents: 'none',
             /**
              * MODIFICATION: Applied a simple blackish overlay (rgba(0,0,0,0.5))
              * across the entire element. This ensures the content (which has a zIndex of 1)
              * is visually on top of the overlay, and the overlay covers the background image.
              */
-            background: "rgba(0, 0, 0, 0.5)", // Blackish overlay
+            background: 'rgba(0, 0, 0, 0.5)', // Blackish overlay
           },
         }),
       }}
@@ -89,34 +76,28 @@ const HeroImageSection = ({
       animate={{
         opacity: 1,
         y: 0,
-        transition: { duration: 0.6, ease: "easeOut" },
+        transition: { duration: 0.6, ease: 'easeOut' },
       }}
     >
       {bg && (
-        <img
-          src={bg}
-          fetchPriority="high"
-          alt=""
-          aria-hidden="true"
-          style={{ display: "none" }}
-        />
+        <img src={bg} fetchPriority="high" alt="" aria-hidden="true" style={{ display: 'none' }} />
       )}
 
       <motion.div
         aria-hidden
         style={{
-          position: "absolute",
-          top: "8%",
-          left: "2%",
+          position: 'absolute',
+          top: '8%',
+          left: '2%',
           width: 240,
           height: 240,
-          borderRadius: "50%",
+          borderRadius: '50%',
           background:
-            "conic-gradient(from 90deg at 50% 50%, rgba(56,141,145,.5), rgba(14,165,165,.35), rgba(56,141,145,.5))",
-          filter: "blur(18px)",
+            'conic-gradient(from 90deg at 50% 50%, rgba(56,141,145,.5), rgba(14,165,165,.35), rgba(56,141,145,.5))',
+          filter: 'blur(18px)',
           opacity: 0.35,
           y: shapeUp,
-          pointerEvents: "none",
+          pointerEvents: 'none',
         }}
       />
 
@@ -124,25 +105,18 @@ const HeroImageSection = ({
         aria-hidden
         viewBox="0 0 200 120"
         style={{
-          position: "absolute",
-          left: "6%",
-          top: "40%",
+          position: 'absolute',
+          left: '6%',
+          top: '40%',
           width: 260,
           height: 140,
           opacity: 1,
           y: shapeDown,
-          pointerEvents: "none",
+          pointerEvents: 'none',
         }}
       >
         <defs>
-          <pattern
-            id="dotGrid"
-            x="0"
-            y="0"
-            width="14"
-            height="14"
-            patternUnits="userSpaceOnUse"
-          >
+          <pattern id="dotGrid" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
             <circle cx="12" cy="10" r="1.3" fill="#fff" />
           </pattern>
         </defs>
@@ -160,12 +134,12 @@ const HeroImageSection = ({
             transition: { delay: 0.35, duration: 0.5 },
           }}
           style={{
-            position: "absolute",
-            right: "6%",
-            top: "18%",
-            display: "grid",
+            position: 'absolute',
+            right: '6%',
+            top: '18%',
+            display: 'grid',
             gap: 12,
-            pointerEvents: "none",
+            pointerEvents: 'none',
           }}
         >
           {stats.map((item, i) => (
@@ -175,25 +149,23 @@ const HeroImageSection = ({
               animate={{ opacity: 0.95, y: 0 }}
               transition={{ delay: 0.45 + i * 0.08, duration: 0.45 }}
               style={{
-                background: "rgba(255,255,255,0.9)",
-                color: "#0f172a",
-                padding: "10px 14px",
+                background: 'rgba(255,255,255,0.9)',
+                color: '#0f172a',
+                padding: '10px 14px',
                 borderRadius: 12,
-                boxShadow: "0 10px 24px rgba(0,0,0,0.18)",
-                border: "1px solid rgba(15,23,42,0.08)",
+                boxShadow: '0 10px 24px rgba(0,0,0,0.18)',
+                border: '1px solid rgba(15,23,42,0.08)',
                 minWidth: 120,
-                textAlign: "center",
-                willChange: "transform, opacity",
+                textAlign: 'center',
+                willChange: 'transform, opacity',
               }}
             >
-              <div style={{ fontWeight: 900, fontSize: 20, lineHeight: 1 }}>
-                {item.k}
-              </div>
+              <div style={{ fontWeight: 900, fontSize: 20, lineHeight: 1 }}>{item.k}</div>
               <div
                 style={{
                   fontWeight: 700,
                   fontSize: 12,
-                  letterSpacing: ".08em",
+                  letterSpacing: '.08em',
                 }}
               >
                 {item.v}
@@ -207,7 +179,7 @@ const HeroImageSection = ({
         maxWidth="lg"
         /* adds small-side padding on xs/sm only; desktop unchanged */
         sx={{
-          position: "relative",
+          position: 'relative',
           zIndex: 1, // Ensures content is always above the overlay (&::before)
           mt: { xs: 2.5, md: 24 },
           px: { xs: 2.5, sm: 4, md: 0 },
@@ -217,9 +189,9 @@ const HeroImageSection = ({
           aria-hidden
           initial={{ width: 0, opacity: 0 }}
           animate={{ width: 72, opacity: 1 }}
-          transition={{ duration: 0.55, ease: "easeOut", delay: 0.12 }}
+          transition={{ duration: 0.55, ease: 'easeOut', delay: 0.12 }}
           style={{
-            display: "block",
+            display: 'block',
             height: 4,
             backgroundColor: ACCENT,
             borderRadius: 4,
@@ -233,76 +205,74 @@ const HeroImageSection = ({
               component="h1"
               sx={{
                 fontWeight: 900,
-                letterSpacing: "-0.4px",
-                color: "#fff",
-                textShadow: "0 2px 20px rgba(0,0,0,0.6)",
+                letterSpacing: '-0.4px',
+                color: '#fff',
+                textShadow: '0 2px 20px rgba(0,0,0,0.6)',
                 fontSize: {
-                  xs: "clamp(34px, 8vw, 52px)",
-                  md: "clamp(46px, 5vw, 68px)",
+                  xs: 'clamp(34px, 8vw, 52px)',
+                  md: 'clamp(46px, 5vw, 68px)',
                 },
                 lineHeight: 1.02,
-                maxWidth: { md: "18ch" },
+                maxWidth: { md: '18ch' },
                 /* safe wrap on tiny screens; no desktop change */
-                wordBreak: "break-word",
-                hyphens: "auto",
+                wordBreak: 'break-word',
+                hyphens: 'auto',
               }}
             >
               {title}
             </Typography>
           ) : (
-            <Box
-              sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline" }}
-            >
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline' }}>
               <Typography
                 component="span"
                 sx={{
                   mr: 1,
                   fontWeight: 900,
-                  letterSpacing: "-0.4px",
-                  color: "#fff",
-                  textShadow: "0 2px 20px rgba(0,0,0,0.6)",
+                  letterSpacing: '-0.4px',
+                  color: '#fff',
+                  textShadow: '0 2px 20px rgba(0,0,0,0.6)',
                   fontSize: {
-                    xs: "clamp(34px, 8vw, 52px)",
-                    md: "clamp(46px, 5vw, 68px)",
+                    xs: 'clamp(34px, 8vw, 52px)',
+                    md: 'clamp(46px, 5vw, 68px)',
                   },
                   lineHeight: 1.02,
-                  wordBreak: "break-word",
-                  hyphens: "auto",
+                  wordBreak: 'break-word',
+                  hyphens: 'auto',
                 }}
               >
                 {titleLeft}
               </Typography>
 
-              <Box sx={{ position: "relative", display: "inline-block" }}>
+              <Box sx={{ position: 'relative', display: 'inline-block' }}>
                 <motion.span
                   aria-hidden
                   initial={{ scaleX: 0, opacity: 0 }}
                   animate={{ scaleX: 1, opacity: 1 }}
-                  transition={{ duration: 0.55, ease: "easeOut", delay: 0.32 }}
+                  transition={{ duration: 0.55, ease: 'easeOut', delay: 0.32 }}
                   style={{
-                    position: "absolute",
-                    inset: "-6px -10px -6px -10px",
+                    position: 'absolute',
+                    inset: '-6px -10px -6px -10px',
                     borderRadius: 12,
-                    transformOrigin: "left center",
+                    transformOrigin: 'left center',
                     background:
-                      "linear-gradient(90deg, rgba(56,141,145,.55), rgba(14,165,165,.45))",
-                    boxShadow: "0 12px 22px rgba(0,0,0,0.12)",
+                      'linear-gradient(90deg, rgba(56,141,145,.55), rgba(14,165,165,.45))',
+                    boxShadow: '0 12px 22px rgba(0,0,0,0.12)',
                   }}
                 />
                 <Typography
                   component="span"
                   sx={{
-                    position: "relative",
+                    position: 'relative',
                     fontWeight: 900,
-                    letterSpacing: "-0.4px",
-                    color: "#0e2a2a",
+                    letterSpacing: '-0.4px',
+                    color: '#0e2a2a',
                     fontSize: {
-                      xs: "clamp(34px, 8vw, 52px)",
-                      md: "clamp(46px, 5vw, 68px)",
+                      xs: 'clamp(34px, 8vw, 52px)',
+                      md: 'clamp(46px, 5vw, 68px)',
                     },
                     lineHeight: 1.02,
-                    wordBreak: "break-word",
-                    hyphens: "auto",
+                    wordBreak: 'break-word',
+                    hyphens: 'auto',
                   }}
                 >
                   {highlight}
@@ -315,10 +285,10 @@ const HeroImageSection = ({
             <Typography
               sx={{
                 mt: 0.75,
-                color: "#e6eef7",
+                color: '#e6eef7',
                 fontSize: { xs: 15, md: 17 },
-                textShadow: "0 1px 12px rgba(0,0,0,0.55)",
-                maxWidth: { md: "58ch" },
+                textShadow: '0 1px 12px rgba(0,0,0,0.55)',
+                maxWidth: { md: '58ch' },
               }}
             >
               {subtitle}
@@ -330,28 +300,28 @@ const HeroImageSection = ({
               href={ctaHref}
               underline="none"
               sx={{
-                display: "inline-flex",
-                alignItems: "center",
+                display: 'inline-flex',
+                alignItems: 'center',
                 gap: 1,
                 mt: 2.2,
-                color: "#ffffff",
+                color: '#ffffff',
                 fontWeight: 800,
-                letterSpacing: ".02em",
-                position: "relative",
-                "&:hover .arr": { transform: "translateX(4px)" },
-                "&:hover::after": { transform: "scaleX(1)" },
-                "&&::after": {
+                letterSpacing: '.02em',
+                position: 'relative',
+                '&:hover .arr': { transform: 'translateX(4px)' },
+                '&:hover::after': { transform: 'scaleX(1)' },
+                '&&::after': {
                   content: '""',
-                  position: "absolute",
+                  position: 'absolute',
                   left: 0,
                   bottom: -4,
                   height: 2,
-                  width: "100%",
+                  width: '100%',
                   background:
-                    "linear-gradient(90deg, rgba(56,141,145,1) 0%, rgba(14,165,165,1) 100%)",
-                  transform: "scaleX(0)",
-                  transformOrigin: "left",
-                  transition: "transform .25s ease",
+                    'linear-gradient(90deg, rgba(56,141,145,1) 0%, rgba(14,165,165,1) 100%)',
+                  transform: 'scaleX(0)',
+                  transformOrigin: 'left',
+                  transition: 'transform .25s ease',
                   borderRadius: 2,
                 },
               }}
@@ -360,8 +330,8 @@ const HeroImageSection = ({
               <span
                 className="arr"
                 style={{
-                  display: "inline-block",
-                  transition: "transform 180ms ease",
+                  display: 'inline-block',
+                  transition: 'transform 180ms ease',
                 }}
               >
                 →
@@ -376,26 +346,26 @@ const HeroImageSection = ({
         aria-hidden
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 0.9, y: [0, 6, 0] }}
-        transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
         style={{
-          position: "absolute",
-          left: "50%",
+          position: 'absolute',
+          left: '50%',
           bottom: 16,
-          transform: "translateX(-50%)",
+          transform: 'translateX(-50%)',
           width: 12,
           height: 18,
           borderRadius: 10,
-          boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.85)",
-          pointerEvents: "none",
+          boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.85)',
+          pointerEvents: 'none',
         }}
       >
         <span
           style={{
-            display: "block",
-            margin: "4px auto 0",
+            display: 'block',
+            margin: '4px auto 0',
             width: 2,
             height: 5,
-            background: "rgba(255,255,255,0.85)",
+            background: 'rgba(255,255,255,0.85)',
             borderRadius: 2,
           }}
         />
@@ -417,7 +387,7 @@ HeroImageSection.propTypes = {
     PropTypes.shape({
       k: PropTypes.string.isRequired,
       v: PropTypes.string.isRequired,
-    }),
+    })
   ),
   overlay: PropTypes.bool,
 };

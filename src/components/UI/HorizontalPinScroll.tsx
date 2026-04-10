@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useMemo, useState } from "react";
-import { Box } from "@mui/material";
+import React, { useRef, useEffect, useMemo, useState } from 'react';
+import { Box } from '@mui/material';
 
 /**
  * Vertical scroll drives horizontal movement across N panels,
@@ -58,9 +58,7 @@ const HorizontalPinScroll: React.FC<HorizontalPinScrollProps> = ({
 
         // Progress within horizontal part [0..1]
         const horizProgress =
-          horizScrollHeight > 0
-            ? Math.min(1, Math.max(0, start / horizScrollHeight))
-            : 1;
+          horizScrollHeight > 0 ? Math.min(1, Math.max(0, start / horizScrollHeight)) : 1;
 
         // Move the track horizontally
         const maxX = Math.max(0, track.scrollWidth - window.innerWidth);
@@ -73,10 +71,7 @@ const HorizontalPinScroll: React.FC<HorizontalPinScrollProps> = ({
           const tailRange = totalScrollable - horizScrollHeight; // = tailScreens * viewH
           let newProgress = 0;
           if (tailRange > 0) {
-            newProgress = Math.min(
-              1,
-              Math.max(0, (start - tailStart) / tailRange),
-            );
+            newProgress = Math.min(1, Math.max(0, (start - tailStart) / tailRange));
           }
           setWorkflowProgress(newProgress);
         } else {
@@ -85,13 +80,13 @@ const HorizontalPinScroll: React.FC<HorizontalPinScrollProps> = ({
       });
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
     onScroll();
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
   }, [count, gap, tailScreens, pinOffset]);
@@ -108,31 +103,31 @@ const HorizontalPinScroll: React.FC<HorizontalPinScrollProps> = ({
     <Box
       ref={wrapperRef}
       sx={{
-        position: "relative",
+        position: 'relative',
         height: wrapperHeight,
-        width: "100vw",
+        width: '100vw',
       }}
     >
       <Box
         sx={{
-          position: "sticky",
-          top: "59px",
+          position: 'sticky',
+          top: '59px',
           left: 0,
           height: `calc(100vh - ${pinOffset}px)`,
-          width: "100vw",
-          overflow: "hidden",
-          willChange: "transform",
+          width: '100vw',
+          overflow: 'hidden',
+          willChange: 'transform',
         }}
       >
         <Box
           ref={trackRef}
           sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "stretch",
-            height: "100%",
-            transform: "translateX(0)",
-            transition: "transform 0s",
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'stretch',
+            height: '100%',
+            transform: 'translateX(0)',
+            transition: 'transform 0s',
             gap,
           }}
         >
@@ -141,12 +136,12 @@ const HorizontalPinScroll: React.FC<HorizontalPinScrollProps> = ({
               key={idx}
               component="section"
               sx={{
-                flex: "0 0 100vw",
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                flex: '0 0 100vw',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               {idx === panels.length - 1

@@ -9,9 +9,9 @@
  * Step 5.4.5
  */
 
-import { useMemo } from "react";
-import type { LockInfo } from "./usePreviewSync";
-import type { WebSocketConnectionState } from "../types/websocket";
+import { useMemo } from 'react';
+import type { LockInfo } from './usePreviewSync';
+import type { WebSocketConnectionState } from '../types/websocket';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,19 +36,17 @@ export function useConflictPrevention(
   blockId: number,
   currentUserId: number,
   locks: Map<number, LockInfo>,
-  connectionState: WebSocketConnectionState = "disconnected",
+  connectionState: WebSocketConnectionState = 'disconnected'
 ): UseConflictPreventionReturn {
   return useMemo(() => {
     const lock = locks.get(blockId);
     const isLockedByOther = lock !== undefined && lock.userId !== currentUserId;
     const collaborationUnavailable =
-      connectionState === "disconnected" || connectionState === "error";
+      connectionState === 'disconnected' || connectionState === 'error';
 
     return {
       isLocked: isLockedByOther,
-      lockedBy: isLockedByOther
-        ? (lock.username ?? `User ${lock.userId}`)
-        : null,
+      lockedBy: isLockedByOther ? (lock.username ?? `User ${lock.userId}`) : null,
       // Allow local editing even when disconnected — only block when another user has the lock
       canEdit: !isLockedByOther,
       collaborationUnavailable,

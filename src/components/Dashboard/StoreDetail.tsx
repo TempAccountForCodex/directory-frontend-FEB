@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Box,
   Container,
@@ -12,21 +12,17 @@ import {
   CircularProgress,
   alpha,
   MenuItem,
-} from "@mui/material";
-import { ArrowLeft, Save, Store } from "lucide-react";
-import { getDashboardColors } from "../../styles/dashboardTheme";
-import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-import { usePersistentState } from "../../hooks/usePersistentState";
-import type { PlanSummary } from "../../hooks/usePlanSummary";
-import StoreProducts from "./StoreProducts";
-import StoreOrders from "./StoreOrders";
-import {
-  DashboardActionButton,
-  DashboardInput,
-  DashboardSelect,
-} from "./shared";
+} from '@mui/material';
+import { ArrowLeft, Save, Store } from 'lucide-react';
+import { getDashboardColors } from '../../styles/dashboardTheme';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
+import { usePersistentState } from '../../hooks/usePersistentState';
+import type { PlanSummary } from '../../hooks/usePlanSummary';
+import StoreProducts from './StoreProducts';
+import StoreOrders from './StoreOrders';
+import { DashboardActionButton, DashboardInput, DashboardSelect } from './shared';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface Store {
   id: string;
@@ -43,7 +39,7 @@ interface Store {
 interface StoreDetailProps {
   store: Store;
   onBack: () => void;
-  onPlanLimitReached: (message: string, type: "stores" | "products") => void;
+  onPlanLimitReached: (message: string, type: 'stores' | 'products') => void;
   planSummary: PlanSummary | null;
 }
 
@@ -59,8 +55,8 @@ const StoreDetail = ({
   // Use persistent state for active tab
   const [activeTab, setActiveTab] = usePersistentState(
     `stores:detail:${initialStore.id}:tab:v1`,
-    "settings",
-    { scope: "global" },
+    'settings',
+    { scope: 'global' }
   );
 
   const [store, setStore] = useState<Store>(initialStore);
@@ -71,7 +67,7 @@ const StoreDetail = ({
   // Settings form state
   const [settingsForm, setSettingsForm] = useState({
     name: initialStore.name,
-    description: initialStore.description || "",
+    description: initialStore.description || '',
     currency: initialStore.currency,
   });
   const [settingsChanged, setSettingsChanged] = useState(false);
@@ -92,12 +88,12 @@ const StoreDetail = ({
       setStore(storeData);
       setSettingsForm({
         name: storeData.name,
-        description: storeData.description || "",
+        description: storeData.description || '',
         currency: storeData.currency,
       });
     } catch (err: any) {
-      console.error("Error fetching store details:", err);
-      setError(err.response?.data?.message || "Failed to load store details");
+      console.error('Error fetching store details:', err);
+      setError(err.response?.data?.message || 'Failed to load store details');
     } finally {
       setLoading(false);
     }
@@ -108,21 +104,17 @@ const StoreDetail = ({
       setSaving(true);
       setError(null);
 
-      const response = await axios.put(
-        `${API_URL}/stores/${store.id}`,
-        settingsForm,
-        {
-          headers: {},
-        },
-      );
+      const response = await axios.put(`${API_URL}/stores/${store.id}`, settingsForm, {
+        headers: {},
+      });
 
       setStore(response.data.data);
       setSettingsChanged(false);
-      setSuccess("Settings saved successfully");
+      setSuccess('Settings saved successfully');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      console.error("Error saving settings:", err);
-      setError(err.response?.data?.message || "Failed to save settings");
+      console.error('Error saving settings:', err);
+      setError(err.response?.data?.message || 'Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -134,7 +126,7 @@ const StoreDetail = ({
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case "settings":
+      case 'settings':
         return (
           <Card
             sx={{
@@ -143,34 +135,23 @@ const StoreDetail = ({
               p: 3,
             }}
           >
-            <Typography
-              variant="h6"
-              sx={{ color: colors.text, fontWeight: 700, mb: 3 }}
-            >
+            <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700, mb: 3 }}>
               Store Settings
             </Typography>
 
             {error && (
-              <Alert
-                severity="error"
-                sx={{ mb: 2 }}
-                onClose={() => setError(null)}
-              >
+              <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
                 {error}
               </Alert>
             )}
 
             {success && (
-              <Alert
-                severity="success"
-                sx={{ mb: 2 }}
-                onClose={() => setSuccess(null)}
-              >
+              <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
                 {success}
               </Alert>
             )}
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <DashboardInput
                 label="Store Name"
                 labelPlacement="floating"
@@ -210,21 +191,13 @@ const StoreDetail = ({
               />
 
               <Box>
-                <DashboardSelect
-                  fullWidth
-                  label="Currency"
-                  value={settingsForm.currency}
-                  disabled
-                >
+                <DashboardSelect fullWidth label="Currency" value={settingsForm.currency} disabled>
                   <MenuItem value="USD">USD - US Dollar</MenuItem>
                   <MenuItem value="EUR">EUR - Euro</MenuItem>
                   <MenuItem value="GBP">GBP - British Pound</MenuItem>
                   <MenuItem value="PKR">PKR - Pakistani Rupee</MenuItem>
                 </DashboardSelect>
-                <Typography
-                  variant="caption"
-                  sx={{ color: colors.textSecondary, mt: 0.5 }}
-                >
+                <Typography variant="caption" sx={{ color: colors.textSecondary, mt: 0.5 }}>
                   Currency cannot be changed after creation
                 </Typography>
               </Box>
@@ -238,26 +211,15 @@ const StoreDetail = ({
                   border: `1px solid ${alpha(colors.primary, 0.1)}`,
                 }}
               >
-                <Typography
-                  variant="body2"
-                  sx={{ color: colors.textSecondary, mb: 0.5 }}
-                >
+                <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
                   Platform Fee
                 </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ color: colors.primary, fontWeight: 700 }}
-                >
+                <Typography variant="h5" sx={{ color: colors.primary, fontWeight: 700 }}>
                   {store.platformFeePercent / 100}%
                 </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: colors.textSecondary }}
-                >
-                  This fee is charged on each order and is determined by your
-                  store plan.
-                  {planSummary?.storePlan?.code === "store_pro" &&
-                    " (0% fee on Store Pro plan!)"}
+                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                  This fee is charged on each order and is determined by your store plan.
+                  {planSummary?.storePlan?.code === 'store_pro' && ' (0% fee on Store Pro plan!)'}
                 </Typography>
               </Box>
 
@@ -267,7 +229,7 @@ const StoreDetail = ({
                   onClick={() => {
                     setSettingsForm({
                       name: store.name,
-                      description: store.description || "",
+                      description: store.description || '',
                       currency: store.currency,
                     });
                     setSettingsChanged(false);
@@ -276,7 +238,7 @@ const StoreDetail = ({
                   sx={{
                     borderColor: colors.textSecondary,
                     color: colors.textSecondary,
-                    "&:hover": {
+                    '&:hover': {
                       borderColor: colors.text,
                       background: alpha(colors.textSecondary, 0.1),
                     },
@@ -290,9 +252,9 @@ const StoreDetail = ({
                   disabled={!settingsChanged || saving}
                 >
                   {saving ? (
-                    <CircularProgress size={20} sx={{ color: "inherit" }} />
+                    <CircularProgress size={20} sx={{ color: 'inherit' }} />
                   ) : (
-                    "Save Changes"
+                    'Save Changes'
                   )}
                 </DashboardActionButton>
               </Box>
@@ -300,7 +262,7 @@ const StoreDetail = ({
           </Card>
         );
 
-      case "products":
+      case 'products':
         return (
           <StoreProducts
             storeId={store.id}
@@ -310,10 +272,8 @@ const StoreDetail = ({
           />
         );
 
-      case "orders":
-        return (
-          <StoreOrders storeId={store.id} storeCurrency={store.currency} />
-        );
+      case 'orders':
+        return <StoreOrders storeId={store.id} storeCurrency={store.currency} />;
 
       default:
         return null;
@@ -322,12 +282,7 @@ const StoreDetail = ({
 
   if (loading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <CircularProgress sx={{ color: colors.primary }} />
       </Box>
     );
@@ -343,7 +298,7 @@ const StoreDetail = ({
           sx={{
             color: colors.textSecondary,
             mb: 2,
-            "&:hover": {
+            '&:hover': {
               color: colors.text,
               background: alpha(colors.textSecondary, 0.1),
             },
@@ -358,9 +313,9 @@ const StoreDetail = ({
               background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
               p: 1.5,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <Store size={32} color="#fff" />
@@ -371,14 +326,13 @@ const StoreDetail = ({
               sx={{
                 color: colors.text,
                 fontWeight: 800,
-                fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" },
+                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
               }}
             >
               {store.name}
             </Typography>
             <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-              /{store.slug} • {store.currency} •{" "}
-              {store.platformFeePercent / 100}% platform fee
+              /{store.slug} • {store.currency} • {store.platformFeePercent / 100}% platform fee
             </Typography>
           </Box>
         </Box>
@@ -390,19 +344,19 @@ const StoreDetail = ({
           value={activeTab}
           onChange={handleTabChange}
           sx={{
-            "& .MuiTab-root": {
+            '& .MuiTab-root': {
               color: colors.textSecondary,
               fontWeight: 600,
-              textTransform: "none",
-              fontSize: "1rem",
-              "&.Mui-selected": {
+              textTransform: 'none',
+              fontSize: '1rem',
+              '&.Mui-selected': {
                 color: colors.primary,
               },
             },
-            "& .MuiTabs-indicator": {
+            '& .MuiTabs-indicator': {
               backgroundColor: colors.primary,
               height: 3,
-              borderRadius: "3px 3px 0 0",
+              borderRadius: '3px 3px 0 0',
             },
           }}
         >

@@ -11,7 +11,7 @@
  * - Framer Motion entrance animation with whileInView
  */
 
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -22,23 +22,23 @@ import {
   CardMedia,
   Chip,
   Divider,
-} from "@mui/material";
-import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
+} from '@mui/material';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type DietaryTag =
-  | "vegetarian"
-  | "vegan"
-  | "gluten-free"
-  | "dairy-free"
-  | "nut-free"
-  | "spicy"
-  | "halal"
-  | "kosher";
+  | 'vegetarian'
+  | 'vegan'
+  | 'gluten-free'
+  | 'dairy-free'
+  | 'nut-free'
+  | 'spicy'
+  | 'halal'
+  | 'kosher';
 
-type Layout = "classic" | "cards" | "compact";
+type Layout = 'classic' | 'cards' | 'compact';
 
 interface MenuItem {
   name?: string;
@@ -102,44 +102,44 @@ interface MenuDisplayBlockProps {
 // ── Dietary icon labels ────────────────────────────────────────────────────────
 
 const DIETARY_LABELS: Record<DietaryTag, string> = {
-  vegetarian: "V",
-  vegan: "VG",
-  "gluten-free": "GF",
-  "dairy-free": "DF",
-  "nut-free": "NF",
-  spicy: "🌶",
-  halal: "H",
-  kosher: "K",
+  vegetarian: 'V',
+  vegan: 'VG',
+  'gluten-free': 'GF',
+  'dairy-free': 'DF',
+  'nut-free': 'NF',
+  spicy: '🌶',
+  halal: 'H',
+  kosher: 'K',
 };
 
 const DIETARY_COLORS: Record<DietaryTag, string> = {
-  vegetarian: "#4caf50",
-  vegan: "#2e7d32",
-  "gluten-free": "#ff9800",
-  "dairy-free": "#2196f3",
-  "nut-free": "#9c27b0",
-  spicy: "#f44336",
-  halal: "#00897b",
-  kosher: "#5c6bc0",
+  vegetarian: '#4caf50',
+  vegan: '#2e7d32',
+  'gluten-free': '#ff9800',
+  'dairy-free': '#2196f3',
+  'nut-free': '#9c27b0',
+  spicy: '#f44336',
+  halal: '#00897b',
+  kosher: '#5c6bc0',
 };
 
 // ── Currency symbol helper ─────────────────────────────────────────────────────
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: "$",
-  EUR: "€",
-  GBP: "£",
-  JPY: "¥",
-  CAD: "CA$",
-  AUD: "A$",
-  CHF: "CHF",
-  CNY: "¥",
-  INR: "₹",
-  MXN: "MX$",
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+  JPY: '¥',
+  CAD: 'CA$',
+  AUD: 'A$',
+  CHF: 'CHF',
+  CNY: '¥',
+  INR: '₹',
+  MXN: 'MX$',
 };
 
 function getCurrencySymbol(currency: string): string {
-  return CURRENCY_SYMBOLS[currency?.toUpperCase()] || currency || "$";
+  return CURRENCY_SYMBOLS[currency?.toUpperCase()] || currency || '$';
 }
 
 // ── Spacing map ────────────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ const DietaryBadges: React.FC<DietaryBadgesProps> = memo(({ dietary }) => {
   if (!dietary || dietary.length === 0) return null;
 
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
       {dietary.map((tag) => (
         <Chip
           key={tag}
@@ -171,11 +171,11 @@ const DietaryBadges: React.FC<DietaryBadgesProps> = memo(({ dietary }) => {
           title={tag}
           sx={{
             height: 18,
-            fontSize: "0.65rem",
+            fontSize: '0.65rem',
             fontWeight: 700,
-            bgcolor: DIETARY_COLORS[tag] || "grey.400",
-            color: "white",
-            "& .MuiChip-label": { px: 0.75, lineHeight: "18px" },
+            bgcolor: DIETARY_COLORS[tag] || 'grey.400',
+            color: 'white',
+            '& .MuiChip-label': { px: 0.75, lineHeight: '18px' },
           }}
         />
       ))}
@@ -183,7 +183,7 @@ const DietaryBadges: React.FC<DietaryBadgesProps> = memo(({ dietary }) => {
   );
 });
 
-DietaryBadges.displayName = "DietaryBadges";
+DietaryBadges.displayName = 'DietaryBadges';
 
 // ── Classic layout item ────────────────────────────────────────────────────────
 
@@ -203,22 +203,17 @@ const ClassicItem: React.FC<ClassicItemProps> = memo(
       <Box sx={{ mb: 2 }}>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "flex-end",
+            display: 'flex',
+            alignItems: 'flex-end',
             gap: 1,
           }}
         >
           {/* Name */}
           <Typography
             variant="body1"
-            sx={{
-              fontWeight: 600,
-              color: bodyColor,
-              flexShrink: 0,
-              whiteSpace: "nowrap",
-            }}
+            sx={{ fontWeight: 600, color: bodyColor, flexShrink: 0, whiteSpace: 'nowrap' }}
           >
-            {name || "Item"}
+            {name || 'Item'}
           </Typography>
 
           {badge && (
@@ -227,12 +222,12 @@ const ClassicItem: React.FC<ClassicItemProps> = memo(
               size="small"
               sx={{
                 height: 20,
-                fontSize: "0.65rem",
+                fontSize: '0.65rem',
                 bgcolor: primaryColor,
-                color: "white",
+                color: 'white',
                 ml: 0.5,
                 flexShrink: 0,
-                "& .MuiChip-label": { px: 0.75 },
+                '& .MuiChip-label': { px: 0.75 },
               }}
             />
           )}
@@ -241,8 +236,8 @@ const ClassicItem: React.FC<ClassicItemProps> = memo(
           <Box
             sx={{
               flex: 1,
-              borderBottom: "2px dotted",
-              borderColor: "grey.300",
+              borderBottom: '2px dotted',
+              borderColor: 'grey.300',
               mb: 0.6,
               minWidth: 16,
             }}
@@ -252,12 +247,7 @@ const ClassicItem: React.FC<ClassicItemProps> = memo(
           {price && (
             <Typography
               variant="body1"
-              sx={{
-                fontWeight: 700,
-                color: primaryColor,
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-              }}
+              sx={{ fontWeight: 700, color: primaryColor, flexShrink: 0, whiteSpace: 'nowrap' }}
             >
               {currencySymbol}
               {price}
@@ -267,10 +257,7 @@ const ClassicItem: React.FC<ClassicItemProps> = memo(
 
         {/* Description */}
         {description && (
-          <Typography
-            variant="body2"
-            sx={{ color: "text.secondary", mt: 0.25, ml: 0 }}
-          >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.25, ml: 0 }}>
             {description}
           </Typography>
         )}
@@ -283,10 +270,10 @@ const ClassicItem: React.FC<ClassicItemProps> = memo(
         )}
       </Box>
     );
-  },
+  }
 );
 
-ClassicItem.displayName = "ClassicItem";
+ClassicItem.displayName = 'ClassicItem';
 
 // ── Cards layout item ──────────────────────────────────────────────────────────
 
@@ -300,26 +287,19 @@ interface CardItemProps {
 }
 
 const CardItem: React.FC<CardItemProps> = memo(
-  ({
-    item,
-    currencySymbol,
-    showImages,
-    showDietaryIcons,
-    bodyColor,
-    primaryColor,
-  }) => {
+  ({ item, currencySymbol, showImages, showDietaryIcons, bodyColor, primaryColor }) => {
     const { name, description, price, image, badge, dietary } = item;
 
     return (
       <Card
         elevation={2}
         sx={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          transition: "transform 0.2s ease, box-shadow 0.2s ease",
-          "&:hover": {
-            transform: "translateY(-4px)",
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          '&:hover': {
+            transform: 'translateY(-4px)',
             boxShadow: 4,
           },
         }}
@@ -329,17 +309,17 @@ const CardItem: React.FC<CardItemProps> = memo(
             component="img"
             height="160"
             image={image}
-            alt={name || "Menu item"}
+            alt={name || 'Menu item'}
             loading="lazy"
-            sx={{ objectFit: "cover" }}
+            sx={{ objectFit: 'cover' }}
           />
         )}
         <CardContent sx={{ flexGrow: 1, p: 2 }}>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
               mb: 0.5,
             }}
           >
@@ -347,17 +327,12 @@ const CardItem: React.FC<CardItemProps> = memo(
               variant="subtitle1"
               sx={{ fontWeight: 700, color: bodyColor, flex: 1, mr: 1 }}
             >
-              {name || "Item"}
+              {name || 'Item'}
             </Typography>
             {price && (
               <Typography
                 variant="subtitle1"
-                sx={{
-                  fontWeight: 700,
-                  color: primaryColor,
-                  flexShrink: 0,
-                  whiteSpace: "nowrap",
-                }}
+                sx={{ fontWeight: 700, color: primaryColor, flexShrink: 0, whiteSpace: 'nowrap' }}
               >
                 {currencySymbol}
                 {price}
@@ -371,34 +346,29 @@ const CardItem: React.FC<CardItemProps> = memo(
               size="small"
               sx={{
                 height: 20,
-                fontSize: "0.65rem",
+                fontSize: '0.65rem',
                 bgcolor: primaryColor,
-                color: "white",
+                color: 'white',
                 mb: 0.75,
-                "& .MuiChip-label": { px: 0.75 },
+                '& .MuiChip-label': { px: 0.75 },
               }}
             />
           )}
 
           {description && (
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", mb: 0.75 }}
-            >
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.75 }}>
               {description}
             </Typography>
           )}
 
-          {showDietaryIcons && dietary && dietary.length > 0 && (
-            <DietaryBadges dietary={dietary} />
-          )}
+          {showDietaryIcons && dietary && dietary.length > 0 && <DietaryBadges dietary={dietary} />}
         </CardContent>
       </Card>
     );
-  },
+  }
 );
 
-CardItem.displayName = "CardItem";
+CardItem.displayName = 'CardItem';
 
 // ── Compact layout item ────────────────────────────────────────────────────────
 
@@ -417,27 +387,17 @@ const CompactItem: React.FC<CompactItemProps> = memo(
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
           py: 0.75,
           gap: 1,
         }}
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.75,
-              flexWrap: "wrap",
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{ fontWeight: 600, color: bodyColor }}
-            >
-              {name || "Item"}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: bodyColor }}>
+              {name || 'Item'}
             </Typography>
             {badge && (
               <Chip
@@ -445,10 +405,10 @@ const CompactItem: React.FC<CompactItemProps> = memo(
                 size="small"
                 sx={{
                   height: 16,
-                  fontSize: "0.6rem",
+                  fontSize: '0.6rem',
                   bgcolor: primaryColor,
-                  color: "white",
-                  "& .MuiChip-label": { px: 0.5 },
+                  color: 'white',
+                  '& .MuiChip-label': { px: 0.5 },
                 }}
               />
             )}
@@ -459,7 +419,7 @@ const CompactItem: React.FC<CompactItemProps> = memo(
           {description && (
             <Typography
               variant="caption"
-              sx={{ color: "text.secondary", display: "block", mt: 0.25 }}
+              sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}
               noWrap
             >
               {description}
@@ -470,12 +430,7 @@ const CompactItem: React.FC<CompactItemProps> = memo(
         {price && (
           <Typography
             variant="body2"
-            sx={{
-              fontWeight: 700,
-              color: primaryColor,
-              flexShrink: 0,
-              whiteSpace: "nowrap",
-            }}
+            sx={{ fontWeight: 700, color: primaryColor, flexShrink: 0, whiteSpace: 'nowrap' }}
           >
             {currencySymbol}
             {price}
@@ -483,10 +438,10 @@ const CompactItem: React.FC<CompactItemProps> = memo(
         )}
       </Box>
     );
-  },
+  }
 );
 
-CompactItem.displayName = "CompactItem";
+CompactItem.displayName = 'CompactItem';
 
 // ── Category section ───────────────────────────────────────────────────────────
 
@@ -520,17 +475,13 @@ const CategorySection: React.FC<CategorySectionProps> = memo(
           <Typography
             variant="h5"
             component="h3"
-            sx={{
-              fontWeight: 700,
-              color: headingColor,
-              mb: description ? 0.5 : 2,
-            }}
+            sx={{ fontWeight: 700, color: headingColor, mb: description ? 0.5 : 2 }}
           >
             {name}
           </Typography>
         )}
         {description && (
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             {description}
           </Typography>
         )}
@@ -538,8 +489,8 @@ const CategorySection: React.FC<CategorySectionProps> = memo(
         <Divider sx={{ mb: 2 }} />
 
         {/* Classic layout */}
-        {layout === "classic" && (
-          <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0 }}>
+        {layout === 'classic' && (
+          <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
             {items.map((item, idx) => (
               <Box component="li" key={idx}>
                 <ClassicItem
@@ -555,7 +506,7 @@ const CategorySection: React.FC<CategorySectionProps> = memo(
         )}
 
         {/* Cards layout */}
-        {layout === "cards" && (
+        {layout === 'cards' && (
           <Grid container spacing={2}>
             {items.map((item, idx) => (
               <Grid item xs={12} sm={6} md={4} key={idx}>
@@ -573,8 +524,8 @@ const CategorySection: React.FC<CategorySectionProps> = memo(
         )}
 
         {/* Compact layout */}
-        {layout === "compact" && (
-          <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0 }}>
+        {layout === 'compact' && (
+          <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
             {items.map((item, idx) => (
               <Box component="li" key={idx}>
                 <CompactItem
@@ -591,30 +542,30 @@ const CategorySection: React.FC<CategorySectionProps> = memo(
         )}
       </Box>
     );
-  },
+  }
 );
 
-CategorySection.displayName = "CategorySection";
+CategorySection.displayName = 'CategorySection';
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
 const MenuDisplayBlock: React.FC<MenuDisplayBlockProps> = ({
   block,
-  primaryColor = "#2563eb",
-  headingColor = "#1e293b",
-  bodyColor = "#475569",
+  primaryColor = '#2563eb',
+  headingColor = '#1e293b',
+  bodyColor = '#475569',
 }) => {
   const content = block.content || {};
   const {
     heading,
     description,
     categories = [],
-    currency = "USD",
+    currency = 'USD',
     showImages = false,
-    layout = "classic",
+    layout = 'classic',
     showDietaryIcons = true,
-    spacingPaddingTop = "md",
-    spacingPaddingBottom = "md",
+    spacingPaddingTop = 'md',
+    spacingPaddingBottom = 'md',
     responsiveHideOnMobile = false,
     responsiveHideOnTablet = false,
     responsiveHideOnDesktop = false,
@@ -635,17 +586,14 @@ const MenuDisplayBlock: React.FC<MenuDisplayBlockProps> = ({
       component={motion.div as any}
       initial={{ opacity: 0, y: 24 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-      transition={{
-        duration: animationDuration / 1000,
-        delay: animationDelay / 1000,
-      }}
+      transition={{ duration: animationDuration / 1000, delay: animationDelay / 1000 }}
       sx={{
         py: { xs: pt / 2 + 2, md: pt },
         pb: { xs: pb / 2 + 2, md: pb },
         display: {
-          xs: responsiveHideOnMobile ? "none" : "block",
-          sm: responsiveHideOnTablet ? "none" : "block",
-          lg: responsiveHideOnDesktop ? "none" : "block",
+          xs: responsiveHideOnMobile ? 'none' : 'block',
+          sm: responsiveHideOnTablet ? 'none' : 'block',
+          lg: responsiveHideOnDesktop ? 'none' : 'block',
         },
       }}
     >
@@ -659,7 +607,7 @@ const MenuDisplayBlock: React.FC<MenuDisplayBlockProps> = ({
               fontWeight: 700,
               color: headingColor,
               mb: description ? 1 : 4,
-              textAlign: "center",
+              textAlign: 'center',
             }}
           >
             {heading}
@@ -669,23 +617,14 @@ const MenuDisplayBlock: React.FC<MenuDisplayBlockProps> = ({
         {description && (
           <Typography
             variant="body1"
-            sx={{
-              color: bodyColor,
-              mb: 4,
-              textAlign: "center",
-              maxWidth: "600px",
-              mx: "auto",
-            }}
+            sx={{ color: bodyColor, mb: 4, textAlign: 'center', maxWidth: '600px', mx: 'auto' }}
           >
             {description}
           </Typography>
         )}
 
         {categories.length === 0 ? (
-          <Typography
-            variant="body2"
-            sx={{ color: "text.secondary", textAlign: "center" }}
-          >
+          <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
             No menu categories configured.
           </Typography>
         ) : (
@@ -708,6 +647,6 @@ const MenuDisplayBlock: React.FC<MenuDisplayBlockProps> = ({
   );
 };
 
-MenuDisplayBlock.displayName = "MenuDisplayBlock";
+MenuDisplayBlock.displayName = 'MenuDisplayBlock';
 
 export default memo(MenuDisplayBlock);

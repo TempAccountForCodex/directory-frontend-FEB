@@ -1,24 +1,16 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  Grid,
-  InputAdornment,
-} from "@mui/material";
-import PhoneIcon from "@mui/icons-material/Phone";
-import EmailIcon from "@mui/icons-material/Email";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import type { BusinessData } from "../types/BusinessData";
-import type { TemplateTheme } from "../templateEngine/types";
-import FadeIn from "./FadeIn";
+import React, { useState } from 'react';
+import { Box, Typography, TextField, Button, Alert, Grid, InputAdornment } from '@mui/material';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import type { BusinessData } from '../types/BusinessData';
+import type { TemplateTheme } from '../templateEngine/types';
+import FadeIn from './FadeIn';
 
 export interface ContactBlockProps {
   data: BusinessData;
   theme: TemplateTheme;
-  variant?: "card" | "inline" | "dark";
+  variant?: 'card' | 'inline' | 'dark';
 }
 
 interface FormState {
@@ -28,15 +20,10 @@ interface FormState {
 }
 
 function useContactForm() {
-  const [form, setForm] = useState<FormState>({
-    name: "",
-    email: "",
-    message: "",
-  });
+  const [form, setForm] = useState<FormState>({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
@@ -44,7 +31,7 @@ function useContactForm() {
   return { form, submitted, handleChange, handleSubmit };
 }
 
-function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
+function CardContact({ data, theme }: Omit<ContactBlockProps, 'variant'>) {
   const { form, submitted, handleChange, handleSubmit } = useContactForm();
   const { contact } = data;
   return (
@@ -52,70 +39,53 @@ function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
       <Box
         sx={{
           maxWidth: 1000,
-          mx: "auto",
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 1.4fr" },
+          mx: 'auto',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1.4fr' },
           gap: 4,
           bgcolor: theme.surfaceColor,
           borderRadius: 4,
-          overflow: "hidden",
+          overflow: 'hidden',
           border: `1px solid ${theme.borderColor}`,
-          boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
+          boxShadow: '0 8px 40px rgba(0,0,0,0.08)',
         }}
       >
         <Box
           sx={{
             bgcolor: theme.primaryColor,
             p: 5,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
           }}
         >
           <FadeIn direction="left">
             <Typography
               variant="h4"
-              sx={{
-                fontFamily: theme.fontFamily,
-                fontWeight: 800,
-                color: "#fff",
-                mb: 4,
-              }}
+              sx={{ fontFamily: theme.fontFamily, fontWeight: 800, color: '#fff', mb: 4 }}
             >
               Contact Us
             </Typography>
             {contact.phone && (
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
-              >
-                <PhoneIcon sx={{ color: "rgba(255,255,255,0.7)" }} />
-                <Typography
-                  sx={{ color: "#fff", fontFamily: theme.fontFamily }}
-                >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <PhoneIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                <Typography sx={{ color: '#fff', fontFamily: theme.fontFamily }}>
                   {contact.phone}
                 </Typography>
               </Box>
             )}
             {contact.email && (
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
-              >
-                <EmailIcon sx={{ color: "rgba(255,255,255,0.7)" }} />
-                <Typography
-                  sx={{ color: "#fff", fontFamily: theme.fontFamily }}
-                >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <EmailIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                <Typography sx={{ color: '#fff', fontFamily: theme.fontFamily }}>
                   {contact.email}
                 </Typography>
               </Box>
             )}
             {contact.address && (
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
-                <LocationOnIcon
-                  sx={{ color: "rgba(255,255,255,0.7)", mt: 0.3 }}
-                />
-                <Typography
-                  sx={{ color: "#fff", fontFamily: theme.fontFamily }}
-                >
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <LocationOnIcon sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.3 }} />
+                <Typography sx={{ color: '#fff', fontFamily: theme.fontFamily }}>
                   {contact.address}
                 </Typography>
               </Box>
@@ -125,9 +95,7 @@ function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
         <Box sx={{ p: 5 }}>
           <FadeIn direction="right">
             {submitted ? (
-              <Alert severity="success">
-                Thank you! We'll be in touch soon.
-              </Alert>
+              <Alert severity="success">Thank you! We'll be in touch soon.</Alert>
             ) : (
               <Box component="form" onSubmit={handleSubmit}>
                 <Grid container spacing={2}>
@@ -176,10 +144,7 @@ function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                         bgcolor: theme.primaryColor,
                         fontWeight: 700,
                         borderRadius: 2,
-                        "&:hover": {
-                          bgcolor: theme.primaryColor,
-                          filter: "brightness(0.9)",
-                        },
+                        '&:hover': { bgcolor: theme.primaryColor, filter: 'brightness(0.9)' },
                       }}
                     >
                       Send Message
@@ -195,36 +160,27 @@ function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
   );
 }
 
-function InlineContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
+function InlineContact({ data, theme }: Omit<ContactBlockProps, 'variant'>) {
   const { form, submitted, handleChange, handleSubmit } = useContactForm();
   const { contact } = data;
   return (
     <Box sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}>
-      <Box sx={{ maxWidth: 760, mx: "auto" }}>
+      <Box sx={{ maxWidth: 760, mx: 'auto' }}>
         <FadeIn>
           <Typography
             variant="h3"
-            sx={{
-              fontFamily: theme.fontFamily,
-              fontWeight: 800,
-              color: theme.headingColor,
-              mb: 1,
-            }}
+            sx={{ fontFamily: theme.fontFamily, fontWeight: 800, color: theme.headingColor, mb: 1 }}
           >
             Get in Touch
           </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, mb: 5 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 5 }}>
             {contact.phone && (
-              <Typography
-                sx={{ color: theme.bodyColor, fontFamily: theme.fontFamily }}
-              >
+              <Typography sx={{ color: theme.bodyColor, fontFamily: theme.fontFamily }}>
                 {contact.phone}
               </Typography>
             )}
             {contact.email && (
-              <Typography
-                sx={{ color: theme.primaryColor, fontFamily: theme.fontFamily }}
-              >
+              <Typography sx={{ color: theme.primaryColor, fontFamily: theme.fontFamily }}>
                 {contact.email}
               </Typography>
             )}
@@ -279,10 +235,7 @@ function InlineContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                       px: 5,
                       py: 1.5,
                       borderRadius: 2,
-                      "&:hover": {
-                        bgcolor: theme.primaryColor,
-                        filter: "brightness(0.9)",
-                      },
+                      '&:hover': { bgcolor: theme.primaryColor, filter: 'brightness(0.9)' },
                     }}
                   >
                     Send Message
@@ -297,21 +250,21 @@ function InlineContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
   );
 }
 
-function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
+function DarkContact({ data, theme }: Omit<ContactBlockProps, 'variant'>) {
   const { form, submitted, handleChange, handleSubmit } = useContactForm();
   const { contact } = data;
   const inputSx = {
-    "& .MuiOutlinedInput-root": {
+    '& .MuiOutlinedInput-root': {
       color: theme.headingColor,
-      "& fieldset": { borderColor: theme.borderColor },
-      "&:hover fieldset": { borderColor: theme.accentColor },
+      '& fieldset': { borderColor: theme.borderColor },
+      '&:hover fieldset': { borderColor: theme.accentColor },
     },
-    "& .MuiInputLabel-root": { color: theme.bodyColor },
-    "& .MuiInputAdornment-root .MuiSvgIcon-root": { color: theme.bodyColor },
+    '& .MuiInputLabel-root': { color: theme.bodyColor },
+    '& .MuiInputAdornment-root .MuiSvgIcon-root': { color: theme.bodyColor },
   };
   return (
     <Box sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}>
-      <Box sx={{ maxWidth: 640, mx: "auto" }}>
+      <Box sx={{ maxWidth: 640, mx: 'auto' }}>
         <FadeIn>
           <Typography
             variant="h3"
@@ -319,7 +272,7 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
               fontFamily: theme.fontFamily,
               fontWeight: 800,
               color: theme.headingColor,
-              textAlign: "center",
+              textAlign: 'center',
               mb: 1,
             }}
           >
@@ -330,7 +283,7 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
               width: 48,
               height: 3,
               bgcolor: theme.accentColor,
-              mx: "auto",
+              mx: 'auto',
               borderRadius: 999,
               mb: 5,
             }}
@@ -351,9 +304,7 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                     onChange={handleChange}
                     required
                     sx={inputSx}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start" />,
-                    }}
+                    InputProps={{ startAdornment: <InputAdornment position="start" /> }}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -383,23 +334,14 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                 </Grid>
                 {(contact.phone || contact.email) && (
                   <Grid item xs={12}>
-                    <Box
-                      sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 1 }}
-                    >
+                    <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 1 }}>
                       {contact.phone && (
-                        <Typography
-                          sx={{ color: theme.bodyColor, fontSize: "0.875rem" }}
-                        >
+                        <Typography sx={{ color: theme.bodyColor, fontSize: '0.875rem' }}>
                           {contact.phone}
                         </Typography>
                       )}
                       {contact.email && (
-                        <Typography
-                          sx={{
-                            color: theme.accentColor,
-                            fontSize: "0.875rem",
-                          }}
-                        >
+                        <Typography sx={{ color: theme.accentColor, fontSize: '0.875rem' }}>
                           {contact.email}
                         </Typography>
                       )}
@@ -414,14 +356,11 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                     size="large"
                     sx={{
                       bgcolor: theme.accentColor,
-                      color: "#000",
+                      color: '#000',
                       fontWeight: 700,
                       borderRadius: 2,
                       py: 1.5,
-                      "&:hover": {
-                        bgcolor: theme.accentColor,
-                        filter: "brightness(0.9)",
-                      },
+                      '&:hover': { bgcolor: theme.accentColor, filter: 'brightness(0.9)' },
                     }}
                   >
                     Send Message
@@ -436,13 +375,9 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
   );
 }
 
-const ContactBlock: React.FC<ContactBlockProps> = ({
-  data,
-  theme,
-  variant = "card",
-}) => {
-  if (variant === "inline") return <InlineContact data={data} theme={theme} />;
-  if (variant === "dark") return <DarkContact data={data} theme={theme} />;
+const ContactBlock: React.FC<ContactBlockProps> = ({ data, theme, variant = 'card' }) => {
+  if (variant === 'inline') return <InlineContact data={data} theme={theme} />;
+  if (variant === 'dark') return <DarkContact data={data} theme={theme} />;
   return <CardContact data={data} theme={theme} />;
 };
 

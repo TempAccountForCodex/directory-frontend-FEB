@@ -18,28 +18,23 @@
  * - useCallback on all event handlers
  */
 
-import React, { useState, useCallback } from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import Paper from "@mui/material/Paper";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import {
-  DndContext,
-  DragOverlay,
-  type DragStartEvent,
-  type DragEndEvent,
-} from "@dnd-kit/core";
+import React, { useState, useCallback } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import { DndContext, DragOverlay, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
 import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
   arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useDragAndDrop } from "../../hooks/useDragAndDrop";
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -117,27 +112,20 @@ const SortablePage = React.memo(function SortablePage({
   const isLast = index === totalCount - 1;
 
   return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      role="listitem"
-      aria-label={`Page: ${page.title}`}
-    >
+    <li ref={setNodeRef} style={style} role="listitem" aria-label={`Page: ${page.title}`}>
       <Paper
         variant="outlined"
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 0.5,
           p: 1,
           mb: 0.5,
-          cursor: disabled ? "default" : "pointer",
-          borderColor: page.isHome ? "primary.main" : "divider",
-          bgcolor: page.isHome ? "action.selected" : "background.paper",
-          transition: "all 0.15s ease",
-          "&:hover": disabled
-            ? {}
-            : { borderColor: "primary.light", bgcolor: "action.hover" },
+          cursor: disabled ? 'default' : 'pointer',
+          borderColor: page.isHome ? 'primary.main' : 'divider',
+          bgcolor: page.isHome ? 'action.selected' : 'background.paper',
+          transition: 'all 0.15s ease',
+          '&:hover': disabled ? {} : { borderColor: 'primary.light', bgcolor: 'action.hover' },
         }}
       >
         {/* Drag handle */}
@@ -147,7 +135,7 @@ const SortablePage = React.memo(function SortablePage({
           size="small"
           disabled={disabled}
           aria-label={`Drag page ${page.title}`}
-          sx={{ cursor: disabled ? "not-allowed" : "grab" }}
+          sx={{ cursor: disabled ? 'not-allowed' : 'grab' }}
           onClick={handleDragHandleClick}
         >
           <DragIndicatorIcon fontSize="small" />
@@ -157,20 +145,20 @@ const SortablePage = React.memo(function SortablePage({
         <Box sx={{ flexGrow: 1 }}>
           <Typography
             variant="body2"
-            sx={{ fontWeight: page.isHome ? 600 : 400, color: "text.primary" }}
+            sx={{ fontWeight: page.isHome ? 600 : 400, color: 'text.primary' }}
           >
             {page.title}
             {page.isHome && (
               <Typography
                 component="span"
                 variant="caption"
-                sx={{ ml: 1, color: "primary.main", fontSize: "0.65rem" }}
+                sx={{ ml: 1, color: 'primary.main', fontSize: '0.65rem' }}
               >
                 (Home)
               </Typography>
             )}
           </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {page.path}
           </Typography>
         </Box>
@@ -201,29 +189,25 @@ const SortablePage = React.memo(function SortablePage({
 // DragOverlay content
 // ---------------------------------------------------------------------------
 
-const DragOverlayPage = React.memo(function DragOverlayPage({
-  page,
-}: {
-  page: PageItem | null;
-}) {
+const DragOverlayPage = React.memo(function DragOverlayPage({ page }: { page: PageItem | null }) {
   if (!page) return null;
 
   return (
     <Paper
       variant="outlined"
       sx={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 0.5,
         p: 1,
-        borderColor: "primary.main",
-        bgcolor: "background.paper",
+        borderColor: 'primary.main',
+        bgcolor: 'background.paper',
         boxShadow: 4,
         opacity: 1,
-        cursor: "grabbing",
+        cursor: 'grabbing',
       }}
     >
-      <DragIndicatorIcon fontSize="small" sx={{ color: "primary.main" }} />
+      <DragIndicatorIcon fontSize="small" sx={{ color: 'primary.main' }} />
       <Typography variant="body2" sx={{ fontWeight: 600 }}>
         {page.title}
       </Typography>
@@ -272,7 +256,7 @@ const DraggablePageList = React.memo(function DraggablePageList({
 
       onPagesChange(reordered);
     },
-    [pages, onPagesChange],
+    [pages, onPagesChange]
   );
 
   // ── Fallback up/down (backward compatible with movePage logic) ────────────
@@ -280,40 +264,33 @@ const DraggablePageList = React.memo(function DraggablePageList({
     (index: number) => {
       if (index <= 0) return;
       const newPages = [...pages];
-      [newPages[index], newPages[index - 1]] = [
-        newPages[index - 1],
-        newPages[index],
-      ];
+      [newPages[index], newPages[index - 1]] = [newPages[index - 1], newPages[index]];
       // Update sortOrder
       newPages[index].sortOrder = index;
       newPages[index - 1].sortOrder = index - 1;
       onPagesChange(newPages);
     },
-    [pages, onPagesChange],
+    [pages, onPagesChange]
   );
 
   const handleMoveDown = useCallback(
     (index: number) => {
       if (index >= pages.length - 1) return;
       const newPages = [...pages];
-      [newPages[index], newPages[index + 1]] = [
-        newPages[index + 1],
-        newPages[index],
-      ];
+      [newPages[index], newPages[index + 1]] = [newPages[index + 1], newPages[index]];
       // Update sortOrder
       newPages[index].sortOrder = index;
       newPages[index + 1].sortOrder = index + 1;
       onPagesChange(newPages);
     },
-    [pages, onPagesChange],
+    [pages, onPagesChange]
   );
 
   if (pages.length === 0) {
     return null;
   }
 
-  const activeDragPage =
-    activeId !== null ? (pages.find((p) => p.id === activeId) ?? null) : null;
+  const activeDragPage = activeId !== null ? (pages.find((p) => p.id === activeId) ?? null) : null;
 
   return (
     <DndContext
@@ -322,11 +299,8 @@ const DraggablePageList = React.memo(function DraggablePageList({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext
-        items={pages.map((p) => p.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+      <SortableContext items={pages.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {pages.map((page, index) => (
             <SortablePage
               key={page.id}
@@ -349,6 +323,6 @@ const DraggablePageList = React.memo(function DraggablePageList({
   );
 });
 
-DraggablePageList.displayName = "DraggablePageList";
+DraggablePageList.displayName = 'DraggablePageList';
 
 export default DraggablePageList;

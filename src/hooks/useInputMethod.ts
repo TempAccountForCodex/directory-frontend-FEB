@@ -15,13 +15,13 @@
  * Manages a 'keyboard-active' CSS class on document.body so global styles
  * can conditionally show focus outlines.
  */
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type InputMethod = "touch" | "mouse" | "keyboard";
+export type InputMethod = 'touch' | 'mouse' | 'keyboard';
 
 export interface UseInputMethodReturn {
   /** Current detected input method */
@@ -39,8 +39,8 @@ export interface UseInputMethodReturn {
 // ---------------------------------------------------------------------------
 
 const TOUCH_TIMEOUT_MS = 5000;
-const STORAGE_KEY = "keyboardNavigationMode";
-const BODY_CLASS = "keyboard-active";
+const STORAGE_KEY = 'keyboardNavigationMode';
+const BODY_CLASS = 'keyboard-active';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,7 +48,7 @@ const BODY_CLASS = "keyboard-active";
 
 const readStoredPreference = (): boolean => {
   try {
-    return localStorage.getItem(STORAGE_KEY) === "true";
+    return localStorage.getItem(STORAGE_KEY) === 'true';
   } catch {
     return false;
   }
@@ -59,15 +59,14 @@ const readStoredPreference = (): boolean => {
 // ---------------------------------------------------------------------------
 
 export function useInputMethod(): UseInputMethodReturn {
-  const [inputMethod, setInputMethod] = useState<InputMethod>("mouse");
-  const [forceKeyboardMode, setForceKeyboardModeState] =
-    useState<boolean>(readStoredPreference);
+  const [inputMethod, setInputMethod] = useState<InputMethod>('mouse');
+  const [forceKeyboardMode, setForceKeyboardModeState] = useState<boolean>(readStoredPreference);
 
   // Track last touch timestamp via ref to avoid re-registering listeners
   const lastTouchRef = useRef<number>(0);
 
   // Derived: keyboard mode is active if detected keyboard OR forced
-  const isKeyboardMode = forceKeyboardMode || inputMethod === "keyboard";
+  const isKeyboardMode = forceKeyboardMode || inputMethod === 'keyboard';
 
   // -------------------------------------------------------------------------
   // Body class management
@@ -89,7 +88,7 @@ export function useInputMethod(): UseInputMethodReturn {
   useEffect(() => {
     const handleTouchStart = () => {
       lastTouchRef.current = Date.now();
-      setInputMethod("touch");
+      setInputMethod('touch');
     };
 
     const handleMouseMove = () => {
@@ -97,25 +96,25 @@ export function useInputMethod(): UseInputMethodReturn {
       // Only switch to mouse if enough time passed since last touch
       // (mouse events can fire after touch on some devices)
       if (timeSinceTouch > TOUCH_TIMEOUT_MS) {
-        setInputMethod("mouse");
+        setInputMethod('mouse');
       }
     };
 
     const handleKeyDown = () => {
       const timeSinceTouch = Date.now() - lastTouchRef.current;
       if (timeSinceTouch > TOUCH_TIMEOUT_MS) {
-        setInputMethod("keyboard");
+        setInputMethod('keyboard');
       }
     };
 
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    window.addEventListener("keydown", handleKeyDown, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('keydown', handleKeyDown, { passive: true });
 
     return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 

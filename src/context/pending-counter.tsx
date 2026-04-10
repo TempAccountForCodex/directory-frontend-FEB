@@ -1,4 +1,4 @@
-import React, { createContext, useState, type ReactNode } from "react";
+import React, { createContext, useState, type ReactNode } from 'react';
 
 /* ---------------- Types ---------------- */
 interface PendingCounterContextType {
@@ -11,13 +11,11 @@ interface PendingCounterProviderProps {
 }
 
 /* ---------------- Context ---------------- */
-export const PendingCounterContext = createContext<
-  PendingCounterContextType | undefined
->(undefined);
+export const PendingCounterContext = createContext<PendingCounterContextType | undefined>(
+  undefined
+);
 
-export const PendingCounterProvider: React.FC<PendingCounterProviderProps> = ({
-  children,
-}) => {
+export const PendingCounterProvider: React.FC<PendingCounterProviderProps> = ({ children }) => {
   const [counter, setCounter] = useState<number>(0);
 
   return (

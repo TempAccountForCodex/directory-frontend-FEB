@@ -13,7 +13,7 @@
  * - Quota exceeded: catches and silently fails (data loss preferred over crash)
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,25 +54,19 @@ export interface UseLocalStorageBackupReturn {
 // Constants
 // ---------------------------------------------------------------------------
 
-const KEY_PREFIX = "UNSAVED_CHANGES";
+const KEY_PREFIX = 'UNSAVED_CHANGES';
 const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
-const SESSION_RESTORE_FLAG_PREFIX = "RESTORE_CLAIMED";
+const SESSION_RESTORE_FLAG_PREFIX = 'RESTORE_CLAIMED';
 
 // ---------------------------------------------------------------------------
 // Helpers (exported for testing)
 // ---------------------------------------------------------------------------
 
-export function buildKey(
-  websiteId: number | string,
-  pageId: number | string,
-): string {
+export function buildKey(websiteId: number | string, pageId: number | string): string {
   return `${KEY_PREFIX}_${websiteId}_${pageId}`;
 }
 
-export function buildSessionFlag(
-  websiteId: number | string,
-  pageId: number | string,
-): string {
+export function buildSessionFlag(websiteId: number | string, pageId: number | string): string {
   return `${SESSION_RESTORE_FLAG_PREFIX}_${websiteId}_${pageId}`;
 }
 
@@ -86,8 +80,7 @@ export function readBackup(key: string): BackupEntry | null {
     if (!raw) return null;
 
     const entry: BackupEntry = JSON.parse(raw);
-    if (!entry || typeof entry.timestamp !== "number" || !entry.data)
-      return null;
+    if (!entry || typeof entry.timestamp !== 'number' || !entry.data) return null;
 
     // Discard stale backups (>24h)
     if (Date.now() - entry.timestamp > STALE_THRESHOLD_MS) {
@@ -104,10 +97,7 @@ export function readBackup(key: string): BackupEntry | null {
 /**
  * Write a backup entry to localStorage. Catches quota errors silently.
  */
-export function writeBackup(
-  key: string,
-  data: Record<string, unknown>,
-): boolean {
+export function writeBackup(key: string, data: Record<string, unknown>): boolean {
   try {
     const entry: BackupEntry = { data, timestamp: Date.now() };
     localStorage.setItem(key, JSON.stringify(entry));
@@ -131,7 +121,7 @@ export function cleanupStaleBackups(): void {
         if (raw) {
           try {
             const entry = JSON.parse(raw);
-            if (entry && typeof entry.timestamp === "number") {
+            if (entry && typeof entry.timestamp === 'number') {
               if (Date.now() - entry.timestamp > STALE_THRESHOLD_MS) {
                 keysToRemove.push(key);
               }
@@ -203,7 +193,7 @@ export function useLocalStorageBackup({
     const entry = readBackup(key);
     if (entry) {
       // Claim the restore for this tab
-      sessionStorage.setItem(sessionFlag, "1");
+      sessionStorage.setItem(sessionFlag, '1');
       setBackupEntry(entry);
       setHasBackup(true);
     }
@@ -222,8 +212,8 @@ export function useLocalStorageBackup({
       }
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
   // -------------------------------------------------------------------------

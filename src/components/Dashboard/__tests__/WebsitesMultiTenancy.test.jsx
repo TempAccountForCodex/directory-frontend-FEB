@@ -41,6 +41,9 @@ vi.mock('../../../context/ThemeContext', () => ({
 // Mock framer-motion
 // ---------------------------------------------------------------------------
 vi.mock('framer-motion', () => ({
+  useScroll: () => ({ scrollYProgress: { get: () => 0, onChange: () => () => {} } }),
+  useTransform: (..._args) => ({ get: () => "0%", onChange: () => () => {} }),
+  useMotionValue: (v) => ({ get: () => v, set: () => {}, onChange: () => () => {} }),
   motion: {
     div: ({ children, ...props }) => <div {...props}>{children}</div>,
   },

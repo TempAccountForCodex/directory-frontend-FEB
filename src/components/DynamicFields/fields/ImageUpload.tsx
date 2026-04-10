@@ -17,22 +17,15 @@
  * - React.memo prevents re-renders when parent re-renders with same props
  * - useCallback on onDrop to avoid re-creating dropzone on each render
  */
-import React, { useState, useCallback, useId } from "react";
-import {
-  Box,
-  Typography,
-  LinearProgress,
-  Alert,
-  IconButton,
-  FormHelperText,
-} from "@mui/material";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { useDropzone } from "react-dropzone";
-import type { FileRejection } from "react-dropzone";
-import axios from "axios";
-import { registerFieldComponent } from "../registry";
-import { FieldType } from "../types";
+import React, { useState, useCallback, useId } from 'react';
+import { Box, Typography, LinearProgress, Alert, IconButton, FormHelperText } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useDropzone } from 'react-dropzone';
+import type { FileRejection } from 'react-dropzone';
+import axios from 'axios';
+import { registerFieldComponent } from '../registry';
+import { FieldType } from '../types';
 
 /* ------------------------------------------------------------------ */
 /* Props interface                                                     */
@@ -80,9 +73,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
   }) => {
     const uid = useId();
     const errorId = `${uid}-error`;
-    const [uploadProgress, setUploadProgress] = useState<number | undefined>(
-      undefined,
-    );
+    const [uploadProgress, setUploadProgress] = useState<number | undefined>(undefined);
     const [localError, setLocalError] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const hasErrors = errors.length > 0;
@@ -96,15 +87,12 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
 
         if (rejectedFiles.length > 0) {
           const rejection = rejectedFiles[0];
-          if (rejection.errors[0]?.code === "file-too-large") {
+          if (rejection.errors[0]?.code === 'file-too-large') {
             setLocalError(`File too large (max ${maxSizeMB}MB)`);
-          } else if (rejection.errors[0]?.code === "file-invalid-type") {
-            setLocalError("Invalid file type. Use JPEG, PNG, GIF, or WebP");
+          } else if (rejection.errors[0]?.code === 'file-invalid-type') {
+            setLocalError('Invalid file type. Use JPEG, PNG, GIF, or WebP');
           } else {
-            setLocalError(
-              "File rejected: " +
-                (rejection.errors[0]?.message ?? "unknown error"),
-            );
+            setLocalError('File rejected: ' + (rejection.errors[0]?.message ?? 'unknown error'));
           }
           return;
         }
@@ -120,7 +108,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
           }
         };
         reader.onerror = () => {
-          setLocalError("Failed to read file — please try again");
+          setLocalError('Failed to read file — please try again');
         };
         reader.readAsDataURL(file);
 
@@ -129,10 +117,10 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
         setUploadProgress(0);
 
         const formData = new FormData();
-        formData.append("image", file);
+        formData.append('image', file);
 
         try {
-          const response = await axios.post("/api/upload/image", formData, {
+          const response = await axios.post('/api/upload/image', formData, {
             onUploadProgress: (e) => {
               if (e.total) {
                 setUploadProgress(Math.round((e.loaded * 100) / e.total));
@@ -143,30 +131,28 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
           setUploadProgress(undefined);
           setIsUploading(false);
         } catch {
-          setLocalError("Upload failed — please try again");
+          setLocalError('Upload failed — please try again');
           onChange(null); // clear temporary data URL
           setUploadProgress(undefined);
           setIsUploading(false);
         }
       },
-      [onChange, maxSizeMB],
+      [onChange, maxSizeMB]
     );
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       onDrop,
-      accept: { "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"] },
+      accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] },
       maxSize: maxSizeBytes,
       disabled: disabled || isUploading || isLoading,
       multiple: false,
     });
 
     const isUploadingState =
-      uploadProgress !== undefined &&
-      uploadProgress >= 0 &&
-      uploadProgress <= 100;
+      uploadProgress !== undefined && uploadProgress >= 0 && uploadProgress <= 100;
 
     // Success state: has an image URL and no upload in progress
-    const hasImage = value !== null && value !== "" && !isUploadingState;
+    const hasImage = value !== null && value !== '' && !isUploadingState;
 
     // Combined error (local takes precedence since it's more specific)
     const displayError = localError ?? error ?? null;
@@ -179,30 +165,30 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
     }, [disabled, isUploading, onChange]);
 
     return (
-      <Box sx={{ width: "100%" }}>
+      <Box sx={{ width: '100%' }}>
         {/* ----- Success state: image preview ----- */}
         {hasImage ? (
           <Box
             sx={{
-              position: "relative",
-              width: "100%",
+              position: 'relative',
+              width: '100%',
               borderRadius: 1,
-              overflow: "hidden",
+              overflow: 'hidden',
               border: 1,
-              borderColor: "divider",
-              bgcolor: "background.paper",
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
             }}
           >
             <Box
               component="img"
-              src={value ?? ""}
-              alt={label ?? "Uploaded image"}
+              src={value ?? ''}
+              alt={label ?? 'Uploaded image'}
               sx={{
-                display: "block",
-                width: "100%",
+                display: 'block',
+                width: '100%',
                 maxHeight: 300,
-                objectFit: "contain",
-                bgcolor: "background.default",
+                objectFit: 'contain',
+                bgcolor: 'background.default',
               }}
             />
             <IconButton
@@ -211,14 +197,14 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
               aria-label="Remove image"
               size="small"
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 top: 8,
                 right: 8,
-                bgcolor: "background.paper",
+                bgcolor: 'background.paper',
                 boxShadow: 1,
-                "&:hover": {
-                  bgcolor: "error.light",
-                  color: "error.contrastText",
+                '&:hover': {
+                  bgcolor: 'error.light',
+                  color: 'error.contrastText',
                 },
               }}
             >
@@ -231,61 +217,58 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
             {...getRootProps()}
             role="button"
             tabIndex={disabled ? -1 : 0}
-            aria-label={label ? `Upload ${label}` : "Upload image"}
+            aria-label={label ? `Upload ${label}` : 'Upload image'}
             aria-invalid={hasErrors || !!displayError || undefined}
             aria-describedby={hasErrors ? errorId : undefined}
             sx={{
-              width: "100%",
+              width: '100%',
               minHeight: { xs: 120, sm: 160 },
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               gap: 1,
-              border: "2px dashed",
+              border: '2px dashed',
               borderColor: isDragActive
-                ? "primary.main"
+                ? 'primary.main'
                 : displayError || hasErrors
-                  ? "error.main"
-                  : "divider",
+                  ? 'error.main'
+                  : 'divider',
               borderRadius: 1,
-              bgcolor: isDragActive ? "action.hover" : "background.paper",
-              cursor:
-                disabled || isUploading || isLoading ? "default" : "pointer",
-              transition: "border-color 0.2s ease, background-color 0.2s ease",
+              bgcolor: isDragActive ? 'action.hover' : 'background.paper',
+              cursor: disabled || isUploading || isLoading ? 'default' : 'pointer',
+              transition: 'border-color 0.2s ease, background-color 0.2s ease',
               opacity: disabled ? 0.5 : 1,
-              "&:hover":
+              '&:hover':
                 disabled || isUploading || isLoading
                   ? {}
                   : {
-                      borderColor: "primary.main",
-                      bgcolor: "action.hover",
+                      borderColor: 'primary.main',
+                      bgcolor: 'action.hover',
                     },
-              "&:focus-visible": {
-                outline: "2px solid",
-                outlineColor: "primary.main",
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.main',
                 outlineOffset: 2,
               },
             }}
           >
             <input {...getInputProps()} />
 
-            <CloudUploadIcon sx={{ fontSize: 40, color: "text.secondary" }} />
+            <CloudUploadIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
             <Typography
               variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center", px: 2 }}
+              sx={{ color: 'text.secondary', textAlign: 'center', px: 2 }}
             >
-              {isDragActive
-                ? "Drop the image here"
-                : "Drag & drop an image or click to upload"}
+              {isDragActive ? 'Drop the image here' : 'Drag & drop an image or click to upload'}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               JPEG, PNG, GIF, WebP &mdash; max {maxSizeMB}MB
             </Typography>
 
             {/* ----- Loading state: progress bar ----- */}
             {isUploadingState && (
-              <Box sx={{ width: "80%", mt: 1 }}>
+              <Box sx={{ width: '80%', mt: 1 }}>
                 <LinearProgress
                   variant="determinate"
                   value={uploadProgress}
@@ -294,10 +277,10 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
                 <Typography
                   variant="caption"
                   sx={{
-                    display: "block",
-                    textAlign: "center",
+                    display: 'block',
+                    textAlign: 'center',
                     mt: 0.5,
-                    color: "text.secondary",
+                    color: 'text.secondary',
                   }}
                 >
                   {Math.round(uploadProgress ?? 0)}%
@@ -323,10 +306,10 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
           ))}
       </Box>
     );
-  },
+  }
 );
 
-ImageUpload.displayName = "ImageUpload";
+ImageUpload.displayName = 'ImageUpload';
 
 /* ------------------------------------------------------------------ */
 /* Self-registration                                                   */
@@ -337,7 +320,7 @@ ImageUpload.displayName = "ImageUpload";
 // Pattern is consistent with TextField, TextArea, NumberInput self-registration.
 registerFieldComponent(
   FieldType.IMAGE,
-  ImageUpload as React.ComponentType<import("../types").FieldRendererProps>,
+  ImageUpload as React.ComponentType<import('../types').FieldRendererProps>
 );
 
 export { ImageUpload };

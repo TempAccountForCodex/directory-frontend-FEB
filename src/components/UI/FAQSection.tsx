@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Box,
   Container,
@@ -9,15 +9,15 @@ import {
   Stack,
   Paper,
   Avatar,
-} from "@mui/material";
-import { useTheme, alpha } from "@mui/material/styles";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
-import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
-import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
-import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
+} from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 
-const uniqueLinesbg = "/assets/publicAssets/images/common/uniqueLinesbg.webp";
+const uniqueLinesbg = '/assets/publicAssets/images/common/uniqueLinesbg.webp';
 
 export type FAQItem = {
   question: string;
@@ -30,10 +30,7 @@ type FAQSectionProps = {
   defaultOpenIndex?: number | null;
 };
 
-const FAQSection: React.FC<FAQSectionProps> = ({
-  title = "Frequently Asked Questions",
-  items,
-}) => {
+const FAQSection: React.FC<FAQSectionProps> = ({ title = 'Frequently Asked Questions', items }) => {
   const theme = useTheme();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -47,60 +44,56 @@ const FAQSection: React.FC<FAQSectionProps> = ({
   return (
     <Box
       sx={{
-        height: "auto",
+        height: 'auto',
         py: 15,
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        position: "relative",
-        overflow: "hidden",
-        background: theme.palette.background.default || "#ffffff",
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        background: theme.palette.background.default || '#ffffff',
         backgroundImage: `url(${uniqueLinesbg})`,
       }}
     >
       {/* Floating geometric shapes */}
       <Box
         sx={{
-          position: "absolute",
-          top: "15%",
-          left: "8%",
-          width: "120px",
-          height: "120px",
+          position: 'absolute',
+          top: '15%',
+          left: '8%',
+          width: '120px',
+          height: '120px',
           border: `2px solid ${alpha(primaryMain!, 0.1)}`,
-          borderRadius: "20px",
-          transform: "rotate(15deg)",
-          pointerEvents: "none",
+          borderRadius: '20px',
+          transform: 'rotate(15deg)',
+          pointerEvents: 'none',
         }}
       />
 
       <Box
         sx={{
-          position: "absolute",
-          bottom: "20%",
-          right: "12%",
-          width: "80px",
-          height: "80px",
+          position: 'absolute',
+          bottom: '20%',
+          right: '12%',
+          width: '80px',
+          height: '80px',
           background: `linear-gradient(135deg, ${alpha(primaryMain!, 0.05)} 0%, ${alpha(primaryMain!, 0.02)} 100%)`,
-          borderRadius: "50%",
-          pointerEvents: "none",
+          borderRadius: '50%',
+          pointerEvents: 'none',
         }}
       />
 
-      <Container maxWidth="lg" sx={{ height: "auto", py: 3 }}>
-        <Grid
-          container
-          spacing={4}
-          sx={{ position: "relative", zIndex: 1, height: "100%" }}
-        >
+      <Container maxWidth="lg" sx={{ height: 'auto', py: 3 }}>
+        <Grid container spacing={4} sx={{ position: 'relative', zIndex: 1, height: '100%' }}>
           {/* LEFT SIDE */}
           <Grid
             item
             xs={12}
             md={4.5}
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
             }}
           >
             <Box>
@@ -110,30 +103,25 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                   width: 48,
                   height: 48,
                   background: `linear-gradient(135deg, ${primaryMain} 0%, ${darkBg} 100%)`,
-                  borderRadius: "12px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   mb: 2,
-                  position: "relative",
+                  position: 'relative',
                   boxShadow: `0 8px 24px ${alpha(primaryMain!, 0.25)}`,
                 }}
               >
-                <HelpOutlineRoundedIcon sx={{ fontSize: 24, color: "#fff" }} />
+                <HelpOutlineRoundedIcon sx={{ fontSize: 24, color: '#fff' }} />
               </Box>
 
-              <Stack
-                direction="row"
-                alignItems="center"
-                spacing={1}
-                sx={{ mb: 1.5 }}
-              >
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
                 <Box
                   sx={{
                     width: 6,
                     height: 6,
                     bgcolor: primaryMain,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                   }}
                 />
                 <Typography
@@ -142,7 +130,7 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                     fontWeight: 700,
                     color: primaryMain,
                     letterSpacing: 2,
-                    fontSize: "0.65rem",
+                    fontSize: '0.65rem',
                   }}
                 >
                   KNOWLEDGE BASE
@@ -154,9 +142,9 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                 sx={{
                   color: textColor,
                   fontWeight: 800,
-                  fontSize: "2.75rem",
+                  fontSize: '2.75rem',
                   lineHeight: 1.2,
-                  letterSpacing: "-0.02em",
+                  letterSpacing: '-0.02em',
                   mb: 1.5,
                 }}
               >
@@ -168,12 +156,11 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                 sx={{
                   color: subTextColor,
                   lineHeight: 1.6,
-                  fontSize: "0.875rem",
+                  fontSize: '0.875rem',
                   mb: 2.5,
                 }}
               >
-                Search through our most common inquiries. Designed to help you
-                build faster.
+                Search through our most common inquiries. Designed to help you build faster.
               </Typography>
 
               {/* Action Card */}
@@ -181,28 +168,20 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                 elevation={0}
                 sx={{
                   p: 2.5,
-                  borderRadius: "16px",
-                  background: alpha(
-                    theme.palette.background.paper || "#fff",
-                    0.7,
-                  ),
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid",
+                  borderRadius: '16px',
+                  background: alpha(theme.palette.background.paper || '#fff', 0.7),
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
                   borderColor: alpha(subTextColor!, 0.2),
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
                     boxShadow: `0 12px 28px ${alpha(primaryMain!, 0.12)}`,
                     borderColor: primaryMain,
                   },
                 }}
               >
-                <Stack
-                  direction="row"
-                  spacing={1.5}
-                  alignItems="flex-start"
-                  sx={{ mb: 2 }}
-                >
+                <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ mb: 2 }}>
                   <Avatar
                     sx={{
                       bgcolor: alpha(primaryMain!, 0.1),
@@ -220,17 +199,17 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                         fontWeight: 700,
                         mb: 0.3,
                         color: textColor,
-                        fontSize: "1rem",
+                        fontSize: '1rem',
                       }}
                     >
-                      Didn't find what you're looking for?{" "}
+                      Didn't find what you're looking for?{' '}
                     </Typography>
                     <Typography
                       variant="caption"
                       sx={{
                         color: subTextColor,
                         lineHeight: 1.4,
-                        fontSize: "0.75rem",
+                        fontSize: '0.75rem',
                       }}
                     >
                       Expert developers available
@@ -242,22 +221,18 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                   variant="contained"
                   fullWidth
                   disableElevation
-                  endIcon={
-                    <ArrowForwardIosRoundedIcon
-                      sx={{ fontSize: "10px !important" }}
-                    />
-                  }
+                  endIcon={<ArrowForwardIosRoundedIcon sx={{ fontSize: '10px !important' }} />}
                   sx={{
                     background: `linear-gradient(135deg, ${primaryMain} 0%, ${darkBg} 100%)`,
-                    borderRadius: "28px",
-                    textTransform: "none",
-                    fontSize: "0.8rem",
+                    borderRadius: '28px',
+                    textTransform: 'none',
+                    fontSize: '0.8rem',
                     fontWeight: 600,
                     py: 1.2,
-                    color: "#fff",
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      transform: "translateY(-1px)",
+                    color: '#fff',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
                       boxShadow: `0 6px 16px ${alpha(primaryMain!, 0.4)}`,
                     },
                   }}
@@ -272,14 +247,14 @@ const FAQSection: React.FC<FAQSectionProps> = ({
           <Grid item xs={12} md={7.5}>
             <Box
               sx={{
-                height: "100%",
-                overflowY: "auto",
+                height: '100%',
+                overflowY: 'auto',
                 pr: 1,
-                "&::-webkit-scrollbar": { width: "4px" },
-                "&::-webkit-scrollbar-thumb": {
+                '&::-webkit-scrollbar': { width: '4px' },
+                '&::-webkit-scrollbar-thumb': {
                   background: alpha(subTextColor!, 0.2),
-                  borderRadius: "10px",
-                  "&:hover": { background: alpha(subTextColor!, 0.4) },
+                  borderRadius: '10px',
+                  '&:hover': { background: alpha(subTextColor!, 0.4) },
                 },
               }}
             >
@@ -296,40 +271,38 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                       onMouseLeave={() => setHoveredIndex(null)}
                       onClick={() => setOpenIndex(isOpen ? null : index)}
                       sx={{
-                        cursor: "pointer",
-                        borderRadius: "14px",
-                        bgcolor: alpha(theme.palette.bg.gray || "#eee", 0.8),
-                        backdropFilter: "blur(10px)",
-                        border: "1px solid",
-                        borderColor: isOpen
-                          ? primaryMain
-                          : alpha(subTextColor!, 0.1),
-                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                        position: "relative",
-                        overflow: "hidden",
+                        cursor: 'pointer',
+                        borderRadius: '14px',
+                        bgcolor: alpha(theme.palette.bg.gray || '#eee', 0.8),
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid',
+                        borderColor: isOpen ? primaryMain : alpha(subTextColor!, 0.1),
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        position: 'relative',
+                        overflow: 'hidden',
                         boxShadow: isOpen
                           ? `0 12px 32px ${alpha(primaryMain!, 0.15)}`
                           : isHovered
-                            ? "0 4px 12px rgba(0, 0, 0, 0.06)"
-                            : "0 2px 6px rgba(0, 0, 0, 0.03)",
-                        transform: isOpen ? "translateX(4px)" : "none",
-                        "&::before": {
+                            ? '0 4px 12px rgba(0, 0, 0, 0.06)'
+                            : '0 2px 6px rgba(0, 0, 0, 0.03)',
+                        transform: isOpen ? 'translateX(4px)' : 'none',
+                        '&::before': {
                           content: '""',
-                          position: "absolute",
+                          position: 'absolute',
                           left: 0,
                           top: 0,
                           bottom: 0,
-                          width: isOpen ? "4px" : "0px",
+                          width: isOpen ? '4px' : '0px',
                           background: `linear-gradient(135deg, ${primaryMain} 0%, ${darkBg} 100%)`,
-                          transition: "width 0.3s ease",
+                          transition: 'width 0.3s ease',
                         },
                       }}
                     >
                       <Box sx={{ p: 2.5 }}>
                         <Box
                           sx={{
-                            display: "flex",
-                            alignItems: "flex-start",
+                            display: 'flex',
+                            alignItems: 'flex-start',
                             gap: 2,
                           }}
                         >
@@ -338,39 +311,37 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                             sx={{
                               minWidth: 32,
                               height: 32,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              borderRadius: "8px",
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '8px',
                               background: isOpen
                                 ? alpha(primaryMain!, 0.12)
                                 : alpha(subTextColor!, 0.05),
                               border: isOpen
                                 ? `1px solid ${alpha(primaryMain!, 0.15)}`
-                                : "1px solid transparent",
-                              transition: "all 0.3s ease",
+                                : '1px solid transparent',
+                              transition: 'all 0.3s ease',
                             }}
                           >
                             <Typography
                               sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.75rem",
+                                fontFamily: 'monospace',
+                                fontSize: '0.75rem',
                                 fontWeight: 700,
-                                color: isOpen
-                                  ? primaryMain
-                                  : alpha(subTextColor!, 0.6),
+                                color: isOpen ? primaryMain : alpha(subTextColor!, 0.6),
                               }}
                             >
-                              {String(index + 1).padStart(2, "0")}
+                              {String(index + 1).padStart(2, '0')}
                             </Typography>
                           </Box>
 
                           <Box sx={{ flex: 1 }}>
                             <Box
                               sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "flex-start",
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'flex-start',
                                 gap: 1.5,
                                 mb: isOpen ? 2 : 0,
                               }}
@@ -379,8 +350,8 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                                 sx={{
                                   fontWeight: 600,
                                   color: textColor,
-                                  fontSize: "1.2rem",
-                                  letterSpacing: "-0.01em",
+                                  fontSize: '1.2rem',
+                                  letterSpacing: '-0.01em',
                                   lineHeight: 1.4,
                                   flex: 1,
                                 }}
@@ -393,20 +364,18 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                                 sx={{
                                   minWidth: 28,
                                   height: 28,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  borderRadius: "8px",
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  borderRadius: '8px',
                                   background: isOpen
                                     ? `linear-gradient(135deg, ${primaryMain} 0%, ${darkBg} 100%)`
                                     : alpha(subTextColor!, 0.05),
-                                  transition: "all 0.3s ease",
+                                  transition: 'all 0.3s ease',
                                 }}
                               >
                                 {isOpen ? (
-                                  <RemoveRoundedIcon
-                                    sx={{ fontSize: 16, color: "#fff" }}
-                                  />
+                                  <RemoveRoundedIcon sx={{ fontSize: 16, color: '#fff' }} />
                                 ) : (
                                   <AddRoundedIcon
                                     sx={{
@@ -429,7 +398,7 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                                   sx={{
                                     color: alpha(textColor!, 0.8),
                                     lineHeight: 1.6,
-                                    fontSize: "0.8rem",
+                                    fontSize: '0.8rem',
                                     pl: 2,
                                     borderLeft: `2px solid ${primaryMain}`,
                                   }}

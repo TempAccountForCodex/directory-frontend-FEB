@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 
-const API_URL = "http://localhost:5001/api";
+const API_URL = 'http://localhost:5001/api';
 
 export interface WebsitePlan {
   code: string;
@@ -87,10 +87,9 @@ export function usePlanSummary(): UsePlanSummaryReturn {
 
       setPlanSummary(response.data.planSummary);
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || "Failed to fetch plan summary";
+      const errorMessage = err.response?.data?.message || 'Failed to fetch plan summary';
       setError(errorMessage);
-      console.error("Failed to fetch plan summary:", err);
+      console.error('Failed to fetch plan summary:', err);
     } finally {
       setLoading(false);
     }

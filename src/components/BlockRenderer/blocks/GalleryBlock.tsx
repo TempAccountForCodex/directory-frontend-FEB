@@ -1,6 +1,6 @@
-import React from "react";
-import type { BlockRendererProps } from "../types";
-import { escapeHtml, escapeAttr, sanitizeUrl } from "../utils";
+import React from 'react';
+import type { BlockRendererProps } from '../types';
+import { escapeHtml, escapeAttr, sanitizeUrl } from '../utils';
 
 interface GalleryImage {
   src?: string;
@@ -38,16 +38,14 @@ const GalleryBlock: React.FC<BlockRendererProps> = ({ block }) => {
                 <figure className="gallery__item" key={idx}>
                   <img
                     className="gallery__img"
-                    src={safeSrc !== "#" ? safeSrc : undefined}
-                    alt={escapeAttr(img.alt || "")}
+                    src={safeSrc !== '#' ? safeSrc : undefined}
+                    alt={escapeAttr(img.alt || '')}
                     loading="lazy"
                   />
                   {img.caption && (
                     <figcaption
                       className="gallery__caption"
-                      dangerouslySetInnerHTML={{
-                        __html: escapeHtml(img.caption),
-                      }}
+                      dangerouslySetInnerHTML={{ __html: escapeHtml(img.caption) }}
                     />
                   )}
                 </figure>

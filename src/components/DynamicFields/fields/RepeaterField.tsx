@@ -26,32 +26,32 @@
  * - Collapse state keyed by _id — survives drag reorders without reset
  */
 
-import React, { useState, useCallback } from "react";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import Collapse from "@mui/material/Collapse";
-import Divider from "@mui/material/Divider";
-import Paper from "@mui/material/Paper";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import React, { useState, useCallback } from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import Collapse from '@mui/material/Collapse';
+import Divider from '@mui/material/Divider';
+import Paper from '@mui/material/Paper';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import {
   SortableContext,
   useSortable,
   arrayMove,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import type { FieldRendererProps, FieldDefinition } from "../types";
-import { FieldType } from "../types";
-import { registerFieldComponent } from "../registry";
-import { FieldRenderer } from "../FieldRenderer";
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { FieldRendererProps, FieldDefinition } from '../types';
+import { FieldType } from '../types';
+import { registerFieldComponent } from '../registry';
+import { FieldRenderer } from '../FieldRenderer';
 
 // ---------------------------------------------------------------------------
 // Internal types
@@ -67,8 +67,8 @@ interface RepeaterItem extends Record<string, unknown> {
 // ---------------------------------------------------------------------------
 
 type DragHandleProps = {
-  attributes: ReturnType<typeof useSortable>["attributes"];
-  listeners: ReturnType<typeof useSortable>["listeners"];
+  attributes: ReturnType<typeof useSortable>['attributes'];
+  listeners: ReturnType<typeof useSortable>['listeners'];
 };
 
 interface SortableItemProps {
@@ -85,8 +85,10 @@ interface SortableItemProps {
  * the render-prop pattern using `dragHandleProps`.
  */
 function SortableItem({ id, children, disabled }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id, disabled });
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id,
+    disabled,
+  });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -118,22 +120,18 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
   ({ field, value, onChange, disabled = false, errors = [] }) => {
     // --- Extract configuration from field.ui.props ---
     const uiProps = (field.ui?.props ?? {}) as Record<string, unknown>;
-    const itemSchema =
-      (uiProps["itemSchema"] as Record<string, FieldDefinition>) ?? {};
-    const min: number = typeof uiProps["min"] === "number" ? uiProps["min"] : 0;
-    const max: number =
-      typeof uiProps["max"] === "number" ? uiProps["max"] : Infinity;
+    const itemSchema = (uiProps['itemSchema'] as Record<string, FieldDefinition>) ?? {};
+    const min: number = typeof uiProps['min'] === 'number' ? uiProps['min'] : 0;
+    const max: number = typeof uiProps['max'] === 'number' ? uiProps['max'] : Infinity;
 
     // --- Normalise value to RepeaterItem[] with stable _id ---
-    const items: RepeaterItem[] = (Array.isArray(value) ? value : []).map(
-      (item, i) => ({
-        ...(item as Record<string, unknown>),
-        _id:
-          typeof (item as Record<string, unknown>)["_id"] === "string"
-            ? ((item as Record<string, unknown>)["_id"] as string)
-            : String(i),
-      }),
-    );
+    const items: RepeaterItem[] = (Array.isArray(value) ? value : []).map((item, i) => ({
+      ...(item as Record<string, unknown>),
+      _id:
+        typeof (item as Record<string, unknown>)['_id'] === 'string'
+          ? ((item as Record<string, unknown>)['_id'] as string)
+          : String(i),
+    }));
 
     // --- Per-item collapse state keyed by _id (survives reorders) ---
     const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -156,7 +154,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
           onChange(items.filter((_, i) => i !== idx));
         }
       },
-      [items, min, onChange],
+      [items, min, onChange]
     );
 
     const handleDuplicate = useCallback(
@@ -166,7 +164,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
         newItems.splice(idx + 1, 0, dup);
         onChange(newItems);
       },
-      [items, onChange],
+      [items, onChange]
     );
 
     // --- Nested field change handler ---
@@ -177,7 +175,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
         newItems[itemIdx] = { ...newItems[itemIdx], [fieldName]: newValue };
         onChange(newItems);
       },
-      [items, onChange],
+      [items, onChange]
     );
 
     // --- Drag-to-reorder handler ---
@@ -193,7 +191,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
           }
         }
       },
-      [items, onChange],
+      [items, onChange]
     );
 
     // --- Derived flags ---
@@ -210,12 +208,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
       <Box>
         {/* Error banner */}
         {hasErrors && (
-          <Typography
-            variant="caption"
-            color="error"
-            role="alert"
-            sx={{ display: "block", mb: 1 }}
-          >
+          <Typography variant="caption" color="error" role="alert" sx={{ display: 'block', mb: 1 }}>
             {errors[0]}
           </Typography>
         )}
@@ -224,26 +217,21 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
         {items.length === 0 && (
           <Box
             sx={{
-              textAlign: "center",
+              textAlign: 'center',
               py: 3,
-              color: "text.secondary",
-              border: "1px dashed",
-              borderColor: "divider",
+              color: 'text.secondary',
+              border: '1px dashed',
+              borderColor: 'divider',
               borderRadius: 1,
               mb: 1,
             }}
           >
-            <Typography variant="body2">
-              No items. Click Add to start.
-            </Typography>
+            <Typography variant="body2">No items. Click Add to start.</Typography>
           </Box>
         )}
 
         {/* Items list wrapped in DndContext + SortableContext */}
-        <DndContext
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
             items={items.map((item) => item._id)}
             strategy={verticalListSortingStrategy}
@@ -263,8 +251,8 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
                       {/* Item header row */}
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: 0.5,
                           mb: isCollapsed ? 0 : 1,
                         }}
@@ -276,17 +264,13 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
                           size="small"
                           disabled={disabled}
                           aria-label={`Drag item ${idx + 1}`}
-                          sx={{ cursor: disabled ? "not-allowed" : "grab" }}
+                          sx={{ cursor: disabled ? 'not-allowed' : 'grab' }}
                         >
                           <DragIndicatorIcon fontSize="small" />
                         </IconButton>
 
                         {/* Item counter */}
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ flexGrow: 1 }}
-                        >
+                        <Typography variant="caption" color="text.secondary" sx={{ flexGrow: 1 }}>
                           Item {idx + 1} of {items.length}
                         </Typography>
 
@@ -296,9 +280,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
                           onClick={() => toggleCollapse(item._id)}
                           disabled={disabled}
                           aria-label={
-                            isCollapsed
-                              ? `Expand item ${idx + 1}`
-                              : `Collapse item ${idx + 1}`
+                            isCollapsed ? `Expand item ${idx + 1}` : `Collapse item ${idx + 1}`
                           }
                         >
                           {isCollapsed ? (
@@ -332,18 +314,12 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
 
                       {/* Collapsible item body */}
                       <Collapse in={!isCollapsed}>
-                        {schemaEntries.length > 0 && (
-                          <Divider sx={{ mb: 1.5 }} />
-                        )}
+                        {schemaEntries.length > 0 && <Divider sx={{ mb: 1.5 }} />}
                         {schemaEntries.map(([fieldName, fieldDef]) => (
                           <Box key={fieldName} sx={{ mb: 1.5 }}>
                             <FieldRenderer
                               field={fieldDef}
-                              value={
-                                (item[fieldName] as unknown) ??
-                                fieldDef.defaultValue ??
-                                ""
-                              }
+                              value={(item[fieldName] as unknown) ?? fieldDef.defaultValue ?? ''}
                               onChange={handleFieldChange(idx, fieldName)}
                               disabled={disabled}
                             />
@@ -371,10 +347,10 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
         </Button>
       </Box>
     );
-  },
+  }
 );
 
-RepeaterField.displayName = "RepeaterField";
+RepeaterField.displayName = 'RepeaterField';
 
 // Self-register in the global field component registry (module scope — runs once on import)
 registerFieldComponent(FieldType.REPEATER, RepeaterField);

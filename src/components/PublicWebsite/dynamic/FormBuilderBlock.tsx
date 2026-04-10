@@ -13,10 +13,10 @@
  * - Security: submitEndpoint sanitized (must start with /)
  */
 
-import React, { memo, useCallback, useMemo, useState } from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import DOMPurify from "dompurify";
+import React, { memo, useCallback, useMemo, useState } from 'react';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import DOMPurify from 'dompurify';
 import {
   Alert,
   Box,
@@ -34,16 +34,16 @@ import {
   Select,
   TextField,
   Typography,
-} from "@mui/material";
-import EmailIcon from "@mui/icons-material/Email";
-import PhoneIcon from "@mui/icons-material/Phone";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import InstagramIcon from "@mui/icons-material/Instagram";
-import FacebookIcon from "@mui/icons-material/Facebook";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import TwitterIcon from "@mui/icons-material/Twitter";
-import { MuiTelInput } from "mui-tel-input";
+} from '@mui/material';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import { MuiTelInput } from 'mui-tel-input';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -68,17 +68,17 @@ interface FormField {
   name: string;
   label: string;
   type:
-    | "text"
-    | "email"
-    | "phone"
-    | "textarea"
-    | "select"
-    | "cascading-select"
-    | "file"
-    | "checkbox"
-    | "date"
-    | "number"
-    | "url";
+    | 'text'
+    | 'email'
+    | 'phone'
+    | 'textarea'
+    | 'select'
+    | 'cascading-select'
+    | 'file'
+    | 'checkbox'
+    | 'date'
+    | 'number'
+    | 'url';
   required?: boolean;
   halfWidth?: boolean;
   placeholder?: string;
@@ -108,7 +108,9 @@ interface FormBuilderContent {
   submitEndpoint: string;
   submitButtonText?: string;
   successMessage?: string;
-  layout?: "single-column" | "two-column" | "compact";
+  layout?: 'single-column' | 'two-column' | 'compact';
+  fieldVariant?: 'outlined' | 'standard' | 'filled';
+  fieldColor?: string;
   fields: FormField[];
   contactInfo?: ContactInfo | null;
   showSocialLinks?: boolean;
@@ -128,7 +130,7 @@ interface FormBuilderBlockProps {
   primaryColor?: string;
 }
 
-type SubmitState = "idle" | "submitting" | "success" | "error";
+type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
 // ---------------------------------------------------------------------------
 // Security: sanitize endpoint (must be relative or same-origin)
@@ -139,26 +141,26 @@ type SubmitState = "idle" | "submitting" | "success" | "error";
  * Allow only http, https, mailto, and tel protocols.
  */
 const safeSocialUrl = (url: string): string => {
-  if (!url) return "#";
+  if (!url) return '#';
   const trimmed = url.trim().toLowerCase();
   if (
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("https://") ||
-    trimmed.startsWith("mailto:") ||
-    trimmed.startsWith("tel:")
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('mailto:') ||
+    trimmed.startsWith('tel:')
   ) {
     return url.trim();
   }
-  return "#";
+  return '#';
 };
 
 const sanitizeEndpoint = (endpoint: string): string => {
-  if (!endpoint) return "/api/contact";
+  if (!endpoint) return '/api/contact';
   const trimmed = endpoint.trim();
   // Allow only relative paths starting with /
-  if (trimmed.startsWith("/")) return trimmed;
+  if (trimmed.startsWith('/')) return trimmed;
   // Reject absolute URLs (open redirect / SSRF risk)
-  return "/api/contact";
+  return '/api/contact';
 };
 
 // ---------------------------------------------------------------------------
@@ -172,38 +174,27 @@ const buildYupSchema = (fields: FormField[]): Yup.ObjectSchema<any> => {
     const { name, type, required, validation = {} } = field;
     let schema: Yup.Schema;
 
-    if (type === "checkbox") {
+    if (type === 'checkbox') {
       schema = Yup.boolean();
       if (required) {
-        schema = (schema as Yup.BooleanSchema).oneOf(
-          [true],
-          `${field.label} is required`,
-        );
+        schema = (schema as Yup.BooleanSchema).oneOf([true], `${field.label} is required`);
       }
-    } else if (type === "number") {
-      let numSchema = Yup.number()
-        .nullable()
-        .typeError(`${field.label} must be a number`);
-      if (required)
-        numSchema = numSchema.required(`${field.label} is required`);
-      if (validation.min !== undefined)
-        numSchema = numSchema.min(validation.min);
-      if (validation.max !== undefined)
-        numSchema = numSchema.max(validation.max);
+    } else if (type === 'number') {
+      let numSchema = Yup.number().nullable().typeError(`${field.label} must be a number`);
+      if (required) numSchema = numSchema.required(`${field.label} is required`);
+      if (validation.min !== undefined) numSchema = numSchema.min(validation.min);
+      if (validation.max !== undefined) numSchema = numSchema.max(validation.max);
       schema = numSchema;
-    } else if (type === "file") {
+    } else if (type === 'file') {
       let fileSchema = Yup.mixed().nullable();
       if (required)
-        fileSchema = (fileSchema as Yup.MixedSchema).required(
-          `${field.label} is required`,
-        );
+        fileSchema = (fileSchema as Yup.MixedSchema).required(`${field.label} is required`);
       const maxFileSize = field.maxSize || validation?.maxFileSize;
       if (maxFileSize) {
         fileSchema = (fileSchema as Yup.MixedSchema).test(
-          "fileSize",
+          'fileSize',
           `File must be smaller than ${Math.round(maxFileSize / (1024 * 1024))} MB`,
-          (value) =>
-            !value || !(value instanceof File) || value.size <= maxFileSize,
+          (value) => !value || !(value instanceof File) || value.size <= maxFileSize
         );
       }
       schema = fileSchema;
@@ -211,22 +202,22 @@ const buildYupSchema = (fields: FormField[]): Yup.ObjectSchema<any> => {
       // String-based fields
       let strSchema: Yup.StringSchema<string | null | undefined> = Yup.string();
 
-      if (type === "email") {
-        strSchema = strSchema.email("Invalid email address");
-      } else if (type === "url") {
-        strSchema = strSchema.url("Invalid URL address");
+      if (type === 'email') {
+        strSchema = strSchema.email('Invalid email address');
+      } else if (type === 'url') {
+        strSchema = strSchema.url('Invalid URL address');
       }
 
       if (validation.minLength !== undefined) {
         strSchema = strSchema.min(
           validation.minLength,
-          `Must be at least ${validation.minLength} characters`,
+          `Must be at least ${validation.minLength} characters`
         );
       }
       if (validation.maxLength !== undefined) {
         strSchema = strSchema.max(
           validation.maxLength,
-          `Must be at most ${validation.maxLength} characters`,
+          `Must be at most ${validation.maxLength} characters`
         );
       }
 
@@ -242,7 +233,7 @@ const buildYupSchema = (fields: FormField[]): Yup.ObjectSchema<any> => {
     shape[name] = schema;
 
     // Cascading select: add sub-field schema
-    if (type === "cascading-select") {
+    if (type === 'cascading-select') {
       shape[`${name}_sub`] = Yup.string().nullable();
     }
   }
@@ -257,15 +248,15 @@ const buildYupSchema = (fields: FormField[]): Yup.ObjectSchema<any> => {
 const buildInitialValues = (fields: FormField[]): Record<string, any> => {
   const values: Record<string, any> = {};
   for (const field of fields) {
-    if (field.type === "checkbox") {
+    if (field.type === 'checkbox') {
       values[field.name] = false;
-    } else if (field.type === "file") {
+    } else if (field.type === 'file') {
       values[field.name] = null;
     } else {
-      values[field.name] = "";
+      values[field.name] = '';
     }
-    if (field.type === "cascading-select") {
-      values[`${field.name}_sub`] = "";
+    if (field.type === 'cascading-select') {
+      values[`${field.name}_sub`] = '';
     }
   }
   return values;
@@ -275,8 +266,7 @@ const buildInitialValues = (fields: FormField[]): Record<string, any> => {
 // Check if any field is a file upload (determines multipart encoding)
 // ---------------------------------------------------------------------------
 
-const hasFileFields = (fields: FormField[]): boolean =>
-  fields.some((f) => f.type === "file");
+const hasFileFields = (fields: FormField[]): boolean => fields.some((f) => f.type === 'file');
 
 // ---------------------------------------------------------------------------
 // Social icon map
@@ -291,6 +281,30 @@ const SOCIAL_ICONS: Record<string, React.ComponentType<any>> = {
 };
 
 // ---------------------------------------------------------------------------
+// Field color sx helper
+// ---------------------------------------------------------------------------
+
+function getFieldColorSx(variant: string, color: string): object {
+  if (!color) return {};
+  if (variant === 'standard') {
+    return {
+      '& .MuiInput-underline:after': { borderBottomColor: color },
+      '& .MuiInputLabel-root.Mui-focused': { color },
+    };
+  }
+  if (variant === 'filled') {
+    return {
+      '& .MuiFilledInput-root:after': { borderBottomColor: color },
+      '& .MuiInputLabel-root.Mui-focused': { color },
+    };
+  }
+  return {
+    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: color },
+    '& .MuiInputLabel-root.Mui-focused': { color },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Individual field renderers
 // ---------------------------------------------------------------------------
 
@@ -298,9 +312,17 @@ interface FieldProps {
   field: FormField;
   formik: ReturnType<typeof useFormik>;
   disabled: boolean;
+  fieldVariant?: 'outlined' | 'standard' | 'filled';
+  fieldSx?: object;
 }
 
-const renderTextField = ({ field, formik, disabled }: FieldProps) => (
+const renderTextField = ({
+  field,
+  formik,
+  disabled,
+  fieldVariant = 'outlined',
+  fieldSx = {},
+}: FieldProps) => (
   <TextField
     fullWidth
     id={field.name}
@@ -309,22 +331,29 @@ const renderTextField = ({ field, formik, disabled }: FieldProps) => (
     type="text"
     required={field.required}
     placeholder={field.placeholder}
-    value={formik.values[field.name] ?? ""}
+    value={formik.values[field.name] ?? ''}
     onChange={formik.handleChange}
     onBlur={formik.handleBlur}
     error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
     helperText={
       formik.touched[field.name] && formik.errors[field.name]
         ? String(formik.errors[field.name])
-        : ""
+        : ''
     }
     disabled={disabled}
-    variant="outlined"
+    variant={fieldVariant}
     size="small"
+    sx={fieldSx}
   />
 );
 
-const renderEmailField = ({ field, formik, disabled }: FieldProps) => (
+const renderEmailField = ({
+  field,
+  formik,
+  disabled,
+  fieldVariant = 'outlined',
+  fieldSx = {},
+}: FieldProps) => (
   <TextField
     fullWidth
     id={field.name}
@@ -333,18 +362,19 @@ const renderEmailField = ({ field, formik, disabled }: FieldProps) => (
     type="email"
     required={field.required}
     placeholder={field.placeholder}
-    value={formik.values[field.name] ?? ""}
+    value={formik.values[field.name] ?? ''}
     onChange={formik.handleChange}
     onBlur={formik.handleBlur}
     error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
     helperText={
       formik.touched[field.name] && formik.errors[field.name]
         ? String(formik.errors[field.name])
-        : ""
+        : ''
     }
     disabled={disabled}
-    variant="outlined"
+    variant={fieldVariant}
     size="small"
+    sx={fieldSx}
   />
 );
 
@@ -352,12 +382,12 @@ const renderPhoneField = ({ field, formik, disabled }: FieldProps) => (
   <FormControl fullWidth>
     <MuiTelInput
       label={field.label}
-      value={formik.values[field.name] ?? ""}
+      value={formik.values[field.name] ?? ''}
       onChange={(val) => formik.setFieldValue(field.name, val)}
       onBlur={() => formik.setFieldTouched(field.name, true)}
       disabled={disabled}
       defaultCountry="US"
-      preferredCountries={["US", "GB", "CA"]}
+      preferredCountries={['US', 'GB', 'CA']}
     />
     {formik.touched[field.name] && formik.errors[field.name] && (
       <FormHelperText error>{String(formik.errors[field.name])}</FormHelperText>
@@ -365,7 +395,13 @@ const renderPhoneField = ({ field, formik, disabled }: FieldProps) => (
   </FormControl>
 );
 
-const renderTextareaField = ({ field, formik, disabled }: FieldProps) => (
+const renderTextareaField = ({
+  field,
+  formik,
+  disabled,
+  fieldVariant = 'outlined',
+  fieldSx = {},
+}: FieldProps) => (
   <TextField
     fullWidth
     id={field.name}
@@ -373,20 +409,21 @@ const renderTextareaField = ({ field, formik, disabled }: FieldProps) => (
     label={field.label}
     required={field.required}
     placeholder={field.placeholder}
-    value={formik.values[field.name] ?? ""}
+    value={formik.values[field.name] ?? ''}
     onChange={formik.handleChange}
     onBlur={formik.handleBlur}
     error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
     helperText={
       formik.touched[field.name] && formik.errors[field.name]
         ? String(formik.errors[field.name])
-        : ""
+        : ''
     }
     disabled={disabled}
     multiline
     rows={4}
-    variant="outlined"
+    variant={fieldVariant}
     size="small"
+    sx={fieldSx}
   />
 );
 
@@ -402,12 +439,12 @@ const renderSelectField = ({ field, formik, disabled }: FieldProps) => {
         id={field.name}
         name={field.name}
         label={field.label}
-        value={formik.values[field.name] ?? ""}
+        value={formik.values[field.name] ?? ''}
         onChange={formik.handleChange}
         onBlur={formik.handleBlur}
         error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
         disabled={disabled}
-        inputProps={{ "aria-labelledby": labelId }}
+        inputProps={{ 'aria-labelledby': labelId }}
       >
         <MenuItem value="">
           <em>Select an option</em>
@@ -419,9 +456,7 @@ const renderSelectField = ({ field, formik, disabled }: FieldProps) => {
         ))}
       </Select>
       {formik.touched[field.name] && formik.errors[field.name] && (
-        <FormHelperText error>
-          {String(formik.errors[field.name])}
-        </FormHelperText>
+        <FormHelperText error>{String(formik.errors[field.name])}</FormHelperText>
       )}
     </FormControl>
   );
@@ -441,9 +476,9 @@ const CascadingSelectField: React.FC<CascadingSelectProps> = ({
   disabled,
   onParentChange,
 }) => {
-  const parentValue = formik.values[field.name] ?? "";
+  const parentValue = formik.values[field.name] ?? '';
   const subFieldName = `${field.name}_sub`;
-  const subValue = formik.values[subFieldName] ?? "";
+  const subValue = formik.values[subFieldName] ?? '';
 
   const parentLabelId = `${field.name}-label`;
   const childLabelId = `${subFieldName}-label`;
@@ -451,9 +486,7 @@ const CascadingSelectField: React.FC<CascadingSelectProps> = ({
   // Derive child options from selected parent value
   const childOptions = useMemo(() => {
     if (!parentValue) return [];
-    const parentOption = (field.options || []).find(
-      (o) => o.value === parentValue,
-    );
+    const parentOption = (field.options || []).find((o) => o.value === parentValue);
     return parentOption?.children || [];
   }, [parentValue, field.options]);
 
@@ -462,11 +495,11 @@ const CascadingSelectField: React.FC<CascadingSelectProps> = ({
       const value = e.target.value as string;
       onParentChange(field.name, subFieldName, value);
     },
-    [field.name, subFieldName, onParentChange],
+    [field.name, subFieldName, onParentChange]
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       {/* Parent select */}
       <FormControl fullWidth variant="outlined" size="small">
         <InputLabel id={parentLabelId} required={field.required}>
@@ -480,11 +513,9 @@ const CascadingSelectField: React.FC<CascadingSelectProps> = ({
           value={parentValue}
           onChange={handleParentChange as any}
           onBlur={formik.handleBlur}
-          error={
-            formik.touched[field.name] && Boolean(formik.errors[field.name])
-          }
+          error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
           disabled={disabled}
-          inputProps={{ "aria-labelledby": parentLabelId }}
+          inputProps={{ 'aria-labelledby': parentLabelId }}
         >
           <MenuItem value="">
             <em>Select an option</em>
@@ -496,18 +527,14 @@ const CascadingSelectField: React.FC<CascadingSelectProps> = ({
           ))}
         </Select>
         {formik.touched[field.name] && formik.errors[field.name] && (
-          <FormHelperText error>
-            {String(formik.errors[field.name])}
-          </FormHelperText>
+          <FormHelperText error>{String(formik.errors[field.name])}</FormHelperText>
         )}
       </FormControl>
 
       {/* Child select — visually indented */}
       <Box sx={{ ml: 3 }}>
         <FormControl fullWidth variant="outlined" size="small">
-          <InputLabel id={childLabelId}>
-            {field.label} (sub-category)
-          </InputLabel>
+          <InputLabel id={childLabelId}>{field.label} (sub-category)</InputLabel>
           <Select
             labelId={childLabelId}
             id={subFieldName}
@@ -517,7 +544,7 @@ const CascadingSelectField: React.FC<CascadingSelectProps> = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             disabled={disabled || !parentValue}
-            inputProps={{ "aria-labelledby": childLabelId }}
+            inputProps={{ 'aria-labelledby': childLabelId }}
           >
             {!parentValue && (
               <MenuItem value="" disabled>
@@ -538,26 +565,20 @@ const CascadingSelectField: React.FC<CascadingSelectProps> = ({
 
 const renderFileField = ({ field, formik, disabled }: FieldProps) => (
   <FormControl fullWidth>
-    <Typography
-      variant="caption"
-      color="text.secondary"
-      sx={{ mb: 0.5, display: "block" }}
-    >
+    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
       {field.label}
-      {field.required && " *"}
+      {field.required && ' *'}
     </Typography>
     <Box
       sx={{
-        border: "2px dashed",
+        border: '2px dashed',
         borderColor:
-          formik.touched[field.name] && formik.errors[field.name]
-            ? "error.main"
-            : "divider",
+          formik.touched[field.name] && formik.errors[field.name] ? 'error.main' : 'divider',
         borderRadius: 1,
         p: 2,
-        textAlign: "center",
-        cursor: disabled ? "not-allowed" : "pointer",
-        "&:hover": { borderColor: disabled ? "divider" : "primary.main" },
+        textAlign: 'center',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        '&:hover': { borderColor: disabled ? 'divider' : 'primary.main' },
       }}
     >
       <input
@@ -567,7 +588,7 @@ const renderFileField = ({ field, formik, disabled }: FieldProps) => (
         accept={field.accept}
         aria-label={field.label}
         disabled={disabled}
-        style={{ display: "block", width: "100%" }}
+        style={{ display: 'block', width: '100%' }}
         onChange={(e) => {
           const file = e.currentTarget.files?.[0] ?? null;
           formik.setFieldValue(field.name, file);
@@ -582,9 +603,7 @@ const renderFileField = ({ field, formik, disabled }: FieldProps) => (
 );
 
 const renderCheckboxField = ({ field, formik, disabled }: FieldProps) => (
-  <FormControl
-    error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
-  >
+  <FormControl error={formik.touched[field.name] && Boolean(formik.errors[field.name])}>
     <FormControlLabel
       control={
         <Checkbox
@@ -596,7 +615,7 @@ const renderCheckboxField = ({ field, formik, disabled }: FieldProps) => (
           disabled={disabled}
         />
       }
-      label={`${field.label}${field.required ? " *" : ""}`}
+      label={`${field.label}${field.required ? ' *' : ''}`}
     />
     {formik.touched[field.name] && formik.errors[field.name] && (
       <FormHelperText>{String(formik.errors[field.name])}</FormHelperText>
@@ -604,7 +623,13 @@ const renderCheckboxField = ({ field, formik, disabled }: FieldProps) => (
   </FormControl>
 );
 
-const renderDateField = ({ field, formik, disabled }: FieldProps) => (
+const renderDateField = ({
+  field,
+  formik,
+  disabled,
+  fieldVariant = 'outlined',
+  fieldSx = {},
+}: FieldProps) => (
   <TextField
     fullWidth
     id={field.name}
@@ -612,18 +637,19 @@ const renderDateField = ({ field, formik, disabled }: FieldProps) => (
     label={field.label}
     type="date"
     required={field.required}
-    value={formik.values[field.name] ?? ""}
+    value={formik.values[field.name] ?? ''}
     onChange={formik.handleChange}
     onBlur={formik.handleBlur}
     error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
     helperText={
       formik.touched[field.name] && formik.errors[field.name]
         ? String(formik.errors[field.name])
-        : ""
+        : ''
     }
     disabled={disabled}
-    variant="outlined"
+    variant={fieldVariant}
     size="small"
+    sx={fieldSx}
     InputLabelProps={{ shrink: true }}
   />
 );
@@ -637,14 +663,14 @@ const renderNumberField = ({ field, formik, disabled }: FieldProps) => (
     type="number"
     required={field.required}
     placeholder={field.placeholder}
-    value={formik.values[field.name] ?? ""}
+    value={formik.values[field.name] ?? ''}
     onChange={formik.handleChange}
     onBlur={formik.handleBlur}
     error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
     helperText={
       formik.touched[field.name] && formik.errors[field.name]
         ? String(formik.errors[field.name])
-        : ""
+        : ''
     }
     disabled={disabled}
     variant="outlined"
@@ -661,14 +687,14 @@ const renderUrlField = ({ field, formik, disabled }: FieldProps) => (
     type="url"
     required={field.required}
     placeholder={field.placeholder}
-    value={formik.values[field.name] ?? ""}
+    value={formik.values[field.name] ?? ''}
     onChange={formik.handleChange}
     onBlur={formik.handleBlur}
     error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
     helperText={
       formik.touched[field.name] && formik.errors[field.name]
         ? String(formik.errors[field.name])
-        : ""
+        : ''
     }
     disabled={disabled}
     variant="outlined"
@@ -680,33 +706,32 @@ const renderUrlField = ({ field, formik, disabled }: FieldProps) => (
 // Main component
 // ---------------------------------------------------------------------------
 
-const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
-  block,
-  primaryColor,
-}) => {
+const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({ block, primaryColor }) => {
   const content = block.content;
   const {
     title,
     description,
     submitEndpoint,
-    submitButtonText = "Submit",
-    successMessage = "Your form has been submitted successfully!",
-    layout = "single-column",
+    submitButtonText = 'Submit',
+    successMessage = 'Your form has been submitted successfully!',
+    layout = 'single-column',
+    fieldVariant = 'outlined',
+    fieldColor = '',
     fields = [],
     contactInfo,
     showSocialLinks = false,
     socialLinks = {},
   } = content;
 
-  const resolvedPrimaryColor =
-    primaryColor || content.primaryColor || "#2563eb";
-  const safeEndpoint = useMemo(
-    () => sanitizeEndpoint(submitEndpoint),
-    [submitEndpoint],
+  const resolvedPrimaryColor = primaryColor || content.primaryColor || '#2563eb';
+  const safeEndpoint = useMemo(() => sanitizeEndpoint(submitEndpoint), [submitEndpoint]);
+  const fieldSx = useMemo(
+    () => getFieldColorSx(fieldVariant, fieldColor),
+    [fieldVariant, fieldColor]
   );
 
-  const [submitState, setSubmitState] = useState<SubmitState>("idle");
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [submitState, setSubmitState] = useState<SubmitState>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   // Memoized validation schema
   const validationSchema = useMemo(() => buildYupSchema(fields), [fields]);
@@ -715,7 +740,7 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
   const initialValues = useMemo(() => buildInitialValues(fields), [fields]);
 
   // Is submitting
-  const isSubmitting = submitState === "submitting";
+  const isSubmitting = submitState === 'submitting';
 
   const formik = useFormik({
     initialValues,
@@ -723,8 +748,8 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
     validateOnBlur: true,
     validateOnChange: false,
     onSubmit: async (values, { resetForm }) => {
-      setSubmitState("submitting");
-      setErrorMessage("");
+      setSubmitState('submitting');
+      setErrorMessage('');
 
       try {
         const useMultipart = hasFileFields(fields);
@@ -744,17 +769,17 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
           // Don't set Content-Type for FormData (browser sets boundary automatically)
         } else {
           body = JSON.stringify(values);
-          headers["Content-Type"] = "application/json";
+          headers['Content-Type'] = 'application/json';
         }
 
         const response = await fetch(safeEndpoint, {
-          method: "POST",
+          method: 'POST',
           headers,
           body,
         });
 
         if (!response.ok) {
-          let msg = "Submission failed. Please try again.";
+          let msg = 'Submission failed. Please try again.';
           try {
             const data = await response.json();
             if (data?.message) msg = data.message;
@@ -764,13 +789,11 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
           throw new Error(msg);
         }
 
-        setSubmitState("success");
+        setSubmitState('success');
         resetForm();
       } catch (err: any) {
-        setErrorMessage(
-          err?.message || "An unexpected error occurred. Please try again.",
-        );
-        setSubmitState("error");
+        setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.');
+        setSubmitState('error');
       }
     },
   });
@@ -779,38 +802,44 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
   const handleCascadeParentChange = useCallback(
     (parentName: string, subName: string, value: string) => {
       formik.setFieldValue(parentName, value);
-      formik.setFieldValue(subName, "");
+      formik.setFieldValue(subName, '');
     },
-    [formik],
+    [formik]
   );
 
   // Retry handler
   const handleRetry = useCallback(() => {
-    setSubmitState("idle");
-    setErrorMessage("");
+    setSubmitState('idle');
+    setErrorMessage('');
   }, []);
 
   // Determine layout spacing
-  const gridSpacing = layout === "compact" ? 1 : 2;
-  const containerPy = layout === "compact" ? 4 : 8;
+  const gridSpacing = layout === 'compact' ? 1 : 2;
+  const containerPy = layout === 'compact' ? 4 : 8;
 
   // Render a single field
   const renderField = useCallback(
     (field: FormField) => {
-      const fieldProps: FieldProps = { field, formik, disabled: isSubmitting };
+      const fieldProps: FieldProps = {
+        field,
+        formik,
+        disabled: isSubmitting,
+        fieldVariant,
+        fieldSx,
+      };
 
       switch (field.type) {
-        case "text":
+        case 'text':
           return renderTextField(fieldProps);
-        case "email":
+        case 'email':
           return renderEmailField(fieldProps);
-        case "phone":
+        case 'phone':
           return renderPhoneField(fieldProps);
-        case "textarea":
+        case 'textarea':
           return renderTextareaField(fieldProps);
-        case "select":
+        case 'select':
           return renderSelectField(fieldProps);
-        case "cascading-select":
+        case 'cascading-select':
           return (
             <CascadingSelectField
               key={field.name}
@@ -818,47 +847,43 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
               onParentChange={handleCascadeParentChange}
             />
           );
-        case "file":
+        case 'file':
           return renderFileField(fieldProps);
-        case "checkbox":
+        case 'checkbox':
           return renderCheckboxField(fieldProps);
-        case "date":
+        case 'date':
           return renderDateField(fieldProps);
-        case "number":
+        case 'number':
           return renderNumberField(fieldProps);
-        case "url":
+        case 'url':
           return renderUrlField(fieldProps);
         default:
           return renderTextField(fieldProps);
       }
     },
-    [formik, isSubmitting, handleCascadeParentChange],
+    [formik, isSubmitting, handleCascadeParentChange, fieldVariant, fieldSx]
   );
 
   // Determine grid size for a field
   const getGridSize = (field: FormField) => {
-    if (layout === "two-column" && field.halfWidth) {
+    if (layout === 'two-column' && field.halfWidth) {
       return { xs: 12, sm: 6 };
     }
     return { xs: 12 };
   };
 
   const hasContactInfo =
-    contactInfo &&
-    (contactInfo.email || contactInfo.phone || contactInfo.address);
+    contactInfo && (contactInfo.email || contactInfo.phone || contactInfo.address);
 
   const activeSocialLinks = useMemo(
-    () =>
-      showSocialLinks
-        ? Object.entries(socialLinks).filter(([, url]) => Boolean(url))
-        : [],
-    [showSocialLinks, socialLinks],
+    () => (showSocialLinks ? Object.entries(socialLinks).filter(([, url]) => Boolean(url)) : []),
+    [showSocialLinks, socialLinks]
   );
 
   const hasSideContent = hasContactInfo || activeSocialLinks.length > 0;
 
   return (
-    <Box sx={{ py: containerPy, bgcolor: "background.default" }}>
+    <Box sx={{ py: containerPy, bgcolor: 'background.default' }}>
       <Container maxWidth="lg">
         <Grid container spacing={4}>
           {/* Contact info / social links sidebar */}
@@ -870,17 +895,13 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
                     variant="h5"
                     component="h2"
                     gutterBottom
-                    sx={{ fontWeight: 700, color: "text.primary", mb: 2 }}
+                    sx={{ fontWeight: 700, color: 'text.primary', mb: 2 }}
                   >
                     {DOMPurify.sanitize(title)}
                   </Typography>
                 )}
                 {description && (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 3 }}
-                  >
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                     {DOMPurify.sanitize(description)}
                   </Typography>
                 )}
@@ -889,14 +910,7 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
                 {hasContactInfo && (
                   <Box sx={{ mb: 3 }}>
                     {contactInfo?.email && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 1.5,
-                        }}
-                      >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                         <EmailIcon fontSize="small" color="action" />
                         <Typography
                           component="a"
@@ -904,8 +918,8 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
                           variant="body2"
                           sx={{
                             color: resolvedPrimaryColor,
-                            textDecoration: "none",
-                            "&:hover": { textDecoration: "underline" },
+                            textDecoration: 'none',
+                            '&:hover': { textDecoration: 'underline' },
                           }}
                         >
                           {contactInfo.email}
@@ -913,14 +927,7 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
                       </Box>
                     )}
                     {contactInfo?.phone && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 1.5,
-                        }}
-                      >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                         <PhoneIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
                           {contactInfo.phone}
@@ -928,19 +935,8 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
                       </Box>
                     )}
                     {contactInfo?.address && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 1,
-                          mb: 1.5,
-                        }}
-                      >
-                        <LocationOnIcon
-                          fontSize="small"
-                          color="action"
-                          sx={{ mt: 0.3 }}
-                        />
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.5 }}>
+                        <LocationOnIcon fontSize="small" color="action" sx={{ mt: 0.3 }} />
                         <Typography variant="body2" color="text.secondary">
                           {contactInfo.address}
                         </Typography>
@@ -951,10 +947,9 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
 
                 {/* Social links */}
                 {activeSocialLinks.length > 0 && (
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     {activeSocialLinks.map(([platform, url]) => {
-                      const IconComponent =
-                        SOCIAL_ICONS[platform.toLowerCase()];
+                      const IconComponent = SOCIAL_ICONS[platform.toLowerCase()];
                       if (!IconComponent) return null;
                       return (
                         <IconButton
@@ -966,8 +961,8 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
                           aria-label={platform}
                           size="small"
                           sx={{
-                            color: "text.secondary",
-                            "&:hover": { color: resolvedPrimaryColor },
+                            color: 'text.secondary',
+                            '&:hover': { color: resolvedPrimaryColor },
                           }}
                         >
                           <IconComponent fontSize="small" />
@@ -990,7 +985,7 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
                     variant="h4"
                     component="h2"
                     gutterBottom
-                    sx={{ fontWeight: 700, color: "text.primary" }}
+                    sx={{ fontWeight: 700, color: 'text.primary' }}
                   >
                     {DOMPurify.sanitize(title)}
                   </Typography>
@@ -1004,14 +999,14 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
             )}
 
             {/* Success state */}
-            {submitState === "success" && (
+            {submitState === 'success' && (
               <Alert severity="success" sx={{ mb: 3 }}>
                 {successMessage}
               </Alert>
             )}
 
             {/* Error state */}
-            {submitState === "error" && (
+            {submitState === 'error' && (
               <Alert
                 severity="error"
                 sx={{ mb: 3 }}
@@ -1021,12 +1016,12 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
                   </Button>
                 }
               >
-                {errorMessage || "Submission failed. Please try again."}
+                {errorMessage || 'Submission failed. Please try again.'}
               </Alert>
             )}
 
             {/* Form — hidden on success */}
-            {submitState !== "success" && (
+            {submitState !== 'success' && (
               <Box component="form" onSubmit={formik.handleSubmit} noValidate>
                 <Grid container spacing={gridSpacing}>
                   {fields.map((field) => (
@@ -1036,27 +1031,22 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
                   ))}
                 </Grid>
 
-                <Box sx={{ mt: layout === "compact" ? 2 : 3 }}>
+                <Box sx={{ mt: layout === 'compact' ? 2 : 3 }}>
                   <Button
                     type="submit"
                     variant="contained"
-                    size={layout === "compact" ? "medium" : "large"}
+                    size={layout === 'compact' ? 'medium' : 'large'}
                     disabled={isSubmitting}
                     startIcon={
-                      isSubmitting ? (
-                        <CircularProgress size={16} color="inherit" />
-                      ) : undefined
+                      isSubmitting ? <CircularProgress size={16} color="inherit" /> : undefined
                     }
                     sx={{
                       bgcolor: resolvedPrimaryColor,
-                      "&:hover": {
-                        bgcolor: resolvedPrimaryColor,
-                        opacity: 0.9,
-                      },
+                      '&:hover': { bgcolor: resolvedPrimaryColor, opacity: 0.9 },
                       minWidth: 140,
                     }}
                   >
-                    {isSubmitting ? "Sending…" : submitButtonText}
+                    {isSubmitting ? 'Sending…' : submitButtonText}
                   </Button>
                 </Box>
               </Box>
@@ -1069,6 +1059,6 @@ const FormBuilderBlockBase: React.FC<FormBuilderBlockProps> = ({
 };
 
 const FormBuilderBlock = memo(FormBuilderBlockBase);
-FormBuilderBlock.displayName = "FormBuilderBlock";
+FormBuilderBlock.displayName = 'FormBuilderBlock';
 
 export default FormBuilderBlock;

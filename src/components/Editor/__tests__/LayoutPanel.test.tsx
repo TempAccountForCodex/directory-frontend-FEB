@@ -10,16 +10,16 @@
  * 6. Home page checkbox disabled with 'Required' chip
  * 7. DraggableBlockList conditional render
  */
-import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("../../Editor/DraggablePageList", () => ({
+vi.mock('../../Editor/DraggablePageList', () => ({
   default: ({ pages }: any) => (
     <div data-testid="draggable-page-list">
       {pages.map((p: any) => (
@@ -29,7 +29,7 @@ vi.mock("../../Editor/DraggablePageList", () => ({
   ),
 }));
 
-vi.mock("../../Editor/DraggableBlockList", () => ({
+vi.mock('../../Editor/DraggableBlockList', () => ({
   default: ({ blocks }: any) => (
     <div data-testid="draggable-block-list">
       {blocks.map((b: any) => (
@@ -43,28 +43,23 @@ vi.mock("../../Editor/DraggableBlockList", () => ({
 // Subject under test
 // ---------------------------------------------------------------------------
 
-import LayoutPanel from "../LayoutPanel";
+import LayoutPanel from '../LayoutPanel';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const mockColors = {
-  text: "#ffffff",
-  textSecondary: "#aaaaaa",
-  primary: "#378C92",
-  dark: "#0a0a0a",
-  border: "#333333",
-  bgDefault: "#111111",
-  warning: "#ff9800",
+  text: '#ffffff',
+  textSecondary: '#aaaaaa',
+  primary: '#378C92',
+  dark: '#0a0a0a',
+  border: '#333333',
+  bgDefault: '#111111',
+  warning: '#ff9800',
 };
 
-const makePage = (
-  id: string,
-  title: string,
-  selected: boolean,
-  isHome = false,
-) => ({
+const makePage = (id: string, title: string, selected: boolean, isHome = false) => ({
   id,
   title,
   path: `/${title.toLowerCase()}`,
@@ -75,25 +70,15 @@ const makePage = (
 });
 
 const baseSections = [
-  {
-    pageTitle: "Home",
-    sectionIndex: 0,
-    sectionName: "Hero Section",
-    enabled: true,
-  },
-  {
-    pageTitle: "Services",
-    sectionIndex: 0,
-    sectionName: "Services Section",
-    enabled: true,
-  },
+  { pageTitle: 'Home', sectionIndex: 0, sectionName: 'Hero Section', enabled: true },
+  { pageTitle: 'Services', sectionIndex: 0, sectionName: 'Services Section', enabled: true },
 ];
 
 const baseProps = {
   pages: [
-    makePage("p1", "Home", true, true),
-    makePage("p2", "About", true),
-    makePage("p3", "Services", false),
+    makePage('p1', 'Home', true, true),
+    makePage('p2', 'About', true),
+    makePage('p3', 'Services', false),
   ],
   sections: baseSections,
   maxPagesPerWebsite: 5,
@@ -108,70 +93,67 @@ const baseProps = {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("LayoutPanel", () => {
+describe('LayoutPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders Page Selection & Order section heading", () => {
+  it('renders Page Selection & Order section heading', () => {
     render(<LayoutPanel {...baseProps} />);
-    expect(screen.getByText("Page Selection & Order")).toBeInTheDocument();
+    expect(screen.getByText('Page Selection & Order')).toBeInTheDocument();
   });
 
-  it("renders all pages in the list", () => {
+  it('renders all pages in the list', () => {
     render(<LayoutPanel {...baseProps} />);
     // Page titles may appear in both page card and DraggablePageList mock
-    expect(screen.getAllByText("Home").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("About").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Services")).toBeInTheDocument();
+    expect(screen.getAllByText('Home').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('About').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Services')).toBeInTheDocument();
   });
 
-  it("home page has Required chip", () => {
+  it('home page has Required chip', () => {
     render(<LayoutPanel {...baseProps} />);
-    expect(screen.getByText("Required")).toBeInTheDocument();
+    expect(screen.getByText('Required')).toBeInTheDocument();
   });
 
-  it("clicking a non-home page checkbox fires onTogglePage", () => {
+  it('clicking a non-home page checkbox fires onTogglePage', () => {
     render(<LayoutPanel {...baseProps} />);
     // Find About page checkbox
-    const checkboxes = screen.getAllByRole("checkbox");
+    const checkboxes = screen.getAllByRole('checkbox');
     // Home is index 0 (disabled), About is index 1
     fireEvent.click(checkboxes[1]);
-    expect(baseProps.onTogglePage).toHaveBeenCalledWith("p2");
+    expect(baseProps.onTogglePage).toHaveBeenCalledWith('p2');
   });
 
-  it("renders DraggablePageList when >1 selected pages", () => {
+  it('renders DraggablePageList when >1 selected pages', () => {
     render(<LayoutPanel {...baseProps} />);
     // 2 selected pages (Home + About)
-    expect(screen.getByTestId("draggable-page-list")).toBeInTheDocument();
+    expect(screen.getByTestId('draggable-page-list')).toBeInTheDocument();
   });
 
-  it("does NOT render DraggablePageList when only 1 selected page", () => {
+  it('does NOT render DraggablePageList when only 1 selected page', () => {
     const props = {
       ...baseProps,
-      pages: [
-        makePage("p1", "Home", true, true),
-        makePage("p2", "About", false),
-      ],
+      pages: [makePage('p1', 'Home', true, true), makePage('p2', 'About', false)],
     };
     render(<LayoutPanel {...props} />);
-    expect(screen.queryByTestId("draggable-page-list")).not.toBeInTheDocument();
+    expect(screen.queryByTestId('draggable-page-list')).not.toBeInTheDocument();
   });
 
-  it("renders Section Visibility heading", () => {
+  it('renders Section Visibility heading', () => {
     render(<LayoutPanel {...baseProps} />);
-    expect(screen.getByText("Section Visibility")).toBeInTheDocument();
+    expect(screen.getByText('Section Visibility')).toBeInTheDocument();
   });
 
-  it("renders section toggles", () => {
+  it('renders section toggles', () => {
     render(<LayoutPanel {...baseProps} />);
-    expect(screen.getByText("Hero Section")).toBeInTheDocument();
-    expect(screen.getByText("Services Section")).toBeInTheDocument();
+    expect(screen.getByText('Hero Section')).toBeInTheDocument();
+    expect(screen.getByText('Services Section')).toBeInTheDocument();
   });
 
-  it("clicking section toggle fires onToggleSection", () => {
+  it('clicking section toggle fires onToggleSection', () => {
     render(<LayoutPanel {...baseProps} />);
-    const sectionCheckboxes = screen.getAllByRole("checkbox");
+    const sectionCheckboxes = screen.getAllByRole('checkbox');
     // After page checkboxes, section checkboxes follow
     // Home (disabled) + About + Services = 3 page checkboxes, then section checkboxes
     const sectionCheckbox = sectionCheckboxes[3]; // first section checkbox
@@ -179,15 +161,15 @@ describe("LayoutPanel", () => {
     expect(baseProps.onToggleSection).toHaveBeenCalled();
   });
 
-  it("shows max page warning when limit reached", () => {
+  it('shows max page warning when limit reached', () => {
     const props = {
       ...baseProps,
       pages: [
-        makePage("p1", "Home", true, true),
-        makePage("p2", "About", true),
-        makePage("p3", "Services", true),
-        makePage("p4", "Contact", true),
-        makePage("p5", "Blog", true),
+        makePage('p1', 'Home', true, true),
+        makePage('p2', 'About', true),
+        makePage('p3', 'Services', true),
+        makePage('p4', 'Contact', true),
+        makePage('p5', 'Blog', true),
       ],
       maxPagesPerWebsite: 5,
     };
@@ -195,17 +177,13 @@ describe("LayoutPanel", () => {
     expect(screen.getByText(/Maximum reached/i)).toBeInTheDocument();
   });
 
-  it("does NOT render DraggableBlockList when blocks/pageId/websiteId not provided", () => {
+  it('does NOT render DraggableBlockList when blocks/pageId/websiteId not provided', () => {
     render(<LayoutPanel {...baseProps} />);
-    expect(
-      screen.queryByTestId("draggable-block-list"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('draggable-block-list')).not.toBeInTheDocument();
   });
 
-  it("renders DraggableBlockList when blocks, pageId, websiteId all provided", () => {
-    const blocks = [
-      { id: 1, blockType: "HERO", content: {}, isVisible: true, sortOrder: 0 },
-    ];
+  it('renders DraggableBlockList when blocks, pageId, websiteId all provided', () => {
+    const blocks = [{ id: 1, blockType: 'HERO', content: {}, isVisible: true, sortOrder: 0 }];
     render(
       <LayoutPanel
         {...baseProps}
@@ -213,8 +191,8 @@ describe("LayoutPanel", () => {
         pageId={10}
         websiteId={5}
         onBlocksChange={vi.fn()}
-      />,
+      />
     );
-    expect(screen.getByTestId("draggable-block-list")).toBeInTheDocument();
+    expect(screen.getByTestId('draggable-block-list')).toBeInTheDocument();
   });
 });

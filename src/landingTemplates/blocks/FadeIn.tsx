@@ -1,19 +1,14 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React from 'react';
+import { motion } from 'framer-motion';
 
 interface FadeInProps {
   children: React.ReactNode;
   delay?: number;
-  direction?: "up" | "down" | "left" | "right" | "none";
+  direction?: 'up' | 'down' | 'left' | 'right' | 'none';
   className?: string;
 }
 
-const FadeIn: React.FC<FadeInProps> = ({
-  children,
-  delay = 0,
-  direction = "up",
-  className,
-}) => {
+const FadeIn: React.FC<FadeInProps> = ({ children, delay = 0, direction = 'up', className }) => {
   const directionMap = {
     up: { y: 32 },
     down: { y: -32 },
@@ -27,7 +22,7 @@ const FadeIn: React.FC<FadeInProps> = ({
       className={className}
       initial={{ opacity: 0, ...directionMap[direction] }}
       whileInView={{ opacity: 1, x: 0, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.6, delay, ease: [0.22, 0.61, 0.36, 1] }}
     >
       {children}

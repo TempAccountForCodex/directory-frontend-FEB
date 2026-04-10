@@ -34,15 +34,12 @@ export interface ValidationRules {
  * @returns      An array of human-readable error messages.
  *               Returns an empty array when the value passes all rules.
  */
-export function validateField(
-  value: unknown,
-  rules: ValidationRules,
-): string[] {
+export function validateField(value: unknown, rules: ValidationRules): string[] {
   const errors: string[] = [];
 
   // required
-  if (rules.required && (value == null || value === "")) {
-    errors.push("Required");
+  if (rules.required && (value == null || value === '')) {
+    errors.push('Required');
   }
 
   // minLength — applies to strings (and array-like values with .length)
@@ -64,31 +61,31 @@ export function validateField(
   }
 
   // min — numeric comparison
-  if (rules.min != null && typeof value === "number" && value < rules.min) {
+  if (rules.min != null && typeof value === 'number' && value < rules.min) {
     errors.push(`Must be at least ${rules.min}`);
   }
 
   // max — numeric comparison
-  if (rules.max != null && typeof value === "number" && value > rules.max) {
+  if (rules.max != null && typeof value === 'number' && value > rules.max) {
     errors.push(`Must be at most ${rules.max}`);
   }
 
   // pattern — RegExp test against string representation
-  if (rules.pattern && !rules.pattern.test(String(value ?? ""))) {
-    errors.push("Invalid format");
+  if (rules.pattern && !rules.pattern.test(String(value ?? ''))) {
+    errors.push('Invalid format');
   }
 
   // email — simple RFC-5322 subset check
-  if (rules.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? ""))) {
-    errors.push("Invalid email address");
+  if (rules.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? ''))) {
+    errors.push('Invalid email address');
   }
 
   // url — WHATWG URL constructor
   if (rules.url) {
     try {
-      new URL(String(value ?? ""));
+      new URL(String(value ?? ''));
     } catch {
-      errors.push("Invalid URL");
+      errors.push('Invalid URL');
     }
   }
 

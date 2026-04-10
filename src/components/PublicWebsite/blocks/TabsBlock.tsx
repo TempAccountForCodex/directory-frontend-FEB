@@ -11,11 +11,11 @@
  * - React.memo for performance
  */
 
-import React, { useState } from "react";
-import { Box, Container, Tab, Tabs, Typography } from "@mui/material";
-import { motion, AnimatePresence } from "framer-motion";
-import { useInView } from "react-intersection-observer";
-import DOMPurify from "dompurify";
+import React, { useState } from 'react';
+import { Box, Container, Tab, Tabs, Typography } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+import DOMPurify from 'dompurify';
 import {
   Business as BusinessIcon,
   Build as BuildIcon,
@@ -38,7 +38,7 @@ import {
   MenuBook as CertIcon,
   Web as WebIcon,
   Star as StarIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 // ---- Types ----
 
@@ -51,8 +51,8 @@ interface TabItem {
 interface TabsBlockContent {
   heading?: string;
   tabs?: TabItem[];
-  variant?: "standard" | "outlined" | "pills";
-  orientation?: "horizontal" | "vertical";
+  variant?: 'standard' | 'outlined' | 'pills';
+  orientation?: 'horizontal' | 'vertical';
   defaultTab?: number;
 }
 
@@ -122,15 +122,10 @@ interface TabPanelProps {
   children: React.ReactNode;
   index: number;
   value: number;
-  orientation: "horizontal" | "vertical";
+  orientation: 'horizontal' | 'vertical';
 }
 
-const TabPanel: React.FC<TabPanelProps> = ({
-  children,
-  index,
-  value,
-  orientation,
-}) => {
+const TabPanel: React.FC<TabPanelProps> = ({ children, index, value, orientation }) => {
   const isActive = value === index;
   return (
     <Box
@@ -140,9 +135,9 @@ const TabPanel: React.FC<TabPanelProps> = ({
       sx={{
         flex: 1,
         // SSR: always in DOM; JS toggles visibility
-        display: isActive ? "block" : "none",
-        pt: orientation === "horizontal" ? 3 : 0,
-        pl: orientation === "vertical" ? 3 : 0,
+        display: isActive ? 'block' : 'none',
+        pt: orientation === 'horizontal' ? 3 : 0,
+        pl: orientation === 'vertical' ? 3 : 0,
       }}
     >
       {children}
@@ -154,14 +149,14 @@ const TabPanel: React.FC<TabPanelProps> = ({
 
 const TabsBlock: React.FC<TabsBlockProps> = ({
   block,
-  primaryColor = "#2563eb",
-  headingColor = "#1e293b",
-  bodyColor = "#475569",
+  primaryColor = '#2563eb',
+  headingColor = '#1e293b',
+  bodyColor = '#475569',
 }) => {
   const { content } = block;
   const tabs = content.tabs || [];
-  const variant = content.variant || "standard";
-  const orientation = content.orientation || "horizontal";
+  const variant = content.variant || 'standard';
+  const orientation = content.orientation || 'horizontal';
   const defaultTab = content.defaultTab ?? 0;
   const safeDefault = Math.max(0, Math.min(defaultTab, tabs.length - 1));
 
@@ -176,60 +171,60 @@ const TabsBlock: React.FC<TabsBlockProps> = ({
   // ---- Variant-specific tab styles ----
   const getTabsSx = () => {
     const base = {
-      borderBottom: orientation === "horizontal" ? 1 : "none",
-      borderRight: orientation === "vertical" ? 1 : "none",
-      borderColor: "divider",
-      minWidth: orientation === "vertical" ? 160 : "auto",
+      borderBottom: orientation === 'horizontal' ? 1 : 'none',
+      borderRight: orientation === 'vertical' ? 1 : 'none',
+      borderColor: 'divider',
+      minWidth: orientation === 'vertical' ? 160 : 'auto',
     };
 
-    if (variant === "outlined") {
+    if (variant === 'outlined') {
       return {
         ...base,
-        "& .MuiTab-root": {
-          border: "1px solid",
-          borderColor: "divider",
+        '& .MuiTab-root': {
+          border: '1px solid',
+          borderColor: 'divider',
           borderRadius: 1,
           mr: 0.5,
-          mb: orientation === "horizontal" ? 0.5 : 0.5,
-          "&.Mui-selected": {
+          mb: orientation === 'horizontal' ? 0.5 : 0.5,
+          '&.Mui-selected': {
             borderColor: primaryColor,
             color: primaryColor,
             bgcolor: `${primaryColor}10`,
           },
         },
-        "& .MuiTabs-indicator": { display: "none" },
+        '& .MuiTabs-indicator': { display: 'none' },
       };
     }
 
-    if (variant === "pills") {
+    if (variant === 'pills') {
       return {
         ...base,
-        borderBottom: "none",
-        borderRight: "none",
-        "& .MuiTab-root": {
-          borderRadius: "9999px",
+        borderBottom: 'none',
+        borderRight: 'none',
+        '& .MuiTab-root': {
+          borderRadius: '9999px',
           mr: 0.5,
           mb: 0.5,
           px: 2.5,
           py: 1,
           minHeight: 36,
-          "&.Mui-selected": {
+          '&.Mui-selected': {
             bgcolor: primaryColor,
-            color: "white",
+            color: 'white',
           },
-          "&:hover": {
+          '&:hover': {
             bgcolor: `${primaryColor}20`,
           },
         },
-        "& .MuiTabs-indicator": { display: "none" },
+        '& .MuiTabs-indicator': { display: 'none' },
       };
     }
 
     // standard
     return {
       ...base,
-      "& .MuiTab-root.Mui-selected": { color: primaryColor },
-      "& .MuiTabs-indicator": { backgroundColor: primaryColor },
+      '& .MuiTab-root.Mui-selected': { color: primaryColor },
+      '& .MuiTabs-indicator': { backgroundColor: primaryColor },
     };
   };
 
@@ -238,7 +233,7 @@ const TabsBlock: React.FC<TabsBlockProps> = ({
       ref={ref}
       initial={{ opacity: 0, y: 30 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <Box sx={{ py: 8 }}>
         <Container maxWidth="lg">
@@ -256,11 +251,8 @@ const TabsBlock: React.FC<TabsBlockProps> = ({
 
           <Box
             sx={{
-              display: "flex",
-              flexDirection: {
-                xs: "column",
-                md: orientation === "vertical" ? "row" : "column",
-              },
+              display: 'flex',
+              flexDirection: { xs: 'column', md: orientation === 'vertical' ? 'row' : 'column' },
             }}
           >
             {/* Tabs navigation */}
@@ -268,9 +260,7 @@ const TabsBlock: React.FC<TabsBlockProps> = ({
               value={activeTab}
               onChange={handleChange}
               orientation={
-                orientation === "vertical"
-                  ? ("vertical" as const)
-                  : ("horizontal" as const)
+                orientation === 'vertical' ? ('vertical' as const) : ('horizontal' as const)
               }
               variant="scrollable"
               scrollButtons="auto"
@@ -278,9 +268,7 @@ const TabsBlock: React.FC<TabsBlockProps> = ({
               sx={getTabsSx()}
             >
               {tabs.map((tab, index) => {
-                const IconComponent = tab.icon
-                  ? getIconComponent(tab.icon)
-                  : null;
+                const IconComponent = tab.icon ? getIconComponent(tab.icon) : null;
                 return (
                   <Tab
                     key={index}
@@ -289,7 +277,7 @@ const TabsBlock: React.FC<TabsBlockProps> = ({
                     label={tab.label}
                     icon={IconComponent ? <IconComponent /> : undefined}
                     iconPosition="start"
-                    sx={{ textTransform: "none", fontWeight: 500 }}
+                    sx={{ textTransform: 'none', fontWeight: 500 }}
                   />
                 );
               })}
@@ -298,18 +286,9 @@ const TabsBlock: React.FC<TabsBlockProps> = ({
             {/* Tab panels */}
             <AnimatePresence mode="wait">
               {tabs.map((tab, index) => (
-                <TabPanel
-                  key={index}
-                  index={index}
-                  value={activeTab}
-                  orientation={orientation}
-                >
+                <TabPanel key={index} index={index} value={activeTab} orientation={orientation}>
                   <motion.div
-                    key={
-                      activeTab === index
-                        ? `active-${index}`
-                        : `inactive-${index}`
-                    }
+                    key={activeTab === index ? `active-${index}` : `inactive-${index}`}
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
@@ -320,7 +299,7 @@ const TabsBlock: React.FC<TabsBlockProps> = ({
                       component="div"
                       sx={{ color: bodyColor, lineHeight: 1.8 }}
                       dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(tab.content || ""),
+                        __html: DOMPurify.sanitize(tab.content || ''),
                       }}
                     />
                   </motion.div>

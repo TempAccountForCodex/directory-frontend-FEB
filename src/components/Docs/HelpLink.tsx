@@ -5,8 +5,8 @@
  * Purely presentational — no API calls.
  */
 
-import React, { memo } from "react";
-import Typography from "@mui/material/Typography";
+import React, { memo } from 'react';
+import Typography from '@mui/material/Typography';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -23,7 +23,7 @@ interface HelpLinkProps {
 // Component
 // ---------------------------------------------------------------------------
 
-const HelpLink = memo<HelpLinkProps>(({ slug, text = "Learn more" }) => {
+const HelpLink = memo<HelpLinkProps>(({ slug, text = 'Learn more' }) => {
   return (
     <Typography
       component="a"
@@ -32,11 +32,11 @@ const HelpLink = memo<HelpLinkProps>(({ slug, text = "Learn more" }) => {
       rel="noopener noreferrer"
       variant="caption"
       sx={{
-        color: "primary.main",
-        textDecoration: "none",
+        color: 'primary.main',
+        textDecoration: 'none',
         fontWeight: 500,
-        "&:hover": {
-          textDecoration: "underline",
+        '&:hover': {
+          textDecoration: 'underline',
         },
       }}
     >
@@ -45,6 +45,6 @@ const HelpLink = memo<HelpLinkProps>(({ slug, text = "Learn more" }) => {
   );
 });
 
-HelpLink.displayName = "HelpLink";
+HelpLink.displayName = 'HelpLink';
 
 export default HelpLink;

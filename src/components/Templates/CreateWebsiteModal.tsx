@@ -9,62 +9,51 @@
  * that is not connected to this modal. PR.5 will unify both flows.
  */
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Stepper from "@mui/material/Stepper";
-import Step from "@mui/material/Step";
-import StepLabel from "@mui/material/StepLabel";
-import IconButton from "@mui/material/IconButton";
-import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
-import InputAdornment from "@mui/material/InputAdornment";
-import Alert from "@mui/material/Alert";
-import Fade from "@mui/material/Fade";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useTheme } from "@mui/material/styles";
-import { X, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
-import axios from "axios";
-import { type TemplateSummary } from "../../templates/templateApi";
-import { getDashboardColors } from "../../styles/dashboardTheme";
-import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-import DashboardInput from "../Dashboard/shared/DashboardInput";
-import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
-import DashboardActionButton from "../Dashboard/shared/DashboardActionButton";
-import DashboardCancelButton from "../Dashboard/shared/DashboardCancelButton";
-import ListingOptInStep from "../WebsiteEditor/ListingOptInStep";
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import IconButton from '@mui/material/IconButton';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import InputAdornment from '@mui/material/InputAdornment';
+import Alert from '@mui/material/Alert';
+import Fade from '@mui/material/Fade';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import { X, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import axios from 'axios';
+import { type TemplateSummary } from '../../templates/templateApi';
+import { getDashboardColors } from '../../styles/dashboardTheme';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
+import DashboardInput from '../Dashboard/shared/DashboardInput';
+import DashboardGradientButton from '../Dashboard/shared/DashboardGradientButton';
+import DashboardActionButton from '../Dashboard/shared/DashboardActionButton';
+import DashboardCancelButton from '../Dashboard/shared/DashboardCancelButton';
+import ListingOptInStep from '../WebsiteEditor/ListingOptInStep';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-const STEPS = [
-  "Name Your Website",
-  "Choose Your Address",
-  "Customize",
-  "Directory Listing",
-];
+const STEPS = ['Name Your Website', 'Choose Your Address', 'Customize', 'Directory Listing'];
 
 /** Slugify a name for subdomain use */
 function slugify(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
     .slice(0, 63);
 }
 
-type SubdomainStatus =
-  | "idle"
-  | "checking"
-  | "available"
-  | "taken"
-  | "invalid"
-  | "error";
+type SubdomainStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'error';
 
 interface CreateWebsiteModalProps {
   open: boolean;
@@ -79,23 +68,22 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
   template,
   onClose,
   onSuccess,
-  planCode = "website_free",
+  planCode = 'website_free',
 }: CreateWebsiteModalProps) {
   const muiTheme = useTheme();
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
-  const isFullScreen = useMediaQuery(muiTheme.breakpoints.down("sm"));
+  const isFullScreen = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
   // Wizard state
   const [activeStep, setActiveStep] = useState(0);
-  const [websiteName, setWebsiteName] = useState("");
-  const [subdomain, setSubdomain] = useState("");
-  const [subdomainStatus, setSubdomainStatus] =
-    useState<SubdomainStatus>("idle");
-  const [subdomainError, setSubdomainError] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#378C92");
+  const [websiteName, setWebsiteName] = useState('');
+  const [subdomain, setSubdomain] = useState('');
+  const [subdomainStatus, setSubdomainStatus] = useState<SubdomainStatus>('idle');
+  const [subdomainError, setSubdomainError] = useState('');
+  const [primaryColor, setPrimaryColor] = useState('#378C92');
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [createdWebsiteId, setCreatedWebsiteId] = useState<number | null>(null);
 
   // Debounce timer ref
@@ -105,13 +93,13 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
   useEffect(() => {
     if (open) {
       setActiveStep(0);
-      setWebsiteName("");
-      setSubdomain("");
-      setSubdomainStatus("idle");
-      setSubdomainError("");
-      setPrimaryColor("#378C92");
+      setWebsiteName('');
+      setSubdomain('');
+      setSubdomainStatus('idle');
+      setSubdomainError('');
+      setPrimaryColor('#378C92');
       setCreating(false);
-      setError("");
+      setError('');
       setCreatedWebsiteId(null);
     }
   }, [open]);
@@ -124,60 +112,55 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
   // Check subdomain availability
   const checkSubdomain = useCallback(async (value: string) => {
     if (!value || value.length < 3) {
-      setSubdomainStatus("idle");
+      setSubdomainStatus('idle');
       return;
     }
     if (!isValidSubdomain(value)) {
-      setSubdomainStatus("invalid");
-      setSubdomainError(
-        "Only lowercase letters, numbers, and hyphens (3-63 chars)",
-      );
+      setSubdomainStatus('invalid');
+      setSubdomainError('Only lowercase letters, numbers, and hyphens (3-63 chars)');
       return;
     }
-    setSubdomainStatus("checking");
+    setSubdomainStatus('checking');
     try {
       const res = await axios.get(
-        `${API_URL}/domains/check-availability?subdomain=${encodeURIComponent(value)}`,
+        `${API_URL}/domains/check-availability?subdomain=${encodeURIComponent(value)}`
       );
       if (res.data?.available) {
-        setSubdomainStatus("available");
-        setSubdomainError("");
+        setSubdomainStatus('available');
+        setSubdomainError('');
       } else {
-        setSubdomainStatus("taken");
+        setSubdomainStatus('taken');
         setSubdomainError(`${value}.techietribe.app is taken`);
       }
     } catch {
-      setSubdomainStatus("error");
-      setSubdomainError("Unable to verify availability. Please try again.");
+      setSubdomainStatus('error');
+      setSubdomainError('Unable to verify availability. Please try again.');
     }
   }, []);
 
   // Debounced subdomain check
   const handleSubdomainChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
       setSubdomain(val);
-      setSubdomainStatus("idle");
+      setSubdomainStatus('idle');
 
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
         checkSubdomain(val);
       }, 500);
     },
-    [checkSubdomain],
+    [checkSubdomain]
   );
 
   // Auto-generate subdomain from name
-  const handleNameChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
-      setWebsiteName(val);
-      const slug = slugify(val);
-      setSubdomain(slug);
-      setSubdomainStatus("idle");
-    },
-    [],
-  );
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setWebsiteName(val);
+    const slug = slugify(val);
+    setSubdomain(slug);
+    setSubdomainStatus('idle');
+  }, []);
 
   // Step 1 → Step 2: auto-check subdomain
   const handleNext = useCallback(() => {
@@ -194,12 +177,12 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
   // Create website
   const handleCreate = useCallback(async () => {
     if (!template) return;
-    if (subdomainStatus !== "available") {
-      setError("Please verify subdomain availability before creating.");
+    if (subdomainStatus !== 'available') {
+      setError('Please verify subdomain availability before creating.');
       return;
     }
     setCreating(true);
-    setError("");
+    setError('');
 
     try {
       const res = await axios.post(`${API_URL}/websites/from-template`, {
@@ -215,44 +198,34 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
         setCreatedWebsiteId(res.data.data.id);
         setActiveStep(3); // Go to directory opt-in step
       } else {
-        setError(res.data?.message || "Failed to create website");
+        setError(res.data?.message || 'Failed to create website');
       }
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to create website";
+      const msg = err.response?.data?.message || err.message || 'Failed to create website';
       setError(msg);
     } finally {
       setCreating(false);
     }
-  }, [
-    template,
-    websiteName,
-    subdomain,
-    primaryColor,
-    subdomainStatus,
-    onSuccess,
-  ]);
+  }, [template, websiteName, subdomain, primaryColor, subdomainStatus, onSuccess]);
 
   // Validation
   const nameValid = websiteName.trim().length >= 3;
-  const subdomainReady = subdomainStatus === "available";
+  const subdomainReady = subdomainStatus === 'available';
   const canProceedStep0 = nameValid;
   const canProceedStep1 = subdomainReady;
 
   // Subdomain adornment icon
   const subdomainIcon = (() => {
     switch (subdomainStatus) {
-      case "checking":
+      case 'checking':
         return <CircularProgress size={16} />;
-      case "available":
+      case 'available':
         return <CheckCircle size={16} color="#16a34a" />;
-      case "taken":
+      case 'taken':
         return <XCircle size={16} color="#dc2626" />;
-      case "invalid":
+      case 'invalid':
         return <AlertTriangle size={16} color="#f59e0b" />;
-      case "error":
+      case 'error':
         return <AlertTriangle size={16} color="#f59e0b" />;
       default:
         return null;
@@ -261,9 +234,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
 
   // Suggestion chips when taken
   const suggestions =
-    subdomainStatus === "taken"
-      ? [`${subdomain}2`, `${subdomain}-app`, `${subdomain}-site`]
-      : [];
+    subdomainStatus === 'taken' ? [`${subdomain}2`, `${subdomain}-app`, `${subdomain}-site`] : [];
 
   return (
     <Dialog
@@ -278,16 +249,16 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
         sx: {
           backgroundColor: colors.panelBg || colors.bgCard,
           border: `1px solid ${colors.border}`,
-          backdropFilter: "blur(12px)",
+          backdropFilter: 'blur(12px)',
         },
       }}
     >
       <DialogTitle
         id="create-website-title"
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           pr: 1,
           color: colors.text,
         }}
@@ -310,14 +281,11 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
           alternativeLabel
           sx={{
             mb: 3,
-            "& .MuiStepLabel-label": {
-              color: colors.textSecondary,
-              fontSize: "0.8rem",
-            },
-            "& .MuiStepLabel-label.Mui-active": { color: colors.text },
-            "& .MuiStepLabel-label.Mui-completed": { color: "#378C92" },
-            "& .MuiStepIcon-root.Mui-active": { color: "#378C92" },
-            "& .MuiStepIcon-root.Mui-completed": { color: "#378C92" },
+            '& .MuiStepLabel-label': { color: colors.textSecondary, fontSize: '0.8rem' },
+            '& .MuiStepLabel-label.Mui-active': { color: colors.text },
+            '& .MuiStepLabel-label.Mui-completed': { color: '#378C92' },
+            '& .MuiStepIcon-root.Mui-active': { color: '#378C92' },
+            '& .MuiStepIcon-root.Mui-completed': { color: '#378C92' },
           }}
         >
           {STEPS.map((label) => (
@@ -330,14 +298,14 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
         {template && (
           <Typography
             variant="caption"
-            sx={{ color: colors.textSecondary, mb: 2, display: "block" }}
+            sx={{ color: colors.textSecondary, mb: 2, display: 'block' }}
           >
             Template: {template.name}
           </Typography>
         )}
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
             {error}
           </Alert>
         )}
@@ -352,21 +320,14 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
               onChange={handleNameChange}
               error={websiteName.length > 0 && !nameValid}
               helperText={
-                websiteName.length > 0 && !nameValid
-                  ? "Name must be at least 3 characters"
-                  : ""
+                websiteName.length > 0 && !nameValid ? 'Name must be at least 3 characters' : ''
               }
               autoFocus
             />
             {websiteName && subdomain && (
-              <Typography
-                variant="body2"
-                sx={{ mt: 2, color: colors.textSecondary }}
-              >
-                Your website will be at:{" "}
-                <strong style={{ color: "#378C92" }}>
-                  {subdomain}.techietribe.app
-                </strong>
+              <Typography variant="body2" sx={{ mt: 2, color: colors.textSecondary }}>
+                Your website will be at:{' '}
+                <strong style={{ color: '#378C92' }}>{subdomain}.techietribe.app</strong>
               </Typography>
             )}
           </Box>
@@ -381,30 +342,27 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
               value={subdomain}
               onChange={handleSubdomainChange}
               error={
-                subdomainStatus === "taken" ||
-                subdomainStatus === "invalid" ||
-                subdomainStatus === "error"
+                subdomainStatus === 'taken' ||
+                subdomainStatus === 'invalid' ||
+                subdomainStatus === 'error'
               }
               helperText={
-                subdomainStatus === "available"
+                subdomainStatus === 'available'
                   ? `${subdomain}.techietribe.app is available`
-                  : subdomainStatus === "taken" ||
-                      subdomainStatus === "invalid" ||
-                      subdomainStatus === "error"
+                  : subdomainStatus === 'taken' ||
+                      subdomainStatus === 'invalid' ||
+                      subdomainStatus === 'error'
                     ? subdomainError
-                    : ""
+                    : ''
               }
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {subdomainIcon}
                       <Typography
                         variant="caption"
-                        sx={{
-                          color: colors.textSecondary,
-                          whiteSpace: "nowrap",
-                        }}
+                        sx={{ color: colors.textSecondary, whiteSpace: 'nowrap' }}
                       >
                         .techietribe.app
                       </Typography>
@@ -416,10 +374,10 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
             />
 
             {suggestions.length > 0 && (
-              <Box sx={{ mt: 1, display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+              <Box sx={{ mt: 1, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                 <Typography
                   variant="caption"
-                  sx={{ color: colors.textSecondary, width: "100%", mb: 0.5 }}
+                  sx={{ color: colors.textSecondary, width: '100%', mb: 0.5 }}
                 >
                   Try one of these:
                 </Typography>
@@ -430,16 +388,14 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                     size="small"
                     onClick={() => {
                       setSubdomain(s);
-                      setSubdomainStatus("idle");
+                      setSubdomainStatus('idle');
                       checkSubdomain(s);
                     }}
                     sx={{
-                      cursor: "pointer",
-                      borderColor: "#378C92",
-                      color: "#378C92",
-                      "&:hover": {
-                        backgroundColor: "rgba(55, 140, 146, 0.08)",
-                      },
+                      cursor: 'pointer',
+                      borderColor: '#378C92',
+                      color: '#378C92',
+                      '&:hover': { backgroundColor: 'rgba(55, 140, 146, 0.08)' },
                     }}
                     variant="outlined"
                   />
@@ -452,18 +408,12 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
         {/* Step 3: Customize */}
         {activeStep === 2 && (
           <Box>
-            <Typography
-              variant="body2"
-              sx={{ color: colors.textSecondary, mb: 2 }}
-            >
+            <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 2 }}>
               Customize your website&apos;s look (optional)
             </Typography>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-              <Typography
-                variant="body2"
-                sx={{ color: colors.text, minWidth: 100 }}
-              >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Typography variant="body2" sx={{ color: colors.text, minWidth: 100 }}>
                 Primary Color
               </Typography>
               <input
@@ -475,15 +425,12 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                   height: 44,
                   border: `1px solid ${colors.border}`,
                   borderRadius: 8,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                   padding: 2,
-                  background: "transparent",
+                  background: 'transparent',
                 }}
               />
-              <Typography
-                variant="caption"
-                sx={{ color: colors.textSecondary }}
-              >
+              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
                 {primaryColor}
               </Typography>
             </Box>
@@ -503,13 +450,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
       </DialogContent>
 
       <DialogActions
-        sx={{
-          px: 3,
-          pb: 2,
-          gap: 1,
-          flexWrap: "wrap",
-          display: activeStep === 3 ? "none" : "flex",
-        }}
+        sx={{ px: 3, pb: 2, gap: 1, flexWrap: 'wrap', display: activeStep === 3 ? 'none' : 'flex' }}
       >
         <DashboardCancelButton onClick={onClose} disabled={creating}>
           Cancel
@@ -527,8 +468,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
           <DashboardGradientButton
             onClick={handleNext}
             disabled={
-              (activeStep === 0 && !canProceedStep0) ||
-              (activeStep === 1 && !canProceedStep1)
+              (activeStep === 0 && !canProceedStep0) || (activeStep === 1 && !canProceedStep1)
             }
           >
             Next
@@ -541,11 +481,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
               Skip &amp; Create
             </DashboardActionButton>
             <DashboardGradientButton onClick={handleCreate} disabled={creating}>
-              {creating ? (
-                <CircularProgress size={20} sx={{ color: "#fff" }} />
-              ) : (
-                "Create Website"
-              )}
+              {creating ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Create Website'}
             </DashboardGradientButton>
           </>
         )}

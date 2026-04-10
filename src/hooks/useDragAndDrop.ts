@@ -20,7 +20,7 @@
  * - useCallback on all event handlers for stable references
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 import {
   useSensors,
   useSensor,
@@ -30,8 +30,8 @@ import {
   closestCenter,
   type DragEndEvent,
   type CollisionDetection,
-} from "@dnd-kit/core";
-import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -96,7 +96,7 @@ export function useDragAndDrop<T extends DraggableItem>({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    })
   );
 
   // ── Drag-end handler ───────────────────────────────────────────────────────
@@ -119,7 +119,7 @@ export function useDragAndDrop<T extends DraggableItem>({
         onReorder(arrayMove(items, oldIndex, newIndex));
       }
     },
-    [items, onReorder],
+    [items, onReorder]
   );
 
   // ── setActiveId callback ───────────────────────────────────────────────────

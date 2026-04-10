@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface GoogleAnalyticsConfig {
   measurementId: string;
@@ -16,15 +16,15 @@ export const initializeGA = (config: GoogleAnalyticsConfig) => {
   }
 
   // Check if gtag is already loaded
-  if (typeof window.gtag === "function") {
+  if (typeof window.gtag === 'function') {
     if (config.debug) {
-      console.log("[GA] Already initialized");
+      console.log('[GA] Already initialized');
     }
     return;
   }
 
   // Load Google Analytics script
-  const script = document.createElement("script");
+  const script = document.createElement('script');
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${config.measurementId}`;
   document.head.appendChild(script);
@@ -35,14 +35,14 @@ export const initializeGA = (config: GoogleAnalyticsConfig) => {
     window.dataLayer.push(arguments);
   };
 
-  window.gtag("js", new Date());
-  window.gtag("config", config.measurementId, {
+  window.gtag('js', new Date());
+  window.gtag('config', config.measurementId, {
     send_page_view: false, // We'll handle page views manually
     debug_mode: config.debug,
   });
 
   if (config.debug) {
-    console.log("[GA] Initialized with measurement ID:", config.measurementId);
+    console.log('[GA] Initialized with measurement ID:', config.measurementId);
   }
 };
 
@@ -52,13 +52,13 @@ export const initializeGA = (config: GoogleAnalyticsConfig) => {
 export const trackPageView = (
   path: string,
   title?: string,
-  additionalParams?: Record<string, any>,
+  additionalParams?: Record<string, any>
 ) => {
-  if (typeof window.gtag !== "function") {
+  if (typeof window.gtag !== 'function') {
     return;
   }
 
-  window.gtag("event", "page_view", {
+  window.gtag('event', 'page_view', {
     page_path: path,
     page_title: title,
     ...additionalParams,
@@ -68,25 +68,19 @@ export const trackPageView = (
 /**
  * Track custom event
  */
-export const trackEvent = (
-  eventName: string,
-  eventParams?: Record<string, any>,
-) => {
-  if (typeof window.gtag !== "function") {
+export const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
+  if (typeof window.gtag !== 'function') {
     return;
   }
 
-  window.gtag("event", eventName, eventParams);
+  window.gtag('event', eventName, eventParams);
 };
 
 /**
  * Track button/link clicks
  */
-export const trackClick = (
-  elementName: string,
-  additionalParams?: Record<string, any>,
-) => {
-  trackEvent("click", {
+export const trackClick = (elementName: string, additionalParams?: Record<string, any>) => {
+  trackEvent('click', {
     element_name: elementName,
     ...additionalParams,
   });
@@ -98,9 +92,9 @@ export const trackClick = (
 export const trackFormSubmit = (
   formName: string,
   success: boolean,
-  additionalParams?: Record<string, any>,
+  additionalParams?: Record<string, any>
 ) => {
-  trackEvent("form_submit", {
+  trackEvent('form_submit', {
     form_name: formName,
     success,
     ...additionalParams,
@@ -113,9 +107,9 @@ export const trackFormSubmit = (
 export const trackConversion = (
   conversionName: string,
   value?: number,
-  currency: string = "USD",
+  currency: string = 'USD'
 ) => {
-  trackEvent("conversion", {
+  trackEvent('conversion', {
     conversion_name: conversionName,
     value,
     currency,
@@ -142,7 +136,7 @@ export const useGoogleAnalytics = (config: GoogleAnalyticsConfig) => {
     trackPageView(location.pathname + location.search, document.title);
 
     if (config.debug) {
-      console.log("[GA] Page view tracked:", location.pathname);
+      console.log('[GA] Page view tracked:', location.pathname);
     }
   }, [location, config.enabled, config.debug]);
 

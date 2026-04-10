@@ -1,16 +1,7 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Typography,
-  Stack,
-  Button,
-  Chip,
-  IconButton,
-  Divider,
-  Avatar,
-} from "@mui/material";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
+import React, { useState } from 'react';
+import { Box, Typography, Stack, Button, Chip, IconButton, Divider, Avatar } from '@mui/material';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
 import {
   Instagram,
   Facebook,
@@ -21,21 +12,21 @@ import {
   Truck,
   Star,
   Headphones,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import type { TemplateProps } from "../../templateEngine/types";
-import type { Product } from "../../types/BusinessData";
-import FadeIn from "../../blocks/FadeIn";
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { TemplateProps } from '../../templateEngine/types';
+import type { Product } from '../../types/BusinessData';
+import FadeIn from '../../blocks/FadeIn';
 
 const MotionBox = motion(Box);
 const MotionImg = motion.img;
 
 /* ─── Trust Badge Strip ───────────────────────────────────────── */
 const TRUST_BADGES = [
-  { icon: Shield, label: "Quality Guaranteed" },
-  { icon: Truck, label: "Fast Delivery" },
-  { icon: Star, label: "Top Rated" },
-  { icon: Headphones, label: "Expert Support" },
+  { icon: Shield, label: 'Quality Guaranteed' },
+  { icon: Truck, label: 'Fast Delivery' },
+  { icon: Star, label: 'Top Rated' },
+  { icon: Headphones, label: 'Expert Support' },
 ];
 
 /* ─── Product Card ────────────────────────────────────────────── */
@@ -58,62 +49,53 @@ function ProductCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       sx={{
-        bgcolor: "#fff",
+        bgcolor: '#fff',
         borderRadius: 3,
-        overflow: "hidden",
-        border: "1px solid #f0f0f0",
-        transition: "box-shadow 0.3s",
-        "&:hover": { boxShadow: "0 20px 60px rgba(0,0,0,0.1)" },
+        overflow: 'hidden',
+        border: '1px solid #f0f0f0',
+        transition: 'box-shadow 0.3s',
+        '&:hover': { boxShadow: '0 20px 60px rgba(0,0,0,0.1)' },
       }}
     >
       {/* Image */}
-      <Box
-        sx={{
-          position: "relative",
-          height: 280,
-          overflow: "hidden",
-          bgcolor: "#f8f8f8",
-        }}
-      >
+      <Box sx={{ position: 'relative', height: 280, overflow: 'hidden', bgcolor: '#f8f8f8' }}>
         {product.image ? (
           <Box
             component="img"
             src={product.image}
             alt={product.name}
             sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transition: "transform 0.55s ease",
-              transform: hovered ? "scale(1.07)" : "scale(1)",
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'transform 0.55s ease',
+              transform: hovered ? 'scale(1.07)' : 'scale(1)',
             }}
           />
         ) : (
-          <Box sx={{ width: "100%", height: "100%", bgcolor: `${accent}18` }} />
+          <Box sx={{ width: '100%', height: '100%', bgcolor: `${accent}18` }} />
         )}
 
         {/* Badge */}
         {product.badge && (
           <Box
             sx={{
-              position: "absolute",
+              position: 'absolute',
               top: 14,
               left: 14,
               bgcolor:
-                product.badge === "Sale"
-                  ? "#ef4444"
-                  : product.badge === "New"
-                    ? "#22c55e"
+                product.badge === 'Sale'
+                  ? '#ef4444'
+                  : product.badge === 'New'
+                    ? '#22c55e'
                     : primary,
-              color: "#fff",
+              color: '#fff',
               borderRadius: 999,
               px: 1.5,
               py: 0.5,
             }}
           >
-            <Typography
-              sx={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: 1 }}
-            >
+            <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: 1 }}>
               {product.badge}
             </Typography>
           </Box>
@@ -128,15 +110,14 @@ function ProductCard({
               exit={{ opacity: 0, y: 10 }}
               transition={{ duration: 0.2 }}
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 bottom: 0,
                 left: 0,
                 right: 0,
                 p: 2,
-                display: "flex",
-                justifyContent: "center",
-                background:
-                  "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)",
+                display: 'flex',
+                justifyContent: 'center',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
               }}
             >
               <Button
@@ -144,12 +125,12 @@ function ProductCard({
                 fullWidth
                 onClick={() => onQuote(product.name)}
                 sx={{
-                  bgcolor: "#fff",
+                  bgcolor: '#fff',
                   color: primary,
                   fontWeight: 700,
                   borderRadius: 999,
-                  fontSize: "0.8rem",
-                  "&:hover": { bgcolor: "#fff", filter: "brightness(0.95)" },
+                  fontSize: '0.8rem',
+                  '&:hover': { bgcolor: '#fff', filter: 'brightness(0.95)' },
                 }}
               >
                 Get a Quote
@@ -165,10 +146,10 @@ function ProductCard({
           <Typography
             variant="caption"
             sx={{
-              color: "#bbb",
-              textTransform: "uppercase",
+              color: '#bbb',
+              textTransform: 'uppercase',
               letterSpacing: 1.5,
-              fontSize: "0.6rem",
+              fontSize: '0.6rem',
             }}
           >
             {product.category}
@@ -177,10 +158,10 @@ function ProductCard({
         <Typography
           sx={{
             fontWeight: 700,
-            color: "#111",
+            color: '#111',
             mt: 0.5,
             mb: 0.5,
-            fontSize: "1rem",
+            fontSize: '1rem',
             lineHeight: 1.3,
           }}
         >
@@ -190,11 +171,11 @@ function ProductCard({
           <Typography
             variant="caption"
             sx={{
-              color: "#888",
-              display: "-webkit-box",
+              color: '#888',
+              display: '-webkit-box',
               WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
               lineHeight: 1.6,
               mb: 1.5,
             }}
@@ -203,26 +184,15 @@ function ProductCard({
           </Typography>
         )}
         <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mt: 1.5,
-          }}
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1.5 }}
         >
           <Box>
-            <Typography
-              sx={{ fontWeight: 900, fontSize: "1.2rem", color: primary }}
-            >
+            <Typography sx={{ fontWeight: 900, fontSize: '1.2rem', color: primary }}>
               {product.price}
             </Typography>
             {product.originalPrice && (
               <Typography
-                sx={{
-                  textDecoration: "line-through",
-                  color: "#ccc",
-                  fontSize: "0.8rem",
-                }}
+                sx={{ textDecoration: 'line-through', color: '#ccc', fontSize: '0.8rem' }}
               >
                 {product.originalPrice}
               </Typography>
@@ -235,7 +205,7 @@ function ProductCard({
               border: `1px solid ${primary}33`,
               color: primary,
               borderRadius: 2,
-              "&:hover": { bgcolor: `${primary}0f`, borderColor: primary },
+              '&:hover': { bgcolor: `${primary}0f`, borderColor: primary },
             }}
           >
             <ArrowOutwardIcon sx={{ fontSize: 16 }} />
@@ -248,31 +218,25 @@ function ProductCard({
 
 /* ─── Main Component ──────────────────────────────────────────── */
 const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
-  const primary = data.primaryColor || "#111";
-  const accent = data.secondaryColor || "#f59e0b";
+  const primary = data.primaryColor || '#111';
+  const accent = data.secondaryColor || '#f59e0b';
 
   const products = data.products || [];
   const allCategories = [
-    "All",
+    'All',
     ...(data.storeCategories ||
-      Array.from(
-        new Set(products.map((p) => p.category).filter(Boolean) as string[]),
-      )),
+      Array.from(new Set(products.map((p) => p.category).filter(Boolean) as string[]))),
   ];
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState('All');
 
   const filtered =
-    activeCategory === "All"
-      ? products
-      : products.filter((p) => p.category === activeCategory);
+    activeCategory === 'All' ? products : products.filter((p) => p.category === activeCategory);
 
   const heroProduct = products[0];
   const gridProducts = products.slice(1);
 
   const handleQuote = (productName?: string) => {
-    const subject = productName
-      ? `Quote Request – ${productName}`
-      : "Quote Request";
+    const subject = productName ? `Quote Request – ${productName}` : 'Quote Request';
     if (data.contact?.email) {
       window.location.href = `mailto:${data.contact.email}?subject=${encodeURIComponent(subject)}`;
     } else if (data.contact?.phone) {
@@ -284,30 +248,30 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
     <Box
       sx={{
         fontFamily: "'Inter', -apple-system, sans-serif",
-        bgcolor: "#fafafa",
-        minHeight: "100vh",
+        bgcolor: '#fafafa',
+        minHeight: '100vh',
       }}
     >
       {/* ── NAVBAR ─────────────────────────────────────────────── */}
       <Box
         component="header"
         sx={{
-          position: "sticky",
+          position: 'sticky',
           top: 0,
           zIndex: 100,
-          bgcolor: "#fff",
-          borderBottom: "1px solid #efefef",
+          bgcolor: '#fff',
+          borderBottom: '1px solid #efefef',
           px: { xs: 3, md: 8 },
           py: 2,
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 4,
         }}
       >
         <Typography
           sx={{
             fontWeight: 900,
-            fontSize: "1.25rem",
+            fontSize: '1.25rem',
             color: primary,
             flexGrow: 1,
             letterSpacing: -0.5,
@@ -316,22 +280,18 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
           {data.name}
         </Typography>
 
-        <Stack
-          direction="row"
-          spacing={4}
-          sx={{ display: { xs: "none", md: "flex" } }}
-        >
+        <Stack direction="row" spacing={4} sx={{ display: { xs: 'none', md: 'flex' } }}>
           {allCategories.slice(1, 5).map((c) => (
             <Typography
               key={c}
               onClick={() => setActiveCategory(c)}
               variant="body2"
               sx={{
-                color: "#555",
-                cursor: "pointer",
+                color: '#555',
+                cursor: 'pointer',
                 fontWeight: 500,
-                "&:hover": { color: primary },
-                transition: "color 0.2s",
+                '&:hover': { color: primary },
+                transition: 'color 0.2s',
               }}
             >
               {c}
@@ -346,11 +306,11 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
           endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
           sx={{
             bgcolor: primary,
-            color: "#fff",
+            color: '#fff',
             fontWeight: 700,
             borderRadius: 999,
             px: 3,
-            "&:hover": { bgcolor: primary, filter: "brightness(0.88)" },
+            '&:hover': { bgcolor: primary, filter: 'brightness(0.88)' },
           }}
         >
           Get a Quote
@@ -360,18 +320,18 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
       {/* ── HERO (split: left text, right product image) ──────── */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-          minHeight: { xs: "auto", md: "88vh" },
-          bgcolor: "#fff",
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          minHeight: { xs: 'auto', md: '88vh' },
+          bgcolor: '#fff',
         }}
       >
         {/* Left text panel */}
         <Box
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
             px: { xs: 5, md: 10 },
             py: { xs: 12, md: 16 },
           }}
@@ -385,32 +345,26 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                 color: accent,
                 fontWeight: 700,
                 mb: 3,
-                fontSize: "0.7rem",
+                fontSize: '0.7rem',
                 letterSpacing: 1,
-                alignSelf: "flex-start",
+                alignSelf: 'flex-start',
               }}
             />
             <Typography
               variant="h1"
               sx={{
                 fontWeight: 900,
-                fontSize: { xs: "2.8rem", md: "4rem", lg: "5rem" },
+                fontSize: { xs: '2.8rem', md: '4rem', lg: '5rem' },
                 lineHeight: 1.0,
-                letterSpacing: "-0.03em",
-                color: "#111",
+                letterSpacing: '-0.03em',
+                color: '#111',
                 mb: 3,
               }}
             >
               {data.tagline || `Discover ${data.name}`}
             </Typography>
             <Typography
-              sx={{
-                color: "#666",
-                fontSize: "1.05rem",
-                lineHeight: 1.8,
-                maxWidth: 440,
-                mb: 6,
-              }}
+              sx={{ color: '#666', fontSize: '1.05rem', lineHeight: 1.8, maxWidth: 440, mb: 6 }}
             >
               {data.description}
             </Typography>
@@ -421,12 +375,12 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                 endIcon={<ArrowForwardIcon />}
                 sx={{
                   bgcolor: primary,
-                  color: "#fff",
+                  color: '#fff',
                   fontWeight: 700,
                   borderRadius: 999,
                   px: 5,
                   py: 1.6,
-                  "&:hover": { bgcolor: primary, filter: "brightness(0.88)" },
+                  '&:hover': { bgcolor: primary, filter: 'brightness(0.88)' },
                 }}
               >
                 Explore Products
@@ -436,16 +390,12 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                 size="large"
                 onClick={() => handleQuote()}
                 sx={{
-                  borderColor: "#e0e0e0",
-                  color: "#555",
+                  borderColor: '#e0e0e0',
+                  color: '#555',
                   borderRadius: 999,
                   px: 5,
                   py: 1.6,
-                  "&:hover": {
-                    borderColor: primary,
-                    color: primary,
-                    bgcolor: "transparent",
-                  },
+                  '&:hover': { borderColor: primary, color: primary, bgcolor: 'transparent' },
                 }}
               >
                 Get a Quote
@@ -453,19 +403,19 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Stack>
 
             {/* Inline contact */}
-            <Box sx={{ mt: 6, display: "flex", gap: 3, flexWrap: "wrap" }}>
+            <Box sx={{ mt: 6, display: 'flex', gap: 3, flexWrap: 'wrap' }}>
               {data.contact?.phone && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Phone size={14} color={accent} />
-                  <Typography variant="caption" sx={{ color: "#888" }}>
+                  <Typography variant="caption" sx={{ color: '#888' }}>
                     {data.contact.phone}
                   </Typography>
                 </Box>
               )}
               {data.contact?.email && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Mail size={14} color={accent} />
-                  <Typography variant="caption" sx={{ color: "#888" }}>
+                  <Typography variant="caption" sx={{ color: '#888' }}>
                     {data.contact.email}
                   </Typography>
                 </Box>
@@ -479,11 +429,7 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1] }}
-          sx={{
-            display: { xs: "none", md: "block" },
-            position: "relative",
-            overflow: "hidden",
-          }}
+          sx={{ display: { xs: 'none', md: 'block' }, position: 'relative', overflow: 'hidden' }}
         >
           {heroProduct?.image ? (
             <>
@@ -491,50 +437,41 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                 component="img"
                 src={heroProduct.image}
                 alt={heroProduct.name}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "center",
-                }}
+                sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
               />
               {/* Product info overlay */}
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   bottom: 32,
                   left: 32,
                   right: 32,
-                  bgcolor: "rgba(255,255,255,0.95)",
-                  backdropFilter: "blur(12px)",
+                  bgcolor: 'rgba(255,255,255,0.95)',
+                  backdropFilter: 'blur(12px)',
                   borderRadius: 3,
                   p: 3,
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
                 <Box>
                   <Typography
                     variant="caption"
                     sx={{
-                      color: "#bbb",
-                      textTransform: "uppercase",
+                      color: '#bbb',
+                      textTransform: 'uppercase',
                       letterSpacing: 1.5,
-                      fontSize: "0.6rem",
+                      fontSize: '0.6rem',
                     }}
                   >
-                    {heroProduct.category || "Featured"}
+                    {heroProduct.category || 'Featured'}
                   </Typography>
-                  <Typography
-                    sx={{ fontWeight: 700, color: "#111", fontSize: "1rem" }}
-                  >
+                  <Typography sx={{ fontWeight: 700, color: '#111', fontSize: '1rem' }}>
                     {heroProduct.name}
                   </Typography>
-                  <Typography
-                    sx={{ fontWeight: 900, color: primary, fontSize: "1.1rem" }}
-                  >
+                  <Typography sx={{ fontWeight: 900, color: primary, fontSize: '1.1rem' }}>
                     {heroProduct.price}
                   </Typography>
                 </Box>
@@ -543,10 +480,10 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                   onClick={() => handleQuote(heroProduct.name)}
                   sx={{
                     bgcolor: primary,
-                    color: "#fff",
+                    color: '#fff',
                     fontWeight: 700,
                     borderRadius: 2,
-                    "&:hover": { bgcolor: primary, filter: "brightness(0.88)" },
+                    '&:hover': { bgcolor: primary, filter: 'brightness(0.88)' },
                   }}
                 >
                   Get a Quote
@@ -556,8 +493,8 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
           ) : (
             <Box
               sx={{
-                width: "100%",
-                height: "100%",
+                width: '100%',
+                height: '100%',
                 background: `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`,
               }}
             />
@@ -570,34 +507,29 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Box
           sx={{
             maxWidth: 1200,
-            mx: "auto",
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" },
+            mx: 'auto',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
             gap: 3,
           }}
         >
           {TRUST_BADGES.map(({ icon: Icon, label }) => (
-            <Box
-              key={label}
-              sx={{ display: "flex", alignItems: "center", gap: 2 }}
-            >
+            <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
                 sx={{
                   width: 36,
                   height: 36,
                   borderRadius: 2,
-                  bgcolor: "rgba(255,255,255,0.12)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  bgcolor: 'rgba(255,255,255,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
                 <Icon size={18} color="#fff" />
               </Box>
-              <Typography
-                sx={{ color: "#fff", fontWeight: 600, fontSize: "0.85rem" }}
-              >
+              <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '0.85rem' }}>
                 {label}
               </Typography>
             </Box>
@@ -606,19 +538,12 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
       </Box>
 
       {/* ── PRODUCT COLLECTION ─────────────────────────────────── */}
-      <Box
-        sx={{
-          py: { xs: 10, md: 16 },
-          px: { xs: 4, md: 8 },
-          maxWidth: 1400,
-          mx: "auto",
-        }}
-      >
+      <Box sx={{ py: { xs: 10, md: 16 }, px: { xs: 4, md: 8 }, maxWidth: 1400, mx: 'auto' }}>
         <FadeIn>
-          <Box sx={{ textAlign: "center", mb: 8 }}>
+          <Box sx={{ textAlign: 'center', mb: 8 }}>
             <Typography
               variant="overline"
-              sx={{ color: accent, letterSpacing: 4, fontSize: "0.65rem" }}
+              sx={{ color: accent, letterSpacing: 4, fontSize: '0.65rem' }}
             >
               Our Products
             </Typography>
@@ -626,9 +551,9 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
               variant="h3"
               sx={{
                 fontWeight: 900,
-                color: "#111",
+                color: '#111',
                 mt: 1,
-                fontSize: { xs: "1.8rem", md: "2.8rem" },
+                fontSize: { xs: '1.8rem', md: '2.8rem' },
               }}
             >
               The Collection
@@ -637,28 +562,20 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
         </FadeIn>
 
         {/* Category filter */}
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 6 }}>
-          <Stack
-            direction="row"
-            spacing={1}
-            flexWrap="wrap"
-            useFlexGap
-            justifyContent="center"
-          >
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 6 }}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap justifyContent="center">
             {allCategories.map((c) => (
               <Chip
                 key={c}
                 label={c}
                 onClick={() => setActiveCategory(c)}
                 sx={{
-                  bgcolor: activeCategory === c ? primary : "#fff",
-                  color: activeCategory === c ? "#fff" : "#555",
+                  bgcolor: activeCategory === c ? primary : '#fff',
+                  color: activeCategory === c ? '#fff' : '#555',
                   fontWeight: activeCategory === c ? 700 : 500,
-                  border: `1px solid ${activeCategory === c ? primary : "#e5e5e5"}`,
-                  cursor: "pointer",
-                  "&:hover": {
-                    bgcolor: activeCategory === c ? primary : "#f5f5f5",
-                  },
+                  border: `1px solid ${activeCategory === c ? primary : '#e5e5e5'}`,
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: activeCategory === c ? primary : '#f5f5f5' },
                   borderRadius: 999,
                   px: 0.5,
                 }}
@@ -670,12 +587,8 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
         {/* Grid */}
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr 1fr",
-              sm: "repeat(3, 1fr)",
-              lg: "repeat(4, 1fr)",
-            },
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
             gap: 3,
           }}
         >
@@ -694,29 +607,22 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       {/* ── CATEGORY SHOWCASE ──────────────────────────────────── */}
       {allCategories.length > 2 && (
-        <Box
-          sx={{ py: { xs: 10, md: 14 }, px: { xs: 4, md: 8 }, bgcolor: "#fff" }}
-        >
-          <Box sx={{ maxWidth: 1400, mx: "auto" }}>
+        <Box sx={{ py: { xs: 10, md: 14 }, px: { xs: 4, md: 8 }, bgcolor: '#fff' }}>
+          <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
             <FadeIn>
               <Typography
                 variant="h4"
-                sx={{
-                  fontWeight: 900,
-                  color: "#111",
-                  mb: 6,
-                  textAlign: "center",
-                }}
+                sx={{ fontWeight: 900, color: '#111', mb: 6, textAlign: 'center' }}
               >
                 Shop by Category
               </Typography>
             </FadeIn>
             <Box
               sx={{
-                display: "grid",
+                display: 'grid',
                 gridTemplateColumns: {
-                  xs: "1fr",
-                  sm: "1fr 1fr",
+                  xs: '1fr',
+                  sm: '1fr 1fr',
                   md: `repeat(${Math.min(allCategories.length - 1, 3)}, 1fr)`,
                 },
                 gap: 3,
@@ -730,83 +636,64 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                       whileHover="hovered"
                       onClick={() => setActiveCategory(cat)}
                       sx={{
-                        position: "relative",
+                        position: 'relative',
                         height: { xs: 200, md: 280 },
                         borderRadius: 4,
-                        overflow: "hidden",
-                        cursor: "pointer",
-                        bgcolor: "#f5f5f5",
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        bgcolor: '#f5f5f5',
                       }}
                     >
                       {catProduct?.image && (
                         <MotionImg
-                          variants={{
-                            hovered: { scale: 1.07 },
-                            initial: { scale: 1 },
-                          }}
+                          variants={{ hovered: { scale: 1.07 }, initial: { scale: 1 } }}
                           initial="initial"
                           transition={{ duration: 0.45 }}
                           src={catProduct.image}
                           alt={cat}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       )}
                       <Box
                         sx={{
-                          position: "absolute",
+                          position: 'absolute',
                           inset: 0,
                           background:
-                            "linear-gradient(to top, rgba(0,0,0,0.65) 30%, rgba(0,0,0,0.1) 100%)",
+                            'linear-gradient(to top, rgba(0,0,0,0.65) 30%, rgba(0,0,0,0.1) 100%)',
                         }}
                       />
                       <Box
                         sx={{
-                          position: "absolute",
+                          position: 'absolute',
                           bottom: 20,
                           left: 20,
                           right: 20,
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-end",
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-end',
                         }}
                       >
                         <Box>
-                          <Typography
-                            sx={{
-                              color: "#fff",
-                              fontWeight: 800,
-                              fontSize: "1.1rem",
-                            }}
-                          >
+                          <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '1.1rem' }}>
                             {cat}
                           </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "rgba(255,255,255,0.7)" }}
-                          >
-                            {products.filter((p) => p.category === cat).length}{" "}
-                            products
+                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                            {products.filter((p) => p.category === cat).length} products
                           </Typography>
                         </Box>
                         <Box
                           sx={{
                             width: 32,
                             height: 32,
-                            borderRadius: "50%",
-                            bgcolor: "rgba(255,255,255,0.2)",
-                            backdropFilter: "blur(4px)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            borderRadius: '50%',
+                            bgcolor: 'rgba(255,255,255,0.2)',
+                            backdropFilter: 'blur(4px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
                         >
-                          <ArrowOutwardIcon
-                            sx={{ color: "#fff", fontSize: 16 }}
-                          />
+                          <ArrowOutwardIcon sx={{ color: '#fff', fontSize: 16 }} />
                         </Box>
                       </Box>
                     </MotionBox>
@@ -824,18 +711,18 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
           py: { xs: 12, md: 18 },
           px: { xs: 4, md: 10 },
           maxWidth: 1400,
-          mx: "auto",
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+          mx: 'auto',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
           gap: { xs: 6, md: 12 },
-          alignItems: "center",
+          alignItems: 'center',
         }}
       >
         <FadeIn direction="left">
           <Box>
             <Typography
               variant="overline"
-              sx={{ color: accent, letterSpacing: 4, fontSize: "0.65rem" }}
+              sx={{ color: accent, letterSpacing: 4, fontSize: '0.65rem' }}
             >
               Our Story
             </Typography>
@@ -843,18 +730,16 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
               variant="h3"
               sx={{
                 fontWeight: 900,
-                color: "#111",
+                color: '#111',
                 mt: 1,
                 mb: 3,
-                fontSize: { xs: "2rem", md: "2.8rem" },
+                fontSize: { xs: '2rem', md: '2.8rem' },
                 lineHeight: 1.1,
               }}
             >
               {data.name}
             </Typography>
-            <Typography
-              sx={{ color: "#666", lineHeight: 1.9, mb: 4, fontSize: "1rem" }}
-            >
+            <Typography sx={{ color: '#666', lineHeight: 1.9, mb: 4, fontSize: '1rem' }}>
               {data.description}
             </Typography>
             {data.contact?.email && (
@@ -864,12 +749,12 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                 onClick={() => handleQuote()}
                 sx={{
                   bgcolor: primary,
-                  color: "#fff",
+                  color: '#fff',
                   fontWeight: 700,
                   borderRadius: 999,
                   px: 5,
                   py: 1.5,
-                  "&:hover": { bgcolor: primary, filter: "brightness(0.88)" },
+                  '&:hover': { bgcolor: primary, filter: 'brightness(0.88)' },
                 }}
               >
                 Get in Touch
@@ -881,8 +766,8 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
         <FadeIn direction="right" delay={0.12}>
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
               gap: 2,
               height: { xs: 300, md: 420 },
             }}
@@ -892,15 +777,15 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                 key={i}
                 sx={{
                   borderRadius: 3,
-                  overflow: "hidden",
-                  ...(i === 0 ? { gridRow: "span 2" } : {}),
+                  overflow: 'hidden',
+                  ...(i === 0 ? { gridRow: 'span 2' } : {}),
                 }}
               >
                 <Box
                   component="img"
                   src={img.url}
-                  alt={img.caption || ""}
-                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  alt={img.caption || ''}
+                  sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </Box>
             ))}
@@ -910,30 +795,25 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       {/* ── REVIEWS ────────────────────────────────────────────── */}
       {data.reviews && data.reviews.length > 0 && (
-        <Box
-          sx={{ bgcolor: "#fff", py: { xs: 10, md: 14 }, px: { xs: 4, md: 8 } }}
-        >
-          <Box sx={{ maxWidth: 1200, mx: "auto" }}>
+        <Box sx={{ bgcolor: '#fff', py: { xs: 10, md: 14 }, px: { xs: 4, md: 8 } }}>
+          <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
             <FadeIn>
-              <Box sx={{ textAlign: "center", mb: 8 }}>
+              <Box sx={{ textAlign: 'center', mb: 8 }}>
                 <Typography
                   variant="overline"
-                  sx={{ color: accent, letterSpacing: 4, fontSize: "0.65rem" }}
+                  sx={{ color: accent, letterSpacing: 4, fontSize: '0.65rem' }}
                 >
                   Testimonials
                 </Typography>
-                <Typography
-                  variant="h4"
-                  sx={{ fontWeight: 900, color: "#111", mt: 1 }}
-                >
+                <Typography variant="h4" sx={{ fontWeight: 900, color: '#111', mt: 1 }}>
                   What Customers Say
                 </Typography>
               </Box>
             </FadeIn>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
                 gap: 3,
               }}
             >
@@ -942,55 +822,42 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Box
                     sx={{
                       p: 4,
-                      bgcolor: "#fafafa",
+                      bgcolor: '#fafafa',
                       borderRadius: 3,
-                      border: "1px solid #efefef",
+                      border: '1px solid #efefef',
                       ...(i === 1
-                        ? {
-                            bgcolor: primary,
-                            "& *": {
-                              color: "rgba(255,255,255,0.9) !important",
-                            },
-                          }
+                        ? { bgcolor: primary, '& *': { color: 'rgba(255,255,255,0.9) !important' } }
                         : {}),
                     }}
                   >
-                    <Box sx={{ display: "flex", gap: 0.5, mb: 2 }}>
-                      {Array.from({ length: Math.round(r.rating || 5) }).map(
-                        (_, si) => (
-                          <Typography
-                            key={si}
-                            sx={{
-                              color: i === 1 ? "#fbbf24 !important" : accent,
-                              fontSize: "0.85rem",
-                            }}
-                          >
-                            ★
-                          </Typography>
-                        ),
-                      )}
+                    <Box sx={{ display: 'flex', gap: 0.5, mb: 2 }}>
+                      {Array.from({ length: Math.round(r.rating || 5) }).map((_, si) => (
+                        <Typography
+                          key={si}
+                          sx={{
+                            color: i === 1 ? '#fbbf24 !important' : accent,
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          ★
+                        </Typography>
+                      ))}
                     </Box>
                     <Typography
                       sx={{
-                        color: "#444",
+                        color: '#444',
                         lineHeight: 1.8,
-                        fontStyle: "italic",
+                        fontStyle: 'italic',
                         mb: 3,
-                        fontSize: "0.95rem",
+                        fontSize: '0.95rem',
                       }}
                     >
                       "{r.comment}"
                     </Typography>
                     <Divider
-                      sx={{
-                        mb: 2.5,
-                        borderColor:
-                          i === 1 ? "rgba(255,255,255,0.15)" : "#efefef",
-                      }}
+                      sx={{ mb: 2.5, borderColor: i === 1 ? 'rgba(255,255,255,0.15)' : '#efefef' }}
                     />
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                    >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Avatar
                         sx={{
                           width: 36,
@@ -998,23 +865,17 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                           bgcolor: `${accent}33`,
                           color: accent,
                           fontWeight: 700,
-                          fontSize: "0.85rem",
+                          fontSize: '0.85rem',
                         }}
                       >
                         {r.name?.charAt(0)}
                       </Avatar>
                       <Box>
-                        <Typography
-                          sx={{
-                            fontWeight: 700,
-                            color: "#111",
-                            fontSize: "0.85rem",
-                          }}
-                        >
+                        <Typography sx={{ fontWeight: 700, color: '#111', fontSize: '0.85rem' }}>
                           {r.name}
                         </Typography>
                         {r.role && (
-                          <Typography variant="caption" sx={{ color: "#999" }}>
+                          <Typography variant="caption" sx={{ color: '#999' }}>
                             {r.role}
                           </Typography>
                         )}
@@ -1034,40 +895,28 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
           background: `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`,
           py: { xs: 10, md: 14 },
           px: { xs: 4, md: 8 },
-          textAlign: "center",
+          textAlign: 'center',
         }}
       >
         <FadeIn>
           <Typography
             variant="h3"
-            sx={{
-              fontWeight: 900,
-              color: "#fff",
-              mb: 2,
-              fontSize: { xs: "1.8rem", md: "2.8rem" },
-            }}
+            sx={{ fontWeight: 900, color: '#fff', mb: 2, fontSize: { xs: '1.8rem', md: '2.8rem' } }}
           >
             Ready to place an order?
           </Typography>
           <Typography
             sx={{
-              color: "rgba(255,255,255,0.8)",
+              color: 'rgba(255,255,255,0.8)',
               mb: 5,
-              fontSize: "1.05rem",
+              fontSize: '1.05rem',
               maxWidth: 480,
-              mx: "auto",
+              mx: 'auto',
             }}
           >
-            Contact us for pricing, custom orders, bulk inquiries, and tailored
-            solutions.
+            Contact us for pricing, custom orders, bulk inquiries, and tailored solutions.
           </Typography>
-          <Stack
-            direction="row"
-            spacing={2}
-            justifyContent="center"
-            flexWrap="wrap"
-            useFlexGap
-          >
+          <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" useFlexGap>
             {data.contact?.phone && (
               <Button
                 variant="outlined"
@@ -1075,15 +924,12 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                 startIcon={<Phone size={16} />}
                 href={`tel:${data.contact.phone}`}
                 sx={{
-                  borderColor: "rgba(255,255,255,0.5)",
-                  color: "#fff",
+                  borderColor: 'rgba(255,255,255,0.5)',
+                  color: '#fff',
                   borderRadius: 999,
                   px: 5,
                   py: 1.5,
-                  "&:hover": {
-                    borderColor: "#fff",
-                    bgcolor: "rgba(255,255,255,0.1)",
-                  },
+                  '&:hover': { borderColor: '#fff', bgcolor: 'rgba(255,255,255,0.1)' },
                 }}
               >
                 {data.contact.phone}
@@ -1096,13 +942,13 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
                 startIcon={<Mail size={16} />}
                 onClick={() => handleQuote()}
                 sx={{
-                  bgcolor: "#fff",
+                  bgcolor: '#fff',
                   color: primary,
                   fontWeight: 700,
                   borderRadius: 999,
                   px: 5,
                   py: 1.5,
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' },
                 }}
               >
                 Get a Quote
@@ -1113,34 +959,24 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
       </Box>
 
       {/* ── FOOTER ─────────────────────────────────────────────── */}
-      <Box sx={{ bgcolor: "#111", py: 6, px: { xs: 4, md: 8 } }}>
+      <Box sx={{ bgcolor: '#111', py: 6, px: { xs: 4, md: 8 } }}>
         <Box
           sx={{
             maxWidth: 1400,
-            mx: "auto",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
+            mx: 'auto',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
             gap: 3,
           }}
         >
           <Box>
-            <Typography
-              sx={{
-                fontWeight: 900,
-                color: "#fff",
-                fontSize: "1.1rem",
-                mb: 0.5,
-              }}
-            >
+            <Typography sx={{ fontWeight: 900, color: '#fff', fontSize: '1.1rem', mb: 0.5 }}>
               {data.name}
             </Typography>
             {data.contact?.address && (
-              <Typography
-                variant="caption"
-                sx={{ color: "rgba(255,255,255,0.4)" }}
-              >
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)' }}>
                 {data.contact.address}
               </Typography>
             )}
@@ -1150,10 +986,7 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
               {data.socialLinks.instagram && (
                 <IconButton
                   size="small"
-                  sx={{
-                    color: "rgba(255,255,255,0.4)",
-                    "&:hover": { color: "#fff" },
-                  }}
+                  sx={{ color: 'rgba(255,255,255,0.4)', '&:hover': { color: '#fff' } }}
                 >
                   <Instagram size={16} />
                 </IconButton>
@@ -1161,10 +994,7 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
               {data.socialLinks.twitter && (
                 <IconButton
                   size="small"
-                  sx={{
-                    color: "rgba(255,255,255,0.4)",
-                    "&:hover": { color: "#1da1f2" },
-                  }}
+                  sx={{ color: 'rgba(255,255,255,0.4)', '&:hover': { color: '#1da1f2' } }}
                 >
                   <Twitter size={16} />
                 </IconButton>
@@ -1172,17 +1002,14 @@ const StoreShowcaseTemplate: React.FC<TemplateProps> = ({ data }) => {
               {data.socialLinks.facebook && (
                 <IconButton
                   size="small"
-                  sx={{
-                    color: "rgba(255,255,255,0.4)",
-                    "&:hover": { color: "#1877f2" },
-                  }}
+                  sx={{ color: 'rgba(255,255,255,0.4)', '&:hover': { color: '#1877f2' } }}
                 >
                   <Facebook size={16} />
                 </IconButton>
               )}
             </Stack>
           )}
-          <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.3)" }}>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.3)' }}>
             © {new Date().getFullYear()} {data.name}. All rights reserved.
           </Typography>
         </Box>

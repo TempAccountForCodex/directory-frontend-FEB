@@ -9,9 +9,9 @@
  *   sm  600   – md  899px   → tablet   (2 columns)
  *   md  900+              → desktop  (3 columns)
  */
-import { useMemo } from "react";
-import { useMediaQuery } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useMemo } from 'react';
+import { useMediaQuery } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 export interface ResponsiveEditorState {
   /** true on xs / sm viewports (< 900px) */
@@ -28,11 +28,11 @@ export function useResponsiveEditor(): ResponsiveEditorState {
   const theme = useTheme();
 
   // down('md') covers xs + sm + md → ≤ 899px  → "mobile" in editor terms
-  const isMobileRaw = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobileRaw = useMediaQuery(theme.breakpoints.down('md'));
   // between('md','lg') → 900–1199px
-  const isTabletRaw = useMediaQuery(theme.breakpoints.between("md", "lg"));
+  const isTabletRaw = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   // up('lg') → ≥ 1200px
-  const isDesktopRaw = useMediaQuery(theme.breakpoints.up("lg"));
+  const isDesktopRaw = useMediaQuery(theme.breakpoints.up('lg'));
 
   return useMemo<ResponsiveEditorState>(() => {
     // Mutually-exclusive priority: desktop > tablet > mobile
@@ -43,11 +43,6 @@ export function useResponsiveEditor(): ResponsiveEditorState {
       return { isMobile: false, isTablet: true, isDesktop: false, columns: 2 };
     }
     // Fallback — mobile (or SSR where all queries return false)
-    return {
-      isMobile: isMobileRaw || true,
-      isTablet: false,
-      isDesktop: false,
-      columns: 1,
-    };
+    return { isMobile: isMobileRaw || true, isTablet: false, isDesktop: false, columns: 1 };
   }, [isMobileRaw, isTabletRaw, isDesktopRaw]);
 }

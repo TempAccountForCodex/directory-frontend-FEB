@@ -1,9 +1,9 @@
 // src/components/RotatingButton.jsx
 
-import React, { useState, useEffect } from "react";
-import { Box, keyframes, SvgIcon } from "@mui/material";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import { useNavigate, useLocation } from "react-router-dom"; // Import useLocation
+import React, { useState, useEffect } from 'react';
+import { Box, keyframes, SvgIcon } from '@mui/material';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import { useNavigate, useLocation } from 'react-router-dom'; // Import useLocation
 
 // Keyframe animation for the rotating text
 const rotate = keyframes`
@@ -17,34 +17,34 @@ const rotate = keyframes`
 
 const sizeVariants = {
   sm: {
-    wrapper: { width: "100px", height: "100px" },
-    inner: { width: "40px", height: "40px" },
-    icon: { fontSize: "1.5rem" },
-    text: { fontSize: "15px", letterSpacing: "2.5px" },
+    wrapper: { width: '100px', height: '100px' },
+    inner: { width: '40px', height: '40px' },
+    icon: { fontSize: '1.5rem' },
+    text: { fontSize: '15px', letterSpacing: '2.5px' },
     path: { radius: 45 },
   },
   md: {
-    wrapper: { width: "120px", height: "120px" },
-    inner: { width: "50px", height: "50px" },
-    icon: { fontSize: "1.8rem" },
-    text: { fontSize: "19px", letterSpacing: "3px" },
+    wrapper: { width: '120px', height: '120px' },
+    inner: { width: '50px', height: '50px' },
+    icon: { fontSize: '1.8rem' },
+    text: { fontSize: '19px', letterSpacing: '3px' },
     path: { radius: 70 },
   },
   lg: {
-    wrapper: { width: "160px", height: "160px" },
-    inner: { width: "70px", height: "70px" },
-    icon: { fontSize: "2.5rem" },
-    text: { fontSize: "22px", letterSpacing: "3.5px" },
+    wrapper: { width: '160px', height: '160px' },
+    inner: { width: '70px', height: '70px' },
+    icon: { fontSize: '2.5rem' },
+    text: { fontSize: '22px', letterSpacing: '3.5px' },
     path: { radius: 90 },
   },
 };
 
 const RotatingButton = ({
   text = "CONTACT US NOW. LET'S CONNECT.",
-  size = "md",
-  textColor = "black",
+  size = 'md',
+  textColor = 'black',
   sx,
-  pathId = "text-path-1",
+  pathId = 'text-path-1',
   linkTo,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -56,9 +56,9 @@ const RotatingButton = ({
     if (linkTo) {
       navigate(linkTo);
     } else {
-      const contactSection = document.getElementById("contact-section");
+      const contactSection = document.getElementById('contact-section');
       if (contactSection) {
-        contactSection.scrollIntoView({ behavior: "smooth" });
+        contactSection.scrollIntoView({ behavior: 'smooth' });
       }
     }
   };
@@ -68,7 +68,7 @@ const RotatingButton = ({
     if (location.hash) {
       const targetElement = document.getElementById(location.hash.substring(1));
       if (targetElement) {
-        targetElement.scrollIntoView({ behavior: "smooth" });
+        targetElement.scrollIntoView({ behavior: 'smooth' });
       }
     }
   }, [location]);
@@ -80,32 +80,32 @@ const RotatingButton = ({
       onMouseLeave={() => setIsHovered(false)}
       sx={{
         ...currentSize.wrapper,
-        position: "relative",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        position: 'relative',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         ...sx,
       }}
     >
       {/* Rotating Text */}
       <Box
         sx={{
-          position: "absolute",
-          width: "100%",
-          height: "100%",
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
           animation: `${rotate} 20s linear infinite`,
-          pointerEvents: "none",
-          fontFamily: "Helvetica, sans-serif",
-          overflow: "visible",
+          pointerEvents: 'none',
+          fontFamily: 'Helvetica, sans-serif',
+          overflow: 'visible',
         }}
       >
         <svg
           viewBox="0 0 150 150"
           style={{
-            width: "100%",
-            height: "100%",
-            overflow: "visible",
+            width: '100%',
+            height: '100%',
+            overflow: 'visible',
           }}
         >
           <path
@@ -122,8 +122,8 @@ const RotatingButton = ({
           <text
             style={{
               ...currentSize.text,
-              textTransform: "uppercase",
-              fontWeight: "500",
+              textTransform: 'uppercase',
+              fontWeight: '500',
             }}
             fill={textColor}
           >
@@ -136,20 +136,20 @@ const RotatingButton = ({
       <Box
         sx={{
           ...currentSize.inner,
-          borderRadius: "50%",
-          backgroundColor: "#378C92",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          transition: "transform 0.3s ease-in-out",
-          transform: isHovered ? "rotate(180deg)" : "rotate(45deg)",
+          borderRadius: '50%',
+          backgroundColor: '#378C92',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'transform 0.3s ease-in-out',
+          transform: isHovered ? 'rotate(180deg)' : 'rotate(45deg)',
           zIndex: 1,
         }}
       >
         <ArrowUpwardIcon
           sx={{
             ...currentSize.icon,
-            color: "white",
+            color: 'white',
           }}
         />
       </Box>

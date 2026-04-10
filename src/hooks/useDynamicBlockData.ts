@@ -9,11 +9,11 @@
  * - Registers block with DynamicBlockContext on mount
  */
 
-import { useState, useEffect, useCallback, useRef, useContext } from "react";
-import { useDebouncedValue } from "./useDebouncedValue";
-import { DynamicBlockContext } from "../context/DynamicBlockContext";
+import { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import { useDebouncedValue } from './useDebouncedValue';
+import { DynamicBlockContext } from '../context/DynamicBlockContext';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 /* -------- Data-source → public API endpoint mapping -------- */
 
@@ -27,14 +27,14 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
  */
 function resolveDataSourceUrl(dataSource: string): string {
   // Split into prefix and query string
-  const qIndex = dataSource.indexOf("?");
+  const qIndex = dataSource.indexOf('?');
   const prefix = qIndex >= 0 ? dataSource.slice(0, qIndex) : dataSource;
-  const queryString = qIndex >= 0 ? dataSource.slice(qIndex) : "";
+  const queryString = qIndex >= 0 ? dataSource.slice(qIndex) : '';
 
   // Special case: blog-article?identifier=<slug> → /api/blogs/public/<slug>
-  if (prefix === "blog-article") {
+  if (prefix === 'blog-article') {
     const params = new URLSearchParams(queryString);
-    const identifier = params.get("identifier");
+    const identifier = params.get('identifier');
     if (identifier) {
       return `${API_URL}/blogs/public/${encodeURIComponent(identifier)}`;
     }
@@ -44,11 +44,11 @@ function resolveDataSourceUrl(dataSource: string): string {
 
   // Standard prefix → API path mappings
   const ENDPOINT_MAP: Record<string, string> = {
-    blog: "/blogs/public",
-    products: "/products/public",
-    listing: "/directory/listings",
-    review: "/reviews/listings",
-    event: "/events/public",
+    blog: '/blogs/public',
+    products: '/products/public',
+    listing: '/directory/listings',
+    review: '/reviews/listings',
+    event: '/events/public',
   };
 
   const apiPath = ENDPOINT_MAP[prefix];
@@ -87,7 +87,7 @@ function useDynamicBlockData(
   blockId: number,
   blockType: string,
   dataSource: string | null,
-  options: DynamicBlockDataOptions = {},
+  options: DynamicBlockDataOptions = {}
 ): DynamicBlockDataResult {
   const {
     enabled = true,
@@ -174,9 +174,7 @@ function useDynamicBlockData(
         const response = await fetch(url, { signal });
 
         if (!response.ok) {
-          throw new Error(
-            `Failed to fetch block data: HTTP ${response.status}`,
-          );
+          throw new Error(`Failed to fetch block data: HTTP ${response.status}`);
         }
 
         const json = await response.json();
@@ -188,9 +186,9 @@ function useDynamicBlockData(
           setLastUpdated(new Date());
         }
       } catch (err: any) {
-        if (err.name === "AbortError") return; // Cancelled — ignore
+        if (err.name === 'AbortError') return; // Cancelled — ignore
 
-        const errorMsg = err.message || "Unknown error fetching block data";
+        const errorMsg = err.message || 'Unknown error fetching block data';
         if (mountedRef.current) {
           setError(errorMsg);
           setLoading(false);
@@ -201,7 +199,7 @@ function useDynamicBlockData(
         }
       }
     },
-    [blockId, context, debouncedDataSource, enabled, onError],
+    [blockId, context, debouncedDataSource, enabled, onError]
   );
 
   // Main fetch effect — runs when debouncedDataSource or fetchTrigger changes

@@ -1,9 +1,9 @@
 // src/theme/mui.d.ts
-import "@mui/material/styles";
+import '@mui/material/styles';
 
 export {};
 
-declare module "@mui/material/styles" {
+declare module '@mui/material/styles' {
   interface TypeText {
     main: string;
     white?: string;

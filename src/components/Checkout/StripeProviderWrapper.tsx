@@ -1,20 +1,17 @@
-import { useMemo } from "react";
-import type { ReactNode } from "react";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
-import { Alert, Box, Typography } from "@mui/material";
-import { getDashboardColors } from "../../styles/dashboardTheme";
-import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import { useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { Alert, Box, Typography } from '@mui/material';
+import { getDashboardColors } from '../../styles/dashboardTheme';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 
 interface StripeProviderWrapperProps {
   children: ReactNode;
   clientSecret?: string | null;
 }
 
-const StripeProviderWrapper = ({
-  children,
-  clientSecret,
-}: StripeProviderWrapperProps) => {
+const StripeProviderWrapper = ({ children, clientSecret }: StripeProviderWrapperProps) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
 
@@ -23,12 +20,9 @@ const StripeProviderWrapper = ({
 
   // Create Stripe promise (memoized to avoid recreation)
   const stripePromise = useMemo(() => {
-    if (
-      !stripePublishableKey ||
-      stripePublishableKey === "pk_test_XXXXXXXXXXXXXXXXXXXXXXXX"
-    ) {
+    if (!stripePublishableKey || stripePublishableKey === 'pk_test_XXXXXXXXXXXXXXXXXXXXXXXX') {
       console.warn(
-        "VITE_STRIPE_PUBLISHABLE_KEY is not configured. Stripe functionality will not work.",
+        'VITE_STRIPE_PUBLISHABLE_KEY is not configured. Stripe functionality will not work.'
       );
       return null;
     }
@@ -44,12 +38,11 @@ const StripeProviderWrapper = ({
             Stripe Not Configured
           </Typography>
           <Typography variant="body2">
-            The Stripe publishable key is not configured. Please set
-            VITE_STRIPE_PUBLISHABLE_KEY in your environment variables.
+            The Stripe publishable key is not configured. Please set VITE_STRIPE_PUBLISHABLE_KEY in
+            your environment variables.
           </Typography>
           <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-            For development: Add your test publishable key (pk_test_...) to the
-            .env file.
+            For development: Add your test publishable key (pk_test_...) to the .env file.
           </Typography>
         </Alert>
       </Box>
@@ -60,35 +53,34 @@ const StripeProviderWrapper = ({
   const options = useMemo(() => {
     const baseOptions: any = {
       appearance: {
-        theme: actualTheme === "dark" ? "night" : "stripe",
+        theme: actualTheme === 'dark' ? 'night' : 'stripe',
         variables: {
           colorPrimary: colors.primary,
-          colorBackground:
-            colors.cardBg || (actualTheme === "dark" ? "#1a1a1a" : "#ffffff"),
+          colorBackground: colors.cardBg || (actualTheme === 'dark' ? '#1a1a1a' : '#ffffff'),
           colorText: colors.text,
           colorDanger: colors.error,
           fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-          borderRadius: "8px",
+          borderRadius: '8px',
         },
         rules: {
-          ".Input": {
+          '.Input': {
             border: `1px solid ${colors.border}`,
-            boxShadow: "none",
+            boxShadow: 'none',
           },
-          ".Input:focus": {
+          '.Input:focus': {
             border: `2px solid ${colors.primary}`,
             boxShadow: `0 0 0 1px ${colors.primary}`,
           },
-          ".Label": {
+          '.Label': {
             color: colors.textSecondary,
-            fontWeight: "500",
+            fontWeight: '500',
           },
         },
       },
     };
 
     // Only add clientSecret if it's provided and valid
-    if (clientSecret && clientSecret !== "") {
+    if (clientSecret && clientSecret !== '') {
       baseOptions.clientSecret = clientSecret;
     }
 

@@ -15,13 +15,13 @@
  * - Step buttons disabled at boundary or when field is disabled
  * FieldWrapper (parent) owns label/description display — DashboardInput used without label.
  */
-import React, { useState, useEffect, useCallback, useRef, useId } from "react";
-import { InputAdornment, IconButton } from "@mui/material";
-import { Add as AddIcon, Remove as RemoveIcon } from "@mui/icons-material";
-import DashboardInput from "../../Dashboard/shared/DashboardInput";
-import type { FieldRendererProps } from "../types";
-import { FieldType } from "../types";
-import { registerFieldComponent } from "../registry";
+import React, { useState, useEffect, useCallback, useRef, useId } from 'react';
+import { InputAdornment, IconButton } from '@mui/material';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import DashboardInput from '../../Dashboard/shared/DashboardInput';
+import type { FieldRendererProps } from '../types';
+import { FieldType } from '../types';
+import { registerFieldComponent } from '../registry';
 
 // ---------------------------------------------------------------------------
 // Helpers (module-level — stable, no closure over component state)
@@ -29,17 +29,13 @@ import { registerFieldComponent } from "../registry";
 
 /** Parse a display string to a number, returning null for empty/invalid input. */
 function parseDisplay(str: string): number | null {
-  if (str.trim() === "" || str === "-" || str === ".") return null;
+  if (str.trim() === '' || str === '-' || str === '.') return null;
   const n = parseFloat(str);
   return isNaN(n) ? null : n;
 }
 
 /** Clamp a number to [min, max], applying only the bounds that are defined. */
-function clamp(
-  n: number,
-  min: number | undefined,
-  max: number | undefined,
-): number {
+function clamp(n: number, min: number | undefined, max: number | undefined): number {
   let result = n;
   if (min !== undefined && result < min) result = min;
   if (max !== undefined && result > max) result = max;
@@ -80,27 +76,23 @@ const NumberInput: React.FC<FieldRendererProps> = React.memo(
 
     // Step configuration via field.ui.props
     const step =
-      typeof field.ui?.props?.["step"] === "number"
-        ? (field.ui.props["step"] as number)
-        : 1;
-    const allowDecimals = field.ui?.props?.["allowDecimals"] === true;
+      typeof field.ui?.props?.['step'] === 'number' ? (field.ui.props['step'] as number) : 1;
+    const allowDecimals = field.ui?.props?.['allowDecimals'] === true;
 
     // ---------------------------------------------------------------------------
     // Local state — display string allows partial input like "-" or "3."
     // ---------------------------------------------------------------------------
     const toDisplayStr = useCallback((v: unknown): string => {
-      if (typeof v === "number" && !isNaN(v)) return String(v);
-      if (v === null || v === undefined) return "";
-      if (typeof v === "string") {
+      if (typeof v === 'number' && !isNaN(v)) return String(v);
+      if (v === null || v === undefined) return '';
+      if (typeof v === 'string') {
         const n = parseFloat(v);
-        return isNaN(n) ? "" : String(n);
+        return isNaN(n) ? '' : String(n);
       }
-      return "";
+      return '';
     }, []);
 
-    const [localValue, setLocalValue] = useState<string>(() =>
-      toDisplayStr(value),
-    );
+    const [localValue, setLocalValue] = useState<string>(() => toDisplayStr(value));
 
     // Sync with external value changes (e.g. form reset, external update)
     useEffect(() => {
@@ -117,14 +109,11 @@ const NumberInput: React.FC<FieldRendererProps> = React.memo(
     // ---------------------------------------------------------------------------
     // Change handler — update local string state only (no upstream call)
     // ---------------------------------------------------------------------------
-    const handleChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        setLocalValue(e.target.value);
-        // NOTE: onChange NOT called here — only on blur and step button clicks.
-        // This allows smooth typing of partial values like "1." or "-3".
-      },
-      [],
-    );
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      setLocalValue(e.target.value);
+      // NOTE: onChange NOT called here — only on blur and step button clicks.
+      // This allows smooth typing of partial values like "1." or "-3".
+    }, []);
 
     // ---------------------------------------------------------------------------
     // Step button handlers — defined before keyDown so refs can be set
@@ -162,7 +151,7 @@ const NumberInput: React.FC<FieldRendererProps> = React.memo(
         const parsed = parseDisplay(prev);
         if (parsed === null) {
           onChange(null);
-          return "";
+          return '';
         }
         const clamped = clamp(parsed, min, max);
         onChange(clamped);
@@ -176,14 +165,14 @@ const NumberInput: React.FC<FieldRendererProps> = React.memo(
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLInputElement>) => {
         const allowedKeys = new Set([
-          "Backspace",
-          "Delete",
-          "Tab",
-          "Enter",
-          "ArrowLeft",
-          "ArrowRight",
-          "Home",
-          "End",
+          'Backspace',
+          'Delete',
+          'Tab',
+          'Enter',
+          'ArrowLeft',
+          'ArrowRight',
+          'Home',
+          'End',
         ]);
 
         if (allowedKeys.has(e.key)) return;
@@ -192,12 +181,12 @@ const NumberInput: React.FC<FieldRendererProps> = React.memo(
         if (e.ctrlKey || e.metaKey) return;
 
         // Arrow Up/Down: increment/decrement by step (via refs — no circular dep)
-        if (e.key === "ArrowUp") {
+        if (e.key === 'ArrowUp') {
           e.preventDefault();
           incrementRef.current();
           return;
         }
-        if (e.key === "ArrowDown") {
+        if (e.key === 'ArrowDown') {
           e.preventDefault();
           decrementRef.current();
           return;
@@ -207,45 +196,42 @@ const NumberInput: React.FC<FieldRendererProps> = React.memo(
         if (/^[0-9]$/.test(e.key)) return;
 
         // Minus sign — only allow if min is undefined or min < 0, and no minus already present
-        if (e.key === "-") {
+        if (e.key === '-') {
           const target = e.target as HTMLInputElement;
-          const alreadyHasMinus = target.value.includes("-");
+          const alreadyHasMinus = target.value.includes('-');
           const minAllowsNegative = min === undefined || min < 0;
           if (minAllowsNegative && !alreadyHasMinus) return;
         }
 
         // Decimal point — only if allowDecimals, and no decimal already present
-        if (e.key === ".") {
+        if (e.key === '.') {
           if (allowDecimals) {
             const target = e.target as HTMLInputElement;
-            if (!target.value.includes(".")) return;
+            if (!target.value.includes('.')) return;
           }
         }
 
         // Block everything else
         e.preventDefault();
       },
-      [allowDecimals, min],
+      [allowDecimals, min]
     );
 
     // ---------------------------------------------------------------------------
     // Paste handler — validate paste content
     // ---------------------------------------------------------------------------
-    const handlePaste = useCallback(
-      (e: React.ClipboardEvent<HTMLInputElement>) => {
-        const pasted = e.clipboardData.getData("text").trim();
-        // Accept any string that is a valid finite number representation.
-        // Use a regex instead of String(parseFloat(pasted)) === pasted to avoid
-        // false rejections for valid forms like "3.50" or "-0" where
-        // String(parseFloat(...)) normalises away trailing zeros / negative zero.
-        // Pattern: optional leading minus, one or more digits, optional decimal part.
-        const isValidNumber = /^-?[0-9]+(\.[0-9]*)?$/.test(pasted);
-        if (!isValidNumber) {
-          e.preventDefault();
-        }
-      },
-      [],
-    );
+    const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
+      const pasted = e.clipboardData.getData('text').trim();
+      // Accept any string that is a valid finite number representation.
+      // Use a regex instead of String(parseFloat(pasted)) === pasted to avoid
+      // false rejections for valid forms like "3.50" or "-0" where
+      // String(parseFloat(...)) normalises away trailing zeros / negative zero.
+      // Pattern: optional leading minus, one or more digits, optional decimal part.
+      const isValidNumber = /^-?[0-9]+(\.[0-9]*)?$/.test(pasted);
+      if (!isValidNumber) {
+        e.preventDefault();
+      }
+    }, []);
 
     // ---------------------------------------------------------------------------
     // Render
@@ -263,15 +249,13 @@ const NumberInput: React.FC<FieldRendererProps> = React.memo(
         error={hasErrors}
         helperText={hasErrors ? errors[0] : undefined}
         inputProps={{
-          "aria-label": label,
-          "aria-invalid": hasErrors ? true : undefined,
-          "aria-describedby": hasErrors ? errorId : undefined,
-          "aria-required": required ? true : undefined,
-          inputMode: "numeric",
+          'aria-label': label,
+          'aria-invalid': hasErrors ? true : undefined,
+          'aria-describedby': hasErrors ? errorId : undefined,
+          'aria-required': required ? true : undefined,
+          inputMode: 'numeric',
         }}
-        FormHelperTextProps={
-          hasErrors ? { id: errorId, role: "alert" } : undefined
-        }
+        FormHelperTextProps={hasErrors ? { id: errorId, role: 'alert' } : undefined}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end" sx={{ gap: 0 }}>
@@ -298,10 +282,10 @@ const NumberInput: React.FC<FieldRendererProps> = React.memo(
         }}
       />
     );
-  },
+  }
 );
 
-NumberInput.displayName = "NumberInput";
+NumberInput.displayName = 'NumberInput';
 
 // Register component in the global field registry
 registerFieldComponent(FieldType.NUMBER, NumberInput);

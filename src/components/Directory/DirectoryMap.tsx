@@ -1,13 +1,13 @@
-import React, { useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { Icon } from "leaflet";
-import type { LatLngBoundsExpression } from "leaflet";
-import "leaflet/dist/leaflet.css";
+import React, { useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { Icon } from 'leaflet';
+import type { LatLngBoundsExpression } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in Leaflet with React
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 delete (Icon.Default.prototype as any)._getIconUrl;
 Icon.Default.mergeOptions({
@@ -43,18 +43,14 @@ interface DirectoryMapProps {
  * Renders an interactive map with markers for directory listings using Leaflet + OpenStreetMap.
  * Only shows businesses with valid lat/lng and isRemoteOnly=false.
  */
-const DirectoryMap: React.FC<DirectoryMapProps> = ({
-  listings,
-  userLocation,
-  onMarkerClick,
-}) => {
+const DirectoryMap: React.FC<DirectoryMapProps> = ({ listings, userLocation, onMarkerClick }) => {
   // Filter listings that have valid coordinates and are not remote-only
   const mappableListings = useMemo(() => {
     return listings.filter(
       (listing) =>
         listing.location.latitude !== null &&
         listing.location.longitude !== null &&
-        !listing.location.isRemoteOnly,
+        !listing.location.isRemoteOnly
     );
   }, [listings]);
 
@@ -82,10 +78,7 @@ const DirectoryMap: React.FC<DirectoryMapProps> = ({
     // If one listing, center on it
     if (mappableListings.length === 1) {
       return {
-        center: [
-          mappableListings[0].location.latitude!,
-          mappableListings[0].location.longitude!,
-        ],
+        center: [mappableListings[0].location.latitude!, mappableListings[0].location.longitude!],
         bounds: null,
       };
     }
@@ -120,15 +113,14 @@ const DirectoryMap: React.FC<DirectoryMapProps> = ({
       <div
         className="directory-map-empty"
         style={{
-          padding: "2rem",
-          textAlign: "center",
-          background: "#f5f5f5",
-          borderRadius: "8px",
+          padding: '2rem',
+          textAlign: 'center',
+          background: '#f5f5f5',
+          borderRadius: '8px',
         }}
       >
-        <p style={{ margin: 0, color: "#666" }}>
-          No mappable businesses found. Remote/online-only businesses are listed
-          below the map.
+        <p style={{ margin: 0, color: '#666' }}>
+          No mappable businesses found. Remote/online-only businesses are listed below the map.
         </p>
       </div>
     );
@@ -138,10 +130,10 @@ const DirectoryMap: React.FC<DirectoryMapProps> = ({
     <div
       className="directory-map"
       style={{
-        height: "500px",
-        width: "100%",
-        borderRadius: "8px",
-        overflow: "hidden",
+        height: '500px',
+        width: '100%',
+        borderRadius: '8px',
+        overflow: 'hidden',
       }}
     >
       <MapContainer
@@ -149,7 +141,7 @@ const DirectoryMap: React.FC<DirectoryMapProps> = ({
         zoom={zoom}
         bounds={bounds || undefined}
         scrollWheelZoom={true}
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -179,36 +171,34 @@ const DirectoryMap: React.FC<DirectoryMapProps> = ({
             }}
           >
             <Popup>
-              <div style={{ minWidth: "200px" }}>
+              <div style={{ minWidth: '200px' }}>
                 <strong
                   style={{
-                    fontSize: "1.1rem",
-                    display: "block",
-                    marginBottom: "0.5rem",
+                    fontSize: '1.1rem',
+                    display: 'block',
+                    marginBottom: '0.5rem',
                   }}
                 >
                   {listing.businessName}
                 </strong>
                 {listing.businessCategory && (
-                  <div style={{ color: "#666", marginBottom: "0.25rem" }}>
+                  <div style={{ color: '#666', marginBottom: '0.25rem' }}>
                     {listing.businessCategory}
                   </div>
                 )}
                 {listing.city && listing.country && (
-                  <div style={{ color: "#666", marginBottom: "0.5rem" }}>
+                  <div style={{ color: '#666', marginBottom: '0.5rem' }}>
                     {listing.city}, {listing.country}
                   </div>
                 )}
                 {listing.priceLevel && (
-                  <div style={{ color: "#666", marginBottom: "0.5rem" }}>
-                    {listing.priceLevel}
-                  </div>
+                  <div style={{ color: '#666', marginBottom: '0.5rem' }}>{listing.priceLevel}</div>
                 )}
                 <a
                   href={`/s/${listing.slug}`}
                   style={{
-                    color: "#1976d2",
-                    textDecoration: "none",
+                    color: '#1976d2',
+                    textDecoration: 'none',
                     fontWeight: 500,
                   }}
                   target="_blank"

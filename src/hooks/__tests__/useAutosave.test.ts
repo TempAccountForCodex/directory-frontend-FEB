@@ -12,11 +12,11 @@
  * - No stale closure bugs — useRef for mutable values
  * - Conflict detection via updatedAt timestamps
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useAutosave } from "../useAutosave";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { useAutosave } from '../useAutosave';
 
-describe("useAutosave", () => {
+describe('useAutosave', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -31,38 +31,34 @@ describe("useAutosave", () => {
   // Initial state
   // ---------------------------------------------------------------------------
 
-  it("returns expected shape on mount", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('returns expected shape on mount', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result } = renderHook(() =>
       useAutosave({
-        entityType: "website",
+        entityType: 'website',
         entityId: 1,
-        data: { name: "Test" },
+        data: { name: 'Test' },
         onSave,
-      }),
+      })
     );
-    expect(typeof result.current.hasUnsavedChanges).toBe("boolean");
+    expect(typeof result.current.hasUnsavedChanges).toBe('boolean');
     expect(result.current.hasUnsavedChanges).toBe(false);
-    expect(typeof result.current.saveStatus).toBe("string");
-    expect(result.current.saveStatus).toBe("idle");
-    expect(typeof result.current.triggerSave).toBe("function");
-    expect(typeof result.current.clearDirty).toBe("function");
+    expect(typeof result.current.saveStatus).toBe('string');
+    expect(result.current.saveStatus).toBe('idle');
+    expect(typeof result.current.triggerSave).toBe('function');
+    expect(typeof result.current.clearDirty).toBe('function');
   });
 
-  it("does not call onSave immediately on mount", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('does not call onSave immediately on mount', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     renderHook(() =>
       useAutosave({
-        entityType: "website",
+        entityType: 'website',
         entityId: 1,
-        data: { name: "Test" },
+        data: { name: 'Test' },
         onSave,
         isLoading: false,
-      }),
+      })
     );
     act(() => {
       vi.advanceTimersByTime(60000);
@@ -74,53 +70,43 @@ describe("useAutosave", () => {
   // Dirty state tracking
   // ---------------------------------------------------------------------------
 
-  it("sets hasUnsavedChanges to true when data changes", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('sets hasUnsavedChanges to true when data changes', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
     // After 2s debounce, dirty should be set
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2001);
     });
     expect(result.current.hasUnsavedChanges).toBe(true);
   });
 
-  it("does not set dirty when isLoading is true", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('does not set dirty when isLoading is true', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result, rerender } = renderHook(
-      ({
-        data,
-        isLoading,
-      }: {
-        data: Record<string, unknown>;
-        isLoading: boolean;
-      }) =>
+      ({ data, isLoading }: { data: Record<string, unknown>; isLoading: boolean }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading,
         }),
-      { initialProps: { data: { name: "Initial" }, isLoading: true } },
+      { initialProps: { data: { name: 'Initial' }, isLoading: true } }
     );
 
-    rerender({ data: { name: "Changed" }, isLoading: true });
+    rerender({ data: { name: 'Changed' }, isLoading: true });
     act(() => {
       vi.advanceTimersByTime(5000);
     });
@@ -131,73 +117,67 @@ describe("useAutosave", () => {
   // 2s debounce — marks dirty
   // ---------------------------------------------------------------------------
 
-  it("does not mark dirty before 2s debounce", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('does not mark dirty before 2s debounce', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(1999);
     });
     expect(result.current.hasUnsavedChanges).toBe(false);
   });
 
-  it("marks dirty exactly at 2s debounce boundary", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('marks dirty exactly at 2s debounce boundary', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
     expect(result.current.hasUnsavedChanges).toBe(true);
   });
 
-  it("rapid data changes only mark dirty after final 2s debounce", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('rapid data changes only mark dirty after final 2s debounce', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "a" } } },
+      { initialProps: { data: { name: 'a' } } }
     );
 
-    rerender({ data: { name: "b" } });
+    rerender({ data: { name: 'b' } });
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-    rerender({ data: { name: "c" } });
+    rerender({ data: { name: 'c' } });
     act(() => {
       vi.advanceTimersByTime(1000);
     });
@@ -215,23 +195,21 @@ describe("useAutosave", () => {
   // 30s autosave trigger
   // ---------------------------------------------------------------------------
 
-  it("calls onSave 30s after data becomes dirty", async () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('calls onSave 30s after data becomes dirty', async () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     // Wait for 2s debounce to mark dirty
     act(() => {
       vi.advanceTimersByTime(2000);
@@ -241,26 +219,24 @@ describe("useAutosave", () => {
       vi.advanceTimersByTime(30000);
     });
     expect(onSave).toHaveBeenCalledOnce();
-    expect(onSave).toHaveBeenCalledWith({ name: "Changed" });
+    expect(onSave).toHaveBeenCalledWith({ name: 'Changed' });
   });
 
-  it("does not call onSave before 30s", async () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('does not call onSave before 30s', async () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     }); // debounce
@@ -274,23 +250,21 @@ describe("useAutosave", () => {
   // Manual save trigger
   // ---------------------------------------------------------------------------
 
-  it("triggerSave calls onSave immediately without waiting 30s", async () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('triggerSave calls onSave immediately without waiting 30s', async () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     }); // debounce
@@ -300,75 +274,73 @@ describe("useAutosave", () => {
     expect(onSave).toHaveBeenCalledOnce();
   });
 
-  it("triggerSave sets saveStatus to saving then saved", async () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('triggerSave sets saveStatus to saving then saved', async () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     }); // debounce
     await act(async () => {
       await result.current.triggerSave();
     });
-    expect(result.current.saveStatus).toBe("saved");
+    expect(result.current.saveStatus).toBe('saved');
   });
 
   // ---------------------------------------------------------------------------
   // Error handling
   // ---------------------------------------------------------------------------
 
-  it("sets saveStatus to error when onSave rejects", async () => {
-    const onSave = vi.fn().mockRejectedValue(new Error("Network error"));
+  it('sets saveStatus to error when onSave rejects', async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error('Network error'));
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     }); // debounce
     await act(async () => {
       await result.current.triggerSave();
     });
-    expect(result.current.saveStatus).toBe("error");
+    expect(result.current.saveStatus).toBe('error');
   });
 
-  it("preserves hasUnsavedChanges=true on save failure", async () => {
-    const onSave = vi.fn().mockRejectedValue(new Error("Network error"));
+  it('preserves hasUnsavedChanges=true on save failure', async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error('Network error'));
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     }); // debounce
@@ -378,23 +350,21 @@ describe("useAutosave", () => {
     expect(result.current.hasUnsavedChanges).toBe(true);
   });
 
-  it("clears dirty state after successful save", async () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('clears dirty state after successful save', async () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     }); // debounce
@@ -408,23 +378,21 @@ describe("useAutosave", () => {
   // clearDirty function
   // ---------------------------------------------------------------------------
 
-  it("clearDirty resets hasUnsavedChanges to false", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('clearDirty resets hasUnsavedChanges to false', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     }); // debounce
@@ -440,23 +408,21 @@ describe("useAutosave", () => {
   // Unmount cleanup — no memory leaks
   // ---------------------------------------------------------------------------
 
-  it("clears pending timers on unmount without errors", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('clears pending timers on unmount without errors', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { rerender, unmount } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     expect(() => unmount()).not.toThrow();
     // Advance timers after unmount — no state update error
     act(() => {
@@ -469,26 +435,26 @@ describe("useAutosave", () => {
   // Conflict detection
   // ---------------------------------------------------------------------------
 
-  it("returns conflictData when onSave resolves with conflict", async () => {
+  it('returns conflictData when onSave resolves with conflict', async () => {
     const conflict = {
       conflict: true,
-      serverData: { name: "Server version" },
+      serverData: { name: 'Server version' },
       serverUpdatedAt: new Date().toISOString(),
     };
     const onSave = vi.fn().mockResolvedValue(conflict);
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Local version" } });
+    rerender({ data: { name: 'Local version' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -496,31 +462,29 @@ describe("useAutosave", () => {
       await result.current.triggerSave();
     });
     expect(result.current.conflictData).toBeDefined();
-    expect(result.current.conflictData?.serverData).toEqual({
-      name: "Server version",
-    });
+    expect(result.current.conflictData?.serverData).toEqual({ name: 'Server version' });
   });
 
-  it("resolveConflict clears conflictData", async () => {
+  it('resolveConflict clears conflictData', async () => {
     const conflict = {
       conflict: true,
-      serverData: { name: "Server version" },
+      serverData: { name: 'Server version' },
       serverUpdatedAt: new Date().toISOString(),
     };
     const onSave = vi.fn().mockResolvedValue(conflict);
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "website",
+          entityType: 'website',
           entityId: 1,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Local version" } });
+    rerender({ data: { name: 'Local version' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -530,7 +494,7 @@ describe("useAutosave", () => {
     expect(result.current.conflictData).toBeDefined();
 
     act(() => {
-      result.current.resolveConflict("keep-local");
+      result.current.resolveConflict('keep-local');
     });
     expect(result.current.conflictData).toBeNull();
   });
@@ -539,18 +503,16 @@ describe("useAutosave", () => {
   // Edge cases
   // ---------------------------------------------------------------------------
 
-  it("handles null entityId gracefully", () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
+  it('handles null entityId gracefully', () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
     const { result } = renderHook(() =>
       useAutosave({
-        entityType: "website",
+        entityType: 'website',
         entityId: null as unknown as number,
-        data: { name: "Test" },
+        data: { name: 'Test' },
         onSave,
         isLoading: false,
-      }),
+      })
     );
     expect(result.current.hasUnsavedChanges).toBe(false);
     act(() => {
@@ -559,19 +521,17 @@ describe("useAutosave", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it("does not autosave when data has not changed", async () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ updatedAt: new Date().toISOString() });
-    const data = { name: "Unchanged" };
+  it('does not autosave when data has not changed', async () => {
+    const onSave = vi.fn().mockResolvedValue({ updatedAt: new Date().toISOString() });
+    const data = { name: 'Unchanged' };
     renderHook(() =>
       useAutosave({
-        entityType: "website",
+        entityType: 'website',
         entityId: 1,
         data,
         onSave,
         isLoading: false,
-      }),
+      })
     );
     await act(async () => {
       vi.advanceTimersByTime(40000);
@@ -583,11 +543,9 @@ describe("useAutosave", () => {
   // 412 Conflict handling — onSave returning conflict shape (Step 5.9.6)
   // ---------------------------------------------------------------------------
 
-  it("onSave returning { conflict: true, serverData, serverUpdatedAt } sets conflictData state", async () => {
-    const serverData = {
-      blocks: [{ blockType: "HERO", content: { heading: "Server Version" } }],
-    };
-    const serverUpdatedAt = "2026-03-15T10:00:00Z";
+  it('onSave returning { conflict: true, serverData, serverUpdatedAt } sets conflictData state', async () => {
+    const serverData = { blocks: [{ blockType: 'HERO', content: { heading: 'Server Version' } }] };
+    const serverUpdatedAt = '2026-03-15T10:00:00Z';
     const onSave = vi.fn().mockResolvedValue({
       conflict: true,
       serverData,
@@ -596,24 +554,16 @@ describe("useAutosave", () => {
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "page",
+          entityType: 'page',
           entityId: 42,
           data,
           onSave,
           isLoading: false,
         }),
-      {
-        initialProps: {
-          data: {
-            blocks: [{ blockType: "HERO", content: { heading: "Local" } }],
-          },
-        },
-      },
+      { initialProps: { data: { blocks: [{ blockType: 'HERO', content: { heading: 'Local' } }] } } }
     );
 
-    rerender({
-      data: { blocks: [{ blockType: "HERO", content: { heading: "Edited" } }] },
-    });
+    rerender({ data: { blocks: [{ blockType: 'HERO', content: { heading: 'Edited' } }] } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -629,22 +579,22 @@ describe("useAutosave", () => {
   it('resolveConflict("keep-local") sets hasUnsavedChanges to true for re-save', async () => {
     const onSave = vi.fn().mockResolvedValue({
       conflict: true,
-      serverData: { name: "Server" },
-      serverUpdatedAt: "2026-03-15T10:00:00Z",
+      serverData: { name: 'Server' },
+      serverUpdatedAt: '2026-03-15T10:00:00Z',
     });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "page",
+          entityType: 'page',
           entityId: 42,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Edited" } });
+    rerender({ data: { name: 'Edited' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -654,7 +604,7 @@ describe("useAutosave", () => {
     expect(result.current.conflictData).not.toBeNull();
 
     act(() => {
-      result.current.resolveConflict("keep-local");
+      result.current.resolveConflict('keep-local');
     });
     expect(result.current.hasUnsavedChanges).toBe(true);
     expect(result.current.conflictData).toBeNull();
@@ -663,22 +613,22 @@ describe("useAutosave", () => {
   it('resolveConflict("use-server") clears hasUnsavedChanges', async () => {
     const onSave = vi.fn().mockResolvedValue({
       conflict: true,
-      serverData: { name: "Server" },
-      serverUpdatedAt: "2026-03-15T10:00:00Z",
+      serverData: { name: 'Server' },
+      serverUpdatedAt: '2026-03-15T10:00:00Z',
     });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "page",
+          entityType: 'page',
           entityId: 42,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Edited" } });
+    rerender({ data: { name: 'Edited' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -688,33 +638,33 @@ describe("useAutosave", () => {
     expect(result.current.conflictData).not.toBeNull();
 
     act(() => {
-      result.current.resolveConflict("use-server");
+      result.current.resolveConflict('use-server');
     });
     expect(result.current.hasUnsavedChanges).toBe(false);
     expect(result.current.conflictData).toBeNull();
   });
 
-  it("after conflict resolution, conflictData is null regardless of resolution type", async () => {
+  it('after conflict resolution, conflictData is null regardless of resolution type', async () => {
     const conflict = {
       conflict: true,
-      serverData: { name: "Server" },
-      serverUpdatedAt: "2026-03-15T10:00:00Z",
+      serverData: { name: 'Server' },
+      serverUpdatedAt: '2026-03-15T10:00:00Z',
     };
     const onSave = vi.fn().mockResolvedValue(conflict);
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "page",
+          entityType: 'page',
           entityId: 42,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
     // Trigger conflict
-    rerender({ data: { name: "Edited" } });
+    rerender({ data: { name: 'Edited' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -725,7 +675,7 @@ describe("useAutosave", () => {
 
     // Resolve with keep-local
     act(() => {
-      result.current.resolveConflict("keep-local");
+      result.current.resolveConflict('keep-local');
     });
     expect(result.current.conflictData).toBeNull();
 
@@ -737,40 +687,40 @@ describe("useAutosave", () => {
 
     // Resolve with use-server
     act(() => {
-      result.current.resolveConflict("use-server");
+      result.current.resolveConflict('use-server');
     });
     expect(result.current.conflictData).toBeNull();
   });
 
-  it("successful save stores updatedAt for next request via onSave result", async () => {
-    const updatedAt = "2026-03-15T12:00:00Z";
+  it('successful save stores updatedAt for next request via onSave result', async () => {
+    const updatedAt = '2026-03-15T12:00:00Z';
     const onSave = vi.fn().mockResolvedValue({ updatedAt });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "page",
+          entityType: 'page',
           entityId: 42,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
     // First save
-    rerender({ data: { name: "Changed" } });
+    rerender({ data: { name: 'Changed' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
     await act(async () => {
       await result.current.triggerSave();
     });
-    expect(result.current.saveStatus).toBe("saved");
-    expect(onSave).toHaveBeenCalledWith({ name: "Changed" });
+    expect(result.current.saveStatus).toBe('saved');
+    expect(onSave).toHaveBeenCalledWith({ name: 'Changed' });
 
     // Second save — onSave is called with updated data
-    onSave.mockResolvedValue({ updatedAt: "2026-03-15T12:01:00Z" });
-    rerender({ data: { name: "Changed again" } });
+    onSave.mockResolvedValue({ updatedAt: '2026-03-15T12:01:00Z' });
+    rerender({ data: { name: 'Changed again' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -778,28 +728,28 @@ describe("useAutosave", () => {
       await result.current.triggerSave();
     });
     expect(onSave).toHaveBeenCalledTimes(2);
-    expect(onSave).toHaveBeenLastCalledWith({ name: "Changed again" });
+    expect(onSave).toHaveBeenLastCalledWith({ name: 'Changed again' });
   });
 
-  it("conflict sets saveStatus to idle, not error", async () => {
+  it('conflict sets saveStatus to idle, not error', async () => {
     const onSave = vi.fn().mockResolvedValue({
       conflict: true,
-      serverData: { name: "Server" },
-      serverUpdatedAt: "2026-03-15T10:00:00Z",
+      serverData: { name: 'Server' },
+      serverUpdatedAt: '2026-03-15T10:00:00Z',
     });
     const { result, rerender } = renderHook(
       ({ data }: { data: Record<string, unknown> }) =>
         useAutosave({
-          entityType: "page",
+          entityType: 'page',
           entityId: 42,
           data,
           onSave,
           isLoading: false,
         }),
-      { initialProps: { data: { name: "Initial" } } },
+      { initialProps: { data: { name: 'Initial' } } }
     );
 
-    rerender({ data: { name: "Edited" } });
+    rerender({ data: { name: 'Edited' } });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -807,7 +757,7 @@ describe("useAutosave", () => {
       await result.current.triggerSave();
     });
 
-    expect(result.current.saveStatus).toBe("idle");
+    expect(result.current.saveStatus).toBe('idle');
     expect(result.current.conflictData).not.toBeNull();
   });
 });

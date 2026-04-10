@@ -9,38 +9,35 @@
  * Rendered inside Dashboard layout via renderContent switch.
  * No standalone route needed (accessed at /dashboard/websites/my-templates).
  */
-import { useState, useCallback, useEffect } from "react";
-import Box from "@mui/material/Box";
-import Skeleton from "@mui/material/Skeleton";
-import Grid from "@mui/material/Grid";
-import { useNavigate } from "react-router-dom";
-import { Heart, Clock, LayoutTemplate } from "lucide-react";
-import axios from "axios";
+import { useState, useCallback, useEffect } from 'react';
+import Box from '@mui/material/Box';
+import Skeleton from '@mui/material/Skeleton';
+import Grid from '@mui/material/Grid';
+import { useNavigate } from 'react-router-dom';
+import { Heart, Clock, LayoutTemplate } from 'lucide-react';
+import axios from 'axios';
 import {
   PageHeader,
   TabNavigation,
   EmptyState,
   DashboardPanel,
-} from "../components/Dashboard/shared";
-import TemplateGallery from "../components/Templates/TemplateGallery";
-import TemplateFilters from "../components/Templates/TemplateFilters";
-import { useTemplates } from "../hooks/useTemplates";
-import { useTemplateFavorites } from "../hooks/useTemplateFavorites";
-import {
-  type TemplateSummary,
-  normalizeTemplateSummary,
-} from "../templates/templateApi";
+} from '../components/Dashboard/shared';
+import TemplateGallery from '../components/Templates/TemplateGallery';
+import TemplateFilters from '../components/Templates/TemplateFilters';
+import { useTemplates } from '../hooks/useTemplates';
+import { useTemplateFavorites } from '../hooks/useTemplateFavorites';
+import { type TemplateSummary, normalizeTemplateSummary } from '../templates/templateApi';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-const TAB_FAVORITES = "favorites";
-const TAB_RECENT = "recently-used";
-const TAB_ALL = "all-templates";
+const TAB_FAVORITES = 'favorites';
+const TAB_RECENT = 'recently-used';
+const TAB_ALL = 'all-templates';
 
 const TABS = [
-  { label: "Favorites", value: TAB_FAVORITES },
-  { label: "Recently Used", value: TAB_RECENT },
-  { label: "All Templates", value: TAB_ALL },
+  { label: 'Favorites', value: TAB_FAVORITES },
+  { label: 'Recently Used', value: TAB_RECENT },
+  { label: 'All Templates', value: TAB_ALL },
 ];
 
 interface HistoryEntry {
@@ -80,12 +77,7 @@ const MyTemplates = () => {
   const [historyFetched, setHistoryFetched] = useState<boolean>(false);
 
   // All Templates
-  const {
-    templates,
-    loading: allLoading,
-    filters,
-    setFilters,
-  } = useTemplates();
+  const { templates, loading: allLoading, filters, setFilters } = useTemplates();
 
   // Fetch history only when tab is activated
   useEffect(() => {
@@ -104,9 +96,7 @@ const MyTemplates = () => {
           const templates: TemplateSummary[] = entries
             .filter((entry) => entry.template)
             .map((entry) =>
-              normalizeTemplateSummary(
-                entry.template as unknown as Record<string, unknown>,
-              ),
+              normalizeTemplateSummary(entry.template as unknown as Record<string, unknown>)
             );
           setHistory(templates);
           setHistoryFetched(true);
@@ -135,9 +125,9 @@ const MyTemplates = () => {
 
   const handleSelectTemplate = useCallback(
     (_template: TemplateSummary) => {
-      navigate("/dashboard/websites/templates");
+      navigate('/dashboard/websites/templates');
     },
-    [navigate],
+    [navigate]
   );
 
   const handlePreviewTemplate = useCallback((_template: TemplateSummary) => {
@@ -148,15 +138,12 @@ const MyTemplates = () => {
     (templateId: string) => {
       toggleFavorite(templateId);
     },
-    [toggleFavorite],
+    [toggleFavorite]
   );
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
-      <PageHeader
-        title="My Templates"
-        subtitle="Your saved and recently used templates"
-      />
+      <PageHeader title="My Templates" subtitle="Your saved and recently used templates" />
 
       <TabNavigation tabs={TABS} value={activeTab} onChange={handleTabChange} />
 

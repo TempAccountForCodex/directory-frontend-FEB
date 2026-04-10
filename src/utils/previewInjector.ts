@@ -45,11 +45,11 @@ export interface PreviewBlock {
 /* ------------------------------------------------------------------ */
 
 const ESCAPE_MAP: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
 };
 
 const ESCAPE_RE = /[&<>"']/g;
@@ -59,7 +59,7 @@ const ESCAPE_RE = /[&<>"']/g;
  * Prevents XSS when injecting content into srcdoc HTML strings.
  */
 export function escapeHtml(str: unknown): string {
-  if (str === null || str === undefined) return "";
+  if (str === null || str === undefined) return '';
   return String(str).replace(ESCAPE_RE, (ch) => ESCAPE_MAP[ch] || ch);
 }
 
@@ -73,7 +73,7 @@ export function escapeHtml(str: unknown): string {
  * CSS injection via malicious key names (e.g. "x; } body { background: ...").
  */
 function sanitizeCssKey(key: string): string {
-  return key.replace(/[^a-zA-Z0-9-]/g, "");
+  return key.replace(/[^a-zA-Z0-9-]/g, '');
 }
 
 /**
@@ -85,7 +85,7 @@ function sanitizeCssKey(key: string): string {
 function sanitizeCssValue(value: string): string {
   // Strip ; and { } which are the primary CSS injection breakout characters.
   // Also strip backslash (CSS escape sequences) to prevent encoding tricks.
-  return value.replace(/[;{}\\]/g, "");
+  return value.replace(/[;{}\\]/g, '');
 }
 
 /* ------------------------------------------------------------------ */
@@ -93,7 +93,7 @@ function sanitizeCssValue(value: string): string {
 /* ------------------------------------------------------------------ */
 
 /** Allowed URL schemes for href and src attributes. */
-const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:"]);
+const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:']);
 
 /**
  * Sanitize a URL for use in href/src attributes.
@@ -101,19 +101,19 @@ const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:"]);
  * Allows http:, https:, mailto:, tel:, relative paths (/...), and fragment links (#...).
  */
 export function sanitizeUrl(url: unknown): string {
-  if (url === null || url === undefined) return "";
+  if (url === null || url === undefined) return '';
   const str = String(url).trim();
-  if (!str) return "";
+  if (!str) return '';
 
   // Allow relative paths and fragment-only links
-  if (str.startsWith("/") || str.startsWith("#")) return escapeHtml(str);
+  if (str.startsWith('/') || str.startsWith('#')) return escapeHtml(str);
 
   // Parse protocol — handle whitespace/control chars that browsers may ignore
   // Strip leading whitespace, tabs, newlines that could mask the protocol
-  const normalized = str.replace(/[\x00-\x1f\x7f]/g, "").trim();
+  const normalized = str.replace(/[\x00-\x1f\x7f]/g, '').trim();
 
   try {
-    const parsed = new URL(normalized, "https://placeholder.invalid");
+    const parsed = new URL(normalized, 'https://placeholder.invalid');
     if (SAFE_URL_PROTOCOLS.has(parsed.protocol)) {
       return escapeHtml(str);
     }
@@ -122,17 +122,17 @@ export function sanitizeUrl(url: unknown): string {
     // But double-check it doesn't start with a dangerous scheme
     const lower = normalized.toLowerCase();
     if (
-      lower.startsWith("javascript:") ||
-      lower.startsWith("data:") ||
-      lower.startsWith("vbscript:")
+      lower.startsWith('javascript:') ||
+      lower.startsWith('data:') ||
+      lower.startsWith('vbscript:')
     ) {
-      return "";
+      return '';
     }
     return escapeHtml(str);
   }
 
   // Protocol not in allowlist — block
-  return "";
+  return '';
 }
 
 /* ------------------------------------------------------------------ */
@@ -162,7 +162,7 @@ function buildCssVariables(website: PreviewWebsite): string {
     }
   }
 
-  return vars.length > 0 ? `:root {\n${vars.join("\n")}\n}` : "";
+  return vars.length > 0 ? `:root {\n${vars.join('\n')}\n}` : '';
 }
 
 /* ------------------------------------------------------------------ */
@@ -173,13 +173,13 @@ function renderHeroBlock(content: Record<string, unknown>): string {
   const title = escapeHtml(content.title);
   const subtitle = escapeHtml(content.subtitle);
   const buttonText = escapeHtml(content.buttonText);
-  const buttonUrl = sanitizeUrl(content.buttonUrl || "#");
+  const buttonUrl = sanitizeUrl(content.buttonUrl || '#');
 
   return `
     <section style="padding:60px 20px;text-align:center;background:var(--color-primary,#378C92);color:#fff;">
-      ${title ? `<h1 data-editable="title" data-edit-type="single" style="margin:0 0 16px;font-family:var(--font-heading,sans-serif);font-size:2.5rem;">${title}</h1>` : ""}
-      ${subtitle ? `<p data-editable="subtitle" data-edit-type="single" style="margin:0 0 24px;font-size:1.2rem;opacity:0.9;">${subtitle}</p>` : ""}
-      ${buttonText ? `<a data-editable="buttonText" data-edit-type="single" href="${buttonUrl}" style="display:inline-block;padding:12px 32px;background:#fff;color:var(--color-primary,#378C92);border-radius:6px;text-decoration:none;font-weight:600;">${buttonText}</a>` : ""}
+      ${title ? `<h1 data-editable="title" data-edit-type="single" style="margin:0 0 16px;font-family:var(--font-heading,sans-serif);font-size:2.5rem;">${title}</h1>` : ''}
+      ${subtitle ? `<p data-editable="subtitle" data-edit-type="single" style="margin:0 0 24px;font-size:1.2rem;opacity:0.9;">${subtitle}</p>` : ''}
+      ${buttonText ? `<a data-editable="buttonText" data-edit-type="single" href="${buttonUrl}" style="display:inline-block;padding:12px 32px;background:#fff;color:var(--color-primary,#378C92);border-radius:6px;text-decoration:none;font-weight:600;">${buttonText}</a>` : ''}
     </section>`;
 }
 
@@ -195,19 +195,19 @@ function renderCtaBlock(content: Record<string, unknown>): string {
   const heading = escapeHtml(content.heading);
   const description = escapeHtml(content.description);
   const buttonText = escapeHtml(content.buttonText);
-  const buttonUrl = sanitizeUrl(content.buttonUrl || "#");
+  const buttonUrl = sanitizeUrl(content.buttonUrl || '#');
 
   return `
     <section style="padding:60px 20px;text-align:center;background:var(--color-secondary,#f5f5f5);">
-      ${heading ? `<h2 data-editable="heading" data-edit-type="single" style="margin:0 0 12px;font-family:var(--font-heading,sans-serif);">${heading}</h2>` : ""}
-      ${description ? `<p data-editable="description" data-edit-type="multi" style="margin:0 0 24px;color:var(--color-text,#444);">${description}</p>` : ""}
-      ${buttonText ? `<a data-editable="buttonText" data-edit-type="single" href="${buttonUrl}" style="display:inline-block;padding:12px 32px;background:var(--color-primary,#378C92);color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">${buttonText}</a>` : ""}
+      ${heading ? `<h2 data-editable="heading" data-edit-type="single" style="margin:0 0 12px;font-family:var(--font-heading,sans-serif);">${heading}</h2>` : ''}
+      ${description ? `<p data-editable="description" data-edit-type="multi" style="margin:0 0 24px;color:var(--color-text,#444);">${description}</p>` : ''}
+      ${buttonText ? `<a data-editable="buttonText" data-edit-type="single" href="${buttonUrl}" style="display:inline-block;padding:12px 32px;background:var(--color-primary,#378C92);color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">${buttonText}</a>` : ''}
     </section>`;
 }
 
 function renderImageBlock(content: Record<string, unknown>): string {
   const src = sanitizeUrl(content.src);
-  const alt = escapeHtml(content.alt || "Image");
+  const alt = escapeHtml(content.alt || 'Image');
 
   return `
     <section style="padding:20px;text-align:center;">
@@ -228,9 +228,9 @@ function renderFeaturesBlock(content: Record<string, unknown>): string {
       <div style="flex:1;min-width:200px;padding:20px;text-align:center;">
         <h3 style="margin:0 0 8px;font-family:var(--font-heading,sans-serif);">${escapeHtml(f.title)}</h3>
         <p style="margin:0;color:var(--color-text,#666);">${escapeHtml(f.description)}</p>
-      </div>`,
+      </div>`
     )
-    .join("");
+    .join('');
 
   return `
     <section style="padding:40px 20px;">
@@ -241,7 +241,7 @@ function renderFeaturesBlock(content: Record<string, unknown>): string {
 }
 
 function renderContactBlock(content: Record<string, unknown>): string {
-  const heading = escapeHtml(content.heading || "Contact Us");
+  const heading = escapeHtml(content.heading || 'Contact Us');
 
   return `
     <section style="padding:60px 20px;text-align:center;">
@@ -254,7 +254,7 @@ function renderContactBlock(content: Record<string, unknown>): string {
 
 export function renderNavbarBlock(content: Record<string, unknown>): string {
   // Support both new schema (brandName/navigationItems) and legacy (logo/links)
-  const brandName = escapeHtml(content.brandName || content.logo || "My Brand");
+  const brandName = escapeHtml(content.brandName || content.logo || 'My Brand');
   const navigationItems = Array.isArray(content.navigationItems)
     ? content.navigationItems
     : Array.isArray(content.links)
@@ -267,24 +267,22 @@ export function renderNavbarBlock(content: Record<string, unknown>): string {
     .slice(0, 8)
     .map(
       (item: Record<string, unknown>) =>
-        `<a href="${sanitizeUrl(item.link)}" style="color:inherit;text-decoration:none;margin:0 12px;">${escapeHtml(item.label)}</a>`,
+        `<a href="${sanitizeUrl(item.link)}" style="color:inherit;text-decoration:none;margin:0 12px;">${escapeHtml(item.label)}</a>`
     )
-    .join("");
+    .join('');
 
   const ctaText = escapeHtml(content.ctaText);
   const ctaLink = sanitizeUrl(content.ctaLink);
   const ctaHtml =
     ctaText && ctaLink
       ? `<a href="${ctaLink}" style="background:#fff;color:var(--color-primary,#378C92);padding:8px 16px;border-radius:4px;text-decoration:none;font-weight:600;">${ctaText}</a>`
-      : "";
+      : '';
 
-  const sticky = content.sticky ? "position:sticky;top:0;z-index:1000;" : "";
+  const sticky = content.sticky ? 'position:sticky;top:0;z-index:1000;' : '';
   const logoImg =
-    content.logo &&
-    typeof content.logo === "string" &&
-    content.logo.startsWith("http")
+    content.logo && typeof content.logo === 'string' && content.logo.startsWith('http')
       ? `<img src="${sanitizeUrl(content.logo)}" alt="${brandName}" style="height:32px;margin-right:8px;" />`
-      : "";
+      : '';
 
   return `
     <nav data-block-type="NAVBAR" data-global-component="navbar" style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--color-primary,#378C92);color:#fff;${sticky}">
@@ -304,14 +302,12 @@ export function renderFooterBlock(content: Record<string, unknown>): string {
 
   // Logo
   const logoImg =
-    content.logo && typeof content.logo === "string"
+    content.logo && typeof content.logo === 'string'
       ? `<img src="${sanitizeUrl(content.logo)}" alt="Logo" style="height:40px;margin-bottom:12px;" />`
-      : "";
+      : '';
 
   // Columns with nested links (new schema)
-  const columns = Array.isArray(content.columns)
-    ? content.columns.slice(0, 4)
-    : [];
+  const columns = Array.isArray(content.columns) ? content.columns.slice(0, 4) : [];
   const columnsHtml = columns
     .map((col: Record<string, unknown>) => {
       const colTitle = escapeHtml(col.title);
@@ -319,47 +315,45 @@ export function renderFooterBlock(content: Record<string, unknown>): string {
       const colLinkHtml = colLinks
         .map(
           (link: Record<string, unknown>) =>
-            `<a href="${sanitizeUrl(link.url)}" style="color:inherit;text-decoration:none;display:block;margin:4px 0;">${escapeHtml(link.label)}</a>`,
+            `<a href="${sanitizeUrl(link.url)}" style="color:inherit;text-decoration:none;display:block;margin:4px 0;">${escapeHtml(link.label)}</a>`
         )
-        .join("");
+        .join('');
       return `<div style="flex:1;min-width:120px;"><h4 style="margin:0 0 8px 0;font-size:0.95rem;">${colTitle}</h4>${colLinkHtml}</div>`;
     })
-    .join("");
+    .join('');
 
   // Social links
-  const socialLinks = Array.isArray(content.socialLinks)
-    ? content.socialLinks.slice(0, 5)
-    : [];
+  const socialLinks = Array.isArray(content.socialLinks) ? content.socialLinks.slice(0, 5) : [];
   const platformLabels: Record<string, string> = {
-    facebook: "FB",
-    twitter: "TW",
-    instagram: "IG",
-    linkedin: "LI",
-    youtube: "YT",
+    facebook: 'FB',
+    twitter: 'TW',
+    instagram: 'IG',
+    linkedin: 'LI',
+    youtube: 'YT',
   };
   const socialHtml = socialLinks
     .map(
       (s: Record<string, unknown>) =>
-        `<a href="${sanitizeUrl(s.url)}" style="color:inherit;margin:0 6px;text-decoration:none;" target="_blank" rel="noopener noreferrer">${platformLabels[String(s.platform)] || escapeHtml(s.platform)}</a>`,
+        `<a href="${sanitizeUrl(s.url)}" style="color:inherit;margin:0 6px;text-decoration:none;" target="_blank" rel="noopener noreferrer">${platformLabels[String(s.platform)] || escapeHtml(s.platform)}</a>`
     )
-    .join("");
+    .join('');
 
   // Legacy links support (old schema: content.links with text/url)
   const legacyLinks = Array.isArray(content.links) ? content.links : [];
   const legacyHtml = legacyLinks
     .map(
       (link: Record<string, unknown>) =>
-        `<a href="${sanitizeUrl(link.url)}" style="color:inherit;margin:0 8px;">${escapeHtml(link.text || link.label)}</a>`,
+        `<a href="${sanitizeUrl(link.url)}" style="color:inherit;margin:0 8px;">${escapeHtml(link.text || link.label)}</a>`
     )
-    .join("");
+    .join('');
 
   return `
     <footer data-block-type="FOOTER" data-global-component="footer" style="padding:24px;background:#222;color:#ccc;font-size:0.9rem;">
       ${logoImg}
-      ${columnsHtml ? `<div style="display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;">${columnsHtml}</div>` : ""}
-      ${legacyHtml ? `<div style="text-align:center;margin-bottom:8px;">${legacyHtml}</div>` : ""}
-      ${socialHtml ? `<div style="text-align:center;margin-bottom:8px;">${socialHtml}</div>` : ""}
-      ${copyright ? `<p data-editable="copyright" data-edit-type="single" style="margin:0;text-align:center;opacity:0.7;">${copyright}</p>` : ""}
+      ${columnsHtml ? `<div style="display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;">${columnsHtml}</div>` : ''}
+      ${legacyHtml ? `<div style="text-align:center;margin-bottom:8px;">${legacyHtml}</div>` : ''}
+      ${socialHtml ? `<div style="text-align:center;margin-bottom:8px;">${socialHtml}</div>` : ''}
+      ${copyright ? `<p data-editable="copyright" data-edit-type="single" style="margin:0;text-align:center;opacity:0.7;">${copyright}</p>` : ''}
     </footer>`;
 }
 
@@ -369,28 +363,28 @@ function blockToHtml(block: PreviewBlock): string {
   let inner: string;
 
   switch (blockType) {
-    case "HERO":
+    case 'HERO':
       inner = renderHeroBlock(content);
       break;
-    case "TEXT":
+    case 'TEXT':
       inner = renderTextBlock(content);
       break;
-    case "CTA":
+    case 'CTA':
       inner = renderCtaBlock(content);
       break;
-    case "IMAGE":
+    case 'IMAGE':
       inner = renderImageBlock(content);
       break;
-    case "FEATURES":
+    case 'FEATURES':
       inner = renderFeaturesBlock(content);
       break;
-    case "CONTACT":
+    case 'CONTACT':
       inner = renderContactBlock(content);
       break;
-    case "NAVBAR":
+    case 'NAVBAR':
       inner = renderNavbarBlock(content);
       break;
-    case "FOOTER":
+    case 'FOOTER':
       inner = renderFooterBlock(content);
       break;
     default:
@@ -687,12 +681,11 @@ export function generateLivePreview(
   page: PreviewPage,
   blocks: PreviewBlock[],
   parentOrigin?: string,
-  globalComponents?: GlobalComponents,
+  globalComponents?: GlobalComponents
 ): string {
   // Callers should pass window.location.origin. Fall back safely if omitted.
   const resolvedParentOrigin =
-    parentOrigin ||
-    (typeof window !== "undefined" ? window.location.origin : "");
+    parentOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
 
   const cssVars = buildCssVariables(website);
   const responsiveCss = buildResponsiveCss();
@@ -703,12 +696,12 @@ export function generateLivePreview(
   // Render blocks or empty placeholder
   const bodyContent =
     sorted.length > 0
-      ? sorted.map((b) => blockToHtml(b)).join("\n")
+      ? sorted.map((b) => blockToHtml(b)).join('\n')
       : `<div style="display:flex;align-items:center;justify-content:center;min-height:60vh;color:#999;font-size:1.1rem;">Add blocks to see a preview</div>`;
 
   // Global component injection (navbar before content, footer after)
-  let navbarHtml = "";
-  let footerHtml = "";
+  let navbarHtml = '';
+  let footerHtml = '';
   try {
     if (globalComponents?.navbar && !page.hideNavbar) {
       navbarHtml = renderNavbarBlock(globalComponents.navbar);
@@ -727,7 +720,7 @@ export function generateLivePreview(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(page.title || website.name || "Preview")}</title>
+  <title>${escapeHtml(page.title || website.name || 'Preview')}</title>
   <style>
     ${cssVars}
     ${responsiveCss}

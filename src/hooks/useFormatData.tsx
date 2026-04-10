@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 /* ---------------- Hook ---------------- */
 const useFormatData = (data?: string): string[] => {
@@ -9,7 +9,7 @@ const useFormatData = (data?: string): string[] => {
       // Use a regular expression to split based on hyphens, bullets, or dots
       const formatted = data
         .split(/\s*[-•]\s*/)
-        .filter((item) => item.trim() !== "")
+        .filter((item) => item.trim() !== '')
         .map((item) => item.trim());
 
       setFormattedData(formatted);

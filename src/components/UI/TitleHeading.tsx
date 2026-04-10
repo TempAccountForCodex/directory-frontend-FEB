@@ -1,5 +1,5 @@
-import React from "react";
-import { Typography, useTheme, type TypographyProps } from "@mui/material";
+import React from 'react';
+import { Typography, useTheme, type TypographyProps } from '@mui/material';
 
 interface TitleHeadingProps extends TypographyProps {
   text: string;
@@ -11,23 +11,23 @@ const TitleHeading: React.FC<TitleHeadingProps> = ({ text, ...rest }) => {
     <Typography
       variant="h5"
       style={{
-        fontSize: "25px",
-        lineHeight: "42px",
-        textAlign: "left",
+        fontSize: '25px',
+        lineHeight: '42px',
+        textAlign: 'left',
         fontWeight: 600,
-        fontFamily: "Poppins",
-        marginTop: "10px",
+        fontFamily: 'Poppins',
+        marginTop: '10px',
         color: (theme.palette.primary as any).hero,
       }}
       sx={{
-        position: "relative",
-        "&:before": {
+        position: 'relative',
+        '&:before': {
           content: '""',
-          position: "absolute",
-          bottom: "0",
-          left: "0",
-          width: "80px",
-          height: "3px",
+          position: 'absolute',
+          bottom: '0',
+          left: '0',
+          width: '80px',
+          height: '3px',
           backgroundColor: (theme.palette.primary as any).focus,
         },
       }}

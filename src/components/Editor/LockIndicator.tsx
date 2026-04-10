@@ -11,20 +11,20 @@
  * SECURITY: Role is sourced from server metadata
  */
 
-import React, { useMemo } from "react";
-import { Box, Tooltip, Typography } from "@mui/material";
-import LockIcon from "@mui/icons-material/Lock";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import React, { useMemo } from 'react';
+import { Box, Tooltip, Typography } from '@mui/material';
+import LockIcon from '@mui/icons-material/Lock';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 // ---------------------------------------------------------------------------
 // Role badge colors
 // ---------------------------------------------------------------------------
 
 const ROLE_COLORS: Record<string, string> = {
-  OWNER: "#f59e0b",
-  ADMIN: "#3b82f6",
-  EDITOR: "#22c55e",
-  VIEWER: "#9ca3af",
+  OWNER: '#f59e0b',
+  ADMIN: '#3b82f6',
+  EDITOR: '#22c55e',
+  VIEWER: '#9ca3af',
 };
 
 // ---------------------------------------------------------------------------
@@ -58,10 +58,10 @@ const LockIndicatorInner: React.FC<LockIndicatorProps> = ({
 }) => {
   const isLockedByOther = useMemo(
     () => lock !== null && lock.userId !== currentUserId,
-    [lock, currentUserId],
+    [lock, currentUserId]
   );
 
-  const isViewer = currentUserRole === "VIEWER";
+  const isViewer = currentUserRole === 'VIEWER';
 
   // VIEWER overlay (no lock needed — always read-only)
   if (isViewer && !isLockedByOther) {
@@ -70,22 +70,18 @@ const LockIndicatorInner: React.FC<LockIndicatorProps> = ({
         <Box
           data-testid={`viewer-overlay-${blockId}`}
           sx={{
-            display: "inline-flex",
-            alignItems: "center",
+            display: 'inline-flex',
+            alignItems: 'center',
             gap: 0.5,
             px: 1,
             py: 0.25,
-            bgcolor: "action.disabledBackground",
+            bgcolor: 'action.disabledBackground',
             borderRadius: 1,
-            cursor: "default",
+            cursor: 'default',
           }}
         >
-          <VisibilityIcon sx={{ fontSize: 12, color: "text.disabled" }} />
-          <Typography
-            variant="caption"
-            color="text.disabled"
-            sx={{ fontWeight: 500 }}
-          >
+          <VisibilityIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
+          <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 500 }}>
             View Only
           </Typography>
         </Box>
@@ -102,38 +98,35 @@ const LockIndicatorInner: React.FC<LockIndicatorProps> = ({
         data-testid={`lock-indicator-${blockId}`}
         aria-label={`Block locked by ${lock.userName} (${lock.role})`}
         sx={{
-          display: "inline-flex",
-          alignItems: "center",
+          display: 'inline-flex',
+          alignItems: 'center',
           gap: 0.5,
           px: 1,
           py: 0.25,
-          bgcolor: "warning.light",
+          bgcolor: 'warning.light',
           borderRadius: 1,
-          cursor: "default",
+          cursor: 'default',
         }}
       >
-        <LockIcon sx={{ fontSize: 12, color: "warning.dark" }} />
-        <Typography
-          variant="caption"
-          sx={{ fontWeight: 500, color: "warning.dark" }}
-        >
+        <LockIcon sx={{ fontSize: 12, color: 'warning.dark' }} />
+        <Typography variant="caption" sx={{ fontWeight: 500, color: 'warning.dark' }}>
           {lock.userName}
         </Typography>
         {/* Role badge */}
         <Box
           data-testid={`lock-role-badge-${blockId}`}
           sx={{
-            px: "4px",
-            py: "1px",
+            px: '4px',
+            py: '1px',
             bgcolor: roleColor,
-            borderRadius: "3px",
+            borderRadius: '3px',
           }}
         >
           <Typography
             sx={{
-              fontSize: "8px",
+              fontSize: '8px',
               fontWeight: 700,
-              color: "#fff",
+              color: '#fff',
               lineHeight: 1,
             }}
           >
@@ -151,16 +144,16 @@ const LockIndicatorInner: React.FC<LockIndicatorProps> = ({
         <Box
           data-testid={`viewer-overlay-${blockId}`}
           sx={{
-            display: "inline-flex",
-            alignItems: "center",
+            display: 'inline-flex',
+            alignItems: 'center',
             gap: 0.5,
             px: 1,
             py: 0.25,
-            bgcolor: "action.disabledBackground",
+            bgcolor: 'action.disabledBackground',
             borderRadius: 1,
           }}
         >
-          <VisibilityIcon sx={{ fontSize: 12, color: "text.disabled" }} />
+          <VisibilityIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
           <Typography variant="caption" color="text.disabled">
             View Only
           </Typography>

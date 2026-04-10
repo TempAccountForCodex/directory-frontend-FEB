@@ -1,25 +1,25 @@
-import { useState, useRef } from "react";
-import type { ChangeEvent, KeyboardEvent } from "react";
-import { Box, TextField } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { useState, useRef } from 'react';
+import type { ChangeEvent, KeyboardEvent } from 'react';
+import { Box, TextField } from '@mui/material';
+import { styled } from '@mui/material/styles';
 
 const CodeDigitField = styled(TextField)(({ theme }) => ({
-  width: "3rem",
-  "& .MuiOutlinedInput-root": {
-    color: "#ffffff",
-    "& fieldset": {
-      borderColor: "rgba(255, 255, 255, 0.23)",
+  width: '3rem',
+  '& .MuiOutlinedInput-root': {
+    color: '#ffffff',
+    '& fieldset': {
+      borderColor: 'rgba(255, 255, 255, 0.23)',
     },
-    "&:hover fieldset": {
-      borderColor: "rgba(255, 255, 255, 0.4)",
+    '&:hover fieldset': {
+      borderColor: 'rgba(255, 255, 255, 0.4)',
     },
-    "&.Mui-focused fieldset": {
-      borderColor: "#378C92",
+    '&.Mui-focused fieldset': {
+      borderColor: '#378C92',
     },
   },
-  "& input": {
-    textAlign: "center",
-    fontSize: "1.5rem",
+  '& input': {
+    textAlign: 'center',
+    fontSize: '1.5rem',
     fontWeight: 600,
     padding: theme.spacing(1.5),
   },
@@ -41,7 +41,7 @@ const CodeInput = ({
   error = false,
 }: CodeInputProps) => {
   const [digits, setDigits] = useState<string[]>(
-    value.split("").concat(Array(6 - value.length).fill("")),
+    value.split('').concat(Array(6 - value.length).fill(''))
   );
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -57,12 +57,12 @@ const CodeInput = ({
 
     // Handle paste
     if (newValue.length > 1) {
-      const pastedDigits = newValue.slice(0, 6).split("");
+      const pastedDigits = newValue.slice(0, 6).split('');
       for (let i = 0; i < pastedDigits.length && index + i < 6; i++) {
         newDigits[index + i] = pastedDigits[i];
       }
       setDigits(newDigits);
-      const code = newDigits.join("");
+      const code = newDigits.join('');
       onChange(code);
 
       // Focus on next empty field or last field
@@ -79,7 +79,7 @@ const CodeInput = ({
     // Handle single digit input
     newDigits[index] = newValue;
     setDigits(newDigits);
-    const code = newDigits.join("");
+    const code = newDigits.join('');
     onChange(code);
 
     // Auto-advance to next field
@@ -95,21 +95,21 @@ const CodeInput = ({
 
   const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
     // Backspace: clear current digit and move to previous
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
       const newDigits = [...digits];
-      newDigits[index - 1] = "";
+      newDigits[index - 1] = '';
       setDigits(newDigits);
-      onChange(newDigits.join(""));
+      onChange(newDigits.join(''));
       inputRefs.current[index - 1]?.focus();
     }
 
     // Left arrow: move to previous
-    if (e.key === "ArrowLeft" && index > 0) {
+    if (e.key === 'ArrowLeft' && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
 
     // Right arrow: move to next
-    if (e.key === "ArrowRight" && index < 5) {
+    if (e.key === 'ArrowRight' && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -120,26 +120,22 @@ const CodeInput = ({
   };
 
   return (
-    <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
       {digits.map((digit, index) => (
         <CodeDigitField
           key={index}
           inputRef={(el) => (inputRefs.current[index] = el)}
           value={digit}
-          onChange={(e) =>
-            handleChange(index, e as ChangeEvent<HTMLInputElement>)
-          }
-          onKeyDown={(e) =>
-            handleKeyDown(index, e as KeyboardEvent<HTMLInputElement>)
-          }
+          onChange={(e) => handleChange(index, e as ChangeEvent<HTMLInputElement>)}
+          onKeyDown={(e) => handleKeyDown(index, e as KeyboardEvent<HTMLInputElement>)}
           onFocus={() => handleFocus(index)}
           disabled={disabled}
           error={error}
           inputProps={{
             maxLength: 1,
-            inputMode: "numeric",
-            pattern: "[0-9]*",
-            autoComplete: "off",
+            inputMode: 'numeric',
+            pattern: '[0-9]*',
+            autoComplete: 'off',
           }}
         />
       ))}

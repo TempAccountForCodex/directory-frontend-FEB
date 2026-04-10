@@ -8,7 +8,7 @@
  * Returns the debounced value. The returned value only updates after
  * `delay` milliseconds have elapsed with no new input.
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 /**
  * useDebouncedValue

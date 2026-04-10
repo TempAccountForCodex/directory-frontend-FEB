@@ -17,17 +17,11 @@
  * Accessibility: role="img", aria-label on map container
  */
 
-import React, { useMemo } from "react";
-import { Box, Container, Typography, Tooltip } from "@mui/material";
-import { motion } from "framer-motion";
-import DOMPurify from "dompurify";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  ZoomableGroup,
-  Marker,
-} from "react-simple-maps";
+import React, { useMemo } from 'react';
+import { Box, Container, Typography, Tooltip } from '@mui/material';
+import { motion } from 'framer-motion';
+import DOMPurify from 'dompurify';
+import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from 'react-simple-maps';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,7 +40,7 @@ interface MapLocationContent {
   zoom?: number;
   height?: number;
   showTooltips?: boolean;
-  style?: "world" | "region" | "minimal";
+  style?: 'world' | 'region' | 'minimal';
   // Standard styling fields
   spacingPaddingTop?: string;
   spacingPaddingBottom?: string;
@@ -70,16 +64,15 @@ interface MapLocationBlockProps {
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const GEO_URL =
-  "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
 const DEFAULT_MARKER: MarkerConfig = {
   lat: 40.7128,
   lng: -74.006,
-  label: "Main Office",
-  address: "123 Main St, New York, NY",
-  phone: "",
-  color: "#378C92",
+  label: 'Main Office',
+  address: '123 Main St, New York, NY',
+  phone: '',
+  color: '#378C92',
 };
 
 // ── Tooltip Content ───────────────────────────────────────────────────────────
@@ -88,41 +81,39 @@ interface MarkerTooltipProps {
   marker: MarkerConfig;
 }
 
-const MarkerTooltipContent: React.FC<MarkerTooltipProps> = React.memo(
-  ({ marker }) => (
-    <Box sx={{ p: 0.5 }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.25 }}>
-        {DOMPurify.sanitize(marker.label)}
+const MarkerTooltipContent: React.FC<MarkerTooltipProps> = React.memo(({ marker }) => (
+  <Box sx={{ p: 0.5 }}>
+    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.25 }}>
+      {DOMPurify.sanitize(marker.label)}
+    </Typography>
+    {marker.address && (
+      <Typography variant="caption" display="block">
+        {DOMPurify.sanitize(marker.address)}
       </Typography>
-      {marker.address && (
-        <Typography variant="caption" display="block">
-          {DOMPurify.sanitize(marker.address)}
-        </Typography>
-      )}
-      {marker.phone && (
-        <Typography variant="caption" display="block">
-          {DOMPurify.sanitize(marker.phone)}
-        </Typography>
-      )}
-    </Box>
-  ),
-);
+    )}
+    {marker.phone && (
+      <Typography variant="caption" display="block">
+        {DOMPurify.sanitize(marker.phone)}
+      </Typography>
+    )}
+  </Box>
+));
 
-MarkerTooltipContent.displayName = "MarkerTooltipContent";
+MarkerTooltipContent.displayName = 'MarkerTooltipContent';
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
 const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
   block,
-  headingColor = "#1e293b",
+  headingColor = '#1e293b',
 }) => {
   const {
-    heading = "Our Locations",
+    heading = 'Our Locations',
     markers: rawMarkers,
     zoom = 4,
     height = 400,
     showTooltips = true,
-    style = "world",
+    style = 'world',
   } = block.content;
 
   // Use default marker if no markers configured
@@ -133,13 +124,13 @@ const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
 
   // Compute projection settings based on style
   const projectionConfig = useMemo(() => {
-    if (style === "region" && markers.length > 0) {
+    if (style === 'region' && markers.length > 0) {
       // Center on average of marker coordinates
       const avgLng = markers.reduce((s, m) => s + m.lng, 0) / markers.length;
       const avgLat = markers.reduce((s, m) => s + m.lat, 0) / markers.length;
       return { center: [avgLng, avgLat] as [number, number], scale: 120 };
     }
-    if (style === "minimal") {
+    if (style === 'minimal') {
       return { center: [0, 0] as [number, number], scale: 90 };
     }
     // world — default
@@ -147,8 +138,8 @@ const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
   }, [style, markers]);
 
   // Geography fill based on style
-  const geoFill = style === "minimal" ? "#d4d4d8" : "#e2e8f0";
-  const geoStroke = style === "minimal" ? "#a1a1aa" : "#94a3b8";
+  const geoFill = style === 'minimal' ? '#d4d4d8' : '#e2e8f0';
+  const geoStroke = style === 'minimal' ? '#a1a1aa' : '#94a3b8';
 
   return (
     <motion.div
@@ -157,11 +148,7 @@ const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
     >
-      <Box
-        component="section"
-        aria-label={heading || "Map Location"}
-        sx={{ py: 6 }}
-      >
+      <Box component="section" aria-label={heading || 'Map Location'} sx={{ py: 6 }}>
         <Container maxWidth="lg">
           {heading && (
             <Typography
@@ -177,20 +164,20 @@ const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
 
           <Box
             sx={{
-              width: "100%",
+              width: '100%',
               height: height,
-              overflow: "hidden",
+              overflow: 'hidden',
               borderRadius: 2,
-              border: "1px solid",
-              borderColor: "divider",
-              bgcolor: "#f8fafc",
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: '#f8fafc',
             }}
             role="img"
             aria-label="Interactive location map"
           >
             <ComposableMap
               projectionConfig={projectionConfig}
-              style={{ width: "100%", height: "100%" }}
+              style={{ width: '100%', height: '100%' }}
             >
               <ZoomableGroup zoom={zoom} center={projectionConfig.center}>
                 <Geographies geography={GEO_URL}>
@@ -203,9 +190,9 @@ const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
                         stroke={geoStroke}
                         strokeWidth={0.5}
                         style={{
-                          default: { outline: "none" },
-                          hover: { fill: "#cbd5e1", outline: "none" },
-                          pressed: { outline: "none" },
+                          default: { outline: 'none' },
+                          hover: { fill: '#cbd5e1', outline: 'none' },
+                          pressed: { outline: 'none' },
                         }}
                       />
                     ))
@@ -215,25 +202,17 @@ const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
                 {markers.map((marker, idx) => {
                   const safeLabel = DOMPurify.sanitize(marker.label);
                   const safeAddress = DOMPurify.sanitize(marker.address);
-                  const safePhone = DOMPurify.sanitize(marker.phone || "");
+                  const safePhone = DOMPurify.sanitize(marker.phone || '');
                   const fill = marker.color || DEFAULT_MARKER.color;
 
                   const circle = (
-                    <Marker
-                      key={`marker-${idx}`}
-                      coordinates={[marker.lng, marker.lat]}
-                    >
-                      <circle
-                        r={8}
-                        fill={fill}
-                        stroke="#ffffff"
-                        strokeWidth={2}
-                      />
+                    <Marker key={`marker-${idx}`} coordinates={[marker.lng, marker.lat]}>
+                      <circle r={8} fill={fill} stroke="#ffffff" strokeWidth={2} />
                       {showTooltips && (
                         <title>
                           {safeLabel}
-                          {safeAddress ? ` — ${safeAddress}` : ""}
-                          {safePhone ? ` — ${safePhone}` : ""}
+                          {safeAddress ? ` — ${safeAddress}` : ''}
+                          {safePhone ? ` — ${safePhone}` : ''}
                         </title>
                       )}
                     </Marker>
@@ -250,12 +229,7 @@ const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
                     >
                       <g>
                         <Marker coordinates={[marker.lng, marker.lat]}>
-                          <circle
-                            r={8}
-                            fill={fill}
-                            stroke="#ffffff"
-                            strokeWidth={2}
-                          />
+                          <circle r={8} fill={fill} stroke="#ffffff" strokeWidth={2} />
                         </Marker>
                       </g>
                     </Tooltip>
@@ -269,29 +243,18 @@ const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
           {showTooltips && (
             <Box
               component="ul"
-              sx={{
-                mt: 2,
-                listStyle: "none",
-                p: 0,
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 2,
-              }}
+              sx={{ mt: 2, listStyle: 'none', p: 0, display: 'flex', flexWrap: 'wrap', gap: 2 }}
               aria-label="Location list"
             >
               {markers.map((marker, idx) => (
                 <Box
                   key={idx}
                   component="li"
-                  sx={{ fontSize: "0.875rem", color: "text.secondary" }}
+                  sx={{ fontSize: '0.875rem', color: 'text.secondary' }}
                 >
                   <strong>{DOMPurify.sanitize(marker.label)}</strong>
-                  {marker.address && (
-                    <span> — {DOMPurify.sanitize(marker.address)}</span>
-                  )}
-                  {marker.phone && (
-                    <span> — {DOMPurify.sanitize(marker.phone)}</span>
-                  )}
+                  {marker.address && <span> — {DOMPurify.sanitize(marker.address)}</span>}
+                  {marker.phone && <span> — {DOMPurify.sanitize(marker.phone)}</span>}
                 </Box>
               ))}
             </Box>
@@ -302,9 +265,9 @@ const MapLocationBlockBase: React.FC<MapLocationBlockProps> = ({
   );
 };
 
-MapLocationBlockBase.displayName = "MapLocationBlock";
+MapLocationBlockBase.displayName = 'MapLocationBlock';
 
 const MapLocationBlock = React.memo(MapLocationBlockBase);
-MapLocationBlock.displayName = "MapLocationBlock";
+MapLocationBlock.displayName = 'MapLocationBlock';
 
 export default MapLocationBlock;

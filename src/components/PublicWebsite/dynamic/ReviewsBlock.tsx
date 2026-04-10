@@ -21,7 +21,7 @@
  * Accessibility: aria-labels, semantic HTML
  */
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Alert,
   Box,
@@ -38,22 +38,22 @@ import {
   Stack,
   TextField,
   Typography,
-} from "@mui/material";
-import { motion } from "framer-motion";
-import DOMPurify from "dompurify";
-import useDynamicBlockData from "../../../hooks/useDynamicBlockData";
+} from '@mui/material';
+import { motion } from 'framer-motion';
+import DOMPurify from 'dompurify';
+import useDynamicBlockData from '../../../hooks/useDynamicBlockData';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ReviewsContent {
   heading?: string;
-  entityType?: "website" | "product" | "listing";
-  layout?: "list" | "grid" | "carousel";
+  entityType?: 'website' | 'product' | 'listing';
+  layout?: 'list' | 'grid' | 'carousel';
   reviewsPerPage?: number;
   showRatingBreakdown?: boolean;
   showSubmitForm?: boolean;
   showPagination?: boolean;
-  sortBy?: "newest" | "oldest" | "highest" | "lowest";
+  sortBy?: 'newest' | 'oldest' | 'highest' | 'lowest';
   emptyMessage?: string;
 }
 
@@ -103,8 +103,7 @@ interface ReviewsData {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const API_URL =
-  (import.meta as any).env?.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -116,18 +115,14 @@ function formatRelativeDate(dateStr: string): string {
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
     if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   } catch {
-    return "";
+    return '';
   }
 }
 
@@ -139,64 +134,43 @@ interface ReviewCardProps {
   bodyColor: string;
 }
 
-const ReviewCard: React.FC<ReviewCardProps> = React.memo(
-  ({ review, headingColor, bodyColor }) => {
-    const safeAuthor = DOMPurify.sanitize(review.authorName);
-    const safeTitle = review.title ? DOMPurify.sanitize(review.title) : "";
-    const safeContent = DOMPurify.sanitize(review.content);
-    const dateStr = formatRelativeDate(review.createdAt);
+const ReviewCard: React.FC<ReviewCardProps> = React.memo(({ review, headingColor, bodyColor }) => {
+  const safeAuthor = DOMPurify.sanitize(review.authorName);
+  const safeTitle = review.title ? DOMPurify.sanitize(review.title) : '';
+  const safeContent = DOMPurify.sanitize(review.content);
+  const dateStr = formatRelativeDate(review.createdAt);
 
-    return (
-      <Card elevation={1} sx={{ height: "100%" }}>
-        <CardContent>
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="space-between"
-            mb={1}
-          >
-            <Typography
-              variant="subtitle2"
-              fontWeight={700}
-              color={headingColor}
-            >
-              {safeAuthor}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {dateStr}
-            </Typography>
-          </Box>
-          <Rating
-            value={review.rating}
-            readOnly
-            size="small"
-            aria-label={`Rating: ${review.rating} out of 5`}
-          />
-          {safeTitle && (
-            <Typography
-              variant="body2"
-              fontWeight={600}
-              mt={0.5}
-              color={headingColor}
-            >
-              {safeTitle}
-            </Typography>
-          )}
-          <Typography
-            variant="body2"
-            mt={0.5}
-            color={bodyColor}
-            sx={{ lineHeight: 1.6 }}
-          >
-            {safeContent}
+  return (
+    <Card elevation={1} sx={{ height: '100%' }}>
+      <CardContent>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+          <Typography variant="subtitle2" fontWeight={700} color={headingColor}>
+            {safeAuthor}
           </Typography>
-        </CardContent>
-      </Card>
-    );
-  },
-);
+          <Typography variant="caption" color="text.secondary">
+            {dateStr}
+          </Typography>
+        </Box>
+        <Rating
+          value={review.rating}
+          readOnly
+          size="small"
+          aria-label={`Rating: ${review.rating} out of 5`}
+        />
+        {safeTitle && (
+          <Typography variant="body2" fontWeight={600} mt={0.5} color={headingColor}>
+            {safeTitle}
+          </Typography>
+        )}
+        <Typography variant="body2" mt={0.5} color={bodyColor} sx={{ lineHeight: 1.6 }}>
+          {safeContent}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+});
 
-ReviewCard.displayName = "ReviewCard";
+ReviewCard.displayName = 'ReviewCard';
 
 // ── Rating Breakdown ──────────────────────────────────────────────────────────
 
@@ -204,59 +178,46 @@ interface RatingBreakdownProps {
   summary: ReviewsSummary;
 }
 
-const RatingBreakdown: React.FC<RatingBreakdownProps> = React.memo(
-  ({ summary }) => {
-    return (
-      <Box
-        aria-label="Rating breakdown"
-        sx={{ mb: 4, p: 3, bgcolor: "grey.50", borderRadius: 2 }}
-      >
-        <Box display="flex" alignItems="center" gap={2} mb={2}>
-          <Typography variant="h3" fontWeight={700} color="text.primary">
-            {summary.average.toFixed(1)}
+const RatingBreakdown: React.FC<RatingBreakdownProps> = React.memo(({ summary }) => {
+  return (
+    <Box aria-label="Rating breakdown" sx={{ mb: 4, p: 3, bgcolor: 'grey.50', borderRadius: 2 }}>
+      <Box display="flex" alignItems="center" gap={2} mb={2}>
+        <Typography variant="h3" fontWeight={700} color="text.primary">
+          {summary.average.toFixed(1)}
+        </Typography>
+        <Box>
+          <Rating value={summary.average} readOnly precision={0.5} />
+          <Typography variant="caption" color="text.secondary">
+            {summary.total} {summary.total === 1 ? 'review' : 'reviews'}
           </Typography>
-          <Box>
-            <Rating value={summary.average} readOnly precision={0.5} />
-            <Typography variant="caption" color="text.secondary">
-              {summary.total} {summary.total === 1 ? "review" : "reviews"}
+        </Box>
+      </Box>
+
+      {[5, 4, 3, 2, 1].map((star) => {
+        const count = summary.breakdown[star] || 0;
+        const pct = summary.total > 0 ? (count / summary.total) * 100 : 0;
+        return (
+          <Box key={star} display="flex" alignItems="center" gap={1} mb={0.5}>
+            <Typography variant="caption" sx={{ minWidth: 16 }}>
+              {star}
+            </Typography>
+            <Rating value={1} max={1} readOnly size="small" />
+            <LinearProgress
+              variant="determinate"
+              value={pct}
+              sx={{ flex: 1, height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
+            />
+            <Typography variant="caption" sx={{ minWidth: 20, textAlign: 'right' }}>
+              {count}
             </Typography>
           </Box>
-        </Box>
+        );
+      })}
+    </Box>
+  );
+});
 
-        {[5, 4, 3, 2, 1].map((star) => {
-          const count = summary.breakdown[star] || 0;
-          const pct = summary.total > 0 ? (count / summary.total) * 100 : 0;
-          return (
-            <Box key={star} display="flex" alignItems="center" gap={1} mb={0.5}>
-              <Typography variant="caption" sx={{ minWidth: 16 }}>
-                {star}
-              </Typography>
-              <Rating value={1} max={1} readOnly size="small" />
-              <LinearProgress
-                variant="determinate"
-                value={pct}
-                sx={{
-                  flex: 1,
-                  height: 8,
-                  borderRadius: 4,
-                  bgcolor: "grey.200",
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{ minWidth: 20, textAlign: "right" }}
-              >
-                {count}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
-    );
-  },
-);
-
-RatingBreakdown.displayName = "RatingBreakdown";
+RatingBreakdown.displayName = 'RatingBreakdown';
 
 // ── Submit Form ───────────────────────────────────────────────────────────────
 
@@ -270,33 +231,30 @@ interface SubmitFormProps {
 const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
   ({ blockId, entityType, primaryColor, onSuccess }) => {
     const [formData, setFormData] = useState({
-      authorName: "",
-      authorEmail: "",
+      authorName: '',
+      authorEmail: '',
       rating: 0,
-      title: "",
-      content: "",
-      company: "", // honeypot
+      title: '',
+      content: '',
+      company: '', // honeypot
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [status, setStatus] = useState<
-      "idle" | "loading" | "success" | "error"
-    >("idle");
-    const [errorMessage, setErrorMessage] = useState("");
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [errorMessage, setErrorMessage] = useState('');
 
     const validate = useCallback(() => {
       const newErrors: Record<string, string> = {};
-      if (!formData.authorName.trim())
-        newErrors.authorName = "Name is required.";
+      if (!formData.authorName.trim()) newErrors.authorName = 'Name is required.';
       if (!formData.authorEmail.trim()) {
-        newErrors.authorEmail = "Email is required.";
+        newErrors.authorEmail = 'Email is required.';
       } else if (!EMAIL_REGEX.test(formData.authorEmail.trim())) {
-        newErrors.authorEmail = "Please enter a valid email address.";
+        newErrors.authorEmail = 'Please enter a valid email address.';
       }
-      if (!formData.rating) newErrors.rating = "Rating is required.";
+      if (!formData.rating) newErrors.rating = 'Rating is required.';
       if (!formData.content.trim()) {
-        newErrors.content = "Review content is required.";
+        newErrors.content = 'Review content is required.';
       } else if (formData.content.trim().length < 10) {
-        newErrors.content = "Review must be at least 10 characters.";
+        newErrors.content = 'Review must be at least 10 characters.';
       }
       return newErrors;
     }, [formData]);
@@ -307,7 +265,7 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
 
         // Honeypot check — if filled, silently succeed (bot trap)
         if (formData.company) {
-          setStatus("success");
+          setStatus('success');
           onSuccess();
           return;
         }
@@ -318,12 +276,12 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
           return;
         }
         setErrors({});
-        setStatus("loading");
+        setStatus('loading');
 
         try {
           const res = await fetch(`${API_URL}/reviews`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               entityType,
               entityId: blockId,
@@ -336,35 +294,29 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
           });
 
           if (res.status === 429) {
-            setErrorMessage(
-              "Too many submissions. Please wait before submitting again.",
-            );
-            setStatus("error");
+            setErrorMessage('Too many submissions. Please wait before submitting again.');
+            setStatus('error');
             return;
           }
 
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            setErrorMessage(
-              body.message || "Failed to submit review. Please try again.",
-            );
-            setStatus("error");
+            setErrorMessage(body.message || 'Failed to submit review. Please try again.');
+            setStatus('error');
             return;
           }
 
-          setStatus("success");
+          setStatus('success');
           onSuccess();
         } catch {
-          setErrorMessage(
-            "Unable to submit review. Please check your connection.",
-          );
-          setStatus("error");
+          setErrorMessage('Unable to submit review. Please check your connection.');
+          setStatus('error');
         }
       },
-      [formData, validate, entityType, blockId, onSuccess],
+      [formData, validate, entityType, blockId, onSuccess]
     );
 
-    if (status === "success") {
+    if (status === 'success') {
       return (
         <Alert severity="success" sx={{ mt: 3 }}>
           Thank you for your review! It will appear after approval.
@@ -376,13 +328,7 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
       <Box
         component="form"
         onSubmit={handleSubmit}
-        sx={{
-          mt: 4,
-          p: 3,
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 2,
-        }}
+        sx={{ mt: 4, p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
         aria-label="Submit a review"
         noValidate
       >
@@ -390,7 +336,7 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
           Write a Review
         </Typography>
 
-        {status === "error" && (
+        {status === 'error' && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {errorMessage}
           </Alert>
@@ -408,12 +354,12 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
           tabIndex={-1}
           autoComplete="off"
           style={{
-            position: "absolute",
-            left: "-9999px",
-            width: "1px",
-            height: "1px",
-            overflow: "hidden",
-            display: "none",
+            position: 'absolute',
+            left: '-9999px',
+            width: '1px',
+            height: '1px',
+            overflow: 'hidden',
+            display: 'none',
           }}
         />
 
@@ -422,13 +368,11 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
             fullWidth
             label="Your Name"
             value={formData.authorName}
-            onChange={(e) =>
-              setFormData((p) => ({ ...p, authorName: e.target.value }))
-            }
+            onChange={(e) => setFormData((p) => ({ ...p, authorName: e.target.value }))}
             error={Boolean(errors.authorName)}
             helperText={errors.authorName}
             required
-            disabled={status === "loading"}
+            disabled={status === 'loading'}
             size="small"
           />
           <TextField
@@ -436,13 +380,11 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
             label="Your Email"
             type="email"
             value={formData.authorEmail}
-            onChange={(e) =>
-              setFormData((p) => ({ ...p, authorEmail: e.target.value }))
-            }
+            onChange={(e) => setFormData((p) => ({ ...p, authorEmail: e.target.value }))}
             error={Boolean(errors.authorEmail)}
             helperText={errors.authorEmail}
             required
-            disabled={status === "loading"}
+            disabled={status === 'loading'}
             size="small"
           />
           <Box>
@@ -451,9 +393,7 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
             </Typography>
             <Rating
               value={formData.rating}
-              onChange={(_, val) =>
-                setFormData((p) => ({ ...p, rating: val || 0 }))
-              }
+              onChange={(_, val) => setFormData((p) => ({ ...p, rating: val || 0 }))}
               aria-label="Select your rating"
             />
             {errors.rating && (
@@ -466,10 +406,8 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
             fullWidth
             label="Title (optional)"
             value={formData.title}
-            onChange={(e) =>
-              setFormData((p) => ({ ...p, title: e.target.value }))
-            }
-            disabled={status === "loading"}
+            onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+            disabled={status === 'loading'}
             size="small"
           />
           <TextField
@@ -478,56 +416,54 @@ const ReviewSubmitForm: React.FC<SubmitFormProps> = React.memo(
             multiline
             rows={4}
             value={formData.content}
-            onChange={(e) =>
-              setFormData((p) => ({ ...p, content: e.target.value }))
-            }
+            onChange={(e) => setFormData((p) => ({ ...p, content: e.target.value }))}
             error={Boolean(errors.content)}
             helperText={errors.content}
             required
-            disabled={status === "loading"}
+            disabled={status === 'loading'}
             size="small"
           />
           <Button
             type="submit"
             variant="contained"
-            disabled={status === "loading"}
+            disabled={status === 'loading'}
             sx={{
               bgcolor: primaryColor,
-              "&:hover": { bgcolor: primaryColor, opacity: 0.9 },
+              '&:hover': { bgcolor: primaryColor, opacity: 0.9 },
             }}
           >
-            {status === "loading" ? (
+            {status === 'loading' ? (
               <CircularProgress size={20} color="inherit" />
             ) : (
-              "Submit Review"
+              'Submit Review'
             )}
           </Button>
         </Stack>
       </Box>
     );
-  },
+  }
 );
 
-ReviewSubmitForm.displayName = "ReviewSubmitForm";
+ReviewSubmitForm.displayName = 'ReviewSubmitForm';
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
 const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
   block,
-  primaryColor = "#378C92",
-  headingColor = "#1e293b",
-  bodyColor = "#475569",
+  primaryColor = '#378C92',
+  headingColor = '#1e293b',
+  bodyColor = '#475569',
 }) => {
   const {
-    heading = "Customer Reviews",
-    entityType = "website",
-    layout = "list",
+    heading = 'Customer Reviews',
+    entityType = 'website',
+    layout = 'list',
     reviewsPerPage = 10,
     showRatingBreakdown = true,
     showSubmitForm = true,
     showPagination = true,
-    sortBy = "newest",
-    emptyMessage = "No reviews yet. Be the first to share your experience!",
+    sortBy = 'newest',
+    emptyMessage = 'No reviews yet. Be the first to share your experience!',
   } = block.content;
 
   const [page, setPage] = useState(1);
@@ -536,19 +472,16 @@ const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
   // Build parameterized dataSource string (same pattern as ProductShowcaseBlock)
   const dataSource = useMemo(() => {
     const params = new URLSearchParams();
-    params.set("page", String(page));
-    params.set("limit", String(reviewsPerPage));
-    params.set("sortBy", sortBy || "newest");
-    params.set("entityType", entityType);
+    params.set('page', String(page));
+    params.set('limit', String(reviewsPerPage));
+    params.set('sortBy', sortBy || 'newest');
+    params.set('entityType', entityType);
     return `review?${params.toString()}`;
   }, [page, reviewsPerPage, sortBy, entityType]);
 
-  const { data, loading, error } = useDynamicBlockData(
-    block.id,
-    block.blockType,
-    dataSource,
-    { enabled: true },
-  );
+  const { data, loading, error } = useDynamicBlockData(block.id, block.blockType, dataSource, {
+    enabled: true,
+  });
 
   const reviewsData = data as ReviewsData | null;
 
@@ -559,11 +492,7 @@ const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
 
   const summary = useMemo<ReviewsSummary>(() => {
     if (!reviewsData?.summary) {
-      return {
-        average: 0,
-        total: 0,
-        breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-      };
+      return { average: 0, total: 0, breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } };
     }
     return reviewsData.summary;
   }, [reviewsData]);
@@ -586,11 +515,7 @@ const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
         viewport={{ once: true }}
         transition={{ duration: 0.5 }}
       >
-        <Box
-          component="section"
-          aria-label={heading || "Reviews"}
-          sx={{ py: 6 }}
-        >
+        <Box component="section" aria-label={heading || 'Reviews'} sx={{ py: 6 }}>
           <Container maxWidth="lg">
             <Skeleton variant="text" width="40%" height={48} sx={{ mb: 2 }} />
             {Array.from({ length: 3 }).map((_, i) => (
@@ -616,11 +541,7 @@ const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
         viewport={{ once: true }}
         transition={{ duration: 0.5 }}
       >
-        <Box
-          component="section"
-          aria-label={heading || "Reviews"}
-          sx={{ py: 6 }}
-        >
+        <Box component="section" aria-label={heading || 'Reviews'} sx={{ py: 6 }}>
           <Container maxWidth="lg">
             <Alert severity="error">{error}</Alert>
           </Container>
@@ -634,47 +555,35 @@ const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
   const renderReviews = () => {
     if (reviews.length === 0) {
       return (
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          textAlign="center"
-          sx={{ py: 4 }}
-        >
+        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ py: 4 }}>
           {emptyMessage}
         </Typography>
       );
     }
 
-    if (layout === "grid") {
+    if (layout === 'grid') {
       return (
         <Grid container spacing={3}>
           {reviews.map((review) => (
             <Grid item xs={12} sm={6} key={review.id}>
-              <ReviewCard
-                review={review}
-                headingColor={headingColor}
-                bodyColor={bodyColor}
-              />
+              <ReviewCard review={review} headingColor={headingColor} bodyColor={bodyColor} />
             </Grid>
           ))}
         </Grid>
       );
     }
 
-    if (layout === "carousel") {
+    if (layout === 'carousel') {
       return (
         <Box
           sx={{
-            display: "flex",
+            display: 'flex',
             gap: 2,
-            overflowX: "auto",
+            overflowX: 'auto',
             pb: 2,
-            scrollSnapType: "x mandatory",
-            "&::-webkit-scrollbar": { height: 6 },
-            "&::-webkit-scrollbar-thumb": {
-              bgcolor: "grey.300",
-              borderRadius: 3,
-            },
+            scrollSnapType: 'x mandatory',
+            '&::-webkit-scrollbar': { height: 6 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: 'grey.300', borderRadius: 3 },
           }}
           role="region"
           aria-label="Reviews carousel"
@@ -683,16 +592,12 @@ const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
             <Box
               key={review.id}
               sx={{
-                minWidth: { xs: "85%", sm: "45%", md: "30%" },
-                scrollSnapAlign: "start",
+                minWidth: { xs: '85%', sm: '45%', md: '30%' },
+                scrollSnapAlign: 'start',
                 flexShrink: 0,
               }}
             >
-              <ReviewCard
-                review={review}
-                headingColor={headingColor}
-                bodyColor={bodyColor}
-              />
+              <ReviewCard review={review} headingColor={headingColor} bodyColor={bodyColor} />
             </Box>
           ))}
         </Box>
@@ -721,7 +626,7 @@ const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
     >
-      <Box component="section" aria-label={heading || "Reviews"} sx={{ py: 6 }}>
+      <Box component="section" aria-label={heading || 'Reviews'} sx={{ py: 6 }}>
         <Container maxWidth="lg">
           {heading && (
             <Typography
@@ -735,9 +640,7 @@ const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
             </Typography>
           )}
 
-          {showRatingBreakdown && summary.total > 0 && (
-            <RatingBreakdown summary={summary} />
-          )}
+          {showRatingBreakdown && summary.total > 0 && <RatingBreakdown summary={summary} />}
 
           {renderReviews()}
 
@@ -768,9 +671,9 @@ const ReviewsBlockBase: React.FC<ReviewsBlockProps> = ({
   );
 };
 
-ReviewsBlockBase.displayName = "ReviewsBlock";
+ReviewsBlockBase.displayName = 'ReviewsBlock';
 
 const ReviewsBlock = React.memo(ReviewsBlockBase);
-ReviewsBlock.displayName = "ReviewsBlock";
+ReviewsBlock.displayName = 'ReviewsBlock';
 
 export default ReviewsBlock;

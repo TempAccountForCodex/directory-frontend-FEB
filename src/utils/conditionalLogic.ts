@@ -9,13 +9,13 @@
 export interface ConditionalRule {
   field: string;
   operator:
-    | "equals"
-    | "notEquals"
-    | "isEmpty"
-    | "isNotEmpty"
-    | "contains"
-    | "greaterThan"
-    | "lessThan";
+    | 'equals'
+    | 'notEquals'
+    | 'isEmpty'
+    | 'isNotEmpty'
+    | 'contains'
+    | 'greaterThan'
+    | 'lessThan';
   value?: any;
 }
 
@@ -43,10 +43,7 @@ export interface FieldDefinition {
  * - Unknown operator → safe default, show (returns true)
  * - FLAT paths only: values[field.conditional.field]
  */
-export const shouldShowField = (
-  field: FieldDefinition,
-  values: Record<string, any>,
-): boolean => {
+export const shouldShowField = (field: FieldDefinition, values: Record<string, any>): boolean => {
   if (!field.conditional) {
     return true;
   }
@@ -56,29 +53,29 @@ export const shouldShowField = (
   const target = values[targetField];
 
   switch (operator) {
-    case "equals":
+    case 'equals':
       return target === expected;
 
-    case "notEquals":
+    case 'notEquals':
       return target !== expected;
 
-    case "isEmpty":
-      return target == null || target === "";
+    case 'isEmpty':
+      return target == null || target === '';
 
-    case "isNotEmpty":
-      return target != null && target !== "";
+    case 'isNotEmpty':
+      return target != null && target !== '';
 
-    case "contains":
+    case 'contains':
       if (Array.isArray(target)) {
         return target.includes(expected);
       }
-      return String(target ?? "").includes(String(expected ?? ""));
+      return String(target ?? '').includes(String(expected ?? ''));
 
-    case "greaterThan":
-      return typeof target === "number" && target > (expected as number);
+    case 'greaterThan':
+      return typeof target === 'number' && target > (expected as number);
 
-    case "lessThan":
-      return typeof target === "number" && target < (expected as number);
+    case 'lessThan':
+      return typeof target === 'number' && target < (expected as number);
 
     default:
       // Unknown operator: safe default — never hide a field unexpectedly

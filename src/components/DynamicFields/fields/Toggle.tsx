@@ -17,11 +17,11 @@
  * - React.memo prevents re-renders when parent re-renders with same props
  * - useCallback for stable onChange handler reference
  */
-import React, { useCallback, useId } from "react";
-import { Box, FormControlLabel, FormHelperText, Switch } from "@mui/material";
-import type { FieldRendererProps } from "../types";
-import { FieldType } from "../types";
-import { registerFieldComponent } from "../registry";
+import React, { useCallback, useId } from 'react';
+import { Box, FormControlLabel, FormHelperText, Switch } from '@mui/material';
+import type { FieldRendererProps } from '../types';
+import { FieldType } from '../types';
+import { registerFieldComponent } from '../registry';
 
 /**
  * ToggleProps
@@ -33,7 +33,7 @@ interface ToggleProps extends FieldRendererProps {
   /** Explicit label override; falls back to field.label when not provided */
   label?: string;
   /** Position of the label relative to the switch (default: 'end') */
-  labelPlacement?: "start" | "end";
+  labelPlacement?: 'start' | 'end';
 }
 
 /**
@@ -51,25 +51,17 @@ interface ToggleProps extends FieldRendererProps {
  * - value || false — coerces null/undefined to false for checked prop
  */
 const Toggle: React.FC<ToggleProps> = React.memo(
-  ({
-    field,
-    value,
-    onChange,
-    disabled = false,
-    errors = [],
-    label,
-    labelPlacement,
-  }) => {
+  ({ field, value, onChange, disabled = false, errors = [], label, labelPlacement }) => {
     const uid = useId();
     const errorId = `${uid}-error`;
-    const resolvedLabel = label ?? field.label ?? "";
+    const resolvedLabel = label ?? field.label ?? '';
     const hasErrors = errors.length > 0;
 
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         onChange(e.target.checked);
       },
-      [onChange],
+      [onChange]
     );
 
     const switchElement = (
@@ -78,8 +70,8 @@ const Toggle: React.FC<ToggleProps> = React.memo(
         onChange={handleChange}
         disabled={disabled}
         inputProps={{
-          "aria-invalid": hasErrors ? true : undefined,
-          "aria-describedby": hasErrors ? errorId : undefined,
+          'aria-invalid': hasErrors ? true : undefined,
+          'aria-describedby': hasErrors ? errorId : undefined,
         }}
       />
     );
@@ -100,10 +92,10 @@ const Toggle: React.FC<ToggleProps> = React.memo(
           ))}
       </Box>
     );
-  },
+  }
 );
 
-Toggle.displayName = "Toggle";
+Toggle.displayName = 'Toggle';
 
 // Register component in the global field registry
 registerFieldComponent(FieldType.TOGGLE, Toggle);

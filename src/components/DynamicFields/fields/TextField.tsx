@@ -11,12 +11,12 @@
  *
  * FieldWrapper (parent) owns label/description display — DashboardInput used without label.
  */
-import React, { useState, useEffect, useId } from "react";
-import { FormHelperText, Box } from "@mui/material";
-import DashboardInput from "../../Dashboard/shared/DashboardInput";
-import type { FieldRendererProps } from "../types";
-import { FieldType } from "../types";
-import { registerFieldComponent } from "../registry";
+import React, { useState, useEffect, useId } from 'react';
+import { FormHelperText, Box } from '@mui/material';
+import DashboardInput from '../../Dashboard/shared/DashboardInput';
+import type { FieldRendererProps } from '../types';
+import { FieldType } from '../types';
+import { registerFieldComponent } from '../registry';
 
 /**
  * TextField
@@ -50,8 +50,8 @@ const TextField: React.FC<FieldRendererProps> = React.memo(
 
     // Local state as string — cast unknown value to string safely
     const toStr = (v: unknown): string => {
-      if (typeof v === "string") return v;
-      if (v === null || v === undefined) return "";
+      if (typeof v === 'string') return v;
+      if (v === null || v === undefined) return '';
       return String(v);
     };
 
@@ -69,8 +69,7 @@ const TextField: React.FC<FieldRendererProps> = React.memo(
     const describedByParts: string[] = [];
     if (maxLength !== undefined) describedByParts.push(counterId);
     if (hasErrors) describedByParts.push(errorId);
-    const describedBy =
-      describedByParts.length > 0 ? describedByParts.join(" ") : undefined;
+    const describedBy = describedByParts.length > 0 ? describedByParts.join(' ') : undefined;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
@@ -93,14 +92,12 @@ const TextField: React.FC<FieldRendererProps> = React.memo(
           helperText={helperText}
           inputProps={{
             maxLength: maxLength,
-            "aria-label": label,
-            "aria-invalid": hasErrors ? true : undefined,
-            "aria-describedby": describedBy,
-            "aria-required": required ? true : undefined,
+            'aria-label': label,
+            'aria-invalid': hasErrors ? true : undefined,
+            'aria-describedby': describedBy,
+            'aria-required': required ? true : undefined,
           }}
-          FormHelperTextProps={
-            hasErrors ? { id: errorId, role: "alert" } : undefined
-          }
+          FormHelperTextProps={hasErrors ? { id: errorId, role: 'alert' } : undefined}
         />
 
         {/* Character counter — shown when maxLength is configured */}
@@ -108,8 +105,8 @@ const TextField: React.FC<FieldRendererProps> = React.memo(
           <FormHelperText
             id={counterId}
             sx={{
-              textAlign: "right",
-              color: "text.secondary",
+              textAlign: 'right',
+              color: 'text.secondary',
               mt: hasErrors ? 0 : -0.5,
             }}
           >
@@ -118,10 +115,10 @@ const TextField: React.FC<FieldRendererProps> = React.memo(
         )}
       </Box>
     );
-  },
+  }
 );
 
-TextField.displayName = "TextField";
+TextField.displayName = 'TextField';
 
 // Register component in the global field registry
 registerFieldComponent(FieldType.TEXT, TextField);

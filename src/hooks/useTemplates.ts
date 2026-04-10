@@ -1,13 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
-import axios, { isAxiosError } from "axios";
-import { useDebouncedValue } from "./useDebouncedValue";
-import {
-  type TemplateSummary,
-  normalizeTemplateSummary,
-} from "../templates/templateApi";
-import type { TemplateFilters } from "../components/Templates/TemplateFilters";
+import { useState, useEffect, useCallback } from 'react';
+import axios, { isAxiosError } from 'axios';
+import { useDebouncedValue } from './useDebouncedValue';
+import { type TemplateSummary, normalizeTemplateSummary } from '../templates/templateApi';
+import type { TemplateFilters } from '../components/Templates/TemplateFilters';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface UseTemplatesReturn {
   templates: TemplateSummary[];
@@ -23,9 +20,9 @@ export const useTemplates = (): UseTemplatesReturn => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFiltersState] = useState<TemplateFilters>({
-    search: "",
-    category: "",
-    type: "",
+    search: '',
+    category: '',
+    type: '',
   });
   const [fetchTrigger, setFetchTrigger] = useState<number>(0);
 
@@ -40,13 +37,11 @@ export const useTemplates = (): UseTemplatesReturn => {
 
       try {
         const params = new URLSearchParams();
-        if (debouncedSearch) params.append("search", debouncedSearch);
-        if (filters.category) params.append("category", filters.category);
-        if (filters.type) params.append("type", filters.type);
+        if (debouncedSearch) params.append('search', debouncedSearch);
+        if (filters.category) params.append('category', filters.category);
+        if (filters.type) params.append('type', filters.type);
 
-        const response = await axios.get(
-          `${API_URL}/templates?${params.toString()}`,
-        );
+        const response = await axios.get(`${API_URL}/templates?${params.toString()}`);
 
         if (!cancelled) {
           const raw: Record<string, unknown>[] = response.data?.data || [];
@@ -54,12 +49,11 @@ export const useTemplates = (): UseTemplatesReturn => {
         }
       } catch (err: unknown) {
         if (!cancelled) {
-          let message = "Failed to load templates";
+          let message = 'Failed to load templates';
           if (isAxiosError(err)) {
             // Prefer server-provided message over generic axios network message
             message =
-              (err.response?.data as { message?: string } | undefined)
-                ?.message ?? err.message;
+              (err.response?.data as { message?: string } | undefined)?.message ?? err.message;
           } else if (err instanceof Error) {
             message = err.message;
           }

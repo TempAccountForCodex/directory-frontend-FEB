@@ -15,21 +15,23 @@
  * - React.memo applied
  * - Framer Motion entrance animation props
  */
-import React from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 
 // Mock dompurify
-vi.mock("dompurify", () => ({
+vi.mock('dompurify', () => ({
   default: {
-    sanitize: (html: string) =>
-      html.replace(/<script[^>]*>.*?<\/script>/gi, ""),
+    sanitize: (html: string) => html.replace(/<script[^>]*>.*?<\/script>/gi, ''),
   },
 }));
 
 // Mock framer-motion
-vi.mock("framer-motion", () => ({
+vi.mock('framer-motion', () => ({
+  useScroll: () => ({ scrollYProgress: { get: () => 0, onChange: () => () => {} } }),
+  useTransform: (..._args) => ({ get: () => '0%', onChange: () => () => {} }),
+  useMotionValue: (v) => ({ get: () => v, set: () => {}, onChange: () => () => {} }),
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
   },
@@ -37,11 +39,11 @@ vi.mock("framer-motion", () => ({
 }));
 
 // Mock react-intersection-observer
-vi.mock("react-intersection-observer", () => ({
+vi.mock('react-intersection-observer', () => ({
   useInView: () => [null, true],
 }));
 
-import TabsBlock from "./TabsBlock";
+import TabsBlock from './TabsBlock';
 
 type BlockLike = {
   id: number;
@@ -52,23 +54,23 @@ type BlockLike = {
 
 const defaultBlock: BlockLike = {
   id: 1,
-  blockType: "TABS",
+  blockType: 'TABS',
   sortOrder: 0,
   content: {
-    heading: "Our Services",
+    heading: 'Our Services',
     tabs: [
-      { label: "Tab One", content: "<p>Tab one content</p>", icon: "business" },
-      { label: "Tab Two", content: "<p>Tab two content</p>", icon: "" },
-      { label: "Tab Three", content: "<p>Tab three content</p>", icon: "" },
+      { label: 'Tab One', content: '<p>Tab one content</p>', icon: 'business' },
+      { label: 'Tab Two', content: '<p>Tab two content</p>', icon: '' },
+      { label: 'Tab Three', content: '<p>Tab three content</p>', icon: '' },
     ],
-    variant: "standard",
-    orientation: "horizontal",
+    variant: 'standard',
+    orientation: 'horizontal',
     defaultTab: 0,
   },
 };
 
-describe("TabsBlock", () => {
-  it("renders without crashing", () => {
+describe('TabsBlock', () => {
+  it('renders without crashing', () => {
     const { container } = render(
       <TabsBlock
         block={defaultBlock}
@@ -76,47 +78,47 @@ describe("TabsBlock", () => {
         secondaryColor="#64748b"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders the heading", () => {
+  it('renders the heading', () => {
     render(
       <TabsBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("Our Services")).toBeInTheDocument();
+    expect(screen.getByText('Our Services')).toBeInTheDocument();
   });
 
-  it("renders all tab labels", () => {
+  it('renders all tab labels', () => {
     render(
       <TabsBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("Tab One")).toBeInTheDocument();
-    expect(screen.getByText("Tab Two")).toBeInTheDocument();
-    expect(screen.getByText("Tab Three")).toBeInTheDocument();
+    expect(screen.getByText('Tab One')).toBeInTheDocument();
+    expect(screen.getByText('Tab Two')).toBeInTheDocument();
+    expect(screen.getByText('Tab Three')).toBeInTheDocument();
   });
 
-  it("DOMPurify sanitizes tab content — XSS script tags stripped", () => {
+  it('DOMPurify sanitizes tab content — XSS script tags stripped', () => {
     const xssBlock = {
       ...defaultBlock,
       content: {
         ...defaultBlock.content,
         tabs: [
           {
-            label: "XSS Tab",
+            label: 'XSS Tab',
             content: '<p>Safe</p><script>alert("xss")</script>',
-            icon: "",
+            icon: '',
           },
         ],
       },
@@ -127,17 +129,17 @@ describe("TabsBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     // Script tag should not be rendered
-    const scripts = document.querySelectorAll("script");
+    const scripts = document.querySelectorAll('script');
     expect(scripts.length).toBe(0);
   });
 
-  it("renders with outlined variant without crashing", () => {
+  it('renders with outlined variant without crashing', () => {
     const outlinedBlock: BlockLike = {
       ...defaultBlock,
-      content: { ...defaultBlock.content, variant: "outlined" },
+      content: { ...defaultBlock.content, variant: 'outlined' },
     };
     const { container } = render(
       <TabsBlock
@@ -145,15 +147,15 @@ describe("TabsBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with pills variant without crashing", () => {
+  it('renders with pills variant without crashing', () => {
     const pillsBlock: BlockLike = {
       ...defaultBlock,
-      content: { ...defaultBlock.content, variant: "pills" },
+      content: { ...defaultBlock.content, variant: 'pills' },
     };
     const { container } = render(
       <TabsBlock
@@ -161,15 +163,15 @@ describe("TabsBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with vertical orientation without crashing", () => {
+  it('renders with vertical orientation without crashing', () => {
     const verticalBlock: BlockLike = {
       ...defaultBlock,
-      content: { ...defaultBlock.content, orientation: "vertical" },
+      content: { ...defaultBlock.content, orientation: 'vertical' },
     };
     const { container } = render(
       <TabsBlock
@@ -177,12 +179,12 @@ describe("TabsBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("respects defaultTab prop — active tab panel is visible", () => {
+  it('respects defaultTab prop — active tab panel is visible', () => {
     const secondTabBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, defaultTab: 1 },
@@ -193,16 +195,16 @@ describe("TabsBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     // Tab Two label should be present (active)
-    expect(screen.getByText("Tab Two")).toBeInTheDocument();
+    expect(screen.getByText('Tab Two')).toBeInTheDocument();
   });
 
-  it("renders with no heading gracefully", () => {
+  it('renders with no heading gracefully', () => {
     const noHeadingBlock = {
       ...defaultBlock,
-      content: { ...defaultBlock.content, heading: "" },
+      content: { ...defaultBlock.content, heading: '' },
     };
     const { container } = render(
       <TabsBlock
@@ -210,12 +212,12 @@ describe("TabsBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with empty tabs array gracefully", () => {
+  it('renders with empty tabs array gracefully', () => {
     const emptyTabsBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, tabs: [] },
@@ -226,12 +228,12 @@ describe("TabsBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with undefined tabs gracefully", () => {
+  it('renders with undefined tabs gracefully', () => {
     const undefinedTabsBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, tabs: undefined },
@@ -242,55 +244,55 @@ describe("TabsBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("is wrapped with React.memo (is an object/memoized component)", () => {
-    expect(typeof TabsBlock).toBe("object");
+  it('is wrapped with React.memo (is an object/memoized component)', () => {
+    expect(typeof TabsBlock).toBe('object');
   });
 
-  it("tab icon renders when icon name is provided", () => {
+  it('tab icon renders when icon name is provided', () => {
     const { container } = render(
       <TabsBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     // The icon renders as an SVG element inside the tab
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders SSR fallback — all panels have content in DOM", () => {
+  it('renders SSR fallback — all panels have content in DOM', () => {
     render(
       <TabsBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     // All tab labels should be present
-    expect(screen.getByText("Tab One")).toBeInTheDocument();
-    expect(screen.getByText("Tab Two")).toBeInTheDocument();
-    expect(screen.getByText("Tab Three")).toBeInTheDocument();
+    expect(screen.getByText('Tab One')).toBeInTheDocument();
+    expect(screen.getByText('Tab Two')).toBeInTheDocument();
+    expect(screen.getByText('Tab Three')).toBeInTheDocument();
   });
 
-  it("clicking a tab updates the active panel", () => {
+  it('clicking a tab updates the active panel', () => {
     render(
       <TabsBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    const tab2 = screen.getByText("Tab Two");
+    const tab2 = screen.getByText('Tab Two');
     fireEvent.click(tab2);
     // Component should not crash on tab switch
-    expect(screen.getByText("Tab Two")).toBeInTheDocument();
+    expect(screen.getByText('Tab Two')).toBeInTheDocument();
   });
 });

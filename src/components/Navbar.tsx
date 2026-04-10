@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-const WhiteLogo = "/WhiteLogo.png";
+const WhiteLogo = '/WhiteLogo.png';
 
 const tabs = [
-  { label: "Templates", path: "/templates" },
-  { label: "Listings", path: "/listings" },
-  { label: "Blog", path: "/blog" },
-  { label: "About", path: "/about" },
-  { label: "Pricing", path: "/pricing" },
-  { label: "Contact", path: "/contact" },
+  { label: 'Templates', path: '/templates' },
+  { label: 'Listings', path: '/listings' },
+  { label: 'Blog', path: '/blog' },
+  { label: 'About', path: '/about' },
+  { label: 'Pricing', path: '/pricing' },
+  { label: 'Contact', path: '/contact' },
 ];
 
 function Navbar() {
@@ -22,29 +22,29 @@ function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   const activePath = useMemo(() => {
-    if (location.pathname.startsWith("/listings/")) return "/listings";
+    if (location.pathname.startsWith('/listings/')) return '/listings';
     return location.pathname;
   }, [location.pathname]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     if (!mobileOpen) return;
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = previousOverflow;
     };
   }, [mobileOpen]);
 
-  const isDashboardRoute = location.pathname.startsWith("/dashboard");
+  const isDashboardRoute = location.pathname.startsWith('/dashboard');
   if (
-    location.pathname === "/dashboard" ||
+    location.pathname === '/dashboard' ||
     /^\/business\//.test(location.pathname) ||
     isDashboardRoute
   ) {
@@ -52,7 +52,7 @@ function Navbar() {
   }
 
   const handleSignIn = () => {
-    navigate(auth.user ? "/dashboard" : "/auth");
+    navigate(auth.user ? '/dashboard' : '/auth');
   };
 
   const onNavClick = (path: string) => {
@@ -64,48 +64,48 @@ function Navbar() {
     <>
       <header
         style={{
-          position: "fixed",
+          position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           height: 70,
           zIndex: 300,
-          display: "flex",
-          alignItems: "center",
-          background: scrolled ? "#0b0f10" : "transparent",
-          transition: "background-color 0.35s ease",
-          padding: "0 16px",
+          display: 'flex',
+          alignItems: 'center',
+          background: scrolled ? '#0b0f10' : 'transparent',
+          transition: 'background-color 0.35s ease',
+          padding: '0 16px',
         }}
       >
         <div
           style={{
-            width: "100%",
+            width: '100%',
             maxWidth: 1280,
-            margin: "0 auto",
-            display: "grid",
-            gridTemplateColumns: "1fr auto 1fr",
-            alignItems: "center",
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: '1fr auto 1fr',
+            alignItems: 'center',
             gap: 12,
           }}
         >
           {/* Col 1: hamburger (mobile) | logo (desktop) */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {/* Hamburger — mobile only */}
             <button
               type="button"
               aria-label="Open menu"
               onClick={() => setMobileOpen(true)}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 width: 42,
                 height: 42,
                 borderRadius: 10,
-                border: "none",
-                background: "transparent",
-                color: "#fff",
-                cursor: "pointer",
+                border: 'none',
+                background: 'transparent',
+                color: '#fff',
+                cursor: 'pointer',
               }}
               className="nav-mobile-btn"
             >
@@ -113,15 +113,11 @@ function Navbar() {
             </button>
 
             {/* Logo — desktop left */}
-            <Link
-              to="/"
-              className="nav-logo-desktop"
-              style={{ display: "none" }}
-            >
+            <Link to="/" className="nav-logo-desktop" style={{ display: 'none' }}>
               <img
                 src={WhiteLogo}
                 alt="logo"
-                style={{ width: "clamp(145px, 15vw, 180px)", height: "auto" }}
+                style={{ width: 'clamp(145px, 15vw, 180px)', height: 'auto' }}
                 fetchPriority="high"
                 decoding="async"
               />
@@ -129,23 +125,13 @@ function Navbar() {
           </div>
 
           {/* Col 2: logo center (mobile) | nav links center (desktop) */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {/* Logo — mobile center */}
-            <Link
-              to="/"
-              className="nav-logo-mobile"
-              style={{ display: "inline-flex" }}
-            >
+            <Link to="/" className="nav-logo-mobile" style={{ display: 'inline-flex' }}>
               <img
                 src={WhiteLogo}
                 alt="logo"
-                style={{ width: "clamp(145px, 15vw, 180px)", height: "auto" }}
+                style={{ width: 'clamp(145px, 15vw, 180px)', height: 'auto' }}
                 fetchPriority="high"
                 decoding="async"
               />
@@ -161,15 +147,15 @@ function Navbar() {
                     type="button"
                     onClick={() => onNavClick(item.path)}
                     style={{
-                      border: "none",
-                      background: "transparent",
-                      color: isActive ? "#47aab6" : "#fff",
-                      cursor: "pointer",
+                      border: 'none',
+                      background: 'transparent',
+                      color: isActive ? '#47aab6' : '#fff',
+                      cursor: 'pointer',
                       fontSize: 16,
                       fontWeight: 400,
-                      letterSpacing: "0.3px",
-                      padding: "8px 6px",
-                      whiteSpace: "nowrap",
+                      letterSpacing: '0.3px',
+                      padding: '8px 6px',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {item.label}
@@ -180,22 +166,22 @@ function Navbar() {
           </div>
 
           {/* Col 3: CTA button right (desktop only) */}
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button
               type="button"
               onClick={handleSignIn}
               className="nav-cta"
               style={{
-                border: "none",
+                border: 'none',
                 borderRadius: 999,
-                padding: "12px 24px",
-                background: "#fff",
-                color: "#000",
+                padding: '12px 24px',
+                background: '#fff',
+                color: '#000',
                 fontSize: 12,
                 fontWeight: 600,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                cursor: "pointer",
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
               }}
             >
               Get Started
@@ -212,75 +198,72 @@ function Navbar() {
             aria-label="Close menu overlay"
             onClick={() => setMobileOpen(false)}
             style={{
-              position: "fixed",
+              position: 'fixed',
               inset: 0,
-              background: "rgba(0,0,0,0.7)",
-              backdropFilter: "blur(8px)",
-              border: "none",
+              background: 'rgba(0,0,0,0.7)',
+              backdropFilter: 'blur(8px)',
+              border: 'none',
               zIndex: 350,
             }}
           />
 
           <aside
             style={{
-              position: "fixed",
+              position: 'fixed',
               top: 0,
               left: 0,
-              width: "min(85vw, 320px)",
-              height: "100vh",
+              width: 'min(85vw, 320px)',
+              height: '100vh',
               zIndex: 360,
-              background:
-                "linear-gradient(160deg, #0d1117 0%, #0f1e22 60%, #0a1a1f 100%)",
-              color: "#fff",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
+              background: 'linear-gradient(160deg, #0d1117 0%, #0f1e22 60%, #0a1a1f 100%)',
+              color: '#fff',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
             }}
           >
             {/* Decorative glow orbs */}
             <div
               style={{
-                position: "absolute",
+                position: 'absolute',
                 top: -60,
                 left: -60,
                 width: 200,
                 height: 200,
-                borderRadius: "50%",
-                background:
-                  "radial-gradient(circle, rgba(71,170,182,0.18) 0%, transparent 70%)",
-                pointerEvents: "none",
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(71,170,182,0.18) 0%, transparent 70%)',
+                pointerEvents: 'none',
               }}
             />
             <div
               style={{
-                position: "absolute",
+                position: 'absolute',
                 bottom: 80,
                 right: -80,
                 width: 250,
                 height: 250,
-                borderRadius: "50%",
-                background:
-                  "radial-gradient(circle, rgba(71,170,182,0.1) 0%, transparent 70%)",
-                pointerEvents: "none",
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(71,170,182,0.1) 0%, transparent 70%)',
+                pointerEvents: 'none',
               }}
             />
 
             {/* Header */}
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "20px 20px 16px",
-                borderBottom: "1px solid rgba(71,170,182,0.15)",
-                position: "relative",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px 20px 16px',
+                borderBottom: '1px solid rgba(71,170,182,0.15)',
+                position: 'relative',
               }}
             >
               <Link to="/" onClick={() => setMobileOpen(false)}>
                 <img
                   src={WhiteLogo}
                   alt="logo"
-                  style={{ width: 150, height: "auto" }}
+                  style={{ width: 150, height: 'auto' }}
                   decoding="async"
                 />
               </Link>
@@ -289,18 +272,18 @@ function Navbar() {
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close menu"
                 style={{
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  background: 'rgba(255,255,255,0.06)',
+                  color: '#fff',
                   width: 34,
                   height: 34,
                   borderRadius: 8,
                   fontSize: 18,
                   lineHeight: 1,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 ✕
@@ -310,10 +293,10 @@ function Navbar() {
             {/* Nav items */}
             <div
               style={{
-                padding: "20px 0 0",
-                display: "flex",
-                flexDirection: "column",
-                position: "relative",
+                padding: '20px 0 0',
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative',
               }}
             >
               {tabs.map((item, i) => {
@@ -324,44 +307,38 @@ function Navbar() {
                     type="button"
                     onClick={() => onNavClick(item.path)}
                     style={{
-                      border: "none",
-                      borderBottom: "1px solid rgba(255,255,255,0.06)",
-                      textAlign: "left",
-                      padding: "18px 24px",
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                      border: 'none',
+                      borderBottom: '1px solid rgba(255,255,255,0.06)',
+                      textAlign: 'left',
+                      padding: '18px 24px',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                       gap: 12,
                     }}
                   >
                     {/* Left: number + label */}
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "baseline",
-                        gap: 14,
-                      }}
-                    >
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
                       <span
                         style={{
                           fontSize: 11,
                           fontWeight: 700,
-                          color: isActive ? "#47aab6" : "rgba(255,255,255,0.2)",
-                          letterSpacing: "0.08em",
+                          color: isActive ? '#47aab6' : 'rgba(255,255,255,0.2)',
+                          letterSpacing: '0.08em',
                           minWidth: 20,
-                          fontVariantNumeric: "tabular-nums",
+                          fontVariantNumeric: 'tabular-nums',
                         }}
                       >
-                        {String(i + 1).padStart(2, "0")}
+                        {String(i + 1).padStart(2, '0')}
                       </span>
                       <span
                         style={{
                           fontSize: 22,
                           fontWeight: 700,
-                          color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
-                          letterSpacing: "-0.3px",
+                          color: isActive ? '#fff' : 'rgba(255,255,255,0.55)',
+                          letterSpacing: '-0.3px',
                           lineHeight: 1,
                         }}
                       >
@@ -374,18 +351,14 @@ function Navbar() {
                       style={{
                         width: 32,
                         height: 32,
-                        borderRadius: "50%",
-                        border: isActive
-                          ? "1px solid #47aab6"
-                          : "1px solid rgba(255,255,255,0.1)",
-                        background: isActive
-                          ? "rgba(71,170,182,0.15)"
-                          : "transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        borderRadius: '50%',
+                        border: isActive ? '1px solid #47aab6' : '1px solid rgba(255,255,255,0.1)',
+                        background: isActive ? 'rgba(71,170,182,0.15)' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         flexShrink: 0,
-                        color: isActive ? "#47aab6" : "rgba(255,255,255,0.3)",
+                        color: isActive ? '#47aab6' : 'rgba(255,255,255,0.3)',
                         fontSize: 14,
                       }}
                     >
@@ -397,19 +370,13 @@ function Navbar() {
             </div>
 
             {/* Bottom CTA */}
-            <div
-              style={{
-                marginTop: "auto",
-                padding: "20px 16px",
-                position: "relative",
-              }}
-            >
+            <div style={{ marginTop: 'auto', padding: '20px 16px', position: 'relative' }}>
               {/* Thin divider */}
               <div
                 style={{
                   height: 1,
                   background:
-                    "linear-gradient(90deg, transparent, rgba(71,170,182,0.3), transparent)",
+                    'linear-gradient(90deg, transparent, rgba(71,170,182,0.3), transparent)',
                   marginBottom: 20,
                 }}
               />
@@ -421,29 +388,28 @@ function Navbar() {
                   handleSignIn();
                 }}
                 style={{
-                  width: "100%",
-                  border: "none",
+                  width: '100%',
+                  border: 'none',
                   borderRadius: 12,
-                  background:
-                    "linear-gradient(135deg, #47aab6 0%, #2d7a85 100%)",
-                  color: "#fff",
-                  padding: "15px 14px",
+                  background: 'linear-gradient(135deg, #47aab6 0%, #2d7a85 100%)',
+                  color: '#fff',
+                  padding: '15px 14px',
                   fontSize: 14,
                   fontWeight: 600,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                  boxShadow: "0 4px 24px rgba(71,170,182,0.3)",
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 24px rgba(71,170,182,0.3)',
                 }}
               >
-                {auth.user ? "Go to Dashboard" : "Get Started →"}
+                {auth.user ? 'Go to Dashboard' : 'Get Started →'}
               </button>
 
               <p
                 style={{
-                  textAlign: "center",
+                  textAlign: 'center',
                   fontSize: 11,
-                  color: "rgba(255,255,255,0.3)",
+                  color: 'rgba(255,255,255,0.3)',
                   marginTop: 12,
                   marginBottom: 0,
                 }}

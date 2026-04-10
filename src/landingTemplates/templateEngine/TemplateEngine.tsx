@@ -1,21 +1,18 @@
-import React, { Suspense } from "react";
-import { Box, CircularProgress } from "@mui/material";
-import type { BusinessData } from "../types/BusinessData";
-import { getTemplateById } from "./templateRegistry";
+import React, { Suspense } from 'react';
+import { Box, CircularProgress } from '@mui/material';
+import type { BusinessData } from '../types/BusinessData';
+import { getTemplateById } from './templateRegistry';
 
 interface TemplateEngineProps {
   templateId: string;
   data: BusinessData;
 }
 
-const TemplateEngine: React.FC<TemplateEngineProps> = ({
-  templateId,
-  data,
-}) => {
-  const definition = getTemplateById(templateId) ?? getTemplateById("modern");
+const TemplateEngine: React.FC<TemplateEngineProps> = ({ templateId, data }) => {
+  const definition = getTemplateById(templateId) ?? getTemplateById('modern');
 
   if (!definition) {
-    return <Box sx={{ p: 4, textAlign: "center" }}>Template not found.</Box>;
+    return <Box sx={{ p: 4, textAlign: 'center' }}>Template not found.</Box>;
   }
 
   const TemplateComponent = definition.component;
@@ -25,10 +22,10 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
       fallback={
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: "100vh",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
           }}
         >
           <CircularProgress />

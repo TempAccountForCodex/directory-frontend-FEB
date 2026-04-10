@@ -1,45 +1,40 @@
-import React, {
-  useState,
-  useRef,
-  type FormEvent,
-  type ChangeEvent,
-} from "react";
-import { makeStyles } from "@mui/styles";
-import { Button, Grid, useMediaQuery, useTheme } from "@mui/material";
-import emailjs from "@emailjs/browser";
-import { SnackbarProvider, useSnackbar } from "notistack";
+import React, { useState, useRef, type FormEvent, type ChangeEvent } from 'react';
+import { makeStyles } from '@mui/styles';
+import { Button, Grid, useMediaQuery, useTheme } from '@mui/material';
+import emailjs from '@emailjs/browser';
+import { SnackbarProvider, useSnackbar } from 'notistack';
 
 /* ---------------- Styles ---------------- */
 const useStyles = makeStyles((theme: any) => ({
   reviewInput: {
-    background: theme?.palette?.primary?.main || "#fff",
-    minHeight: "68px",
-    padding: "0 20px",
-    border: "none",
-    borderRadius: "4px",
-    outline: "none",
-    fontSize: "20px",
-    width: "100%",
+    background: theme?.palette?.primary?.main || '#fff',
+    minHeight: '68px',
+    padding: '0 20px',
+    border: 'none',
+    borderRadius: '4px',
+    outline: 'none',
+    fontSize: '20px',
+    width: '100%',
     // flex:1,
-    "&::placeholder": {
-      color: "text.secondary",
-      fontSize: "16px",
+    '&::placeholder': {
+      color: 'text.secondary',
+      fontSize: '16px',
     },
   },
   reviewTextArea: {
-    background: theme?.palette?.primary?.main || "#fff",
-    padding: "30px 20px",
-    border: "none",
-    borderRadius: "4px",
-    outline: "none",
-    fontSize: "20px",
-    "&::placeholder": {
-      color: "text.secondary",
-      fontSize: "16px",
-      fontFamily: "poppins",
+    background: theme?.palette?.primary?.main || '#fff',
+    padding: '30px 20px',
+    border: 'none',
+    borderRadius: '4px',
+    outline: 'none',
+    fontSize: '20px',
+    '&::placeholder': {
+      color: 'text.secondary',
+      fontSize: '16px',
+      fontFamily: 'poppins',
     },
-    display: "block",
-    resize: "vertical",
+    display: 'block',
+    resize: 'vertical',
   },
 }));
 
@@ -58,39 +53,31 @@ export interface FormCProps {
   onSubmit?: (formData: Record<string, string>) => Promise<void> | void;
 }
 
-const FormC: React.FC<FormCProps> = ({
-  fields,
-  buttonText,
-  textAreaPlaceholder,
-  onSubmit,
-}) => {
+const FormC: React.FC<FormCProps> = ({ fields, buttonText, textAreaPlaceholder, onSubmit }) => {
   const classes = useStyles();
   const theme = useTheme();
   const [buttonTextState, setButtonTextState] = useState(buttonText);
   const formRef = useRef<HTMLFormElement>(null);
-  const isSmUp = useMediaQuery(theme.breakpoints.up("md"));
-  const isMdUp = useMediaQuery(theme.breakpoints.up("lg"));
-  const isLgUp = useMediaQuery(theme.breakpoints.up("xl"));
+  const isSmUp = useMediaQuery(theme.breakpoints.up('md'));
+  const isMdUp = useMediaQuery(theme.breakpoints.up('lg'));
+  const isLgUp = useMediaQuery(theme.breakpoints.up('xl'));
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-  const [textareaValue, setTextareaValue] = useState("");
+  const [textareaValue, setTextareaValue] = useState('');
 
   const initialFormState: Record<string, string> = fields.reduce(
     (acc, field) => {
-      acc[field.name] = "";
+      acc[field.name] = '';
       return acc;
     },
-    {} as Record<string, string>,
+    {} as Record<string, string>
   );
 
-  const [formData, setFormData] =
-    useState<Record<string, string>>(initialFormState);
+  const [formData, setFormData] = useState<Record<string, string>>(initialFormState);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    if (name === "message") {
+    if (name === 'message') {
       setTextareaValue(value);
     } else {
       setFormData({
@@ -102,48 +89,38 @@ const FormC: React.FC<FormCProps> = ({
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setButtonTextState("Sending...");
+    setButtonTextState('Sending...');
 
     try {
       if (onSubmit) {
         await onSubmit({ ...formData, message: textareaValue });
 
-        enqueueSnackbar("Form submitted successfully!", {
-          variant: "success",
+        enqueueSnackbar('Form submitted successfully!', {
+          variant: 'success',
           autoHideDuration: 2000,
           action: (key) => (
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => closeSnackbar(key)}
-            >
+            <Button color="inherit" size="small" onClick={() => closeSnackbar(key)}>
               Close
             </Button>
           ),
         });
       } else {
         const public_key = import.meta.env.REACT_APP_EMAILJS_USER as string;
-        const service_id = import.meta.env
-          .REACT_APP_EMAILJS_SERVICE_ID as string;
-        const template_id = import.meta.env
-          .REACT_APP_EMAILJS_TEMPLATE_ID as string;
+        const service_id = import.meta.env.REACT_APP_EMAILJS_SERVICE_ID as string;
+        const template_id = import.meta.env.REACT_APP_EMAILJS_TEMPLATE_ID as string;
 
         await emailjs.sendForm(
           service_id,
           template_id,
           formRef.current as HTMLFormElement,
-          public_key,
+          public_key
         );
 
-        enqueueSnackbar("Form submitted successfully!", {
-          variant: "success",
+        enqueueSnackbar('Form submitted successfully!', {
+          variant: 'success',
           autoHideDuration: 2000,
           action: (key) => (
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => closeSnackbar(key)}
-            >
+            <Button color="inherit" size="small" onClick={() => closeSnackbar(key)}>
               Close
             </Button>
           ),
@@ -151,18 +128,14 @@ const FormC: React.FC<FormCProps> = ({
       }
 
       setFormData(initialFormState);
-      setTextareaValue("");
+      setTextareaValue('');
       setButtonTextState(buttonText);
     } catch (error: any) {
-      enqueueSnackbar(error?.text || "An error occurred", {
-        variant: "error",
+      enqueueSnackbar(error?.text || 'An error occurred', {
+        variant: 'error',
         autoHideDuration: 2000,
         action: (key) => (
-          <Button
-            color="inherit"
-            size="small"
-            onClick={() => closeSnackbar(key)}
-          >
+          <Button color="inherit" size="small" onClick={() => closeSnackbar(key)}>
             Close
           </Button>
         ),
@@ -173,23 +146,19 @@ const FormC: React.FC<FormCProps> = ({
 
   return (
     <>
-      <form
-        ref={formRef}
-        onSubmit={handleSubmit}
-        style={{ maxWidth: 800, display: "block" }}
-      >
+      <form ref={formRef} onSubmit={handleSubmit} style={{ maxWidth: 800, display: 'block' }}>
         <Grid
           container
           spacing={2}
           xs={12}
           md={6}
-          sx={{ mb: 2, width: "100%" }}
+          sx={{ mb: 2, width: '100%' }}
           justifyContent="space-between"
           alignItems="flex-start"
           component="div"
           {...({} as any)}
         >
-          {" "}
+          {' '}
           {fields.map((field, index) => {
             let mdCols = 12;
             if (fields.length === 2) {
@@ -217,7 +186,7 @@ const FormC: React.FC<FormCProps> = ({
                   value={formData[field.name]}
                   onChange={handleChange}
                   style={{
-                    width: "100%",
+                    width: '100%',
                     margin: 0,
                   }}
                 />
@@ -232,8 +201,8 @@ const FormC: React.FC<FormCProps> = ({
           placeholder={textAreaPlaceholder}
           className={classes.reviewTextArea}
           style={{
-            width: "100%",
-            marginBottom: "16px",
+            width: '100%',
+            marginBottom: '16px',
           }}
           value={textareaValue}
           onChange={handleChange}
@@ -244,11 +213,11 @@ const FormC: React.FC<FormCProps> = ({
           sx={{
             background: (theme.palette.primary as any).focus,
             color: theme.palette.common.white,
-            height: "64px",
+            height: '64px',
             px: 4,
             borderRadius: 2,
             mt: 3,
-            "&:hover": {
+            '&:hover': {
               background: (theme.palette.primary as any).focus,
               opacity: 0.9,
             },
@@ -265,7 +234,7 @@ const FormC: React.FC<FormCProps> = ({
 const EnhancedForm: React.FC<FormCProps> = (props) => (
   <SnackbarProvider
     maxSnack={3}
-    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
     autoHideDuration={2000}
   >
     <FormC {...props} />

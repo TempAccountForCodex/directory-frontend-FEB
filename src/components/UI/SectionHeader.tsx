@@ -1,17 +1,14 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { Box, Typography } from "@mui/material";
-import type { TypographyProps } from "@mui/material";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { Box, Typography } from '@mui/material';
+import type { TypographyProps } from '@mui/material';
 
-interface SectionHeaderProps extends Omit<
-  TypographyProps,
-  "variant" | "align"
-> {
+interface SectionHeaderProps extends Omit<TypographyProps, 'variant' | 'align'> {
   text: string;
   subtext?: string;
-  variant?: "sm" | "md" | "lg" | "xl";
-  subVariant?: "xs" | "sm" | "md" | "lg" | "xl";
-  align?: "left" | "center" | "right";
+  variant?: 'sm' | 'md' | 'lg' | 'xl';
+  subVariant?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  align?: 'left' | 'center' | 'right';
   showAccent?: boolean;
   accentColor?: string;
   sx?: any;
@@ -20,10 +17,10 @@ interface SectionHeaderProps extends Omit<
 }
 
 const variantMap = {
-  sm: { variant: "h6" as const, fontSize: { xs: 16, md: 18 }, fontWeight: 600 },
-  md: { variant: "h5" as const, fontSize: { xs: 20, md: 24 }, fontWeight: 700 },
-  lg: { variant: "h3" as const, fontSize: { xs: 28, md: 40 }, fontWeight: 800 },
-  xl: { variant: "h2" as const, fontSize: { xs: 36, md: 56 }, fontWeight: 800 },
+  sm: { variant: 'h6' as const, fontSize: { xs: 16, md: 18 }, fontWeight: 600 },
+  md: { variant: 'h5' as const, fontSize: { xs: 20, md: 24 }, fontWeight: 700 },
+  lg: { variant: 'h3' as const, fontSize: { xs: 28, md: 40 }, fontWeight: 800 },
+  xl: { variant: 'h2' as const, fontSize: { xs: 36, md: 56 }, fontWeight: 800 },
 };
 
 // ✅ subtext size variants
@@ -40,9 +37,9 @@ const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps>(
     {
       text,
       subtext,
-      variant = "lg",
-      subVariant = "md",
-      align = "center",
+      variant = 'lg',
+      subVariant = 'md',
+      align = 'center',
       showAccent = false,
       accentColor,
       sx,
@@ -50,22 +47,22 @@ const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps>(
       subtextSx,
       ...typographyProps
     },
-    ref,
+    ref
   ) => {
     const cfg = variantMap[variant] ?? variantMap.lg;
     const subCfg = subVariantMap[subVariant] ?? subVariantMap.md;
 
     return (
       <Box sx={{ textAlign: align, ...sx }} ref={ref}>
-        <Box sx={{ display: "inline-flex", gap: 2, alignItems: "flex-start" }}>
+        <Box sx={{ display: 'inline-flex', gap: 2, alignItems: 'flex-start' }}>
           {showAccent && (
             <Box
               sx={{
                 width: 4,
                 height: { xs: 20, md: 28 },
-                bgcolor: accentColor || "primary.main",
+                bgcolor: accentColor || 'primary.main',
                 mt: 0.5,
-                flex: "0 0 auto",
+                flex: '0 0 auto',
               }}
             />
           )}
@@ -90,9 +87,9 @@ const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps>(
                 variant="body1"
                 sx={{
                   mt: 1,
-                  color: "text.secondary",
+                  color: 'text.secondary',
                   maxWidth: 900,
-                  mx: align === "center" ? "auto" : 0,
+                  mx: align === 'center' ? 'auto' : 0,
                   fontSize: subCfg.fontSize, // 👈 apply subVariant size
                   lineHeight: subCfg.lineHeight, // 👈 apply subVariant line-height
                   ...subtextSx,
@@ -105,17 +102,17 @@ const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps>(
         </Box>
       </Box>
     );
-  },
+  }
 );
 
-SectionHeader.displayName = "SectionHeader";
+SectionHeader.displayName = 'SectionHeader';
 
 SectionHeader.propTypes = {
   text: PropTypes.string.isRequired,
   subtext: PropTypes.string,
-  variant: PropTypes.oneOf(["sm", "md", "lg", "xl"]),
-  subVariant: PropTypes.oneOf(["sm", "md", "lg", "xl"]), // 👈 NEW
-  align: PropTypes.oneOf(["left", "center", "right"]),
+  variant: PropTypes.oneOf(['sm', 'md', 'lg', 'xl']),
+  subVariant: PropTypes.oneOf(['sm', 'md', 'lg', 'xl']), // 👈 NEW
+  align: PropTypes.oneOf(['left', 'center', 'right']),
   showAccent: PropTypes.bool,
   accentColor: PropTypes.string,
   sx: PropTypes.object,

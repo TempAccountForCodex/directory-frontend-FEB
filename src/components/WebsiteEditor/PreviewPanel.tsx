@@ -9,17 +9,17 @@
  * Features: viewport toggle, zoom controls, rotation, device frame,
  * postMessage bridge, error handling with auto-fallback.
  */
-import React from "react";
-import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
-import CircularProgress from "@mui/material/CircularProgress";
-import Switch from "@mui/material/Switch";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Button from "@mui/material/Button";
+import React from 'react';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Button from '@mui/material/Button';
 import {
   Monitor,
   Tablet,
@@ -28,23 +28,20 @@ import {
   Maximize2,
   Minimize2,
   RotateCw,
-} from "lucide-react";
-import { getDashboardColors } from "../../styles/dashboardTheme";
-import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-import { usePreviewIframe } from "../../hooks/usePreviewApi";
-import {
-  PreviewImageError,
-  PreviewNetworkError,
-} from "../Templates/PreviewSkeleton";
-import { usePreview } from "../../context/PreviewContext";
-import { generateLivePreview } from "../../utils/previewInjector";
+} from 'lucide-react';
+import { getDashboardColors } from '../../styles/dashboardTheme';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
+import { usePreviewIframe } from '../../hooks/usePreviewApi';
+import { PreviewImageError, PreviewNetworkError } from '../Templates/PreviewSkeleton';
+import { usePreview } from '../../context/PreviewContext';
+import { generateLivePreview } from '../../utils/previewInjector';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type Viewport = "desktop" | "tablet" | "mobile";
-type PreviewMode = "live" | "static";
+type Viewport = 'desktop' | 'tablet' | 'mobile';
+type PreviewMode = 'live' | 'static';
 type ZoomLevel = 0.5 | 0.75 | 1;
 
 const VIEWPORT_WIDTHS: Record<Viewport, number> = {
@@ -71,7 +68,7 @@ export interface InlineEditStartData {
   fieldPath: string;
   value: string;
   rect: { top: number; left: number; width: number; height: number };
-  editType: "single" | "multi";
+  editType: 'single' | 'multi';
 }
 
 interface PreviewPanelProps {
@@ -109,9 +106,9 @@ const PreviewPanel = React.memo(function PreviewPanel({
   const previewCtx = usePreview();
 
   // Local state
-  const [viewport, setViewport] = React.useState<Viewport>("desktop");
+  const [viewport, setViewport] = React.useState<Viewport>('desktop');
   const [scaleToFit, setScaleToFit] = React.useState(true);
-  const [mode, setMode] = React.useState<PreviewMode>("live");
+  const [mode, setMode] = React.useState<PreviewMode>('live');
   const [zoom, setZoom] = React.useState<ZoomLevel>(1);
   const [rotated, setRotated] = React.useState(false);
   const [timedOut, setTimedOut] = React.useState(false);
@@ -140,104 +137,92 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
   // Auto-fallback: if previewError is set and we're in live mode, switch to static
   const effectiveMode = React.useMemo(() => {
-    if (mode === "live" && previewCtx.previewError) {
-      return "static";
+    if (mode === 'live' && previewCtx.previewError) {
+      return 'static';
     }
     return mode;
   }, [mode, previewCtx.previewError]);
 
   // Track fallback state
   React.useEffect(() => {
-    if (mode === "live" && previewCtx.previewError) {
+    if (mode === 'live' && previewCtx.previewError) {
       setFallbackActive(true);
-    } else if (mode === "live" && !previewCtx.previewError) {
+    } else if (mode === 'live' && !previewCtx.previewError) {
       setFallbackActive(false);
     }
   }, [mode, previewCtx.previewError]);
 
   // Generate srcdoc for live mode
   const srcdocHtml = React.useMemo(() => {
-    if (effectiveMode !== "live" || !previewCtx.currentPageContent) {
+    if (effectiveMode !== 'live' || !previewCtx.currentPageContent) {
       return null;
     }
 
     const { blocks, websiteMeta } = previewCtx.currentPageContent;
     const website = {
-      name: websiteMeta?.name || "Preview",
+      name: websiteMeta?.name || 'Preview',
       colors: websiteMeta?.colors,
       fonts: websiteMeta?.fonts,
     };
     const page = {
       id: previewCtx.currentPageContent.pageId,
-      title: websiteMeta?.name || "Preview",
+      title: websiteMeta?.name || 'Preview',
     };
 
     return generateLivePreview(website, page, blocks, window.location.origin);
   }, [effectiveMode, previewCtx.currentPageContent, previewCtx.revision]);
 
   // PostMessage: send CONTENT_UPDATE to iframe
-  const sendPostMessage = React.useCallback(
-    (message: Record<string, unknown>) => {
-      if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          message,
-          window.location.origin,
-        );
-      }
-    },
-    [],
-  );
+  const sendPostMessage = React.useCallback((message: Record<string, unknown>) => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(message, window.location.origin);
+    }
+  }, []);
 
   // PostMessage listener for messages from iframe
   React.useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin && event.origin !== "null")
-        return;
+      if (event.origin !== window.location.origin && event.origin !== 'null') return;
 
       const data = event.data;
-      if (!data || typeof data !== "object") return;
+      if (!data || typeof data !== 'object') return;
 
-      if (data.type === "CSP_VIOLATION") {
+      if (data.type === 'CSP_VIOLATION') {
         if (import.meta.env.DEV) {
           // eslint-disable-next-line no-console
-          console.error("[PreviewPanel] CSP violation in iframe:", data.detail);
+          console.error('[PreviewPanel] CSP violation in iframe:', data.detail);
         }
       }
 
       // Step 9.14.3: Relay block selection events to parent
-      if (data.type === "BLOCK_SELECTED") {
+      if (data.type === 'BLOCK_SELECTED') {
         onBlockSelected?.(data.blockId as string);
       }
 
-      if (data.type === "BLOCK_HOVER") {
+      if (data.type === 'BLOCK_HOVER') {
         onBlockHover?.(data.blockId as string | null);
       }
 
       // Step 9.16.3: Relay inline edit start from iframe
-      if (data.type === "EDIT_START" && data.blockId && data.fieldPath) {
+      if (data.type === 'EDIT_START' && data.blockId && data.fieldPath) {
         onInlineEditStart?.({
           blockId: data.blockId as string,
           fieldPath: data.fieldPath as string,
           value: data.value as string,
-          rect: data.rect as {
-            top: number;
-            left: number;
-            width: number;
-            height: number;
-          },
-          editType: (data.editType as "single" | "multi") || "single",
+          rect: data.rect as { top: number; left: number; width: number; height: number },
+          editType: (data.editType as 'single' | 'multi') || 'single',
         });
       }
     };
 
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, [onBlockSelected, onBlockHover, onInlineEditStart]);
 
   // Send VIEWPORT_CHANGE when viewport or zoom changes
   React.useEffect(() => {
     sendPostMessage({
-      type: "VIEWPORT_CHANGE",
+      type: 'VIEWPORT_CHANGE',
       viewport,
       zoom,
       rotated,
@@ -247,15 +232,15 @@ const PreviewPanel = React.memo(function PreviewPanel({
   // Step 9.14.3: Sync selectedBlockId to iframe via postMessage
   React.useEffect(() => {
     if (selectedBlockId) {
-      sendPostMessage({ type: "SELECT_BLOCK", blockId: selectedBlockId });
+      sendPostMessage({ type: 'SELECT_BLOCK', blockId: selectedBlockId });
     } else if (selectedBlockId === null) {
-      sendPostMessage({ type: "DESELECT_ALL" });
+      sendPostMessage({ type: 'DESELECT_ALL' });
     }
   }, [selectedBlockId, sendPostMessage]);
 
   // Timeout detection for loading state
   React.useEffect(() => {
-    if (iframeLoading && effectiveMode === "static") {
+    if (iframeLoading && effectiveMode === 'static') {
       timeoutRef.current = setTimeout(() => {
         setTimedOut(true);
       }, TIMEOUT_MS);
@@ -276,12 +261,10 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
   // Live mode timeout: detect if srcdoc iframe takes too long to load
   const [liveTimedOut, setLiveTimedOut] = React.useState(false);
-  const liveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const liveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
-    if (effectiveMode === "live" && srcdocHtml) {
+    if (effectiveMode === 'live' && srcdocHtml) {
       setLiveTimedOut(false);
       liveTimeoutRef.current = setTimeout(() => {
         setLiveTimedOut(true);
@@ -312,7 +295,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
         setRotated(false); // Reset rotation on viewport change
       }
     },
-    [],
+    []
   );
 
   // Mode change handler
@@ -322,12 +305,12 @@ const PreviewPanel = React.memo(function PreviewPanel({
         setMode(value);
         setTimedOut(false);
         setLiveTimedOut(false);
-        if (value === "live") {
+        if (value === 'live') {
           setFallbackActive(false);
         }
       }
     },
-    [],
+    []
   );
 
   // Zoom change handler
@@ -335,7 +318,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
     (_: React.MouseEvent<HTMLElement>, value: ZoomLevel | null) => {
       if (value !== null) setZoom(value);
     },
-    [],
+    []
   );
 
   // Rotation handler
@@ -347,7 +330,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
   const handleRetry = React.useCallback(() => {
     setTimedOut(false);
     setLiveTimedOut(false);
-    if (mode === "live") {
+    if (mode === 'live') {
       previewCtx.refreshPreview();
     }
     refresh();
@@ -355,7 +338,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
   // Try live again handler
   const handleTryLiveAgain = React.useCallback(() => {
-    setMode("live");
+    setMode('live');
     setFallbackActive(false);
     previewCtx.setPreviewError(null);
   }, [previewCtx]);
@@ -381,34 +364,31 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
   // Scale factor: combine scale-to-fit with zoom
   const fitScale =
-    scaleToFit && containerWidth > 0
-      ? Math.min(1, containerWidth / displayWidth)
-      : 1;
+    scaleToFit && containerWidth > 0 ? Math.min(1, containerWidth / displayWidth) : 1;
   const effectiveScale = fitScale * zoom;
 
   // Screen reader announcements
-  const [viewportAnnouncement, setViewportAnnouncement] = React.useState("");
+  const [viewportAnnouncement, setViewportAnnouncement] = React.useState('');
   React.useEffect(() => {
     setViewportAnnouncement(`Preview switched to ${viewport} view`);
-    const timer = setTimeout(() => setViewportAnnouncement(""), 1000);
+    const timer = setTimeout(() => setViewportAnnouncement(''), 1000);
     return () => clearTimeout(timer);
   }, [viewport]);
 
   // Should show device frame (mobile only)
-  const showDeviceFrame = viewport === "mobile";
+  const showDeviceFrame = viewport === 'mobile';
 
   // Determine if we show the "no src" placeholder
-  const hasContent =
-    effectiveMode === "live" ? !!previewCtx.currentPageContent : !!src;
+  const hasContent = effectiveMode === 'live' ? !!previewCtx.currentPageContent : !!src;
 
   if (!hasContent && !src) {
     return (
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
           minHeight: 300,
           color: colors.textSecondary,
         }}
@@ -419,19 +399,19 @@ const PreviewPanel = React.memo(function PreviewPanel({
   }
 
   // Determine the current timeout state
-  const isTimedOut = effectiveMode === "static" ? timedOut : liveTimedOut;
-  const isLoading = effectiveMode === "static" ? iframeLoading : false;
-  const isError = effectiveMode === "static" ? iframeError : false;
+  const isTimedOut = effectiveMode === 'static' ? timedOut : liveTimedOut;
+  const isLoading = effectiveMode === 'static' ? iframeLoading : false;
+  const isError = effectiveMode === 'static' ? iframeError : false;
 
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
         border: `1px solid ${colors.border}`,
         borderRadius: 2,
-        overflow: "hidden",
+        overflow: 'hidden',
         backgroundColor: colors.panelBg,
       }}
     >
@@ -441,11 +421,11 @@ const PreviewPanel = React.memo(function PreviewPanel({
         aria-live="polite"
         aria-atomic
         sx={{
-          position: "absolute",
+          position: 'absolute',
           width: 1,
           height: 1,
-          overflow: "hidden",
-          clip: "rect(0,0,0,0)",
+          overflow: 'hidden',
+          clip: 'rect(0,0,0,0)',
         }}
       >
         {viewportAnnouncement}
@@ -454,18 +434,18 @@ const PreviewPanel = React.memo(function PreviewPanel({
       {/* Toolbar */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           px: 2,
           py: 1,
           borderBottom: `1px solid ${colors.border}`,
           gap: 1,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
         }}
       >
         {/* Left: Viewport toggle + Mode toggle */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           {/* Viewport toggle */}
           <ToggleButtonGroup
             value={viewport}
@@ -474,16 +454,16 @@ const PreviewPanel = React.memo(function PreviewPanel({
             size="small"
             aria-label="Preview viewport"
             sx={{
-              "& .MuiToggleButton-root": {
+              '& .MuiToggleButton-root': {
                 border: `1px solid ${colors.border}`,
                 color: colors.textSecondary,
                 minWidth: 44,
                 minHeight: 36,
-                "&.Mui-selected": {
-                  backgroundColor: "rgba(55,140,146,0.15)",
-                  color: "#378C92",
-                  borderColor: "#378C92",
-                  "&:hover": { backgroundColor: "rgba(55,140,146,0.25)" },
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(55,140,146,0.15)',
+                  color: '#378C92',
+                  borderColor: '#378C92',
+                  '&:hover': { backgroundColor: 'rgba(55,140,146,0.25)' },
                 },
               },
             }}
@@ -513,18 +493,18 @@ const PreviewPanel = React.memo(function PreviewPanel({
             size="small"
             aria-label="Preview mode"
             sx={{
-              "& .MuiToggleButton-root": {
+              '& .MuiToggleButton-root': {
                 border: `1px solid ${colors.border}`,
                 color: colors.textSecondary,
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
                 px: 1.5,
                 minHeight: 36,
-                textTransform: "none",
-                "&.Mui-selected": {
-                  backgroundColor: "rgba(55,140,146,0.15)",
-                  color: "#378C92",
-                  borderColor: "#378C92",
-                  "&:hover": { backgroundColor: "rgba(55,140,146,0.25)" },
+                textTransform: 'none',
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(55,140,146,0.15)',
+                  color: '#378C92',
+                  borderColor: '#378C92',
+                  '&:hover': { backgroundColor: 'rgba(55,140,146,0.25)' },
                 },
               },
             }}
@@ -540,18 +520,14 @@ const PreviewPanel = React.memo(function PreviewPanel({
           {/* Viewport size display */}
           <Typography
             variant="caption"
-            sx={{
-              color: colors.textSecondary,
-              fontFamily: "monospace",
-              minWidth: 80,
-            }}
+            sx={{ color: colors.textSecondary, fontFamily: 'monospace', minWidth: 80 }}
           >
             {displayWidth} &times; {displayHeight}
           </Typography>
         </Box>
 
         {/* Right: Zoom + Rotation + Scale-to-fit + Refresh */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {/* Zoom controls */}
           <ToggleButtonGroup
             value={zoom}
@@ -560,16 +536,16 @@ const PreviewPanel = React.memo(function PreviewPanel({
             size="small"
             aria-label="Zoom level"
             sx={{
-              "& .MuiToggleButton-root": {
+              '& .MuiToggleButton-root': {
                 border: `1px solid ${colors.border}`,
                 color: colors.textSecondary,
-                fontSize: "0.7rem",
+                fontSize: '0.7rem',
                 px: 1,
                 minHeight: 32,
-                "&.Mui-selected": {
-                  backgroundColor: "rgba(55,140,146,0.15)",
-                  color: "#378C92",
-                  borderColor: "#378C92",
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(55,140,146,0.15)',
+                  color: '#378C92',
+                  borderColor: '#378C92',
                 },
               },
             }}
@@ -586,15 +562,15 @@ const PreviewPanel = React.memo(function PreviewPanel({
           </ToggleButtonGroup>
 
           {/* Rotation toggle (mobile/tablet only) */}
-          {viewport !== "desktop" && (
-            <Tooltip title={rotated ? "Portrait" : "Landscape"}>
+          {viewport !== 'desktop' && (
+            <Tooltip title={rotated ? 'Portrait' : 'Landscape'}>
               <IconButton
                 onClick={handleRotate}
                 size="small"
                 aria-label="Rotate viewport"
                 sx={{
                   color: colors.textSecondary,
-                  "&:hover": { color: "#378C92" },
+                  '&:hover': { color: '#378C92' },
                 }}
               >
                 <RotateCw size={16} />
@@ -611,13 +587,10 @@ const PreviewPanel = React.memo(function PreviewPanel({
               />
             }
             label={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {scaleToFit ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                <Typography
-                  variant="caption"
-                  sx={{ color: colors.textSecondary }}
-                >
-                  {scaleToFit ? "Fit" : "Actual"}
+                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                  {scaleToFit ? 'Fit' : 'Actual'}
                 </Typography>
               </Box>
             }
@@ -633,7 +606,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 color: colors.textSecondary,
                 minWidth: 44,
                 minHeight: 44,
-                "&:hover": { color: "#378C92" },
+                '&:hover': { color: '#378C92' },
               }}
             >
               <RefreshCw size={16} />
@@ -646,13 +619,13 @@ const PreviewPanel = React.memo(function PreviewPanel({
       {fallbackActive && (
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             gap: 1,
             px: 2,
             py: 0.75,
-            backgroundColor: "rgba(245,158,11,0.15)",
+            backgroundColor: 'rgba(245,158,11,0.15)',
             borderBottom: `1px solid ${colors.border}`,
           }}
         >
@@ -663,7 +636,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
             size="small"
             onClick={handleTryLiveAgain}
             aria-label="Try live again"
-            sx={{ textTransform: "none", fontSize: "0.75rem" }}
+            sx={{ textTransform: 'none', fontSize: '0.75rem' }}
           >
             Try Live Again
           </Button>
@@ -675,33 +648,29 @@ const PreviewPanel = React.memo(function PreviewPanel({
         ref={containerRef}
         sx={{
           flex: 1,
-          overflow: scaleToFit ? "hidden" : "auto",
-          position: "relative",
-          display: "flex",
-          justifyContent: "center",
-          backgroundColor:
-            actualTheme === "dark" ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.03)",
+          overflow: scaleToFit ? 'hidden' : 'auto',
+          position: 'relative',
+          display: 'flex',
+          justifyContent: 'center',
+          backgroundColor: actualTheme === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.03)',
         }}
       >
         {/* Loading overlay */}
         {isLoading && (
           <Box
             sx={{
-              position: "absolute",
+              position: 'absolute',
               inset: 0,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               zIndex: 2,
-              backgroundColor:
-                actualTheme === "dark"
-                  ? "rgba(0,0,0,0.5)"
-                  : "rgba(255,255,255,0.7)",
+              backgroundColor: actualTheme === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)',
               gap: 1,
             }}
           >
-            <CircularProgress size={32} sx={{ color: "#378C92" }} />
+            <CircularProgress size={32} sx={{ color: '#378C92' }} />
             <Typography variant="caption" sx={{ color: colors.textSecondary }}>
               Loading preview...
             </Typography>
@@ -712,24 +681,18 @@ const PreviewPanel = React.memo(function PreviewPanel({
         {isTimedOut && (
           <Box
             sx={{
-              position: "absolute",
+              position: 'absolute',
               inset: 0,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               zIndex: 3,
-              backgroundColor:
-                actualTheme === "dark"
-                  ? "rgba(0,0,0,0.7)"
-                  : "rgba(255,255,255,0.9)",
+              backgroundColor: actualTheme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.9)',
               gap: 1,
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{ color: colors.text, fontWeight: 500 }}
-            >
+            <Typography variant="body2" sx={{ color: colors.text, fontWeight: 500 }}>
               Preview timed out
             </Typography>
             <Button
@@ -737,7 +700,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
               size="small"
               onClick={handleRetry}
               aria-label="Retry preview"
-              sx={{ textTransform: "none" }}
+              sx={{ textTransform: 'none' }}
             >
               Retry
             </Button>
@@ -745,20 +708,20 @@ const PreviewPanel = React.memo(function PreviewPanel({
         )}
 
         {/* Token expired banner */}
-        {tokenExpired && !isLoading && effectiveMode === "static" && (
+        {tokenExpired && !isLoading && effectiveMode === 'static' && (
           <Box
             sx={{
-              position: "absolute",
+              position: 'absolute',
               top: 0,
               left: 0,
               right: 0,
               zIndex: 3,
               p: 1,
-              backgroundColor: "rgba(245,158,11,0.9)",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              backgroundColor: 'rgba(245,158,11,0.9)',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               gap: 1,
             }}
           >
@@ -768,7 +731,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
             <IconButton
               onClick={refresh}
               size="small"
-              sx={{ color: "#fff", minWidth: 36, minHeight: 36 }}
+              sx={{ color: '#fff', minWidth: 36, minHeight: 36 }}
               aria-label="Refresh expired preview"
             >
               <RefreshCw size={14} />
@@ -777,40 +740,37 @@ const PreviewPanel = React.memo(function PreviewPanel({
         )}
 
         {/* Error state (static mode) */}
-        {isError && !isLoading && effectiveMode === "static" ? (
+        {isError && !isLoading && effectiveMode === 'static' ? (
           navigator.onLine === false ? (
             <PreviewNetworkError onRetry={refresh} />
           ) : (
-            <PreviewImageError
-              onRetry={refresh}
-              message="Failed to load website preview"
-            />
+            <PreviewImageError onRetry={refresh} message="Failed to load website preview" />
           )
         ) : (
           /* Iframe container with optional device frame */
           <Box
             sx={{
               width: scaleToFit ? displayWidth : displayWidth,
-              height: scaleToFit ? `${100 / effectiveScale}%` : "100%",
+              height: scaleToFit ? `${100 / effectiveScale}%` : '100%',
               transform: `scale(${effectiveScale})`,
-              transformOrigin: "top center",
+              transformOrigin: 'top center',
               minHeight: scaleToFit ? 0 : 600,
-              transition: "width 0.3s ease, transform 0.3s ease",
-              position: "relative",
+              transition: 'width 0.3s ease, transform 0.3s ease',
+              position: 'relative',
               ...(showDeviceFrame && {
-                border: "3px solid #333",
-                borderRadius: "24px",
-                overflow: "hidden",
-                "&::before": {
+                border: '3px solid #333',
+                borderRadius: '24px',
+                overflow: 'hidden',
+                '&::before': {
                   content: '""',
-                  position: "absolute",
+                  position: 'absolute',
                   top: 0,
-                  left: "50%",
-                  transform: "translateX(-50%)",
+                  left: '50%',
+                  transform: 'translateX(-50%)',
                   width: 80,
                   height: 4,
-                  backgroundColor: "#555",
-                  borderRadius: "0 0 4px 4px",
+                  backgroundColor: '#555',
+                  borderRadius: '0 0 4px 4px',
                   zIndex: 1,
                 },
               }),
@@ -818,20 +778,16 @@ const PreviewPanel = React.memo(function PreviewPanel({
           >
             <iframe
               ref={iframeRef}
-              {...(effectiveMode === "live" && srcdocHtml
-                ? { srcDoc: srcdocHtml }
-                : { src })}
+              {...(effectiveMode === 'live' && srcdocHtml ? { srcDoc: srcdocHtml } : { src })}
               title={`Website preview - ${viewport}`}
-              onLoad={
-                effectiveMode === "live" ? handleLiveIframeLoad : staticOnLoad
-              }
-              onError={effectiveMode === "static" ? staticOnError : undefined}
+              onLoad={effectiveMode === 'live' ? handleLiveIframeLoad : staticOnLoad}
+              onError={effectiveMode === 'static' ? staticOnError : undefined}
               sandbox="allow-same-origin allow-scripts"
               style={{
-                width: "100%",
-                height: "100%",
-                border: "none",
-                display: "block",
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                display: 'block',
                 minHeight: 600,
               }}
               aria-label={`Website preview in ${viewport} mode`}

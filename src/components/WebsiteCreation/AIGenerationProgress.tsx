@@ -8,37 +8,30 @@
  * Step 3.18.B + 3.18.C
  */
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  LinearProgress,
-  CircularProgress,
-  Snackbar,
-  Alert,
-} from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { motion, AnimatePresence } from "framer-motion";
-import CheckCircle from "@mui/icons-material/CheckCircle";
-import RadioButtonUnchecked from "@mui/icons-material/RadioButtonUnchecked";
-import ErrorIcon from "@mui/icons-material/Error";
-import { Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { getDashboardColors } from "../../styles/dashboardTheme";
-import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Box, Typography, LinearProgress, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { motion, AnimatePresence } from 'framer-motion';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import RadioButtonUnchecked from '@mui/icons-material/RadioButtonUnchecked';
+import ErrorIcon from '@mui/icons-material/Error';
+import { Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getDashboardColors } from '../../styles/dashboardTheme';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import {
   DashboardCard,
   DashboardGradientButton,
   DashboardActionButton,
   DashboardCancelButton,
-} from "../Dashboard/shared";
+} from '../Dashboard/shared';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface PageStatus {
   pageId: number;
   pageName: string;
-  status: "pending" | "current" | "completed" | "failed";
+  status: 'pending' | 'current' | 'completed' | 'failed';
   blockCount: number;
 }
 
@@ -67,13 +60,7 @@ interface AIGenerationProgressProps {
 }
 
 const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
-  ({
-    sessionId,
-    websiteId,
-    websiteName,
-    questionnaireData,
-    onRetrySession,
-  }) => {
+  ({ sessionId, websiteId, websiteName, questionnaireData, onRetrySession }) => {
     const { actualTheme } = useCustomTheme();
     const colors = getDashboardColors(actualTheme);
     const navigate = useNavigate();
@@ -89,17 +76,17 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
       pagesCompleted: 0,
     });
     const [phase, setPhase] = useState<
-      "connecting" | "generating" | "complete" | "failed" | "disconnected"
-    >("connecting");
+      'connecting' | 'generating' | 'complete' | 'failed' | 'disconnected'
+    >('connecting');
     const [countdown, setCountdown] = useState(3);
     const [snackbar, setSnackbar] = useState<{
       open: boolean;
       message: string;
-      severity: "success" | "error";
+      severity: 'success' | 'error';
     }>({
       open: false,
-      message: "",
-      severity: "success",
+      message: '',
+      severity: 'success',
     });
 
     const abortRef = useRef<AbortController | null>(null);
@@ -121,7 +108,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
     // Connect to SSE stream
     const connectSSE = useCallback(async (sid: string) => {
       activeSessionIdRef.current = sid;
-      setPhase("connecting");
+      setPhase('connecting');
 
       // Abort previous connection if any
       if (abortRef.current) {
@@ -133,40 +120,40 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
 
       try {
         const response = await fetch(`${API_URL}/ai/progress/${sid}`, {
-          method: "GET",
+          method: 'GET',
           headers: {
-            Accept: "text/event-stream",
+            Accept: 'text/event-stream',
           },
-          credentials: "include",
+          credentials: 'include',
           signal: controller.signal,
         });
 
         if (!response.ok) {
-          setPhase("failed");
+          setPhase('failed');
           return;
         }
 
-        setPhase("generating");
+        setPhase('generating');
 
         const reader = response.body?.getReader();
         if (!reader) {
-          setPhase("failed");
+          setPhase('failed');
           return;
         }
 
         const decoder = new TextDecoder();
-        let buffer = "";
+        let buffer = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
 
           for (const line of lines) {
-            if (line.startsWith("data: ")) {
+            if (line.startsWith('data: ')) {
               try {
                 const data = JSON.parse(line.slice(6));
                 handleSSEEvent(data);
@@ -177,11 +164,11 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
           }
         }
       } catch (error: unknown) {
-        if (error instanceof DOMException && error.name === "AbortError") {
+        if (error instanceof DOMException && error.name === 'AbortError') {
           return; // Intentional abort
         }
-        if (phase !== "complete") {
-          setPhase("disconnected");
+        if (phase !== 'complete') {
+          setPhase('disconnected');
         }
       }
     }, []);
@@ -189,49 +176,44 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
     // Handle SSE events
     const handleSSEEvent = useCallback((data: Record<string, unknown>) => {
       switch (data.type) {
-        case "start":
+        case 'start':
           setStats((prev) => ({
             ...prev,
             totalBlocks: data.totalBlocks as number,
           }));
           break;
 
-        case "page_start":
+        case 'page_start':
           setPages((prev) => {
             const exists = prev.find((p) => p.pageId === data.pageId);
             if (exists) {
               return prev.map((p) =>
-                p.pageId === data.pageId
-                  ? { ...p, status: "current" as const }
-                  : p,
+                p.pageId === data.pageId ? { ...p, status: 'current' as const } : p
               );
             }
             return [
               ...prev.map((p) =>
-                p.status === "current"
-                  ? { ...p, status: "completed" as const }
-                  : p,
+                p.status === 'current' ? { ...p, status: 'completed' as const } : p
               ),
               {
                 pageId: data.pageId as number,
                 pageName: data.pageName as string,
-                status: "current" as const,
+                status: 'current' as const,
                 blockCount: data.blockCount as number,
               },
             ];
           });
           break;
 
-        case "block_complete":
+        case 'block_complete':
           setStats((prev) => ({
             ...prev,
             completedBlocks: prev.completedBlocks + 1,
-            cacheHits:
-              data.source === "cache" ? prev.cacheHits + 1 : prev.cacheHits,
+            cacheHits: data.source === 'cache' ? prev.cacheHits + 1 : prev.cacheHits,
           }));
           break;
 
-        case "block_error":
+        case 'block_error':
           setStats((prev) => ({
             ...prev,
             blocksFailed: prev.blocksFailed + 1,
@@ -247,13 +229,9 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
           ]);
           break;
 
-        case "page_complete":
+        case 'page_complete':
           setPages((prev) =>
-            prev.map((p) =>
-              p.pageId === data.pageId
-                ? { ...p, status: "completed" as const }
-                : p,
-            ),
+            prev.map((p) => (p.pageId === data.pageId ? { ...p, status: 'completed' as const } : p))
           );
           setStats((prev) => ({
             ...prev,
@@ -261,31 +239,30 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
           }));
           break;
 
-        case "complete":
+        case 'complete':
           setStats((prev) => ({
             ...prev,
             totalTokensUsed: data.totalTokensUsed as number,
             cacheHits: data.cacheHits as number,
             blocksFailed: data.blocksFailed as number,
             pagesCompleted: data.pagesCompleted as number,
-            completedBlocks:
-              (data.totalBlocks as number) - (data.blocksFailed as number),
+            completedBlocks: (data.totalBlocks as number) - (data.blocksFailed as number),
           }));
           // Check for total failure
           if (
             (data.blocksFailed as number) === (data.totalBlocks as number) &&
             !data.alreadyCompleted
           ) {
-            setPhase("failed");
-          } else if (data.alreadyCompleted && data.status === "failed") {
-            setPhase("failed");
+            setPhase('failed');
+          } else if (data.alreadyCompleted && data.status === 'failed') {
+            setPhase('failed');
           } else {
-            setPhase("complete");
+            setPhase('complete');
           }
           break;
 
-        case "error":
-          setPhase("failed");
+        case 'error':
+          setPhase('failed');
           break;
       }
     }, []);
@@ -299,7 +276,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
 
     // Auto-redirect countdown on completion
     useEffect(() => {
-      if (phase === "complete") {
+      if (phase === 'complete') {
         countdownRef.current = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
@@ -324,7 +301,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
       if (onRetrySession) {
         const newSessionId = await onRetrySession(true);
         if (newSessionId) {
-          setPhase("connecting");
+          setPhase('connecting');
           setFailedBlocks([]);
           connectSSE(newSessionId);
         }
@@ -336,7 +313,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
       if (onRetrySession) {
         const newSessionId = await onRetrySession(false);
         if (newSessionId) {
-          setPhase("connecting");
+          setPhase('connecting');
           setPages([]);
           setFailedBlocks([]);
           setStats({
@@ -356,18 +333,16 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
     const handleBlockRetry = useCallback(
       async (block: FailedBlock) => {
         setFailedBlocks((prev) =>
-          prev.map((b) =>
-            b.blockId === block.blockId ? { ...b, retrying: true } : b,
-          ),
+          prev.map((b) => (b.blockId === block.blockId ? { ...b, retrying: true } : b))
         );
 
         try {
           const response = await fetch(`${API_URL}/ai/generate-block`, {
-            method: "POST",
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
+              'Content-Type': 'application/json',
             },
-            credentials: "include",
+            credentials: 'include',
             body: JSON.stringify({
               blockId: block.blockId,
               blockType: block.blockType,
@@ -376,9 +351,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
           });
 
           if (response.ok) {
-            setFailedBlocks((prev) =>
-              prev.filter((b) => b.blockId !== block.blockId),
-            );
+            setFailedBlocks((prev) => prev.filter((b) => b.blockId !== block.blockId));
             setStats((prev) => ({
               ...prev,
               completedBlocks: prev.completedBlocks + 1,
@@ -386,43 +359,36 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
             }));
             setSnackbar({
               open: true,
-              message: "Section regenerated successfully",
-              severity: "success",
+              message: 'Section regenerated successfully',
+              severity: 'success',
             });
           } else {
             setFailedBlocks((prev) =>
-              prev.map((b) =>
-                b.blockId === block.blockId ? { ...b, retrying: false } : b,
-              ),
+              prev.map((b) => (b.blockId === block.blockId ? { ...b, retrying: false } : b))
             );
             setSnackbar({
               open: true,
-              message: "Failed to regenerate section. Please try again.",
-              severity: "error",
+              message: 'Failed to regenerate section. Please try again.',
+              severity: 'error',
             });
           }
         } catch {
           setFailedBlocks((prev) =>
-            prev.map((b) =>
-              b.blockId === block.blockId ? { ...b, retrying: false } : b,
-            ),
+            prev.map((b) => (b.blockId === block.blockId ? { ...b, retrying: false } : b))
           );
           setSnackbar({
             open: true,
-            message: "Failed to regenerate section. Please try again.",
-            severity: "error",
+            message: 'Failed to regenerate section. Please try again.',
+            severity: 'error',
           });
         }
       },
-      [questionnaireData],
+      [questionnaireData]
     );
 
     const progressPercent =
       stats.totalBlocks > 0
-        ? Math.round(
-            ((stats.completedBlocks + stats.blocksFailed) / stats.totalBlocks) *
-              100,
-          )
+        ? Math.round(((stats.completedBlocks + stats.blocksFailed) / stats.totalBlocks) * 100)
         : 0;
 
     const handleGoToEditor = useCallback(() => {
@@ -432,28 +398,28 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "flex-start",
-          minHeight: "60vh",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          minHeight: '60vh',
           pt: { xs: 2, sm: 6 },
           px: { xs: 1, sm: 2 },
         }}
       >
-        <Box sx={{ width: "100%", maxWidth: 600 }}>
+        <Box sx={{ width: '100%', maxWidth: 600 }}>
           <DashboardCard
             icon={Sparkles}
-            title={websiteName || "Your Website"}
+            title={websiteName || 'Your Website'}
             subtitle="AI Content Generation"
           >
             {/* Disconnected banner */}
-            {phase === "disconnected" && (
+            {phase === 'disconnected' && (
               <Alert
                 severity="warning"
                 sx={{
                   mb: 2,
-                  bgcolor: alpha("#ff9800", 0.1),
-                  border: `1px solid ${alpha("#ff9800", 0.3)}`,
+                  bgcolor: alpha('#ff9800', 0.1),
+                  border: `1px solid ${alpha('#ff9800', 0.3)}`,
                 }}
                 action={
                   <DashboardGradientButton
@@ -471,30 +437,17 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
             )}
 
             {/* Total failure state */}
-            {phase === "failed" && (
-              <Box sx={{ textAlign: "center", py: 3 }}>
-                <ErrorIcon sx={{ fontSize: 48, color: "error.main", mb: 2 }} />
-                <Typography
-                  variant="h6"
-                  sx={{ color: colors.text, mb: 1, fontWeight: 600 }}
-                >
+            {phase === 'failed' && (
+              <Box sx={{ textAlign: 'center', py: 3 }}>
+                <ErrorIcon sx={{ fontSize: 48, color: 'error.main', mb: 2 }} />
+                <Typography variant="h6" sx={{ color: colors.text, mb: 1, fontWeight: 600 }}>
                   AI content generation unavailable
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: alpha(colors.text, 0.6), mb: 3 }}
-                >
-                  Your website is ready with template defaults. You can edit
-                  content manually or try AI generation again later.
+                <Typography variant="body2" sx={{ color: alpha(colors.text, 0.6), mb: 3 }}>
+                  Your website is ready with template defaults. You can edit content manually or try
+                  AI generation again later.
                 </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 2,
-                    justifyContent: "center",
-                    flexWrap: "wrap",
-                  }}
-                >
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                   <DashboardGradientButton
                     onClick={handleGoToEditor}
                     sx={{ minWidth: 44, minHeight: 44 }}
@@ -514,44 +467,25 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
             )}
 
             {/* Connecting state */}
-            {phase === "connecting" && (
-              <Box sx={{ textAlign: "center", py: 4 }}>
-                <CircularProgress
-                  size={32}
-                  sx={{ color: colors.primary, mb: 2 }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{ color: alpha(colors.text, 0.6) }}
-                >
+            {phase === 'connecting' && (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <CircularProgress size={32} sx={{ color: colors.primary, mb: 2 }} />
+                <Typography variant="body2" sx={{ color: alpha(colors.text, 0.6) }}>
                   Connecting to AI service...
                 </Typography>
               </Box>
             )}
 
             {/* Generating state */}
-            {phase === "generating" && (
+            {phase === 'generating' && (
               <Box>
                 {/* Overall progress bar */}
                 <Box sx={{ mb: 3 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      mb: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: colors.text, fontWeight: 600 }}
-                    >
-                      {stats.completedBlocks + stats.blocksFailed} of{" "}
-                      {stats.totalBlocks} blocks
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ color: colors.text, fontWeight: 600 }}>
+                      {stats.completedBlocks + stats.blocksFailed} of {stats.totalBlocks} blocks
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: alpha(colors.text, 0.5) }}
-                    >
+                    <Typography variant="body2" sx={{ color: alpha(colors.text, 0.5) }}>
                       {progressPercent}%
                     </Typography>
                   </Box>
@@ -562,7 +496,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
                       height: 8,
                       borderRadius: 4,
                       bgcolor: alpha(colors.primary, 0.1),
-                      "& .MuiLinearProgress-bar": {
+                      '& .MuiLinearProgress-bar': {
                         bgcolor: colors.primary,
                         borderRadius: 4,
                       },
@@ -571,15 +505,10 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
                   {/* Token/cache summary */}
                   <Typography
                     variant="caption"
-                    sx={{
-                      color: alpha(colors.text, 0.4),
-                      mt: 0.5,
-                      display: "block",
-                    }}
+                    sx={{ color: alpha(colors.text, 0.4), mt: 0.5, display: 'block' }}
                   >
                     {stats.cacheHits > 0 && `${stats.cacheHits} cached`}
-                    {stats.blocksFailed > 0 &&
-                      ` · ${stats.blocksFailed} failed`}
+                    {stats.blocksFailed > 0 && ` · ${stats.blocksFailed} failed`}
                   </Typography>
                 </Box>
 
@@ -587,9 +516,9 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
                 <Box
                   sx={{
                     maxHeight: { xs: 300, sm: 400 },
-                    overflow: "auto",
-                    "&::-webkit-scrollbar": { width: 4 },
-                    "&::-webkit-scrollbar-thumb": {
+                    overflow: 'auto',
+                    '&::-webkit-scrollbar': { width: 4 },
+                    '&::-webkit-scrollbar-thumb': {
                       bgcolor: alpha(colors.text, 0.2),
                       borderRadius: 2,
                     },
@@ -605,32 +534,26 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
                       >
                         <Box
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1.5,
                             py: 1.5,
                             px: 1,
                             borderRadius: 1,
                             mb: 0.5,
                             bgcolor:
-                              page.status === "current"
+                              page.status === 'current'
                                 ? alpha(colors.primary, 0.05)
-                                : "transparent",
+                                : 'transparent',
                           }}
                         >
-                          {page.status === "completed" && (
-                            <CheckCircle
-                              sx={{ color: "success.main", fontSize: 20 }}
-                            />
+                          {page.status === 'completed' && (
+                            <CheckCircle sx={{ color: 'success.main', fontSize: 20 }} />
                           )}
-                          {page.status === "current" && (
+                          {page.status === 'current' && (
                             <motion.div
                               animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 1.5,
-                                repeat: Infinity,
-                                ease: "linear",
-                              }}
+                              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
                             >
                               <CircularProgress
                                 size={20}
@@ -639,37 +562,27 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
                               />
                             </motion.div>
                           )}
-                          {page.status === "pending" && (
+                          {page.status === 'pending' && (
                             <RadioButtonUnchecked
-                              sx={{
-                                color: alpha(colors.text, 0.3),
-                                fontSize: 20,
-                              }}
+                              sx={{ color: alpha(colors.text, 0.3), fontSize: 20 }}
                             />
                           )}
-                          {page.status === "failed" && (
-                            <ErrorIcon
-                              sx={{ color: "error.main", fontSize: 20 }}
-                            />
+                          {page.status === 'failed' && (
+                            <ErrorIcon sx={{ color: 'error.main', fontSize: 20 }} />
                           )}
                           <Typography
                             variant="body2"
                             sx={{
                               color:
-                                page.status === "current"
-                                  ? colors.text
-                                  : alpha(colors.text, 0.7),
-                              fontWeight: page.status === "current" ? 600 : 400,
+                                page.status === 'current' ? colors.text : alpha(colors.text, 0.7),
+                              fontWeight: page.status === 'current' ? 600 : 400,
                               flex: 1,
                             }}
                           >
                             {page.pageName}
                           </Typography>
-                          {page.status === "current" && (
-                            <Typography
-                              variant="caption"
-                              sx={{ color: alpha(colors.text, 0.4) }}
-                            >
+                          {page.status === 'current' && (
+                            <Typography variant="caption" sx={{ color: alpha(colors.text, 0.4) }}>
                               {page.blockCount} blocks
                             </Typography>
                           )}
@@ -684,7 +597,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
                   <Box sx={{ mt: 2 }}>
                     <Typography
                       variant="subtitle2"
-                      sx={{ color: "error.main", mb: 1, fontWeight: 600 }}
+                      sx={{ color: 'error.main', mb: 1, fontWeight: 600 }}
                     >
                       Failed blocks
                     </Typography>
@@ -692,43 +605,29 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
                       <Box
                         key={block.blockId}
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                           py: 1,
                           px: 1,
                           borderRadius: 1,
-                          bgcolor: alpha("#f44336", 0.05),
+                          bgcolor: alpha('#f44336', 0.05),
                           mb: 0.5,
                         }}
                       >
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <ErrorIcon
-                            sx={{ color: "error.main", fontSize: 16 }}
-                          />
-                          <Typography
-                            variant="body2"
-                            sx={{ color: colors.text }}
-                          >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <ErrorIcon sx={{ color: 'error.main', fontSize: 16 }} />
+                          <Typography variant="body2" sx={{ color: colors.text }}>
                             {block.blockType}
                           </Typography>
                         </Box>
                         {block.retrying ? (
-                          <CircularProgress
-                            size={16}
-                            sx={{ color: colors.primary }}
-                          />
+                          <CircularProgress size={16} sx={{ color: colors.primary }} />
                         ) : (
                           <DashboardActionButton
                             size="small"
                             onClick={() => handleBlockRetry(block)}
-                            sx={{
-                              minWidth: 44,
-                              minHeight: 44,
-                              fontSize: "0.75rem",
-                            }}
+                            sx={{ minWidth: 44, minHeight: 44, fontSize: '0.75rem' }}
                             aria-label={`Retry ${block.blockType} block`}
                           >
                             Retry
@@ -742,47 +641,30 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
             )}
 
             {/* Complete state */}
-            {phase === "complete" && (
-              <Box sx={{ textAlign: "center", py: 3 }}>
+            {phase === 'complete' && (
+              <Box sx={{ textAlign: 'center', py: 3 }}>
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: "spring", duration: 0.5 }}
+                  transition={{ type: 'spring', duration: 0.5 }}
                 >
-                  <CheckCircle
-                    sx={{ fontSize: 48, color: "success.main", mb: 2 }}
-                  />
+                  <CheckCircle sx={{ fontSize: 48, color: 'success.main', mb: 2 }} />
                 </motion.div>
-                <Typography
-                  variant="h6"
-                  sx={{ color: colors.text, mb: 1, fontWeight: 600 }}
-                >
+                <Typography variant="h6" sx={{ color: colors.text, mb: 1, fontWeight: 600 }}>
                   Content Generated!
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: alpha(colors.text, 0.6), mb: 1 }}
-                >
-                  {stats.completedBlocks} blocks across {stats.pagesCompleted}{" "}
-                  pages
+                <Typography variant="body2" sx={{ color: alpha(colors.text, 0.6), mb: 1 }}>
+                  {stats.completedBlocks} blocks across {stats.pagesCompleted} pages
                 </Typography>
                 {/* Token/cache summary */}
                 <Typography
                   variant="caption"
-                  sx={{
-                    color: alpha(colors.text, 0.4),
-                    display: "block",
-                    mb: 3,
-                  }}
+                  sx={{ color: alpha(colors.text, 0.4), display: 'block', mb: 3 }}
                 >
-                  {stats.totalTokensUsed > 0 &&
-                    `${stats.totalTokensUsed} tokens used`}
+                  {stats.totalTokensUsed > 0 && `${stats.totalTokensUsed} tokens used`}
                   {stats.cacheHits > 0 && ` · ${stats.cacheHits} from cache`}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: alpha(colors.text, 0.5), mb: 2 }}
-                >
+                <Typography variant="body2" sx={{ color: alpha(colors.text, 0.5), mb: 2 }}>
                   Redirecting to editor in {countdown}s...
                 </Typography>
                 <DashboardGradientButton
@@ -801,7 +683,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
           open={snackbar.open}
           autoHideDuration={4000}
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
           <Alert
             severity={snackbar.severity}
@@ -812,9 +694,9 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
         </Snackbar>
       </Box>
     );
-  },
+  }
 );
 
-AIGenerationProgress.displayName = "AIGenerationProgress";
+AIGenerationProgress.displayName = 'AIGenerationProgress';
 
 export default AIGenerationProgress;

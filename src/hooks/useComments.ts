@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import axios from "axios";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 /* ---------- Types ---------- */
 export interface CommentAuthor {
@@ -24,7 +24,7 @@ export interface Comment {
   replies?: Comment[];
   parentCommentId?: number | null;
   createdAt: string;
-  status: "visible" | "hidden";
+  status: 'visible' | 'hidden';
 }
 
 export interface CommentPagination {
@@ -44,10 +44,7 @@ export interface CommentsResult {
 }
 
 export interface SubmitCommentResult {
-  submitComment: (data: {
-    content: string;
-    parentCommentId?: number;
-  }) => Promise<Comment | null>;
+  submitComment: (data: { content: string; parentCommentId?: number }) => Promise<Comment | null>;
   loading: boolean;
   error: string | null;
   requiresAuth?: boolean;
@@ -61,7 +58,7 @@ export interface ReactCommentResult {
 /* ---------- useComments ---------- */
 export function useComments(
   websiteId: string | number | null | undefined,
-  page: number = 1,
+  page: number = 1
 ): CommentsResult {
   const [comments, setComments] = useState<Comment[]>([]);
   const [pagination, setPagination] = useState<CommentPagination | null>(null);
@@ -78,13 +75,10 @@ export function useComments(
     setRequiresAuth(false);
 
     try {
-      const response = await axios.get(
-        `${API_URL}/comments/listings/${websiteId}`,
-        {
-          params: { page, limit: 20 },
-          withCredentials: true,
-        },
-      );
+      const response = await axios.get(`${API_URL}/comments/listings/${websiteId}`, {
+        params: { page, limit: 20 },
+        withCredentials: true,
+      });
       if (currentFetch !== fetchCountRef.current) return;
       const data = response.data;
       setComments(data.comments || []);
@@ -94,7 +88,7 @@ export function useComments(
       if (err.response?.status === 401) {
         setRequiresAuth(true);
       } else {
-        setError(err.response?.data?.message || "Failed to load comments");
+        setError(err.response?.data?.message || 'Failed to load comments');
       }
     } finally {
       if (currentFetch === fetchCountRef.current) {
@@ -107,53 +101,41 @@ export function useComments(
     fetchComments();
   }, [fetchComments]);
 
-  return {
-    comments,
-    pagination,
-    loading,
-    error,
-    requiresAuth,
-    refetch: fetchComments,
-  };
+  return { comments, pagination, loading, error, requiresAuth, refetch: fetchComments };
 }
 
 /* ---------- useSubmitComment ---------- */
 export function useSubmitComment(
-  websiteId: string | number | null | undefined,
+  websiteId: string | number | null | undefined
 ): SubmitCommentResult {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [requiresAuth, setRequiresAuth] = useState(false);
 
   const submitComment = useCallback(
-    async (data: {
-      content: string;
-      parentCommentId?: number;
-    }): Promise<Comment | null> => {
+    async (data: { content: string; parentCommentId?: number }): Promise<Comment | null> => {
       if (!websiteId) return null;
       setLoading(true);
       setError(null);
       setRequiresAuth(false);
 
       try {
-        const response = await axios.post(
-          `${API_URL}/comments/listings/${websiteId}`,
-          data,
-          { withCredentials: true },
-        );
+        const response = await axios.post(`${API_URL}/comments/listings/${websiteId}`, data, {
+          withCredentials: true,
+        });
         return response.data.comment as Comment;
       } catch (err: any) {
         if (err.response?.status === 401) {
           setRequiresAuth(true);
         } else {
-          setError(err.response?.data?.message || "Failed to submit comment");
+          setError(err.response?.data?.message || 'Failed to submit comment');
         }
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [websiteId],
+    [websiteId]
   );
 
   return { submitComment, loading, error, requiresAuth };
@@ -170,7 +152,7 @@ export function useReactComment(): ReactCommentResult {
         await axios.post(
           `${API_URL}/comments/${commentId}/react`,
           { reactionType },
-          { withCredentials: true },
+          { withCredentials: true }
         );
         return true;
       } catch {
@@ -179,7 +161,7 @@ export function useReactComment(): ReactCommentResult {
         setLoading(false);
       }
     },
-    [],
+    []
   );
 
   return { reactComment, loading };

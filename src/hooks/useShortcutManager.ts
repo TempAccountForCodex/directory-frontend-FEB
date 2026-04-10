@@ -12,13 +12,13 @@
  * Works ALONGSIDE existing useKeyboardShortcuts (undo/redo). Does NOT break it.
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type ShortcutScope = "global" | "editor" | "modal";
+export type ShortcutScope = 'global' | 'editor' | 'modal';
 
 export interface ShortcutEntry {
   /** Normalized key combo, e.g. 'ctrl+s', 'alt+ctrl+shift+s' */
@@ -63,8 +63,8 @@ export interface UseShortcutManagerReturn {
 const detectMac = (): boolean => {
   try {
     const platform =
-      (navigator as Navigator & { userAgentData?: { platform: string } })
-        .userAgentData?.platform ?? "";
+      (navigator as Navigator & { userAgentData?: { platform: string } }).userAgentData?.platform ??
+      '';
     if (platform) {
       return /mac/i.test(platform);
     }
@@ -89,23 +89,19 @@ const detectMac = (): boolean => {
  *   'Delete'         → 'delete'
  */
 export const normalizeKeyCombo = (key: string): string => {
-  const MODIFIERS = ["alt", "ctrl", "meta", "shift"] as const;
+  const MODIFIERS = ['alt', 'ctrl', 'meta', 'shift'] as const;
   const parts = key
     .toLowerCase()
-    .split("+")
+    .split('+')
     .map((p) => p.trim());
 
-  const modifiers = parts.filter((p) =>
-    MODIFIERS.includes(p as (typeof MODIFIERS)[number]),
-  );
-  const nonModifiers = parts.filter(
-    (p) => !MODIFIERS.includes(p as (typeof MODIFIERS)[number]),
-  );
+  const modifiers = parts.filter((p) => MODIFIERS.includes(p as (typeof MODIFIERS)[number]));
+  const nonModifiers = parts.filter((p) => !MODIFIERS.includes(p as (typeof MODIFIERS)[number]));
 
   // Sort modifiers alphabetically for dedup consistency
   modifiers.sort();
 
-  return [...modifiers, ...nonModifiers].join("+");
+  return [...modifiers, ...nonModifiers].join('+');
 };
 
 /**
@@ -113,21 +109,21 @@ export const normalizeKeyCombo = (key: string): string => {
  */
 const eventToKeyCombo = (e: KeyboardEvent): string => {
   const modifiers: string[] = [];
-  if (e.altKey) modifiers.push("alt");
-  if (e.ctrlKey) modifiers.push("ctrl");
-  if (e.metaKey) modifiers.push("meta");
-  if (e.shiftKey) modifiers.push("shift");
+  if (e.altKey) modifiers.push('alt');
+  if (e.ctrlKey) modifiers.push('ctrl');
+  if (e.metaKey) modifiers.push('meta');
+  if (e.shiftKey) modifiers.push('shift');
 
   // Use the key value lower-cased; for special keys like 'Escape', 'Delete', etc.
   const key = e.key.toLowerCase();
 
   // Avoid double-counting pure modifier key presses
-  if (["alt", "control", "meta", "shift"].includes(key)) {
-    return modifiers.join("+");
+  if (['alt', 'control', 'meta', 'shift'].includes(key)) {
+    return modifiers.join('+');
   }
 
   modifiers.sort();
-  return [...modifiers, key].join("+");
+  return [...modifiers, key].join('+');
 };
 
 /**
@@ -140,18 +136,16 @@ const isEditableActive = (): boolean => {
   const tag = target.tagName?.toUpperCase();
   const isContentEditable =
     target.isContentEditable === true ||
-    target.getAttribute?.("contenteditable") === "true" ||
-    target.getAttribute?.("contenteditable") === "";
-  return tag === "INPUT" || tag === "TEXTAREA" || isContentEditable;
+    target.getAttribute?.('contenteditable') === 'true' ||
+    target.getAttribute?.('contenteditable') === '';
+  return tag === 'INPUT' || tag === 'TEXTAREA' || isContentEditable;
 };
 
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useShortcutManager(options?: {
-  isModalOpen?: boolean;
-}): UseShortcutManagerReturn {
+export function useShortcutManager(options?: { isModalOpen?: boolean }): UseShortcutManagerReturn {
   const isMac = detectMac();
   const isModalOpen = options?.isModalOpen ?? false;
 
@@ -159,9 +153,9 @@ export function useShortcutManager(options?: {
   const registryRef = useRef<Map<string, ShortcutEntry>>(new Map());
 
   // State copy for consumers who need reactivity on the shortcuts Map
-  const [shortcutsSnapshot, setShortcutsSnapshot] = useState<
-    Map<string, ShortcutEntry>
-  >(() => new Map());
+  const [shortcutsSnapshot, setShortcutsSnapshot] = useState<Map<string, ShortcutEntry>>(
+    () => new Map()
+  );
 
   // Stable ref for isModalOpen
   const isModalOpenRef = useRef(isModalOpen);
@@ -178,7 +172,7 @@ export function useShortcutManager(options?: {
       const existing = registryRef.current.get(normalizedKey)!;
       console.warn(
         `[useShortcutManager] Shortcut conflict: "${normalizedKey}" already registered as "${existing.description}". ` +
-          `New registration: "${params.description}" will overwrite.`,
+          `New registration: "${params.description}" will overwrite.`
       );
     }
 
@@ -214,11 +208,11 @@ export function useShortcutManager(options?: {
       if (!entry) return;
 
       // Scope checks
-      if (entry.scope === "editor") {
+      if (entry.scope === 'editor') {
         if (isEditableActive()) return;
       }
 
-      if (entry.scope === "modal") {
+      if (entry.scope === 'modal') {
         if (!isModalOpenRef.current) return;
       }
 
@@ -227,13 +221,13 @@ export function useShortcutManager(options?: {
       try {
         entry.action(e);
       } catch (err) {
-        console.error("[useShortcutManager] Shortcut action threw:", err);
+        console.error('[useShortcutManager] Shortcut action threw:', err);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []); // Single listener — uses refs to read current state
 

@@ -20,10 +20,8 @@ export default defineConfig({
     include: [
       '@emotion/react',
       '@emotion/styled',
-      '@mui/material',
-      '@mui/material/styles',
-      '@mui/system',
-      'prop-types',
+      '@mui/material/Tooltip',
+      '@mui/material/Unstable_Grid2',
       'framer-motion',
       'react-router-dom',
       'leaflet',

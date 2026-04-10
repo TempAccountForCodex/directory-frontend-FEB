@@ -24,29 +24,30 @@
  *  20. primaryColor prop applied without crashing
  */
 
-import React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import React from 'react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 
 // Mock framer-motion
-vi.mock("framer-motion", () => ({
+vi.mock('framer-motion', () => ({
+  useScroll: () => ({ scrollYProgress: { get: () => 0, onChange: () => () => {} } }),
+  useTransform: (..._args) => ({ get: () => '0%', onChange: () => () => {} }),
+  useMotionValue: (v) => ({ get: () => v, set: () => {}, onChange: () => () => {} }),
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    section: ({ children, ...props }: any) => (
-      <section {...props}>{children}</section>
-    ),
+    section: ({ children, ...props }: any) => <section {...props}>{children}</section>,
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
   useInView: () => [null, true],
 }));
 
 // Mock react-intersection-observer
-vi.mock("react-intersection-observer", () => ({
+vi.mock('react-intersection-observer', () => ({
   useInView: () => ({ ref: null, inView: true }),
 }));
 
-import CountdownBlock from "../CountdownBlock";
+import CountdownBlock from '../CountdownBlock';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -57,20 +58,20 @@ const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
 const baseBlock = {
   id: 2,
-  blockType: "COUNTDOWN" as const,
+  blockType: 'COUNTDOWN' as const,
   sortOrder: 2,
   content: {
-    heading: "Launch Countdown",
-    description: "Get ready for something big!",
+    heading: 'Launch Countdown',
+    description: 'Get ready for something big!',
     targetDate: futureDate,
-    expiredMessage: "Time is up!",
+    expiredMessage: 'Time is up!',
     showDays: true,
     showHours: true,
     showMinutes: true,
     showSeconds: true,
-    style: "simple" as const,
-    ctaText: "Learn More",
-    ctaLink: "/launch",
+    style: 'simple' as const,
+    ctaText: 'Learn More',
+    ctaLink: '/launch',
   },
 };
 
@@ -79,23 +80,23 @@ const expiredBlock = {
   content: {
     ...baseBlock.content,
     targetDate: pastDate,
-    expiredMessage: "The event has passed!",
+    expiredMessage: 'The event has passed!',
   },
 };
 
 const noCtaBlock = {
   ...baseBlock,
-  content: { ...baseBlock.content, ctaText: "", ctaLink: "" },
+  content: { ...baseBlock.content, ctaText: '', ctaLink: '' },
 };
 
 const flipBlock = {
   ...baseBlock,
-  content: { ...baseBlock.content, style: "flip" as const },
+  content: { ...baseBlock.content, style: 'flip' as const },
 };
 
 const circularBlock = {
   ...baseBlock,
-  content: { ...baseBlock.content, style: "circular" as const },
+  content: { ...baseBlock.content, style: 'circular' as const },
 };
 
 const noDaysBlock = {
@@ -120,7 +121,7 @@ const noSecondsBlock = {
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
-describe("CountdownBlock", () => {
+describe('CountdownBlock', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -130,133 +131,129 @@ describe("CountdownBlock", () => {
     vi.useRealTimers();
   });
 
-  it("renders without crashing with simple style", () => {
+  it('renders without crashing with simple style', () => {
     const { container } = render(<CountdownBlock block={baseBlock} />);
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders heading when provided", () => {
+  it('renders heading when provided', () => {
     render(<CountdownBlock block={baseBlock} />);
-    expect(screen.getByText("Launch Countdown")).toBeInTheDocument();
+    expect(screen.getByText('Launch Countdown')).toBeInTheDocument();
   });
 
-  it("renders description when provided", () => {
+  it('renders description when provided', () => {
     render(<CountdownBlock block={baseBlock} />);
-    expect(
-      screen.getByText("Get ready for something big!"),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Get ready for something big!')).toBeInTheDocument();
   });
 
-  it("renders days unit when showDays=true (simple style)", () => {
+  it('renders days unit when showDays=true (simple style)', () => {
     render(<CountdownBlock block={baseBlock} />);
     expect(screen.getByText(/days/i)).toBeInTheDocument();
   });
 
-  it("renders hours unit when showHours=true (simple style)", () => {
+  it('renders hours unit when showHours=true (simple style)', () => {
     render(<CountdownBlock block={baseBlock} />);
     expect(screen.getByText(/hours/i)).toBeInTheDocument();
   });
 
-  it("renders minutes unit when showMinutes=true (simple style)", () => {
+  it('renders minutes unit when showMinutes=true (simple style)', () => {
     render(<CountdownBlock block={baseBlock} />);
     expect(screen.getByText(/minutes/i)).toBeInTheDocument();
   });
 
-  it("renders seconds unit when showSeconds=true (simple style)", () => {
+  it('renders seconds unit when showSeconds=true (simple style)', () => {
     render(<CountdownBlock block={baseBlock} />);
     expect(screen.getByText(/seconds/i)).toBeInTheDocument();
   });
 
-  it("hides days when showDays=false", () => {
+  it('hides days when showDays=false', () => {
     render(<CountdownBlock block={noDaysBlock} />);
     expect(screen.queryByText(/^days$/i)).toBeNull();
   });
 
-  it("hides hours when showHours=false", () => {
+  it('hides hours when showHours=false', () => {
     render(<CountdownBlock block={noHoursBlock} />);
     expect(screen.queryByText(/^hours$/i)).toBeNull();
   });
 
-  it("hides minutes when showMinutes=false", () => {
+  it('hides minutes when showMinutes=false', () => {
     render(<CountdownBlock block={noMinutesBlock} />);
     expect(screen.queryByText(/^minutes$/i)).toBeNull();
   });
 
-  it("hides seconds when showSeconds=false", () => {
+  it('hides seconds when showSeconds=false', () => {
     render(<CountdownBlock block={noSecondsBlock} />);
     expect(screen.queryByText(/^seconds$/i)).toBeNull();
   });
 
-  it("shows expired message when target date is in the past", () => {
+  it('shows expired message when target date is in the past', () => {
     render(<CountdownBlock block={expiredBlock} />);
-    expect(screen.getByText("The event has passed!")).toBeInTheDocument();
+    expect(screen.getByText('The event has passed!')).toBeInTheDocument();
   });
 
-  it("renders CTA button when ctaText is provided", () => {
+  it('renders CTA button when ctaText is provided', () => {
     render(<CountdownBlock block={baseBlock} />);
-    expect(
-      screen.getByRole("button", { name: /learn more/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /learn more/i })).toBeInTheDocument();
   });
 
-  it("CTA button links to ctaLink", () => {
+  it('CTA button links to ctaLink', () => {
     render(<CountdownBlock block={baseBlock} />);
     // Button should have the correct href or the parent is an anchor
-    const btn = screen.getByRole("button", { name: /learn more/i });
+    const btn = screen.getByRole('button', { name: /learn more/i });
     expect(btn).toBeInTheDocument();
   });
 
-  it("does not render CTA button when ctaText is empty", () => {
+  it('does not render CTA button when ctaText is empty', () => {
     render(<CountdownBlock block={noCtaBlock} />);
-    expect(screen.queryByRole("button", { name: /learn more/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /learn more/i })).toBeNull();
   });
 
-  it("renders with flip style without crashing", () => {
+  it('renders with flip style without crashing', () => {
     const { container } = render(<CountdownBlock block={flipBlock} />);
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders flip style digit containers", () => {
+  it('renders flip style digit containers', () => {
     render(<CountdownBlock block={flipBlock} />);
     // Should render digit elements
-    expect(screen.getByText("Launch Countdown")).toBeInTheDocument();
+    expect(screen.getByText('Launch Countdown')).toBeInTheDocument();
   });
 
-  it("renders with circular style without crashing", () => {
+  it('renders with circular style without crashing', () => {
     const { container } = render(<CountdownBlock block={circularBlock} />);
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders SVG circles in circular style", () => {
+  it('renders SVG circles in circular style', () => {
     const { container } = render(<CountdownBlock block={circularBlock} />);
-    const svgs = container.querySelectorAll("svg");
+    const svgs = container.querySelectorAll('svg');
     expect(svgs.length).toBeGreaterThan(0);
   });
 
-  it("uses setInterval for countdown ticking", () => {
-    const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
+  it('uses setInterval for countdown ticking', () => {
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
     render(<CountdownBlock block={baseBlock} />);
     expect(setIntervalSpy).toHaveBeenCalled();
   });
 
-  it("clears interval on unmount (no memory leak)", () => {
-    const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
+  it('clears interval on unmount (no memory leak)', () => {
+    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
     const { unmount } = render(<CountdownBlock block={baseBlock} />);
     unmount();
     expect(clearIntervalSpy).toHaveBeenCalled();
   });
 
-  it("updates countdown values after time passes", () => {
+  it('updates countdown values after time passes', () => {
     render(<CountdownBlock block={baseBlock} />);
     act(() => {
       vi.advanceTimersByTime(1000);
     });
     // Should still render without crashing after time advance
-    expect(screen.getByText("Launch Countdown")).toBeInTheDocument();
+    expect(screen.getByText('Launch Countdown')).toBeInTheDocument();
   });
 
-  it("uses 1s interval when showSeconds=true", () => {
-    const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
+  it('uses 1s interval when showSeconds=true', () => {
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
     render(<CountdownBlock block={baseBlock} />);
     // At least one call with 1000ms interval
     const calls = setIntervalSpy.mock.calls;
@@ -264,15 +261,15 @@ describe("CountdownBlock", () => {
     expect(hasOneSecond).toBe(true);
   });
 
-  it("uses 60s interval when showSeconds=false", () => {
-    const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
+  it('uses 60s interval when showSeconds=false', () => {
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
     render(<CountdownBlock block={noSecondsBlock} />);
     const calls = setIntervalSpy.mock.calls;
     const hasSixtySeconds = calls.some(([, interval]) => interval === 60000);
     expect(hasSixtySeconds).toBe(true);
   });
 
-  it("is wrapped with React.memo (displayName or type defined)", () => {
+  it('is wrapped with React.memo (displayName or type defined)', () => {
     expect(CountdownBlock).toBeDefined();
     const name =
       (CountdownBlock as any).displayName ||
@@ -281,32 +278,28 @@ describe("CountdownBlock", () => {
     expect(name).toBeTruthy();
   });
 
-  it("renders with minimal content gracefully", () => {
+  it('renders with minimal content gracefully', () => {
     const minimalBlock = {
       id: 99,
-      blockType: "COUNTDOWN" as const,
+      blockType: 'COUNTDOWN' as const,
       sortOrder: 0,
       content: {},
     };
-    const { container } = render(
-      <CountdownBlock block={minimalBlock as any} />,
-    );
+    const { container } = render(<CountdownBlock block={minimalBlock as any} />);
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders primaryColor prop without crashing", () => {
-    const { container } = render(
-      <CountdownBlock block={baseBlock} primaryColor="#00ff00" />,
-    );
+  it('renders primaryColor prop without crashing', () => {
+    const { container } = render(<CountdownBlock block={baseBlock} primaryColor="#00ff00" />);
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("expired block with no ctaText shows no button", () => {
+  it('expired block with no ctaText shows no button', () => {
     const block = {
       ...expiredBlock,
-      content: { ...expiredBlock.content, ctaText: "" },
+      content: { ...expiredBlock.content, ctaText: '' },
     };
     render(<CountdownBlock block={block} />);
-    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });

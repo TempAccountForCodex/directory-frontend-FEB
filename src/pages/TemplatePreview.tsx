@@ -5,8 +5,8 @@
  * Opens in new tab when user clicks "Demo" on a template card.
  */
 
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -16,14 +16,10 @@ import {
   Toolbar,
   Alert,
   Chip,
-} from "@mui/material";
-import {
-  getTemplateById,
-  CATEGORY_LABELS,
-  type Template,
-} from "../templates/templateApi";
-import BlockRenderer from "../components/PublicWebsite/BlockRenderer";
-import { processTemplatePlaceholders } from "../utils/templatePlaceholderText";
+} from '@mui/material';
+import { getTemplateById, CATEGORY_LABELS, type Template } from '../templates/templateApi';
+import BlockRenderer from '../components/PublicWebsite/BlockRenderer';
+import { processTemplatePlaceholders } from '../utils/templatePlaceholderText';
 
 const TemplatePreview: React.FC = () => {
   const { templateId } = useParams<{ templateId: string }>();
@@ -64,10 +60,10 @@ const TemplatePreview: React.FC = () => {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
         }}
       >
         <CircularProgress />
@@ -79,11 +75,11 @@ const TemplatePreview: React.FC = () => {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          bgcolor: "background.default",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          bgcolor: 'background.default',
         }}
       >
         <Container maxWidth="md">
@@ -99,17 +95,16 @@ const TemplatePreview: React.FC = () => {
   }
 
   // Get home page (first page or page marked as home)
-  const homePage =
-    template.defaultPages.find((p) => p.isHome) || template.defaultPages[0];
+  const homePage = template.defaultPages.find((p) => p.isHome) || template.defaultPages[0];
 
   if (!homePage) {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
         }}
       >
         <CircularProgress />
@@ -118,13 +113,13 @@ const TemplatePreview: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Preview Header - Shows this is a demo */}
       <Box
         sx={{
-          bgcolor: "warning.light",
-          borderBottom: "2px solid",
-          borderColor: "warning.main",
+          bgcolor: 'warning.light',
+          borderBottom: '2px solid',
+          borderColor: 'warning.main',
           py: 1.5,
           px: 2,
         }}
@@ -132,25 +127,18 @@ const TemplatePreview: React.FC = () => {
         <Container maxWidth="lg">
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 2,
-              flexWrap: "wrap",
+              flexWrap: 'wrap',
             }}
           >
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               Template Preview
             </Typography>
             <Chip label={template.name} size="small" color="primary" />
-            <Chip
-              label={CATEGORY_LABELS[template.category]}
-              size="small"
-              variant="outlined"
-            />
-            <Typography
-              variant="caption"
-              sx={{ ml: "auto", display: { xs: "none", sm: "block" } }}
-            >
+            <Chip label={CATEGORY_LABELS[template.category]} size="small" variant="outlined" />
+            <Typography variant="caption" sx={{ ml: 'auto', display: { xs: 'none', sm: 'block' } }}>
               This is a preview. No data will be saved.
             </Typography>
           </Box>
@@ -162,10 +150,10 @@ const TemplatePreview: React.FC = () => {
         position="sticky"
         elevation={1}
         sx={{
-          bgcolor: "white",
-          color: "text.primary",
-          borderBottom: "1px solid",
-          borderColor: "divider",
+          bgcolor: 'white',
+          color: 'text.primary',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Toolbar>
@@ -175,7 +163,7 @@ const TemplatePreview: React.FC = () => {
             sx={{
               flexGrow: 1,
               fontWeight: 700,
-              color: template.defaultWebsiteConfig?.primaryColor || "inherit",
+              color: template.defaultWebsiteConfig?.primaryColor || 'inherit',
             }}
           >
             {template.name}
@@ -187,8 +175,8 @@ const TemplatePreview: React.FC = () => {
               sx={{
                 mx: 1,
                 color: page.isHome
-                  ? template.defaultWebsiteConfig?.primaryColor || "inherit"
-                  : "text.secondary",
+                  ? template.defaultWebsiteConfig?.primaryColor || 'inherit'
+                  : 'text.secondary',
                 fontWeight: page.isHome ? 600 : 400,
               }}
             >
@@ -216,9 +204,7 @@ const TemplatePreview: React.FC = () => {
                 content: processTemplatePlaceholders(block.content, new Date()),
                 sortOrder: block.sortOrder,
               }}
-              primaryColor={
-                template.defaultWebsiteConfig?.primaryColor || "#378C92"
-              }
+              primaryColor={template.defaultWebsiteConfig?.primaryColor || '#378C92'}
             />
           ))
         )}
@@ -230,10 +216,10 @@ const TemplatePreview: React.FC = () => {
         sx={{
           py: 4,
           px: 2,
-          mt: "auto",
-          bgcolor: "grey.900",
-          color: "white",
-          textAlign: "center",
+          mt: 'auto',
+          bgcolor: 'grey.900',
+          color: 'white',
+          textAlign: 'center',
         }}
       >
         <Typography variant="body2">

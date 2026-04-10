@@ -7,15 +7,15 @@
  * PERFORMANCE: Wrapped in React.memo — only re-renders when props change.
  * TARGET: field rendering < 50 ms.
  */
-import React, { useCallback } from "react";
-import { FieldWrapper } from "./FieldWrapper";
-import { getFieldComponent } from "./registry";
+import React, { useCallback } from 'react';
+import { FieldWrapper } from './FieldWrapper';
+import { getFieldComponent } from './registry';
 import {
   ConditionalOperator,
   type ConditionalRule,
   type FieldDefinition,
   type FieldRendererProps,
-} from "./types";
+} from './types';
 
 // ---------------------------------------------------------------------------
 // Conditional evaluation
@@ -27,7 +27,7 @@ import {
  */
 export function evaluateConditional(
   rule: ConditionalRule,
-  allValues: Record<string, unknown>,
+  allValues: Record<string, unknown>
 ): boolean {
   const fieldValue = allValues[rule.field];
 
@@ -45,7 +45,7 @@ export function evaluateConditional(
       return !!fieldValue || fieldValue === 0 || fieldValue === false;
 
     case ConditionalOperator.GREATER_THAN: {
-      if (typeof fieldValue === "number" && typeof rule.value === "number") {
+      if (typeof fieldValue === 'number' && typeof rule.value === 'number') {
         return fieldValue > rule.value;
       }
       const gtA = Number(fieldValue);
@@ -54,7 +54,7 @@ export function evaluateConditional(
     }
 
     case ConditionalOperator.LESS_THAN: {
-      if (typeof fieldValue === "number" && typeof rule.value === "number") {
+      if (typeof fieldValue === 'number' && typeof rule.value === 'number') {
         return fieldValue < rule.value;
       }
       const ltA = Number(fieldValue);
@@ -88,7 +88,7 @@ function runValidation(field: FieldDefinition, value: unknown): string[] {
     const isEmpty =
       value === null ||
       value === undefined ||
-      value === "" ||
+      value === '' ||
       (Array.isArray(value) && value.length === 0);
     if (isEmpty) {
       errors.push(validation?.message ?? `${label} is required.`);
@@ -99,47 +99,27 @@ function runValidation(field: FieldDefinition, value: unknown): string[] {
 
   if (!validation) return errors;
 
-  const strVal = String(value ?? "");
+  const strVal = String(value ?? '');
   const numVal = Number(value);
 
-  if (
-    validation.minLength !== undefined &&
-    strVal.length < validation.minLength
-  ) {
+  if (validation.minLength !== undefined && strVal.length < validation.minLength) {
     errors.push(
-      validation.message ??
-        `${label} must be at least ${validation.minLength} characters.`,
+      validation.message ?? `${label} must be at least ${validation.minLength} characters.`
     );
   }
 
-  if (
-    validation.maxLength !== undefined &&
-    strVal.length > validation.maxLength
-  ) {
+  if (validation.maxLength !== undefined && strVal.length > validation.maxLength) {
     errors.push(
-      validation.message ??
-        `${label} must be no more than ${validation.maxLength} characters.`,
+      validation.message ?? `${label} must be no more than ${validation.maxLength} characters.`
     );
   }
 
-  if (
-    validation.min !== undefined &&
-    !isNaN(numVal) &&
-    numVal < validation.min
-  ) {
-    errors.push(
-      validation.message ?? `${label} must be at least ${validation.min}.`,
-    );
+  if (validation.min !== undefined && !isNaN(numVal) && numVal < validation.min) {
+    errors.push(validation.message ?? `${label} must be at least ${validation.min}.`);
   }
 
-  if (
-    validation.max !== undefined &&
-    !isNaN(numVal) &&
-    numVal > validation.max
-  ) {
-    errors.push(
-      validation.message ?? `${label} must be no more than ${validation.max}.`,
-    );
+  if (validation.max !== undefined && !isNaN(numVal) && numVal > validation.max) {
+    errors.push(validation.message ?? `${label} must be no more than ${validation.max}.`);
   }
 
   if (validation.pattern !== undefined) {
@@ -153,7 +133,7 @@ function runValidation(field: FieldDefinition, value: unknown): string[] {
     }
   }
 
-  if (typeof validation.custom === "function") {
+  if (typeof validation.custom === 'function') {
     try {
       const customError = validation.custom(value);
       if (customError) {
@@ -193,10 +173,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = React.memo(
     allValues = {},
   }) => {
     // Stable onChange wrapper — declared before any early returns to satisfy Rules of Hooks
-    const handleChange = useCallback(
-      (newValue: unknown) => onChange(newValue),
-      [onChange],
-    );
+    const handleChange = useCallback((newValue: unknown) => onChange(newValue), [onChange]);
 
     // 1. Conditional visibility — hide field when rule evaluates false
     if (field.conditional) {
@@ -207,8 +184,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = React.memo(
     // 2. When errors are externally provided (e.g. from FormGenerator via
     //    useValidation hook), the parent owns validation — skip internal.
     //    When errors is undefined (standalone usage), run built-in validation.
-    const validationErrors =
-      externalErrors !== undefined ? [] : runValidation(field, value);
+    const validationErrors = externalErrors !== undefined ? [] : runValidation(field, value);
     const allErrors = [...validationErrors, ...(externalErrors || [])];
 
     // 3. Resolve component from registry
@@ -233,9 +209,9 @@ export const FieldRenderer: React.FC<FieldRendererProps> = React.memo(
         </div>
       </FieldWrapper>
     );
-  },
+  }
 );
 
-FieldRenderer.displayName = "FieldRenderer";
+FieldRenderer.displayName = 'FieldRenderer';
 
 export default FieldRenderer;

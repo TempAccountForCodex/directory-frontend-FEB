@@ -19,15 +19,15 @@
  *     <DeleteButton />
  *   </PermissionGate>
  */
-import React, { useMemo, type ReactNode } from "react";
-import { Box, Tooltip } from "@mui/material";
+import React, { useMemo, type ReactNode } from 'react';
+import { Box, Tooltip } from '@mui/material';
 import {
   usePermission,
   useHasRole,
   WEBSITE_ACTIONS,
   ROLE_HIERARCHY,
   ROLE_PERMISSIONS,
-} from "../context/PermissionContext";
+} from '../context/PermissionContext';
 
 // ── Props ───────────────────────────────────────────────────────────────────
 
@@ -51,14 +51,14 @@ export interface PermissionGateProps {
  */
 function getRequiredRoleForAction(action: string): string {
   // Walk from lowest role upward; first role that has the action is the minimum
-  const orderedRoles = ["VIEWER", "EDITOR", "ADMIN", "OWNER"];
+  const orderedRoles = ['VIEWER', 'EDITOR', 'ADMIN', 'OWNER'];
   for (const role of orderedRoles) {
     const perms = ROLE_PERMISSIONS[role];
     if (perms && perms.has(action)) {
       return role;
     }
   }
-  return "OWNER";
+  return 'OWNER';
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -70,13 +70,13 @@ const PermissionGate = React.memo(function PermissionGate({
   hide = true,
   children,
 }: PermissionGateProps) {
-  const actionPermitted = usePermission(action ?? "");
-  const rolePermitted = useHasRole(minRole ?? "VIEWER");
+  const actionPermitted = usePermission(action ?? '');
+  const rolePermitted = useHasRole(minRole ?? 'VIEWER');
 
   const isPermitted = action ? actionPermitted : minRole ? rolePermitted : true;
 
   const tooltipText = useMemo(() => {
-    if (isPermitted) return "";
+    if (isPermitted) return '';
     if (action) {
       const requiredRole = getRequiredRoleForAction(action);
       return `You need ${requiredRole} role to perform this action`;
@@ -84,7 +84,7 @@ const PermissionGate = React.memo(function PermissionGate({
     if (minRole) {
       return `You need ${minRole} role to perform this action`;
     }
-    return "You do not have permission to perform this action";
+    return 'You do not have permission to perform this action';
   }, [isPermitted, action, minRole]);
 
   if (isPermitted) {
@@ -107,10 +107,10 @@ const PermissionGate = React.memo(function PermissionGate({
       <Box
         component="span"
         sx={{
-          display: "inline-block",
-          pointerEvents: "none",
+          display: 'inline-block',
+          pointerEvents: 'none',
           opacity: 0.5,
-          cursor: "not-allowed",
+          cursor: 'not-allowed',
         }}
       >
         {children}
@@ -119,7 +119,7 @@ const PermissionGate = React.memo(function PermissionGate({
   );
 });
 
-PermissionGate.displayName = "PermissionGate";
+PermissionGate.displayName = 'PermissionGate';
 
 export default PermissionGate;
 
@@ -133,15 +133,11 @@ export function usePermissionGate() {
   const canView = usePermission(WEBSITE_ACTIONS.VIEW);
   const canEdit = usePermission(WEBSITE_ACTIONS.EDIT_CONTENT);
   const canDelete = usePermission(WEBSITE_ACTIONS.DELETE);
-  const canManageCollaborators = usePermission(
-    WEBSITE_ACTIONS.MANAGE_COLLABORATORS,
-  );
+  const canManageCollaborators = usePermission(WEBSITE_ACTIONS.MANAGE_COLLABORATORS);
   const canAccessDashboard = usePermission(WEBSITE_ACTIONS.DASHBOARD_ACCESS);
   const canViewAnalytics = usePermission(WEBSITE_ACTIONS.VIEW_ANALYTICS);
   const canManageForms = usePermission(WEBSITE_ACTIONS.MANAGE_FORMS);
-  const canManageIntegrations = usePermission(
-    WEBSITE_ACTIONS.MANAGE_INTEGRATIONS,
-  );
+  const canManageIntegrations = usePermission(WEBSITE_ACTIONS.MANAGE_INTEGRATIONS);
   const canManageDomain = usePermission(WEBSITE_ACTIONS.MANAGE_DOMAIN);
 
   return useMemo(
@@ -166,6 +162,6 @@ export function usePermissionGate() {
       canManageForms,
       canManageIntegrations,
       canManageDomain,
-    ],
+    ]
   );
 }

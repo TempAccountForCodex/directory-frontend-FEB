@@ -1,12 +1,7 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from 'react';
 
-export type LocationState =
-  | "idle"
-  | "requesting"
-  | "granted"
-  | "denied"
-  | "error";
-export type PermissionStatus = "unknown" | "granted" | "denied";
+export type LocationState = 'idle' | 'requesting' | 'granted' | 'denied' | 'error';
+export type PermissionStatus = 'unknown' | 'granted' | 'denied';
 
 export interface UserLocation {
   latitude: number | null;
@@ -28,7 +23,7 @@ export interface UseUserLocationReturn {
   clearLocation: () => void;
 }
 
-const LOCATION_STORAGE_KEY = "ttdir:global:userLocation:v1";
+const LOCATION_STORAGE_KEY = 'ttdir:global:userLocation:v1';
 const LOCATION_FRESHNESS_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
@@ -53,7 +48,7 @@ export const useUserLocation = (): UseUserLocationReturn => {
         }
       }
     } catch (error) {
-      console.warn("Failed to load persisted location:", error);
+      console.warn('Failed to load persisted location:', error);
     }
     return null;
   };
@@ -61,19 +56,19 @@ export const useUserLocation = (): UseUserLocationReturn => {
   const persistedData = loadPersistedLocation();
 
   const [state, setState] = useState<LocationState>(
-    persistedData?.permission === "granted"
-      ? "granted"
-      : persistedData?.permission === "denied"
-        ? "denied"
-        : "idle",
+    persistedData?.permission === 'granted'
+      ? 'granted'
+      : persistedData?.permission === 'denied'
+        ? 'denied'
+        : 'idle'
   );
 
   const [location, setLocation] = useState<UserLocation>(
-    persistedData?.coords || { latitude: null, longitude: null },
+    persistedData?.coords || { latitude: null, longitude: null }
   );
 
   const [permission, setPermission] = useState<PermissionStatus>(
-    persistedData?.permission || "unknown",
+    persistedData?.permission || 'unknown'
   );
 
   const [error, setError] = useState<string | null>(null);
@@ -83,18 +78,18 @@ export const useUserLocation = (): UseUserLocationReturn => {
     try {
       window.localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
-      console.error("Failed to persist location:", error);
+      console.error('Failed to persist location:', error);
     }
   }, []);
 
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setState("error");
-      setError("Geolocation is not supported by your browser");
+      setState('error');
+      setError('Geolocation is not supported by your browser');
       return;
     }
 
-    setState("requesting");
+    setState('requesting');
     setError(null);
 
     navigator.geolocation.getCurrentPosition(
@@ -104,51 +99,43 @@ export const useUserLocation = (): UseUserLocationReturn => {
           longitude: position.coords.longitude,
         };
 
-        setState("granted");
+        setState('granted');
         setLocation(coords);
-        setPermission("granted");
+        setPermission('granted');
         setError(null);
 
         // Persist to localStorage
         persistLocation({
           coords,
           timestamp: Date.now(),
-          permission: "granted",
+          permission: 'granted',
         });
       },
       (err) => {
-        setState("denied");
+        setState('denied');
         setLocation({ latitude: null, longitude: null });
-        setPermission("denied");
+        setPermission('denied');
 
         // Persist denial (so we don't keep asking)
         persistLocation({
           coords: { latitude: null, longitude: null },
           timestamp: Date.now(),
-          permission: "denied",
+          permission: 'denied',
         });
 
         // Friendly error messages based on error code
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            setError(
-              "Location access denied. You can still search by typing your city manually.",
-            );
+            setError('Location access denied. You can still search by typing your city manually.');
             break;
           case err.POSITION_UNAVAILABLE:
-            setError(
-              "Location information is unavailable. Please type your city manually.",
-            );
+            setError('Location information is unavailable. Please type your city manually.');
             break;
           case err.TIMEOUT:
-            setError(
-              "Location request timed out. Please type your city manually.",
-            );
+            setError('Location request timed out. Please type your city manually.');
             break;
           default:
-            setError(
-              "An unknown error occurred. Please type your city manually.",
-            );
+            setError('An unknown error occurred. Please type your city manually.');
             break;
         }
       },
@@ -156,21 +143,21 @@ export const useUserLocation = (): UseUserLocationReturn => {
         enableHighAccuracy: false, // Don't need GPS-level accuracy for directory
         timeout: 10000, // 10 second timeout
         maximumAge: 300000, // Cache location for 5 minutes
-      },
+      }
     );
   }, [persistLocation]);
 
   const clearLocation = useCallback(() => {
-    setState("idle");
+    setState('idle');
     setLocation({ latitude: null, longitude: null });
-    setPermission("unknown");
+    setPermission('unknown');
     setError(null);
 
     // Clear from localStorage
     try {
       window.localStorage.removeItem(LOCATION_STORAGE_KEY);
     } catch (error) {
-      console.error("Failed to clear location from storage:", error);
+      console.error('Failed to clear location from storage:', error);
     }
   }, []);
 

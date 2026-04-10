@@ -3,11 +3,11 @@
  * Inspired by Framer's clean template picker design
  */
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useTheme as useCustomTheme } from "../context/ThemeContext";
-import { getDashboardColors } from "../styles/dashboardTheme";
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useTheme as useCustomTheme } from '../context/ThemeContext';
+import { getDashboardColors } from '../styles/dashboardTheme';
 import {
   Box,
   Container,
@@ -20,51 +20,41 @@ import {
   alpha,
   IconButton,
   CircularProgress,
-} from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   getWebsiteTemplates,
   getAllCategories,
   CATEGORY_LABELS,
   refreshTemplateCache,
   type TemplateSummary,
-} from "../templates/templateApi";
-import type { TemplateCategory } from "../templates/templateApi";
-import {
-  generateTemplatePlaceholder,
-  isPlaceholderPath,
-} from "../utils/templatePlaceholderImage";
+} from '../templates/templateApi';
+import type { TemplateCategory } from '../templates/templateApi';
+import { generateTemplatePlaceholder, isPlaceholderPath } from '../utils/templatePlaceholderImage';
 
 interface CreateWebsiteWizardProps {
   embedded?: boolean;
 }
 
-const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
-  embedded = false,
-}) => {
+const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({ embedded = false }) => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [hoveredTemplateId, setHoveredTemplateId] = useState<string | null>(
-    null,
-  );
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [hoveredTemplateId, setHoveredTemplateId] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
 
-  const categories = [
-    "all",
-    ...getAllCategories(templates).filter((cat) => cat !== "ecommerce"),
-  ];
+  const categories = ['all', ...getAllCategories(templates).filter((cat) => cat !== 'ecommerce')];
 
   // Redirect if not authenticated
   useEffect(() => {
     if (!loading && !user) {
-      navigate("/auth");
+      navigate('/auth');
     }
   }, [user, loading, navigate]);
 
@@ -82,7 +72,7 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
       .catch(() => {
         if (!cancelled) {
           setTemplates([]);
-          setTemplatesError("Failed to load templates");
+          setTemplatesError('Failed to load templates');
         }
       })
       .finally(() => {
@@ -101,19 +91,19 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
     const handleFocus = () => {
       loadTemplates(true);
     };
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [loadTemplates]);
 
   // Filter and sort templates by category
   const filteredTemplates = (
-    selectedCategory === "all"
+    selectedCategory === 'all'
       ? templates
       : templates.filter((t) => t.category === selectedCategory)
   ).sort((a, b) => a.name.localeCompare(b.name));
 
   const handleBack = () => {
-    navigate("/dashboard/websites");
+    navigate('/dashboard/websites');
   };
 
   const handleSelect = (templateId: string) => {
@@ -121,18 +111,18 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
   };
 
   const handleDemo = (templateId: string) => {
-    window.open(`/template-preview/${templateId}`, "_blank");
+    window.open(`/template-preview/${templateId}`, '_blank');
   };
 
   if (loading || templatesLoading) {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: embedded ? "400px" : "100vh",
-          bgcolor: embedded ? "transparent" : colors.bgDefault,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: embedded ? '400px' : '100vh',
+          bgcolor: embedded ? 'transparent' : colors.bgDefault,
         }}
       >
         <CircularProgress sx={{ color: colors.primary }} />
@@ -154,10 +144,10 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
           onChange={(e, newValue) => setSelectedCategory(newValue)}
           centered
           sx={{
-            "& .MuiTabs-indicator": {
+            '& .MuiTabs-indicator': {
               backgroundColor: colors.primary,
               height: 3,
-              borderRadius: "3px 3px 0 0",
+              borderRadius: '3px 3px 0 0',
             },
             mb: 4,
           }}
@@ -166,18 +156,14 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
             <Tab
               key={category}
               value={category}
-              label={
-                category === "all"
-                  ? "All"
-                  : CATEGORY_LABELS[category as TemplateCategory]
-              }
+              label={category === 'all' ? 'All' : CATEGORY_LABELS[category as TemplateCategory]}
               sx={{
                 color: colors.textSecondary,
                 fontWeight: 600,
-                fontSize: "1rem",
-                textTransform: "capitalize",
+                fontSize: '1rem',
+                textTransform: 'capitalize',
                 px: 4,
-                "&.Mui-selected": {
+                '&.Mui-selected': {
                   color: colors.text,
                 },
               }}
@@ -192,13 +178,12 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
           sx={{
             color: colors.textSecondary,
             maxWidth: 800,
-            mx: "auto",
-            fontSize: "1.1rem",
+            mx: 'auto',
+            fontSize: '1.1rem',
           }}
         >
-          Choose a starting point, or select one of the above categories to
-          narrow things down a bit. You can also choose a blank page if you'd
-          rather start from scratch.
+          Choose a starting point, or select one of the above categories to narrow things down a
+          bit. You can also choose a blank page if you'd rather start from scratch.
         </Typography>
       </Box>
 
@@ -214,27 +199,27 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
         {/* Blank Page Option */}
         <Grid item xs={12} sm={6} md={4} lg={3}>
           <Card
-            onMouseEnter={() => setHoveredTemplateId("blank")}
+            onMouseEnter={() => setHoveredTemplateId('blank')}
             onMouseLeave={() => setHoveredTemplateId(null)}
             sx={{
-              position: "relative",
+              position: 'relative',
               height: 400,
               bgcolor: colors.cardBg,
               border: `2px dashed ${alpha(colors.primary, 0.3)}`,
               borderRadius: 3,
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-              "&:hover": {
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              '&:hover': {
                 borderColor: colors.primary,
-                transform: "translateY(-4px)",
+                transform: 'translateY(-4px)',
                 boxShadow: `0 12px 24px ${alpha(colors.primary, 0.2)}`,
               },
             }}
-            onClick={() => handleSelect("blank")}
+            onClick={() => handleSelect('blank')}
           >
             <Typography
               variant="h5"
@@ -247,18 +232,18 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
             </Typography>
 
             {/* Hover Overlay with Select Button */}
-            {hoveredTemplateId === "blank" && (
+            {hoveredTemplateId === 'blank' && (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   inset: 0,
                   bgcolor: alpha(colors.darker, 0.85),
-                  backdropFilter: "blur(8px)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  animation: "fadeIn 0.2s ease",
-                  "@keyframes fadeIn": {
+                  backdropFilter: 'blur(8px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  animation: 'fadeIn 0.2s ease',
+                  '@keyframes fadeIn': {
                     from: { opacity: 0 },
                     to: { opacity: 1 },
                   },
@@ -269,18 +254,18 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                   size="large"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleSelect("blank");
+                    handleSelect('blank');
                   }}
                   sx={{
                     px: 6,
                     py: 1.5,
-                    fontSize: "1rem",
+                    fontSize: '1rem',
                     fontWeight: 600,
-                    textTransform: "none",
+                    textTransform: 'none',
                     background: colors.primary,
-                    color: "#fff",
+                    color: '#fff',
                     borderRadius: 2,
-                    "&:hover": {
+                    '&:hover': {
                       background: colors.primaryLight,
                     },
                   }}
@@ -299,13 +284,13 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
               ? generateTemplatePlaceholder(
                   template.name,
                   template.defaultWebsiteConfig?.primaryColor || colors.primary,
-                  template.category,
+                  template.category
                 )
               : template.previewImage
             : generateTemplatePlaceholder(
                 template.name,
                 template.defaultWebsiteConfig?.primaryColor || colors.primary,
-                template.category,
+                template.category
               );
 
           return (
@@ -314,17 +299,17 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                 onMouseEnter={() => setHoveredTemplateId(template.id)}
                 onMouseLeave={() => setHoveredTemplateId(null)}
                 sx={{
-                  position: "relative",
+                  position: 'relative',
                   height: 400,
                   bgcolor: colors.cardBg,
                   border: `1px solid ${alpha(colors.primary, 0.2)}`,
                   borderRadius: 3,
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  overflow: "hidden",
-                  "&:hover": {
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  overflow: 'hidden',
+                  '&:hover': {
                     borderColor: colors.primary,
-                    transform: "translateY(-4px)",
+                    transform: 'translateY(-4px)',
                     boxShadow: `0 12px 24px ${alpha(colors.primary, 0.25)}`,
                   },
                 }}
@@ -332,13 +317,13 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                 {/* Template Preview */}
                 <Box
                   sx={{
-                    width: "100%",
-                    height: "100%",
+                    width: '100%',
+                    height: '100%',
                     background: `linear-gradient(135deg, ${template.defaultWebsiteConfig?.primaryColor || colors.primary}15 0%, ${template.defaultWebsiteConfig?.primaryColor || colors.primary}35 100%)`,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     p: 3,
                   }}
                 >
@@ -346,12 +331,12 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                   <Typography
                     variant="caption"
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       top: 16,
                       right: 16,
                       color: colors.text,
                       fontWeight: 600,
-                      fontSize: "0.75rem",
+                      fontSize: '0.75rem',
                       bgcolor: alpha(colors.cardBg, 0.9),
                       px: 2,
                       py: 0.5,
@@ -364,19 +349,18 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                   {/* Template Icon/Preview */}
                   <Box
                     sx={{
-                      width: "80%",
-                      height: "60%",
+                      width: '80%',
+                      height: '60%',
                       bgcolor: alpha(
-                        template.defaultWebsiteConfig?.primaryColor ||
-                          colors.primary,
-                        0.2,
+                        template.defaultWebsiteConfig?.primaryColor || colors.primary,
+                        0.2
                       ),
                       borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       border: `2px solid ${alpha(template.defaultWebsiteConfig?.primaryColor || colors.primary, 0.3)}`,
-                      overflow: "hidden",
+                      overflow: 'hidden',
                     }}
                   >
                     {previewImage ? (
@@ -385,18 +369,16 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                         src={previewImage}
                         alt={`${template.name} preview`}
                         sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
                         }}
                       />
                     ) : (
                       <Typography
                         variant="h4"
                         sx={{
-                          color:
-                            template.defaultWebsiteConfig?.primaryColor ||
-                            colors.primary,
+                          color: template.defaultWebsiteConfig?.primaryColor || colors.primary,
                           fontWeight: 700,
                           opacity: 0.5,
                         }}
@@ -410,11 +392,11 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                   <Typography
                     variant="caption"
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       bottom: 16,
                       left: 16,
                       color: colors.textSecondary,
-                      fontSize: "0.75rem",
+                      fontSize: '0.75rem',
                     }}
                   >
                     {CATEGORY_LABELS[template.category]}
@@ -425,17 +407,17 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                 {hoveredTemplateId === template.id && (
                   <Box
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       inset: 0,
                       bgcolor: alpha(colors.darker, 0.85),
-                      backdropFilter: "blur(8px)",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      backdropFilter: 'blur(8px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       gap: 2,
-                      animation: "fadeIn 0.2s ease",
-                      "@keyframes fadeIn": {
+                      animation: 'fadeIn 0.2s ease',
+                      '@keyframes fadeIn': {
                         from: { opacity: 0 },
                         to: { opacity: 1 },
                       },
@@ -451,13 +433,13 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                       sx={{
                         px: 6,
                         py: 1.5,
-                        fontSize: "1rem",
+                        fontSize: '1rem',
                         fontWeight: 600,
-                        textTransform: "none",
+                        textTransform: 'none',
                         background: colors.primary,
-                        color: "#fff",
+                        color: '#fff',
                         borderRadius: 2,
-                        "&:hover": {
+                        '&:hover': {
                           background: colors.primaryLight,
                         },
                       }}
@@ -476,13 +458,13 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
                       sx={{
                         px: 5,
                         py: 1.5,
-                        fontSize: "1rem",
+                        fontSize: '1rem',
                         fontWeight: 600,
-                        textTransform: "none",
+                        textTransform: 'none',
                         borderColor: alpha(colors.text, 0.3),
                         color: colors.text,
                         borderRadius: 2,
-                        "&:hover": {
+                        '&:hover': {
                           borderColor: colors.text,
                           bgcolor: alpha(colors.text, 0.1),
                         },
@@ -509,7 +491,7 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: '100vh',
         bgcolor: colors.bgDefault,
         py: 4,
       }}
@@ -521,7 +503,7 @@ const CreateWebsiteWizard: React.FC<CreateWebsiteWizardProps> = ({
             onClick={handleBack}
             sx={{
               color: colors.text,
-              "&:hover": {
+              '&:hover': {
                 bgcolor: alpha(colors.primary, 0.1),
               },
             }}

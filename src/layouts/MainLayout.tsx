@@ -1,9 +1,9 @@
-import { Outlet } from "react-router-dom";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import { Box } from "@mui/material";
-import ScrollToTop from "../components/ScrollToTop";
-import MoveUpButton from "../components/UI/MoveUpBtn";
+import { Outlet } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import { Box } from '@mui/material';
+import ScrollToTop from '../components/ScrollToTop';
+import MoveUpButton from '../components/UI/MoveUpBtn';
 
 export default function MainLayout() {
   return (

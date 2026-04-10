@@ -14,12 +14,12 @@
  * is fast enough for textarea updates at this scale.
  * FieldWrapper (parent) owns label/description display — DashboardInput used without label.
  */
-import React, { useState, useEffect, useId } from "react";
-import { FormHelperText, Box } from "@mui/material";
-import DashboardInput from "../../Dashboard/shared/DashboardInput";
-import type { FieldRendererProps } from "../types";
-import { FieldType } from "../types";
-import { registerFieldComponent } from "../registry";
+import React, { useState, useEffect, useId } from 'react';
+import { FormHelperText, Box } from '@mui/material';
+import DashboardInput from '../../Dashboard/shared/DashboardInput';
+import type { FieldRendererProps } from '../types';
+import { FieldType } from '../types';
+import { registerFieldComponent } from '../registry';
 
 /**
  * TextArea
@@ -53,18 +53,14 @@ const TextArea: React.FC<FieldRendererProps> = React.memo(
 
     // Extract row configuration from field.ui.props with safe defaults
     const rows =
-      typeof field.ui?.props?.["rows"] === "number"
-        ? (field.ui.props["rows"] as number)
-        : 4;
+      typeof field.ui?.props?.['rows'] === 'number' ? (field.ui.props['rows'] as number) : 4;
     const maxRows =
-      typeof field.ui?.props?.["maxRows"] === "number"
-        ? (field.ui.props["maxRows"] as number)
-        : 10;
+      typeof field.ui?.props?.['maxRows'] === 'number' ? (field.ui.props['maxRows'] as number) : 10;
 
     // Local state as string — cast unknown value to string safely
     const toStr = (v: unknown): string => {
-      if (typeof v === "string") return v;
-      if (v === null || v === undefined) return "";
+      if (typeof v === 'string') return v;
+      if (v === null || v === undefined) return '';
       return String(v);
     };
 
@@ -82,12 +78,9 @@ const TextArea: React.FC<FieldRendererProps> = React.memo(
     const describedByParts: string[] = [];
     if (maxLength !== undefined) describedByParts.push(counterId);
     if (hasErrors) describedByParts.push(errorId);
-    const describedBy =
-      describedByParts.length > 0 ? describedByParts.join(" ") : undefined;
+    const describedBy = describedByParts.length > 0 ? describedByParts.join(' ') : undefined;
 
-    const handleChange = (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    ) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const newValue = e.target.value;
       setLocalValue(newValue);
       onChange(newValue);
@@ -111,14 +104,12 @@ const TextArea: React.FC<FieldRendererProps> = React.memo(
           helperText={helperText}
           inputProps={{
             maxLength: maxLength,
-            "aria-label": label,
-            "aria-invalid": hasErrors ? true : undefined,
-            "aria-describedby": describedBy,
-            "aria-required": required ? true : undefined,
+            'aria-label': label,
+            'aria-invalid': hasErrors ? true : undefined,
+            'aria-describedby': describedBy,
+            'aria-required': required ? true : undefined,
           }}
-          FormHelperTextProps={
-            hasErrors ? { id: errorId, role: "alert" } : undefined
-          }
+          FormHelperTextProps={hasErrors ? { id: errorId, role: 'alert' } : undefined}
         />
 
         {/* Character counter — shown when maxLength is configured */}
@@ -126,8 +117,8 @@ const TextArea: React.FC<FieldRendererProps> = React.memo(
           <FormHelperText
             id={counterId}
             sx={{
-              textAlign: "right",
-              color: "text.secondary",
+              textAlign: 'right',
+              color: 'text.secondary',
               mt: hasErrors ? 0 : -0.5,
             }}
           >
@@ -136,10 +127,10 @@ const TextArea: React.FC<FieldRendererProps> = React.memo(
         )}
       </Box>
     );
-  },
+  }
 );
 
-TextArea.displayName = "TextArea";
+TextArea.displayName = 'TextArea';
 
 // Register component in the global field registry
 registerFieldComponent(FieldType.TEXTAREA, TextArea);

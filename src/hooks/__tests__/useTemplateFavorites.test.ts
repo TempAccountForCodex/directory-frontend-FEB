@@ -15,8 +15,8 @@
  * 11. fetchFavorites sets loading=false after error
  * 12. API_URL fallback to http://localhost:5001/api
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, waitFor, act } from '@testing-library/react';
 
 // ---------------------------------------------------------------------------
 // Mock axios
@@ -24,7 +24,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 const mockAxiosGet = vi.fn();
 const mockAxiosPost = vi.fn();
 
-vi.mock("axios", () => ({
+vi.mock('axios', () => ({
   default: {
     get: (...args: unknown[]) => mockAxiosGet(...args),
     post: (...args: unknown[]) => mockAxiosPost(...args),
@@ -34,7 +34,7 @@ vi.mock("axios", () => ({
 // ---------------------------------------------------------------------------
 // Import hook after mocks
 // ---------------------------------------------------------------------------
-import { useTemplateFavorites } from "../useTemplateFavorites";
+import { useTemplateFavorites } from '../useTemplateFavorites';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -45,33 +45,33 @@ const fakeFavorites = [
   {
     id: 1,
     userId: 1,
-    templateId: "tpl-1",
-    createdAt: "2026-03-14",
+    templateId: 'tpl-1',
+    createdAt: '2026-03-14',
     template: {
-      id: "tpl-1",
-      name: "Business Template",
-      slug: "business",
-      category: "business",
+      id: 'tpl-1',
+      name: 'Business Template',
+      slug: 'business',
+      category: 'business',
       thumbnailUrl: null,
-      description: "Desc",
+      description: 'Desc',
       isPublished: true,
-      status: "approved",
+      status: 'approved',
     },
   },
   {
     id: 2,
     userId: 1,
-    templateId: "tpl-2",
-    createdAt: "2026-03-14",
+    templateId: 'tpl-2',
+    createdAt: '2026-03-14',
     template: {
-      id: "tpl-2",
-      name: "Portfolio Template",
-      slug: "portfolio",
-      category: "portfolio",
+      id: 'tpl-2',
+      name: 'Portfolio Template',
+      slug: 'portfolio',
+      category: 'portfolio',
       thumbnailUrl: null,
-      description: "Desc 2",
+      description: 'Desc 2',
       isPublished: true,
-      status: "approved",
+      status: 'approved',
     },
   },
 ];
@@ -89,7 +89,7 @@ function makePostResponse(favorited: boolean) {
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-describe("useTemplateFavorites", () => {
+describe('useTemplateFavorites', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: successful favorites fetch
@@ -101,14 +101,14 @@ describe("useTemplateFavorites", () => {
   });
 
   // 1. Initial state
-  it("starts with loading=true and empty favorites array", () => {
+  it('starts with loading=true and empty favorites array', () => {
     const { result } = renderHook(() => useTemplateFavorites());
     expect(result.current.loading).toBe(true);
     expect(result.current.favorites).toEqual([]);
   });
 
   // 2. fetchFavorites populates favorites
-  it("populates favorites after successful fetch", async () => {
+  it('populates favorites after successful fetch', async () => {
     const { result } = renderHook(() => useTemplateFavorites());
 
     await waitFor(() => {
@@ -116,12 +116,12 @@ describe("useTemplateFavorites", () => {
     });
 
     expect(result.current.favorites).toHaveLength(2);
-    expect(result.current.favorites[0].id).toBe("tpl-1");
-    expect(result.current.favorites[1].id).toBe("tpl-2");
+    expect(result.current.favorites[0].id).toBe('tpl-1');
+    expect(result.current.favorites[1].id).toBe('tpl-2');
   });
 
   // 3. loading=false after fetch completes
-  it("sets loading=false after fetch completes", async () => {
+  it('sets loading=false after fetch completes', async () => {
     const { result } = renderHook(() => useTemplateFavorites());
 
     await waitFor(() => {
@@ -130,30 +130,30 @@ describe("useTemplateFavorites", () => {
   });
 
   // 4. isFavorited returns true when in favorites
-  it("isFavorited returns true for a template id in favorites list", async () => {
+  it('isFavorited returns true for a template id in favorites list', async () => {
     const { result } = renderHook(() => useTemplateFavorites());
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.isFavorited("tpl-1")).toBe(true);
-    expect(result.current.isFavorited("tpl-2")).toBe(true);
+    expect(result.current.isFavorited('tpl-1')).toBe(true);
+    expect(result.current.isFavorited('tpl-2')).toBe(true);
   });
 
   // 5. isFavorited returns false when NOT in favorites
-  it("isFavorited returns false for a template id not in favorites list", async () => {
+  it('isFavorited returns false for a template id not in favorites list', async () => {
     const { result } = renderHook(() => useTemplateFavorites());
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.isFavorited("tpl-999")).toBe(false);
+    expect(result.current.isFavorited('tpl-999')).toBe(false);
   });
 
   // 6. toggleFavorite optimistically removes (favorited -> unfavorited)
-  it("optimistically removes template from favorites when currently favorited", async () => {
+  it('optimistically removes template from favorites when currently favorited', async () => {
     mockAxiosPost.mockImplementation(() => makePostResponse(false));
 
     const { result } = renderHook(() => useTemplateFavorites());
@@ -163,14 +163,14 @@ describe("useTemplateFavorites", () => {
     });
 
     // Confirm it's currently favorited
-    expect(result.current.isFavorited("tpl-1")).toBe(true);
+    expect(result.current.isFavorited('tpl-1')).toBe(true);
 
     act(() => {
-      result.current.toggleFavorite("tpl-1");
+      result.current.toggleFavorite('tpl-1');
     });
 
     // After optimistic update, it should be removed immediately
-    expect(result.current.isFavorited("tpl-1")).toBe(false);
+    expect(result.current.isFavorited('tpl-1')).toBe(false);
 
     await waitFor(() => {
       expect(mockAxiosPost).toHaveBeenCalledTimes(1);
@@ -178,7 +178,7 @@ describe("useTemplateFavorites", () => {
   });
 
   // 7. toggleFavorite optimistically adds (unfavorited -> favorited)
-  it("optimistically adds template to favorites when currently unfavorited", async () => {
+  it('optimistically adds template to favorites when currently unfavorited', async () => {
     mockAxiosPost.mockImplementation(() => makePostResponse(true));
 
     const { result } = renderHook(() => useTemplateFavorites());
@@ -188,14 +188,14 @@ describe("useTemplateFavorites", () => {
     });
 
     // tpl-99 is not in favorites
-    expect(result.current.isFavorited("tpl-99")).toBe(false);
+    expect(result.current.isFavorited('tpl-99')).toBe(false);
 
     act(() => {
-      result.current.toggleFavorite("tpl-99");
+      result.current.toggleFavorite('tpl-99');
     });
 
     // After optimistic update, id should be in favorites immediately
-    expect(result.current.isFavorited("tpl-99")).toBe(true);
+    expect(result.current.isFavorited('tpl-99')).toBe(true);
 
     await waitFor(() => {
       expect(mockAxiosPost).toHaveBeenCalledTimes(1);
@@ -203,10 +203,8 @@ describe("useTemplateFavorites", () => {
   });
 
   // 8. toggleFavorite reverts on API failure
-  it("reverts favorites state when API call fails", async () => {
-    mockAxiosPost.mockImplementation(() =>
-      Promise.reject(new Error("Network error")),
-    );
+  it('reverts favorites state when API call fails', async () => {
+    mockAxiosPost.mockImplementation(() => Promise.reject(new Error('Network error')));
 
     const { result } = renderHook(() => useTemplateFavorites());
 
@@ -215,23 +213,23 @@ describe("useTemplateFavorites", () => {
     });
 
     // tpl-1 is favorited
-    expect(result.current.isFavorited("tpl-1")).toBe(true);
+    expect(result.current.isFavorited('tpl-1')).toBe(true);
 
     act(() => {
-      result.current.toggleFavorite("tpl-1");
+      result.current.toggleFavorite('tpl-1');
     });
 
     // Optimistically removed
-    expect(result.current.isFavorited("tpl-1")).toBe(false);
+    expect(result.current.isFavorited('tpl-1')).toBe(false);
 
     // After API failure, reverted
     await waitFor(() => {
-      expect(result.current.isFavorited("tpl-1")).toBe(true);
+      expect(result.current.isFavorited('tpl-1')).toBe(true);
     });
   });
 
   // 9. toggleFavorite calls correct API endpoint
-  it("calls POST /api/templates/:templateId/favorite", async () => {
+  it('calls POST /api/templates/:templateId/favorite', async () => {
     mockAxiosPost.mockImplementation(() => makePostResponse(false));
 
     const { result } = renderHook(() => useTemplateFavorites());
@@ -241,7 +239,7 @@ describe("useTemplateFavorites", () => {
     });
 
     act(() => {
-      result.current.toggleFavorite("tpl-1");
+      result.current.toggleFavorite('tpl-1');
     });
 
     await waitFor(() => {
@@ -249,14 +247,12 @@ describe("useTemplateFavorites", () => {
     });
 
     const calledUrl = mockAxiosPost.mock.calls[0][0] as string;
-    expect(calledUrl).toContain("/templates/tpl-1/favorite");
+    expect(calledUrl).toContain('/templates/tpl-1/favorite');
   });
 
   // 10. error state is set on fetch failure
-  it("sets error when fetchFavorites fails", async () => {
-    mockAxiosGet.mockImplementation(() =>
-      Promise.reject(new Error("Fetch failed")),
-    );
+  it('sets error when fetchFavorites fails', async () => {
+    mockAxiosGet.mockImplementation(() => Promise.reject(new Error('Fetch failed')));
 
     const { result } = renderHook(() => useTemplateFavorites());
 
@@ -264,15 +260,13 @@ describe("useTemplateFavorites", () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe("Fetch failed");
+    expect(result.current.error).toBe('Fetch failed');
     expect(result.current.favorites).toEqual([]);
   });
 
   // 11. loading=false after fetch error
-  it("sets loading=false after fetch error", async () => {
-    mockAxiosGet.mockImplementation(() =>
-      Promise.reject(new Error("Network error")),
-    );
+  it('sets loading=false after fetch error', async () => {
+    mockAxiosGet.mockImplementation(() => Promise.reject(new Error('Network error')));
 
     const { result } = renderHook(() => useTemplateFavorites());
 
@@ -282,7 +276,7 @@ describe("useTemplateFavorites", () => {
   });
 
   // 12. fetchFavorites callable to re-fetch
-  it("fetchFavorites can be called to re-trigger fetch", async () => {
+  it('fetchFavorites can be called to re-trigger fetch', async () => {
     const { result } = renderHook(() => useTemplateFavorites());
 
     await waitFor(() => {
@@ -290,6 +284,6 @@ describe("useTemplateFavorites", () => {
     });
 
     // fetchFavorites is exposed in return
-    expect(typeof result.current.fetchFavorites).toBe("function");
+    expect(typeof result.current.fetchFavorites).toBe('function');
   });
 });

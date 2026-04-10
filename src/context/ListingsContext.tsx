@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
-import axios from "axios";
+import { createContext, useContext, useState, type ReactNode } from 'react';
+import axios from 'axios';
 
 // -------------------- Types --------------------
 export interface Place {
@@ -13,7 +13,7 @@ export interface Place {
   category: string;
   city: string;
   region: string;
-  status: "active" | "pending";
+  status: 'active' | 'pending';
   createdAt: string;
   updatedAt: string;
 
@@ -40,7 +40,7 @@ export interface Place {
     id: string;
     username: string;
     email: string;
-    role: "user" | "admin";
+    role: 'user' | 'admin';
   };
 }
 
@@ -59,7 +59,7 @@ interface ListingsContextType {
   fetchListings: (
     page?: number,
     limit?: number,
-    filters?: Record<string, string>,
+    filters?: Record<string, string>
   ) => Promise<Pagination | null>;
   fetchListingById: (id: string) => Promise<Place | null>;
   fetchListingBySlug: (slug: string) => Promise<Place | null>;
@@ -69,23 +69,21 @@ interface ListingsContextType {
 }
 
 // -------------------- Context --------------------
-const ListingsContext = createContext<ListingsContextType | undefined>(
-  undefined,
-);
+const ListingsContext = createContext<ListingsContextType | undefined>(undefined);
 
 export const ListingsProvider = ({ children }: { children: ReactNode }) => {
   const [listings, setListings] = useState<Place[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
   // -------------------- API Functions --------------------
 
   const fetchListings = async (
     page: number = 1,
     limit: number = 10,
-    filters: Record<string, string> = {},
+    filters: Record<string, string> = {}
   ) => {
     try {
       setLoading(true);
@@ -158,9 +156,7 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       const res = await axios.put(`${API_URL}/places/${id}`, data);
       const updated = res.data?.data as Place;
-      setListings((prev) =>
-        prev.map((l) => (l.id === id ? { ...l, ...updated } : l)),
-      );
+      setListings((prev) => prev.map((l) => (l.id === id ? { ...l, ...updated } : l)));
       return updated;
     } catch (err: any) {
       setError(err.response?.data?.message || err.message);
@@ -205,7 +201,7 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
 export const useListings = () => {
   const context = useContext(ListingsContext);
   if (!context) {
-    throw new Error("useListings must be used within ListingsProvider");
+    throw new Error('useListings must be used within ListingsProvider');
   }
   return context;
 };

@@ -18,23 +18,23 @@
 // ── Types ────────────────────────────────────────────────────────────────────
 
 /** Available collaborator presets */
-export type CollaboratorPreset = "CONTENT_ONLY" | "REVIEWER";
+export type CollaboratorPreset = 'CONTENT_ONLY' | 'REVIEWER';
 
 /** Website actions that can be checked against presets */
 export type WebsiteAction =
-  | "VIEW"
-  | "EDIT_CONTENT"
-  | "EDIT_SETTINGS"
-  | "DELETE"
-  | "MANAGE_COLLABORATORS"
-  | "PUBLISH"
-  | "UNPUBLISH"
-  | "TRANSFER_OWNERSHIP"
-  | "DASHBOARD_ACCESS"
-  | "VIEW_ANALYTICS"
-  | "MANAGE_FORMS"
-  | "MANAGE_INTEGRATIONS"
-  | "MANAGE_DOMAIN";
+  | 'VIEW'
+  | 'EDIT_CONTENT'
+  | 'EDIT_SETTINGS'
+  | 'DELETE'
+  | 'MANAGE_COLLABORATORS'
+  | 'PUBLISH'
+  | 'UNPUBLISH'
+  | 'TRANSFER_OWNERSHIP'
+  | 'DASHBOARD_ACCESS'
+  | 'VIEW_ANALYTICS'
+  | 'MANAGE_FORMS'
+  | 'MANAGE_INTEGRATIONS'
+  | 'MANAGE_DOMAIN';
 
 // ── Preset Labels ─────────────────────────────────────────────────────────────
 
@@ -42,8 +42,8 @@ export type WebsiteAction =
  * Short display labels for preset badges and dropdowns.
  */
 export const PRESET_LABELS: Record<CollaboratorPreset, string> = {
-  CONTENT_ONLY: "Content Editor",
-  REVIEWER: "Reviewer",
+  CONTENT_ONLY: 'Content Editor',
+  REVIEWER: 'Reviewer',
 };
 
 /**
@@ -51,9 +51,9 @@ export const PRESET_LABELS: Record<CollaboratorPreset, string> = {
  */
 export const PRESET_DESCRIPTIONS: Record<CollaboratorPreset, string> = {
   CONTENT_ONLY:
-    "Can only edit content — cannot publish, change settings, manage collaborators, or access analytics.",
+    'Can only edit content — cannot publish, change settings, manage collaborators, or access analytics.',
   REVIEWER:
-    "Read-only access with analytics visibility — cannot edit content, publish, or change any settings.",
+    'Read-only access with analytics visibility — cannot edit content, publish, or change any settings.',
 };
 
 // ── Allowed Actions per Preset ────────────────────────────────────────────────
@@ -67,16 +67,12 @@ export const PRESET_DESCRIPTIONS: Record<CollaboratorPreset, string> = {
  */
 const PRESET_ALLOWED_ACTIONS: Record<CollaboratorPreset, Set<WebsiteAction>> = {
   CONTENT_ONLY: new Set<WebsiteAction>([
-    "VIEW",
-    "EDIT_CONTENT",
-    "DASHBOARD_ACCESS",
-    "MANAGE_FORMS",
+    'VIEW',
+    'EDIT_CONTENT',
+    'DASHBOARD_ACCESS',
+    'MANAGE_FORMS',
   ]),
-  REVIEWER: new Set<WebsiteAction>([
-    "VIEW",
-    "DASHBOARD_ACCESS",
-    "VIEW_ANALYTICS",
-  ]),
+  REVIEWER: new Set<WebsiteAction>(['VIEW', 'DASHBOARD_ACCESS', 'VIEW_ANALYTICS']),
 };
 
 // ── Blocked Action Messages ───────────────────────────────────────────────────
@@ -91,38 +87,31 @@ const PRESET_BLOCKED_ACTION_MESSAGES: Record<
 > = {
   CONTENT_ONLY: {
     PUBLISH:
-      "Your access is restricted to content editing. Publishing requires a higher permission level.",
+      'Your access is restricted to content editing. Publishing requires a higher permission level.',
     UNPUBLISH:
-      "Your access is restricted to content editing. Unpublishing requires a higher permission level.",
-    VIEW_ANALYTICS:
-      "Analytics access is not included in your content editor access level.",
-    EDIT_SETTINGS: "Changing site settings requires a higher permission level.",
-    DELETE: "Deleting the website requires a higher permission level.",
-    MANAGE_COLLABORATORS:
-      "Managing collaborators requires a higher permission level.",
-    TRANSFER_OWNERSHIP: "Transferring ownership requires full owner access.",
-    MANAGE_INTEGRATIONS:
-      "Managing integrations requires a higher permission level.",
-    MANAGE_DOMAIN: "Domain management requires owner-level access.",
+      'Your access is restricted to content editing. Unpublishing requires a higher permission level.',
+    VIEW_ANALYTICS: 'Analytics access is not included in your content editor access level.',
+    EDIT_SETTINGS: 'Changing site settings requires a higher permission level.',
+    DELETE: 'Deleting the website requires a higher permission level.',
+    MANAGE_COLLABORATORS: 'Managing collaborators requires a higher permission level.',
+    TRANSFER_OWNERSHIP: 'Transferring ownership requires full owner access.',
+    MANAGE_INTEGRATIONS: 'Managing integrations requires a higher permission level.',
+    MANAGE_DOMAIN: 'Domain management requires owner-level access.',
   },
   REVIEWER: {
-    EDIT_CONTENT:
-      "Your reviewer access is read-only. Editing content is not permitted.",
-    PUBLISH:
-      "Your reviewer access is read-only. Publishing requires a higher permission level.",
+    EDIT_CONTENT: 'Your reviewer access is read-only. Editing content is not permitted.',
+    PUBLISH: 'Your reviewer access is read-only. Publishing requires a higher permission level.',
     UNPUBLISH:
-      "Your reviewer access is read-only. Unpublishing requires a higher permission level.",
+      'Your reviewer access is read-only. Unpublishing requires a higher permission level.',
     MANAGE_FORMS:
-      "Your reviewer access is read-only. Form management requires a higher permission level.",
+      'Your reviewer access is read-only. Form management requires a higher permission level.',
     EDIT_SETTINGS:
-      "Your reviewer access is read-only. Changing settings requires a higher permission level.",
-    DELETE: "Deleting the website requires a higher permission level.",
-    MANAGE_COLLABORATORS:
-      "Managing collaborators requires a higher permission level.",
-    TRANSFER_OWNERSHIP: "Transferring ownership requires full owner access.",
-    MANAGE_INTEGRATIONS:
-      "Managing integrations requires a higher permission level.",
-    MANAGE_DOMAIN: "Domain management requires owner-level access.",
+      'Your reviewer access is read-only. Changing settings requires a higher permission level.',
+    DELETE: 'Deleting the website requires a higher permission level.',
+    MANAGE_COLLABORATORS: 'Managing collaborators requires a higher permission level.',
+    TRANSFER_OWNERSHIP: 'Transferring ownership requires full owner access.',
+    MANAGE_INTEGRATIONS: 'Managing integrations requires a higher permission level.',
+    MANAGE_DOMAIN: 'Domain management requires owner-level access.',
   },
 };
 
@@ -145,7 +134,7 @@ const PRESET_BLOCKED_ACTION_MESSAGES: Record<
  */
 export function isActionBlockedByPreset(
   preset: CollaboratorPreset | null | undefined,
-  action: WebsiteAction,
+  action: WebsiteAction
 ): boolean {
   if (!preset) return false;
 
@@ -173,9 +162,9 @@ export function isActionBlockedByPreset(
  */
 export function getBlockedActionMessage(
   preset: CollaboratorPreset | null | undefined,
-  action: WebsiteAction,
+  action: WebsiteAction
 ): string {
-  if (!preset) return "";
+  if (!preset) return '';
 
   const presetMessages = PRESET_BLOCKED_ACTION_MESSAGES[preset];
   if (!presetMessages) {
@@ -196,7 +185,7 @@ export function getBlockedActionMessage(
  * @returns Array of blocked action names
  */
 export function getBlockedActionsForPreset(
-  preset: CollaboratorPreset | null | undefined,
+  preset: CollaboratorPreset | null | undefined
 ): WebsiteAction[] {
   if (!preset) return [];
 
@@ -204,19 +193,19 @@ export function getBlockedActionsForPreset(
   if (!allowedActions) return [];
 
   const allActions: WebsiteAction[] = [
-    "VIEW",
-    "EDIT_CONTENT",
-    "EDIT_SETTINGS",
-    "DELETE",
-    "MANAGE_COLLABORATORS",
-    "PUBLISH",
-    "UNPUBLISH",
-    "TRANSFER_OWNERSHIP",
-    "DASHBOARD_ACCESS",
-    "VIEW_ANALYTICS",
-    "MANAGE_FORMS",
-    "MANAGE_INTEGRATIONS",
-    "MANAGE_DOMAIN",
+    'VIEW',
+    'EDIT_CONTENT',
+    'EDIT_SETTINGS',
+    'DELETE',
+    'MANAGE_COLLABORATORS',
+    'PUBLISH',
+    'UNPUBLISH',
+    'TRANSFER_OWNERSHIP',
+    'DASHBOARD_ACCESS',
+    'VIEW_ANALYTICS',
+    'MANAGE_FORMS',
+    'MANAGE_INTEGRATIONS',
+    'MANAGE_DOMAIN',
   ];
 
   return allActions.filter((action) => !allowedActions.has(action));
@@ -229,10 +218,8 @@ export function getBlockedActionsForPreset(
  * @param preset - The collaborator's preset (or null)
  * @returns Display label or empty string
  */
-export function getPresetLabel(
-  preset: CollaboratorPreset | null | undefined,
-): string {
-  if (!preset) return "";
+export function getPresetLabel(preset: CollaboratorPreset | null | undefined): string {
+  if (!preset) return '';
   return PRESET_LABELS[preset] ?? preset;
 }
 
@@ -242,11 +229,9 @@ export function getPresetLabel(
  * @param preset - The collaborator's preset (or null)
  * @returns Description string or empty string
  */
-export function getPresetDescription(
-  preset: CollaboratorPreset | null | undefined,
-): string {
-  if (!preset) return "";
-  return PRESET_DESCRIPTIONS[preset] ?? "";
+export function getPresetDescription(preset: CollaboratorPreset | null | undefined): string {
+  if (!preset) return '';
+  return PRESET_DESCRIPTIONS[preset] ?? '';
 }
 
 export default {

@@ -5,42 +5,32 @@
  * desktop/mobile viewport toggle, navigation between templates,
  * and "Use This Template" CTA.
  */
-import React from "react";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import IconButton from "@mui/material/IconButton";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Chip from "@mui/material/Chip";
-import Skeleton from "@mui/material/Skeleton";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import Tooltip from "@mui/material/Tooltip";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import Fade from "@mui/material/Fade";
-import { useTheme } from "@mui/material/styles";
-import {
-  X,
-  LayoutTemplate,
-  ChevronLeft,
-  ChevronRight,
-  Monitor,
-  Smartphone,
-} from "lucide-react";
-import {
-  type TemplateSummary,
-  CATEGORY_LABELS,
-} from "../../templates/templateApi";
-import { getDashboardColors } from "../../styles/dashboardTheme";
-import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
-import { useTemplateScreenshots } from "../../hooks/usePreviewApi";
-import { PreviewImageError, usePreviewTimeout } from "./PreviewSkeleton";
-import { isSafePreviewUrl } from "../../utils/urlSafety";
+import React from 'react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import IconButton from '@mui/material/IconButton';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import Skeleton from '@mui/material/Skeleton';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import Fade from '@mui/material/Fade';
+import { useTheme } from '@mui/material/styles';
+import { X, LayoutTemplate, ChevronLeft, ChevronRight, Monitor, Smartphone } from 'lucide-react';
+import { type TemplateSummary, CATEGORY_LABELS } from '../../templates/templateApi';
+import { getDashboardColors } from '../../styles/dashboardTheme';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
+import DashboardGradientButton from '../Dashboard/shared/DashboardGradientButton';
+import { useTemplateScreenshots } from '../../hooks/usePreviewApi';
+import { PreviewImageError, usePreviewTimeout } from './PreviewSkeleton';
+import { isSafePreviewUrl } from '../../utils/urlSafety';
 
-type Viewport = "desktop" | "mobile";
+type Viewport = 'desktop' | 'mobile';
 
 interface TemplatePreviewModalProps {
   open: boolean;
@@ -48,7 +38,7 @@ interface TemplatePreviewModalProps {
   templates: TemplateSummary[];
   onClose: () => void;
   onUseTemplate: (template: TemplateSummary) => void;
-  onNavigate: (direction: "prev" | "next") => void;
+  onNavigate: (direction: 'prev' | 'next') => void;
 }
 
 const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
@@ -62,9 +52,9 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
   const muiTheme = useTheme();
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
-  const isFullScreen = useMediaQuery(muiTheme.breakpoints.down("sm"));
+  const isFullScreen = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
-  const [viewport, setViewport] = React.useState<Viewport>("desktop");
+  const [viewport, setViewport] = React.useState<Viewport>('desktop');
   const [imgLoaded, setImgLoaded] = React.useState(false);
   const [imgError, setImgError] = React.useState(false);
 
@@ -79,15 +69,13 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
   React.useEffect(() => {
     setImgLoaded(false);
     setImgError(false);
-    setViewport("desktop");
+    setViewport('desktop');
   }, [template?.id]);
 
-  const timedOut = usePreviewTimeout(
-    screenshotsLoading || (!imgLoaded && !imgError),
-  );
+  const timedOut = usePreviewTimeout(screenshotsLoading || (!imgLoaded && !imgError));
 
-  const handlePrev = React.useCallback(() => onNavigate("prev"), [onNavigate]);
-  const handleNext = React.useCallback(() => onNavigate("next"), [onNavigate]);
+  const handlePrev = React.useCallback(() => onNavigate('prev'), [onNavigate]);
+  const handleNext = React.useCallback(() => onNavigate('next'), [onNavigate]);
   const handleUse = React.useCallback(() => {
     if (template) onUseTemplate(template);
   }, [onUseTemplate, template]);
@@ -100,7 +88,7 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
         setImgError(false);
       }
     },
-    [],
+    []
   );
 
   // Keyboard shortcuts
@@ -108,22 +96,21 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
     if (!open) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
+      if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        onNavigate("prev");
-      } else if (e.key === "ArrowRight") {
+        onNavigate('prev');
+      } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        onNavigate("next");
+        onNavigate('next');
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, onNavigate]);
 
   // Determine which image URL to show
-  const screenshotUrl =
-    viewport === "mobile" ? screenshots?.mobile : screenshots?.desktop;
+  const screenshotUrl = viewport === 'mobile' ? screenshots?.mobile : screenshots?.desktop;
   const fallbackUrl = template?.previewImage;
   const displayUrl = screenshotUrl || fallbackUrl;
   const hasValidUrl = displayUrl && isSafePreviewUrl(displayUrl);
@@ -142,39 +129,31 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
         sx: {
           backgroundColor: colors.panelBg || colors.bgCard,
           border: `1px solid ${colors.border}`,
-          backdropFilter: "blur(12px)",
+          backdropFilter: 'blur(12px)',
         },
       }}
     >
       <DialogTitle
         id="template-preview-title"
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           pr: 1,
           color: colors.text,
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
           <Typography
             variant="h6"
             component="span"
             sx={{
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
-            {template?.name ?? ""}
+            {template?.name ?? ''}
           </Typography>
 
           {/* Viewport Toggle — only show when screenshots are available */}
@@ -186,16 +165,16 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
               size="small"
               aria-label="Preview viewport"
               sx={{
-                "& .MuiToggleButton-root": {
+                '& .MuiToggleButton-root': {
                   border: `1px solid ${colors.border}`,
                   color: colors.textSecondary,
                   minWidth: 44,
                   minHeight: 36,
-                  "&.Mui-selected": {
-                    backgroundColor: "rgba(55,140,146,0.15)",
-                    color: "#378C92",
-                    borderColor: "#378C92",
-                    "&:hover": { backgroundColor: "rgba(55,140,146,0.25)" },
+                  '&.Mui-selected': {
+                    backgroundColor: 'rgba(55,140,146,0.15)',
+                    color: '#378C92',
+                    borderColor: '#378C92',
+                    '&:hover': { backgroundColor: 'rgba(55,140,146,0.25)' },
                   },
                 },
               }}
@@ -232,7 +211,7 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
               <Skeleton
                 variant="rectangular"
                 height={400}
-                sx={{ width: "100%" }}
+                sx={{ width: '100%' }}
                 aria-label="Loading preview image"
               />
             ) : imgError ? (
@@ -247,27 +226,19 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
             ) : hasValidUrl ? (
               <Box
                 sx={{
-                  width: "100%",
-                  overflow: "hidden",
-                  display: "flex",
-                  justifyContent: "center",
-                  backgroundColor:
-                    actualTheme === "dark"
-                      ? "rgba(0,0,0,0.3)"
-                      : "rgba(0,0,0,0.03)",
-                  position: "relative",
+                  width: '100%',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  backgroundColor: actualTheme === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.03)',
+                  position: 'relative',
                 }}
               >
                 {!imgLoaded && (
                   <Skeleton
                     variant="rectangular"
                     height={400}
-                    sx={{
-                      width: "100%",
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                    }}
+                    sx={{ width: '100%', position: 'absolute', top: 0, left: 0 }}
                   />
                 )}
                 <Box
@@ -278,14 +249,14 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
                   onLoad={() => setImgLoaded(true)}
                   onError={() => setImgError(true)}
                   sx={{
-                    maxWidth: viewport === "mobile" ? 375 : "100%",
+                    maxWidth: viewport === 'mobile' ? 375 : '100%',
                     maxHeight: 500,
-                    width: viewport === "mobile" ? 375 : "100%",
-                    objectFit: "contain",
-                    display: "block",
-                    mx: "auto",
-                    transition: "transform 0.3s ease",
-                    "&:hover": { transform: "scale(1.02)" },
+                    width: viewport === 'mobile' ? 375 : '100%',
+                    objectFit: 'contain',
+                    display: 'block',
+                    mx: 'auto',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': { transform: 'scale(1.02)' },
                     opacity: imgLoaded ? 1 : 0,
                   }}
                 />
@@ -293,11 +264,11 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
             ) : (
               <Box
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   height: 200,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   backgroundColor: colors.bgCard,
                 }}
               >
@@ -310,7 +281,7 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
               <Box sx={{ px: 2 }}>
                 <Typography
                   variant="caption"
-                  sx={{ color: colors.textSecondary, fontStyle: "italic" }}
+                  sx={{ color: colors.textSecondary, fontStyle: 'italic' }}
                 >
                   Preview is taking longer than expected...
                 </Typography>
@@ -319,31 +290,26 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
 
             {/* Template Details */}
             <Box sx={{ p: 3 }}>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                 <Chip
-                  label={
-                    CATEGORY_LABELS[template.category] ?? template.category
-                  }
+                  label={CATEGORY_LABELS[template.category] ?? template.category}
                   size="small"
                   variant="outlined"
-                  sx={{ borderColor: "#378C92", color: "#378C92" }}
+                  sx={{ borderColor: '#378C92', color: '#378C92' }}
                 />
                 <Chip
                   label={template.type}
                   size="small"
                   variant="outlined"
-                  sx={{
-                    borderColor: colors.border,
-                    color: colors.textSecondary,
-                  }}
+                  sx={{ borderColor: colors.border, color: colors.textSecondary }}
                 />
                 {hasScreenshots && (
                   <Chip
-                    label={viewport === "desktop" ? "Desktop" : "Mobile"}
+                    label={viewport === 'desktop' ? 'Desktop' : 'Mobile'}
                     size="small"
                     sx={{
-                      backgroundColor: "rgba(55,140,146,0.1)",
-                      color: "#378C92",
+                      backgroundColor: 'rgba(55,140,146,0.1)',
+                      color: '#378C92',
                       fontWeight: 500,
                     }}
                   />
@@ -360,19 +326,10 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
               )}
 
               {(template.pageCount != null || template.blockCount != null) && (
-                <Typography
-                  variant="caption"
-                  sx={{ color: colors.textSecondary }}
-                >
-                  {template.pageCount != null
-                    ? `${template.pageCount} pages`
-                    : ""}
-                  {template.pageCount != null && template.blockCount != null
-                    ? " · "
-                    : ""}
-                  {template.blockCount != null
-                    ? `${template.blockCount} blocks`
-                    : ""}
+                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                  {template.pageCount != null ? `${template.pageCount} pages` : ''}
+                  {template.pageCount != null && template.blockCount != null ? ' · ' : ''}
+                  {template.blockCount != null ? `${template.blockCount} blocks` : ''}
                 </Typography>
               )}
             </Box>

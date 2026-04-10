@@ -3,9 +3,9 @@
  * Catches errors in individual blocks to prevent entire page crashes
  */
 
-import React, { Component } from "react";
-import type { ErrorInfo, ReactNode } from "react";
-import { Box, Container, Typography, Alert } from "@mui/material";
+import React, { Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
+import { Box, Container, Typography, Alert } from '@mui/material';
 
 interface Props {
   children: ReactNode;
@@ -35,7 +35,7 @@ class BlockErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Block rendering error:", {
+    console.error('Block rendering error:', {
       blockType: this.props.blockType,
       blockId: this.props.blockId,
       error: error.message,
@@ -46,20 +46,20 @@ class BlockErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <Box sx={{ py: 4, bgcolor: "error.light" }}>
+        <Box sx={{ py: 4, bgcolor: 'error.light' }}>
           <Container>
             <Alert severity="error">
               <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
                 Block Rendering Error
               </Typography>
               <Typography variant="caption" display="block">
-                Block Type: {this.props.blockType || "Unknown"}
+                Block Type: {this.props.blockType || 'Unknown'}
               </Typography>
               {this.state.error && (
                 <Typography
                   variant="caption"
                   display="block"
-                  sx={{ mt: 1, fontFamily: "monospace" }}
+                  sx={{ mt: 1, fontFamily: 'monospace' }}
                 >
                   {this.state.error.message}
                 </Typography>

@@ -16,21 +16,14 @@
  * - Active viewport button is visually highlighted (contained variant)
  * - Orientation toggle is always rendered but only meaningful for mobile
  */
-import React, { useCallback, useMemo } from "react";
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  IconButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import SmartphoneIcon from "@mui/icons-material/Smartphone";
-import TabletIcon from "@mui/icons-material/Tablet";
-import DesktopWindowsIcon from "@mui/icons-material/DesktopWindows";
-import ScreenRotationIcon from "@mui/icons-material/ScreenRotation";
+import React, { useCallback, useMemo } from 'react';
+import { Box, Button, ButtonGroup, IconButton, Tooltip, Typography } from '@mui/material';
+import SmartphoneIcon from '@mui/icons-material/Smartphone';
+import TabletIcon from '@mui/icons-material/Tablet';
+import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
+import ScreenRotationIcon from '@mui/icons-material/ScreenRotation';
 
-export type ViewportOrientation = "portrait" | "landscape";
+export type ViewportOrientation = 'portrait' | 'landscape';
 
 export interface ViewportPreset {
   label: string;
@@ -39,9 +32,9 @@ export interface ViewportPreset {
 }
 
 export const VIEWPORT_PRESETS: ViewportPreset[] = [
-  { label: "375", width: 375, height: 667 },
-  { label: "768", width: 768, height: 1024 },
-  { label: "1280", width: 1280, height: 800 },
+  { label: '375', width: 375, height: 667 },
+  { label: '768', width: 768, height: 1024 },
+  { label: '1280', width: 1280, height: 800 },
 ];
 
 export interface ViewportPreviewToolbarProps {
@@ -59,53 +52,42 @@ const ViewportPreviewToolbar: React.FC<ViewportPreviewToolbarProps> = ({
 }) => {
   const icons: Record<string, React.ReactNode> = useMemo(
     () => ({
-      "375": <SmartphoneIcon fontSize="small" />,
-      "768": <TabletIcon fontSize="small" />,
-      "1280": <DesktopWindowsIcon fontSize="small" />,
+      '375': <SmartphoneIcon fontSize="small" />,
+      '768': <TabletIcon fontSize="small" />,
+      '1280': <DesktopWindowsIcon fontSize="small" />,
     }),
-    [],
+    []
   );
 
   const activePreset = useMemo(
     () => VIEWPORT_PRESETS.find((p) => p.width === viewportWidth),
-    [viewportWidth],
+    [viewportWidth]
   );
 
   const handlePresetClick = useCallback(
     (preset: ViewportPreset) => {
-      const w =
-        orientation === "landscape" && preset.width < 900
-          ? preset.height
-          : preset.width;
-      const h =
-        orientation === "landscape" && preset.width < 900
-          ? preset.width
-          : preset.height;
+      const w = orientation === 'landscape' && preset.width < 900 ? preset.height : preset.width;
+      const h = orientation === 'landscape' && preset.width < 900 ? preset.width : preset.height;
       onViewportChange(w, h);
     },
-    [orientation, onViewportChange],
+    [orientation, onViewportChange]
   );
 
   return (
     <Box
       data-testid="viewport-preview-toolbar"
       sx={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 1,
-        flexWrap: "wrap",
+        flexWrap: 'wrap',
       }}
     >
-      <Typography variant="caption" sx={{ color: "text.secondary", mr: 0.5 }}>
+      <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>
         Viewport:
       </Typography>
 
-      <ButtonGroup
-        size="small"
-        aria-label="Viewport presets"
-        variant="outlined"
-        role="group"
-      >
+      <ButtonGroup size="small" aria-label="Viewport presets" variant="outlined" role="group">
         {VIEWPORT_PRESETS.map((preset) => {
           const isActive = activePreset?.width === preset.width;
           return (
@@ -113,11 +95,11 @@ const ViewportPreviewToolbar: React.FC<ViewportPreviewToolbarProps> = ({
               key={preset.label}
               aria-label={`${preset.label}px viewport`}
               aria-pressed={isActive}
-              variant={isActive ? "contained" : "outlined"}
+              variant={isActive ? 'contained' : 'outlined'}
               onClick={() => handlePresetClick(preset)}
               startIcon={icons[preset.label]}
               sx={{
-                textTransform: "none",
+                textTransform: 'none',
                 minWidth: 70,
               }}
             >
@@ -137,8 +119,8 @@ const ViewportPreviewToolbar: React.FC<ViewportPreviewToolbarProps> = ({
           <ScreenRotationIcon
             fontSize="small"
             sx={{
-              transform: orientation === "landscape" ? "rotate(90deg)" : "none",
-              transition: "transform 0.2s",
+              transform: orientation === 'landscape' ? 'rotate(90deg)' : 'none',
+              transition: 'transform 0.2s',
             }}
           />
         </IconButton>
@@ -147,6 +129,6 @@ const ViewportPreviewToolbar: React.FC<ViewportPreviewToolbarProps> = ({
   );
 };
 
-ViewportPreviewToolbar.displayName = "ViewportPreviewToolbar";
+ViewportPreviewToolbar.displayName = 'ViewportPreviewToolbar';
 
 export default ViewportPreviewToolbar;

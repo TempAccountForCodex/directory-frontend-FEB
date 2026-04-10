@@ -26,9 +26,9 @@ import {
   useRef,
   useMemo,
   type ReactNode,
-} from "react";
-import axios from "axios";
-import { useAuth } from "./AuthContext";
+} from 'react';
+import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -70,14 +70,14 @@ export interface AccountContextType {
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export const useAccountContext = (): AccountContextType => {
   const context = useContext(AccountContext);
   if (!context) {
-    throw new Error("useAccountContext must be used within an AccountProvider");
+    throw new Error('useAccountContext must be used within an AccountProvider');
   }
   return context;
 };
@@ -92,11 +92,8 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
   const { user } = useAuth();
 
   // All delegation state is in-memory only (NEVER localStorage)
-  const [delegateAccount, setDelegateAccount] =
-    useState<DelegatedAccount | null>(null);
-  const [delegatedAccounts, setDelegatedAccounts] = useState<
-    DelegatedAccount[]
-  >([]);
+  const [delegateAccount, setDelegateAccount] = useState<DelegatedAccount | null>(null);
+  const [delegatedAccounts, setDelegatedAccounts] = useState<DelegatedAccount[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,10 +109,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
   }, [delegateAccount]);
 
   const isDelegating = delegateAccount !== null;
-  const serviceScopes = useMemo(
-    () => delegateAccount?.serviceScopes ?? [],
-    [delegateAccount],
-  );
+  const serviceScopes = useMemo(() => delegateAccount?.serviceScopes ?? [], [delegateAccount]);
 
   // ── Axios interceptor: inject X-Account-Context header ──────────────────
 
@@ -131,7 +125,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
         const current = delegateAccountRef.current;
         if (current) {
           config.headers = config.headers || {};
-          config.headers["X-Account-Context"] = String(current.ownerUser.id);
+          config.headers['X-Account-Context'] = String(current.ownerUser.id);
         }
         return config;
       });
@@ -155,17 +149,13 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
         if (delegateAccountRef.current) {
           if (status === 401) {
             setDelegateAccount(null);
-            setError(
-              "Session expired. You have been returned to your own account.",
-            );
+            setError('Session expired. You have been returned to your own account.');
           } else if (status === 403) {
-            setError(
-              "This action is not permitted under your current delegation scope.",
-            );
+            setError('This action is not permitted under your current delegation scope.');
           }
         }
         return Promise.reject(err);
-      },
+      }
     );
 
     return () => {
@@ -193,8 +183,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
       const response = await axios.get(`${API_URL}/account/delegated-accounts`);
       setDelegatedAccounts(response.data.accounts || []);
     } catch (err: any) {
-      const message =
-        err.response?.data?.message || "Failed to load delegated accounts";
+      const message = err.response?.data?.message || 'Failed to load delegated accounts';
       setError(message);
       setDelegatedAccounts([]);
     } finally {
@@ -212,13 +201,13 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
   // Refresh on visibility change (tab focus)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && user) {
+      if (document.visibilityState === 'visible' && user) {
         refreshAccounts();
       }
     };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user, refreshAccounts]);
 
@@ -228,7 +217,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
     async (account: DelegatedAccount): Promise<boolean> => {
       // Prevent self-delegation
       if (user && account.ownerUser.id === user.id) {
-        setError("Cannot delegate to your own account");
+        setError('Cannot delegate to your own account');
         return false;
       }
 
@@ -238,7 +227,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
         account.ownerUser.id < 1 ||
         !Number.isInteger(account.ownerUser.id)
       ) {
-        setError("Invalid account ID");
+        setError('Invalid account ID');
         return false;
       }
 
@@ -258,11 +247,11 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
         return true;
       } catch (err: any) {
         const status = err.response?.status;
-        let message = "Failed to switch account context";
+        let message = 'Failed to switch account context';
         if (status === 403) {
-          message = "You are not authorized to access this account";
+          message = 'You are not authorized to access this account';
         } else if (status === 404) {
-          message = "Delegation access not found or has been revoked";
+          message = 'Delegation access not found or has been revoked';
         } else if (err.response?.data?.message) {
           message = err.response.data.message;
         }
@@ -272,7 +261,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
         setIsSwitching(false);
       }
     },
-    [user, isSwitching],
+    [user, isSwitching]
   );
 
   // ── Clear delegation ─────────────────────────────────────────────────────
@@ -322,12 +311,10 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
       switchAccount,
       clearDelegation,
       refreshAccounts,
-    ],
+    ]
   );
 
-  return (
-    <AccountContext.Provider value={value}>{children}</AccountContext.Provider>
-  );
+  return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;
 };
 
 export default AccountContext;

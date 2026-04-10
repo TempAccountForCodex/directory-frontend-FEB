@@ -17,16 +17,16 @@
  * - Keyboard shortcuts: Alt+Up/Down move, Ctrl+D duplicate
  * - Barrel exports
  */
-import React from "react";
-import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
-import { render, screen, fireEvent, within, act } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import React from 'react';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 
 // ---------------------------------------------------------------------------
 // Mock @dnd-kit entirely (same pattern as BlockList tests)
 // ---------------------------------------------------------------------------
 
-vi.mock("@dnd-kit/core", () => ({
+vi.mock('@dnd-kit/core', () => ({
   DndContext: ({
     children,
     onDragEnd,
@@ -43,10 +43,8 @@ vi.mock("@dnd-kit/core", () => ({
   useSensors: vi.fn(() => []),
 }));
 
-vi.mock("@dnd-kit/sortable", () => ({
-  SortableContext: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
+vi.mock('@dnd-kit/sortable', () => ({
+  SortableContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useSortable: () => ({
     attributes: {},
     listeners: {},
@@ -64,36 +62,36 @@ vi.mock("@dnd-kit/sortable", () => ({
   verticalListSortingStrategy: vi.fn(),
 }));
 
-vi.mock("@dnd-kit/utilities", () => ({
-  CSS: { Transform: { toString: () => "" } },
+vi.mock('@dnd-kit/utilities', () => ({
+  CSS: { Transform: { toString: () => '' } },
 }));
 
 // ---------------------------------------------------------------------------
 // Mock MUI icons to avoid SVG rendering issues in jsdom
 // ---------------------------------------------------------------------------
 
-vi.mock("@mui/icons-material/DragIndicator", () => ({
+vi.mock('@mui/icons-material/DragIndicator', () => ({
   default: () => <span data-testid="icon-drag" />,
 }));
-vi.mock("@mui/icons-material/Visibility", () => ({
+vi.mock('@mui/icons-material/Visibility', () => ({
   default: () => <span data-testid="icon-visible" />,
 }));
-vi.mock("@mui/icons-material/VisibilityOff", () => ({
+vi.mock('@mui/icons-material/VisibilityOff', () => ({
   default: () => <span data-testid="icon-hidden" />,
 }));
-vi.mock("@mui/icons-material/Delete", () => ({
+vi.mock('@mui/icons-material/Delete', () => ({
   default: () => <span data-testid="icon-delete" />,
 }));
-vi.mock("@mui/icons-material/Add", () => ({
+vi.mock('@mui/icons-material/Add', () => ({
   default: () => <span data-testid="icon-add" />,
 }));
-vi.mock("@mui/icons-material/ContentCopy", () => ({
+vi.mock('@mui/icons-material/ContentCopy', () => ({
   default: () => <span data-testid="icon-duplicate" />,
 }));
-vi.mock("@mui/icons-material/Close", () => ({
+vi.mock('@mui/icons-material/Close', () => ({
   default: () => <span data-testid="icon-close" />,
 }));
-vi.mock("@mui/icons-material/Search", () => ({
+vi.mock('@mui/icons-material/Search', () => ({
   default: () => <span data-testid="icon-search" />,
 }));
 
@@ -101,7 +99,7 @@ vi.mock("@mui/icons-material/Search", () => ({
 // Mock FormGenerator — we don't need it to fetch real field metadata
 // ---------------------------------------------------------------------------
 
-vi.mock("../../FormGenerator", () => ({
+vi.mock('../../FormGenerator', () => ({
   default: ({
     blockType,
     initialValues,
@@ -113,18 +111,12 @@ vi.mock("../../FormGenerator", () => ({
     onChange?: (values: Record<string, unknown>) => void;
     disabled?: boolean;
   }) => (
-    <div
-      data-testid="form-generator"
-      data-block-type={blockType}
-      data-disabled={disabled}
-    >
+    <div data-testid="form-generator" data-block-type={blockType} data-disabled={disabled}>
       <span data-testid="fg-block-type">{blockType}</span>
-      <span data-testid="fg-initial-values">
-        {JSON.stringify(initialValues)}
-      </span>
+      <span data-testid="fg-initial-values">{JSON.stringify(initialValues)}</span>
       <button
         data-testid="fg-trigger-change"
-        onClick={() => onChange?.({ heading: "Updated Heading" })}
+        onClick={() => onChange?.({ heading: 'Updated Heading' })}
       >
         Trigger onChange
       </button>
@@ -141,18 +133,12 @@ vi.mock("../../FormGenerator", () => ({
     onChange?: (values: Record<string, unknown>) => void;
     disabled?: boolean;
   }) => (
-    <div
-      data-testid="form-generator"
-      data-block-type={blockType}
-      data-disabled={disabled}
-    >
+    <div data-testid="form-generator" data-block-type={blockType} data-disabled={disabled}>
       <span data-testid="fg-block-type">{blockType}</span>
-      <span data-testid="fg-initial-values">
-        {JSON.stringify(initialValues)}
-      </span>
+      <span data-testid="fg-initial-values">{JSON.stringify(initialValues)}</span>
       <button
         data-testid="fg-trigger-change"
-        onClick={() => onChange?.({ heading: "Updated Heading" })}
+        onClick={() => onChange?.({ heading: 'Updated Heading' })}
       >
         Trigger onChange
       </button>
@@ -168,7 +154,7 @@ let uuidCounter = 0;
 
 beforeEach(() => {
   uuidCounter = 0;
-  vi.spyOn(crypto, "randomUUID").mockImplementation(() => {
+  vi.spyOn(crypto, 'randomUUID').mockImplementation(() => {
     uuidCounter += 1;
     return `test-uuid-${uuidCounter}` as `${string}-${string}-${string}-${string}-${string}`;
   });
@@ -178,8 +164,8 @@ beforeEach(() => {
 // Import BlockEditor
 // ---------------------------------------------------------------------------
 
-import { BlockEditor } from "../BlockEditor";
-import type { Block } from "../BlockList";
+import { BlockEditor } from '../BlockEditor';
+import type { Block } from '../BlockList';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -187,8 +173,8 @@ import type { Block } from "../BlockList";
 
 const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   id: `block-${Math.random().toString(36).slice(2, 8)}`,
-  blockType: "HERO",
-  content: { heading: "Test Heading" },
+  blockType: 'HERO',
+  content: { heading: 'Test Heading' },
   isVisible: true,
   sortOrder: 0,
   ...overrides,
@@ -200,9 +186,7 @@ const defaultProps = () => ({
   disabled: false,
 });
 
-function renderBlockEditor(
-  overrides: Partial<ReturnType<typeof defaultProps>> = {},
-) {
+function renderBlockEditor(overrides: Partial<ReturnType<typeof defaultProps>> = {}) {
   const props = { ...defaultProps(), ...overrides };
   return { ...render(<BlockEditor {...props} />), props };
 }
@@ -211,36 +195,34 @@ function renderBlockEditor(
 // Tests — Layout
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — layout", () => {
-  it("renders a two-panel layout container", () => {
-    const blocks = [makeBlock({ id: "b1" })];
+describe('BlockEditor — layout', () => {
+  it('renders a two-panel layout container', () => {
+    const blocks = [makeBlock({ id: 'b1' })];
     renderBlockEditor({ blocks });
 
     // Should have the block editor container
-    const container = screen.getByTestId("block-editor");
+    const container = screen.getByTestId('block-editor');
     expect(container).toBeInTheDocument();
   });
 
-  it("renders BlockList in the left panel", () => {
-    const blocks = [makeBlock({ id: "b1", blockType: "HERO" })];
+  it('renders BlockList in the left panel', () => {
+    const blocks = [makeBlock({ id: 'b1', blockType: 'HERO' })];
     renderBlockEditor({ blocks });
 
     // BlockList renders block labels
-    expect(screen.getByText("Hero")).toBeInTheDocument();
+    expect(screen.getByText('Hero')).toBeInTheDocument();
   });
 
-  it("shows an empty state message in the right panel when no block is selected", () => {
-    const blocks = [makeBlock({ id: "b1" })];
+  it('shows an empty state message in the right panel when no block is selected', () => {
+    const blocks = [makeBlock({ id: 'b1' })];
     renderBlockEditor({ blocks });
 
     expect(screen.getByText(/select a block to edit/i)).toBeInTheDocument();
   });
 
-  it("renders Add Block button", () => {
+  it('renders Add Block button', () => {
     renderBlockEditor();
-    expect(
-      screen.getByRole("button", { name: /add block/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add block/i })).toBeInTheDocument();
   });
 });
 
@@ -248,30 +230,28 @@ describe("BlockEditor — layout", () => {
 // Tests — Select Block
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — select block", () => {
-  it("shows FormGenerator when a block is selected", () => {
-    const blocks = [
-      makeBlock({ id: "b1", blockType: "HERO", content: { heading: "Hello" } }),
-    ];
+describe('BlockEditor — select block', () => {
+  it('shows FormGenerator when a block is selected', () => {
+    const blocks = [makeBlock({ id: 'b1', blockType: 'HERO', content: { heading: 'Hello' } })];
     renderBlockEditor({ blocks });
 
     // Click on the block to select it
-    fireEvent.click(screen.getByText("Hero"));
+    fireEvent.click(screen.getByText('Hero'));
 
     // FormGenerator should render with correct blockType
-    expect(screen.getByTestId("form-generator")).toBeInTheDocument();
-    expect(screen.getByTestId("fg-block-type")).toHaveTextContent("HERO");
+    expect(screen.getByTestId('form-generator')).toBeInTheDocument();
+    expect(screen.getByTestId('fg-block-type')).toHaveTextContent('HERO');
   });
 
-  it("passes block content as initialValues to FormGenerator", () => {
-    const content = { heading: "My Heading", subheading: "Sub" };
-    const blocks = [makeBlock({ id: "b1", blockType: "HERO", content })];
+  it('passes block content as initialValues to FormGenerator', () => {
+    const content = { heading: 'My Heading', subheading: 'Sub' };
+    const blocks = [makeBlock({ id: 'b1', blockType: 'HERO', content })];
     renderBlockEditor({ blocks });
 
-    fireEvent.click(screen.getByText("Hero"));
+    fireEvent.click(screen.getByText('Hero'));
 
-    const initialValues = screen.getByTestId("fg-initial-values");
-    expect(initialValues.textContent).toContain("My Heading");
+    const initialValues = screen.getByTestId('fg-initial-values');
+    expect(initialValues.textContent).toContain('My Heading');
   });
 });
 
@@ -279,34 +259,34 @@ describe("BlockEditor — select block", () => {
 // Tests — Add Block
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — add block", () => {
-  it("opens BlockSelector dialog when Add Block is clicked", () => {
+describe('BlockEditor — add block', () => {
+  it('opens BlockSelector dialog when Add Block is clicked', () => {
     renderBlockEditor();
 
-    fireEvent.click(screen.getByRole("button", { name: /add block/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add block/i }));
 
     // BlockSelector dialog should be open (has title "Add Block" in dialog)
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it("creates a new block with UUID and defaults when a block type is selected from BlockSelector", () => {
+  it('creates a new block with UUID and defaults when a block type is selected from BlockSelector', () => {
     const onChange = vi.fn();
     renderBlockEditor({ onChange });
 
     // Open BlockSelector
-    fireEvent.click(screen.getByRole("button", { name: /add block/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add block/i }));
 
     // Select "Hero" from the dialog
-    const dialog = screen.getByRole("dialog");
-    const heroOption = within(dialog).getByText("Hero");
+    const dialog = screen.getByRole('dialog');
+    const heroOption = within(dialog).getByText('Hero');
     fireEvent.click(heroOption);
 
     // onChange should have been called with a new block
     expect(onChange).toHaveBeenCalledTimes(1);
     const newBlocks = onChange.mock.calls[0][0] as Block[];
     expect(newBlocks).toHaveLength(1);
-    expect(newBlocks[0].id).toBe("test-uuid-1");
-    expect(newBlocks[0].blockType).toBe("HERO");
+    expect(newBlocks[0].id).toBe('test-uuid-1');
+    expect(newBlocks[0].blockType).toBe('HERO');
     expect(newBlocks[0].isVisible).toBe(true);
     expect(newBlocks[0].content).toBeDefined();
   });
@@ -316,12 +296,12 @@ describe("BlockEditor — add block", () => {
 // Tests — Remove Block
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — remove block", () => {
-  it("removes a block and calls onChange with filtered array", () => {
+describe('BlockEditor — remove block', () => {
+  it('removes a block and calls onChange with filtered array', () => {
     const onChange = vi.fn();
     const blocks = [
-      makeBlock({ id: "b1", blockType: "HERO", sortOrder: 0 }),
-      makeBlock({ id: "b2", blockType: "FEATURES", sortOrder: 1 }),
+      makeBlock({ id: 'b1', blockType: 'HERO', sortOrder: 0 }),
+      makeBlock({ id: 'b2', blockType: 'FEATURES', sortOrder: 1 }),
     ];
     renderBlockEditor({ blocks, onChange });
 
@@ -331,26 +311,24 @@ describe("BlockEditor — remove block", () => {
 
     // onChange should be called with only the second block
     expect(onChange).toHaveBeenCalled();
-    const lastCall = onChange.mock.calls[
-      onChange.mock.calls.length - 1
-    ][0] as Block[];
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0] as Block[];
     expect(lastCall).toHaveLength(1);
-    expect(lastCall[0].id).toBe("b2");
+    expect(lastCall[0].id).toBe('b2');
   });
 
-  it("clears selection when the selected block is removed", () => {
+  it('clears selection when the selected block is removed', () => {
     const onChange = vi.fn();
     const blocks = [
-      makeBlock({ id: "b1", blockType: "HERO", sortOrder: 0 }),
-      makeBlock({ id: "b2", blockType: "FEATURES", sortOrder: 1 }),
+      makeBlock({ id: 'b1', blockType: 'HERO', sortOrder: 0 }),
+      makeBlock({ id: 'b2', blockType: 'FEATURES', sortOrder: 1 }),
     ];
     renderBlockEditor({ blocks, onChange });
 
     // Select first block
-    fireEvent.click(screen.getByText("Hero"));
+    fireEvent.click(screen.getByText('Hero'));
 
     // FormGenerator should be showing
-    expect(screen.getByTestId("form-generator")).toBeInTheDocument();
+    expect(screen.getByTestId('form-generator')).toBeInTheDocument();
 
     // Remove the selected block
     const removeBtns = screen.getAllByLabelText(/remove block/i);
@@ -366,42 +344,33 @@ describe("BlockEditor — remove block", () => {
 // Tests — Duplicate Block
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — duplicate block", () => {
-  it("duplicates the selected block with a new UUID and inserts after original", () => {
+describe('BlockEditor — duplicate block', () => {
+  it('duplicates the selected block with a new UUID and inserts after original', () => {
     const onChange = vi.fn();
     const blocks = [
-      makeBlock({
-        id: "b1",
-        blockType: "HERO",
-        content: { heading: "Original" },
-        sortOrder: 0,
-      }),
-      makeBlock({ id: "b2", blockType: "FEATURES", sortOrder: 1 }),
+      makeBlock({ id: 'b1', blockType: 'HERO', content: { heading: 'Original' }, sortOrder: 0 }),
+      makeBlock({ id: 'b2', blockType: 'FEATURES', sortOrder: 1 }),
     ];
     renderBlockEditor({ blocks, onChange });
 
     // Select first block
-    fireEvent.click(screen.getByText("Hero"));
+    fireEvent.click(screen.getByText('Hero'));
 
     // Click duplicate button
-    const duplicateBtn = screen.getByRole("button", {
-      name: /duplicate block/i,
-    });
+    const duplicateBtn = screen.getByRole('button', { name: /duplicate block/i });
     fireEvent.click(duplicateBtn);
 
     expect(onChange).toHaveBeenCalled();
-    const lastCall = onChange.mock.calls[
-      onChange.mock.calls.length - 1
-    ][0] as Block[];
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0] as Block[];
     expect(lastCall).toHaveLength(3);
     // Original at index 0
-    expect(lastCall[0].id).toBe("b1");
+    expect(lastCall[0].id).toBe('b1');
     // Duplicate at index 1 with new UUID
-    expect(lastCall[1].id).toBe("test-uuid-1");
-    expect(lastCall[1].blockType).toBe("HERO");
-    expect(lastCall[1].content).toEqual({ heading: "Original" });
+    expect(lastCall[1].id).toBe('test-uuid-1');
+    expect(lastCall[1].blockType).toBe('HERO');
+    expect(lastCall[1].content).toEqual({ heading: 'Original' });
     // Second original block at index 2
-    expect(lastCall[2].id).toBe("b2");
+    expect(lastCall[2].id).toBe('b2');
   });
 });
 
@@ -409,19 +378,17 @@ describe("BlockEditor — duplicate block", () => {
 // Tests — Toggle Visibility
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — toggle visibility", () => {
-  it("toggles isVisible on a block and calls onChange", () => {
+describe('BlockEditor — toggle visibility', () => {
+  it('toggles isVisible on a block and calls onChange', () => {
     const onChange = vi.fn();
-    const blocks = [makeBlock({ id: "b1", isVisible: true })];
+    const blocks = [makeBlock({ id: 'b1', isVisible: true })];
     renderBlockEditor({ blocks, onChange });
 
     const toggleBtn = screen.getByLabelText(/toggle visibility/i);
     fireEvent.click(toggleBtn);
 
     expect(onChange).toHaveBeenCalled();
-    const lastCall = onChange.mock.calls[
-      onChange.mock.calls.length - 1
-    ][0] as Block[];
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0] as Block[];
     expect(lastCall[0].isVisible).toBe(false);
   });
 });
@@ -430,20 +397,20 @@ describe("BlockEditor — toggle visibility", () => {
 // Tests — Reorder
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — reorder", () => {
-  it("calls onChange when blocks are reordered", () => {
+describe('BlockEditor — reorder', () => {
+  it('calls onChange when blocks are reordered', () => {
     const onChange = vi.fn();
     const blocks = [
-      makeBlock({ id: "b1", blockType: "HERO", sortOrder: 0 }),
-      makeBlock({ id: "b2", blockType: "FEATURES", sortOrder: 1 }),
+      makeBlock({ id: 'b1', blockType: 'HERO', sortOrder: 0 }),
+      makeBlock({ id: 'b2', blockType: 'FEATURES', sortOrder: 1 }),
     ];
     renderBlockEditor({ blocks, onChange });
 
     // The reorder is handled via BlockList's onReorder callback
     // We can't easily simulate drag in jsdom, but we can verify
     // the component is wired up correctly by checking BlockList renders
-    expect(screen.getByText("Hero")).toBeInTheDocument();
-    expect(screen.getByText("Features")).toBeInTheDocument();
+    expect(screen.getByText('Hero')).toBeInTheDocument();
+    expect(screen.getByText('Features')).toBeInTheDocument();
   });
 });
 
@@ -451,25 +418,21 @@ describe("BlockEditor — reorder", () => {
 // Tests — Update Content via FormGenerator
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — update content", () => {
-  it("updates block content when FormGenerator triggers onChange", () => {
+describe('BlockEditor — update content', () => {
+  it('updates block content when FormGenerator triggers onChange', () => {
     const onChange = vi.fn();
-    const blocks = [
-      makeBlock({ id: "b1", blockType: "HERO", content: { heading: "Old" } }),
-    ];
+    const blocks = [makeBlock({ id: 'b1', blockType: 'HERO', content: { heading: 'Old' } })];
     renderBlockEditor({ blocks, onChange });
 
     // Select the block
-    fireEvent.click(screen.getByText("Hero"));
+    fireEvent.click(screen.getByText('Hero'));
 
     // Trigger FormGenerator onChange
-    fireEvent.click(screen.getByTestId("fg-trigger-change"));
+    fireEvent.click(screen.getByTestId('fg-trigger-change'));
 
     expect(onChange).toHaveBeenCalled();
-    const lastCall = onChange.mock.calls[
-      onChange.mock.calls.length - 1
-    ][0] as Block[];
-    expect(lastCall[0].content).toEqual({ heading: "Updated Heading" });
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0] as Block[];
+    expect(lastCall[0].content).toEqual({ heading: 'Updated Heading' });
   });
 });
 
@@ -477,23 +440,23 @@ describe("BlockEditor — update content", () => {
 // Tests — Disabled state
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — disabled state", () => {
-  it("disables the Add Block button when disabled=true", () => {
+describe('BlockEditor — disabled state', () => {
+  it('disables the Add Block button when disabled=true', () => {
     renderBlockEditor({ disabled: true });
 
-    const addBtn = screen.getByRole("button", { name: /add block/i });
+    const addBtn = screen.getByRole('button', { name: /add block/i });
     expect(addBtn).toBeDisabled();
   });
 
-  it("passes disabled to FormGenerator when a block is selected", () => {
-    const blocks = [makeBlock({ id: "b1", blockType: "HERO" })];
+  it('passes disabled to FormGenerator when a block is selected', () => {
+    const blocks = [makeBlock({ id: 'b1', blockType: 'HERO' })];
     renderBlockEditor({ blocks, disabled: true });
 
     // Select the block
-    fireEvent.click(screen.getByText("Hero"));
+    fireEvent.click(screen.getByText('Hero'));
 
-    const fg = screen.getByTestId("form-generator");
-    expect(fg).toHaveAttribute("data-disabled", "true");
+    const fg = screen.getByTestId('form-generator');
+    expect(fg).toHaveAttribute('data-disabled', 'true');
   });
 });
 
@@ -501,90 +464,79 @@ describe("BlockEditor — disabled state", () => {
 // Tests — Keyboard shortcuts
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — keyboard shortcuts", () => {
-  it("duplicates selected block on Ctrl+D", () => {
+describe('BlockEditor — keyboard shortcuts', () => {
+  it('duplicates selected block on Ctrl+D', () => {
     const onChange = vi.fn();
     const blocks = [
-      makeBlock({
-        id: "b1",
-        blockType: "HERO",
-        content: { heading: "Test" },
-        sortOrder: 0,
-      }),
+      makeBlock({ id: 'b1', blockType: 'HERO', content: { heading: 'Test' }, sortOrder: 0 }),
     ];
     renderBlockEditor({ blocks, onChange });
 
     // Select the block
-    fireEvent.click(screen.getByText("Hero"));
+    fireEvent.click(screen.getByText('Hero'));
 
     // Press Ctrl+D
-    fireEvent.keyDown(document, { key: "d", ctrlKey: true });
+    fireEvent.keyDown(document, { key: 'd', ctrlKey: true });
 
     expect(onChange).toHaveBeenCalled();
-    const lastCall = onChange.mock.calls[
-      onChange.mock.calls.length - 1
-    ][0] as Block[];
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0] as Block[];
     expect(lastCall).toHaveLength(2);
-    expect(lastCall[1].id).toBe("test-uuid-1");
+    expect(lastCall[1].id).toBe('test-uuid-1');
   });
 
-  it("moves block up on Alt+ArrowUp", () => {
+  it('moves block up on Alt+ArrowUp', () => {
     const onChange = vi.fn();
     const blocks = [
-      makeBlock({ id: "b1", blockType: "HERO", sortOrder: 0 }),
-      makeBlock({ id: "b2", blockType: "FEATURES", sortOrder: 1 }),
+      makeBlock({ id: 'b1', blockType: 'HERO', sortOrder: 0 }),
+      makeBlock({ id: 'b2', blockType: 'FEATURES', sortOrder: 1 }),
     ];
     renderBlockEditor({ blocks, onChange });
 
     // Select second block
-    fireEvent.click(screen.getByText("Features"));
+    fireEvent.click(screen.getByText('Features'));
 
     // Press Alt+ArrowUp
-    fireEvent.keyDown(document, { key: "ArrowUp", altKey: true });
+    fireEvent.keyDown(document, { key: 'ArrowUp', altKey: true });
 
     expect(onChange).toHaveBeenCalled();
-    const lastCall = onChange.mock.calls[
-      onChange.mock.calls.length - 1
-    ][0] as Block[];
-    expect(lastCall[0].id).toBe("b2");
-    expect(lastCall[1].id).toBe("b1");
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0] as Block[];
+    expect(lastCall[0].id).toBe('b2');
+    expect(lastCall[1].id).toBe('b1');
   });
 
-  it("moves block down on Alt+ArrowDown", () => {
+  it('moves block down on Alt+ArrowDown', () => {
     const onChange = vi.fn();
     const blocks = [
-      makeBlock({ id: "b1", blockType: "HERO", sortOrder: 0 }),
-      makeBlock({ id: "b2", blockType: "FEATURES", sortOrder: 1 }),
+      makeBlock({ id: 'b1', blockType: 'HERO', sortOrder: 0 }),
+      makeBlock({ id: 'b2', blockType: 'FEATURES', sortOrder: 1 }),
     ];
     renderBlockEditor({ blocks, onChange });
 
     // Select first block
-    fireEvent.click(screen.getByText("Hero"));
+    fireEvent.click(screen.getByText('Hero'));
 
     // Press Alt+ArrowDown
-    fireEvent.keyDown(document, { key: "ArrowDown", altKey: true });
+    fireEvent.keyDown(document, { key: 'ArrowDown', altKey: true });
 
     expect(onChange).toHaveBeenCalled();
-    const lastCall = onChange.mock.calls[
-      onChange.mock.calls.length - 1
-    ][0] as Block[];
-    expect(lastCall[0].id).toBe("b2");
-    expect(lastCall[1].id).toBe("b1");
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0] as Block[];
+    expect(lastCall[0].id).toBe('b2');
+    expect(lastCall[1].id).toBe('b1');
   });
 
-  it("does not move block up if already first", () => {
+  it('does not move block up if already first', () => {
     const onChange = vi.fn();
     const blocks = [
-      makeBlock({ id: "b1", blockType: "HERO", sortOrder: 0 }),
-      makeBlock({ id: "b2", blockType: "FEATURES", sortOrder: 1 }),
+      makeBlock({ id: 'b1', blockType: 'HERO', sortOrder: 0 }),
+      makeBlock({ id: 'b2', blockType: 'FEATURES', sortOrder: 1 }),
     ];
     renderBlockEditor({ blocks, onChange });
 
     // Select first block
-    fireEvent.click(screen.getByText("Hero"));
+    fireEvent.click(screen.getByText('Hero'));
 
     // Press Alt+ArrowUp — should not move
-    fireEvent.keyDown(document, { key: "ArrowUp", altKey: true });
+    fireEvent.keyDown(document, { key: 'ArrowUp', altKey: true });
 
     // onChange should NOT be called for move (may be called for select though)
     const moveCalls = onChange.mock.calls.filter((call: unknown[]) => {
@@ -594,7 +546,7 @@ describe("BlockEditor — keyboard shortcuts", () => {
     // If onChange wasn't called or blocks order is unchanged, that's correct
     if (moveCalls.length > 0) {
       const lastMoveCall = moveCalls[moveCalls.length - 1][0] as Block[];
-      expect(lastMoveCall[0].id).toBe("b1");
+      expect(lastMoveCall[0].id).toBe('b1');
     }
   });
 });
@@ -603,9 +555,9 @@ describe("BlockEditor — keyboard shortcuts", () => {
 // Tests — React.memo + displayName
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — React.memo + displayName", () => {
+describe('BlockEditor — React.memo + displayName', () => {
   it('has displayName "BlockEditor"', () => {
-    expect(BlockEditor.displayName).toBe("BlockEditor");
+    expect(BlockEditor.displayName).toBe('BlockEditor');
   });
 });
 
@@ -613,19 +565,19 @@ describe("BlockEditor — React.memo + displayName", () => {
 // Tests — Barrel exports
 // ---------------------------------------------------------------------------
 
-describe("BlockEditor — barrel exports", () => {
-  it("exports BlockEditor from index.ts", async () => {
-    const barrel = await import("../index");
+describe('BlockEditor — barrel exports', () => {
+  it('exports BlockEditor from index.ts', async () => {
+    const barrel = await import('../index');
     expect(barrel.BlockEditor).toBeDefined();
   });
 
-  it("exports BlockList from index.ts", async () => {
-    const barrel = await import("../index");
+  it('exports BlockList from index.ts', async () => {
+    const barrel = await import('../index');
     expect(barrel.BlockList).toBeDefined();
   });
 
-  it("exports BlockSelector from index.ts", async () => {
-    const barrel = await import("../index");
+  it('exports BlockSelector from index.ts', async () => {
+    const barrel = await import('../index');
     expect(barrel.BlockSelector).toBeDefined();
   });
 });

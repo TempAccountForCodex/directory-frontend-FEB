@@ -12,13 +12,13 @@
  * Step 5.3.3
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type {
   WebSocketConnectionState,
   WebSocketMessage,
   UseWebSocketReturn,
   UserMetadata,
-} from "../types/websocket";
+} from '../types/websocket';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -29,9 +29,9 @@ const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000, 30000];
 
 /** Derive ws(s) URL from the HTTP API base URL */
 function buildWsUrl(token: string, websiteId?: number | string): string {
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
   // Replace http(s):// with ws(s):// and strip /api suffix if present
-  const base = apiUrl.replace(/^http/, "ws").replace(/\/api$/, "");
+  const base = apiUrl.replace(/^http/, 'ws').replace(/\/api$/, '');
   let url = `${base}/ws?token=${encodeURIComponent(token)}`;
   if (websiteId) {
     url += `&websiteId=${encodeURIComponent(String(websiteId))}`;
@@ -69,14 +69,11 @@ interface UseWebSocketOptions {
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useWebSocket(
-  options: UseWebSocketOptions = {},
-): UseWebSocketReturn {
+export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {
   const { enabled = true, onMessage, websiteId } = options;
 
   // ---- State (minimal — only values that must trigger re-render) -----------
-  const [connectionState, setConnectionState] =
-    useState<WebSocketConnectionState>("disconnected");
+  const [connectionState, setConnectionState] = useState<WebSocketConnectionState>('disconnected');
   const [connectedUsers, setConnectedUsers] = useState(0);
   const [reconnectAttempt, setReconnectAttempt] = useState(0);
   const [userMetadata, setUserMetadata] = useState<UserMetadata | null>(null);
@@ -131,14 +128,11 @@ export function useWebSocket(
 
     clearReconnectTimer();
 
-    const delayIndex = Math.min(
-      reconnectDelayIndexRef.current,
-      RECONNECT_DELAYS.length - 1,
-    );
+    const delayIndex = Math.min(reconnectDelayIndexRef.current, RECONNECT_DELAYS.length - 1);
     const delay = RECONNECT_DELAYS[delayIndex];
     reconnectDelayIndexRef.current = Math.min(
       reconnectDelayIndexRef.current + 1,
-      RECONNECT_DELAYS.length - 1,
+      RECONNECT_DELAYS.length - 1
     );
 
     reconnectAttemptRef.current += 1;
@@ -159,7 +153,7 @@ export function useWebSocket(
     if (!mountedRef.current || !enabledRef.current) return;
 
     // Strategy 1: Read token from localStorage (explicit storage by some flows)
-    let token = localStorage.getItem("token");
+    let token = localStorage.getItem('token');
 
     // Strategy 2: If not in localStorage, try the non-httpOnly ws_token cookie
     // (set during login alongside the httpOnly token cookie, specifically for WS auth)
@@ -169,7 +163,7 @@ export function useWebSocket(
 
     if (!token) {
       // No token available — do not attempt connection
-      if (mountedRef.current) setConnectionState("disconnected");
+      if (mountedRef.current) setConnectionState('disconnected');
       return;
     }
 
@@ -188,14 +182,14 @@ export function useWebSocket(
       wsRef.current = null;
     }
 
-    if (mountedRef.current) setConnectionState("connecting");
+    if (mountedRef.current) setConnectionState('connecting');
 
     const url = buildWsUrl(token, websiteIdRef.current);
     let ws: WebSocket;
     try {
       ws = new WebSocket(url);
     } catch {
-      if (mountedRef.current) setConnectionState("error");
+      if (mountedRef.current) setConnectionState('error');
       scheduleReconnect();
       return;
     }
@@ -203,7 +197,7 @@ export function useWebSocket(
 
     ws.onopen = () => {
       if (!mountedRef.current) return;
-      setConnectionState("connected");
+      setConnectionState('connected');
       // Reset backoff on successful connection
       reconnectDelayIndexRef.current = 0;
       reconnectAttemptRef.current = 0;
@@ -212,7 +206,7 @@ export function useWebSocket(
 
       // Rejoin all rooms from before the reconnect
       joinedRoomsRef.current.forEach((roomId) => {
-        sendRaw({ type: "JOIN_ROOM", roomId });
+        sendRaw({ type: 'JOIN_ROOM', roomId });
       });
     };
 
@@ -220,10 +214,10 @@ export function useWebSocket(
       if (!mountedRef.current) return;
       // 4001 = auth failed, 4002 = rate limited — do not reconnect on either
       if (event.code === 4001 || event.code === 4002) {
-        setConnectionState("error");
+        setConnectionState('error');
         return;
       }
-      setConnectionState("disconnected");
+      setConnectionState('disconnected');
       if (enabledRef.current) {
         scheduleReconnect();
       }
@@ -231,7 +225,7 @@ export function useWebSocket(
 
     ws.onerror = () => {
       if (!mountedRef.current) return;
-      setConnectionState("error");
+      setConnectionState('error');
       // onerror is always followed by onclose in browsers — reconnect there
     };
 
@@ -247,13 +241,13 @@ export function useWebSocket(
       }
 
       // Respond to JSON-level ping messages from server
-      if ((parsed as { type: string }).type === "ping") {
-        sendRaw({ type: "pong" });
+      if ((parsed as { type: string }).type === 'ping') {
+        sendRaw({ type: 'pong' });
         return;
       }
 
       // Step 5.8: Handle USER_METADATA handshake from server
-      if (parsed.type === "USER_METADATA" && parsed.data) {
+      if (parsed.type === 'USER_METADATA' && parsed.data) {
         const d = parsed.data as Record<string, unknown>;
         setUserMetadata({
           userId: d.userId as number,
@@ -264,7 +258,7 @@ export function useWebSocket(
       }
 
       // Update connected users from ROOM_STATE messages
-      if (parsed.type === "ROOM_STATE" && parsed.data) {
+      if (parsed.type === 'ROOM_STATE' && parsed.data) {
         const members = (parsed.data as { members?: unknown[] }).members;
         if (Array.isArray(members)) {
           setConnectedUsers(members.length);
@@ -320,7 +314,7 @@ export function useWebSocket(
         wsRef.current.close();
         wsRef.current = null;
       }
-      if (mountedRef.current) setConnectionState("disconnected");
+      if (mountedRef.current) setConnectionState('disconnected');
     } else {
       // Re-enable: start fresh connection if not already open
       if (
@@ -339,31 +333,31 @@ export function useWebSocket(
   // ---- Public API -----------------------------------------------------------
 
   const send = useCallback(
-    (message: Omit<WebSocketMessage, "timestamp" | "userId">): boolean => {
+    (message: Omit<WebSocketMessage, 'timestamp' | 'userId'>): boolean => {
       return sendRaw(message);
     },
-    [sendRaw],
+    [sendRaw]
   );
 
   const joinRoom = useCallback(
     (roomId: string): void => {
       joinedRoomsRef.current.add(roomId);
-      sendRaw({ type: "JOIN_ROOM", roomId });
+      sendRaw({ type: 'JOIN_ROOM', roomId });
     },
-    [sendRaw],
+    [sendRaw]
   );
 
   const leaveRoom = useCallback(
     (roomId: string): void => {
       joinedRoomsRef.current.delete(roomId);
-      sendRaw({ type: "LEAVE_ROOM", roomId });
+      sendRaw({ type: 'LEAVE_ROOM', roomId });
     },
-    [sendRaw],
+    [sendRaw]
   );
 
   const leaveAllRooms = useCallback((): void => {
     joinedRoomsRef.current.forEach((roomId) => {
-      sendRaw({ type: "LEAVE_ROOM", roomId });
+      sendRaw({ type: 'LEAVE_ROOM', roomId });
     });
     joinedRoomsRef.current.clear();
   }, [sendRaw]);

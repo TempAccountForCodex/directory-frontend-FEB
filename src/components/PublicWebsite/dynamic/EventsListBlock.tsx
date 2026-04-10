@@ -18,13 +18,7 @@
  * Security: no dangerouslySetInnerHTML, no new dependencies
  */
 
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Alert,
   Box,
@@ -41,17 +35,17 @@ import {
   Skeleton,
   TextField,
   Typography,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import useTenantUrl from "../../../hooks/useTenantUrl";
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import useTenantUrl from '../../../hooks/useTenantUrl';
 
 /* ===================== Constants ===================== */
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const DEBOUNCE_MS = 300;
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /* ===================== Types ===================== */
 
@@ -89,7 +83,7 @@ interface EventsApiResponse {
 interface EventsListContent {
   heading?: string;
   subheading?: string;
-  layout?: "list" | "cards" | "calendar";
+  layout?: 'list' | 'cards' | 'calendar';
   eventsPerPage?: number;
   showSearch?: boolean;
   showFilters?: boolean;
@@ -101,8 +95,8 @@ interface EventsListContent {
   showPrice?: boolean;
   showPastEvents?: boolean;
   categoryFilter?: string;
-  sortBy?: "startDate" | "title" | "createdAt";
-  sortOrder?: "asc" | "desc";
+  sortBy?: 'startDate' | 'title' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
   emptyMessage?: string;
   detailLink?: string;
   websiteId?: string;
@@ -134,24 +128,17 @@ function isPastEvent(startDate: string): boolean {
 function formatEventDate(dateStr: string): string {
   try {
     const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   } catch {
     return dateStr;
   }
 }
 
-function formatPrice(price: number | undefined, currency = "USD"): string {
-  if (price === undefined || price === null) return "";
-  if (price === 0) return "Free";
+function formatPrice(price: number | undefined, currency = 'USD'): string {
+  if (price === undefined || price === null) return '';
+  if (price === 0) return 'Free';
   try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-    }).format(price);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(price);
   } catch {
     return `${currency} ${price}`;
   }
@@ -159,40 +146,28 @@ function formatPrice(price: number | undefined, currency = "USD"): string {
 
 /* ===================== Skeleton ===================== */
 
-const EventsListSkeleton: React.FC<{ count?: number }> = React.memo(
-  ({ count = 6 }) => (
-    <Container sx={{ py: 6 }}>
-      <Skeleton
-        variant="text"
-        sx={{ fontSize: "2rem", mb: 1, width: "40%", mx: "auto" }}
-      />
-      <Skeleton
-        variant="text"
-        sx={{ fontSize: "1rem", mb: 4, width: "60%", mx: "auto" }}
-      />
-      <Grid container spacing={3}>
-        {Array.from({ length: count }).map((_, i) => (
-          <Grid item xs={12} sm={6} md={4} key={i}>
-            <Skeleton
-              variant="rectangular"
-              height={200}
-              sx={{ borderRadius: 2 }}
-            />
-            <Skeleton variant="text" sx={{ mt: 1 }} />
-            <Skeleton variant="text" width="60%" />
-          </Grid>
-        ))}
-      </Grid>
-    </Container>
-  ),
-);
-EventsListSkeleton.displayName = "EventsListSkeleton";
+const EventsListSkeleton: React.FC<{ count?: number }> = React.memo(({ count = 6 }) => (
+  <Container sx={{ py: 6 }}>
+    <Skeleton variant="text" sx={{ fontSize: '2rem', mb: 1, width: '40%', mx: 'auto' }} />
+    <Skeleton variant="text" sx={{ fontSize: '1rem', mb: 4, width: '60%', mx: 'auto' }} />
+    <Grid container spacing={3}>
+      {Array.from({ length: count }).map((_, i) => (
+        <Grid item xs={12} sm={6} md={4} key={i}>
+          <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="text" sx={{ mt: 1 }} />
+          <Skeleton variant="text" width="60%" />
+        </Grid>
+      ))}
+    </Grid>
+  </Container>
+));
+EventsListSkeleton.displayName = 'EventsListSkeleton';
 
 /* ===================== EventCard (inline sub-component) ===================== */
 
 interface EventCardProps {
   event: Event;
-  layout: "list" | "cards" | "calendar";
+  layout: 'list' | 'cards' | 'calendar';
   showLocation: boolean;
   showDate: boolean;
   showImage: boolean;
@@ -232,33 +207,30 @@ const EventCard: React.FC<EventCardProps> = React.memo(
         onClick={() => onRsvp(event.id)}
         aria-label={`RSVP for ${event.title}`}
         sx={{
-          bgcolor: isRsvped ? "grey.400" : primaryColor,
-          color: "white",
-          "&:hover": {
-            bgcolor: isRsvped ? "grey.400" : primaryColor,
-            opacity: 0.9,
-          },
-          "&.Mui-disabled": { bgcolor: "grey.300", color: "grey.500" },
+          bgcolor: isRsvped ? 'grey.400' : primaryColor,
+          color: 'white',
+          '&:hover': { bgcolor: isRsvped ? 'grey.400' : primaryColor, opacity: 0.9 },
+          '&.Mui-disabled': { bgcolor: 'grey.300', color: 'grey.500' },
           minWidth: 80,
         }}
       >
-        {isRsvped ? "RSVP'd" : "RSVP"}
+        {isRsvped ? "RSVP'd" : 'RSVP'}
       </Button>
     ) : null;
 
-    if (layout === "list") {
+    if (layout === 'list') {
       return (
         <Box
           component="article"
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 2,
             p: 2,
-            border: "1px solid",
-            borderColor: "divider",
+            border: '1px solid',
+            borderColor: 'divider',
             borderRadius: 2,
-            bgcolor: "background.paper",
+            bgcolor: 'background.paper',
           }}
         >
           {/* Date column */}
@@ -266,21 +238,17 @@ const EventCard: React.FC<EventCardProps> = React.memo(
             <Box
               sx={{
                 minWidth: 60,
-                textAlign: "center",
+                textAlign: 'center',
                 bgcolor: primaryColor,
-                color: "white",
+                color: 'white',
                 borderRadius: 1,
                 p: 1,
                 flexShrink: 0,
               }}
             >
-              <Typography
-                variant="caption"
-                display="block"
-                sx={{ fontWeight: 700 }}
-              >
+              <Typography variant="caption" display="block" sx={{ fontWeight: 700 }}>
                 {new Date(event.startDate)
-                  .toLocaleDateString("en-US", { month: "short" })
+                  .toLocaleDateString('en-US', { month: 'short' })
                   .toUpperCase()}
               </Typography>
               <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1 }}>
@@ -291,15 +259,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(
 
           {/* Details column */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                mb: 0.5,
-                flexWrap: "wrap",
-              }}
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
               <Typography
                 variant="subtitle1"
                 component="h3"
@@ -311,12 +271,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(
                 <Chip
                   label="Past"
                   size="small"
-                  sx={{
-                    bgcolor: "grey.300",
-                    color: "grey.700",
-                    height: 20,
-                    fontSize: "0.7rem",
-                  }}
+                  sx={{ bgcolor: 'grey.300', color: 'grey.700', height: 20, fontSize: '0.7rem' }}
                 />
               )}
               {event.category && (
@@ -327,13 +282,13 @@ const EventCard: React.FC<EventCardProps> = React.memo(
                     bgcolor: `${primaryColor}22`,
                     color: primaryColor,
                     height: 20,
-                    fontSize: "0.7rem",
+                    fontSize: '0.7rem',
                   }}
                 />
               )}
             </Box>
             {showLocation && event.location && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <LocationOnIcon sx={{ fontSize: 14, color: bodyColor }} />
                 <Typography variant="caption" sx={{ color: bodyColor }}>
                   {event.location}
@@ -341,10 +296,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(
               </Box>
             )}
             {showPrice && event.price !== undefined && (
-              <Typography
-                variant="caption"
-                sx={{ color: primaryColor, fontWeight: 600 }}
-              >
+              <Typography variant="caption" sx={{ color: primaryColor, fontWeight: 600 }}>
                 {formatPrice(event.price, event.currency)}
               </Typography>
             )}
@@ -362,11 +314,11 @@ const EventCard: React.FC<EventCardProps> = React.memo(
         component="article"
         elevation={2}
         sx={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          transition: "transform 0.2s ease",
-          "&:hover": { transform: "translateY(-4px)", boxShadow: 4 },
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'transform 0.2s ease',
+          '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 },
         }}
       >
         {showImage && event.image && (
@@ -375,20 +327,11 @@ const EventCard: React.FC<EventCardProps> = React.memo(
             height={160}
             image={event.image}
             alt={event.title}
-            sx={{ objectFit: "cover" }}
+            sx={{ objectFit: 'cover' }}
           />
         )}
-        <CardContent
-          sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 1,
-              flexWrap: "wrap",
-            }}
-          >
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap' }}>
             <Typography
               variant="h6"
               component="h3"
@@ -400,12 +343,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(
               <Chip
                 label="Past"
                 size="small"
-                sx={{
-                  bgcolor: "grey.300",
-                  color: "grey.700",
-                  height: 20,
-                  fontSize: "0.7rem",
-                }}
+                sx={{ bgcolor: 'grey.300', color: 'grey.700', height: 20, fontSize: '0.7rem' }}
               />
             )}
           </Box>
@@ -415,16 +353,16 @@ const EventCard: React.FC<EventCardProps> = React.memo(
               label={event.category}
               size="small"
               sx={{
-                alignSelf: "flex-start",
+                alignSelf: 'flex-start',
                 bgcolor: `${primaryColor}22`,
                 color: primaryColor,
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
               }}
             />
           )}
 
           {showDate && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <CalendarTodayIcon sx={{ fontSize: 14, color: bodyColor }} />
               <Typography variant="caption" sx={{ color: bodyColor }}>
                 {formatEventDate(event.startDate)}
@@ -433,7 +371,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(
           )}
 
           {showLocation && event.location && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <LocationOnIcon sx={{ fontSize: 14, color: bodyColor }} />
               <Typography variant="caption" sx={{ color: bodyColor }}>
                 {event.location}
@@ -442,32 +380,26 @@ const EventCard: React.FC<EventCardProps> = React.memo(
           )}
 
           {showPrice && event.price !== undefined && (
-            <Typography
-              variant="body2"
-              sx={{ color: primaryColor, fontWeight: 600 }}
-            >
+            <Typography variant="body2" sx={{ color: primaryColor, fontWeight: 600 }}>
               {formatPrice(event.price, event.currency)}
             </Typography>
           )}
 
           {event.description && (
-            <Typography
-              variant="body2"
-              sx={{ color: bodyColor, flex: 1, lineHeight: 1.5 }}
-            >
+            <Typography variant="body2" sx={{ color: bodyColor, flex: 1, lineHeight: 1.5 }}>
               {event.description.length > 100
                 ? `${event.description.slice(0, 100)}…`
                 : event.description}
             </Typography>
           )}
 
-          {rsvpButton && <Box sx={{ mt: "auto", pt: 1 }}>{rsvpButton}</Box>}
+          {rsvpButton && <Box sx={{ mt: 'auto', pt: 1 }}>{rsvpButton}</Box>}
         </CardContent>
       </Card>
     );
-  },
+  }
 );
-EventCard.displayName = "EventCard";
+EventCard.displayName = 'EventCard';
 
 /* ===================== Calendar Layout ===================== */
 
@@ -476,158 +408,142 @@ interface CalendarViewProps {
   primaryColor: string;
 }
 
-const CalendarView: React.FC<CalendarViewProps> = React.memo(
-  ({ events, primaryColor }) => {
-    const [viewDate] = useState(() => new Date());
+const CalendarView: React.FC<CalendarViewProps> = React.memo(({ events, primaryColor }) => {
+  const [viewDate] = useState(() => new Date());
 
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
 
-    const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // Build events by day
-    const eventsByDay = useMemo(() => {
-      const map: Record<number, Event[]> = {};
-      events.forEach((ev) => {
-        const d = new Date(ev.startDate);
-        if (d.getFullYear() === year && d.getMonth() === month) {
-          const day = d.getDate();
-          if (!map[day]) map[day] = [];
-          map[day].push(ev);
-        }
-      });
-      return map;
-    }, [events, year, month]);
-
-    const monthLabel = viewDate.toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
+  // Build events by day
+  const eventsByDay = useMemo(() => {
+    const map: Record<number, Event[]> = {};
+    events.forEach((ev) => {
+      const d = new Date(ev.startDate);
+      if (d.getFullYear() === year && d.getMonth() === month) {
+        const day = d.getDate();
+        if (!map[day]) map[day] = [];
+        map[day].push(ev);
+      }
     });
+    return map;
+  }, [events, year, month]);
 
-    // Total cells = leading blanks + days in month, rounded up to multiple of 7
-    const totalCells = Math.ceil((firstDayOfMonth + daysInMonth) / 7) * 7;
+  const monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    return (
-      <Box aria-label="Event calendar">
-        <Typography
-          variant="h6"
-          sx={{ textAlign: "center", mb: 2, fontWeight: 600 }}
-        >
-          {monthLabel}
-        </Typography>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            gap: 0.5,
-          }}
-        >
-          {/* Day headers */}
-          {DAY_LABELS.map((day) => (
+  // Total cells = leading blanks + days in month, rounded up to multiple of 7
+  const totalCells = Math.ceil((firstDayOfMonth + daysInMonth) / 7) * 7;
+
+  return (
+    <Box aria-label="Event calendar">
+      <Typography variant="h6" sx={{ textAlign: 'center', mb: 2, fontWeight: 600 }}>
+        {monthLabel}
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(7, 1fr)',
+          gap: 0.5,
+        }}
+      >
+        {/* Day headers */}
+        {DAY_LABELS.map((day) => (
+          <Box
+            key={day}
+            sx={{
+              textAlign: 'center',
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'text.secondary',
+            }}
+          >
+            {day}
+          </Box>
+        ))}
+
+        {/* Day cells */}
+        {Array.from({ length: totalCells }).map((_, i) => {
+          const dayNum = i - firstDayOfMonth + 1;
+          const isValidDay = dayNum >= 1 && dayNum <= daysInMonth;
+          const dayEvents = isValidDay ? eventsByDay[dayNum] || [] : [];
+
+          return (
             <Box
-              key={day}
+              key={i}
               sx={{
-                textAlign: "center",
-                py: 0.5,
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                color: "text.secondary",
+                minHeight: 48,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+                p: 0.5,
+                bgcolor: isValidDay ? 'background.paper' : 'transparent',
+                borderStyle: isValidDay ? 'solid' : 'none',
               }}
             >
-              {day}
+              {isValidDay && (
+                <>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: 'block',
+                      fontWeight: dayEvents.length > 0 ? 700 : 400,
+                      color: dayEvents.length > 0 ? primaryColor : 'text.primary',
+                    }}
+                  >
+                    {dayNum}
+                  </Typography>
+                  {/* Event dots */}
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.25, mt: 0.25 }}>
+                    {dayEvents.slice(0, 3).map((ev) => (
+                      <Box
+                        key={ev.id}
+                        title={ev.title}
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          bgcolor: primaryColor,
+                        }}
+                      />
+                    ))}
+                    {dayEvents.length > 3 && (
+                      <Typography
+                        variant="caption"
+                        sx={{ fontSize: '0.6rem', color: primaryColor }}
+                      >
+                        +{dayEvents.length - 3}
+                      </Typography>
+                    )}
+                  </Box>
+                </>
+              )}
             </Box>
-          ))}
-
-          {/* Day cells */}
-          {Array.from({ length: totalCells }).map((_, i) => {
-            const dayNum = i - firstDayOfMonth + 1;
-            const isValidDay = dayNum >= 1 && dayNum <= daysInMonth;
-            const dayEvents = isValidDay ? eventsByDay[dayNum] || [] : [];
-
-            return (
-              <Box
-                key={i}
-                sx={{
-                  minHeight: 48,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  p: 0.5,
-                  bgcolor: isValidDay ? "background.paper" : "transparent",
-                  borderStyle: isValidDay ? "solid" : "none",
-                }}
-              >
-                {isValidDay && (
-                  <>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        display: "block",
-                        fontWeight: dayEvents.length > 0 ? 700 : 400,
-                        color:
-                          dayEvents.length > 0 ? primaryColor : "text.primary",
-                      }}
-                    >
-                      {dayNum}
-                    </Typography>
-                    {/* Event dots */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: 0.25,
-                        mt: 0.25,
-                      }}
-                    >
-                      {dayEvents.slice(0, 3).map((ev) => (
-                        <Box
-                          key={ev.id}
-                          title={ev.title}
-                          sx={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: "50%",
-                            bgcolor: primaryColor,
-                          }}
-                        />
-                      ))}
-                      {dayEvents.length > 3 && (
-                        <Typography
-                          variant="caption"
-                          sx={{ fontSize: "0.6rem", color: primaryColor }}
-                        >
-                          +{dayEvents.length - 3}
-                        </Typography>
-                      )}
-                    </Box>
-                  </>
-                )}
-              </Box>
-            );
-          })}
-        </Box>
+          );
+        })}
       </Box>
-    );
-  },
-);
-CalendarView.displayName = "CalendarView";
+    </Box>
+  );
+});
+CalendarView.displayName = 'CalendarView';
 
 /* ===================== Main Component ===================== */
 
 const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
   block,
-  primaryColor = "#378C92",
-  headingColor = "#252525",
-  bodyColor = "#6A6F78",
+  primaryColor = '#378C92',
+  headingColor = '#252525',
+  bodyColor = '#6A6F78',
   onCtaClick,
 }) => {
   const { content } = block;
 
   const {
-    heading = "Upcoming Events",
-    subheading = "",
-    layout = "cards",
+    heading = 'Upcoming Events',
+    subheading = '',
+    layout = 'cards',
     eventsPerPage = 9,
     showSearch = true,
     showFilters = true,
@@ -638,10 +554,10 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
     showRsvp = true,
     showPrice = true,
     showPastEvents = true,
-    categoryFilter: defaultCategory = "",
-    sortBy = "startDate",
-    sortOrder: configSortOrder = "asc",
-    emptyMessage = "No events found.",
+    categoryFilter: defaultCategory = '',
+    sortBy = 'startDate',
+    sortOrder: configSortOrder = 'asc',
+    emptyMessage = 'No events found.',
     websiteId,
     detailLink,
   } = content;
@@ -655,8 +571,8 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(defaultCategory);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -664,7 +580,7 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
   const [rsvpedEvents, setRsvpedEvents] = useState<Set<number>>(() => {
     // Initialize from sessionStorage
     const set = new Set<number>();
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       // We'll populate this after events load
     }
     return set;
@@ -674,18 +590,15 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
   /* --- Debounce search --- */
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setSearchQuery(value);
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = setTimeout(() => {
-        setDebouncedSearch(value);
-        setCurrentPage(1);
-      }, DEBOUNCE_MS);
-    },
-    [],
-  );
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+      setCurrentPage(1);
+    }, DEBOUNCE_MS);
+  }, []);
 
   /* --- Fetch events --- */
   useEffect(() => {
@@ -700,14 +613,12 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
       sortOrder: configSortOrder,
     });
 
-    if (websiteId) params.set("websiteId", websiteId);
-    if (debouncedSearch) params.set("search", debouncedSearch);
-    if (selectedCategory) params.set("category", selectedCategory);
-    if (!showPastEvents) params.set("upcoming", "true");
+    if (websiteId) params.set('websiteId', websiteId);
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (selectedCategory) params.set('category', selectedCategory);
+    if (!showPastEvents) params.set('upcoming', 'true');
 
-    fetch(`${API_URL}/events/public?${params.toString()}`, {
-      signal: controller.signal,
-    })
+    fetch(`${API_URL}/events/public?${params.toString()}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`Failed to load events (${res.status})`);
         return res.json() as Promise<EventsApiResponse>;
@@ -726,7 +637,7 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
           // Initialize RSVP state from sessionStorage
           const rsvpSet = new Set<number>();
           eventsData.forEach((ev) => {
-            if (sessionStorage.getItem(`rsvp_${ev.id}`) === "true") {
+            if (sessionStorage.getItem(`rsvp_${ev.id}`) === 'true') {
               rsvpSet.add(ev.id);
             }
           });
@@ -735,8 +646,8 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
         }
       })
       .catch((err: Error) => {
-        if (err.name !== "AbortError" && !controller.signal.aborted) {
-          setError(err.message || "Failed to load events. Please try again.");
+        if (err.name !== 'AbortError' && !controller.signal.aborted) {
+          setError(err.message || 'Failed to load events. Please try again.');
           setLoading(false);
         }
       });
@@ -774,11 +685,11 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
 
       try {
         const res = await fetch(`${API_URL}/events/${eventId}/rsvp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
         });
         if (res.ok) {
-          sessionStorage.setItem(`rsvp_${eventId}`, "true");
+          sessionStorage.setItem(`rsvp_${eventId}`, 'true');
           setRsvpedEvents((prev) => new Set(prev).add(eventId));
         }
       } catch {
@@ -791,26 +702,23 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
         });
       }
     },
-    [rsvpedEvents, rsvpLoadingIds, onCtaClick, block.blockType],
+    [rsvpedEvents, rsvpLoadingIds, onCtaClick, block.blockType]
   );
 
   /* --- Category chip click --- */
   const handleCategoryClick = useCallback((category: string) => {
-    setSelectedCategory((prev) => (prev === category ? "" : category));
+    setSelectedCategory((prev) => (prev === category ? '' : category));
     setCurrentPage(1);
   }, []);
 
   /* --- Page change --- */
-  const handlePageChange = useCallback(
-    (_: React.ChangeEvent<unknown>, page: number) => {
-      setCurrentPage(page);
-    },
-    [],
-  );
+  const handlePageChange = useCallback((_: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page);
+  }, []);
 
   /* --- Responsive grid --- */
   const mdCols = useMemo(() => {
-    if (layout === "list") return 12 as const;
+    if (layout === 'list') return 12 as const;
     return 4 as const; // 3 columns default for cards
   }, [layout]);
 
@@ -835,13 +743,13 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
   return (
     <Box
       component="section"
-      aria-label={heading || "Events List"}
-      sx={{ py: 8, bgcolor: "background.default" }}
+      aria-label={heading || 'Events List'}
+      sx={{ py: 8, bgcolor: 'background.default' }}
     >
       <Container maxWidth="lg">
         {/* Header */}
         {(heading || subheading) && (
-          <Box sx={{ textAlign: "center", mb: 4 }}>
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
             {heading && (
               <Typography
                 variant="h3"
@@ -855,12 +763,7 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
             {subheading && (
               <Typography
                 variant="h6"
-                sx={{
-                  color: bodyColor,
-                  fontWeight: 400,
-                  maxWidth: 600,
-                  mx: "auto",
-                }}
+                sx={{ color: bodyColor, fontWeight: 400, maxWidth: 600, mx: 'auto' }}
               >
                 {subheading}
               </Typography>
@@ -877,7 +780,7 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
               placeholder="Search events..."
               value={searchQuery}
               onChange={handleSearchChange}
-              inputProps={{ "aria-label": "Search events" }}
+              inputProps={{ 'aria-label': 'Search events' }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -885,7 +788,7 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
                   </InputAdornment>
                 ),
               }}
-              sx={{ maxWidth: 480, display: "block", mx: "auto" }}
+              sx={{ maxWidth: 480, display: 'block', mx: 'auto' }}
             />
           </Box>
         )}
@@ -893,13 +796,7 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
         {/* Category Filter Chips */}
         {showFilters && categories.length > 0 && (
           <Box
-            sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 1,
-              justifyContent: "center",
-              mb: 3,
-            }}
+            sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center', mb: 3 }}
             role="group"
             aria-label="Category filter"
           >
@@ -908,19 +805,15 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
                 key={cat}
                 label={cat}
                 clickable
-                variant={selectedCategory === cat ? "filled" : "outlined"}
+                variant={selectedCategory === cat ? 'filled' : 'outlined'}
                 onClick={() => handleCategoryClick(cat)}
                 aria-pressed={selectedCategory === cat}
                 sx={{
                   borderColor: primaryColor,
-                  color: selectedCategory === cat ? "white" : primaryColor,
-                  bgcolor:
-                    selectedCategory === cat ? primaryColor : "transparent",
-                  "&:hover": {
-                    bgcolor:
-                      selectedCategory === cat
-                        ? primaryColor
-                        : `${primaryColor}1A`,
+                  color: selectedCategory === cat ? 'white' : primaryColor,
+                  bgcolor: selectedCategory === cat ? primaryColor : 'transparent',
+                  '&:hover': {
+                    bgcolor: selectedCategory === cat ? primaryColor : `${primaryColor}1A`,
                   },
                 }}
               />
@@ -930,28 +823,24 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
 
         {/* Loading indicator for subsequent loads */}
         {loading && events.length > 0 && (
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
             <CircularProgress size={24} />
           </Box>
         )}
 
         {/* Calendar Layout */}
-        {layout === "calendar" ? (
+        {layout === 'calendar' ? (
           <CalendarView events={events} primaryColor={primaryColor} />
         ) : events.length === 0 ? (
           /* Empty state */
-          <Box
-            sx={{ textAlign: "center", py: 8 }}
-            role="status"
-            aria-label="No events found"
-          >
+          <Box sx={{ textAlign: 'center', py: 8 }} role="status" aria-label="No events found">
             <Typography variant="body1" sx={{ color: bodyColor }}>
               {emptyMessage}
             </Typography>
           </Box>
-        ) : layout === "list" ? (
+        ) : layout === 'list' ? (
           /* List Layout */
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {events.map((ev) => (
               <EventCard
                 key={ev.id}
@@ -998,7 +887,7 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
 
         {/* Pagination */}
         {showPagination && pagination && pagination.totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <Pagination
               count={pagination.totalPages}
               page={currentPage}
@@ -1013,9 +902,9 @@ const EventsListBlockBase: React.FC<EventsListBlockProps> = ({
   );
 };
 
-EventsListBlockBase.displayName = "EventsListBlock";
+EventsListBlockBase.displayName = 'EventsListBlock';
 
 const EventsListBlock = React.memo(EventsListBlockBase);
-EventsListBlock.displayName = "EventsListBlock";
+EventsListBlock.displayName = 'EventsListBlock';
 
 export default EventsListBlock;

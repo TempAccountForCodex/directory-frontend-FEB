@@ -1,39 +1,31 @@
-import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  IconButton,
-  TextField,
-  useTheme,
-} from "@mui/material";
-import { SnackbarProvider, useSnackbar } from "notistack";
-import MailIcon from "@mui/icons-material/Mail";
-import CallIcon from "@mui/icons-material/Call";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import FacebookIcon from "@mui/icons-material/Facebook";
-import InstagramIcon from "@mui/icons-material/Instagram";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import YouTubeIcon from "@mui/icons-material/YouTube";
-import PinterestIcon from "@mui/icons-material/Pinterest";
-import CompanyContactData from "./Data/CompanyContactInfo";
-import header from "/assets/images/header/WhiteLogo.png";
-import RotatingButton from "./UI/Rotatingbutton";
-import { useCookieConsent } from "../context/PreferencesContext";
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Box, Container, Typography, Button, IconButton, TextField, useTheme } from '@mui/material';
+import { SnackbarProvider, useSnackbar } from 'notistack';
+import MailIcon from '@mui/icons-material/Mail';
+import CallIcon from '@mui/icons-material/Call';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import PinterestIcon from '@mui/icons-material/Pinterest';
+import CompanyContactData from './Data/CompanyContactInfo';
+import header from '/assets/images/header/WhiteLogo.png';
+import RotatingButton from './UI/Rotatingbutton';
+import { useCookieConsent } from '../context/PreferencesContext';
 
 const { email, phone, OfficeLocation } = CompanyContactData[0];
 
 const forumSupport = [
-  { name: "Terms and Conditions", path: "/terms-and-conditions" },
-  { name: "Help & FAQ", path: "/faq" },
-  { name: "Privacy Policy", path: "/privacy-policy" },
-  { name: "Cookie Policy", path: "/cookie-policy" },
+  { name: 'Terms and Conditions', path: '/terms-and-conditions' },
+  { name: 'Help & FAQ', path: '/faq' },
+  { name: 'Privacy Policy', path: '/privacy-policy' },
+  { name: 'Cookie Policy', path: '/cookie-policy' },
   {
-    name: "Cookie Settings",
-    path: "#cookie-settings",
-    action: "openCookieSettings",
+    name: 'Cookie Settings',
+    path: '#cookie-settings',
+    action: 'openCookieSettings',
   },
 ];
 
@@ -42,33 +34,30 @@ const Footer = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { openPreferences } = useCookieConsent();
-  const [formemail, setFormEmail] = useState("");
-  const [error, setError] = useState("");
+  const [formemail, setFormEmail] = useState('');
+  const [error, setError] = useState('');
   const location = useLocation();
-  const isDashboardRoute = location.pathname.startsWith("/dashboard");
+  const isDashboardRoute = location.pathname.startsWith('/dashboard');
 
   if (
-    location?.pathname === "/dashboard" ||
+    location?.pathname === '/dashboard' ||
     /^\/business\//.test(location?.pathname) ||
     isDashboardRoute
   ) {
     return null;
   }
 
-  const validateEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setFormEmail(e.target.value);
+  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormEmail(e.target.value);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formemail) return setError("Email is required");
-    if (!validateEmail(formemail))
-      return setError("Please enter a valid email address");
+    if (!formemail) return setError('Email is required');
+    if (!validateEmail(formemail)) return setError('Please enter a valid email address');
 
-    enqueueSnackbar("Subscribed successfully!", {
-      variant: "success",
+    enqueueSnackbar('Subscribed successfully!', {
+      variant: 'success',
       autoHideDuration: 3000,
       action: (key) => (
         <Button color="inherit" size="small" onClick={() => closeSnackbar(key)}>
@@ -77,17 +66,13 @@ const Footer = () => {
       ),
     });
 
-    setFormEmail("");
-    setError("");
+    setFormEmail('');
+    setError('');
   };
 
   // ✅ Handle footer link clicks
-  const handleFooterLinkClick = (data: {
-    name: string;
-    path: string;
-    action?: string;
-  }) => {
-    if (data.action === "openCookieSettings") {
+  const handleFooterLinkClick = (data: { name: string; path: string; action?: string }) => {
+    if (data.action === 'openCookieSettings') {
       openPreferences();
     } else {
       navigate(data.path);
@@ -96,14 +81,14 @@ const Footer = () => {
 
   // ✅ Smooth scroll to homepage sections
   const handleSmoothScroll = (id: string) => {
-    if (window.location.pathname === "/") {
+    if (window.location.pathname === '/') {
       const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
       window.location.href = `/#${id}`;
       setTimeout(() => {
         const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 800);
     }
   };
@@ -112,15 +97,15 @@ const Footer = () => {
   const socialLinks = [
     {
       icon: FacebookIcon,
-      href: "https://www.facebook.com/thetechietribe.official",
+      href: 'https://www.facebook.com/thetechietribe.official',
     },
     {
       icon: InstagramIcon,
-      href: "https://www.instagram.com/thetechietribe_/",
+      href: 'https://www.instagram.com/thetechietribe_/',
     },
     {
       icon: LinkedInIcon,
-      href: "https://www.linkedin.com/company/techietribe",
+      href: 'https://www.linkedin.com/company/techietribe',
     },
     // {
     //   icon: YouTubeIcon,
@@ -128,7 +113,7 @@ const Footer = () => {
     // },
     {
       icon: PinterestIcon,
-      href: "https://www.pinterest.com/thetechietribe_/",
+      href: 'https://www.pinterest.com/thetechietribe_/',
     },
   ];
 
@@ -136,10 +121,10 @@ const Footer = () => {
     <Box
       component="footer"
       sx={{
-        width: "100%",
-        position: "relative",
-        overflow: "hidden",
-        color: "#ffffff",
+        width: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        color: '#ffffff',
         pt: 8,
         pb: 4,
       }}
@@ -147,13 +132,13 @@ const Footer = () => {
       {/* === Black Overlay Background + Image === */}
       <Box
         sx={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
           backgroundColor: (theme.palette as any).bg.blackBg,
           // backgroundImage: `url(${bgImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "top left",
-          backgroundRepeat: "no-repeat",
+          backgroundSize: 'cover',
+          backgroundPosition: 'top left',
+          backgroundRepeat: 'no-repeat',
           opacity: 0.98,
           zIndex: 0,
         }}
@@ -162,19 +147,19 @@ const Footer = () => {
       <Container
         maxWidth="lg"
         sx={{
-          position: "relative",
+          position: 'relative',
           zIndex: 1,
         }}
       >
         {/* === TOP SECTION (Newsletter) === */}
         <Box
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            alignItems: { xs: "flex-start", md: "center" },
-            justifyContent: "space-between",
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: { xs: 'flex-start', md: 'center' },
+            justifyContent: 'space-between',
             pb: 5,
-            borderBottom: "1px solid rgba(255,255,255,0.15)",
+            borderBottom: '1px solid rgba(255,255,255,0.15)',
             gap: 3,
           }}
         >
@@ -183,8 +168,8 @@ const Footer = () => {
               variant="h4"
               sx={{
                 fontWeight: 700,
-                fontFamily: "Plus Jakarta Sans, system-ui",
-                color: "#fff",
+                fontFamily: 'Plus Jakarta Sans, system-ui',
+                color: '#fff',
                 mb: 2,
               }}
             >
@@ -195,14 +180,14 @@ const Footer = () => {
               component="form"
               onSubmit={handleSubmit}
               sx={{
-                display: "flex",
-                alignItems: "center",
-                borderRadius: "30px",
-                overflow: "hidden",
-                border: "1px solid rgba(255,255,255,0.25)",
-                backgroundColor: "transparent",
-                width: { xs: "100%", md: "71%" },
-                height: "52px",
+                display: 'flex',
+                alignItems: 'center',
+                borderRadius: '30px',
+                overflow: 'hidden',
+                border: '1px solid rgba(255,255,255,0.25)',
+                backgroundColor: 'transparent',
+                width: { xs: '100%', md: '71%' },
+                height: '52px',
               }}
             >
               <TextField
@@ -213,30 +198,30 @@ const Footer = () => {
                 InputProps={{
                   disableUnderline: true,
                   style: {
-                    padding: "0 18px",
-                    color: "#fff",
-                    fontSize: "16px",
-                    height: "52px",
+                    padding: '0 18px',
+                    color: '#fff',
+                    fontSize: '16px',
+                    height: '52px',
                   },
                 }}
                 sx={{
                   flex: 1,
-                  "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+                  '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                 }}
               />
               <Button
                 type="submit"
                 sx={{
-                  backgroundColor: "#ffffff",
-                  color: "#000",
+                  backgroundColor: '#ffffff',
+                  color: '#000',
                   fontWeight: 600,
-                  fontSize: "16px",
-                  textTransform: "none",
-                  height: "52px",
-                  borderRadius: "30px",
-                  px: "28px",
-                  "&:hover": {
-                    backgroundColor: "#ffffff",
+                  fontSize: '16px',
+                  textTransform: 'none',
+                  height: '52px',
+                  borderRadius: '30px',
+                  px: '28px',
+                  '&:hover': {
+                    backgroundColor: '#ffffff',
                     opacity: 0.9,
                   },
                 }}
@@ -246,22 +231,18 @@ const Footer = () => {
             </Box>
 
             {error && (
-              <Typography
-                color="error"
-                variant="body2"
-                sx={{ mt: 1, fontSize: "13px" }}
-              >
+              <Typography color="error" variant="body2" sx={{ mt: 1, fontSize: '13px' }}>
                 {error}
               </Typography>
             )}
           </Box>
 
-          <Box sx={{ width: { xs: "100%", md: "30%" }, mt: { xs: 4, md: 0 } }}>
+          <Box sx={{ width: { xs: '100%', md: '30%' }, mt: { xs: 4, md: 0 } }}>
             <RotatingButton
               linkTo="/contact"
               size="md"
               textColor="white"
-              sx={{ ml: { xs: "0", md: "auto" } }}
+              sx={{ ml: { xs: '0', md: 'auto' } }}
             />
           </Box>
         </Box>
@@ -269,50 +250,50 @@ const Footer = () => {
         {/* === MIDDLE SECTION (Left + Right) === */}
         <Box
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            justifyContent: "space-between",
-            alignItems: "flex-start",
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
             gap: { xs: 6, md: 0 },
             pt: 6,
             pb: 4,
-            borderBottom: "1px solid rgba(255,255,255,0.15)",
+            borderBottom: '1px solid rgba(255,255,255,0.15)',
           }}
         >
           {/* LEFT SIDE */}
           <Box
             sx={{
               flex: 1.1,
-              minWidth: "320px",
+              minWidth: '320px',
               pr: { md: 6 },
             }}
           >
             <img src={header} alt="Techietribe" width={220} />
             <Typography
               sx={{
-                fontSize: "16px",
-                lineHeight: "28px",
-                fontFamily: "system-ui",
-                color: "rgba(255,255,255,0.85)",
+                fontSize: '16px',
+                lineHeight: '28px',
+                fontFamily: 'system-ui',
+                color: 'rgba(255,255,255,0.85)',
                 mt: 2,
-                maxWidth: "380px",
+                maxWidth: '380px',
               }}
             >
-              Connecting businesses to endless opportunities. We list, link, and
-              elevate trusted brands.
+              Connecting businesses to endless opportunities. We list, link, and elevate trusted
+              brands.
             </Typography>
 
             {/* ✅ Social Icons with links */}
             <Box
               sx={{
-                display: "flex",
+                display: 'flex',
                 gap: 2,
                 mt: 3,
                 px: 2,
                 py: 1,
-                borderRadius: "50px",
-                backgroundColor: "rgba(255,255,255,0.05)",
-                width: "fit-content",
+                borderRadius: '50px',
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                width: 'fit-content',
               }}
             >
               {socialLinks.map(({ icon: Icon, href }, index) => (
@@ -323,11 +304,11 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{
-                    color: "#378C92",
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      color: "#56b0b3",
-                      transform: "translateY(-3px)",
+                    color: '#378C92',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      color: '#56b0b3',
+                      transform: 'translateY(-3px)',
                     },
                     width: 36,
                     height: 36,
@@ -343,47 +324,47 @@ const Footer = () => {
           <Box
             sx={{
               flex: 1.5,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              flexWrap: 'wrap',
               gap: { xs: 4, md: 6 },
-              width: "100%",
+              width: '100%',
             }}
           >
             {/* Quick Links */}
-            <Box sx={{ minWidth: "100px" }}>
+            <Box sx={{ minWidth: '100px' }}>
               <Typography
                 sx={{
-                  fontFamily: "sans-serif",
-                  fontSize: "22px",
+                  fontFamily: 'sans-serif',
+                  fontSize: '22px',
                   fontWeight: 700,
                   mb: 2.5,
-                  color: "#fff",
+                  color: '#fff',
                 }}
               >
                 Quick Links
               </Typography>
               {[
-                { label: "Home", to: "/" },
-                { label: "About us", to: "/about-us" },
-                { label: "Listing", to: "/listings" },
-                { label: "Blog", to: "/blog" },
-                { label: "Contact us", to: "/contact" },
+                { label: 'Home', to: '/' },
+                { label: 'About us', to: '/about-us' },
+                { label: 'Listing', to: '/listings' },
+                { label: 'Blog', to: '/blog' },
+                { label: 'Contact us', to: '/contact' },
               ].map((item) => (
                 <Typography
                   key={item.to}
                   component={Link}
                   to={item.to}
                   sx={{
-                    display: "block",
-                    lineHeight: "2rem",
-                    fontFamily: "system-ui",
-                    color: "rgba(255,255,255,0.9)",
+                    display: 'block',
+                    lineHeight: '2rem',
+                    fontFamily: 'system-ui',
+                    color: 'rgba(255,255,255,0.9)',
                     fontWeight: 400,
-                    fontSize: "16px",
-                    textDecoration: "none",
-                    "&:hover": { color: "#378C92" },
+                    fontSize: '16px',
+                    textDecoration: 'none',
+                    '&:hover': { color: '#378C92' },
                   }}
                 >
                   {item.label}
@@ -392,36 +373,36 @@ const Footer = () => {
             </Box>
 
             {/* ✅ Explore Sections */}
-            <Box sx={{ minWidth: "100px" }}>
+            <Box sx={{ minWidth: '100px' }}>
               <Typography
                 sx={{
-                  fontFamily: "sans-serif",
-                  fontSize: "22px",
+                  fontFamily: 'sans-serif',
+                  fontSize: '22px',
                   fontWeight: 700,
                   mb: 2.5,
-                  color: "#fff",
+                  color: '#fff',
                 }}
               >
                 Explore Sections
               </Typography>
               {[
-                { label: "Best in Your City", id: "StyledHeader" },
-                { label: "listing", id: "listing" },
-                { label: "How it Works", id: "process-info" },
-                { label: "Featured Listings", id: "featured-listing" },
-                { label: "Category", id: "category-slider" },
-                { label: "Worldwide Clients", id: "coverflow-showcase" },
+                { label: 'Best in Your City', id: 'StyledHeader' },
+                { label: 'listing', id: 'listing' },
+                { label: 'How it Works', id: 'process-info' },
+                { label: 'Featured Listings', id: 'featured-listing' },
+                { label: 'Category', id: 'category-slider' },
+                { label: 'Worldwide Clients', id: 'coverflow-showcase' },
               ].map((section, i) => (
                 <Typography
                   key={i}
                   sx={{
-                    lineHeight: "2rem",
-                    color: "rgba(255,255,255,0.9)",
-                    fontFamily: "system-ui",
+                    lineHeight: '2rem',
+                    color: 'rgba(255,255,255,0.9)',
+                    fontFamily: 'system-ui',
                     fontWeight: 400,
-                    fontSize: "16px",
-                    cursor: "pointer",
-                    "&:hover": { color: "#378C92" },
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    '&:hover': { color: '#378C92' },
                   }}
                   onClick={() => handleSmoothScroll(section.id)}
                 >
@@ -431,56 +412,56 @@ const Footer = () => {
             </Box>
 
             {/* Get in Touch */}
-            <Box sx={{ minWidth: "100px" }}>
+            <Box sx={{ minWidth: '100px' }}>
               <Typography
                 sx={{
-                  fontFamily: "sans-serif",
-                  fontSize: "22px",
+                  fontFamily: 'sans-serif',
+                  fontSize: '22px',
                   fontWeight: 700,
                   mb: 2.5,
-                  color: "#fff",
+                  color: '#fff',
                 }}
               >
                 Get in touch with us
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                <MailIcon sx={{ color: "#378C92", mr: 1 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <MailIcon sx={{ color: '#378C92', mr: 1 }} />
                 <Typography
                   component="a"
                   href={`mailto:${email}`}
                   sx={{
-                    color: "#fff",
-                    fontSize: "16px",
-                    textDecoration: "none",
-                    "&:hover": { color: "#378C92" },
+                    color: '#fff',
+                    fontSize: '16px',
+                    textDecoration: 'none',
+                    '&:hover': { color: '#378C92' },
                   }}
                 >
                   {email}
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                <CallIcon sx={{ color: "#378C92", mr: 1 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <CallIcon sx={{ color: '#378C92', mr: 1 }} />
                 <Typography
                   component="a"
                   href={`tel:${phone}`}
                   sx={{
-                    color: "#fff",
-                    fontSize: "16px",
-                    textDecoration: "none",
-                    "&:hover": { color: "#378C92" },
+                    color: '#fff',
+                    fontSize: '16px',
+                    textDecoration: 'none',
+                    '&:hover': { color: '#378C92' },
                   }}
                 >
                   {phone}
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-                <LocationOnIcon sx={{ color: "#378C92", mr: 1, mt: "2px" }} />
+              <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                <LocationOnIcon sx={{ color: '#378C92', mr: 1, mt: '2px' }} />
                 <Typography
                   sx={{
-                    color: "#fff",
-                    fontSize: "16px",
-                    maxWidth: "230px",
-                    lineHeight: "24px",
+                    color: '#fff',
+                    fontSize: '16px',
+                    maxWidth: '230px',
+                    lineHeight: '24px',
                   }}
                 >
                   {OfficeLocation}
@@ -493,26 +474,26 @@ const Footer = () => {
         {/* === BOTTOM COPYRIGHT === */}
         <Box
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: 'center',
             mt: 3,
-            gap: "1rem",
+            gap: '1rem',
           }}
         >
           <Typography
             variant="subtitle2"
             sx={(t) => ({
               color: (t.palette.text as any).gray,
-              fontFamily: "system-ui",
+              fontFamily: 'system-ui',
               fontWeight: 400,
-              textAlign: "center",
+              textAlign: 'center',
             })}
           >
             Copyright © 2024 Techietribe. All Rights Reserved.
           </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
             {forumSupport.map((data, index) => (
               <Typography
                 variant="subtitle2"
@@ -520,10 +501,10 @@ const Footer = () => {
                 onClick={() => handleFooterLinkClick(data)}
                 sx={(t) => ({
                   color: (t.palette.text as any).gray,
-                  fontFamily: "system-ui",
+                  fontFamily: 'system-ui',
                   fontWeight: 500,
-                  cursor: "pointer",
-                  "&:hover": { color: "#378C92" },
+                  cursor: 'pointer',
+                  '&:hover': { color: '#378C92' },
                 })}
               >
                 {data.name}
@@ -540,7 +521,7 @@ const Footer = () => {
 const EnhancedNewsletterForm = () => (
   <SnackbarProvider
     maxSnack={3}
-    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
     autoHideDuration={3000}
   >
     <Footer />

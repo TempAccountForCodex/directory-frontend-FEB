@@ -15,19 +15,11 @@
  * - Uses MUI theme tokens only (no hardcoded colors/spacing)
  * - All touch targets >= 48px enforced via minHeight on children
  */
-import React, { useCallback } from "react";
-import {
-  Box,
-  Chip,
-  Grid,
-  Switch,
-  type SxProps,
-  type Theme,
-  Typography,
-} from "@mui/material";
-import KeyboardIcon from "@mui/icons-material/Keyboard";
-import { useResponsiveEditor } from "../../hooks/useResponsiveEditor";
-import { useInputMethod } from "../../hooks/useInputMethod";
+import React, { useCallback } from 'react';
+import { Box, Chip, Grid, Switch, type SxProps, type Theme, Typography } from '@mui/material';
+import KeyboardIcon from '@mui/icons-material/Keyboard';
+import { useResponsiveEditor } from '../../hooks/useResponsiveEditor';
+import { useInputMethod } from '../../hooks/useInputMethod';
 
 interface ResponsiveEditorLayoutProps {
   children?: React.ReactNode;
@@ -35,28 +27,21 @@ interface ResponsiveEditorLayoutProps {
   sx?: SxProps<Theme>;
 }
 
-const ResponsiveEditorLayout: React.FC<ResponsiveEditorLayoutProps> = ({
-  children,
-  sx,
-}) => {
+const ResponsiveEditorLayout: React.FC<ResponsiveEditorLayoutProps> = ({ children, sx }) => {
   const { columns, isTablet } = useResponsiveEditor();
-  const { isKeyboardMode, forceKeyboardMode, setForceKeyboardMode } =
-    useInputMethod();
+  const { isKeyboardMode, forceKeyboardMode, setForceKeyboardMode } = useInputMethod();
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       // Only navigate blocks when not in an editable field
       const target = event.target as HTMLElement;
       const tag = target.tagName?.toUpperCase();
-      const isEditable =
-        tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable;
+      const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable;
 
       if (!isEditable) {
         event.preventDefault();
-        const direction = event.key === "ArrowUp" ? "up" : "down";
-        window.dispatchEvent(
-          new CustomEvent("block-navigate", { detail: { direction } }),
-        );
+        const direction = event.key === 'ArrowUp' ? 'up' : 'down';
+        window.dispatchEvent(new CustomEvent('block-navigate', { detail: { direction } }));
       }
     }
   }, []);
@@ -69,16 +54,16 @@ const ResponsiveEditorLayout: React.FC<ResponsiveEditorLayoutProps> = ({
       role="region"
       aria-label="Editor canvas"
       onKeyDown={handleKeyDown}
-      className={isKeyboardMode ? "keyboard-mode" : undefined}
+      className={isKeyboardMode ? 'keyboard-mode' : undefined}
       sx={{
-        width: "100%",
+        width: '100%',
         // Ensure touch targets are at least 48px on mobile
         '& button, & [role="button"]': {
-          minHeight: { xs: 48, md: "unset" },
-          minWidth: { xs: 48, md: "unset" },
+          minHeight: { xs: 48, md: 'unset' },
+          minWidth: { xs: 48, md: 'unset' },
         },
         // Focus outline visible in keyboard mode
-        "&.keyboard-mode:focus-visible": {
+        '&.keyboard-mode:focus-visible': {
           outline: (theme) => `2px solid ${theme.palette.primary.main}`,
           outlineOffset: 2,
         },
@@ -90,9 +75,9 @@ const ResponsiveEditorLayout: React.FC<ResponsiveEditorLayoutProps> = ({
         <Box
           data-testid="keyboard-mode-toggle"
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
             px: 1,
             py: 0.5,
             gap: 1,
@@ -111,7 +96,7 @@ const ResponsiveEditorLayout: React.FC<ResponsiveEditorLayoutProps> = ({
             />
           )}
           {!forceKeyboardMode && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Typography variant="caption" color="text.secondary">
                 Keyboard Nav
               </Typography>
@@ -120,7 +105,7 @@ const ResponsiveEditorLayout: React.FC<ResponsiveEditorLayoutProps> = ({
                 checked={forceKeyboardMode}
                 onChange={(e) => setForceKeyboardMode(e.target.checked)}
                 inputProps={{
-                  "aria-label": "Enable keyboard navigation mode",
+                  'aria-label': 'Enable keyboard navigation mode',
                 }}
               />
             </Box>
@@ -135,6 +120,6 @@ const ResponsiveEditorLayout: React.FC<ResponsiveEditorLayoutProps> = ({
   );
 };
 
-ResponsiveEditorLayout.displayName = "ResponsiveEditorLayout";
+ResponsiveEditorLayout.displayName = 'ResponsiveEditorLayout';
 
 export default ResponsiveEditorLayout;

@@ -11,11 +11,11 @@
  *
  * Security: Sanitizes HTML tags from contentEditable output on save.
  */
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import Box from "@mui/material/Box";
-import Portal from "@mui/material/Portal";
-import Tooltip from "@mui/material/Tooltip";
-import { AnimatePresence, motion } from "framer-motion";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Box from '@mui/material/Box';
+import Portal from '@mui/material/Portal';
+import Tooltip from '@mui/material/Tooltip';
+import { AnimatePresence, motion } from 'framer-motion';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -29,7 +29,7 @@ interface InlineTextEditorProps {
   /** Content field path (e.g., 'heading', 'subtitle') */
   fieldPath: string;
   /** Edit type: single-line or multi-line */
-  editType: "single" | "multi";
+  editType: 'single' | 'multi';
   /** Bounding rect of the target element relative to the iframe viewport */
   rect: { top: number; left: number; width: number; height: number };
   /** Called with the new text value on save */
@@ -49,18 +49,18 @@ interface InlineTextEditorProps {
 /** Strip HTML tags from user content to prevent XSS on save */
 function sanitizeText(html: string): string {
   // Use a temporary element to extract plain text safely
-  if (typeof document !== "undefined") {
-    const tmp = document.createElement("div");
+  if (typeof document !== 'undefined') {
+    const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || "";
+    return tmp.textContent || tmp.innerText || '';
   }
   // Fallback: strip tags with regex (less safe, used in SSR context)
-  return html.replace(/<[^>]*>/g, "");
+  return html.replace(/<[^>]*>/g, '');
 }
 
 /** Mobile detection: viewport width < 768px */
 function isMobileViewport(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === 'undefined') return false;
   return window.innerWidth < 768;
 }
 
@@ -114,12 +114,12 @@ const InlineTextEditor = React.memo(function InlineTextEditor({
       setHasValidationError(false);
       return true;
     },
-    [maxLength],
+    [maxLength]
   );
 
   // Get current text from the editor
   const getCurrentText = useCallback((): string => {
-    if (!editorRef.current) return initialValue || "";
+    if (!editorRef.current) return initialValue || '';
     return sanitizeText(editorRef.current.innerHTML);
   }, [initialValue]);
 
@@ -145,26 +145,26 @@ const InlineTextEditor = React.memo(function InlineTextEditor({
   // Key handler
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
         handleCancel();
         return;
       }
 
-      if (e.key === "Enter" && editType === "single") {
+      if (e.key === 'Enter' && editType === 'single') {
         e.preventDefault();
         handleSave();
         return;
       }
 
-      if (e.key === "Tab") {
+      if (e.key === 'Tab') {
         e.preventDefault();
         handleSave();
         return;
       }
     },
-    [editType, handleSave, handleCancel],
+    [editType, handleSave, handleCancel]
   );
 
   // Input handler — validate on each change
@@ -185,12 +185,12 @@ const InlineTextEditor = React.memo(function InlineTextEditor({
 
     // Use a small delay to avoid capturing the dblclick that opened us
     const timer = setTimeout(() => {
-      document.addEventListener("mousedown", handleMouseDown);
+      document.addEventListener('mousedown', handleMouseDown);
     }, 50);
 
     return () => {
       clearTimeout(timer);
-      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener('mousedown', handleMouseDown);
     };
   }, [shouldRender, handleSave]);
 
@@ -207,7 +207,7 @@ const InlineTextEditor = React.memo(function InlineTextEditor({
       initialValueRef.current = initialValue;
 
       // Set initial content
-      node.textContent = initialValue || "";
+      node.textContent = initialValue || '';
 
       // Focus and select all
       node.focus();
@@ -221,10 +221,10 @@ const InlineTextEditor = React.memo(function InlineTextEditor({
       }
 
       // Validate initial value
-      validateText(initialValue || "");
+      validateText(initialValue || '');
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [shouldRender, initialValue],
+    [shouldRender, initialValue]
   );
 
   // Reset initialization flag when editor closes
@@ -244,7 +244,7 @@ const InlineTextEditor = React.memo(function InlineTextEditor({
   const editorContent = (
     <Tooltip
       open={hasValidationError}
-      title={`Text exceeds maximum length${maxLength ? ` (${maxLength} characters)` : ""}`}
+      title={`Text exceeds maximum length${maxLength ? ` (${maxLength} characters)` : ''}`}
       placement="top"
       arrow
     >
@@ -258,30 +258,28 @@ const InlineTextEditor = React.memo(function InlineTextEditor({
         onKeyDown={handleKeyDown}
         onInput={handleInput}
         sx={{
-          position: "fixed",
+          position: 'fixed',
           top: absRect.top,
           left: absRect.left,
           width: Math.max(absRect.width, 100),
           minHeight: Math.max(absRect.height, 24),
-          padding: "2px 4px",
+          padding: '2px 4px',
           margin: 0,
-          backgroundColor: "rgba(255, 255, 255, 0.97)",
-          border: hasValidationError
-            ? "2px solid #d32f2f"
-            : "2px solid #1976d2",
-          borderRadius: "2px",
-          outline: "none",
+          backgroundColor: 'rgba(255, 255, 255, 0.97)',
+          border: hasValidationError ? '2px solid #d32f2f' : '2px solid #1976d2',
+          borderRadius: '2px',
+          outline: 'none',
           zIndex: 9999,
-          fontFamily: "inherit",
-          fontSize: "inherit",
-          lineHeight: "inherit",
-          color: "#111",
-          whiteSpace: editType === "single" ? "nowrap" : "pre-wrap",
-          overflow: editType === "single" ? "hidden" : "auto",
-          maxHeight: editType === "multi" ? 200 : undefined,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-          "&:focus": {
-            borderColor: hasValidationError ? "#d32f2f" : "#1565c0",
+          fontFamily: 'inherit',
+          fontSize: 'inherit',
+          lineHeight: 'inherit',
+          color: '#111',
+          whiteSpace: editType === 'single' ? 'nowrap' : 'pre-wrap',
+          overflow: editType === 'single' ? 'hidden' : 'auto',
+          maxHeight: editType === 'multi' ? 200 : undefined,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          '&:focus': {
+            borderColor: hasValidationError ? '#d32f2f' : '#1565c0',
           },
         }}
       />
@@ -298,14 +296,7 @@ const InlineTextEditor = React.memo(function InlineTextEditor({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: 0,
-              height: 0,
-              zIndex: 9998,
-            }}
+            style={{ position: 'fixed', top: 0, left: 0, width: 0, height: 0, zIndex: 9998 }}
           >
             {editorContent}
           </motion.div>

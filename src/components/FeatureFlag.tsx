@@ -1,5 +1,5 @@
-import React, { type ReactNode } from "react";
-import { useFeatureFlagsContext } from "../hooks/useFeatureFlags";
+import React, { type ReactNode } from 'react';
+import { useFeatureFlagsContext } from '../hooks/useFeatureFlags';
 
 interface FeatureFlagProps {
   /**

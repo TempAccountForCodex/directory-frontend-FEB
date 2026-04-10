@@ -1,6 +1,6 @@
-import React, { type ReactNode } from "react";
-import { I18nContext, useI18n } from "../hooks/useI18n";
-import type { Language } from "../i18n/translations";
+import React, { type ReactNode } from 'react';
+import { I18nContext, useI18n } from '../hooks/useI18n';
+import type { Language } from '../i18n/translations';
 
 interface I18nProviderProps {
   children: ReactNode;
@@ -18,10 +18,7 @@ interface I18nProviderProps {
  * </I18nProvider>
  * ```
  */
-export const I18nProvider: React.FC<I18nProviderProps> = ({
-  children,
-  defaultLanguage,
-}) => {
+export const I18nProvider: React.FC<I18nProviderProps> = ({ children, defaultLanguage }) => {
   const i18n = useI18n(defaultLanguage);
 
   return <I18nContext.Provider value={i18n}>{children}</I18nContext.Provider>;

@@ -16,7 +16,7 @@
  * Returns { isMac, toastOpen, toastMessage, closeToast }
  */
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,7 +50,7 @@ export interface UseKeyboardShortcutsReturn {
 const detectMac = (): boolean => {
   try {
     // Modern API
-    const platform = (navigator as any).userAgentData?.platform ?? "";
+    const platform = (navigator as any).userAgentData?.platform ?? '';
     if (platform) {
       return /mac/i.test(platform);
     }
@@ -68,13 +68,13 @@ export function useKeyboardShortcuts({
   onUndo,
   onRedo,
   enabled,
-  undoDescription = "",
-  redoDescription = "",
+  undoDescription = '',
+  redoDescription = '',
 }: UseKeyboardShortcutsParams): UseKeyboardShortcutsReturn {
   const isMac = detectMac();
 
   const [toastOpen, setToastOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  const [toastMessage, setToastMessage] = useState('');
 
   // Keep refs to callbacks to avoid stale closures in the event handler
   const onUndoRef = useRef(onUndo);
@@ -110,15 +110,15 @@ export function useKeyboardShortcuts({
         const tag = target.tagName?.toUpperCase();
         const isEditable =
           target.isContentEditable === true ||
-          target.getAttribute?.("contenteditable") === "true" ||
-          target.getAttribute?.("contenteditable") === "";
-        if (tag === "INPUT" || tag === "TEXTAREA" || isEditable) {
+          target.getAttribute?.('contenteditable') === 'true' ||
+          target.getAttribute?.('contenteditable') === '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || isEditable) {
           return;
         }
       }
 
-      const isZ = e.key === "z" || e.key === "Z";
-      const isY = e.key === "y" || e.key === "Y";
+      const isZ = e.key === 'z' || e.key === 'Z';
+      const isY = e.key === 'y' || e.key === 'Y';
       const modifier = e.ctrlKey || e.metaKey;
 
       if (!modifier) return;
@@ -132,7 +132,7 @@ export function useKeyboardShortcuts({
           // Gracefully handle callback errors
         }
         const desc = redoDescRef.current;
-        showToast(desc ? `Redone: ${desc}` : "Redone");
+        showToast(desc ? `Redone: ${desc}` : 'Redone');
         return;
       }
 
@@ -145,7 +145,7 @@ export function useKeyboardShortcuts({
           // Gracefully handle callback errors
         }
         const desc = undoDescRef.current;
-        showToast(desc ? `Undone: ${desc}` : "Undone");
+        showToast(desc ? `Undone: ${desc}` : 'Undone');
         return;
       }
 
@@ -158,14 +158,14 @@ export function useKeyboardShortcuts({
           // Gracefully handle callback errors
         }
         const desc = redoDescRef.current;
-        showToast(desc ? `Redone: ${desc}` : "Redone");
+        showToast(desc ? `Redone: ${desc}` : 'Redone');
         return;
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []); // Empty deps — uses refs to avoid re-registering
 

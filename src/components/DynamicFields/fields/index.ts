@@ -13,13 +13,13 @@
  * Added Select (2.4.1), Toggle (2.4.2), and RepeaterField (2.4.3-2.4.6).
  */
 
-export { default as TextField } from "./TextField";
-export { default as TextArea } from "./TextArea";
-export { default as NumberInput } from "./NumberInput";
-export { TokenPicker } from "./TokenPicker";
-export { ColorPicker } from "./ColorPicker";
-export { default as ImageUpload } from "./ImageUpload";
-export { default as LinkField } from "./LinkField";
-export { default as Select } from "./Select";
-export { default as Toggle } from "./Toggle";
-export { default as RepeaterField } from "./RepeaterField";
+export { default as TextField } from './TextField';
+export { default as TextArea } from './TextArea';
+export { default as NumberInput } from './NumberInput';
+export { TokenPicker } from './TokenPicker';
+export { ColorPicker } from './ColorPicker';
+export { default as ImageUpload } from './ImageUpload';
+export { default as LinkField } from './LinkField';
+export { default as Select } from './Select';
+export { default as Toggle } from './Toggle';
+export { default as RepeaterField } from './RepeaterField';

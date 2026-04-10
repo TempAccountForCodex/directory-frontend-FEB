@@ -1,8 +1,8 @@
 // @ts-nocheck
-import { useState, useEffect } from "react";
-import type { ChangeEvent, FormEvent } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useState, useEffect } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   Box,
   Container,
@@ -20,23 +20,23 @@ import {
   CircularProgress,
   useMediaQuery,
   useTheme as useMuiTheme,
-} from "@mui/material";
-import { styled, keyframes } from "@mui/material/styles";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import StorefrontIcon from "@mui/icons-material/Storefront";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import CodeInput from "../components/CodeInput";
-import { ResendLink } from "../components/auth/ResendLink";
-import { useResendTimer } from "../hooks/useResendTimer";
-import WhiteLogo from "../assets/images/home/WhiteLogo.png";
-import star from "../assets/images/common/star.svg";
-import darkhole from "../assets/images/common/darkhole.svg";
+} from '@mui/material';
+import { styled, keyframes } from '@mui/material/styles';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CodeInput from '../components/CodeInput';
+import { ResendLink } from '../components/auth/ResendLink';
+import { useResendTimer } from '../hooks/useResendTimer';
+import WhiteLogo from '../assets/images/home/WhiteLogo.png';
+import star from '../assets/images/common/star.svg';
+import darkhole from '../assets/images/common/darkhole.svg';
 
-console.log("star", star);
-console.log("darkhole", darkhole);
+console.log('star', star);
+console.log('darkhole', darkhole);
 
 // Subtle floating animation for particles
 const float = keyframes`
@@ -59,251 +59,245 @@ const pulse = keyframes`
 
 // Styled Components
 const PageContainer = styled(Box)(({ theme }) => ({
-  minHeight: "100vh",
-  display: "flex",
-  backgroundColor: "#041e18",
-  position: "relative",
-  overflow: "hidden",
+  minHeight: '100vh',
+  display: 'flex',
+  backgroundColor: '#041e18',
+  position: 'relative',
+  overflow: 'hidden',
   backgroundImage: `url(${star})`,
-  backgroundPosition: "center", // Ensure image is centered
-  backgroundRepeat: "no-repeat",
-  backgroundSize: "cover",
+  backgroundPosition: 'center', // Ensure image is centered
+  backgroundRepeat: 'no-repeat',
+  backgroundSize: 'cover',
 }));
 
 const LeftPanel = styled(Box)(({ theme }) => ({
   flex: 1,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-start",
-  justifyContent: "center",
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  justifyContent: 'center',
   padding: theme.spacing(8, 10),
-  position: "relative",
+  position: 'relative',
   zIndex: 1,
-  [theme.breakpoints.down("lg")]: {
+  [theme.breakpoints.down('lg')]: {
     padding: theme.spacing(6, 6),
   },
-  [theme.breakpoints.down("md")]: {
-    display: "none",
+  [theme.breakpoints.down('md')]: {
+    display: 'none',
   },
 }));
 
 const HeroContent = styled(Box)(({ theme }) => ({
-  maxWidth: "540px",
-  width: "100%",
+  maxWidth: '540px',
+  width: '100%',
 }));
 
 const RightPanel = styled(Box)(({ theme }) => ({
   flex: 1,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   padding: theme.spacing(4),
-  position: "relative",
+  position: 'relative',
   zIndex: 1,
-  [theme.breakpoints.down("md")]: {
-    flex: "auto",
-    width: "100%",
+  [theme.breakpoints.down('md')]: {
+    flex: 'auto',
+    width: '100%',
     padding: theme.spacing(3, 2),
   },
 }));
 
 const AuthCard = styled(Box)(({ theme }) => ({
-  background: "rgba(13, 17, 22, 0.8)",
-  backdropFilter: "blur(24px) saturate(180%)",
-  WebkitBackdropFilter: "blur(24px) saturate(180%)",
-  borderRadius: "20px",
+  background: 'rgba(13, 17, 22, 0.8)',
+  backdropFilter: 'blur(24px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+  borderRadius: '20px',
   padding: theme.spacing(5, 4),
-  maxWidth: "500px",
-  width: "100%",
-  border: "1px solid rgba(55, 140, 146, 0.12)",
+  maxWidth: '500px',
+  width: '100%',
+  border: '1px solid rgba(55, 140, 146, 0.12)',
   boxShadow: `
     0 20px 60px rgba(0, 0, 0, 0.6),
     0 0 0 1px rgba(55, 140, 146, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.02)
   `,
-  position: "relative",
-  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-  "&::before": {
+  position: 'relative',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&::before': {
     content: '""',
-    position: "absolute",
+    position: 'absolute',
     top: 0,
-    left: "10%",
-    right: "10%",
-    height: "1px",
-    background:
-      "linear-gradient(90deg, transparent, rgba(55, 140, 146, 0.3), transparent)",
+    left: '10%',
+    right: '10%',
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(55, 140, 146, 0.3), transparent)',
   },
-  [theme.breakpoints.down("sm")]: {
+  [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(4, 3),
-    borderRadius: "16px",
+    borderRadius: '16px',
   },
 }));
 
 const StyledTabs = styled(Tabs)(({ theme }) => ({
   marginBottom: theme.spacing(4),
   minHeight: 48,
-  "& .MuiTabs-indicator": {
-    backgroundColor: "#378C92",
+  '& .MuiTabs-indicator': {
+    backgroundColor: '#378C92',
     height: 2,
-    borderRadius: "2px 2px 0 0",
+    borderRadius: '2px 2px 0 0',
   },
 }));
 
 const StyledTab = styled(Tab)(({ theme }) => ({
   flex: 1,
-  fontSize: "15px",
+  fontSize: '15px',
   fontWeight: 600,
-  textTransform: "none",
-  color: "rgba(255, 255, 255, 0.45)",
-  transition: "all 0.2s ease",
-  "&.Mui-selected": {
-    color: "#378C92",
+  textTransform: 'none',
+  color: 'rgba(255, 255, 255, 0.45)',
+  transition: 'all 0.2s ease',
+  '&.Mui-selected': {
+    color: '#378C92',
   },
-  "&:hover": {
-    color: "rgba(255, 255, 255, 0.7)",
+  '&:hover': {
+    color: 'rgba(255, 255, 255, 0.7)',
   },
 }));
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   marginBottom: theme.spacing(2.5),
-  "& .MuiOutlinedInput-root": {
-    color: "#ffffff",
-    backgroundColor: "rgba(255, 255, 255, 0.025)",
-    borderRadius: "10px",
-    transition: "all 0.25s ease",
-    "& fieldset": {
-      borderColor: "rgba(255, 255, 255, 0.1)",
-      transition: "border-color 0.25s ease",
+  '& .MuiOutlinedInput-root': {
+    color: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.025)',
+    borderRadius: '10px',
+    transition: 'all 0.25s ease',
+    '& fieldset': {
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+      transition: 'border-color 0.25s ease',
     },
-    "&:hover fieldset": {
-      borderColor: "rgba(55, 140, 146, 0.25)",
+    '&:hover fieldset': {
+      borderColor: 'rgba(55, 140, 146, 0.25)',
     },
-    "&.Mui-focused": {
-      backgroundColor: "rgba(255, 255, 255, 0.035)",
-      "& fieldset": {
-        borderColor: "#378C92",
-        borderWidth: "1.5px",
+    '&.Mui-focused': {
+      backgroundColor: 'rgba(255, 255, 255, 0.035)',
+      '& fieldset': {
+        borderColor: '#378C92',
+        borderWidth: '1.5px',
       },
     },
   },
-  "& .MuiInputLabel-root": {
-    color: "rgba(255, 255, 255, 0.55)",
+  '& .MuiInputLabel-root': {
+    color: 'rgba(255, 255, 255, 0.55)',
     fontWeight: 500,
-    fontSize: "14px",
+    fontSize: '14px',
   },
-  "& .MuiInputLabel-root.Mui-focused": {
-    color: "#378C92",
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: '#378C92',
   },
-  "& input:-webkit-autofill": {
-    WebkitBoxShadow: "0 0 0 100px rgba(15, 15, 22, 0.95) inset",
-    WebkitTextFillColor: "#ffffff",
+  '& input:-webkit-autofill': {
+    WebkitBoxShadow: '0 0 0 100px rgba(15, 15, 22, 0.95) inset',
+    WebkitTextFillColor: '#ffffff',
   },
 }));
 
 const PrimaryButton = styled(Button)(({ theme }) => ({
   padding: theme.spacing(1.6, 3),
-  borderRadius: "10px",
-  fontSize: "15px",
+  borderRadius: '10px',
+  fontSize: '15px',
   fontWeight: 600,
-  textTransform: "none",
-  background: "linear-gradient(135deg, #378C92 0%, #2c6f74 100%)",
-  color: "#ffffff",
-  boxShadow: "0 4px 16px rgba(55, 140, 146, 0.25)",
-  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-  position: "relative",
-  overflow: "hidden",
-  "&:hover": {
-    transform: "translateY(-2px)",
-    boxShadow: "0 8px 24px rgba(55, 140, 146, 0.35)",
-    background: "linear-gradient(135deg, #3a98a0 0%, #378C92 100%)",
+  textTransform: 'none',
+  background: 'linear-gradient(135deg, #378C92 0%, #2c6f74 100%)',
+  color: '#ffffff',
+  boxShadow: '0 4px 16px rgba(55, 140, 146, 0.25)',
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  position: 'relative',
+  overflow: 'hidden',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 24px rgba(55, 140, 146, 0.35)',
+    background: 'linear-gradient(135deg, #3a98a0 0%, #378C92 100%)',
   },
-  "&:active": {
-    transform: "translateY(-1px)",
+  '&:active': {
+    transform: 'translateY(-1px)',
   },
-  "&:disabled": {
+  '&:disabled': {
     opacity: 0.4,
-    cursor: "not-allowed",
-    background: "rgba(55, 140, 146, 0.3)",
-    boxShadow: "none",
-    color: "rgba(255, 255, 255, 0.5)",
+    cursor: 'not-allowed',
+    background: 'rgba(55, 140, 146, 0.3)',
+    boxShadow: 'none',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
 }));
 
 const GoogleButton = styled(Button)(({ theme }) => ({
-  width: "100%",
+  width: '100%',
   padding: theme.spacing(1.6, 2),
   marginBottom: theme.spacing(3),
-  borderRadius: "10px",
-  fontSize: "15px",
+  borderRadius: '10px',
+  fontSize: '15px',
   fontWeight: 600,
-  textTransform: "none",
-  color: "#ffffff",
-  backgroundColor: "rgba(255, 255, 255, 0.04)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-  "&:hover": {
-    backgroundColor: "rgba(55, 140, 146, 0.06)",
-    border: "1px solid rgba(55, 140, 146, 0.3)",
-    transform: "translateY(-1px)",
-    boxShadow: "0 4px 16px rgba(55, 140, 146, 0.15)",
+  textTransform: 'none',
+  color: '#ffffff',
+  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    backgroundColor: 'rgba(55, 140, 146, 0.06)',
+    border: '1px solid rgba(55, 140, 146, 0.3)',
+    transform: 'translateY(-1px)',
+    boxShadow: '0 4px 16px rgba(55, 140, 146, 0.15)',
   },
 }));
 
 const SecondaryButton = styled(Button)(({ theme }) => ({
-  color: "#378C92",
-  fontSize: "14px",
+  color: '#378C92',
+  fontSize: '14px',
   fontWeight: 600,
-  textTransform: "none",
-  transition: "all 0.2s ease",
-  "&:hover": {
-    color: "#3a98a0",
-    backgroundColor: "rgba(55, 140, 146, 0.06)",
+  textTransform: 'none',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    color: '#3a98a0',
+    backgroundColor: 'rgba(55, 140, 146, 0.06)',
   },
 }));
 
 const FeatureItem = styled(Box)(({ theme }) => ({
-  display: "flex",
-  alignItems: "flex-start",
+  display: 'flex',
+  alignItems: 'flex-start',
   gap: theme.spacing(2),
   marginBottom: theme.spacing(3),
-  color: "rgba(255, 255, 255, 0.8)",
+  color: 'rgba(255, 255, 255, 0.8)',
 }));
 
 const IconWrapper = styled(Box)(({ theme }) => ({
   width: 44,
   height: 44,
   minWidth: 44,
-  borderRadius: "10px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "rgba(55, 140, 146, 0.08)",
-  border: "1px solid rgba(55, 140, 146, 0.15)",
-  transition: "all 0.3s ease",
-  "& svg": {
-    color: "#ffffffff",
+  borderRadius: '10px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'rgba(55, 140, 146, 0.08)',
+  border: '1px solid rgba(55, 140, 146, 0.15)',
+  transition: 'all 0.3s ease',
+  '& svg': {
+    color: '#ffffffff',
     fontSize: 22,
   },
 }));
 
 const FloatingParticle = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  width: "4px",
-  height: "4px",
-  borderRadius: "50%",
-  background: "rgba(55, 140, 146, 0.3)",
+  position: 'absolute',
+  width: '4px',
+  height: '4px',
+  borderRadius: '50%',
+  background: 'rgba(55, 140, 146, 0.3)',
   animation: `${float} 8s ease-in-out infinite, ${pulse} 4s ease-in-out infinite`,
-  pointerEvents: "none",
+  pointerEvents: 'none',
 }));
 
 // Google Icon Component
 const GoogleIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 48 48"
-    style={{ marginRight: "10px" }}
-  >
+  <svg width="18" height="18" viewBox="0 0 48 48" style={{ marginRight: '10px' }}>
     <path
       fill="#EA4335"
       d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
@@ -335,9 +329,9 @@ interface BackendStatus {
   cached: boolean;
 }
 
-type SigninMode = "password" | "code" | "reset";
-type ResetStep = "email" | "code";
-type CodeSigninStep = "email" | "code";
+type SigninMode = 'password' | 'code' | 'reset';
+type ResetStep = 'email' | 'code';
+type CodeSigninStep = 'email' | 'code';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -356,83 +350,85 @@ const Auth = () => {
     resendVerification,
   } = useAuth();
   const muiTheme = useMuiTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
-  const isSmall = useMediaQuery(muiTheme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+  const isSmall = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
-  const [tabValue, setTabValue] = useState<"signin" | "signup">("signin");
-  const [signinMode, setSigninMode] = useState<SigninMode>("password");
+  const [tabValue, setTabValue] = useState<'signin' | 'signup'>('signin');
+  const [signinMode, setSigninMode] = useState<SigninMode>('password');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [backendStatus, setBackendStatus] = useState<BackendStatus>({
     online: true,
     cached: false,
   });
   const [showEmailVerification, setShowEmailVerification] = useState(false);
-  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationEmail, setVerificationEmail] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
 
   // Code signin state
-  const [codeSigninStep, setCodeSigninStep] = useState<CodeSigninStep>("email");
-  const [codeSigninEmail, setCodeSigninEmail] = useState("");
-  const [signinCodeValue, setSigninCodeValue] = useState("");
+  const [codeSigninStep, setCodeSigninStep] = useState<CodeSigninStep>('email');
+  const [codeSigninEmail, setCodeSigninEmail] = useState('');
+  const [signinCodeValue, setSigninCodeValue] = useState('');
   const codeSigninTimer = useResendTimer(60);
 
   // Password reset state
-  const [resetStep, setResetStep] = useState<ResetStep>("email");
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetCode, setResetCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [resetStep, setResetStep] = useState<ResetStep>('email');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const resetTimer = useResendTimer(60);
 
   // Email verification state
-  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationCode, setVerificationCode] = useState('');
   const verificationTimer = useResendTimer(60);
 
   const [formData, setFormData] = useState<FormData>({
-    email: "",
-    password: "",
-    name: "",
+    email: '',
+    password: '',
+    name: '',
   });
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
+  console.log("api url", API_URL);
 
   // Handle mode from URL query string
   useEffect(() => {
-    const mode = searchParams.get("mode");
-    if (mode === "login" || mode === "signin") {
-      setTabValue("signin");
-      setSigninMode("password");
-    } else if (mode === "signup" || mode === "register") {
-      setTabValue("signup");
-    } else if (mode === "code") {
-      setTabValue("signin");
-      setSigninMode("code");
-    } else if (mode === "forgot-password" || mode === "reset-password") {
-      setTabValue("signin");
-      setSigninMode("reset");
+    const mode = searchParams.get('mode');
+    if (mode === 'login' || mode === 'signin') {
+      setTabValue('signin');
+      setSigninMode('password');
+    } else if (mode === 'signup' || mode === 'register') {
+      setTabValue('signup');
+    } else if (mode === 'code') {
+      setTabValue('signin');
+      setSigninMode('code');
+    } else if (mode === 'forgot-password' || mode === 'reset-password') {
+      setTabValue('signin');
+      setSigninMode('reset');
     }
   }, [searchParams]);
 
   // Handle Google OAuth errors (success now redirects directly to dashboard)
   useEffect(() => {
-    const googleAuth = searchParams.get("google_auth");
+    const googleAuth = searchParams.get('google_auth');
 
-    if (googleAuth === "error") {
-      const message = searchParams.get("message");
-      setError(decodeURIComponent(message || "Google authentication failed"));
+    if (googleAuth === 'error') {
+      const message = searchParams.get('message');
+      setError(decodeURIComponent(message || 'Google authentication failed'));
 
       // Clear the URL params
       const newUrl = window.location.pathname;
-      window.history.replaceState({}, "", newUrl);
+      window.history.replaceState({}, '', newUrl);
     }
   }, [searchParams]);
 
   useEffect(() => {
     // Only redirect after auth loading is complete and user is authenticated
     if (!authLoading && user) {
-      navigate("/dashboard");
+      navigate('/dashboard');
       return;
     }
 
@@ -446,16 +442,14 @@ const Auth = () => {
 
       if (result.error && result.cached) {
         setBackendStatus({ online: false, cached: true });
-        setTabValue(!result.exists ? "signup" : "signin");
+        setTabValue(!result.exists ? 'signup' : 'signin');
       } else if (result.error && !result.cached) {
         setBackendStatus({ online: false, cached: false });
-        setTabValue("signin");
-        setError(
-          "Cannot connect to server. Please check if the backend is running.",
-        );
+        setTabValue('signin');
+        setError('Cannot connect to server. Please check if the backend is running.');
       } else {
         setBackendStatus({ online: true, cached: false });
-        setTabValue(!result.exists ? "signup" : "signin");
+        setTabValue(!result.exists ? 'signup' : 'signin');
       }
     };
 
@@ -468,19 +462,16 @@ const Auth = () => {
       ...prev,
       [name]: value,
     }));
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
   };
 
-  const handleTabChange = (
-    _event: React.SyntheticEvent,
-    newValue: "signin" | "signup",
-  ) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: 'signin' | 'signup') => {
     setTabValue(newValue);
-    setSigninMode("password");
-    setError("");
-    setSuccess("");
-    setFormData({ email: "", password: "", name: "" });
+    setSigninMode('password');
+    setError('');
+    setSuccess('');
+    setFormData({ email: '', password: '', name: '' });
   };
 
   const handleGoogleSignIn = () => {
@@ -489,22 +480,22 @@ const Auth = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
-      if (tabValue === "signup") {
+      if (tabValue === 'signup') {
         // Validate terms acceptance before proceeding
         if (!acceptTerms) {
-          setError("Please accept the Terms of Service and Privacy Policy");
+          setError('Please accept the Terms of Service and Privacy Policy');
           setLoading(false);
           return;
         }
 
         // Validate password complexity on frontend (same rules as backend)
         if (!formData.password || formData.password.length < 8) {
-          setError("Password must be at least 8 characters");
+          setError('Password must be at least 8 characters');
           setLoading(false);
           return;
         }
@@ -513,35 +504,35 @@ const Auth = () => {
           /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+\-=\[\]{};:'",.<>\/\\|`~])[A-Za-z\d@$!%*?&#^()_+\-=\[\]{};:'",.<>\/\\|`~]{8,}$/;
         if (!passwordRegex.test(formData.password)) {
           setError(
-            "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+            'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
           );
           setLoading(false);
           return;
         }
 
         const formDataToSend = new FormData();
-        formDataToSend.append("email", formData.email);
-        formDataToSend.append("password", formData.password);
-        formDataToSend.append("name", formData.name);
-        formDataToSend.append("acceptTerms", acceptTerms.toString());
+        formDataToSend.append('email', formData.email);
+        formDataToSend.append('password', formData.password);
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('acceptTerms', acceptTerms.toString());
 
         const result = await signup(formDataToSend);
         if (result.success) {
           setVerificationEmail(formData.email);
           setShowEmailVerification(true);
         } else {
-          setError(result.message || "Signup failed");
+          setError(result.message || 'Signup failed');
         }
       } else {
         const result = await signin(formData.email, formData.password);
         if (result.success) {
-          navigate("/dashboard");
+          navigate('/dashboard');
         } else {
-          setError(result.message || "Sign in failed");
+          setError(result.message || 'Sign in failed');
         }
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -549,33 +540,31 @@ const Auth = () => {
 
   // Code Signin Handlers
   const handleRequestSigninCode = async () => {
-    if (!codeSigninEmail || !codeSigninEmail.includes("@")) {
-      setError("Please enter a valid email address");
+    if (!codeSigninEmail || !codeSigninEmail.includes('@')) {
+      setError('Please enter a valid email address');
       return;
     }
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const result = await requestSigninCode(codeSigninEmail);
       if (result.success) {
-        setCodeSigninStep("code");
+        setCodeSigninStep('code');
         codeSigninTimer.start(60);
-        setSuccess("Code sent to your email");
+        setSuccess('Code sent to your email');
       } else {
         if (result.retryAfter) {
           codeSigninTimer.start(result.retryAfter);
-          setError(
-            `Please wait ${result.retryAfter} seconds before requesting another code`,
-          );
+          setError(`Please wait ${result.retryAfter} seconds before requesting another code`);
         } else {
-          setError(result.message || "Failed to send signin code");
+          setError(result.message || 'Failed to send signin code');
         }
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -583,23 +572,23 @@ const Auth = () => {
 
   const handleCodeSignin = async () => {
     if (signinCodeValue.length !== 6) {
-      setError("Please enter the 6-digit code");
+      setError('Please enter the 6-digit code');
       return;
     }
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const result = await signinCode(codeSigninEmail, signinCodeValue);
       if (result.success) {
-        navigate("/dashboard");
+        navigate('/dashboard');
       } else {
-        setError(result.message || "Sign in failed");
+        setError(result.message || 'Sign in failed');
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -608,28 +597,26 @@ const Auth = () => {
   const handleResendSigninCode = async () => {
     if (codeSigninTimer.secondsRemaining > 0) return;
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const result = await requestSigninCode(codeSigninEmail);
       if (result.success) {
         codeSigninTimer.reset(60);
-        setSuccess("Code resent to your email");
-        setSigninCodeValue("");
+        setSuccess('Code resent to your email');
+        setSigninCodeValue('');
       } else {
         if (result.retryAfter) {
           codeSigninTimer.reset(result.retryAfter);
-          setError(
-            `Please wait ${result.retryAfter} seconds before requesting another code`,
-          );
+          setError(`Please wait ${result.retryAfter} seconds before requesting another code`);
         } else {
-          setError(result.message || "Failed to resend code");
+          setError(result.message || 'Failed to resend code');
         }
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -637,33 +624,31 @@ const Auth = () => {
 
   // Password Reset Handlers
   const handleRequestResetCode = async () => {
-    if (!resetEmail || !resetEmail.includes("@")) {
-      setError("Please enter a valid email address");
+    if (!resetEmail || !resetEmail.includes('@')) {
+      setError('Please enter a valid email address');
       return;
     }
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const result = await requestPasswordReset(resetEmail);
       if (result.success) {
-        setResetStep("code");
+        setResetStep('code');
         resetTimer.start(60);
-        setSuccess("Reset code sent to your email");
+        setSuccess('Reset code sent to your email');
       } else {
         if (result.retryAfter) {
           resetTimer.start(result.retryAfter);
-          setError(
-            `Please wait ${result.retryAfter} seconds before requesting another code`,
-          );
+          setError(`Please wait ${result.retryAfter} seconds before requesting another code`);
         } else {
-          setError(result.message || "Failed to send reset code");
+          setError(result.message || 'Failed to send reset code');
         }
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -671,13 +656,13 @@ const Auth = () => {
 
   const handlePasswordReset = async () => {
     if (resetCode.length !== 6) {
-      setError("Please enter the 6-digit code");
+      setError('Please enter the 6-digit code');
       return;
     }
 
     // Password validation matching backend requirements
     if (!newPassword || newPassword.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -685,34 +670,34 @@ const Auth = () => {
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+\-=\[\]{};:'",.<>\/\\|`~])[A-Za-z\d@$!%*?&#^()_+\-=\[\]{};:'",.<>\/\\|`~]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
       setError(
-        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
       );
       return;
     }
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const result = await resetPassword(resetEmail, resetCode, newPassword);
       if (result.success) {
-        setSuccess("Password reset successfully!");
+        setSuccess('Password reset successfully!');
         setTimeout(() => {
-          setSigninMode("password");
-          setFormData({ ...formData, email: resetEmail, password: "" });
-          setResetStep("email");
-          setResetEmail("");
-          setResetCode("");
-          setNewPassword("");
-          setError("");
-          setSuccess("");
+          setSigninMode('password');
+          setFormData({ ...formData, email: resetEmail, password: '' });
+          setResetStep('email');
+          setResetEmail('');
+          setResetCode('');
+          setNewPassword('');
+          setError('');
+          setSuccess('');
         }, 2000);
       } else {
-        setError(result.message || "Password reset failed");
+        setError(result.message || 'Password reset failed');
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -721,28 +706,26 @@ const Auth = () => {
   const handleResendResetCode = async () => {
     if (resetTimer.secondsRemaining > 0) return;
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const result = await requestPasswordReset(resetEmail);
       if (result.success) {
         resetTimer.reset(60);
-        setSuccess("Code resent to your email");
-        setResetCode("");
+        setSuccess('Code resent to your email');
+        setResetCode('');
       } else {
         if (result.retryAfter) {
           resetTimer.reset(result.retryAfter);
-          setError(
-            `Please wait ${result.retryAfter} seconds before requesting another code`,
-          );
+          setError(`Please wait ${result.retryAfter} seconds before requesting another code`);
         } else {
-          setError(result.message || "Failed to resend code");
+          setError(result.message || 'Failed to resend code');
         }
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -751,24 +734,24 @@ const Auth = () => {
   // Email Verification Handlers
   const handleEmailVerification = async () => {
     if (verificationCode.length !== 6) {
-      setError("Please enter the 6-digit code");
+      setError('Please enter the 6-digit code');
       return;
     }
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const result = await verifyEmail(verificationEmail, verificationCode);
       if (result.success) {
         // Redirect immediately to dashboard (no delay)
-        navigate("/dashboard");
+        navigate('/dashboard');
       } else {
-        setError(result.message || "Verification failed");
+        setError(result.message || 'Verification failed');
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -777,28 +760,26 @@ const Auth = () => {
   const handleResendVerification = async () => {
     if (verificationTimer.secondsRemaining > 0) return;
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const result = await resendVerification(verificationEmail);
       if (result.success) {
         verificationTimer.reset(60);
-        setSuccess("Code resent to your email");
-        setVerificationCode("");
+        setSuccess('Code resent to your email');
+        setVerificationCode('');
       } else {
         if (result.retryAfter) {
           verificationTimer.reset(result.retryAfter);
-          setError(
-            `Please wait ${result.retryAfter} seconds before requesting another code`,
-          );
+          setError(`Please wait ${result.retryAfter} seconds before requesting another code`);
         } else {
-          setError(result.message || "Failed to resend code");
+          setError(result.message || 'Failed to resend code');
         }
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -807,17 +788,17 @@ const Auth = () => {
   // Render Email Verification View (in card)
   const renderEmailVerification = () => (
     <>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
         <IconButton
           onClick={() => {
             setShowEmailVerification(false);
-            setVerificationEmail("");
-            setVerificationCode("");
-            setError("");
-            setSuccess("");
+            setVerificationEmail('');
+            setVerificationCode('');
+            setError('');
+            setSuccess('');
           }}
           size="small"
-          sx={{ color: "rgba(255, 255, 255, 0.6)" }}
+          sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
         >
           <ArrowBackIcon fontSize="small" />
         </IconButton>
@@ -825,8 +806,8 @@ const Auth = () => {
           variant="h5"
           sx={{
             fontWeight: 700,
-            fontSize: { xs: "22px", sm: "24px" },
-            color: "#ffffff",
+            fontSize: { xs: '22px', sm: '24px' },
+            color: '#ffffff',
           }}
         >
           Verify Your Email
@@ -836,8 +817,8 @@ const Auth = () => {
       <Typography
         variant="body2"
         sx={{
-          color: "rgba(255, 255, 255, 0.65)",
-          fontSize: "14px",
+          color: 'rgba(255, 255, 255, 0.65)',
+          fontSize: '14px',
           mb: 1,
         }}
       >
@@ -848,7 +829,7 @@ const Auth = () => {
         variant="body1"
         sx={{
           fontWeight: 600,
-          color: "#378C92",
+          color: '#378C92',
           mb: 4,
         }}
       >
@@ -860,10 +841,10 @@ const Auth = () => {
           severity="success"
           sx={{
             mb: 3,
-            fontSize: "13px",
-            backgroundColor: "rgba(46, 125, 50, 0.1)",
-            border: "1px solid rgba(46, 125, 50, 0.3)",
-            color: "#66bb6a",
+            fontSize: '13px',
+            backgroundColor: 'rgba(46, 125, 50, 0.1)',
+            border: '1px solid rgba(46, 125, 50, 0.3)',
+            color: '#66bb6a',
           }}
         >
           {success}
@@ -875,10 +856,10 @@ const Auth = () => {
           severity="error"
           sx={{
             mb: 3,
-            fontSize: "13px",
-            backgroundColor: "rgba(211, 47, 47, 0.08)",
-            border: "1px solid rgba(211, 47, 47, 0.25)",
-            color: "#ff6b6b",
+            fontSize: '13px',
+            backgroundColor: 'rgba(211, 47, 47, 0.08)',
+            border: '1px solid rgba(211, 47, 47, 0.25)',
+            color: '#ff6b6b',
           }}
         >
           {error}
@@ -901,26 +882,19 @@ const Auth = () => {
         disabled={loading || verificationCode.length !== 6}
         sx={{ mb: 2 }}
       >
-        {loading ? (
-          <CircularProgress size={20} sx={{ color: "#ffffff" }} />
-        ) : (
-          "Verify Email"
-        )}
+        {loading ? <CircularProgress size={20} sx={{ color: '#ffffff' }} /> : 'Verify Email'}
       </PrimaryButton>
 
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
+          display: 'flex',
+          justifyContent: 'center',
           gap: 0.5,
-          alignItems: "center",
+          alignItems: 'center',
           mt: 2,
         }}
       >
-        <Typography
-          variant="body2"
-          sx={{ color: "rgba(255, 255, 255, 0.55)", fontSize: "14px" }}
-        >
+        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: '14px' }}>
           Didn't receive the code?
         </Typography>
         <ResendLink
@@ -935,18 +909,18 @@ const Auth = () => {
   // Render Code Signin View (in card)
   const renderCodeSignin = () => (
     <>
-      {codeSigninStep === "email" && (
+      {codeSigninStep === 'email' && (
         <>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <IconButton
               onClick={() => {
-                setSigninMode("password");
-                setCodeSigninEmail("");
-                setError("");
-                setSuccess("");
+                setSigninMode('password');
+                setCodeSigninEmail('');
+                setError('');
+                setSuccess('');
               }}
               size="small"
-              sx={{ color: "rgba(255, 255, 255, 0.6)" }}
+              sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
             >
               <ArrowBackIcon fontSize="small" />
             </IconButton>
@@ -954,8 +928,8 @@ const Auth = () => {
               variant="h5"
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: "22px", sm: "24px" },
-                color: "#ffffff",
+                fontSize: { xs: '22px', sm: '24px' },
+                color: '#ffffff',
               }}
             >
               Sign in with code
@@ -965,8 +939,8 @@ const Auth = () => {
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.65)",
-              fontSize: "14px",
+              color: 'rgba(255, 255, 255, 0.65)',
+              fontSize: '14px',
               mb: 4,
             }}
           >
@@ -978,10 +952,10 @@ const Auth = () => {
               severity="error"
               sx={{
                 mb: 3,
-                fontSize: "13px",
-                backgroundColor: "rgba(211, 47, 47, 0.08)",
-                border: "1px solid rgba(211, 47, 47, 0.25)",
-                color: "#ff6b6b",
+                fontSize: '13px',
+                backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                border: '1px solid rgba(211, 47, 47, 0.25)',
+                color: '#ff6b6b',
               }}
             >
               {error}
@@ -995,10 +969,10 @@ const Auth = () => {
             value={codeSigninEmail}
             onChange={(e) => {
               setCodeSigninEmail(e.target.value);
-              setError("");
+              setError('');
             }}
             autoFocus
-            size={isSmall ? "small" : "medium"}
+            size={isSmall ? 'small' : 'medium'}
           />
 
           <PrimaryButton
@@ -1007,27 +981,23 @@ const Auth = () => {
             disabled={loading || !codeSigninEmail}
             sx={{ mb: 2 }}
           >
-            {loading ? (
-              <CircularProgress size={20} sx={{ color: "#ffffff" }} />
-            ) : (
-              "Send code"
-            )}
+            {loading ? <CircularProgress size={20} sx={{ color: '#ffffff' }} /> : 'Send code'}
           </PrimaryButton>
         </>
       )}
 
-      {codeSigninStep === "code" && (
+      {codeSigninStep === 'code' && (
         <>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <IconButton
               onClick={() => {
-                setCodeSigninStep("email");
-                setSigninCodeValue("");
-                setError("");
-                setSuccess("");
+                setCodeSigninStep('email');
+                setSigninCodeValue('');
+                setError('');
+                setSuccess('');
               }}
               size="small"
-              sx={{ color: "rgba(255, 255, 255, 0.6)" }}
+              sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
             >
               <ArrowBackIcon fontSize="small" />
             </IconButton>
@@ -1035,8 +1005,8 @@ const Auth = () => {
               variant="h5"
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: "22px", sm: "24px" },
-                color: "#ffffff",
+                fontSize: { xs: '22px', sm: '24px' },
+                color: '#ffffff',
               }}
             >
               Enter code
@@ -1046,8 +1016,8 @@ const Auth = () => {
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.65)",
-              fontSize: "14px",
+              color: 'rgba(255, 255, 255, 0.65)',
+              fontSize: '14px',
               mb: 1,
             }}
           >
@@ -1058,7 +1028,7 @@ const Auth = () => {
             variant="body1"
             sx={{
               fontWeight: 600,
-              color: "#378C92",
+              color: '#378C92',
               mb: 4,
             }}
           >
@@ -1070,10 +1040,10 @@ const Auth = () => {
               severity="success"
               sx={{
                 mb: 3,
-                fontSize: "13px",
-                backgroundColor: "rgba(46, 125, 50, 0.1)",
-                border: "1px solid rgba(46, 125, 50, 0.3)",
-                color: "#66bb6a",
+                fontSize: '13px',
+                backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                border: '1px solid rgba(46, 125, 50, 0.3)',
+                color: '#66bb6a',
               }}
             >
               {success}
@@ -1085,10 +1055,10 @@ const Auth = () => {
               severity="error"
               sx={{
                 mb: 3,
-                fontSize: "13px",
-                backgroundColor: "rgba(211, 47, 47, 0.08)",
-                border: "1px solid rgba(211, 47, 47, 0.25)",
-                color: "#ff6b6b",
+                fontSize: '13px',
+                backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                border: '1px solid rgba(211, 47, 47, 0.25)',
+                color: '#ff6b6b',
               }}
             >
               {error}
@@ -1111,25 +1081,21 @@ const Auth = () => {
             disabled={loading || signinCodeValue.length !== 6}
             sx={{ mb: 2 }}
           >
-            {loading ? (
-              <CircularProgress size={20} sx={{ color: "#ffffff" }} />
-            ) : (
-              "Sign in"
-            )}
+            {loading ? <CircularProgress size={20} sx={{ color: '#ffffff' }} /> : 'Sign in'}
           </PrimaryButton>
 
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "center",
+              display: 'flex',
+              justifyContent: 'center',
               gap: 0.5,
-              alignItems: "center",
+              alignItems: 'center',
               mt: 2,
             }}
           >
             <Typography
               variant="body2"
-              sx={{ color: "rgba(255, 255, 255, 0.55)", fontSize: "14px" }}
+              sx={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: '14px' }}
             >
               Didn't receive the code?
             </Typography>
@@ -1147,18 +1113,18 @@ const Auth = () => {
   // Render Password Reset View (in card)
   const renderPasswordReset = () => (
     <>
-      {resetStep === "email" && (
+      {resetStep === 'email' && (
         <>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <IconButton
               onClick={() => {
-                setSigninMode("password");
-                setResetEmail("");
-                setError("");
-                setSuccess("");
+                setSigninMode('password');
+                setResetEmail('');
+                setError('');
+                setSuccess('');
               }}
               size="small"
-              sx={{ color: "rgba(255, 255, 255, 0.6)" }}
+              sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
             >
               <ArrowBackIcon fontSize="small" />
             </IconButton>
@@ -1166,8 +1132,8 @@ const Auth = () => {
               variant="h5"
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: "22px", sm: "24px" },
-                color: "#ffffff",
+                fontSize: { xs: '22px', sm: '24px' },
+                color: '#ffffff',
               }}
             >
               Reset your password
@@ -1177,8 +1143,8 @@ const Auth = () => {
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.65)",
-              fontSize: "14px",
+              color: 'rgba(255, 255, 255, 0.65)',
+              fontSize: '14px',
               mb: 4,
             }}
           >
@@ -1190,10 +1156,10 @@ const Auth = () => {
               severity="success"
               sx={{
                 mb: 3,
-                fontSize: "13px",
-                backgroundColor: "rgba(46, 125, 50, 0.1)",
-                border: "1px solid rgba(46, 125, 50, 0.3)",
-                color: "#66bb6a",
+                fontSize: '13px',
+                backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                border: '1px solid rgba(46, 125, 50, 0.3)',
+                color: '#66bb6a',
               }}
             >
               {success}
@@ -1205,10 +1171,10 @@ const Auth = () => {
               severity="error"
               sx={{
                 mb: 3,
-                fontSize: "13px",
-                backgroundColor: "rgba(211, 47, 47, 0.08)",
-                border: "1px solid rgba(211, 47, 47, 0.25)",
-                color: "#ff6b6b",
+                fontSize: '13px',
+                backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                border: '1px solid rgba(211, 47, 47, 0.25)',
+                color: '#ff6b6b',
               }}
             >
               {error}
@@ -1222,11 +1188,11 @@ const Auth = () => {
             value={resetEmail}
             onChange={(e) => {
               setResetEmail(e.target.value);
-              setError("");
-              setSuccess("");
+              setError('');
+              setSuccess('');
             }}
             autoFocus
-            size={isSmall ? "small" : "medium"}
+            size={isSmall ? 'small' : 'medium'}
           />
 
           <PrimaryButton
@@ -1235,28 +1201,24 @@ const Auth = () => {
             disabled={loading || !resetEmail}
             sx={{ mb: 2 }}
           >
-            {loading ? (
-              <CircularProgress size={20} sx={{ color: "#ffffff" }} />
-            ) : (
-              "Send reset code"
-            )}
+            {loading ? <CircularProgress size={20} sx={{ color: '#ffffff' }} /> : 'Send reset code'}
           </PrimaryButton>
         </>
       )}
 
-      {resetStep === "code" && (
+      {resetStep === 'code' && (
         <>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <IconButton
               onClick={() => {
-                setResetStep("email");
-                setResetCode("");
-                setNewPassword("");
-                setError("");
-                setSuccess("");
+                setResetStep('email');
+                setResetCode('');
+                setNewPassword('');
+                setError('');
+                setSuccess('');
               }}
               size="small"
-              sx={{ color: "rgba(255, 255, 255, 0.6)" }}
+              sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
             >
               <ArrowBackIcon fontSize="small" />
             </IconButton>
@@ -1264,8 +1226,8 @@ const Auth = () => {
               variant="h5"
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: "22px", sm: "24px" },
-                color: "#ffffff",
+                fontSize: { xs: '22px', sm: '24px' },
+                color: '#ffffff',
               }}
             >
               Enter code & new password
@@ -1275,8 +1237,8 @@ const Auth = () => {
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.65)",
-              fontSize: "14px",
+              color: 'rgba(255, 255, 255, 0.65)',
+              fontSize: '14px',
               mb: 1,
             }}
           >
@@ -1287,7 +1249,7 @@ const Auth = () => {
             variant="body1"
             sx={{
               fontWeight: 600,
-              color: "#378C92",
+              color: '#378C92',
               mb: 3,
             }}
           >
@@ -1299,10 +1261,10 @@ const Auth = () => {
               severity="success"
               sx={{
                 mb: 3,
-                fontSize: "13px",
-                backgroundColor: "rgba(46, 125, 50, 0.1)",
-                border: "1px solid rgba(46, 125, 50, 0.3)",
-                color: "#66bb6a",
+                fontSize: '13px',
+                backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                border: '1px solid rgba(46, 125, 50, 0.3)',
+                color: '#66bb6a',
               }}
             >
               {success}
@@ -1314,10 +1276,10 @@ const Auth = () => {
               severity="error"
               sx={{
                 mb: 3,
-                fontSize: "13px",
-                backgroundColor: "rgba(211, 47, 47, 0.08)",
-                border: "1px solid rgba(211, 47, 47, 0.25)",
-                color: "#ff6b6b",
+                fontSize: '13px',
+                backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                border: '1px solid rgba(211, 47, 47, 0.25)',
+                color: '#ff6b6b',
               }}
             >
               {error}
@@ -1327,8 +1289,8 @@ const Auth = () => {
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.55)",
-              fontSize: "13px",
+              color: 'rgba(255, 255, 255, 0.55)',
+              fontSize: '13px',
               mb: 1,
               fontWeight: 500,
             }}
@@ -1349,14 +1311,14 @@ const Auth = () => {
           <StyledTextField
             fullWidth
             label="New Password"
-            type={showPassword ? "text" : "password"}
+            type={showPassword ? 'text' : 'password'}
             value={newPassword}
             onChange={(e) => {
               setNewPassword(e.target.value);
-              setError("");
-              setSuccess("");
+              setError('');
+              setSuccess('');
             }}
-            size={isSmall ? "small" : "medium"}
+            size={isSmall ? 'small' : 'medium'}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -1364,7 +1326,7 @@ const Auth = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     edge="end"
                     size="small"
-                    sx={{ color: "rgba(255, 255, 255, 0.5)" }}
+                    sx={{ color: 'rgba(255, 255, 255, 0.5)' }}
                   >
                     {showPassword ? (
                       <VisibilityOff fontSize="small" />
@@ -1380,30 +1342,24 @@ const Auth = () => {
           <PrimaryButton
             fullWidth
             onClick={handlePasswordReset}
-            disabled={
-              loading || resetCode.length !== 6 || newPassword.length < 8
-            }
+            disabled={loading || resetCode.length !== 6 || newPassword.length < 8}
             sx={{ mb: 2 }}
           >
-            {loading ? (
-              <CircularProgress size={20} sx={{ color: "#ffffff" }} />
-            ) : (
-              "Update password"
-            )}
+            {loading ? <CircularProgress size={20} sx={{ color: '#ffffff' }} /> : 'Update password'}
           </PrimaryButton>
 
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "center",
+              display: 'flex',
+              justifyContent: 'center',
               gap: 0.5,
-              alignItems: "center",
+              alignItems: 'center',
               mt: 2,
             }}
           >
             <Typography
               variant="body2"
-              sx={{ color: "rgba(255, 255, 255, 0.55)", fontSize: "14px" }}
+              sx={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: '14px' }}
             >
               Didn't receive the code?
             </Typography>
@@ -1425,31 +1381,30 @@ const Auth = () => {
         variant="h4"
         sx={{
           fontWeight: 800,
-          fontSize: { xs: "26px", sm: "30px" },
-          background:
-            "linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.9) 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
+          fontSize: { xs: '26px', sm: '30px' },
+          background: 'linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.9) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
           mb: 1.5,
-          letterSpacing: "-0.02em",
+          letterSpacing: '-0.02em',
         }}
       >
-        {tabValue === "signin" ? "Welcome back" : "Create your account"}
+        {tabValue === 'signin' ? 'Welcome back' : 'Create your account'}
       </Typography>
 
       <Typography
         variant="body2"
         sx={{
-          color: "rgba(255, 255, 255, 0.55)",
-          fontSize: "14px",
+          color: 'rgba(255, 255, 255, 0.55)',
+          fontSize: '14px',
           mb: 4,
           lineHeight: 1.5,
         }}
       >
-        {tabValue === "signin"
-          ? "Sign in to your Techietribe account to access the dashboard."
-          : "Join Techietribe and start building your online presence."}
+        {tabValue === 'signin'
+          ? 'Sign in to your Techietribe account to access the dashboard.'
+          : 'Join Techietribe and start building your online presence.'}
       </Typography>
 
       {/* Tabs */}
@@ -1461,12 +1416,12 @@ const Auth = () => {
       {/* Backend Status Warning */}
       {!backendStatus.online && backendStatus.cached && (
         <Alert
-          severity={import.meta.env.DEV ? "warning" : "error"}
-          sx={{ mb: 3, fontSize: "13px" }}
+          severity={import.meta.env.DEV ? 'warning' : 'error'}
+          sx={{ mb: 3, fontSize: '13px' }}
         >
           {import.meta.env.DEV
-            ? "Backend is offline. Using cached data. Some features may not work."
-            : "Unable to connect to the server. Please try again later or contact support."}
+            ? 'Backend is offline. Using cached data. Some features may not work.'
+            : 'Unable to connect to the server. Please try again later or contact support.'}
         </Alert>
       )}
 
@@ -1479,10 +1434,10 @@ const Auth = () => {
       <Typography
         variant="caption"
         sx={{
-          display: "block",
-          textAlign: "center",
-          color: "rgba(255, 255, 255, 0.4)",
-          fontSize: "12px",
+          display: 'block',
+          textAlign: 'center',
+          color: 'rgba(255, 255, 255, 0.4)',
+          fontSize: '12px',
           mb: 3,
           mt: -2,
         }}
@@ -1495,8 +1450,8 @@ const Auth = () => {
         <Typography
           variant="body2"
           sx={{
-            color: "rgba(255, 255, 255, 0.45)",
-            fontSize: "12px",
+            color: 'rgba(255, 255, 255, 0.45)',
+            fontSize: '12px',
             px: 2,
           }}
         >
@@ -1510,10 +1465,10 @@ const Auth = () => {
           severity="error"
           sx={{
             mb: 3,
-            fontSize: "13px",
-            backgroundColor: "rgba(211, 47, 47, 0.08)",
-            border: "1px solid rgba(211, 47, 47, 0.25)",
-            color: "#ff6b6b",
+            fontSize: '13px',
+            backgroundColor: 'rgba(211, 47, 47, 0.08)',
+            border: '1px solid rgba(211, 47, 47, 0.25)',
+            color: '#ff6b6b',
           }}
         >
           {error}
@@ -1522,7 +1477,7 @@ const Auth = () => {
 
       {/* Form */}
       <form onSubmit={handleSubmit}>
-        {tabValue === "signup" && (
+        {tabValue === 'signup' && (
           <StyledTextField
             fullWidth
             label="Full Name"
@@ -1531,7 +1486,7 @@ const Auth = () => {
             onChange={handleChange}
             required
             autoComplete="name"
-            size={isSmall ? "small" : "medium"}
+            size={isSmall ? 'small' : 'medium'}
           />
         )}
 
@@ -1544,21 +1499,19 @@ const Auth = () => {
           onChange={handleChange}
           required
           autoComplete="email"
-          size={isSmall ? "small" : "medium"}
+          size={isSmall ? 'small' : 'medium'}
         />
 
         <StyledTextField
           fullWidth
           label="Password"
           name="password"
-          type={showPassword ? "text" : "password"}
+          type={showPassword ? 'text' : 'password'}
           value={formData.password}
           onChange={handleChange}
           required
-          autoComplete={
-            tabValue === "signin" ? "current-password" : "new-password"
-          }
-          size={isSmall ? "small" : "medium"}
+          autoComplete={tabValue === 'signin' ? 'current-password' : 'new-password'}
+          size={isSmall ? 'small' : 'medium'}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -1566,7 +1519,7 @@ const Auth = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
                   size="small"
-                  sx={{ color: "rgba(255, 255, 255, 0.5)" }}
+                  sx={{ color: 'rgba(255, 255, 255, 0.5)' }}
                 >
                   {showPassword ? (
                     <VisibilityOff fontSize="small" />
@@ -1579,24 +1532,23 @@ const Auth = () => {
           }}
         />
 
-        {tabValue === "signup" && (
+        {tabValue === 'signup' && (
           <Typography
             variant="caption"
             sx={{
-              display: "block",
-              color: "rgba(255, 255, 255, 0.45)",
-              fontSize: "12px",
+              display: 'block',
+              color: 'rgba(255, 255, 255, 0.45)',
+              fontSize: '12px',
               mb: 2,
               mt: -1.5,
               lineHeight: 1.4,
             }}
           >
-            Must be 8+ characters with uppercase, lowercase, number, and special
-            character
+            Must be 8+ characters with uppercase, lowercase, number, and special character
           </Typography>
         )}
 
-        {tabValue === "signup" && (
+        {tabValue === 'signup' && (
           <FormControlLabel
             control={
               <Checkbox
@@ -1604,9 +1556,9 @@ const Auth = () => {
                 onChange={(e) => setAcceptTerms(e.target.checked)}
                 size="small"
                 sx={{
-                  color: "rgba(255, 255, 255, 0.25)",
-                  "&.Mui-checked": {
-                    color: "#378C92",
+                  color: 'rgba(255, 255, 255, 0.25)',
+                  '&.Mui-checked': {
+                    color: '#378C92',
                   },
                 }}
               />
@@ -1614,7 +1566,7 @@ const Auth = () => {
             label={
               <Typography
                 variant="body2"
-                sx={{ color: "rgba(255, 255, 255, 0.55)", fontSize: "13px" }}
+                sx={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: '13px' }}
               >
                 I agree to the Terms of Service and Privacy Policy
               </Typography>
@@ -1630,57 +1582,54 @@ const Auth = () => {
           disabled={
             loading ||
             (!backendStatus.online && !backendStatus.cached) ||
-            (tabValue === "signup" && !acceptTerms)
+            (tabValue === 'signup' && !acceptTerms)
           }
           sx={{ mb: 2 }}
         >
           {loading ? (
-            <CircularProgress size={20} sx={{ color: "#ffffff" }} />
-          ) : tabValue === "signin" ? (
-            "Sign in"
+            <CircularProgress size={20} sx={{ color: '#ffffff' }} />
+          ) : tabValue === 'signin' ? (
+            'Sign in'
           ) : (
-            "Create account"
+            'Create account'
           )}
         </PrimaryButton>
 
         {/* Secondary Links */}
-        {tabValue === "signin" && (
+        {tabValue === 'signin' && (
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-              alignItems: "center",
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              alignItems: 'center',
               mt: 2,
             }}
           >
-            <SecondaryButton onClick={() => setSigninMode("code")} size="small">
+            <SecondaryButton onClick={() => setSigninMode('code')} size="small">
               Sign in with code instead
             </SecondaryButton>
-            <SecondaryButton
-              onClick={() => setSigninMode("reset")}
-              size="small"
-            >
+            <SecondaryButton onClick={() => setSigninMode('reset')} size="small">
               Forgot password?
             </SecondaryButton>
           </Box>
         )}
 
-        {tabValue === "signup" && (
-          <Box sx={{ textAlign: "center", mt: 2 }}>
+        {tabValue === 'signup' && (
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
             <Typography
               variant="body2"
-              sx={{ color: "rgba(255, 255, 255, 0.55)", fontSize: "13px" }}
+              sx={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: '13px' }}
             >
-              Already have an account?{" "}
+              Already have an account?{' '}
               <SecondaryButton
-                onClick={() => setTabValue("signin")}
+                onClick={() => setTabValue('signin')}
                 size="small"
                 sx={{
                   p: 0,
-                  minWidth: "auto",
-                  fontSize: "13px",
-                  verticalAlign: "baseline",
+                  minWidth: 'auto',
+                  fontSize: '13px',
+                  verticalAlign: 'baseline',
                 }}
               >
                 Sign in
@@ -1698,16 +1647,16 @@ const Auth = () => {
       <PageContainer>
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "100vh",
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
           }}
         >
           <CircularProgress
             size={50}
             sx={{
-              color: "#378C92",
+              color: '#378C92',
             }}
           />
         </Box>
@@ -1720,35 +1669,29 @@ const Auth = () => {
     <PageContainer>
       <Box
         sx={{
-          position: "absolute",
-          height: "auto",
+          position: 'absolute',
+          height: 'auto',
           zIndex: 0,
           backgroundImage: `url("${darkhole}")`,
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "contain",
-          aspectRatio: "2074 / 1333",
-          top: "12%",
-          left: "-70%",
-          width: "280%",
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'contain',
+          aspectRatio: '2074 / 1333',
+          top: '12%',
+          left: '-70%',
+          width: '280%',
 
-          "@media (min-width: 640px)": {
-            top: "-4%",
-            width: "130%",
-            left: "-15%",
+          '@media (min-width: 640px)': {
+            top: '-4%',
+            width: '130%',
+            left: '-15%',
           },
         }}
       />
       {/* Floating particles for subtle background effect */}
-      <FloatingParticle sx={{ top: "15%", left: "8%", animationDelay: "0s" }} />
-      <FloatingParticle
-        sx={{ top: "65%", left: "12%", animationDelay: "2s" }}
-      />
-      <FloatingParticle
-        sx={{ top: "45%", right: "15%", animationDelay: "4s" }}
-      />
-      <FloatingParticle
-        sx={{ top: "80%", right: "10%", animationDelay: "6s" }}
-      />
+      <FloatingParticle sx={{ top: '15%', left: '8%', animationDelay: '0s' }} />
+      <FloatingParticle sx={{ top: '65%', left: '12%', animationDelay: '2s' }} />
+      <FloatingParticle sx={{ top: '45%', right: '15%', animationDelay: '4s' }} />
+      <FloatingParticle sx={{ top: '80%', right: '10%', animationDelay: '6s' }} />
 
       {/* Left Brand Panel */}
       <LeftPanel>
@@ -1757,9 +1700,9 @@ const Auth = () => {
           <Link
             to="/"
             style={{
-              textDecoration: "none",
-              display: "inline-block",
-              marginBottom: "48px",
+              textDecoration: 'none',
+              display: 'inline-block',
+              marginBottom: '48px',
             }}
           >
             <Box
@@ -1767,11 +1710,11 @@ const Auth = () => {
               src={WhiteLogo}
               alt="Techietribe"
               sx={{
-                width: { lg: "200px", md: "180px" },
-                height: "auto",
-                cursor: "pointer",
-                transition: "opacity 0.3s ease",
-                "&:hover": {
+                width: { lg: '200px', md: '180px' },
+                height: 'auto',
+                cursor: 'pointer',
+                transition: 'opacity 0.3s ease',
+                '&:hover': {
                   opacity: 0.8,
                 },
               }}
@@ -1783,14 +1726,14 @@ const Auth = () => {
             variant="h2"
             sx={{
               fontWeight: 900,
-              fontSize: { lg: "52px", md: "44px" },
+              fontSize: { lg: '52px', md: '44px' },
               lineHeight: 1.1,
               mb: 3,
-              background: "linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              letterSpacing: "-0.03em",
+              background: 'linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.03em',
             }}
           >
             Build. Launch.
@@ -1802,14 +1745,14 @@ const Auth = () => {
           <Typography
             variant="body1"
             sx={{
-              color: "rgba(255, 255, 255, 0.65)",
-              fontSize: "17px",
+              color: 'rgba(255, 255, 255, 0.65)',
+              fontSize: '17px',
               lineHeight: 1.65,
               mb: 6,
             }}
           >
-            Create stunning landing pages in minutes and get discovered in our
-            curated business directory—all for free.
+            Create stunning landing pages in minutes and get discovered in our curated business
+            directory—all for free.
           </Typography>
 
           {/* Feature List */}
@@ -1823,9 +1766,9 @@ const Auth = () => {
                   variant="body1"
                   sx={{
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: '#ffffff',
                     mb: 0.5,
-                    fontSize: "15px",
+                    fontSize: '15px',
                   }}
                 >
                   Easy Business Setup
@@ -1833,13 +1776,12 @@ const Auth = () => {
                 <Typography
                   variant="body2"
                   sx={{
-                    color: "rgba(255, 255, 255, 0.55)",
-                    fontSize: "14px",
+                    color: 'rgba(255, 255, 255, 0.55)',
+                    fontSize: '14px',
                     lineHeight: 1.5,
                   }}
                 >
-                  Get your business information set up quickly with a simple,
-                  guided process
+                  Get your business information set up quickly with a simple, guided process
                 </Typography>
               </Box>
             </FeatureItem>
@@ -1853,9 +1795,9 @@ const Auth = () => {
                   variant="body1"
                   sx={{
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: '#ffffff',
                     mb: 0.5,
-                    fontSize: "15px",
+                    fontSize: '15px',
                   }}
                 >
                   Premium Templates
@@ -1863,8 +1805,8 @@ const Auth = () => {
                 <Typography
                   variant="body2"
                   sx={{
-                    color: "rgba(255, 255, 255, 0.55)",
-                    fontSize: "14px",
+                    color: 'rgba(255, 255, 255, 0.55)',
+                    fontSize: '14px',
                     lineHeight: 1.5,
                   }}
                 >
@@ -1882,9 +1824,9 @@ const Auth = () => {
                   variant="body1"
                   sx={{
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: '#ffffff',
                     mb: 0.5,
-                    fontSize: "15px",
+                    fontSize: '15px',
                   }}
                 >
                   Directory Presence
@@ -1892,8 +1834,8 @@ const Auth = () => {
                 <Typography
                   variant="body2"
                   sx={{
-                    color: "rgba(255, 255, 255, 0.55)",
-                    fontSize: "14px",
+                    color: 'rgba(255, 255, 255, 0.55)',
+                    fontSize: '14px',
                     lineHeight: 1.5,
                   }}
                 >
@@ -1909,38 +1851,36 @@ const Auth = () => {
       <RightPanel>
         <AuthCard>
           {/* Back button for mobile (xs and sm screens only) */}
-          {(isSmall || isMobile) &&
-            signinMode === "password" &&
-            !showEmailVerification && (
-              <Box sx={{ mb: 2 }}>
-                <IconButton
-                  component={Link}
-                  to="/"
-                  size="small"
-                  sx={{
-                    color: "rgba(255, 255, 255, 0.6)",
-                    "&:hover": {
-                      color: "rgba(255, 255, 255, 0.8)",
-                      backgroundColor: "rgba(255, 255, 255, 0.05)",
-                    },
-                  }}
-                >
-                  <ArrowBackIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            )}
+          {(isSmall || isMobile) && signinMode === 'password' && !showEmailVerification && (
+            <Box sx={{ mb: 2 }}>
+              <IconButton
+                component={Link}
+                to="/"
+                size="small"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  '&:hover': {
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  },
+                }}
+              >
+                <ArrowBackIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          )}
 
           {/* Logo Badge (Mobile) */}
           {isMobile && (
-            <Box sx={{ textAlign: "center", mb: 3 }}>
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
               <Box
                 component="img"
                 src={WhiteLogo}
                 alt="Techietribe"
                 sx={{
-                  width: { xs: "160px", sm: "180px" },
-                  height: "auto",
-                  mx: "auto",
+                  width: { xs: '160px', sm: '180px' },
+                  height: 'auto',
+                  mx: 'auto',
                 }}
               />
             </Box>
@@ -1949,9 +1889,9 @@ const Auth = () => {
           {/* Render different views based on state */}
           {showEmailVerification
             ? renderEmailVerification()
-            : tabValue === "signin" && signinMode === "code"
+            : tabValue === 'signin' && signinMode === 'code'
               ? renderCodeSignin()
-              : tabValue === "signin" && signinMode === "reset"
+              : tabValue === 'signin' && signinMode === 'reset'
                 ? renderPasswordReset()
                 : renderPasswordMode()}
         </AuthCard>

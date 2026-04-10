@@ -36,8 +36,7 @@ const visualSet = {
     "https://themejunction.net/html/bexon/demo/assets/images/hero/h7-hero-banner.webp",
   strategy:
     "https://themejunction.net/html/bexon/demo/assets/images/about/about-5.webp",
-  team:
-    "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80",
+  team: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80",
   office:
     "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1400&q=80",
   boardroom:
@@ -84,9 +83,9 @@ const hexToRgb = (hex: string) => {
   const value =
     normalized.length === 3
       ? normalized
-        .split("")
-        .map((char) => char + char)
-        .join("")
+          .split("")
+          .map((char) => char + char)
+          .join("")
       : normalized;
 
   const int = Number.parseInt(value, 16);
@@ -120,8 +119,7 @@ const isLightColor = (hex: string) => {
 };
 
 const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
-  const headingFont =
-    data.themeSettings?.headingFont || defaultHeadingFont;
+  const headingFont = data.themeSettings?.headingFont || defaultHeadingFont;
   const bodyFont = data.themeSettings?.bodyFont || defaultBodyFont;
   const features = (data.features || []).slice(0, 4);
   const stats = (data.stats || []).slice(0, 3);
@@ -257,7 +255,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 borderRadius: 999,
               }}
             >
-             Contact Us
+              Contact Us
             </Button>
           </Stack>
         </Container>
@@ -278,8 +276,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           sx={{
             position: "absolute",
             inset: 0,
-            background:
-              `radial-gradient(circle at 12% 78%, ${rgba(themeColor, 0.52)}, transparent 30%), radial-gradient(circle at 78% 24%, ${rgba(themeColor, 0.32)}, transparent 24%), linear-gradient(135deg, ${themeHeroBase} 0%, ${themeHeroMid} 58%, ${themeHeroEnd} 100%)`,
+            background: `radial-gradient(circle at 12% 78%, ${rgba(themeColor, 0.52)}, transparent 30%), radial-gradient(circle at 78% 24%, ${rgba(themeColor, 0.32)}, transparent 24%), linear-gradient(135deg, ${themeHeroBase} 0%, ${themeHeroMid} 58%, ${themeHeroEnd} 100%)`,
           }}
         />
         <Box
@@ -310,7 +307,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             component={motion.img}
             initial={{ opacity: 0, y: 40, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.16 }}
+            transition={{
+              duration: 0.9,
+              ease: [0.22, 1, 0.36, 1],
+              delay: 0.16,
+            }}
             src={visualSet.heroPortrait}
             alt="Executive portrait"
             sx={{
@@ -373,7 +374,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             animate="show"
             sx={{ width: "100%" }}
           >
-            <Stack spacing={1.2} sx={{ maxWidth: { xs: "100%", md: 760 }, pt: { xs: 10, md: 4 } }}>
+            <Stack
+              spacing={1.2}
+              sx={{ maxWidth: { xs: "100%", md: 760 }, pt: { xs: 10, md: 4 } }}
+            >
               <Box component={motion.div} variants={fadeUp}>
                 <Chip
                   label="Trusted business partner"
@@ -591,7 +595,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       <Typography sx={{ color: "rgba(255,255,255,0.84)" }}>
                         {item.label}
                       </Typography>
-                      <Typography sx={{ fontWeight: 700 }}>{item.value}</Typography>
+                      <Typography sx={{ fontWeight: 700 }}>
+                        {item.value}
+                      </Typography>
                     </Stack>
                     <Box
                       sx={{
@@ -628,7 +634,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
-                paddingRight: "20px"
+                paddingRight: "20px",
               }}
             >
               <Box component={motion.div} {...sectionReveal}>
@@ -673,11 +679,19 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {[
                     {
                       title: "What we build",
-                      items: ["Clear systems", "Premium visuals", "Business growth"],
+                      items: [
+                        "Clear systems",
+                        "Premium visuals",
+                        "Business growth",
+                      ],
                     },
                     {
                       title: "How we work",
-                      items: ["Fast collaboration", "Focused delivery", "Global support"],
+                      items: [
+                        "Fast collaboration",
+                        "Focused delivery",
+                        "Global support",
+                      ],
                     },
                   ].map((group, index) => (
                     <Box
@@ -768,7 +782,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             py: { xs: 2, md: 3 },
             px: { xs: 2, md: 3 },
             mt: { xs: 1, md: 6 },
-                        mb: { xs: 1, md: 12 },
+            mb: { xs: 1, md: 12 },
             borderRadius: "36px",
             bgcolor: themeColor,
             color: palette.white,
@@ -962,7 +976,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   Seamless process,
                   <br />
                   great
-                  <Box component="span" sx={{ color: "rgba(255,255,255,0.58)" }}>
+                  <Box
+                    component="span"
+                    sx={{ color: "rgba(255,255,255,0.58)" }}
+                  >
                     {" "}
                     business results.
                   </Box>
@@ -1006,7 +1023,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                 Contact Us
+                  Contact Us
                 </Button>
               </Stack>
             </Stack>
@@ -1041,7 +1058,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   key={item.number}
                   component={motion.div}
                   {...sectionReveal}
-                  transition={{ ...sectionReveal.transition, delay: index * 0.08 }}
+                  transition={{
+                    ...sectionReveal.transition,
+                    delay: index * 0.08,
+                  }}
                   sx={{
                     borderRadius: "28px",
                     minHeight: { xs: 240, md: 320 },
@@ -1118,7 +1138,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 component="img"
                 src={visualSet.team}
                 alt="Company team"
-                sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
               />
             </Box>
 
@@ -1139,7 +1164,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   border: `1px solid ${themeLine}`,
                 }}
               >
-                <Typography sx={{ color: palette.muted, mb: 1 }}>Team</Typography>
+                <Typography sx={{ color: palette.muted, mb: 1 }}>
+                  Team
+                </Typography>
                 <Typography
                   sx={{
                     fontFamily: headingFont,
@@ -1153,13 +1180,14 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   Strong visuals for trust and leadership.
                 </Typography>
                 <Stack spacing={1} sx={{ mt: 2.4 }}>
-                  {(team.length ? team : [{ name: "Leadership" }, { name: "Operations" }]).map(
-                    (member) => (
-                      <Typography key={member.name} sx={{ color: palette.muted }}>
-                        {member.name}
-                      </Typography>
-                    ),
-                  )}
+                  {(team.length
+                    ? team
+                    : [{ name: "Leadership" }, { name: "Operations" }]
+                  ).map((member) => (
+                    <Typography key={member.name} sx={{ color: palette.muted }}>
+                      {member.name}
+                    </Typography>
+                  ))}
                 </Stack>
               </Box>
 
@@ -1186,7 +1214,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 420,
                   }}
                 >
-                  {reviews[0]?.text || "Built to feel sharp, premium, and easy to scan."}
+                  {reviews[0]?.text ||
+                    "Built to feel sharp, premium, and easy to scan."}
                 </Typography>
                 <Typography sx={{ mt: 2, color: "rgba(255,255,255,0.68)" }}>
                   {reviews[0]?.author || "Executive team"}
@@ -1391,7 +1420,6 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         },
                       }}
                     />
-                   
                   </Stack>
 
                   <TextField

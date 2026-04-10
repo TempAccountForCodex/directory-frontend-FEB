@@ -14,9 +14,9 @@
  * - Cleanup: removeEventListener on unmount
  * - enabled=false disables all shortcuts
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useKeyboardShortcuts } from "../useKeyboardShortcuts";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { useKeyboardShortcuts } from '../useKeyboardShortcuts';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -29,9 +29,9 @@ const makeKeyEvent = (
     metaKey?: boolean;
     shiftKey?: boolean;
     target?: Partial<HTMLElement>;
-  } = {},
+  } = {}
 ): KeyboardEvent => {
-  const event = new KeyboardEvent("keydown", {
+  const event = new KeyboardEvent('keydown', {
     key,
     ctrlKey: options.ctrlKey ?? false,
     metaKey: options.metaKey ?? false,
@@ -40,7 +40,7 @@ const makeKeyEvent = (
     cancelable: true,
   });
   if (options.target) {
-    Object.defineProperty(event, "target", {
+    Object.defineProperty(event, 'target', {
       value: options.target,
       configurable: true,
     });
@@ -52,7 +52,7 @@ const makeKeyEvent = (
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("useKeyboardShortcuts", () => {
+describe('useKeyboardShortcuts', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let onUndo: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,24 +71,22 @@ describe("useKeyboardShortcuts", () => {
   // Return shape
   // ---------------------------------------------------------------------------
 
-  it("returns expected shape with isMac, toastOpen, toastMessage, closeToast", () => {
-    const { result } = renderHook(() =>
-      useKeyboardShortcuts({ onUndo, onRedo, enabled: true }),
-    );
-    expect(typeof result.current.isMac).toBe("boolean");
-    expect(typeof result.current.toastOpen).toBe("boolean");
-    expect(typeof result.current.toastMessage).toBe("string");
-    expect(typeof result.current.closeToast).toBe("function");
+  it('returns expected shape with isMac, toastOpen, toastMessage, closeToast', () => {
+    const { result } = renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
+    expect(typeof result.current.isMac).toBe('boolean');
+    expect(typeof result.current.toastOpen).toBe('boolean');
+    expect(typeof result.current.toastMessage).toBe('string');
+    expect(typeof result.current.closeToast).toBe('function');
   });
 
   // ---------------------------------------------------------------------------
   // Ctrl+Z (undo)
   // ---------------------------------------------------------------------------
 
-  it("Ctrl+Z triggers onUndo callback", () => {
+  it('Ctrl+Z triggers onUndo callback', () => {
     renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
     act(() => {
-      window.dispatchEvent(makeKeyEvent("z", { ctrlKey: true }));
+      window.dispatchEvent(makeKeyEvent('z', { ctrlKey: true }));
     });
     expect(onUndo).toHaveBeenCalledTimes(1);
     expect(onRedo).not.toHaveBeenCalled();
@@ -98,10 +96,10 @@ describe("useKeyboardShortcuts", () => {
   // Cmd+Z (undo — Mac)
   // ---------------------------------------------------------------------------
 
-  it("Cmd+Z (Meta+Z) triggers onUndo callback", () => {
+  it('Cmd+Z (Meta+Z) triggers onUndo callback', () => {
     renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
     act(() => {
-      window.dispatchEvent(makeKeyEvent("z", { metaKey: true }));
+      window.dispatchEvent(makeKeyEvent('z', { metaKey: true }));
     });
     expect(onUndo).toHaveBeenCalledTimes(1);
   });
@@ -110,12 +108,10 @@ describe("useKeyboardShortcuts", () => {
   // Ctrl+Shift+Z (redo)
   // ---------------------------------------------------------------------------
 
-  it("Ctrl+Shift+Z triggers onRedo callback", () => {
+  it('Ctrl+Shift+Z triggers onRedo callback', () => {
     renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
     act(() => {
-      window.dispatchEvent(
-        makeKeyEvent("z", { ctrlKey: true, shiftKey: true }),
-      );
+      window.dispatchEvent(makeKeyEvent('z', { ctrlKey: true, shiftKey: true }));
     });
     expect(onRedo).toHaveBeenCalledTimes(1);
     expect(onUndo).not.toHaveBeenCalled();
@@ -125,12 +121,10 @@ describe("useKeyboardShortcuts", () => {
   // Cmd+Shift+Z (redo — Mac)
   // ---------------------------------------------------------------------------
 
-  it("Cmd+Shift+Z (Meta+Shift+Z) triggers onRedo callback", () => {
+  it('Cmd+Shift+Z (Meta+Shift+Z) triggers onRedo callback', () => {
     renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
     act(() => {
-      window.dispatchEvent(
-        makeKeyEvent("z", { metaKey: true, shiftKey: true }),
-      );
+      window.dispatchEvent(makeKeyEvent('z', { metaKey: true, shiftKey: true }));
     });
     expect(onRedo).toHaveBeenCalledTimes(1);
   });
@@ -139,10 +133,10 @@ describe("useKeyboardShortcuts", () => {
   // Ctrl+Y (redo — Windows)
   // ---------------------------------------------------------------------------
 
-  it("Ctrl+Y triggers onRedo callback", () => {
+  it('Ctrl+Y triggers onRedo callback', () => {
     renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
     act(() => {
-      window.dispatchEvent(makeKeyEvent("y", { ctrlKey: true }));
+      window.dispatchEvent(makeKeyEvent('y', { ctrlKey: true }));
     });
     expect(onRedo).toHaveBeenCalledTimes(1);
     expect(onUndo).not.toHaveBeenCalled();
@@ -152,20 +146,20 @@ describe("useKeyboardShortcuts", () => {
   // Input / textarea exclusion
   // ---------------------------------------------------------------------------
 
-  it("does NOT intercept Ctrl+Z when activeElement is an input", () => {
+  it('does NOT intercept Ctrl+Z when activeElement is an input', () => {
     renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
-    const input = document.createElement("input");
+    const input = document.createElement('input');
     document.body.appendChild(input);
     input.focus();
 
     act(() => {
       // Dispatch on window — but hook should check activeElement
-      const event = makeKeyEvent("z", {
+      const event = makeKeyEvent('z', {
         ctrlKey: true,
-        target: { tagName: "INPUT", isContentEditable: false } as any,
+        target: { tagName: 'INPUT', isContentEditable: false } as any,
       });
       // Simulate the real browser behaviour: activeElement is input
-      Object.defineProperty(document, "activeElement", {
+      Object.defineProperty(document, 'activeElement', {
         value: input,
         configurable: true,
       });
@@ -175,53 +169,53 @@ describe("useKeyboardShortcuts", () => {
     expect(onUndo).not.toHaveBeenCalled();
     document.body.removeChild(input);
     // Restore activeElement
-    Object.defineProperty(document, "activeElement", {
+    Object.defineProperty(document, 'activeElement', {
       value: document.body,
       configurable: true,
     });
   });
 
-  it("does NOT intercept Ctrl+Z when activeElement is a textarea", () => {
+  it('does NOT intercept Ctrl+Z when activeElement is a textarea', () => {
     renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
-    const textarea = document.createElement("textarea");
+    const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
 
     act(() => {
-      Object.defineProperty(document, "activeElement", {
+      Object.defineProperty(document, 'activeElement', {
         value: textarea,
         configurable: true,
       });
-      window.dispatchEvent(makeKeyEvent("z", { ctrlKey: true }));
+      window.dispatchEvent(makeKeyEvent('z', { ctrlKey: true }));
     });
 
     expect(onUndo).not.toHaveBeenCalled();
     document.body.removeChild(textarea);
-    Object.defineProperty(document, "activeElement", {
+    Object.defineProperty(document, 'activeElement', {
       value: document.body,
       configurable: true,
     });
   });
 
-  it("does NOT intercept when activeElement is contentEditable", () => {
+  it('does NOT intercept when activeElement is contentEditable', () => {
     renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
-    const div = document.createElement("div");
-    div.setAttribute("contenteditable", "true");
+    const div = document.createElement('div');
+    div.setAttribute('contenteditable', 'true');
     document.body.appendChild(div);
 
     // Set activeElement before dispatching event
-    Object.defineProperty(document, "activeElement", {
+    Object.defineProperty(document, 'activeElement', {
       value: div,
       configurable: true,
     });
 
     act(() => {
-      window.dispatchEvent(makeKeyEvent("z", { ctrlKey: true }));
+      window.dispatchEvent(makeKeyEvent('z', { ctrlKey: true }));
     });
 
     expect(onUndo).not.toHaveBeenCalled();
     document.body.removeChild(div);
     // Restore activeElement
-    Object.defineProperty(document, "activeElement", {
+    Object.defineProperty(document, 'activeElement', {
       value: document.body,
       configurable: true,
     });
@@ -231,10 +225,10 @@ describe("useKeyboardShortcuts", () => {
   // enabled=false
   // ---------------------------------------------------------------------------
 
-  it("does not trigger shortcuts when enabled=false", () => {
+  it('does not trigger shortcuts when enabled=false', () => {
     renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: false }));
     act(() => {
-      window.dispatchEvent(makeKeyEvent("z", { ctrlKey: true }));
+      window.dispatchEvent(makeKeyEvent('z', { ctrlKey: true }));
     });
     expect(onUndo).not.toHaveBeenCalled();
     expect(onRedo).not.toHaveBeenCalled();
@@ -244,33 +238,23 @@ describe("useKeyboardShortcuts", () => {
   // Toast state
   // ---------------------------------------------------------------------------
 
-  it("toastOpen becomes true and toastMessage is set after undo shortcut", () => {
+  it('toastOpen becomes true and toastMessage is set after undo shortcut', () => {
     const { result } = renderHook(() =>
-      useKeyboardShortcuts({
-        onUndo,
-        onRedo,
-        enabled: true,
-        undoDescription: "Changed color",
-      }),
+      useKeyboardShortcuts({ onUndo, onRedo, enabled: true, undoDescription: 'Changed color' })
     );
     act(() => {
-      window.dispatchEvent(makeKeyEvent("z", { ctrlKey: true }));
+      window.dispatchEvent(makeKeyEvent('z', { ctrlKey: true }));
     });
     expect(result.current.toastOpen).toBe(true);
-    expect(result.current.toastMessage).toContain("Undone");
+    expect(result.current.toastMessage).toContain('Undone');
   });
 
-  it("closeToast sets toastOpen to false", () => {
+  it('closeToast sets toastOpen to false', () => {
     const { result } = renderHook(() =>
-      useKeyboardShortcuts({
-        onUndo,
-        onRedo,
-        enabled: true,
-        undoDescription: "Some action",
-      }),
+      useKeyboardShortcuts({ onUndo, onRedo, enabled: true, undoDescription: 'Some action' })
     );
     act(() => {
-      window.dispatchEvent(makeKeyEvent("z", { ctrlKey: true }));
+      window.dispatchEvent(makeKeyEvent('z', { ctrlKey: true }));
     });
     expect(result.current.toastOpen).toBe(true);
     act(() => {
@@ -283,13 +267,11 @@ describe("useKeyboardShortcuts", () => {
   // Cleanup
   // ---------------------------------------------------------------------------
 
-  it("removes event listener on unmount (no callbacks fired after unmount)", () => {
-    const { unmount } = renderHook(() =>
-      useKeyboardShortcuts({ onUndo, onRedo, enabled: true }),
-    );
+  it('removes event listener on unmount (no callbacks fired after unmount)', () => {
+    const { unmount } = renderHook(() => useKeyboardShortcuts({ onUndo, onRedo, enabled: true }));
     unmount();
     act(() => {
-      window.dispatchEvent(makeKeyEvent("z", { ctrlKey: true }));
+      window.dispatchEvent(makeKeyEvent('z', { ctrlKey: true }));
     });
     expect(onUndo).not.toHaveBeenCalled();
   });

@@ -1,11 +1,7 @@
-import React from "react";
-import { Box, Badge } from "@mui/material";
-import {
-  SearchBar,
-  FilterBar,
-  DashboardActionButton,
-} from "../Dashboard/shared";
-import { CATEGORY_LABELS } from "../../templates/templateApi";
+import React from 'react';
+import { Box, Badge } from '@mui/material';
+import { SearchBar, FilterBar, DashboardActionButton } from '../Dashboard/shared';
+import { CATEGORY_LABELS } from '../../templates/templateApi';
 
 export interface TemplateFilters {
   search: string;
@@ -19,42 +15,35 @@ interface TemplateFiltersProps {
 }
 
 const categoryOptions = [
-  { value: "", label: "All Categories" },
-  ...Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
-    value,
-    label,
-  })),
+  { value: '', label: 'All Categories' },
+  ...Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label })),
 ];
 
 const typeOptions = [
-  { value: "", label: "All Types" },
-  { value: "website", label: "Website" },
-  { value: "store", label: "Store" },
+  { value: '', label: 'All Types' },
+  { value: 'website', label: 'Website' },
+  { value: 'store', label: 'Store' },
 ];
 
 const TemplateFilters = React.memo(function TemplateFilters({
   filters,
   onFiltersChange,
 }: TemplateFiltersProps) {
-  const activeFilterCount = [
-    filters.search,
-    filters.category,
-    filters.type,
-  ].filter(Boolean).length;
+  const activeFilterCount = [filters.search, filters.category, filters.type].filter(Boolean).length;
   const hasActiveFilters = activeFilterCount > 0;
 
   const handleReset = React.useCallback(() => {
-    onFiltersChange({ search: "", category: "", type: "" });
+    onFiltersChange({ search: '', category: '', type: '' });
   }, [onFiltersChange]);
 
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: { xs: "column", sm: "row" },
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
         gap: 2,
-        alignItems: "center",
-        flexWrap: "wrap",
+        alignItems: 'center',
+        flexWrap: 'wrap',
       }}
     >
       <SearchBar
@@ -86,9 +75,7 @@ const TemplateFilters = React.memo(function TemplateFilters({
 
       {hasActiveFilters && (
         <Badge badgeContent={activeFilterCount} color="primary">
-          <DashboardActionButton onClick={handleReset}>
-            Reset Filters
-          </DashboardActionButton>
+          <DashboardActionButton onClick={handleReset}>Reset Filters</DashboardActionButton>
         </Badge>
       )}
     </Box>

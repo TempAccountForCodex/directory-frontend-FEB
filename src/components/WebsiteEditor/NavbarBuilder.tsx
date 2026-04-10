@@ -10,7 +10,7 @@
  *   initialConfig — optional pre-populated config (skips initial fetch if provided)
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -21,18 +21,18 @@ import {
   FormControlLabel,
   MenuItem,
   alpha,
-} from "@mui/material";
-import { Plus, Trash2, Navigation } from "lucide-react";
-import axios from "axios";
+} from '@mui/material';
+import { Plus, Trash2, Navigation } from 'lucide-react';
+import axios from 'axios';
 
 import {
   DashboardCard,
   DashboardInput,
   DashboardIconButton,
   DashboardGradientButton,
-} from "../Dashboard/shared";
-import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-import { getDashboardColors } from "../../styles/dashboardTheme";
+} from '../Dashboard/shared';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
+import { getDashboardColors } from '../../styles/dashboardTheme';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -56,50 +56,42 @@ interface NavbarBuilderProps {
   initialConfig?: Record<string, unknown>;
 }
 
-const API_BASE = "/api";
+const API_BASE = '/api';
 const MAX_NAV_ITEMS = 8;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function defaultConfig(): NavbarConfig {
   return {
-    brandName: "",
-    navigationItems: [{ label: "Home", link: "/" }],
-    ctaText: "",
-    ctaLink: "",
+    brandName: '',
+    navigationItems: [{ label: 'Home', link: '/' }],
+    ctaText: '',
+    ctaLink: '',
     sticky: false,
-    logo: "",
+    logo: '',
   };
 }
 
 function configFromApi(raw: Record<string, unknown> | null): NavbarConfig {
   if (!raw) return defaultConfig();
   return {
-    brandName: String(raw.brandName || ""),
-    navigationItems: Array.isArray(raw.navigationItems)
-      ? (raw.navigationItems as NavItem[])
-      : [],
-    ctaText: raw.ctaText ? String(raw.ctaText) : "",
-    ctaLink: raw.ctaLink ? String(raw.ctaLink) : "",
+    brandName: String(raw.brandName || ''),
+    navigationItems: Array.isArray(raw.navigationItems) ? (raw.navigationItems as NavItem[]) : [],
+    ctaText: raw.ctaText ? String(raw.ctaText) : '',
+    ctaLink: raw.ctaLink ? String(raw.ctaLink) : '',
     sticky: Boolean(raw.sticky),
-    logo: raw.logo ? String(raw.logo) : "",
+    logo: raw.logo ? String(raw.logo) : '',
   };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
-  websiteId,
-  onSave,
-  initialConfig,
-}) => {
+const NavbarBuilder: React.FC<NavbarBuilderProps> = ({ websiteId, onSave, initialConfig }) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
 
   const [config, setConfig] = useState<NavbarConfig>(() =>
-    initialConfig
-      ? configFromApi(initialConfig as Record<string, unknown>)
-      : defaultConfig(),
+    initialConfig ? configFromApi(initialConfig as Record<string, unknown>) : defaultConfig()
   );
   const [loading, setLoading] = useState(!initialConfig);
   const [saving, setSaving] = useState(false);
@@ -107,11 +99,11 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: "success" | "error";
+    severity: 'success' | 'error';
   }>({
     open: false,
-    message: "",
-    severity: "success",
+    message: '',
+    severity: 'success',
   });
 
   // ── Fetch existing config ───────────────────────────────────────────────
@@ -135,7 +127,7 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
             // Not yet created — use defaults
             setConfig(defaultConfig());
           } else {
-            setError("Failed to load navbar configuration.");
+            setError('Failed to load navbar configuration.');
           }
         }
       })
@@ -150,55 +142,40 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
 
   // ── Field handlers ──────────────────────────────────────────────────────
 
-  const handleBrandName = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setConfig((prev) => ({ ...prev, brandName: e.target.value }));
-    },
-    [],
-  );
+  const handleBrandName = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig((prev) => ({ ...prev, brandName: e.target.value }));
+  }, []);
 
-  const handleCtaText = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setConfig((prev) => ({ ...prev, ctaText: e.target.value }));
-    },
-    [],
-  );
+  const handleCtaText = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig((prev) => ({ ...prev, ctaText: e.target.value }));
+  }, []);
 
-  const handleCtaLink = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setConfig((prev) => ({ ...prev, ctaLink: e.target.value }));
-    },
-    [],
-  );
+  const handleCtaLink = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig((prev) => ({ ...prev, ctaLink: e.target.value }));
+  }, []);
 
-  const handleSticky = useCallback(
-    (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-      setConfig((prev) => ({ ...prev, sticky: checked }));
-    },
-    [],
-  );
+  const handleSticky = useCallback((_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+    setConfig((prev) => ({ ...prev, sticky: checked }));
+  }, []);
 
   const handleLogo = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig((prev) => ({ ...prev, logo: e.target.value }));
   }, []);
 
-  const handleNavItemChange = useCallback(
-    (idx: number, field: keyof NavItem, value: string) => {
-      setConfig((prev) => {
-        const updated = [...prev.navigationItems];
-        updated[idx] = { ...updated[idx], [field]: value };
-        return { ...prev, navigationItems: updated };
-      });
-    },
-    [],
-  );
+  const handleNavItemChange = useCallback((idx: number, field: keyof NavItem, value: string) => {
+    setConfig((prev) => {
+      const updated = [...prev.navigationItems];
+      updated[idx] = { ...updated[idx], [field]: value };
+      return { ...prev, navigationItems: updated };
+    });
+  }, []);
 
   const handleAddNavItem = useCallback(() => {
     setConfig((prev) => {
       if (prev.navigationItems.length >= MAX_NAV_ITEMS) return prev;
       return {
         ...prev,
-        navigationItems: [...prev.navigationItems, { label: "", link: "" }],
+        navigationItems: [...prev.navigationItems, { label: '', link: '' }],
       };
     });
   }, []);
@@ -216,23 +193,16 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
     setSaving(true);
     setError(null);
     try {
-      await axios.put(
-        `${API_BASE}/websites/${websiteId}/global-components/navbar`,
-        {
-          config,
-        },
-      );
-      setSnackbar({
-        open: true,
-        message: "Navbar saved successfully.",
-        severity: "success",
+      await axios.put(`${API_BASE}/websites/${websiteId}/global-components/navbar`, {
+        config,
       });
+      setSnackbar({ open: true, message: 'Navbar saved successfully.', severity: 'success' });
       onSave?.();
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to save navbar.";
-      setSnackbar({ open: true, message: msg, severity: "error" });
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Failed to save navbar.';
+      setSnackbar({ open: true, message: msg, severity: 'error' });
     } finally {
       setSaving(false);
     }
@@ -240,7 +210,7 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
 
   const canAddMore = useMemo(
     () => config.navigationItems.length < MAX_NAV_ITEMS,
-    [config.navigationItems.length],
+    [config.navigationItems.length]
   );
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -281,17 +251,14 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
         {/* Logo URL */}
         <DashboardInput
           label="Logo URL (optional)"
-          value={config.logo || ""}
+          value={config.logo || ''}
           onChange={handleLogo}
           placeholder="https://example.com/logo.png"
           sx={{ mb: 2 }}
         />
 
         {/* Navigation items */}
-        <Typography
-          variant="body2"
-          sx={{ color: colors.panelText, fontWeight: 500, mb: 1 }}
-        >
+        <Typography variant="body2" sx={{ color: colors.panelText, fontWeight: 500, mb: 1 }}>
           Navigation Items ({config.navigationItems.length}/{MAX_NAV_ITEMS})
         </Typography>
 
@@ -299,17 +266,17 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
           <Box
             key={idx}
             sx={{
-              display: "flex",
+              display: 'flex',
               gap: 1,
               mb: 1,
-              alignItems: "flex-start",
+              alignItems: 'flex-start',
             }}
           >
             <DashboardInput
               label="Label"
               value={item.label}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleNavItemChange(idx, "label", e.target.value)
+                handleNavItemChange(idx, 'label', e.target.value)
               }
               inputProps={{ maxLength: 40 }}
               sx={{ flex: 1 }}
@@ -318,7 +285,7 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
               label="Link"
               value={item.link}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleNavItemChange(idx, "link", e.target.value)
+                handleNavItemChange(idx, 'link', e.target.value)
               }
               inputProps={{ maxLength: 500 }}
               sx={{ flex: 2 }}
@@ -328,7 +295,7 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
               tooltipLabel="Remove"
               onClick={() => handleRemoveNavItem(idx)}
               aria-label={`Remove navigation item ${idx + 1}`}
-              sx={{ mt: "28px" }}
+              sx={{ mt: '28px' }}
             />
           </Box>
         ))}
@@ -345,30 +312,20 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
         )}
 
         {/* CTA */}
-        <Typography
-          variant="body2"
-          sx={{ color: colors.panelText, fontWeight: 500, mb: 1, mt: 2 }}
-        >
+        <Typography variant="body2" sx={{ color: colors.panelText, fontWeight: 500, mb: 1, mt: 2 }}>
           Call to Action (optional)
         </Typography>
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1,
-            mb: 2,
-            flexWrap: { xs: "wrap", sm: "nowrap" },
-          }}
-        >
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
           <DashboardInput
             label="CTA Text"
-            value={config.ctaText || ""}
+            value={config.ctaText || ''}
             onChange={handleCtaText}
             placeholder="Get Started"
             sx={{ flex: 1 }}
           />
           <DashboardInput
             label="CTA Link"
-            value={config.ctaLink || ""}
+            value={config.ctaLink || ''}
             onChange={handleCtaLink}
             placeholder="/signup"
             sx={{ flex: 2 }}
@@ -378,11 +335,7 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
         {/* Sticky toggle */}
         <FormControlLabel
           control={
-            <Switch
-              checked={Boolean(config.sticky)}
-              onChange={handleSticky}
-              color="primary"
-            />
+            <Switch checked={Boolean(config.sticky)} onChange={handleSticky} color="primary" />
           }
           label={
             <Typography variant="body2" sx={{ color: colors.panelText }}>
@@ -393,12 +346,12 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
         />
 
         {/* Save */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <DashboardGradientButton
             onClick={handleSave}
             disabled={saving || !config.brandName.trim()}
           >
-            {saving ? "Saving…" : "Save Navbar"}
+            {saving ? 'Saving…' : 'Save Navbar'}
           </DashboardGradientButton>
         </Box>
       </DashboardCard>
@@ -407,12 +360,12 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
           severity={snackbar.severity}
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          sx={{ width: "100%" }}
+          sx={{ width: '100%' }}
         >
           {snackbar.message}
         </Alert>

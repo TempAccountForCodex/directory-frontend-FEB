@@ -1,6 +1,6 @@
-import { expect, afterEach, vi, beforeAll } from "vitest";
-import { cleanup } from "@testing-library/react";
-import * as matchers from "@testing-library/jest-dom/matchers";
+import { expect, afterEach, vi, beforeAll } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import * as matchers from '@testing-library/jest-dom/matchers';
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers);
@@ -13,18 +13,18 @@ afterEach(() => {
 // Setup window.location for React Router
 beforeAll(() => {
   // Set up window.location properly for React Router
-  Object.defineProperty(window, "location", {
+  Object.defineProperty(window, 'location', {
     writable: true,
     value: {
-      href: "http://localhost:3000/",
-      origin: "http://localhost:3000",
-      protocol: "http:",
-      host: "localhost:3000",
-      hostname: "localhost",
-      port: "3000",
-      pathname: "/",
-      search: "",
-      hash: "",
+      href: 'http://localhost:3000/',
+      origin: 'http://localhost:3000',
+      protocol: 'http:',
+      host: 'localhost:3000',
+      hostname: 'localhost',
+      port: '3000',
+      pathname: '/',
+      search: '',
+      hash: '',
       assign: vi.fn(),
       reload: vi.fn(),
       replace: vi.fn(),
@@ -55,7 +55,7 @@ const sessionStorageMock = {
 global.sessionStorage = sessionStorageMock as any;
 
 // Mock window.matchMedia
-Object.defineProperty(window, "matchMedia", {
+Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
     matches: false,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -8,17 +8,17 @@ import {
   CircularProgress,
   Alert,
   Chip,
-} from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import PersonIcon from "@mui/icons-material/Person";
-import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
-import { Helmet } from "react-helmet";
-import { getFallbackInsightByIdentifier } from "../../utils/data/Insights";
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PersonIcon from '@mui/icons-material/Person';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
+import { Helmet } from 'react-helmet';
+import { getFallbackInsightByIdentifier } from '../../utils/data/Insights';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface Blog {
   metaTitle?: string;
@@ -39,8 +39,8 @@ interface Blog {
   [key: string]: any;
 }
 
-const getAuthorName = (author: Blog["author"]) =>
-  typeof author === "string" ? author : author?.name || "";
+const getAuthorName = (author: Blog['author']) =>
+  typeof author === 'string' ? author : author?.name || '';
 
 const InsightsDetailsNew = () => {
   const [blog, setBlog] = useState<Blog | null>(null);
@@ -52,7 +52,7 @@ const InsightsDetailsNew = () => {
 
   useEffect(() => {
     fetchInsightDetails();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id, retryCount]);
 
   const fetchInsightDetails = async () => {
@@ -69,20 +69,19 @@ const InsightsDetailsNew = () => {
         if (fallbackInsight) {
           setBlog(fallbackInsight);
         } else {
-          setError("Insight not found");
+          setError('Insight not found');
           setBlog(null);
         }
       }
       setLoading(false);
     } catch (error: any) {
-      console.error("Error fetching insight details:", error);
+      console.error('Error fetching insight details:', error);
       const fallbackInsight = getFallbackInsightByIdentifier(id);
       if (fallbackInsight) {
         setBlog(fallbackInsight);
         setError(null);
       } else {
-        const errorMsg =
-          error.response?.data?.message || error.message || "Insight not found";
+        const errorMsg = error.response?.data?.message || error.message || 'Insight not found';
         setError(errorMsg);
         setBlog(null);
       }
@@ -95,12 +94,12 @@ const InsightsDetailsNew = () => {
   };
 
   const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "";
+    if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
 
@@ -108,17 +107,17 @@ const InsightsDetailsNew = () => {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
+          minHeight: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
           gap: 2,
-          backgroundColor: "#f5f5f5",
+          backgroundColor: '#f5f5f5',
         }}
       >
-        <CircularProgress size={60} sx={{ color: "#378C92" }} />
-        <Typography sx={{ color: "#616161", fontFamily: "Questrial" }}>
+        <CircularProgress size={60} sx={{ color: '#378C92' }} />
+        <Typography sx={{ color: '#616161', fontFamily: 'Questrial' }}>
           Loading insight...
         </Typography>
       </Box>
@@ -129,31 +128,28 @@ const InsightsDetailsNew = () => {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
-          backgroundColor: "#f5f5f5",
-          padding: "40px 20px",
+          minHeight: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+          backgroundColor: '#f5f5f5',
+          padding: '40px 20px',
           gap: 2,
         }}
       >
-        <Typography
-          variant="h4"
-          sx={{ fontWeight: 700, mb: 2, textAlign: "center" }}
-        >
-          {error?.includes("not found") || error?.includes("NOT_FOUND")
-            ? "Insight Not Found"
-            : "Failed to Load Insight"}
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 2, textAlign: 'center' }}>
+          {error?.includes('not found') || error?.includes('NOT_FOUND')
+            ? 'Insight Not Found'
+            : 'Failed to Load Insight'}
         </Typography>
         <Typography
           variant="body1"
           sx={{
             mb: 2,
-            textAlign: "center",
-            maxWidth: "600px",
-            color: "#616161",
+            textAlign: 'center',
+            maxWidth: '600px',
+            color: '#616161',
           }}
         >
           {error ||
@@ -161,25 +157,25 @@ const InsightsDetailsNew = () => {
         </Typography>
         <Box
           sx={{
-            display: "flex",
+            display: 'flex',
             gap: 2,
-            flexWrap: "wrap",
-            justifyContent: "center",
+            flexWrap: 'wrap',
+            justifyContent: 'center',
           }}
         >
-          {!error?.includes("not found") && !error?.includes("NOT_FOUND") && (
+          {!error?.includes('not found') && !error?.includes('NOT_FOUND') && (
             <Button
               variant="outlined"
               onClick={handleRetry}
               sx={{
-                borderColor: "#378C92",
-                color: "#378C92",
-                "&:hover": {
-                  borderColor: "#313431",
-                  backgroundColor: "#f0f0f0",
+                borderColor: '#378C92',
+                color: '#378C92',
+                '&:hover': {
+                  borderColor: '#313431',
+                  backgroundColor: '#f0f0f0',
                 },
-                textTransform: "none",
-                padding: "10px 30px",
+                textTransform: 'none',
+                padding: '10px 30px',
               }}
             >
               Try Again
@@ -187,14 +183,14 @@ const InsightsDetailsNew = () => {
           )}
           <Button
             variant="contained"
-            onClick={() => navigate("/insights")}
+            onClick={() => navigate('/insights')}
             sx={{
-              background: "linear-gradient(135deg, #378C92 0%, #313431 100%)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #313431 0%, #378C92 100%)",
+              background: 'linear-gradient(135deg, #378C92 0%, #313431 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #313431 0%, #378C92 100%)',
               },
-              textTransform: "none",
-              padding: "10px 30px",
+              textTransform: 'none',
+              padding: '10px 30px',
             }}
           >
             Back to Insights
@@ -209,18 +205,10 @@ const InsightsDetailsNew = () => {
       {/* SEO Meta Tags */}
       <Helmet>
         <title>{blog.metaTitle || blog.title} | TheTechietribe</title>
-        <meta
-          name="description"
-          content={blog.metaDescription || blog.content}
-        />
-        {blog.keywords && (
-          <meta name="keywords" content={blog.keywords.join(", ")} />
-        )}
+        <meta name="description" content={blog.metaDescription || blog.content} />
+        {blog.keywords && <meta name="keywords" content={blog.keywords.join(', ')} />}
         <meta property="og:title" content={blog.metaTitle || blog.title} />
-        <meta
-          property="og:description"
-          content={blog.ogDescription || blog.content}
-        />
+        <meta property="og:description" content={blog.ogDescription || blog.content} />
         {blog.ogImage && <meta property="og:image" content={blog.ogImage} />}
         <meta property="og:type" content="article" />
         {blog.canonicalUrl && <link rel="canonical" href={blog.canonicalUrl} />}
@@ -229,26 +217,26 @@ const InsightsDetailsNew = () => {
       {/* Hero Section */}
       <Box
         sx={{
-          position: "relative",
-          width: "100%",
-          height: { xs: "300px", md: "400px" },
+          position: 'relative',
+          width: '100%',
+          height: { xs: '300px', md: '400px' },
           backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${blog.image})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <Container maxWidth="lg">
           <Typography
             variant="h2"
             sx={{
-              color: "white",
+              color: 'white',
               fontWeight: 700,
-              fontSize: { xs: "2rem", md: "3rem" },
-              textAlign: "center",
-              textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+              fontSize: { xs: '2rem', md: '3rem' },
+              textAlign: 'center',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
             }}
           >
             {blog.title}
@@ -265,30 +253,30 @@ const InsightsDetailsNew = () => {
             <Box
               sx={{
                 mb: 4,
-                display: "flex",
-                flexWrap: "wrap",
+                display: 'flex',
+                flexWrap: 'wrap',
                 gap: 2,
-                alignItems: "center",
+                alignItems: 'center',
               }}
             >
               <Chip
-                icon={<CalendarTodayIcon sx={{ fontSize: "1rem" }} />}
+                icon={<CalendarTodayIcon sx={{ fontSize: '1rem' }} />}
                 label={formatDate(blog.publishedAt)}
-                sx={{ backgroundColor: "#f0f0f0" }}
+                sx={{ backgroundColor: '#f0f0f0' }}
               />
               <Chip
                 label={blog.category}
                 sx={{
-                  backgroundColor: "#378C92",
-                  color: "white",
+                  backgroundColor: '#378C92',
+                  color: 'white',
                   fontWeight: 600,
                 }}
               />
               {blog.author && (
                 <Chip
-                  icon={<PersonIcon sx={{ fontSize: "1rem" }} />}
+                  icon={<PersonIcon sx={{ fontSize: '1rem' }} />}
                   label={`By ${getAuthorName(blog.author)}`}
-                  sx={{ backgroundColor: "#f0f0f0" }}
+                  sx={{ backgroundColor: '#f0f0f0' }}
                 />
               )}
             </Box>
@@ -299,13 +287,13 @@ const InsightsDetailsNew = () => {
               sx={{
                 mb: 4,
                 lineHeight: 1.8,
-                color: "#555",
-                fontStyle: "italic",
-                borderLeft: "4px solid #378C92",
+                color: '#555',
+                fontStyle: 'italic',
+                borderLeft: '4px solid #378C92',
                 paddingLeft: 3,
-                backgroundColor: "#f9f9f9",
+                backgroundColor: '#f9f9f9',
                 padding: 3,
-                borderRadius: "8px",
+                borderRadius: '8px',
               }}
             >
               {blog.description}
@@ -320,8 +308,8 @@ const InsightsDetailsNew = () => {
                     sx={{
                       mb: 3,
                       fontWeight: 700,
-                      color: "#313431",
-                      fontSize: { xs: "1.5rem", md: "2rem" },
+                      color: '#313431',
+                      fontSize: { xs: '1.5rem', md: '2rem' },
                     }}
                   >
                     {section.heading}
@@ -334,8 +322,8 @@ const InsightsDetailsNew = () => {
                         sx={{
                           mb: 2,
                           lineHeight: 1.8,
-                          color: "#555",
-                          textAlign: "justify",
+                          color: '#555',
+                          textAlign: 'justify',
                         }}
                       >
                         {paragraph}
@@ -347,8 +335,8 @@ const InsightsDetailsNew = () => {
                       sx={{
                         mb: 2,
                         lineHeight: 1.8,
-                        color: "#555",
-                        textAlign: "justify",
+                        color: '#555',
+                        textAlign: 'justify',
                       }}
                     >
                       {section.description}
@@ -361,21 +349,21 @@ const InsightsDetailsNew = () => {
             <Box
               sx={{
                 mt: 6,
-                display: "flex",
-                justifyContent: "space-between",
+                display: 'flex',
+                justifyContent: 'space-between',
                 gap: 2,
               }}
             >
               <Button
                 variant="outlined"
                 startIcon={<ArrowBackIcon />}
-                onClick={() => navigate("/insights")}
+                onClick={() => navigate('/insights')}
                 sx={{
-                  borderColor: "#378C92",
-                  color: "#378C92",
-                  "&:hover": {
-                    borderColor: "#313431",
-                    backgroundColor: "#f0f0f0",
+                  borderColor: '#378C92',
+                  color: '#378C92',
+                  '&:hover': {
+                    borderColor: '#313431',
+                    backgroundColor: '#f0f0f0',
                   },
                 }}
               >
@@ -383,13 +371,11 @@ const InsightsDetailsNew = () => {
               </Button>
               <Button
                 variant="contained"
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 sx={{
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  "&:hover": {
-                    background:
-                      "linear-gradient(135deg, #764ba2 0%, #667eea 100%)",
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
                   },
                 }}
               >
@@ -402,12 +388,12 @@ const InsightsDetailsNew = () => {
           <Grid item xs={12} md={4}>
             <Box
               sx={{
-                position: { md: "sticky" },
+                position: { md: 'sticky' },
                 top: 100,
-                backgroundColor: "#f9f9f9",
+                backgroundColor: '#f9f9f9',
                 padding: 3,
-                borderRadius: "12px",
-                boxShadow: "0px 4px 12px rgba(0,0,0,0.1)",
+                borderRadius: '12px',
+                boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
               }}
             >
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>
@@ -447,13 +433,11 @@ const InsightsDetailsNew = () => {
                 <Button
                   fullWidth
                   variant="contained"
-                  onClick={() => navigate("/insights")}
+                  onClick={() => navigate('/insights')}
                   sx={{
-                    background:
-                      "linear-gradient(135deg, #378C92 0%, #313431 100%)",
-                    "&:hover": {
-                      background:
-                        "linear-gradient(135deg, #313431 0%, #378C92 100%)",
+                    background: 'linear-gradient(135deg, #378C92 0%, #313431 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #313431 0%, #378C92 100%)',
                     },
                   }}
                 >

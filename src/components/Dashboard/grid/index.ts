@@ -1,5 +1,5 @@
 // Main component
-export { default as DashboardDataGrid } from "./DashboardDataGrid";
+export { default as DashboardDataGrid } from './DashboardDataGrid';
 
 // Types
 export type {
@@ -8,4 +8,4 @@ export type {
   ActionColumnConfig,
   ServerSidePaginationConfig,
   DashboardColors,
-} from "./types";
+} from './types';

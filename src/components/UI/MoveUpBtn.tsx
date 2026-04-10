@@ -1,35 +1,35 @@
-import React, { useState, useEffect } from "react";
-import { Box, Button, Slide, useTheme } from "@mui/material";
-import NorthIcon from "@mui/icons-material/North";
-import type { SxProps, Theme } from "@mui/system";
+import React, { useState, useEffect } from 'react';
+import { Box, Button, Slide, useTheme } from '@mui/material';
+import NorthIcon from '@mui/icons-material/North';
+import type { SxProps, Theme } from '@mui/system';
 
 const styles: Record<string, SxProps<Theme>> = {
   scrollToTopBtnContainer: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollToTopBtn: {
-    borderRadius: "50%",
-    padding: "10px",
-    cursor: "pointer",
-    position: "fixed",
-    bottom: { xs: "70px", md: "50px" },
-    right: { xs: "20px", md: "50px" },
+    borderRadius: '50%',
+    padding: '10px',
+    cursor: 'pointer',
+    position: 'fixed',
+    bottom: { xs: '70px', md: '50px' },
+    right: { xs: '20px', md: '50px' },
     zIndex: 999,
-    minWidth: "unset",
-    minHeight: "unset",
-    width: "60px",
-    height: "60px",
+    minWidth: 'unset',
+    minHeight: 'unset',
+    width: '60px',
+    height: '60px',
   },
   icon: {
-    fontSize: "24px",
-    color: "primary.focus",
-    position: "absolute",
+    fontSize: '24px',
+    color: 'primary.focus',
+    position: 'absolute',
   },
   progressCircle: {
-    transform: "rotate(-90deg)",
-    transformOrigin: "center",
+    transform: 'rotate(-90deg)',
+    transformOrigin: 'center',
   },
 };
 
@@ -49,16 +49,16 @@ const MoveUpButton: React.FC = () => {
       setIsVisible(scrolled > 100);
     };
 
-    window.addEventListener("scroll", toggleVisibility);
+    window.addEventListener('scroll', toggleVisibility);
     return () => {
-      window.removeEventListener("scroll", toggleVisibility);
+      window.removeEventListener('scroll', toggleVisibility);
     };
   }, []);
 
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: 'smooth',
     });
   };
 

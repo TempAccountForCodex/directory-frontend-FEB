@@ -7,20 +7,20 @@
  * - Teal (#378C92) fill when favorited, transparent when not
  * - e.stopPropagation() to prevent card click
  */
-import React, { useCallback } from "react";
-import { motion } from "framer-motion";
-import { Heart } from "lucide-react";
+import React, { useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { Heart } from 'lucide-react';
 
 interface TemplateFavoritesProps {
   templateId: string;
   isFavorited: boolean;
   onToggle: (templateId: string, newState: boolean) => void;
-  size?: "small" | "medium";
+  size?: 'small' | 'medium';
 }
 
-const TEAL = "#378C92";
+const TEAL = '#378C92';
 
-const ICON_SIZE: Record<NonNullable<TemplateFavoritesProps["size"]>, number> = {
+const ICON_SIZE: Record<NonNullable<TemplateFavoritesProps['size']>, number> = {
   small: 16,
   medium: 20,
 };
@@ -29,7 +29,7 @@ const TemplateFavorites = React.memo(function TemplateFavorites({
   templateId,
   isFavorited,
   onToggle,
-  size = "medium",
+  size = 'medium',
 }: TemplateFavoritesProps) {
   const iconSize = ICON_SIZE[size];
 
@@ -38,7 +38,7 @@ const TemplateFavorites = React.memo(function TemplateFavorites({
       e.stopPropagation();
       onToggle(templateId, !isFavorited);
     },
-    [templateId, isFavorited, onToggle],
+    [templateId, isFavorited, onToggle]
   );
 
   return (
@@ -48,24 +48,24 @@ const TemplateFavorites = React.memo(function TemplateFavorites({
       animate={{ scale: 1 }}
       whileTap={{ scale: [1, 1.2, 1] }}
       transition={{ duration: 0.3 }}
-      aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+      aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
       style={{
-        background: "transparent",
-        border: "none",
-        cursor: "pointer",
-        padding: size === "small" ? "4px" : "6px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: "50%",
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        padding: size === 'small' ? '4px' : '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '50%',
         lineHeight: 0,
-        transition: "background 0.2s ease",
+        transition: 'background 0.2s ease',
       }}
     >
       <Heart
         size={iconSize}
-        color={isFavorited ? TEAL : "rgba(255,255,255,0.6)"}
-        fill={isFavorited ? TEAL : "transparent"}
+        color={isFavorited ? TEAL : 'rgba(255,255,255,0.6)'}
+        fill={isFavorited ? TEAL : 'transparent'}
         strokeWidth={2}
       />
     </motion.button>

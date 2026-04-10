@@ -1,14 +1,14 @@
-import React from "react";
-import { Button } from "@mui/material";
-import type { ButtonProps } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom"; // <--- IMPORT useNavigate
+import React from 'react';
+import { Button } from '@mui/material';
+import type { ButtonProps } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom'; // <--- IMPORT useNavigate
 
 interface ButtonV3Props {
   children: React.ReactNode;
   href?: string;
   to?: string;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   accentColor?: string;
   sx?: any;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -19,8 +19,8 @@ const ButtonV3: React.FC<ButtonV3Props> = ({
   children,
   href,
   to,
-  size = "md",
-  accentColor = "#00BFFF",
+  size = 'md',
+  accentColor = '#00BFFF',
   sx,
   onClick,
   ...props
@@ -61,14 +61,14 @@ const ButtonV3: React.FC<ButtonV3Props> = ({
         // ... (Styles remain the same)
         borderRadius: 999,
         fontWeight: 600,
-        textTransform: "none",
-        color: "#fff",
+        textTransform: 'none',
+        color: '#fff',
         borderColor: accentColor,
-        transition: "all 0.3s ease-in-out",
+        transition: 'all 0.3s ease-in-out',
 
         ...currentSizeStyles,
 
-        "&:hover": {
+        '&:hover': {
           background: alpha(accentColor, 0.12),
           borderColor: accentColor,
         },

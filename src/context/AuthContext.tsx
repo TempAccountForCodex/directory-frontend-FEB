@@ -1,13 +1,7 @@
-import {
-  createContext,
-  useState,
-  useContext,
-  useEffect,
-  type ReactNode,
-} from "react";
-import axios from "axios";
-import type { User } from "../types/user";
-import { isSentryEnabled, getSentry } from "../config/sentry";
+import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
+import axios from 'axios';
+import type { User } from '../types/user';
+import { isSentryEnabled, getSentry } from '../config/sentry';
 
 interface AuthResult {
   success: boolean;
@@ -33,27 +27,13 @@ interface AuthContextType {
   signout: () => Promise<void>;
   checkSuperAdmin: () => Promise<SuperAdminCheckResult>;
   verifyEmail: (email: string, code: string) => Promise<AuthResult>;
-  resendVerification: (
-    email: string,
-  ) => Promise<AuthResult & { retryAfter?: number }>;
-  requestSigninCode: (
-    email: string,
-  ) => Promise<AuthResult & { retryAfter?: number }>;
+  resendVerification: (email: string) => Promise<AuthResult & { retryAfter?: number }>;
+  requestSigninCode: (email: string) => Promise<AuthResult & { retryAfter?: number }>;
   signinCode: (email: string, code: string) => Promise<AuthResult>;
-  requestPasswordReset: (
-    email: string,
-  ) => Promise<AuthResult & { retryAfter?: number }>;
-  resetPassword: (
-    email: string,
-    code: string,
-    newPassword: string,
-  ) => Promise<AuthResult>;
-  requestEmailChange: (
-    newEmail: string,
-  ) => Promise<AuthResult & { retryAfter?: number }>;
-  confirmEmailChange: (
-    code: string,
-  ) => Promise<AuthResult & { newEmail?: string }>;
+  requestPasswordReset: (email: string) => Promise<AuthResult & { retryAfter?: number }>;
+  resetPassword: (email: string, code: string, newPassword: string) => Promise<AuthResult>;
+  requestEmailChange: (newEmail: string) => Promise<AuthResult & { retryAfter?: number }>;
+  confirmEmailChange: (code: string) => Promise<AuthResult & { newEmail?: string }>;
   unlinkGoogle: () => Promise<AuthResult>;
   deleteAccount: () => Promise<AuthResult>;
   updateUser: (updatedUser: Partial<User>) => void;
@@ -61,12 +41,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
@@ -98,17 +78,13 @@ interface AuthProviderProps {
  * - Logout invalidates token via Redis blacklist + cookie clearing
  */
 // Configure axios defaults once (outside component to avoid re-running)
-axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;
 
 // Clean up any bad Authorization header that might exist
-const existingAuth = axios.defaults.headers.common["Authorization"];
-if (
-  existingAuth === "Bearer null" ||
-  existingAuth === "Bearer undefined" ||
-  !existingAuth
-) {
-  delete axios.defaults.headers.common["Authorization"];
+const existingAuth = axios.defaults.headers.common['Authorization'];
+if (existingAuth === 'Bearer null' || existingAuth === 'Bearer undefined' || !existingAuth) {
+  delete axios.defaults.headers.common['Authorization'];
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
@@ -131,22 +107,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         // Only handle 401 errors (not 403 which could be permissions)
         if (status === 401) {
-          const errorMessage =
-            error.response?.data?.message?.toLowerCase() || "";
+          const errorMessage = error.response?.data?.message?.toLowerCase() || '';
 
           // Only clear session if it's explicitly about tokens or requires reauth
           if (
-            errorMessage.includes("token") ||
-            errorMessage.includes("expired") ||
-            errorMessage.includes("invalid") ||
+            errorMessage.includes('token') ||
+            errorMessage.includes('expired') ||
+            errorMessage.includes('invalid') ||
             error.response?.data?.requiresReauth
           ) {
-            console.error(
-              "Authentication error, clearing session:",
-              errorMessage,
-            );
+            console.error('Authentication error, clearing session:', errorMessage);
             // Clear all auth data (httpOnly cookie will be cleared by backend on next request)
-            localStorage.removeItem("superAdminExists");
+            localStorage.removeItem('superAdminExists');
             setUser(null);
           }
         }
@@ -162,13 +134,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 method: error.config?.method,
                 responseData: error.response?.data,
               },
-              tags: { source: "axios_interceptor" },
+              tags: { source: 'axios_interceptor' },
             });
           }
         }
 
         return Promise.reject(error);
-      },
+      }
     );
 
     // Cleanup interceptor on unmount
@@ -191,13 +163,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Associate authenticated user with Sentry on page load (Step 10.23)
         if (isSentryEnabled() && currentUser) {
           const sentry = getSentry();
-          sentry?.setUser({
-            id: String(currentUser.id),
-            email: currentUser.email,
-          });
+          sentry?.setUser({ id: String(currentUser.id), email: currentUser.email });
         }
       } catch (error) {
-        console.error("Auth check failed:", error);
+        console.error('Auth check failed:', error);
         // Clear user state on auth failure
         setUser(null);
       } finally {
@@ -221,14 +190,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         timestamp: Date.now(),
         ttl: 24 * 60 * 60 * 1000, // 24 hours
       };
-      localStorage.setItem("superAdminExists", JSON.stringify(cacheData));
+      localStorage.setItem('superAdminExists', JSON.stringify(cacheData));
 
       return { exists, error: false };
     } catch (error) {
-      console.error("Check super admin failed:", error);
+      console.error('Check super admin failed:', error);
 
       // If backend is down, check localStorage for cached value
-      const cached = localStorage.getItem("superAdminExists");
+      const cached = localStorage.getItem('superAdminExists');
       if (cached !== null) {
         try {
           const cacheData = JSON.parse(cached);
@@ -247,11 +216,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             };
           } else {
             // Cache expired, remove it
-            localStorage.removeItem("superAdminExists");
+            localStorage.removeItem('superAdminExists');
           }
         } catch (parseError) {
           // Invalid cache format, remove it
-          localStorage.removeItem("superAdminExists");
+          localStorage.removeItem('superAdminExists');
         }
       }
 
@@ -264,14 +233,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signup = async (formData: FormData): Promise<AuthResult> => {
     try {
       const response = await axios.post(`${API_URL}/auth/signup`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       // Signup no longer returns a token - email verification required first
       // Token will be issued after successful email verification or signin
       const message =
-        response.data.message ||
-        "Account created successfully. Please verify your email.";
+        response.data.message || 'Account created successfully. Please verify your email.';
 
       return {
         success: true,
@@ -280,16 +248,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || "Signup failed",
+        message: error.response?.data?.message || 'Signup failed',
       };
     }
   };
 
   // Sign in
-  const signin = async (
-    email: string,
-    password: string,
-  ): Promise<AuthResult> => {
+  const signin = async (email: string, password: string): Promise<AuthResult> => {
     try {
       const response = await axios.post(
         `${API_URL}/auth/signin`,
@@ -299,7 +264,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
         {
           withCredentials: true, // Ensure cookies are sent/received
-        },
+        }
       );
       const { user: newUser } = response.data;
       // Token is now in httpOnly cookie (no localStorage needed)
@@ -313,16 +278,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || "Signin failed",
+        message: error.response?.data?.message || 'Signin failed',
       };
     }
   };
 
   // Verify email
-  const verifyEmail = async (
-    email: string,
-    code: string,
-  ): Promise<AuthResult> => {
+  const verifyEmail = async (email: string, code: string): Promise<AuthResult> => {
     try {
       const response = await axios.post(`${API_URL}/auth/verify-email`, {
         email,
@@ -336,14 +298,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || "Email verification failed",
+        message: error.response?.data?.message || 'Email verification failed',
       };
     }
   };
 
   // Resend verification code
   const resendVerification = async (
-    email: string,
+    email: string
   ): Promise<AuthResult & { retryAfter?: number }> => {
     try {
       const response = await axios.post(`${API_URL}/auth/resend-verification`, {
@@ -354,8 +316,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const retryAfter = error.response?.data?.retryAfter;
       return {
         success: false,
-        message:
-          error.response?.data?.message || "Failed to resend verification code",
+        message: error.response?.data?.message || 'Failed to resend verification code',
         retryAfter,
       };
     }
@@ -363,7 +324,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Request signin code
   const requestSigninCode = async (
-    email: string,
+    email: string
   ): Promise<AuthResult & { retryAfter?: number }> => {
     try {
       const response = await axios.post(`${API_URL}/auth/request-signin-code`, {
@@ -374,17 +335,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const retryAfter = error.response?.data?.retryAfter;
       return {
         success: false,
-        message: error.response?.data?.message || "Failed to send signin code",
+        message: error.response?.data?.message || 'Failed to send signin code',
         retryAfter,
       };
     }
   };
 
   // Sign in with code
-  const signinCode = async (
-    email: string,
-    code: string,
-  ): Promise<AuthResult> => {
+  const signinCode = async (email: string, code: string): Promise<AuthResult> => {
     try {
       const response = await axios.post(
         `${API_URL}/auth/signin-code`,
@@ -394,7 +352,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
         {
           withCredentials: true, // Ensure cookies are sent/received
-        },
+        }
       );
       const { user: newUser } = response.data;
       // Token is now in httpOnly cookie (no localStorage needed)
@@ -408,29 +366,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || "Signin with code failed",
+        message: error.response?.data?.message || 'Signin with code failed',
       };
     }
   };
 
   // Request password reset
   const requestPasswordReset = async (
-    email: string,
+    email: string
   ): Promise<AuthResult & { retryAfter?: number }> => {
     try {
-      const response = await axios.post(
-        `${API_URL}/auth/request-password-reset`,
-        {
-          email,
-        },
-      );
+      const response = await axios.post(`${API_URL}/auth/request-password-reset`, {
+        email,
+      });
       return { success: true, message: response.data.message };
     } catch (error: any) {
       const retryAfter = error.response?.data?.retryAfter;
       return {
         success: false,
-        message:
-          error.response?.data?.message || "Failed to send password reset code",
+        message: error.response?.data?.message || 'Failed to send password reset code',
         retryAfter,
       };
     }
@@ -440,7 +394,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const resetPassword = async (
     email: string,
     code: string,
-    newPassword: string,
+    newPassword: string
   ): Promise<AuthResult> => {
     try {
       const response = await axios.post(`${API_URL}/auth/reset-password`, {
@@ -452,45 +406,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || "Password reset failed",
+        message: error.response?.data?.message || 'Password reset failed',
       };
     }
   };
 
   // Request email change
   const requestEmailChange = async (
-    newEmail: string,
+    newEmail: string
   ): Promise<AuthResult & { retryAfter?: number }> => {
     try {
-      const response = await axios.post(
-        `${API_URL}/auth/request-email-change`,
-        {
-          newEmail,
-        },
-      );
+      const response = await axios.post(`${API_URL}/auth/request-email-change`, {
+        newEmail,
+      });
       return { success: true, message: response.data.message };
     } catch (error: any) {
       const retryAfter = error.response?.data?.retryAfter;
       return {
         success: false,
-        message:
-          error.response?.data?.message || "Failed to send email change code",
+        message: error.response?.data?.message || 'Failed to send email change code',
         retryAfter,
       };
     }
   };
 
   // Confirm email change with code
-  const confirmEmailChange = async (
-    code: string,
-  ): Promise<AuthResult & { newEmail?: string }> => {
+  const confirmEmailChange = async (code: string): Promise<AuthResult & { newEmail?: string }> => {
     try {
-      const response = await axios.post(
-        `${API_URL}/auth/confirm-email-change`,
-        {
-          code,
-        },
-      );
+      const response = await axios.post(`${API_URL}/auth/confirm-email-change`, {
+        code,
+      });
       const newEmail = response.data.newEmail;
       // Update user email in local state
       if (user && newEmail) {
@@ -500,8 +445,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       return {
         success: false,
-        message:
-          error.response?.data?.message || "Email change confirmation failed",
+        message: error.response?.data?.message || 'Email change confirmation failed',
       };
     }
   };
@@ -518,8 +462,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       return {
         success: false,
-        message:
-          error.response?.data?.message || "Failed to unlink Google account",
+        message: error.response?.data?.message || 'Failed to unlink Google account',
       };
     }
   };
@@ -530,14 +473,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await axios.delete(`${API_URL}/account`);
 
       // After successful deletion, perform local signout
-      localStorage.removeItem("superAdminExists");
+      localStorage.removeItem('superAdminExists');
       setUser(null);
 
-      return { success: true, message: "Account permanently deleted" };
+      return { success: true, message: 'Account permanently deleted' };
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || "Failed to delete account",
+        message: error.response?.data?.message || 'Failed to delete account',
       };
     }
   };
@@ -559,14 +502,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         {},
         {
           withCredentials: true,
-        },
+        }
       );
     } catch (error) {
-      console.error("Signout API error:", error);
+      console.error('Signout API error:', error);
       // Continue with local signout even if API call fails
     } finally {
       // Clear local state
-      localStorage.removeItem("superAdminExists");
+      localStorage.removeItem('superAdminExists');
       setUser(null);
       // httpOnly cookie will be cleared by the backend
       // Clear Sentry user association (Step 10.23)

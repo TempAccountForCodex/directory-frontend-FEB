@@ -4,21 +4,21 @@
  * Frontend now consumes templates from the backend registry.
  */
 
-import axios from "axios";
-import type { TemplateCategory } from "../constants/templateCategories";
+import axios from 'axios';
+import type { TemplateCategory } from '../constants/templateCategories';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-export type TemplateType = "website" | "store";
+export type TemplateType = 'website' | 'store';
 
 // Re-export shared constants for all consumers
 export {
   TEMPLATE_CATEGORIES,
   TEMPLATE_CATEGORY_LABELS,
   type TemplateCategory,
-} from "../constants/templateCategories";
+} from '../constants/templateCategories';
 // Re-export under the legacy name consumed by TemplateFilters and other callers
-export { TEMPLATE_CATEGORY_LABELS as CATEGORY_LABELS } from "../constants/templateCategories";
+export { TEMPLATE_CATEGORY_LABELS as CATEGORY_LABELS } from '../constants/templateCategories';
 
 export interface TemplateBlock {
   type: string;
@@ -64,11 +64,7 @@ let cacheTimestamp: number | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const fetchTemplates = async (): Promise<TemplateSummary[]> => {
-  if (
-    cachedTemplates &&
-    cacheTimestamp &&
-    Date.now() - cacheTimestamp < CACHE_TTL_MS
-  ) {
+  if (cachedTemplates && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
     return cachedTemplates;
   }
 
@@ -91,24 +87,20 @@ const fetchTemplates = async (): Promise<TemplateSummary[]> => {
 
 export const getWebsiteTemplates = async (): Promise<TemplateSummary[]> => {
   const templates = await fetchTemplates();
-  return templates.filter((template) => template.type === "website");
+  return templates.filter((template) => template.type === 'website');
 };
 
 export const getStoreTemplates = async (): Promise<TemplateSummary[]> => {
   const templates = await fetchTemplates();
-  return templates.filter((template) => template.type === "store");
+  return templates.filter((template) => template.type === 'store');
 };
 
-export const getTemplateById = async (
-  id: string,
-): Promise<Template | undefined> => {
+export const getTemplateById = async (id: string): Promise<Template | undefined> => {
   const response = await axios.get(`${API_URL}/templates/${id}`);
   return response.data?.data;
 };
 
-export const getAllCategories = (
-  templates: TemplateSummary[],
-): TemplateCategory[] => {
+export const getAllCategories = (templates: TemplateSummary[]): TemplateCategory[] => {
   const categories = new Set<TemplateCategory>();
   templates.forEach((template) => {
     categories.add(template.category);
@@ -144,9 +136,7 @@ export interface TemplatePreviewUrls {
  * - previews.thumbnail (gallery/detail) -> previewImage
  * - Missing fields get sensible defaults
  */
-export function normalizeTemplateSummary(
-  raw: Record<string, unknown>,
-): TemplateSummary {
+export function normalizeTemplateSummary(raw: Record<string, unknown>): TemplateSummary {
   // Extract preview image from whichever shape the backend provides
   const previews = raw.previews as Record<string, string | null> | undefined;
   const previewImage =
@@ -158,15 +148,14 @@ export function normalizeTemplateSummary(
   return {
     id: raw.id as string,
     name: raw.name as string,
-    description: (raw.description as string) || "",
-    type: (raw.type as TemplateType) || "website",
-    category: (raw.category as TemplateCategory) || "business",
-    version: (raw.version as string) || "1.0.0",
+    description: (raw.description as string) || '',
+    type: (raw.type as TemplateType) || 'website',
+    category: (raw.category as TemplateCategory) || 'business',
+    version: (raw.version as string) || '1.0.0',
     previewImage,
     pageCount: raw.pageCount as number | undefined,
     blockCount: raw.blockCount as number | undefined,
-    defaultWebsiteConfig:
-      raw.defaultWebsiteConfig as TemplateSummary["defaultWebsiteConfig"],
+    defaultWebsiteConfig: raw.defaultWebsiteConfig as TemplateSummary['defaultWebsiteConfig'],
   };
 }
 
@@ -174,13 +163,9 @@ export function normalizeTemplateSummary(
  * Extract preview URLs from any backend template response.
  * Normalizes the different shapes (screenshots object, previews object, flat fields).
  */
-export function extractPreviewUrls(
-  raw: Record<string, unknown>,
-): TemplatePreviewUrls {
+export function extractPreviewUrls(raw: Record<string, unknown>): TemplatePreviewUrls {
   // Shape 1: screenshots endpoint { data: { screenshots: { desktop, mobile, thumbnail } } }
-  const screenshots = raw.screenshots as
-    | Record<string, string | null>
-    | undefined;
+  const screenshots = raw.screenshots as Record<string, string | null> | undefined;
   if (screenshots) {
     return {
       thumbnail: screenshots.thumbnail || null,

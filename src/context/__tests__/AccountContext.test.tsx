@@ -22,16 +22,10 @@
  * 18.  serviceScopes reflects current delegation
  */
 
-import React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-  renderHook,
-} from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import React from 'react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, act, waitFor, renderHook } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 
 // ── Mock axios ──────────────────────────────────────────────────────────────
 
@@ -46,7 +40,7 @@ const responseInterceptors: Array<{
   onRejected: (err: any) => any;
 }> = [];
 
-vi.mock("axios", () => ({
+vi.mock('axios', () => ({
   default: {
     get: (...args: unknown[]) => mockAxiosGet(...args),
     post: (...args: unknown[]) => mockAxiosPost(...args),
@@ -80,10 +74,10 @@ vi.mock("axios", () => ({
 
 // ── Mock AuthContext ────────────────────────────────────────────────────────
 
-const mockUser = { id: 1, email: "test@test.com", name: "Test User" };
+const mockUser = { id: 1, email: 'test@test.com', name: 'Test User' };
 let currentMockUser: typeof mockUser | null = mockUser;
 
-vi.mock("../AuthContext", () => ({
+vi.mock('../AuthContext', () => ({
   useAuth: () => ({
     user: currentMockUser,
     token: null,
@@ -93,22 +87,22 @@ vi.mock("../AuthContext", () => ({
 
 // ── Import after mocks ─────────────────────────────────────────────────────
 
-import { AccountProvider, useAccountContext } from "../AccountContext";
+import { AccountProvider, useAccountContext } from '../AccountContext';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 const mockAccounts = [
   {
     id: 100,
-    ownerUser: { id: 10, name: "Alice Owner", email: "alice@test.com" },
-    role: "ACCOUNT_ADMIN",
+    ownerUser: { id: 10, name: 'Alice Owner', email: 'alice@test.com' },
+    role: 'ACCOUNT_ADMIN',
     serviceScopes: [],
   },
   {
     id: 200,
-    ownerUser: { id: 20, name: "Bob Boss", email: "bob@test.com" },
-    role: "ACCOUNT_COLLABORATOR",
-    serviceScopes: ["websites", "listings"],
+    ownerUser: { id: 20, name: 'Bob Boss', email: 'bob@test.com' },
+    role: 'ACCOUNT_COLLABORATOR',
+    serviceScopes: ['websites', 'listings'],
   },
 ];
 
@@ -120,22 +114,16 @@ function TestConsumer() {
       <span data-testid="isDelegating">{String(ctx.isDelegating)}</span>
       <span data-testid="isLoading">{String(ctx.isLoading)}</span>
       <span data-testid="isSwitching">{String(ctx.isSwitching)}</span>
-      <span data-testid="error">{ctx.error || ""}</span>
+      <span data-testid="error">{ctx.error || ''}</span>
       <span data-testid="delegateAccount">
-        {ctx.delegateAccount ? ctx.delegateAccount.ownerUser.name : ""}
+        {ctx.delegateAccount ? ctx.delegateAccount.ownerUser.name : ''}
       </span>
-      <span data-testid="serviceScopes">{ctx.serviceScopes.join(",")}</span>
+      <span data-testid="serviceScopes">{ctx.serviceScopes.join(',')}</span>
       <span data-testid="accountCount">{ctx.delegatedAccounts.length}</span>
-      <button
-        data-testid="switch-alice"
-        onClick={() => ctx.switchAccount(mockAccounts[0])}
-      >
+      <button data-testid="switch-alice" onClick={() => ctx.switchAccount(mockAccounts[0])}>
         Switch Alice
       </button>
-      <button
-        data-testid="switch-bob"
-        onClick={() => ctx.switchAccount(mockAccounts[1])}
-      >
+      <button data-testid="switch-bob" onClick={() => ctx.switchAccount(mockAccounts[1])}>
         Switch Bob
       </button>
       <button
@@ -143,8 +131,8 @@ function TestConsumer() {
         onClick={() =>
           ctx.switchAccount({
             id: 999,
-            ownerUser: { id: 1, name: "Me", email: "test@test.com" },
-            role: "ACCOUNT_ADMIN",
+            ownerUser: { id: 1, name: 'Me', email: 'test@test.com' },
+            role: 'ACCOUNT_ADMIN',
             serviceScopes: [],
           })
         }
@@ -156,8 +144,8 @@ function TestConsumer() {
         onClick={() =>
           ctx.switchAccount({
             id: 888,
-            ownerUser: { id: -1, name: "Bad", email: "bad@test.com" },
-            role: "ACCOUNT_ADMIN",
+            ownerUser: { id: -1, name: 'Bad', email: 'bad@test.com' },
+            role: 'ACCOUNT_ADMIN',
             serviceScopes: [],
           })
         }
@@ -178,13 +166,13 @@ function renderWithProvider() {
   return render(
     <AccountProvider>
       <TestConsumer />
-    </AccountProvider>,
+    </AccountProvider>
   );
 }
 
 // ── Tests ───────────────────────────────────────────────────────────────────
 
-describe("AccountContext", () => {
+describe('AccountContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     currentMockUser = mockUser;
@@ -200,72 +188,69 @@ describe("AccountContext", () => {
     vi.restoreAllMocks();
   });
 
-  it("1. renders children", async () => {
+  it('1. renders children', async () => {
     renderWithProvider();
-    expect(screen.getByTestId("isDelegating")).toBeInTheDocument();
+    expect(screen.getByTestId('isDelegating')).toBeInTheDocument();
   });
 
-  it("2. useAccountContext throws outside provider", () => {
+  it('2. useAccountContext throws outside provider', () => {
     // Suppress console.error for expected error
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => {
       renderHook(() => useAccountContext());
-    }).toThrow("useAccountContext must be used within an AccountProvider");
+    }).toThrow('useAccountContext must be used within an AccountProvider');
     consoleSpy.mockRestore();
   });
 
-  it("3. fetches delegated accounts on mount", async () => {
+  it('3. fetches delegated accounts on mount', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
     expect(mockAxiosGet).toHaveBeenCalledWith(
-      expect.stringContaining("/account/delegated-accounts"),
+      expect.stringContaining('/account/delegated-accounts')
     );
   });
 
-  it("4. isDelegating is false when no delegation active", async () => {
+  it('4. isDelegating is false when no delegation active', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("false");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
     });
   });
 
-  it("5. switchAccount calls POST /switch-context and sets delegation state", async () => {
+  it('5. switchAccount calls POST /switch-context and sets delegation state', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     await act(async () => {
-      screen.getByTestId("switch-alice").click();
+      screen.getByTestId('switch-alice').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("true");
-      expect(screen.getByTestId("delegateAccount").textContent).toBe(
-        "Alice Owner",
-      );
+      expect(screen.getByTestId('isDelegating').textContent).toBe('true');
+      expect(screen.getByTestId('delegateAccount').textContent).toBe('Alice Owner');
     });
 
-    expect(mockAxiosPost).toHaveBeenCalledWith(
-      expect.stringContaining("/account/switch-context"),
-      { accountUserId: 10 },
-    );
+    expect(mockAxiosPost).toHaveBeenCalledWith(expect.stringContaining('/account/switch-context'), {
+      accountUserId: 10,
+    });
   });
 
-  it("6. switchAccount sets X-Account-Context header via interceptor", async () => {
+  it('6. switchAccount sets X-Account-Context header via interceptor', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     await act(async () => {
-      screen.getByTestId("switch-alice").click();
+      screen.getByTestId('switch-alice').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("true");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('true');
     });
 
     // Find the active request interceptor
@@ -275,55 +260,55 @@ describe("AccountContext", () => {
     // Simulate a request going through the interceptor
     const config = { headers: {} };
     const result = activeInterceptor!(config);
-    expect(result.headers["X-Account-Context"]).toBe("10");
+    expect(result.headers['X-Account-Context']).toBe('10');
   });
 
-  it("7. clearDelegation calls DELETE /switch-context and clears state", async () => {
+  it('7. clearDelegation calls DELETE /switch-context and clears state', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     // First switch
     await act(async () => {
-      screen.getByTestId("switch-alice").click();
+      screen.getByTestId('switch-alice').click();
     });
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("true");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('true');
     });
 
     // Then clear
     await act(async () => {
-      screen.getByTestId("clear").click();
+      screen.getByTestId('clear').click();
     });
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("false");
-      expect(screen.getByTestId("delegateAccount").textContent).toBe("");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
+      expect(screen.getByTestId('delegateAccount').textContent).toBe('');
     });
 
     expect(mockAxiosDelete).toHaveBeenCalledWith(
-      expect.stringContaining("/account/switch-context"),
+      expect.stringContaining('/account/switch-context')
     );
   });
 
-  it("8. clearDelegation removes X-Account-Context header (interceptor ejected)", async () => {
+  it('8. clearDelegation removes X-Account-Context header (interceptor ejected)', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     await act(async () => {
-      screen.getByTestId("switch-alice").click();
+      screen.getByTestId('switch-alice').click();
     });
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("true");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('true');
     });
 
     await act(async () => {
-      screen.getByTestId("clear").click();
+      screen.getByTestId('clear').click();
     });
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("false");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
     });
 
     // After clearing, no active interceptors should inject the header
@@ -333,62 +318,58 @@ describe("AccountContext", () => {
     if (activeInterceptors.length > 0) {
       const config = { headers: {} };
       const result = activeInterceptors[activeInterceptors.length - 1](config);
-      expect(result.headers["X-Account-Context"]).toBeUndefined();
+      expect(result.headers['X-Account-Context']).toBeUndefined();
     }
   });
 
-  it("9. self-delegation is prevented", async () => {
+  it('9. self-delegation is prevented', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     await act(async () => {
-      screen.getByTestId("switch-self").click();
+      screen.getByTestId('switch-self').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("error").textContent).toBe(
-        "Cannot delegate to your own account",
-      );
-      expect(screen.getByTestId("isDelegating").textContent).toBe("false");
+      expect(screen.getByTestId('error').textContent).toBe('Cannot delegate to your own account');
+      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
     });
 
     // POST should NOT have been called
     expect(mockAxiosPost).not.toHaveBeenCalled();
   });
 
-  it("10. invalid accountUserId is rejected", async () => {
+  it('10. invalid accountUserId is rejected', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     await act(async () => {
-      screen.getByTestId("switch-invalid").click();
+      screen.getByTestId('switch-invalid').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("error").textContent).toBe(
-        "Invalid account ID",
-      );
-      expect(screen.getByTestId("isDelegating").textContent).toBe("false");
+      expect(screen.getByTestId('error').textContent).toBe('Invalid account ID');
+      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
     });
 
     expect(mockAxiosPost).not.toHaveBeenCalled();
   });
 
-  it("11. 403 during delegation clears delegation state", async () => {
+  it('11. 403 during delegation clears delegation state', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     await act(async () => {
-      screen.getByTestId("switch-alice").click();
+      screen.getByTestId('switch-alice').click();
     });
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("true");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('true');
     });
 
     // Simulate a 403 through the response interceptor
@@ -404,21 +385,21 @@ describe("AccountContext", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("false");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
     });
   });
 
-  it("12. 401 during delegation clears delegation state", async () => {
+  it('12. 401 during delegation clears delegation state', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     await act(async () => {
-      screen.getByTestId("switch-alice").click();
+      screen.getByTestId('switch-alice').click();
     });
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("true");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('true');
     });
 
     const responseHandler = responseInterceptors.filter(Boolean).pop();
@@ -431,21 +412,21 @@ describe("AccountContext", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("false");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
     });
   });
 
-  it("13. delegation state clears on logout (user becomes null)", async () => {
+  it('13. delegation state clears on logout (user becomes null)', async () => {
     const { rerender } = renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     await act(async () => {
-      screen.getByTestId("switch-alice").click();
+      screen.getByTestId('switch-alice').click();
     });
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("true");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('true');
     });
 
     // Simulate logout
@@ -453,76 +434,76 @@ describe("AccountContext", () => {
     rerender(
       <AccountProvider>
         <TestConsumer />
-      </AccountProvider>,
+      </AccountProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("isDelegating").textContent).toBe("false");
-      expect(screen.getByTestId("accountCount").textContent).toBe("0");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
+      expect(screen.getByTestId('accountCount').textContent).toBe('0');
     });
   });
 
-  it("14. error state set on failed fetch", async () => {
+  it('14. error state set on failed fetch', async () => {
     mockAxiosGet.mockRejectedValue({
-      response: { data: { message: "Server error" } },
+      response: { data: { message: 'Server error' } },
     });
 
     renderWithProvider();
 
     await waitFor(() => {
-      expect(screen.getByTestId("error").textContent).toBe("Server error");
+      expect(screen.getByTestId('error').textContent).toBe('Server error');
     });
   });
 
-  it("15. error state set on failed switch (403)", async () => {
+  it('15. error state set on failed switch (403)', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     mockAxiosPost.mockRejectedValue({
-      response: { status: 403, data: { message: "Not authorized" } },
+      response: { status: 403, data: { message: 'Not authorized' } },
     });
 
     await act(async () => {
-      screen.getByTestId("switch-alice").click();
+      screen.getByTestId('switch-alice').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("error").textContent).toBe(
-        "You are not authorized to access this account",
+      expect(screen.getByTestId('error').textContent).toBe(
+        'You are not authorized to access this account'
       );
-      expect(screen.getByTestId("isDelegating").textContent).toBe("false");
+      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
     });
   });
 
-  it("16. isSwitching prevents double-click", async () => {
+  it('16. isSwitching prevents double-click', async () => {
     // Make switchContext slow
     let resolveSwitch: Function;
     mockAxiosPost.mockImplementation(
       () =>
         new Promise((resolve) => {
           resolveSwitch = resolve;
-        }),
+        })
     );
 
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     // First click starts switching
     act(() => {
-      screen.getByTestId("switch-alice").click();
+      screen.getByTestId('switch-alice').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("isSwitching").textContent).toBe("true");
+      expect(screen.getByTestId('isSwitching').textContent).toBe('true');
     });
 
     // Second click should be ignored
     await act(async () => {
-      screen.getByTestId("switch-bob").click();
+      screen.getByTestId('switch-bob').click();
     });
 
     // Only one POST call should have been made
@@ -534,20 +515,20 @@ describe("AccountContext", () => {
     });
   });
 
-  it("17. refreshes accounts on visibility change", async () => {
+  it('17. refreshes accounts on visibility change', async () => {
     renderWithProvider();
     await waitFor(() => {
       expect(mockAxiosGet).toHaveBeenCalledTimes(1);
     });
 
     // Simulate visibility change
-    Object.defineProperty(document, "visibilityState", {
-      value: "visible",
+    Object.defineProperty(document, 'visibilityState', {
+      value: 'visible',
       writable: true,
     });
 
     await act(async () => {
-      document.dispatchEvent(new Event("visibilitychange"));
+      document.dispatchEvent(new Event('visibilitychange'));
     });
 
     await waitFor(() => {
@@ -555,21 +536,19 @@ describe("AccountContext", () => {
     });
   });
 
-  it("18. serviceScopes reflects current delegation", async () => {
+  it('18. serviceScopes reflects current delegation', async () => {
     renderWithProvider();
     await waitFor(() => {
-      expect(screen.getByTestId("accountCount").textContent).toBe("2");
+      expect(screen.getByTestId('accountCount').textContent).toBe('2');
     });
 
     // Switch to Bob (has scopes)
     await act(async () => {
-      screen.getByTestId("switch-bob").click();
+      screen.getByTestId('switch-bob').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("serviceScopes").textContent).toBe(
-        "websites,listings",
-      );
+      expect(screen.getByTestId('serviceScopes').textContent).toBe('websites,listings');
     });
   });
 });

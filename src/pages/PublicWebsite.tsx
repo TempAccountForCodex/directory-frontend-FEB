@@ -3,9 +3,9 @@
  * Renders template-generated websites based on slug from subdomain or path
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useParams, useLocation, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import {
   Box,
   Container,
@@ -15,20 +15,20 @@ import {
   Toolbar,
   Button,
   Alert,
-} from "@mui/material";
-import axios from "axios";
-import DynamicBlockRenderer from "../components/PublicWebsite/DynamicBlockRenderer";
-import BlockErrorBoundary from "../components/PublicWebsite/BlockErrorBoundary";
-import { DynamicBlockProvider } from "../context/DynamicBlockContext";
+} from '@mui/material';
+import axios from 'axios';
+import DynamicBlockRenderer from '../components/PublicWebsite/DynamicBlockRenderer';
+import BlockErrorBoundary from '../components/PublicWebsite/BlockErrorBoundary';
+import { DynamicBlockProvider } from '../context/DynamicBlockContext';
 import {
   BlogArticleSeoContext,
   type BlogArticleSeoData,
-} from "../components/PublicWebsite/dynamic/BlogArticleBlock";
-import ImageWithLoader from "../components/UI/ImageWithLoader";
-import { useGoogleAnalytics } from "../hooks/useGoogleAnalytics";
-import LanguageSelector from "../components/LanguageSelector";
+} from '../components/PublicWebsite/dynamic/BlogArticleBlock';
+import ImageWithLoader from '../components/UI/ImageWithLoader';
+import { useGoogleAnalytics } from '../hooks/useGoogleAnalytics';
+import LanguageSelector from '../components/LanguageSelector';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface Page {
   id: number;
@@ -45,6 +45,38 @@ interface Block {
   sortOrder: number;
 }
 
+// ---------------------------------------------------------------------------
+// Font preset definitions (Step 12.1) — mirrors backend/constants/fontPresets.js
+// ---------------------------------------------------------------------------
+const FONT_PRESETS_MAP: Record<
+  string,
+  { headingFont: string; bodyFont: string; googleFontsUrl: string | null }
+> = {
+  system: {
+    headingFont: 'Inter, system-ui, sans-serif',
+    bodyFont: 'Inter, system-ui, sans-serif',
+    googleFontsUrl: null,
+  },
+  serif: {
+    headingFont: "'Playfair Display', Georgia, serif",
+    bodyFont: "'Lora', Georgia, serif",
+    googleFontsUrl:
+      'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500&display=swap',
+  },
+  modern: {
+    headingFont: "'Poppins', sans-serif",
+    bodyFont: "'Poppins', sans-serif",
+    googleFontsUrl:
+      'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap',
+  },
+  editorial: {
+    headingFont: "'Cormorant Garamond', Georgia, serif",
+    bodyFont: "'Montserrat', sans-serif",
+    googleFontsUrl:
+      'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;600&display=swap',
+  },
+};
+
 interface Website {
   id: number;
   name: string;
@@ -60,11 +92,14 @@ interface Website {
   businessName?: string;
   shortDescription?: string;
   gaMeasurementId?: string;
+  fontPreset?: string;
+  headingLetterSpacing?: string;
+  headingTextTransform?: string;
   pages: Page[];
 }
 
 const PublicWebsite: React.FC = () => {
-  const { slug, "*": splatPath } = useParams<{ slug: string; "*": string }>();
+  const { slug, '*': splatPath } = useParams<{ slug: string; '*': string }>();
   const location = useLocation();
   const [website, setWebsite] = useState<Website | null>(null);
   const currentYear = useMemo(() => new Date().getFullYear(), []);
@@ -73,25 +108,20 @@ const PublicWebsite: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Blog article SEO override — populated by BlogArticleBlock via context
-  const [blogSeoData, setBlogSeoData] = useState<BlogArticleSeoData | null>(
-    null,
-  );
+  const [blogSeoData, setBlogSeoData] = useState<BlogArticleSeoData | null>(null);
 
-  const handleSetBlogSeoData = useCallback(
-    (data: BlogArticleSeoData | null) => {
-      setBlogSeoData(data);
-    },
-    [],
-  );
+  const handleSetBlogSeoData = useCallback((data: BlogArticleSeoData | null) => {
+    setBlogSeoData(data);
+  }, []);
 
   const blogArticleSeoContextValue = useMemo(
     () => ({ seoData: blogSeoData, setSeoData: handleSetBlogSeoData }),
-    [blogSeoData, handleSetBlogSeoData],
+    [blogSeoData, handleSetBlogSeoData]
   );
 
   // Initialize Google Analytics if configured
   const { trackClick, trackFormSubmit } = useGoogleAnalytics({
-    measurementId: website?.gaMeasurementId || "",
+    measurementId: website?.gaMeasurementId || '',
     enabled: !!website?.gaMeasurementId,
     debug: import.meta.env.DEV,
   });
@@ -103,23 +133,23 @@ const PublicWebsite: React.FC = () => {
 
     // Try to extract from subdomain
     const hostname = window.location.hostname;
-    const parts = hostname.split(".");
+    const parts = hostname.split('.');
 
     // Reserved subdomains that should NOT be treated as website slugs
     const reservedSubdomains = [
-      "www",
-      "api",
-      "admin",
-      "app",
-      "dashboard",
-      "staging",
-      "dev",
-      "test",
-      "localhost",
+      'www',
+      'api',
+      'admin',
+      'app',
+      'dashboard',
+      'staging',
+      'dev',
+      'test',
+      'localhost',
     ];
 
     // Check if it's a subdomain and not a reserved one
-    if (parts.length > 1 && parts[0] !== "localhost") {
+    if (parts.length > 1 && parts[0] !== 'localhost') {
       const subdomain = parts[0].toLowerCase();
       if (!reservedSubdomains.includes(subdomain)) {
         return subdomain;
@@ -138,27 +168,21 @@ const PublicWebsite: React.FC = () => {
         const websiteSlug = getWebsiteSlug();
 
         if (!websiteSlug) {
-          setError("No website specified");
+          setError('No website specified');
           setLoading(false);
           return;
         }
 
         // Fetch website by slug
-        const response = await axios.get(
-          `${API_URL}/websites/slug/${websiteSlug}`,
-        );
+        const response = await axios.get(`${API_URL}/websites/slug/${websiteSlug}`);
         const websiteData = response.data;
 
         // Sort pages by sortOrder
-        const sortedPages = [...websiteData.pages].sort(
-          (a, b) => a.sortOrder - b.sortOrder,
-        );
+        const sortedPages = [...websiteData.pages].sort((a, b) => a.sortOrder - b.sortOrder);
 
         // Sort blocks within each page
         sortedPages.forEach((page) => {
-          page.blocks = [...page.blocks].sort(
-            (a, b) => a.sortOrder - b.sortOrder,
-          );
+          page.blocks = [...page.blocks].sort((a, b) => a.sortOrder - b.sortOrder);
         });
 
         websiteData.pages = sortedPages;
@@ -174,10 +198,10 @@ const PublicWebsite: React.FC = () => {
           pagePath = `/${splatPath}`;
         } else if (slug) {
           // /site/my-site (no sub-path) → home page
-          pagePath = "/";
+          pagePath = '/';
         } else {
           // Subdomain or custom domain access — pathname is the page path directly
-          pagePath = location.pathname === "/" ? "/" : location.pathname;
+          pagePath = location.pathname === '/' ? '/' : location.pathname;
         }
         let page = sortedPages.find((p) => p.path === pagePath);
 
@@ -193,9 +217,9 @@ const PublicWebsite: React.FC = () => {
         // in production. console.error is silenced in prod builds.
         if (import.meta.env.DEV) {
           // eslint-disable-next-line no-console
-          console.error("[PublicWebsite] Error fetching website:", err);
+          console.error('[PublicWebsite] Error fetching website:', err);
         }
-        setError(err.response?.data?.message || "Failed to load website");
+        setError(err.response?.data?.message || 'Failed to load website');
         setLoading(false);
       }
     };
@@ -203,39 +227,125 @@ const PublicWebsite: React.FC = () => {
     fetchWebsite();
   }, [slug, splatPath, location.pathname]);
 
+  // ---------------------------------------------------------------------------
+  // Step 12.1 — Font preset injection
+  // Injects a Google Fonts <link> tag and a <style> block with CSS custom
+  // properties whenever the website's fontPreset changes.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const presetKey = website?.fontPreset || 'system';
+    const preset = FONT_PRESETS_MAP[presetKey] ?? FONT_PRESETS_MAP.system;
+
+    const LINK_ID = 'tt-google-fonts-link';
+    const STYLE_ID = 'tt-font-preset-style';
+
+    // Manage Google Fonts <link>
+    let linkEl = document.getElementById(LINK_ID) as HTMLLinkElement | null;
+    if (preset.googleFontsUrl) {
+      if (!linkEl) {
+        linkEl = document.createElement('link');
+        linkEl.id = LINK_ID;
+        linkEl.rel = 'stylesheet';
+        document.head.appendChild(linkEl);
+      }
+      linkEl.href = preset.googleFontsUrl;
+    } else {
+      linkEl?.remove();
+    }
+
+    // Manage CSS custom properties <style>
+    let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = STYLE_ID;
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+:root {
+  --font-heading: ${preset.headingFont};
+  --font-body: ${preset.bodyFont};
+}
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
+body, p, span, div { font-family: var(--font-body); }
+    `.trim();
+
+    return () => {
+      // Clean up when the component unmounts to avoid leaking styles
+      document.getElementById(LINK_ID)?.remove();
+      document.getElementById(STYLE_ID)?.remove();
+    };
+  }, [website?.fontPreset]);
+
+  // ---------------------------------------------------------------------------
+  // Step 12.2 — Heading letter-spacing and text-transform injection
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const STYLE_ID = 'tt-heading-typography-style';
+
+    // Map preset keys to CSS values
+    const letterSpacingMap: Record<string, string> = {
+      normal: 'normal',
+      wide: '0.05em',
+      wider: '0.1em',
+    };
+    const textTransformMap: Record<string, string> = {
+      none: 'none',
+      uppercase: 'uppercase',
+    };
+
+    const spacingKey = website?.headingLetterSpacing || 'normal';
+    const transformKey = website?.headingTextTransform || 'none';
+    const letterSpacing = letterSpacingMap[spacingKey] ?? 'normal';
+    const textTransform = textTransformMap[transformKey] ?? 'none';
+
+    let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = STYLE_ID;
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+:root {
+  --heading-letter-spacing: ${letterSpacing};
+  --heading-text-transform: ${textTransform};
+}
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: var(--heading-letter-spacing);
+  text-transform: var(--heading-text-transform);
+}
+    `.trim();
+
+    return () => {
+      document.getElementById(STYLE_ID)?.remove();
+    };
+  }, [website?.headingLetterSpacing, website?.headingTextTransform]);
+
   // Prepare SEO meta values (must be computed before early returns so the
   // blogPostingJsonLd useMemo below never violates React hooks ordering)
-  const pageTitle = currentPage?.title || "Home";
-  const baseMetaTitle =
-    website?.metaTitle || `${pageTitle} - ${website?.name || ""}`;
+  const pageTitle = currentPage?.title || 'Home';
+  const baseMetaTitle = website?.metaTitle || `${pageTitle} - ${website?.name || ''}`;
   const baseMetaDescription =
     website?.metaDescription ||
     website?.shortDescription ||
-    `${website?.name || ""} - ${website?.businessName || ""}`.trim();
+    `${website?.name || ''} - ${website?.businessName || ''}`.trim();
   const siteUrl = window.location.origin + window.location.pathname;
-  const baseOgImage = website?.logoUrl || "";
+  const baseOgImage = website?.logoUrl || '';
 
   // Blog article SEO overrides (set by BlogArticleBlock when it loads a post)
   const isBlogArticle = !!blogSeoData;
-  const metaTitle = isBlogArticle
-    ? blogSeoData!.title || baseMetaTitle
-    : baseMetaTitle;
+  const metaTitle = isBlogArticle ? blogSeoData!.title || baseMetaTitle : baseMetaTitle;
   const metaDescription = isBlogArticle
     ? blogSeoData!.description || baseMetaDescription
     : baseMetaDescription;
-  const ogImage = isBlogArticle
-    ? blogSeoData!.image || baseOgImage
-    : baseOgImage;
-  const canonicalUrl = isBlogArticle
-    ? blogSeoData!.canonicalUrl || siteUrl
-    : siteUrl;
+  const ogImage = isBlogArticle ? blogSeoData!.image || baseOgImage : baseOgImage;
+  const canonicalUrl = isBlogArticle ? blogSeoData!.canonicalUrl || siteUrl : siteUrl;
 
   // Build schema.org BlogPosting JSON-LD when a blog article is present
   const blogPostingJsonLd = useMemo(() => {
     if (!isBlogArticle || !blogSeoData) return null;
     const data: Record<string, any> = {
-      "@context": "https://schema.org",
-      "@type": "BlogPosting",
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
       headline: blogSeoData.title || metaTitle,
       description: blogSeoData.description || metaDescription,
       url: blogSeoData.canonicalUrl || siteUrl,
@@ -243,31 +353,23 @@ const PublicWebsite: React.FC = () => {
     if (blogSeoData.image) data.image = blogSeoData.image;
     if (blogSeoData.publishedAt) data.datePublished = blogSeoData.publishedAt;
     if (blogSeoData.authorName) {
-      data.author = { "@type": "Person", name: blogSeoData.authorName };
+      data.author = { '@type': 'Person', name: blogSeoData.authorName };
     }
     if (blogSeoData.keywords) data.keywords = blogSeoData.keywords;
-    if (website?.name)
-      data.publisher = { "@type": "Organization", name: website.name };
+    if (website?.name) data.publisher = { '@type': 'Organization', name: website.name };
     // Escape </script to prevent injection
-    return JSON.stringify(data).replace(/<\/script/gi, "<\\/script");
-  }, [
-    isBlogArticle,
-    blogSeoData,
-    metaTitle,
-    metaDescription,
-    siteUrl,
-    website?.name,
-  ]);
+    return JSON.stringify(data).replace(/<\/script/gi, '<\\/script');
+  }, [isBlogArticle, blogSeoData, metaTitle, metaDescription, siteUrl, website?.name]);
 
   if (loading) {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          bgcolor: "background.default",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          bgcolor: 'background.default',
         }}
       >
         <CircularProgress size={60} />
@@ -279,16 +381,16 @@ const PublicWebsite: React.FC = () => {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          bgcolor: "background.default",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          bgcolor: 'background.default',
         }}
       >
         <Container maxWidth="md">
           <Alert severity="error" sx={{ mb: 2 }}>
-            {error || "Website not found"}
+            {error || 'Website not found'}
           </Alert>
           <Typography variant="body1" align="center">
             The website you're looking for doesn't exist or is not published.
@@ -299,7 +401,7 @@ const PublicWebsite: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <DynamicBlockProvider>
         <BlogArticleSeoContext.Provider value={blogArticleSeoContextValue}>
           {/* SEO Meta Tags */}
@@ -312,18 +414,13 @@ const PublicWebsite: React.FC = () => {
             )}
 
             {/* Favicon */}
-            {website.faviconUrl && (
-              <link rel="icon" href={website.faviconUrl} />
-            )}
+            {website.faviconUrl && <link rel="icon" href={website.faviconUrl} />}
 
             {/* Canonical URL */}
             <link rel="canonical" href={canonicalUrl} />
 
             {/* Open Graph Tags for Social Sharing */}
-            <meta
-              property="og:type"
-              content={isBlogArticle ? "article" : "website"}
-            />
+            <meta property="og:type" content={isBlogArticle ? 'article' : 'website'} />
             <meta property="og:title" content={metaTitle} />
             <meta property="og:description" content={metaDescription} />
             <meta property="og:url" content={canonicalUrl} />
@@ -332,16 +429,10 @@ const PublicWebsite: React.FC = () => {
 
             {/* Article-specific Open Graph tags */}
             {isBlogArticle && blogSeoData?.publishedAt && (
-              <meta
-                property="article:published_time"
-                content={blogSeoData.publishedAt}
-              />
+              <meta property="article:published_time" content={blogSeoData.publishedAt} />
             )}
             {isBlogArticle && blogSeoData?.authorName && (
-              <meta
-                property="article:author"
-                content={blogSeoData.authorName}
-              />
+              <meta property="article:author" content={blogSeoData.authorName} />
             )}
 
             {/* Twitter Card Tags */}
@@ -351,9 +442,7 @@ const PublicWebsite: React.FC = () => {
             {ogImage && <meta name="twitter:image" content={ogImage} />}
 
             {/* Schema.org BlogPosting JSON-LD */}
-            {blogPostingJsonLd && (
-              <script type="application/ld+json">{blogPostingJsonLd}</script>
-            )}
+            {blogPostingJsonLd && <script type="application/ld+json">{blogPostingJsonLd}</script>}
           </Helmet>
 
           {/* Navigation Bar */}
@@ -361,21 +450,14 @@ const PublicWebsite: React.FC = () => {
             position="sticky"
             elevation={1}
             sx={{
-              bgcolor: "white",
-              color: "text.primary",
-              borderBottom: "1px solid",
-              borderColor: "divider",
+              bgcolor: 'white',
+              color: 'text.primary',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
             }}
           >
             <Toolbar>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  flexGrow: 1,
-                  gap: 2,
-                }}
-              >
+              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, gap: 2 }}>
                 {website.logoUrl && (
                   <ImageWithLoader
                     src={website.logoUrl}
@@ -392,7 +474,7 @@ const PublicWebsite: React.FC = () => {
                   component="div"
                   sx={{
                     fontWeight: 700,
-                    color: website.primaryColor || "#2563eb",
+                    color: website.primaryColor || '#2563eb',
                   }}
                 >
                   {website.name}
@@ -404,23 +486,16 @@ const PublicWebsite: React.FC = () => {
                   component={Link}
                   to={`/site/${website.slug}${page.path}`}
                   sx={{
-                    color:
-                      currentPage?.id === page.id
-                        ? website.primaryColor
-                        : "text.secondary",
+                    color: currentPage?.id === page.id ? website.primaryColor : 'text.secondary',
                     fontWeight: currentPage?.id === page.id ? 600 : 400,
-                    textDecoration: "none",
+                    textDecoration: 'none',
                   }}
                 >
                   {page.title}
                 </Button>
               ))}
               <Box sx={{ ml: 2 }}>
-                <LanguageSelector
-                  variant="standard"
-                  size="small"
-                  showIcon={false}
-                />
+                <LanguageSelector variant="standard" size="small" showIcon={false} />
               </Box>
             </Toolbar>
           </AppBar>
@@ -435,17 +510,13 @@ const PublicWebsite: React.FC = () => {
               </Container>
             ) : (
               currentPage.blocks.map((block) => (
-                <BlockErrorBoundary
-                  key={block.id}
-                  blockType={block.blockType}
-                  blockId={block.id}
-                >
+                <BlockErrorBoundary key={block.id} blockType={block.blockType} blockId={block.id}>
                   <DynamicBlockRenderer
                     block={block}
-                    primaryColor={website.primaryColor || "#378C92"} // Techietribe teal
-                    secondaryColor={website.secondaryColor || "#D3EB63"} // Techietribe lime accent
-                    headingColor={website.headingTextColor || "#252525"} // Techietribe dark text
-                    bodyColor={website.bodyTextColor || "#6A6F78"} // Techietribe gray text
+                    primaryColor={website.primaryColor || '#378C92'} // Techietribe teal
+                    secondaryColor={website.secondaryColor || '#D3EB63'} // Techietribe lime accent
+                    headingColor={website.headingTextColor || '#252525'} // Techietribe dark text
+                    bodyColor={website.bodyTextColor || '#6A6F78'} // Techietribe gray text
                     onCtaClick={(blockType, ctaText) =>
                       trackClick(`${blockType}_CTA`, { cta_text: ctaText })
                     }
@@ -462,10 +533,10 @@ const PublicWebsite: React.FC = () => {
             sx={{
               py: 4,
               px: 2,
-              mt: "auto",
-              bgcolor: "grey.900",
-              color: "white",
-              textAlign: "center",
+              mt: 'auto',
+              bgcolor: 'grey.900',
+              color: 'white',
+              textAlign: 'center',
             }}
           >
             <Typography variant="body2">

@@ -12,16 +12,16 @@
  * 8.  setCurrentWebsite updates active website
  * 9.  refetch re-fetches permissions
  */
-import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, act, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, act, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 
 // ── Mock axios ──────────────────────────────────────────────────────────────
 
 const mockAxiosGet = vi.fn();
 
-vi.mock("axios", () => ({
+vi.mock('axios', () => ({
   default: {
     get: (...args: unknown[]) => mockAxiosGet(...args),
     defaults: {
@@ -36,10 +36,10 @@ vi.mock("axios", () => ({
 
 // ── Mock AuthContext ────────────────────────────────────────────────────────
 
-const mockUser = { id: 1, email: "test@test.com", name: "Test User" };
+const mockUser = { id: 1, email: 'test@test.com', name: 'Test User' };
 let currentMockUser: typeof mockUser | null = mockUser;
 
-vi.mock("../AuthContext", () => ({
+vi.mock('../AuthContext', () => ({
   useAuth: () => ({
     user: currentMockUser,
     token: null,
@@ -56,7 +56,7 @@ import {
   useWebsiteRole,
   usePermissionContext,
   WEBSITE_ACTIONS,
-} from "../PermissionContext";
+} from '../PermissionContext';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -67,7 +67,7 @@ function makeWebsitesResponse(websites: Array<{ id: number; role?: string }>) {
         ...w,
         name: `Website ${w.id}`,
         slug: `website-${w.id}`,
-        status: "active",
+        status: 'active',
       })),
     },
   });
@@ -81,15 +81,15 @@ function ContextConsumer({ websiteId }: { websiteId?: number }) {
   const canDelete = usePermission(WEBSITE_ACTIONS.DELETE);
   const canTransfer = usePermission(WEBSITE_ACTIONS.TRANSFER_OWNERSHIP);
   const canManageDomain = usePermission(WEBSITE_ACTIONS.MANAGE_DOMAIN);
-  const hasEditorRole = useHasRole("EDITOR");
-  const hasAdminRole = useHasRole("ADMIN");
-  const hasOwnerRole = useHasRole("OWNER");
+  const hasEditorRole = useHasRole('EDITOR');
+  const hasAdminRole = useHasRole('ADMIN');
+  const hasOwnerRole = useHasRole('OWNER');
   const role = useWebsiteRole(websiteId);
 
   return (
     <div>
       <span data-testid="loading">{String(ctx.loading)}</span>
-      <span data-testid="error">{ctx.error ?? "none"}</span>
+      <span data-testid="error">{ctx.error ?? 'none'}</span>
       <span data-testid="current-website">{String(ctx.currentWebsiteId)}</span>
       <span data-testid="can-view">{String(canView)}</span>
       <span data-testid="can-edit">{String(canEdit)}</span>
@@ -99,19 +99,10 @@ function ContextConsumer({ websiteId }: { websiteId?: number }) {
       <span data-testid="has-editor">{String(hasEditorRole)}</span>
       <span data-testid="has-admin">{String(hasAdminRole)}</span>
       <span data-testid="has-owner">{String(hasOwnerRole)}</span>
-      <span data-testid="role">{role ?? "null"}</span>
-      <button
-        data-testid="set-website-1"
-        onClick={() => ctx.setCurrentWebsite(1)}
-      />
-      <button
-        data-testid="set-website-2"
-        onClick={() => ctx.setCurrentWebsite(2)}
-      />
-      <button
-        data-testid="set-website-null"
-        onClick={() => ctx.setCurrentWebsite(null)}
-      />
+      <span data-testid="role">{role ?? 'null'}</span>
+      <button data-testid="set-website-1" onClick={() => ctx.setCurrentWebsite(1)} />
+      <button data-testid="set-website-2" onClick={() => ctx.setCurrentWebsite(2)} />
+      <button data-testid="set-website-null" onClick={() => ctx.setCurrentWebsite(null)} />
       <button data-testid="refetch" onClick={() => ctx.refetch()} />
     </div>
   );
@@ -120,276 +111,264 @@ function ContextConsumer({ websiteId }: { websiteId?: number }) {
 /** Consumer that uses hooks outside provider to test graceful fallback */
 function NoProviderConsumer() {
   const canView = usePermission(WEBSITE_ACTIONS.VIEW);
-  const hasAdmin = useHasRole("ADMIN");
+  const hasAdmin = useHasRole('ADMIN');
   const role = useWebsiteRole();
 
   return (
     <div>
       <span data-testid="np-can-view">{String(canView)}</span>
       <span data-testid="np-has-admin">{String(hasAdmin)}</span>
-      <span data-testid="np-role">{role ?? "null"}</span>
+      <span data-testid="np-role">{role ?? 'null'}</span>
     </div>
   );
 }
 
 // ── Tests ───────────────────────────────────────────────────────────────────
 
-describe("PermissionContext (Step 7.2.3)", () => {
+describe('PermissionContext (Step 7.2.3)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     currentMockUser = mockUser;
     mockAxiosGet.mockResolvedValue(makeWebsitesResponse([]));
   });
 
-  it("renders children inside PermissionProvider", async () => {
+  it('renders children inside PermissionProvider', async () => {
     render(
       <PermissionProvider>
         <span data-testid="child">Hello</span>
-      </PermissionProvider>,
+      </PermissionProvider>
     );
-    expect(screen.getByTestId("child")).toHaveTextContent("Hello");
+    expect(screen.getByTestId('child')).toHaveTextContent('Hello');
   });
 
-  it("fetches websites on mount", async () => {
+  it('fetches websites on mount', async () => {
     mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1 }, { id: 2 }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
       expect(mockAxiosGet).toHaveBeenCalledWith(
-        expect.stringContaining("/websites"),
-        expect.objectContaining({ withCredentials: true }),
+        expect.stringContaining('/websites'),
+        expect.objectContaining({ withCredentials: true })
       );
     });
   });
 
-  it("usePermission returns correct booleans for OWNER role", async () => {
+  it('usePermission returns correct booleans for OWNER role', async () => {
     mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1 }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     // Wait for load and set current website
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     act(() => {
-      screen.getByTestId("set-website-1").click();
+      screen.getByTestId('set-website-1').click();
     });
 
     // OWNER can do everything
-    expect(screen.getByTestId("can-view")).toHaveTextContent("true");
-    expect(screen.getByTestId("can-edit")).toHaveTextContent("true");
-    expect(screen.getByTestId("can-delete")).toHaveTextContent("true");
-    expect(screen.getByTestId("can-transfer")).toHaveTextContent("true");
-    expect(screen.getByTestId("can-manage-domain")).toHaveTextContent("true");
+    expect(screen.getByTestId('can-view')).toHaveTextContent('true');
+    expect(screen.getByTestId('can-edit')).toHaveTextContent('true');
+    expect(screen.getByTestId('can-delete')).toHaveTextContent('true');
+    expect(screen.getByTestId('can-transfer')).toHaveTextContent('true');
+    expect(screen.getByTestId('can-manage-domain')).toHaveTextContent('true');
   });
 
-  it("usePermission returns correct booleans for ADMIN role", async () => {
-    mockAxiosGet.mockReturnValue(
-      makeWebsitesResponse([{ id: 1, role: "ADMIN" }]),
-    );
+  it('usePermission returns correct booleans for ADMIN role', async () => {
+    mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1, role: 'ADMIN' }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     act(() => {
-      screen.getByTestId("set-website-1").click();
+      screen.getByTestId('set-website-1').click();
     });
 
-    expect(screen.getByTestId("can-view")).toHaveTextContent("true");
-    expect(screen.getByTestId("can-edit")).toHaveTextContent("true");
-    expect(screen.getByTestId("can-delete")).toHaveTextContent("true");
+    expect(screen.getByTestId('can-view')).toHaveTextContent('true');
+    expect(screen.getByTestId('can-edit')).toHaveTextContent('true');
+    expect(screen.getByTestId('can-delete')).toHaveTextContent('true');
     // ADMIN cannot transfer ownership or manage domain
-    expect(screen.getByTestId("can-transfer")).toHaveTextContent("false");
-    expect(screen.getByTestId("can-manage-domain")).toHaveTextContent("false");
+    expect(screen.getByTestId('can-transfer')).toHaveTextContent('false');
+    expect(screen.getByTestId('can-manage-domain')).toHaveTextContent('false');
   });
 
-  it("usePermission returns correct booleans for EDITOR role", async () => {
-    mockAxiosGet.mockReturnValue(
-      makeWebsitesResponse([{ id: 1, role: "EDITOR" }]),
-    );
+  it('usePermission returns correct booleans for EDITOR role', async () => {
+    mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1, role: 'EDITOR' }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     act(() => {
-      screen.getByTestId("set-website-1").click();
+      screen.getByTestId('set-website-1').click();
     });
 
-    expect(screen.getByTestId("can-view")).toHaveTextContent("true");
-    expect(screen.getByTestId("can-edit")).toHaveTextContent("true");
+    expect(screen.getByTestId('can-view')).toHaveTextContent('true');
+    expect(screen.getByTestId('can-edit')).toHaveTextContent('true');
     // EDITOR cannot delete
-    expect(screen.getByTestId("can-delete")).toHaveTextContent("false");
-    expect(screen.getByTestId("can-transfer")).toHaveTextContent("false");
+    expect(screen.getByTestId('can-delete')).toHaveTextContent('false');
+    expect(screen.getByTestId('can-transfer')).toHaveTextContent('false');
   });
 
-  it("usePermission returns correct booleans for VIEWER role", async () => {
-    mockAxiosGet.mockReturnValue(
-      makeWebsitesResponse([{ id: 1, role: "VIEWER" }]),
-    );
+  it('usePermission returns correct booleans for VIEWER role', async () => {
+    mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1, role: 'VIEWER' }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     act(() => {
-      screen.getByTestId("set-website-1").click();
+      screen.getByTestId('set-website-1').click();
     });
 
-    expect(screen.getByTestId("can-view")).toHaveTextContent("true");
+    expect(screen.getByTestId('can-view')).toHaveTextContent('true');
     // VIEWER cannot do anything else
-    expect(screen.getByTestId("can-edit")).toHaveTextContent("false");
-    expect(screen.getByTestId("can-delete")).toHaveTextContent("false");
-    expect(screen.getByTestId("can-transfer")).toHaveTextContent("false");
+    expect(screen.getByTestId('can-edit')).toHaveTextContent('false');
+    expect(screen.getByTestId('can-delete')).toHaveTextContent('false');
+    expect(screen.getByTestId('can-transfer')).toHaveTextContent('false');
   });
 
-  it("useHasRole returns correct booleans per role hierarchy", async () => {
-    mockAxiosGet.mockReturnValue(
-      makeWebsitesResponse([{ id: 1, role: "EDITOR" }]),
-    );
+  it('useHasRole returns correct booleans per role hierarchy', async () => {
+    mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1, role: 'EDITOR' }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     act(() => {
-      screen.getByTestId("set-website-1").click();
+      screen.getByTestId('set-website-1').click();
     });
 
     // EDITOR (level 2) >= EDITOR (level 2) → true
-    expect(screen.getByTestId("has-editor")).toHaveTextContent("true");
+    expect(screen.getByTestId('has-editor')).toHaveTextContent('true');
     // EDITOR (level 2) >= ADMIN (level 3) → false
-    expect(screen.getByTestId("has-admin")).toHaveTextContent("false");
+    expect(screen.getByTestId('has-admin')).toHaveTextContent('false');
     // EDITOR (level 2) >= OWNER (level 4) → false
-    expect(screen.getByTestId("has-owner")).toHaveTextContent("false");
+    expect(screen.getByTestId('has-owner')).toHaveTextContent('false');
   });
 
-  it("useHasRole returns true for higher roles", async () => {
-    mockAxiosGet.mockReturnValue(
-      makeWebsitesResponse([{ id: 1, role: "ADMIN" }]),
-    );
+  it('useHasRole returns true for higher roles', async () => {
+    mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1, role: 'ADMIN' }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     act(() => {
-      screen.getByTestId("set-website-1").click();
+      screen.getByTestId('set-website-1').click();
     });
 
     // ADMIN (level 3) >= EDITOR (level 2) → true
-    expect(screen.getByTestId("has-editor")).toHaveTextContent("true");
+    expect(screen.getByTestId('has-editor')).toHaveTextContent('true');
     // ADMIN (level 3) >= ADMIN (level 3) → true
-    expect(screen.getByTestId("has-admin")).toHaveTextContent("true");
+    expect(screen.getByTestId('has-admin')).toHaveTextContent('true');
     // ADMIN (level 3) >= OWNER (level 4) → false
-    expect(screen.getByTestId("has-owner")).toHaveTextContent("false");
+    expect(screen.getByTestId('has-owner')).toHaveTextContent('false');
   });
 
-  it("useWebsiteRole returns role string or null", async () => {
+  it('useWebsiteRole returns role string or null', async () => {
     mockAxiosGet.mockReturnValue(
       makeWebsitesResponse([
-        { id: 1, role: "EDITOR" },
-        { id: 2, role: "ADMIN" },
-      ]),
+        { id: 1, role: 'EDITOR' },
+        { id: 2, role: 'ADMIN' },
+      ])
     );
 
     render(
       <PermissionProvider>
         <ContextConsumer websiteId={2} />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     // websiteId=2 role is ADMIN
-    expect(screen.getByTestId("role")).toHaveTextContent("ADMIN");
+    expect(screen.getByTestId('role')).toHaveTextContent('ADMIN');
   });
 
-  it("useWebsiteRole returns null for unknown website", async () => {
+  it('useWebsiteRole returns null for unknown website', async () => {
     mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1 }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer websiteId={999} />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
-    expect(screen.getByTestId("role")).toHaveTextContent("null");
+    expect(screen.getByTestId('role')).toHaveTextContent('null');
   });
 
-  it("useWebsiteRole uses currentWebsiteId when no websiteId provided", async () => {
-    mockAxiosGet.mockReturnValue(
-      makeWebsitesResponse([{ id: 1, role: "VIEWER" }]),
-    );
+  it('useWebsiteRole uses currentWebsiteId when no websiteId provided', async () => {
+    mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1, role: 'VIEWER' }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     // No current website → null
-    expect(screen.getByTestId("role")).toHaveTextContent("null");
+    expect(screen.getByTestId('role')).toHaveTextContent('null');
 
     act(() => {
-      screen.getByTestId("set-website-1").click();
+      screen.getByTestId('set-website-1').click();
     });
 
-    expect(screen.getByTestId("role")).toHaveTextContent("VIEWER");
+    expect(screen.getByTestId('role')).toHaveTextContent('VIEWER');
   });
 
-  it("handles loading state correctly", async () => {
+  it('handles loading state correctly', async () => {
     let resolvePromise: (value: any) => void;
     const pendingPromise = new Promise((resolve) => {
       resolvePromise = resolve;
@@ -399,48 +378,48 @@ describe("PermissionContext (Step 7.2.3)", () => {
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     // Should be loading
-    expect(screen.getByTestId("loading")).toHaveTextContent("true");
+    expect(screen.getByTestId('loading')).toHaveTextContent('true');
 
     // Resolve the API call
     await act(async () => {
       resolvePromise!({ data: { data: [] } });
     });
 
-    expect(screen.getByTestId("loading")).toHaveTextContent("false");
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
   });
 
-  it("handles API error state", async () => {
+  it('handles API error state', async () => {
     mockAxiosGet.mockRejectedValue({
-      response: { data: { message: "Unauthorized" } },
+      response: { data: { message: 'Unauthorized' } },
     });
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("error")).toHaveTextContent("Unauthorized");
+      expect(screen.getByTestId('error')).toHaveTextContent('Unauthorized');
     });
 
-    expect(screen.getByTestId("loading")).toHaveTextContent("false");
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
   });
 
-  it("missing provider — hooks return safe defaults without crash", () => {
+  it('missing provider — hooks return safe defaults without crash', () => {
     render(<NoProviderConsumer />);
 
-    expect(screen.getByTestId("np-can-view")).toHaveTextContent("false");
-    expect(screen.getByTestId("np-has-admin")).toHaveTextContent("false");
-    expect(screen.getByTestId("np-role")).toHaveTextContent("null");
+    expect(screen.getByTestId('np-can-view')).toHaveTextContent('false');
+    expect(screen.getByTestId('np-has-admin')).toHaveTextContent('false');
+    expect(screen.getByTestId('np-role')).toHaveTextContent('null');
   });
 
-  it("usePermissionContext throws without provider", () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+  it('usePermissionContext throws without provider', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     expect(() => {
       render(<ContextConsumer />);
@@ -449,61 +428,59 @@ describe("PermissionContext (Step 7.2.3)", () => {
     spy.mockRestore();
   });
 
-  it("setCurrentWebsite updates active website", async () => {
-    mockAxiosGet.mockReturnValue(
-      makeWebsitesResponse([{ id: 1 }, { id: 2, role: "VIEWER" }]),
-    );
+  it('setCurrentWebsite updates active website', async () => {
+    mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1 }, { id: 2, role: 'VIEWER' }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
-    expect(screen.getByTestId("current-website")).toHaveTextContent("null");
+    expect(screen.getByTestId('current-website')).toHaveTextContent('null');
 
     act(() => {
-      screen.getByTestId("set-website-2").click();
+      screen.getByTestId('set-website-2').click();
     });
 
-    expect(screen.getByTestId("current-website")).toHaveTextContent("2");
+    expect(screen.getByTestId('current-website')).toHaveTextContent('2');
     // Website 2 is VIEWER → cannot edit
-    expect(screen.getByTestId("can-edit")).toHaveTextContent("false");
+    expect(screen.getByTestId('can-edit')).toHaveTextContent('false');
   });
 
-  it("returns false for all permissions when no current website", async () => {
+  it('returns false for all permissions when no current website', async () => {
     mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1 }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     // No current website set
-    expect(screen.getByTestId("can-view")).toHaveTextContent("false");
-    expect(screen.getByTestId("can-edit")).toHaveTextContent("false");
+    expect(screen.getByTestId('can-view')).toHaveTextContent('false');
+    expect(screen.getByTestId('can-edit')).toHaveTextContent('false');
   });
 
-  it("clears permissions when user is null", async () => {
+  it('clears permissions when user is null', async () => {
     mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1 }]));
 
     const { rerender } = render(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
     // Set user to null
@@ -512,28 +489,28 @@ describe("PermissionContext (Step 7.2.3)", () => {
     rerender(
       <PermissionProvider>
         <ContextConsumer />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
   });
 
-  it("defaults to OWNER when API does not include role field", async () => {
+  it('defaults to OWNER when API does not include role field', async () => {
     // Response without role field — defaults to OWNER
     mockAxiosGet.mockReturnValue(makeWebsitesResponse([{ id: 1 }]));
 
     render(
       <PermissionProvider>
         <ContextConsumer websiteId={1} />
-      </PermissionProvider>,
+      </PermissionProvider>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
     });
 
-    expect(screen.getByTestId("role")).toHaveTextContent("OWNER");
+    expect(screen.getByTestId('role')).toHaveTextContent('OWNER');
   });
 });

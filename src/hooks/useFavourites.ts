@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import axios from "axios";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 /* ---------- Types ---------- */
 export interface FavouriteListing {
@@ -47,9 +47,7 @@ export interface BatchFavouritesResult {
 }
 
 /* ---------- useFavourite (single listing) ---------- */
-export function useFavourite(
-  websiteId: string | number | null | undefined,
-): FavouriteResult {
+export function useFavourite(websiteId: string | number | null | undefined): FavouriteResult {
   const [isFavourited, setIsFavourited] = useState(false);
   const [favouriteCount, setFavouriteCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -62,10 +60,9 @@ export function useFavourite(
 
     const fetchStatus = async () => {
       try {
-        const response = await axios.get(
-          `${API_URL}/favourites/listings/${websiteId}/status`,
-          { withCredentials: true },
-        );
+        const response = await axios.get(`${API_URL}/favourites/listings/${websiteId}/status`, {
+          withCredentials: true,
+        });
         if (!cancelled) {
           setIsFavourited(response.data.isFavourited ?? false);
           setFavouriteCount(response.data.favouriteCount ?? 0);
@@ -92,15 +89,13 @@ export function useFavourite(
     const previousState = isFavourited;
     const previousCount = favouriteCount;
     setIsFavourited(!previousState);
-    setFavouriteCount(
-      previousState ? Math.max(0, previousCount - 1) : previousCount + 1,
-    );
+    setFavouriteCount(previousState ? Math.max(0, previousCount - 1) : previousCount + 1);
 
     try {
       await axios.post(
         `${API_URL}/favourites/listings/${websiteId}/favourite`,
         {},
-        { withCredentials: true },
+        { withCredentials: true }
       );
     } catch (err: any) {
       // Revert on error
@@ -114,24 +109,13 @@ export function useFavourite(
     }
   }, [websiteId, isFavourited, favouriteCount]);
 
-  return {
-    isFavourited,
-    favouriteCount,
-    toggleFavourite,
-    loading,
-    requiresAuth,
-  };
+  return { isFavourited, favouriteCount, toggleFavourite, loading, requiresAuth };
 }
 
 /* ---------- useUserFavourites ---------- */
-export function useUserFavourites(
-  sort: string = "recent",
-  page: number = 1,
-): UserFavouritesResult {
+export function useUserFavourites(sort: string = 'recent', page: number = 1): UserFavouritesResult {
   const [favourites, setFavourites] = useState<FavouriteListing[]>([]);
-  const [pagination, setPagination] = useState<FavouritePagination | null>(
-    null,
-  );
+  const [pagination, setPagination] = useState<FavouritePagination | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [requiresAuth, setRequiresAuth] = useState(false);
@@ -144,13 +128,10 @@ export function useUserFavourites(
     setRequiresAuth(false);
 
     try {
-      const response = await axios.get(
-        `${API_URL}/favourites/user/favourites`,
-        {
-          params: { sort, page, limit: 12 },
-          withCredentials: true,
-        },
-      );
+      const response = await axios.get(`${API_URL}/favourites/user/favourites`, {
+        params: { sort, page, limit: 12 },
+        withCredentials: true,
+      });
       if (currentFetch !== fetchCountRef.current) return;
       const data = response.data;
       setFavourites(data.favourites || data.data || []);
@@ -160,7 +141,7 @@ export function useUserFavourites(
       if (err.response?.status === 401) {
         setRequiresAuth(true);
       } else {
-        setError(err.response?.data?.message || "Failed to load favourites");
+        setError(err.response?.data?.message || 'Failed to load favourites');
       }
     } finally {
       if (currentFetch === fetchCountRef.current) {
@@ -173,25 +154,14 @@ export function useUserFavourites(
     fetchFavourites();
   }, [fetchFavourites]);
 
-  return {
-    favourites,
-    pagination,
-    loading,
-    error,
-    requiresAuth,
-    refetch: fetchFavourites,
-  };
+  return { favourites, pagination, loading, error, requiresAuth, refetch: fetchFavourites };
 }
 
 /* ---------- useBatchFavourites ---------- */
-export function useBatchFavourites(
-  websiteIds: (string | number)[],
-): BatchFavouritesResult {
-  const [statusMap, setStatusMap] = useState<Record<number | string, boolean>>(
-    {},
-  );
+export function useBatchFavourites(websiteIds: (string | number)[]): BatchFavouritesResult {
+  const [statusMap, setStatusMap] = useState<Record<number | string, boolean>>({});
   const [loading, setLoading] = useState(false);
-  const idsKey = websiteIds.join(",");
+  const idsKey = websiteIds.join(',');
 
   const fetchBatch = useCallback(async () => {
     if (!websiteIds.length) return;
@@ -201,7 +171,7 @@ export function useBatchFavourites(
       const response = await axios.post(
         `${API_URL}/favourites/user/favourites/check`,
         { websiteIds },
-        { withCredentials: true },
+        { withCredentials: true }
       );
       setStatusMap(response.data.statusMap || {});
     } catch {

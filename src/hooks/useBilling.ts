@@ -1,26 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import type { BillingDetails, DisplayPlan, PaymentMethod } from "../types/user";
+import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import type { BillingDetails, DisplayPlan, PaymentMethod } from '../types/user';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // Display plans matching the UI design
 export const DISPLAY_PLANS: DisplayPlan[] = [
   {
-    code: "website_free",
-    displayName: "STARTUP",
+    code: 'website_free',
+    displayName: 'STARTUP',
     priceMonthly: 0,
     tierLevel: 1,
   },
   {
-    code: "website_core",
-    displayName: "STANDARD",
+    code: 'website_core',
+    displayName: 'STANDARD',
     priceMonthly: 14.99,
     tierLevel: 2,
   },
   {
-    code: "website_growth",
-    displayName: "BUSINESS",
+    code: 'website_growth',
+    displayName: 'BUSINESS',
     priceMonthly: 29.99,
     tierLevel: 3,
   },
@@ -81,12 +81,8 @@ interface UseBillingReturn {
   currentPeriodEnd: string | null;
   updateBillingDetails: (data: Partial<BillingDetails>) => Promise<boolean>;
   updatePlan: (
-    planCode: string,
-  ) => Promise<{
-    success: boolean;
-    requiresPaymentMethod?: boolean;
-    useCancel?: boolean;
-  }>;
+    planCode: string
+  ) => Promise<{ success: boolean; requiresPaymentMethod?: boolean; useCancel?: boolean }>;
   getPlanPreview: (planCode: string) => Promise<PlanPreview>;
   reactivateSubscription: () => Promise<boolean>;
   createSetupIntent: () => Promise<string | null>;
@@ -95,10 +91,7 @@ interface UseBillingReturn {
   setDefaultPaymentMethod: (id: number) => Promise<boolean>;
   removePaymentMethod: (id: number) => Promise<boolean>;
   cancelSubscription: (options?: CancelSubscriptionOptions) => Promise<boolean>;
-  fetchBillingHistory: (
-    page?: number,
-    limit?: number,
-  ) => Promise<BillingHistoryResponse>;
+  fetchBillingHistory: (page?: number, limit?: number) => Promise<BillingHistoryResponse>;
   refetch: () => Promise<void>;
 }
 
@@ -106,17 +99,12 @@ interface UseBillingReturn {
  * Hook for managing billing details, payment methods, and plan changes
  */
 export function useBilling(): UseBillingReturn {
-  const [billingDetails, setBillingDetails] = useState<BillingDetails | null>(
-    null,
-  );
+  const [billingDetails, setBillingDetails] = useState<BillingDetails | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [paymentMethodsLoading, setPaymentMethodsLoading] =
-    useState<boolean>(false);
+  const [paymentMethodsLoading, setPaymentMethodsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(
-    null,
-  );
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [cancelledAt, setCancelledAt] = useState<string | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
 
@@ -139,10 +127,9 @@ export function useBilling(): UseBillingReturn {
         setCurrentPeriodEnd(billing.currentPeriodEnd ?? null);
       }
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || "Failed to fetch billing details";
+      const errorMessage = err.response?.data?.message || 'Failed to fetch billing details';
       setError(errorMessage);
-      console.error("Failed to fetch billing details:", err);
+      console.error('Failed to fetch billing details:', err);
     } finally {
       setLoading(false);
     }
@@ -156,10 +143,9 @@ export function useBilling(): UseBillingReturn {
       const response = await axios.get(`${API_URL}/account/payment-methods`);
       setPaymentMethods(response.data.paymentMethods || []);
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || "Failed to fetch payment methods";
+      const errorMessage = err.response?.data?.message || 'Failed to fetch payment methods';
       setError(errorMessage);
-      console.error("Failed to fetch payment methods:", err);
+      console.error('Failed to fetch payment methods:', err);
     } finally {
       setPaymentMethodsLoading(false);
     }
@@ -178,28 +164,21 @@ export function useBilling(): UseBillingReturn {
         setBillingDetails(response.data.billing);
         return true;
       } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message || "Failed to update billing details";
+        const errorMessage = err.response?.data?.message || 'Failed to update billing details';
         setError(errorMessage);
         return false;
       }
     },
-    [],
+    []
   );
 
   const updatePlan = useCallback(
     async (
-      planCode: string,
-    ): Promise<{
-      success: boolean;
-      requiresPaymentMethod?: boolean;
-      useCancel?: boolean;
-    }> => {
+      planCode: string
+    ): Promise<{ success: boolean; requiresPaymentMethod?: boolean; useCancel?: boolean }> => {
       try {
         setError(null);
-        const response = await axios.put(`${API_URL}/account/plan`, {
-          plan: planCode,
-        });
+        const response = await axios.put(`${API_URL}/account/plan`, { plan: planCode });
 
         // Sync subscription fields from response if available
         if (response.data.subscriptionStatus !== undefined) {
@@ -213,34 +192,27 @@ export function useBilling(): UseBillingReturn {
         await fetchBillingDetails();
         return { success: true };
       } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message || "Failed to update plan";
-        const requiresPaymentMethod =
-          err.response?.data?.requiresPaymentMethod || false;
+        const errorMessage = err.response?.data?.message || 'Failed to update plan';
+        const requiresPaymentMethod = err.response?.data?.requiresPaymentMethod || false;
         const useCancel = err.response?.data?.useCancel || false;
         setError(errorMessage);
         return { success: false, requiresPaymentMethod, useCancel };
       }
     },
-    [fetchBillingDetails],
+    [fetchBillingDetails]
   );
 
-  const getPlanPreview = useCallback(
-    async (planCode: string): Promise<PlanPreview> => {
-      const response = await axios.get(`${API_URL}/account/plan-preview`, {
-        params: { plan: planCode },
-      });
-      return response.data as PlanPreview;
-    },
-    [],
-  );
+  const getPlanPreview = useCallback(async (planCode: string): Promise<PlanPreview> => {
+    const response = await axios.get(`${API_URL}/account/plan-preview`, {
+      params: { plan: planCode },
+    });
+    return response.data as PlanPreview;
+  }, []);
 
   const reactivateSubscription = useCallback(async (): Promise<boolean> => {
     try {
       setError(null);
-      const response = await axios.post(
-        `${API_URL}/account/reactivate-subscription`,
-      );
+      const response = await axios.post(`${API_URL}/account/reactivate-subscription`);
 
       // Sync subscription status from response
       if (response.data.subscriptionStatus !== undefined) {
@@ -253,8 +225,7 @@ export function useBilling(): UseBillingReturn {
       await fetchBillingDetails();
       return true;
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || "Failed to reactivate subscription";
+      const errorMessage = err.response?.data?.message || 'Failed to reactivate subscription';
       setError(errorMessage);
       return false;
     }
@@ -266,8 +237,7 @@ export function useBilling(): UseBillingReturn {
       const response = await axios.post(`${API_URL}/account/setup-intent`);
       return response.data.clientSecret;
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || "Failed to initialize card setup";
+      const errorMessage = err.response?.data?.message || 'Failed to initialize card setup';
       setError(errorMessage);
       return null;
     }
@@ -285,13 +255,12 @@ export function useBilling(): UseBillingReturn {
         await fetchBillingDetails();
         return true;
       } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message || "Failed to add payment method";
+        const errorMessage = err.response?.data?.message || 'Failed to add payment method';
         setError(errorMessage);
         return false;
       }
     },
-    [fetchPaymentMethods, fetchBillingDetails],
+    [fetchPaymentMethods, fetchBillingDetails]
   );
 
   const setDefaultPaymentMethod = useCallback(
@@ -306,13 +275,12 @@ export function useBilling(): UseBillingReturn {
         await fetchBillingDetails();
         return true;
       } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message || "Failed to set default payment method";
+        const errorMessage = err.response?.data?.message || 'Failed to set default payment method';
         setError(errorMessage);
         return false;
       }
     },
-    [fetchPaymentMethods, fetchBillingDetails],
+    [fetchPaymentMethods, fetchBillingDetails]
   );
 
   const removePaymentMethod = useCallback(
@@ -327,13 +295,12 @@ export function useBilling(): UseBillingReturn {
         await fetchBillingDetails();
         return true;
       } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message || "Failed to remove payment method";
+        const errorMessage = err.response?.data?.message || 'Failed to remove payment method';
         setError(errorMessage);
         return false;
       }
     },
-    [fetchPaymentMethods, fetchBillingDetails],
+    [fetchPaymentMethods, fetchBillingDetails]
   );
 
   const cancelSubscription = useCallback(
@@ -349,13 +316,12 @@ export function useBilling(): UseBillingReturn {
         await fetchBillingDetails();
         return true;
       } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message || "Failed to cancel subscription";
+        const errorMessage = err.response?.data?.message || 'Failed to cancel subscription';
         setError(errorMessage);
         return false;
       }
     },
-    [fetchBillingDetails],
+    [fetchBillingDetails]
   );
 
   const fetchBillingHistory = useCallback(
@@ -365,7 +331,7 @@ export function useBilling(): UseBillingReturn {
       });
       return response.data as BillingHistoryResponse;
     },
-    [],
+    []
   );
 
   const refetch = useCallback(async () => {

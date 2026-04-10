@@ -15,7 +15,7 @@
  * - Framer Motion entrance animation with useInView
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -28,17 +28,17 @@ import {
   TableRow,
   TableSortLabel,
   Typography,
-} from "@mui/material";
-import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
-import DOMPurify from "dompurify";
+} from '@mui/material';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+import DOMPurify from 'dompurify';
 
 // ---- Types ----
 
 interface Column {
   header: string;
   accessor: string;
-  align?: "left" | "center" | "right";
+  align?: 'left' | 'center' | 'right';
   width?: string;
 }
 
@@ -72,15 +72,15 @@ interface TableBlockProps {
   onCtaClick?: (blockType: string, ctaText: string) => void;
 }
 
-type SortDirection = "asc" | "desc";
+type SortDirection = 'asc' | 'desc';
 
 // ---- Main component ----
 
 const TableBlock: React.FC<TableBlockProps> = ({
   block,
-  primaryColor = "#2563eb",
-  headingColor = "#1e293b",
-  bodyColor = "#475569",
+  primaryColor = '#2563eb',
+  headingColor = '#1e293b',
+  bodyColor = '#475569',
 }) => {
   const { content } = block;
   const columns = content.columns || [];
@@ -92,7 +92,7 @@ const TableBlock: React.FC<TableBlockProps> = ({
   const compact = content.compact || false;
 
   const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
 
@@ -100,10 +100,10 @@ const TableBlock: React.FC<TableBlockProps> = ({
   const handleSort = (accessor: string) => {
     if (!sortable) return;
     if (sortColumn === accessor) {
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortColumn(accessor);
-      setSortDirection("asc");
+      setSortDirection('asc');
     }
   };
 
@@ -111,20 +111,15 @@ const TableBlock: React.FC<TableBlockProps> = ({
   const sortedRows = useMemo(() => {
     if (!sortColumn || !sortable) return rows;
     return [...rows].sort((a, b) => {
-      const aVal = String(a[sortColumn] || "");
-      const bVal = String(b[sortColumn] || "");
-      const cmp = aVal.localeCompare(bVal, undefined, {
-        numeric: true,
-        sensitivity: "base",
-      });
-      return sortDirection === "asc" ? cmp : -cmp;
+      const aVal = String(a[sortColumn] || '');
+      const bVal = String(b[sortColumn] || '');
+      const cmp = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
+      return sortDirection === 'asc' ? cmp : -cmp;
     });
   }, [rows, sortColumn, sortDirection, sortable]);
 
   // ---- Cell border style ----
-  const cellBorderSx = bordered
-    ? { border: "1px solid", borderColor: "divider" }
-    : {};
+  const cellBorderSx = bordered ? { border: '1px solid', borderColor: 'divider' } : {};
 
   // ---- Compact padding ----
   const cellPaddingSx = compact ? { py: 0.5, px: 1 } : {};
@@ -134,7 +129,7 @@ const TableBlock: React.FC<TableBlockProps> = ({
       ref={ref}
       initial={{ opacity: 0, y: 30 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <Box sx={{ py: 8 }}>
         <Container maxWidth="lg">
@@ -152,26 +147,22 @@ const TableBlock: React.FC<TableBlockProps> = ({
           )}
 
           {/* Table with horizontal scroll for responsive */}
-          <TableContainer
-            component={Paper}
-            elevation={1}
-            sx={{ overflowX: "auto", width: "100%" }}
-          >
+          <TableContainer component={Paper} elevation={1} sx={{ overflowX: 'auto', width: '100%' }}>
             <Table
-              size={compact ? "small" : "medium"}
+              size={compact ? 'small' : 'medium'}
               sx={{
                 minWidth: 400,
               }}
-              aria-label={content.heading || "data table"}
+              aria-label={content.heading || 'data table'}
             >
               {/* Caption (SSR-friendly) */}
               {content.caption && (
                 <caption
                   style={{
-                    captionSide: "bottom",
-                    padding: "8px",
+                    captionSide: 'bottom',
+                    padding: '8px',
                     color: bodyColor,
-                    fontSize: "0.875rem",
+                    fontSize: '0.875rem',
                   }}
                 >
                   {content.caption}
@@ -183,8 +174,8 @@ const TableBlock: React.FC<TableBlockProps> = ({
                 <TableRow
                   sx={{
                     bgcolor: primaryColor,
-                    "& .MuiTableCell-root": {
-                      color: "white",
+                    '& .MuiTableCell-root': {
+                      color: 'white',
                       fontWeight: 600,
                       ...cellBorderSx,
                       ...cellPaddingSx,
@@ -194,25 +185,19 @@ const TableBlock: React.FC<TableBlockProps> = ({
                   {columns.map((col) => (
                     <TableCell
                       key={col.accessor}
-                      align={col.align || "left"}
+                      align={col.align || 'left'}
                       width={col.width || undefined}
-                      sortDirection={
-                        sortColumn === col.accessor ? sortDirection : false
-                      }
+                      sortDirection={sortColumn === col.accessor ? sortDirection : false}
                     >
                       {sortable ? (
                         <TableSortLabel
                           active={sortColumn === col.accessor}
-                          direction={
-                            sortColumn === col.accessor ? sortDirection : "asc"
-                          }
+                          direction={sortColumn === col.accessor ? sortDirection : 'asc'}
                           onClick={() => handleSort(col.accessor)}
                           sx={{
-                            color: "white !important",
-                            "&.Mui-active": { color: "white !important" },
-                            "& .MuiTableSortLabel-icon": {
-                              color: "white !important",
-                            },
+                            color: 'white !important',
+                            '&.Mui-active': { color: 'white !important' },
+                            '& .MuiTableSortLabel-icon': { color: 'white !important' },
                           }}
                         >
                           {col.header}
@@ -232,30 +217,25 @@ const TableBlock: React.FC<TableBlockProps> = ({
                     key={rowIndex}
                     sx={{
                       // Striped rows
-                      bgcolor:
-                        striped && rowIndex % 2 === 1
-                          ? "grey.50"
-                          : "background.paper",
+                      bgcolor: striped && rowIndex % 2 === 1 ? 'grey.50' : 'background.paper',
                       // Hoverable
                       ...(hoverable && {
-                        "&:hover": { bgcolor: `${primaryColor}10` },
+                        '&:hover': { bgcolor: `${primaryColor}10` },
                       }),
-                      cursor: hoverable ? "default" : undefined,
+                      cursor: hoverable ? 'default' : undefined,
                     }}
                   >
                     {columns.map((col) => (
                       <TableCell
                         key={col.accessor}
-                        align={col.align || "left"}
+                        align={col.align || 'left'}
                         sx={{
                           color: bodyColor,
                           ...cellBorderSx,
                           ...cellPaddingSx,
                         }}
                         dangerouslySetInnerHTML={{
-                          __html: DOMPurify.sanitize(
-                            String(row[col.accessor] || ""),
-                          ),
+                          __html: DOMPurify.sanitize(String(row[col.accessor] || '')),
                         }}
                       />
                     ))}

@@ -3,51 +3,92 @@
  * This component displays the visual content for template blocks
  */
 
-import React, { useState, lazy, Suspense } from "react";
+import React, { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { BlockWrapper } from './BlockWrapper';
+import { useCountUp } from './hooks/useCountUp';
 
 // Lazy-load FormBuilderBlock for code splitting (Step 2.29.2)
-const FormBuilderBlock = lazy(() => import("./dynamic/FormBuilderBlock"));
+const FormBuilderBlock = lazy(() => import('./dynamic/FormBuilderBlock'));
 
 // Lazy-load BlogFeedBlock for code splitting (Step 2.23)
-const BlogFeedBlock = lazy(() => import("./dynamic/BlogFeedBlock"));
+const BlogFeedBlock = lazy(() => import('./dynamic/BlogFeedBlock'));
+
+// Lazy-load BlogFeedStaticRenderer for code splitting (Step 17.5)
+const BlogFeedStaticRenderer = lazy(() => import('./blocks/BlogFeedStaticRenderer'));
 
 // Lazy-load BlogArticleBlock for code splitting (Step 2.24)
-const BlogArticleBlock = lazy(() => import("./dynamic/BlogArticleBlock"));
+const BlogArticleBlock = lazy(() => import('./dynamic/BlogArticleBlock'));
 
 // Lazy-load ProductShowcaseBlock for code splitting (Step 2.26)
-const ProductShowcaseBlock = lazy(
-  () => import("./dynamic/ProductShowcaseBlock"),
-);
+const ProductShowcaseBlock = lazy(() => import('./dynamic/ProductShowcaseBlock'));
 
 // Lazy-load DirectoryListingBlock for code splitting (Step 2.27)
-const DirectoryListingBlock = lazy(
-  () => import("./dynamic/DirectoryListingBlock"),
-);
+const DirectoryListingBlock = lazy(() => import('./dynamic/DirectoryListingBlock'));
 
 // Lazy-load embed and menu display blocks for code splitting (Step 2.29B)
-const SocialEmbedBlock = lazy(() => import("./blocks/SocialEmbedBlock"));
-const EmbedBlock = lazy(() => import("./blocks/EmbedBlock"));
-const MenuDisplayBlock = lazy(() => import("./blocks/MenuDisplayBlock"));
+const SocialEmbedBlock = lazy(() => import('./blocks/SocialEmbedBlock'));
+const EmbedBlock = lazy(() => import('./blocks/EmbedBlock'));
+const MenuDisplayBlock = lazy(() => import('./blocks/MenuDisplayBlock'));
 
 // Lazy-load newsletter and reviews blocks for code splitting (Step 2.28)
-const NewsletterBlock = lazy(() => import("./blocks/NewsletterBlock"));
-const ReviewsBlock = lazy(() => import("./dynamic/ReviewsBlock"));
+const NewsletterBlock = lazy(() => import('./blocks/NewsletterBlock'));
+const ReviewsBlock = lazy(() => import('./dynamic/ReviewsBlock'));
 // Lazy-load MapLocationBlock for code splitting (Step 2.28.1)
-const MapLocationBlock = lazy(() => import("./blocks/MapLocationBlock"));
+const MapLocationBlock = lazy(() => import('./blocks/MapLocationBlock'));
 
 // Lazy-load EventsListBlock for code splitting (Step 2.29C)
-const EventsListBlock = lazy(() => import("./dynamic/EventsListBlock"));
+const EventsListBlock = lazy(() => import('./dynamic/EventsListBlock'));
+
+// Lazy-load CollageBlock for code splitting (Step 14.6)
+const CollageBlock = lazy(() => import('./blocks/CollageBlock'));
+
+// Block components (Step 10.1)
+import HeroBlock from './blocks/HeroBlock';
+// Block components (Step 10.2)
+import GalleryBlock from './blocks/GalleryBlock';
+// Block components (Step 10.3)
+import FeaturesBlock from './blocks/FeaturesBlock';
+// Block components (Step 11.2)
+import PortfolioGridBlock from './blocks/PortfolioGridBlock';
+// Block components (Step 11.1)
+import MarqueeBlock from './blocks/MarqueeBlock';
+// Block components (Step 11.3)
+import WorkingHoursBlock from './blocks/WorkingHoursBlock';
+// Block components (Step 11.4)
+import ReservationFormBlock from './blocks/ReservationFormBlock';
+// Block components (Step 15.4)
+import ContactBlock from './blocks/ContactBlock';
+// Block components (Step 15.8)
+import StoryPanelBlock from './blocks/StoryPanelBlock';
+// Block components (Step 17.8)
+import DecorativeBlock from './blocks/DecorativeBlock';
 
 // Block components (Step 2.29A)
-import BeforeAfterBlock from "./blocks/BeforeAfterBlock";
-import AnnouncementBarBlock from "./blocks/AnnouncementBarBlock";
-import LogoCarouselBlock from "./blocks/LogoCarouselBlock";
-import CountdownBlock from "./blocks/CountdownBlock";
+import BeforeAfterBlock from './blocks/BeforeAfterBlock';
+import AnnouncementBarBlock from './blocks/AnnouncementBarBlock';
+import LogoCarouselBlock from './blocks/LogoCarouselBlock';
+import CountdownBlock from './blocks/CountdownBlock';
 // Block components (Step 2.29A.1-2, 2.29A.7)
-import TabsBlock from "./blocks/TabsBlock";
-import StepsProcessBlock from "./blocks/StepsProcessBlock";
-import TableBlock from "./blocks/TableBlock";
-import { useNavigate } from "react-router-dom";
+import TabsBlock from './blocks/TabsBlock';
+import StepsProcessBlock from './blocks/StepsProcessBlock';
+import TableBlock from './blocks/TableBlock';
+// Block components (Step 10.6)
+import FooterBlock from './blocks/FooterBlock';
+// Block components (Step 10.7)
+import ImageTextSplitBlock from './blocks/ImageTextSplitBlock';
+// Block components (Step 10.5 / Step 14.10 — PublicWebsite-native with BlockWrapper)
+import NavbarBlock from './blocks/NavbarBlock';
+// Step 14.1 — per-item stagger animation
+import AnimatedList from './utils/AnimatedList';
+// Heading typography resolver (Step 14.2)
+import {
+  resolveHeadingTypographySx,
+  resolveSubheadingTypographySx,
+  resolveGradientTextSx,
+  resolveTextStrokeSx,
+} from './utils/headingTypography';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -59,37 +100,15 @@ import {
   Avatar,
   TextField,
   Alert,
-} from "@mui/material";
-import DOMPurify from "dompurify";
-import {
-  Business as BusinessIcon,
-  Build as BuildIcon,
-  Support as SupportIcon,
-  Verified as VerifiedIcon,
-  Public as GlobalIcon,
-  Lightbulb as InnovationIcon,
-  Assessment as AnalyticsIcon,
-  Computer as TechnologyIcon,
-  School as TrainingIcon,
-  Code as CodeIcon,
-  Palette as PaletteIcon,
-  Videocam as VideoIcon,
-  TrendingUp as ChartIcon,
-  Campaign as AdsIcon,
-  Share as SocialIcon,
-  Restaurant as ChefIcon,
-  Home as HomeIcon,
-  FitnessCenter as FitnessCenterIcon,
-  MenuBook as CertIcon,
-  Web as WebIcon,
-  Star as StarIcon,
-} from "@mui/icons-material";
+} from '@mui/material';
+import DOMPurify from 'dompurify';
 
 interface Block {
   id: number;
   blockType: string;
   content: any;
   sortOrder: number;
+  variant?: string;
 }
 
 interface BlockRendererProps {
@@ -102,64 +121,272 @@ interface BlockRendererProps {
   onFormSubmit?: (formName: string, success: boolean) => void;
 }
 
-/**
- * Maps icon names from templates to Material-UI icon components
- */
-const getIconComponent = (iconName: string) => {
-  const iconMap: Record<string, React.ComponentType> = {
-    business: BusinessIcon,
-    build: BuildIcon,
-    support: SupportIcon,
-    verified: VerifiedIcon,
-    global: GlobalIcon,
-    innovation: InnovationIcon,
-    analytics: AnalyticsIcon,
-    technology: TechnologyIcon,
-    training: TrainingIcon,
-    code: CodeIcon,
-    palette: PaletteIcon,
-    video: VideoIcon,
-    chart: ChartIcon,
-    ads: AdsIcon,
-    social: SocialIcon,
-    chef: ChefIcon,
-    home: HomeIcon,
-    fitness: FitnessCenterIcon,
-    cert: CertIcon,
-    web: WebIcon,
-    integrity: VerifiedIcon,
-    excellence: StarIcon,
-    consulting: BusinessIcon,
-    strategy: AnalyticsIcon,
-    design: PaletteIcon,
-    local: HomeIcon,
-    ambiance: StarIcon,
-    rent: HomeIcon,
-    invest: ChartIcon,
-    class: FitnessCenterIcon,
-    nutrition: FitnessCenterIcon,
-    expert: StarIcon,
-    flexible: StarIcon,
-    automation: BuildIcon,
-    integration: TechnologyIcon,
-  };
+// ── TestimonialsStackedMUI — module-level (Step 10.4) ─────────────────────────
 
-  return iconMap[iconName.toLowerCase()] || StarIcon;
+interface TestimonialsStackedMUIProps {
+  heading?: string;
+  items: any[];
+  headingColor: string;
+  bodyColor: string;
+  fields: any;
+}
+
+const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
+  heading,
+  items,
+  headingColor,
+  bodyColor,
+  fields,
+}) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const count = items.length;
+
+  const startInterval = useCallback(() => {
+    if (count <= 1) return;
+    intervalRef.current = setInterval(() => {
+      setActiveIndex((i) => (i + 1) % count);
+    }, 6000);
+  }, [count]);
+
+  const stopInterval = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    startInterval();
+    return () => stopInterval();
+  }, [startInterval, stopInterval]);
+
+  const goTo = useCallback(
+    (idx: number) => {
+      stopInterval();
+      setActiveIndex(idx);
+      startInterval();
+    },
+    [stopInterval, startInterval]
+  );
+
+  const goPrev = useCallback(() => {
+    goTo((activeIndex - 1 + count) % count);
+  }, [activeIndex, count, goTo]);
+
+  const goNext = useCallback(() => {
+    goTo((activeIndex + 1) % count);
+  }, [activeIndex, count, goTo]);
+
+  if (count === 0) {
+    return (
+      <BlockWrapper fields={fields}>
+        <Box sx={{ bgcolor: 'grey.50', py: 8, textAlign: 'center' }}>
+          <Typography color="text.secondary">No testimonials yet.</Typography>
+        </Box>
+      </BlockWrapper>
+    );
+  }
+
+  const item = items[activeIndex];
+  const starRating =
+    item.rating != null ? Math.min(5, Math.max(1, Math.round(Number(item.rating)))) : null;
+
+  return (
+    <BlockWrapper fields={fields}>
+      <Box
+        sx={{ bgcolor: 'grey.50', py: 8 }}
+        onMouseEnter={stopInterval}
+        onMouseLeave={startInterval}
+      >
+        <Container maxWidth="md">
+          <Typography
+            variant="h3"
+            component="h2"
+            align="center"
+            gutterBottom
+            sx={{ mb: 6, fontWeight: 600, color: headingColor }}
+          >
+            {heading || 'What Our Clients Say'}
+          </Typography>
+
+          <Box sx={{ position: 'relative', minHeight: 260 }}>
+            {/* Prev arrow */}
+            {count > 1 && (
+              <Box
+                component="button"
+                onClick={goPrev}
+                aria-label="Previous testimonial"
+                sx={{
+                  position: 'absolute',
+                  left: -40,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '2rem',
+                  cursor: 'pointer',
+                  color: headingColor,
+                  opacity: 0.6,
+                  '&:hover': { opacity: 1 },
+                  zIndex: 1,
+                }}
+              >
+                &#8249;
+              </Box>
+            )}
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card elevation={2} sx={{ p: 4, textAlign: 'center' }}>
+                  <Avatar
+                    src={item.photo || item.avatar}
+                    alt={item.author || 'Author'}
+                    sx={{ width: 72, height: 72, mx: 'auto', mb: 2 }}
+                  >
+                    {(item.author || 'A').charAt(0).toUpperCase()}
+                  </Avatar>
+                  {starRating != null && (
+                    <Box
+                      aria-label={`${starRating} out of 5 stars`}
+                      sx={{ color: '#f59e0b', fontSize: '1.2em', mb: 1 }}
+                    >
+                      {'★'.repeat(starRating)}
+                      {'☆'.repeat(5 - starRating)}
+                    </Box>
+                  )}
+                  <Typography
+                    variant="body1"
+                    sx={{ fontStyle: 'italic', color: bodyColor, mb: 3, fontSize: '1.1rem' }}
+                  >
+                    &ldquo;{item.quote}&rdquo;
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: headingColor }}>
+                    {item.author}
+                  </Typography>
+                  {(item.position || item.role) && (
+                    <Typography variant="body2" color="text.secondary">
+                      {item.position || item.role}
+                    </Typography>
+                  )}
+                </Card>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Next arrow */}
+            {count > 1 && (
+              <Box
+                component="button"
+                onClick={goNext}
+                aria-label="Next testimonial"
+                sx={{
+                  position: 'absolute',
+                  right: -40,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '2rem',
+                  cursor: 'pointer',
+                  color: headingColor,
+                  opacity: 0.6,
+                  '&:hover': { opacity: 1 },
+                  zIndex: 1,
+                }}
+              >
+                &#8250;
+              </Box>
+            )}
+          </Box>
+
+          {/* Dot indicators */}
+          {count > 1 && (
+            <Box
+              sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 3 }}
+              role="tablist"
+              aria-label="Testimonial navigation"
+            >
+              {items.map((_, idx) => (
+                <Box
+                  key={idx}
+                  component="button"
+                  role="tab"
+                  aria-selected={idx === activeIndex}
+                  aria-label={`Go to testimonial ${idx + 1}`}
+                  onClick={() => goTo(idx)}
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    border: 'none',
+                    cursor: 'pointer',
+                    p: 0,
+                    background: idx === activeIndex ? '#f59e0b' : 'rgba(0,0,0,0.2)',
+                    transition: 'background 0.3s',
+                  }}
+                />
+              ))}
+            </Box>
+          )}
+        </Container>
+      </Box>
+    </BlockWrapper>
+  );
 };
+
+// ── StatItem — scroll-triggered count-up animation (Step 16.2) ──────────────
+
+interface StatItemProps {
+  stat: { number: string; label: string; prefix?: string; suffix?: string };
+  animateNumbers?: boolean;
+  animationNumberDuration?: number;
+}
+
+const StatItem = React.memo<StatItemProps>(
+  ({ stat, animateNumbers = false, animationNumberDuration = 2000 }) => {
+    const { ref, displayValue } = useCountUp({
+      target: stat.number,
+      duration: animationNumberDuration,
+      enabled: animateNumbers,
+    });
+
+    return (
+      <Grid item xs={6} md={4} sx={{ textAlign: 'center' }}>
+        <Typography variant="h2" sx={{ fontWeight: 800, color: 'white' }} ref={ref as React.Ref<HTMLElement>}>
+          {stat.prefix || ''}
+          {displayValue}
+          {stat.suffix || ''}
+        </Typography>
+        <Typography variant="h6" sx={{ opacity: 0.85, color: 'white' }}>
+          {stat.label}
+        </Typography>
+      </Grid>
+    );
+  }
+);
+
+StatItem.displayName = 'StatItem';
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const BlockRenderer: React.FC<BlockRendererProps> = ({
   block,
-  primaryColor = "#2563eb",
-  secondaryColor = "#64748b",
-  headingColor = "#1e293b",
-  bodyColor = "#475569",
+  primaryColor = '#2563eb',
+  secondaryColor = '#64748b',
+  headingColor = '#1e293b',
+  bodyColor = '#475569',
   onCtaClick,
   onFormSubmit,
 }) => {
   const { blockType, content } = block;
   const navigate = useNavigate();
-  const basePrimaryColor =
-    primaryColor.length === 9 ? primaryColor.slice(0, 7) : primaryColor;
+  const basePrimaryColor = primaryColor.length === 9 ? primaryColor.slice(0, 7) : primaryColor;
 
   /**
    * Check if a URL is internal (relative or same domain)
@@ -167,11 +394,11 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
   const isInternalLink = (url: string): boolean => {
     if (!url) return false;
     // Relative paths are internal
-    if (url.startsWith("/")) return true;
+    if (url.startsWith('/')) return true;
     // Hash links are internal
-    if (url.startsWith("#")) return true;
+    if (url.startsWith('#')) return true;
     // External links start with http:// or https://
-    if (url.startsWith("http://") || url.startsWith("https://")) return false;
+    if (url.startsWith('http://') || url.startsWith('https://')) return false;
     // Everything else is considered internal
     return true;
   };
@@ -180,7 +407,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
    * Handle CTA button clicks - navigate for internal links, open in same tab for external
    */
   const handleCtaClick = (url: string, ctaText?: string) => {
-    if (!url || url === "#") return;
+    if (!url || url === '#') return;
 
     // Track CTA click if analytics is enabled
     if (onCtaClick && ctaText) {
@@ -195,1420 +422,1193 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
   };
 
   switch (blockType) {
-    case "HERO":
+    case 'HERO':
       return (
-        <Box
-          sx={{
-            minHeight: "60vh",
-            display: "flex",
-            alignItems: "center",
-            background: `linear-gradient(135deg, ${primaryColor} 0%, ${basePrimaryColor}dd 100%)`,
-            color: "white",
-            py: 8,
-          }}
-        >
-          <Container maxWidth="lg">
-            <Typography
-              variant="h2"
-              component="h1"
-              gutterBottom
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: "2.5rem", md: "3.5rem" },
-                color: "white",
-              }}
-            >
-              {content.heading || "Welcome"}
-            </Typography>
-            <Typography
-              variant="h5"
-              sx={{ mb: 4, opacity: 0.9, maxWidth: "600px", color: "white" }}
-            >
-              {content.subheading || "Discover amazing content"}
-            </Typography>
-            {content.ctaText && (
-              <Button
-                variant="contained"
-                size="large"
-                onClick={() => handleCtaClick(content.ctaLink, content.ctaText)}
-                sx={{
-                  bgcolor: "white",
-                  color: primaryColor,
-                  px: 4,
-                  py: 1.5,
-                  fontSize: "1.1rem",
-                  cursor: "pointer",
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.9)",
-                  },
-                }}
-              >
-                {content.ctaText}
-              </Button>
-            )}
-          </Container>
-        </Box>
+        <HeroBlock
+          content={content}
+          variant={block.variant}
+          primaryColor={primaryColor}
+          secondaryColor={secondaryColor}
+          headingColor={headingColor}
+          bodyColor={bodyColor}
+          onCtaClick={onCtaClick}
+        />
       );
 
-    case "FEATURES":
+    case 'FEATURES':
       return (
-        <Box sx={{ py: 8, bgcolor: "background.default" }}>
-          <Container maxWidth="lg">
-            <Typography
-              variant="h3"
-              component="h2"
-              align="center"
-              gutterBottom
-              sx={{ mb: 6, fontWeight: 600, color: headingColor }}
-            >
-              {content.heading || "Features"}
-            </Typography>
-            <Grid container spacing={4}>
-              {content.features?.map((feature: any, index: number) => (
-                <Grid item xs={12} md={4} key={index}>
-                  <Card
-                    elevation={2}
-                    sx={{
-                      height: "100%",
-                      transition: "transform 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-8px)",
-                        boxShadow: 4,
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ p: 3 }}>
-                      {feature.icon &&
-                        (() => {
-                          const IconComponent = getIconComponent(feature.icon);
-                          return (
+        <FeaturesBlock
+          content={content}
+          primaryColor={primaryColor}
+          headingColor={headingColor}
+          bodyColor={bodyColor}
+        />
+      );
+
+    case 'TESTIMONIALS': {
+      const testimonialItems: any[] = content.testimonials || content.items || [];
+
+      if ((content.variant || 'cards') === 'stacked') {
+        return (
+          <TestimonialsStackedMUI
+            heading={content.heading}
+            items={testimonialItems}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            fields={content}
+          />
+        );
+      }
+
+      // cards variant (default) — 2-column grid with star ratings
+      return (
+        <BlockWrapper fields={content}>
+          <Box sx={{ bgcolor: 'grey.50' }}>
+            <Container maxWidth="lg">
+              <Typography
+                variant="h3"
+                component="h2"
+                align="center"
+                gutterBottom
+                sx={{ mb: 6, fontWeight: 600, color: headingColor }}
+              >
+                {content.heading || 'What Our Clients Say'}
+              </Typography>
+              <Grid container spacing={4}>
+                <AnimatedList staggerMs={100} wrapperStyle={{ display: 'contents' }}>
+                  {testimonialItems.map((testimonial: any, index: number) => {
+                    const starRating =
+                      testimonial.rating != null
+                        ? Math.min(5, Math.max(1, Math.round(Number(testimonial.rating))))
+                        : null;
+                    return (
+                      <Grid item xs={12} md={6} key={index}>
+                        <Card elevation={1} sx={{ p: 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Avatar
-                              sx={{
-                                bgcolor: primaryColor,
-                                width: 56,
-                                height: 56,
-                                mb: 2,
-                              }}
+                              src={testimonial.photo || testimonial.avatar}
+                              alt={testimonial.author || 'Author'}
+                              sx={{ width: 40, height: 40, mr: 1.5 }}
                             >
-                              <IconComponent />
+                              {(testimonial.author || 'A').charAt(0).toUpperCase()}
                             </Avatar>
-                          );
-                        })()}
-                      <Typography
-                        variant="h5"
-                        component="h3"
-                        gutterBottom
-                        sx={{ color: primaryColor, fontWeight: 600 }}
-                      >
-                        {feature.title}
-                      </Typography>
-                      <Typography variant="body1" sx={{ color: bodyColor }}>
-                        {feature.description}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Container>
-        </Box>
+                            <Box>
+                              <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: 600, color: headingColor, lineHeight: 1.2 }}
+                              >
+                                {testimonial.author}
+                              </Typography>
+                              {(testimonial.position || testimonial.role) && (
+                                <Typography variant="body2" color="text.secondary">
+                                  {testimonial.position || testimonial.role}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                          {starRating != null && (
+                            <Box
+                              aria-label={`${starRating} out of 5 stars`}
+                              sx={{ color: '#f59e0b', fontSize: '1.1em', mb: 1 }}
+                            >
+                              {'★'.repeat(starRating)}
+                              {'☆'.repeat(5 - starRating)}
+                            </Box>
+                          )}
+                          <Typography
+                            variant="body1"
+                            sx={{ fontStyle: 'italic', color: bodyColor }}
+                          >
+                            &ldquo;{testimonial.quote}&rdquo;
+                          </Typography>
+                        </Card>
+                      </Grid>
+                    );
+                  })}
+                </AnimatedList>
+              </Grid>
+            </Container>
+          </Box>
+        </BlockWrapper>
       );
+    }
 
-    case "TESTIMONIALS":
+    case 'CTA': {
+      const headingTypoSx = resolveHeadingTypographySx(content);
+      const subheadingTypoSx = resolveSubheadingTypographySx(content);
+      const ctaGradientTextSx = resolveGradientTextSx(content);
+      const ctaTextStrokeSx = resolveTextStrokeSx(content);
+      const ctaStatusBadge = content.statusBadge;
       return (
-        <Box sx={{ py: 8, bgcolor: "grey.50" }}>
-          <Container maxWidth="lg">
-            <Typography
-              variant="h3"
-              component="h2"
-              align="center"
-              gutterBottom
-              sx={{ mb: 6, fontWeight: 600, color: headingColor }}
-            >
-              {content.heading || "What Our Clients Say"}
-            </Typography>
-            <Grid container spacing={4}>
-              {content.testimonials?.map((testimonial: any, index: number) => (
-                <Grid item xs={12} md={6} key={index}>
-                  <Card elevation={1} sx={{ p: 3 }}>
-                    <Typography
-                      variant="body1"
-                      sx={{ mb: 2, fontStyle: "italic", color: bodyColor }}
-                    >
-                      "{testimonial.quote}"
-                    </Typography>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: 600, color: headingColor }}
-                    >
-                      {testimonial.author}
-                    </Typography>
-                    {(testimonial.position || testimonial.role) && (
-                      <Typography variant="body2" color="text.secondary">
-                        {testimonial.position || testimonial.role}
-                      </Typography>
-                    )}
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Container>
-        </Box>
-      );
-
-    case "CTA":
-      return (
-        <Box
-          sx={{
-            py: 10,
-            background: `linear-gradient(135deg, ${basePrimaryColor}ee 0%, ${primaryColor} 100%)`,
-            color: "white",
-            textAlign: "center",
-          }}
-        >
-          <Container maxWidth="md">
-            <Typography
-              variant="h3"
-              component="h2"
-              gutterBottom
-              sx={{ fontWeight: 700, mb: 3, color: "white" }}
-            >
-              {content.heading || "Ready to Get Started?"}
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{ mb: 4, opacity: 0.95, color: "white" }}
-            >
-              {content.subheading ||
-                "Join us today and transform your business"}
-            </Typography>
-            {content.ctaText && (
-              <Button
-                variant="contained"
-                size="large"
-                onClick={() => handleCtaClick(content.ctaLink, content.ctaText)}
-                sx={{
-                  bgcolor: "white",
-                  color: primaryColor,
-                  px: 5,
-                  py: 2,
-                  fontSize: "1.2rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.9)",
-                  },
-                }}
-              >
-                {content.ctaText}
-              </Button>
-            )}
-          </Container>
-        </Box>
-      );
-
-    case "CONTACT":
-      // Form state
-      const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        message: "",
-      });
-      const [formStatus, setFormStatus] = useState<
-        "idle" | "success" | "error"
-      >("idle");
-
-      const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        // TODO: Implement actual form submission to backend
-        console.log("Contact form submitted:", formData);
-        const success = true; // Would be based on actual API response
-        setFormStatus("success");
-
-        // Track form submission
-        if (onFormSubmit) {
-          onFormSubmit("contact", success);
-        }
-
-        setFormData({ name: "", email: "", message: "" });
-        setTimeout(() => setFormStatus("idle"), 5000);
-      };
-
-      const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-      ) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-      };
-
-      return (
-        <Box sx={{ py: 8 }}>
-          <Container maxWidth="md">
-            <Typography
-              variant="h3"
-              component="h2"
-              align="center"
-              gutterBottom
-              sx={{ mb: 4, fontWeight: 600, color: headingColor }}
-            >
-              {content.heading || "Get In Touch"}
-            </Typography>
-            <Card elevation={2} sx={{ p: 4 }}>
-              <Typography
-                variant="body1"
-                sx={{ mb: 3, textAlign: "center", color: bodyColor }}
-              >
-                {content.description || "Contact us for more information"}
-              </Typography>
-
-              {/* Contact Information */}
-              <Box sx={{ mb: content.showForm ? 3 : 0 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ mb: 1, fontWeight: 500, color: bodyColor }}
-                >
-                  Email: {content.email || "contact@example.com"}
-                </Typography>
-                {content.phone && (
-                  <Typography
-                    variant="body2"
-                    sx={{ mb: 1, fontWeight: 500, color: bodyColor }}
-                  >
-                    Phone: {content.phone}
-                  </Typography>
-                )}
-                {content.address && (
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 500, color: bodyColor }}
-                  >
-                    Address: {content.address}
-                  </Typography>
-                )}
-              </Box>
-
-              {/* Contact Form - Only show if showForm is true */}
-              {content.showForm && (
-                <Box
-                  component="form"
-                  onSubmit={handleSubmit}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 2,
-                    mt: 3,
-                  }}
-                >
-                  {formStatus === "success" && (
-                    <Alert severity="success">
-                      Thank you! Your message has been sent successfully.
-                    </Alert>
-                  )}
-                  {formStatus === "error" && (
-                    <Alert severity="error">
-                      Sorry, there was an error sending your message. Please try
-                      again.
-                    </Alert>
-                  )}
-
-                  <TextField
-                    fullWidth
-                    label="Name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    variant="outlined"
-                  />
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    variant="outlined"
-                  />
-                  <TextField
-                    fullWidth
-                    label="Message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                    multiline
-                    rows={4}
-                    variant="outlined"
-                  />
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    size="large"
+        <BlockWrapper fields={content}>
+          <Box
+            sx={{
+              background: `linear-gradient(135deg, ${basePrimaryColor}ee 0%, ${primaryColor} 100%)`,
+              color: 'white',
+              textAlign: 'center',
+            }}
+          >
+            <Container maxWidth="md">
+              {ctaStatusBadge?.text && (
+                <>
+                  <style>{`
+                  @keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+                  @keyframes statusGlow { 0%, 100% { box-shadow: 0 0 4px 1px currentColor; } 50% { box-shadow: 0 0 10px 4px currentColor; } }
+                `}</style>
+                  <Box
+                    data-testid="status-badge"
                     sx={{
-                      bgcolor: primaryColor,
-                      "&:hover": {
-                        bgcolor: primaryColor,
-                        opacity: 0.9,
-                      },
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      mb: 1.5,
+                      justifyContent: 'center',
+                      width: '100%',
                     }}
                   >
-                    Send Message
-                  </Button>
-                </Box>
-              )}
-            </Card>
-          </Container>
-        </Box>
-      );
-
-    case "TEXT":
-      return (
-        <Box sx={{ py: 6 }}>
-          <Container maxWidth="md">
-            {content.heading && (
-              <Typography
-                variant="h3"
-                component="h2"
-                gutterBottom
-                sx={{ mb: 4, fontWeight: 600, color: headingColor }}
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(content.heading),
-                }}
-              />
-            )}
-            <Typography
-              variant="body1"
-              sx={{
-                lineHeight: 1.8,
-                fontSize: "1.1rem",
-                color: bodyColor,
-              }}
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(content.body || ""),
-              }}
-            />
-          </Container>
-        </Box>
-      );
-
-    case "FORM_BUILDER":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading form…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <FormBuilderBlock block={block} primaryColor={primaryColor} />
-        </Suspense>
-      );
-
-    case "BEFORE_AFTER":
-      return (
-        <BeforeAfterBlock
-          block={block}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          headingColor={headingColor}
-          bodyColor={bodyColor}
-          onCtaClick={onCtaClick}
-        />
-      );
-
-    case "ANNOUNCEMENT_BAR":
-      return (
-        <AnnouncementBarBlock
-          block={block}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          headingColor={headingColor}
-          bodyColor={bodyColor}
-          onCtaClick={onCtaClick}
-        />
-      );
-
-    case "LOGO_CAROUSEL":
-      return (
-        <LogoCarouselBlock
-          block={block}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          headingColor={headingColor}
-          bodyColor={bodyColor}
-          onCtaClick={onCtaClick}
-        />
-      );
-
-    case "COUNTDOWN":
-      return (
-        <CountdownBlock
-          block={block}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          headingColor={headingColor}
-          bodyColor={bodyColor}
-          onCtaClick={onCtaClick}
-        />
-      );
-
-    case "TABS":
-      return (
-        <TabsBlock
-          block={block}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          headingColor={headingColor}
-          bodyColor={bodyColor}
-          onCtaClick={onCtaClick}
-        />
-      );
-
-    case "STEPS_PROCESS":
-      return (
-        <StepsProcessBlock
-          block={block}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          headingColor={headingColor}
-          bodyColor={bodyColor}
-          onCtaClick={onCtaClick}
-        />
-      );
-
-    case "TABLE":
-      return (
-        <TableBlock
-          block={block}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          headingColor={headingColor}
-          bodyColor={bodyColor}
-          onCtaClick={onCtaClick}
-        />
-      );
-
-    case "BLOG_FEED":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading blog feed…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <BlogFeedBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "BLOG_ARTICLE":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading article…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <BlogArticleBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "PRODUCT_SHOWCASE":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading products…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <ProductShowcaseBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "DIRECTORY_LISTING":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading directory…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <DirectoryListingBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "SOCIAL_EMBED":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading social embeds…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <SocialEmbedBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "EMBED":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading embed…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <EmbedBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "MENU_DISPLAY":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading menu…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <MenuDisplayBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "EVENTS_LIST":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading events…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <EventsListBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "MAP_LOCATION":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading map…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <MapLocationBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "NEWSLETTER":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading newsletter…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <NewsletterBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "REVIEWS":
-      return (
-        <Suspense
-          fallback={
-            <Box sx={{ py: 8 }}>
-              <Container maxWidth="lg">
-                <Typography variant="body2" color="text.secondary">
-                  Loading reviews…
-                </Typography>
-              </Container>
-            </Box>
-          }
-        >
-          <ReviewsBlock
-            block={block}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
-            onCtaClick={onCtaClick}
-          />
-        </Suspense>
-      );
-
-    case "IMAGE":
-      return (
-        <Box sx={{ py: 6, textAlign: content.alignment || "center" }}>
-          <Container maxWidth="lg">
-            {content.heading && (
-              <Typography
-                variant="h3"
-                component="h2"
-                gutterBottom
-                sx={{ fontWeight: 600, color: headingColor }}
-              >
-                {content.heading}
-              </Typography>
-            )}
-            {content.image ? (
-              <Box
-                component="img"
-                src={content.image}
-                alt={content.alt || "Image"}
-                sx={{
-                  maxWidth: "100%",
-                  height: "auto",
-                  borderRadius: 1,
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  py: 4,
-                  bgcolor: "grey.100",
-                  borderRadius: 1,
-                  textAlign: "center",
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  No image set
-                </Typography>
-              </Box>
-            )}
-            {content.caption && (
-              <Typography
-                variant="body2"
-                sx={{ mt: 1, color: bodyColor, fontStyle: "italic" }}
-              >
-                {content.caption}
-              </Typography>
-            )}
-          </Container>
-        </Box>
-      );
-
-    case "NAVBAR":
-      return (
-        <Box
-          component="nav"
-          sx={{
-            py: 1.5,
-            px: 3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            bgcolor: "background.paper",
-            borderBottom: "1px solid",
-            borderColor: "divider",
-            ...(content.sticky
-              ? { position: "sticky", top: 0, zIndex: 1100 }
-              : {}),
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {content.logo && (
-              <Box
-                component="img"
-                src={content.logo}
-                alt={content.brandName || "Logo"}
-                sx={{ height: 36 }}
-              />
-            )}
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 700, color: headingColor }}
-            >
-              {content.brandName || "Brand"}
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 3, alignItems: "center" }}>
-            {content.navigationItems?.map(
-              (item: { label: string; link: string }, idx: number) => (
-                <Typography
-                  key={idx}
-                  component="a"
-                  href={item.link}
-                  sx={{
-                    textDecoration: "none",
-                    color: bodyColor,
-                    fontWeight: 500,
-                    "&:hover": { color: primaryColor },
-                  }}
-                >
-                  {item.label}
-                </Typography>
-              ),
-            )}
-            {content.ctaText && (
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => handleCtaClick(content.ctaLink, content.ctaText)}
-                sx={{ bgcolor: primaryColor }}
-              >
-                {content.ctaText}
-              </Button>
-            )}
-          </Box>
-        </Box>
-      );
-
-    case "FOOTER":
-      return (
-        <Box
-          component="footer"
-          sx={{ py: 6, bgcolor: "grey.900", color: "grey.300" }}
-        >
-          <Container maxWidth="lg">
-            <Grid container spacing={4}>
-              {content.columns?.map(
-                (
-                  col: {
-                    title: string;
-                    links: { label: string; url: string }[];
-                  },
-                  idx: number,
-                ) => (
-                  <Grid item xs={12} sm={6} md key={idx}>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ mb: 2, fontWeight: 700, color: "white" }}
-                    >
-                      {col.title}
-                    </Typography>
-                    {col.links?.map(
-                      (
-                        link: { label: string; url: string },
-                        linkIdx: number,
-                      ) => (
-                        <Typography
-                          key={linkIdx}
-                          component="a"
-                          href={link.url}
-                          display="block"
-                          sx={{
-                            color: "grey.400",
-                            textDecoration: "none",
-                            mb: 0.5,
-                            "&:hover": { color: "white" },
-                          }}
-                        >
-                          {link.label}
-                        </Typography>
-                      ),
-                    )}
-                  </Grid>
-                ),
-              )}
-            </Grid>
-            {content.copyright && (
-              <Typography
-                variant="body2"
-                sx={{
-                  mt: 4,
-                  pt: 3,
-                  borderTop: "1px solid rgba(255,255,255,0.1)",
-                  textAlign: "center",
-                  color: "grey.500",
-                }}
-              >
-                {content.copyright}
-              </Typography>
-            )}
-          </Container>
-        </Box>
-      );
-
-    case "GALLERY":
-      return (
-        <Box sx={{ py: 8, bgcolor: "background.default" }}>
-          <Container maxWidth="lg">
-            {content.heading && (
-              <Typography
-                variant="h3"
-                component="h2"
-                align="center"
-                gutterBottom
-                sx={{ mb: 6, fontWeight: 600, color: headingColor }}
-              >
-                {content.heading}
-              </Typography>
-            )}
-            <Grid container spacing={2}>
-              {content.images?.map(
-                (img: { image: string; caption?: string }, idx: number) => (
-                  <Grid
-                    item
-                    xs={12}
-                    sm={6}
-                    md={12 / Math.min(Number(content.columns) || 3, 6)}
-                    key={idx}
-                  >
-                    <Card elevation={1} sx={{ overflow: "hidden" }}>
-                      {img.image ? (
-                        <Box
-                          component="img"
-                          src={img.image}
-                          alt={img.caption || `Gallery image ${idx + 1}`}
-                          sx={{
-                            width: "100%",
-                            height: 200,
-                            objectFit: "cover",
-                          }}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            width: "100%",
-                            height: 200,
-                            bgcolor: "grey.200",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Typography variant="body2" color="text.secondary">
-                            No image
-                          </Typography>
-                        </Box>
-                      )}
-                      {img.caption && (
-                        <CardContent sx={{ py: 1 }}>
-                          <Typography variant="body2" color="text.secondary">
-                            {img.caption}
-                          </Typography>
-                        </CardContent>
-                      )}
-                    </Card>
-                  </Grid>
-                ),
-              )}
-            </Grid>
-          </Container>
-        </Box>
-      );
-
-    case "PRICING":
-      return (
-        <Box sx={{ py: 8, bgcolor: "grey.50" }}>
-          <Container maxWidth="lg">
-            {content.heading && (
-              <Typography
-                variant="h3"
-                component="h2"
-                align="center"
-                gutterBottom
-                sx={{ mb: 6, fontWeight: 600, color: headingColor }}
-              >
-                {content.heading}
-              </Typography>
-            )}
-            <Grid container spacing={4} justifyContent="center">
-              {content.plans?.map(
-                (
-                  plan: {
-                    name: string;
-                    price: string;
-                    features: string[];
-                    ctaText?: string;
-                    ctaLink?: string;
-                    highlighted?: boolean;
-                  },
-                  idx: number,
-                ) => (
-                  <Grid item xs={12} sm={6} md={4} key={idx}>
-                    <Card
-                      elevation={plan.highlighted ? 8 : 2}
+                    <Box
+                      data-testid="status-badge-dot"
+                      data-animation={ctaStatusBadge.animation || 'none'}
                       sx={{
-                        height: "100%",
-                        display: "flex",
-                        flexDirection: "column",
-                        border: plan.highlighted
-                          ? `2px solid ${primaryColor}`
-                          : "none",
-                        position: "relative",
-                        overflow: "visible",
+                        width: 12,
+                        height: 12,
+                        borderRadius: '50%',
+                        backgroundColor: ctaStatusBadge.color || '#22c55e',
+                        flexShrink: 0,
+                        ...(ctaStatusBadge.animation === 'pulse'
+                          ? { animation: 'statusPulse 2s ease-in-out infinite' }
+                          : ctaStatusBadge.animation === 'glow'
+                            ? {
+                                animation: 'statusGlow 2s ease-in-out infinite',
+                                color: ctaStatusBadge.color || '#22c55e',
+                              }
+                            : {}),
+                      }}
+                    />
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        color: 'inherit',
+                        letterSpacing: '0.02em',
                       }}
                     >
-                      {plan.highlighted && (
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: -12,
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            bgcolor: primaryColor,
-                            color: "white",
-                            px: 2,
-                            py: 0.5,
-                            borderRadius: 1,
-                            fontSize: "0.75rem",
-                            fontWeight: 700,
-                          }}
-                        >
-                          Popular
-                        </Box>
-                      )}
-                      <CardContent
-                        sx={{
-                          p: 4,
-                          flex: 1,
-                          display: "flex",
-                          flexDirection: "column",
-                        }}
-                      >
-                        <Typography
-                          variant="h5"
-                          sx={{ fontWeight: 700, mb: 1, color: headingColor }}
-                        >
-                          {plan.name}
-                        </Typography>
-                        <Typography
-                          variant="h4"
-                          sx={{ fontWeight: 700, mb: 3, color: primaryColor }}
-                        >
-                          {plan.price}
-                        </Typography>
-                        <Box sx={{ flex: 1, mb: 3 }}>
-                          {plan.features?.map((f: string, fIdx: number) => (
-                            <Typography
-                              key={fIdx}
-                              variant="body2"
-                              sx={{ py: 0.5, color: bodyColor }}
-                            >
-                              {f}
-                            </Typography>
-                          ))}
-                        </Box>
-                        {plan.ctaText && (
-                          <Button
-                            variant={
-                              plan.highlighted ? "contained" : "outlined"
-                            }
-                            fullWidth
-                            onClick={() =>
-                              handleCtaClick(plan.ctaLink || "#", plan.ctaText)
-                            }
-                            sx={
-                              plan.highlighted
-                                ? { bgcolor: primaryColor }
-                                : {
-                                    borderColor: primaryColor,
-                                    color: primaryColor,
-                                  }
-                            }
-                          >
-                            {plan.ctaText}
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ),
+                      {ctaStatusBadge.text}
+                    </Typography>
+                  </Box>
+                </>
               )}
-            </Grid>
-          </Container>
-        </Box>
-      );
-
-    case "FAQ":
-      return (
-        <Box sx={{ py: 8 }}>
-          <Container maxWidth="md">
-            {content.heading && (
               <Typography
                 variant="h3"
                 component="h2"
-                align="center"
                 gutterBottom
-                sx={{ mb: 6, fontWeight: 600, color: headingColor }}
+                sx={{
+                  fontWeight: 700,
+                  mb: 3,
+                  color: 'white',
+                  ...headingTypoSx,
+                  ...ctaGradientTextSx,
+                  ...ctaTextStrokeSx,
+                }}
               >
-                {content.heading}
+                {content.heading || 'Ready to Get Started?'}
               </Typography>
-            )}
-            {content.items?.map(
-              (item: { question: string; answer: string }, idx: number) => (
-                <Box
-                  key={idx}
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 4,
+                  color: 'white',
+                  ...subheadingTypoSx,
+                  opacity: 0.95 * ((content.headingOpacity ?? 100) / 100),
+                }}
+              >
+                {content.subheading || 'Join us today and transform your business'}
+              </Typography>
+              {content.ctaText && (
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => handleCtaClick(content.ctaLink, content.ctaText)}
                   sx={{
-                    mb: 3,
-                    pb: 3,
-                    borderBottom: "1px solid",
-                    borderColor: "divider",
+                    bgcolor: 'white',
+                    color: primaryColor,
+                    px: 5,
+                    py: 2,
+                    fontSize: '1.2rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                    },
                   }}
                 >
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 600, mb: 1, color: headingColor }}
-                  >
+                  {content.ctaText}
+                </Button>
+              )}
+            </Container>
+          </Box>
+        </BlockWrapper>
+      );
+    }
+
+    case 'CONTACT':
+      return (
+        <ContactBlock
+          block={block}
+          primaryColor={primaryColor}
+          secondaryColor={secondaryColor}
+          headingColor={headingColor}
+          bodyColor={bodyColor}
+          onFormSubmit={onFormSubmit}
+        />
+      );
+
+    case 'TEXT':
+      return (
+        <BlockWrapper fields={content}>
+          <Box>
+            <Container maxWidth="md">
+              {content.heading && (
+                <Typography
+                  variant="h3"
+                  component="h2"
+                  gutterBottom
+                  sx={{ mb: 4, fontWeight: 600, color: headingColor }}
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(content.heading),
+                  }}
+                />
+              )}
+              <Typography
+                variant="body1"
+                sx={{
+                  lineHeight: 1.8,
+                  fontSize: '1.1rem',
+                  color: bodyColor,
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(content.body || ''),
+                }}
+              />
+            </Container>
+          </Box>
+        </BlockWrapper>
+      );
+
+    case 'FORM_BUILDER':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading form…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <FormBuilderBlock block={block} primaryColor={primaryColor} />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'BEFORE_AFTER':
+      return (
+        <BlockWrapper fields={content}>
+          <BeforeAfterBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'ANNOUNCEMENT_BAR':
+      return (
+        <BlockWrapper fields={content}>
+          <AnnouncementBarBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'LOGO_CAROUSEL':
+      return (
+        <BlockWrapper fields={content}>
+          <LogoCarouselBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'COUNTDOWN':
+      return (
+        <BlockWrapper fields={content}>
+          <CountdownBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'TABS':
+      return (
+        <BlockWrapper fields={content}>
+          <TabsBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'STEPS_PROCESS':
+      return (
+        <BlockWrapper fields={content}>
+          <StepsProcessBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'TABLE':
+      return (
+        <BlockWrapper fields={content}>
+          <TableBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'BLOG_FEED': {
+      const staticPosts = content?.staticPosts;
+      const useStaticWhenEmpty = content?.useStaticWhenEmpty !== false;
+      const hasStaticPosts =
+        Array.isArray(staticPosts) && staticPosts.length > 0 && useStaticWhenEmpty;
+
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading blog feed…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            {hasStaticPosts ? (
+              <BlogFeedStaticRenderer
+                posts={staticPosts}
+                columns={content?.staticPostColumns || '3'}
+                showCategory={content?.showCategory !== false}
+                showDate={content?.showDate !== false}
+                showReadTime={content?.showReadTime !== false}
+                showExcerpt={content?.showExcerpt !== false}
+                heading={content?.heading}
+                subheading={content?.subheading}
+                primaryColor={primaryColor}
+                headingColor={headingColor}
+                bodyColor={bodyColor}
+              />
+            ) : (
+              <BlogFeedBlock
+                block={block}
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                headingColor={headingColor}
+                bodyColor={bodyColor}
+                onCtaClick={onCtaClick}
+              />
+            )}
+          </Suspense>
+        </BlockWrapper>
+      );
+    }
+
+    case 'BLOG_ARTICLE':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading article…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <BlogArticleBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'PRODUCT_SHOWCASE':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading products…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <ProductShowcaseBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'DIRECTORY_LISTING':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading directory…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <DirectoryListingBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'SOCIAL_EMBED':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading social embeds…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <SocialEmbedBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'EMBED':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading embed…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <EmbedBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'MENU_DISPLAY':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading menu…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <MenuDisplayBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'EVENTS_LIST':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading events…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <EventsListBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'MAP_LOCATION':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading map…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <MapLocationBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'NEWSLETTER':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading newsletter…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <NewsletterBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'REVIEWS':
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading reviews…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <ReviewsBlock
+              block={block}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case 'IMAGE':
+      return (
+        <BlockWrapper fields={content}>
+          <Box sx={{ textAlign: content.alignment || 'center' }}>
+            <Container maxWidth="lg">
+              {content.heading && (
+                <Typography
+                  variant="h3"
+                  component="h2"
+                  gutterBottom
+                  sx={{ fontWeight: 600, color: headingColor }}
+                >
+                  {content.heading}
+                </Typography>
+              )}
+              {content.image ? (
+                <Box
+                  component="img"
+                  src={content.image}
+                  alt={content.alt || 'Image'}
+                  sx={{
+                    maxWidth: '100%',
+                    height: 'auto',
+                    borderRadius: 1,
+                  }}
+                />
+              ) : (
+                <Box sx={{ py: 4, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No image set
+                  </Typography>
+                </Box>
+              )}
+              {content.caption && (
+                <Typography variant="body2" sx={{ mt: 1, color: bodyColor, fontStyle: 'italic' }}>
+                  {content.caption}
+                </Typography>
+              )}
+            </Container>
+          </Box>
+        </BlockWrapper>
+      );
+
+    case 'NAVBAR':
+      return (
+        <BlockWrapper fields={content}>
+          <NavbarBlock block={block as unknown as { content?: Record<string, unknown>; [key: string]: unknown }} />
+        </BlockWrapper>
+      );
+
+    case 'FOOTER':
+      return (
+        <BlockWrapper fields={content}>
+          <FooterBlock content={content} />
+        </BlockWrapper>
+      );
+
+    case 'GALLERY':
+      return <GalleryBlock content={content} variant={block.variant} headingColor={headingColor} />;
+
+    case 'COLLAGE':
+      return (
+        <BlockWrapper fields={content}>
+          <CollageBlock content={content} headingColor={headingColor} />
+        </BlockWrapper>
+      );
+
+    case 'PRICING':
+      return (
+        <BlockWrapper fields={content}>
+          <Box sx={{ bgcolor: 'grey.50' }}>
+            <Container maxWidth="lg">
+              {content.heading && (
+                <Typography
+                  variant="h3"
+                  component="h2"
+                  align="center"
+                  gutterBottom
+                  sx={{ mb: 6, fontWeight: 600, color: headingColor }}
+                >
+                  {content.heading}
+                </Typography>
+              )}
+              <Grid container spacing={4} justifyContent="center">
+                {content.plans?.map(
+                  (
+                    plan: {
+                      name: string;
+                      price: string;
+                      features: string[];
+                      ctaText?: string;
+                      ctaLink?: string;
+                      highlighted?: boolean;
+                    },
+                    idx: number
+                  ) => (
+                    <Grid item xs={12} sm={6} md={4} key={idx}>
+                      <Card
+                        elevation={plan.highlighted ? 8 : 2}
+                        sx={{
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          border: plan.highlighted ? `2px solid ${primaryColor}` : 'none',
+                          position: 'relative',
+                          overflow: 'visible',
+                        }}
+                      >
+                        {plan.highlighted && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: -12,
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              bgcolor: primaryColor,
+                              color: 'white',
+                              px: 2,
+                              py: 0.5,
+                              borderRadius: 1,
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            Popular
+                          </Box>
+                        )}
+                        <CardContent
+                          sx={{ p: 4, flex: 1, display: 'flex', flexDirection: 'column' }}
+                        >
+                          <Typography
+                            variant="h5"
+                            sx={{ fontWeight: 700, mb: 1, color: headingColor }}
+                          >
+                            {plan.name}
+                          </Typography>
+                          <Typography
+                            variant="h4"
+                            sx={{ fontWeight: 700, mb: 3, color: primaryColor }}
+                          >
+                            {plan.price}
+                          </Typography>
+                          <Box sx={{ flex: 1, mb: 3 }}>
+                            {plan.features?.map((f: string, fIdx: number) => (
+                              <Typography
+                                key={fIdx}
+                                variant="body2"
+                                sx={{ py: 0.5, color: bodyColor }}
+                              >
+                                {f}
+                              </Typography>
+                            ))}
+                          </Box>
+                          {plan.ctaText && (
+                            <Button
+                              variant={plan.highlighted ? 'contained' : 'outlined'}
+                              fullWidth
+                              onClick={() => handleCtaClick(plan.ctaLink || '#', plan.ctaText)}
+                              sx={
+                                plan.highlighted
+                                  ? { bgcolor: primaryColor }
+                                  : { borderColor: primaryColor, color: primaryColor }
+                              }
+                            >
+                              {plan.ctaText}
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  )
+                )}
+              </Grid>
+            </Container>
+          </Box>
+        </BlockWrapper>
+      );
+
+    case 'FAQ':
+      return (
+        <BlockWrapper fields={content}>
+          <Box>
+            <Container maxWidth="md">
+              {content.heading && (
+                <Typography
+                  variant="h3"
+                  component="h2"
+                  align="center"
+                  gutterBottom
+                  sx={{ mb: 6, fontWeight: 600, color: headingColor }}
+                >
+                  {content.heading}
+                </Typography>
+              )}
+              {content.items?.map((item: { question: string; answer: string }, idx: number) => (
+                <Box
+                  key={idx}
+                  sx={{ mb: 3, pb: 3, borderBottom: '1px solid', borderColor: 'divider' }}
+                >
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: headingColor }}>
                     {item.question}
                   </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{ color: bodyColor, lineHeight: 1.8 }}
-                  >
+                  <Typography variant="body1" sx={{ color: bodyColor, lineHeight: 1.8 }}>
                     {item.answer}
                   </Typography>
                 </Box>
-              ),
-            )}
-          </Container>
-        </Box>
+              ))}
+            </Container>
+          </Box>
+        </BlockWrapper>
       );
 
-    case "STATS":
+    case 'STATS':
       return (
-        <Box sx={{ py: 8, bgcolor: primaryColor, color: "white" }}>
-          <Container maxWidth="lg">
-            {content.heading && (
-              <Typography
-                variant="h3"
-                component="h2"
-                align="center"
-                gutterBottom
-                sx={{ mb: 6, fontWeight: 700, color: "white" }}
-              >
-                {content.heading}
-              </Typography>
-            )}
-            <Grid container spacing={4} justifyContent="center">
-              {content.stats?.map(
-                (
-                  stat: {
-                    number: string;
-                    label: string;
-                    prefix?: string;
-                    suffix?: string;
-                  },
-                  idx: number,
-                ) => (
-                  <Grid
-                    item
-                    xs={6}
-                    md={4}
-                    key={idx}
-                    sx={{ textAlign: "center" }}
-                  >
-                    <Typography
-                      variant="h2"
-                      sx={{ fontWeight: 800, color: "white" }}
-                    >
-                      {stat.prefix || ""}
-                      {stat.number}
-                      {stat.suffix || ""}
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      sx={{ opacity: 0.85, color: "white" }}
-                    >
-                      {stat.label}
-                    </Typography>
-                  </Grid>
-                ),
-              )}
-            </Grid>
-          </Container>
-        </Box>
-      );
-
-    case "TEAM":
-      return (
-        <Box sx={{ py: 8, bgcolor: "background.default" }}>
-          <Container maxWidth="lg">
-            {content.heading && (
-              <Typography
-                variant="h3"
-                component="h2"
-                align="center"
-                gutterBottom
-                sx={{ mb: 6, fontWeight: 600, color: headingColor }}
-              >
-                {content.heading}
-              </Typography>
-            )}
-            <Grid container spacing={4} justifyContent="center">
-              {content.members?.map(
-                (
-                  member: {
-                    name: string;
-                    role: string;
-                    bio?: string;
-                    avatar?: string;
-                  },
-                  idx: number,
-                ) => (
-                  <Grid item xs={12} sm={6} md={4} key={idx}>
-                    <Card elevation={2} sx={{ textAlign: "center", p: 3 }}>
-                      <Avatar
-                        src={member.avatar || undefined}
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          mx: "auto",
-                          mb: 2,
-                          bgcolor: primaryColor,
-                          fontSize: "2rem",
-                        }}
-                      >
-                        {!member.avatar && member.name?.[0]}
-                      </Avatar>
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: 600, color: headingColor }}
-                      >
-                        {member.name}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: primaryColor, mb: 1 }}
-                      >
-                        {member.role}
-                      </Typography>
-                      {member.bio && (
-                        <Typography variant="body2" sx={{ color: bodyColor }}>
-                          {member.bio}
-                        </Typography>
-                      )}
-                    </Card>
-                  </Grid>
-                ),
-              )}
-            </Grid>
-          </Container>
-        </Box>
-      );
-
-    case "VIDEO":
-      return (
-        <Box sx={{ py: 6 }}>
-          <Container
-            maxWidth={
-              content.maxWidth === "small"
-                ? "sm"
-                : content.maxWidth === "medium"
-                  ? "md"
-                  : "lg"
-            }
-          >
-            {content.heading && (
-              <Typography
-                variant="h3"
-                component="h2"
-                align="center"
-                gutterBottom
-                sx={{ mb: 4, fontWeight: 600, color: headingColor }}
-              >
-                {content.heading}
-              </Typography>
-            )}
-            {content.videoUrl ? (
-              <Box
-                sx={{
-                  position: "relative",
-                  paddingTop:
-                    content.aspectRatio === "4:3"
-                      ? "75%"
-                      : content.aspectRatio === "1:1"
-                        ? "100%"
-                        : "56.25%",
-                  overflow: "hidden",
-                  borderRadius: 1,
-                }}
-              >
-                {content.videoUrl.includes("youtube") ||
-                content.videoUrl.includes("vimeo") ? (
-                  <Box
-                    component="iframe"
-                    src={content.videoUrl}
-                    title={content.heading || "Video"}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      border: 0,
-                    }}
-                  />
-                ) : (
-                  <Box
-                    component="video"
-                    src={content.videoUrl}
-                    controls={content.showControls !== false}
-                    autoPlay={content.autoplay || false}
-                    muted={content.muted !== false}
-                    loop={content.loop || false}
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                )}
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  py: 8,
-                  bgcolor: "grey.100",
-                  borderRadius: 1,
-                  textAlign: "center",
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  No video URL set
+        <BlockWrapper fields={content}>
+          <Box sx={{ bgcolor: primaryColor, color: 'white' }}>
+            <Container maxWidth="lg">
+              {content.heading && (
+                <Typography
+                  variant="h3"
+                  component="h2"
+                  align="center"
+                  gutterBottom
+                  sx={{ mb: 6, fontWeight: 700, color: 'white' }}
+                >
+                  {content.heading}
                 </Typography>
-              </Box>
-            )}
-            {content.caption && (
-              <Typography
-                variant="body2"
-                sx={{
-                  mt: 1,
-                  textAlign: "center",
-                  color: bodyColor,
-                  fontStyle: "italic",
-                }}
-              >
-                {content.caption}
-              </Typography>
-            )}
-          </Container>
-        </Box>
+              )}
+              <Grid container spacing={4} justifyContent="center">
+                {content.stats?.map(
+                  (
+                    stat: { number: string; label: string; prefix?: string; suffix?: string },
+                    idx: number
+                  ) => (
+                    <StatItem
+                      key={idx}
+                      stat={stat}
+                      animateNumbers={content.animateNumbers}
+                      animationNumberDuration={content.animationNumberDuration}
+                    />
+                  )
+                )}
+              </Grid>
+            </Container>
+          </Box>
+        </BlockWrapper>
+      );
+
+    case 'TEAM':
+      return (
+        <BlockWrapper fields={content}>
+          <Box sx={{ bgcolor: 'background.default' }}>
+            <Container maxWidth="lg">
+              {content.heading && (
+                <Typography
+                  variant="h3"
+                  component="h2"
+                  align="center"
+                  gutterBottom
+                  sx={{ mb: 6, fontWeight: 600, color: headingColor }}
+                >
+                  {content.heading}
+                </Typography>
+              )}
+              <Grid container spacing={4} justifyContent="center">
+                {content.members?.map(
+                  (
+                    member: { name: string; role: string; bio?: string; avatar?: string },
+                    idx: number
+                  ) => (
+                    <Grid item xs={12} sm={6} md={4} key={idx}>
+                      <Card elevation={2} sx={{ textAlign: 'center', p: 3 }}>
+                        <Avatar
+                          src={member.avatar || undefined}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            mx: 'auto',
+                            mb: 2,
+                            bgcolor: primaryColor,
+                            fontSize: '2rem',
+                          }}
+                        >
+                          {!member.avatar && member.name?.[0]}
+                        </Avatar>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: headingColor }}>
+                          {member.name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: primaryColor, mb: 1 }}>
+                          {member.role}
+                        </Typography>
+                        {member.bio && (
+                          <Typography variant="body2" sx={{ color: bodyColor }}>
+                            {member.bio}
+                          </Typography>
+                        )}
+                      </Card>
+                    </Grid>
+                  )
+                )}
+              </Grid>
+            </Container>
+          </Box>
+        </BlockWrapper>
+      );
+
+    case 'VIDEO':
+      return (
+        <BlockWrapper fields={content}>
+          <Box>
+            <Container
+              maxWidth={
+                content.maxWidth === 'small' ? 'sm' : content.maxWidth === 'medium' ? 'md' : 'lg'
+              }
+            >
+              {content.heading && (
+                <Typography
+                  variant="h3"
+                  component="h2"
+                  align="center"
+                  gutterBottom
+                  sx={{ mb: 4, fontWeight: 600, color: headingColor }}
+                >
+                  {content.heading}
+                </Typography>
+              )}
+              {content.videoUrl ? (
+                <Box
+                  sx={{
+                    position: 'relative',
+                    paddingTop:
+                      content.aspectRatio === '4:3'
+                        ? '75%'
+                        : content.aspectRatio === '1:1'
+                          ? '100%'
+                          : '56.25%',
+                    overflow: 'hidden',
+                    borderRadius: 1,
+                  }}
+                >
+                  {content.videoUrl.includes('youtube') || content.videoUrl.includes('vimeo') ? (
+                    <Box
+                      component="iframe"
+                      src={content.videoUrl}
+                      title={content.heading || 'Video'}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 0,
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      component="video"
+                      src={content.videoUrl}
+                      controls={content.showControls !== false}
+                      autoPlay={content.autoplay || false}
+                      muted={content.muted !== false}
+                      loop={content.loop || false}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  )}
+                </Box>
+              ) : (
+                <Box sx={{ py: 8, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No video URL set
+                  </Typography>
+                </Box>
+              )}
+              {content.caption && (
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 1, textAlign: 'center', color: bodyColor, fontStyle: 'italic' }}
+                >
+                  {content.caption}
+                </Typography>
+              )}
+            </Container>
+          </Box>
+        </BlockWrapper>
+      );
+
+    case 'PORTFOLIO_GRID':
+      return (
+        <BlockWrapper fields={content}>
+          <PortfolioGridBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'WORKING_HOURS':
+      return (
+        <BlockWrapper fields={content}>
+          <WorkingHoursBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'RESERVATION_FORM':
+      return (
+        <BlockWrapper fields={content}>
+          <ReservationFormBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onFormSubmit={onFormSubmit}
+          />
+        </BlockWrapper>
+      );
+
+    case 'MARQUEE':
+      return (
+        <BlockWrapper fields={content}>
+          <MarqueeBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case 'IMAGE_TEXT_SPLIT':
+      return (
+        <BlockWrapper fields={content}>
+          <ImageTextSplitBlock
+            content={content}
+            primaryColor={primaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            onCtaClick={onCtaClick ? (link: string) => onCtaClick('IMAGE_TEXT_SPLIT', link) : undefined}
+          />
+        </BlockWrapper>
+      );
+
+    case 'STORY_PANEL':
+      return (
+        <BlockWrapper fields={content}>
+          <StoryPanelBlock
+            content={content}
+            primaryColor={primaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+          />
+        </BlockWrapper>
+      );
+
+    case 'DECORATIVE':
+      return (
+        <BlockWrapper fields={content}>
+          <DecorativeBlock content={content} />
+        </BlockWrapper>
       );
 
     default:
       return (
-        <Box sx={{ py: 4, bgcolor: "warning.light" }}>
+        <Box sx={{ py: 4, bgcolor: 'warning.light' }}>
           <Container>
-            <Typography variant="body2">
-              Unknown block type: {blockType}
-            </Typography>
+            <Typography variant="body2">Unknown block type: {blockType}</Typography>
           </Container>
         </Box>
       );

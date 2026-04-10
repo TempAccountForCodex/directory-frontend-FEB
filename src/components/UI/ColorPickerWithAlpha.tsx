@@ -1,12 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  TextField,
-  Slider,
-  Typography,
-  Stack,
-  alpha,
-} from "@mui/material";
+import React, { useState, useEffect } from 'react';
+import { Box, TextField, Slider, Typography, Stack, alpha } from '@mui/material';
 
 interface ColorPickerWithAlphaProps {
   value: string;
@@ -21,11 +14,9 @@ interface ColorPickerWithAlphaProps {
 /**
  * Converts hex color to RGBA
  */
-const hexToRgba = (
-  hex: string,
-): { r: number; g: number; b: number; a: number } => {
+const hexToRgba = (hex: string): { r: number; g: number; b: number; a: number } => {
   // Remove # if present
-  hex = hex.replace(/^#/, "");
+  hex = hex.replace(/^#/, '');
 
   let r = 0,
     g = 0,
@@ -59,7 +50,7 @@ const hexToRgba = (
 const rgbaToHex = (r: number, g: number, b: number, a: number): string => {
   const toHex = (n: number) => {
     const hex = Math.round(n).toString(16);
-    return hex.length === 1 ? "0" + hex : hex;
+    return hex.length === 1 ? '0' + hex : hex;
   };
 
   const hex = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
@@ -89,13 +80,13 @@ export const ColorPickerWithAlpha: React.FC<ColorPickerWithAlphaProps> = ({
 }) => {
   const [hexValue, setHexValue] = useState(value);
   const [rgba, setRgba] = useState(hexToRgba(value));
-  const [inputError, setInputError] = useState<string>("");
+  const [inputError, setInputError] = useState<string>('');
 
   useEffect(() => {
     if (isValidHexColor(value)) {
       setHexValue(value);
       setRgba(hexToRgba(value));
-      setInputError("");
+      setInputError('');
     }
   }, [value]);
 
@@ -103,11 +94,11 @@ export const ColorPickerWithAlpha: React.FC<ColorPickerWithAlphaProps> = ({
     setHexValue(newHex);
 
     if (isValidHexColor(newHex)) {
-      setInputError("");
+      setInputError('');
       setRgba(hexToRgba(newHex));
       onChange(newHex);
-    } else if (newHex.startsWith("#")) {
-      setInputError("Invalid hex color format");
+    } else if (newHex.startsWith('#')) {
+      setInputError('Invalid hex color format');
     }
   };
 
@@ -137,7 +128,7 @@ export const ColorPickerWithAlpha: React.FC<ColorPickerWithAlphaProps> = ({
   };
 
   // Get the base color without alpha for the native color picker
-  const baseColor = `#${rgba.r.toString(16).padStart(2, "0")}${rgba.g.toString(16).padStart(2, "0")}${rgba.b.toString(16).padStart(2, "0")}`;
+  const baseColor = `#${rgba.r.toString(16).padStart(2, '0')}${rgba.g.toString(16).padStart(2, '0')}${rgba.b.toString(16).padStart(2, '0')}`;
 
   return (
     <Stack spacing={2}>
@@ -147,40 +138,40 @@ export const ColorPickerWithAlpha: React.FC<ColorPickerWithAlphaProps> = ({
         </Typography>
       )}
 
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
         {/* Color Picker */}
         <Box
           sx={{
-            position: "relative",
+            position: 'relative',
             width: 60,
             height: 60,
             borderRadius: 1,
-            overflow: "hidden",
-            border: `2px solid ${alpha("#000", 0.2)}`,
-            cursor: disabled ? "not-allowed" : "pointer",
+            overflow: 'hidden',
+            border: `2px solid ${alpha('#000', 0.2)}`,
+            cursor: disabled ? 'not-allowed' : 'pointer',
             opacity: disabled ? 0.5 : 1,
           }}
         >
           {/* Checkered background for transparency preview */}
           <Box
             sx={{
-              position: "absolute",
+              position: 'absolute',
               inset: 0,
               backgroundImage: `
-                linear-gradient(45deg, ${alpha("#000", 0.1)} 25%, transparent 25%),
-                linear-gradient(-45deg, ${alpha("#000", 0.1)} 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, ${alpha("#000", 0.1)} 75%),
-                linear-gradient(-45deg, transparent 75%, ${alpha("#000", 0.1)} 75%)
+                linear-gradient(45deg, ${alpha('#000', 0.1)} 25%, transparent 25%),
+                linear-gradient(-45deg, ${alpha('#000', 0.1)} 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, ${alpha('#000', 0.1)} 75%),
+                linear-gradient(-45deg, transparent 75%, ${alpha('#000', 0.1)} 75%)
               `,
-              backgroundSize: "10px 10px",
-              backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
+              backgroundSize: '10px 10px',
+              backgroundPosition: '0 0, 0 5px, 5px -5px, -5px 0px',
             }}
           />
 
           {/* Color overlay with alpha */}
           <Box
             sx={{
-              position: "absolute",
+              position: 'absolute',
               inset: 0,
               bgcolor: `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`,
             }}
@@ -193,12 +184,12 @@ export const ColorPickerWithAlpha: React.FC<ColorPickerWithAlphaProps> = ({
             onChange={handleColorPickerChange}
             disabled={disabled}
             style={{
-              position: "absolute",
+              position: 'absolute',
               inset: 0,
-              width: "100%",
-              height: "100%",
+              width: '100%',
+              height: '100%',
               opacity: 0,
-              cursor: disabled ? "not-allowed" : "pointer",
+              cursor: disabled ? 'not-allowed' : 'pointer',
             }}
           />
         </Box>
@@ -214,7 +205,7 @@ export const ColorPickerWithAlpha: React.FC<ColorPickerWithAlphaProps> = ({
           disabled={disabled}
           sx={{ flex: 1 }}
           inputProps={{
-            style: { fontFamily: "monospace", textTransform: "uppercase" },
+            style: { fontFamily: 'monospace', textTransform: 'uppercase' },
           }}
         />
       </Box>
@@ -222,15 +213,11 @@ export const ColorPickerWithAlpha: React.FC<ColorPickerWithAlphaProps> = ({
       {/* Alpha Slider */}
       {showAlpha && (
         <Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
             <Typography variant="caption" color="text.secondary">
               Opacity
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontFamily: "monospace" }}
-            >
+            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
               {Math.round(rgba.a * 100)}%
             </Typography>
           </Box>
@@ -243,18 +230,18 @@ export const ColorPickerWithAlpha: React.FC<ColorPickerWithAlphaProps> = ({
             step={0.01}
             disabled={disabled}
             sx={{
-              "& .MuiSlider-track": {
+              '& .MuiSlider-track': {
                 background: `linear-gradient(to right, transparent, ${baseColor})`,
               },
-              "& .MuiSlider-rail": {
+              '& .MuiSlider-rail': {
                 backgroundImage: `
-                  linear-gradient(45deg, ${alpha("#000", 0.1)} 25%, transparent 25%),
-                  linear-gradient(-45deg, ${alpha("#000", 0.1)} 25%, transparent 25%),
-                  linear-gradient(45deg, transparent 75%, ${alpha("#000", 0.1)} 75%),
-                  linear-gradient(-45deg, transparent 75%, ${alpha("#000", 0.1)} 75%)
+                  linear-gradient(45deg, ${alpha('#000', 0.1)} 25%, transparent 25%),
+                  linear-gradient(-45deg, ${alpha('#000', 0.1)} 25%, transparent 25%),
+                  linear-gradient(45deg, transparent 75%, ${alpha('#000', 0.1)} 75%),
+                  linear-gradient(-45deg, transparent 75%, ${alpha('#000', 0.1)} 75%)
                 `,
-                backgroundSize: "10px 10px",
-                backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
+                backgroundSize: '10px 10px',
+                backgroundPosition: '0 0, 0 5px, 5px -5px, -5px 0px',
               },
             }}
           />
@@ -262,20 +249,12 @@ export const ColorPickerWithAlpha: React.FC<ColorPickerWithAlphaProps> = ({
       )}
 
       {/* Color Preview Info */}
-      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ fontFamily: "monospace" }}
-        >
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
           RGB: {rgba.r}, {rgba.g}, {rgba.b}
         </Typography>
         {showAlpha && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ fontFamily: "monospace" }}
-          >
+          <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
             Alpha: {rgba.a.toFixed(2)}
           </Typography>
         )}

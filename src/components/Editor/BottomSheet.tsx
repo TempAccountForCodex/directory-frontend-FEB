@@ -15,10 +15,10 @@
  * - anchor must be "bottom"
  * - Uses MUI theme tokens only
  */
-import React, { useCallback } from "react";
-import { Box, Typography, IconButton } from "@mui/material";
-import { SwipeableDrawer } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import React, { useCallback } from 'react';
+import { Box, Typography, IconButton } from '@mui/material';
+import { SwipeableDrawer } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 export interface BottomSheetProps {
   open: boolean;
@@ -40,25 +40,20 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
 }) => {
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         event.stopPropagation();
         onClose();
-      } else if (event.key === "Enter" && onConfirm) {
+      } else if (event.key === 'Enter' && onConfirm) {
         // Only trigger confirm if not on a button/link (let native behavior happen)
         const target = event.target as HTMLElement;
         const tag = target.tagName?.toUpperCase();
-        if (
-          tag !== "BUTTON" &&
-          tag !== "A" &&
-          tag !== "INPUT" &&
-          tag !== "TEXTAREA"
-        ) {
+        if (tag !== 'BUTTON' && tag !== 'A' && tag !== 'INPUT' && tag !== 'TEXTAREA') {
           event.preventDefault();
           onConfirm();
         }
       }
     },
-    [onClose, onConfirm],
+    [onClose, onConfirm]
   );
 
   return (
@@ -70,20 +65,20 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
       disableSwipeToOpen={false}
       PaperProps={
         {
-          role: "dialog",
-          "aria-modal": true,
-          "aria-label": title || "Bottom sheet",
+          role: 'dialog',
+          'aria-modal': true,
+          'aria-label': title || 'Bottom sheet',
           onKeyDown: handleKeyDown,
           sx: {
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
             // Max height: 85% of viewport so users can see content behind
-            maxHeight: "85vh",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
+            maxHeight: '85vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
           },
-        } as React.ComponentProps<"div">
+        } as React.ComponentProps<'div'>
       }
       // iOS momentum scrolling
       ModalProps={{ keepMounted: true }}
@@ -93,9 +88,9 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
         sx={{
           width: 32,
           height: 4,
-          bgcolor: "action.disabled",
+          bgcolor: 'action.disabled',
           borderRadius: 2,
-          mx: "auto",
+          mx: 'auto',
           mt: 1,
           mb: 0.5,
           flexShrink: 0,
@@ -106,13 +101,13 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
       {title && (
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             px: 2,
             py: 1,
             borderBottom: 1,
-            borderColor: "divider",
+            borderColor: 'divider',
             flexShrink: 0,
           }}
         >
@@ -133,11 +128,11 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
       {/* Scrollable content */}
       <Box
         sx={{
-          overflowY: "auto",
+          overflowY: 'auto',
           flex: 1,
           p: 2,
           // Momentum scrolling on iOS
-          WebkitOverflowScrolling: "touch",
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {children}
@@ -146,6 +141,6 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
   );
 };
 
-BottomSheet.displayName = "BottomSheet";
+BottomSheet.displayName = 'BottomSheet';
 
 export default BottomSheet;

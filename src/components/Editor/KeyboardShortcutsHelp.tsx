@@ -10,7 +10,7 @@
  * - Accessible: aria-label on dialog, keyboard navigation
  */
 
-import React, { memo, useState, useCallback, useEffect, useMemo } from "react";
+import React, { memo, useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -28,16 +28,16 @@ import {
   Snackbar,
   InputAdornment,
   Divider,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import KeyboardIcon from "@mui/icons-material/Keyboard";
-import type { ShortcutEntry } from "../../hooks/useShortcutManager";
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import KeyboardIcon from '@mui/icons-material/Keyboard';
+import type { ShortcutEntry } from '../../hooks/useShortcutManager';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const FIRST_TIME_FLAG = "editor-shortcuts-seen";
+const FIRST_TIME_FLAG = 'editor-shortcuts-seen';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -50,47 +50,47 @@ const FIRST_TIME_FLAG = "editor-shortcuts-seen";
  * - Joins with '+'
  */
 const formatKeyCombo = (key: string, isMac: boolean): string[] => {
-  const parts = key.split("+");
+  const parts = key.split('+');
   return parts.map((part) => {
     switch (part.toLowerCase()) {
-      case "ctrl":
-        return isMac ? "Cmd" : "Ctrl";
-      case "meta":
-        return isMac ? "Cmd" : "Meta";
-      case "shift":
-        return "Shift";
-      case "alt":
-        return isMac ? "Opt" : "Alt";
-      case "arrowup":
-        return "↑";
-      case "arrowdown":
-        return "↓";
-      case "arrowleft":
-        return "←";
-      case "arrowright":
-        return "→";
-      case "escape":
-        return "Esc";
-      case "delete":
-        return "Del";
-      case "enter":
-        return "Enter";
-      case "?":
-        return "?";
-      case "/":
-        return "/";
-      case "\\":
-        return "\\";
-      case "[":
-        return "[";
-      case "]":
-        return "]";
-      case "+":
-        return "+";
-      case "-":
-        return "-";
-      case "0":
-        return "0";
+      case 'ctrl':
+        return isMac ? 'Cmd' : 'Ctrl';
+      case 'meta':
+        return isMac ? 'Cmd' : 'Meta';
+      case 'shift':
+        return 'Shift';
+      case 'alt':
+        return isMac ? 'Opt' : 'Alt';
+      case 'arrowup':
+        return '↑';
+      case 'arrowdown':
+        return '↓';
+      case 'arrowleft':
+        return '←';
+      case 'arrowright':
+        return '→';
+      case 'escape':
+        return 'Esc';
+      case 'delete':
+        return 'Del';
+      case 'enter':
+        return 'Enter';
+      case '?':
+        return '?';
+      case '/':
+        return '/';
+      case '\\':
+        return '\\';
+      case '[':
+        return '[';
+      case ']':
+        return ']';
+      case '+':
+        return '+';
+      case '-':
+        return '-';
+      case '0':
+        return '0';
       default:
         return part.toUpperCase();
     }
@@ -122,7 +122,7 @@ const KeyComboChips: React.FC<{ keyCombo: string; isMac: boolean }> = memo(
   ({ keyCombo, isMac }) => {
     const parts = formatKeyCombo(keyCombo, isMac);
     return (
-      <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
         {parts.map((part, i) => (
           <Chip
             key={i}
@@ -131,19 +131,19 @@ const KeyComboChips: React.FC<{ keyCombo: string; isMac: boolean }> = memo(
             variant="outlined"
             sx={{
               height: 22,
-              fontSize: "0.7rem",
-              fontFamily: "monospace",
+              fontSize: '0.7rem',
+              fontFamily: 'monospace',
               borderRadius: 1,
-              color: "text.secondary",
-              borderColor: "divider",
+              color: 'text.secondary',
+              borderColor: 'divider',
             }}
           />
         ))}
       </Box>
     );
-  },
+  }
 );
-KeyComboChips.displayName = "KeyComboChips";
+KeyComboChips.displayName = 'KeyComboChips';
 
 // ---------------------------------------------------------------------------
 // Main component
@@ -151,7 +151,7 @@ KeyComboChips.displayName = "KeyComboChips";
 
 const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
   ({ open, onClose, shortcuts, isMac, showFirstTimeHint = false }) => {
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery, setSearchQuery] = useState('');
     // Initialize hintOpen by reading localStorage immediately (no effect needed for initial value)
     const [hintOpen, setHintOpen] = useState(() => {
       if (!showFirstTimeHint) return false;
@@ -160,20 +160,17 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
 
     const handleHintClose = useCallback(() => {
       setHintOpen(false);
-      localStorage.setItem(FIRST_TIME_FLAG, "1");
+      localStorage.setItem(FIRST_TIME_FLAG, '1');
     }, []);
 
     const handleClose = useCallback(() => {
       onClose();
-      setSearchQuery("");
+      setSearchQuery('');
     }, [onClose]);
 
-    const handleSearchChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value);
-      },
-      [],
-    );
+    const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+    }, []);
 
     // Filter shortcuts
     const filteredShortcuts = useMemo(() => {
@@ -183,7 +180,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
         (s) =>
           s.description.toLowerCase().includes(query) ||
           s.key.toLowerCase().includes(query) ||
-          s.category.toLowerCase().includes(query),
+          s.category.toLowerCase().includes(query)
       );
     }, [shortcuts, searchQuery]);
 
@@ -199,10 +196,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
       return groups;
     }, [filteredShortcuts]);
 
-    const categoryOrder = useMemo(
-      () => ["Editing", "Blocks", "Navigation", "UI"],
-      [],
-    );
+    const categoryOrder = useMemo(() => ['Editing', 'Blocks', 'Navigation', 'UI'], []);
 
     // Sorted categories: known categories first, then alphabetical unknowns
     const sortedCategories = useMemo(() => {
@@ -217,7 +211,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
       });
     }, [groupedShortcuts, categoryOrder]);
 
-    const modifierLabel = isMac ? "Cmd" : "Ctrl";
+    const modifierLabel = isMac ? 'Cmd' : 'Ctrl';
 
     return (
       <>
@@ -228,16 +222,16 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
           fullWidth
           aria-modal="true"
           PaperProps={{
-            "aria-label": "Keyboard shortcuts help",
-            role: "dialog",
+            'aria-label': 'Keyboard shortcuts help',
+            role: 'dialog',
             sx: {
-              bgcolor: "background.paper",
-              maxHeight: "80vh",
+              bgcolor: 'background.paper',
+              maxHeight: '80vh',
             },
           }}
         >
           <DialogTitle>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <KeyboardIcon fontSize="small" color="action" />
               <Typography variant="h6" component="span">
                 Keyboard Shortcuts
@@ -247,7 +241,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
 
           <DialogContent dividers sx={{ p: 0 }}>
             {/* Search box */}
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
               <TextField
                 size="small"
                 fullWidth
@@ -267,33 +261,26 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
 
             {/* Shortcut list */}
             {filteredShortcuts.length === 0 ? (
-              <Box sx={{ py: 6, textAlign: "center", color: "text.secondary" }}>
-                <Typography variant="body2">
-                  No shortcuts match your search.
-                </Typography>
+              <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
+                <Typography variant="body2">No shortcuts match your search.</Typography>
               </Box>
             ) : (
-              <List
-                dense
-                subheader={<li />}
-                sx={{ pb: 0 }}
-                aria-label="Keyboard shortcuts list"
-              >
+              <List dense subheader={<li />} sx={{ pb: 0 }} aria-label="Keyboard shortcuts list">
                 {sortedCategories.map((category, catIdx) => (
                   <li key={category}>
-                    <ul style={{ padding: 0, margin: 0, listStyle: "none" }}>
+                    <ul style={{ padding: 0, margin: 0, listStyle: 'none' }}>
                       <ListSubheader
                         disableSticky={false}
                         sx={{
-                          bgcolor: "background.paper",
-                          color: "text.primary",
+                          bgcolor: 'background.paper',
+                          color: 'text.primary',
                           fontWeight: 700,
-                          fontSize: "0.75rem",
-                          letterSpacing: "0.08em",
-                          textTransform: "uppercase",
-                          lineHeight: "36px",
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          lineHeight: '36px',
                           borderTop: catIdx > 0 ? 1 : 0,
-                          borderColor: "divider",
+                          borderColor: 'divider',
                         }}
                       >
                         {category}
@@ -304,12 +291,12 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
                           sx={{
                             py: 0.75,
                             px: 2,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
                             gap: 2,
-                            "&:hover": {
-                              bgcolor: "action.hover",
+                            '&:hover': {
+                              bgcolor: 'action.hover',
                             },
                           }}
                           aria-keyshortcuts={entry.key}
@@ -317,8 +304,8 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
                           <ListItemText
                             primary={entry.description}
                             primaryTypographyProps={{
-                              variant: "body2",
-                              color: "text.primary",
+                              variant: 'body2',
+                              color: 'text.primary',
                             }}
                           />
                           <KeyComboChips keyCombo={entry.key} isMac={isMac} />
@@ -332,18 +319,10 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
           </DialogContent>
 
           <DialogActions sx={{ px: 3, py: 1.5 }}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ flex: 1 }}
-            >
+            <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
               Press {modifierLabel}+? to open this panel
             </Typography>
-            <Button
-              onClick={handleClose}
-              size="small"
-              aria-label="Close shortcuts help"
-            >
+            <Button onClick={handleClose} size="small" aria-label="Close shortcuts help">
               Close
             </Button>
           </DialogActions>
@@ -355,7 +334,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
             open={hintOpen}
             onClose={handleHintClose}
             autoHideDuration={6000}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
             message={`Press ${modifierLabel}+? to see all keyboard shortcuts`}
             action={
               <Button color="inherit" size="small" onClick={handleHintClose}>
@@ -367,9 +346,9 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = memo(
         )}
       </>
     );
-  },
+  }
 );
 
-KeyboardShortcutsHelp.displayName = "KeyboardShortcutsHelp";
+KeyboardShortcutsHelp.displayName = 'KeyboardShortcutsHelp';
 
 export default KeyboardShortcutsHelp;

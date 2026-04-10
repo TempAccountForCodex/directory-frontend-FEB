@@ -7,14 +7,11 @@
  * - Provides toggleFavorite(id) with optimistic update
  * - Reverts on API failure
  */
-import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import {
-  type TemplateSummary,
-  normalizeTemplateSummary,
-} from "../templates/templateApi";
+import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import { type TemplateSummary, normalizeTemplateSummary } from '../templates/templateApi';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 export interface UseTemplateFavoritesReturn {
   favorites: TemplateSummary[];
@@ -39,9 +36,7 @@ export const useTemplateFavorites = (): UseTemplateFavoritesReturn => {
       setError(null);
 
       try {
-        const response = await axios.get(
-          `${API_URL}/templates/favorites?page=1&limit=50`,
-        );
+        const response = await axios.get(`${API_URL}/templates/favorites?page=1&limit=50`);
         if (!cancelled) {
           // API returns UserTemplateFavorite records with nested template object.
           // Use centralized normalizer for consistent preview field mapping.
@@ -49,14 +44,13 @@ export const useTemplateFavorites = (): UseTemplateFavoritesReturn => {
           const mapped: TemplateSummary[] = records
             .filter((r: { template?: unknown }) => r.template)
             .map((r: { template: Record<string, unknown> }) =>
-              normalizeTemplateSummary(r.template),
+              normalizeTemplateSummary(r.template)
             );
           setFavorites(mapped);
         }
       } catch (err: unknown) {
         if (!cancelled) {
-          const message =
-            err instanceof Error ? err.message : "Failed to load favorites";
+          const message = err instanceof Error ? err.message : 'Failed to load favorites';
           setError(message);
           setFavorites([]);
         }
@@ -82,7 +76,7 @@ export const useTemplateFavorites = (): UseTemplateFavoritesReturn => {
     (templateId: string): boolean => {
       return favorites.some((f) => f.id === templateId);
     },
-    [favorites],
+    [favorites]
   );
 
   const toggleFavorite = useCallback(
@@ -95,22 +89,17 @@ export const useTemplateFavorites = (): UseTemplateFavoritesReturn => {
         setFavorites((prev) => prev.filter((f) => f.id !== templateId));
       } else {
         // Add a minimal placeholder entry optimistically
-        setFavorites((prev) => [
-          ...prev,
-          { id: templateId } as TemplateSummary,
-        ]);
+        setFavorites((prev) => [...prev, { id: templateId } as TemplateSummary]);
       }
 
       // Fire API
-      axios
-        .post(`${API_URL}/templates/${templateId}/favorite`)
-        .catch((err: unknown) => {
-          // Revert on failure
-          console.error("[useTemplateFavorites] toggleFavorite failed:", err);
-          setFavorites(previousFavorites);
-        });
+      axios.post(`${API_URL}/templates/${templateId}/favorite`).catch((err: unknown) => {
+        // Revert on failure
+        console.error('[useTemplateFavorites] toggleFavorite failed:', err);
+        setFavorites(previousFavorites);
+      });
     },
-    [favorites],
+    [favorites]
   );
 
   return {

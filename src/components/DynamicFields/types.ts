@@ -7,32 +7,31 @@
  * Operators for evaluating conditional visibility rules.
  */
 export const ConditionalOperator = {
-  EQUALS: "EQUALS",
-  NOT_EQUALS: "NOT_EQUALS",
-  IS_EMPTY: "IS_EMPTY",
-  IS_NOT_EMPTY: "IS_NOT_EMPTY",
-  GREATER_THAN: "GREATER_THAN",
-  LESS_THAN: "LESS_THAN",
-  CONTAINS: "CONTAINS",
+  EQUALS: 'EQUALS',
+  NOT_EQUALS: 'NOT_EQUALS',
+  IS_EMPTY: 'IS_EMPTY',
+  IS_NOT_EMPTY: 'IS_NOT_EMPTY',
+  GREATER_THAN: 'GREATER_THAN',
+  LESS_THAN: 'LESS_THAN',
+  CONTAINS: 'CONTAINS',
 } as const;
-export type ConditionalOperator =
-  (typeof ConditionalOperator)[keyof typeof ConditionalOperator];
+export type ConditionalOperator = (typeof ConditionalOperator)[keyof typeof ConditionalOperator];
 
 /**
  * Supported field types for the dynamic field system.
  */
 export const FieldType = {
-  TEXT: "TEXT",
-  TEXTAREA: "TEXTAREA",
-  NUMBER: "NUMBER",
-  SELECT: "SELECT",
-  TOGGLE: "TOGGLE",
-  IMAGE: "IMAGE",
-  COLOR: "COLOR",
-  LINK: "LINK",
-  EMAIL: "EMAIL",
-  REPEATER: "REPEATER",
-  TOKEN: "TOKEN",
+  TEXT: 'TEXT',
+  TEXTAREA: 'TEXTAREA',
+  NUMBER: 'NUMBER',
+  SELECT: 'SELECT',
+  TOGGLE: 'TOGGLE',
+  IMAGE: 'IMAGE',
+  COLOR: 'COLOR',
+  LINK: 'LINK',
+  EMAIL: 'EMAIL',
+  REPEATER: 'REPEATER',
+  TOKEN: 'TOKEN',
 } as const;
 export type FieldType = (typeof FieldType)[keyof typeof FieldType];
 

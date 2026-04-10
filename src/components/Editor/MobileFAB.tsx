@@ -13,9 +13,9 @@
  * - aria-label must include "Add block"
  * - Uses MUI theme tokens only (no hardcoded colors)
  */
-import React from "react";
-import { Fab, Box, Tooltip } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import React from 'react';
+import { Fab, Box, Tooltip } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 
 export interface MobileFABProps {
   onOpen: () => void;
@@ -27,7 +27,7 @@ const MobileFAB: React.FC<MobileFABProps> = ({ onOpen }) => {
       data-testid="mobile-fab-wrapper"
       sx={{
         // Hidden on md and above
-        display: { xs: "block", md: "none" },
+        display: { xs: 'block', md: 'none' },
       }}
     >
       <Tooltip title="Add a new block">
@@ -36,7 +36,7 @@ const MobileFAB: React.FC<MobileFABProps> = ({ onOpen }) => {
           color="primary"
           onClick={onOpen}
           sx={{
-            position: "fixed",
+            position: 'fixed',
             // Sit above MobileActionBar (bottom: 72 accounts for 64px bar + 8px gap)
             bottom: 72,
             right: 16,
@@ -51,6 +51,6 @@ const MobileFAB: React.FC<MobileFABProps> = ({ onOpen }) => {
   );
 };
 
-MobileFAB.displayName = "MobileFAB";
+MobileFAB.displayName = 'MobileFAB';
 
 export default MobileFAB;

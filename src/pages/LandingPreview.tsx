@@ -1,6 +1,13 @@
 import React from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Box, Button, Chip, IconButton, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DesktopWindowsOutlinedIcon from "@mui/icons-material/DesktopWindowsOutlined";
 import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
@@ -892,12 +899,12 @@ const STORE_PERFORMANCE_DATA: BusinessData = {
 
 const STORE_FIT_DATA: BusinessData = {
   name: "Fabrix",
-  tagline: "Performance runners and lifestyle silhouettes with a campaign-led look.",
+  tagline:
+    "Performance runners and lifestyle silhouettes with a campaign-led look.",
   description:
     "Fabrix is a dark sports retail template built for footwear brands that want bold hero imagery, stacked product promos, seasonal stories, and strong sale messaging.",
   primaryColor: "#f4efe8",
   secondaryColor: "#050505",
-
 
   heroBannerUrl:
     "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1800&q=80",
@@ -960,7 +967,8 @@ const STORE_FIT_DATA: BusinessData = {
       badge: "Sale",
       image:
         "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=1200&q=80",
-      description: "High-grip black trainer with durable tread for hard sessions.",
+      description:
+        "High-grip black trainer with durable tread for hard sessions.",
     },
     {
       id: "sf-5",
@@ -993,7 +1001,14 @@ const STORE_PAWS_DATA: BusinessData = {
     address: "14 Crosby Street, New York, NY 10013",
   },
   socialLinks: { instagram: "#", facebook: "#", twitter: "#" },
-  storeCategories: ["Harnesses", "Beds", "Walk Sets", "Bowls", "Travel", "Apparel"],
+  storeCategories: [
+    "Harnesses",
+    "Beds",
+    "Walk Sets",
+    "Bowls",
+    "Travel",
+    "Apparel",
+  ],
   products: [
     {
       id: "spw-1",
@@ -1003,7 +1018,8 @@ const STORE_PAWS_DATA: BusinessData = {
       badge: "Best Seller",
       image:
         "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1200&q=80",
-      description: "Premium harness and leash pairing for polished daily walks.",
+      description:
+        "Premium harness and leash pairing for polished daily walks.",
     },
     {
       id: "spw-2",
@@ -1013,7 +1029,8 @@ const STORE_PAWS_DATA: BusinessData = {
       badge: "New",
       image:
         "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&q=80",
-      description: "Soft neutral dog bed with structured support and calm styling.",
+      description:
+        "Soft neutral dog bed with structured support and calm styling.",
     },
     {
       id: "spw-3",
@@ -1023,7 +1040,8 @@ const STORE_PAWS_DATA: BusinessData = {
       badge: "Gift Pick",
       image:
         "https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?auto=format&fit=crop&w=1200&q=80",
-      description: "Counter-friendly jar for daily treats and training rewards.",
+      description:
+        "Counter-friendly jar for daily treats and training rewards.",
     },
     {
       id: "spw-4",
@@ -1033,7 +1051,8 @@ const STORE_PAWS_DATA: BusinessData = {
       badge: "Seasonal",
       image:
         "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80",
-      description: "Reflective dog coat for rainy city walks and outdoor errands.",
+      description:
+        "Reflective dog coat for rainy city walks and outdoor errands.",
     },
     {
       id: "spw-5",
@@ -1213,7 +1232,10 @@ const TEMPLATE_GROUPS = [
       "store-paws",
     ],
   },
-  { label: "Company", slugs: ["company", "company-premium", "company-executive"] },
+  {
+    label: "Company",
+    slugs: ["company", "company-premium", "company-executive"],
+  },
 ];
 
 function resolveSlug(slug: string): { templateId: string; data: BusinessData } {
@@ -1587,10 +1609,10 @@ const PreviewBar: React.FC<{
                         ? "Premium"
                         : s === "company-executive"
                           ? "Executive"
-                        : s === "store-performance"
-                          ? "Performance"
-                          : shortLabel.charAt(0).toUpperCase() +
-                            shortLabel.slice(1));
+                          : s === "store-performance"
+                            ? "Performance"
+                            : shortLabel.charAt(0).toUpperCase() +
+                              shortLabel.slice(1));
 
               return (
                 <Chip
@@ -1828,7 +1850,13 @@ const LandingPreview: React.FC = () => {
     }
 
     return `/landing-preview/${slug}${pageId ? `/${pageId}` : ""}?${params.toString()}`;
-  }, [isCompanyExecutive, pageId, selectedFontPack.id, selectedPalette.id, slug]);
+  }, [
+    isCompanyExecutive,
+    pageId,
+    selectedFontPack.id,
+    selectedPalette.id,
+    slug,
+  ]);
   const fullPreviewUrl = React.useMemo(() => {
     const params = new URLSearchParams();
     if (isCompanyExecutive) {
@@ -1839,7 +1867,13 @@ const LandingPreview: React.FC = () => {
 
     const query = params.toString();
     return `/landing-preview/${slug}${pageId ? `/${pageId}` : ""}${query ? `?${query}` : ""}`;
-  }, [isCompanyExecutive, pageId, selectedFontPack.id, selectedPalette.id, slug]);
+  }, [
+    isCompanyExecutive,
+    pageId,
+    selectedFontPack.id,
+    selectedPalette.id,
+    slug,
+  ]);
 
   const updateCompanyExecutiveSearch = React.useCallback(
     (updates: Record<string, string>) => {
@@ -2163,7 +2197,9 @@ const LandingPreview: React.FC = () => {
                 <Typography sx={{ fontWeight: 800, color: "#111827", mb: 0.3 }}>
                   Color palettes
                 </Typography>
-                <Typography sx={{ color: "#64748b", fontSize: "0.85rem", mb: 1.2 }}>
+                <Typography
+                  sx={{ color: "#64748b", fontSize: "0.85rem", mb: 1.2 }}
+                >
                   Pick the tone for dark sections, accents, and tinted surfaces.
                 </Typography>
                 <Box
@@ -2179,7 +2215,10 @@ const LandingPreview: React.FC = () => {
                       component="button"
                       type="button"
                       onClick={() =>
-                        updateCompanyExecutiveSearch({ palette: palette.id, font: selectedFontPack.id })
+                        updateCompanyExecutiveSearch({
+                          palette: palette.id,
+                          font: selectedFontPack.id,
+                        })
                       }
                       sx={{
                         border:
@@ -2223,7 +2262,8 @@ const LandingPreview: React.FC = () => {
                         sx={{
                           fontSize: "0.82rem",
                           color: "#334155",
-                          fontWeight: selectedPalette.id === palette.id ? 700 : 500,
+                          fontWeight:
+                            selectedPalette.id === palette.id ? 700 : 500,
                         }}
                       >
                         {palette.name}
@@ -2245,8 +2285,11 @@ const LandingPreview: React.FC = () => {
                 <Typography sx={{ fontWeight: 800, color: "#111827", mb: 0.3 }}>
                   Font packs
                 </Typography>
-                <Typography sx={{ color: "#64748b", fontSize: "0.85rem", mb: 1.2 }}>
-                  Switch the tone between corporate, editorial, and modern styles.
+                <Typography
+                  sx={{ color: "#64748b", fontSize: "0.85rem", mb: 1.2 }}
+                >
+                  Switch the tone between corporate, editorial, and modern
+                  styles.
                 </Typography>
                 <Box
                   sx={{
@@ -2261,7 +2304,10 @@ const LandingPreview: React.FC = () => {
                       component="button"
                       type="button"
                       onClick={() =>
-                        updateCompanyExecutiveSearch({ font: pack.id, palette: selectedPalette.id })
+                        updateCompanyExecutiveSearch({
+                          font: pack.id,
+                          palette: selectedPalette.id,
+                        })
                       }
                       sx={{
                         border:

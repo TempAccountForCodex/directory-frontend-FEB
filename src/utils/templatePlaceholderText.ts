@@ -13,12 +13,12 @@
  */
 export function processTemplatePlaceholders(
   content: Record<string, any>,
-  createdAt: Date = new Date(),
+  createdAt: Date = new Date()
 ): Record<string, any> {
-  const creationDate = createdAt.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  const creationDate = createdAt.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 
   const processed: Record<string, any> = {};
@@ -27,18 +27,18 @@ export function processTemplatePlaceholders(
   Object.keys(content).forEach((key) => {
     const value = content[key];
 
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       // Replace {{CREATION_DATE}} placeholder
       processed[key] = value.replace(/\{\{CREATION_DATE\}\}/g, creationDate);
-    } else if (value && typeof value === "object" && !Array.isArray(value)) {
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
       // Recursively process nested objects
       processed[key] = processTemplatePlaceholders(value, createdAt);
     } else if (Array.isArray(value)) {
       // Process arrays
       processed[key] = value.map((item) =>
-        typeof item === "object" && item !== null
+        typeof item === 'object' && item !== null
           ? processTemplatePlaceholders(item, createdAt)
-          : item,
+          : item
       );
     } else {
       // Keep other values as-is
@@ -55,14 +55,12 @@ export function processTemplatePlaceholders(
  * @returns True if placeholders are found
  */
 export function hasUnprocessedPlaceholders(content: any): boolean {
-  if (typeof content === "string") {
+  if (typeof content === 'string') {
     return /\{\{[A-Z_]+\}\}/.test(content);
   }
 
-  if (content && typeof content === "object") {
-    return Object.values(content).some((value) =>
-      hasUnprocessedPlaceholders(value),
-    );
+  if (content && typeof content === 'object') {
+    return Object.values(content).some((value) => hasUnprocessedPlaceholders(value));
   }
 
   return false;

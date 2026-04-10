@@ -1,15 +1,15 @@
-import { useState, useCallback } from "react";
-import Alert from "@mui/material/Alert";
-import Snackbar from "@mui/material/Snackbar";
-import Box from "@mui/material/Box";
-import { useNavigate } from "react-router-dom";
-import { PageHeader } from "../components/Dashboard/shared";
-import TemplateFilters from "../components/Templates/TemplateFilters";
-import TemplateGallery from "../components/Templates/TemplateGallery";
-import TemplatePreviewModal from "../components/Templates/TemplatePreviewModal";
-import CreateWebsiteModal from "../components/Templates/CreateWebsiteModal";
-import { useTemplates } from "../hooks/useTemplates";
-import { type TemplateSummary } from "../templates/templateApi";
+import { useState, useCallback } from 'react';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import Box from '@mui/material/Box';
+import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../components/Dashboard/shared';
+import TemplateFilters from '../components/Templates/TemplateFilters';
+import TemplateGallery from '../components/Templates/TemplateGallery';
+import TemplatePreviewModal from '../components/Templates/TemplatePreviewModal';
+import CreateWebsiteModal from '../components/Templates/CreateWebsiteModal';
+import { useTemplates } from '../hooks/useTemplates';
+import { type TemplateSummary } from '../templates/templateApi';
 
 interface TemplatesPageProps {
   pageTitle?: string;
@@ -17,20 +17,17 @@ interface TemplatesPageProps {
 }
 
 const TemplatesPage = ({
-  pageTitle = "Template Gallery",
-  pageSubtitle = "Browse and preview website templates",
+  pageTitle = 'Template Gallery',
+  pageSubtitle = 'Browse and preview website templates',
 }: TemplatesPageProps) => {
   const navigate = useNavigate();
   const { templates, loading, error, filters, setFilters } = useTemplates();
 
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<TemplateSummary | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateSummary | null>(null);
   const [previewOpen, setPreviewOpen] = useState<boolean>(false);
   const [createOpen, setCreateOpen] = useState<boolean>(false);
-  const [createTemplate, setCreateTemplate] = useState<TemplateSummary | null>(
-    null,
-  );
-  const [successMessage, setSuccessMessage] = useState("");
+  const [createTemplate, setCreateTemplate] = useState<TemplateSummary | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const onPreviewTemplate = useCallback((template: TemplateSummary) => {
     setSelectedTemplate(template);
@@ -41,7 +38,7 @@ const TemplatesPage = ({
     (template: TemplateSummary) => {
       onPreviewTemplate(template);
     },
-    [onPreviewTemplate],
+    [onPreviewTemplate]
   );
 
   const onClosePreview = useCallback(() => {
@@ -49,16 +46,14 @@ const TemplatesPage = ({
   }, []);
 
   const onPreviewNavigate = useCallback(
-    (direction: "prev" | "next") => {
+    (direction: 'prev' | 'next') => {
       if (!selectedTemplate || templates.length === 0) return;
 
-      const currentIndex = templates.findIndex(
-        (t) => t.id === selectedTemplate.id,
-      );
+      const currentIndex = templates.findIndex((t) => t.id === selectedTemplate.id);
       if (currentIndex === -1) return;
 
       let newIndex: number;
-      if (direction === "prev") {
+      if (direction === 'prev') {
         newIndex = currentIndex === 0 ? templates.length - 1 : currentIndex - 1;
       } else {
         newIndex = currentIndex === templates.length - 1 ? 0 : currentIndex + 1;
@@ -66,7 +61,7 @@ const TemplatesPage = ({
 
       setSelectedTemplate(templates[newIndex]);
     },
-    [selectedTemplate, templates],
+    [selectedTemplate, templates]
   );
 
   const onUseTemplate = useCallback((template: TemplateSummary) => {
@@ -84,13 +79,13 @@ const TemplatesPage = ({
     (websiteId: number) => {
       setCreateOpen(false);
       setCreateTemplate(null);
-      setSuccessMessage("Website created successfully!");
+      setSuccessMessage('Website created successfully!');
       // Navigate to website editor after short delay for snackbar visibility
       setTimeout(() => {
         navigate(`/dashboard/websites/${websiteId}/manage/overview`);
       }, 1200);
     },
-    [navigate],
+    [navigate]
   );
 
   return (
@@ -133,14 +128,14 @@ const TemplatesPage = ({
       <Snackbar
         open={!!successMessage}
         autoHideDuration={4000}
-        onClose={() => setSuccessMessage("")}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        onClose={() => setSuccessMessage('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
-          onClose={() => setSuccessMessage("")}
+          onClose={() => setSuccessMessage('')}
           severity="success"
           variant="filled"
-          sx={{ width: "100%" }}
+          sx={{ width: '100%' }}
         >
           {successMessage}
         </Alert>

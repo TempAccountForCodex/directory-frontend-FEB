@@ -9,22 +9,22 @@
  * - On reconnect, clears collaborationUnavailable
  * - Edge cases: null blockId, empty locks map
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook } from '@testing-library/react';
 
 // ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
 
-import { useConflictPrevention } from "../useConflictPrevention";
-import type { LockInfo } from "../usePreviewSync";
-import type { WebSocketConnectionState } from "../../types/websocket";
+import { useConflictPrevention } from '../useConflictPrevention';
+import type { LockInfo } from '../usePreviewSync';
+import type { WebSocketConnectionState } from '../../types/websocket';
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("useConflictPrevention", () => {
+describe('useConflictPrevention', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -35,112 +35,94 @@ describe("useConflictPrevention", () => {
 
   // ---- Basic return value ---------------------------------------------------
 
-  it("returns { isLocked, lockedBy, canEdit, collaborationUnavailable }", () => {
+  it('returns { isLocked, lockedBy, canEdit, collaborationUnavailable }', () => {
     const locks = new Map<number, LockInfo>();
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, locks, "connected"),
-    );
+    const { result } = renderHook(() => useConflictPrevention(1, 42, locks, 'connected'));
 
-    expect(result.current).toHaveProperty("isLocked");
-    expect(result.current).toHaveProperty("lockedBy");
-    expect(result.current).toHaveProperty("canEdit");
-    expect(result.current).toHaveProperty("collaborationUnavailable");
+    expect(result.current).toHaveProperty('isLocked');
+    expect(result.current).toHaveProperty('lockedBy');
+    expect(result.current).toHaveProperty('canEdit');
+    expect(result.current).toHaveProperty('collaborationUnavailable');
   });
 
   // ---- Lock check -----------------------------------------------------------
 
-  it("canEdit=true when no lock on blockId", () => {
+  it('canEdit=true when no lock on blockId', () => {
     const locks = new Map<number, LockInfo>();
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, locks, "connected"),
-    );
+    const { result } = renderHook(() => useConflictPrevention(1, 42, locks, 'connected'));
 
     expect(result.current.canEdit).toBe(true);
     expect(result.current.isLocked).toBe(false);
     expect(result.current.lockedBy).toBeNull();
   });
 
-  it("canEdit=false when another user holds lock on blockId", () => {
+  it('canEdit=false when another user holds lock on blockId', () => {
     const locks = new Map<number, LockInfo>();
     locks.set(1, {
       userId: 99,
       blockId: 1,
-      username: "Bob",
+      username: 'Bob',
       acquiredAt: Date.now(),
     });
 
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, locks, "connected"),
-    );
+    const { result } = renderHook(() => useConflictPrevention(1, 42, locks, 'connected'));
 
     expect(result.current.canEdit).toBe(false);
     expect(result.current.isLocked).toBe(true);
-    expect(result.current.lockedBy).toBe("Bob");
+    expect(result.current.lockedBy).toBe('Bob');
   });
 
-  it("canEdit=true when current user holds lock on blockId (own lock)", () => {
+  it('canEdit=true when current user holds lock on blockId (own lock)', () => {
     const locks = new Map<number, LockInfo>();
     locks.set(1, {
       userId: 42,
       blockId: 1,
-      username: "Alice",
+      username: 'Alice',
       acquiredAt: Date.now(),
     });
 
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, locks, "connected"),
-    );
+    const { result } = renderHook(() => useConflictPrevention(1, 42, locks, 'connected'));
 
     expect(result.current.canEdit).toBe(true);
     expect(result.current.isLocked).toBe(false);
   });
 
-  it("canEdit=true when lock exists but on different blockId", () => {
+  it('canEdit=true when lock exists but on different blockId', () => {
     const locks = new Map<number, LockInfo>();
     locks.set(99, {
       userId: 99,
       blockId: 99,
-      username: "Bob",
+      username: 'Bob',
       acquiredAt: Date.now(),
     });
 
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, locks, "connected"),
-    );
+    const { result } = renderHook(() => useConflictPrevention(1, 42, locks, 'connected'));
 
     expect(result.current.canEdit).toBe(true);
   });
 
   // ---- WebSocket disconnect -------------------------------------------------
 
-  it("collaborationUnavailable=false when connected", () => {
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, new Map(), "connected"),
-    );
+  it('collaborationUnavailable=false when connected', () => {
+    const { result } = renderHook(() => useConflictPrevention(1, 42, new Map(), 'connected'));
 
     expect(result.current.collaborationUnavailable).toBe(false);
   });
 
-  it("collaborationUnavailable=true when disconnected", () => {
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, new Map(), "disconnected"),
-    );
+  it('collaborationUnavailable=true when disconnected', () => {
+    const { result } = renderHook(() => useConflictPrevention(1, 42, new Map(), 'disconnected'));
 
     expect(result.current.collaborationUnavailable).toBe(true);
   });
 
-  it("collaborationUnavailable=true when error state", () => {
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, new Map(), "error"),
-    );
+  it('collaborationUnavailable=true when error state', () => {
+    const { result } = renderHook(() => useConflictPrevention(1, 42, new Map(), 'error'));
 
     expect(result.current.collaborationUnavailable).toBe(true);
   });
 
-  it("canEdit still true when disconnected (local editing continues)", () => {
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, new Map(), "disconnected"),
-    );
+  it('canEdit still true when disconnected (local editing continues)', () => {
+    const { result } = renderHook(() => useConflictPrevention(1, 42, new Map(), 'disconnected'));
 
     expect(result.current.canEdit).toBe(true);
     expect(result.current.collaborationUnavailable).toBe(true);
@@ -148,15 +130,13 @@ describe("useConflictPrevention", () => {
 
   // ---- Edge cases -----------------------------------------------------------
 
-  it("handles empty locks map", () => {
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, new Map(), "connected"),
-    );
+  it('handles empty locks map', () => {
+    const { result } = renderHook(() => useConflictPrevention(1, 42, new Map(), 'connected'));
 
     expect(result.current.canEdit).toBe(true);
   });
 
-  it("provides lockedBy username as fallback when username is not set", () => {
+  it('provides lockedBy username as fallback when username is not set', () => {
     const locks = new Map<number, LockInfo>();
     locks.set(1, {
       userId: 99,
@@ -164,10 +144,8 @@ describe("useConflictPrevention", () => {
       acquiredAt: Date.now(),
     });
 
-    const { result } = renderHook(() =>
-      useConflictPrevention(1, 42, locks, "connected"),
-    );
+    const { result } = renderHook(() => useConflictPrevention(1, 42, locks, 'connected'));
 
-    expect(result.current.lockedBy).toBe("User 99");
+    expect(result.current.lockedBy).toBe('User 99');
   });
 });

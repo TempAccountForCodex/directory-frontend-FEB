@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   AppBar,
   Box,
@@ -10,13 +10,13 @@ import {
   Stack,
   Toolbar,
   Typography,
-} from "@mui/material";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { Mail, MapPin, Phone } from "lucide-react";
-import type { TemplateProps } from "../../templateEngine/types";
-import { buildModernTheme } from "../modern/modernTheme";
-import { FadeIn } from "../../blocks";
+} from '@mui/material';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { Mail, MapPin, Phone } from 'lucide-react';
+import type { TemplateProps } from '../../templateEngine/types';
+import { buildModernTheme } from '../modern/modernTheme';
+import { FadeIn } from '../../blocks';
 
 const sectionOffset = 110;
 
@@ -24,24 +24,23 @@ function scrollToSection(sectionId: string) {
   const section = document.getElementById(sectionId);
   if (!section) return;
 
-  const y =
-    section.getBoundingClientRect().top + window.scrollY - sectionOffset;
-  window.scrollTo({ top: y, behavior: "smooth" });
+  const y = section.getBoundingClientRect().top + window.scrollY - sectionOffset;
+  window.scrollTo({ top: y, behavior: 'smooth' });
 }
 
 const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
   const theme = {
     ...buildModernTheme(data.primaryColor, data.secondaryColor),
-    bgPrimary: "#f7faff",
-    bgSecondary: "#eef4ff",
-    surfaceColor: "#ffffff",
+    bgPrimary: '#f7faff',
+    bgSecondary: '#eef4ff',
+    surfaceColor: '#ffffff',
   };
 
   const navItems = [
-    { label: "Programs", id: "programs" },
-    { label: "Highlights", id: "highlights" },
-    { label: "Gallery", id: "gallery" },
-    { label: "Contact", id: "contact" },
+    { label: 'Programs', id: 'programs' },
+    { label: 'Highlights', id: 'highlights' },
+    { label: 'Gallery', id: 'gallery' },
+    { label: 'Contact', id: 'contact' },
   ];
 
   const heroImage = data.heroBannerUrl;
@@ -56,31 +55,26 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         elevation={0}
         sx={{
           top: { xs: 0, md: 50 },
-          bgcolor: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(14px)",
-          borderBottom: "1px solid rgba(28, 54, 114, 0.08)",
+          bgcolor: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(14px)',
+          borderBottom: '1px solid rgba(28, 54, 114, 0.08)',
           color: theme.headingColor,
         }}
       >
         <Toolbar
           sx={{
-            minHeight: "auto !important",
+            minHeight: 'auto !important',
             maxWidth: 1240,
-            width: "100%",
-            mx: "auto",
+            width: '100%',
+            mx: 'auto',
             px: { xs: 2, md: 3 },
             py: { xs: 1.2, md: 1.4 },
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr auto", md: "260px 1fr 220px" },
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr auto', md: '260px 1fr 220px' },
             gap: 2,
           }}
         >
-          <Stack
-            direction="row"
-            spacing={1.25}
-            alignItems="center"
-            sx={{ minWidth: 0 }}
-          >
+          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0 }}>
             {data.logoUrl && (
               <Box
                 component="img"
@@ -89,11 +83,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   width: { xs: 42, md: 50 },
                   height: { xs: 42, md: 50 },
-                  objectFit: "contain",
+                  objectFit: 'contain',
                   borderRadius: 2,
-                  bgcolor: "#fff",
+                  bgcolor: '#fff',
                   p: 0.35,
-                  border: "1px solid rgba(37,99,235,0.12)",
+                  border: '1px solid rgba(37,99,235,0.12)',
                 }}
               />
             )}
@@ -101,21 +95,21 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Typography
                 sx={{
                   fontWeight: 800,
-                  color: "#1b3266",
-                  fontSize: { xs: "0.98rem", md: "1.08rem" },
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  color: '#1b3266',
+                  fontSize: { xs: '0.98rem', md: '1.08rem' },
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
                 {data.name}
               </Typography>
               <Typography
                 sx={{
-                  fontSize: "0.72rem",
-                  color: "#6277a3",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
+                  fontSize: '0.72rem',
+                  color: '#6277a3',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
                 }}
               >
                 Learning with clarity
@@ -127,7 +121,7 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             direction="row"
             spacing={3}
             justifyContent="center"
-            sx={{ display: { xs: "none", md: "flex" } }}
+            sx={{ display: { xs: 'none', md: 'flex' } }}
           >
             {navItems.map((item) => (
               <Box
@@ -138,16 +132,16 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   border: 0,
                   p: 0,
-                  bgcolor: "transparent",
-                  cursor: "pointer",
-                  color: "#243b6b",
+                  bgcolor: 'transparent',
+                  cursor: 'pointer',
+                  color: '#243b6b',
                   fontWeight: 700,
                   fontFamily: theme.fontFamily,
-                  fontSize: "0.82rem",
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  transition: "color 160ms ease",
-                  "&:hover": { color: theme.primaryColor },
+                  fontSize: '0.82rem',
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  transition: 'color 160ms ease',
+                  '&:hover': { color: theme.primaryColor },
                 }}
               >
                 {item.label}
@@ -158,21 +152,19 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Stack direction="row" justifyContent="flex-end">
             <Button
               variant="contained"
-              href={
-                data.contact.phone ? `tel:${data.contact.phone}` : undefined
-              }
+              href={data.contact.phone ? `tel:${data.contact.phone}` : undefined}
               sx={{
                 bgcolor: theme.primaryColor,
-                color: "#fff",
+                color: '#fff',
                 borderRadius: 999,
                 px: { xs: 2.4, md: 3.2 },
                 py: 1,
                 fontWeight: 700,
-                boxShadow: "0 12px 28px rgba(37,99,235,0.22)",
-                "&:hover": {
+                boxShadow: '0 12px 28px rgba(37,99,235,0.22)',
+                '&:hover': {
                   bgcolor: theme.primaryColor,
-                  color: "#fff",
-                  filter: "brightness(0.94)",
+                  color: '#fff',
+                  filter: 'brightness(0.94)',
                 },
               }}
             >
@@ -186,42 +178,42 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         id="hero"
         data-preview-section="Hero"
         sx={{
-          position: "relative",
-          overflow: "hidden",
-          minHeight: { xs: "auto", md: "88vh" },
-          display: "flex",
-          alignItems: "stretch",
-          backgroundColor: "#0f2450",
+          position: 'relative',
+          overflow: 'hidden',
+          minHeight: { xs: 'auto', md: '88vh' },
+          display: 'flex',
+          alignItems: 'stretch',
+          backgroundColor: '#0f2450',
           backgroundImage: heroImage
             ? `linear-gradient(110deg, rgba(7, 20, 47, 0.88) 0%, rgba(7, 20, 47, 0.76) 34%, rgba(7, 20, 47, 0.42) 58%, rgba(7, 20, 47, 0.72) 100%), url(${heroImage})`
-            : "linear-gradient(135deg, #0f2450 0%, #1f4c9f 100%)",
-          backgroundPosition: "center",
-          backgroundSize: "cover",
+            : 'linear-gradient(135deg, #0f2450 0%, #1f4c9f 100%)',
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
         }}
       >
         <Box
           sx={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
             background:
-              "radial-gradient(circle at top right, rgba(96,165,250,0.24), transparent 28%), radial-gradient(circle at bottom left, rgba(59,130,246,0.2), transparent 34%)",
-            pointerEvents: "none",
+              'radial-gradient(circle at top right, rgba(96,165,250,0.24), transparent 28%), radial-gradient(circle at bottom left, rgba(59,130,246,0.2), transparent 34%)',
+            pointerEvents: 'none',
           }}
         />
         <Container
           maxWidth="xl"
           sx={{
-            position: "relative",
+            position: 'relative',
             zIndex: 1,
             px: { xs: 2, md: 4 },
             py: { xs: 6, md: 8 },
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
           }}
         >
           <Box
             sx={{
-              width: "100%",
+              width: '100%',
               maxWidth: 700,
               px: { xs: 1.5, sm: 2, md: 0 },
               py: { xs: 2, md: 3 },
@@ -230,19 +222,19 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             <FadeIn>
               <Box
                 sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
+                  display: 'inline-flex',
+                  alignItems: 'center',
                   gap: 1,
                   px: 1.6,
                   py: 0.9,
                   mb: 2.5,
                   borderRadius: 999,
-                  bgcolor: "rgba(255,255,255,0.14)",
-                  color: "#e8f1ff",
+                  bgcolor: 'rgba(255,255,255,0.14)',
+                  color: '#e8f1ff',
                   fontWeight: 700,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  fontSize: "0.72rem",
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  fontSize: '0.72rem',
                 }}
               >
                 Admissions open for new term
@@ -252,13 +244,13 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             <FadeIn delay={0.08}>
               <Typography
                 sx={{
-                  color: "#ffffff",
-                  fontSize: { xs: "2.6rem", md: "5.2rem" },
+                  color: '#ffffff',
+                  fontSize: { xs: '2.6rem', md: '5.2rem' },
                   lineHeight: { xs: 1, md: 0.95 },
                   fontWeight: 900,
-                  letterSpacing: "-0.05em",
+                  letterSpacing: '-0.05em',
                   maxWidth: 680,
-                  textShadow: "0 10px 28px rgba(0,0,0,0.24)",
+                  textShadow: '0 10px 28px rgba(0,0,0,0.24)',
                 }}
               >
                 A brighter learning journey starts here.
@@ -270,8 +262,8 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   mt: 2.5,
                   maxWidth: 600,
-                  color: "rgba(235, 243, 255, 0.88)",
-                  fontSize: { xs: "1rem", md: "1.12rem" },
+                  color: 'rgba(235, 243, 255, 0.88)',
+                  fontSize: { xs: '1rem', md: '1.12rem' },
                   lineHeight: 1.8,
                 }}
               >
@@ -280,26 +272,22 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             </FadeIn>
 
             <FadeIn delay={0.2}>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={2}
-                sx={{ mt: 4 }}
-              >
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 4 }}>
                 <Button
                   variant="contained"
                   endIcon={<ArrowForwardIcon />}
-                  onClick={() => scrollToSection("programs")}
+                  onClick={() => scrollToSection('programs')}
                   sx={{
-                    bgcolor: "#ffffff",
-                    color: "#10244c",
+                    bgcolor: '#ffffff',
+                    color: '#10244c',
                     borderRadius: 999,
                     px: 4,
                     py: 1.55,
                     fontWeight: 800,
-                    "&:hover": {
-                      bgcolor: "#ffffff",
-                      color: "#10244c",
-                      filter: "brightness(0.94)",
+                    '&:hover': {
+                      bgcolor: '#ffffff',
+                      color: '#10244c',
+                      filter: 'brightness(0.94)',
                     },
                   }}
                 >
@@ -307,18 +295,18 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Button>
                 <Button
                   variant="outlined"
-                  onClick={() => scrollToSection("contact")}
+                  onClick={() => scrollToSection('contact')}
                   sx={{
-                    borderColor: "rgba(255,255,255,0.4)",
-                    color: "#ffffff",
+                    borderColor: 'rgba(255,255,255,0.4)',
+                    color: '#ffffff',
                     borderRadius: 999,
                     px: 4,
                     py: 1.55,
                     fontWeight: 700,
-                    bgcolor: "rgba(255,255,255,0.04)",
-                    "&:hover": {
-                      borderColor: "rgba(255,255,255,0.7)",
-                      bgcolor: "rgba(255,255,255,0.08)",
+                    bgcolor: 'rgba(255,255,255,0.04)',
+                    '&:hover': {
+                      borderColor: 'rgba(255,255,255,0.7)',
+                      bgcolor: 'rgba(255,255,255,0.08)',
                     },
                   }}
                 >
@@ -333,29 +321,29 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
       <Box
         id="programs"
         data-preview-section="Programs"
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#ffffff" }}
+        sx={{ py: { xs: 8, md: 12 }, bgcolor: '#ffffff' }}
       >
         <Container maxWidth="lg">
           <FadeIn>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 color: theme.primaryColor,
                 fontWeight: 800,
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                fontSize: "0.78rem",
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                fontSize: '0.78rem',
               }}
             >
               Signature Programs
             </Typography>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 mt: 1.5,
-                color: "#10244c",
+                color: '#10244c',
                 fontWeight: 900,
-                fontSize: { xs: "2rem", md: "3.25rem" },
+                fontSize: { xs: '2rem', md: '3.25rem' },
                 lineHeight: 1.05,
               }}
             >
@@ -363,17 +351,16 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Typography>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 mt: 2,
                 maxWidth: 760,
-                mx: "auto",
-                color: "#62718e",
+                mx: 'auto',
+                color: '#62718e',
                 lineHeight: 1.8,
               }}
             >
-              Each learning track is structured to combine expert instruction,
-              targeted practice, and ongoing mentorship so students keep
-              progressing with clarity.
+              Each learning track is structured to combine expert instruction, targeted practice,
+              and ongoing mentorship so students keep progressing with clarity.
             </Typography>
           </FadeIn>
 
@@ -384,11 +371,10 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Card
                     elevation={0}
                     sx={{
-                      height: "100%",
+                      height: '100%',
                       borderRadius: 4,
-                      border: "1px solid rgba(31, 72, 152, 0.08)",
-                      background:
-                        "linear-gradient(180deg, #ffffff 0%, #f7fbff 100%)",
+                      border: '1px solid rgba(31, 72, 152, 0.08)',
+                      background: 'linear-gradient(180deg, #ffffff 0%, #f7fbff 100%)',
                     }}
                   >
                     <CardContent sx={{ p: 3.2 }}>
@@ -397,28 +383,26 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                           width: 52,
                           height: 52,
                           borderRadius: 2.5,
-                          display: "grid",
-                          placeItems: "center",
-                          bgcolor: "rgba(37,99,235,0.1)",
+                          display: 'grid',
+                          placeItems: 'center',
+                          bgcolor: 'rgba(37,99,235,0.1)',
                           color: theme.primaryColor,
                           fontWeight: 900,
                           mb: 2.2,
                         }}
                       >
-                        {String(index + 1).padStart(2, "0")}
+                        {String(index + 1).padStart(2, '0')}
                       </Box>
                       <Typography
                         sx={{
-                          color: "#12264f",
+                          color: '#12264f',
                           fontWeight: 800,
-                          fontSize: "1.18rem",
+                          fontSize: '1.18rem',
                         }}
                       >
                         {service.name}
                       </Typography>
-                      <Typography
-                        sx={{ mt: 1.1, color: "#62718e", lineHeight: 1.75 }}
-                      >
+                      <Typography sx={{ mt: 1.1, color: '#62718e', lineHeight: 1.75 }}>
                         {service.description}
                       </Typography>
                       {service.price && (
@@ -454,9 +438,9 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     color: theme.primaryColor,
                     fontWeight: 800,
-                    letterSpacing: "0.16em",
-                    textTransform: "uppercase",
-                    fontSize: "0.78rem",
+                    letterSpacing: '0.16em',
+                    textTransform: 'uppercase',
+                    fontSize: '0.78rem',
                   }}
                 >
                   Why Families Choose Us
@@ -464,18 +448,17 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography
                   sx={{
                     mt: 1.5,
-                    color: "#10244c",
+                    color: '#10244c',
                     fontWeight: 900,
-                    fontSize: { xs: "2rem", md: "3rem" },
+                    fontSize: { xs: '2rem', md: '3rem' },
                     lineHeight: 1.08,
                   }}
                 >
                   Support that feels personal, structured, and ambitious.
                 </Typography>
-                <Typography sx={{ mt: 2, color: "#62718e", lineHeight: 1.85 }}>
-                  We combine high-touch mentorship with clear academic systems
-                  so students know what to work on, why it matters, and how to
-                  keep moving forward.
+                <Typography sx={{ mt: 2, color: '#62718e', lineHeight: 1.85 }}>
+                  We combine high-touch mentorship with clear academic systems so students know what
+                  to work on, why it matters, and how to keep moving forward.
                 </Typography>
               </FadeIn>
             </Grid>
@@ -483,10 +466,10 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Grid item xs={12} md={7}>
               <Grid container spacing={2}>
                 {[
-                  "Certified instructors and subject specialists",
-                  "Progress tracking shared with families",
-                  "Flexible in-person and online formats",
-                  "Confidence-building beyond grades alone",
+                  'Certified instructors and subject specialists',
+                  'Progress tracking shared with families',
+                  'Flexible in-person and online formats',
+                  'Confidence-building beyond grades alone',
                 ].map((point, index) => (
                   <Grid item xs={12} sm={6} key={point}>
                     <FadeIn delay={index * 0.06}>
@@ -494,18 +477,16 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                         elevation={0}
                         sx={{
                           borderRadius: 4,
-                          border: "1px solid rgba(37,99,235,0.08)",
-                          bgcolor: "#ffffff",
-                          height: "100%",
+                          border: '1px solid rgba(37,99,235,0.08)',
+                          bgcolor: '#ffffff',
+                          height: '100%',
                         }}
                       >
                         <CardContent sx={{ p: 2.6 }}>
-                          <CheckCircleIcon
-                            sx={{ color: theme.primaryColor, mb: 1.4 }}
-                          />
+                          <CheckCircleIcon sx={{ color: theme.primaryColor, mb: 1.4 }} />
                           <Typography
                             sx={{
-                              color: "#12264f",
+                              color: '#12264f',
                               fontWeight: 800,
                               lineHeight: 1.45,
                             }}
@@ -526,29 +507,29 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
       <Box
         id="gallery"
         data-preview-section="Gallery"
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#ffffff" }}
+        sx={{ py: { xs: 8, md: 12 }, bgcolor: '#ffffff' }}
       >
         <Container maxWidth="lg">
           <FadeIn>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 color: theme.primaryColor,
                 fontWeight: 800,
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                fontSize: "0.78rem",
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                fontSize: '0.78rem',
               }}
             >
               Campus Moments
             </Typography>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 mt: 1.5,
-                color: "#10244c",
+                color: '#10244c',
                 fontWeight: 900,
-                fontSize: { xs: "2rem", md: "3rem" },
+                fontSize: { xs: '2rem', md: '3rem' },
               }}
             >
               Learning spaces that feel active and inspiring.
@@ -567,8 +548,8 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <FadeIn delay={index * 0.06}>
                   <Box
                     sx={{
-                      position: "relative",
-                      overflow: "hidden",
+                      position: 'relative',
+                      overflow: 'hidden',
                       borderRadius: 4,
                       minHeight: index === 0 ? 420 : 280,
                     }}
@@ -577,25 +558,25 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                       component="img"
                       src={item.url}
                       alt={item.caption || data.name}
-                      sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     <Box
                       sx={{
-                        position: "absolute",
+                        position: 'absolute',
                         inset: 0,
                         background:
-                          "linear-gradient(180deg, rgba(0,0,0,0.02) 20%, rgba(11,22,49,0.55) 100%)",
+                          'linear-gradient(180deg, rgba(0,0,0,0.02) 20%, rgba(11,22,49,0.55) 100%)',
                       }}
                     />
                     <Typography
                       sx={{
-                        position: "absolute",
+                        position: 'absolute',
                         left: 18,
                         right: 18,
                         bottom: 16,
-                        color: "#fff",
+                        color: '#fff',
                         fontWeight: 700,
-                        fontSize: "1rem",
+                        fontSize: '1rem',
                       }}
                     >
                       {item.caption}
@@ -617,23 +598,23 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
           <FadeIn>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 color: theme.primaryColor,
                 fontWeight: 800,
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                fontSize: "0.78rem",
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                fontSize: '0.78rem',
               }}
             >
               Parent Feedback
             </Typography>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 mt: 1.5,
-                color: "#10244c",
+                color: '#10244c',
                 fontWeight: 900,
-                fontSize: { xs: "2rem", md: "3rem" },
+                fontSize: { xs: '2rem', md: '3rem' },
               }}
             >
               Trusted by families who want more than tutoring.
@@ -647,36 +628,30 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Card
                     elevation={0}
                     sx={{
-                      height: "100%",
+                      height: '100%',
                       borderRadius: 4,
-                      border: "1px solid rgba(37,99,235,0.08)",
-                      bgcolor: "#ffffff",
+                      border: '1px solid rgba(37,99,235,0.08)',
+                      bgcolor: '#ffffff',
                     }}
                   >
                     <CardContent sx={{ p: 3 }}>
                       <Typography
                         sx={{
-                          color: "#f4b400",
-                          letterSpacing: "0.12em",
+                          color: '#f4b400',
+                          letterSpacing: '0.12em',
                           fontWeight: 800,
                         }}
                       >
-                        {"★".repeat(review.rating)}
+                        {'★'.repeat(review.rating)}
                       </Typography>
-                      <Typography
-                        sx={{ mt: 1.8, color: "#4d5d79", lineHeight: 1.85 }}
-                      >
+                      <Typography sx={{ mt: 1.8, color: '#4d5d79', lineHeight: 1.85 }}>
                         {review.text}
                       </Typography>
-                      <Typography
-                        sx={{ mt: 2.4, color: "#12264f", fontWeight: 800 }}
-                      >
+                      <Typography sx={{ mt: 2.4, color: '#12264f', fontWeight: 800 }}>
                         {review.author}
                       </Typography>
                       {review.date && (
-                        <Typography
-                          sx={{ mt: 0.4, color: "#7b8aa6", fontSize: "0.9rem" }}
-                        >
+                        <Typography sx={{ mt: 0.4, color: '#7b8aa6', fontSize: '0.9rem' }}>
                           {review.date}
                         </Typography>
                       )}
@@ -692,7 +667,7 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
       <Box
         id="contact"
         data-preview-section="Contact"
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#0f2450" }}
+        sx={{ py: { xs: 8, md: 12 }, bgcolor: '#0f2450' }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
@@ -700,11 +675,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
               <FadeIn>
                 <Typography
                   sx={{
-                    color: "#8eb5ff",
+                    color: '#8eb5ff',
                     fontWeight: 800,
-                    letterSpacing: "0.16em",
-                    textTransform: "uppercase",
-                    fontSize: "0.78rem",
+                    letterSpacing: '0.16em',
+                    textTransform: 'uppercase',
+                    fontSize: '0.78rem',
                   }}
                 >
                   Admissions Desk
@@ -712,9 +687,9 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography
                   sx={{
                     mt: 1.5,
-                    color: "#ffffff",
+                    color: '#ffffff',
                     fontWeight: 900,
-                    fontSize: { xs: "2rem", md: "3rem" },
+                    fontSize: { xs: '2rem', md: '3rem' },
                     lineHeight: 1.08,
                     maxWidth: 540,
                   }}
@@ -724,14 +699,13 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography
                   sx={{
                     mt: 2,
-                    color: "rgba(255,255,255,0.76)",
+                    color: 'rgba(255,255,255,0.76)',
                     lineHeight: 1.9,
                     maxWidth: 560,
                   }}
                 >
-                  Speak with our team about goals, schedules, and the best next
-                  step. We’ll help you choose a path that matches academic needs
-                  and learning style.
+                  Speak with our team about goals, schedules, and the best next step. We’ll help you
+                  choose a path that matches academic needs and learning style.
                 </Typography>
               </FadeIn>
             </Grid>
@@ -742,26 +716,26 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                   elevation={0}
                   sx={{
                     borderRadius: 4,
-                    bgcolor: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    backdropFilter: "blur(12px)",
+                    bgcolor: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(12px)',
                   }}
                 >
                   <CardContent sx={{ p: 3.2 }}>
                     {[
                       {
                         icon: <Phone size={18} />,
-                        label: "Call us",
+                        label: 'Call us',
                         value: data.contact.phone,
                       },
                       {
                         icon: <Mail size={18} />,
-                        label: "Email",
+                        label: 'Email',
                         value: data.contact.email,
                       },
                       {
                         icon: <MapPin size={18} />,
-                        label: "Visit",
+                        label: 'Visit',
                         value: data.contact.address,
                       },
                     ].map((item) => (
@@ -773,28 +747,22 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                         sx={{
                           py: 1.4,
                           borderBottom:
-                            item.label === "Visit"
-                              ? "none"
-                              : "1px solid rgba(255,255,255,0.08)",
+                            item.label === 'Visit' ? 'none' : '1px solid rgba(255,255,255,0.08)',
                         }}
                       >
-                        <Box sx={{ color: "#9ac0ff", mt: 0.2 }}>
-                          {item.icon}
-                        </Box>
+                        <Box sx={{ color: '#9ac0ff', mt: 0.2 }}>{item.icon}</Box>
                         <Box>
                           <Typography
                             sx={{
-                              color: "#9ac0ff",
-                              fontSize: "0.82rem",
-                              textTransform: "uppercase",
-                              letterSpacing: "0.14em",
+                              color: '#9ac0ff',
+                              fontSize: '0.82rem',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.14em',
                             }}
                           >
                             {item.label}
                           </Typography>
-                          <Typography
-                            sx={{ mt: 0.6, color: "#ffffff", lineHeight: 1.7 }}
-                          >
+                          <Typography sx={{ mt: 0.6, color: '#ffffff', lineHeight: 1.7 }}>
                             {item.value}
                           </Typography>
                         </Box>
@@ -804,22 +772,18 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Button
                       variant="contained"
                       fullWidth
-                      href={
-                        data.contact.phone
-                          ? `tel:${data.contact.phone}`
-                          : undefined
-                      }
+                      href={data.contact.phone ? `tel:${data.contact.phone}` : undefined}
                       sx={{
                         mt: 2.6,
-                        bgcolor: "#ffffff",
-                        color: "#15316b",
+                        bgcolor: '#ffffff',
+                        color: '#15316b',
                         fontWeight: 800,
                         borderRadius: 999,
                         py: 1.4,
-                        "&:hover": {
-                          bgcolor: "#ffffff",
-                          color: "#15316b",
-                          filter: "brightness(0.97)",
+                        '&:hover': {
+                          bgcolor: '#ffffff',
+                          color: '#15316b',
+                          filter: 'brightness(0.97)',
                         },
                       }}
                     >
@@ -838,44 +802,43 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-section="Campus"
         sx={{
           py: { xs: 8, md: 12 },
-          bgcolor: "#f7faff",
-          position: "relative",
-          overflow: "hidden",
+          bgcolor: '#f7faff',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
         <Box
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: -120,
             right: -100,
             width: 280,
             height: 280,
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(96,165,250,0.18) 0%, rgba(96,165,250,0) 70%)",
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(96,165,250,0.18) 0%, rgba(96,165,250,0) 70%)',
           }}
         />
         <Container maxWidth="lg">
           <FadeIn>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 color: theme.primaryColor,
                 fontWeight: 800,
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                fontSize: "0.78rem",
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                fontSize: '0.78rem',
               }}
             >
               Visit Our Campus
             </Typography>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 mt: 1.5,
-                color: "#10244c",
+                color: '#10244c',
                 fontWeight: 900,
-                fontSize: { xs: "2rem", md: "3rem" },
+                fontSize: { xs: '2rem', md: '3rem' },
                 lineHeight: 1.08,
               }}
             >
@@ -883,36 +846,31 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Typography>
             <Typography
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 mt: 2,
                 maxWidth: 760,
-                mx: "auto",
-                color: "#62718e",
+                mx: 'auto',
+                color: '#62718e',
                 lineHeight: 1.8,
               }}
             >
-              Our learning center is designed to feel welcoming, focused, and
-              easy to access for students and families throughout the week.
+              Our learning center is designed to feel welcoming, focused, and easy to access for
+              students and families throughout the week.
             </Typography>
           </FadeIn>
 
-          <Grid
-            container
-            spacing={{ xs: 3, md: 4 }}
-            sx={{ mt: 4 }}
-            alignItems="stretch"
-          >
+          <Grid container spacing={{ xs: 3, md: 4 }} sx={{ mt: 4 }} alignItems="stretch">
             <Grid item xs={12} md={12}>
               <FadeIn direction="left">
                 <Box
                   sx={{
-                    position: "relative",
+                    position: 'relative',
                     height: { xs: 340, md: 500 },
-                    overflow: "hidden",
-                    borderRadius: "32px",
-                    border: "1px solid rgba(31,72,152,0.08)",
-                    bgcolor: "#dfeaff",
-                    boxShadow: "0 32px 70px rgba(35, 72, 150, 0.10)",
+                    overflow: 'hidden',
+                    borderRadius: '32px',
+                    border: '1px solid rgba(31,72,152,0.08)',
+                    bgcolor: '#dfeaff',
+                    boxShadow: '0 32px 70px rgba(35, 72, 150, 0.10)',
                   }}
                 >
                   {data.location?.embedUrl ? (
@@ -929,11 +887,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                   ) : (
                     <Box
                       sx={{
-                        width: "100%",
-                        height: "100%",
-                        display: "grid",
-                        placeItems: "center",
-                        color: "#5570a5",
+                        width: '100%',
+                        height: '100%',
+                        display: 'grid',
+                        placeItems: 'center',
+                        color: '#5570a5',
                         fontWeight: 700,
                       }}
                     >
@@ -944,33 +902,27 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {data.location?.address && (
                     <Box
                       sx={{
-                        position: "absolute",
+                        position: 'absolute',
                         left: 20,
                         right: 20,
                         bottom: 20,
                         p: 2,
                         borderRadius: 4,
-                        bgcolor: "rgba(16,36,76,0.78)",
-                        color: "#ffffff",
-                        backdropFilter: "blur(10px)",
+                        bgcolor: 'rgba(16,36,76,0.78)',
+                        color: '#ffffff',
+                        backdropFilter: 'blur(10px)',
                       }}
                     >
-                      <Stack
-                        direction="row"
-                        spacing={1.2}
-                        alignItems="flex-start"
-                      >
+                      <Stack direction="row" spacing={1.2} alignItems="flex-start">
                         <MapPin size={18} />
                         <Box>
-                          <Typography
-                            sx={{ fontWeight: 800, fontSize: "0.95rem" }}
-                          >
+                          <Typography sx={{ fontWeight: 800, fontSize: '0.95rem' }}>
                             Bright Minds Campus
                           </Typography>
                           <Typography
                             sx={{
                               mt: 0.4,
-                              color: "rgba(255,255,255,0.82)",
+                              color: 'rgba(255,255,255,0.82)',
                               lineHeight: 1.6,
                             }}
                           >

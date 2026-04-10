@@ -21,30 +21,29 @@ import {
   useCallback,
   useMemo,
   type ReactNode,
-} from "react";
-import axios from "axios";
-import { useAuth } from "./AuthContext";
+} from 'react';
+import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 // ── Permission Constants (mirrors backend/constants/permissions.js) ─────────
 
 export const WEBSITE_ACTIONS = {
-  VIEW: "VIEW",
-  EDIT_CONTENT: "EDIT_CONTENT",
-  EDIT_SETTINGS: "EDIT_SETTINGS",
-  DELETE: "DELETE",
-  MANAGE_COLLABORATORS: "MANAGE_COLLABORATORS",
-  PUBLISH: "PUBLISH",
-  UNPUBLISH: "UNPUBLISH",
-  TRANSFER_OWNERSHIP: "TRANSFER_OWNERSHIP",
-  DASHBOARD_ACCESS: "DASHBOARD_ACCESS",
-  VIEW_ANALYTICS: "VIEW_ANALYTICS",
-  MANAGE_FORMS: "MANAGE_FORMS",
-  MANAGE_INTEGRATIONS: "MANAGE_INTEGRATIONS",
-  MANAGE_DOMAIN: "MANAGE_DOMAIN",
+  VIEW: 'VIEW',
+  EDIT_CONTENT: 'EDIT_CONTENT',
+  EDIT_SETTINGS: 'EDIT_SETTINGS',
+  DELETE: 'DELETE',
+  MANAGE_COLLABORATORS: 'MANAGE_COLLABORATORS',
+  PUBLISH: 'PUBLISH',
+  UNPUBLISH: 'UNPUBLISH',
+  TRANSFER_OWNERSHIP: 'TRANSFER_OWNERSHIP',
+  DASHBOARD_ACCESS: 'DASHBOARD_ACCESS',
+  VIEW_ANALYTICS: 'VIEW_ANALYTICS',
+  MANAGE_FORMS: 'MANAGE_FORMS',
+  MANAGE_INTEGRATIONS: 'MANAGE_INTEGRATIONS',
+  MANAGE_DOMAIN: 'MANAGE_DOMAIN',
 } as const;
 
-export type WebsiteAction =
-  (typeof WEBSITE_ACTIONS)[keyof typeof WEBSITE_ACTIONS];
+export type WebsiteAction = (typeof WEBSITE_ACTIONS)[keyof typeof WEBSITE_ACTIONS];
 
 export const ROLE_HIERARCHY: Record<string, number> = {
   OWNER: 4,
@@ -101,11 +100,9 @@ export interface PermissionContextType {
 
 // ── Context ─────────────────────────────────────────────────────────────────
 
-const PermissionContext = createContext<PermissionContextType | undefined>(
-  undefined,
-);
+const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ── Provider ────────────────────────────────────────────────────────────────
 
@@ -116,8 +113,7 @@ interface PermissionProviderProps {
 export function PermissionProvider({ children }: PermissionProviderProps) {
   const { user } = useAuth();
 
-  const [websitePermissions, setWebsitePermissions] =
-    useState<WebsitePermissions>({});
+  const [websitePermissions, setWebsitePermissions] = useState<WebsitePermissions>({});
   const [currentWebsiteId, setCurrentWebsiteId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,13 +139,12 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       for (const website of websites) {
         // If the API response includes a role field, use it; otherwise default to VIEWER
         // (safest fallback — backend enforces real permissions)
-        permissions[website.id] = website.role?.toUpperCase() || "VIEWER";
+        permissions[website.id] = website.role?.toUpperCase() || 'VIEWER';
       }
 
       setWebsitePermissions(permissions);
     } catch (err: any) {
-      const message =
-        err.response?.data?.message || "Failed to fetch website permissions";
+      const message = err.response?.data?.message || 'Failed to fetch website permissions';
       setError(message);
     } finally {
       setLoading(false);
@@ -173,21 +168,10 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       error,
       refetch: fetchPermissions,
     }),
-    [
-      websitePermissions,
-      currentWebsiteId,
-      setCurrentWebsite,
-      loading,
-      error,
-      fetchPermissions,
-    ],
+    [websitePermissions, currentWebsiteId, setCurrentWebsite, loading, error, fetchPermissions]
   );
 
-  return (
-    <PermissionContext.Provider value={value}>
-      {children}
-    </PermissionContext.Provider>
-  );
+  return <PermissionContext.Provider value={value}>{children}</PermissionContext.Provider>;
 }
 
 // ── Hooks ───────────────────────────────────────────────────────────────────
@@ -199,9 +183,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
 export function usePermissionContext(): PermissionContextType {
   const context = useContext(PermissionContext);
   if (!context) {
-    throw new Error(
-      "usePermissionContext must be used within a PermissionProvider",
-    );
+    throw new Error('usePermissionContext must be used within a PermissionProvider');
   }
   return context;
 }

@@ -21,28 +21,22 @@
  * - Responsive: two-panel on desktop, stacked on mobile
  */
 
-import React, {
-  useState,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import Paper from "@mui/material/Paper";
-import IconButton from "@mui/material/IconButton";
-import AddIcon from "@mui/icons-material/Add";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+import IconButton from '@mui/material/IconButton';
+import AddIcon from '@mui/icons-material/Add';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
-import { BlockList } from "./BlockList";
-import type { Block } from "./BlockList";
-import { BlockSelector } from "./BlockSelector";
-import FormGenerator from "../FormGenerator";
-import SaveStatus from "../Editor/SaveStatus";
-import type { SaveStatusType } from "../Editor/SaveStatus";
-import { useShortcutManager } from "../../hooks/useShortcutManager";
+import { BlockList } from './BlockList';
+import type { Block } from './BlockList';
+import { BlockSelector } from './BlockSelector';
+import FormGenerator from '../FormGenerator';
+import SaveStatus from '../Editor/SaveStatus';
+import type { SaveStatusType } from '../Editor/SaveStatus';
+import { useShortcutManager } from '../../hooks/useShortcutManager';
 
 // ---------------------------------------------------------------------------
 // Block type defaults — fetched from registry via API on mount.
@@ -50,8 +44,7 @@ import { useShortcutManager } from "../../hooks/useShortcutManager";
 // Now dynamically loads defaults for all 34 block types from the registry.
 // ---------------------------------------------------------------------------
 
-const API_URL =
-  (import.meta as any).env?.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -82,9 +75,7 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
 
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
     const [selectorOpen, setSelectorOpen] = useState(false);
-    const [blockDefaults, setBlockDefaults] = useState<
-      Record<string, Record<string, unknown>>
-    >({});
+    const [blockDefaults, setBlockDefaults] = useState<Record<string, Record<string, unknown>>>({});
 
     // Fetch block defaults from registry API on mount
     useEffect(() => {
@@ -114,7 +105,7 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
 
     const selectedBlock = useMemo(
       () => blocks.find((b) => b.id === selectedBlockId) ?? null,
-      [blocks, selectedBlockId],
+      [blocks, selectedBlockId]
     );
 
     // -------------------------------------------------------------------------
@@ -151,7 +142,7 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
         setSelectedBlockId(newBlock.id);
         setSelectorOpen(false);
       },
-      [blocks, onChange, blockDefaults],
+      [blocks, onChange, blockDefaults]
     );
 
     /** Remove a block by id */
@@ -163,7 +154,7 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
           setSelectedBlockId(null);
         }
       },
-      [blocks, onChange, selectedBlockId],
+      [blocks, onChange, selectedBlockId]
     );
 
     /** Duplicate the selected block */
@@ -190,11 +181,11 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
     const handleToggleVisibility = useCallback(
       (blockId: string) => {
         const updatedBlocks = blocks.map((b) =>
-          b.id === blockId ? { ...b, isVisible: !b.isVisible } : b,
+          b.id === blockId ? { ...b, isVisible: !b.isVisible } : b
         );
         onChange(updatedBlocks);
       },
-      [blocks, onChange],
+      [blocks, onChange]
     );
 
     /** Handle reorder from BlockList drag-end */
@@ -202,7 +193,7 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
       (reorderedBlocks: Block[]) => {
         onChange(reorderedBlocks);
       },
-      [onChange],
+      [onChange]
     );
 
     /** Update selected block's content from FormGenerator onChange */
@@ -210,11 +201,11 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
       (values: Record<string, unknown>) => {
         if (!selectedBlockId) return;
         const updatedBlocks = blocks.map((b) =>
-          b.id === selectedBlockId ? { ...b, content: values } : b,
+          b.id === selectedBlockId ? { ...b, content: values } : b
         );
         onChange(updatedBlocks);
       },
-      [blocks, onChange, selectedBlockId],
+      [blocks, onChange, selectedBlockId]
     );
 
     /** Move block up or down by index delta */
@@ -232,7 +223,7 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
         updatedBlocks.splice(newIndex, 0, moved);
         onChange(updatedBlocks);
       },
-      [blocks, onChange, selectedBlockId],
+      [blocks, onChange, selectedBlockId]
     );
 
     // -------------------------------------------------------------------------
@@ -256,58 +247,58 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
 
       // Ctrl+D: Duplicate selected block
       registerShortcut({
-        key: "ctrl+d",
+        key: 'ctrl+d',
         action: () => handleDuplicateRef.current(),
-        description: "Duplicate selected block",
-        category: "Blocks",
-        scope: "editor",
+        description: 'Duplicate selected block',
+        category: 'Blocks',
+        scope: 'editor',
       });
 
       // Alt+ArrowUp: Move block up
       registerShortcut({
-        key: "alt+arrowup",
+        key: 'alt+arrowup',
         action: () => moveBlockRef.current(-1),
-        description: "Move block up",
-        category: "Blocks",
-        scope: "editor",
+        description: 'Move block up',
+        category: 'Blocks',
+        scope: 'editor',
       });
 
       // Alt+ArrowDown: Move block down
       registerShortcut({
-        key: "alt+arrowdown",
+        key: 'alt+arrowdown',
         action: () => moveBlockRef.current(1),
-        description: "Move block down",
-        category: "Blocks",
-        scope: "editor",
+        description: 'Move block down',
+        category: 'Blocks',
+        scope: 'editor',
       });
 
       // Delete: Remove selected block
       registerShortcut({
-        key: "delete",
+        key: 'delete',
         action: () => {
           const id = selectedBlockIdRef.current;
           if (id) handleRemoveRef.current(id);
         },
-        description: "Delete selected block",
-        category: "Blocks",
-        scope: "editor",
+        description: 'Delete selected block',
+        category: 'Blocks',
+        scope: 'editor',
       });
 
       // Escape: Deselect block
       registerShortcut({
-        key: "escape",
+        key: 'escape',
         action: () => setSelectedBlockId(null),
-        description: "Deselect block / close panel",
-        category: "Editing",
-        scope: "editor",
+        description: 'Deselect block / close panel',
+        category: 'Editing',
+        scope: 'editor',
       });
 
       return () => {
-        unregisterShortcut("ctrl+d");
-        unregisterShortcut("alt+arrowup");
-        unregisterShortcut("alt+arrowdown");
-        unregisterShortcut("delete");
-        unregisterShortcut("escape");
+        unregisterShortcut('ctrl+d');
+        unregisterShortcut('alt+arrowup');
+        unregisterShortcut('alt+arrowdown');
+        unregisterShortcut('delete');
+        unregisterShortcut('escape');
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [disabled, registerShortcut, unregisterShortcut]);
@@ -316,10 +307,7 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
     // Existing block types (for BlockSelector "Already added" indicator)
     // -------------------------------------------------------------------------
 
-    const existingBlockTypes = useMemo(
-      () => blocks.map((b) => b.blockType),
-      [blocks],
-    );
+    const existingBlockTypes = useMemo(() => blocks.map((b) => b.blockType), [blocks]);
 
     // -------------------------------------------------------------------------
     // Render
@@ -329,8 +317,8 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
       <Box
         data-testid="block-editor"
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
           gap: 2,
           minHeight: 400,
         }}
@@ -338,29 +326,26 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
         {/* Left panel — Block List + Add button */}
         <Box
           sx={{
-            width: { xs: "100%", md: "30%" },
+            width: { xs: '100%', md: '30%' },
             minWidth: { md: 260 },
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
             gap: 1,
           }}
         >
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               mb: 1,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ color: "text.primary", fontWeight: 600 }}
-              >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="subtitle2" sx={{ color: 'text.primary', fontWeight: 600 }}>
                 Blocks
               </Typography>
-              {saveStatus && saveStatus !== "idle" && (
+              {saveStatus && saveStatus !== 'idle' && (
                 <SaveStatus status={saveStatus} onRetry={onSaveRetry} />
               )}
             </Box>
@@ -390,7 +375,7 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
         {/* Right panel — FormGenerator or empty state */}
         <Box
           sx={{
-            width: { xs: "100%", md: "70%" },
+            width: { xs: '100%', md: '70%' },
             flexGrow: 1,
           }}
         >
@@ -399,8 +384,8 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
             sx={{
               p: 2,
               minHeight: 300,
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {selectedBlock ? (
@@ -408,16 +393,13 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
                 {/* Header with block type and duplicate button */}
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     mb: 2,
                   }}
                 >
-                  <Typography
-                    variant="subtitle1"
-                    sx={{ color: "text.primary", fontWeight: 600 }}
-                  >
+                  <Typography variant="subtitle1" sx={{ color: 'text.primary', fontWeight: 600 }}>
                     Edit Block
                   </Typography>
                   <IconButton
@@ -425,7 +407,7 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
                     onClick={handleDuplicate}
                     disabled={disabled}
                     aria-label="Duplicate block"
-                    sx={{ color: "text.secondary" }}
+                    sx={{ color: 'text.secondary' }}
                   >
                     <ContentCopyIcon fontSize="small" />
                   </IconButton>
@@ -442,16 +424,15 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
             ) : (
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   flexGrow: 1,
-                  color: "text.secondary",
+                  color: 'text.secondary',
                 }}
               >
                 <Typography variant="body2">
-                  Select a block to edit its content, or add a new block to get
-                  started.
+                  Select a block to edit its content, or add a new block to get started.
                 </Typography>
               </Box>
             )}
@@ -467,10 +448,10 @@ const BlockEditor: React.FC<BlockEditorProps> = React.memo(
         />
       </Box>
     );
-  },
+  }
 );
 
-BlockEditor.displayName = "BlockEditor";
+BlockEditor.displayName = 'BlockEditor';
 
 export { BlockEditor };
 export default BlockEditor;

@@ -1,21 +1,13 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
-import Hero from "../../components/publicComponents/Contact/Hero";
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import Hero from '../../components/publicComponents/Contact/Hero';
 
-const CTASection = lazy(
-  () => import("../../components/publicComponents/Contact/CtaSection"),
-);
-const FollowUs = lazy(
-  () => import("../../components/publicComponents/careers/FollowUs"),
-);
-const Map = lazy(() => import("../../components/publicComponents/Contact/Map"));
-const SocialInfo = lazy(
-  () => import("../../components/publicComponents/Contact/SocialInfo"),
-);
-const FormSection = lazy(
-  () => import("../../components/publicComponents/Contact/FormSection"),
-);
-const Faq = lazy(() => import("../../components/publicComponents/Contact/Faq"));
+const CTASection = lazy(() => import('../../components/publicComponents/Contact/CtaSection'));
+const FollowUs = lazy(() => import('../../components/publicComponents/careers/FollowUs'));
+const Map = lazy(() => import('../../components/publicComponents/Contact/Map'));
+const SocialInfo = lazy(() => import('../../components/publicComponents/Contact/SocialInfo'));
+const FormSection = lazy(() => import('../../components/publicComponents/Contact/FormSection'));
+const Faq = lazy(() => import('../../components/publicComponents/Contact/Faq'));
 
 type DeferredSectionProps = {
   children: ReactNode;
@@ -26,7 +18,7 @@ type DeferredSectionProps = {
 const DeferredSection = ({
   children,
   minHeight,
-  rootMargin = "250px 0px",
+  rootMargin = '250px 0px',
 }: DeferredSectionProps) => {
   const [visible, setVisible] = useState(false);
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -43,7 +35,7 @@ const DeferredSection = ({
           observer.disconnect();
         }
       },
-      { rootMargin },
+      { rootMargin }
     );
 
     observer.observe(mountRef.current);

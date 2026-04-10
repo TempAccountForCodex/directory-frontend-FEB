@@ -10,14 +10,14 @@
  * - Framer Motion entrance animation
  */
 
-import React, { memo, useMemo } from "react";
-import { Box, Container, Typography, Alert } from "@mui/material";
-import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
+import React, { memo, useMemo } from 'react';
+import { Box, Container, Typography, Alert } from '@mui/material';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type AspectRatio = "16:9" | "4:3" | "1:1" | "custom";
+type AspectRatio = '16:9' | '4:3' | '1:1' | 'custom';
 
 interface EmbedContent {
   heading?: string;
@@ -69,17 +69,17 @@ interface EmbedBlockProps {
  * Only these domains (and their subdomains) are permitted.
  */
 const ALLOWED_DOMAINS: string[] = [
-  "calendly.com",
-  "docs.google.com",
-  "airtable.com",
-  "typeform.com",
-  "figma.com",
-  "canva.com",
-  "loom.com",
-  "miro.com",
-  "notion.so",
-  "codepen.io",
-  "codesandbox.io",
+  'calendly.com',
+  'docs.google.com',
+  'airtable.com',
+  'typeform.com',
+  'figma.com',
+  'canva.com',
+  'loom.com',
+  'miro.com',
+  'notion.so',
+  'codepen.io',
+  'codesandbox.io',
 ];
 
 /**
@@ -88,7 +88,7 @@ const ALLOWED_DOMAINS: string[] = [
  * Returns the matched domain entry or null if not allowed.
  */
 function getAllowedDomain(url: string): string | null {
-  if (!url || url.trim() === "") return null;
+  if (!url || url.trim() === '') return null;
 
   let parsedUrl: URL;
   try {
@@ -98,7 +98,7 @@ function getAllowedDomain(url: string): string | null {
   }
 
   // Must be https
-  if (parsedUrl.protocol !== "https:") return null;
+  if (parsedUrl.protocol !== 'https:') return null;
 
   const hostname = parsedUrl.hostname.toLowerCase();
 
@@ -118,17 +118,17 @@ function getAllowedDomain(url: string): string | null {
  */
 function getPlatformName(domain: string): string {
   const names: Record<string, string> = {
-    "calendly.com": "Calendly",
-    "docs.google.com": "Google Docs",
-    "airtable.com": "Airtable",
-    "typeform.com": "Typeform",
-    "figma.com": "Figma",
-    "canva.com": "Canva",
-    "loom.com": "Loom",
-    "miro.com": "Miro",
-    "notion.so": "Notion",
-    "codepen.io": "CodePen",
-    "codesandbox.io": "CodeSandbox",
+    'calendly.com': 'Calendly',
+    'docs.google.com': 'Google Docs',
+    'airtable.com': 'Airtable',
+    'typeform.com': 'Typeform',
+    'figma.com': 'Figma',
+    'canva.com': 'Canva',
+    'loom.com': 'Loom',
+    'miro.com': 'Miro',
+    'notion.so': 'Notion',
+    'codepen.io': 'CodePen',
+    'codesandbox.io': 'CodeSandbox',
   };
   return names[domain] || domain;
 }
@@ -136,10 +136,10 @@ function getPlatformName(domain: string): string {
 // ── Aspect ratio padding map ───────────────────────────────────────────────────
 
 const ASPECT_RATIO_PADDING: Record<AspectRatio, string> = {
-  "16:9": "56.25%",
-  "4:3": "75%",
-  "1:1": "100%",
-  custom: "0", // custom uses explicit height
+  '16:9': '56.25%',
+  '4:3': '75%',
+  '1:1': '100%',
+  custom: '0', // custom uses explicit height
 };
 
 // ── Spacing map ────────────────────────────────────────────────────────────────
@@ -154,25 +154,25 @@ const SPACING_MAP: Record<string, number> = {
 
 // ── SSR check ─────────────────────────────────────────────────────────────────
 
-const isSSR = typeof window === "undefined";
+const isSSR = typeof window === 'undefined';
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
 const EmbedBlock: React.FC<EmbedBlockProps> = ({
   block,
-  primaryColor = "#2563eb",
-  headingColor = "#1e293b",
+  primaryColor = '#2563eb',
+  headingColor = '#1e293b',
 }) => {
   const content = block.content || {};
   const {
     heading,
-    url = "",
+    url = '',
     height = 500,
-    aspectRatio = "16:9",
+    aspectRatio = '16:9',
     allowFullscreen = true,
     lazyLoad = true,
-    spacingPaddingTop = "md",
-    spacingPaddingBottom = "md",
+    spacingPaddingTop = 'md',
+    spacingPaddingBottom = 'md',
     responsiveHideOnMobile = false,
     responsiveHideOnTablet = false,
     responsiveHideOnDesktop = false,
@@ -187,36 +187,34 @@ const EmbedBlock: React.FC<EmbedBlockProps> = ({
 
   // Validate domain
   const allowedDomain = useMemo(() => {
-    if (!url || url.trim() === "") return null;
+    if (!url || url.trim() === '') return null;
     return getAllowedDomain(url);
   }, [url]);
 
   const platformName = useMemo(() => {
-    if (!allowedDomain) return "";
+    if (!allowedDomain) return '';
     return getPlatformName(allowedDomain);
   }, [allowedDomain]);
 
   // Determine aspect ratio container style
-  const isCustomAspect = aspectRatio === "custom";
-  const paddingTop = isCustomAspect
-    ? undefined
-    : ASPECT_RATIO_PADDING[aspectRatio];
+  const isCustomAspect = aspectRatio === 'custom';
+  const paddingTop = isCustomAspect ? undefined : ASPECT_RATIO_PADDING[aspectRatio];
 
   const renderEmbed = () => {
     // Empty state
-    if (!url || url.trim() === "") {
+    if (!url || url.trim() === '') {
       return (
         <Box
           sx={{
-            width: "100%",
+            width: '100%',
             minHeight: 200,
-            bgcolor: "grey.100",
+            bgcolor: 'grey.100',
             borderRadius: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "2px dashed",
-            borderColor: "grey.300",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px dashed',
+            borderColor: 'grey.300',
           }}
         >
           <Typography variant="body2" color="text.secondary">
@@ -238,7 +236,7 @@ const EmbedBlock: React.FC<EmbedBlockProps> = ({
               rel="noopener noreferrer"
               sx={{ color: primaryColor }}
             >
-              Open in {platformName || "external site"} →
+              Open in {platformName || 'external site'} →
             </Box>
           </Typography>
         </Box>
@@ -249,8 +247,8 @@ const EmbedBlock: React.FC<EmbedBlockProps> = ({
     if (!allowedDomain) {
       return (
         <Alert severity="error" sx={{ borderRadius: 2 }}>
-          Domain not allowed. Only the following platforms are supported for
-          embedding: {ALLOWED_DOMAINS.join(", ")}.
+          Domain not allowed. Only the following platforms are supported for embedding:{' '}
+          {ALLOWED_DOMAINS.join(', ')}.
         </Alert>
       );
     }
@@ -261,25 +259,25 @@ const EmbedBlock: React.FC<EmbedBlockProps> = ({
         component="iframe"
         src={url}
         title={heading || `Embedded ${platformName} content`}
-        loading={lazyLoad ? "lazy" : "eager"}
+        loading={lazyLoad ? 'lazy' : 'eager'}
         referrerPolicy="no-referrer-when-downgrade"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         allowFullScreen={allowFullscreen}
         sx={
           isCustomAspect
             ? {
-                width: "100%",
+                width: '100%',
                 height: `${height}px`,
                 border: 0,
                 borderRadius: 2,
-                display: "block",
+                display: 'block',
               }
             : {
-                position: "absolute",
+                position: 'absolute',
                 top: 0,
                 left: 0,
-                width: "100%",
-                height: "100%",
+                width: '100%',
+                height: '100%',
                 border: 0,
                 borderRadius: 2,
               }
@@ -294,11 +292,11 @@ const EmbedBlock: React.FC<EmbedBlockProps> = ({
     return (
       <Box
         sx={{
-          position: "relative",
-          width: "100%",
+          position: 'relative',
+          width: '100%',
           paddingTop,
           borderRadius: 2,
-          overflow: "hidden",
+          overflow: 'hidden',
         }}
       >
         {iframeEl}
@@ -312,17 +310,14 @@ const EmbedBlock: React.FC<EmbedBlockProps> = ({
       component={motion.div as any}
       initial={{ opacity: 0, y: 24 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-      transition={{
-        duration: animationDuration / 1000,
-        delay: animationDelay / 1000,
-      }}
+      transition={{ duration: animationDuration / 1000, delay: animationDelay / 1000 }}
       sx={{
         py: { xs: pt / 2 + 2, md: pt },
         pb: { xs: pb / 2 + 2, md: pb },
         display: {
-          xs: responsiveHideOnMobile ? "none" : "block",
-          sm: responsiveHideOnTablet ? "none" : "block",
-          lg: responsiveHideOnDesktop ? "none" : "block",
+          xs: responsiveHideOnMobile ? 'none' : 'block',
+          sm: responsiveHideOnTablet ? 'none' : 'block',
+          lg: responsiveHideOnDesktop ? 'none' : 'block',
         },
       }}
     >
@@ -332,12 +327,7 @@ const EmbedBlock: React.FC<EmbedBlockProps> = ({
             variant="h3"
             component="h2"
             gutterBottom
-            sx={{
-              fontWeight: 700,
-              color: headingColor,
-              mb: 4,
-              textAlign: "center",
-            }}
+            sx={{ fontWeight: 700, color: headingColor, mb: 4, textAlign: 'center' }}
           >
             {heading}
           </Typography>
@@ -349,14 +339,9 @@ const EmbedBlock: React.FC<EmbedBlockProps> = ({
         {!isSSR && allowedDomain && url && (
           <Typography
             variant="caption"
-            sx={{
-              mt: 1,
-              display: "block",
-              textAlign: "right",
-              color: "text.secondary",
-            }}
+            sx={{ mt: 1, display: 'block', textAlign: 'right', color: 'text.secondary' }}
           >
-            Embedded from{" "}
+            Embedded from{' '}
             <Box
               component="a"
               href={url}
@@ -373,7 +358,7 @@ const EmbedBlock: React.FC<EmbedBlockProps> = ({
   );
 };
 
-EmbedBlock.displayName = "EmbedBlock";
+EmbedBlock.displayName = 'EmbedBlock';
 
 export default memo(EmbedBlock);
 

@@ -6,25 +6,25 @@
  * Free plan users see disabled toggle with upgrade CTA.
  */
 
-import React, { useState, useCallback, useEffect } from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Switch from "@mui/material/Switch";
-import LinearProgress from "@mui/material/LinearProgress";
-import Chip from "@mui/material/Chip";
-import Tooltip from "@mui/material/Tooltip";
-import Alert from "@mui/material/Alert";
-import Skeleton from "@mui/material/Skeleton";
-import CircularProgress from "@mui/material/CircularProgress";
-import { Globe, Sparkles } from "lucide-react";
-import axios from "axios";
-import DashboardCard from "./shared/DashboardCard";
-import DashboardGradientButton from "./shared/DashboardGradientButton";
-import { ConfirmationDialog } from "./shared";
+import React, { useState, useCallback, useEffect } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Switch from '@mui/material/Switch';
+import LinearProgress from '@mui/material/LinearProgress';
+import Chip from '@mui/material/Chip';
+import Tooltip from '@mui/material/Tooltip';
+import Alert from '@mui/material/Alert';
+import Skeleton from '@mui/material/Skeleton';
+import CircularProgress from '@mui/material/CircularProgress';
+import { Globe, Sparkles } from 'lucide-react';
+import axios from 'axios';
+import DashboardCard from './shared/DashboardCard';
+import DashboardGradientButton from './shared/DashboardGradientButton';
+import { ConfirmationDialog } from './shared';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-const PAID_PLANS = ["website_core", "website_growth", "website_agency"];
+const PAID_PLANS = ['website_core', 'website_growth', 'website_agency'];
 
 interface CompletenessData {
   score: number;
@@ -52,13 +52,11 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
   const isPaidPlan = PAID_PLANS.includes(planCode);
 
   const [optedIn, setOptedIn] = useState(initialOptedIn);
-  const [completeness, setCompleteness] = useState<CompletenessData | null>(
-    null,
-  );
+  const [completeness, setCompleteness] = useState<CompletenessData | null>(null);
   const [loading, setLoading] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [toggling, setToggling] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [showConfirmOff, setShowConfirmOff] = useState(false);
 
   // Fetch completeness on mount if already opted in
@@ -70,9 +68,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
 
   const fetchCompleteness = useCallback(async () => {
     try {
-      const res = await axios.get(
-        `${API_URL}/websites/${websiteId}/listing/completeness`,
-      );
+      const res = await axios.get(`${API_URL}/websites/${websiteId}/listing/completeness`);
       if (res.data?.success) {
         setCompleteness(res.data.data);
       }
@@ -83,7 +79,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
 
   const handleToggleOn = useCallback(async () => {
     setToggling(true);
-    setError("");
+    setError('');
     try {
       // Patch directoryOptedIn
       await axios.patch(`${API_URL}/websites/${websiteId}/listing`, {
@@ -103,9 +99,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
       setOptedIn(true);
       onUpdate?.();
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Failed to enable directory listing",
-      );
+      setError(err.response?.data?.message || 'Failed to enable directory listing');
     } finally {
       setToggling(false);
     }
@@ -113,7 +107,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
 
   const handleToggleOff = useCallback(async () => {
     setToggling(true);
-    setError("");
+    setError('');
     try {
       await axios.patch(`${API_URL}/websites/${websiteId}/listing`, {
         directoryOptedIn: false,
@@ -123,9 +117,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
       setShowConfirmOff(false);
       onUpdate?.();
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Failed to disable directory listing",
-      );
+      setError(err.response?.data?.message || 'Failed to disable directory listing');
     } finally {
       setToggling(false);
     }
@@ -139,7 +131,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
         setShowConfirmOff(true);
       }
     },
-    [handleToggleOn],
+    [handleToggleOn]
   );
 
   const handleConfirmOff = useCallback(() => {
@@ -152,13 +144,13 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
 
   const handleEnhance = useCallback(async () => {
     setEnhancing(true);
-    setError("");
+    setError('');
     try {
       await axios.post(`${API_URL}/websites/${websiteId}/listing/enhance`);
       await fetchCompleteness();
       onUpdate?.();
     } catch (err: any) {
-      setError(err.response?.data?.message || "AI enhancement failed");
+      setError(err.response?.data?.message || 'AI enhancement failed');
     } finally {
       setEnhancing(false);
     }
@@ -170,11 +162,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
   if (loading) {
     return (
       <DashboardCard icon={Globe} title="Directory Listing">
-        <Skeleton
-          variant="rectangular"
-          height={40}
-          sx={{ mb: 1, borderRadius: 1 }}
-        />
+        <Skeleton variant="rectangular" height={40} sx={{ mb: 1, borderRadius: 1 }} />
         <Skeleton variant="rectangular" height={20} sx={{ borderRadius: 1 }} />
       </DashboardCard>
     );
@@ -188,15 +176,14 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
         title="Directory Listing"
         subtitle="Available on Core plan and above"
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <Switch disabled checked={false} data-testid="listing-toggle" />
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Include in Directory
           </Typography>
         </Box>
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          Upgrade to a paid plan to list your business in the Techietribe
-          Directory.
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+          Upgrade to a paid plan to list your business in the Techietribe Directory.
         </Typography>
         <DashboardGradientButton href="/pricing" data-testid="upgrade-cta">
           Upgrade to Unlock
@@ -208,24 +195,21 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
   return (
     <DashboardCard icon={Globe} title="Directory Listing">
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
           {error}
         </Alert>
       )}
 
       {/* Toggle */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
         <Switch
           checked={optedIn}
           onChange={handleToggleChange}
           disabled={toggling}
           data-testid="listing-toggle"
-          inputProps={{ "aria-label": "Include in Directory" }}
+          inputProps={{ 'aria-label': 'Include in Directory' }}
         />
-        <Typography
-          variant="body2"
-          sx={{ color: "text.primary", fontWeight: 500 }}
-        >
+        <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500 }}>
           Include in Directory
         </Typography>
         {toggling && <CircularProgress size={16} />}
@@ -234,13 +218,13 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
       {/* Completeness */}
       {optedIn && completeness && (
         <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Completeness
             </Typography>
             <Typography
               variant="body2"
-              sx={{ color: "text.primary", fontWeight: 600 }}
+              sx={{ color: 'text.primary', fontWeight: 600 }}
               data-testid="completeness-score"
             >
               {completeness.score}%
@@ -253,31 +237,27 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
               height: 8,
               borderRadius: 4,
               mb: 1,
-              bgcolor: "action.hover",
-              "& .MuiLinearProgress-bar": {
+              bgcolor: 'action.hover',
+              '& .MuiLinearProgress-bar': {
                 borderRadius: 4,
                 bgcolor:
                   completeness.score >= 80
-                    ? "success.main"
+                    ? 'success.main'
                     : completeness.score >= 60
-                      ? "warning.main"
-                      : "error.main",
+                      ? 'warning.main'
+                      : 'error.main',
               },
             }}
             data-testid="completeness-bar"
           />
           {completeness.missing.length > 0 && (
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
               {completeness.missing.map((field) => (
                 <Chip
                   key={field}
                   label={field}
                   size="small"
-                  sx={{
-                    bgcolor: "warning.light",
-                    color: "warning.dark",
-                    fontSize: "0.75rem",
-                  }}
+                  sx={{ bgcolor: 'warning.light', color: 'warning.dark', fontSize: '0.75rem' }}
                   data-testid="missing-field-chip"
                 />
               ))}
@@ -288,21 +268,14 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
 
       {/* AI Enhance */}
       {optedIn && (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            flexWrap: "wrap",
-          }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <Tooltip
             title={
               !isPaidPlan
-                ? "AI enhancement is available on paid plans"
+                ? 'AI enhancement is available on paid plans'
                 : aiRemaining <= 0
-                  ? "AI generation limit reached"
-                  : ""
+                  ? 'AI generation limit reached'
+                  : ''
             }
           >
             <span>
@@ -317,14 +290,14 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
                   )
                 }
                 data-testid="enhance-btn"
-                sx={{ minWidth: { xs: "100%", sm: "auto" } }}
+                sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
               >
                 Enhance with AI
               </DashboardGradientButton>
             </span>
           </Tooltip>
           {isPaidPlan && (
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               {aiRemaining} of {aiGenerationsLimit} AI generations remaining
             </Typography>
           )}

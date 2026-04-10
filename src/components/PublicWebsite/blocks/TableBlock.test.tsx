@@ -17,32 +17,34 @@
  * - SSR: full HTML table rendered
  * - React.memo applied
  */
-import React from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 
 // Mock dompurify
-vi.mock("dompurify", () => ({
+vi.mock('dompurify', () => ({
   default: {
-    sanitize: (html: string) =>
-      html.replace(/<script[^>]*>.*?<\/script>/gi, ""),
+    sanitize: (html: string) => html.replace(/<script[^>]*>.*?<\/script>/gi, ''),
   },
 }));
 
 // Mock framer-motion
-vi.mock("framer-motion", () => ({
+vi.mock('framer-motion', () => ({
+  useScroll: () => ({ scrollYProgress: { get: () => 0, onChange: () => () => {} } }),
+  useTransform: (..._args) => ({ get: () => '0%', onChange: () => () => {} }),
+  useMotionValue: (v) => ({ get: () => v, set: () => {}, onChange: () => () => {} }),
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
   },
 }));
 
 // Mock react-intersection-observer
-vi.mock("react-intersection-observer", () => ({
+vi.mock('react-intersection-observer', () => ({
   useInView: () => [null, true],
 }));
 
-import TableBlock from "./TableBlock";
+import TableBlock from './TableBlock';
 
 type BlockLike = {
   id: number;
@@ -53,21 +55,21 @@ type BlockLike = {
 
 const defaultBlock: BlockLike = {
   id: 3,
-  blockType: "TABLE",
+  blockType: 'TABLE',
   sortOrder: 2,
   content: {
-    heading: "Pricing Comparison",
-    caption: "All prices in USD",
+    heading: 'Pricing Comparison',
+    caption: 'All prices in USD',
     columns: [
-      { header: "Plan", accessor: "plan", align: "left", width: "" },
-      { header: "Price", accessor: "price", align: "center", width: "" },
-      { header: "Features", accessor: "features", align: "left", width: "" },
+      { header: 'Plan', accessor: 'plan', align: 'left', width: '' },
+      { header: 'Price', accessor: 'price', align: 'center', width: '' },
+      { header: 'Features', accessor: 'features', align: 'left', width: '' },
     ],
     rows: [
-      { plan: "Starter", price: "$9/mo", features: "5 users" },
-      { plan: "Pro", price: "$29/mo", features: "25 users" },
-      { plan: "Enterprise", price: "$99/mo", features: "Unlimited" },
-      { plan: "Custom", price: "Contact", features: "Unlimited+" },
+      { plan: 'Starter', price: '$9/mo', features: '5 users' },
+      { plan: 'Pro', price: '$29/mo', features: '25 users' },
+      { plan: 'Enterprise', price: '$99/mo', features: 'Unlimited' },
+      { plan: 'Custom', price: 'Contact', features: 'Unlimited+' },
     ],
     striped: true,
     bordered: true,
@@ -77,71 +79,67 @@ const defaultBlock: BlockLike = {
   },
 };
 
-describe("TableBlock", () => {
-  it("renders without crashing", () => {
+describe('TableBlock', () => {
+  it('renders without crashing', () => {
     const { container } = render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders the heading", () => {
+  it('renders the heading', () => {
     render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("Pricing Comparison")).toBeInTheDocument();
+    expect(screen.getByText('Pricing Comparison')).toBeInTheDocument();
   });
 
-  it("renders column headers", () => {
+  it('renders column headers', () => {
     render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("Plan")).toBeInTheDocument();
-    expect(screen.getByText("Price")).toBeInTheDocument();
-    expect(screen.getByText("Features")).toBeInTheDocument();
+    expect(screen.getByText('Plan')).toBeInTheDocument();
+    expect(screen.getByText('Price')).toBeInTheDocument();
+    expect(screen.getByText('Features')).toBeInTheDocument();
   });
 
-  it("renders row data", () => {
+  it('renders row data', () => {
     render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("Starter")).toBeInTheDocument();
-    expect(screen.getByText("Pro")).toBeInTheDocument();
-    expect(screen.getByText("Enterprise")).toBeInTheDocument();
-    expect(screen.getByText("Custom")).toBeInTheDocument();
+    expect(screen.getByText('Starter')).toBeInTheDocument();
+    expect(screen.getByText('Pro')).toBeInTheDocument();
+    expect(screen.getByText('Enterprise')).toBeInTheDocument();
+    expect(screen.getByText('Custom')).toBeInTheDocument();
   });
 
-  it("DOMPurify sanitizes cell content — XSS script tags stripped", () => {
+  it('DOMPurify sanitizes cell content — XSS script tags stripped', () => {
     const xssBlock = {
       ...defaultBlock,
       content: {
         ...defaultBlock.content,
         rows: [
-          {
-            plan: '<script>alert("xss")</script>Safe Content',
-            price: "$0",
-            features: "test",
-          },
+          { plan: '<script>alert("xss")</script>Safe Content', price: '$0', features: 'test' },
         ],
       },
     };
@@ -151,57 +149,57 @@ describe("TableBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    const scripts = document.querySelectorAll("script");
+    const scripts = document.querySelectorAll('script');
     expect(scripts.length).toBe(0);
   });
 
-  it("renders with sortable=true and sort buttons present", () => {
+  it('renders with sortable=true and sort buttons present', () => {
     render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     // Column headers should be present (sort labels wrap them)
-    expect(screen.getByText("Plan")).toBeInTheDocument();
+    expect(screen.getByText('Plan')).toBeInTheDocument();
   });
 
-  it("clicking a sortable column header does not crash", () => {
+  it('clicking a sortable column header does not crash', () => {
     render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    const planHeader = screen.getByText("Plan");
+    const planHeader = screen.getByText('Plan');
     fireEvent.click(planHeader);
     // Should not crash - row data still present
-    expect(screen.getByText("Starter")).toBeInTheDocument();
+    expect(screen.getByText('Starter')).toBeInTheDocument();
   });
 
-  it("clicking same column header twice toggles sort direction", () => {
+  it('clicking same column header twice toggles sort direction', () => {
     render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    const planHeader = screen.getByText("Plan");
+    const planHeader = screen.getByText('Plan');
     fireEvent.click(planHeader);
     fireEvent.click(planHeader);
     // Should not crash - data still present
-    expect(screen.getByText("Pro")).toBeInTheDocument();
+    expect(screen.getByText('Pro')).toBeInTheDocument();
   });
 
-  it("renders with sortable=false without crashing", () => {
+  it('renders with sortable=false without crashing', () => {
     const nonSortableBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, sortable: false },
@@ -212,12 +210,12 @@ describe("TableBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with striped=false without crashing", () => {
+  it('renders with striped=false without crashing', () => {
     const nonStripedBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, striped: false },
@@ -228,12 +226,12 @@ describe("TableBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with bordered=false without crashing", () => {
+  it('renders with bordered=false without crashing', () => {
     const nonBorderedBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, bordered: false },
@@ -244,12 +242,12 @@ describe("TableBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with compact=true without crashing", () => {
+  it('renders with compact=true without crashing', () => {
     const compactBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, compact: true },
@@ -260,12 +258,12 @@ describe("TableBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with empty rows gracefully", () => {
+  it('renders with empty rows gracefully', () => {
     const emptyRowsBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, rows: [] },
@@ -276,12 +274,12 @@ describe("TableBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with empty columns gracefully", () => {
+  it('renders with empty columns gracefully', () => {
     const emptyColsBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, columns: [] },
@@ -292,15 +290,15 @@ describe("TableBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with no heading gracefully", () => {
+  it('renders with no heading gracefully', () => {
     const noHeadingBlock = {
       ...defaultBlock,
-      content: { ...defaultBlock.content, heading: "" },
+      content: { ...defaultBlock.content, heading: '' },
     };
     const { container } = render(
       <TableBlock
@@ -308,66 +306,66 @@ describe("TableBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders caption when provided", () => {
+  it('renders caption when provided', () => {
     render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("All prices in USD")).toBeInTheDocument();
+    expect(screen.getByText('All prices in USD')).toBeInTheDocument();
   });
 
-  it("is wrapped with React.memo (is an object/memoized component)", () => {
-    expect(typeof TableBlock).toBe("object");
+  it('is wrapped with React.memo (is an object/memoized component)', () => {
+    expect(typeof TableBlock).toBe('object');
   });
 
-  it("renders a table element in the DOM (SSR-friendly)", () => {
+  it('renders a table element in the DOM (SSR-friendly)', () => {
     const { container } = render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    const table = container.querySelector("table");
+    const table = container.querySelector('table');
     expect(table).not.toBeNull();
   });
 
-  it("renders table head and body", () => {
+  it('renders table head and body', () => {
     const { container } = render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    const thead = container.querySelector("thead");
-    const tbody = container.querySelector("tbody");
+    const thead = container.querySelector('thead');
+    const tbody = container.querySelector('tbody');
     expect(thead).not.toBeNull();
     expect(tbody).not.toBeNull();
   });
 
-  it("renders all rows in table body", () => {
+  it('renders all rows in table body', () => {
     const { container } = render(
       <TableBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    const tbody = container.querySelector("tbody");
-    const rows = tbody?.querySelectorAll("tr");
+    const tbody = container.querySelector('tbody');
+    const rows = tbody?.querySelectorAll('tr');
     expect(rows?.length).toBe(4);
   });
 });

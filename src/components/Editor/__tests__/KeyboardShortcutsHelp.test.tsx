@@ -14,17 +14,11 @@
  * - First-time tooltip: shown when localStorage flag absent
  * - First-time tooltip: NOT shown when localStorage flag present
  */
-import React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  cleanup,
-} from "@testing-library/react";
-import KeyboardShortcutsHelp from "../KeyboardShortcutsHelp";
-import type { ShortcutEntry } from "../../../hooks/useShortcutManager";
+import React from 'react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import KeyboardShortcutsHelp from '../KeyboardShortcutsHelp';
+import type { ShortcutEntry } from '../../../hooks/useShortcutManager';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -32,33 +26,33 @@ import type { ShortcutEntry } from "../../../hooks/useShortcutManager";
 
 const makeShortcuts = (): ReadonlyMap<string, ShortcutEntry> => {
   const map = new Map<string, ShortcutEntry>();
-  map.set("ctrl+s", {
-    key: "ctrl+s",
+  map.set('ctrl+s', {
+    key: 'ctrl+s',
     action: vi.fn(),
-    description: "Save changes",
-    category: "Editing",
-    scope: "global",
+    description: 'Save changes',
+    category: 'Editing',
+    scope: 'global',
   });
-  map.set("ctrl+b", {
-    key: "ctrl+b",
+  map.set('ctrl+b', {
+    key: 'ctrl+b',
     action: vi.fn(),
-    description: "Toggle block library",
-    category: "Blocks",
-    scope: "global",
+    description: 'Toggle block library',
+    category: 'Blocks',
+    scope: 'global',
   });
-  map.set("ctrl+shift+p", {
-    key: "ctrl+shift+p",
+  map.set('ctrl+shift+p', {
+    key: 'ctrl+shift+p',
     action: vi.fn(),
-    description: "Open preview",
-    category: "Navigation",
-    scope: "global",
+    description: 'Open preview',
+    category: 'Navigation',
+    scope: 'global',
   });
-  map.set("delete", {
-    key: "delete",
+  map.set('delete', {
+    key: 'delete',
     action: vi.fn(),
-    description: "Delete selected block",
-    category: "Blocks",
-    scope: "editor",
+    description: 'Delete selected block',
+    category: 'Blocks',
+    scope: 'editor',
   });
   return map;
 };
@@ -67,7 +61,7 @@ const makeShortcuts = (): ReadonlyMap<string, ShortcutEntry> => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("KeyboardShortcutsHelp", () => {
+describe('KeyboardShortcutsHelp', () => {
   const onClose = vi.fn();
 
   beforeEach(() => {
@@ -86,81 +80,81 @@ describe("KeyboardShortcutsHelp", () => {
   // Open / closed state
   // -------------------------------------------------------------------------
 
-  it("renders dialog content when open=true", () => {
+  it('renders dialog content when open=true', () => {
     render(
       <KeyboardShortcutsHelp
         open={true}
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={false}
-      />,
+      />
     );
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it("does not render dialog when open=false", () => {
+  it('does not render dialog when open=false', () => {
     render(
       <KeyboardShortcutsHelp
         open={false}
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={false}
-      />,
+      />
     );
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
   // Accessibility
   // -------------------------------------------------------------------------
 
-  it("dialog has aria-label for screen readers", () => {
+  it('dialog has aria-label for screen readers', () => {
     render(
       <KeyboardShortcutsHelp
         open={true}
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={false}
-      />,
+      />
     );
-    const dialog = screen.getByRole("dialog");
-    expect(dialog).toHaveAttribute("aria-label");
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveAttribute('aria-label');
   });
 
   // -------------------------------------------------------------------------
   // Content — shortcuts listed
   // -------------------------------------------------------------------------
 
-  it("shows shortcut descriptions in the dialog", () => {
+  it('shows shortcut descriptions in the dialog', () => {
     render(
       <KeyboardShortcutsHelp
         open={true}
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={false}
-      />,
+      />
     );
-    expect(screen.getByText("Save changes")).toBeInTheDocument();
-    expect(screen.getByText("Toggle block library")).toBeInTheDocument();
-    expect(screen.getByText("Open preview")).toBeInTheDocument();
+    expect(screen.getByText('Save changes')).toBeInTheDocument();
+    expect(screen.getByText('Toggle block library')).toBeInTheDocument();
+    expect(screen.getByText('Open preview')).toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
   // Category grouping
   // -------------------------------------------------------------------------
 
-  it("shows category headers (Editing, Blocks, Navigation)", () => {
+  it('shows category headers (Editing, Blocks, Navigation)', () => {
     render(
       <KeyboardShortcutsHelp
         open={true}
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={false}
-      />,
+      />
     );
-    expect(screen.getByText("Editing")).toBeInTheDocument();
-    expect(screen.getByText("Blocks")).toBeInTheDocument();
-    expect(screen.getByText("Navigation")).toBeInTheDocument();
+    expect(screen.getByText('Editing')).toBeInTheDocument();
+    expect(screen.getByText('Blocks')).toBeInTheDocument();
+    expect(screen.getByText('Navigation')).toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
@@ -174,7 +168,7 @@ describe("KeyboardShortcutsHelp", () => {
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={false}
-      />,
+      />
     );
     // Should have at least one mention of Ctrl in the key display area
     const ctrlChips = screen.getAllByText(/ctrl/i);
@@ -188,7 +182,7 @@ describe("KeyboardShortcutsHelp", () => {
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={true}
-      />,
+      />
     );
     // On Mac, ctrl in combo should be shown as Cmd
     const cmdChips = screen.getAllByText(/cmd/i);
@@ -199,34 +193,34 @@ describe("KeyboardShortcutsHelp", () => {
   // Search / filter
   // -------------------------------------------------------------------------
 
-  it("filters shortcuts by description when typing in search box", () => {
+  it('filters shortcuts by description when typing in search box', () => {
     render(
       <KeyboardShortcutsHelp
         open={true}
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={false}
-      />,
+      />
     );
     const searchInput = screen.getByPlaceholderText(/search/i);
-    fireEvent.change(searchInput, { target: { value: "save" } });
+    fireEvent.change(searchInput, { target: { value: 'save' } });
 
-    expect(screen.getByText("Save changes")).toBeInTheDocument();
-    expect(screen.queryByText("Toggle block library")).not.toBeInTheDocument();
-    expect(screen.queryByText("Open preview")).not.toBeInTheDocument();
+    expect(screen.getByText('Save changes')).toBeInTheDocument();
+    expect(screen.queryByText('Toggle block library')).not.toBeInTheDocument();
+    expect(screen.queryByText('Open preview')).not.toBeInTheDocument();
   });
 
-  it("shows empty state when search yields no results", () => {
+  it('shows empty state when search yields no results', () => {
     render(
       <KeyboardShortcutsHelp
         open={true}
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={false}
-      />,
+      />
     );
     const searchInput = screen.getByPlaceholderText(/search/i);
-    fireEvent.change(searchInput, { target: { value: "xyznotfound" } });
+    fireEvent.change(searchInput, { target: { value: 'xyznotfound' } });
 
     expect(screen.getByText(/no shortcuts/i)).toBeInTheDocument();
   });
@@ -235,16 +229,16 @@ describe("KeyboardShortcutsHelp", () => {
   // Close button
   // -------------------------------------------------------------------------
 
-  it("calls onClose when Close button is clicked", () => {
+  it('calls onClose when Close button is clicked', () => {
     render(
       <KeyboardShortcutsHelp
         open={true}
         onClose={onClose}
         shortcuts={makeShortcuts()}
         isMac={false}
-      />,
+      />
     );
-    const closeBtn = screen.getByRole("button", { name: /close/i });
+    const closeBtn = screen.getByRole('button', { name: /close/i });
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -253,7 +247,7 @@ describe("KeyboardShortcutsHelp", () => {
   // First-time tooltip
   // -------------------------------------------------------------------------
 
-  it("shows first-time snackbar when localStorage flag is not set", () => {
+  it('shows first-time snackbar when localStorage flag is not set', () => {
     // Mock getItem to return null (flag not set)
     vi.mocked(localStorage.getItem).mockReturnValue(null);
     render(
@@ -263,14 +257,14 @@ describe("KeyboardShortcutsHelp", () => {
         shortcuts={makeShortcuts()}
         isMac={false}
         showFirstTimeHint={true}
-      />,
+      />
     );
     expect(screen.getByText(/ctrl\+\?/i)).toBeInTheDocument();
   });
 
-  it("does NOT show first-time snackbar when localStorage flag is present", () => {
+  it('does NOT show first-time snackbar when localStorage flag is present', () => {
     // Mock getItem to return a value (flag is set)
-    vi.mocked(localStorage.getItem).mockReturnValue("1");
+    vi.mocked(localStorage.getItem).mockReturnValue('1');
     render(
       <KeyboardShortcutsHelp
         open={false}
@@ -278,7 +272,7 @@ describe("KeyboardShortcutsHelp", () => {
         shortcuts={makeShortcuts()}
         isMac={false}
         showFirstTimeHint={true}
-      />,
+      />
     );
     expect(screen.queryByText(/ctrl\+\?/i)).not.toBeInTheDocument();
   });

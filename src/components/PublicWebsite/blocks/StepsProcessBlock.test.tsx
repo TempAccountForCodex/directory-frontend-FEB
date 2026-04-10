@@ -15,13 +15,16 @@
  * - React.memo applied
  * - Responsive: collapses to vertical on mobile
  */
-import React from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 
 // Mock framer-motion
-vi.mock("framer-motion", () => ({
+vi.mock('framer-motion', () => ({
+  useScroll: () => ({ scrollYProgress: { get: () => 0, onChange: () => () => {} } }),
+  useTransform: (..._args) => ({ get: () => '0%', onChange: () => () => {} }),
+  useMotionValue: (v) => ({ get: () => v, set: () => {}, onChange: () => () => {} }),
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
   },
@@ -29,11 +32,11 @@ vi.mock("framer-motion", () => ({
 }));
 
 // Mock react-intersection-observer
-vi.mock("react-intersection-observer", () => ({
+vi.mock('react-intersection-observer', () => ({
   useInView: () => [null, true],
 }));
 
-import StepsProcessBlock from "./StepsProcessBlock";
+import StepsProcessBlock from './StepsProcessBlock';
 
 type BlockLike = {
   id: number;
@@ -44,134 +47,122 @@ type BlockLike = {
 
 const defaultBlock: BlockLike = {
   id: 2,
-  blockType: "STEPS_PROCESS",
+  blockType: 'STEPS_PROCESS',
   sortOrder: 1,
   content: {
-    heading: "How It Works",
-    description: "Simple three-step process",
+    heading: 'How It Works',
+    description: 'Simple three-step process',
     steps: [
-      {
-        title: "Step One Title",
-        description: "Step one description text",
-        icon: "",
-      },
-      {
-        title: "Step Two Title",
-        description: "Step two description text",
-        icon: "",
-      },
-      {
-        title: "Step Three Title",
-        description: "Step three description text",
-        icon: "",
-      },
+      { title: 'Step One Title', description: 'Step one description text', icon: '' },
+      { title: 'Step Two Title', description: 'Step two description text', icon: '' },
+      { title: 'Step Three Title', description: 'Step three description text', icon: '' },
     ],
-    layout: "horizontal",
+    layout: 'horizontal',
     showConnectors: true,
-    accentColor: "#2563eb",
+    accentColor: '#2563eb',
   },
 };
 
 const blockWithIcons: BlockLike = {
   id: 3,
-  blockType: "STEPS_PROCESS",
+  blockType: 'STEPS_PROCESS',
   sortOrder: 2,
   content: {
-    heading: "Steps with Icons",
-    description: "",
+    heading: 'Steps with Icons',
+    description: '',
     steps: [
-      { title: "Step One", description: "Desc one", icon: "business" },
-      { title: "Step Two", description: "Desc two", icon: "build" },
+      { title: 'Step One', description: 'Desc one', icon: 'business' },
+      { title: 'Step Two', description: 'Desc two', icon: 'build' },
     ],
-    layout: "horizontal",
+    layout: 'horizontal',
     showConnectors: true,
-    accentColor: "#2563eb",
+    accentColor: '#2563eb',
   },
 };
 
-describe("StepsProcessBlock", () => {
-  it("renders without crashing", () => {
+describe('StepsProcessBlock', () => {
+  it('renders without crashing', () => {
     const { container } = render(
       <StepsProcessBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders the heading", () => {
+  it('renders the heading', () => {
     render(
       <StepsProcessBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("How It Works")).toBeInTheDocument();
+    expect(screen.getByText('How It Works')).toBeInTheDocument();
   });
 
-  it("renders the description", () => {
+  it('renders the description', () => {
     render(
       <StepsProcessBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("Simple three-step process")).toBeInTheDocument();
+    expect(screen.getByText('Simple three-step process')).toBeInTheDocument();
   });
 
-  it("renders step numbers auto-incremented (1, 2, 3)", () => {
+  it('renders step numbers auto-incremented with default padded format (01, 02, 03)', () => {
     render(
       <StepsProcessBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText('01')).toBeInTheDocument();
+    expect(screen.getByText('02')).toBeInTheDocument();
+    expect(screen.getByText('03')).toBeInTheDocument();
   });
 
-  it("renders step titles", () => {
+  it('renders step titles', () => {
     render(
       <StepsProcessBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("Step One Title")).toBeInTheDocument();
-    expect(screen.getByText("Step Two Title")).toBeInTheDocument();
-    expect(screen.getByText("Step Three Title")).toBeInTheDocument();
+    expect(screen.getByText('Step One Title')).toBeInTheDocument();
+    expect(screen.getByText('Step Two Title')).toBeInTheDocument();
+    expect(screen.getByText('Step Three Title')).toBeInTheDocument();
   });
 
-  it("renders step descriptions", () => {
+  it('renders step descriptions', () => {
     render(
       <StepsProcessBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    expect(screen.getByText("Step one description text")).toBeInTheDocument();
-    expect(screen.getByText("Step two description text")).toBeInTheDocument();
-    expect(screen.getByText("Step three description text")).toBeInTheDocument();
+    expect(screen.getByText('Step one description text')).toBeInTheDocument();
+    expect(screen.getByText('Step two description text')).toBeInTheDocument();
+    expect(screen.getByText('Step three description text')).toBeInTheDocument();
   });
 
-  it("renders with vertical layout without crashing", () => {
+  it('renders with vertical layout without crashing', () => {
     const verticalBlock = {
       ...defaultBlock,
-      content: { ...defaultBlock.content, layout: "vertical" as const },
+      content: { ...defaultBlock.content, layout: 'vertical' as const },
     };
     const { container } = render(
       <StepsProcessBlock
@@ -179,15 +170,15 @@ describe("StepsProcessBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with alternating layout without crashing", () => {
+  it('renders with alternating layout without crashing', () => {
     const alternatingBlock = {
       ...defaultBlock,
-      content: { ...defaultBlock.content, layout: "alternating" as const },
+      content: { ...defaultBlock.content, layout: 'alternating' as const },
     };
     const { container } = render(
       <StepsProcessBlock
@@ -195,12 +186,12 @@ describe("StepsProcessBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with showConnectors false without crashing", () => {
+  it('renders with showConnectors false without crashing', () => {
     const noConnectorsBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, showConnectors: false },
@@ -211,12 +202,12 @@ describe("StepsProcessBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with empty steps array gracefully", () => {
+  it('renders with empty steps array gracefully', () => {
     const emptyStepsBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, steps: [] },
@@ -227,12 +218,12 @@ describe("StepsProcessBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with undefined steps gracefully", () => {
+  it('renders with undefined steps gracefully', () => {
     const undefinedStepsBlock = {
       ...defaultBlock,
       content: { ...defaultBlock.content, steps: undefined },
@@ -243,35 +234,35 @@ describe("StepsProcessBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("is wrapped with React.memo (is an object/memoized component)", () => {
-    expect(typeof StepsProcessBlock).toBe("object");
+  it('is wrapped with React.memo (is an object/memoized component)', () => {
+    expect(typeof StepsProcessBlock).toBe('object');
   });
 
-  it("renders icon when icon name provided in step", () => {
+  it('renders icon when icon name provided in step', () => {
     const { container } = render(
       <StepsProcessBlock
         block={blockWithIcons}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     // Icon should render as SVG (MUI icon) — block renders without crashing
     expect(container.firstChild).not.toBeNull();
     // Icons render as SVG elements
-    const svgs = container.querySelectorAll("svg");
+    const svgs = container.querySelectorAll('svg');
     expect(svgs.length).toBeGreaterThan(0);
   });
 
-  it("renders with custom accentColor without crashing", () => {
+  it('renders with custom accentColor without crashing', () => {
     const customColorBlock = {
       ...defaultBlock,
-      content: { ...defaultBlock.content, accentColor: "#ff6b6b" },
+      content: { ...defaultBlock.content, accentColor: '#ff6b6b' },
     };
     const { container } = render(
       <StepsProcessBlock
@@ -279,15 +270,15 @@ describe("StepsProcessBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders with no heading gracefully", () => {
+  it('renders with no heading gracefully', () => {
     const noHeadingBlock = {
       ...defaultBlock,
-      content: { ...defaultBlock.content, heading: "" },
+      content: { ...defaultBlock.content, heading: '' },
     };
     const { container } = render(
       <StepsProcessBlock
@@ -295,23 +286,79 @@ describe("StepsProcessBlock", () => {
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders SSR fallback — step numbers present without JS", () => {
+  it('renders SSR fallback — padded step numbers present in DOM', () => {
     render(
       <StepsProcessBlock
         block={defaultBlock}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />,
+      />
     );
-    // All step numbers should be in DOM
-    expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText('01')).toBeInTheDocument();
+    expect(screen.getByText('02')).toBeInTheDocument();
+    expect(screen.getByText('03')).toBeInTheDocument();
+  });
+
+  it('renders plain number format (1, 2, 3) when numberFormat=plain', () => {
+    const plainBlock = {
+      ...defaultBlock,
+      content: { ...defaultBlock.content, numberFormat: 'plain' as const },
+    };
+    render(
+      <StepsProcessBlock
+        block={plainBlock}
+        primaryColor="#2563eb"
+        headingColor="#1e293b"
+        bodyColor="#475569"
+      />
+    );
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.queryByText('01')).not.toBeInTheDocument();
+  });
+
+  it('renders startNumber=5 with padded format (05, 06, 07)', () => {
+    const startBlock = {
+      ...defaultBlock,
+      content: { ...defaultBlock.content, startNumber: 5, numberFormat: 'padded' as const },
+    };
+    render(
+      <StepsProcessBlock
+        block={startBlock}
+        primaryColor="#2563eb"
+        headingColor="#1e293b"
+        bodyColor="#475569"
+      />
+    );
+    expect(screen.getByText('05')).toBeInTheDocument();
+    expect(screen.getByText('06')).toBeInTheDocument();
+    expect(screen.getByText('07')).toBeInTheDocument();
+    expect(screen.queryByText('01')).not.toBeInTheDocument();
+  });
+
+  it('renders startNumber=5 with plain format (5, 6, 7)', () => {
+    const startPlainBlock = {
+      ...defaultBlock,
+      content: { ...defaultBlock.content, startNumber: 5, numberFormat: 'plain' as const },
+    };
+    render(
+      <StepsProcessBlock
+        block={startPlainBlock}
+        primaryColor="#2563eb"
+        headingColor="#1e293b"
+        bodyColor="#475569"
+      />
+    );
+    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getByText('6')).toBeInTheDocument();
+    expect(screen.getByText('7')).toBeInTheDocument();
+    expect(screen.queryByText('1')).not.toBeInTheDocument();
   });
 });

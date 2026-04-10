@@ -3,8 +3,8 @@ import React, {
   forwardRef,
   useImperativeHandle,
   type ForwardRefRenderFunction,
-} from "react";
-import { Modal, Box, Typography, Button, useTheme } from "@mui/material";
+} from 'react';
+import { Modal, Box, Typography, Button, useTheme } from '@mui/material';
 
 /* ---------- Types ---------- */
 interface ConfirmModalProps {
@@ -20,12 +20,9 @@ export interface ConfirmModalRef {
 }
 
 /* ---------- Component ---------- */
-const ConfirmModal: ForwardRefRenderFunction<
-  ConfirmModalRef,
-  ConfirmModalProps
-> = (
-  { slug, handleSubmit, confirmLabel = "Confirm", cancelLabel = "Cancel" },
-  ref,
+const ConfirmModal: ForwardRefRenderFunction<ConfirmModalRef, ConfirmModalProps> = (
+  { slug, handleSubmit, confirmLabel = 'Confirm', cancelLabel = 'Cancel' },
+  ref
 ) => {
   const [open, setOpen] = useState<boolean>(false);
   const theme = useTheme();
@@ -52,15 +49,14 @@ const ConfirmModal: ForwardRefRenderFunction<
       <Box
         sx={{
           bgcolor: theme.palette.common.white,
-          width: "300px",
+          width: '300px',
           p: 4,
-          borderRadius: "10px",
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          boxShadow:
-            "rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,rgba(0, 0, 0, 0.08) 0px 0px 0px 1px",
+          borderRadius: '10px',
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          boxShadow: 'rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,rgba(0, 0, 0, 0.08) 0px 0px 0px 1px',
         }}
       >
         <Typography
@@ -68,11 +64,11 @@ const ConfirmModal: ForwardRefRenderFunction<
           id="confirm-modal-title"
           sx={{ color: (theme.palette.primary as any).hover }}
         >
-          This title already exists. Your new URL will be:{" "}
+          This title already exists. Your new URL will be:{' '}
           <span>{`https://prismx.us/business/${slug}`}</span>
         </Typography>
 
-        <Box mt={2} sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Box mt={2} sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button variant="outlined" onClick={handleClose}>
             {cancelLabel}
           </Button>

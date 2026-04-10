@@ -13,16 +13,10 @@
  * 9. Loading state: shows spinner during save
  * 10. Error state: shows error alert on save failure
  */
-import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  act,
-} from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -33,18 +27,18 @@ global.fetch = mockFetch;
 // ---------------------------------------------------------------------------
 // Component under test
 // ---------------------------------------------------------------------------
-import SaveTemplateModal from "../SaveTemplateModal";
+import SaveTemplateModal from '../SaveTemplateModal';
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("SaveTemplateModal (Step 9.3.4)", () => {
+describe('SaveTemplateModal (Step 9.3.4)', () => {
   const defaultProps = {
     open: true,
     onClose: vi.fn(),
-    blockType: "HERO",
-    blockContent: { heading: "My Hero", ctaText: "Click Me" },
+    blockType: 'HERO',
+    blockContent: { heading: 'My Hero', ctaText: 'Click Me' },
     onSaveSuccess: vi.fn(),
   };
 
@@ -54,107 +48,105 @@ describe("SaveTemplateModal (Step 9.3.4)", () => {
       ok: true,
       json: async () => ({
         success: true,
-        data: { id: 1, name: "My Template", blockType: "HERO" },
+        data: { id: 1, name: 'My Template', blockType: 'HERO' },
       }),
     });
   });
 
-  it("renders name input when open=true", async () => {
+  it('renders name input when open=true', async () => {
     await act(async () => {
       render(<SaveTemplateModal {...defaultProps} />);
     });
     expect(screen.getByLabelText(/template name/i)).toBeInTheDocument();
   });
 
-  it("renders description textarea", async () => {
+  it('renders description textarea', async () => {
     await act(async () => {
       render(<SaveTemplateModal {...defaultProps} />);
     });
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
   });
 
-  it("Save button is disabled when name is empty", async () => {
+  it('Save button is disabled when name is empty', async () => {
     await act(async () => {
       render(<SaveTemplateModal {...defaultProps} />);
     });
-    const saveBtn = screen.getByRole("button", { name: /save/i });
+    const saveBtn = screen.getByRole('button', { name: /save/i });
     expect(saveBtn).toBeDisabled();
   });
 
-  it("Save button enabled after name is entered", async () => {
+  it('Save button enabled after name is entered', async () => {
     await act(async () => {
       render(<SaveTemplateModal {...defaultProps} />);
     });
     const nameInput = screen.getByLabelText(/template name/i);
-    fireEvent.change(nameInput, { target: { value: "My Hero Template" } });
-    const saveBtn = screen.getByRole("button", { name: /save/i });
+    fireEvent.change(nameInput, { target: { value: 'My Hero Template' } });
+    const saveBtn = screen.getByRole('button', { name: /save/i });
     expect(saveBtn).not.toBeDisabled();
   });
 
-  it("calls fetch with correct data on valid submit", async () => {
+  it('calls fetch with correct data on valid submit', async () => {
     await act(async () => {
       render(<SaveTemplateModal {...defaultProps} />);
     });
     const nameInput = screen.getByLabelText(/template name/i);
-    fireEvent.change(nameInput, { target: { value: "My Hero Template" } });
+    fireEvent.change(nameInput, { target: { value: 'My Hero Template' } });
     const descInput = screen.getByLabelText(/description/i);
-    fireEvent.change(descInput, { target: { value: "Great template" } });
-    const saveBtn = screen.getByRole("button", { name: /save/i });
+    fireEvent.change(descInput, { target: { value: 'Great template' } });
+    const saveBtn = screen.getByRole('button', { name: /save/i });
     fireEvent.click(saveBtn);
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/blocks/templates"),
+        expect.stringContaining('/blocks/templates'),
         expect.objectContaining({
-          method: "POST",
-          body: expect.stringContaining("My Hero Template"),
-        }),
+          method: 'POST',
+          body: expect.stringContaining('My Hero Template'),
+        })
       );
     });
   });
 
-  it("calls onSaveSuccess after successful save", async () => {
+  it('calls onSaveSuccess after successful save', async () => {
     const onSaveSuccess = vi.fn();
     await act(async () => {
-      render(
-        <SaveTemplateModal {...defaultProps} onSaveSuccess={onSaveSuccess} />,
-      );
+      render(<SaveTemplateModal {...defaultProps} onSaveSuccess={onSaveSuccess} />);
     });
     const nameInput = screen.getByLabelText(/template name/i);
-    fireEvent.change(nameInput, { target: { value: "Test Template" } });
-    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    fireEvent.change(nameInput, { target: { value: 'Test Template' } });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
       expect(onSaveSuccess).toHaveBeenCalled();
     });
   });
 
-  it("calls onClose when Cancel is clicked", async () => {
+  it('calls onClose when Cancel is clicked', async () => {
     const onClose = vi.fn();
     await act(async () => {
       render(<SaveTemplateModal {...defaultProps} onClose={onClose} />);
     });
-    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("shows error alert when API call fails", async () => {
-    mockFetch.mockRejectedValue(new Error("Network error"));
+  it('shows error alert when API call fails', async () => {
+    mockFetch.mockRejectedValue(new Error('Network error'));
     await act(async () => {
       render(<SaveTemplateModal {...defaultProps} />);
     });
     const nameInput = screen.getByLabelText(/template name/i);
-    fireEvent.change(nameInput, { target: { value: "Fail Template" } });
-    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    fireEvent.change(nameInput, { target: { value: 'Fail Template' } });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
     });
   });
 
-  it("is wrapped with React.memo", () => {
+  it('is wrapped with React.memo', () => {
     expect(SaveTemplateModal).toBeDefined();
-    expect((SaveTemplateModal as any).$$typeof?.toString()).toContain("Symbol");
+    expect((SaveTemplateModal as any).$$typeof?.toString()).toContain('Symbol');
   });
 
-  it("does not render when open=false", async () => {
+  it('does not render when open=false', async () => {
     await act(async () => {
       render(<SaveTemplateModal {...defaultProps} open={false} />);
     });
