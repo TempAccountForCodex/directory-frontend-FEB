@@ -16,21 +16,10 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import FadeIn from '../../blocks/FadeIn';
 import type { TemplateProps } from '../../templateEngine/types';
+import { buildStoreTheme, rgba, blendHex } from './theme';
 
-const headingFont = '"Poppins", "Avenir Next", "Segoe UI", sans-serif';
-const bodyFont = '"Manrope", "Avenir Next", "Segoe UI", sans-serif';
-
-const palette = {
-  page: '#efe6d6',
-  panel: '#f5ecdf',
-  ink: '#111111',
-  muted: '#544e46',
-  accent: '#f0bc3f',
-  border: '#17140f',
-  fieldBorder: 'rgba(68, 58, 40, 0.34)',
-  fieldText: '#2e281f',
-  fieldLabel: '#8d7f68',
-};
+const defaultHeadingFont = '"Poppins", "Avenir Next", "Segoe UI", sans-serif';
+const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
 
 const fallbackLogo = 'https://cdn-icons-png.freepik.com/128/3081/3081559.png';
 
@@ -132,6 +121,39 @@ const benefitItems = [
 type StorePage = 'home' | 'shop' | 'about' | 'contact';
 
 const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const theme = buildStoreTheme({
+    data,
+    defaultPrimary: '#f0bc3f',
+    defaultSecondary: '#efe6d6',
+    defaultHeadingFont,
+    defaultBodyFont,
+  });
+  const headingFont = theme.headingFont;
+  const bodyFont = theme.bodyFont;
+  const palette = {
+    page: theme.page,
+    panel: theme.card,
+    ink: theme.ink,
+    muted: theme.muted,
+    accent: theme.primary,
+    border: blendHex(theme.primary, '#17140f', 0.62),
+    fieldBorder: rgba(theme.primary, 0.24),
+    fieldText: theme.ink,
+    fieldLabel: rgba(theme.ink, 0.52),
+  };
+  const lightSurface = blendHex(theme.secondary, '#ffffff', 0.22);
+  const lightSurfaceSoft = rgba(theme.light, 0.28);
+  const lightBorder = rgba(theme.ink, 0.14);
+  const lightBorderStrong = rgba(theme.ink, 0.22);
+  const headerBg = rgba(theme.secondary, 0.94);
+  const darkBadge = rgba(theme.ink, 0.88);
+  const darkOverlay = `linear-gradient(90deg, ${rgba(theme.ink, 0.68)} 0%, ${rgba(
+    theme.ink,
+    0.4,
+  )} 44%, ${rgba(theme.ink, 0.14)} 100%)`;
+  const accentHover = blendHex(theme.primary, '#ffffff', 0.12);
+  const subtleShadow = `0 10px 30px ${rgba(theme.ink, 0.04)}`;
+  const strongShadow = `0 24px 50px ${rgba(theme.ink, 0.1)}`;
   const navigate = useNavigate();
   const { templateId = 'store-premium', pageId } = useParams<{
     templateId?: string;
@@ -196,10 +218,10 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         borderWidth: '1px',
       },
       '&:hover fieldset': {
-        borderColor: 'rgba(54,45,29,0.48)',
+        borderColor: rgba(theme.primary, 0.4),
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#a98d3a',
+        borderColor: theme.primary,
         borderWidth: '1px',
       },
       '& input::placeholder, & textarea::placeholder': {
@@ -211,7 +233,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
       color: palette.fieldLabel,
     },
     '& .MuiInputLabel-root.Mui-focused': {
-      color: '#8b6f1d',
+      color: theme.primary,
     },
   } as const;
 
@@ -262,7 +284,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 mt: 2.4,
                 bgcolor: palette.accent,
-                color: palette.ink,
+                color: palette.page,
                 borderRadius: 999,
                 border: `1px solid ${palette.border}`,
                 boxShadow: 'none',
@@ -271,7 +293,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 fontSize: '0.72rem',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                '&:hover': { bgcolor: accentHover, boxShadow: 'none' },
               }}
             >
               Shop now
@@ -316,8 +338,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Box
               sx={{
                 p: { xs: 2.5, md: 3 },
-                border: `1px solid rgba(17,17,17,0.14)`,
-                bgcolor: 'rgba(255,255,255,0.28)',
+                border: `1px solid ${lightBorder}`,
+                bgcolor: lightSurfaceSoft,
               }}
             >
               <Typography
@@ -396,18 +418,18 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   minWidth: 0,
                   p: { xs: 1.4, md: 1.6 },
-                  border: `1px solid rgba(17,17,17,0.12)`,
-                  bgcolor: '#f4ebdd',
+                  border: `1px solid ${rgba(theme.ink, 0.12)}`,
+                  bgcolor: lightSurface,
                   textAlign: 'center',
                   position: 'relative',
                   overflow: 'hidden',
-                  boxShadow: '0 10px 30px rgba(48,34,8,0.04)',
+                  boxShadow: subtleShadow,
                   transition:
                     'transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease',
                   '&:hover': {
                     transform: 'translateY(-8px)',
-                    boxShadow: '0 24px 50px rgba(48,34,8,0.10)',
-                    borderColor: 'rgba(17,17,17,0.22)',
+                    boxShadow: strongShadow,
+                    borderColor: lightBorderStrong,
                   },
                 }}
               >
@@ -421,8 +443,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                       px: 1.1,
                       py: 0.5,
                       borderRadius: 999,
-                      bgcolor: 'rgba(17,17,17,0.88)',
-                      color: '#fff',
+                      bgcolor: darkBadge,
+                      color: theme.light,
                       fontSize: '0.62rem',
                       letterSpacing: '0.18em',
                       textTransform: 'uppercase',
@@ -482,7 +504,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 mt: 3.2,
                 bgcolor: palette.accent,
-                color: palette.ink,
+                color: palette.page,
                 borderRadius: 999,
                 border: `1px solid ${palette.border}`,
                 boxShadow: 'none',
@@ -491,7 +513,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 fontSize: '0.7rem',
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
-                '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                '&:hover': { bgcolor: accentHover, boxShadow: 'none' },
               }}
             >
               View all products
@@ -517,8 +539,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             gridTemplateColumns: { xs: '1fr', md: '0.86fr 1.14fr' },
             gap: { xs: 3, md: 4 },
             alignItems: 'stretch',
-            border: `1px solid rgba(17,17,17,0.15)`,
-            bgcolor: '#f4ebdd',
+            border: `1px solid ${rgba(theme.ink, 0.15)}`,
+            bgcolor: lightSurface,
             overflow: 'hidden',
           }}
         >
@@ -586,7 +608,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 2.5,
                   alignSelf: 'flex-start',
                   bgcolor: palette.accent,
-                  color: palette.ink,
+                  color: palette.page,
                   borderRadius: 999,
                   border: `1px solid ${palette.border}`,
                   boxShadow: 'none',
@@ -595,7 +617,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontSize: '0.7rem',
                   letterSpacing: '0.18em',
                   textTransform: 'uppercase',
-                  '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                  '&:hover': { bgcolor: accentHover, boxShadow: 'none' },
                 }}
               >
                 Read about us
@@ -619,8 +641,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Box
           sx={{
             p: { xs: 3, md: 4.5 },
-            border: `1px solid rgba(17,17,17,0.14)`,
-            bgcolor: '#f4ebdd',
+            border: `1px solid ${lightBorder}`,
+            bgcolor: lightSurface,
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '0.95fr 1.05fr' },
             gap: { xs: 3, md: 4 },
@@ -682,7 +704,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     alignSelf: { xs: 'stretch', sm: 'flex-start' },
                     bgcolor: palette.accent,
-                    color: palette.ink,
+                    color: palette.page,
                     borderRadius: 999,
                     border: `1px solid ${palette.border}`,
                     boxShadow: 'none',
@@ -691,7 +713,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: '0.7rem',
                     letterSpacing: '0.18em',
                     textTransform: 'uppercase',
-                    '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                    '&:hover': { bgcolor: accentHover, boxShadow: 'none' },
                   }}
                 >
                   Subscribe
@@ -738,8 +760,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             sx={{
               position: 'absolute',
               inset: 0,
-              background:
-                'linear-gradient(90deg, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.4) 44%, rgba(0,0,0,0.14) 100%)',
+              background: darkOverlay,
             }}
           />
 
@@ -761,7 +782,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: '0.72rem',
                     letterSpacing: '0.34em',
                     textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.76)',
+                    color: rgba(theme.light, 0.76),
                   }}
                 >
                   Shop the full collection
@@ -774,7 +795,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: { xs: '2.4rem', md: '4.6rem' },
                     lineHeight: 0.92,
                     letterSpacing: '-0.06em',
-                    color: '#fff',
+                    color: theme.light,
                   }}
                 >
                   Discover every
@@ -785,7 +806,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     mt: 1.8,
                     maxWidth: 520,
-                    color: 'rgba(255,255,255,0.82)',
+                    color: rgba(theme.light, 0.82),
                     fontSize: { xs: '0.96rem', md: '1rem' },
                     lineHeight: 1.85,
                   }}
@@ -807,7 +828,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: '0.7rem',
                     letterSpacing: '0.18em',
                     textTransform: 'uppercase',
-                    '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                    '&:hover': { bgcolor: accentHover, boxShadow: 'none' },
                   }}
                 >
                   Shop now
@@ -845,9 +866,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Box
                 sx={{
                   p: { xs: 1.4, md: 1.6 },
-                  border: `1px solid rgba(17,17,17,0.12)`,
-                  bgcolor: '#f4ebdd',
-                  boxShadow: '0 10px 30px rgba(48,34,8,0.04)',
+                  border: `1px solid ${rgba(theme.ink, 0.12)}`,
+                  bgcolor: lightSurface,
+                  boxShadow: subtleShadow,
                 }}
               >
                 <Box sx={{ position: 'relative', overflow: 'hidden' }}>
@@ -861,8 +882,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                         px: 1.1,
                         py: 0.5,
                         borderRadius: 999,
-                        bgcolor: 'rgba(17,17,17,0.88)',
-                        color: '#fff',
+                        bgcolor: darkBadge,
+                        color: theme.light,
                         fontSize: '0.62rem',
                         letterSpacing: '0.18em',
                         textTransform: 'uppercase',
@@ -941,7 +962,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                       fontSize: '0.66rem',
                       letterSpacing: '0.16em',
                       textTransform: 'uppercase',
-                      '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                      '&:hover': { bgcolor: accentHover, boxShadow: 'none' },
                     }}
                   >
                     Visit product
@@ -1429,9 +1450,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 mt: 3.2,
                 width: { xs: 220, md: 280 },
                 p: 1.2,
-                bgcolor: 'rgba(255,255,255,0.28)',
-                border: `1px solid rgba(17,17,17,0.12)`,
-                boxShadow: '0 16px 40px rgba(48,34,8,0.06)',
+                bgcolor: lightSurfaceSoft,
+                border: `1px solid ${rgba(theme.ink, 0.12)}`,
+                boxShadow: `0 16px 40px ${rgba(theme.ink, 0.06)}`,
               }}
             >
               <Box
@@ -1455,9 +1476,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               justifySelf: 'end',
               width: '100%',
               p: { xs: 2.5, md: 3.2 },
-              border: `1px solid rgba(17,17,17,0.18)`,
-              bgcolor: '#f4ebdd',
-              boxShadow: '0 22px 50px rgba(48,34,8,0.07)',
+              border: `1px solid ${rgba(theme.ink, 0.18)}`,
+              bgcolor: lightSurface,
+              boxShadow: `0 22px 50px ${rgba(theme.ink, 0.07)}`,
               position: 'relative',
             }}
           >
@@ -1469,7 +1490,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 px: 1.2,
                 py: 0.4,
                 bgcolor: palette.page,
-                border: `1px solid rgba(17,17,17,0.14)`,
+                border: `1px solid ${lightBorder}`,
                 fontSize: '0.66rem',
                 letterSpacing: '0.22em',
                 textTransform: 'uppercase',
@@ -1529,7 +1550,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 fontSize: '0.72rem',
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
-                '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                '&:hover': { bgcolor: accentHover, boxShadow: 'none' },
               }}
             >
               Ask
@@ -1562,8 +1583,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           position: 'sticky',
           top: 0,
           zIndex: 20,
-          bgcolor: 'rgba(239,230,214,0.96)',
-          borderBottom: `1px solid ${palette.border}`,
+          bgcolor: headerBg,
+          borderBottom: `1px solid ${lightBorder}`,
           backdropFilter: 'blur(12px)',
         }}
       >
@@ -1641,7 +1662,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     p: 0,
                     bgcolor: 'transparent',
                     cursor: 'pointer',
-                    color: activePage === item.page ? palette.ink : 'rgba(17,17,17,0.62)',
+                    color: activePage === item.page ? palette.ink : rgba(theme.ink, 0.62),
                     fontSize: { xs: '0.72rem', md: '0.74rem' },
                     letterSpacing: '0.22em',
                     textTransform: 'uppercase',

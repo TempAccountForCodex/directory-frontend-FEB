@@ -3,6 +3,7 @@ import { Box, Button, Stack, TextField, Typography } from '@mui/material';
 import { Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import FadeIn from '../../blocks/FadeIn';
 import type { TemplateProps } from '../../templateEngine/types';
+import { buildCompanyTheme, rgba } from './theme';
 
 const editorialImages = {
   hero: 'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80',
@@ -14,18 +15,19 @@ const editorialImages = {
     'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80',
   detail:
     'https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=1200&q=80',
-  socialOne:
-    'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=600&q=80',
-  socialTwo:
-    'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80',
-  socialThree:
-    'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=600&q=80',
-  socialFour:
-    'https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=600&q=80',
 };
 
+const defaultHeadingFont = '"Plus Jakarta Sans", "Inter", sans-serif';
+const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
+
 const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
-  const primary = data.primaryColor || '#161616';
+  const theme = buildCompanyTheme({
+    data,
+    defaultPrimary: '#161616',
+    defaultSecondary: '#efefef',
+    defaultHeadingFont,
+    defaultBodyFont,
+  });
   const services = data.features?.slice(0, 4) || [];
   const heroImage = data.gallery?.[0]?.url || editorialImages.hero;
 
@@ -47,9 +49,9 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
     <Box
       sx={{
         minHeight: '100vh',
-        bgcolor: '#efefef',
-        color: '#111111',
-        fontFamily: '"Arial Narrow", "Roboto Condensed", Arial, sans-serif',
+        background: theme.pageBackground,
+        color: theme.ink,
+        fontFamily: theme.bodyFont,
         scrollBehavior: 'smooth',
       }}
     >
@@ -65,7 +67,14 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               mb: { xs: 4, md: 6 },
             }}
           >
-            <Typography sx={{ fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+            <Typography
+              sx={{
+                fontFamily: theme.headingFont,
+                fontSize: '1.3rem',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+              }}
+            >
               {data.name.toUpperCase()}
             </Typography>
 
@@ -74,7 +83,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               spacing={3}
               sx={{
                 display: { xs: 'none', md: 'flex' },
-                color: '#3b3b3b',
+                color: theme.inkSoft,
                 fontSize: '0.82rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
@@ -114,7 +123,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 fontSize: '0.9rem',
                 fontWeight: 700,
-                color: '#111111',
+                color: theme.ink,
                 textDecoration: 'none',
                 background: 'transparent',
                 border: 0,
@@ -141,16 +150,23 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               alignItems: 'flex-end',
               px: { xs: 3, md: 5 },
               py: { xs: 4, md: 5 },
-              backgroundImage: `linear-gradient(180deg, rgba(9, 12, 18, 0.12) 0%, rgba(9, 12, 18, 0.56) 72%, rgba(9, 12, 18, 0.78) 100%), url(${heroImage})`,
+              backgroundImage: `linear-gradient(180deg, ${rgba(
+                theme.darkest,
+                0.12,
+              )} 0%, ${rgba(theme.dark, 0.56)} 72%, ${rgba(
+                theme.darkest,
+                0.78,
+              )} 100%), url(${heroImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              boxShadow: '0 24px 60px rgba(17, 17, 17, 0.12)',
+              boxShadow: `0 24px 60px ${rgba(theme.darkest, 0.16)}`,
             }}
           >
             <Box sx={{ maxWidth: 620 }}>
               <Typography
                 sx={{
-                  color: '#ffffff',
+                  fontFamily: theme.headingFont,
+                  color: theme.light,
                   fontSize: { xs: '3rem', md: '6.2rem' },
                   lineHeight: 0.9,
                   letterSpacing: '-0.07em',
@@ -165,7 +181,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   mt: 1.6,
                   maxWidth: 360,
-                  color: 'rgba(255,255,255,0.82)',
+                  color: rgba(theme.light, 0.82),
                   fontSize: { xs: '0.95rem', md: '1rem' },
                   lineHeight: 1.7,
                 }}
@@ -177,15 +193,15 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                   variant="contained"
                   onClick={() => scrollToSection('studio')}
                   sx={{
-                    bgcolor: '#ffffff',
-                    color: '#111111',
+                    bgcolor: theme.light,
+                    color: theme.ink,
                     px: 2.6,
                     py: 1.05,
                     borderRadius: 999,
                     textTransform: 'none',
                     fontWeight: 700,
                     boxShadow: 'none',
-                    '&:hover': { bgcolor: '#f0f0f0', boxShadow: 'none' },
+                    '&:hover': { bgcolor: theme.light, boxShadow: 'none', opacity: 0.92 },
                   }}
                 >
                   View Studio
@@ -194,14 +210,17 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                   variant="outlined"
                   onClick={() => scrollToSection('contact')}
                   sx={{
-                    color: '#ffffff',
-                    borderColor: 'rgba(255,255,255,0.55)',
+                    color: theme.light,
+                    borderColor: rgba(theme.light, 0.55),
                     px: 2.6,
                     py: 1.05,
                     borderRadius: 999,
                     textTransform: 'none',
                     fontWeight: 700,
-                    '&:hover': { borderColor: '#ffffff', bgcolor: 'rgba(255,255,255,0.08)' },
+                    '&:hover': {
+                      borderColor: theme.light,
+                      bgcolor: rgba(theme.light, 0.08),
+                    },
                   }}
                 >
                   Contact
@@ -230,10 +249,10 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                   backgroundPosition: 'center',
                 }}
               />
-              <Typography sx={{ mt: 1.2, fontSize: '0.82rem', color: '#222222' }}>
+              <Typography sx={{ mt: 1.2, fontSize: '0.82rem', color: theme.ink }}>
                 Hospitality interiors
               </Typography>
-              <Typography sx={{ fontSize: '0.75rem', color: '#666666' }}>
+              <Typography sx={{ fontSize: '0.75rem', color: theme.inkSoft }}>
                 Boutique lounge concept
               </Typography>
             </Box>
@@ -249,10 +268,10 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                   backgroundPosition: 'center',
                 }}
               />
-              <Typography sx={{ mt: 1.2, fontSize: '0.82rem', color: '#222222' }}>
+              <Typography sx={{ mt: 1.2, fontSize: '0.82rem', color: theme.ink }}>
                 Residential styling
               </Typography>
-              <Typography sx={{ fontSize: '0.75rem', color: '#666666' }}>
+              <Typography sx={{ fontSize: '0.75rem', color: theme.inkSoft }}>
                 Warm minimal living
               </Typography>
             </Box>
@@ -285,6 +304,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Box sx={{ pt: { md: 2 } }}>
               <Typography
                 sx={{
+                  fontFamily: theme.headingFont,
                   fontSize: { xs: '2.8rem', md: '4.6rem' },
                   lineHeight: 0.94,
                   fontWeight: 900,
@@ -294,7 +314,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 Studio
               </Typography>
-              <Typography sx={{ mt: 1.5, maxWidth: 360, color: '#555555', lineHeight: 1.8 }}>
+              <Typography sx={{ mt: 1.5, maxWidth: 360, color: theme.inkSoft, lineHeight: 1.8 }}>
                 {data.tagline}
               </Typography>
 
@@ -303,11 +323,16 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <FadeIn key={service.title} delay={index * 0.08}>
                     <Box>
                       <Typography
-                        sx={{ fontSize: '1.1rem', fontWeight: 800, textTransform: 'uppercase' }}
+                        sx={{
+                          fontFamily: theme.headingFont,
+                          fontSize: '1.1rem',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                        }}
                       >
                         {service.title}
                       </Typography>
-                      <Typography sx={{ mt: 0.5, color: '#5f5f5f', lineHeight: 1.7 }}>
+                      <Typography sx={{ mt: 0.5, color: theme.inkSoft, lineHeight: 1.7 }}>
                         {service.description}
                       </Typography>
                     </Box>
@@ -330,7 +355,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box id="contact" sx={{ bgcolor: '#040404', color: '#ffffff', mt: { xs: 6, md: 8 } }}>
+      <Box id="contact" sx={{ background: `linear-gradient(180deg, ${theme.dark} 0%, ${theme.darkest} 100%)`, color: theme.light, mt: { xs: 6, md: 8 } }}>
         <Box sx={{ maxWidth: 1180, mx: 'auto', px: { xs: 2, md: 3 }, py: { xs: 4, md: 5 } }}>
           <Box
             sx={{
@@ -339,18 +364,23 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               gap: 3,
               alignItems: 'center',
               pb: 4,
-              borderBottom: '1px solid rgba(255,255,255,0.14)',
+              borderBottom: `1px solid ${rgba(theme.light, 0.14)}`,
             }}
           >
             <FadeIn>
               <Box>
                 <Typography
-                  sx={{ fontSize: '1.5rem', fontWeight: 800, textTransform: 'uppercase' }}
+                  sx={{
+                    fontFamily: theme.headingFont,
+                    fontSize: '1.5rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                  }}
                 >
                   Newsletter Sign Up
                 </Typography>
                 <Typography
-                  sx={{ mt: 1, maxWidth: 500, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7 }}
+                  sx={{ mt: 1, maxWidth: 500, color: rgba(theme.light, 0.72), lineHeight: 1.7 }}
                 >
                   Occasional updates about projects, spaces, and the studio&apos;s latest work.
                 </Typography>
@@ -371,7 +401,8 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     flex: 1,
                     '& .MuiOutlinedInput-root': {
-                      bgcolor: '#ffffff',
+                      bgcolor: theme.light,
+                      color: theme.ink,
                       borderRadius: 0,
                       minHeight: 58,
                       fontSize: '1rem',
@@ -385,8 +416,8 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Button
                   variant="contained"
                   sx={{
-                    bgcolor: '#6f6f6f',
-                    color: '#ffffff',
+                    bgcolor: theme.accent,
+                    color: theme.light,
                     borderRadius: 0,
                     minWidth: { xs: '100%', sm: 132 },
                     minHeight: 58,
@@ -395,7 +426,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontWeight: 700,
                     textTransform: 'none',
                     boxShadow: 'none',
-                    '&:hover': { bgcolor: '#6f6f6f', boxShadow: 'none', opacity: 0.9 },
+                    '&:hover': { bgcolor: theme.accent, boxShadow: 'none', opacity: 0.9 },
                   }}
                 >
                   Sign Up
@@ -412,17 +443,22 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               alignItems: { xs: 'flex-start', md: 'center' },
               flexDirection: { xs: 'column', md: 'row' },
               gap: 2,
-              borderTop: '1px solid rgba(255,255,255,0.14)',
+              borderTop: `1px solid ${rgba(theme.light, 0.14)}`,
             }}
           >
             <FadeIn>
               <Box>
                 <Typography
-                  sx={{ fontSize: '1.15rem', fontWeight: 800, textTransform: 'uppercase' }}
+                  sx={{
+                    fontFamily: theme.headingFont,
+                    fontSize: '1.15rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                  }}
                 >
                   {data.name}
                 </Typography>
-                <Typography sx={{ mt: 0.8, color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>
+                <Typography sx={{ mt: 0.8, color: rgba(theme.light, 0.7), fontSize: '0.9rem' }}>
                   {data.contact.email} · {data.contact.phone}
                 </Typography>
               </Box>
@@ -439,8 +475,8 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        border: '1px solid rgba(255,255,255,0.18)',
-                        color: '#ffffff',
+                        border: `1px solid ${rgba(theme.light, 0.18)}`,
+                        color: theme.light,
                       }}
                     >
                       <Icon size={15} />

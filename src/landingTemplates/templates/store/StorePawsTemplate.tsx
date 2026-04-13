@@ -15,21 +15,11 @@ import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import { motion } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
+import { buildStoreTheme, rgba } from "./theme";
 
-const palette = {
-  bg: "#f4e4d3",
-  card: "#f8efe6",
-  ink: "#231815",
-  muted: "rgba(35, 24, 21, 0.66)",
-  line: "rgba(35, 24, 21, 0.1)",
-  accent: "#7f4f3d",
-  accentSoft: "#ead4c2",
-  white: "#fffaf5",
-};
-
-const headingFont = '"Questrial", "Inter", sans-serif';
-const bodyFont = '"Inter", "Segoe UI", sans-serif';
-const heroVideo = "https://videocdn.cdnpk.net/videos/76f0be3a-af58-4fc9-b0f0-6252b6b58f8f/horizontal/previews/clear/large.mp4?token=exp=1775511212~hmac=36253990c1b625f12c6fba83194d10e86376484db1b895b90160be55de3fcf9e";
+const defaultHeadingFont = '"Questrial", "Inter", sans-serif';
+const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
+const heroVideo = "https://videocdn.cdnpk.net/videos/76f0be3a-af58-4fc9-b0f0-6252b6b58f8f/horizontal/previews/clear/large.mp4?token=exp=1776093435~hmac=277fdf765864244a45431c287f25daf253a52c82f4e190d4698b2436f7aeb75b";
 
 const fallbackProducts = [
   {
@@ -177,6 +167,25 @@ const imageReveal = {
 } as const;
 
 const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const theme = buildStoreTheme({
+    data,
+    defaultPrimary: "#7f4f3d",
+    defaultSecondary: "#f4e4d3",
+    defaultHeadingFont,
+    defaultBodyFont,
+  });
+  const palette = {
+    bg: theme.page,
+    card: theme.card,
+    ink: theme.ink,
+    muted: theme.muted,
+    line: theme.border,
+    accent: theme.primary,
+    accentSoft: theme.accentSoft,
+    white: theme.light,
+  };
+  const headingFont = theme.headingFont;
+  const bodyFont = theme.bodyFont;
   const products = data.products?.length ? data.products : fallbackProducts;
   const featured = products.slice(0, 3);
   const essentials = products.slice(3, 6);

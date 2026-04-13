@@ -1,18 +1,9 @@
 import React from 'react';
 import { Box, Button, Stack, TextField, Typography } from '@mui/material';
-import {
-  ArrowRight,
-  Facebook,
-  Instagram,
-  Linkedin,
-  Mail,
-  MapPin,
-  Phone,
-  Quote,
-  Twitter,
-} from 'lucide-react';
+import { ArrowRight, Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter } from 'lucide-react';
 import FadeIn from '../../blocks/FadeIn';
 import type { TemplateProps } from '../../templateEngine/types';
+import { blendHex, buildCompanyTheme, rgba } from './theme';
 
 const editorialImages = {
   hero: 'https://images.unsplash.com/photo-1525258946800-98cfd641d0de?auto=format&fit=crop&w=1600&q=80',
@@ -30,22 +21,20 @@ const editorialImages = {
     'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=1100&q=80',
   servicesRight:
     'https://images.unsplash.com/photo-1460036521480-ff49c08c2781?auto=format&fit=crop&w=1100&q=80',
-  detailLeft:
-    'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1000&q=80',
-  detailRight:
-    'https://images.unsplash.com/photo-1459666644539-a9755287d6b0?auto=format&fit=crop&w=1000&q=80',
 };
 
-const serifFont = '"Bodoni Moda", "Didot", "Times New Roman", serif';
-const sansFont = '"Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+const defaultHeadingFont = 'Georgia, "Times New Roman", serif';
+const defaultBodyFont = '"DM Sans", "Inter", sans-serif';
 
 const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
-  const primary = data.primaryColor || '#101010';
-  const secondary = data.secondaryColor || '#f3ede3';
+  const theme = buildCompanyTheme({
+    data,
+    defaultPrimary: '#101010',
+    defaultSecondary: '#f3ede3',
+    defaultHeadingFont,
+    defaultBodyFont,
+  });
   const features = data.features?.slice(0, 6) || [];
-  const stats = data.stats?.slice(0, 3) || [];
-  const reviews = data.reviews?.slice(0, 2) || [];
-  const team = data.team?.slice(0, 3) || [];
 
   const socialIcons = [
     { key: 'instagram', icon: Instagram },
@@ -120,9 +109,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
     <Box
       sx={{
         minHeight: '100vh',
-        bgcolor: '#f4f0e8',
-        color: '#141414',
-        fontFamily: sansFont,
+        background: theme.pageBackground,
+        color: theme.ink,
+        fontFamily: theme.bodyFont,
       }}
     >
       <Box
@@ -131,9 +120,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           position: 'sticky',
           top: 0,
           zIndex: 20,
-          bgcolor: 'rgba(244,240,232,0.9)',
+          bgcolor: rgba(theme.secondary, 0.9),
           backdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(20,20,20,0.08)',
+          borderBottom: `1px solid ${theme.line}`,
         }}
       >
         <FadeIn direction="down">
@@ -161,11 +150,11 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     background: 'transparent',
                     p: 0,
                     cursor: 'pointer',
-                    fontFamily: sansFont,
+                    fontFamily: theme.bodyFont,
                     fontSize: '0.76rem',
                     letterSpacing: '0.18em',
                     textTransform: 'uppercase',
-                    color: 'rgba(20,20,20,0.68)',
+                    color: theme.inkSoft,
                   }}
                 >
                   {item.label}
@@ -175,7 +164,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
             <Typography
               sx={{
-                fontFamily: serifFont,
+                fontFamily: theme.headingFont,
                 fontSize: { xs: '1.2rem', md: '1.5rem' },
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
@@ -189,8 +178,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               variant="text"
               endIcon={<ArrowRight size={14} />}
               sx={{
-                color: '#111',
-                fontFamily: sansFont,
+                color: theme.ink,
+                fontFamily: theme.bodyFont,
                 fontSize: '0.76rem',
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
@@ -212,12 +201,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '1.15fr 0.85fr' },
           alignItems: 'stretch',
-          '& > .company-premium-hero-left': {
-            height: '100%',
-          },
-          '& > .company-premium-hero-right': {
-            height: '100%',
-          },
+          '& > .company-premium-hero-left': { height: '100%' },
+          '& > .company-premium-hero-right': { height: '100%' },
         }}
       >
         <FadeIn className="company-premium-hero-left">
@@ -229,8 +214,14 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               alignItems: 'center',
               px: { xs: 2, sm: 4, md: 7 },
               py: { xs: 8, md: 10 },
-              color: '#f9f6ef',
-              backgroundImage: `linear-gradient(90deg, rgba(19,19,19,0.5) 0%, rgba(19,19,19,0.18) 46%, rgba(19,19,19,0.1) 100%), url(${data.gallery?.[0]?.url || editorialImages.hero})`,
+              color: theme.light,
+              backgroundImage: `linear-gradient(90deg, ${rgba(
+                theme.darkest,
+                0.5,
+              )} 0%, ${rgba(theme.dark, 0.18)} 46%, ${rgba(
+                theme.dark,
+                0.1,
+              )} 100%), url(${data.gallery?.[0]?.url || editorialImages.hero})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
@@ -241,7 +232,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontSize: '0.74rem',
                   letterSpacing: '0.24em',
                   textTransform: 'uppercase',
-                  color: 'rgba(249,246,239,0.72)',
+                  color: rgba(theme.light, 0.72),
                   mb: 2,
                 }}
               >
@@ -249,7 +240,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Typography>
               <Typography
                 sx={{
-                  fontFamily: serifFont,
+                  fontFamily: theme.headingFont,
                   fontSize: { xs: '3.5rem', sm: '4.3rem', md: '5.8rem' },
                   lineHeight: 0.9,
                   letterSpacing: '-0.05em',
@@ -263,7 +254,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   maxWidth: 470,
                   fontSize: { xs: '1rem', md: '1.08rem' },
                   lineHeight: 1.85,
-                  color: 'rgba(249,246,239,0.82)',
+                  color: rgba(theme.light, 0.82),
                 }}
               >
                 {data.description}
@@ -276,15 +267,15 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   px: 3.25,
                   py: 1.5,
                   borderRadius: 0,
-                  bgcolor: '#f8f2e8',
-                  color: '#121212',
+                  bgcolor: theme.light,
+                  color: theme.ink,
                   boxShadow: 'none',
-                  fontFamily: sansFont,
+                  fontFamily: theme.bodyFont,
                   fontSize: '0.76rem',
                   letterSpacing: '0.18em',
                   textTransform: 'uppercase',
                   '&:hover': {
-                    bgcolor: '#f8f2e8',
+                    bgcolor: theme.light,
                     boxShadow: 'none',
                     opacity: 0.92,
                   },
@@ -297,33 +288,30 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         </FadeIn>
 
         <Box
+          className="company-premium-hero-right"
           sx={{
             position: 'relative',
             minHeight: { xs: 360, md: '78vh' },
-            backgroundColor: '#d9d0c1',
+            backgroundColor: theme.lightPanelStrong,
             overflow: 'hidden',
           }}
         >
-          <Box sx={{ width: '100%', height: '100%' }}>
-            <Box sx={{ width: '100%', height: '100%' }}>
-              <Box
-                component="img"
-                src={data.gallery?.[1]?.url || editorialImages.heroAccent}
-                alt={data.name}
-                sx={{
-                  width: '100%',
-                  minHeight: { xs: 360, md: '78vh' },
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-              />
-            </Box>
-          </Box>
+          <Box
+            component="img"
+            src={data.gallery?.[1]?.url || editorialImages.heroAccent}
+            alt={data.name}
+            sx={{
+              width: '100%',
+              minHeight: { xs: 360, md: '78vh' },
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
         </Box>
       </Box>
 
-      <Box sx={{ bgcolor: '#40461c', color: '#f6f1e8' }}>
+      <Box sx={{ bgcolor: blendHex(theme.primary, '#4c5522', 0.38), color: theme.light }}>
         <FadeIn>
           <Box
             sx={{
@@ -337,20 +325,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               alignItems: 'center',
             }}
           >
-            <Typography
-              sx={{
-                fontFamily: serifFont,
-                fontSize: { xs: '2rem', md: '2.6rem' },
-                lineHeight: 0.9,
-              }}
-            ></Typography>
-            <Typography
-              sx={{
-                maxWidth: 760,
-                lineHeight: 1.9,
-                color: 'rgba(246,241,232,0.82)',
-              }}
-            >
+            <Typography sx={{ fontFamily: theme.headingFont, fontSize: { xs: '2rem', md: '2.6rem' }, lineHeight: 0.9 }} />
+            <Typography sx={{ maxWidth: 760, lineHeight: 1.9, color: rgba(theme.light, 0.82) }}>
               {data.name} works with a deliberately small roster of clients, shaping premium brand
               experiences, spaces, and presentation systems with detail, restraint, and a polished
               editorial point of view.
@@ -373,18 +349,12 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <FadeIn>
           <Box>
-            <Typography
-              sx={{
-                fontFamily: serifFont,
-                fontSize: { xs: '2.8rem', md: '4.4rem' },
-                lineHeight: 0.95,
-              }}
-            >
+            <Typography sx={{ fontFamily: theme.headingFont, fontSize: { xs: '2.8rem', md: '4.4rem' }, lineHeight: 0.95 }}>
               Featured
               <br />
               selections
             </Typography>
-            <Typography sx={{ mt: 2, color: 'rgba(20,20,20,0.7)', lineHeight: 1.85 }}>
+            <Typography sx={{ mt: 2, color: theme.inkSoft, lineHeight: 1.85 }}>
               A premium showcase for signature offerings, designed to feel elevated and editorial
               without turning the page into a storefront.
             </Typography>
@@ -394,8 +364,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 mt: 4,
                 borderRadius: 0,
-                bgcolor: '#0f1110',
-                color: '#fff',
+                bgcolor: theme.darkest,
+                color: theme.light,
                 px: 3,
                 py: 1.4,
                 fontSize: '0.76rem',
@@ -403,7 +373,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 textTransform: 'uppercase',
                 boxShadow: 'none',
                 '&:hover': {
-                  bgcolor: '#0f1110',
+                  bgcolor: theme.darkest,
                   boxShadow: 'none',
                   opacity: 0.92,
                 },
@@ -414,13 +384,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Box>
         </FadeIn>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-            gap: 3,
-          }}
-        >
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 3 }}>
           {featuredCards.map((card, index) => (
             <FadeIn key={card.title} delay={index * 0.08}>
               <Box>
@@ -433,13 +397,13 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     aspectRatio: index === 1 ? '0.85 / 1' : '0.82 / 1',
                     objectFit: 'cover',
                     display: 'block',
-                    bgcolor: '#ddd6c9',
+                    bgcolor: theme.lightPanelStrong,
                   }}
                 />
-                <Typography sx={{ mt: 1.5, fontFamily: serifFont, fontSize: '1.35rem' }}>
+                <Typography sx={{ mt: 1.5, fontFamily: theme.headingFont, fontSize: '1.35rem' }}>
                   {card.title}
                 </Typography>
-                <Typography sx={{ mt: 0.75, color: 'rgba(20,20,20,0.7)', lineHeight: 1.7 }}>
+                <Typography sx={{ mt: 0.75, color: theme.inkSoft, lineHeight: 1.7 }}>
                   {card.description}
                 </Typography>
               </Box>
@@ -448,7 +412,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box sx={{ bgcolor: secondary }}>
+      <Box sx={{ bgcolor: theme.secondary }}>
         <Box
           sx={{
             maxWidth: 1280,
@@ -482,7 +446,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontSize: '0.74rem',
                   letterSpacing: '0.22em',
                   textTransform: 'uppercase',
-                  color: 'rgba(20,20,20,0.58)',
+                  color: rgba(theme.ink, 0.58),
                 }}
               >
                 Brand occasions
@@ -490,7 +454,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Typography
                 sx={{
                   mt: 1.5,
-                  fontFamily: serifFont,
+                  fontFamily: theme.headingFont,
                   fontSize: { xs: '3rem', md: '4.5rem' },
                   lineHeight: 0.94,
                   letterSpacing: '-0.04em',
@@ -498,25 +462,11 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 Direction for launches, events, and polished company moments.
               </Typography>
-              <Typography
-                sx={{
-                  mt: 2.5,
-                  maxWidth: 470,
-                  lineHeight: 1.9,
-                  color: 'rgba(20,20,20,0.72)',
-                }}
-              >
+              <Typography sx={{ mt: 2.5, maxWidth: 470, lineHeight: 1.9, color: theme.inkSoft }}>
                 Built for premium service companies, studios, consultancies, and boutique brands
                 that need visual storytelling rather than product-cart behavior.
               </Typography>
-              <Typography
-                sx={{
-                  mt: 2,
-                  maxWidth: 470,
-                  lineHeight: 1.9,
-                  color: 'rgba(20,20,20,0.72)',
-                }}
-              >
+              <Typography sx={{ mt: 2, maxWidth: 470, lineHeight: 1.9, color: theme.inkSoft }}>
                 Use this section for campaigns, seasonal messaging, private appointments, or company
                 capabilities without introducing any checkout or add-to-cart flow.
               </Typography>
@@ -536,39 +486,18 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         }}
       >
         <FadeIn>
-          <Typography
-            sx={{
-              fontFamily: serifFont,
-              fontSize: { xs: '3rem', md: '4.4rem' },
-              lineHeight: 0.95,
-            }}
-          >
+          <Typography sx={{ fontFamily: theme.headingFont, fontSize: { xs: '3rem', md: '4.4rem' }, lineHeight: 0.95 }}>
             What we do
           </Typography>
         </FadeIn>
         <FadeIn delay={0.08}>
-          <Typography
-            sx={{
-              mt: 1.5,
-              maxWidth: 720,
-              mx: 'auto',
-              color: 'rgba(20,20,20,0.68)',
-              lineHeight: 1.85,
-            }}
-          >
+          <Typography sx={{ mt: 1.5, maxWidth: 720, mx: 'auto', color: theme.inkSoft, lineHeight: 1.85 }}>
             A premium multi-section template for company storytelling, services, and trust-building.
             It is structured around enquiries, not e-commerce actions.
           </Typography>
         </FadeIn>
 
-        <Box
-          sx={{
-            mt: 5,
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
-            gap: 3,
-          }}
-        >
+        <Box sx={{ mt: 5, display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
           {serviceTiles.map((tile, index) => (
             <FadeIn key={tile.title} delay={index * 0.08}>
               <Box>
@@ -583,16 +512,10 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     display: 'block',
                   }}
                 />
-                <Typography sx={{ mt: 1.6, fontFamily: serifFont, fontSize: '1.4rem' }}>
+                <Typography sx={{ mt: 1.6, fontFamily: theme.headingFont, fontSize: '1.4rem' }}>
                   {tile.title}
                 </Typography>
-                <Typography
-                  sx={{
-                    mt: 0.75,
-                    color: 'rgba(20,20,20,0.72)',
-                    lineHeight: 1.75,
-                  }}
-                >
+                <Typography sx={{ mt: 0.75, color: theme.inkSoft, lineHeight: 1.75 }}>
                   {tile.description}
                 </Typography>
               </Box>
@@ -601,13 +524,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box
-        id="contact"
-        sx={{
-          bgcolor: '#e4ded2',
-          color: '#141414',
-        }}
-      >
+      <Box id="contact" sx={{ bgcolor: theme.lightPanelStrong, color: theme.ink }}>
         <Box
           sx={{
             maxWidth: 1280,
@@ -622,24 +539,10 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         >
           <FadeIn>
             <Box>
-              <Typography
-                sx={{
-                  fontSize: '0.74rem',
-                  letterSpacing: '0.22em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(20,20,20,0.58)',
-                }}
-              >
+              <Typography sx={{ fontSize: '0.74rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: rgba(theme.ink, 0.58) }}>
                 Contact
               </Typography>
-              <Typography
-                sx={{
-                  mt: 1.5,
-                  fontFamily: serifFont,
-                  fontSize: { xs: '2.8rem', md: '4rem' },
-                  lineHeight: 0.96,
-                }}
-              >
+              <Typography sx={{ mt: 1.5, fontFamily: theme.headingFont, fontSize: { xs: '2.8rem', md: '4rem' }, lineHeight: 0.96 }}>
                 Let&apos;s shape something memorable.
               </Typography>
 
@@ -674,21 +577,10 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
           <FadeIn delay={0.08}>
             <Box>
-              <Typography
-                sx={{
-                  fontSize: '0.74rem',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(20,20,20,0.58)',
-                }}
-              >
+              <Typography sx={{ fontSize: '0.74rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: rgba(theme.ink, 0.58) }}>
                 Join the mailing list
               </Typography>
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={1.25}
-                sx={{ mt: 2.5, alignItems: 'stretch' }}
-              >
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ mt: 2.5, alignItems: 'stretch' }}>
                 <TextField
                   fullWidth
                   placeholder="Email address"
@@ -698,9 +590,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     '& .MuiOutlinedInput-root': {
                       minHeight: 58,
                       borderRadius: 0,
-                      bgcolor: '#f7f2e8',
+                      bgcolor: theme.lightPanel,
                       '& fieldset': {
-                        borderColor: 'rgba(20,20,20,0.14)',
+                        borderColor: theme.line,
                       },
                     },
                     '& .MuiOutlinedInput-input': {
@@ -715,14 +607,14 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     minHeight: 58,
                     px: 3.2,
                     borderRadius: 0,
-                    bgcolor: '#111',
-                    color: '#fff',
+                    bgcolor: theme.darkest,
+                    color: theme.light,
                     boxShadow: 'none',
                     fontSize: '0.76rem',
                     letterSpacing: '0.18em',
                     textTransform: 'uppercase',
                     '&:hover': {
-                      bgcolor: '#111',
+                      bgcolor: theme.darkest,
                       boxShadow: 'none',
                       opacity: 0.92,
                     },
@@ -743,8 +635,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          border: '1px solid rgba(20,20,20,0.14)',
-                          bgcolor: '#f7f2e8',
+                          border: `1px solid ${theme.line}`,
+                          bgcolor: theme.lightPanel,
                         }}
                       >
                         <Icon size={16} />

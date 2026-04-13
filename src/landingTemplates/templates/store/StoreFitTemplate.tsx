@@ -4,20 +4,10 @@ import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
 import EastIcon from "@mui/icons-material/East";
 import { motion } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
+import { buildStoreTheme, rgba, blendHex } from "./theme";
 
-const palette = {
-  bg: "#050505",
-  surface: "#111111",
-  surfaceSoft: "#171717",
-  border: "rgba(255,255,255,0.09)",
-  text: "#f8f3ee",
-  muted: "rgba(248,243,238,0.68)",
-  accent: "#cbc3b8",
-  chip: "rgba(255,255,255,0.1)",
-};
-
-const headingFont = '"Space Grotesk", "Segoe UI", sans-serif';
-const bodyFont = '"Manrope", "Segoe UI", sans-serif';
+const defaultHeadingFont = '"Space Grotesk", "Segoe UI", sans-serif';
+const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
 
 const fallbackHero =
   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1600&q=80";
@@ -137,14 +127,6 @@ const normalizeProductImage = (
   index: number,
 ) => fallbackProducts[index % fallbackProducts.length].image || image || fallbackHero;
 
-const sectionTitleSx = {
-  fontFamily: headingFont,
-  fontWeight: 800,
-  fontSize: { xs: "2.3rem", md: "3.6rem" },
-  letterSpacing: "-0.06em",
-  lineHeight: 0.92,
-};
-
 const revealUp = {
   initial: { opacity: 0, y: 34 },
   whileInView: { opacity: 1, y: 0 },
@@ -167,28 +149,56 @@ const cardReveal = {
   transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
 } as const;
 
-const contactFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: palette.text,
-    borderRadius: "18px",
-    backgroundColor: "rgba(255,255,255,0.03)",
-    "& fieldset": {
-      borderColor: palette.border,
-    },
-    "&:hover fieldset": {
-      borderColor: "rgba(255,255,255,0.2)",
-    },
-    "&.Mui-focused fieldset": {
-      borderColor: "rgba(255,255,255,0.38)",
-    },
-  },
-  "& .MuiInputBase-input::placeholder": {
-    color: palette.muted,
-    opacity: 1,
-  },
-} as const;
-
 const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const theme = buildStoreTheme({
+    data,
+    defaultPrimary: "#cbc3b8",
+    defaultSecondary: "#050505",
+    defaultHeadingFont,
+    defaultBodyFont,
+  });
+  const palette = {
+    bg: theme.page,
+    surface: theme.card,
+    surfaceSoft: theme.panel,
+    border: theme.border,
+    text: theme.ink,
+    muted: theme.muted,
+    accent: theme.primary,
+    chip: rgba(theme.ink, 0.08),
+    onImage: theme.light,
+    onImageMuted: rgba(theme.light, 0.78),
+    inverseBg: theme.ink,
+    inverseText: theme.page,
+    headerBg: blendHex(theme.card, "#ffffff", 0.28),
+  };
+  const sectionTitleSx = {
+    fontFamily: theme.headingFont,
+    fontWeight: 800,
+    fontSize: { xs: "2.3rem", md: "3.6rem" },
+    letterSpacing: "-0.06em",
+    lineHeight: 0.92,
+  };
+  const contactFieldSx = {
+    "& .MuiOutlinedInput-root": {
+      color: palette.text,
+      borderRadius: "18px",
+      backgroundColor: rgba(theme.ink, 0.03),
+      "& fieldset": {
+        borderColor: palette.border,
+      },
+      "&:hover fieldset": {
+        borderColor: rgba(theme.ink, 0.2),
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: rgba(theme.ink, 0.38),
+      },
+    },
+    "& .MuiInputBase-input::placeholder": {
+      color: palette.muted,
+      opacity: 1,
+    },
+  } as const;
   const products = (data.products?.length ? data.products : fallbackProducts).map(
     (product, index) => ({
       ...product,
@@ -257,7 +267,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
         overflow: "hidden",
         border: `1px solid ${palette.border}`,
         background:
-          "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01))",
+          `linear-gradient(180deg, ${rgba(theme.ink, 0.06)}, ${rgba(theme.ink, 0.01)})`,
       }}
     >
       <Box
@@ -293,7 +303,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
             label={options?.badgeLabel || product.badge || product.category}
             size="small"
             sx={{
-              bgcolor: "rgba(255,255,255,0.9)",
+              bgcolor: rgba(theme.light, 0.92),
               color: "#0f0f0f",
               fontWeight: 700,
               height: 24,
@@ -301,11 +311,11 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
           />
           <Typography
             sx={{
-              fontFamily: headingFont,
+              fontFamily: theme.headingFont,
               fontSize: { xs: "1rem", md: "1.08rem" },
               fontWeight: 700,
               letterSpacing: "-0.02em",
-              color: "#f7efe3",
+              color: palette.onImage,
               textShadow: "0 1px 10px rgba(0,0,0,0.25)",
             }}
           >
@@ -315,13 +325,13 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
         {!options?.imageOnly ? (
           <Box>
             {options?.caption ? (
-              <Typography sx={{ fontSize: "0.72rem", color: palette.muted, mb: 0.5 }}>
+              <Typography sx={{ fontSize: "0.72rem", color: palette.onImageMuted, mb: 0.5 }}>
                 {options.caption}
               </Typography>
             ) : null}
             <Typography
               sx={{
-                fontFamily: headingFont,
+                fontFamily: theme.headingFont,
                 fontSize: options?.compact ? "1rem" : "1.25rem",
                 fontWeight: 700,
                 lineHeight: 1.05,
@@ -336,7 +346,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 maxWidth: 260,
                 fontSize: "0.82rem",
                 lineHeight: 1.55,
-                color: palette.muted,
+                color: palette.onImageMuted,
               }}
             >
               {product.description}
@@ -352,7 +362,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
       sx={{
         bgcolor: palette.bg,
         color: palette.text,
-        fontFamily: bodyFont,
+        fontFamily: theme.bodyFont,
         "@keyframes storeFitMarquee": {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-50%)" },
@@ -371,8 +381,8 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
           left: 0,
           right: 0,
           zIndex: 40,
-          bgcolor: "rgba(255,255,255,0.98)",
-          borderBottom: "1px solid rgba(15,15,15,0.08)",
+          bgcolor: rgba(palette.headerBg, 0.98),
+          borderBottom: `1px solid ${palette.border}`,
           boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
         }}
       >
@@ -389,11 +399,11 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <Typography
               sx={{
-                fontFamily: headingFont,
+                fontFamily: theme.headingFont,
                 fontWeight: 800,
                 letterSpacing: "-0.05em",
                 fontSize: { xs: "2rem", md: "2.9rem" },
-                color: "#0d0d0d",
+                color: palette.text,
                 lineHeight: 0.95,
               }}
             >
@@ -415,7 +425,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
                   sx={{
-                    color: "#0d0d0d",
+                    color: palette.text,
                     cursor: "pointer",
                     fontSize: "1rem",
                     fontWeight: 600,
@@ -430,9 +440,9 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Button
               onClick={() => scrollToSection("contact")}
               sx={{
-                color: "#0d0d0d",
+                color: palette.text,
                 justifySelf: "end",
-                border: "1px solid rgba(15,15,15,0.12)",
+                border: `1px solid ${palette.border}`,
                 borderRadius: 999,
                 px: 2.2,
                 py: 0.95,
@@ -501,11 +511,12 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 bottom: { xs: 20, md: 34 },
                 maxWidth: { xs: 260, md: 360, lg: 420 },
                 justifyContent: "flex-end",
+                color: palette.onImage,
               }}
             >
               <Typography
                 sx={{
-                  fontFamily: headingFont,
+                  fontFamily: theme.headingFont,
                   fontWeight: 800,
                   fontSize: { xs: "2.5rem", md: "3.9rem", lg: "4.6rem" },
                   lineHeight: 0.9,
@@ -520,7 +531,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   fontSize: { xs: "0.98rem", md: "1.08rem", lg: "1.18rem" },
                   lineHeight: 1.45,
-                  color: palette.muted,
+                  color: palette.onImageMuted,
                   maxWidth: { xs: 240, md: 320, lg: 360 },
                 }}
               >
@@ -531,7 +542,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 onClick={() => scrollToSection("new-arrivals")}
                 sx={{
                   alignSelf: "flex-start",
-                  bgcolor: "rgba(255,255,255,0.94)",
+                  bgcolor: rgba(theme.light, 0.94),
                   color: "#0d0d0d",
                   borderRadius: 999,
                   px: 1.9,
@@ -539,7 +550,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                   textTransform: "none",
                   fontWeight: 700,
                   fontSize: { xs: "0.95rem", md: "1rem" },
-                  "&:hover": { bgcolor: "#ffffff" },
+                  "&:hover": { bgcolor: theme.light },
                 }}
               >
                 Explore collection
@@ -635,7 +646,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Box>
                   <Typography
                     sx={{
-                      fontFamily: headingFont,
+                      fontFamily: theme.headingFont,
                       fontWeight: 800,
                       fontSize: { xs: "2.6rem", md: "4.2rem" },
                       lineHeight: 0.92,
@@ -655,14 +666,14 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                   endIcon={<EastIcon />}
                   sx={{
                     alignSelf: "flex-start",
-                    color: palette.bg,
-                    bgcolor: palette.text,
+                    color: palette.inverseText,
+                    bgcolor: palette.inverseBg,
                     borderRadius: 999,
                     textTransform: "none",
                     px: 2,
                     py: 0.9,
                     "&:hover": {
-                      bgcolor: "#ffffff",
+                      bgcolor: palette.inverseBg,
                     },
                   }}
                 >
@@ -841,7 +852,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                     }}
                   >
                     <Typography sx={{ fontWeight: 700 }}>{story.title}</Typography>
-                    <Typography sx={{ mt: 0.5, fontSize: "0.82rem", color: palette.muted }}>
+                <Typography sx={{ mt: 0.5, fontSize: "0.82rem", color: palette.onImageMuted }}>
                       {story.description}
                     </Typography>
                   </Box>
@@ -875,7 +886,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 borderRadius: "26px",
                 border: `1px solid ${palette.border}`,
                 background:
-                  "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015))",
+                  `linear-gradient(180deg, ${rgba(theme.ink, 0.06)}, ${rgba(theme.ink, 0.015)})`,
                 p: { xs: 2.2, md: 3.2 },
                 display: "flex",
                 flexDirection: "column",
@@ -926,13 +937,13 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                     sx={{
                       borderRadius: "18px",
                       border: `1px solid ${palette.border}`,
-                      bgcolor: "rgba(255,255,255,0.04)",
+                      bgcolor: rgba(theme.ink, 0.04),
                       p: 1.4,
                     }}
                   >
                     <Typography
                       sx={{
-                        fontFamily: headingFont,
+                        fontFamily: theme.headingFont,
                         fontWeight: 800,
                         fontSize: "1.45rem",
                         letterSpacing: "-0.05em",
@@ -1014,7 +1025,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 <Typography
                   sx={{
-                    fontFamily: headingFont,
+                    fontFamily: theme.headingFont,
                     fontWeight: 700,
                     fontSize: { xs: "1.35rem", md: "1.65rem" },
                     letterSpacing: "-0.04em",
@@ -1056,7 +1067,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 borderRadius: "24px",
                 border: `1px solid ${palette.border}`,
                 background:
-                  "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
+                  `linear-gradient(180deg, ${rgba(theme.ink, 0.05)}, ${rgba(theme.ink, 0.02)})`,
                 p: { xs: 2.2, md: 3 },
                 display: "flex",
                 flexDirection: "column",
@@ -1065,7 +1076,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Typography
                 sx={{
-                  fontFamily: headingFont,
+                  fontFamily: theme.headingFont,
                   fontWeight: 800,
                   fontSize: { xs: "1.9rem", md: "2.55rem" },
                   lineHeight: 0.96,
@@ -1115,7 +1126,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 overflow: "hidden",
                 border: `1px solid ${palette.border}`,
                 background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.09))",
+                  `linear-gradient(135deg, ${rgba(theme.ink, 0.02)}, ${rgba(theme.ink, 0.09)})`,
                 p: { xs: 2.2, md: 3 },
                 position: "relative",
                 display: "flex",
@@ -1138,7 +1149,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography
                   sx={{
                     mt: 1,
-                    fontFamily: headingFont,
+                    fontFamily: theme.headingFont,
                     fontWeight: 800,
                     fontSize: { xs: "2.3rem", md: "3.55rem" },
                     lineHeight: 0.9,
@@ -1156,14 +1167,14 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   position: "relative",
                   alignSelf: "flex-start",
-                  bgcolor: "rgba(255,255,255,0.92)",
+                  bgcolor: rgba(theme.light, 0.92),
                   color: "#0d0d0d",
                   borderRadius: 999,
                   px: 1.6,
                   py: 0.85,
                   textTransform: "none",
                   fontWeight: 700,
-                  "&:hover": { bgcolor: "#ffffff" },
+                  "&:hover": { bgcolor: theme.light },
                 }}
               >
                 Shop sale
@@ -1224,7 +1235,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                 />
                 <Box sx={{ position: "absolute", left: 16, right: 16, bottom: 16 }}>
                   <Typography sx={{ fontWeight: 700 }}>{product.name}</Typography>
-                  <Typography sx={{ mt: 0.5, fontSize: "0.8rem", color: palette.muted }}>
+                  <Typography sx={{ mt: 0.5, fontSize: "0.8rem", color: palette.onImageMuted }}>
                     {product.category} edition
                   </Typography>
                 </Box>
@@ -1234,7 +1245,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Typography
             sx={{
               mt: 1.6,
-              fontFamily: headingFont,
+              fontFamily: theme.headingFont,
               fontWeight: 700,
               fontSize: { xs: "1.35rem", md: "1.7rem" },
               letterSpacing: "-0.04em",
@@ -1263,8 +1274,8 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
               mx: "auto",
               borderRadius: "30px",
               border: `1px solid ${palette.border}`,
-              background:
-                "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015))",
+                background:
+                  `linear-gradient(180deg, ${rgba(theme.ink, 0.05)}, ${rgba(theme.ink, 0.015)})`,
               p: { xs: 2.2, md: 3.2 },
               textAlign: "center",
             }}
@@ -1332,15 +1343,15 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
               endIcon={<ArrowOutwardIcon />}
               sx={{
                 mt: 2.2,
-                bgcolor: palette.text,
-                color: palette.bg,
+                bgcolor: palette.inverseBg,
+                color: palette.inverseText,
                 borderRadius: 999,
                 px: 2.4,
                 py: 1,
                 textTransform: "none",
                 fontWeight: 700,
                 "&:hover": {
-                  bgcolor: "#ffffff",
+                  bgcolor: palette.inverseBg,
                 },
               }}
             >
@@ -1374,7 +1385,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
               borderRadius: "28px",
               border: `1px solid ${palette.border}`,
               background:
-                "radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 35%), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015))",
+                `radial-gradient(circle at top left, ${rgba(theme.ink, 0.08)}, transparent 35%), linear-gradient(180deg, ${rgba(theme.ink, 0.04)}, ${rgba(theme.ink, 0.015)})`,
               p: { xs: 2.2, md: 3 },
             }}
           >
@@ -1388,7 +1399,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Typography
                 sx={{
-                  fontFamily: headingFont,
+                  fontFamily: theme.headingFont,
                   fontWeight: 800,
                   fontSize: { xs: "2rem", md: "2.5rem" },
                   letterSpacing: "-0.04em",
@@ -1407,7 +1418,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                       key={item}
                       label={item}
                       sx={{
-                        bgcolor: "rgba(255,255,255,0.06)",
+                        bgcolor: rgba(theme.ink, 0.06),
                         color: palette.text,
                         border: `1px solid ${palette.border}`,
                       }}
@@ -1470,3 +1481,4 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
 };
 
 export default StoreFitTemplate;
+

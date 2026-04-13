@@ -1658,6 +1658,20 @@ type CompanyExecutiveFontPack = {
   bodyFont: string;
 };
 
+const COMPANY_TEMPLATE_SLUGS = [
+  "company",
+  "company-premium",
+  "company-executive",
+] as const;
+
+const STORE_TEMPLATE_SLUGS = [
+  "store-basic",
+  "store-premium",
+  "store-performance",
+  "store-fit",
+  "store-paws",
+] as const;
+
 const COMPANY_EXECUTIVE_PALETTES: CompanyExecutivePalette[] = [
   {
     id: "teal",
@@ -1804,7 +1818,13 @@ const LandingPreview: React.FC = () => {
     pageId?: string;
   }>();
   const isEmbeddedPreview = searchParams.get("embed") === "1";
-  const isCompanyExecutive = slug === "company-executive";
+  const isCompanyCategory = COMPANY_TEMPLATE_SLUGS.includes(
+    slug as (typeof COMPANY_TEMPLATE_SLUGS)[number],
+  );
+  const isStoreCategory = STORE_TEMPLATE_SLUGS.includes(
+    slug as (typeof STORE_TEMPLATE_SLUGS)[number],
+  );
+  const isTemplateCustomizerCategory = isCompanyCategory || isStoreCategory;
   const previewMode = searchParams.get("mode");
   const selectedPalette =
     COMPANY_EXECUTIVE_PALETTES.find(
@@ -1815,8 +1835,27 @@ const LandingPreview: React.FC = () => {
       (pack) => pack.id === searchParams.get("font"),
     ) || COMPANY_EXECUTIVE_FONT_PACKS[0];
   const { templateId, data: resolvedData } = resolveSlug(slug);
+  const companyCustomizerLabel =
+    slug === "company-premium"
+      ? "Company Premium"
+      : slug === "company-executive"
+        ? "Company Executive"
+        : "Company";
+  const storeCustomizerLabel =
+    slug === "store-premium"
+      ? "Store Premium"
+      : slug === "store-performance"
+        ? "Store Performance"
+        : slug === "store-fit"
+          ? "Store Fit"
+          : slug === "store-paws"
+            ? "Store Paws"
+            : "Store";
+  const customizerLabel = isCompanyCategory
+    ? companyCustomizerLabel
+    : storeCustomizerLabel;
   const data = React.useMemo<BusinessData>(() => {
-    if (!isCompanyExecutive) return resolvedData;
+    if (!isTemplateCustomizerCategory) return resolvedData;
 
     return {
       ...resolvedData,
@@ -1830,7 +1869,7 @@ const LandingPreview: React.FC = () => {
         bodyFont: selectedFontPack.bodyFont,
       },
     };
-  }, [isCompanyExecutive, resolvedData, selectedFontPack, selectedPalette]);
+  }, [isTemplateCustomizerCategory, resolvedData, selectedFontPack, selectedPalette]);
   const [device, setDevice] = React.useState<PreviewDevice>("desktop");
   const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
   const currentPreviewPage = pageId || "home";
@@ -1843,7 +1882,7 @@ const LandingPreview: React.FC = () => {
   const iframePreviewUrl = React.useMemo(() => {
     const params = new URLSearchParams();
     params.set("embed", "1");
-    if (isCompanyExecutive) {
+    if (isTemplateCustomizerCategory) {
       params.set("mode", "full");
       params.set("palette", selectedPalette.id);
       params.set("font", selectedFontPack.id);
@@ -1851,7 +1890,7 @@ const LandingPreview: React.FC = () => {
 
     return `/landing-preview/${slug}${pageId ? `/${pageId}` : ""}?${params.toString()}`;
   }, [
-    isCompanyExecutive,
+    isTemplateCustomizerCategory,
     pageId,
     selectedFontPack.id,
     selectedPalette.id,
@@ -1859,7 +1898,7 @@ const LandingPreview: React.FC = () => {
   ]);
   const fullPreviewUrl = React.useMemo(() => {
     const params = new URLSearchParams();
-    if (isCompanyExecutive) {
+    if (isTemplateCustomizerCategory) {
       params.set("mode", "full");
       params.set("palette", selectedPalette.id);
       params.set("font", selectedFontPack.id);
@@ -1868,14 +1907,14 @@ const LandingPreview: React.FC = () => {
     const query = params.toString();
     return `/landing-preview/${slug}${pageId ? `/${pageId}` : ""}${query ? `?${query}` : ""}`;
   }, [
-    isCompanyExecutive,
+    isTemplateCustomizerCategory,
     pageId,
     selectedFontPack.id,
     selectedPalette.id,
     slug,
   ]);
 
-  const updateCompanyExecutiveSearch = React.useCallback(
+  const updateCompanyTemplateSearch = React.useCallback(
     (updates: Record<string, string>) => {
       const next = new URLSearchParams(searchParams);
       Object.entries(updates).forEach(([key, value]) => {
@@ -1986,7 +2025,7 @@ const LandingPreview: React.FC = () => {
     );
   }
 
-  if (isCompanyExecutive && previewMode !== "full") {
+  if (isTemplateCustomizerCategory && previewMode !== "full") {
     return (
       <>
         <PreviewBar slug={slug} device={device} onDeviceChange={setDevice} />
@@ -2126,7 +2165,7 @@ const LandingPreview: React.FC = () => {
                   color: "#6b7280",
                 }}
               >
-                Company Executive
+                {customizerLabel}
               </Typography>
               <Typography
                 sx={{
@@ -2200,7 +2239,7 @@ const LandingPreview: React.FC = () => {
                 <Typography
                   sx={{ color: "#64748b", fontSize: "0.85rem", mb: 1.2 }}
                 >
-                  Pick the tone for dark sections, accents, and tinted surfaces.
+                  Pick the tone for accents, dark sections, and tinted surfaces.
                 </Typography>
                 <Box
                   sx={{
@@ -2215,7 +2254,7 @@ const LandingPreview: React.FC = () => {
                       component="button"
                       type="button"
                       onClick={() =>
-                        updateCompanyExecutiveSearch({
+                        updateCompanyTemplateSearch({
                           palette: palette.id,
                           font: selectedFontPack.id,
                         })
@@ -2288,8 +2327,7 @@ const LandingPreview: React.FC = () => {
                 <Typography
                   sx={{ color: "#64748b", fontSize: "0.85rem", mb: 1.2 }}
                 >
-                  Switch the tone between corporate, editorial, and modern
-                  styles.
+                  Switch the tone between sharp, editorial, and modern styles.
                 </Typography>
                 <Box
                   sx={{
@@ -2304,7 +2342,7 @@ const LandingPreview: React.FC = () => {
                       component="button"
                       type="button"
                       onClick={() =>
-                        updateCompanyExecutiveSearch({
+                        updateCompanyTemplateSearch({
                           font: pack.id,
                           palette: selectedPalette.id,
                         })
