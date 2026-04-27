@@ -146,8 +146,8 @@ const OverviewTab = React.memo(function OverviewTab() {
     setError(null);
     try {
       const [metricsRes, breakdownRes] = await Promise.all([
-        axios.get(`${API_URL}/api/admin/finances/metrics`, { withCredentials: true }),
-        axios.get(`${API_URL}/api/admin/finances/revenue?period=12m`, { withCredentials: true }),
+        axios.get(`${API_URL}/admin/finances/metrics`, { withCredentials: true }),
+        axios.get(`${API_URL}/admin/finances/revenue?period=12m`, { withCredentials: true }),
       ]);
       setMetrics(metricsRes.data.data);
       setBreakdown(breakdownRes.data.data);
@@ -339,7 +339,7 @@ const SubscriptionsTab = React.memo(function SubscriptionsTab() {
         status,
       });
       if (search) params.set("search", search);
-      const res = await axios.get(`${API_URL}/api/admin/finances/subscriptions?${params}`, {
+      const res = await axios.get(`${API_URL}/admin/finances/subscriptions?${params}`, {
         withCredentials: true,
       });
       setData(res.data.data);
@@ -459,7 +459,7 @@ const TransactionsTab = React.memo(function TransactionsTab() {
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
       if (search) params.set("search", search);
-      const res = await axios.get(`${API_URL}/api/admin/finances/transactions?${params}`, {
+      const res = await axios.get(`${API_URL}/admin/finances/transactions?${params}`, {
         withCredentials: true,
       });
       setData(res.data.data);
@@ -583,7 +583,7 @@ const ReportsTab = React.memo(function ReportsTab() {
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
 
-      const res = await axios.get(`${API_URL}/api/admin/finances/reports/export?${params}`, {
+      const res = await axios.get(`${API_URL}/admin/finances/reports/export?${params}`, {
         withCredentials: true,
         responseType: format === "csv" ? "text" : "json",
       });

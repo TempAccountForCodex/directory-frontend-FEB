@@ -117,6 +117,14 @@ const DEFAULT_FORM = {
   category: '',
 };
 
+const getWebsiteIdFromPathname = (pathname) => {
+  const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
+  const websitesIndex = segments.indexOf('websites');
+  return websitesIndex >= 0 ? segments[websitesIndex + 1] || null : null;
+};
+
+const isValidWebsiteId = (value) => /^\d+$/.test(String(value || ''));
+
 // ---------------------------------------------------------------------------
 // Stat Skeleton (loading placeholder for a single metric card)
 // ---------------------------------------------------------------------------
@@ -156,12 +164,18 @@ const RowSkeleton = ({ cols = 6, colors }) => (
 // ---------------------------------------------------------------------------
 // WebsiteManageEvents Component
 // ---------------------------------------------------------------------------
-const WebsiteManageEvents = () => {
+const WebsiteManageEvents = ({ websiteId: websiteIdProp } = {}) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
-  const { websiteId } = useParams();
+  const { websiteId: paramsWebsiteId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const websiteId = useMemo(
+    () => websiteIdProp || paramsWebsiteId || getWebsiteIdFromPathname(location.pathname),
+    [websiteIdProp, paramsWebsiteId, location.pathname]
+  );
+  const hasValidWebsiteId = isValidWebsiteId(websiteId);
 
   // Parse subtab from URL
   const parseSubtab = useCallback(() => {
@@ -194,10 +208,19 @@ const WebsiteManageEvents = () => {
   // Toast
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  const showSnackbar = useCallback((message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  }, []);
+
   // ---------------------------------------------------------------------------
   // Data fetching
   // ---------------------------------------------------------------------------
   const fetchStats = useCallback(async () => {
+    if (!hasValidWebsiteId) {
+      setStatsLoading(false);
+      return;
+    }
+
     setStatsLoading(true);
     try {
       const res = await fetch(`/api/events/stats?websiteId=${websiteId}`, {
@@ -213,12 +236,20 @@ const WebsiteManageEvents = () => {
     } finally {
       setStatsLoading(false);
     }
-  }, [websiteId]);
+  }, [hasValidWebsiteId, websiteId]);
 
   const fetchEvents = useCallback(async () => {
+    if (!hasValidWebsiteId) {
+      setLoading(false);
+      setEvents([]);
+      setCategories([]);
+      showSnackbar('Invalid website id for events', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
-      const params = new URLSearchParams({ websiteId });
+      const params = new URLSearchParams({ websiteId: String(websiteId) });
       if (searchQuery) params.set('search', searchQuery);
       if (filterMode !== 'all') params.set('filter', filterMode);
       params.set('sortBy', sortBy);
@@ -237,7 +268,7 @@ const WebsiteManageEvents = () => {
     } finally {
       setLoading(false);
     }
-  }, [websiteId, searchQuery, filterMode, sortBy]);
+  }, [hasValidWebsiteId, websiteId, searchQuery, filterMode, sortBy, showSnackbar]);
 
   useEffect(() => {
     fetchStats();
@@ -246,13 +277,6 @@ const WebsiteManageEvents = () => {
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
-
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
-  };
 
   // ---------------------------------------------------------------------------
   // Filtered + sorted events (client-side for quick filter)
@@ -346,10 +370,15 @@ const WebsiteManageEvents = () => {
   // API mutations
   // ---------------------------------------------------------------------------
   const handleSaveEvent = async () => {
+    if (!hasValidWebsiteId) {
+      showSnackbar('Invalid website id for events', 'error');
+      return;
+    }
+
     try {
       const payload = {
         ...formData,
-        websiteId,
+        websiteId: Number(websiteId),
         startDate: formData.startDate ? formData.startDate.toISOString() : null,
         endDate: formData.endDate ? formData.endDate.toISOString() : null,
         capacity: formData.capacity ? Number(formData.capacity) : null,
@@ -876,6 +905,7 @@ const WebsiteManageEvents = () => {
   ];
 
   const handleTabChange = (_, newValue) => {
+    if (!hasValidWebsiteId) return;
     navigate(`/dashboard/websites/${websiteId}/events/${newValue}`, { replace: true });
   };
 

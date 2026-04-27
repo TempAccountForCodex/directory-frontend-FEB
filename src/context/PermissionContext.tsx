@@ -104,6 +104,22 @@ const PermissionContext = createContext<PermissionContextType | undefined>(undef
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
+const getWebsiteId = (website: any): number | null => {
+  const id = website?.websiteId ?? website?.website_id ?? website?.website?.id ?? website?.id;
+  const numericId = Number(id);
+  return Number.isFinite(numericId) ? numericId : null;
+};
+
+const extractWebsiteList = (payload: any): any[] => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.websites)) return payload.data.websites;
+  if (Array.isArray(payload?.websites)) return payload.websites;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+};
+
 // ── Provider ────────────────────────────────────────────────────────────────
 
 interface PermissionProviderProps {
@@ -133,13 +149,18 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
         withCredentials: true,
       });
 
-      const websites = response.data?.data || [];
+      const websites = extractWebsiteList(response.data);
       const permissions: WebsitePermissions = {};
 
       for (const website of websites) {
         // If the API response includes a role field, use it; otherwise default to VIEWER
         // (safest fallback — backend enforces real permissions)
-        permissions[website.id] = website.role?.toUpperCase() || 'VIEWER';
+        const websiteId = getWebsiteId(website);
+        if (websiteId === null) continue;
+
+        permissions[websiteId] =
+          (website.role || website.website?.role || website.permissionRole)?.toUpperCase() ||
+          'VIEWER';
       }
 
       setWebsitePermissions(permissions);

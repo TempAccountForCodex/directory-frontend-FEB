@@ -1052,7 +1052,7 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
                         <DashboardActionButton
                           size="small"
                           onClick={() => {
-                            window.location.href = 'http://localhost:5001/api/auth/google/start';
+                            window.location.href = `${API_URL}/auth/google/start`;
                           }}
                           sx={{
                             bgcolor: colors.success,

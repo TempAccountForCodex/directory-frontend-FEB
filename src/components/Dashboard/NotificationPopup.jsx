@@ -134,9 +134,9 @@ const NotificationPopup = () => {
 
   // Stream unread count updates via SSE
   useEffect(() => {
-    const streamUrl = new URL(`${API_URL}/notifications/stream`);
+    const streamUrl = `${API_URL}/notifications/stream`;
 
-    const eventSource = new EventSource(streamUrl.toString(), {
+    const eventSource = new EventSource(streamUrl, {
       withCredentials: true,
     });
 

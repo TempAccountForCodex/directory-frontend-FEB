@@ -85,6 +85,28 @@ import { useShortcutManager } from '../../hooks/useShortcutManager';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
+const getWebsiteId = (website) =>
+  website?.id ?? website?.websiteId ?? website?.website_id ?? website?.website?.id;
+
+const isSameWebsiteId = (left, right) => String(left) === String(right);
+
+const extractWebsiteList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.websites)) return payload.data.websites;
+  if (Array.isArray(payload?.websites)) return payload.websites;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+};
+
+const unwrapWebsiteResponse = (payload) =>
+  payload?.data?.website || payload?.data || payload?.website || payload;
+
+const resolveWebsiteIdForAction = async (website) => {
+  return getWebsiteId(website);
+};
+
 // REMOVED: BLOCK_TYPES hardcoded allowlist. Block selection now exclusively
 // uses BlockLibrary (fetches from /api/content-types/blocks with all 34 types).
 
@@ -371,7 +393,13 @@ const WebsiteEditorInner = () => {
       const websiteRes = await axios.get(`${API_URL}/websites/${websiteId}`, {
         headers: {},
       });
-      setWebsite(websiteRes.data.data);
+      const websiteData = unwrapWebsiteResponse(websiteRes.data);
+      const resolvedWebsiteId = await resolveWebsiteIdForAction(websiteData);
+      if (resolvedWebsiteId && !isSameWebsiteId(resolvedWebsiteId, websiteId)) {
+        navigate(`/dashboard/websites/${resolvedWebsiteId}/editor`, { replace: true });
+        return;
+      }
+      setWebsite(websiteData);
 
       // Fetch pages
       const pagesRes = await axios.get(`${API_URL}/websites/${websiteId}/pages`, {
@@ -413,6 +441,27 @@ const WebsiteEditorInner = () => {
         // Non-critical — AI features just won't appear
       }
     } catch (err) {
+      if (err?.response?.status === 404) {
+        try {
+          const listRes = await axios.get(`${API_URL}/websites`, {
+            params: { page: 1, limit: 100 },
+            withCredentials: true,
+          });
+          const matchedWebsite = extractWebsiteList(listRes.data).find((item) =>
+            isSameWebsiteId(getWebsiteId(item), websiteId)
+          );
+          const resolvedWebsiteId = matchedWebsite
+            ? await resolveWebsiteIdForAction(matchedWebsite)
+            : null;
+
+          if (resolvedWebsiteId && !isSameWebsiteId(resolvedWebsiteId, websiteId)) {
+            navigate(`/dashboard/websites/${resolvedWebsiteId}/editor`, { replace: true });
+            return;
+          }
+        } catch {
+          // Fall through to the normal error message below.
+        }
+      }
       console.error('Error fetching website data:', err);
       setError(err.response?.data?.message || 'Failed to load website');
     } finally {
@@ -688,8 +737,9 @@ const WebsiteEditorInner = () => {
   const handleMobilePublish = useCallback(async () => {
     // TODO: Wire to full publish flow when available
     try {
+      const resolvedWebsiteId = await resolveWebsiteIdForAction(website);
       await axios.put(
-        `${API_URL}/websites/${websiteId}`,
+        `${API_URL}/websites/${resolvedWebsiteId || websiteId}`,
         { status: 'PUBLISHED' },
         { headers: {} }
       );
@@ -697,11 +747,11 @@ const WebsiteEditorInner = () => {
     } catch (err) {
       console.error('Error publishing website:', err);
     }
-  }, [websiteId]);
+  }, [website, websiteId]);
 
   const handleMobilePreview = useCallback(() => {
     if (website?.slug) {
-      window.open(`/s/${website.slug}`, '_blank');
+      window.open(`/site/${website.slug}`, '_blank');
     }
   }, [website?.slug]);
 
@@ -1230,7 +1280,7 @@ const WebsiteEditorInner = () => {
             <Box display="flex" gap={1} mt={0.5}>
               <Chip label={website?.status} size="small" />
               <Typography variant="caption" sx={{ color: colors.textSecondary }}>
-                /s/{website?.slug}
+                /site/{website?.slug}
               </Typography>
             </Box>
           </Box>
@@ -1252,7 +1302,7 @@ const WebsiteEditorInner = () => {
             <Button
               variant="outlined"
               startIcon={<Eye size={18} />}
-              onClick={() => window.open(`/s/${website?.slug}`, '_blank')}
+              onClick={() => window.open(`/site/${website?.slug}`, '_blank')}
               sx={{ textTransform: 'none' }}
             >
               View Live

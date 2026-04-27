@@ -35,6 +35,7 @@ interface Page {
   title: string;
   path: string;
   isHome: boolean;
+  sortOrder?: number;
   blocks: Block[];
 }
 
@@ -97,6 +98,15 @@ interface Website {
   headingTextTransform?: string;
   pages: Page[];
 }
+
+const unwrapWebsiteResponse = (payload: any): Website =>
+  payload?.data?.website || payload?.data || payload?.website || payload;
+
+const fetchWebsiteByIdentifier = async (identifier: string): Promise<Website> => {
+  const encodedIdentifier = encodeURIComponent(identifier);
+  const response = await axios.get(`${API_URL}/websites/slug/${encodedIdentifier}`);
+  return unwrapWebsiteResponse(response.data);
+};
 
 const PublicWebsite: React.FC = () => {
   const { slug, '*': splatPath } = useParams<{ slug: string; '*': string }>();
@@ -173,12 +183,12 @@ const PublicWebsite: React.FC = () => {
           return;
         }
 
-        // Fetch website by slug
-        const response = await axios.get(`${API_URL}/websites/slug/${websiteSlug}`);
-        const websiteData = response.data;
+        const websiteData = await fetchWebsiteByIdentifier(websiteSlug);
 
         // Sort pages by sortOrder
-        const sortedPages = [...websiteData.pages].sort((a, b) => a.sortOrder - b.sortOrder);
+        const sortedPages = [...websiteData.pages].sort(
+          (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+        );
 
         // Sort blocks within each page
         sortedPages.forEach((page) => {

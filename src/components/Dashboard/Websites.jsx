@@ -86,6 +86,35 @@ const canPerformAction = (role, action) => {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
+const getWebsiteId = (website) =>
+  website?.id ??
+  website?.websiteId ??
+  website?.website_id ??
+  website?.websiteID ??
+  website?.website?.id ??
+  website?.website?.websiteId ??
+  website?.website?.website_id;
+
+const isSameWebsiteId = (left, right) => String(left) === String(right);
+
+const extractWebsiteList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.websites)) return payload.data.websites;
+  if (Array.isArray(payload?.websites)) return payload.websites;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+};
+
+const resolveWebsiteIdForAction = async (website) => {
+  if (website === null || website === undefined || typeof website !== 'object') {
+    return website;
+  }
+
+  return getWebsiteId(website);
+};
+
 const SkeletonCard = () => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -331,9 +360,10 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       const response = await axios.get(`${API_URL}/websites`, {
         params,
+        withCredentials: true,
       });
 
-      const newData = response.data.data || [];
+      const newData = extractWebsiteList(response.data);
       if (reset) {
         setWebsites(newData);
       } else {
@@ -396,9 +426,10 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
           page,
           limit: PAGE_SIZE,
         },
+        withCredentials: true,
       });
 
-      const newData = response.data.data || [];
+      const newData = extractWebsiteList(response.data);
       if (reset) {
         setDeletedWebsites(newData);
       } else {
@@ -503,7 +534,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
     if (item.itemType === 'store') {
       await handleRestoreStore(item.id);
     } else {
-      await handleRestoreWebsite(item.id);
+      await handleRestoreWebsite(getWebsiteId(item));
     }
   };
 
@@ -529,8 +560,13 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
         await axios.delete(`${API_URL}/stores/${websiteToPermanentlyDelete.id}/permanent`);
         setDeletedStores(deletedStores.filter((s) => s.id !== websiteToPermanentlyDelete.id));
       } else {
-        await axios.delete(`${API_URL}/websites/${websiteToPermanentlyDelete.id}/permanent`);
-        setDeletedWebsites(deletedWebsites.filter((w) => w.id !== websiteToPermanentlyDelete.id));
+        const websiteId = await resolveWebsiteIdForAction(websiteToPermanentlyDelete);
+        await axios.delete(`${API_URL}/websites/${websiteId}/permanent`, {
+          withCredentials: true,
+        });
+        setDeletedWebsites(
+          deletedWebsites.filter((w) => !isSameWebsiteId(getWebsiteId(w), websiteId))
+        );
       }
 
       setPermanentDeleteDialogOpen(false);
@@ -626,12 +662,20 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
     }
   };
 
-  const handlePublish = async (websiteId) => {
+  const handlePublish = async (website) => {
     try {
-      const response = await axios.post(`${API_URL}/websites/${websiteId}/publish`, {});
+      const originalWebsiteId = getWebsiteId(website);
+      const websiteId = await resolveWebsiteIdForAction(website);
+      await axios.post(`${API_URL}/websites/${websiteId}/publish`, {}, { withCredentials: true });
 
       // Update website status in state
-      setWebsites(websites.map((w) => (w.id === websiteId ? { ...w, status: 'PUBLISHED' } : w)));
+      setWebsites(
+        websites.map((w) =>
+          isSameWebsiteId(getWebsiteId(w), websiteId) || isSameWebsiteId(getWebsiteId(w), originalWebsiteId)
+            ? { ...w, status: 'PUBLISHED' }
+            : w
+        )
+      );
       fetchStats();
     } catch (err) {
       console.error('Error publishing website:', err);
@@ -639,12 +683,20 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
     }
   };
 
-  const handleUnpublish = async (websiteId) => {
+  const handleUnpublish = async (website) => {
     try {
-      const response = await axios.post(`${API_URL}/websites/${websiteId}/unpublish`, {});
+      const originalWebsiteId = getWebsiteId(website);
+      const websiteId = await resolveWebsiteIdForAction(website);
+      await axios.post(`${API_URL}/websites/${websiteId}/unpublish`, {}, { withCredentials: true });
 
       // Update website status in state
-      setWebsites(websites.map((w) => (w.id === websiteId ? { ...w, status: 'DRAFT' } : w)));
+      setWebsites(
+        websites.map((w) =>
+          isSameWebsiteId(getWebsiteId(w), websiteId) || isSameWebsiteId(getWebsiteId(w), originalWebsiteId)
+            ? { ...w, status: 'DRAFT' }
+            : w
+        )
+      );
       fetchStats();
     } catch (err) {
       console.error('Error unpublishing website:', err);
@@ -671,14 +723,19 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
       setSubmitting(true);
       setSettingsError(null);
 
-      const response = await axios.put(
-        `${API_URL}/websites/${editingWebsite.id}`,
-        settingsFormData
-      );
+      const originalWebsiteId = getWebsiteId(editingWebsite);
+      const websiteId = await resolveWebsiteIdForAction(editingWebsite);
+      await axios.put(`${API_URL}/websites/${websiteId}`, settingsFormData, {
+        withCredentials: true,
+      });
 
       // Update website in state
       setWebsites(
-        websites.map((w) => (w.id === editingWebsite.id ? { ...w, ...settingsFormData } : w))
+        websites.map((w) =>
+          isSameWebsiteId(getWebsiteId(w), websiteId) || isSameWebsiteId(getWebsiteId(w), originalWebsiteId)
+            ? { ...w, ...settingsFormData }
+            : w
+        )
       );
 
       setSettingsDialogOpen(false);
@@ -714,11 +771,17 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
       const formData = new FormData();
       formData.append('logo', file);
 
-      const response = await axios.post(`${API_URL}/websites/${editingWebsite.id}/logo`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const websiteId = await resolveWebsiteIdForAction(editingWebsite);
+      const response = await axios.post(
+        `${API_URL}/websites/${websiteId}/logo`,
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
       // Update form data with new logo URL
       const logoUrl = `${API_URL.replace('/api', '')}${response.data.data.logoUrl}`;
@@ -754,10 +817,12 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
       const formData = new FormData();
       formData.append('favicon', file);
 
+      const websiteId = await resolveWebsiteIdForAction(editingWebsite);
       const response = await axios.post(
-        `${API_URL}/websites/${editingWebsite.id}/favicon`,
+        `${API_URL}/websites/${websiteId}/favicon`,
         formData,
         {
+          withCredentials: true,
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -793,10 +858,18 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
 
     try {
       setDeleting(true);
-      await axios.delete(`${API_URL}/websites/${websiteToDelete.id}`);
+      const originalWebsiteId = getWebsiteId(websiteToDelete);
+      const websiteId = await resolveWebsiteIdForAction(websiteToDelete);
+      await axios.delete(`${API_URL}/websites/${websiteId}`, { withCredentials: true });
 
       // Remove from list
-      setWebsites(websites.filter((w) => w.id !== websiteToDelete.id));
+      setWebsites(
+        websites.filter(
+          (w) =>
+            !isSameWebsiteId(getWebsiteId(w), websiteId) &&
+            !isSameWebsiteId(getWebsiteId(w), originalWebsiteId)
+        )
+      );
       setDeleteDialogOpen(false);
       setWebsiteToDelete(null);
       setDeleteConfirmText('');
@@ -809,14 +882,22 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
     }
   };
 
-  const handlePreviewWebsite = (website) => {
-    // Open preview in new tab - works for both published and draft websites
-    window.open(`/site/${website.slug}`, '_blank');
+  const handlePreviewWebsite = async (website) => {
+    const websiteId = await resolveWebsiteIdForAction(website);
+    const isPublished = String(website?.status || '').toUpperCase() === 'PUBLISHED';
+
+    if (isPublished && website?.slug) {
+      window.open(`/site/${website.slug}`, '_blank');
+      return;
+    }
+
+    window.open(`/dashboard/websites/${websiteId}/editor`, '_blank');
   };
 
-  const handleCardClick = (websiteId) => {
-    // Navigate to website detail page
-    navigate(`/dashboard/websites/${websiteId}`);
+  const handleCardClick = async (website) => {
+    // Navigate to the supported management route; /dashboard/websites/:id is not a routed detail page.
+    const websiteId = await resolveWebsiteIdForAction(website);
+    navigate(`/dashboard/websites/${websiteId}/manage/overview`);
   };
 
   const getStatusColor = (status) => {
@@ -850,7 +931,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
   }, [websites]);
 
   const handleOpenCollaboratorModal = useCallback((website) => {
-    setCollaboratorWebsiteId(website.id);
+    setCollaboratorWebsiteId(getWebsiteId(website));
     setCollaboratorWebsiteRole((website.role || 'OWNER').toUpperCase());
     setCollaboratorModalOpen(true);
   }, []);
@@ -1103,7 +1184,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
               const isShared = websiteRole !== 'OWNER';
 
               return (
-              <Grid item xs={12} sm={6} md={4} key={website.id}>
+              <Grid item xs={12} sm={6} md={4} key={getWebsiteId(website)}>
                 <Card
                   sx={{
                     aspectRatio: '16/10',
@@ -1122,7 +1203,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                       },
                     },
                   }}
-                  onClick={() => handleCardClick(website.id)}
+                  onClick={() => handleCardClick(website)}
                 >
                   {/* Preview Image/Background */}
                   <Box
@@ -1147,7 +1228,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                   <Chip
                     label={websiteRole}
                     size="small"
-                    data-testid={`role-badge-${website.id}`}
+                    data-testid={`role-badge-${getWebsiteId(website)}`}
                     sx={{
                       position: 'absolute',
                       top: 12,
@@ -1219,16 +1300,17 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                         mb: 1,
                       }}
                     >
-                      /s/{website.slug}
+                      /site/{website.slug}
                     </Typography>
                     <Box display="flex" gap={1} flexWrap="wrap">
                       {/* Manage — always visible for EDITOR+ roles */}
                       <Button
                         size="small"
                         startIcon={<Settings size={18} />}
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation();
-                          navigate(`/dashboard/websites/${website.id}/manage/overview`);
+                          const websiteId = await resolveWebsiteIdForAction(website);
+                          navigate(`/dashboard/websites/${websiteId}/manage/overview`);
                         }}
                         sx={{
                           color: colors.primary,
@@ -1247,9 +1329,10 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                         <Button
                           size="small"
                           startIcon={<Pencil size={18} />}
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            navigate(`/dashboard/websites/${website.id}/editor`);
+                            const websiteId = await resolveWebsiteIdForAction(website);
+                            navigate(`/dashboard/websites/${websiteId}/editor`);
                           }}
                           sx={{
                             color: colors.primary,
@@ -1370,7 +1453,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                             startIcon={<EyeOff size={18} />}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleUnpublish(website.id);
+                              handleUnpublish(website);
                             }}
                             sx={{
                               color: colors.textSecondary,
@@ -1388,7 +1471,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                             startIcon={<Eye size={18} />}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePublish(website.id);
+                              handlePublish(website);
                             }}
                             sx={{
                               color: '#4ade80',
@@ -1652,7 +1735,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                               mb: 0.5,
                             }}
                           >
-                            {isStore ? `/store/${item.slug}` : `/s/${item.slug}`}
+                            {isStore ? `/store/${item.slug}` : `/site/${item.slug}`}
                           </Typography>
                           {item.deletedAt && (
                             <Typography
@@ -2435,7 +2518,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
 
         <DialogContent dividers sx={{ borderColor: colors.border, pt: 3 }}>
           {selectedWebsiteForAnalytics && (
-            <WebsiteAnalytics websiteId={selectedWebsiteForAnalytics.id} />
+            <WebsiteAnalytics websiteId={getWebsiteId(selectedWebsiteForAnalytics)} />
           )}
         </DialogContent>
 

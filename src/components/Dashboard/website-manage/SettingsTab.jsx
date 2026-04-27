@@ -28,6 +28,13 @@ import DashboardInput from '../shared/DashboardInput';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
+const getWebsiteId = (website) =>
+  website?.id ?? website?.websiteId ?? website?.website_id ?? website?.website?.id;
+
+const resolveWebsiteIdForAction = async (website, fallbackId) => {
+  return getWebsiteId(website) ?? fallbackId;
+};
+
 const VISIBILITY_OPTIONS = [
   { value: 'public', label: 'Public — Anyone can view your website' },
   { value: 'private', label: 'Private — Only team members can view' },
@@ -92,7 +99,10 @@ const SettingsTab = memo(({ website, websiteId, onSaved, onDeleted, currentUserR
       const payload = {
         name: name.trim(),
       };
-      const res = await axios.put(`${API_URL}/websites/${websiteId}`, payload);
+      const resolvedWebsiteId = await resolveWebsiteIdForAction(website, websiteId);
+      const res = await axios.put(`${API_URL}/websites/${resolvedWebsiteId}`, payload, {
+        withCredentials: true,
+      });
       if (onSaved) onSaved(res.data?.data || res.data);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -106,10 +116,11 @@ const SettingsTab = memo(({ website, websiteId, onSaved, onDeleted, currentUserR
   const handleArchive = async () => {
     // TODO: Backend does not have a dedicated archive endpoint. Using soft-delete
     // (DELETE /api/websites/:id) as the closest equivalent. The website can be restored
-    // via POST /api/websites/:id/restore. A proper ARCHIVED status requires backend changes.
+      // via POST /api/websites/:id/restore. A proper ARCHIVED status requires backend changes.
     try {
       setArchiveLoading(true);
-      await axios.delete(`${API_URL}/websites/${websiteId}`);
+      const resolvedWebsiteId = await resolveWebsiteIdForAction(website, websiteId);
+      await axios.delete(`${API_URL}/websites/${resolvedWebsiteId}`, { withCredentials: true });
       if (onSaved) onSaved({ ...website, status: 'ARCHIVED' });
       setArchiveDialogOpen(false);
     } catch (err) {
@@ -123,7 +134,8 @@ const SettingsTab = memo(({ website, websiteId, onSaved, onDeleted, currentUserR
     try {
       setDeleteLoading(true);
       setDeleteError(null);
-      await axios.delete(`${API_URL}/websites/${websiteId}`);
+      const resolvedWebsiteId = await resolveWebsiteIdForAction(website, websiteId);
+      await axios.delete(`${API_URL}/websites/${resolvedWebsiteId}`, { withCredentials: true });
       if (onDeleted) onDeleted();
     } catch (err) {
       setDeleteError(err?.response?.data?.message || 'Failed to delete website.');

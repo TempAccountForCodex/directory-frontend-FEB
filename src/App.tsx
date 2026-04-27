@@ -5,6 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { CookieConsentProvider } from './context/PreferencesContext';
 import { Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 const Home = lazy(() => import('../src/pages/publicPages/Home'));
 const Listings = lazy(() => import('../src/pages/publicPages/Listings'));
@@ -27,6 +28,7 @@ const CookiePolicy = lazy(() => import('../src/pages/publicPages/CookiePolicy'))
 import { DashboardProvider } from './context/DashboardContext';
 import { PendingCounterProvider } from './context/pending-counter';
 import { ListingsProvider } from './context/ListingsContext.js';
+import { PermissionProvider } from './context/PermissionContext';
 import { useCookieConsent } from './context/PreferencesContext';
 const PublicWebsite = lazy(() => import('./pages/PublicWebsite'));
 const TemplatePreview = lazy(() => import('./pages/TemplatePreview'));
@@ -233,11 +235,13 @@ const App = () => {
       <ThemeProvider>
         <CookieConsentProvider>
           <ListingsProvider>
-            <DashboardProvider>
-              <PendingCounterProvider>
-                <AppRoutes />
-              </PendingCounterProvider>
-            </DashboardProvider>
+            <PermissionProvider>
+              <DashboardProvider>
+                <PendingCounterProvider>
+                  <AppRoutes />
+                </PendingCounterProvider>
+              </DashboardProvider>
+            </PermissionProvider>
           </ListingsProvider>
         </CookieConsentProvider>
       </ThemeProvider>
@@ -418,6 +422,14 @@ const AppRoutes = () => {
           element: suspense(<PublicWebsite />),
         },
         {
+          path: '/s/:slug',
+          element: suspense(<PublicWebsite />),
+        },
+        {
+          path: '/s/:slug/*',
+          element: suspense(<PublicWebsite />),
+        },
+        {
           path: '*',
           element: <NotFoundLayout />,
         },
@@ -437,7 +449,11 @@ const AppRoutes = () => {
         },
         {
           path: '/dashboard/websites/:websiteId/editor',
-          element: suspense(<WebsiteEditor />),
+          element: suspense(
+            <ProtectedRoute>
+              <WebsiteEditor />
+            </ProtectedRoute>
+          ),
         },
         {
           path: '/dashboard/*',

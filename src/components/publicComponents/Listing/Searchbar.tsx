@@ -103,7 +103,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
   paramCategory,
   clearFilter,
 }) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL as string;
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
   const [isAdvancedSearchVisible, setIsAdvancedSearchVisible] =
     useState<boolean>(false);
@@ -195,7 +195,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
       if (area) searchParams.area = area;
       if (region) searchParams.region = region;
 
-      const response = await axios.get(`${backendUrl}/api/places`, {
+      const response = await axios.get(`${API_URL}/places`, {
         params: { search: JSON.stringify(searchParams) },
       });
       setItems(response.data.places);

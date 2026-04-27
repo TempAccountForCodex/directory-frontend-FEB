@@ -184,7 +184,7 @@ function Navbar() {
                 cursor: 'pointer',
               }}
             >
-              Get Started
+              {auth.user ? 'Dashboard' : 'Get Started'}
             </button>
           </div>
         </div>
@@ -402,7 +402,7 @@ function Navbar() {
                   boxShadow: '0 4px 24px rgba(71,170,182,0.3)',
                 }}
               >
-                {auth.user ? 'Go to Dashboard' : 'Get Started →'}
+                {auth.user ? 'Dashboard' : 'Get Started →'}
               </button>
 
               <p

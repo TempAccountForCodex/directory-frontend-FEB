@@ -33,7 +33,9 @@ const MESSAGE_TYPES = {
  */
 function buildWsUrl(token) {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-  const base = apiUrl.replace(/^http/, 'ws').replace(/\/api$/, '');
+  const base = apiUrl.startsWith('/')
+    ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
+    : apiUrl.replace(/^http/, 'ws').replace(/\/api$/, '');
   // Metrics WS uses the same /ws endpoint but with no websiteId requirement
   // Server allows connections without websiteId for non-website channels
   return `${base}/ws?token=${encodeURIComponent(token)}`;

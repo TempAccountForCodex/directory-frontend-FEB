@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
 import axios from "axios";
-const DashboardOverview = lazy(() => import('./DashboardOverview'));
-const Finances = lazy(() => import('./Finances'));
-const Communications = lazy(() => import('./Communications'));
-const ReferralAnalytics = lazy(() => import('./admin/ReferralAnalytics'));
+const DashboardOverview = lazy(() => import("./DashboardOverview"));
+const Finances = lazy(() => import("./Finances"));
+const Communications = lazy(() => import("./Communications"));
+const ReferralAnalytics = lazy(() => import("./admin/ReferralAnalytics"));
 import { useAuth } from "../../context/AuthContext";
 import { usePersistentState } from "../../hooks/usePersistentState";
 // Direct MUI imports for better tree-shaking (bundle size optimization)
@@ -69,13 +69,10 @@ import AccountSwitcher from "./AccountSwitcher";
 import ManageDocs from "./ManageDocs";
 import PromoDealManager from "./PromoDealManager";
 import WebsiteManagementDashboard from "./WebsiteManagementDashboard";
+import WebsiteManageEvents from "./WebsiteManageEvents";
+import WebsiteManageInsights from "./WebsiteManageInsights";
 import { AccountProvider } from "../../context/AccountContext";
-import {
-  AllListings,
-  ModifyListing,
-  Favourites,
-  ArchivedListings,
-} from "./listings";
+import { AllListings, ModifyListing, Favourites, ArchivedListings } from "./listings";
 import SearchPopup from "./SearchPopup";
 import WelcomeTour from "./WelcomeTour";
 import OnboardingProvider from "./tours/OnboardingProvider";
@@ -88,33 +85,155 @@ import RealTimePanel from "./analytics/RealTimePanel";
 import CoreWebVitals from "./analytics/CoreWebVitals";
 import EventTimeline from "./analytics/EventTimeline";
 import PerformanceMonitoring from "../../pages/PerformanceMonitoring";
-import {
-  DashboardActionButton,
-  DashboardDateField,
-  PageHeader,
-  DealBanner,
-} from "./shared";
-import {
-  getDashboardTheme,
-  getDashboardColors,
-} from "../../styles/dashboardTheme";
+import { DashboardActionButton, DashboardDateField, PageHeader, DealBanner } from "./shared";
+import { getDashboardTheme, getDashboardColors } from "../../styles/dashboardTheme";
 import { useTheme as useCustomTheme } from "../../context/ThemeContext";
 import dashboardStars from "../../assets/common/star.svg";
 import dashboardDarkHole from "../../assets/common/darkhole.svg";
 import brandIcon from "../../assets/images/navbar/collapsedLogo.png";
-import {
-  isAdmin,
-  isSuperAdmin,
-  hasRole,
-  isContentManager,
-  ROLES,
-} from "../../constants/roles";
+import { isAdmin, isSuperAdmin, hasRole, isContentManager, ROLES } from "../../constants/roles";
 
 // Collapsible sidebar dimensions
 const SIDEBAR_COLLAPSED_WIDTH = 70;
 const SIDEBAR_EXPANDED_WIDTH = 300;
 const DRAWER_WIDTH = 290;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+
+const extractWebsiteList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.websites)) return payload.data.websites;
+  if (Array.isArray(payload?.websites)) return payload.websites;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+};
+
+const getWebsiteId = (website) =>
+  website?.websiteId ?? website?.website_id ?? website?.website?.id ?? website?.id;
+
+const WebsiteScopedContentPicker = ({ type, colors }) => {
+  const navigate = useNavigate();
+  const [websites, setWebsites] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const isBlog = type === "blog";
+  const title = isBlog ? "Blog Posts" : "Events";
+  const subtitle = isBlog
+    ? "Choose a website to manage its blog posts"
+    : "Choose a website to manage its events";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchWebsites = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await axios.get(`${API_URL}/websites`, {
+          params: { page: 1, limit: 100 },
+          withCredentials: true,
+        });
+
+        if (!cancelled) {
+          setWebsites(extractWebsiteList(response.data));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.response?.data?.message || "Failed to load websites");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchWebsites();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const getTargetPath = (websiteId) =>
+    isBlog
+      ? `/dashboard/websites/${websiteId}/blog/posts`
+      : `/dashboard/websites/${websiteId}/events`;
+
+  return (
+    <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0 } }}>
+      <PageHeader title={title} subtitle={subtitle} />
+
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress sx={{ color: colors.primary }} />
+        </Box>
+      ) : error ? (
+        <Card sx={{ borderRadius: "16px", background: colors.panelBg, p: 3 }}>
+          <Typography sx={{ color: colors.text, fontWeight: 600, mb: 1 }}>
+            Could not load websites
+          </Typography>
+          <Typography sx={{ color: colors.textSecondary }}>{error}</Typography>
+        </Card>
+      ) : websites.length === 0 ? (
+        <Card sx={{ borderRadius: "16px", background: colors.panelBg, p: 3 }}>
+          <Typography sx={{ color: colors.text, fontWeight: 600, mb: 1 }}>
+            No websites yet
+          </Typography>
+          <Typography sx={{ color: colors.textSecondary, mb: 2 }}>
+            Create a website first, then you can manage its {isBlog ? "blog posts" : "events"}.
+          </Typography>
+          <DashboardActionButton onClick={() => navigate("/dashboard/websites/templates")}>
+            Create Website
+          </DashboardActionButton>
+        </Card>
+      ) : (
+        <Grid container spacing={2}>
+          {websites.map((website) => {
+            const websiteId = getWebsiteId(website);
+
+            return (
+            <Grid item xs={12} sm={6} md={4} key={websiteId}>
+              <Card
+                onClick={() => navigate(getTargetPath(websiteId))}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") navigate(getTargetPath(websiteId));
+                }}
+                sx={{
+                  height: "100%",
+                  borderRadius: "16px",
+                  background: colors.panelBg,
+                  border: `1px solid ${alpha(colors.text, 0.1)}`,
+                  p: 2.5,
+                  cursor: "pointer",
+                  transition: "transform 180ms ease, border-color 180ms ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    borderColor: colors.primary,
+                  },
+                  "&:focus-visible": { outline: `2px solid ${colors.primary}` },
+                }}
+              >
+                <Typography sx={{ color: colors.text, fontWeight: 700, mb: 0.75 }}>
+                  {website.name || "Untitled Website"}
+                </Typography>
+                <Typography sx={{ color: colors.textSecondary, fontSize: "0.875rem" }}>
+                  Manage {isBlog ? "blog posts" : "events"}
+                </Typography>
+              </Card>
+            </Grid>
+            );
+          })}
+        </Grid>
+      )}
+    </Container>
+  );
+};
 
 const Dashboard = ({ user }) => {
   const { actualTheme } = useCustomTheme();
@@ -138,9 +257,7 @@ const Dashboard = ({ user }) => {
 
   // Computed sidebar width based on collapse state
   // Collapsed sidebar has 16px left margin; expanded has 0 margin
-  const currentSidebarWidth = sidebarCollapsed
-    ? SIDEBAR_COLLAPSED_WIDTH
-    : SIDEBAR_EXPANDED_WIDTH;
+  const currentSidebarWidth = sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH;
   const totalSidebarWidth = sidebarCollapsed
     ? SIDEBAR_COLLAPSED_WIDTH + 16
     : SIDEBAR_EXPANDED_WIDTH;
@@ -161,12 +278,22 @@ const Dashboard = ({ user }) => {
     if (
       segments[1] === "websites" &&
       segments[2] &&
-      !["create", "create-template", "stores", "recently-deleted", "templates"].includes(segments[2]) &&
+      !["create", "create-template", "stores", "recently-deleted", "templates"].includes(
+        segments[2],
+      ) &&
       segments[3] === "manage"
     ) {
       return {
         tab: `websites/${segments[2]}/manage`,
         subtab: segments[4] || "overview",
+      };
+    }
+
+    // Handle per-website content management routes
+    if (segments[1] === "websites" && segments[2] && ["events", "blog"].includes(segments[3])) {
+      return {
+        tab: `websites/${segments[2]}/${segments[3]}`,
+        subtab: segments[4] || (segments[3] === "blog" ? "posts" : "events"),
       };
     }
 
@@ -178,14 +305,16 @@ const Dashboard = ({ user }) => {
       "stores",
       "recently-deleted",
       "templates",
+      "my-templates",
+      "events",
+      "blog",
     ];
-    if (
-      segments[1] === "websites" &&
-      segments[2] &&
-      websiteSubRoutes.includes(segments[2])
-    ) {
+    if (segments[1] === "websites" && segments[2] && websiteSubRoutes.includes(segments[2])) {
       // Legacy create/customize and create/questionnaire routes redirect to template gallery
-      if (segments[2] === "create" && (segments[3] === "customize" || segments[3] === "questionnaire")) {
+      if (
+        segments[2] === "create" &&
+        (segments[3] === "customize" || segments[3] === "questionnaire")
+      ) {
         return {
           tab: "websites/templates",
           subtab: null,
@@ -206,11 +335,7 @@ const Dashboard = ({ user }) => {
 
     // Handle nested listings routes
     const listingsSubRoutes = ["modify", "favourites", "archived"];
-    if (
-      segments[1] === "listings" &&
-      segments[2] &&
-      listingsSubRoutes.includes(segments[2])
-    ) {
+    if (segments[1] === "listings" && segments[2] && listingsSubRoutes.includes(segments[2])) {
       return {
         tab: `listings/${segments[2]}`,
         subtab: segments[3] || null,
@@ -258,8 +383,7 @@ const Dashboard = ({ user }) => {
   // Auto-collapse sidebar for customize step and website manage pages (better view)
   // Only auto-collapse once when entering the page, allow manual re-expansion
   useEffect(() => {
-    const isAutoCollapseRoute =
-      (tab && tab.startsWith("websites/") && tab.endsWith("/manage"));
+    const isAutoCollapseRoute = tab && tab.startsWith("websites/") && tab.endsWith("/manage");
     if (isAutoCollapseRoute) {
       // Only auto-collapse if we haven't already done so for this session
       if (!hasAutoCollapsedRef.current && !sidebarCollapsed && !isMobile) {
@@ -295,7 +419,12 @@ const Dashboard = ({ user }) => {
         "websites/recently-deleted",
         "websites/stores",
         "websites/templates",
+        "websites/my-templates",
+        "websites/events",
+        "websites/blog",
         "websites/:id/manage",
+        "websites/:id/events",
+        "websites/:id/blog",
         "listings",
         "listings/modify",
         "listings/favourites",
@@ -319,7 +448,12 @@ const Dashboard = ({ user }) => {
         "websites/recently-deleted",
         "websites/stores",
         "websites/templates",
+        "websites/my-templates",
+        "websites/events",
+        "websites/blog",
         "websites/:id/manage",
+        "websites/:id/events",
+        "websites/:id/blog",
         "listings",
         "listings/modify",
         "listings/favourites",
@@ -343,7 +477,12 @@ const Dashboard = ({ user }) => {
         "websites/recently-deleted",
         "websites/stores",
         "websites/templates",
+        "websites/my-templates",
+        "websites/events",
+        "websites/blog",
         "websites/:id/manage",
+        "websites/:id/events",
+        "websites/:id/blog",
         "listings",
         "listings/modify",
         "listings/favourites",
@@ -354,7 +493,14 @@ const Dashboard = ({ user }) => {
         "account-invites",
         "settings",
       ],
-      content_creator: ["insights", "templates", "websites/create-template", "communications", "account-invites", "settings"],
+      content_creator: [
+        "insights",
+        "templates",
+        "websites/create-template",
+        "communications",
+        "account-invites",
+        "settings",
+      ],
       user: [
         "overview",
         "websites",
@@ -362,7 +508,12 @@ const Dashboard = ({ user }) => {
         "websites/recently-deleted",
         "websites/stores",
         "websites/templates",
+        "websites/my-templates",
+        "websites/events",
+        "websites/blog",
         "websites/:id/manage",
+        "websites/:id/events",
+        "websites/:id/blog",
         "listings",
         "listings/modify",
         "listings/favourites",
@@ -377,7 +528,13 @@ const Dashboard = ({ user }) => {
     // If current tab not allowed, redirect to first allowed tab
     // Note: tabs matching pattern websites/:id/manage are allowed dynamically
     const isManageTab = activeTab && /^websites\/[^/]+\/manage$/.test(activeTab);
-    if (activeTab && !allowedTabs.includes(activeTab) && !isManageTab && !allowedTabs.includes("websites/:id/manage")) {
+    const isWebsiteEventsTab = activeTab && /^websites\/[^/]+\/events$/.test(activeTab);
+    const isWebsiteBlogTab = activeTab && /^websites\/[^/]+\/blog$/.test(activeTab);
+    const isAllowedDynamicTab =
+      (isManageTab && allowedTabs.includes("websites/:id/manage")) ||
+      (isWebsiteEventsTab && allowedTabs.includes("websites/:id/events")) ||
+      (isWebsiteBlogTab && allowedTabs.includes("websites/:id/blog"));
+    if (activeTab && !allowedTabs.includes(activeTab) && !isAllowedDynamicTab) {
       navigate(`/dashboard/${allowedTabs[0]}`, { replace: true });
     }
   }, [activeTab, user.role, navigate]);
@@ -573,10 +730,7 @@ const Dashboard = ({ user }) => {
         const deal = response.data?.deals?.[0] || null;
         setActiveDeal(deal);
         try {
-          sessionStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({ data: deal, fetchedAt: Date.now() }),
-          );
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: deal, fetchedAt: Date.now() }));
         } catch {
           // Storage unavailable
         }
@@ -596,17 +750,11 @@ const Dashboard = ({ user }) => {
 
       // Build query params
       let queryParams = `period=${selectedPeriod}`;
-      if (
-        selectedPeriod === "custom" &&
-        customDateRange.startDate &&
-        customDateRange.endDate
-      ) {
+      if (selectedPeriod === "custom" && customDateRange.startDate && customDateRange.endDate) {
         queryParams += `&startDate=${customDateRange.startDate}&endDate=${customDateRange.endDate}`;
       }
 
-      const response = await axios.get(
-        `${API_URL}/analytics/overview?${queryParams}`,
-      );
+      const response = await axios.get(`${API_URL}/analytics/overview?${queryParams}`);
 
       if (response.data.success) {
         setAnalyticsData(response.data.data);
@@ -615,8 +763,7 @@ const Dashboard = ({ user }) => {
     } catch (error) {
       console.error("Error fetching analytics:", error);
       setAnalyticsError(
-        error.response?.data?.message ||
-          "Failed to load analytics data. Please try again.",
+        error.response?.data?.message || "Failed to load analytics data. Please try again.",
       );
       setAnalyticsData(null);
     } finally {
@@ -954,6 +1101,14 @@ const Dashboard = ({ user }) => {
       title: "Stores",
       subtitle: "Manage your e-commerce websites and sell products online",
     },
+    "websites/events": {
+      title: "Events",
+      subtitle: "Choose a website to manage events",
+    },
+    "websites/blog": {
+      title: "Blog Posts",
+      subtitle: "Choose a website to manage blog posts",
+    },
     finances: {
       title: "Finances",
       subtitle: "Platform revenue, subscriptions, and financial reports",
@@ -1008,7 +1163,7 @@ const Dashboard = ({ user }) => {
 
   // New collapsible sidebar content using layout components
   const sidebarContent = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <AccountSwitcher isCollapsed={sidebarCollapsed} colors={colors} />
       <CollapsibleSidebar
         isCollapsed={sidebarCollapsed}
@@ -1056,10 +1211,7 @@ const Dashboard = ({ user }) => {
       case "overview":
         return (
           <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0 } }}>
-            <PageHeader
-              title={currentPage.title}
-              subtitle={currentPage.subtitle}
-            />
+            <PageHeader title={currentPage.title} subtitle={currentPage.subtitle} />
             <Suspense fallback={<CircularProgress sx={{ display: "block", mx: "auto", mt: 6 }} />}>
               <DashboardOverview user={user} />
             </Suspense>
@@ -1068,10 +1220,7 @@ const Dashboard = ({ user }) => {
       case "admin-analytics":
         return (
           <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0 } }}>
-            <PageHeader
-              title={currentPage.title}
-              subtitle={currentPage.subtitle}
-            />
+            <PageHeader title={currentPage.title} subtitle={currentPage.subtitle} />
 
             {/* Google Analytics Section */}
             <Box
@@ -1118,9 +1267,7 @@ const Dashboard = ({ user }) => {
                         "100%": { transform: "rotate(360deg)" },
                       },
                       "& svg": {
-                        animation: analyticsLoading
-                          ? "spin 1s linear infinite"
-                          : "none",
+                        animation: analyticsLoading ? "spin 1s linear infinite" : "none",
                       },
                     }}
                   >
@@ -1211,16 +1358,10 @@ const Dashboard = ({ user }) => {
                 <Box sx={{ mb: 2, color: colors.error }}>
                   <ErrorOutlineIcon size={48} />
                 </Box>
-                <Typography
-                  variant="h6"
-                  sx={{ color: colors.text, fontWeight: 700, mb: 1 }}
-                >
+                <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700, mb: 1 }}>
                   Failed to Load Analytics
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: colors.textSecondary, mb: 3 }}
-                >
+                <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 3 }}>
                   {analyticsError}
                 </Typography>
                 <Box
@@ -1270,31 +1411,23 @@ const Dashboard = ({ user }) => {
                         p: 2.5,
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{ color: colors.textSecondary, mb: 1 }}
-                      >
+                      <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 1 }}>
                         Page Views
                       </Typography>
                       <Typography
                         variant="h4"
                         sx={{ color: colors.text, fontWeight: 700, mb: 0.5 }}
                       >
-                        {(
-                          analyticsData?.overview?.pageViews?.total ?? 0
-                        ).toLocaleString()}
+                        {(analyticsData?.overview?.pageViews?.total ?? 0).toLocaleString()}
                       </Typography>
                       <Chip
                         label={`${
-                          (analyticsData?.overview?.pageViews?.change ?? 0) > 0
-                            ? "+"
-                            : ""
+                          (analyticsData?.overview?.pageViews?.change ?? 0) > 0 ? "+" : ""
                         }${analyticsData?.overview?.pageViews?.change ?? 0}%`}
                         size="small"
                         sx={{
                           background:
-                            (analyticsData?.overview?.pageViews?.change ?? 0) >
-                            0
+                            (analyticsData?.overview?.pageViews?.change ?? 0) > 0
                               ? colors.success
                               : colors.error,
                           color: "#F5F5F5",
@@ -1312,25 +1445,18 @@ const Dashboard = ({ user }) => {
                         p: 2.5,
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{ color: colors.textSecondary, mb: 1 }}
-                      >
+                      <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 1 }}>
                         Sessions
                       </Typography>
                       <Typography
                         variant="h4"
                         sx={{ color: colors.text, fontWeight: 700, mb: 0.5 }}
                       >
-                        {(
-                          analyticsData?.overview?.sessions?.total ?? 0
-                        ).toLocaleString()}
+                        {(analyticsData?.overview?.sessions?.total ?? 0).toLocaleString()}
                       </Typography>
                       <Chip
                         label={`${
-                          (analyticsData?.overview?.sessions?.change ?? 0) > 0
-                            ? "+"
-                            : ""
+                          (analyticsData?.overview?.sessions?.change ?? 0) > 0 ? "+" : ""
                         }${analyticsData?.overview?.sessions?.change ?? 0}%`}
                         size="small"
                         sx={{
@@ -1353,25 +1479,18 @@ const Dashboard = ({ user }) => {
                         p: 2.5,
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{ color: colors.textSecondary, mb: 1 }}
-                      >
+                      <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 1 }}>
                         Users
                       </Typography>
                       <Typography
                         variant="h4"
                         sx={{ color: colors.text, fontWeight: 700, mb: 0.5 }}
                       >
-                        {(
-                          analyticsData?.overview?.users?.total ?? 0
-                        ).toLocaleString()}
+                        {(analyticsData?.overview?.users?.total ?? 0).toLocaleString()}
                       </Typography>
                       <Chip
                         label={`${
-                          (analyticsData?.overview?.users?.change ?? 0) > 0
-                            ? "+"
-                            : ""
+                          (analyticsData?.overview?.users?.change ?? 0) > 0 ? "+" : ""
                         }${analyticsData?.overview?.users?.change ?? 0}%`}
                         size="small"
                         sx={{
@@ -1394,10 +1513,7 @@ const Dashboard = ({ user }) => {
                         p: 2.5,
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{ color: colors.textSecondary, mb: 1 }}
-                      >
+                      <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 1 }}>
                         Bounce Rate
                       </Typography>
                       <Typography
@@ -1408,15 +1524,12 @@ const Dashboard = ({ user }) => {
                       </Typography>
                       <Chip
                         label={`${
-                          (analyticsData?.overview?.bounceRate?.change ?? 0) > 0
-                            ? "+"
-                            : ""
+                          (analyticsData?.overview?.bounceRate?.change ?? 0) > 0 ? "+" : ""
                         }${analyticsData?.overview?.bounceRate?.change ?? 0}%`}
                         size="small"
                         sx={{
                           background:
-                            (analyticsData?.overview?.bounceRate?.change ?? 0) <
-                            0
+                            (analyticsData?.overview?.bounceRate?.change ?? 0) < 0
                               ? colors.success
                               : colors.error,
                           color: "#F5F5F5",
@@ -1438,10 +1551,7 @@ const Dashboard = ({ user }) => {
                         p: 3,
                       }}
                     >
-                      <Typography
-                        variant="h6"
-                        sx={{ color: colors.text, fontWeight: 700, mb: 2 }}
-                      >
+                      <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
                         Top Pages
                       </Typography>
                       {(analyticsData?.topPages ?? []).length > 0 ? (
@@ -1459,10 +1569,7 @@ const Dashboard = ({ user }) => {
                                   : "none",
                             }}
                           >
-                            <Typography
-                              variant="body2"
-                              sx={{ color: colors.text }}
-                            >
+                            <Typography variant="body2" sx={{ color: colors.text }}>
                               {page?.page ?? "N/A"}
                             </Typography>
                             <Typography
@@ -1495,10 +1602,7 @@ const Dashboard = ({ user }) => {
                         p: 3,
                       }}
                     >
-                      <Typography
-                        variant="h6"
-                        sx={{ color: colors.text, fontWeight: 700, mb: 2 }}
-                      >
+                      <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
                         Top Referrers
                       </Typography>
                       {(analyticsData?.topReferrers ?? []).length > 0 ? (
@@ -1516,10 +1620,7 @@ const Dashboard = ({ user }) => {
                                   : "none",
                             }}
                           >
-                            <Typography
-                              variant="body2"
-                              sx={{ color: colors.text }}
-                            >
+                            <Typography variant="body2" sx={{ color: colors.text }}>
                               {referrer?.source ?? "N/A"}
                             </Typography>
                             <Box
@@ -1535,10 +1636,7 @@ const Dashboard = ({ user }) => {
                               >
                                 {(referrer?.sessions ?? 0).toLocaleString()}
                               </Typography>
-                              <Typography
-                                variant="caption"
-                                sx={{ color: colors.textSecondary }}
-                              >
+                              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
                                 ({referrer?.percentage ?? 0}%)
                               </Typography>
                             </Box>
@@ -1570,10 +1668,7 @@ const Dashboard = ({ user }) => {
                         p: 3,
                       }}
                     >
-                      <Typography
-                        variant="h6"
-                        sx={{ color: colors.text, fontWeight: 700, mb: 2 }}
-                      >
+                      <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
                         Devices
                       </Typography>
                       {(analyticsData?.devices ?? []).length > 0 ? (
@@ -1586,10 +1681,7 @@ const Dashboard = ({ user }) => {
                                 mb: 1,
                               }}
                             >
-                              <Typography
-                                variant="body2"
-                                sx={{ color: colors.text }}
-                              >
+                              <Typography variant="body2" sx={{ color: colors.text }}>
                                 {device?.device ?? "Unknown"}
                               </Typography>
                               <Typography
@@ -1641,10 +1733,7 @@ const Dashboard = ({ user }) => {
                         p: 3,
                       }}
                     >
-                      <Typography
-                        variant="h6"
-                        sx={{ color: colors.text, fontWeight: 700, mb: 2 }}
-                      >
+                      <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
                         Top Locations
                       </Typography>
                       {(analyticsData?.locations ?? []).length > 0 ? (
@@ -1662,10 +1751,7 @@ const Dashboard = ({ user }) => {
                                   : "none",
                             }}
                           >
-                            <Typography
-                              variant="body2"
-                              sx={{ color: colors.text }}
-                            >
+                            <Typography variant="body2" sx={{ color: colors.text }}>
                               {location?.country ?? "Unknown"}
                             </Typography>
                             <Box
@@ -1681,10 +1767,7 @@ const Dashboard = ({ user }) => {
                               >
                                 {(location?.sessions ?? 0).toLocaleString()}
                               </Typography>
-                              <Typography
-                                variant="caption"
-                                sx={{ color: colors.textSecondary }}
-                              >
+                              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
                                 ({location?.percentage ?? 0}%)
                               </Typography>
                             </Box>
@@ -1780,10 +1863,7 @@ const Dashboard = ({ user }) => {
                         />
                       </Grid>
                       <Grid item xs={12} md={6}>
-                        <CoreWebVitals
-                          period={selectedPeriod}
-                          customDateRange={customDateRange}
-                        />
+                        <CoreWebVitals period={selectedPeriod} customDateRange={customDateRange} />
                       </Grid>
                     </Grid>
 
@@ -1804,26 +1884,19 @@ const Dashboard = ({ user }) => {
 
       case "websites/templates":
         return (
-          <TemplateGalleryPage
-            pageTitle={currentPage.title}
-            pageSubtitle={currentPage.subtitle}
-          />
+          <TemplateGalleryPage pageTitle={currentPage.title} pageSubtitle={currentPage.subtitle} />
         );
       case "websites/my-templates":
         return <MyTemplates />;
+      case "websites/events":
+        return <WebsiteScopedContentPicker type="events" colors={colors} />;
+      case "websites/blog":
+        return <WebsiteScopedContentPicker type="blog" colors={colors} />;
       case "websites":
-        return (
-          <Websites
-            pageTitle={currentPage.title}
-            pageSubtitle={currentPage.subtitle}
-          />
-        );
+        return <Websites pageTitle={currentPage.title} pageSubtitle={currentPage.subtitle} />;
       case "websites/create":
         return (
-          <TemplateGalleryPage
-            pageTitle={currentPage.title}
-            pageSubtitle={currentPage.subtitle}
-          />
+          <TemplateGalleryPage pageTitle={currentPage.title} pageSubtitle={currentPage.subtitle} />
         );
       case "websites/create-template":
         return (
@@ -1842,39 +1915,16 @@ const Dashboard = ({ user }) => {
           />
         );
       case "websites/stores":
-        return (
-          <Stores
-            pageTitle={currentPage.title}
-            pageSubtitle={currentPage.subtitle}
-          />
-        );
+        return <Stores pageTitle={currentPage.title} pageSubtitle={currentPage.subtitle} />;
       case "listings":
-        return (
-          <AllListings
-            pageTitle={currentPage.title}
-            pageSubtitle={currentPage.subtitle}
-          />
-        );
+        return <AllListings pageTitle={currentPage.title} pageSubtitle={currentPage.subtitle} />;
       case "listings/modify":
-        return (
-          <ModifyListing
-            pageTitle={currentPage.title}
-            pageSubtitle={currentPage.subtitle}
-          />
-        );
+        return <ModifyListing pageTitle={currentPage.title} pageSubtitle={currentPage.subtitle} />;
       case "listings/favourites":
-        return (
-          <Favourites
-            pageTitle={currentPage.title}
-            pageSubtitle={currentPage.subtitle}
-          />
-        );
+        return <Favourites pageTitle={currentPage.title} pageSubtitle={currentPage.subtitle} />;
       case "listings/archived":
         return (
-          <ArchivedListings
-            pageTitle={currentPage.title}
-            pageSubtitle={currentPage.subtitle}
-          />
+          <ArchivedListings pageTitle={currentPage.title} pageSubtitle={currentPage.subtitle} />
         );
       case "finances":
         return (
@@ -1948,9 +1998,16 @@ const Dashboard = ({ user }) => {
             <WebsiteManagementDashboard
               websiteId={websiteId}
               section={subtab || "overview"}
-              userPlan={user?.websitePlan || 'free'}
+              userPlan={user?.websitePlan || "free"}
             />
           );
+        }
+        if (activeTab && /^websites\/[^/]+\/events$/.test(activeTab)) {
+          const websiteId = activeTab.split("/")[1];
+          return <WebsiteManageEvents websiteId={websiteId} />;
+        }
+        if (activeTab && /^websites\/[^/]+\/blog$/.test(activeTab)) {
+          return <WebsiteManageInsights user={user} />;
         }
         return null;
     }
@@ -1960,368 +2017,361 @@ const Dashboard = ({ user }) => {
     <ThemeProvider theme={dashboardTheme}>
       <CssBaseline />
       <AccountProvider>
-      <OnboardingProvider>
-
-      {/* Loading overlay - dark with stars, visible until dashboard is ready */}
-      <Box
-        sx={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 9999,
-          backgroundColor: "#090A0B",
-          backgroundImage: `url(${dashboardStars})`,
-          backgroundSize: "1440px 819px",
-          backgroundPosition: "top center",
-          backgroundRepeat: "repeat",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          opacity: dashboardReady ? 0 : 1,
-          pointerEvents: dashboardReady ? "none" : "auto",
-          transition: "opacity 0.5s ease-out",
-        }}
-      >
-        {/* Dark hole accent */}
-        <Box
-          aria-hidden="true"
-          sx={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: `url(${dashboardDarkHole})`,
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "contain",
-            backgroundPosition: "center",
-            opacity: 0.6,
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Ambient glow behind logo */}
-        <Box
-          aria-hidden="true"
-          sx={{
-            position: "absolute",
-            width: 200,
-            height: 200,
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(55, 140, 146, 0.15) 0%, transparent 70%)",
-            animation: "ambientPulse 3s ease-in-out infinite",
-            "@keyframes ambientPulse": {
-              "0%, 100%": { transform: "scale(1)", opacity: 0.6 },
-              "50%": { transform: "scale(1.3)", opacity: 1 },
-            },
-          }}
-        />
-
-        {/* Loading content */}
-        <Box
-          sx={{
-            position: "relative",
-            zIndex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 3,
-          }}
-        >
-          {/* Brand icon */}
-          <Box
-            component="img"
-            src={brandIcon}
-            alt=""
-            sx={{
-              width: 80,
-              height: 80,
-              borderRadius: "18px",
-              animation: "logoBreath 2.5s ease-in-out infinite",
-              "@keyframes logoBreath": {
-                "0%, 100%": { opacity: 0.8, transform: "scale(1)" },
-                "50%": { opacity: 1, transform: "scale(1.08)" },
-              },
-            }}
-          />
-
-          {/* Shimmer progress bar */}
+        <OnboardingProvider>
+          {/* Loading overlay - dark with stars, visible until dashboard is ready */}
           <Box
             sx={{
-              width: 120,
-              height: 3,
-              borderRadius: 2,
-              backgroundColor: "rgba(255, 255, 255, 0.08)",
-              overflow: "hidden",
-              position: "relative",
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+              backgroundColor: "#090A0B",
+              backgroundImage: `url(${dashboardStars})`,
+              backgroundSize: "1440px 819px",
+              backgroundPosition: "top center",
+              backgroundRepeat: "repeat",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: dashboardReady ? 0 : 1,
+              pointerEvents: dashboardReady ? "none" : "auto",
+              transition: "opacity 0.5s ease-out",
             }}
           >
+            {/* Dark hole accent */}
             <Box
+              aria-hidden="true"
               sx={{
                 position: "absolute",
-                top: 0,
-                left: 0,
-                height: "100%",
-                width: "40%",
-                borderRadius: 2,
-                background:
-                  "linear-gradient(90deg, transparent, #378C92, transparent)",
-                animation: "shimmer 1.5s ease-in-out infinite",
-                "@keyframes shimmer": {
-                  "0%": { transform: "translateX(-100%)" },
-                  "100%": { transform: "translateX(350%)" },
+                inset: 0,
+                backgroundImage: `url(${dashboardDarkHole})`,
+                backgroundRepeat: "no-repeat",
+                backgroundSize: "contain",
+                backgroundPosition: "center",
+                opacity: 0.6,
+                pointerEvents: "none",
+              }}
+            />
+
+            {/* Ambient glow behind logo */}
+            <Box
+              aria-hidden="true"
+              sx={{
+                position: "absolute",
+                width: 200,
+                height: 200,
+                borderRadius: "50%",
+                background: "radial-gradient(circle, rgba(55, 140, 146, 0.15) 0%, transparent 70%)",
+                animation: "ambientPulse 3s ease-in-out infinite",
+                "@keyframes ambientPulse": {
+                  "0%, 100%": { transform: "scale(1)", opacity: 0.6 },
+                  "50%": { transform: "scale(1.3)", opacity: 1 },
                 },
               }}
             />
-          </Box>
 
-          <Typography
-            sx={{
-              color: "rgba(255, 255, 255, 0.5)",
-              fontSize: "0.75rem",
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 400,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-            }}
-          >
-            Loading
-          </Typography>
-        </Box>
-      </Box>
-
-      <Box
-        sx={{
-          display: "flex",
-          minHeight: "100vh",
-          height: "100vh",
-          fontFamily: dashboardTheme.typography.fontFamily,
-          fontWeight: dashboardTheme.typography.fontWeightRegular,
-          // Force dark bg until ready so nothing leaks behind the loading overlay
-          backgroundColor: !dashboardReady
-            ? "#090A0B"
-            : colors.mode === "light"
-              ? "transparent"
-              : colors.bgBase || "#041e18",
-          backgroundSize: "1440px 819px",
-          backgroundPosition: "top center",
-          backgroundRepeat: "repeat",
-          overflow: "hidden",
-          position: "relative",
-          // Hide dashboard content until ready — prevents any flash
-          visibility: dashboardReady ? "visible" : "hidden",
-          // Light mode: blurred background image (only shown after dashboard is ready)
-          ...(colors.mode === "light" &&
-            dashboardReady && {
-              "&::before": {
-                content: '""',
-                position: "fixed",
-                inset: 0,
-                zIndex: 0,
-                backgroundImage: `url(${colors.bgImage})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                filter: "blur(18px)",
-                transform: "scale(1.05)",
-              },
-              "&::after": {
-                content: '""',
-                position: "fixed",
-                inset: 0,
-                zIndex: 0,
-                background: "rgba(255, 255, 255, 0.15)",
-                pointerEvents: "none",
-              },
-            }),
-        }}
-      >
-        {colors.bgImageAccent ? (
-          <Box
-            aria-hidden="true"
-            sx={{
-              position: "absolute",
-              height: "auto",
-              zIndex: 0,
-              top: { xs: "12%", sm: "-4%" },
-              left: { xs: "-70%", sm: "-15%" },
-              width: { xs: "280%", sm: "130%" },
-              pointerEvents: "none",
-            }}
-          />
-        ) : null}
-        {/* Sidebar Drawer - Collapsible */}
-        <Box
-          component="nav"
-          sx={{
-            width: { md: totalSidebarWidth }, // +16 for left margin
-            flexShrink: { md: 0 },
-            transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {/* Mobile Drawer - Always expanded */}
-          <Drawer
-            variant="temporary"
-            open={mobileOpen}
-            onClose={() => setMobileOpen(false)}
-            ModalProps={{ keepMounted: true }}
-            sx={{
-              display: { xs: "block", md: "none" },
-              "& .MuiDrawer-paper": {
-                boxSizing: "border-box",
-                width: DRAWER_WIDTH, // Always expanded on mobile
-                backgroundColor: "transparent",
-                border: "none",
-              },
-            }}
-          >
-            {sidebarContent}
-          </Drawer>
-
-          {/* Desktop Drawer - Collapsible with dynamic width */}
-          <Drawer
-            variant="permanent"
-            sx={{
-              display: { xs: "none", md: "block" },
-              "& .MuiDrawer-paper": {
-                boxSizing: "border-box",
-                width: totalSidebarWidth, // +16 for left margin
-                backgroundColor: "transparent",
-                border: "none",
-                overflow: "visible", // Allow rounded corners to show
-                transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              },
-            }}
-            open
-          >
-            {sidebarContent}
-          </Drawer>
-        </Box>
-
-        {/* Main Content - Dynamic offset for collapsible sidebar */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            width: {
-              xs: "100%",
-              md: `calc(100% - ${totalSidebarWidth}px)`, // Dynamic width based on sidebar state
-            },
-            minHeight: "100vh",
-            maxHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            position: "relative",
-            zIndex: 1,
-            // Use specific transition property instead of 'all' for better performance
-            // 'all' causes expensive reflows on pages with sticky elements (templates/customize)
-            transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            willChange: "width", // Hint to browser for GPU optimization
-          }}
-        >
-          <DashboardPageHeader
-            user={user}
-            onMenuToggle={handleDrawerToggle}
-            onSearchOpen={() => setSearchOpen(true)}
-            onLogout={handleLogout}
-            showMenuButton={isMobile}
-            colors={colors}
-          />
-
-          {/* Active promo deal banner — sticky below nav (step 10.36) */}
-          {activeDeal && (
-            <DealBanner deal={activeDeal} userId={user?.id} />
-          )}
-
-          <Box
-            component="main"
-            sx={{
-              flexGrow: 1,
-              overflowY: "auto",
-              overflowX: "hidden",
-              py: { xs: 2, md: 3 },
-              pl: { xs: 2, sm: 3 },
-              pr: { xs: 2, sm: 3, md: 3.7 },
-              minHeight: 0,
-            }}
-          >
-            {renderContent()}
-          </Box>
-        </Box>
-
-        {/* Global Search Popup */}
-        <SearchPopup open={searchOpen} onClose={() => setSearchOpen(false)} />
-
-        {/* Welcome Tour */}
-        <WelcomeTour />
-
-        {/* Custom Date Range Dialog */}
-        <Dialog
-          open={customDateDialogOpen}
-          onClose={handleCustomDateCancel}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: {
-              border: `1px solid ${colors.border}`,
-              borderRadius: "16px",
-            },
-          }}
-        >
-          <DialogTitle sx={{ color: colors.text, fontWeight: 700 }}>
-            Select Custom Date Range
-          </DialogTitle>
-          <DialogContent>
+            {/* Loading content */}
             <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
+              sx={{
+                position: "relative",
+                zIndex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 3,
+              }}
             >
-              <DashboardDateField
-                label="Start Date"
-                value={customDateRange.startDate}
-                onChange={(e) =>
-                  setCustomDateRange((prev) => ({
-                    ...prev,
-                    startDate: e.target.value,
-                  }))
-                }
-              />
-              <DashboardDateField
-                label="End Date"
-                value={customDateRange.endDate}
-                onChange={(e) =>
-                  setCustomDateRange((prev) => ({
-                    ...prev,
-                    endDate: e.target.value,
-                  }))
-                }
-                inputProps={{
-                  min: customDateRange.startDate,
+              {/* Brand icon */}
+              <Box
+                component="img"
+                src={brandIcon}
+                alt=""
+                sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: "18px",
+                  animation: "logoBreath 2.5s ease-in-out infinite",
+                  "@keyframes logoBreath": {
+                    "0%, 100%": { opacity: 0.8, transform: "scale(1)" },
+                    "50%": { opacity: 1, transform: "scale(1.08)" },
+                  },
                 }}
               />
+
+              {/* Shimmer progress bar */}
+              <Box
+                sx={{
+                  width: 120,
+                  height: 3,
+                  borderRadius: 2,
+                  backgroundColor: "rgba(255, 255, 255, 0.08)",
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    height: "100%",
+                    width: "40%",
+                    borderRadius: 2,
+                    background: "linear-gradient(90deg, transparent, #378C92, transparent)",
+                    animation: "shimmer 1.5s ease-in-out infinite",
+                    "@keyframes shimmer": {
+                      "0%": { transform: "translateX(-100%)" },
+                      "100%": { transform: "translateX(350%)" },
+                    },
+                  }}
+                />
+              </Box>
+
+              <Typography
+                sx={{
+                  color: "rgba(255, 255, 255, 0.5)",
+                  fontSize: "0.75rem",
+                  fontFamily: "Inter, sans-serif",
+                  fontWeight: 400,
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Loading
+              </Typography>
             </Box>
-          </DialogContent>
-          <DialogActions sx={{ p: 2.5, pt: 1 }}>
-            <Button
-              onClick={handleCustomDateCancel}
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              minHeight: "100vh",
+              height: "100vh",
+              fontFamily: dashboardTheme.typography.fontFamily,
+              fontWeight: dashboardTheme.typography.fontWeightRegular,
+              // Force dark bg until ready so nothing leaks behind the loading overlay
+              backgroundColor: !dashboardReady
+                ? "#090A0B"
+                : colors.mode === "light"
+                  ? "transparent"
+                  : colors.bgBase || "#041e18",
+              backgroundSize: "1440px 819px",
+              backgroundPosition: "top center",
+              backgroundRepeat: "repeat",
+              overflow: "hidden",
+              position: "relative",
+              // Hide dashboard content until ready — prevents any flash
+              visibility: dashboardReady ? "visible" : "hidden",
+              // Light mode: blurred background image (only shown after dashboard is ready)
+              ...(colors.mode === "light" &&
+                dashboardReady && {
+                  "&::before": {
+                    content: '""',
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 0,
+                    backgroundImage: `url(${colors.bgImage})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                    filter: "blur(18px)",
+                    transform: "scale(1.05)",
+                  },
+                  "&::after": {
+                    content: '""',
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 0,
+                    background: "rgba(255, 255, 255, 0.15)",
+                    pointerEvents: "none",
+                  },
+                }),
+            }}
+          >
+            {colors.bgImageAccent ? (
+              <Box
+                aria-hidden="true"
+                sx={{
+                  position: "absolute",
+                  height: "auto",
+                  zIndex: 0,
+                  top: { xs: "12%", sm: "-4%" },
+                  left: { xs: "-70%", sm: "-15%" },
+                  width: { xs: "280%", sm: "130%" },
+                  pointerEvents: "none",
+                }}
+              />
+            ) : null}
+            {/* Sidebar Drawer - Collapsible */}
+            <Box
+              component="nav"
               sx={{
-                color: colors.textSecondary,
-                "&:hover": {
-                  background: alpha(colors.textSecondary, 0.1),
+                width: { md: totalSidebarWidth }, // +16 for left margin
+                flexShrink: { md: 0 },
+                transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              {/* Mobile Drawer - Always expanded */}
+              <Drawer
+                variant="temporary"
+                open={mobileOpen}
+                onClose={() => setMobileOpen(false)}
+                ModalProps={{ keepMounted: true }}
+                sx={{
+                  display: { xs: "block", md: "none" },
+                  "& .MuiDrawer-paper": {
+                    boxSizing: "border-box",
+                    width: DRAWER_WIDTH, // Always expanded on mobile
+                    backgroundColor: "transparent",
+                    border: "none",
+                  },
+                }}
+              >
+                {sidebarContent}
+              </Drawer>
+
+              {/* Desktop Drawer - Collapsible with dynamic width */}
+              <Drawer
+                variant="permanent"
+                sx={{
+                  display: { xs: "none", md: "block" },
+                  "& .MuiDrawer-paper": {
+                    boxSizing: "border-box",
+                    width: totalSidebarWidth, // +16 for left margin
+                    backgroundColor: "transparent",
+                    border: "none",
+                    overflow: "visible", // Allow rounded corners to show
+                    transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  },
+                }}
+                open
+              >
+                {sidebarContent}
+              </Drawer>
+            </Box>
+
+            {/* Main Content - Dynamic offset for collapsible sidebar */}
+            <Box
+              sx={{
+                flexGrow: 1,
+                width: {
+                  xs: "100%",
+                  md: `calc(100% - ${totalSidebarWidth}px)`, // Dynamic width based on sidebar state
+                },
+                minHeight: "100vh",
+                maxHeight: "100vh",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                position: "relative",
+                zIndex: 1,
+                // Use specific transition property instead of 'all' for better performance
+                // 'all' causes expensive reflows on pages with sticky elements (templates/customize)
+                transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                willChange: "width", // Hint to browser for GPU optimization
+              }}
+            >
+              <DashboardPageHeader
+                user={user}
+                onMenuToggle={handleDrawerToggle}
+                onSearchOpen={() => setSearchOpen(true)}
+                onLogout={handleLogout}
+                showMenuButton={isMobile}
+                colors={colors}
+              />
+
+              {/* Active promo deal banner — sticky below nav (step 10.36) */}
+              {activeDeal && <DealBanner deal={activeDeal} userId={user?.id} />}
+
+              <Box
+                component="main"
+                sx={{
+                  flexGrow: 1,
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  py: { xs: 2, md: 3 },
+                  pl: { xs: 2, sm: 3 },
+                  pr: { xs: 2, sm: 3, md: 3.7 },
+                  minHeight: 0,
+                }}
+              >
+                {renderContent()}
+              </Box>
+            </Box>
+
+            {/* Global Search Popup */}
+            <SearchPopup open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+            {/* Welcome Tour */}
+            <WelcomeTour />
+
+            {/* Custom Date Range Dialog */}
+            <Dialog
+              open={customDateDialogOpen}
+              onClose={handleCustomDateCancel}
+              maxWidth="sm"
+              fullWidth
+              PaperProps={{
+                sx: {
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: "16px",
                 },
               }}
             >
-              Cancel
-            </Button>
-            <DashboardActionButton
-              onClick={handleCustomDateApply}
-              disabled={!customDateRange.startDate || !customDateRange.endDate}
-              sx={{ px: 3 }}
-            >
-              Apply
-            </DashboardActionButton>
-          </DialogActions>
-        </Dialog>
-      </Box>
-      </OnboardingProvider>
+              <DialogTitle sx={{ color: colors.text, fontWeight: 700 }}>
+                Select Custom Date Range
+              </DialogTitle>
+              <DialogContent>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+                  <DashboardDateField
+                    label="Start Date"
+                    value={customDateRange.startDate}
+                    onChange={(e) =>
+                      setCustomDateRange((prev) => ({
+                        ...prev,
+                        startDate: e.target.value,
+                      }))
+                    }
+                  />
+                  <DashboardDateField
+                    label="End Date"
+                    value={customDateRange.endDate}
+                    onChange={(e) =>
+                      setCustomDateRange((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                      }))
+                    }
+                    inputProps={{
+                      min: customDateRange.startDate,
+                    }}
+                  />
+                </Box>
+              </DialogContent>
+              <DialogActions sx={{ p: 2.5, pt: 1 }}>
+                <Button
+                  onClick={handleCustomDateCancel}
+                  sx={{
+                    color: colors.textSecondary,
+                    "&:hover": {
+                      background: alpha(colors.textSecondary, 0.1),
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <DashboardActionButton
+                  onClick={handleCustomDateApply}
+                  disabled={!customDateRange.startDate || !customDateRange.endDate}
+                  sx={{ px: 3 }}
+                >
+                  Apply
+                </DashboardActionButton>
+              </DialogActions>
+            </Dialog>
+          </Box>
+        </OnboardingProvider>
       </AccountProvider>
     </ThemeProvider>
   );
