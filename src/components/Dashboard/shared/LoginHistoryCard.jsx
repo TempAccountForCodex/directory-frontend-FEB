@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, TableHead, TableBody, TableCell, Skeleton } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Timer } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
 import DashboardCard from './DashboardCard';
@@ -12,7 +12,6 @@ import DashboardTable, {
   DashboardTablePagination,
 } from './DashboardTable';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 /**
  * LoginHistoryCard
@@ -43,7 +42,7 @@ const LoginHistoryCard = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_URL}/account/login-history`, {
+      const response = await apiClient.get(`/account/login-history`, {
         params: {
           page: page + 1,
           limit: rowsPerPage,

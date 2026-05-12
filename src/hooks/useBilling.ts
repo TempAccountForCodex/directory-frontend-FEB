@@ -1,8 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../api/client';
+import { queryKeys } from '../api/queryKeys';
+import {
+  useBillingDetail,
+  usePaymentMethods,
+  useCancelSubscription,
+  useReactivateSubscription,
+  useCreateSetupIntent,
+} from '../api/queries/account';
 import type { BillingDetails, DisplayPlan, PaymentMethod } from '../types/user';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // Display plans matching the UI design
 export const DISPLAY_PLANS: DisplayPlan[] = [
@@ -96,80 +103,78 @@ interface UseBillingReturn {
 }
 
 /**
- * Hook for managing billing details, payment methods, and plan changes
+ * Hook for managing billing details, payment methods, and plan changes.
+ *
+ * Phase H.account migration (2026-04-15): now backed by React Query under
+ * the hood — `useBillingDetail()` + `usePaymentMethods()` replace the
+ * useEffect/useState fetches, and the billing/plan-summary query cache is
+ * invalidated on mutations instead of manually refetching. The public return
+ * shape is unchanged so existing consumers (Settings.jsx, ChangePlanCard,
+ * BillingHistoryCard, etc.) continue to work without modification.
+ *
+ * Operations that still go through imperative writes because they're
+ * one-shot form-scoped mutations (PUT billing, PUT plan, PUT default payment
+ * method, DELETE payment method, POST add payment method) now hit
+ * `apiClient` and invalidate the relevant React Query keys so other
+ * consumers of `useBillingDetail`/`usePaymentMethods` re-fetch automatically.
  */
 export function useBilling(): UseBillingReturn {
-  const [billingDetails, setBillingDetails] = useState<BillingDetails | null>(null);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [paymentMethodsLoading, setPaymentMethodsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
-  const [cancelledAt, setCancelledAt] = useState<string | null>(null);
-  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchBillingDetails = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // React Query reads
+  const billingQuery = useBillingDetail();
+  const paymentMethodsQuery = usePaymentMethods();
 
-      const response = await axios.get(`${API_URL}/account/billing`);
-      const billing = response.data.billing;
-      setBillingDetails(billing);
-      // Sync subscription lifecycle fields if present in billing response
-      if (billing?.subscriptionStatus !== undefined) {
-        setSubscriptionStatus(billing.subscriptionStatus ?? null);
-      }
-      if (billing?.cancelledAt !== undefined) {
-        setCancelledAt(billing.cancelledAt ?? null);
-      }
-      if (billing?.currentPeriodEnd !== undefined) {
-        setCurrentPeriodEnd(billing.currentPeriodEnd ?? null);
-      }
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to fetch billing details';
-      setError(errorMessage);
-      console.error('Failed to fetch billing details:', err);
-    } finally {
-      setLoading(false);
+  // Mutation hooks (cache invalidation is encapsulated in these hooks)
+  const cancelMutation = useCancelSubscription();
+  const reactivateMutation = useReactivateSubscription();
+  const setupIntentMutation = useCreateSetupIntent();
+
+  // Local mutation error state. Read errors are merged in below so consumers
+  // keep reading `error` without caring about the source.
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const readError = useMemo(() => {
+    if (billingQuery.error) {
+      const err = billingQuery.error as { response?: { data?: { message?: string } } };
+      return err.response?.data?.message || 'Failed to fetch billing details';
     }
-  }, []);
+    if (paymentMethodsQuery.error) {
+      const err = paymentMethodsQuery.error as { response?: { data?: { message?: string } } };
+      return err.response?.data?.message || 'Failed to fetch payment methods';
+    }
+    return null;
+  }, [billingQuery.error, paymentMethodsQuery.error]);
+
+  const error = mutationError ?? readError;
+
+  // Derive fields from billing response (shape identical to prior behavior).
+  const billing = billingQuery.data?.billing ?? null;
+  const billingDetails = billing as BillingDetails | null;
+  const subscriptionStatus = (billing?.subscriptionStatus as string | null | undefined) ?? null;
+  const cancelledAt = (billing?.cancelledAt as string | null | undefined) ?? null;
+  const currentPeriodEnd = (billing?.currentPeriodEnd as string | null | undefined) ?? null;
+
+  const paymentMethods = (paymentMethodsQuery.data?.paymentMethods ?? []) as unknown as PaymentMethod[];
 
   const fetchPaymentMethods = useCallback(async () => {
-    try {
-      setPaymentMethodsLoading(true);
-      setError(null);
-
-      const response = await axios.get(`${API_URL}/account/payment-methods`);
-      setPaymentMethods(response.data.paymentMethods || []);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to fetch payment methods';
-      setError(errorMessage);
-      console.error('Failed to fetch payment methods:', err);
-    } finally {
-      setPaymentMethodsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchBillingDetails();
-    fetchPaymentMethods();
-  }, [fetchBillingDetails, fetchPaymentMethods]);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.account.paymentMethods() });
+  }, [queryClient]);
 
   const updateBillingDetails = useCallback(
     async (data: Partial<BillingDetails>): Promise<boolean> => {
       try {
-        setError(null);
-        const response = await axios.put(`${API_URL}/account/billing`, data);
-        setBillingDetails(response.data.billing);
+        setMutationError(null);
+        await apiClient.put('/account/billing', data);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account.billing() });
         return true;
       } catch (err: any) {
         const errorMessage = err.response?.data?.message || 'Failed to update billing details';
-        setError(errorMessage);
+        setMutationError(errorMessage);
         return false;
       }
     },
-    []
+    [queryClient]
   );
 
   const updatePlan = useCallback(
@@ -177,33 +182,29 @@ export function useBilling(): UseBillingReturn {
       planCode: string
     ): Promise<{ success: boolean; requiresPaymentMethod?: boolean; useCancel?: boolean }> => {
       try {
-        setError(null);
-        const response = await axios.put(`${API_URL}/account/plan`, { plan: planCode });
-
-        // Sync subscription fields from response if available
-        if (response.data.subscriptionStatus !== undefined) {
-          setSubscriptionStatus(response.data.subscriptionStatus ?? null);
-        }
-        if (response.data.currentPeriodEnd !== undefined) {
-          setCurrentPeriodEnd(response.data.currentPeriodEnd ?? null);
-        }
-
-        // Refetch to get updated plan
-        await fetchBillingDetails();
+        setMutationError(null);
+        await apiClient.put('/account/plan', { plan: planCode });
+        // Plan change ripples through billing detail + plan summary + history.
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account.billing() });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account.planSummary() });
+        await queryClient.invalidateQueries({ queryKey: ['account', 'billingHistory'] });
         return { success: true };
       } catch (err: any) {
         const errorMessage = err.response?.data?.message || 'Failed to update plan';
         const requiresPaymentMethod = err.response?.data?.requiresPaymentMethod || false;
         const useCancel = err.response?.data?.useCancel || false;
-        setError(errorMessage);
+        setMutationError(errorMessage);
         return { success: false, requiresPaymentMethod, useCancel };
       }
     },
-    [fetchBillingDetails]
+    [queryClient]
   );
 
   const getPlanPreview = useCallback(async (planCode: string): Promise<PlanPreview> => {
-    const response = await axios.get(`${API_URL}/account/plan-preview`, {
+    // Imperative because callers fetch on demand with results consumed once;
+    // components that want the cached form can use `usePlanPreview()` from
+    // `api/queries/account.ts`.
+    const response = await apiClient.get('/account/plan-preview', {
       params: { plan: planCode },
     });
     return response.data as PlanPreview;
@@ -211,122 +212,101 @@ export function useBilling(): UseBillingReturn {
 
   const reactivateSubscription = useCallback(async (): Promise<boolean> => {
     try {
-      setError(null);
-      const response = await axios.post(`${API_URL}/account/reactivate-subscription`);
-
-      // Sync subscription status from response
-      if (response.data.subscriptionStatus !== undefined) {
-        setSubscriptionStatus(response.data.subscriptionStatus ?? null);
-      }
-      // Clear cancellation state
-      setCancelledAt(null);
-
-      // Refetch billing details
-      await fetchBillingDetails();
+      setMutationError(null);
+      await reactivateMutation.mutateAsync();
       return true;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to reactivate subscription';
-      setError(errorMessage);
+      setMutationError(errorMessage);
       return false;
     }
-  }, [fetchBillingDetails]);
+  }, [reactivateMutation]);
 
   const createSetupIntent = useCallback(async (): Promise<string | null> => {
     try {
-      setError(null);
-      const response = await axios.post(`${API_URL}/account/setup-intent`);
-      return response.data.clientSecret;
+      setMutationError(null);
+      const data = await setupIntentMutation.mutateAsync();
+      return data.clientSecret;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to initialize card setup';
-      setError(errorMessage);
+      setMutationError(errorMessage);
       return null;
     }
-  }, []);
+  }, [setupIntentMutation]);
 
   const addPaymentMethod = useCallback(
     async (params: AddPaymentMethodParams): Promise<boolean> => {
       try {
-        setError(null);
-        await axios.post(`${API_URL}/account/payment-methods`, params);
-
-        // Refetch payment methods to get the new list
-        await fetchPaymentMethods();
-        // Also refetch billing details as the default card may have changed
-        await fetchBillingDetails();
+        setMutationError(null);
+        await apiClient.post('/account/payment-methods', params);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account.paymentMethods() });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account.billing() });
         return true;
       } catch (err: any) {
         const errorMessage = err.response?.data?.message || 'Failed to add payment method';
-        setError(errorMessage);
+        setMutationError(errorMessage);
         return false;
       }
     },
-    [fetchPaymentMethods, fetchBillingDetails]
+    [queryClient]
   );
 
   const setDefaultPaymentMethod = useCallback(
     async (id: number): Promise<boolean> => {
       try {
-        setError(null);
-        await axios.put(`${API_URL}/account/payment-methods/${id}/default`);
-
-        // Refetch payment methods to get updated default status
-        await fetchPaymentMethods();
-        // Also refetch billing details as the display card has changed
-        await fetchBillingDetails();
+        setMutationError(null);
+        await apiClient.put(`/account/payment-methods/${id}/default`);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account.paymentMethods() });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account.billing() });
         return true;
       } catch (err: any) {
         const errorMessage = err.response?.data?.message || 'Failed to set default payment method';
-        setError(errorMessage);
+        setMutationError(errorMessage);
         return false;
       }
     },
-    [fetchPaymentMethods, fetchBillingDetails]
+    [queryClient]
   );
 
   const removePaymentMethod = useCallback(
     async (id: number): Promise<boolean> => {
       try {
-        setError(null);
-        await axios.delete(`${API_URL}/account/payment-methods/${id}`);
-
-        // Refetch payment methods
-        await fetchPaymentMethods();
-        // Also refetch billing details as the display card may have changed
-        await fetchBillingDetails();
+        setMutationError(null);
+        await apiClient.delete(`/account/payment-methods/${id}`);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account.paymentMethods() });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account.billing() });
         return true;
       } catch (err: any) {
         const errorMessage = err.response?.data?.message || 'Failed to remove payment method';
-        setError(errorMessage);
+        setMutationError(errorMessage);
         return false;
       }
     },
-    [fetchPaymentMethods, fetchBillingDetails]
+    [queryClient]
   );
 
   const cancelSubscription = useCallback(
     async (options?: CancelSubscriptionOptions): Promise<boolean> => {
       try {
-        setError(null);
-        const body: Record<string, string> = {};
-        if (options?.reason) body.reason = options.reason;
-        if (options?.feedback) body.feedback = options.feedback;
-        await axios.post(`${API_URL}/account/cancel-subscription`, body);
-
-        // Refetch to get updated plan
-        await fetchBillingDetails();
+        setMutationError(null);
+        await cancelMutation.mutateAsync(options ?? {});
         return true;
       } catch (err: any) {
         const errorMessage = err.response?.data?.message || 'Failed to cancel subscription';
-        setError(errorMessage);
+        setMutationError(errorMessage);
         return false;
       }
     },
-    [fetchBillingDetails]
+    [cancelMutation]
   );
 
   const fetchBillingHistory = useCallback(
     async (page = 1, limit = 20): Promise<BillingHistoryResponse> => {
-      const response = await axios.get(`${API_URL}/account/billing-history`, {
+      // Imperative because BillingHistoryCard passes this as a prop and
+      // drives its own pagination state. The dedicated
+      // `useBillingHistory({ page, limit })` hook is available for consumers
+      // that want the cached form.
+      const response = await apiClient.get('/account/billing-history', {
         params: { page, limit },
       });
       return response.data as BillingHistoryResponse;
@@ -335,14 +315,17 @@ export function useBilling(): UseBillingReturn {
   );
 
   const refetch = useCallback(async () => {
-    await Promise.all([fetchBillingDetails(), fetchPaymentMethods()]);
-  }, [fetchBillingDetails, fetchPaymentMethods]);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.account.billing() }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.account.paymentMethods() }),
+    ]);
+  }, [queryClient]);
 
   return {
     billingDetails,
     paymentMethods,
-    loading,
-    paymentMethodsLoading,
+    loading: billingQuery.isPending,
+    paymentMethodsLoading: paymentMethodsQuery.isPending,
     error,
     subscriptionStatus,
     cancelledAt,

@@ -38,7 +38,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import {
@@ -56,7 +56,6 @@ import {
   EmptyState,
 } from './shared';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -120,7 +119,7 @@ const MetricsPanel = memo(({ dealId, colors }) => {
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/promo/admin/deals/${dealId}/metrics`, {
+      const res = await apiClient.get(`/promo/admin/deals/${dealId}/metrics`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       setMetrics(res.data.metrics);
@@ -272,7 +271,7 @@ const PromoDealManager = ({ user, pageTitle, pageSubtitle }) => {
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/promo/admin/deals?limit=50&offset=0`, {
+      const res = await apiClient.get(`/promo/admin/deals?limit=50&offset=0`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       setDeals(res.data.deals || []);
@@ -333,7 +332,7 @@ const PromoDealManager = ({ user, pageTitle, pageSubtitle }) => {
         payload.maxRedemptions = parseInt(form.maxRedemptions, 10);
       }
 
-      await axios.post(`${API_URL}/promo/admin/deals`, payload, {
+      await apiClient.post(`/promo/admin/deals`, payload, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
@@ -356,7 +355,7 @@ const PromoDealManager = ({ user, pageTitle, pageSubtitle }) => {
     setDeactivating(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_URL}/promo/admin/deals/${deactivateTargetId}/deactivate`, {}, {
+      await apiClient.put(`/promo/admin/deals/${deactivateTargetId}/deactivate`, {}, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       setDeactivateTargetId(null);

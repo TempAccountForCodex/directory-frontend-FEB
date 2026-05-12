@@ -31,6 +31,8 @@ import '@testing-library/jest-dom/vitest';
 
 const mockAxiosGet = vi.fn();
 const mockAxiosPost = vi.fn();
+const mockAxiosPut = vi.fn();
+const mockAxiosPatch = vi.fn();
 const mockAxiosDelete = vi.fn();
 
 // Track interceptors so we can call them
@@ -40,10 +42,12 @@ const responseInterceptors: Array<{
   onRejected: (err: any) => any;
 }> = [];
 
-vi.mock('axios', () => ({
-  default: {
+vi.mock('axios', () => {
+  const axiosInstance = {
     get: (...args: unknown[]) => mockAxiosGet(...args),
     post: (...args: unknown[]) => mockAxiosPost(...args),
+    put: (...args: unknown[]) => mockAxiosPut(...args),
+    patch: (...args: unknown[]) => mockAxiosPatch(...args),
     delete: (...args: unknown[]) => mockAxiosDelete(...args),
     defaults: {
       headers: { common: {} },
@@ -69,8 +73,14 @@ vi.mock('axios', () => ({
         }),
       },
     },
-  },
-}));
+  };
+  return {
+    default: {
+      ...axiosInstance,
+      create: vi.fn(() => axiosInstance),
+    },
+  };
+});
 
 // ── Mock AuthContext ────────────────────────────────────────────────────────
 
@@ -359,7 +369,7 @@ describe('AccountContext', () => {
     expect(mockAxiosPost).not.toHaveBeenCalled();
   });
 
-  it('11. 403 during delegation clears delegation state', async () => {
+  it('11. 403 during delegation shows scope error, preserves delegation', async () => {
     renderWithProvider();
     await waitFor(() => {
       expect(screen.getByTestId('accountCount').textContent).toBe('2');
@@ -372,7 +382,9 @@ describe('AccountContext', () => {
       expect(screen.getByTestId('isDelegating').textContent).toBe('true');
     });
 
-    // Simulate a 403 through the response interceptor
+    // Simulate a 403 through the response interceptor. 403 means the action is
+    // forbidden under the current delegation scope — session stays valid, so
+    // delegation must NOT be cleared, only an error surfaced.
     const responseHandler = responseInterceptors.filter(Boolean).pop();
     expect(responseHandler).toBeTruthy();
 
@@ -380,13 +392,14 @@ describe('AccountContext', () => {
       try {
         await responseHandler!.onRejected({ response: { status: 403 } });
       } catch {
-        // Expected rejection
+        // Expected rejection — interceptor re-throws.
       }
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('isDelegating').textContent).toBe('false');
+      expect(screen.getByTestId('error').textContent).toContain('not permitted');
     });
+    expect(screen.getByTestId('isDelegating').textContent).toBe('true');
   });
 
   it('12. 401 during delegation clears delegation state', async () => {

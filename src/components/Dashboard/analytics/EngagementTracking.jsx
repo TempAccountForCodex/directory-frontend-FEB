@@ -4,10 +4,8 @@ import { ArrowUpDown, Clock, LogOut, MousePointerClick } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { AnalyticsPanelHeader, DashboardPanel } from '../shared';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import PageSelector from './PageSelector';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const EngagementTracking = ({ period = '30', customDateRange = {} }) => {
   const { actualTheme } = useTheme();
@@ -35,7 +33,7 @@ const EngagementTracking = ({ period = '30', customDateRange = {} }) => {
         params.page = selectedPage;
       }
 
-      const response = await axios.get(`${API_URL}/analytics/engagement`, {
+      const response = await apiClient.get(`/analytics/engagement`, {
         params,
       });
       setData(response.data.data);

@@ -1,106 +1,104 @@
-import React, { useRef, useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
-import { styled } from "@mui/system";
-import SectionHeader from "../../UI/SectionHeader";
+import React, { useRef, useEffect, useState } from 'react';
+import { Box, Typography } from '@mui/material';
+import { styled } from '@mui/system';
+import SectionHeader from '../../UI/SectionHeader';
 
-const videoSrc: string =
-  "/assets/publicAssets/videos/About/bg_test2_compressed.mp4";
-const bgVideoSrc: string =
-  "/assets/publicAssets/videos/About/why-choose-us-bg.mp4";
+const videoSrc: string = '/assets/publicAssets/videos/About/bg_test2_compressed.mp4';
+const bgVideoSrc: string = '/assets/publicAssets/videos/About/why-choose-us-bg.mp4';
 
 const Wrapper = styled(Box)(({ theme }) => ({
-  position: "relative",
-  textAlign: "center",
-  overflow: "hidden",
-  padding: "120px 0px 227px 0px",
-  [theme.breakpoints.down("md")]: {
-    padding: "100px 0 120px",
+  position: 'relative',
+  textAlign: 'center',
+  overflow: 'hidden',
+  padding: '120px 0px 227px 0px',
+  [theme.breakpoints.down('md')]: {
+    padding: '100px 0 120px',
   },
-  [theme.breakpoints.down("sm")]: {
-    padding: "60px 0 120px",
+  [theme.breakpoints.down('sm')]: {
+    padding: '60px 0 120px',
   },
-  backgroundColor: "transparent",
-  color: "#fff",
+  backgroundColor: 'transparent',
+  color: '#fff',
   zIndex: 1,
 }));
 
 const WordWrapper = styled(Box)(({ theme }) => ({
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  flexWrap: "wrap",
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  flexWrap: 'wrap',
   fontWeight: 900,
-  fontSize: "10rem",
-  letterSpacing: "0.02em",
-  position: "relative",
+  fontSize: '10rem',
+  letterSpacing: '0.02em',
+  position: 'relative',
   lineHeight: 1,
-  [theme.breakpoints.down("xl")]: { fontSize: "8rem" },
-  [theme.breakpoints.down("lg")]: { fontSize: "6rem" },
-  [theme.breakpoints.down("md")]: { fontSize: "4.5rem" },
-  [theme.breakpoints.down("sm")]: {
-    fontSize: "2.5rem",
-    letterSpacing: "0.01em",
+  [theme.breakpoints.down('xl')]: { fontSize: '8rem' },
+  [theme.breakpoints.down('lg')]: { fontSize: '6rem' },
+  [theme.breakpoints.down('md')]: { fontSize: '4.5rem' },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '2.5rem',
+    letterSpacing: '0.01em',
   },
 }));
 
 const LetterWrapper = styled(Box)(({ theme }) => ({
-  position: "relative",
-  margin: "0 0px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  [theme.breakpoints.down("sm")]: {
-    margin: "0 2px",
+  position: 'relative',
+  margin: '0 0px',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  [theme.breakpoints.down('sm')]: {
+    margin: '0 2px',
   },
 }));
 
 const LetterChar = styled(Box)({
-  visibility: "hidden",
+  visibility: 'hidden',
   fontWeight: 900,
 });
 
 interface ConnectorProps {
-  anchor: "top" | "bottom";
+  anchor: 'top' | 'bottom';
 }
 
 const Connector = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "anchor",
+  shouldForwardProp: (prop) => prop !== 'anchor',
 })<ConnectorProps>(({ anchor }) => ({
-  position: "absolute",
-  [anchor === "top" ? "top" : "bottom"]: "-85px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
+  position: 'absolute',
+  [anchor === 'top' ? 'top' : 'bottom']: '-85px',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
   zIndex: 3,
 }));
 
-const DashedLine = styled("div")({
-  borderLeft: "2px dashed #000",
+const DashedLine = styled('div')({
+  borderLeft: '2px dashed #000',
   height: 40,
 });
 
-const Circle = styled("div")({
+const Circle = styled('div')({
   width: 10,
   height: 10,
-  borderRadius: "50%",
-  border: "2px solid #000",
-  backgroundColor: "transparent",
+  borderRadius: '50%',
+  border: '2px solid #000',
+  backgroundColor: 'transparent',
 });
 
 const Keyword = styled(Typography)(({ theme }) => ({
-  fontSize: "0.85rem",
-  color: "#666",
+  fontSize: '0.85rem',
+  color: '#666',
   fontWeight: 400,
-  whiteSpace: "nowrap",
+  whiteSpace: 'nowrap',
   marginTop: theme.spacing(1),
-  [theme.breakpoints.down("lg")]: { fontSize: "0.7rem" },
-  [theme.breakpoints.down("sm")]: { fontSize: "0.6rem" },
+  [theme.breakpoints.down('lg')]: { fontSize: '0.7rem' },
+  [theme.breakpoints.down('sm')]: { fontSize: '0.6rem' },
 }));
 
 const MaskedVideoText = styled(Box)({
-  position: "relative",
-  display: "inline-block",
-  width: "100%",
+  position: 'relative',
+  display: 'inline-block',
+  width: '100%',
 });
 
 // ===== main =====
@@ -114,24 +112,24 @@ export default function WhyChooseUs(): JSX.Element {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<number | null>(null);
   const frameCbRef = useRef<number | null>(null);
-  const metricsRef = useRef({ width: 0, height: 0, fontSize: "16px" });
+  const metricsRef = useRef({ width: 0, height: 0, fontSize: '16px' });
 
   const letters: {
     char: string;
     word: string;
-    position: "top" | "bottom";
+    position: 'top' | 'bottom';
   }[] = [
-    { char: "T", word: "Transparent", position: "top" },
-    { char: "E", word: "Excellence", position: "bottom" },
-    { char: "C", word: "Collaboration", position: "top" },
-    { char: "H", word: "Honesty", position: "bottom" },
-    { char: "I", word: "Innovation", position: "top" },
-    { char: "E", word: "Empathy", position: "bottom" },
-    { char: "T", word: "Trust", position: "top" },
-    { char: "R", word: "Reliability", position: "bottom" },
-    { char: "I", word: "Integrity", position: "top" },
-    { char: "B", word: "Boldness", position: "bottom" },
-    { char: "E", word: "Empowerment", position: "top" },
+    { char: 'T', word: 'Transparent', position: 'top' },
+    { char: 'E', word: 'Excellence', position: 'bottom' },
+    { char: 'C', word: 'Collaboration', position: 'top' },
+    { char: 'H', word: 'Honesty', position: 'bottom' },
+    { char: 'I', word: 'Innovation', position: 'top' },
+    { char: 'E', word: 'Empathy', position: 'bottom' },
+    { char: 'T', word: 'Trust', position: 'top' },
+    { char: 'R', word: 'Reliability', position: 'bottom' },
+    { char: 'I', word: 'Integrity', position: 'top' },
+    { char: 'B', word: 'Boldness', position: 'bottom' },
+    { char: 'E', word: 'Empowerment', position: 'top' },
   ];
 
   useEffect(() => {
@@ -144,7 +142,7 @@ export default function WhyChooseUs(): JSX.Element {
           observer.disconnect();
         }
       },
-      { rootMargin: "220px 0px" },
+      { rootMargin: '220px 0px' }
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -157,7 +155,7 @@ export default function WhyChooseUs(): JSX.Element {
       (entries) => {
         setIsInViewport(Boolean(entries[0]?.isIntersecting));
       },
-      { threshold: 0.05, rootMargin: "120px 0px" },
+      { threshold: 0.05, rootMargin: '120px 0px' }
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -170,7 +168,7 @@ export default function WhyChooseUs(): JSX.Element {
     const wrap = textContainerRef.current;
     if (!video || !canvas || !wrap) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const dpr = Math.min(1.5, Math.max(1, window.devicePixelRatio || 1));
@@ -200,19 +198,19 @@ export default function WhyChooseUs(): JSX.Element {
 
         ctx.drawImage(video, 0, 0, width, height);
 
-        ctx.globalCompositeOperation = "destination-in";
+        ctx.globalCompositeOperation = 'destination-in';
         ctx.font = `900 ${fontSize} Sora, Arial, system-ui`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "#000";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#000';
 
-        ctx.fillText("TECHIETRIBE", width / 2, height / 2);
-        ctx.globalCompositeOperation = "source-over";
+        ctx.fillText('TECHIETRIBE', width / 2, height / 2);
+        ctx.globalCompositeOperation = 'source-over';
       }
     };
 
     const schedule = () => {
-      if (typeof video.requestVideoFrameCallback === "function") {
+      if (typeof video.requestVideoFrameCallback === 'function') {
         frameCbRef.current = video.requestVideoFrameCallback(() => {
           drawFrame();
           schedule();
@@ -236,10 +234,7 @@ export default function WhyChooseUs(): JSX.Element {
         cancelAnimationFrame(frameRef.current);
         frameRef.current = null;
       }
-      if (
-        frameCbRef.current &&
-        typeof video.cancelVideoFrameCallback === "function"
-      ) {
+      if (frameCbRef.current && typeof video.cancelVideoFrameCallback === 'function') {
         video.cancelVideoFrameCallback(frameCbRef.current);
         frameCbRef.current = null;
       }
@@ -270,11 +265,11 @@ export default function WhyChooseUs(): JSX.Element {
           playsInline
           preload="none"
           sx={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
             zIndex: 0,
             opacity: 0.25,
           }}
@@ -291,7 +286,7 @@ export default function WhyChooseUs(): JSX.Element {
           playsInline
           preload="none"
           crossOrigin="anonymous"
-          style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
+          style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
         />
       )}
 
@@ -301,11 +296,11 @@ export default function WhyChooseUs(): JSX.Element {
         variant="lg"
         align="center"
         sx={{ mb: 4 }}
-        titleSx={{ color: "#151515ff", letterSpacing: 0.5, fontWeight: 800 }}
+        titleSx={{ color: '#151515ff', letterSpacing: 0.5, fontWeight: 800 }}
         subtextSx={{
           maxWidth: 800,
-          color: "text.primary",
-          mb: { xs: "100px", sm: "150px" },
+          color: 'text.primary',
+          mb: { xs: '100px', sm: '150px' },
         }}
       />
 
@@ -314,10 +309,10 @@ export default function WhyChooseUs(): JSX.Element {
           <canvas
             ref={canvasRef}
             style={{
-              position: "absolute",
+              position: 'absolute',
               inset: 0,
               zIndex: 2,
-              pointerEvents: "none",
+              pointerEvents: 'none',
             }}
           />
         )}
@@ -325,7 +320,7 @@ export default function WhyChooseUs(): JSX.Element {
         <WordWrapper ref={textContainerRef}>
           {letters.map(({ char, word, position }, index) => (
             <LetterWrapper key={index}>
-              {position === "top" && (
+              {position === 'top' && (
                 <Connector anchor="top">
                   <Keyword>{word}</Keyword>
                   <DashedLine />
@@ -335,7 +330,7 @@ export default function WhyChooseUs(): JSX.Element {
 
               <LetterChar>{char}</LetterChar>
 
-              {position === "bottom" && (
+              {position === 'bottom' && (
                 <Connector anchor="bottom">
                   <Circle />
                   <DashedLine />

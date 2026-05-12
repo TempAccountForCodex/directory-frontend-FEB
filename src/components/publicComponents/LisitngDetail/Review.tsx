@@ -1,8 +1,8 @@
-import React from "react";
-import TitleHeading from "../../UI/TitleHeading";
-import { Grid, Box, Typography, useTheme } from "@mui/material";
-import StarRateIcon from "@mui/icons-material/StarRate";
-import Form from "../../UI/Form";
+import React from 'react';
+import TitleHeading from '../../UI/TitleHeading';
+import { Grid, Box, Typography, useTheme } from '@mui/material';
+import StarRateIcon from '@mui/icons-material/StarRate';
+import Form from '../../UI/Form';
 
 /* ---------------- Types ---------------- */
 interface Field {
@@ -18,9 +18,7 @@ interface FormDataShape {
 
 const Review: React.FC = () => {
   const theme = useTheme();
-  const handleFeedbackSubmit = async (
-    formData: FormDataShape,
-  ): Promise<void> => {
+  const handleFeedbackSubmit = async (formData: FormDataShape): Promise<void> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve();
@@ -30,15 +28,15 @@ const Review: React.FC = () => {
 
   const fields: Field[] = [
     {
-      type: "text",
-      placeholder: "Enter your name",
-      name: "user_name",
+      type: 'text',
+      placeholder: 'Enter your name',
+      name: 'user_name',
       required: true,
     },
     {
-      type: "email",
-      placeholder: "Enter your email",
-      name: "user_email",
+      type: 'email',
+      placeholder: 'Enter your email',
+      name: 'user_email',
       required: true,
     },
   ];
@@ -47,13 +45,13 @@ const Review: React.FC = () => {
     <>
       <TitleHeading text="Write a Review" pt={4} mb={3} />
 
-      <Grid spacing={6} container sx={{ fontFamily: "poppins" }}>
+      <Grid spacing={6} container sx={{ fontFamily: 'poppins' }}>
         <Grid item xs={12} sm={6} component="div" {...({} as any)}>
           <Box
             component="section"
             style={{
-              display: "flex",
-              justifyContent: "space-between",
+              display: 'flex',
+              justifyContent: 'space-between',
               maxWidth: 400,
             }}
           >
@@ -64,30 +62,20 @@ const Review: React.FC = () => {
                 sx={{
                   color: (theme.palette.primary as any).hero,
                   fontWeight: 400,
-                  fontSize: "18px",
-                  lineHeight: "32px",
-                  textAlign: "left",
-                  paddingLeft: "3px",
+                  fontSize: '18px',
+                  lineHeight: '32px',
+                  textAlign: 'left',
+                  paddingLeft: '3px',
                 }}
               >
-                Quality{" "}
+                Quality{' '}
               </Typography>
               <Box component="section">
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
               </Box>
             </Box>
 
@@ -98,30 +86,20 @@ const Review: React.FC = () => {
                 sx={{
                   color: (theme.palette.primary as any).hero,
                   fontWeight: 400,
-                  fontSize: "18px",
-                  lineHeight: "32px",
-                  textAlign: "left",
-                  paddingLeft: "3px",
+                  fontSize: '18px',
+                  lineHeight: '32px',
+                  textAlign: 'left',
+                  paddingLeft: '3px',
                 }}
               >
-                Hospitality{" "}
+                Hospitality{' '}
               </Typography>
               <Box component="section">
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
               </Box>
             </Box>
           </Box>
@@ -129,9 +107,9 @@ const Review: React.FC = () => {
           <Box
             component="section"
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: "30px",
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '30px',
             }}
           >
             <Box component="section">
@@ -141,30 +119,20 @@ const Review: React.FC = () => {
                 sx={{
                   color: (theme.palette.primary as any).hero,
                   fontWeight: 400,
-                  fontSize: "18px",
-                  lineHeight: "32px",
-                  textAlign: "left",
-                  paddingLeft: "3px",
+                  fontSize: '18px',
+                  lineHeight: '32px',
+                  textAlign: 'left',
+                  paddingLeft: '3px',
                 }}
               >
-                Service{" "}
+                Service{' '}
               </Typography>
               <Box component="section">
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
               </Box>
             </Box>
 
@@ -175,30 +143,20 @@ const Review: React.FC = () => {
                 sx={{
                   color: (theme.palette.primary as any).hero,
                   fontWeight: 400,
-                  fontSize: "18px",
-                  lineHeight: "32px",
-                  textAlign: "left",
-                  paddingLeft: "3px",
+                  fontSize: '18px',
+                  lineHeight: '32px',
+                  textAlign: 'left',
+                  paddingLeft: '3px',
                 }}
               >
-                Pricing{" "}
+                Pricing{' '}
               </Typography>
               <Box component="section">
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
-                <StarRateIcon
-                  sx={{ color: (theme.palette as any).cardshadow.main }}
-                />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
+                <StarRateIcon sx={{ color: (theme.palette as any).cardshadow.main }} />
               </Box>
             </Box>
           </Box>
@@ -209,12 +167,12 @@ const Review: React.FC = () => {
             component="section"
             sx={{
               background: theme.palette.common.white,
-              width: "200px",
-              display: "flex",
-              marginLeft: { xs: "0", sm: "auto" },
-              borderRadius: "4px",
-              justifyContent: "center",
-              padding: "45px 20px",
+              width: '200px',
+              display: 'flex',
+              marginLeft: { xs: '0', sm: 'auto' },
+              borderRadius: '4px',
+              justifyContent: 'center',
+              padding: '45px 20px',
             }}
           >
             <Box>
@@ -224,8 +182,8 @@ const Review: React.FC = () => {
                 sx={{
                   color: (theme.palette.primary as any).focus,
                   fontWeight: 600,
-                  fontSize: "30px",
-                  lineHeight: "32px",
+                  fontSize: '30px',
+                  lineHeight: '32px',
                 }}
               >
                 5.00
@@ -236,10 +194,10 @@ const Review: React.FC = () => {
                 sx={{
                   color: (theme.palette.primary as any).hover,
                   fontWeight: 400,
-                  fontSize: "17px",
-                  lineHeight: "32px",
-                  textAlign: "left",
-                  paddingLeft: "3px",
+                  fontSize: '17px',
+                  lineHeight: '32px',
+                  textAlign: 'left',
+                  paddingLeft: '3px',
                 }}
               >
                 Average Ratting
@@ -256,14 +214,14 @@ const Review: React.FC = () => {
           sx={{
             color: theme.palette.text.secondary,
             fontWeight: 400,
-            fontSize: "17px",
-            lineHeight: "32px",
-            textAlign: "left",
-            paddingLeft: "3px",
-            marginBottom: "20px",
+            fontSize: '17px',
+            lineHeight: '32px',
+            textAlign: 'left',
+            paddingLeft: '3px',
+            marginBottom: '20px',
           }}
         >
-          Your email address will not be published.{" "}
+          Your email address will not be published.{' '}
         </Typography>
 
         <Form

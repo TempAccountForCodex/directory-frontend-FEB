@@ -20,11 +20,26 @@ import { Route, Routes, MemoryRouter } from 'react-router-dom';
 // ---------------------------------------------------------------------------
 
 // Mock axios
-vi.mock('axios', () => ({
-  default: {
+vi.mock('axios', () => {
+  const axiosInstance = {
     get: vi.fn(),
-  },
-}));
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  return {
+    default: {
+      ...axiosInstance,
+      create: vi.fn(() => axiosInstance),
+    },
+  };
+});
 
 // Mock react-helmet
 vi.mock('react-helmet', () => ({

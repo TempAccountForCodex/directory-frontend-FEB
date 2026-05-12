@@ -24,6 +24,7 @@ import { Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import type { TemplateProps } from '../../templateEngine/types';
 import type { BlogPost } from '../../types/BusinessData';
 import FadeIn from '../../blocks/FadeIn';
+import { getSectionStyleSx } from '../../utils/sectionStyle';
 
 const LOCAL_DEMO_POSTS: BlogPost[] = [
   {
@@ -148,6 +149,11 @@ function formatDate(date?: string) {
 }
 
 const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const templateContent = (data.templateContent as Record<string, any> | undefined) || {};
+  const homeContent = templateContent.home || {};
+  const articlesContent = templateContent.articles || {};
+  const aboutContent = templateContent.about || {};
+  const contactContent = templateContent.contact || {};
   const primary = data.primaryColor || '#8DC63F';
   const secondary = data.secondaryColor || '#d9e9b5';
   const posts = useMemo(() => getPosts(data), [data]);
@@ -159,6 +165,20 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const activeHeroPost = heroPosts[activeHeroIndex] || featuredPost;
   const logoUrl = data.logoUrl || 'https://cdn-icons-png.flaticon.com/512/2909/2909762.png';
+  const aboutHeading = aboutContent.heading || aboutContent.title || 'Have a question? We are here to answer.';
+  const aboutBody =
+    aboutContent.body
+    || aboutContent.description
+    || 'We share common trends and strategies for improving your rental making sure in high demand of service unique.';
+  const contactHeading = contactContent.heading || 'Contact Us';
+  const contactDescription =
+    contactContent.description
+    || 'Reach out for partnership questions, blog collaborations, or agriculture growth strategy discussions.';
+  const contactButton = contactContent.buttonLabel || 'Send Message';
+  const homeBlockId = homeContent.blockId;
+  const articlesBlockId = articlesContent.blockId;
+  const aboutBlockId = aboutContent.blockId;
+  const contactBlockId = contactContent.blockId;
 
   useEffect(() => {
     if (heroPosts.length <= 1) return;
@@ -267,38 +287,50 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
         <FadeIn delay={0.05}>
           <Box
             id="blog-home"
+            data-preview-section="true"
+            data-preview-label="Home"
+            data-preview-block-id={homeBlockId}
             sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: '1.05fr 0.95fr' },
               gap: { xs: 2.5, md: 5 },
               alignItems: 'start',
               mb: { xs: 4, md: 5 },
+              ...getSectionStyleSx(homeContent),
             }}
           >
             <Typography
+              data-editable="heading"
+              data-edit-type="single"
+              data-block-id={homeBlockId}
               sx={{
                 fontSize: { xs: '2.5rem', md: '4.2rem' },
                 lineHeight: 1.04,
                 fontWeight: 800,
                 letterSpacing: '-0.04em',
                 maxWidth: 560,
+                ...(homeContent.headingStyle || {}),
               }}
             >
-              Sustainable Future
+              {homeContent.heroHeading || 'Sustainable Future'}
               <br />
-              Insights
+              {!homeContent.heroHeading && 'Insights'}
             </Typography>
 
             <Box sx={{ maxWidth: 460, pt: { xs: 0, md: 1.2 } }}>
               <Typography
+                data-editable="description"
+                data-edit-type="multi"
+                data-block-id={homeBlockId}
                 sx={{
                   color: '#667085',
                   lineHeight: 1.8,
                   fontSize: { xs: '1rem', md: '1.04rem' },
                   mb: 2,
+                  ...(homeContent.descriptionStyle || {}),
                 }}
               >
-                {data.description ||
+                {homeContent.heroDescription || data.description ||
                   'We share common trends and strategies for improving your operation, making sure demand, efficiency, and visibility move together.'}
               </Typography>
               <Stack
@@ -308,7 +340,14 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 onClick={() => activeHeroPost && setSelectedPost(activeHeroPost)}
                 sx={{ cursor: 'pointer', width: 'fit-content' }}
               >
-                <Typography sx={{ color: primary, fontWeight: 700 }}>Learn More</Typography>
+                <Typography
+                  data-editable="ctaText"
+                  data-edit-type="single"
+                  data-block-id={homeBlockId}
+                  sx={{ color: primary, fontWeight: 700, ...(homeContent.ctaTextStyle || {}) }}
+                >
+                  {homeContent.heroCtaText || 'Learn More'}
+                </Typography>
                 <ArrowForwardIcon sx={{ color: primary, fontSize: 18 }} />
               </Stack>
             </Box>
@@ -427,9 +466,20 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
         )}
 
         <FadeIn delay={0.12}>
-          <Box id="blog-list" sx={{ pt: { xs: 4, md: 6 } }}>
-            <Typography sx={{ fontSize: { xs: '2rem', md: '3rem' }, fontWeight: 800, mb: 1.2 }}>
-              Our Trending Article
+          <Box
+            id="blog-list"
+            data-preview-section="true"
+            data-preview-label="Articles"
+            data-preview-block-id={articlesBlockId}
+            sx={{ pt: { xs: 4, md: 6 }, ...getSectionStyleSx(articlesContent) }}
+          >
+            <Typography
+              data-editable="heading"
+              data-edit-type="single"
+              data-block-id={articlesBlockId}
+              sx={{ fontSize: { xs: '2rem', md: '3rem' }, fontWeight: 800, mb: 1.2, ...(articlesContent.headingStyle || {}) }}
+            >
+                {articlesContent.heading || 'Our Trending Article'}
             </Typography>
             <Typography sx={{ maxWidth: 760, color: '#6b7280', lineHeight: 1.8, mb: 4 }}>
               Common trends, operational signals, and field insights designed for teams that want
@@ -519,12 +569,16 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
         <FadeIn delay={0.18}>
           <Box
             id="blog-about"
+            data-preview-section="true"
+            data-preview-label="About"
+            data-preview-block-id={aboutBlockId}
             sx={{
               pt: { xs: 7, md: 10 },
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: '1fr 0.9fr' },
               gap: { xs: 4, md: 6 },
               alignItems: 'start',
+              ...getSectionStyleSx(aboutContent),
             }}
           >
             <Box>
@@ -537,19 +591,25 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 }}
               >
                 <Typography
+                  data-editable="heading"
+                  data-edit-type="single"
+                  data-block-id={aboutBlockId}
                   sx={{
                     fontSize: { xs: '2.1rem', md: '3.2rem' },
                     lineHeight: 1.08,
                     fontWeight: 800,
+                    ...(aboutContent.headingStyle || {}),
                   }}
                 >
-                  Have a question?
-                  <br />
-                  We are here to answer.
+                  {aboutHeading}
                 </Typography>
-                <Typography sx={{ color: '#667085', lineHeight: 1.8, pt: { xs: 0, md: 1 } }}>
-                  We share common trends and strategies for improving your rental making sure in
-                  high demand of service unique.
+                <Typography
+                  data-editable="description"
+                  data-edit-type="multi"
+                  data-block-id={aboutBlockId}
+                  sx={{ color: '#667085', lineHeight: 1.8, pt: { xs: 0, md: 1 }, ...(aboutContent.descriptionStyle || {}) }}
+                >
+                  {aboutBody}
                 </Typography>
               </Box>
 
@@ -675,12 +735,16 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
 
         <Box
           id="blog-contact"
+          data-preview-section="true"
+          data-preview-label="Contact"
+          data-preview-block-id={contactBlockId}
           sx={{
             pt: { xs: 7, md: 10 },
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '0.95fr 1.05fr' },
             gap: { xs: 3, md: 4 },
             alignItems: 'stretch',
+            ...getSectionStyleSx(contactContent),
           }}
         >
           <FadeIn delay={0.22}>
@@ -698,18 +762,26 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Box>
                 <Typography
+                  data-editable="heading"
+                  data-edit-type="single"
+                  data-block-id={contactBlockId}
                   sx={{
                     fontSize: { xs: '2rem', md: '2.6rem' },
                     fontWeight: 800,
                     lineHeight: 1.08,
                     mb: 1.5,
+                    ...(contactContent.headingStyle || {}),
                   }}
                 >
-                  Contact Us
+                  {contactHeading}
                 </Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.86)', lineHeight: 1.8, mb: 3 }}>
-                  Reach out for partnership questions, blog collaborations, or agriculture growth
-                  strategy discussions.
+                <Typography
+                  data-editable="description"
+                  data-edit-type="multi"
+                  data-block-id={contactBlockId}
+                  sx={{ color: 'rgba(255,255,255,0.86)', lineHeight: 1.8, mb: 3, ...(contactContent.descriptionStyle || {}) }}
+                >
+                  {contactDescription}
                 </Typography>
               </Box>
               <Stack spacing={1.5}>
@@ -772,6 +844,9 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 />
                 <Button
                   variant="contained"
+                  data-editable="buttonText"
+                  data-edit-type="single"
+                  data-block-id={contactBlockId}
                   sx={{
                     mt: 1,
                     alignSelf: 'flex-start',
@@ -781,10 +856,11 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                     px: 3,
                     py: 1.15,
                     boxShadow: 'none',
+                    ...(contactContent.buttonTextStyle || {}),
                     '&:hover': { bgcolor: primary, opacity: 0.92, boxShadow: 'none' },
                   }}
                 >
-                  Send Message
+                  {contactButton}
                 </Button>
               </Stack>
             </Box>
@@ -858,7 +934,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Quick Info</Typography>
                 <Stack spacing={1.1}>
                   <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                    Weekly insights and featured articles
+                    {contactContent.heading || 'Weekly insights and featured articles'}
                   </Typography>
                   <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>
                     Expert answers and field guidance

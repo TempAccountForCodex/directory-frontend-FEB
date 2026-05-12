@@ -17,20 +17,12 @@ import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from 'lucide-react'
 import { motion, useScroll, useTransform } from 'framer-motion';
 import FadeIn from '../../blocks/FadeIn';
 import type { TemplateProps } from '../../templateEngine/types';
-import { buildStoreTheme, rgba, blendHex } from './theme';
 
-const defaultHeadingFont = '"Kanit", "Arial Narrow", "Roboto Condensed", sans-serif';
-const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
-
-const getContrastText = (hex: string) => {
-  const normalized = hex.replace('#', '');
-  if (normalized.length !== 6) return '#ffffff';
-  const r = parseInt(normalized.slice(0, 2), 16);
-  const g = parseInt(normalized.slice(2, 4), 16);
-  const b = parseInt(normalized.slice(4, 6), 16);
-  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-  return luminance > 0.62 ? '#000000' : '#ffffff';
-};
+const neon = '#46ff16';
+const bg = '#050505';
+const panel = '#0a0a0a';
+const gridLine = 'rgba(70,255,22,0.28)';
+const muted = 'rgba(179, 255, 162, 0.68)';
 
 const fallbackHero =
   'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1800&q=80';
@@ -161,38 +153,6 @@ const navItems = [
 ];
 
 const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
-  const theme = buildStoreTheme({
-    data,
-    defaultPrimary: '#46ff16',
-    defaultSecondary: '#050505',
-    defaultHeadingFont,
-    defaultBodyFont,
-  });
-  const neon = theme.primary;
-  const bg = theme.page;
-  const panel = theme.panel;
-  const gridLine = rgba(neon, 0.28);
-  const muted = rgba(theme.light, 0.68);
-  const accentText = getContrastText(neon);
-  const darkSurface = blendHex(theme.secondary, '#000000', 0.62);
-  const darkSurfaceSoft = rgba(theme.secondary, 0.96);
-  const cardSurface = blendHex(theme.secondary, '#ffffff', 0.08);
-  const lightOverlay = rgba(theme.light, 0.12);
-  const darkOverlay = `linear-gradient(180deg, rgba(242, 241, 238, 0.08) 0%, rgb(0 0 0 / 34%) 58%, rgb(0 0 0 / 70%) 100%)`;
-  const bannerOverlay = `linear-gradient(180deg, ${rgba(theme.secondary, 0.18)} 0%, ${rgba(
-    theme.secondary,
-    0.46
-  )} 100%)`;
-  const ctaGradient = `linear-gradient(180deg, ${blendHex(
-    neon,
-    '#020402',
-    0.9
-  )} 0%, ${blendHex(neon, '#071507', 0.74)} 18%, ${blendHex(neon, '#153c06', 0.5)} 44%, ${blendHex(
-    neon,
-    '#ffffff',
-    0.16
-  )} 72%, ${neon} 100%)`;
-  const accentShadow = `0 0 30px ${rgba(neon, 0.18)}`;
   const products = data.products?.length ? data.products : fallbackProducts;
   const heroImage = data.heroBannerUrl || fallbackHero;
   const aboutImage = data.gallery?.[1]?.url || fallbackAbout;
@@ -245,7 +205,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
       sx={{
         bgcolor: bg,
         color: neon,
-        fontFamily: theme.headingFont,
+        fontFamily: '"Oswald", "Arial Narrow", "Roboto Condensed", sans-serif',
         scrollBehavior: 'smooth',
       }}
     >
@@ -255,7 +215,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
           position: 'sticky',
           top: 0,
           zIndex: 30,
-          bgcolor: darkSurfaceSoft,
+          bgcolor: 'rgba(3,3,3,0.96)',
           borderBottom: `1px solid ${gridLine}`,
         }}
       >
@@ -292,12 +252,11 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   key={item.label}
                   onClick={() => scrollToSection(item.sectionId)}
                   sx={{
-                    
+                    color: muted,
                     fontSize: '0.72rem',
                     letterSpacing: '0.22em',
                     textTransform: 'uppercase',
                     cursor: 'pointer',
-                    fontWeight: 800,
                     transition: 'color 180ms ease, transform 180ms ease',
                     '&:hover': {
                       color: neon,
@@ -320,7 +279,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   minWidth: 0,
                   borderRadius: 999,
                   bgcolor: neon,
-                  color: accentText,
+                  color: '#000',
                   px: 2.2,
                   py: 0.55,
                   fontSize: '0.72rem',
@@ -363,7 +322,8 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 position: 'absolute',
                 inset: 0,
-                background: darkOverlay,
+                background:
+                  'linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.28) 58%, rgba(0,0,0,0.62) 100%)',
               }}
             />
             <Container maxWidth="xl">
@@ -396,14 +356,14 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Typography
                     sx={{
                       mt: 1.2,
-                      color: "white",
+                      color: neon,
                       fontWeight: 900,
                       fontStyle: 'italic',
                       lineHeight: 0.82,
                       letterSpacing: '-0.07em',
                       textTransform: 'uppercase',
                       fontSize: { xs: '3.5rem', sm: '5.4rem', md: '8.4rem' },
-                      textShadow: accentShadow,
+                      textShadow: '0 0 30px rgba(70,255,22,0.16)',
                       transform: 'skewX(-10deg)',
                       transformOrigin: 'left center',
                     }}
@@ -418,10 +378,10 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     sx={{
                       mt: 1.4,
                       maxWidth: 430,
-                      color: 'rgb(255, 255, 255)',
-                      fontSize: '1rem',
+                      color: 'rgba(255,255,255,0.78)',
+                      fontSize: '0.82rem',
                       lineHeight: 1.7,
-                      fontFamily: theme.bodyFont,
+                      fontFamily: '"Inter", Arial, sans-serif',
                     }}
                   >
                     {data.description ||
@@ -457,7 +417,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
               px: { xs: 3, md: 4 },
               py: { xs: 3, md: 3.4 },
               bgcolor: neon,
-              color: accentText,
+              color: '#000',
               borderBottom: `1px solid ${gridLine}`,
             }}
           >
@@ -468,9 +428,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 860,
                     fontSize: { xs: '1.02rem', md: '1.18rem' },
                     lineHeight: 1.55,
-                    fontFamily: theme.bodyFont,
-                    color: rgba(theme.light, 0.96),
-                    mb: 1.5,
+                    fontFamily: '"Inter", Arial, sans-serif',
                   }}
                 >
                   Welcome to {data.name}, your ultimate destination for high-quality gym equipment.
@@ -488,13 +446,14 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     justifySelf: { xs: 'flex-start', md: 'flex-end' },
                     minWidth: 0,
                     borderRadius: 999,
-                    bgcolor: theme.secondary,
-                    color: theme.ink,
+                    bgcolor: '#000',
+                    color: neon,
                     px: 3.2,
                     py: 0.95,
                     fontSize: '0.9rem',
                     fontWeight: 700,
                     textTransform: 'none',
+                    '&:hover': { bgcolor: '#000' },
                   }}
                 >
                   Shop Now
@@ -582,7 +541,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   <Box
                     sx={{
-                      bgcolor: cardSurface,
+                      bgcolor: '#fff',
                       aspectRatio: { xs: '1 / 1', md: '1 / 0.98' },
                       overflow: 'hidden',
                       display: 'flex',
@@ -608,8 +567,8 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Box
                     sx={{
                       mt: 0,
-                      bgcolor: darkSurface,
-                      color: "white",
+                      bgcolor: '#3a3a3a',
+                      color: neon,
                       py: 1.3,
                       textAlign: 'center',
                       fontSize: '0.88rem',
@@ -685,7 +644,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   color: neon,
                   lineHeight: 1.28,
                   fontSize: { xs: '1.05rem', sm: '1.45rem', md: '1.95rem' },
-                  fontFamily: theme.bodyFont,
+                  fontFamily: '"Inter", Arial, sans-serif',
                   maxWidth: 520,
                 }}
               >
@@ -700,7 +659,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Box
               sx={{
                 minHeight: { xs: 340, md: 710 },
-                bgcolor: darkSurface,
+                bgcolor: '#111',
                 overflow: 'hidden',
                 position: 'relative',
               }}
@@ -768,7 +727,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                 minWidth: 0,
                 borderRadius: 999,
                 bgcolor: neon,
-                color: accentText,
+                color: '#000',
                 px: { xs: 2.4, md: 3.8 },
                 py: { xs: 0.8, md: 1.2 },
                 fontSize: { xs: '0.82rem', md: '1rem' },
@@ -852,7 +811,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     color: neon,
                     lineHeight: 1.6,
                     fontSize: { xs: '1rem', md: '1.2rem' },
-                    fontFamily: theme.bodyFont,
+                    fontFamily: '"Inter", Arial, sans-serif',
                     maxWidth: 430,
                   }}
                 >
@@ -885,7 +844,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
             sx={{
               position: 'relative',
               minHeight: { xs: 260, md: 420 },
-              backgroundImage: `${bannerOverlay}, url(${promoImage})`,
+              backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.32) 100%), url(${promoImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -946,7 +905,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </AccordionSummary>
                 <AccordionDetails>
                   <Typography
-                    sx={{  lineHeight: 1.8, fontFamily: theme.bodyFont }}
+                    sx={{ color: muted, lineHeight: 1.8, fontFamily: '"Inter", Arial, sans-serif' }}
                   >
                     {item.answer}
                   </Typography>
@@ -968,7 +927,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
           borderRight: `1px solid ${gridLine}`,
           borderBottom: `1px solid ${gridLine}`,
           bgcolor: neon,
-          color: accentText,
+          color: '#000',
         }}
       >
         <FadeIn>
@@ -984,7 +943,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   px: { xs: 3, md: 20 },
                   py: { xs: 3, md: 4 },
-                  borderRight: { md: `1px solid ${rgba(accentText, 0.18)}` },
+                  borderRight: { md: '1px solid rgba(0,0,0,0.15)' },
                 }}
               >
                 <Typography sx={{ fontSize: { xs: '1.5rem', md: '4rem' }, fontWeight: 700 }}>
@@ -1005,15 +964,15 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     placeholder="Your Name"
                     sx={{
                       width: '100%',
-                      border: `1px solid ${rgba(accentText, 0.22)}`,
-                      bgcolor: lightOverlay,
-                      color: accentText,
+                      border: '1px solid rgba(0,0,0,0.25)',
+                      bgcolor: 'rgba(255,255,255,0.12)',
+                      color: '#000',
                       px: 1.8,
                       py: 1.4,
                       fontSize: '0.98rem',
-                      fontFamily: theme.bodyFont,
+                      fontFamily: '"Inter", Arial, sans-serif',
                       outline: 'none',
-                      '&::placeholder': { color: rgba(accentText, 0.66), opacity: 1 },
+                      '&::placeholder': { color: 'rgba(0,0,0,0.62)', opacity: 1 },
                     }}
                   />
                   <Box
@@ -1022,15 +981,15 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     placeholder="Email Address"
                     sx={{
                       width: '100%',
-                      border: `1px solid ${rgba(accentText, 0.22)}`,
-                      bgcolor: lightOverlay,
-                      color: accentText,
+                      border: '1px solid rgba(0,0,0,0.25)',
+                      bgcolor: 'rgba(255,255,255,0.12)',
+                      color: '#000',
                       px: 1.8,
                       py: 1.4,
                       fontSize: '0.98rem',
-                      fontFamily: theme.bodyFont,
+                      fontFamily: '"Inter", Arial, sans-serif',
                       outline: 'none',
-                      '&::placeholder': { color: rgba(accentText, 0.66), opacity: 1 },
+                      '&::placeholder': { color: 'rgba(0,0,0,0.62)', opacity: 1 },
                     }}
                   />
                   <Box
@@ -1039,17 +998,17 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     rows={5}
                     sx={{
                       width: '100%',
-                      border: `1px solid ${rgba(accentText, 0.22)}`,
-                      bgcolor: lightOverlay,
-                      color: accentText,
+                      border: '1px solid rgba(0,0,0,0.25)',
+                      bgcolor: 'rgba(255,255,255,0.12)',
+                      color: '#000',
                       px: 1.8,
                       py: 1.4,
                       fontSize: '0.98rem',
                       lineHeight: 1.6,
-                      fontFamily: theme.bodyFont,
+                      fontFamily: '"Inter", Arial, sans-serif',
                       outline: 'none',
                       resize: 'vertical',
-                      '&::placeholder': { color: rgba(accentText, 0.66), opacity: 1 },
+                      '&::placeholder': { color: 'rgba(0,0,0,0.62)', opacity: 1 },
                     }}
                   />
                   <Box sx={{ pt: 0.6 }}>
@@ -1060,14 +1019,14 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                       sx={{
                         minWidth: 0,
                         borderRadius: 999,
-                        bgcolor: theme.secondary,
+                        bgcolor: '#000',
                         color: neon,
                         px: 3.4,
                         py: 1,
                         fontSize: '0.9rem',
                         fontWeight: 700,
                         textTransform: 'none',
-                        '&:hover': { bgcolor: darkSurface },
+                        '&:hover': { bgcolor: '#000' },
                       }}
                     >
                       Send Inquiry
@@ -1102,7 +1061,8 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
           borderLeft: `1px solid ${gridLine}`,
           borderRight: `1px solid ${gridLine}`,
           borderBottom: `1px solid ${gridLine}`,
-          background: ctaGradient,
+          background:
+            'linear-gradient(180deg, #020402 0%, #071507 18%, #153c06 44%, #39d700 72%, #46ff16 100%)',
         }}
       >
         <FadeIn>
@@ -1123,13 +1083,13 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <Typography
               sx={{
-                color: "white",
+                color: neon,
                 fontWeight: 900,
                 fontStyle: 'italic',
                 textTransform: 'uppercase',
                 letterSpacing: '-0.08em',
                 lineHeight: 0.9,
-                textShadow: accentShadow,
+                textShadow: '0 0 32px rgba(70,255,22,0.14)',
                 transform: 'skewX(-10deg)',
                 transformOrigin: 'center center',
                 fontSize: { xs: '4rem', md: '12.2rem' },
@@ -1171,6 +1131,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Typography
                 sx={{
                   fontSize: '0.82rem',
+                  color: muted,
                   letterSpacing: '0.2em',
                   textTransform: 'uppercase',
                 }}
@@ -1192,7 +1153,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 2.5,
                   borderRadius: 999,
                   bgcolor: neon,
-                  color: accentText,
+                  color: '#000',
                   px: 2.6,
                   py: 0.75,
                   fontSize: '0.72rem',
@@ -1219,19 +1180,19 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Phone size={16} color={neon} />
-                <Typography sx={{  fontFamily: theme.bodyFont }}>
+                <Typography sx={{ color: muted, fontFamily: '"Inter", Arial, sans-serif' }}>
                   {data.contact?.phone || '(555) 240-8800'}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Mail size={16} color={neon} />
-                <Typography sx={{ fontFamily: theme.bodyFont }}>
+                <Typography sx={{ color: muted, fontFamily: '"Inter", Arial, sans-serif' }}>
                   {data.contact?.email || 'hello@boostperformance.co'}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <MapPin size={16} color={neon} />
-                <Typography sx={{  fontFamily: theme.bodyFont }}>
+                <Typography sx={{ color: muted, fontFamily: '"Inter", Arial, sans-serif' }}>
                   {data.contact?.address || '122 Performance Ave, Los Angeles, CA'}
                 </Typography>
               </Box>

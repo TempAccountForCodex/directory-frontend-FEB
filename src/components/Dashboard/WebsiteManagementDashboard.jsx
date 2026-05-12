@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Box,
   Alert,
@@ -14,6 +14,7 @@ import {
   FileText,
   Globe,
   Home,
+  Image,
   Link,
   Palette,
   Search,
@@ -40,35 +41,12 @@ import IntegrationsTab from './website-manage/IntegrationsTab';
 import ListingEditTab from './ListingEditTab';
 import ReviewsTab from './website-manage/ReviewsTab';
 import PagesTab from './website-manage/PagesTab';
+import MediaTab from './website-manage/MediaTab';
 import DesignTab from './website-manage/DesignTab';
 import SeoTab from './website-manage/SeoTab';
 import DomainTab from './website-manage/DomainTab';
 import TeamTab from './website-manage/TeamTab';
 import SettingsTab from './website-manage/SettingsTab';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
-const getWebsiteId = (website) =>
-  website?.id ?? website?.websiteId ?? website?.website_id ?? website?.website?.id;
-
-const isSameWebsiteId = (left, right) => String(left) === String(right);
-
-const extractWebsiteList = (payload) => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.websites)) return payload.data.websites;
-  if (Array.isArray(payload?.websites)) return payload.websites;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.results)) return payload.results;
-  return [];
-};
-
-const unwrapWebsiteResponse = (payload) =>
-  payload?.data?.website || payload?.data || payload?.website || payload;
-
-const resolveWebsiteIdForAction = async (website) => {
-  return getWebsiteId(website);
-};
 
 // ── Nav sections defined outside component for stable reference ──────────────
 const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
@@ -77,6 +55,7 @@ const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
     items: [
       { id: 'overview', label: 'Overview', icon: Home },
       { id: 'pages', label: 'Pages', icon: FileText },
+      { id: 'media', label: 'Media', icon: Image },
     ],
   },
   {
@@ -146,47 +125,22 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`${API_URL}/websites/${websiteId}`);
+      const res = await apiClient.get(`/websites/${websiteId}`);
       // Backend returns { success, data: { id, name, status, role, ... } }
       // Normalize at the boundary: unwrap envelope + uppercase status for frontend consistency
-      const raw = unwrapWebsiteResponse(res.data);
-      const canonicalId = getWebsiteId(raw) ?? websiteId;
+      const raw = res.data.data || res.data.website || res.data;
       const normalized = {
         ...raw,
-        id: canonicalId,
         status: (raw.status || 'draft').toUpperCase(),
         role: (raw.role || 'VIEWER').toUpperCase(),
       };
       setWebsite(normalized);
     } catch (err) {
-      if (err?.response?.status === 404) {
-        try {
-          const listRes = await axios.get(`${API_URL}/websites`, {
-            params: { page: 1, limit: 100 },
-            withCredentials: true,
-          });
-          const matchedWebsite = extractWebsiteList(listRes.data).find((item) =>
-            isSameWebsiteId(getWebsiteId(item), websiteId)
-          );
-          const resolvedWebsiteId = matchedWebsite
-            ? await resolveWebsiteIdForAction(matchedWebsite)
-            : null;
-
-          if (resolvedWebsiteId && !isSameWebsiteId(resolvedWebsiteId, websiteId)) {
-            navigate(`/dashboard/websites/${resolvedWebsiteId}/manage/${activeSection}`, {
-              replace: true,
-            });
-            return;
-          }
-        } catch {
-          // Fall through to the normal error message below.
-        }
-      }
       setError(err?.response?.data?.message || 'Failed to load website details.');
     } finally {
       setLoading(false);
     }
-  }, [activeSection, navigate, websiteId]);
+  }, [websiteId]);
 
   useEffect(() => {
     fetchWebsite();
@@ -203,10 +157,9 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
   const handleSectionChange = useCallback(
     (id) => {
       setActiveSection(id);
-      const targetWebsiteId = getWebsiteId(website) ?? websiteId;
-      navigate(`/dashboard/websites/${targetWebsiteId}/manage/${id}`, { replace: false });
+      navigate(`/dashboard/websites/${websiteId}/manage/${id}`, { replace: false });
     },
-    [navigate, website, websiteId]
+    [navigate, websiteId]
   );
 
   const handleNavigateToSection = useCallback(
@@ -265,7 +218,6 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
   const subdomain = website?.subdomain || website?.slug || '';
   const websiteName = website?.name || 'Website';
   const websiteRole = (website?.role || 'VIEWER').toUpperCase();
-  const canonicalWebsiteId = getWebsiteId(website) ?? websiteId;
 
   // Permission check: block non-EDITOR users
   const allowedRoles = ['EDITOR', 'ADMIN', 'OWNER'];
@@ -280,13 +232,15 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
   }
 
   const renderTabContent = () => {
-    const tabProps = { website, websiteId: canonicalWebsiteId, onSaved: handleWebsiteSaved };
+    const tabProps = { website, websiteId, onSaved: handleWebsiteSaved };
 
     switch (activeSection) {
       case 'overview':
         return <OverviewTab {...tabProps} onNavigateToSection={handleNavigateToSection} />;
       case 'pages':
         return <PagesTab {...tabProps} />;
+      case 'media':
+        return <MediaTab {...tabProps} />;
       case 'design':
         return <DesignTab {...tabProps} />;
       case 'analytics':
@@ -300,7 +254,7 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
       case 'listing':
         return (
           <ListingEditTab
-            websiteId={Number(canonicalWebsiteId)}
+            websiteId={Number(websiteId)}
             websiteData={website}
             planCode={userPlan}
             onUpdate={handleWebsiteSaved}
@@ -390,7 +344,7 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
           >
             <DashboardActionButton
               startIcon={<Wrench size={16} />}
-              onClick={() => navigate(`/dashboard/websites/${canonicalWebsiteId}/editor`)}
+              onClick={() => navigate(`/dashboard/websites/${websiteId}/editor`)}
               variant="outlined"
               size="small"
               aria-label="Open website editor"

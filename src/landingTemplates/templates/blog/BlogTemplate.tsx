@@ -18,6 +18,7 @@ import { Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import type { TemplateProps } from '../../templateEngine/types';
 import type { BlogPost } from '../../types/BusinessData';
 import FadeIn from '../../blocks/FadeIn';
+import { getSectionStyleSx } from '../../utils/sectionStyle';
 
 const LOCAL_DEMO_POSTS: BlogPost[] = [
   {
@@ -126,11 +127,22 @@ function getReadTime(post: BlogPost) {
 
 const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
   const posts = useMemo(() => getPosts(data), [data]);
+  const templateContent = (data.templateContent as Record<string, any> | undefined) || {};
+  const homeContent = templateContent.home || {};
+  const articlesContent = templateContent.articles || {};
+  const contactContent = templateContent.contact || {};
   const primary = data.primaryColor || '#4ade80';
   const brandName = data.name || 'indise.';
   const brandTitle = brandName.replace(/\.$/, '');
   const heroPost = posts[0];
   const gridPosts = posts.slice(1, 5);
+  const contactHeading = contactContent.heading || 'Subscribe for updates';
+  const contactDescription =
+    contactContent.description || 'Add your email and receive editorial updates directly in your inbox.';
+  const contactButton = contactContent.buttonLabel || 'Subscribe';
+  const homeBlockId = homeContent.blockId;
+  const articlesBlockId = articlesContent.blockId;
+  const contactBlockId = contactContent.blockId;
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
 
   const scrollToSection = (id: string) => {
@@ -217,12 +229,16 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
 
         <Box
           id="blog-home"
+          data-preview-section="true"
+          data-preview-label="Home"
+          data-preview-block-id={homeBlockId}
           sx={{
             py: { xs: 4, md: 5 },
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
             gap: 3,
             alignItems: 'center',
+            ...getSectionStyleSx(homeContent),
           }}
         >
           <Box>
@@ -234,6 +250,9 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
             </FadeIn>
             <FadeIn delay={0.08}>
               <Typography
+                data-editable="heading"
+                data-edit-type="single"
+                data-block-id={homeBlockId}
                 sx={{
                   mt: 2,
                   fontSize: { xs: '2.5rem', md: '4rem' },
@@ -241,21 +260,26 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   lineHeight: 0.95,
                   letterSpacing: '-0.04em',
                   maxWidth: 520,
+                  ...(homeContent.headingStyle || {}),
                 }}
               >
-                {heroPost?.title}
+                {homeContent.heroHeading || heroPost?.title}
               </Typography>
             </FadeIn>
             <FadeIn delay={0.16}>
               <Typography
+                data-editable="description"
+                data-edit-type="multi"
+                data-block-id={homeBlockId}
                 sx={{
                   mt: 2,
                   color: 'rgba(17,17,17,0.68)',
                   lineHeight: 1.8,
                   maxWidth: 520,
+                  ...(homeContent.descriptionStyle || {}),
                 }}
               >
-                {heroPost?.description || data.tagline}
+                {homeContent.heroDescription || heroPost?.description || data.tagline}
               </Typography>
             </FadeIn>
             <FadeIn delay={0.24}>
@@ -268,6 +292,9 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Button
                 onClick={() => heroPost && setSelectedPost(heroPost)}
                 endIcon={<ArrowForwardIcon />}
+                data-editable="ctaText"
+                data-edit-type="single"
+                data-block-id={homeBlockId}
                 sx={{
                   mt: 2.5,
                   borderRadius: '999px',
@@ -275,10 +302,11 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   color: '#fff',
                   px: 2.2,
                   textTransform: 'none',
+                  ...(homeContent.ctaTextStyle || {}),
                   '&:hover': { bgcolor: '#111111' },
                 }}
               >
-                Read article
+                {homeContent.heroCtaText || 'Read article'}
               </Button>
             </FadeIn>
           </Box>
@@ -298,15 +326,26 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
           </FadeIn>
         </Box>
 
-        <Box id="blog-articles" sx={{ pb: { xs: 4, md: 5 } }}>
+        <Box
+          id="blog-articles"
+          data-preview-section="true"
+          data-preview-label="Articles"
+          data-preview-block-id={articlesBlockId}
+          sx={{ pb: { xs: 4, md: 5 }, ...getSectionStyleSx(articlesContent) }}
+        >
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             justifyContent="space-between"
             alignItems={{ xs: 'flex-start', md: 'center' }}
             gap={1.5}
           >
-            <Typography sx={{ fontSize: { xs: '1.9rem', md: '2.4rem' }, fontWeight: 800 }}>
-              Latest articles
+            <Typography
+              data-editable="heading"
+              data-edit-type="single"
+              data-block-id={articlesBlockId}
+              sx={{ fontSize: { xs: '1.9rem', md: '2.4rem' }, fontWeight: 800, ...(articlesContent.headingStyle || {}) }}
+            >
+              {articlesContent.heading || 'Latest articles'}
             </Typography>
             <Typography sx={{ color: 'rgba(17,17,17,0.6)', fontSize: '0.95rem' }}>
               Minimal editorial layout
@@ -392,18 +431,37 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
 
         <Box
           id="blog-contact"
+          data-preview-section="true"
+          data-preview-label="Contact"
+          data-preview-block-id={contactBlockId}
           sx={{
             borderTop: '1px solid rgba(17,17,17,0.08)',
             pt: 3,
             pb: 2,
+            ...getSectionStyleSx(contactContent),
           }}
         >
           <FadeIn>
-            <Typography sx={{ fontSize: { xs: '1.5rem', md: '1.8rem' }, fontWeight: 800 }}>
-              Subscribe for updates
+            <Typography
+              data-editable="heading"
+              data-edit-type="single"
+              data-block-id={contactBlockId}
+              sx={{ fontSize: { xs: '1.5rem', md: '1.8rem' }, fontWeight: 800, ...(contactContent.headingStyle || {}) }}
+            >
+              {contactHeading}
             </Typography>
           </FadeIn>
           <FadeIn delay={0.08}>
+            <Typography
+              data-editable="description"
+              data-edit-type="multi"
+              data-block-id={contactBlockId}
+              sx={{ mt: 1, color: 'rgba(17,17,17,0.68)', lineHeight: 1.75, maxWidth: 520, ...(contactContent.descriptionStyle || {}) }}
+            >
+              {contactDescription}
+            </Typography>
+          </FadeIn>
+          <FadeIn delay={0.12}>
             <Box
               sx={{
                 mt: 1.6,
@@ -419,19 +477,23 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <InputBase placeholder="Enter your email" sx={{ flex: 1, px: 1.5 }} />
               <Button
+                data-editable="buttonText"
+                data-edit-type="single"
+                data-block-id={contactBlockId}
                 sx={{
                   borderRadius: '999px',
                   bgcolor: '#111111',
                   color: '#fff',
                   px: 2,
                   textTransform: 'none',
+                  ...(contactContent.buttonTextStyle || {}),
                   '&:hover': { bgcolor: '#111111' },
                 }}
-              >
-                Subscribe
-              </Button>
-            </Box>
-          </FadeIn>
+                >
+                  {contactButton}
+                </Button>
+              </Box>
+            </FadeIn>
         </Box>
 
         <Box

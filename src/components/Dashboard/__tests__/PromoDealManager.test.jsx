@@ -154,8 +154,23 @@ vi.mock('../shared', async () => ({
 // ---------------------------------------------------------------------------
 // Mock axios
 // ---------------------------------------------------------------------------
+vi.mock('axios', () => {
+  const axiosInstance = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  axiosInstance.create = vi.fn(() => axiosInstance);
+  return { default: axiosInstance };
+});
 import axios from 'axios';
-vi.mock('axios');
 
 // ---------------------------------------------------------------------------
 // Import after mocks

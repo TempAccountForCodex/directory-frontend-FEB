@@ -1,7 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { useCallback } from 'react';
+import type { AxiosError } from 'axios';
+import {
+  useFavouriteStatus,
+  useUserFavourites as useUserFavouritesQuery,
+  useBatchFavouriteCheck,
+  useToggleFavourite as useToggleFavouriteMutation,
+} from '../api/queries/content';
 
 /* ---------- Types ---------- */
 export interface FavouriteListing {
@@ -47,145 +51,75 @@ export interface BatchFavouritesResult {
 }
 
 /* ---------- useFavourite (single listing) ---------- */
+/**
+ * Read + toggle favourite state for a single listing. Composes the
+ * `useFavouriteStatus` query and `useToggleFavourite` mutation. The
+ * optimistic cache update in `useToggleFavourite` produces the same
+ * instant UI feedback the legacy implementation provided.
+ */
 export function useFavourite(websiteId: string | number | null | undefined): FavouriteResult {
-  const [isFavourited, setIsFavourited] = useState(false);
-  const [favouriteCount, setFavouriteCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [requiresAuth, setRequiresAuth] = useState(false);
-
-  // Fetch initial state
-  useEffect(() => {
-    if (!websiteId) return;
-    let cancelled = false;
-
-    const fetchStatus = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/favourites/listings/${websiteId}/status`, {
-          withCredentials: true,
-        });
-        if (!cancelled) {
-          setIsFavourited(response.data.isFavourited ?? false);
-          setFavouriteCount(response.data.favouriteCount ?? 0);
-        }
-      } catch (err: any) {
-        if (!cancelled && err.response?.status === 401) {
-          setRequiresAuth(true);
-        }
-      }
-    };
-
-    fetchStatus();
-    return () => {
-      cancelled = true;
-    };
-  }, [websiteId]);
+  const statusQuery = useFavouriteStatus(websiteId);
+  const toggle = useToggleFavouriteMutation();
+  const statusErr = statusQuery.error as AxiosError | null;
+  const toggleErr = toggle.error as AxiosError | null;
+  const requiresAuth =
+    statusErr?.response?.status === 401 || toggleErr?.response?.status === 401;
 
   const toggleFavourite = useCallback(async () => {
     if (!websiteId) return;
-    setLoading(true);
-    setRequiresAuth(false);
-
-    // Optimistic update
-    const previousState = isFavourited;
-    const previousCount = favouriteCount;
-    setIsFavourited(!previousState);
-    setFavouriteCount(previousState ? Math.max(0, previousCount - 1) : previousCount + 1);
-
     try {
-      await axios.post(
-        `${API_URL}/favourites/listings/${websiteId}/favourite`,
-        {},
-        { withCredentials: true }
-      );
-    } catch (err: any) {
-      // Revert on error
-      setIsFavourited(previousState);
-      setFavouriteCount(previousCount);
-      if (err.response?.status === 401) {
-        setRequiresAuth(true);
-      }
-    } finally {
-      setLoading(false);
+      await toggle.mutateAsync({ websiteId });
+    } catch {
+      // Error state surfaced via requiresAuth / toggle.error.
     }
-  }, [websiteId, isFavourited, favouriteCount]);
+  }, [websiteId, toggle]);
 
-  return { isFavourited, favouriteCount, toggleFavourite, loading, requiresAuth };
+  return {
+    isFavourited: statusQuery.data?.isFavourited ?? false,
+    favouriteCount: statusQuery.data?.favouriteCount ?? 0,
+    toggleFavourite,
+    loading: toggle.isPending,
+    requiresAuth,
+  };
 }
 
 /* ---------- useUserFavourites ---------- */
 export function useUserFavourites(sort: string = 'recent', page: number = 1): UserFavouritesResult {
-  const [favourites, setFavourites] = useState<FavouriteListing[]>([]);
-  const [pagination, setPagination] = useState<FavouritePagination | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [requiresAuth, setRequiresAuth] = useState(false);
-  const fetchCountRef = useRef(0);
+  const query = useUserFavouritesQuery({ sort, page, limit: 12 });
+  const err = query.error as AxiosError<{ message?: string }> | null;
+  const requiresAuth = err?.response?.status === 401;
+  const errorMsg = err && !requiresAuth
+    ? (err.response?.data?.message ?? 'Failed to load favourites')
+    : null;
 
-  const fetchFavourites = useCallback(async () => {
-    const currentFetch = ++fetchCountRef.current;
-    setLoading(true);
-    setError(null);
-    setRequiresAuth(false);
-
-    try {
-      const response = await axios.get(`${API_URL}/favourites/user/favourites`, {
-        params: { sort, page, limit: 12 },
-        withCredentials: true,
-      });
-      if (currentFetch !== fetchCountRef.current) return;
-      const data = response.data;
-      setFavourites(data.favourites || data.data || []);
-      setPagination(data.pagination || null);
-    } catch (err: any) {
-      if (currentFetch !== fetchCountRef.current) return;
-      if (err.response?.status === 401) {
-        setRequiresAuth(true);
-      } else {
-        setError(err.response?.data?.message || 'Failed to load favourites');
+  const data = query.data as
+    | {
+        favourites?: FavouriteListing[];
+        data?: FavouriteListing[];
+        pagination?: FavouritePagination;
       }
-    } finally {
-      if (currentFetch === fetchCountRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [sort, page]);
+    | undefined;
 
-  useEffect(() => {
-    fetchFavourites();
-  }, [fetchFavourites]);
-
-  return { favourites, pagination, loading, error, requiresAuth, refetch: fetchFavourites };
+  return {
+    favourites: data?.favourites ?? data?.data ?? [],
+    pagination: data?.pagination ?? null,
+    loading: query.isFetching,
+    error: errorMsg,
+    requiresAuth,
+    refetch: () => {
+      query.refetch();
+    },
+  };
 }
 
 /* ---------- useBatchFavourites ---------- */
 export function useBatchFavourites(websiteIds: (string | number)[]): BatchFavouritesResult {
-  const [statusMap, setStatusMap] = useState<Record<number | string, boolean>>({});
-  const [loading, setLoading] = useState(false);
-  const idsKey = websiteIds.join(',');
-
-  const fetchBatch = useCallback(async () => {
-    if (!websiteIds.length) return;
-    setLoading(true);
-
-    try {
-      const response = await axios.post(
-        `${API_URL}/favourites/user/favourites/check`,
-        { websiteIds },
-        { withCredentials: true }
-      );
-      setStatusMap(response.data.statusMap || {});
-    } catch {
-      // On error (including 401), return empty map — cards will show unfavourited
-      setStatusMap({});
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idsKey]);
-
-  useEffect(() => {
-    fetchBatch();
-  }, [fetchBatch]);
-
-  return { statusMap, loading, refetch: fetchBatch };
+  const query = useBatchFavouriteCheck(websiteIds);
+  return {
+    statusMap: query.data ?? {},
+    loading: query.isFetching,
+    refetch: () => {
+      query.refetch();
+    },
+  };
 }

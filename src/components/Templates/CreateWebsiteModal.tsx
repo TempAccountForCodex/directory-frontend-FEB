@@ -3,10 +3,6 @@
  *
  * Multi-step wizard for creating a website from a DB template.
  * Steps: 1) Name Your Website  2) Choose Subdomain  3) Customize (optional)  4) Directory Opt-In (post-creation)
- *
- * TODO (PR.5): Integrate AI content generation as an optional step in this wizard.
- * Currently, AIQuestionnairePage.tsx provides a standalone AI creation path
- * that is not connected to this modal. PR.5 will unify both flows.
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
@@ -28,7 +24,7 @@ import Fade from '@mui/material/Fade';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { X, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { type TemplateSummary } from '../../templates/templateApi';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
@@ -37,10 +33,12 @@ import DashboardGradientButton from '../Dashboard/shared/DashboardGradientButton
 import DashboardActionButton from '../Dashboard/shared/DashboardActionButton';
 import DashboardCancelButton from '../Dashboard/shared/DashboardCancelButton';
 import ListingOptInStep from '../WebsiteEditor/ListingOptInStep';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { storeWebsiteFrontendTemplateId } from '../../templates/frontendTemplatePersistence';
 
 const STEPS = ['Name Your Website', 'Choose Your Address', 'Customize', 'Directory Listing'];
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /** Slugify a name for subdomain use */
 function slugify(name: string): string {
@@ -113,6 +111,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
   const checkSubdomain = useCallback(async (value: string) => {
     if (!value || value.length < 3) {
       setSubdomainStatus('idle');
+      setSubdomainError('');
       return;
     }
     if (!isValidSubdomain(value)) {
@@ -121,16 +120,26 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
       return;
     }
     setSubdomainStatus('checking');
+    setSubdomainError('');
     try {
-      const res = await axios.get(
-        `${API_URL}/domains/check-availability?subdomain=${encodeURIComponent(value)}`
+      const res = await apiClient.get(
+        `/domains/check-availability?subdomain=${encodeURIComponent(value)}`
       );
-      if (res.data?.available) {
+
+      const payload =
+        res.data && typeof res.data === 'object' && 'data' in res.data
+          ? (res.data.data as { available?: boolean } | null)
+          : (res.data as { available?: boolean } | null);
+
+      if (payload?.available === true) {
         setSubdomainStatus('available');
         setSubdomainError('');
-      } else {
+      } else if (payload?.available === false) {
         setSubdomainStatus('taken');
         setSubdomainError(`${value}.techietribe.app is taken`);
+      } else {
+        setSubdomainStatus('error');
+        setSubdomainError('Could not verify availability right now. Please try again.');
       }
     } catch {
       setSubdomainStatus('error');
@@ -185,17 +194,26 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
     setError('');
 
     try {
-      const res = await axios.post(`${API_URL}/websites/from-template`, {
-        templateId: template.id,
+      const isDbTemplateId = UUID_REGEX.test(template.id);
+      const payload = {
+        ...(isDbTemplateId
+          ? { templateId: template.id }
+          : { frontendTemplateId: template.id }),
         name: websiteName.trim(),
         subdomain: subdomain.trim(),
         customization: {
           primaryColor,
         },
-      });
+      };
+
+      const res = await apiClient.post(`/websites/from-template`, payload);
 
       if (res.data?.success) {
-        setCreatedWebsiteId(res.data.data.id);
+        const createdWebsiteId = res.data.data.id;
+        if (!isDbTemplateId && createdWebsiteId) {
+          storeWebsiteFrontendTemplateId(createdWebsiteId, template.id);
+        }
+        setCreatedWebsiteId(createdWebsiteId);
         setActiveStep(3); // Go to directory opt-in step
       } else {
         setError(res.data?.message || 'Failed to create website');

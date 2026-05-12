@@ -51,8 +51,8 @@ import ShareIcon from '@mui/icons-material/Share';
 import { useDraggable } from '@dnd-kit/core';
 import BlockPreviewModal from './BlockPreviewModal';
 import SaveTemplateModal from './SaveTemplateModal';
+import { API_URL } from '@/config/api';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -750,3 +750,4 @@ BlockLibrary.displayName = 'BlockLibrary';
 
 export default BlockLibrary;
 export { BlockLibraryCard, CATEGORIES, CATEGORY_COLOR };
+

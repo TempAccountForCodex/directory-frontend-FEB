@@ -29,7 +29,7 @@
  */
 
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
@@ -116,6 +116,14 @@ const renderBlock = (
 describe('ContactBlock', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true }),
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   // 1

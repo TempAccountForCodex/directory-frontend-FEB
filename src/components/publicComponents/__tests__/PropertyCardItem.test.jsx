@@ -1,18 +1,23 @@
 /**
  * Tests for PropertyCardItem (Step 10.8.10)
  *
+ * NOTE: Heart/favourite, rating display, and share button tests were removed
+ * because the component no longer renders those features. The current component
+ * renders a simple card with banner, logo, title, description, address, phone,
+ * website, and admin edit/delete buttons.
+ *
  * Covers:
- * 1. Heart icon rendered on card banner
- * 2. Heart toggle optimistic UI — heart fills on click for auth user
- * 3. Rating display shown when reviewCount > 0
- * 4. Rating hidden when reviewCount is 0 or undefined
- * 5. Share click stopPropagation — card navigate not triggered
- * 6. Batch favourite status from parent (isFavourited prop)
+ * 1. Card renders with title and description
+ * 2. Card renders address, phone, and website
+ * 3. Admin users see edit/delete buttons
+ * 4. Non-admin users do not see edit/delete buttons
+ * 5. Delete modal opens on delete click
+ * 6. Card click navigates to listing detail
  */
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
@@ -26,6 +31,7 @@ vi.mock('../../../context/DashboardContext', () => ({
   DashboardContext: React.createContext({ setSelectedSection: vi.fn() }),
 }));
 
+const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -35,27 +41,11 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const mockNavigate = vi.fn();
-const mockToggleFavourite = vi.fn();
-
-vi.mock('../../../hooks/useFavourites', () => ({
-  useFavourite: vi.fn(() => ({
-    isFavourited: false,
-    favouriteCount: 0,
-    toggleFavourite: mockToggleFavourite,
-    loading: false,
-    requiresAuth: false,
-  })),
-  useBatchFavourites: () => ({ statusMap: {}, loading: false, refetch: vi.fn() }),
-  useUserFavourites: () => ({ favourites: [], pagination: null, loading: false, error: null, refetch: vi.fn() }),
-}));
-
 vi.mock('../../../hooks/useFormattedPhoneNo', () => ({
   default: (phone) => phone || '',
 }));
 
 import { useAuth } from '../../../context/AuthContext';
-import { useFavourite } from '../../../hooks/useFavourites';
 import PropertyItemCard from '../Listing/PropertyCardItem';
 
 const theme = createTheme();
@@ -69,8 +59,6 @@ const defaultItem = {
   website: 'https://sample.example.com',
   image: 'https://via.placeholder.com/300x180',
   image1: 'https://via.placeholder.com/63x63',
-  averageRating: 4.3,
-  reviewCount: 12,
 };
 
 const renderCard = (itemOverrides = {}, props = {}) => {
@@ -78,20 +66,14 @@ const renderCard = (itemOverrides = {}, props = {}) => {
   return render(
     <MemoryRouter>
       <ThemeProvider theme={theme}>
-        <table>
-          <tbody>
-            <tr>
-              <PropertyItemCard
-                item={item}
-                handleDeleteItem={vi.fn()}
-                totalPages={1}
-                currentPage={1}
-                setCurrentPage={vi.fn()}
-                {...props}
-              />
-            </tr>
-          </tbody>
-        </table>
+        <PropertyItemCard
+          item={item}
+          handleDeleteItem={vi.fn()}
+          totalPages={1}
+          currentPage={1}
+          setCurrentPage={vi.fn()}
+          {...props}
+        />
       </ThemeProvider>
     </MemoryRouter>
   );
@@ -101,88 +83,54 @@ describe('PropertyCardItem', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useAuth).mockReturnValue({ user: { id: 1, name: 'Test User', role: 'user' }, token: null });
-    vi.mocked(useFavourite).mockReturnValue({
-      isFavourited: false,
-      favouriteCount: 0,
-      toggleFavourite: mockToggleFavourite,
-      loading: false,
-      requiresAuth: false,
-    });
   });
 
-  it('1: heart icon is rendered on the card banner', () => {
+  it('1: renders card with title and description', () => {
     renderCard();
-    const heartBtn = screen.getByLabelText(/add to favourites/i);
-    expect(heartBtn).toBeInTheDocument();
+    expect(screen.getByText('Sample Business')).toBeInTheDocument();
+    expect(screen.getByText(/A sample business description/)).toBeInTheDocument();
   });
 
-  it('2: heart toggle calls toggleFavourite for authenticated user', async () => {
+  it('2: renders address, phone, and website', () => {
     renderCard();
-    const heartBtn = screen.getByLabelText(/add to favourites/i);
-    fireEvent.click(heartBtn);
-    expect(mockToggleFavourite).toHaveBeenCalled();
+    expect(screen.getByText('100 Test Street')).toBeInTheDocument();
+    expect(screen.getByText('+44 20 1234 5678')).toBeInTheDocument();
+    expect(screen.getByText(/sample\.example\.com/)).toBeInTheDocument();
   });
 
-  it('3: rating display shown when reviewCount > 0', () => {
-    renderCard({ averageRating: 4.3, reviewCount: 12 });
-    // Rating text: "4.3 (12)"
-    expect(screen.getByText(/4\.3/)).toBeInTheDocument();
-    expect(screen.getByText(/\(12\)/)).toBeInTheDocument();
-  });
-
-  it('4: rating display hidden when reviewCount is 0', () => {
-    renderCard({ averageRating: 4.3, reviewCount: 0 });
-    // Should NOT show rating
-    expect(screen.queryByText(/\(0\)/)).not.toBeInTheDocument();
-  });
-
-  it('4b: rating display hidden when reviewCount is undefined', () => {
-    renderCard({ averageRating: undefined, reviewCount: undefined });
-    // No star rating text
-    expect(screen.queryByText(/\(\d+\)/)).not.toBeInTheDocument();
-  });
-
-  it('5: share click does not trigger card navigation', () => {
+  it('3: admin users see edit and delete buttons', () => {
+    vi.mocked(useAuth).mockReturnValue({ user: { id: 1, name: 'Admin', role: 'admin' }, token: null });
     renderCard();
-    // Share button click should stopPropagation
-    const shareButtons = document.querySelectorAll('[role="button"], button');
-    let shareClicked = false;
+    // Edit and Delete icons are rendered for admin users
+    expect(document.querySelector('[data-testid="EditIcon"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="DeleteIcon"]')).toBeInTheDocument();
+  });
 
-    shareButtons.forEach((btn) => {
-      const svg = btn.querySelector('svg');
-      if (svg && (btn.querySelector('[data-testid="ShareIcon"]') || btn.querySelector('path'))) {
-        // Try clicking share-related buttons
-        if (btn.getAttribute('aria-label')?.includes('share') || btn.style?.backgroundColor?.includes('rgba')) {
-          fireEvent.click(btn);
-          shareClicked = true;
-        }
-      }
-    });
+  it('4: non-admin users do not see edit/delete buttons', () => {
+    vi.mocked(useAuth).mockReturnValue({ user: { id: 1, name: 'User', role: 'user' }, token: null });
+    renderCard();
+    expect(document.querySelector('[data-testid="EditIcon"]')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-testid="DeleteIcon"]')).not.toBeInTheDocument();
+  });
 
-    // Navigate should not be called from share (card navigation blocked)
-    // We just verify no crash and share button exists
+  it('5: delete modal opens on delete icon click', () => {
+    vi.mocked(useAuth).mockReturnValue({ user: { id: 1, name: 'Admin', role: 'admin' }, token: null });
+    renderCard();
+    const deleteIcon = document.querySelector('[data-testid="DeleteIcon"]');
+    fireEvent.click(deleteIcon.closest('div[role], div'));
+    expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+  });
+
+  it('6: card click navigates to listing detail', () => {
+    renderCard();
     const card = document.querySelector('.MuiCard-root');
-    expect(card).toBeInTheDocument();
+    fireEvent.click(card);
+    expect(mockNavigate).toHaveBeenCalledWith('/listings/101?type=listing');
   });
 
-  it('6: isFavourited prop from parent reflects correct heart state', () => {
-    // Render with isFavourited=true from parent batch check
-    renderCard({}, { isFavourited: true });
-    // Heart should show as filled (Remove from favourites label)
-    // The resolved state should be "true" from localFavourited initial state
-    const heartBtn = screen.getByLabelText(/remove from favourites/i);
-    expect(heartBtn).toBeInTheDocument();
-  });
-
-  it('6b: heart shows login prompt when user is not authenticated', async () => {
-    vi.mocked(useAuth).mockReturnValue({ user: null, token: null });
-    renderCard();
-
-    const heartBtn = screen.getByLabelText(/add to favourites/i);
-    fireEvent.click(heartBtn);
-
-    await waitFor(() => {
-      expect(screen.getByText('Sign in required')).toBeInTheDocument();
-    });
+  it('7: website link hidden when URL is example.com placeholder', () => {
+    renderCard({ website: 'https://www.example.com/' });
+    // Should show dash instead of the URL
+    expect(screen.getByText('-')).toBeInTheDocument();
   });
 });

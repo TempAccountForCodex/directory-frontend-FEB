@@ -1,12 +1,12 @@
 /**
  * Template API Adapter
  *
- * Frontend now consumes templates from the backend registry.
+ * React Query (via src/api/queries/templates.ts) owns template caching now.
+ * These helpers remain for non-React callers and as convenience wrappers;
+ * the old in-memory TTL + in-flight-Promise cache was removed in Phase I.
  */
 
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { apiClient } from '../api/client';
 
 export type TemplateType = 'website' | 'store';
 
@@ -69,31 +69,9 @@ export const CATEGORY_LABELS: Record<TemplateCategory, string> = {
   ecommerce: 'E-commerce',
 };
 
-let cachedTemplates: TemplateSummary[] | null = null;
-let cachedTemplatesPromise: Promise<TemplateSummary[]> | null = null;
-let cacheTimestamp: number | null = null;
-const CACHE_TTL_MS = 5 * 60 * 1000;
-
 const fetchTemplates = async (): Promise<TemplateSummary[]> => {
-  if (cachedTemplates && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
-    return cachedTemplates;
-  }
-
-  if (!cachedTemplatesPromise) {
-    cachedTemplatesPromise = axios
-      .get(`${API_URL}/templates`)
-      .then((response) => response.data?.data || [])
-      .then((templates) => {
-        cachedTemplates = templates;
-        cacheTimestamp = Date.now();
-        return templates;
-      })
-      .finally(() => {
-        cachedTemplatesPromise = null;
-      });
-  }
-
-  return cachedTemplatesPromise;
+  const response = await apiClient.get('/templates');
+  return response.data?.data || [];
 };
 
 export const getWebsiteTemplates = async (): Promise<TemplateSummary[]> => {
@@ -107,7 +85,7 @@ export const getStoreTemplates = async (): Promise<TemplateSummary[]> => {
 };
 
 export const getTemplateById = async (id: string): Promise<Template | undefined> => {
-  const response = await axios.get(`${API_URL}/templates/${id}`);
+  const response = await apiClient.get(`/templates/${id}`);
   return response.data?.data;
 };
 
@@ -119,12 +97,7 @@ export const getAllCategories = (templates: TemplateSummary[]): TemplateCategory
   return Array.from(categories);
 };
 
-export const clearTemplateCache = () => {
-  cachedTemplates = null;
-  cacheTimestamp = null;
-};
-
-export const refreshTemplateCache = async () => {
-  clearTemplateCache();
-  return fetchTemplates();
-};
+// Backward-compat shims — React Query owns caching now. Callers should prefer
+// `queryClient.invalidateQueries({ queryKey: queryKeys.templates.all() })`.
+export const clearTemplateCache = (): void => undefined;
+export const refreshTemplateCache = async (): Promise<TemplateSummary[]> => fetchTemplates();

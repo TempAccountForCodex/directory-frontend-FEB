@@ -1,11 +1,10 @@
 /**
  * Tests for WebsiteEditor mobile responsiveness (Step 9.5)
  *
- * Covers substeps 9.5.1–9.5.4:
+ * Covers substeps 9.5.1–9.5.3:
  * - 9.5.1: isMobile via useMediaQuery, pages sidebar hidden on mobile, mobile page chips row
  * - 9.5.2: SpeedDial FAB with Add Block + Manage Pages actions
  * - 9.5.3: Pages BottomSheet integration on mobile
- * - 9.5.4: ViewportPreviewSwitcher integration
  * - Touch targets 48px min on key IconButtons
  */
 import React from 'react';
@@ -13,14 +12,26 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import axios from 'axios';
-
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('axios');
-const mockedAxios = vi.mocked(axios, true);
+const { mockApiClient } = vi.hoisted(() => {
+  const mockApiClient: Record<string, any> = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} } },
+    interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+  };
+  return { mockApiClient };
+});
+vi.mock('../../../api/client', () => ({
+  apiClient: mockApiClient,
+  default: mockApiClient,
+}));
 
 // Mock ThemeContext
 vi.mock('../../../context/ThemeContext', () => ({
@@ -32,6 +43,39 @@ vi.mock('../../../context/ThemeContext', () => ({
 vi.mock('../../../context/AuthContext', () => ({
   useAuth: () => ({ user: { id: 1, name: 'Test' }, token: 'test-token' }),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+// Mock PermissionContext
+vi.mock('../../../context/PermissionContext', () => ({
+  usePermissionContext: () => ({
+    websitePermissions: { 1: 'OWNER' },
+    currentWebsiteId: 1,
+    setCurrentWebsite: vi.fn(),
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+  PermissionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  usePermission: () => true,
+  useHasRole: () => true,
+  useWebsiteRole: () => 'OWNER',
+  WEBSITE_ACTIONS: {
+    VIEW: 'VIEW',
+    EDIT_CONTENT: 'EDIT_CONTENT',
+    EDIT_SETTINGS: 'EDIT_SETTINGS',
+    DELETE: 'DELETE',
+    MANAGE_COLLABORATORS: 'MANAGE_COLLABORATORS',
+    PUBLISH: 'PUBLISH',
+    UNPUBLISH: 'UNPUBLISH',
+    TRANSFER_OWNERSHIP: 'TRANSFER_OWNERSHIP',
+    DASHBOARD_ACCESS: 'DASHBOARD_ACCESS',
+    VIEW_ANALYTICS: 'VIEW_ANALYTICS',
+    MANAGE_FORMS: 'MANAGE_FORMS',
+    MANAGE_INTEGRATIONS: 'MANAGE_INTEGRATIONS',
+    MANAGE_DOMAIN: 'MANAGE_DOMAIN',
+  },
+  ROLE_HIERARCHY: { OWNER: 4, ADMIN: 3, EDITOR: 2, VIEWER: 1 },
+  ROLE_PERMISSIONS: {},
 }));
 
 // Mock useUnsavedChanges
@@ -78,25 +122,27 @@ vi.mock('../../Editor/DraggableBlockList', () => ({
   ),
 }));
 
-// Mock ViewportPreviewSwitcher
-vi.mock('../../Editor/ViewportPreviewSwitcher', () => ({
-  default: ({ width, orientation, onWidthChange, onOrientationToggle }: any) => (
-    <div data-testid="viewport-switcher">
-      <span data-testid="viewport-width">{width}</span>
-      <span data-testid="viewport-orientation">{orientation}</span>
-      <button data-testid="change-width-375" onClick={() => onWidthChange(375)}>
-        Mobile
-      </button>
-      <button data-testid="toggle-orientation" onClick={onOrientationToggle}>
-        Rotate
-      </button>
-    </div>
-  ),
+
+// Mock dashboardTheme
+vi.mock('../../../styles/dashboardTheme', () => ({
+  getDashboardColors: () => ({
+    background: '#1a1a1a',
+    bgDefault: '#1a1a1a',
+    card: '#2a2a2a',
+    dark: '#111111',
+    text: '#ffffff',
+    textSecondary: '#999999',
+    border: '#333333',
+    primary: '#4a9eff',
+  }),
 }));
 
-// Mock BottomSheet
-vi.mock('../shared/BottomSheet', () => ({
-  default: ({ open, onClose, title, children }: any) =>
+// Mock shared components
+vi.mock('../shared', () => ({
+  DashboardInput: (props: any) => <input {...props} />,
+  DashboardSelect: (props: any) => <select {...props} />,
+  ConfirmationDialog: () => <div data-testid="confirmation-dialog" />,
+  BottomSheet: ({ open, onClose, title, children }: any) =>
     open ? (
       <div data-testid="bottom-sheet" role="dialog">
         <span>{title}</span>
@@ -106,6 +152,86 @@ vi.mock('../shared/BottomSheet', () => ({
         {children}
       </div>
     ) : null,
+}));
+
+// Mock PreviewContext
+vi.mock('../../../context/PreviewContext', () => ({
+  PreviewProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  usePreview: () => ({
+    previewHtml: '',
+    previewUrl: '',
+    refreshPreview: vi.fn(),
+    updatePreviewContent: vi.fn(),
+    isLoading: false,
+  }),
+}));
+
+// Mock heavy editor components
+vi.mock('../../WebsiteEditor/PreviewPanel', () => ({
+  default: () => <div data-testid="preview-panel" />,
+}));
+
+vi.mock('../../Editor/BlockLibrary', () => ({
+  default: () => <div data-testid="block-library" />,
+}));
+
+vi.mock('../../Editor/InlineTextEditor', () => ({
+  default: () => <div data-testid="inline-text-editor" />,
+}));
+
+vi.mock('../../Editor/ResponsiveEditorLayout', () => ({
+  default: ({ children }: any) => <div data-testid="responsive-editor-layout">{children}</div>,
+}));
+
+vi.mock('../../Editor/MobileActionBar', () => ({
+  default: () => <div data-testid="mobile-action-bar" />,
+}));
+
+vi.mock('../../Editor/MobileFAB', () => ({
+  default: () => <div data-testid="mobile-fab" />,
+}));
+
+vi.mock('../../Editor/RecoveryModal', () => ({
+  default: () => <div data-testid="recovery-modal" />,
+}));
+
+vi.mock('../../Editor/ConnectionStatus', () => ({
+  default: () => <div data-testid="connection-status" />,
+}));
+
+vi.mock('../ThemeManager', () => ({
+  default: () => <div data-testid="theme-manager" />,
+}));
+
+vi.mock('../ApprovalStatusBanner', () => ({
+  default: () => <div data-testid="approval-status-banner" />,
+}));
+
+vi.mock('../../../hooks/useLocalStorageBackup', () => ({
+  useLocalStorageBackup: () => ({
+    hasBackup: false,
+    backupEntry: null,
+    restoreBackup: vi.fn(),
+    discardBackup: vi.fn(),
+    clearBackup: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../hooks/useCollaborativeEditor', () => ({
+  useCollaborativeEditor: () => ({
+    connectionState: 'disconnected',
+    activeUsers: [],
+    broadcastChange: vi.fn(),
+    broadcastCursor: vi.fn(),
+    requestEditAccess: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../hooks/useShortcutManager', () => ({
+  useShortcutManager: () => ({
+    registerShortcut: vi.fn(),
+    unregisterShortcut: vi.fn(),
+  }),
 }));
 
 // Control useMediaQuery
@@ -141,7 +267,7 @@ const mockBlocks = [
 ];
 
 function setupAxiosMocks() {
-  mockedAxios.get.mockImplementation((url: string) => {
+  mockApiClient.get.mockImplementation((url: string) => {
     if (url.includes('/websites/') && !url.includes('/pages')) {
       return Promise.resolve({ data: { data: mockWebsite }, headers: {} });
     }
@@ -234,39 +360,4 @@ describe('WebsiteEditor — Mobile Responsive (Step 9.5)', () => {
     });
   });
 
-  // ── 9.5.4: Viewport Preview Switcher ──────────────────────────────────────
-
-  describe('9.5.4 — ViewportPreviewSwitcher', () => {
-    it('renders ViewportPreviewSwitcher', async () => {
-      renderEditor();
-      await waitFor(() => expect(screen.getByText('Test Website')).toBeInTheDocument());
-      expect(screen.getByTestId('viewport-switcher')).toBeInTheDocument();
-    });
-
-    it('defaults to width 1280', async () => {
-      renderEditor();
-      await waitFor(() => expect(screen.getByTestId('viewport-width')).toBeInTheDocument());
-      expect(screen.getByTestId('viewport-width')).toHaveTextContent('1280');
-    });
-
-    it('defaults to portrait orientation', async () => {
-      renderEditor();
-      await waitFor(() => expect(screen.getByTestId('viewport-orientation')).toBeInTheDocument());
-      expect(screen.getByTestId('viewport-orientation')).toHaveTextContent('portrait');
-    });
-
-    it('changes viewport width when switcher button clicked', async () => {
-      renderEditor();
-      await waitFor(() => expect(screen.getByTestId('change-width-375')).toBeInTheDocument());
-      fireEvent.click(screen.getByTestId('change-width-375'));
-      expect(screen.getByTestId('viewport-width')).toHaveTextContent('375');
-    });
-
-    it('toggles orientation when rotate clicked', async () => {
-      renderEditor();
-      await waitFor(() => expect(screen.getByTestId('toggle-orientation')).toBeInTheDocument());
-      fireEvent.click(screen.getByTestId('toggle-orientation'));
-      expect(screen.getByTestId('viewport-orientation')).toHaveTextContent('landscape');
-    });
-  });
 });

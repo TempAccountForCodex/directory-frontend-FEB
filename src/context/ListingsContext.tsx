@@ -1,5 +1,16 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import axios from 'axios';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
+import {
+  useListings as useListingsQuery,
+  useListing as useListingQuery,
+  useListingBySlug as useListingBySlugQuery,
+  useCreateListing,
+  useUpdateListing,
+  useDeleteListing,
+} from '../api/queries/content';
+import { apiClient } from '../api/client';
+import { queryKeys } from '../api/queryKeys';
 
 // -------------------- Types --------------------
 export interface Place {
@@ -71,133 +82,217 @@ interface ListingsContextType {
 // -------------------- Context --------------------
 const ListingsContext = createContext<ListingsContextType | undefined>(undefined);
 
+/**
+ * Listings provider — thin React Query shim preserving the original context
+ * shape (Phase H.content migration).
+ *
+ * - `listings`, `loading`, `error` are hydrated from a shared `useListings`
+ *   query so every consumer reads the same cache.
+ * - The imperative helpers (`fetchListings`, `fetchListingById`, ...) are
+ *   preserved for API compatibility. Each delegates to `queryClient.fetch...`
+ *   or a mutation under the hood and returns the legacy-shaped promise.
+ */
 export const ListingsProvider = ({ children }: { children: ReactNode }) => {
-  const [listings, setListings] = useState<Place[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const listQuery = useListingsQuery();
+
+  const createMutation = useCreateListing();
+  const updateMutation = useUpdateListing();
+  const deleteMutation = useDeleteListing();
+
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+  const rawData = listQuery.data as
+    | { data?: Place[]; pagination?: Pagination }
+    | Place[]
+    | undefined;
+  const listings: Place[] = Array.isArray(rawData)
+    ? rawData
+    : (rawData?.data ?? []);
 
-  // -------------------- API Functions --------------------
+  const queryErrMessage =
+    (listQuery.error as AxiosError<{ message?: string }> | null)?.response?.data?.message ??
+    (listQuery.error as Error | null)?.message ??
+    null;
 
-  const fetchListings = async (
-    page: number = 1,
-    limit: number = 10,
-    filters: Record<string, string> = {}
-  ) => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${API_URL}/places`, {
-        params: { page, limit, ...filters },
-      });
-
-      const data = res.data?.data;
-      const places = data?.data ?? [];
-      const pagination: Pagination = data?.pagination ?? {
-        page,
-        limit,
-        total: 0,
-        totalPages: 0,
-      };
-
-      setListings(places);
-      return pagination;
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchListingById = async (id: string) => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${API_URL}/places/${id}`);
-      return res.data?.data as Place;
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchListingBySlug = async (slug: string) => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${API_URL}/places/slug/${slug}`);
-      return res.data?.data as Place;
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createListing = async (data: Partial<Place>) => {
-    try {
-      setLoading(true);
-      const res = await axios.post(`${API_URL}/places`, data);
-      const place = res.data?.data as Place;
-      setListings((prev) => [...prev, place]);
-      return place;
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateListing = async (id: string, data: Partial<Place>) => {
-    try {
-      setLoading(true);
-      const res = await axios.put(`${API_URL}/places/${id}`, data);
-      const updated = res.data?.data as Place;
-      setListings((prev) => prev.map((l) => (l.id === id ? { ...l, ...updated } : l)));
-      return updated;
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteListing = async (id: string) => {
-    try {
-      setLoading(true);
-      await axios.delete(`${API_URL}/places/${id}`);
-      setListings((prev) => prev.filter((l) => l.id !== id));
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <ListingsContext.Provider
-      value={{
-        listings,
-        loading,
-        error,
-        fetchListings,
-        fetchListingById,
-        fetchListingBySlug,
-        createListing,
-        updateListing,
-        deleteListing,
-      }}
-    >
-      {children}
-    </ListingsContext.Provider>
+  const fetchListings = useCallback(
+    async (
+      page: number = 1,
+      limit: number = 10,
+      filters: Record<string, string> = {}
+    ): Promise<Pagination | null> => {
+      try {
+        setError(null);
+        const params = { page, limit, ...filters };
+        const result = await queryClient.fetchQuery<{ data?: Place[]; pagination?: Pagination }>({
+          queryKey: queryKeys.content.listings(params),
+          queryFn: async ({ signal }) => {
+            const response = await apiClient.get('/places', { params, signal });
+            return response.data?.data ?? response.data ?? { data: [], pagination: null };
+          },
+          staleTime: 5 * 60_000,
+        });
+        return (
+          result?.pagination ?? {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          }
+        );
+      } catch (err) {
+        const axiosErr = err as AxiosError<{ message?: string }>;
+        setError(
+          axiosErr?.response?.data?.message || (err as Error)?.message || 'Failed to load listings'
+        );
+        return null;
+      }
+    },
+    [queryClient]
   );
+
+  const fetchListingById = useCallback(
+    async (id: string): Promise<Place | null> => {
+      try {
+        setError(null);
+        const data = await queryClient.fetchQuery<Place | null>({
+          queryKey: queryKeys.content.listing(id),
+          queryFn: async ({ signal }) => {
+            const response = await apiClient.get(`/places/${id}`, { signal });
+            return response.data?.data ?? response.data ?? null;
+          },
+          staleTime: 5 * 60_000,
+        });
+        return data ?? null;
+      } catch (err) {
+        const axiosErr = err as AxiosError<{ message?: string }>;
+        setError(
+          axiosErr?.response?.data?.message || (err as Error)?.message || 'Failed to load listing'
+        );
+        return null;
+      }
+    },
+    [queryClient]
+  );
+
+  const fetchListingBySlug = useCallback(
+    async (slug: string): Promise<Place | null> => {
+      try {
+        setError(null);
+        const data = await queryClient.fetchQuery<Place | null>({
+          queryKey: ['content', 'listingBySlug', slug] as const,
+          queryFn: async ({ signal }) => {
+            const response = await apiClient.get(`/places/slug/${slug}`, { signal });
+            return response.data?.data ?? response.data ?? null;
+          },
+          staleTime: 5 * 60_000,
+        });
+        return data ?? null;
+      } catch (err) {
+        const axiosErr = err as AxiosError<{ message?: string }>;
+        setError(
+          axiosErr?.response?.data?.message || (err as Error)?.message || 'Failed to load listing'
+        );
+        return null;
+      }
+    },
+    [queryClient]
+  );
+
+  const createListing = useCallback(
+    async (data: Partial<Place>): Promise<Place | null> => {
+      try {
+        setError(null);
+        const place = await createMutation.mutateAsync(data as Record<string, unknown>);
+        return (place as Place) ?? null;
+      } catch (err) {
+        const axiosErr = err as AxiosError<{ message?: string }>;
+        setError(
+          axiosErr?.response?.data?.message ||
+            (err as Error)?.message ||
+            'Failed to create listing'
+        );
+        return null;
+      }
+    },
+    [createMutation]
+  );
+
+  const updateListing = useCallback(
+    async (id: string, data: Partial<Place>): Promise<Place | null> => {
+      try {
+        setError(null);
+        const place = await updateMutation.mutateAsync({
+          id,
+          payload: data as Record<string, unknown>,
+        });
+        return (place as Place) ?? null;
+      } catch (err) {
+        const axiosErr = err as AxiosError<{ message?: string }>;
+        setError(
+          axiosErr?.response?.data?.message ||
+            (err as Error)?.message ||
+            'Failed to update listing'
+        );
+        return null;
+      }
+    },
+    [updateMutation]
+  );
+
+  const deleteListing = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        setError(null);
+        await deleteMutation.mutateAsync(id);
+      } catch (err) {
+        const axiosErr = err as AxiosError<{ message?: string }>;
+        setError(
+          axiosErr?.response?.data?.message ||
+            (err as Error)?.message ||
+            'Failed to delete listing'
+        );
+      }
+    },
+    [deleteMutation]
+  );
+
+  const loading =
+    listQuery.isFetching ||
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending;
+
+  const value = useMemo<ListingsContextType>(
+    () => ({
+      listings,
+      loading,
+      error: error ?? queryErrMessage,
+      fetchListings,
+      fetchListingById,
+      fetchListingBySlug,
+      createListing,
+      updateListing,
+      deleteListing,
+    }),
+    [
+      listings,
+      loading,
+      error,
+      queryErrMessage,
+      fetchListings,
+      fetchListingById,
+      fetchListingBySlug,
+      createListing,
+      updateListing,
+      deleteListing,
+    ]
+  );
+
+  return <ListingsContext.Provider value={value}>{children}</ListingsContext.Provider>;
 };
 
-// -------------------- Hook --------------------
+// -------------------- Hooks --------------------
 export const useListings = () => {
   const context = useContext(ListingsContext);
   if (!context) {
@@ -205,3 +300,6 @@ export const useListings = () => {
   }
   return context;
 };
+
+// Direct React Query hook access for callers who don't need the context shape.
+export { useListingQuery, useListingBySlugQuery };

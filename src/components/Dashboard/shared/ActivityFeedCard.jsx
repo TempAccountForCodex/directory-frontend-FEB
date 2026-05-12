@@ -12,7 +12,7 @@
  */
 
 import { memo, useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
@@ -40,7 +40,6 @@ import FilterBar from './FilterBar';
 import EmptyState from './EmptyState';
 import DashboardTooltip from './DashboardTooltip';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ─── Activity Type Configuration ──────────────────────────────────────────────
 
@@ -163,7 +162,7 @@ const ActivityFeedCard = memo(function ActivityFeedCard({
       });
       if (typesParam) params.set('types', typesParam);
 
-      const res = await axios.get(`${API_URL}/websites/${websiteId}/activity?${params}`);
+      const res = await apiClient.get(`/websites/${websiteId}/activity?${params}`);
       const { activities: items = [], total: count = 0 } = res.data?.data || {};
       setActivities(items);
       setTotal(count);

@@ -1,11 +1,11 @@
-import type { BusinessData } from "../../../../landingTemplates/types/BusinessData";
+import type { BusinessData } from '../../../../landingTemplates/types/BusinessData';
 import {
   educationData,
   gardeningData,
   consultingData,
   restaurantData,
   plumbingData,
-} from "./industryDummyData";
+} from './industryDummyData';
 
 export interface IndustryEntry {
   templateId: string;
@@ -16,34 +16,34 @@ export interface IndustryEntry {
 
 const industryRegistry: Record<string, IndustryEntry> = {
   Education: {
-    templateId: "education",
+    templateId: 'education',
     data: educationData,
-    accentColor: "#2563eb",
-    label: "Education",
+    accentColor: '#2563eb',
+    label: 'Education',
   },
   Gardening: {
-    templateId: "gardening",
+    templateId: 'gardening',
     data: gardeningData,
-    accentColor: "#58b74e",
-    label: "Gardening",
+    accentColor: '#58b74e',
+    label: 'Gardening',
   },
   Consulting: {
-    templateId: "premium",
+    templateId: 'premium',
     data: consultingData,
-    accentColor: "#c9a84c",
-    label: "Consulting",
+    accentColor: '#c9a84c',
+    label: 'Consulting',
   },
   Restaurant: {
-    templateId: "restaurant",
+    templateId: 'restaurant',
     data: restaurantData,
-    accentColor: "#c0392b",
-    label: "Restaurant",
+    accentColor: '#c0392b',
+    label: 'Restaurant',
   },
   Plumbing: {
-    templateId: "plumbing",
+    templateId: 'plumbing',
     data: plumbingData,
-    accentColor: "#3c86d9",
-    label: "Plumbing",
+    accentColor: '#3c86d9',
+    label: 'Plumbing',
   },
 };
 

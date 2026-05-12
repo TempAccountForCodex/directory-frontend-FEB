@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import {
   Box,
   Alert,
@@ -35,8 +35,6 @@ import DashboardCancelButton from '../shared/DashboardCancelButton';
 import DashboardConfirmButton from '../shared/DashboardConfirmButton';
 import DashboardInput from '../shared/DashboardInput';
 import CollaboratorModal from '../CollaboratorModal';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const ROLE_OPTIONS = [
   { value: 'VIEWER', label: 'Viewer' },
@@ -85,7 +83,7 @@ const TeamTab = memo(({ website, websiteId, onSaved, currentUserRole }) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`${API_URL}/websites/${websiteId}/collaborators`);
+      const res = await apiClient.get(`/websites/${websiteId}/collaborators`);
       // Backend returns raw array (no { success, data } envelope)
       setCollaborators(Array.isArray(res.data) ? res.data : res.data?.data || res.data?.collaborators || []);
     } catch (err) {
@@ -102,7 +100,7 @@ const TeamTab = memo(({ website, websiteId, onSaved, currentUserRole }) => {
   const handleRoleChange = async (collab, newRole) => {
     try {
       setRoleChanging((prev) => ({ ...prev, [collab.userId]: true }));
-      await axios.patch(`${API_URL}/websites/${websiteId}/collaborators/${collab.userId}`, {
+      await apiClient.patch(`/websites/${websiteId}/collaborators/${collab.userId}`, {
         role: newRole,
       });
       setCollaborators((prev) =>
@@ -119,7 +117,7 @@ const TeamTab = memo(({ website, websiteId, onSaved, currentUserRole }) => {
     if (!memberToRemove) return;
     try {
       setRemoveLoading(true);
-      await axios.delete(`${API_URL}/websites/${websiteId}/collaborators/${memberToRemove.userId}`);
+      await apiClient.delete(`/websites/${websiteId}/collaborators/${memberToRemove.userId}`);
       setCollaborators((prev) => prev.filter((c) => c.userId !== memberToRemove.userId));
       setRemoveDialogOpen(false);
       setMemberToRemove(null);
@@ -134,7 +132,7 @@ const TeamTab = memo(({ website, websiteId, onSaved, currentUserRole }) => {
     if (!memberToTransfer) return;
     try {
       setTransferLoading(true);
-      await axios.post(`${API_URL}/websites/${websiteId}/transfer-ownership`, {
+      await apiClient.post(`/websites/${websiteId}/transfer-ownership`, {
         newOwnerId: memberToTransfer.userId,
       });
       setTransferDialogOpen(false);

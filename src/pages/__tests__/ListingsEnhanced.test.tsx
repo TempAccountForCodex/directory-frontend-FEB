@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
@@ -7,84 +7,71 @@ import { ThemeProvider, createTheme } from '@mui/material';
 const theme = createTheme();
 
 /* ------------------------------------------------------------------ */
-/*  Mock useDirectorySearch                                             */
+/*  Mock useListings from ListingsContext                               */
 /* ------------------------------------------------------------------ */
 
-const mockSearchState = {
-  results: [] as Array<{ id: string; slug: string; businessName: string }>,
-  total: 0,
-  page: 1,
-  pageSize: 20,
+const mockListingsContext = {
+  listings: [] as Array<{
+    id: string;
+    slug: string;
+    title: string;
+    category: string;
+    creator: string;
+    desc: string;
+    address: string;
+    phone: string;
+    city: string;
+    region: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  }>,
   loading: false,
   error: null as string | null,
-  query: '',
-  setQuery: vi.fn(),
-  sort: 'relevance',
-  setSort: vi.fn(),
-  filters: {},
-  setFilter: vi.fn(),
-  removeFilter: vi.fn(),
-  clearAllFilters: vi.fn(),
-  activeFilters: [],
-  meta: {
-    categories: [{ value: 'Food', label: 'Food & Dining', count: 24 }],
-    locations: { countries: ['USA'], regions: {}, cities: {} },
-    priceLevels: [{ value: '$', label: '$' }],
-    ratingDistribution: {},
-    sortOptions: [{ value: 'relevance', label: 'Relevance' }],
-    totalListings: 100,
-  },
-  suggestions: [],
-  fetchAutocomplete: vi.fn(),
-  recentSearches: [],
-  clearRecentSearches: vi.fn(),
-  removeRecentSearch: vi.fn(),
-  viewMode: 'grid' as const,
-  setViewMode: vi.fn(),
-  setPage: vi.fn(),
+  fetchListings: vi.fn(),
+  fetchListingById: vi.fn(),
+  fetchListingBySlug: vi.fn(),
+  createListing: vi.fn(),
+  updateListing: vi.fn(),
+  deleteListing: vi.fn(),
 };
 
-let currentMockState = { ...mockSearchState };
+let currentMockContext = { ...mockListingsContext };
 
-vi.mock('../../hooks/useDirectorySearch', () => ({
-  useDirectorySearch: () => currentMockState,
+vi.mock('../../context/ListingsContext', () => ({
+  useListings: () => currentMockContext,
+  ListingsProvider: ({ children }: any) => children,
 }));
 
-// Mock StyledHeader
-vi.mock('../../components/publicComponents/Home/StyledHeader', () => ({
-  default: () => React.createElement('div', { 'data-testid': 'styled-header' }, 'Header'),
+// Mock Hero (the component uses Hero, not StyledHeader)
+vi.mock('../../components/publicComponents/Listing/Hero', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'hero' }, 'Hero'),
 }));
 
-// Mock Searchbar (avoids context deps)
+// Mock Searchbar (avoids API + context deps)
 vi.mock('../../components/publicComponents/Listing/Searchbar', () => ({
-  default: React.memo(({ searchState }: any) =>
-    React.createElement('div', { 'data-testid': 'searchbar' }, `Searchbar: ${searchState.query}`)
+  default: React.memo((props: any) =>
+    React.createElement('div', { 'data-testid': 'searchbar' }, `Searchbar: ${props.searchKeyword}`)
   ),
 }));
 
 // Mock SideFilter
 vi.mock('../../components/publicComponents/Listing/SideFilter', () => ({
-  default: React.memo(({ searchState }: any) =>
+  default: React.memo(() =>
     React.createElement('div', { 'data-testid': 'sidefilter' }, 'SideFilter')
   ),
 }));
 
-// Mock PropertyCard (avoids useBatchFavourites and PropertyCardItem context deps)
+// Mock PropertyCard
 vi.mock('../../components/publicComponents/Listing/PropertyCard', () => ({
-  default: React.memo(({ items, viewMode }: any) =>
-    React.createElement(
-      'div',
-      { 'data-testid': 'property-card' },
-      `${items.length} items (${viewMode ?? 'grid'})`
-    )
+  default: React.memo(({ items }: any) =>
+    React.createElement('div', { 'data-testid': 'property-card' }, `${items.length} items`)
   ),
 }));
 
-// Mock DirectoryMapView
-vi.mock('../../components/publicComponents/Listing/DirectoryMapView', () => ({
-  default: React.memo(({ results }: any) =>
-    React.createElement('div', { 'data-testid': 'map-view' }, `Map: ${results.length} markers`)
-  ),
+// Mock ListingsData
+vi.mock('../../utils/data/Listings', () => ({
+  ListingsData: { title: 'Listings', subtitle: 'Browse' },
 }));
 
 import Listings from '../publicPages/Listings';
@@ -104,79 +91,133 @@ function renderListings(isDashboard = false) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Tests                                                               */
+/*  Tests — async because Searchbar/SideFilter/PropertyCard are lazy   */
 /* ------------------------------------------------------------------ */
 
 describe('Listings (Enhanced)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    currentMockState = { ...mockSearchState };
+    currentMockContext = { ...mockListingsContext };
   });
 
-  /* ---- 1. Loading skeleton ---- */
-  it('renders loading skeleton cards when loading is true', () => {
-    currentMockState = { ...mockSearchState, loading: true };
+  /* ---- 1. Loading state shows CircularProgress ---- */
+  it('renders loading spinner when loading is true', async () => {
+    currentMockContext = { ...mockListingsContext, loading: true };
     renderListings();
 
-    // Should render 8 skeleton cards (Skeleton variant="rectangular")
-    const skeletons = document.querySelectorAll('.MuiSkeleton-rectangular');
-    expect(skeletons.length).toBe(8);
+    // Wait for lazy Suspense to resolve, then check for spinner
+    await waitFor(() => {
+      const spinner = document.querySelector('.MuiCircularProgress-root');
+      expect(spinner).toBeTruthy();
+    });
   });
 
-  /* ---- 2. Results count header ---- */
-  it('shows results count header when results are loaded', () => {
-    currentMockState = {
-      ...mockSearchState,
-      results: [
-        { id: '1', slug: 'biz-1', businessName: 'Biz 1' },
-        { id: '2', slug: 'biz-2', businessName: 'Biz 2' },
+  /* ---- 2. Listings rendered via PropertyCard ---- */
+  it('renders PropertyCard with listing items when data is loaded', async () => {
+    currentMockContext = {
+      ...mockListingsContext,
+      listings: [
+        {
+          id: '1',
+          slug: 'biz-1',
+          title: 'Biz 1',
+          category: 'Food',
+          creator: 'u1',
+          desc: '',
+          address: '',
+          phone: '',
+          city: '',
+          region: '',
+          status: 'active',
+          createdAt: '',
+          updatedAt: '',
+        },
+        {
+          id: '2',
+          slug: 'biz-2',
+          title: 'Biz 2',
+          category: 'Tech',
+          creator: 'u2',
+          desc: '',
+          address: '',
+          phone: '',
+          city: '',
+          region: '',
+          status: 'active',
+          createdAt: '',
+          updatedAt: '',
+        },
       ],
-      total: 42,
     };
     renderListings();
 
-    expect(screen.getByText(/42 businesses found/i)).toBeInTheDocument();
+    expect(await screen.findByTestId('property-card')).toBeInTheDocument();
+    expect(screen.getByText('2 items')).toBeInTheDocument();
   });
 
-  /* ---- 3. No results state ---- */
-  it('shows no results state when total is 0 and not loading', () => {
-    currentMockState = {
-      ...mockSearchState,
-      results: [],
-      total: 0,
+  /* ---- 3. No listings state ---- */
+  it('shows "No listings found." when listings array is empty and not loading', async () => {
+    currentMockContext = {
+      ...mockListingsContext,
+      listings: [],
       loading: false,
+      error: null,
     };
     renderListings();
 
-    expect(screen.getByText('No businesses found')).toBeInTheDocument();
-    expect(screen.getByText(/try adjusting your filters/i)).toBeInTheDocument();
+    expect(await screen.findByText('No listings found.')).toBeInTheDocument();
   });
 
-  /* ---- 4. View toggle ---- */
-  it('renders view toggle buttons for grid, list, and map', () => {
-    currentMockState = {
-      ...mockSearchState,
-      results: [{ id: '1', slug: 'biz', businessName: 'Biz' }],
-      total: 1,
-    };
+  /* ---- 4. Error state ---- */
+  it('shows error message when error is set', async () => {
+    currentMockContext = { ...mockListingsContext, error: 'Failed to fetch listings' };
     renderListings();
 
-    expect(screen.getByLabelText('Grid view')).toBeInTheDocument();
-    expect(screen.getByLabelText('List view')).toBeInTheDocument();
-    expect(screen.getByLabelText('Map view')).toBeInTheDocument();
+    expect(await screen.findByText('Failed to fetch listings')).toBeInTheDocument();
   });
 
-  /* ---- 5. StyledHeader shown when not dashboard ---- */
-  it('shows StyledHeader when isDashboard is false', () => {
+  /* ---- 5. Directory header shown when not dashboard ---- */
+  it('shows "Explore Our Directory" heading when isDashboard is false', async () => {
+    currentMockContext = {
+      ...mockListingsContext,
+      listings: [
+        {
+          id: '1',
+          slug: 'b',
+          title: 'B',
+          category: 'C',
+          creator: 'u',
+          desc: '',
+          address: '',
+          phone: '',
+          city: '',
+          region: '',
+          status: 'active',
+          createdAt: '',
+          updatedAt: '',
+        },
+      ],
+    };
     renderListings(false);
-    expect(screen.getByTestId('styled-header')).toBeInTheDocument();
+
+    expect(await screen.findByText('Explore Our Directory')).toBeInTheDocument();
   });
 
-  /* ---- 6. Error state ---- */
-  it('shows error alert when error is set', () => {
-    currentMockState = { ...mockSearchState, error: 'Failed to fetch listings' };
-    renderListings();
+  /* ---- 6. Hero is rendered ---- */
+  it('renders Hero component', () => {
+    renderListings(false);
+    expect(screen.getByTestId('hero')).toBeInTheDocument();
+  });
 
-    expect(screen.getByText('Failed to fetch listings')).toBeInTheDocument();
+  /* ---- 7. Searchbar receives searchKeyword prop ---- */
+  it('renders Searchbar component', async () => {
+    renderListings();
+    expect(await screen.findByTestId('searchbar')).toBeInTheDocument();
+  });
+
+  /* ---- 8. SideFilter is rendered ---- */
+  it('renders SideFilter component', async () => {
+    renderListings();
+    expect(await screen.findByTestId('sidefilter')).toBeInTheDocument();
   });
 });

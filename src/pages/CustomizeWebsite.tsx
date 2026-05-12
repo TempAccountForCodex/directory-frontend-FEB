@@ -61,8 +61,8 @@ import InlineTextEditor from '../components/Editor/InlineTextEditor';
 import type { SelectedBlockInfo } from '../components/Editor/SelectionOverlay';
 import type { InlineEditStartData } from '../components/WebsiteEditor/PreviewPanel';
 import HelpIcon from '../components/Docs/HelpIcon';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // Plan limits - MUST match backend/services/planService.js PLAN_LIMITS.maxPagesPerWebsite
 const MAX_PAGES_PER_WEBSITE = 5;
@@ -2027,3 +2027,4 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 };
 
 export default CustomizeWebsite;
+

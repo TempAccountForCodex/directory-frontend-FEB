@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Typography, Alert, Skeleton, Snackbar, MenuItem, alpha } from '@mui/material';
 import { Plus, Trash2, LayoutTemplate } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 
 import {
   DashboardCard,
@@ -57,7 +57,6 @@ interface FooterBuilderProps {
   initialConfig?: Record<string, unknown>;
 }
 
-const API_BASE = '/api';
 const MAX_COLUMNS = 4;
 const MAX_COL_LINKS = 8;
 const MAX_SOCIAL_LINKS = 5;
@@ -121,8 +120,8 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
     setLoading(true);
     setError(null);
 
-    axios
-      .get(`${API_BASE}/websites/${websiteId}/global-components/footer`)
+    apiClient
+      .get(`/websites/${websiteId}/global-components/footer`)
       .then(({ data }) => {
         if (!cancelled) {
           setConfig(configFromApi(data.data?.config || null));
@@ -257,7 +256,7 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
     setSaving(true);
     setError(null);
     try {
-      await axios.put(`${API_BASE}/websites/${websiteId}/global-components/footer`, {
+      await apiClient.put(`/websites/${websiteId}/global-components/footer`, {
         config,
       });
       setSnackbar({ open: true, message: 'Footer saved successfully.', severity: 'success' });

@@ -1,16 +1,16 @@
-import React from "react";
-import { Box, Typography, Button, Container, Stack } from "@mui/material";
-import { keyframes } from "@mui/system";
-import EastIcon from "@mui/icons-material/East";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import PublicIcon from "@mui/icons-material/Public";
-import SupportAgentIcon from "@mui/icons-material/SupportAgent";
-import EmailIcon from "@mui/icons-material/Email";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
+import React from 'react';
+import { Box, Typography, Button, Container, Stack } from '@mui/material';
+import { keyframes } from '@mui/system';
+import EastIcon from '@mui/icons-material/East';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import PublicIcon from '@mui/icons-material/Public';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import EmailIcon from '@mui/icons-material/Email';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
-const star = "/assets/publicAssets/images/common/star.svg";
-const globeImg = "/assets/publicAssets/images/ContactUs/earthblack.webp";
+const star = '/assets/publicAssets/images/common/star.svg';
+const globeImg = '/assets/publicAssets/images/ContactUs/earthblack.webp';
 
 // ── Animations ────────────────────────────────────────────
 const fadeUp = keyframes`
@@ -57,30 +57,21 @@ const cardSlideRight = keyframes`
 `;
 
 // ── Floating Metric Card ───────────────────────────────────
-const MetricCard = ({
-  value,
-  label,
-  icon,
-  sx,
-  animDelay = "0s",
-  slideDir = "left",
-}) => (
+const MetricCard = ({ value, label, icon, sx, animDelay = '0s', slideDir = 'left' }) => (
   <Box
     sx={{
-      position: "absolute",
-      backdropFilter: "blur(20px)",
-      background:
-        "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(55,140,146,0.12) 100%)",
-      border: "1px solid rgba(55,140,146,0.35)",
-      borderRadius: "16px",
-      p: "14px 18px",
-      display: "flex",
-      alignItems: "center",
+      position: 'absolute',
+      backdropFilter: 'blur(20px)',
+      background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(55,140,146,0.12) 100%)',
+      border: '1px solid rgba(55,140,146,0.35)',
+      borderRadius: '16px',
+      p: '14px 18px',
+      display: 'flex',
+      alignItems: 'center',
       gap: 1.5,
-      minWidth: "165px",
-      boxShadow:
-        "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)",
-      animation: `${slideDir === "left" ? cardSlide : cardSlideRight} 0.9s ease-out ${animDelay} both`,
+      minWidth: '165px',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+      animation: `${slideDir === 'left' ? cardSlide : cardSlideRight} 0.9s ease-out ${animDelay} both`,
       zIndex: 12,
       ...sx,
     }}
@@ -89,13 +80,13 @@ const MetricCard = ({
       sx={{
         width: 36,
         height: 36,
-        borderRadius: "10px",
-        background: "linear-gradient(135deg, #378C92, #1a5a5e)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        borderRadius: '10px',
+        background: 'linear-gradient(135deg, #378C92, #1a5a5e)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         flexShrink: 0,
-        boxShadow: "0 4px 12px rgba(55,140,146,0.5)",
+        boxShadow: '0 4px 12px rgba(55,140,146,0.5)',
       }}
     >
       {icon}
@@ -103,9 +94,9 @@ const MetricCard = ({
     <Box>
       <Typography
         sx={{
-          fontSize: "1.2rem",
+          fontSize: '1.2rem',
           fontWeight: 800,
-          color: "#fff",
+          color: '#fff',
           lineHeight: 1,
         }}
       >
@@ -113,10 +104,10 @@ const MetricCard = ({
       </Typography>
       <Typography
         sx={{
-          fontSize: "0.7rem",
-          color: "rgba(255,255,255,0.55)",
-          mt: "2px",
-          whiteSpace: "nowrap",
+          fontSize: '0.7rem',
+          color: 'rgba(255,255,255,0.55)',
+          mt: '2px',
+          whiteSpace: 'nowrap',
         }}
       >
         {label}
@@ -128,10 +119,8 @@ const MetricCard = ({
 // ── Trust Badge ────────────────────────────────────────────
 const TrustBadge = ({ text }) => (
   <Stack direction="row" spacing={0.8} alignItems="center">
-    <CheckCircleOutlineIcon sx={{ fontSize: 15, color: "#ffffff" }} />
-    <Typography sx={{ fontSize: "0.78rem", color: "rgb(255, 255, 255)" }}>
-      {text}
-    </Typography>
+    <CheckCircleOutlineIcon sx={{ fontSize: 15, color: '#ffffff' }} />
+    <Typography sx={{ fontSize: '0.78rem', color: 'rgb(255, 255, 255)' }}>{text}</Typography>
   </Stack>
 );
 
@@ -140,18 +129,18 @@ const ContactHero = () => {
   return (
     <Box
       sx={{
-        backgroundColor: "#030d0d",
+        backgroundColor: '#030d0d',
         backgroundImage: `url(${star})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        position: "relative",
-        overflow: "hidden",
-        color: "#fff",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        position: 'relative',
+        overflow: 'hidden',
+        color: '#fff',
         pt: { xs: 5, md: 2 },
         fontFamily: "'DM Sans', system-ui, sans-serif",
       }}
@@ -159,19 +148,19 @@ const ContactHero = () => {
       {/* Radial Teal Aura */}
       <Box
         sx={{
-          position: "absolute",
-          top: "-5%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "1400px",
-          height: "700px",
+          position: 'absolute',
+          top: '-5%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '1400px',
+          height: '700px',
           background:
-            "radial-gradient(ellipse at center, rgba(55,140,146,0.22) 0%, rgba(55,140,146,0.10) 45%, transparent 72%)",
-          filter: { xs: "blur(48px)", md: "blur(100px)" },
+            'radial-gradient(ellipse at center, rgba(55,140,146,0.22) 0%, rgba(55,140,146,0.10) 45%, transparent 72%)',
+          filter: { xs: 'blur(48px)', md: 'blur(100px)' },
           zIndex: 0,
-          display: { xs: "none", md: "block" },
+          display: { xs: 'none', md: 'block' },
           animation: {
-            xs: "none",
+            xs: 'none',
             md: `${pulseGlow} 10s ease-in-out infinite`,
           },
         }}
@@ -180,13 +169,12 @@ const ContactHero = () => {
       {/* Bottom fog */}
       <Box
         sx={{
-          position: "absolute",
+          position: 'absolute',
           bottom: 0,
           left: 0,
-          width: "100%",
-          height: "50%",
-          background:
-            "linear-gradient(to top, rgba(10,40,42,0.9) 0%, transparent 100%)",
+          width: '100%',
+          height: '50%',
+          background: 'linear-gradient(to top, rgba(10,40,42,0.9) 0%, transparent 100%)',
           zIndex: 1,
         }}
       />
@@ -194,24 +182,24 @@ const ContactHero = () => {
       {/* Grid overlay */}
       <Box
         sx={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
           zIndex: 0,
           opacity: 0.04,
           backgroundImage: `linear-gradient(rgba(55,140,146,1) 1px, transparent 1px),
                           linear-gradient(90deg, rgba(55,140,146,1) 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
+          backgroundSize: '60px 60px',
         }}
       />
 
       {/* SVG Arcs */}
       <Box
         sx={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
           zIndex: 1,
-          pointerEvents: "none",
-          animation: { xs: "none", md: `${arcDrift} 12s ease-in-out infinite` },
+          pointerEvents: 'none',
+          animation: { xs: 'none', md: `${arcDrift} 12s ease-in-out infinite` },
         }}
       >
         <svg
@@ -338,7 +326,7 @@ const ContactHero = () => {
               strokeWidth="3"
               fill="none"
               style={{
-                strokeDasharray: "90 380",
+                strokeDasharray: '90 380',
                 animation: `${streakMove} 5s ease-in-out infinite`,
               }}
             />
@@ -358,28 +346,28 @@ const ContactHero = () => {
       {/* Spinning orbit ring */}
       <Box
         sx={{
-          position: "absolute",
-          top: { xs: "2%", md: "-8%" },
-          left: "50%",
-          width: { xs: "380px", md: "820px" },
-          height: { xs: "380px", md: "820px" },
-          borderRadius: "50%",
-          border: "1px dashed rgba(55,140,146,0.18)",
+          position: 'absolute',
+          top: { xs: '2%', md: '-8%' },
+          left: '50%',
+          width: { xs: '380px', md: '820px' },
+          height: { xs: '380px', md: '820px' },
+          borderRadius: '50%',
+          border: '1px dashed rgba(55,140,146,0.18)',
           zIndex: 2,
-          animation: { xs: "none", md: `${spinSlow} 60s linear infinite` },
-          pointerEvents: "none",
+          animation: { xs: 'none', md: `${spinSlow} 60s linear infinite` },
+          pointerEvents: 'none',
         }}
       >
         <Box
           sx={{
-            position: "absolute",
-            top: "6%",
-            left: "50%",
+            position: 'absolute',
+            top: '6%',
+            left: '50%',
             width: 8,
             height: 8,
-            borderRadius: "50%",
-            background: "#378C92",
-            boxShadow: "0 0 12px 4px rgba(55,140,146,0.7)",
+            borderRadius: '50%',
+            background: '#378C92',
+            boxShadow: '0 0 12px 4px rgba(55,140,146,0.7)',
             animation: `${blinkDot} 2s ease-in-out infinite`,
           }}
         />
@@ -388,17 +376,15 @@ const ContactHero = () => {
       {/* Globe */}
       <Box
         sx={{
-          position: "absolute",
-          top: { xs: "-8%", md: "-18%" },
-          left: "50%",
-          width: { xs: "100%", md: "1100px" },
+          position: 'absolute',
+          top: { xs: '-8%', md: '-18%' },
+          left: '50%',
+          width: { xs: '100%', md: '1100px' },
           zIndex: 3,
-          pointerEvents: "none",
-          WebkitMaskImage:
-            "radial-gradient(circle at 50% 22%, black 28%, transparent 62%)",
-          maskImage:
-            "radial-gradient(circle at 50% 22%, black 28%, transparent 62%)",
-          animation: { xs: "none", md: `${floatY} 8s ease-in-out infinite` },
+          pointerEvents: 'none',
+          WebkitMaskImage: 'radial-gradient(circle at 50% 22%, black 28%, transparent 62%)',
+          maskImage: 'radial-gradient(circle at 50% 22%, black 28%, transparent 62%)',
+          animation: { xs: 'none', md: `${floatY} 8s ease-in-out infinite` },
         }}
       >
         <Box
@@ -406,11 +392,10 @@ const ContactHero = () => {
           src={globeImg}
           alt="Global Business Network"
           sx={{
-            width: "100%",
-            height: "auto",
-            display: "block",
-            filter:
-              "brightness(0.75) contrast(1.15) saturate(1.3) hue-rotate(5deg)",
+            width: '100%',
+            height: 'auto',
+            display: 'block',
+            filter: 'brightness(0.75) contrast(1.15) saturate(1.3) hue-rotate(5deg)',
           }}
         />
       </Box>
@@ -420,11 +405,11 @@ const ContactHero = () => {
       <MetricCard
         value="24/7"
         label="Support Access"
-        icon={<SupportAgentIcon sx={{ fontSize: 18, color: "#fff" }} />}
+        icon={<SupportAgentIcon sx={{ fontSize: 18, color: '#fff' }} />}
         sx={{
-          top: { xs: "auto", md: "30%" },
-          left: { xs: "auto", md: "5%" },
-          display: { xs: "none", md: "flex" },
+          top: { xs: 'auto', md: '30%' },
+          left: { xs: 'auto', md: '5%' },
+          display: { xs: 'none', md: 'flex' },
         }}
         animDelay="0.6s"
         slideDir="left"
@@ -432,11 +417,11 @@ const ContactHero = () => {
       <MetricCard
         value="Email"
         label="Direct Inquiries"
-        icon={<EmailIcon sx={{ fontSize: 18, color: "#fff" }} />}
+        icon={<EmailIcon sx={{ fontSize: 18, color: '#fff' }} />}
         sx={{
-          top: { xs: "auto", md: "47%" },
-          left: { xs: "auto", md: "3%" },
-          display: { xs: "none", md: "flex" },
+          top: { xs: 'auto', md: '47%' },
+          left: { xs: 'auto', md: '3%' },
+          display: { xs: 'none', md: 'flex' },
         }}
         animDelay="0.9s"
         slideDir="left"
@@ -445,11 +430,11 @@ const ContactHero = () => {
       <MetricCard
         value="Docs"
         label="Self-Help Center"
-        icon={<MenuBookIcon sx={{ fontSize: 18, color: "#fff" }} />}
+        icon={<MenuBookIcon sx={{ fontSize: 18, color: '#fff' }} />}
         sx={{
-          top: { xs: "auto", md: "33%" },
-          right: { xs: "auto", md: "4%" },
-          display: { xs: "none", md: "flex" },
+          top: { xs: 'auto', md: '33%' },
+          right: { xs: 'auto', md: '4%' },
+          display: { xs: 'none', md: 'flex' },
         }}
         animDelay="0.7s"
         slideDir="right"
@@ -457,11 +442,11 @@ const ContactHero = () => {
       <MetricCard
         value="< 2 hrs"
         label="Avg. Response Time"
-        icon={<AccessTimeIcon sx={{ fontSize: 18, color: "#fff" }} />}
+        icon={<AccessTimeIcon sx={{ fontSize: 18, color: '#fff' }} />}
         sx={{
-          top: { xs: "auto", md: "50%" },
-          right: { xs: "auto", md: "2%" },
-          display: { xs: "none", md: "flex" },
+          top: { xs: 'auto', md: '50%' },
+          right: { xs: 'auto', md: '2%' },
+          display: { xs: 'none', md: 'flex' },
         }}
         animDelay="1s"
         slideDir="right"
@@ -471,9 +456,9 @@ const ContactHero = () => {
       <Container
         maxWidth="md"
         sx={{
-          position: "relative",
+          position: 'relative',
           zIndex: 10,
-          textAlign: "center",
+          textAlign: 'center',
           mt: { xs: 22, md: 34 },
         }}
       >
@@ -481,25 +466,24 @@ const ContactHero = () => {
         <Box sx={{ animation: `${fadeUp} 0.7s ease-out both`, mb: 3 }}>
           <Box
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
+              display: 'inline-flex',
+              alignItems: 'center',
               gap: 1,
               px: 2.5,
               py: 0.9,
-              background:
-                "linear-gradient(135deg, rgba(55,140,146,0.2), rgba(55,140,146,0.08))",
-              border: "1px solid rgba(55,140,146,0.4)",
-              borderRadius: "50px",
-              backdropFilter: "blur(12px)",
+              background: 'linear-gradient(135deg, rgba(55,140,146,0.2), rgba(55,140,146,0.08))',
+              border: '1px solid rgba(55,140,146,0.4)',
+              borderRadius: '50px',
+              backdropFilter: 'blur(12px)',
             }}
           >
-            <PublicIcon sx={{ fontSize: 14, color: "#55c5cc" }} />
+            <PublicIcon sx={{ fontSize: 14, color: '#55c5cc' }} />
             <Typography
               sx={{
-                fontSize: { xs: "0.65rem", sm: "0.75rem" },
-                color: "#ffffff",
+                fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                color: '#ffffff',
                 letterSpacing: 2,
-                textTransform: "uppercase",
+                textTransform: 'uppercase',
                 fontWeight: 700,
                 fontFamily: "'Space Mono', monospace",
               }}
@@ -510,9 +494,9 @@ const ContactHero = () => {
               sx={{
                 width: 6,
                 height: 6,
-                borderRadius: "50%",
-                background: "#55c5cc",
-                boxShadow: "0 0 8px #55c5cc",
+                borderRadius: '50%',
+                background: '#55c5cc',
+                boxShadow: '0 0 8px #55c5cc',
                 animation: `${blinkDot} 1.8s ease-in-out infinite`,
               }}
             />
@@ -524,13 +508,13 @@ const ContactHero = () => {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: "2rem", sm: "2.8rem", md: "5rem" },
+              fontSize: { xs: '2rem', sm: '2.8rem', md: '5rem' },
               fontWeight: 800,
               mb: 1,
               fontFamily: "'DM Sans', sans-serif",
-              letterSpacing: "-0.04em",
+              letterSpacing: '-0.04em',
               lineHeight: 1.05,
-              color: "#fff",
+              color: '#fff',
             }}
           >
             Let’s Start a
@@ -538,13 +522,13 @@ const ContactHero = () => {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: "2rem", sm: "2.8rem", md: "5rem" },
+              fontSize: { xs: '2rem', sm: '2.8rem', md: '5rem' },
               fontWeight: 800,
               mb: 3,
               fontFamily: "'DM Sans', sans-serif",
-              letterSpacing: "-0.04em",
+              letterSpacing: '-0.04em',
               lineHeight: 1.05,
-              color: "#fff",
+              color: '#fff',
             }}
           >
             Conversation Today.
@@ -554,30 +538,30 @@ const ContactHero = () => {
         {/* Sub-description */}
         <Typography
           sx={{
-            fontSize: { xs: "1rem", md: "1.15rem" },
-            color: "rgb(255, 255, 255)",
-            maxWidth: "600px",
-            mx: "auto",
+            fontSize: { xs: '1rem', md: '1.15rem' },
+            color: 'rgb(255, 255, 255)',
+            maxWidth: '600px',
+            mx: 'auto',
             mb: 4,
             fontWeight: 400,
             lineHeight: 1.85,
             animation: `${fadeUp} 0.9s ease-out 0.3s both`,
           }}
         >
-          Have questions about your{" "}
-          <Box component="span" sx={{ color: "#ffffff", fontWeight: 600 }}>
+          Have questions about your{' '}
+          <Box component="span" sx={{ color: '#ffffff', fontWeight: 600 }}>
             online presence
-          </Box>{" "}
-          or need assistance? Our team is ready to support your business growth
-          and answer any questions about our{" "}
-          <Box component="span" sx={{ color: "#ffffff", fontWeight: 600 }}>
+          </Box>{' '}
+          or need assistance? Our team is ready to support your business growth and answer any
+          questions about our{' '}
+          <Box component="span" sx={{ color: '#ffffff', fontWeight: 600 }}>
             directory features.
           </Box>
         </Typography>
 
         {/* CTA Buttons */}
         <Stack
-          direction={{ xs: "column", sm: "row" }}
+          direction={{ xs: 'column', sm: 'row' }}
           spacing={2}
           justifyContent="center"
           sx={{
@@ -590,24 +574,23 @@ const ContactHero = () => {
             variant="contained"
             endIcon={<EastIcon />}
             sx={{
-              background: "linear-gradient(135deg, #378C92 0%, #2a6e73 100%)",
-              color: "#fff",
-              borderRadius: "50px",
+              background: 'linear-gradient(135deg, #378C92 0%, #2a6e73 100%)',
+              color: '#fff',
+              borderRadius: '50px',
               px: 4,
               py: 1.8,
               fontWeight: 700,
-              textTransform: "none",
-              fontSize: "0.8rem",
+              textTransform: 'none',
+              fontSize: '0.8rem',
               fontFamily: "'DM Sans', sans-serif",
-              boxShadow:
-                "0 4px 24px rgba(55,140,146,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
-              border: "1px solid rgba(55,140,146,0.6)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #4aa8ae 0%, #378C92 100%)",
-                transform: "translateY(-2px)",
-                boxShadow: "0 8px 32px rgba(55,140,146,0.6)",
+              boxShadow: '0 4px 24px rgba(55,140,146,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
+              border: '1px solid rgba(55,140,146,0.6)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #4aa8ae 0%, #378C92 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 32px rgba(55,140,146,0.6)',
               },
-              transition: "all 0.3s",
+              transition: 'all 0.3s',
             }}
           >
             Submit an Inquiry
@@ -616,23 +599,23 @@ const ContactHero = () => {
           <Button
             variant="outlined"
             sx={{
-              borderColor: "rgba(255,255,255,0.2)",
-              color: "#fff",
-              borderRadius: "50px",
+              borderColor: 'rgba(255,255,255,0.2)',
+              color: '#fff',
+              borderRadius: '50px',
               px: 4,
               py: 1.8,
               fontWeight: 600,
-              textTransform: "none",
-              fontSize: "0.8rem",
+              textTransform: 'none',
+              fontSize: '0.8rem',
               fontFamily: "'DM Sans', sans-serif",
-              backdropFilter: "blur(12px)",
-              background: "rgba(255,255,255,0.04)",
-              "&:hover": {
-                borderColor: "rgba(55,140,146,0.7)",
-                bgcolor: "rgba(55,140,146,0.1)",
-                transform: "translateY(-2px)",
+              backdropFilter: 'blur(12px)',
+              background: 'rgba(255,255,255,0.04)',
+              '&:hover': {
+                borderColor: 'rgba(55,140,146,0.7)',
+                bgcolor: 'rgba(55,140,146,0.1)',
+                transform: 'translateY(-2px)',
               },
-              transition: "all 0.3s",
+              transition: 'all 0.3s',
             }}
           >
             Visit Help Center

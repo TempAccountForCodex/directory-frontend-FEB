@@ -28,11 +28,11 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
   useParams: () => mockParams,
   useSearchParams: () => [new URLSearchParams(), vi.fn()],
-  Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => (
-    <a href={to} {...props}>
+  Link: React.forwardRef(({ to, children, ...props }: any, ref: any) => (
+    <a ref={ref} href={to} {...props}>
       {children}
     </a>
-  ),
+  )),
   useLocation: () => ({ pathname: '/docs/category/getting-started' }),
 }));
 
@@ -67,11 +67,29 @@ vi.mock('../../../components/Docs/TableOfContents', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Mock axios
+// Mock apiClient (the Docs pages import from ../../api/client, not axios)
 // ---------------------------------------------------------------------------
-vi.mock('axios');
-import axios from 'axios';
-const mockedAxios = vi.mocked(axios, true);
+const { mockApiClient } = vi.hoisted(() => {
+  return {
+    mockApiClient: {
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(),
+      defaults: { headers: { common: {} }, withCredentials: true },
+      interceptors: {
+        request: { use: vi.fn(), eject: vi.fn() },
+        response: { use: vi.fn(), eject: vi.fn() },
+      },
+    },
+  };
+});
+
+vi.mock('../../../api/client', () => ({
+  apiClient: mockApiClient,
+  default: mockApiClient,
+}));
 
 // ---------------------------------------------------------------------------
 // Import pages under test
@@ -122,7 +140,7 @@ const mockArticle = mockArticles[0];
 // ---------------------------------------------------------------------------
 describe('DocsHome', () => {
   it('renders 4 section cards after loading', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({ data: { sections: mockSections } });
+    mockApiClient.get.mockResolvedValueOnce({ data: { sections: mockSections } });
 
     render(<DocsHome />);
 
@@ -138,7 +156,7 @@ describe('DocsHome', () => {
   }, 15000);
 
   it('shows loading state while fetching sections', () => {
-    mockedAxios.get = vi.fn(() => new Promise(() => {}));
+    mockApiClient.get.mockImplementation(() => new Promise(() => {}));
     const { container } = render(<DocsHome />);
     // Should show skeletons
     const skeletons =
@@ -149,7 +167,7 @@ describe('DocsHome', () => {
   });
 
   it('shows article counts on section cards', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({ data: { sections: mockSections } });
+    mockApiClient.get.mockResolvedValueOnce({ data: { sections: mockSections } });
 
     render(<DocsHome />);
 
@@ -159,7 +177,7 @@ describe('DocsHome', () => {
   });
 
   it('navigates to category page on card click', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({ data: { sections: mockSections } });
+    mockApiClient.get.mockResolvedValueOnce({ data: { sections: mockSections } });
 
     render(<DocsHome />);
 
@@ -188,7 +206,7 @@ describe('DocsList', () => {
   });
 
   it('renders article list with breadcrumbs', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({
+    mockApiClient.get.mockResolvedValueOnce({
       data: { articles: mockArticles, total: 2, page: 1, totalPages: 1 },
     });
 
@@ -203,7 +221,7 @@ describe('DocsList', () => {
   });
 
   it('shows empty state when no articles in category', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({
+    mockApiClient.get.mockResolvedValueOnce({
       data: { articles: [], total: 0, page: 1, totalPages: 0 },
     });
 
@@ -215,7 +233,7 @@ describe('DocsList', () => {
   });
 
   it('shows pagination when totalPages > 1', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({
+    mockApiClient.get.mockResolvedValueOnce({
       data: {
         articles: mockArticles,
         total: 20,
@@ -247,7 +265,7 @@ describe('DocsArticle', () => {
   });
 
   it('renders article with Markdown content', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({ data: { article: mockArticle } });
+    mockApiClient.get.mockResolvedValueOnce({ data: { article: mockArticle } });
 
     render(<DocsArticle />);
 
@@ -257,7 +275,7 @@ describe('DocsArticle', () => {
   });
 
   it('shows article title in breadcrumbs', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({ data: { article: mockArticle } });
+    mockApiClient.get.mockResolvedValueOnce({ data: { article: mockArticle } });
 
     render(<DocsArticle />);
 
@@ -271,7 +289,7 @@ describe('DocsArticle', () => {
   });
 
   it("shows 'Was this helpful?' feedback buttons", async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({ data: { article: mockArticle } });
+    mockApiClient.get.mockResolvedValueOnce({ data: { article: mockArticle } });
 
     render(<DocsArticle />);
 
@@ -286,7 +304,7 @@ describe('DocsArticle', () => {
   });
 
   it('shows TableOfContents for article content', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValueOnce({ data: { article: mockArticle } });
+    mockApiClient.get.mockResolvedValueOnce({ data: { article: mockArticle } });
 
     render(<DocsArticle />);
 
@@ -296,7 +314,7 @@ describe('DocsArticle', () => {
   });
 
   it('handles article not found (404)', async () => {
-    mockedAxios.get = vi.fn().mockRejectedValueOnce({
+    mockApiClient.get.mockRejectedValueOnce({
       response: { status: 404, data: { message: 'Article not found' } },
     });
 
@@ -308,7 +326,7 @@ describe('DocsArticle', () => {
   });
 
   it('shows loading state while fetching article', () => {
-    mockedAxios.get = vi.fn(() => new Promise(() => {}));
+    mockApiClient.get.mockImplementation(() => new Promise(() => {}));
     const { container } = render(<DocsArticle />);
     // Some loading indicator should be visible
     expect(container.firstChild).toBeInTheDocument();

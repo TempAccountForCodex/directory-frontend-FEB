@@ -23,7 +23,7 @@ import {
   Alert,
   Skeleton,
 } from '@mui/material';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 
 import DashboardSelect from './shared/DashboardSelect';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
@@ -68,7 +68,6 @@ function revertCSSVars(el, tokens) {
 // ThemeSwitcher Component
 // ---------------------------------------------------------------------------
 
-const API_BASE = '/api';
 
 const ThemeSwitcher = memo(({
   websiteId,
@@ -96,7 +95,7 @@ const ThemeSwitcher = memo(({
   const fetchThemes = useCallback(async () => {
     setLoadingThemes(true);
     try {
-      const { data } = await axios.get(`${API_BASE}/websites/${websiteId}/themes`);
+      const { data } = await apiClient.get(`/websites/${websiteId}/themes`);
       const list = Array.isArray(data) ? data : [];
       setThemes(list);
       // Store original theme tokens
@@ -153,7 +152,7 @@ const ThemeSwitcher = memo(({
     if (!previewingThemeId) return;
     setApplying(true);
     try {
-      await axios.patch(`${API_BASE}/websites/${websiteId}/themes/${previewingThemeId}/default`);
+      await apiClient.patch(`/websites/${websiteId}/themes/${previewingThemeId}/default`);
       // Update stored original tokens to the newly applied theme
       const appliedTheme = themes.find((t) => t.id === previewingThemeId);
       if (appliedTheme) {

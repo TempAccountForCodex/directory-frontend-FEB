@@ -31,6 +31,7 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import DOMPurify from 'dompurify';
 import { BlockWrapper } from '../BlockWrapper';
+import { API_URL } from '@/config/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -108,7 +109,6 @@ function getFieldColorSx(variant: string, color: string): object {
 
 // ── API URL ───────────────────────────────────────────────────────────────
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
@@ -656,3 +656,4 @@ const ContactBlock = React.memo(function ContactBlock({
 });
 
 export default ContactBlock;
+

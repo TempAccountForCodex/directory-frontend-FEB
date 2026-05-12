@@ -26,15 +26,13 @@ import {
   ArrowRight as ArrowIcon,
   X as CloseIcon,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useNavigate } from 'react-router-dom';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { DashboardInput } from './shared';
 import { getSearchableFeatures, getQuickActions } from './searchConfig';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const SearchPopup = ({ open, onClose }) => {
   const { actualTheme } = useCustomTheme();
@@ -135,8 +133,8 @@ const SearchPopup = ({ open, onClose }) => {
       );
 
       // Single unified backend search call
-      const searchRes = await axios
-        .get(`${API_URL}/search?q=${encodeURIComponent(query)}&limit=5`, {
+      const searchRes = await apiClient
+        .get(`/search?q=${encodeURIComponent(query)}&limit=5`, {
           withCredentials: true,
         })
         .catch(() => ({

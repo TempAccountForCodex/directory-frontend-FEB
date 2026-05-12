@@ -25,8 +25,8 @@ import {
   DashboardActionButton,
   DashboardCancelButton,
 } from '../Dashboard/shared';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface PageStatus {
   pageId: number;
@@ -700,3 +700,4 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
 AIGenerationProgress.displayName = 'AIGenerationProgress';
 
 export default AIGenerationProgress;
+

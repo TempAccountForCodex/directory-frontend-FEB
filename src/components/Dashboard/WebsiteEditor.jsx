@@ -3,16 +3,15 @@
 // keyboard shortcuts, inline editing, governance UI (ApprovalStatusBanner, SectionLockIndicator).
 //
 // Block identity: WebsiteEditor uses database IDs exclusively.
-// The preview-vs-persisted duality (CustomizeWebsite legacy) does not apply here.
 //
 // Page reorder: Uses pages from API, reordered via PATCH /api/blocks/reorder
-// Full-order editing (LayoutPanel) is not yet integrated — CustomizeWebsite legacy.
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { apiClient } from "../../api/client";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
+  ButtonBase,
   Container,
   Typography,
   Button,
@@ -28,102 +27,207 @@ import {
   Alert,
   IconButton,
   alpha,
+  Menu,
+  MenuItem,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  MenuItem,
+  FormControl,
+  Select,
   Switch,
   FormControlLabel,
-  Divider,
   Paper,
+  Tooltip,
   SpeedDial,
   SpeedDialAction,
   SpeedDialIcon,
   useMediaQuery,
   useTheme,
-} from '@mui/material';
+  ClickAwayListener,
+} from "@mui/material";
 import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
   Eye,
   House,
+  Image as ImageIcon,
   Layers,
   Palette,
   Pencil,
   Plus,
+  Redo2,
+  Save,
   Trash2,
-} from 'lucide-react';
-import { getDashboardColors } from '../../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-import { PreviewProvider, usePreview } from '../../context/PreviewContext';
-import PreviewPanel from '../WebsiteEditor/PreviewPanel';
-import { DashboardInput, DashboardSelect, ConfirmationDialog, BottomSheet } from './shared';
-import RegenerateButton from '../Editor/RegenerateButton';
-import DraggableBlockList from '../Editor/DraggableBlockList';
-import { useAutosave } from '../../hooks/useAutosave';
-import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
-import { useLocalStorageBackup } from '../../hooks/useLocalStorageBackup';
-import { useCollaborativeEditor } from '../../hooks/useCollaborativeEditor';
-import { useAuth } from '../../context/AuthContext';
-import { usePermissionContext, useWebsiteRole } from '../../context/PermissionContext';
-import SaveStatus from '../Editor/SaveStatus';
-import ConflictModal from '../Editor/ConflictModal';
-import RecoveryModal from '../Editor/RecoveryModal';
-import ConnectionStatus from '../Editor/ConnectionStatus';
-import BlockLibrary from '../Editor/BlockLibrary';
-import InlineTextEditor from '../Editor/InlineTextEditor';
-import ResponsiveEditorLayout from '../Editor/ResponsiveEditorLayout';
-import MobileActionBar from '../Editor/MobileActionBar';
-import MobileFAB from '../Editor/MobileFAB';
-import ThemeManager from './ThemeManager';
-import ApprovalStatusBanner from './ApprovalStatusBanner';
+  Undo2,
+  Upload,
+  Ellipsis,
+} from "lucide-react";
+import { getDashboardColors } from "../../styles/dashboardTheme";
+import { PreviewProvider, usePreview } from "../../context/PreviewContext";
+import PreviewPanel from "../WebsiteEditor/PreviewPanel";
+import { DashboardInput, ConfirmationDialog, BottomSheet } from "./shared";
+import RegenerateButton from "../Editor/RegenerateButton";
+import DraggableBlockList from "../Editor/DraggableBlockList";
+import FormGenerator from "../FormGenerator";
+import { useAutosave } from "../../hooks/useAutosave";
+import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
+import { useLocalStorageBackup } from "../../hooks/useLocalStorageBackup";
+import { useCollaborativeEditor } from "../../hooks/useCollaborativeEditor";
+import { useAuth } from "../../context/AuthContext";
+import {
+  usePermissionContext,
+  useWebsiteRole,
+} from "../../context/PermissionContext";
+import SaveStatus from "../Editor/SaveStatus";
+import ConflictModal from "../Editor/ConflictModal";
+import RecoveryModal from "../Editor/RecoveryModal";
+import ConnectionStatus from "../Editor/ConnectionStatus";
+import BlockLibrary from "../Editor/BlockLibrary";
+import InlineTextEditor from "../Editor/InlineTextEditor";
+import EditorStyleToolbar from "../Editor/EditorStyleToolbar";
+import EditorSectionStyleToolbar from "../Editor/EditorSectionStyleToolbar";
+import ResponsiveEditorLayout from "../Editor/ResponsiveEditorLayout";
+import MobileActionBar from "../Editor/MobileActionBar";
+import MobileFAB from "../Editor/MobileFAB";
+import ThemeManager from "./ThemeManager";
+import FrontendTemplateThemePanel, {
+  getDefaultTemplateThemeSelection,
+  getTemplateThemeSettings,
+  resolveTemplateThemeSelection,
+  supportsTemplateThemeCustomization,
+} from "./FrontendTemplateThemePanel";
+import ApprovalStatusBanner from "./ApprovalStatusBanner";
 // SectionLockIndicator is available at ./SectionLockIndicator for per-block lock UI
 // when DraggableBlockList is extended to support render props for block items.
-import { useShortcutManager } from '../../hooks/useShortcutManager';
+import { useShortcutManager } from "../../hooks/useShortcutManager";
+import { useHistory } from "../../hooks/useHistory";
+import {
+  buildFrontendTemplateEditorPages,
+  buildTemplatePreviewBusinessData,
+  inferFrontendTemplateIdFromPages,
+  injectTemplateThemeSettingsIntoBlocks,
+  isSyntheticTemplatePageId,
+  readTemplateThemeSettingsFromPages,
+  supportsFrontendTemplateEditor,
+} from "../../templates/frontendTemplateEditorSupport";
+import { getStoredWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
+import { color } from "framer-motion";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
-const getWebsiteId = (website) =>
-  website?.id ?? website?.websiteId ?? website?.website_id ?? website?.website?.id;
-
-const isSameWebsiteId = (left, right) => String(left) === String(right);
-
-const extractWebsiteList = (payload) => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.websites)) return payload.data.websites;
-  if (Array.isArray(payload?.websites)) return payload.websites;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.results)) return payload.results;
-  return [];
+const EDITABLE_STYLE_FIELD_MAP = {
+  title: { styleKey: "titleStyle", label: "Heading" },
+  subtitle: { styleKey: "subtitleStyle", label: "Paragraph" },
+  text: { styleKey: "textStyle", label: "Paragraph" },
+  heading: { styleKey: "headingStyle", label: "Heading" },
+  subheading: { styleKey: "subheadingStyle", label: "Paragraph" },
+  description: { styleKey: "descriptionStyle", label: "Paragraph" },
+  buttonText: { styleKey: "buttonTextStyle", label: "Button text" },
+  ctaText: { styleKey: "ctaTextStyle", label: "Button text" },
+  primaryCtaText: { styleKey: "ctaTextStyle", label: "Button text" },
+  brandName: { styleKey: "brandNameStyle", label: "Brand name" },
+  copyright: { styleKey: "copyrightStyle", label: "Footer text" },
 };
 
-const unwrapWebsiteResponse = (payload) =>
-  payload?.data?.website || payload?.data || payload?.website || payload;
-
-const resolveWebsiteIdForAction = async (website) => {
-  return getWebsiteId(website);
+const DEFAULT_TEXT_STYLE = {
+  fontFamily: '"Inter", "Segoe UI", sans-serif',
+  fontSize: "16px",
+  color: "#111827",
+  fontWeight: "400",
+  fontStyle: "normal",
+  textDecoration: "none",
+  textAlign: "left",
 };
+
+const DEFAULT_SECTION_STYLE = {
+  backgroundColor: "transparent",
+  backgroundImageUrl: "",
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat",
+  paddingTop: "0px",
+  paddingBottom: "0px",
+  marginTop: "0px",
+  marginBottom: "0px",
+};
+
+const DEFAULT_IMAGE_VALUE = {
+  src: "",
+  objectFit: "cover",
+  borderRadius: "0px",
+  borderWidth: "0px",
+  borderColor: "#e5e7eb",
+};
+
+const getSectionStyleKey = (selection) => selection?.styleKey || "sectionStyle";
+
+const getEditableStyleConfig = (fieldPath) =>
+  EDITABLE_STYLE_FIELD_MAP[fieldPath] || {
+    styleKey: `${fieldPath}Style`,
+    label: fieldPath,
+  };
+
+const humanizeLabel = (value = "") =>
+  String(value)
+    .split(".")
+    .slice(-1)[0]
+    .replace(/([A-Z])/g, " $1")
+    .replace(/[_-]+/g, " ")
+    .replace(/^./, (char) => char.toUpperCase());
+
+const looksLikeImageSource = (value = "") =>
+  /^(https?:\/\/|\/)/i.test(value) ||
+  /^data:image\//i.test(value) ||
+  /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i.test(value);
 
 // REMOVED: BLOCK_TYPES hardcoded allowlist. Block selection now exclusively
 // uses BlockLibrary (fetches from /api/content-types/blocks with all 34 types).
+
+const MAX_CTA_TEXT_LENGTH = 24;
+
+const truncateText = (value, maxLength) => {
+  if (typeof value !== "string") return value;
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
+};
+
+const sanitizeBlockForSave = (block) => {
+  if (!block?.content || typeof block.content !== "object") {
+    return block;
+  }
+
+  if (block.blockType !== "CTA") {
+    return block;
+  }
+
+  return {
+    ...block,
+    content: {
+      ...block.content,
+      ctaText: truncateText(block.content.ctaText, MAX_CTA_TEXT_LENGTH),
+    },
+  };
+};
 
 const WebsiteEditorInner = () => {
   const { websiteId } = useParams();
   const navigate = useNavigate();
   const muiTheme = useTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
-  const { actualTheme } = useCustomTheme();
-  const colors = getDashboardColors(actualTheme);
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
+  const editorThemeMode = "light";
+  const isEditorDark = editorThemeMode === "dark";
+  const colors = getDashboardColors(editorThemeMode);
+  const editorText = "#111827";
+  const editorMutedText = "#374151";
+  const editorLabelText = "#4b5563";
 
   const [website, setWebsite] = useState(null);
   const [pages, setPages] = useState([]);
+  const [persistedPages, setPersistedPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState(null);
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [blockError, setBlockError] = useState(null);
 
   // Preview context bridge — Step 4.11
   const { updatePreviewContent, refreshPreview } = usePreview();
@@ -135,96 +239,302 @@ const WebsiteEditorInner = () => {
   const [blockLibraryOpen, setBlockLibraryOpen] = useState(false);
 
   // Theme Manager state — Step 9.21
-  const [showThemeManager, setShowThemeManager] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState("blocks");
+  const [templateThemeSelection, setTemplateThemeSelection] = useState(null);
 
   // Inline editing state — Step 9.24
   const [inlineEditState, setInlineEditState] = useState(null);
+  const [selectedEditableElement, setSelectedEditableElement] = useState(null);
+  const [selectedImageElement, setSelectedImageElement] = useState(null);
+  const [selectedSectionElement, setSelectedSectionElement] = useState(null);
+  const [activeToolbarMode, setActiveToolbarMode] = useState("text");
+  const [uploadedLibraryImages, setUploadedLibraryImages] = useState([]);
+  const [previewContextMenu, setPreviewContextMenu] = useState(null);
+  const [selectedPreviewTarget, setSelectedPreviewTarget] = useState(null);
   const iframeRef = useRef(null);
+  const previewContextMenuRef = useRef(null);
+  const imageLibraryInputRef = useRef(null);
+  const imageReplaceInputRef = useRef(null);
+  const previewSelectionNonceRef = useRef(0);
+  const resolvedFrontendTemplateId =
+    website?.frontendTemplateId ||
+    getStoredWebsiteFrontendTemplateId(website?.id || websiteId) ||
+    null;
+  const isLocalTemplateEditorPage = !!selectedPage?.localOnly;
+  const supportsLocalTemplateEditor = supportsFrontendTemplateEditor(
+    resolvedFrontendTemplateId,
+  );
+  const supportsTemplateThemeSidebar = supportsTemplateThemeCustomization(
+    resolvedFrontendTemplateId,
+  );
+  const persistedTemplateThemeSettings = useMemo(
+    () => readTemplateThemeSettingsFromPages(pages),
+    [pages],
+  );
+  const localTemplateHydratedPageRef = useRef(null);
 
   // Dialogs
   const [pageDialogOpen, setPageDialogOpen] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
+  const [headerMenuAnchorEl, setHeaderMenuAnchorEl] = useState(null);
 
   // Forms
   const [pageForm, setPageForm] = useState({
-    title: '',
-    path: '',
+    title: "",
+    path: "",
     isHome: false,
     isPublished: true,
   });
-  const [blockForm, setBlockForm] = useState({ blockType: '', content: {} });
+  const [blockForm, setBlockForm] = useState({ blockType: "", content: {} });
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [formHasErrors, setFormHasErrors] = useState(false);
 
   // AI session state
   const [hasAISessions, setHasAISessions] = useState(false);
   const [aiQuestionnaireData, setAiQuestionnaireData] = useState({});
+  const {
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+    push: pushHistory,
+    clear: clearHistory,
+  } = useHistory();
+  const suppressHistoryRef = useRef(true);
+  const historyBootstrappedRef = useRef(false);
+  const pendingHistoryDescriptionRef = useRef("Edited blocks");
+  const activeHistoryPageRef = useRef(null);
 
   // Autosave payload — derived from blocks (single source of truth)
-  const autosavePayload = useMemo(() => ({ blocks }), [blocks]);
+  const autosavePayload = useMemo(
+    () => ({ blocks: blocks.map(sanitizeBlockForSave) }),
+    [blocks],
+  );
   const isLoadingRef = useRef(true);
 
   // ETag + updatedAt refs for conflict detection (Step 5.9)
   const etagRef = useRef(null);
   const expectedUpdatedAtRef = useRef(null);
+  const localConflictRetryRef = useRef(false);
+  const isSoloEditingSessionRef = useRef(true);
+  const templatePersistencePage = useMemo(() => {
+    if (!supportsLocalTemplateEditor) {
+      return null;
+    }
+
+    return (
+      persistedPages.find((page) => page.isHome) ||
+      persistedPages.find((page) => page.path === "/") ||
+      persistedPages[0] ||
+      null
+    );
+  }, [persistedPages, supportsLocalTemplateEditor]);
 
   // Autosave callback — PUT blocks to API with ETag conflict detection
-  const handleAutosave = useCallback(async (data) => {
-    if (!selectedPage?.id || !websiteId) {
-      throw new Error('No page selected');
-    }
-
-    // Build headers — include If-Match when we have a stored ETag
-    const headers = {};
-    if (etagRef.current) {
-      headers['If-Match'] = etagRef.current;
-    }
-
-    try {
-      const response = await axios.put(
-        `${API_URL}/websites/${websiteId}/pages/${selectedPage.id}/blocks`,
-        {
-          blocks: data.blocks.map((b, idx) => ({
-            blockType: b.blockType,
-            content: b.content,
-            variant: b.variant,
-            sortOrder: idx,
-            isVisible: b.isVisible,
-          })),
-          ...(expectedUpdatedAtRef.current ? { expectedUpdatedAt: expectedUpdatedAtRef.current } : {}),
-        },
-        { headers }
-      );
-
-      // Store ETag from response for next request
-      if (response.headers?.etag) {
-        etagRef.current = response.headers.etag;
+  const handleAutosave = useCallback(
+    async (data) => {
+      if (!selectedPage?.id || !websiteId) {
+        throw new Error("No page selected");
       }
 
-      // Store updatedAt for next expectedUpdatedAt fallback
-      const updatedAt = response.data?.data?.updatedAt;
-      if (updatedAt) {
-        expectedUpdatedAtRef.current = updatedAt;
-      }
+      let blocksToSave = [];
 
-      // Step 4.11: Bump preview revision so PreviewPanel re-renders after save
-      refreshPreview();
+      try {
+        const normalizedBlocks = data.blocks.map(sanitizeBlockForSave);
+        const resolvedThemeSettings = templateThemeSelection
+          ? getTemplateThemeSettings(templateThemeSelection)
+          : persistedTemplateThemeSettings;
+        blocksToSave = selectedPage?.localOnly
+          ? injectTemplateThemeSettingsIntoBlocks(
+              normalizedBlocks,
+              resolvedThemeSettings,
+            )
+          : normalizedBlocks;
+        if (JSON.stringify(blocksToSave) !== JSON.stringify(blocks)) {
+          setBlocks(blocksToSave);
+        }
 
-      return { updatedAt };
-    } catch (error) {
-      // Handle 412 Precondition Failed — conflict detected
-      if (error?.response?.status === 412) {
-        return {
-          conflict: true,
-          serverData: error.response.data.serverData,
-          serverUpdatedAt: error.response.data.serverUpdatedAt,
-        };
+        let effectivePageId = selectedPage?.localOnly
+          ? templatePersistencePage?.id
+          : selectedPage.id;
+        if (!effectivePageId && selectedPage?.localOnly) {
+          const createdPageResponse = await apiClient.post(
+            `/websites/${websiteId}/pages`,
+            {
+              title: selectedPage.title,
+              path: selectedPage.path,
+              isHome: selectedPage.isHome,
+              isPublished: true,
+            },
+          );
+          const createdPage =
+            createdPageResponse.data?.data || createdPageResponse.data;
+          effectivePageId = createdPage?.id;
+          if (effectivePageId) {
+            setPersistedPages((prevPages) => [
+              ...prevPages,
+              { ...createdPage, blocks: [] },
+            ]);
+          }
+        }
+        if (!effectivePageId) {
+          throw new Error("No persisted template page is available for saving");
+        }
+
+        // Build headers — include If-Match when we have a stored ETag
+        const headers = {};
+        if (etagRef.current) {
+          headers["If-Match"] = etagRef.current;
+        }
+
+        const response = await apiClient.put(
+          `/websites/${websiteId}/pages/${effectivePageId}/blocks`,
+          {
+            blocks: blocksToSave.map((b, idx) => ({
+              blockType: b.blockType,
+              content: b.content,
+              variant: b.variant,
+              sortOrder: idx,
+              isVisible: b.isVisible,
+            })),
+            ...(expectedUpdatedAtRef.current
+              ? { expectedUpdatedAt: expectedUpdatedAtRef.current }
+              : {}),
+          },
+          { headers },
+        );
+
+        // Store ETag from response for next request
+        if (response.headers?.etag) {
+          etagRef.current = response.headers.etag;
+        }
+
+        // Store updatedAt for next expectedUpdatedAt fallback
+        const updatedAt = response.data?.data?.updatedAt;
+        if (updatedAt) {
+          expectedUpdatedAtRef.current = updatedAt;
+        }
+
+        if (selectedPage?.localOnly && resolvedThemeSettings?.primaryColor) {
+          try {
+            const websiteResponse = await apiClient.put(
+              `/websites/${websiteId}`,
+              {
+                primaryColor: resolvedThemeSettings.primaryColor,
+                secondaryColor:
+                  resolvedThemeSettings.secondaryColor ||
+                  website?.secondaryColor ||
+                  resolvedThemeSettings.primaryColor,
+              },
+            );
+            const updatedWebsite =
+              websiteResponse.data?.data || websiteResponse.data || {};
+            setWebsite((prev) =>
+              prev ? { ...prev, ...updatedWebsite } : prev,
+            );
+          } catch {
+            setWebsite((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    primaryColor: resolvedThemeSettings.primaryColor,
+                    secondaryColor:
+                      resolvedThemeSettings.secondaryColor ||
+                      prev.secondaryColor ||
+                      resolvedThemeSettings.primaryColor,
+                  }
+                : prev,
+            );
+          }
+        }
+
+        if (selectedPage?.localOnly) {
+          setPersistedPages((prevPages) =>
+            prevPages.map((page) =>
+              page.id === effectivePageId
+                ? { ...page, blocks: blocksToSave }
+                : page,
+            ),
+          );
+        }
+
+        localConflictRetryRef.current = false;
+
+        // Step 4.11: Bump preview revision so PreviewPanel re-renders after save
+        refreshPreview();
+
+        return { updatedAt };
+      } catch (error) {
+        // Handle 412 Precondition Failed — conflict detected
+        if (error?.response?.status === 412) {
+          if (!localConflictRetryRef.current) {
+            localConflictRetryRef.current = true;
+            etagRef.current = null;
+            expectedUpdatedAtRef.current = null;
+
+            const retryPageId = selectedPage?.localOnly
+              ? templatePersistencePage?.id
+              : selectedPage.id;
+            if (!retryPageId) {
+              throw new Error(
+                "No persisted template page is available for retry save",
+              );
+            }
+
+            const retryResponse = await apiClient.put(
+              `/websites/${websiteId}/pages/${retryPageId}/blocks`,
+              {
+                blocks: blocksToSave.map((b, idx) => ({
+                  blockType: b.blockType,
+                  content: b.content,
+                  variant: b.variant,
+                  sortOrder: idx,
+                  isVisible: b.isVisible,
+                })),
+              },
+            );
+
+            if (retryResponse.headers?.etag) {
+              etagRef.current = retryResponse.headers.etag;
+            }
+
+            const retryUpdatedAt = retryResponse.data?.data?.updatedAt;
+            if (retryUpdatedAt) {
+              expectedUpdatedAtRef.current = retryUpdatedAt;
+            }
+
+            localConflictRetryRef.current = false;
+            refreshPreview();
+
+            return { updatedAt: retryUpdatedAt };
+          }
+
+          localConflictRetryRef.current = false;
+          return {
+            conflict: true,
+            serverData: error.response.data.serverData,
+            serverUpdatedAt: error.response.data.serverUpdatedAt,
+          };
+        }
+        // Re-throw non-412 errors for useAutosave error handling
+        localConflictRetryRef.current = false;
+        throw error;
       }
-      // Re-throw non-412 errors for useAutosave error handling
-      throw error;
-    }
-  }, [selectedPage?.id, websiteId, refreshPreview]);
+    },
+    [
+      selectedPage?.id,
+      selectedPage?.localOnly,
+      websiteId,
+      refreshPreview,
+      blocks,
+      templateThemeSelection,
+      persistedTemplateThemeSettings,
+      templatePersistencePage?.id,
+      website?.secondaryColor,
+    ],
+  );
 
   const {
     hasUnsavedChanges,
@@ -233,12 +543,43 @@ const WebsiteEditorInner = () => {
     triggerSave,
     resolveConflict,
   } = useAutosave({
-    entityType: 'page',
+    entityType: "page",
     entityId: selectedPage?.id ?? null,
     data: autosavePayload,
     onSave: handleAutosave,
     isLoading: isLoadingRef.current,
+    autoSaveEnabled: false,
   });
+
+  const triggerManualSave = useCallback(async () => {
+    localConflictRetryRef.current = false;
+    await triggerSave();
+  }, [triggerSave]);
+
+  useEffect(() => {
+    if (!supportsTemplateThemeSidebar) {
+      setTemplateThemeSelection(null);
+      if (sidebarMode === "theme") {
+        setSidebarMode("blocks");
+      }
+      return;
+    }
+
+    setTemplateThemeSelection(
+      (prev) =>
+        prev ||
+        getDefaultTemplateThemeSelection(resolvedFrontendTemplateId, {
+          ...website,
+          templateThemeSettings: persistedTemplateThemeSettings,
+        }),
+    );
+  }, [
+    supportsTemplateThemeSidebar,
+    website,
+    sidebarMode,
+    persistedTemplateThemeSettings,
+    resolvedFrontendTemplateId,
+  ]);
 
   // Unsaved changes warning — intercepts client-side navigation
   // skipBeforeUnload=true because useAutosave already handles beforeunload
@@ -249,26 +590,21 @@ const WebsiteEditorInner = () => {
     saveAndNavigate,
   } = useUnsavedChanges({
     hasUnsavedChanges,
-    onSaveBeforeLeave: triggerSave,
+    onSaveBeforeLeave: triggerManualSave,
     skipBeforeUnload: true,
     saveStatus,
   });
 
   // LocalStorage backup — saves unsaved data on beforeunload, detects on mount (Step 5.10)
   const backupData = useMemo(() => ({ blocks }), [blocks]);
-  const {
-    hasBackup,
-    backupEntry,
-    restoreBackup,
-    discardBackup,
-    clearBackup,
-  } = useLocalStorageBackup({
-    websiteId: websiteId ? Number(websiteId) : null,
-    pageId: selectedPage?.id ?? null,
-    currentData: backupData,
-    hasUnsavedChanges,
-    isLoading: loading,
-  });
+  const { hasBackup, backupEntry, restoreBackup, discardBackup, clearBackup } =
+    useLocalStorageBackup({
+      websiteId: websiteId ? Number(websiteId) : null,
+      pageId: selectedPage?.id ?? null,
+      currentData: backupData,
+      hasUnsavedChanges,
+      isLoading: loading,
+    });
 
   const handleRestoreBackup = useCallback(() => {
     const data = restoreBackup();
@@ -279,7 +615,7 @@ const WebsiteEditorInner = () => {
 
   // Clear backup after successful autosave
   useEffect(() => {
-    if (saveStatus === 'saved') {
+    if (saveStatus === "saved") {
       clearBackup();
     }
   }, [saveStatus, clearBackup]);
@@ -287,7 +623,8 @@ const WebsiteEditorInner = () => {
   // Collaborative editing — presence, locks, connection status (Step 7.5)
   const { user } = useAuth();
   const { setCurrentWebsite } = usePermissionContext();
-  const websiteRole = useWebsiteRole(websiteId ? Number(websiteId) : undefined) || 'OWNER';
+  const websiteRole =
+    useWebsiteRole(websiteId ? Number(websiteId) : undefined) || "OWNER";
 
   // Set active website in PermissionContext for permission hooks (Step 7.2)
   useEffect(() => {
@@ -308,49 +645,99 @@ const WebsiteEditorInner = () => {
     broadcastCursor,
     requestEditAccess,
   } = useCollaborativeEditor({
-    pageId: selectedPage ? String(selectedPage.id) : '',
+    pageId: selectedPage ? String(selectedPage.id) : "",
     websiteId: websiteId ? Number(websiteId) : 0,
     currentUserId: user?.id ?? 0,
     currentUserRole: websiteRole,
   });
+
+  const isSoloEditingSession = activeUsers.length <= 1;
+
+  useEffect(() => {
+    isSoloEditingSessionRef.current = isSoloEditingSession;
+  }, [isSoloEditingSession]);
 
   // Keyboard shortcuts — Step 9.23
   const { registerShortcut, unregisterShortcut } = useShortcutManager();
 
   useEffect(() => {
     registerShortcut({
-      key: 'ctrl+s',
-      action: (e) => { e.preventDefault(); triggerSave(); },
-      description: 'Save changes',
-      category: 'Editing',
-      scope: 'global',
+      key: "ctrl+s",
+      action: (e) => {
+        e.preventDefault();
+        triggerManualSave();
+      },
+      description: "Save changes",
+      category: "Editing",
+      scope: "global",
     });
     registerShortcut({
-      key: 'ctrl+b',
-      action: (e) => { e.preventDefault(); setBlockLibraryOpen((prev) => !prev); },
-      description: 'Toggle block library',
-      category: 'Blocks',
-      scope: 'editor',
+      key: "ctrl+b",
+      action: (e) => {
+        e.preventDefault();
+        setBlockLibraryOpen((prev) => !prev);
+      },
+      description: "Toggle block library",
+      category: "Blocks",
+      scope: "editor",
     });
     registerShortcut({
-      key: 'escape',
-      action: () => { setEditingBlock(null); setInlineEditState(null); },
-      description: 'Deselect block / cancel inline edit',
-      category: 'Editing',
-      scope: 'editor',
+      key: "escape",
+      action: () => {
+        setEditingBlock(null);
+        setInlineEditState(null);
+      },
+      description: "Deselect block / cancel inline edit",
+      category: "Editing",
+      scope: "editor",
     });
     return () => {
-      unregisterShortcut('ctrl+s');
-      unregisterShortcut('ctrl+b');
-      unregisterShortcut('escape');
+      unregisterShortcut("ctrl+s");
+      unregisterShortcut("ctrl+b");
+      unregisterShortcut("escape");
     };
-  }, [registerShortcut, unregisterShortcut, triggerSave]);
+  }, [
+    registerShortcut,
+    unregisterShortcut,
+    triggerManualSave,
+    isLocalTemplateEditorPage,
+  ]);
 
   // Sync editor state into PreviewContext — Step 4.11
   // Bridges blocks, selected page, and website metadata so PreviewPanel
   // can render a live srcdoc preview without network requests.
   useEffect(() => {
     if (!selectedPage?.id || !websiteId) return;
+    const previewPages = pages.map((page) =>
+      page.id === selectedPage.id ? { ...page, blocks } : page,
+    );
+    const baseTemplateDataOverride = supportsLocalTemplateEditor
+      ? buildTemplatePreviewBusinessData(
+          resolvedFrontendTemplateId,
+          website || {},
+          previewPages,
+        )
+      : null;
+    const resolvedThemeSelection = templateThemeSelection
+      ? resolveTemplateThemeSelection(templateThemeSelection)
+      : null;
+    const templateDataOverride = baseTemplateDataOverride
+      ? {
+          ...baseTemplateDataOverride,
+          ...(resolvedThemeSelection && {
+            primaryColor: resolvedThemeSelection.palette.primary,
+            secondaryColor: resolvedThemeSelection.palette.secondary,
+            themeSettings: {
+              ...(baseTemplateDataOverride.themeSettings || {}),
+              primaryColor: resolvedThemeSelection.palette.primary,
+              secondaryColor: resolvedThemeSelection.palette.secondary,
+              headingFont: resolvedThemeSelection.fontPack.headingFont,
+              bodyFont: resolvedThemeSelection.fontPack.bodyFont,
+            },
+          }),
+        }
+      : null;
+
     updatePreviewContent({
       websiteId: String(websiteId),
       pageId: String(selectedPage.id),
@@ -363,12 +750,96 @@ const WebsiteEditorInner = () => {
       })),
       websiteMeta: {
         name: website?.name,
+        slug: website?.slug,
+        frontendTemplateId: resolvedFrontendTemplateId,
+        businessName: website?.businessName,
+        primaryColor: website?.primaryColor,
+        secondaryColor: website?.secondaryColor,
+        metaDescription: website?.metaDescription,
+        shortDescription: website?.shortDescription,
+        logoUrl: website?.logoUrl,
+        fullAddress: website?.fullAddress,
+        tags: Array.isArray(website?.tags) ? website.tags : null,
+        templateDataOverride,
         colors: website?.colors,
         fonts: website?.fonts,
         theme: website?.theme,
       },
     });
-  }, [blocks, selectedPage, website, websiteId, updatePreviewContent]);
+  }, [
+    blocks,
+    selectedPage,
+    website,
+    websiteId,
+    updatePreviewContent,
+    pages,
+    supportsLocalTemplateEditor,
+    templateThemeSelection,
+    resolvedFrontendTemplateId,
+  ]);
+
+  useEffect(() => {
+    if (!selectedPage?.id) return;
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === selectedPage.id ? { ...page, blocks } : page,
+      ),
+    );
+    setSelectedPage((prevSelectedPage) =>
+      prevSelectedPage?.id === selectedPage.id
+        ? { ...prevSelectedPage, blocks }
+        : prevSelectedPage,
+    );
+  }, [blocks, selectedPage?.id]);
+
+  useEffect(() => {
+    if (
+      !iframeRef.current?.contentWindow ||
+      !selectedEditableElement?.blockId ||
+      !selectedEditableElement?.fieldPath
+    ) {
+      return;
+    }
+
+    iframeRef.current.contentWindow.postMessage(
+      {
+        type: "SELECT_EDITABLE",
+        blockId: selectedEditableElement.blockId,
+        fieldPath: selectedEditableElement.fieldPath,
+      },
+      window.location.origin,
+    );
+  }, [selectedEditableElement, blocks]);
+
+  useEffect(() => {
+    if (!selectedPage?.id) return;
+    if (activeHistoryPageRef.current !== selectedPage.id) {
+      activeHistoryPageRef.current = selectedPage.id;
+      suppressHistoryRef.current = true;
+      historyBootstrappedRef.current = false;
+      clearHistory();
+    }
+  }, [selectedPage?.id, clearHistory]);
+
+  useEffect(() => {
+    if (!selectedPage?.id) return;
+
+    if (suppressHistoryRef.current) {
+      suppressHistoryRef.current = false;
+      return;
+    }
+
+    if (!historyBootstrappedRef.current) {
+      pushHistory(blocks, "Initial page state");
+      historyBootstrappedRef.current = true;
+      return;
+    }
+
+    pushHistory(
+      blocks,
+      pendingHistoryDescriptionRef.current || "Edited blocks",
+    );
+  }, [blocks, selectedPage?.id, pushHistory]);
 
   useEffect(() => {
     if (websiteId) {
@@ -377,12 +848,14 @@ const WebsiteEditorInner = () => {
   }, [websiteId]);
 
   useEffect(() => {
-    if (selectedPage) {
+    if (selectedPage?.id) {
+      setBlockError(null);
       fetchBlocks(selectedPage.id);
     } else {
+      setBlockError(null);
       setBlocks([]);
     }
-  }, [selectedPage]);
+  }, [selectedPage?.id]);
 
   const fetchWebsiteData = async () => {
     try {
@@ -390,27 +863,103 @@ const WebsiteEditorInner = () => {
       setError(null);
 
       // Fetch website details
-      const websiteRes = await axios.get(`${API_URL}/websites/${websiteId}`, {
+      const websiteRes = await apiClient.get(`/websites/${websiteId}`, {
         headers: {},
       });
-      const websiteData = unwrapWebsiteResponse(websiteRes.data);
-      const resolvedWebsiteId = await resolveWebsiteIdForAction(websiteData);
-      if (resolvedWebsiteId && !isSameWebsiteId(resolvedWebsiteId, websiteId)) {
-        navigate(`/dashboard/websites/${resolvedWebsiteId}/editor`, { replace: true });
-        return;
-      }
-      setWebsite(websiteData);
+      const inferredFrontendTemplateId = inferFrontendTemplateIdFromPages(
+        websiteRes.data.data?.pages,
+      );
+      const normalizedWebsiteData = {
+        ...websiteRes.data.data,
+        frontendTemplateId:
+          websiteRes.data.data?.frontendTemplateId ||
+          inferredFrontendTemplateId ||
+          getStoredWebsiteFrontendTemplateId(
+            websiteRes.data.data?.id || websiteId,
+          ) ||
+          null,
+      };
+      setWebsite(normalizedWebsiteData);
 
-      // Fetch pages
-      const pagesRes = await axios.get(`${API_URL}/websites/${websiteId}/pages`, {
-        headers: {},
-      });
-      const pagesList = pagesRes.data.data || [];
+      let pagesList = [];
+      let nextPersistedPages = [];
+
+      try {
+        const pagesRes = await apiClient.get(`/websites/${websiteId}/pages`, {
+          headers: {},
+        });
+        nextPersistedPages = pagesRes.data.data || [];
+      } catch (pagesErr) {
+        nextPersistedPages = [];
+      }
+
+      const websiteFrontendTemplateId =
+        normalizedWebsiteData.frontendTemplateId;
+
+      if (supportsFrontendTemplateEditor(websiteFrontendTemplateId)) {
+        const persistedPagesWithBlocks = await Promise.all(
+          nextPersistedPages.map(async (page) => {
+            try {
+              const blocksRes = await apiClient.get(
+                `/pages/${page.id}/blocks`,
+                {
+                  headers: {},
+                },
+              );
+              if (page.isHome || page.path === "/") {
+                if (blocksRes.headers?.etag) {
+                  etagRef.current = blocksRes.headers.etag;
+                }
+                const pageUpdatedAt = blocksRes.data?.data?.updatedAt;
+                if (pageUpdatedAt) {
+                  expectedUpdatedAtRef.current = pageUpdatedAt;
+                }
+              }
+              return {
+                ...page,
+                blocks: blocksRes.data.data || [],
+              };
+            } catch {
+              return {
+                ...page,
+                blocks: [],
+              };
+            }
+          }),
+        );
+        nextPersistedPages = persistedPagesWithBlocks;
+        const inferredTemplateFromPersistedPages =
+          inferFrontendTemplateIdFromPages(persistedPagesWithBlocks);
+        if (!websiteFrontendTemplateId && inferredTemplateFromPersistedPages) {
+          normalizedWebsiteData.frontendTemplateId =
+            inferredTemplateFromPersistedPages;
+          setWebsite({ ...normalizedWebsiteData });
+        }
+        setPersistedPages(persistedPagesWithBlocks);
+        pagesList = buildFrontendTemplateEditorPages(
+          normalizedWebsiteData.frontendTemplateId || websiteFrontendTemplateId,
+          normalizedWebsiteData,
+          persistedPagesWithBlocks,
+        );
+      } else if (nextPersistedPages.length > 0) {
+        pagesList = nextPersistedPages;
+        setPersistedPages(nextPersistedPages);
+      } else {
+        setPersistedPages([]);
+      }
       setPages(pagesList);
 
       // Auto-select home page or first page
       const homePage = pagesList.find((p) => p.isHome) || pagesList[0];
       if (homePage) {
+        if (homePage.localOnly) {
+          const initialBlocks = Array.isArray(homePage.blocks)
+            ? homePage.blocks
+            : [];
+          localTemplateHydratedPageRef.current = homePage.id;
+          setBlocks(initialBlocks);
+          setBlockError(null);
+        }
         setSelectedPage(homePage);
       }
 
@@ -418,7 +967,7 @@ const WebsiteEditorInner = () => {
       try {
         const allBlocks = pagesList.flatMap((p) => p.blocks || []);
         const hasAI = allBlocks.some(
-          (b) => b.content && b.content._aiGenerated
+          (b) => b.content && b.content._aiGenerated,
         );
         setHasAISessions(hasAI);
 
@@ -427,7 +976,9 @@ const WebsiteEditorInner = () => {
           const aiBlock = allBlocks.find((b) => b.content?._aiSessionId);
           if (aiBlock?.content?._aiSessionId) {
             // Try to load questionnaire from sessionStorage
-            const stored = sessionStorage.getItem(`ai_questionnaire_${websiteId}`);
+            const stored = sessionStorage.getItem(
+              `ai_questionnaire_${websiteId}`,
+            );
             if (stored) {
               try {
                 setAiQuestionnaireData(JSON.parse(stored));
@@ -441,42 +992,48 @@ const WebsiteEditorInner = () => {
         // Non-critical — AI features just won't appear
       }
     } catch (err) {
-      if (err?.response?.status === 404) {
-        try {
-          const listRes = await axios.get(`${API_URL}/websites`, {
-            params: { page: 1, limit: 100 },
-            withCredentials: true,
-          });
-          const matchedWebsite = extractWebsiteList(listRes.data).find((item) =>
-            isSameWebsiteId(getWebsiteId(item), websiteId)
-          );
-          const resolvedWebsiteId = matchedWebsite
-            ? await resolveWebsiteIdForAction(matchedWebsite)
-            : null;
-
-          if (resolvedWebsiteId && !isSameWebsiteId(resolvedWebsiteId, websiteId)) {
-            navigate(`/dashboard/websites/${resolvedWebsiteId}/editor`, { replace: true });
-            return;
-          }
-        } catch {
-          // Fall through to the normal error message below.
-        }
-      }
-      console.error('Error fetching website data:', err);
-      setError(err.response?.data?.message || 'Failed to load website');
+      console.error("Error fetching website data:", err);
+      setError(err.response?.data?.message || "Failed to load website");
     } finally {
       setLoading(false);
     }
   };
 
   const fetchBlocks = async (pageId) => {
+    if (isSyntheticTemplatePageId(pageId) || selectedPage?.localOnly) {
+      const localPage =
+        selectedPage?.id === pageId
+          ? selectedPage
+          : pages.find((page) => page.id === pageId);
+      const localBlocks = Array.isArray(localPage?.blocks)
+        ? localPage.blocks
+        : [];
+      localTemplateHydratedPageRef.current =
+        typeof pageId === "string" ? pageId : String(pageId);
+      setBlocks(localBlocks);
+      setBlockError(null);
+      isLoadingRef.current = false;
+      return;
+    }
+
     try {
       isLoadingRef.current = true;
-      const response = await axios.get(`${API_URL}/pages/${pageId}/blocks`, {
+      setBlockError(null);
+      const response = await apiClient.get(`/pages/${pageId}/blocks`, {
         headers: {},
       });
       const fetchedBlocks = response.data.data || [];
       setBlocks(fetchedBlocks);
+      setPages((prevPages) =>
+        prevPages.map((page) =>
+          page.id === pageId ? { ...page, blocks: fetchedBlocks } : page,
+        ),
+      );
+      setSelectedPage((prevSelectedPage) =>
+        prevSelectedPage?.id === pageId
+          ? { ...prevSelectedPage, blocks: fetchedBlocks }
+          : prevSelectedPage,
+      );
 
       // Populate initial ETag from GET response (Step 5.9)
       if (response.headers?.etag) {
@@ -484,7 +1041,11 @@ const WebsiteEditorInner = () => {
       }
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Error fetching blocks:', err);
+      console.error("Error fetching blocks:", err);
+      setBlockError(
+        err.response?.data?.message ||
+          "Failed to load blocks. Please try again.",
+      );
     } finally {
       isLoadingRef.current = false;
     }
@@ -495,32 +1056,40 @@ const WebsiteEditorInner = () => {
       setSubmitting(true);
       setFormError(null);
 
-      const response = await axios.post(`${API_URL}/websites/${websiteId}/pages`, pageForm, {
-        headers: {},
-      });
+      const response = await apiClient.post(
+        `/websites/${websiteId}/pages`,
+        pageForm,
+        {
+          headers: {},
+        },
+      );
 
       const newPage = response.data.data;
       setPages([...pages, newPage]);
       setPageDialogOpen(false);
-      setPageForm({ title: '', path: '', isHome: false, isPublished: true });
+      setPageForm({ title: "", path: "", isHome: false, isPublished: true });
 
       // Select the new page
       setSelectedPage(newPage);
     } catch (err) {
-      console.error('Error creating page:', err);
-      setFormError(err.response?.data?.message || 'Failed to create page');
+      console.error("Error creating page:", err);
+      setFormError(err.response?.data?.message || "Failed to create page");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeletePage = async (pageId) => {
-    if (!confirm('Are you sure you want to delete this page? This will also delete all blocks.')) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this page? This will also delete all blocks.",
+      )
+    ) {
       return;
     }
 
     try {
-      await axios.delete(`${API_URL}/pages/${pageId}`, {
+      await apiClient.delete(`/pages/${pageId}`, {
         headers: {},
       });
 
@@ -532,22 +1101,41 @@ const WebsiteEditorInner = () => {
         setSelectedPage(updatedPages[0] || null);
       }
     } catch (err) {
-      console.error('Error deleting page:', err);
-      alert(err.response?.data?.message || 'Failed to delete page');
+      console.error("Error deleting page:", err);
+      alert(err.response?.data?.message || "Failed to delete page");
     }
   };
 
+  const handleSelectPage = useCallback((page) => {
+    setSelectedEditableElement(null);
+    if (page?.localOnly) {
+      const localBlocks = Array.isArray(page.blocks) ? page.blocks : [];
+      localTemplateHydratedPageRef.current = page.id;
+      suppressHistoryRef.current = true;
+      setBlocks(localBlocks);
+      setBlockError(null);
+    }
+    setSelectedPage(page);
+  }, []);
+
   const handleSetHomePage = async (pageId) => {
     try {
-      await axios.put(`${API_URL}/pages/${pageId}`, { isHome: true }, { headers: {} });
+      await apiClient.put(
+        `/pages/${pageId}`,
+        { isHome: true },
+        { headers: {} },
+      );
 
       // Update pages state
-      const updatedPages = pages.map((p) => ({ ...p, isHome: p.id === pageId }));
+      const updatedPages = pages.map((p) => ({
+        ...p,
+        isHome: p.id === pageId,
+      }));
       setPages(updatedPages);
       setSelectedPage(updatedPages.find((p) => p.id === pageId));
     } catch (err) {
-      console.error('Error setting home page:', err);
-      alert(err.response?.data?.message || 'Failed to set home page');
+      console.error("Error setting home page:", err);
+      alert(err.response?.data?.message || "Failed to set home page");
     }
   };
 
@@ -556,30 +1144,22 @@ const WebsiteEditorInner = () => {
       setSubmitting(true);
       setFormError(null);
 
-      // Validate content based on blockType
-      const validatedContent = validateBlockContent(blockForm.blockType, blockForm.content);
-      if (!validatedContent.valid) {
-        setFormError(validatedContent.error);
-        setSubmitting(false);
-        return;
-      }
-
-      const response = await axios.post(
-        `${API_URL}/pages/${selectedPage.id}/blocks`,
-        {
-          blockType: blockForm.blockType,
-          content: blockForm.content,
-          isVisible: true,
-        },
-        { headers: {} }
-      );
-
-      setBlocks([...blocks, response.data.data]);
+      const newBlock = {
+        id: `local-${Date.now()}`,
+        blockType: blockForm.blockType,
+        content: blockForm.content,
+        isVisible: true,
+        sortOrder: blocks.length,
+        localOnly: true,
+      };
+      pendingHistoryDescriptionRef.current = `Added ${blockForm.blockType} block`;
+      setBlocks([...blocks, newBlock]);
       setBlockDialogOpen(false);
-      setBlockForm({ blockType: '', content: {} });
+      setBlockForm({ blockType: "", content: {} });
+      setFormHasErrors(false);
     } catch (err) {
-      console.error('Error creating block:', err);
-      setFormError(err.response?.data?.message || 'Failed to create block');
+      console.error("Error creating block:", err);
+      setFormError(err.response?.data?.message || "Failed to create block");
     } finally {
       setSubmitting(false);
     }
@@ -590,110 +1170,587 @@ const WebsiteEditorInner = () => {
       setSubmitting(true);
       setFormError(null);
 
-      const response = await axios.put(
-        `${API_URL}/blocks/${editingBlock.id}`,
-        { content: blockForm.content },
-        { headers: {} }
+      pendingHistoryDescriptionRef.current = `Updated ${editingBlock.blockType} block`;
+      setBlocks(
+        blocks.map((b) =>
+          b.id === editingBlock.id
+            ? {
+                ...b,
+                content: { ...b.content, ...blockForm.content },
+                localOnly: true,
+              }
+            : b,
+        ),
       );
-
-      setBlocks(blocks.map((b) => (b.id === editingBlock.id ? response.data.data : b)));
       setEditingBlock(null);
-      setBlockForm({ blockType: '', content: {} });
+      setBlockForm({ blockType: "", content: {} });
+      setFormHasErrors(false);
     } catch (err) {
-      console.error('Error updating block:', err);
-      setFormError(err.response?.data?.message || 'Failed to update block');
+      console.error("Error updating block:", err);
+      setFormError(err.response?.data?.message || "Failed to update block");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteBlock = async (blockId) => {
-    if (!confirm('Are you sure you want to delete this block?')) {
+    if (isLocalTemplateEditorPage) {
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete this block?")) {
       return;
     }
 
     try {
-      await axios.delete(`${API_URL}/blocks/${blockId}`, {
-        headers: {},
-      });
-
+      pendingHistoryDescriptionRef.current = "Deleted block";
       setBlocks(blocks.filter((b) => b.id !== blockId));
     } catch (err) {
-      console.error('Error deleting block:', err);
-      alert(err.response?.data?.message || 'Failed to delete block');
+      console.error("Error deleting block:", err);
+      alert(err.response?.data?.message || "Failed to delete block");
     }
   };
 
   const handleToggleBlockVisibility = async (block) => {
-    try {
-      const response = await axios.put(
-        `${API_URL}/blocks/${block.id}`,
-        { isVisible: !block.isVisible },
-        { headers: {} }
-      );
+    if (isLocalTemplateEditorPage) {
+      return;
+    }
 
-      setBlocks(blocks.map((b) => (b.id === block.id ? response.data.data : b)));
+    try {
+      pendingHistoryDescriptionRef.current = `${block.isVisible ? "Hid" : "Showed"} block`;
+      setBlocks(
+        blocks.map((b) =>
+          b.id === block.id
+            ? { ...b, isVisible: !b.isVisible, localOnly: true }
+            : b,
+        ),
+      );
     } catch (err) {
-      console.error('Error toggling block visibility:', err);
-      alert('Failed to update block visibility');
+      console.error("Error toggling block visibility:", err);
+      alert("Failed to update block visibility");
     }
   };
 
   const handleMoveBlock = async (blockId, direction) => {
+    if (isLocalTemplateEditorPage) {
+      return;
+    }
+
     const blockIndex = blocks.findIndex((b) => b.id === blockId);
     if (
-      (direction === 'up' && blockIndex === 0) ||
-      (direction === 'down' && blockIndex === blocks.length - 1)
+      (direction === "up" && blockIndex === 0) ||
+      (direction === "down" && blockIndex === blocks.length - 1)
     ) {
       return;
     }
 
     const newBlocks = [...blocks];
-    const targetIndex = direction === 'up' ? blockIndex - 1 : blockIndex + 1;
+    const targetIndex = direction === "up" ? blockIndex - 1 : blockIndex + 1;
     [newBlocks[blockIndex], newBlocks[targetIndex]] = [
       newBlocks[targetIndex],
       newBlocks[blockIndex],
     ];
 
     try {
-      await axios.patch(
-        `${API_URL}/blocks/reorder`,
-        {
-          pageId: selectedPage.id,
-          blockIds: newBlocks.map((b) => b.id),
-        },
-        { headers: {} }
+      pendingHistoryDescriptionRef.current = "Reordered blocks";
+      setBlocks(
+        newBlocks.map((b, idx) => ({ ...b, sortOrder: idx, localOnly: true })),
       );
-
-      // Update sortOrder in local state
-      setBlocks(newBlocks.map((b, idx) => ({ ...b, sortOrder: idx })));
     } catch (err) {
-      console.error('Error reordering blocks:', err);
-      alert('Failed to reorder blocks');
+      console.error("Error reordering blocks:", err);
+      alert("Failed to reorder blocks");
     }
   };
 
   const handleAIContentUpdate = useCallback((blockId, newContent) => {
+    pendingHistoryDescriptionRef.current = "Updated AI content";
     setBlocks((prev) =>
-      prev.map((b) => (b.id === blockId ? { ...b, content: newContent } : b))
+      prev.map((b) =>
+        b.id === blockId
+          ? { ...b, content: { ...b.content, ...newContent } }
+          : b,
+      ),
     );
   }, []);
 
+  const selectedEditableStyle = useMemo(() => {
+    if (
+      !selectedEditableElement?.blockId ||
+      !selectedEditableElement?.fieldPath
+    ) {
+      return DEFAULT_TEXT_STYLE;
+    }
+
+    const targetBlock = blocks.find(
+      (block) => String(block.id) === String(selectedEditableElement.blockId),
+    );
+    if (!targetBlock?.content) {
+      return DEFAULT_TEXT_STYLE;
+    }
+
+    const { styleKey } = getEditableStyleConfig(
+      selectedEditableElement.fieldPath,
+    );
+    const blockStyle = targetBlock.content?.[styleKey];
+
+    return {
+      ...DEFAULT_TEXT_STYLE,
+      ...(blockStyle && typeof blockStyle === "object" ? blockStyle : {}),
+    };
+  }, [blocks, selectedEditableElement]);
+
+  const selectedSectionStyle = useMemo(() => {
+    if (!selectedSectionElement?.blockId) {
+      return DEFAULT_SECTION_STYLE;
+    }
+
+    const targetBlock = blocks.find(
+      (block) => String(block.id) === String(selectedSectionElement.blockId),
+    );
+    const styleKey = getSectionStyleKey(selectedSectionElement);
+    if (
+      !targetBlock?.content?.[styleKey] ||
+      typeof targetBlock.content[styleKey] !== "object"
+    ) {
+      return DEFAULT_SECTION_STYLE;
+    }
+
+    return {
+      ...DEFAULT_SECTION_STYLE,
+      ...targetBlock.content[styleKey],
+    };
+  }, [blocks, selectedSectionElement]);
+
+  const selectedImageValue = useMemo(() => {
+    if (!selectedImageElement?.blockId || !selectedImageElement?.fieldPath) {
+      return DEFAULT_IMAGE_VALUE;
+    }
+
+    const targetBlock = blocks.find(
+      (block) => String(block.id) === String(selectedImageElement.blockId),
+    );
+    if (!targetBlock?.content) {
+      return DEFAULT_IMAGE_VALUE;
+    }
+
+    const imageStyleKey = `${selectedImageElement.fieldPath}Style`;
+    const blockStyle =
+      targetBlock.content?.[imageStyleKey] &&
+      typeof targetBlock.content[imageStyleKey] === "object"
+        ? targetBlock.content[imageStyleKey]
+        : {};
+
+    return {
+      ...DEFAULT_IMAGE_VALUE,
+      src:
+        typeof targetBlock.content?.[selectedImageElement.fieldPath] ===
+        "string"
+          ? targetBlock.content[selectedImageElement.fieldPath]
+          : selectedImageElement.src || "",
+      ...blockStyle,
+    };
+  }, [blocks, selectedImageElement]);
+
+  const imageLibraryItems = useMemo(() => {
+    const items = [];
+    const walk = (blockId, value, path = []) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry, index) =>
+          walk(blockId, entry, [...path, String(index)]),
+        );
+        return;
+      }
+
+      if (!value || typeof value !== "object") {
+        return;
+      }
+
+      Object.entries(value).forEach(([key, entryValue]) => {
+        const nextPath = [...path, key];
+        if (
+          typeof entryValue === "string" &&
+          entryValue.trim() &&
+          /(image|hero|logo|banner|thumbnail|cover)/i.test(key) &&
+          looksLikeImageSource(entryValue.trim()) &&
+          !/style$/i.test(key)
+        ) {
+          items.push({
+            id: `${blockId}:${nextPath.join(".")}`,
+            blockId,
+            fieldPath: nextPath.join("."),
+            label: humanizeLabel(nextPath.join(".")),
+            src: entryValue,
+          });
+          return;
+        }
+
+        if (entryValue && typeof entryValue === "object") {
+          walk(blockId, entryValue, nextPath);
+        }
+      });
+    };
+
+    blocks.forEach((block) => {
+      walk(block.id, block.content || {}, []);
+    });
+
+    return [...items, ...uploadedLibraryImages];
+  }, [blocks, uploadedLibraryImages]);
+
+  const syncPreviewSelection = useCallback((target) => {
+    previewSelectionNonceRef.current += 1;
+    setSelectedPreviewTarget({
+      ...target,
+      nonce: previewSelectionNonceRef.current,
+    });
+  }, []);
+
+  const handlePreviewEditableSelection = useCallback(
+    (data) => {
+      if (!data) {
+        return;
+      }
+
+      setPreviewContextMenu(null);
+      setSelectedImageElement(null);
+      setSelectedEditableElement(data);
+      setSelectedSectionElement((prev) =>
+        prev && String(prev.blockId) === String(data.blockId)
+          ? prev
+          : {
+              blockId: data.blockId,
+              label: "Section",
+              styleKey: "sectionStyle",
+            },
+      );
+      setActiveToolbarMode("text");
+      setBlockDialogOpen(false);
+      setEditingBlock(null);
+      syncPreviewSelection({
+        kind: "editable",
+        blockId: data.blockId,
+        fieldPath: data.fieldPath,
+      });
+    },
+    [syncPreviewSelection],
+  );
+
+  const handlePreviewSectionSelection = useCallback(
+    (data) => {
+      setPreviewContextMenu(null);
+      if (data) {
+        setSelectedImageElement(null);
+      }
+      setSelectedSectionElement(data);
+      if (data) {
+        setActiveToolbarMode("section");
+        syncPreviewSelection({
+          kind: "section",
+          blockId: data.blockId,
+          styleKey: data.styleKey || "sectionStyle",
+        });
+      }
+      setBlockDialogOpen(false);
+      setEditingBlock(null);
+    },
+    [syncPreviewSelection],
+  );
+
+  const handlePreviewContextMenu = useCallback((data) => {
+    setPreviewContextMenu(data);
+  }, []);
+
+  const uploadImageAsset = useCallback(async (file) => {
+    if (!file) {
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+    const response = await apiClient.post("/upload/image", formData);
+    return response?.data?.url || null;
+  }, []);
+
+  const handlePreviewImageSelection = useCallback(
+    (data) => {
+      if (!data) {
+        return;
+      }
+
+      setPreviewContextMenu(null);
+      setSelectedEditableElement(null);
+      setSelectedImageElement(data);
+      setSelectedSectionElement((prev) => prev || null);
+      setBlockDialogOpen(false);
+      setEditingBlock(null);
+      syncPreviewSelection({
+        kind: "image",
+        blockId: data.blockId,
+        fieldPath: data.fieldPath,
+      });
+    },
+    [syncPreviewSelection],
+  );
+
+  const handleContextMenuLayerSelect = useCallback(
+    (layer) => {
+      if (!layer) {
+        return;
+      }
+
+      if (layer.kind === "editable" && layer.editable) {
+        handlePreviewEditableSelection(layer.editable);
+      } else if (layer.kind === "image" && layer.image) {
+        handlePreviewImageSelection(layer.image);
+      } else if (layer.kind === "section" && layer.section) {
+        handlePreviewSectionSelection(layer.section);
+      }
+
+      setPreviewContextMenu(null);
+    },
+    [
+      handlePreviewEditableSelection,
+      handlePreviewImageSelection,
+      handlePreviewSectionSelection,
+    ],
+  );
+
+  const handleLibraryUpload = useCallback(
+    async (file) => {
+      const url = await uploadImageAsset(file);
+      if (!url) {
+        return;
+      }
+
+      setSidebarMode("library");
+      setUploadedLibraryImages((prev) => [
+        ...prev,
+        {
+          id: `upload:${Date.now()}`,
+          blockId: "",
+          fieldPath: "",
+          label: "Uploaded Image",
+          src: url,
+          uploaded: true,
+        },
+      ]);
+    },
+    [uploadImageAsset],
+  );
+
+  useEffect(() => {
+    if (!previewContextMenu) {
+      return undefined;
+    }
+
+    const handleGlobalPointerDown = (event) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      const menuNode = previewContextMenuRef.current;
+      if (
+        menuNode &&
+        event.target instanceof Node &&
+        menuNode.contains(event.target)
+      ) {
+        return;
+      }
+
+      setPreviewContextMenu(null);
+    };
+
+    document.addEventListener("mousedown", handleGlobalPointerDown, true);
+    return () => {
+      document.removeEventListener("mousedown", handleGlobalPointerDown, true);
+    };
+  }, [previewContextMenu]);
+
+  const handleEditableStyleChange = useCallback(
+    (patch) => {
+      if (
+        !selectedEditableElement?.blockId ||
+        !selectedEditableElement?.fieldPath
+      ) {
+        return;
+      }
+
+      const { blockId, fieldPath } = selectedEditableElement;
+      const { styleKey } = getEditableStyleConfig(fieldPath);
+
+      pendingHistoryDescriptionRef.current = `Styled ${fieldPath}`;
+      setBlocks((prev) =>
+        prev.map((block) => {
+          if (String(block.id) !== String(blockId)) {
+            return block;
+          }
+
+          const existingStyle =
+            block.content?.[styleKey] &&
+            typeof block.content[styleKey] === "object"
+              ? block.content[styleKey]
+              : {};
+
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              [styleKey]: {
+                ...existingStyle,
+                ...patch,
+              },
+            },
+          };
+        }),
+      );
+    },
+    [selectedEditableElement],
+  );
+
+  const handleImageChange = useCallback(
+    (patch) => {
+      if (!selectedImageElement?.blockId || !selectedImageElement?.fieldPath) {
+        return;
+      }
+
+      const { blockId, fieldPath } = selectedImageElement;
+      const imageStyleKey = `${fieldPath}Style`;
+
+      pendingHistoryDescriptionRef.current = `Updated ${fieldPath} image`;
+      setBlocks((prev) =>
+        prev.map((block) => {
+          if (String(block.id) !== String(blockId)) {
+            return block;
+          }
+
+          const existingStyle =
+            block.content?.[imageStyleKey] &&
+            typeof block.content[imageStyleKey] === "object"
+              ? block.content[imageStyleKey]
+              : {};
+
+          const nextContent = {
+            ...block.content,
+            ...(typeof patch.src === "string"
+              ? { [fieldPath]: patch.src }
+              : {}),
+            [imageStyleKey]: {
+              ...existingStyle,
+              ...(typeof patch.objectFit === "string"
+                ? { objectFit: patch.objectFit }
+                : {}),
+              ...(typeof patch.borderRadius === "string"
+                ? { borderRadius: patch.borderRadius }
+                : {}),
+              ...(typeof patch.borderWidth === "string"
+                ? { borderWidth: patch.borderWidth, borderStyle: "solid" }
+                : {}),
+              ...(typeof patch.borderColor === "string"
+                ? { borderColor: patch.borderColor }
+                : {}),
+            },
+          };
+
+          return {
+            ...block,
+            content: nextContent,
+          };
+        }),
+      );
+    },
+    [selectedImageElement],
+  );
+
+  const handleOpenLibraryImage = useCallback(
+    (item) => {
+      if (!item?.blockId || !item?.fieldPath) {
+        return;
+      }
+
+      handlePreviewImageSelection({
+        blockId: item.blockId,
+        fieldPath: item.fieldPath,
+        src: item.src,
+        label: item.label,
+      });
+    },
+    [handlePreviewImageSelection],
+  );
+
+  const handleReplaceSelectedImage = useCallback(
+    async (file) => {
+      const url = await uploadImageAsset(file);
+      if (!url) {
+        return;
+      }
+
+      handleImageChange({ src: url });
+    },
+    [handleImageChange, uploadImageAsset],
+  );
+
+  const handleSectionStyleChange = useCallback(
+    (patch) => {
+      if (!selectedSectionElement?.blockId) {
+        return;
+      }
+
+      const styleKey = getSectionStyleKey(selectedSectionElement);
+      pendingHistoryDescriptionRef.current =
+        `Styled section ${selectedSectionElement.label || ""}`.trim();
+      setBlocks((prev) =>
+        prev.map((block) => {
+          if (String(block.id) !== String(selectedSectionElement.blockId)) {
+            return block;
+          }
+
+          const existingStyle =
+            block.content?.[styleKey] &&
+            typeof block.content[styleKey] === "object"
+              ? block.content[styleKey]
+              : {};
+
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              [styleKey]: {
+                ...existingStyle,
+                ...patch,
+              },
+            },
+          };
+        }),
+      );
+    },
+    [selectedSectionElement],
+  );
+
   // Inline edit save handler — Step 9.24: nested path update for content fields
   const handleInlineEditSave = useCallback((blockId, fieldPath, newValue) => {
+    pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
     setBlocks((prev) =>
       prev.map((block) => {
-        if (block.id !== blockId) return block;
-        const updated = { ...block };
-        const parts = fieldPath.split('.');
-        let obj = updated;
+        if (String(block.id) !== String(blockId)) return block;
+        const updated = {
+          ...block,
+          content: {
+            ...(block.content || {}),
+          },
+        };
+        const parts = fieldPath.split(".");
+        let obj = updated.content;
         for (let i = 0; i < parts.length - 1; i++) {
-          obj[parts[i]] = { ...obj[parts[i]] };
+          obj[parts[i]] = {
+            ...(obj[parts[i]] && typeof obj[parts[i]] === "object"
+              ? obj[parts[i]]
+              : {}),
+          };
           obj = obj[parts[i]];
         }
         obj[parts[parts.length - 1]] = newValue;
         return updated;
-      })
+      }),
     );
   }, []);
 
@@ -702,556 +1759,143 @@ const WebsiteEditorInner = () => {
     async (blockType, position, content) => {
       if (!selectedPage?.id) return;
       try {
-        const response = await axios.post(
-          `${API_URL}/pages/${selectedPage.id}/blocks`,
-          {
-            blockType,
-            content: content || {},
-            isVisible: true,
-          },
-          { headers: {} }
-        );
-        const newBlock = response.data.data;
+        const newBlock = {
+          id: `local-${Date.now()}`,
+          blockType,
+          content: content || {},
+          isVisible: true,
+          sortOrder: blocks.length,
+          localOnly: true,
+        };
+        pendingHistoryDescriptionRef.current = `Inserted ${blockType} block`;
         setBlocks((prev) => {
-          if (position === 'beginning') return [newBlock, ...prev];
-          if (typeof position === 'number') {
+          if (position === "beginning") {
+            return [newBlock, ...prev].map((block, index) => ({
+              ...block,
+              sortOrder: index,
+            }));
+          }
+          if (typeof position === "number") {
             const copy = [...prev];
             copy.splice(position + 1, 0, newBlock);
-            return copy;
+            return copy.map((block, index) => ({
+              ...block,
+              sortOrder: index,
+            }));
           }
           // 'end' or default
-          return [...prev, newBlock];
+          return [...prev, newBlock].map((block, index) => ({
+            ...block,
+            sortOrder: index,
+          }));
         });
+        setBlockLibraryOpen(false);
       } catch (err) {
-        console.error('Error inserting block from library:', err);
+        console.error("Error inserting block from library:", err);
       }
     },
-    [selectedPage?.id]
+    [selectedPage?.id, blocks.length],
   );
 
   // Mobile action handlers for MobileActionBar (Phase 9 gap fix)
   const handleMobileSave = useCallback(() => {
-    triggerSave();
-  }, [triggerSave]);
+    triggerManualSave();
+  }, [triggerManualSave]);
 
   const handleMobilePublish = useCallback(async () => {
     // TODO: Wire to full publish flow when available
     try {
-      const resolvedWebsiteId = await resolveWebsiteIdForAction(website);
-      await axios.put(
-        `${API_URL}/websites/${resolvedWebsiteId || websiteId}`,
-        { status: 'PUBLISHED' },
-        { headers: {} }
+      await apiClient.put(
+        `/websites/${websiteId}`,
+        { status: "PUBLISHED" },
+        { headers: {} },
       );
-      setWebsite((prev) => prev ? { ...prev, status: 'PUBLISHED' } : prev);
+      setWebsite((prev) => (prev ? { ...prev, status: "PUBLISHED" } : prev));
     } catch (err) {
-      console.error('Error publishing website:', err);
+      console.error("Error publishing website:", err);
     }
-  }, [website, websiteId]);
+  }, [websiteId]);
 
   const handleMobilePreview = useCallback(() => {
     if (website?.slug) {
-      window.open(`/site/${website.slug}`, '_blank');
+      window.open(`/site/${website.slug}`, "_blank");
     }
   }, [website?.slug]);
 
-  const validateBlockContent = (blockType, content) => {
-    switch (blockType) {
-      case 'HERO':
-        if (!content.heading) {
-          return { valid: false, error: 'HERO block requires a heading' };
-        }
-        break;
-      case 'CTA':
-        if (!content.heading || !content.ctaText || !content.ctaLink) {
-          return { valid: false, error: 'CTA block requires heading, ctaText, and ctaLink' };
-        }
-        break;
-      case 'FEATURES':
-        if (
-          !content.features ||
-          !Array.isArray(content.features) ||
-          content.features.length === 0
-        ) {
-          return { valid: false, error: 'FEATURES block requires at least one feature' };
-        }
-        break;
-      case 'TESTIMONIALS':
-        if (
-          !content.testimonials ||
-          !Array.isArray(content.testimonials) ||
-          content.testimonials.length === 0
-        ) {
-          return { valid: false, error: 'TESTIMONIALS block requires at least one testimonial' };
-        }
-        break;
-    }
-    return { valid: true };
+  const handleUndoBlocks = useCallback(() => {
+    const previous = undo();
+    if (!previous || !selectedPage?.id) return;
+    suppressHistoryRef.current = true;
+    setBlocks(previous);
+  }, [undo, selectedPage?.id]);
+
+  const handleRedoBlocks = useCallback(() => {
+    const next = redo();
+    if (!next || !selectedPage?.id) return;
+    suppressHistoryRef.current = true;
+    setBlocks(next);
+  }, [redo, selectedPage?.id]);
+
+  const liveSiteHref = website?.slug ? `/site/${website.slug}` : null;
+  const headerMenuOpen = Boolean(headerMenuAnchorEl);
+  const pageCount = pages.length;
+  const activeBlockCount = blocks.length;
+
+  const builderPanelSx = {
+    position: "relative",
+    overflow: "hidden",
+    background: isEditorDark
+      ? "linear-gradient(180deg, rgba(18,24,26,0.96) 0%, rgba(12,17,19,0.94) 100%)"
+      : "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.93) 100%)",
+    border: `1px solid ${alpha(colors.primary, isEditorDark ? 0.18 : 0.12)}`,
+    borderRadius: 4,
+    boxShadow: isEditorDark
+      ? "0 24px 60px rgba(0, 0, 0, 0.45)"
+      : "0 24px 50px rgba(15, 23, 42, 0.08)",
+    backdropFilter: "blur(18px)",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      inset: 0,
+      background: isEditorDark
+        ? "radial-gradient(circle at top right, rgba(45, 212, 191, 0.12), transparent 34%)"
+        : "radial-gradient(circle at top right, rgba(45, 212, 191, 0.08), transparent 34%)",
+      pointerEvents: "none",
+    },
   };
 
-  const getBlockContentPreview = (block) => {
-    const content = block.content || {};
-    const truncate = (str, maxLen = 40) => {
-      if (!str) return '';
-      return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
-    };
-
-    switch (block.blockType) {
-      case 'HERO':
-        return content.heading ? `HERO – ${truncate(content.heading)}` : 'HERO – (no heading)';
-      case 'CTA':
-        return content.heading ? `CTA – ${truncate(content.heading)}` : 'CTA – (no heading)';
-      case 'FEATURES':
-        const featCount = content.features?.length || 0;
-        return `FEATURES – ${featCount} feature${featCount !== 1 ? 's' : ''}`;
-      case 'TESTIMONIALS':
-        const testCount = content.testimonials?.length || 0;
-        return `TESTIMONIALS – ${testCount} testimonial${testCount !== 1 ? 's' : ''}`;
-      case 'CONTACT':
-        const parts = [];
-        if (content.email) parts.push('email');
-        if (content.phone) parts.push('phone');
-        if (content.address) parts.push('address');
-        if (content.showForm) parts.push('form');
-        return `CONTACT – ${parts.length > 0 ? parts.join(', ') : 'empty'}`;
-      default:
-        return block.blockType;
-    }
+  const builderSectionLabelSx = {
+    fontSize: "0.72rem",
+    letterSpacing: "0.18em",
+    textTransform: "uppercase",
+    color: editorLabelText,
   };
 
-  const renderBlockForm = () => {
-    const blockType = blockForm.blockType || editingBlock?.blockType;
-    const content = blockForm.content;
-
-    switch (blockType) {
-      case 'HERO':
-        return (
-          <>
-            <DashboardInput
-              fullWidth
-              label="Heading *"
-              labelPlacement="floating"
-              value={content.heading || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, heading: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Main headline text (required)"
-            />
-            <DashboardInput
-              fullWidth
-              label="Subheading"
-              labelPlacement="floating"
-              value={content.subheading || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, subheading: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Supporting text (optional)"
-            />
-            <DashboardInput
-              fullWidth
-              label="CTA Text"
-              labelPlacement="floating"
-              value={content.ctaText || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, ctaText: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Button text (optional)"
-            />
-            <DashboardInput
-              fullWidth
-              label="CTA Link"
-              labelPlacement="floating"
-              value={content.ctaLink || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, ctaLink: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Button URL (optional)"
-            />
-            <DashboardInput
-              fullWidth
-              label="Background Image URL"
-              labelPlacement="floating"
-              value={content.backgroundImage || ''}
-              onChange={(e) =>
-                setBlockForm({
-                  ...blockForm,
-                  content: { ...content, backgroundImage: e.target.value },
-                })
-              }
-              sx={{ mb: 2 }}
-              helperText="Image URL for background (optional)"
-            />
-            <DashboardSelect
-              fullWidth
-              label="Alignment"
-              value={content.alignment || 'center'}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, alignment: e.target.value } })
-              }
-              containerSx={{ mb: 2 }}
-            >
-              <MenuItem value="center">Center</MenuItem>
-              <MenuItem value="left">Left</MenuItem>
-              <MenuItem value="right">Right</MenuItem>
-            </DashboardSelect>
-          </>
-        );
-      case 'CTA':
-        return (
-          <>
-            <DashboardInput
-              fullWidth
-              label="Heading *"
-              labelPlacement="floating"
-              value={content.heading || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, heading: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Call to action headline (required)"
-            />
-            <DashboardInput
-              fullWidth
-              label="Subheading"
-              labelPlacement="floating"
-              value={content.subheading || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, subheading: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Supporting text (optional)"
-            />
-            <DashboardInput
-              fullWidth
-              label="CTA Button Text *"
-              labelPlacement="floating"
-              value={content.ctaText || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, ctaText: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Button text (required)"
-            />
-            <DashboardInput
-              fullWidth
-              label="CTA Link *"
-              labelPlacement="floating"
-              value={content.ctaLink || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, ctaLink: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Button URL (required)"
-            />
-            <DashboardInput
-              fullWidth
-              label="Background Image URL"
-              labelPlacement="floating"
-              value={content.backgroundImage || ''}
-              onChange={(e) =>
-                setBlockForm({
-                  ...blockForm,
-                  content: { ...content, backgroundImage: e.target.value },
-                })
-              }
-              helperText="Image URL for background (optional)"
-            />
-          </>
-        );
-      case 'FEATURES':
-        return (
-          <>
-            <DashboardInput
-              fullWidth
-              label="Heading"
-              labelPlacement="floating"
-              value={content.heading || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, heading: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Section heading (optional)"
-            />
-            <Typography variant="subtitle2" sx={{ mb: 1, color: colors.text }}>
-              Features
-            </Typography>
-            {(content.features || []).map((feature, index) => (
-              <Card key={index} sx={{ mb: 2, p: 2, bgcolor: alpha(colors.dark, 0.3) }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                  <Typography variant="body2" fontWeight={600}>
-                    Feature {index + 1}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      const newFeatures = content.features.filter((_, i) => i !== index);
-                      setBlockForm({
-                        ...blockForm,
-                        content: { ...content, features: newFeatures },
-                      });
-                    }}
-                  >
-                    <Trash2 size={16} />
-                  </IconButton>
-                </Box>
-                <DashboardInput
-                  fullWidth
-                  label="Icon"
-                  labelPlacement="floating"
-                  value={feature.icon || ''}
-                  onChange={(e) => {
-                    const newFeatures = [...content.features];
-                    newFeatures[index] = { ...feature, icon: e.target.value };
-                    setBlockForm({ ...blockForm, content: { ...content, features: newFeatures } });
-                  }}
-                  sx={{ mb: 1 }}
-                  size="small"
-                  helperText="Icon name or URL"
-                />
-                <DashboardInput
-                  fullWidth
-                  label="Title *"
-                  labelPlacement="floating"
-                  value={feature.title || ''}
-                  onChange={(e) => {
-                    const newFeatures = [...content.features];
-                    newFeatures[index] = { ...feature, title: e.target.value };
-                    setBlockForm({ ...blockForm, content: { ...content, features: newFeatures } });
-                  }}
-                  sx={{ mb: 1 }}
-                  size="small"
-                />
-                <DashboardInput
-                  fullWidth
-                  label="Description *"
-                  labelPlacement="floating"
-                  value={feature.description || ''}
-                  onChange={(e) => {
-                    const newFeatures = [...content.features];
-                    newFeatures[index] = { ...feature, description: e.target.value };
-                    setBlockForm({ ...blockForm, content: { ...content, features: newFeatures } });
-                  }}
-                  multiline
-                  rows={2}
-                  size="small"
-                />
-              </Card>
-            ))}
-            <Button
-              startIcon={<Plus size={18} />}
-              onClick={() => {
-                const newFeatures = [
-                  ...(content.features || []),
-                  { icon: '', title: '', description: '' },
-                ];
-                setBlockForm({ ...blockForm, content: { ...content, features: newFeatures } });
-              }}
-              sx={{ textTransform: 'none' }}
-            >
-              Add Feature
-            </Button>
-          </>
-        );
-      case 'TESTIMONIALS':
-        return (
-          <>
-            <DashboardInput
-              fullWidth
-              label="Heading"
-              labelPlacement="floating"
-              value={content.heading || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, heading: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Section heading (optional)"
-            />
-            <Typography variant="subtitle2" sx={{ mb: 1, color: colors.text }}>
-              Testimonials
-            </Typography>
-            {(content.testimonials || []).map((testimonial, index) => (
-              <Card key={index} sx={{ mb: 2, p: 2, bgcolor: alpha(colors.dark, 0.3) }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                  <Typography variant="body2" fontWeight={600}>
-                    Testimonial {index + 1}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      const newTestimonials = content.testimonials.filter((_, i) => i !== index);
-                      setBlockForm({
-                        ...blockForm,
-                        content: { ...content, testimonials: newTestimonials },
-                      });
-                    }}
-                  >
-                    <Trash2 size={16} />
-                  </IconButton>
-                </Box>
-                <DashboardInput
-                  fullWidth
-                  label="Quote *"
-                  labelPlacement="floating"
-                  value={testimonial.quote || ''}
-                  onChange={(e) => {
-                    const newTestimonials = [...content.testimonials];
-                    newTestimonials[index] = { ...testimonial, quote: e.target.value };
-                    setBlockForm({
-                      ...blockForm,
-                      content: { ...content, testimonials: newTestimonials },
-                    });
-                  }}
-                  sx={{ mb: 1 }}
-                  multiline
-                  rows={2}
-                  size="small"
-                />
-                <DashboardInput
-                  fullWidth
-                  label="Author *"
-                  labelPlacement="floating"
-                  value={testimonial.author || ''}
-                  onChange={(e) => {
-                    const newTestimonials = [...content.testimonials];
-                    newTestimonials[index] = { ...testimonial, author: e.target.value };
-                    setBlockForm({
-                      ...blockForm,
-                      content: { ...content, testimonials: newTestimonials },
-                    });
-                  }}
-                  sx={{ mb: 1 }}
-                  size="small"
-                />
-                <DashboardInput
-                  fullWidth
-                  label="Position"
-                  labelPlacement="floating"
-                  value={testimonial.position || ''}
-                  onChange={(e) => {
-                    const newTestimonials = [...content.testimonials];
-                    newTestimonials[index] = { ...testimonial, position: e.target.value };
-                    setBlockForm({
-                      ...blockForm,
-                      content: { ...content, testimonials: newTestimonials },
-                    });
-                  }}
-                  sx={{ mb: 1 }}
-                  size="small"
-                  helperText="Job title / company"
-                />
-                <DashboardInput
-                  fullWidth
-                  label="Avatar URL"
-                  labelPlacement="floating"
-                  value={testimonial.avatarUrl || ''}
-                  onChange={(e) => {
-                    const newTestimonials = [...content.testimonials];
-                    newTestimonials[index] = { ...testimonial, avatarUrl: e.target.value };
-                    setBlockForm({
-                      ...blockForm,
-                      content: { ...content, testimonials: newTestimonials },
-                    });
-                  }}
-                  size="small"
-                  helperText="Photo URL"
-                />
-              </Card>
-            ))}
-            <Button
-              startIcon={<Plus size={18} />}
-              onClick={() => {
-                const newTestimonials = [
-                  ...(content.testimonials || []),
-                  { quote: '', author: '', position: '', avatarUrl: '' },
-                ];
-                setBlockForm({
-                  ...blockForm,
-                  content: { ...content, testimonials: newTestimonials },
-                });
-              }}
-              sx={{ textTransform: 'none' }}
-            >
-              Add Testimonial
-            </Button>
-          </>
-        );
-      case 'CONTACT':
-        return (
-          <>
-            <DashboardInput
-              fullWidth
-              label="Heading"
-              labelPlacement="floating"
-              value={content.heading || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, heading: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Contact section heading (optional)"
-            />
-            <DashboardInput
-              fullWidth
-              label="Email"
-              labelPlacement="floating"
-              value={content.email || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, email: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Contact email (optional)"
-            />
-            <DashboardInput
-              fullWidth
-              label="Phone"
-              labelPlacement="floating"
-              value={content.phone || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, phone: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              helperText="Contact phone (optional)"
-            />
-            <DashboardInput
-              fullWidth
-              label="Address"
-              labelPlacement="floating"
-              value={content.address || ''}
-              onChange={(e) =>
-                setBlockForm({ ...blockForm, content: { ...content, address: e.target.value } })
-              }
-              sx={{ mb: 2 }}
-              multiline
-              rows={2}
-              helperText="Physical address (optional)"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={content.showForm || false}
-                  onChange={(e) =>
-                    setBlockForm({
-                      ...blockForm,
-                      content: { ...content, showForm: e.target.checked },
-                    })
-                  }
-                />
-              }
-              label="Show contact form"
-            />
-          </>
-        );
-      default:
-        return null;
-    }
+  const sidebarHeaderButtonSx = {
+    textTransform: "none",
+    minHeight: 36,
+    borderRadius: 2.5,
+    boxShadow: "none",
+    transition:
+      "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
+    "&:hover": {
+      boxShadow: "none",
+    },
+    "&.Mui-disabled": {
+      color: alpha(editorText, 0.34),
+      borderColor: alpha(colors.primary, 0.12),
+      backgroundColor: "rgba(255,255,255,0.52)",
+    },
   };
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
         <CircularProgress sx={{ color: colors.primary }} />
       </Box>
     );
@@ -1266,62 +1910,489 @@ const WebsiteEditorInner = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 2 }, pb: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <IconButton onClick={() => navigate('/dashboard?tab=websites')}>
-            <ArrowLeft size={18} />
-          </IconButton>
-          <Box>
-            <Typography variant="h5" sx={{ color: colors.text, fontWeight: 700 }}>
-              {website?.name}
-            </Typography>
-            <Box display="flex" gap={1} mt={0.5}>
-              <Chip label={website?.status} size="small" />
-              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
-                /site/{website?.slug}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "#f3f3f6",
+        backgroundColor: "#f3f3f6",
+        backgroundImage: "none",
+        px: { xs: 1.25, sm: 2, lg: 3 },
+        py: { xs: 1.5, md: 2.5 },
+      }}
+    >
+      <Container maxWidth={false} sx={{ px: 0 }}>
+        {/* Header */}
+        <Box
+          sx={{
+            ...builderPanelSx,
+            mb: 2,
+            px: { xs: 1.1, sm: 1.75 },
+            py: { xs: 1.1, sm: 1.35 },
+            display: "flex",
+            flexDirection: { xs: "column", xl: "row" },
+            justifyContent: "space-between",
+            alignItems: { xs: "stretch", xl: "center" },
+            gap: 1.1,
+          }}
+        >
+          <Box
+            display="flex"
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            gap={1.4}
+          >
+            <IconButton
+              onClick={() => navigate("/dashboard?tab=websites")}
+              sx={{
+                width: 42,
+                height: 42,
+                border: `1px solid ${alpha(colors.primary, 0.24)}`,
+                backgroundColor: alpha(
+                  colors.primary,
+                  isEditorDark ? 0.08 : 0.04,
+                ),
+                color: colors.text,
+              }}
+            >
+              <ArrowLeft size={18} />
+            </IconButton>
+            <Box>
+              <Typography sx={builderSectionLabelSx}>
+                Website Builder
               </Typography>
+              <Typography
+                variant="h5"
+                sx={{
+                  mt: 0.15,
+                  color: colors.text,
+                  fontWeight: 800,
+                  letterSpacing: "-0.04em",
+                  lineHeight: 1,
+                  fontSize: { xs: "1.45rem", md: "1.8rem" },
+                }}
+              >
+                {website?.name || "Untitled Website"}
+              </Typography>
+              <Box
+                display="flex"
+                gap={0.8}
+                mt={0.7}
+                flexWrap="wrap"
+                alignItems="center"
+              >
+                <Chip
+                  label={website?.status || "Draft"}
+                  size="small"
+                  sx={{
+                    height: 28,
+                    fontWeight: 700,
+                    color: colors.text,
+                    backgroundColor: alpha(
+                      website?.status === "PUBLISHED"
+                        ? colors.success
+                        : colors.warning,
+                      0.16,
+                    ),
+                    border: `1px solid ${alpha(
+                      website?.status === "PUBLISHED"
+                        ? colors.success
+                        : colors.warning,
+                      0.3,
+                    )}`,
+                  }}
+                />
+                <IconButton
+                  size="small"
+                  onClick={(event) =>
+                    setHeaderMenuAnchorEl(event.currentTarget)
+                  }
+                  sx={{
+                    width: 30,
+                    height: 30,
+                    border: `1px solid ${alpha(colors.primary, 0.18)}`,
+                    color: editorMutedText,
+                    backgroundColor: alpha(colors.primary, 0.05),
+                  }}
+                  aria-label="Open website details"
+                >
+                  <Ellipsis size={14} />
+                </IconButton>
+              </Box>
             </Box>
+          </Box>
+
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={1.25}
+            flexWrap="wrap"
+            justifyContent={{ xs: "space-between", xl: "flex-end" }}
+          >
+            <Box display="flex" alignItems="center" gap={0.75} flexWrap="wrap">
+              <Tooltip title="Undo last block change">
+                <span>
+                  <IconButton
+                    onClick={handleUndoBlocks}
+                    disabled={!canUndo}
+                    sx={{
+                      minWidth: 42,
+                      minHeight: 42,
+                      border: `1px solid ${alpha(colors.primary, 0.18)}`,
+                      color: canUndo ? colors.text : alpha(colors.text, 0.42),
+                      backgroundColor: canUndo
+                        ? alpha(colors.primary, isEditorDark ? 0.1 : 0.05)
+                        : alpha(colors.text, 0.03),
+                      "&:hover": canUndo
+                        ? {
+                            backgroundColor: alpha(
+                              colors.primary,
+                              isEditorDark ? 0.18 : 0.1,
+                            ),
+                            color: colors.text,
+                          }
+                        : {},
+                      "&.Mui-disabled": {
+                        color: alpha(colors.text, 0.42),
+                        borderColor: alpha(colors.text, 0.12),
+                      },
+                    }}
+                  >
+                    <Undo2 size={16} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Redo reverted block change">
+                <span>
+                  <IconButton
+                    onClick={handleRedoBlocks}
+                    disabled={!canRedo}
+                    sx={{
+                      minWidth: 42,
+                      minHeight: 42,
+                      border: `1px solid ${alpha(colors.primary, 0.18)}`,
+                      color: canRedo ? colors.text : alpha(colors.text, 0.42),
+                      backgroundColor: canRedo
+                        ? alpha(colors.primary, isEditorDark ? 0.1 : 0.05)
+                        : alpha(colors.text, 0.03),
+                      "&:hover": canRedo
+                        ? {
+                            backgroundColor: alpha(
+                              colors.primary,
+                              isEditorDark ? 0.18 : 0.1,
+                            ),
+                            color: colors.text,
+                          }
+                        : {},
+                      "&.Mui-disabled": {
+                        color: alpha(colors.text, 0.42),
+                        borderColor: alpha(colors.text, 0.12),
+                      },
+                    }}
+                  >
+                    <Redo2 size={16} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Button
+                variant="outlined"
+                startIcon={<Eye size={16} />}
+                onClick={handleMobilePreview}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 999,
+                  minHeight: 42,
+                  borderColor: alpha(colors.primary, 0.24),
+                  color: colors.text,
+                }}
+              >
+                Live Preview
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<Save size={16} />}
+                onClick={triggerManualSave}
+                disabled={saveStatus === "saving"}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 999,
+                  minHeight: 42,
+                  px: 2,
+                  background: "black",
+                  color: "white",
+                  fontWeight: 700,
+                  boxShadow: "none",
+                }}
+              >
+                {saveStatus === "saving" ? "Saving..." : "Save Changes"}
+              </Button>
+            </Box>
+
+            {/* Autosave status indicator */}
+            <SaveStatus status={saveStatus} onRetry={triggerManualSave} />
+            {/* WebSocket connection status (Step 7.5) */}
+            <ConnectionStatus
+              connectionState={connectionState}
+              connectedUsers={activeUsers.length}
+            />
+
+            {liveSiteHref && website?.status === "PUBLISHED" && (
+              <Button
+                variant="contained"
+                startIcon={<Eye size={16} />}
+                onClick={() => window.open(liveSiteHref, "_blank")}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 999,
+                  px: 2,
+                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${alpha(colors.primary, 0.78)} 100%)`,
+                  color: "#061214",
+                  fontWeight: 700,
+                  boxShadow: "none",
+                }}
+              >
+                Open Live Site
+              </Button>
+            )}
           </Box>
         </Box>
 
-        <Box display="flex" alignItems="center" gap={2}>
-          {/* Autosave status indicator */}
-          <SaveStatus
-            status={saveStatus}
-            onRetry={triggerSave}
+        {activeToolbarMode === "text" ? (
+          <EditorStyleToolbar
+            selection={
+              selectedEditableElement
+                ? {
+                    blockId: selectedEditableElement.blockId,
+                    fieldPath: selectedEditableElement.fieldPath,
+                    label: getEditableStyleConfig(
+                      selectedEditableElement.fieldPath,
+                    ).label,
+                    editType: selectedEditableElement.editType,
+                  }
+                : null
+            }
+            value={selectedEditableStyle}
+            disabled={!selectedEditableElement}
+            onStyleChange={handleEditableStyleChange}
+            containerSx={{ mb: 2 }}
           />
-          {/* WebSocket connection status (Step 7.5) */}
-          <ConnectionStatus
-            connectionState={connectionState}
-            connectedUsers={activeUsers.length}
+        ) : (
+          <EditorSectionStyleToolbar
+            selection={
+              selectedSectionElement
+                ? {
+                    blockId: selectedSectionElement.blockId,
+                    label: selectedSectionElement.label,
+                  }
+                : null
+            }
+            value={selectedSectionStyle}
+            disabled={!selectedSectionElement}
+            onStyleChange={handleSectionStyleChange}
+            containerSx={{ mb: 2 }}
           />
+        )}
 
-          {website?.status === 'PUBLISHED' && (
-            <Button
-              variant="outlined"
-              startIcon={<Eye size={18} />}
-              onClick={() => window.open(`/site/${website?.slug}`, '_blank')}
-              sx={{ textTransform: 'none' }}
+        <ClickAwayListener onClickAway={() => setPreviewContextMenu(null)}>
+          <Menu
+            open={!!previewContextMenu}
+            onClose={() => setPreviewContextMenu(null)}
+            anchorReference="anchorPosition"
+            anchorPosition={
+              previewContextMenu
+                ? { top: previewContextMenu.y, left: previewContextMenu.x }
+                : undefined
+            }
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
+            hideBackdrop
+            disableAutoFocusItem
+            MenuListProps={{
+              autoFocusItem: false,
+              onContextMenu: (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              },
+            }}
+            PaperProps={{
+              ref: previewContextMenuRef,
+              sx: {
+                mt: 0.5,
+                minWidth: 280,
+                borderRadius: 2.5,
+                border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                boxShadow: "0 20px 48px rgba(15, 23, 42, 0.16)",
+                overflow: "hidden",
+                pointerEvents: "auto",
+              },
+              onContextMenu: (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              },
+            }}
+          >
+            <MenuItem
+              disabled
+              sx={{
+                opacity: 1,
+                minHeight: 42,
+                fontWeight: 700,
+                color: editorText,
+                borderBottom: `1px solid ${alpha(colors.text, 0.08)}`,
+              }}
             >
-              View Live
-            </Button>
+              Layers
+            </MenuItem>
+            {previewContextMenu?.layers?.length ? (
+              previewContextMenu.layers.map((layer) => {
+                const isActive =
+                  layer.kind === "editable"
+                    ? selectedEditableElement &&
+                      String(selectedEditableElement.blockId) ===
+                        String(layer.editable?.blockId) &&
+                      selectedEditableElement.fieldPath ===
+                        layer.editable?.fieldPath
+                    : layer.kind === "image"
+                      ? selectedImageElement &&
+                        String(selectedImageElement.blockId) ===
+                          String(layer.image?.blockId) &&
+                        selectedImageElement.fieldPath ===
+                          layer.image?.fieldPath
+                      : selectedSectionElement &&
+                        String(selectedSectionElement.blockId) ===
+                          String(layer.section?.blockId) &&
+                        getSectionStyleKey(selectedSectionElement) ===
+                          (layer.section?.styleKey || "sectionStyle");
+
+                return (
+                  <MenuItem
+                    key={layer.id}
+                    onClick={() => handleContextMenuLayerSelect(layer)}
+                    sx={{
+                      minHeight: 40,
+                      pl: 1.5 + layer.depth * 2,
+                      pr: 1.5,
+                      gap: 1.2,
+                      color: editorText,
+                      backgroundColor: isActive
+                        ? alpha(colors.primary, 0.12)
+                        : "transparent",
+                      "&:hover": {
+                        backgroundColor: alpha(colors.primary, 0.08),
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 24,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: isActive ? colors.primary : editorMutedText,
+                      }}
+                    >
+                      {layer.kind === "section" ? (
+                        <Layers size={16} />
+                      ) : layer.kind === "image" ? (
+                        <Palette size={16} />
+                      ) : (
+                        <Pencil size={16} />
+                      )}
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: isActive ? 700 : 500,
+                          color: editorText,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {layer.label}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: editorMutedText }}
+                      >
+                        {layer.kind === "section"
+                          ? "Section"
+                          : layer.kind === "image"
+                            ? "Image"
+                            : "Typography"}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                );
+              })
+            ) : (
+              <MenuItem disabled sx={{ opacity: 1, color: editorMutedText }}>
+                No selectable layers
+              </MenuItem>
+            )}
+          </Menu>
+        </ClickAwayListener>
+
+        <Menu
+          anchorEl={headerMenuAnchorEl}
+          open={headerMenuOpen}
+          onClose={() => setHeaderMenuAnchorEl(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              minWidth: 220,
+              borderRadius: 2,
+            },
+          }}
+        >
+          <MenuItem disabled sx={{ opacity: 1, color: editorMutedText }}>
+            {selectedPage ? `${selectedPage.title} page` : `${pageCount} pages`}
+          </MenuItem>
+          <MenuItem disabled sx={{ opacity: 1, color: editorMutedText }}>
+            {liveSiteHref || "/site/preview"}
+          </MenuItem>
+          {liveSiteHref && website?.status === "PUBLISHED" && (
+            <MenuItem
+              onClick={() => {
+                setHeaderMenuAnchorEl(null);
+                window.open(liveSiteHref, "_blank");
+              }}
+              sx={{ color: colors.text }}
+            >
+              Open Live Site
+            </MenuItem>
           )}
-        </Box>
-      </Box>
+        </Menu>
 
-      {/* Governance UI — Step 9.25: ApprovalStatusBanner */}
-      <ApprovalStatusBanner
-        websiteId={websiteId ? Number(websiteId) : 0}
-        userRole={websiteRole}
-        userId={user?.id ?? 0}
-      />
+        {/* Governance UI — Step 9.25: ApprovalStatusBanner */}
+        <ApprovalStatusBanner
+          websiteId={websiteId ? Number(websiteId) : 0}
+          userRole={websiteRole}
+          userId={user?.id ?? 0}
+        />
 
-      <ResponsiveEditorLayout>
-      <Grid container spacing={3}>
-        {/* Mobile page chips row — Step 9.5.1 */}
-        {isMobile && pages.length > 0 && (
+        {/* {website?.frontendTemplateId && (
+        <Alert
+          severity="info"
+          sx={{
+            mt: 2,
+            borderRadius: 3,
+            border: `1px solid ${alpha(colors.primary, 0.18)}`,
+            backgroundColor: alpha(colors.primary, isEditorDark ? 0.08 : 0.04),
+            color: colors.text,
+            '& .MuiAlert-icon': {
+              color: colors.primary,
+            },
+          }}
+        >
+          Template mode: <strong>{resolvedFrontendTemplateId}</strong>. Preview follows the live layout.
+        </Alert>
+      )} */}
+
+        <ResponsiveEditorLayout sx={{ mt: 2 }}>
+          <Grid container spacing={2.5}>
+            {/* Compact page switcher */}
+            {/* {pages.length > 0 && (
           <Grid item xs={12}>
             <Box
               sx={{
@@ -1329,6 +2400,7 @@ const WebsiteEditorInner = () => {
                 gap: 1,
                 overflowX: 'auto',
                 pb: 1,
+                pt:3,
                 px: 0.5,
                 '&::-webkit-scrollbar': { height: 4 },
                 '&::-webkit-scrollbar-thumb': {
@@ -1342,48 +2414,1227 @@ const WebsiteEditorInner = () => {
                   key={page.id}
                   label={page.title}
                   icon={page.isHome ? <House size={14} /> : undefined}
-                  onClick={() => setSelectedPage(page)}
-                  color={selectedPage?.id === page.id ? 'primary' : 'default'}
+                  onClick={() => handleSelectPage(page)}
                   variant={selectedPage?.id === page.id ? 'filled' : 'outlined'}
                   sx={{
                     flexShrink: 0,
                     minHeight: 36,
+                    borderRadius: 999,
                     borderColor: alpha(colors.primary, 0.3),
+                    color: selectedPage?.id === page.id ? '#061214' : editorMutedText,
+                    backgroundColor: selectedPage?.id === page.id ? colors.primary : 'transparent',
+                    '& .MuiChip-icon': {
+                      color: selectedPage?.id === page.id ? '#061214' : editorMutedText,
+                    },
                   }}
                 />
               ))}
+              {!supportsLocalTemplateEditor && (
+                <Chip
+                  label="+ Add Page"
+                  onClick={() => setPageDialogOpen(true)}
+                  variant="outlined"
+                  sx={{
+                    flexShrink: 0,
+                    minHeight: 36,
+                    borderRadius: 999,
+                    borderColor: alpha(colors.primary, 0.3),
+                    color: colors.text,
+                  }}
+                />
+              )}
             </Box>
           </Grid>
+        )} */}
+
+            {/* Blocks & Preview */}
+            <Grid item xs={12} mt={4}>
+              {selectedPage ? (
+                <Box>
+                  <Box
+                    sx={{
+                      ...builderPanelSx,
+                      mb: 2,
+                      px: { xs: 1.25, md: 1.75 },
+                      py: 1.25,
+                      display: "none",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: { xs: "column", xl: "row" },
+                        justifyContent: "space-between",
+                        alignItems: { xs: "flex-start", xl: "center" },
+                        gap: 1.25,
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={builderSectionLabelSx}>
+                          Canvas
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          sx={{ color: colors.text, fontWeight: 700 }}
+                        >
+                          {website?.name || "Untitled Website"}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ mt: 0.45, color: editorMutedText }}
+                        >
+                          Editing {selectedPage.title} with live preview sync.
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                        <Chip
+                          label={
+                            selectedPage.isHome ? "Home page" : "Standard page"
+                          }
+                          variant="outlined"
+                          sx={{
+                            borderColor: alpha(colors.primary, 0.24),
+                            color: editorMutedText,
+                          }}
+                        />
+                        <Chip
+                          label={`${activeBlockCount} blocks`}
+                          variant="outlined"
+                          sx={{
+                            borderColor: colors.border,
+                            color: editorMutedText,
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  <Grid container spacing={2.5} alignItems="stretch">
+                    {/* Blocks List */}
+                    <Grid item xs={12} lg={3}>
+                      <Paper
+                        sx={{
+                          ...builderPanelSx,
+                          p: 2,
+                          height: "100%",
+                        }}
+                      >
+                        <Box
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          mb={2}
+                        >
+                          {/* <Box>
+                            <Typography sx={builderSectionLabelSx}>
+                              Sections
+                            </Typography>
+                            <Typography
+                              variant="h6"
+                              sx={{ color: colors.text, fontWeight: 700 }}
+                            >
+                              {sidebarMode === "theme"
+                                ? "Theme"
+                                : sidebarMode === "media"
+                                  ? "Media"
+                                  : "Blocks"}
+                            </Typography>
+                          </Box> */}
+                          <Box display="flex" gap={0.5}>
+                            <Button
+                              size="small"
+                              variant={
+                                sidebarMode === "blocks"
+                                  ? "contained"
+                                  : "outlined"
+                              }
+                              startIcon={<Layers size={16} />}
+                              onClick={() => setSidebarMode("blocks")}
+                              sx={{
+                                ...sidebarHeaderButtonSx,
+                                color:
+                                  sidebarMode === "blocks"
+                                    ? "#ffffff"
+                                    : editorText,
+                                borderColor: alpha(colors.primary, 0.22),
+                                backgroundColor:
+                                  sidebarMode === "blocks"
+                                    ? "black"
+                                    : "rgba(255,255,255,0.72)",
+                              }}
+                              aria-label="Show blocks panel"
+                            >
+                              Blocks
+                            </Button>
+                            <Button
+                              size="small"
+                              variant={
+                                sidebarMode === "theme"
+                                  ? "contained"
+                                  : "outlined"
+                              }
+                              startIcon={<Palette size={16} />}
+                              onClick={() => setSidebarMode("theme")}
+                              disabled={!supportsTemplateThemeSidebar}
+                              sx={{
+                                ...sidebarHeaderButtonSx,
+                                borderColor: alpha(colors.primary, 0.18),
+                                color:
+                                  sidebarMode === "theme"
+                                    ? "#ffffff"
+                                    : editorText,
+                                backgroundColor:
+                                  sidebarMode === "theme"
+                                    ? "black"
+                                    : "rgba(255,255,255,0.72)",
+                              }}
+                              aria-label="Show theme panel"
+                            >
+                              Theme
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<Layers size={16} />}
+                              onClick={() => setBlockLibraryOpen(true)}
+                              // disabled={sidebarMode !== "blocks"}
+                              sx={{
+                                ...sidebarHeaderButtonSx,
+                                color: editorText,
+                                borderColor: alpha(colors.primary, 0.22),
+                                backgroundColor: "rgba(255,255,255,0.72)",
+                                "&:hover": {
+                                  backgroundColor: "rgba(255,255,255,0.92)",
+                                  borderColor: alpha(colors.primary, 0.3),
+                                },
+                              }}
+                              aria-label="Open block library"
+                            >
+                              Library
+                            </Button>
+                            <Button
+                              size="small"
+                              variant={
+                                sidebarMode === "media"
+                                  ? "contained"
+                                  : "outlined"
+                              }
+                              startIcon={<ImageIcon size={16} />}
+                              onClick={() => setSidebarMode("media")}
+                              sx={{
+                                ...sidebarHeaderButtonSx,
+                                color:
+                                  sidebarMode === "media"
+                                    ? "#ffffff"
+                                    : editorText,
+                                borderColor: alpha(colors.primary, 0.22),
+                                backgroundColor:
+                                  sidebarMode === "media"
+                                    ? alpha(colors.primary, 0.22)
+                                    : "rgba(255,255,255,0.72)",
+                              }}
+                              aria-label="Show media panel"
+                            >
+                              Media
+                            </Button>
+                            <IconButton
+                              size="small"
+                              onClick={() => setBlockDialogOpen(true)}
+                              // disabled={sidebarMode !== "blocks"}
+                              sx={{
+                                minWidth: 48,
+                                minHeight: 48,
+                                borderRadius: 2.5,
+                                border: `1px solid ${alpha(colors.primary, 0.18)}`,
+                                backgroundColor: alpha(colors.primary, 0.08),
+                                color: colors.text,
+                                transition:
+                                  "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
+                                "&:hover": {
+                                  backgroundColor: "black",
+                                  borderColor: alpha(colors.primary, 0.3),
+                                  color: "#ffffff",
+                                },
+                                "&.Mui-disabled": {
+                                  color: alpha(colors.text, 0.34),
+                                  borderColor: alpha(colors.primary, 0.12),
+                                  backgroundColor: "rgba(255,255,255,0.52)",
+                                },
+                              }}
+                              aria-label="Add block"
+                            >
+                              <Plus size={18} />
+                            </IconButton>
+                          </Box>
+                        </Box>
+
+                        {blockError && (
+                          <Alert
+                            severity="error"
+                            sx={{ mb: 2 }}
+                            action={
+                              <Button
+                                color="inherit"
+                                size="small"
+                                onClick={() =>
+                                  selectedPage && fetchBlocks(selectedPage.id)
+                                }
+                              >
+                                Retry
+                              </Button>
+                            }
+                          >
+                            {blockError}
+                          </Alert>
+                        )}
+
+                        {sidebarMode === "blocks" ? (
+                          <>
+                            <DraggableBlockList
+                              blocks={blocks}
+                              pageId={selectedPage?.id}
+                              websiteId={websiteId}
+                              selectedBlockId={editingBlock?.id ?? null}
+                              disabled={false}
+                              persistReorder={!isLocalTemplateEditorPage}
+                              onBlocksChange={(reordered) => {
+                                setBlocks(reordered);
+                              }}
+                              onBlockSelect={(blockId) => {
+                                const block = blocks.find(
+                                  (b) => b.id === blockId,
+                                );
+                                if (block) {
+                                  setEditingBlock(block);
+                                  setBlockForm({
+                                    blockType: block.blockType,
+                                    content: block.content,
+                                  });
+                                }
+                              }}
+                            />
+                          </>
+                        ) : sidebarMode === "media" ? (
+                          <Box>
+                            <input
+                              ref={imageLibraryInputRef}
+                              type="file"
+                              accept="image/*"
+                              hidden
+                              onChange={(event) => {
+                                void handleLibraryUpload(
+                                  event.target.files?.[0] || null,
+                                );
+                                event.target.value = "";
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "repeat(2, minmax(0, 1fr))",
+                                gap: 1.2,
+                                maxHeight: { xs: 420, lg: 700 },
+                                overflowY: "auto",
+                                pr: 0.5,
+                              }}
+                            >
+                              {imageLibraryItems.map((item) => (
+                                <ButtonBase
+                                  key={item.id}
+                                  onClick={() => handleOpenLibraryImage(item)}
+                                  disabled={!item.blockId}
+                                  sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "stretch",
+                                    textAlign: "left",
+                                    borderRadius: 3,
+                                    overflow: "hidden",
+                                    border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                                    backgroundColor: "rgba(255,255,255,0.82)",
+                                    transition:
+                                      "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+                                    "&:hover": {
+                                      transform: item.blockId
+                                        ? "translateY(-2px)"
+                                        : "none",
+                                      boxShadow: item.blockId
+                                        ? "0 12px 28px rgba(15,23,42,0.08)"
+                                        : "none",
+                                      borderColor: alpha(colors.primary, 0.26),
+                                    },
+                                    "&.Mui-disabled": {
+                                      opacity: 0.86,
+                                    },
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      height: 108,
+                                      backgroundImage: `url(${item.src})`,
+                                      backgroundSize: "cover",
+                                      backgroundPosition: "center",
+                                      backgroundColor: "#e5e7eb",
+                                    }}
+                                  />
+                                  <Box sx={{ p: 1.1 }}>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        color: colors.text,
+                                        fontWeight: 700,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                      }}
+                                    >
+                                      {item.label}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{ color: editorMutedText }}
+                                    >
+                                      {item.blockId
+                                        ? "Template image"
+                                        : "Uploaded asset"}
+                                    </Typography>
+                                  </Box>
+                                </ButtonBase>
+                              ))}
+                              <ButtonBase
+                                onClick={() =>
+                                  imageLibraryInputRef.current?.click()
+                                }
+                                sx={{
+                                  minHeight: 156,
+                                  borderRadius: 3,
+                                  border: `1px dashed ${alpha(colors.primary, 0.32)}`,
+                                  backgroundColor: "rgba(255,255,255,0.72)",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 1,
+                                  color: colors.text,
+                                }}
+                              >
+                                <Upload size={20} />
+                                <Typography
+                                  sx={{ fontSize: "0.92rem", fontWeight: 700 }}
+                                >
+                                  Upload
+                                </Typography>
+                              </ButtonBase>
+                            </Box>
+                          </Box>
+                        ) : (
+                          <Box
+                            sx={{
+                              fontFamily: '"Poppins", "Inter", sans-serif',
+                              "& .MuiTypography-root, & .MuiButton-root, & .MuiChip-root, & .MuiInputBase-root, & .MuiFormLabel-root, & .MuiFormHelperText-root":
+                                {
+                                  fontFamily: '"Poppins", "Inter", sans-serif',
+                                },
+                            }}
+                          >
+                            <FrontendTemplateThemePanel
+                              templateId={resolvedFrontendTemplateId}
+                              selection={templateThemeSelection}
+                              onChange={setTemplateThemeSelection}
+                            />
+                            {/* <ThemeManager
+                              websiteId={websiteId}
+                              currentThemeId={website?.themeId || null}
+                              onThemeChange={() => {
+                                refreshPreview();
+                                fetchWebsiteData();
+                              }}
+                            /> */}
+                          </Box>
+                        )}
+                      </Paper>
+                    </Grid>
+
+                    {/* Preview — Step 4.11: PreviewPanel with live srcdoc */}
+                    <Grid item xs={12} lg={9}>
+                      <Paper
+                        sx={{
+                          ...builderPanelSx,
+                          p: 1,
+                          overflow: "hidden",
+                          position: { md: "sticky" },
+                          top: { md: 16 },
+                        }}
+                      >
+                        {/* <Box
+                    sx={{
+                      px: 1.5,
+                      py: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 1,
+                    }}
+                  >
+                    <Box>
+                      <Typography sx={builderSectionLabelSx}>Preview</Typography>
+                      <Typography variant="subtitle1" sx={{ color: colors.text, fontWeight: 700 }}>
+                        Live canvas
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={
+                        resolvedFrontendTemplateId
+                          ? `Template mode: ${resolvedFrontendTemplateId}`
+                          : editingBlock
+                            ? `Selected: ${editingBlock.blockType}`
+                            : 'Select from canvas'
+                      }
+                      size="small"
+                      variant="outlined"
+                      sx={{ borderColor: alpha(colors.primary, 0.24), color: editorMutedText }}
+                    />
+                  </Box> */}
+                        <Box sx={{ height: { xs: 440, md: 760, xl: 860 } }}>
+                          <PreviewPanel
+                            websiteId={websiteId}
+                            pageId={selectedPage?.id}
+                            pageTitle={selectedPage?.title}
+                            pages={pages.map((page) => ({
+                              id: page.id,
+                              title: page.title,
+                            }))}
+                            onPageChange={(pageId) => {
+                              const nextPage = pages.find(
+                                (page) => String(page.id) === String(pageId),
+                              );
+                              if (nextPage) {
+                                setSelectedPage(nextPage);
+                              }
+                            }}
+                            selectedBlockId={
+                              editingBlock?.id ? String(editingBlock.id) : null
+                            }
+                            onBlockSelected={(blockId) => {
+                              setSelectedEditableElement(null);
+                              setSelectedImageElement(null);
+                              setSelectedSectionElement(null);
+                              setActiveToolbarMode("text");
+                              setPreviewContextMenu(null);
+                              setBlockDialogOpen(false);
+                              setEditingBlock(null);
+                            }}
+                            onEditableElementSelected={
+                              handlePreviewEditableSelection
+                            }
+                            onImageSelected={handlePreviewImageSelection}
+                            onSectionSelected={handlePreviewSectionSelection}
+                            onPreviewContextMenu={handlePreviewContextMenu}
+                            onEditableTextSave={handleInlineEditSave}
+                            onInlineEditStart={(data) => {
+                              setSelectedEditableElement({
+                                blockId: data.blockId,
+                                fieldPath: data.fieldPath,
+                                value: data.value,
+                                editType: data.editType,
+                              });
+                              setInlineEditState(data);
+                            }}
+                            iframeRefCallback={(ref) => {
+                              iframeRef.current = ref?.current ?? null;
+                            }}
+                            selectedPreviewTarget={selectedPreviewTarget}
+                          />
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  </Grid>
+                </Box>
+              ) : (
+                <Paper
+                  sx={{
+                    ...builderPanelSx,
+                    px: 3,
+                    py: 6,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography sx={builderSectionLabelSx}>
+                    Start Building
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ mt: 0.8, color: colors.text, fontWeight: 700 }}
+                  >
+                    Select or create a page to get started
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ mt: 1, color: colors.textSecondary }}
+                  >
+                    Set up your sitemap first, then shape each section inside
+                    the live canvas.
+                  </Typography>
+                </Paper>
+              )}
+            </Grid>
+          </Grid>
+        </ResponsiveEditorLayout>
+
+        {/* InlineTextEditor overlay — Step 9.24 */}
+        {inlineEditState && (
+          <InlineTextEditor
+            open={!!inlineEditState}
+            initialValue={inlineEditState.value}
+            fieldPath={inlineEditState.fieldPath}
+            editType={inlineEditState.editType || "single"}
+            rect={inlineEditState.rect}
+            iframeRef={{ current: iframeRef.current }}
+            onSave={(newValue) => {
+              handleInlineEditSave(
+                inlineEditState.blockId,
+                inlineEditState.fieldPath,
+                newValue,
+              );
+              setInlineEditState(null);
+            }}
+            onCancel={() => setInlineEditState(null)}
+          />
         )}
 
-        {/* Pages Sidebar — hidden on mobile (Step 9.5.1) */}
-        <Grid item xs={12} md={3} sx={{ display: { xs: 'none', md: 'block' } }}>
-          <Paper sx={{ p: 2, bgcolor: alpha(colors.dark, 0.5), borderRadius: 2 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
-                Pages
-              </Typography>
+        <Dialog
+          open={!!selectedImageElement}
+          onClose={() => setSelectedImageElement(null)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 4,
+              backgroundColor: "#ffffff",
+              backgroundImage: "none",
+              overflow: "hidden",
+            },
+          }}
+        >
+          <input
+            ref={imageReplaceInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(event) => {
+              void handleReplaceSelectedImage(event.target.files?.[0] || null);
+              event.target.value = "";
+            }}
+          />
+          <DialogTitle
+            sx={{
+              px: 3,
+              py: 2.25,
+              borderBottom: `1px solid ${alpha(colors.primary, 0.12)}`,
+            }}
+          >
+            <Typography sx={builderSectionLabelSx}>Image</Typography>
+            <Typography
+              variant="h6"
+              sx={{ mt: 0.4, fontWeight: 800, color: editorText }}
+            >
+              {selectedImageElement?.label || "Selected Image"}
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ px: 3, py: 2.5, backgroundColor: "#f8fafc" }}>
+            <Box
+              sx={{
+                height: 260,
+                borderRadius: 3,
+                border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                overflow: "hidden",
+                backgroundColor: "#e5e7eb",
+                backgroundImage: selectedImageValue.src
+                  ? `url(${selectedImageValue.src})`
+                  : "none",
+                backgroundSize:
+                  selectedImageValue.objectFit === "contain"
+                    ? "contain"
+                    : selectedImageValue.objectFit,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                mb: 2,
+              }}
+            />
+
+            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<Upload size={16} />}
+                onClick={() => imageReplaceInputRef.current?.click()}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 2.5,
+                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${alpha(colors.primary, 0.78)} 100%)`,
+                  color: "#ffffff",
+                  boxShadow: "none",
+                }}
+              >
+                Replace
+              </Button>
+            </Box>
+
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 1.25,
+              }}
+            >
+              <DashboardInput
+                fullWidth
+                label="Image URL"
+                labelPlacement="floating"
+                value={selectedImageValue.src || ""}
+                onChange={(event) =>
+                  handleImageChange({ src: event.target.value })
+                }
+                sx={{
+                  gridColumn: "1 / -1",
+                  "& input": {
+                    color: "#000000",
+                    fontSize: "14px",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    color: "#fff",
+                    "& fieldset": {
+                      borderColor: "#7a7a7a7a",
+                    },
+                  },
+                }}
+              />
+              <DashboardInput
+                fullWidth
+                label="Border Radius"
+                labelPlacement="floating"
+                value={selectedImageValue.borderRadius || "0px"}
+                onChange={(event) =>
+                  handleImageChange({ borderRadius: event.target.value })
+                }
+                sx={{
+                  "& input": {
+                    color: "#000000",
+                    fontSize: "14px",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    color: "#fff",
+                    "& fieldset": {
+                      borderColor: "#7a7a7a7a",
+                    },
+                  },
+                }}
+              />
+              <DashboardInput
+                fullWidth
+                label="Border Width"
+                labelPlacement="floating"
+                value={selectedImageValue.borderWidth || "0px"}
+                onChange={(event) =>
+                  handleImageChange({ borderWidth: event.target.value })
+                }
+                sx={{
+                  "& input": {
+                    color: "#000000",
+                    fontSize: "14px",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    color: "#fff",
+                    "& fieldset": {
+                      borderColor: "#7a7a7a7a",
+                    },
+                  },
+                }}
+              />
+              <DashboardInput
+                fullWidth
+                label="Border Color"
+                labelPlacement="floating"
+                value={selectedImageValue.borderColor || "#e5e7eb"}
+                onChange={(event) =>
+                  handleImageChange({ borderColor: event.target.value })
+                }
+                sx={{
+                  "& input": {
+                    color: "#000000",
+                    fontSize: "14px",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    color: "#fff",
+                    "& fieldset": {
+                      borderColor: "#7a7a7a7a",
+                    },
+                  },
+                }}
+              />
+              <FormControl size="small" sx={{ minWidth: 0 }}>
+                <Select
+                  value={selectedImageValue.objectFit || "cover"}
+                  onChange={(event) =>
+                    handleImageChange({ objectFit: event.target.value })
+                  }
+                  sx={{
+                    height: 54,
+                    borderRadius: 2.5,
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  <MenuItem value="cover">Fit: cover</MenuItem>
+                  <MenuItem value="contain">Fit: contain</MenuItem>
+                  <MenuItem value="fill">Fit: fill</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </DialogContent>
+          <DialogActions
+            sx={{
+              px: 3,
+              py: 2,
+              borderTop: `1px solid ${alpha(colors.primary, 0.12)}`,
+            }}
+          >
+            <Button
+              onClick={() => setSelectedImageElement(null)}
+              sx={{ textTransform: "none", color: editorMutedText }}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* BlockLibrary drawer — Phase 9 gap fix */}
+        {selectedPage && (
+          <BlockLibrary
+            open={blockLibraryOpen}
+            onClose={() => setBlockLibraryOpen(false)}
+            pageId={selectedPage?.id}
+            blocks={blocks}
+            onInsertBlock={handleInsertBlockFromLibrary}
+            closeAfterInsert={false}
+            currentUserRole={websiteRole}
+          />
+        )}
+
+        {/* MobileFAB — opens block library on mobile (Phase 9 gap fix) */}
+        {isMobile && selectedPage && (
+          <MobileFAB onOpen={() => setBlockLibraryOpen(true)} />
+        )}
+
+        {/* MobileActionBar — save/publish/preview on mobile (Phase 9 gap fix) */}
+        {isMobile && (
+          <MobileActionBar
+            onSave={handleMobileSave}
+            onPublish={handleMobilePublish}
+            onPreview={handleMobilePreview}
+            isSaving={saveStatus === "saving"}
+            isMac={
+              typeof navigator !== "undefined" &&
+              /Mac|iPad|iPhone/.test(navigator.userAgent)
+            }
+          />
+        )}
+
+        {/* Create Page Dialog */}
+        <Dialog
+          open={pageDialogOpen}
+          onClose={() => !submitting && setPageDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              backgroundColor: "#ffffff",
+              backgroundImage: "none",
+              color: editorText,
+            },
+          }}
+        >
+          <DialogTitle sx={{ bgcolor: "#ffffff", color: editorText }}>
+            Create Page
+          </DialogTitle>
+          <DialogContent sx={{ bgcolor: "#ffffff", pt: 3, color: editorText }}>
+            {formError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {formError}
+              </Alert>
+            )}
+
+            <DashboardInput
+              fullWidth
+              label="Title"
+              labelPlacement="floating"
+              value={pageForm.title}
+              onChange={(e) =>
+                setPageForm({ ...pageForm, title: e.target.value })
+              }
+              sx={{ mb: 2 }}
+            />
+
+            <DashboardInput
+              fullWidth
+              label="Path"
+              labelPlacement="floating"
+              value={pageForm.path}
+              onChange={(e) =>
+                setPageForm({ ...pageForm, path: e.target.value })
+              }
+              helperText="Must start with / (example: /about)"
+              sx={{ mb: 2 }}
+            />
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={pageForm.isHome}
+                  onChange={(e) =>
+                    setPageForm({ ...pageForm, isHome: e.target.checked })
+                  }
+                />
+              }
+              label="Set as home page"
+              sx={{ color: editorText }}
+            />
+          </DialogContent>
+
+          <DialogActions sx={{ bgcolor: "#ffffff", px: 3, pb: 2 }}>
+            <Button
+              onClick={() => setPageDialogOpen(false)}
+              disabled={submitting}
+              sx={{ color: editorMutedText }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreatePage}
+              variant="contained"
+              disabled={submitting || !pageForm.title || !pageForm.path}
+            >
+              {submitting ? <CircularProgress size={24} /> : "Create"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Create/Edit Block Dialog */}
+        <Dialog
+          open={blockDialogOpen || !!editingBlock}
+          onClose={() => {
+            if (!submitting) {
+              setBlockDialogOpen(false);
+              setEditingBlock(null);
+              setBlockForm({ blockType: "", content: {} });
+              setFormError(null);
+              setFormHasErrors(false);
+            }
+          }}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 4,
+              overflow: "hidden",
+              backgroundColor: "#ffffff",
+              backgroundImage: "none",
+              background: isEditorDark
+                ? "linear-gradient(180deg, rgba(18,24,26,0.98) 0%, rgba(10,14,16,0.98) 100%)"
+                : "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(249,250,251,1) 100%)",
+              border: `1px solid ${alpha(colors.primary, isEditorDark ? 0.18 : 0.1)}`,
+              boxShadow: isEditorDark
+                ? "0 28px 80px rgba(0, 0, 0, 0.5)"
+                : "0 24px 60px rgba(15, 23, 42, 0.16)",
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              px: 3,
+              py: 2.25,
+              borderBottom: `1px solid ${alpha(colors.primary, 0.12)}`,
+              backgroundColor: alpha(
+                colors.primary,
+                isEditorDark ? 0.08 : 0.04,
+              ),
+              color: editorText,
+            }}
+          >
+            <Typography sx={builderSectionLabelSx}>Block Settings</Typography>
+            <Typography
+              variant="h5"
+              sx={{ mt: 0.5, fontWeight: 800, color: editorText }}
+            >
+              {editingBlock ? "Edit Block" : "Add Block"}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ mt: 0.75, color: editorMutedText }}
+            >
+              {editingBlock
+                ? `Update the selected ${editingBlock.blockType?.toLowerCase() || "content"} section with live preview sync.`
+                : "Choose a block source first, then configure its content and layout."}
+            </Typography>
+          </DialogTitle>
+
+          <DialogContent
+            dividers
+            sx={{
+              px: 3,
+              py: 2.5,
+              backgroundColor: "#ffffff",
+              backgroundImage: "none",
+              color: editorText,
+              "& .MuiAlert-root": {
+                borderRadius: 2.5,
+              },
+              "& .MuiBox-root > .MuiBox-root": {
+                borderRadius: 2,
+              },
+              "& .MuiTypography-root, & .MuiFormLabel-root, & .MuiInputLabel-root, & .MuiFormHelperText-root, & .MuiFormControlLabel-label, & .MuiInputBase-input, & .MuiSelect-select, & .MuiButtonBase-root":
+                {
+                  color: `${editorText} !important`,
+                },
+              "& .MuiFormHelperText-root": {
+                color: `${editorMutedText} !important`,
+              },
+              "& .MuiOutlinedInput-root, & .MuiInputBase-root": {
+                backgroundColor: "#ffffff",
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: `${alpha("#111827", 0.18)} !important`,
+              },
+              "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline":
+                {
+                  borderColor: `${alpha(colors.primary, 0.45)} !important`,
+                },
+              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                {
+                  borderColor: `${colors.primary} !important`,
+                },
+            }}
+          >
+            {formError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {formError}
+              </Alert>
+            )}
+
+            {!editingBlock && (
+              <Box sx={{ mb: 3 }}>
+                <Alert
+                  severity="info"
+                  sx={{
+                    mb: 2,
+                    border: `1px solid ${alpha(colors.primary, 0.12)}`,
+                    backgroundColor: alpha(
+                      colors.primary,
+                      isEditorDark ? 0.08 : 0.04,
+                    ),
+                    color: editorText,
+                  }}
+                >
+                  Use the Block Library to add new blocks with full search and
+                  categories.
+                </Alert>
+                <Button
+                  variant="outlined"
+                  startIcon={<Plus size={18} />}
+                  onClick={() => {
+                    setBlockDialogOpen(false);
+                    setBlockLibraryOpen(true);
+                  }}
+                  fullWidth
+                  sx={{
+                    minHeight: 48,
+                    borderRadius: 2.5,
+                    textTransform: "none",
+                    borderColor: alpha(colors.primary, 0.24),
+                    color: editorText,
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  Open Block Library
+                </Button>
+              </Box>
+            )}
+
+            {(blockForm.blockType || editingBlock) && (
+              <FormGenerator
+                blockType={(
+                  blockForm.blockType ||
+                  editingBlock?.blockType ||
+                  ""
+                ).toLowerCase()}
+                initialValues={blockForm.content}
+                onChange={(values) =>
+                  setBlockForm((prev) => ({ ...prev, content: values }))
+                }
+                onValidate={(errors) =>
+                  setFormHasErrors(Object.keys(errors).length > 0)
+                }
+                disabled={submitting}
+              />
+            )}
+          </DialogContent>
+
+          <DialogActions
+            sx={{
+              px: 3,
+              py: 2,
+              borderTop: `1px solid ${alpha(colors.primary, 0.12)}`,
+              backgroundColor: "#f8fafc",
+            }}
+          >
+            <Button
+              onClick={() => {
+                setBlockDialogOpen(false);
+                setEditingBlock(null);
+                setBlockForm({ blockType: "", content: {} });
+                setFormError(null);
+                setFormHasErrors(false);
+              }}
+              disabled={submitting}
+              sx={{
+                minWidth: 110,
+                minHeight: 46,
+                borderRadius: 2.5,
+                textTransform: "none",
+                color: editorMutedText,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={editingBlock ? handleUpdateBlock : handleCreateBlock}
+              variant="contained"
+              disabled={
+                submitting ||
+                formHasErrors ||
+                (!editingBlock && !blockForm.blockType)
+              }
+              sx={{
+                minWidth: 140,
+                minHeight: 46,
+                borderRadius: 2.5,
+                textTransform: "none",
+                fontWeight: 700,
+                background: `linear-gradient(135deg, ${colors.primary} 0%, ${alpha(colors.primary, 0.78)} 100%)`,
+                color: "#061214",
+                boxShadow: "none",
+              }}
+            >
+              {submitting ? (
+                <CircularProgress size={24} />
+              ) : editingBlock ? (
+                "Update"
+              ) : (
+                "Add"
+              )}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Unsaved changes confirmation dialog */}
+        <ConfirmationDialog
+          open={showUnsavedDialog}
+          variant="warning"
+          title="Unsaved Changes"
+          message="You have unsaved changes. Would you like to save before leaving?"
+          confirmLabel="Leave"
+          cancelLabel="Cancel"
+          secondaryLabel="Save & Leave"
+          onConfirm={confirmNavigation}
+          onCancel={cancelNavigation}
+          onSecondary={saveAndNavigate}
+        />
+
+        {/* Conflict resolution modal */}
+        {conflictData && (
+          <ConflictModal
+            open={!!conflictData}
+            conflictData={conflictData}
+            onResolve={resolveConflict}
+          />
+        )}
+
+        {/* Recovery modal — localStorage backup restore/discard (Step 5.10) */}
+        <RecoveryModal
+          open={hasBackup}
+          timestamp={backupEntry?.timestamp ?? 0}
+          onRestore={handleRestoreBackup}
+          onDiscard={discardBackup}
+        />
+
+        {/* Mobile SpeedDial FAB — Step 9.5.2 */}
+        {isMobile && (
+          <SpeedDial
+            ariaLabel="Mobile editor actions"
+            sx={{
+              position: "fixed",
+              bottom: 24,
+              right: 24,
+              "& .MuiFab-primary": {
+                bgcolor: colors.primary,
+                "&:hover": { bgcolor: alpha(colors.primary, 0.85) },
+              },
+            }}
+            icon={<SpeedDialIcon />}
+          >
+            <SpeedDialAction
+              icon={<Plus size={20} />}
+              tooltipTitle="Add Block"
+              onClick={() => setBlockDialogOpen(true)}
+              FabProps={{ sx: { minWidth: 48, minHeight: 48 } }}
+            />
+            <SpeedDialAction
+              icon={<Layers size={20} />}
+              tooltipTitle="Manage Pages"
+              onClick={() => setPagesBottomSheetOpen(true)}
+              FabProps={{ sx: { minWidth: 48, minHeight: 48 } }}
+            />
+          </SpeedDial>
+        )}
+
+        {/* Pages BottomSheet — Step 9.5.3 */}
+        {isMobile && (
+          <BottomSheet
+            open={pagesBottomSheetOpen}
+            onClose={() => setPagesBottomSheetOpen(false)}
+            title="Pages"
+            initialSnap={1}
+          >
+            <Box display="flex" justifyContent="flex-end" mb={1}>
               <IconButton
                 size="small"
-                onClick={() => setPageDialogOpen(true)}
+                onClick={() => {
+                  setPagesBottomSheetOpen(false);
+                  setPageDialogOpen(true);
+                }}
                 sx={{ minWidth: 48, minHeight: 48 }}
                 aria-label="Add page"
               >
                 <Plus size={18} />
               </IconButton>
             </Box>
-
             <List dense>
               {pages.map((page) => (
                 <ListItem
                   key={page.id}
                   button
                   selected={selectedPage?.id === page.id}
-                  onClick={() => setSelectedPage(page)}
+                  onClick={() => {
+                    setSelectedPage(page);
+                    setPagesBottomSheetOpen(false);
+                  }}
                   sx={{
                     borderRadius: 1,
                     mb: 0.5,
-                    '&.Mui-selected': {
+                    minHeight: 48,
+                    "&.Mui-selected": {
                       bgcolor: alpha(colors.primary, 0.2),
                     },
                   }}
@@ -1405,6 +3656,7 @@ const WebsiteEditorInner = () => {
                           edge="end"
                           onClick={() => handleSetHomePage(page.id)}
                           title="Set as home"
+                          sx={{ minWidth: 48, minHeight: 48 }}
                         >
                           <House size={16} />
                         </IconButton>
@@ -1412,6 +3664,7 @@ const WebsiteEditorInner = () => {
                           size="small"
                           edge="end"
                           onClick={() => handleDeletePage(page.id)}
+                          sx={{ minWidth: 48, minHeight: 48 }}
                         >
                           <Trash2 size={16} />
                         </IconButton>
@@ -1421,437 +3674,10 @@ const WebsiteEditorInner = () => {
                 </ListItem>
               ))}
             </List>
-          </Paper>
-        </Grid>
-
-        {/* Blocks & Preview */}
-        <Grid item xs={12} md={9}>
-          {selectedPage ? (
-            <Grid container spacing={3}>
-              {/* Blocks List */}
-              <Grid item xs={12} md={5}>
-                <Paper sx={{ p: 2, bgcolor: alpha(colors.dark, 0.5), borderRadius: 2 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
-                      Blocks
-                    </Typography>
-                    <Box display="flex" gap={0.5}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<Layers size={16} />}
-                        onClick={() => setBlockLibraryOpen(true)}
-                        sx={{ textTransform: 'none', minHeight: 36 }}
-                        aria-label="Open block library"
-                      >
-                        Library
-                      </Button>
-                      <Button
-                        size="small"
-                        variant={showThemeManager ? 'contained' : 'outlined'}
-                        startIcon={<Palette size={16} />}
-                        onClick={() => setShowThemeManager((prev) => !prev)}
-                        sx={{ textTransform: 'none', minHeight: 36 }}
-                        aria-label="Toggle theme manager"
-                      >
-                        Theme
-                      </Button>
-                      <IconButton
-                        size="small"
-                        onClick={() => setBlockDialogOpen(true)}
-                        sx={{ minWidth: 48, minHeight: 48 }}
-                        aria-label="Add block"
-                      >
-                        <Plus size={18} />
-                      </IconButton>
-                    </Box>
-                  </Box>
-
-                  <DraggableBlockList
-                    blocks={blocks}
-                    pageId={selectedPage?.id}
-                    websiteId={websiteId}
-                    onBlocksChange={(reordered) => {
-                      setBlocks(reordered);
-                    }}
-                    onBlockSelect={(blockId) => {
-                      const block = blocks.find((b) => b.id === blockId);
-                      if (block) {
-                        setEditingBlock(block);
-                        setBlockForm({ blockType: block.blockType, content: block.content });
-                      }
-                    }}
-                  />
-
-                  {/* ThemeManager — Step 9.21 */}
-                  {showThemeManager && (
-                    <Box sx={{ mt: 2 }}>
-                      <Divider sx={{ mb: 2 }} />
-                      <ThemeManager
-                        websiteId={websiteId}
-                        currentThemeId={website?.themeId || null}
-                        onThemeChange={() => {
-                          refreshPreview();
-                          fetchWebsiteData();
-                        }}
-                      />
-                    </Box>
-                  )}
-                </Paper>
-              </Grid>
-
-              {/* Preview — Step 4.11: PreviewPanel with live srcdoc */}
-              <Grid item xs={12} md={7}>
-                <Paper sx={{ p: 0, bgcolor: alpha(colors.dark, 0.5), borderRadius: 2, overflow: 'hidden' }}>
-                  <Box sx={{ height: { xs: 400, md: 600 } }}>
-                    <PreviewPanel
-                      websiteId={websiteId}
-                      pageId={selectedPage?.id}
-                      onBlockSelected={(blockId) => {
-                        const block = blocks.find((b) => String(b.id) === blockId);
-                        if (block) {
-                          setEditingBlock(block);
-                          setBlockForm({ blockType: block.blockType, content: block.content });
-                        }
-                      }}
-                      onInlineEditStart={(data) => setInlineEditState(data)}
-                      iframeRefCallback={(ref) => { iframeRef.current = ref?.current ?? null; }}
-                    />
-                  </Box>
-                </Paper>
-              </Grid>
-            </Grid>
-          ) : (
-            <Typography
-              variant="body1"
-              sx={{ color: colors.textSecondary, textAlign: 'center', py: 8 }}
-            >
-              Select or create a page to get started
-            </Typography>
-          )}
-        </Grid>
-      </Grid>
-      </ResponsiveEditorLayout>
-
-      {/* InlineTextEditor overlay — Step 9.24 */}
-      {inlineEditState && (
-        <InlineTextEditor
-          open={!!inlineEditState}
-          initialValue={inlineEditState.value}
-          fieldPath={inlineEditState.fieldPath}
-          editType={inlineEditState.editType || 'single'}
-          rect={inlineEditState.rect}
-          iframeRef={{ current: iframeRef.current }}
-          onSave={(newValue) => {
-            handleInlineEditSave(
-              inlineEditState.blockId,
-              inlineEditState.fieldPath,
-              newValue
-            );
-            setInlineEditState(null);
-          }}
-          onCancel={() => setInlineEditState(null)}
-        />
-      )}
-
-      {/* BlockLibrary drawer — Phase 9 gap fix */}
-      {selectedPage && (
-        <BlockLibrary
-          open={blockLibraryOpen}
-          onClose={() => setBlockLibraryOpen(false)}
-          pageId={selectedPage?.id}
-          blocks={blocks}
-          onInsertBlock={handleInsertBlockFromLibrary}
-          closeAfterInsert={false}
-          currentUserRole={websiteRole}
-        />
-      )}
-
-      {/* MobileFAB — opens block library on mobile (Phase 9 gap fix) */}
-      {isMobile && selectedPage && (
-        <MobileFAB onOpen={() => setBlockLibraryOpen(true)} />
-      )}
-
-      {/* MobileActionBar — save/publish/preview on mobile (Phase 9 gap fix) */}
-      {isMobile && (
-        <MobileActionBar
-          onSave={handleMobileSave}
-          onPublish={handleMobilePublish}
-          onPreview={handleMobilePreview}
-          isSaving={saveStatus === 'saving'}
-          isMac={typeof navigator !== 'undefined' && /Mac|iPad|iPhone/.test(navigator.userAgent)}
-        />
-      )}
-
-      {/* Create Page Dialog */}
-      <Dialog
-        open={pageDialogOpen}
-        onClose={() => !submitting && setPageDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ bgcolor: colors.bgDefault, color: colors.text }}>
-          Create Page
-        </DialogTitle>
-        <DialogContent sx={{ bgcolor: colors.bgDefault, pt: 3 }}>
-          {formError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {formError}
-            </Alert>
-          )}
-
-          <DashboardInput
-            fullWidth
-            label="Title"
-            labelPlacement="floating"
-            value={pageForm.title}
-            onChange={(e) => setPageForm({ ...pageForm, title: e.target.value })}
-            sx={{ mb: 2 }}
-          />
-
-          <DashboardInput
-            fullWidth
-            label="Path"
-            labelPlacement="floating"
-            value={pageForm.path}
-            onChange={(e) => setPageForm({ ...pageForm, path: e.target.value })}
-            helperText="Must start with / (example: /about)"
-            sx={{ mb: 2 }}
-          />
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={pageForm.isHome}
-                onChange={(e) => setPageForm({ ...pageForm, isHome: e.target.checked })}
-              />
-            }
-            label="Set as home page"
-          />
-        </DialogContent>
-
-        <DialogActions sx={{ bgcolor: colors.bgDefault, px: 3, pb: 2 }}>
-          <Button onClick={() => setPageDialogOpen(false)} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCreatePage}
-            variant="contained"
-            disabled={submitting || !pageForm.title || !pageForm.path}
-          >
-            {submitting ? <CircularProgress size={24} /> : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Create/Edit Block Dialog */}
-      <Dialog
-        open={blockDialogOpen || !!editingBlock}
-        onClose={() => {
-          if (!submitting) {
-            setBlockDialogOpen(false);
-            setEditingBlock(null);
-            setBlockForm({ blockType: '', content: {} });
-            setFormError(null);
-          }
-        }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ bgcolor: colors.bgDefault, color: colors.text }}>
-          {editingBlock ? 'Edit Block' : 'Add Block'}
-        </DialogTitle>
-
-        <DialogContent sx={{ bgcolor: colors.bgDefault, pt: 3 }}>
-          {formError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {formError}
-            </Alert>
-          )}
-
-          {!editingBlock && (
-            <Box sx={{ mb: 3 }}>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Use the Block Library to add new blocks with full search and categories.
-              </Alert>
-              <Button
-                variant="outlined"
-                startIcon={<Plus size={18} />}
-                onClick={() => {
-                  setBlockDialogOpen(false);
-                  setBlockLibraryOpen(true);
-                }}
-                fullWidth
-              >
-                Open Block Library
-              </Button>
-            </Box>
-          )}
-
-          {(blockForm.blockType || editingBlock) && renderBlockForm()}
-        </DialogContent>
-
-        <DialogActions sx={{ bgcolor: colors.bgDefault, px: 3, pb: 2 }}>
-          <Button
-            onClick={() => {
-              setBlockDialogOpen(false);
-              setEditingBlock(null);
-              setBlockForm({ blockType: '', content: {} });
-              setFormError(null);
-            }}
-            disabled={submitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={editingBlock ? handleUpdateBlock : handleCreateBlock}
-            variant="contained"
-            disabled={submitting || (!editingBlock && !blockForm.blockType)}
-          >
-            {submitting ? <CircularProgress size={24} /> : editingBlock ? 'Update' : 'Add'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Unsaved changes confirmation dialog */}
-      <ConfirmationDialog
-        open={showUnsavedDialog}
-        variant="warning"
-        title="Unsaved Changes"
-        message="You have unsaved changes. Would you like to save before leaving?"
-        confirmLabel="Leave"
-        cancelLabel="Cancel"
-        secondaryLabel="Save & Leave"
-        onConfirm={confirmNavigation}
-        onCancel={cancelNavigation}
-        onSecondary={saveAndNavigate}
-      />
-
-      {/* Conflict resolution modal */}
-      {conflictData && (
-        <ConflictModal
-          open={!!conflictData}
-          conflictData={conflictData}
-          onResolve={resolveConflict}
-        />
-      )}
-
-      {/* Recovery modal — localStorage backup restore/discard (Step 5.10) */}
-      <RecoveryModal
-        open={hasBackup}
-        timestamp={backupEntry?.timestamp ?? 0}
-        onRestore={handleRestoreBackup}
-        onDiscard={discardBackup}
-      />
-
-      {/* Mobile SpeedDial FAB — Step 9.5.2 */}
-      {isMobile && (
-        <SpeedDial
-          ariaLabel="Mobile editor actions"
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            '& .MuiFab-primary': {
-              bgcolor: colors.primary,
-              '&:hover': { bgcolor: alpha(colors.primary, 0.85) },
-            },
-          }}
-          icon={<SpeedDialIcon />}
-        >
-          <SpeedDialAction
-            icon={<Plus size={20} />}
-            tooltipTitle="Add Block"
-            onClick={() => setBlockDialogOpen(true)}
-            FabProps={{ sx: { minWidth: 48, minHeight: 48 } }}
-          />
-          <SpeedDialAction
-            icon={<Layers size={20} />}
-            tooltipTitle="Manage Pages"
-            onClick={() => setPagesBottomSheetOpen(true)}
-            FabProps={{ sx: { minWidth: 48, minHeight: 48 } }}
-          />
-        </SpeedDial>
-      )}
-
-      {/* Pages BottomSheet — Step 9.5.3 */}
-      {isMobile && (
-        <BottomSheet
-          open={pagesBottomSheetOpen}
-          onClose={() => setPagesBottomSheetOpen(false)}
-          title="Pages"
-          initialSnap={1}
-        >
-          <Box display="flex" justifyContent="flex-end" mb={1}>
-            <IconButton
-              size="small"
-              onClick={() => {
-                setPagesBottomSheetOpen(false);
-                setPageDialogOpen(true);
-              }}
-              sx={{ minWidth: 48, minHeight: 48 }}
-              aria-label="Add page"
-            >
-              <Plus size={18} />
-            </IconButton>
-          </Box>
-          <List dense>
-            {pages.map((page) => (
-              <ListItem
-                key={page.id}
-                button
-                selected={selectedPage?.id === page.id}
-                onClick={() => {
-                  setSelectedPage(page);
-                  setPagesBottomSheetOpen(false);
-                }}
-                sx={{
-                  borderRadius: 1,
-                  mb: 0.5,
-                  minHeight: 48,
-                  '&.Mui-selected': {
-                    bgcolor: alpha(colors.primary, 0.2),
-                  },
-                }}
-              >
-                <ListItemText
-                  primary={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {page.isHome && <House size={16} />}
-                      <Typography variant="body2">{page.title}</Typography>
-                    </Box>
-                  }
-                  secondary={page.path}
-                />
-                <ListItemSecondaryAction>
-                  {!page.isHome && (
-                    <>
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={() => handleSetHomePage(page.id)}
-                        title="Set as home"
-                        sx={{ minWidth: 48, minHeight: 48 }}
-                      >
-                        <House size={16} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={() => handleDeletePage(page.id)}
-                        sx={{ minWidth: 48, minHeight: 48 }}
-                      >
-                        <Trash2 size={16} />
-                      </IconButton>
-                    </>
-                  )}
-                </ListItemSecondaryAction>
-              </ListItem>
-            ))}
-          </List>
-        </BottomSheet>
-      )}
-    </Container>
+          </BottomSheet>
+        )}
+      </Container>
+    </Box>
   );
 };
 

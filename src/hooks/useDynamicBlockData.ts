@@ -12,8 +12,8 @@
 import { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { useDebouncedValue } from './useDebouncedValue';
 import { DynamicBlockContext } from '../context/DynamicBlockContext';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 /* -------- Data-source → public API endpoint mapping -------- */
 
@@ -267,3 +267,4 @@ function useDynamicBlockData(
 }
 
 export default useDynamicBlockData;
+

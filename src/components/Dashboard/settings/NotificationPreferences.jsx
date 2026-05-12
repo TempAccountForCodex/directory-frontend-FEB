@@ -36,12 +36,10 @@ import {
   Radio,
   Save,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
 import { DashboardCard, DashboardConfirmButton, DashboardTooltip } from '../shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // Unfilterable types that cannot be disabled
 const UNFILTERABLE_TYPES = [
@@ -183,7 +181,7 @@ const NotificationPreferences = React.memo(function NotificationPreferences() {
     try {
       setLoading(true);
       setError('');
-      const res = await axios.get(`${API_URL}/notifications/preferences`);
+      const res = await apiClient.get(`/notifications/preferences`);
       const data = res.data;
       setEmailNotificationsEnabled(data.emailNotificationsEnabled);
       setMarketingEmailsEnabled(data.marketingEmailsEnabled);
@@ -239,7 +237,7 @@ const NotificationPreferences = React.memo(function NotificationPreferences() {
         inAppEnabled: prefs.inAppEnabled,
       }));
 
-      const res = await axios.put(`${API_URL}/notifications/preferences`, {
+      const res = await apiClient.put(`/notifications/preferences`, {
         emailNotificationsEnabled,
         marketingEmailsEnabled,
         preferences: prefsArray,

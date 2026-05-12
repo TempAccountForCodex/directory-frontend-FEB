@@ -45,6 +45,8 @@ export interface UseAutosaveParams {
   onSave: (data: Record<string, unknown>) => Promise<SaveResult>;
   /** Disable autosave during initial data load */
   isLoading?: boolean;
+  /** When false, dirty tracking stays active but timed/online autosave is disabled */
+  autoSaveEnabled?: boolean;
   /** Debounce delay before marking dirty (default: 2000ms) */
   debounceMs?: number;
   /** Autosave interval after dirty (default: 30000ms) */
@@ -82,6 +84,7 @@ export function useAutosave({
   data,
   onSave,
   isLoading = false,
+  autoSaveEnabled = true,
   debounceMs = DEFAULT_DEBOUNCE_MS,
   intervalMs = DEFAULT_INTERVAL_MS,
   idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS,
@@ -208,6 +211,14 @@ export function useAutosave({
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
+    if (!autoSaveEnabled) {
+      if (autosaveTimerRef.current) {
+        clearInterval(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+      return;
+    }
+
     if (!hasUnsavedChanges) {
       // Clear interval if not dirty
       if (autosaveTimerRef.current) {
@@ -232,7 +243,7 @@ export function useAutosave({
         autosaveTimerRef.current = null;
       }
     };
-  }, [hasUnsavedChanges, entityId, intervalMs, performSave]);
+  }, [autoSaveEnabled, hasUnsavedChanges, entityId, intervalMs, performSave]);
 
   // ---------------------------------------------------------------------------
   // Idle detection — pause autosave after 5min of no activity
@@ -291,6 +302,8 @@ export function useAutosave({
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
+    if (!autoSaveEnabled) return;
+
     const handleOnline = () => {
       // When we come back online, if dirty trigger a save
       if (hasUnsavedChanges && entityId && !isSavingRef.current) {
@@ -300,7 +313,7 @@ export function useAutosave({
 
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [hasUnsavedChanges, entityId, performSave]);
+  }, [autoSaveEnabled, hasUnsavedChanges, entityId, performSave]);
 
   // ---------------------------------------------------------------------------
   // Cleanup on unmount

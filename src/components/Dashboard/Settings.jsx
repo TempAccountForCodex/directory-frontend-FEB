@@ -77,8 +77,8 @@ import { isAdmin } from '../../constants/roles';
 import { useBilling } from '../../hooks/useBilling';
 import CancellationFlow from '../Settings/CancellationFlow';
 import NotificationPreferences from './settings/NotificationPreferences';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -170,7 +170,7 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
   const [unlinkLoading, setUnlinkLoading] = useState(false);
   const [activeSection, setActiveSection] = useState(subtab || 'account');
 
-  // Billing hook — for cancel subscription and billing history
+  // Billing hook � for cancel subscription and billing history
   const {
     billingDetails: billingData,
     cancelSubscription: cancelBillingSubscription,
@@ -282,7 +282,7 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
     }
   }, [passwordCooldown]);
 
-  // ── Delegate Management (Step 7.15.1) ──────────────────────────────────────
+  // -- Delegate Management (Step 7.15.1) --------------------------------------
 
   const fetchDelegates = useCallback(async () => {
     setDelegatesLoading(true);
@@ -346,7 +346,7 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
     }
   }, [delegateToRevoke, fetchDelegates]);
 
-  // isFreePlan already declared above (line ~187) — reuse it for delegation section
+  // isFreePlan already declared above (line ~187) � reuse it for delegation section
 
   const delegateRoleLabel = useCallback((role) => {
     switch (role) {
@@ -1335,7 +1335,7 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
                 )}
                 </DashboardCard>
               </Box>
-              {/* Cancel Subscription button — only on paid plans, not when already cancelling */}
+              {/* Cancel Subscription button � only on paid plans, not when already cancelling */}
               {showCancelButton && (
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                   <DashboardCancelButton
@@ -1347,7 +1347,7 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
                 </Box>
               )}
 
-              {/* Inline CancellationFlow — shown below Plan & Limits */}
+              {/* Inline CancellationFlow � shown below Plan & Limits */}
               {showCancellationFlow && (
                 <CancellationFlow
                   currentPlan={planSummary?.websitePlan?.code || 'website_free'}
@@ -2000,3 +2000,4 @@ const Settings = ({ subtab, pageTitle, pageSubtitle }) => {
 };
 
 export default Settings;
+

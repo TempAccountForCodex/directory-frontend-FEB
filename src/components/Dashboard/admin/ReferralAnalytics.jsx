@@ -31,11 +31,9 @@ import {
   ShieldAlert,
   TrendingUp,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const MetricCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2.5),
@@ -69,7 +67,7 @@ const ReferralAnalytics = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.get(`${API_URL}/referral/admin/analytics?period=${p}`, {
+      const res = await apiClient.get(`/referral/admin/analytics?period=${p}`, {
         withCredentials: true,
       });
       setAnalytics(res.data);
@@ -88,8 +86,8 @@ const ReferralAnalytics = () => {
     async (codeId, currentlyFlagged) => {
       setActionLoading(codeId);
       try {
-        await axios.put(
-          `${API_URL}/referral/admin/codes/${codeId}`,
+        await apiClient.put(
+          `/referral/admin/codes/${codeId}`,
           { flagged: !currentlyFlagged },
           { withCredentials: true }
         );
@@ -107,8 +105,8 @@ const ReferralAnalytics = () => {
     async (codeId, currentlyActive) => {
       setActionLoading(codeId);
       try {
-        await axios.put(
-          `${API_URL}/referral/admin/codes/${codeId}`,
+        await apiClient.put(
+          `/referral/admin/codes/${codeId}`,
           { isActive: !currentlyActive },
           { withCredentials: true }
         );

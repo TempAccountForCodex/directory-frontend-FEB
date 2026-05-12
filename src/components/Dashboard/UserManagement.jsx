@@ -86,10 +86,10 @@ import {
 import { DashboardDataGrid } from './grid';
 import RowActionButtonGroup from './shared/RowActionButtonGroup';
 import { ROLES, isSuperAdmin as checkIsSuperAdmin } from '../../constants/roles';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-// ── Plan display config ─────────────────────────────────────────────────
+// -- Plan display config -------------------------------------------------
 const PLAN_DISPLAY = {
   website_free: { label: 'Free', color: '#6b7280' },
   website_core: { label: 'Core', color: '#3b82f6' },
@@ -124,7 +124,7 @@ const CONSENT_ACTION_ICONS = {
   subscription_reactivate: ActiveIcon,
 };
 
-// ── BillingTab subcomponent ─────────────────────────────────────────────
+// -- BillingTab subcomponent ---------------------------------------------
 const BillingTab = memo(function BillingTab({ userId, colors, showSnackbar }) {
   const [billingData, setBillingData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -717,7 +717,7 @@ const BillingTab = memo(function BillingTab({ userId, colors, showSnackbar }) {
         </Box>
       )}
 
-      {/* Refund Dialog — double-confirmation */}
+      {/* Refund Dialog � double-confirmation */}
       <Dialog
         open={refundDialogOpen}
         onClose={() => setRefundDialogOpen(false)}
@@ -1213,7 +1213,7 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
     }
   };
 
-  // Server-side search/filter is active — client-side sort only
+  // Server-side search/filter is active � client-side sort only
   const sortedAndFilteredUsers = [...users].sort((a, b) => {
     let aVal, bVal;
 
@@ -1694,7 +1694,7 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
             </Grid>
           </Grid>
         </DialogContent>
-        {/* Billing Tab — only visible for SUPER_ADMIN editing existing users */}
+        {/* Billing Tab � only visible for SUPER_ADMIN editing existing users */}
         {isEditing && isSuperAdmin && dialogTab === 1 && (
           <DialogContent dividers sx={{ borderColor: colors.border }}>
             <BillingTab
@@ -1819,3 +1819,4 @@ const UserManagement = ({ user: currentUser, pageTitle, pageSubtitle }) => {
 };
 
 export default UserManagement;
+

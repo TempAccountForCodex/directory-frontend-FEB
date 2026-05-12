@@ -68,8 +68,8 @@ import {
 } from './shared';
 import { DashboardDataGrid } from './grid';
 import { isAdmin as checkIsAdmin, isSuperAdmin as checkIsSuperAdmin } from '../../constants/roles';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const ManageInsights = ({
   user,
@@ -383,10 +383,10 @@ const ManageInsights = ({
           const defaultProj =
             projectList.find((p) => p.slug === 'techietribe-directory') || projectList[0];
           if (prev === null) {
-            // Initial load â€” pick the default project
+            // Initial load — pick the default project
             return defaultProj.id;
           }
-          // Refresh after add/delete â€” keep current selection if it still exists
+          // Refresh after add/delete — keep current selection if it still exists
           const stillExists = projectList.some((p) => p.id === prev);
           return stillExists ? prev : defaultProj.id;
         });
@@ -751,7 +751,7 @@ const ManageInsights = ({
         }
         break;
       case 'bullet':
-        insertTextAtCursor(sectionIndex, subsectionIndex, '\nâ€¢ Bullet point');
+        insertTextAtCursor(sectionIndex, subsectionIndex, '\n• Bullet point');
         break;
       case 'numbered':
         const currentText = formData.headings[sectionIndex].subsections[subsectionIndex].content;
@@ -1889,7 +1889,7 @@ const ManageInsights = ({
                                 inputRef={(el) => {
                                   contentRefs.current[`${sectionIndex}-${subsectionIndex}`] = el;
                                 }}
-                                placeholder="Write your content here. Use **text** for bold, *text* for italic, â€¢ for bullets"
+                                placeholder="Write your content here. Use **text** for bold, *text* for italic, • for bullets"
                                 helperText="Each new line creates a paragraph. Use formatting buttons to add style."
                                 sx={{
                                   '& textarea:-webkit-autofill': {
@@ -2269,7 +2269,7 @@ const ManageInsights = ({
         </Alert>
       </Snackbar>
 
-      {/* Manage Projects Dialog â€” Admin Only */}
+      {/* Manage Projects Dialog — Admin Only */}
       <Dialog
         open={openProjectsDialog}
         onClose={() => {
@@ -2444,3 +2444,4 @@ const ManageInsights = ({
 };
 
 export default ManageInsights;
+

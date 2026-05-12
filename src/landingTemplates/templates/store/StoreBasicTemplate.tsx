@@ -3,7 +3,6 @@ import { Box, Button, Stack, TextField, Typography } from '@mui/material';
 import { Facebook, Instagram, Mail, Twitter } from 'lucide-react';
 import type { TemplateProps } from '../../templateEngine/types';
 import FadeIn from '../../blocks/FadeIn';
-import { buildStoreTheme, rgba, blendHex } from './theme';
 
 const visualAssets = {
   hero: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80',
@@ -18,8 +17,8 @@ const visualAssets = {
     'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80',
 };
 
-const defaultHeadingFont = '"Montserrat", "Inter", sans-serif';
-const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
+const headingFont = '"Avenir Next Condensed", "Montserrat", "Arial Black", sans-serif';
+const bodyFont = '"Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 
 const makeTicker = (items: string[]) =>
   Array.from({ length: 8 }, (_, index) => items[index % items.length]).join(' • ');
@@ -28,19 +27,6 @@ const wavePath =
   'M0,180 C180,136 360,96 540,118 C720,140 900,212 1080,198 C1260,184 1440,108 1620,120 C1800,132 1980,206 2160,192 C2340,178 2520,112 2700,126 C2880,140 3060,214 3240,198 C3420,182 3600,116 3780,130';
 
 const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
-  const theme = buildStoreTheme({
-    data,
-    defaultPrimary: '#8c6d5a',
-    defaultSecondary: '#f2ede8',
-    defaultHeadingFont,
-    defaultBodyFont,
-  });
-  const headingFont = theme.headingFont;
-  const bodyFont = theme.bodyFont;
-  const shellBg = theme.primary;
-  const shellText = theme.light;
-  const paperBg = blendHex(theme.secondary, '#ffffff', 0.2);
-  const darkSection = blendHex(theme.primary, '#171312', 0.78);
   const products = data.products?.slice(0, 3) || [];
   const fallbackProducts = useMemo(
     () => [
@@ -135,8 +121,8 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
   return (
     <Box
       sx={{
-        bgcolor: shellBg,
-        color: shellText,
+        bgcolor: '#8c6d5a',
+        color: '#f7f1ea',
         fontFamily: bodyFont,
         scrollBehavior: 'smooth',
       }}
@@ -216,7 +202,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                 letterSpacing: '-0.06em',
                 textTransform: 'uppercase',
                 textAlign: 'center',
-                  color: shellText,
+                color: '#f7f1ea',
               }}
             >
               Live softer
@@ -232,7 +218,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                 aspectRatio: '1.9 / 1',
                 overflow: 'hidden',
                 borderRadius: '50%',
-                bgcolor: blendHex(theme.primary, '#735746', 0.4),
+                bgcolor: '#735746',
               }}
             >
               <Box
@@ -289,7 +275,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         sx={{
           overflow: 'hidden',
           py: { xs: 0.5, md: 1 },
-          color: shellText,
+          color: '#f6efe7',
           mt: { xs: -1, md: -0.5 },
         }}
       >
@@ -372,7 +358,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Box>
                 <Box
                   sx={{
-                    bgcolor: paperBg,
+                    bgcolor: '#f2ede8',
                     px: 3,
                     pt: 2,
                     pb: 3,
@@ -394,7 +380,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                     }}
                   />
                 </Box>
-                <Typography sx={{ mt: 1.7, fontWeight: 700, color: shellText }}>
+                <Typography sx={{ mt: 1.7, fontWeight: 700, color: '#f7f1ea' }}>
                   {product.name}
                 </Typography>
                 <Typography
@@ -430,8 +416,8 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                     width: '100%',
                     height: 38,
                     border: 0,
-                    bgcolor: paperBg,
-                    color: theme.ink,
+                    bgcolor: '#f2ede8',
+                    color: '#2c231f',
                     px: 1.5,
                     fontFamily: bodyFont,
                   }}
@@ -447,11 +433,11 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mt: 1.25,
                     borderRadius: 999,
                     borderColor: 'rgba(247,241,234,0.82)',
-                    color: shellText,
+                    color: '#f7f1ea',
                     textTransform: 'none',
                     '&:hover': {
-                      borderColor: shellText,
-                      bgcolor: rgba(theme.light, 0.08),
+                      borderColor: '#f7f1ea',
+                      bgcolor: 'rgba(247,241,234,0.08)',
                     },
                   }}
                 >
@@ -494,7 +480,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         />
       </Box>
 
-      <Box id="journal" sx={{ bgcolor: theme.light, color: theme.primary }}>
+      <Box id="journal" sx={{ bgcolor: 'white', color: '#8c6d5a' }}>
         <Box
           sx={{
             maxWidth: 1240,
@@ -533,7 +519,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mt: 2.5,
                     maxWidth: 420,
                     lineHeight: 1.9,
-                    color: theme.primary,
+                    color: '#8c6d5a',
                   }}
                 >
                   {data.tagline ||
@@ -550,7 +536,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                   aspectRatio: '0.82 / 1',
                   borderRadius: '46% 46% 0 0',
                   overflow: 'hidden',
-                  bgcolor: blendHex(theme.primary, '#735746', 0.4),
+                  bgcolor: '#735746',
                 }}
               >
                 <Box
@@ -565,7 +551,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box id="about" sx={{ bgcolor: darkSection, color: shellText }}>
+      <Box id="about" sx={{ bgcolor: '#171312', color: '#f3efe9' }}>
         <Box
           sx={{
             maxWidth: 1240,
@@ -657,7 +643,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 0,
-                      bgcolor: theme.light,
+                      bgcolor: '#f3efe9',
                       minHeight: 48,
                     },
                   }}
@@ -668,12 +654,12 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     minWidth: 120,
                     borderRadius: 999,
-                    color: shellText,
+                    color: '#f3efe9',
                     borderColor: 'rgba(243,239,233,0.6)',
                     textTransform: 'none',
                     '&:hover': {
-                      borderColor: shellText,
-                      bgcolor: rgba(theme.light, 0.06),
+                      borderColor: '#f3efe9',
+                      bgcolor: 'rgba(243,239,233,0.06)',
                     },
                   }}
                 >
@@ -699,7 +685,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
                 fontSize: { xs: '4rem', md: '7.4rem' },
                 lineHeight: 0.9,
                 letterSpacing: '-0.06em',
-                color: shellText,
+                color: '#f3efe9',
                 textTransform: 'none',
               }}
             >

@@ -34,10 +34,10 @@ import LinkedIn from '@mui/icons-material/LinkedIn';
 import YouTube from '@mui/icons-material/YouTube';
 import X from '@mui/icons-material/X';
 import { BlockWrapper } from '../BlockWrapper';
+import { API_URL } from '@/config/api';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -577,3 +577,4 @@ FooterBlock.displayName = 'FooterBlock';
 
 export { Twitter, X, SOCIAL_ICONS };
 export default FooterBlock;
+

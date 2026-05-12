@@ -10,6 +10,7 @@
  * postMessage bridge, error handling with auto-fallback.
  */
 import React from 'react';
+import { createPortal } from 'react-dom';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -20,6 +21,12 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Button from '@mui/material/Button';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { CacheProvider } from '@emotion/react';
+import createCache from '@emotion/cache';
 import {
   Monitor,
   Tablet,
@@ -28,6 +35,7 @@ import {
   Maximize2,
   Minimize2,
   RotateCw,
+  ChevronDown,
 } from 'lucide-react';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
@@ -35,6 +43,13 @@ import { usePreviewIframe } from '../../hooks/usePreviewApi';
 import { PreviewImageError, PreviewNetworkError } from '../Templates/PreviewSkeleton';
 import { usePreview } from '../../context/PreviewContext';
 import { generateLivePreview } from '../../utils/previewInjector';
+import TemplateEngine from '../../landingTemplates/templateEngine/TemplateEngine';
+import muiTheme from '../../styles/theme';
+import {
+  buildFrontendTemplateBusinessData,
+  hasFrontendTemplateBaseData,
+} from '../../templates/frontendTemplateSiteData';
+import type { BusinessData } from '../../landingTemplates/types/BusinessData';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -58,6 +73,932 @@ const VIEWPORT_HEIGHTS: Record<Viewport, number> = {
 
 const TIMEOUT_MS = 10_000;
 
+const getNonce = (): string | undefined => {
+  const value = document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content');
+  return value && !value.startsWith('__') ? value : undefined;
+};
+
+const copyParentHeadStyles = (targetDocument: Document) => {
+  const head = targetDocument.head;
+  const marker = 'data-preview-cloned';
+
+  Array.from(head.querySelectorAll(`[${marker}]`)).forEach((node) => node.remove());
+
+  Array.from(document.head.querySelectorAll('link[rel="stylesheet"], style')).forEach((node) => {
+    if (node instanceof HTMLStyleElement && node.textContent?.includes('data-emotion')) {
+      return;
+    }
+
+    const clone = node.cloneNode(true);
+    if (clone instanceof HTMLElement) {
+      clone.setAttribute(marker, 'true');
+    }
+    head.appendChild(clone);
+  });
+};
+
+interface FrontendTemplateIframeProps {
+  title: string;
+  width: number;
+  minHeight: number;
+  templateId: string;
+  pageId: string | number;
+  data: BusinessData;
+  onReady?: () => void;
+  onEditableElementSelected?: (data: EditableElementSelectionData) => void;
+  onImageSelected?: (data: ImageSelectionData) => void;
+  onSectionSelected?: (data: SectionSelectionData | null) => void;
+  onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
+  onEditableTextSave?: (blockId: string, fieldPath: string, value: string) => void;
+  iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
+  selectedPreviewTarget?: PreviewSelectionTarget | null;
+}
+
+const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframePreview({
+  title,
+  width,
+  minHeight,
+  templateId,
+  pageId,
+  data,
+  onReady,
+  onEditableElementSelected,
+  onImageSelected,
+  onSectionSelected,
+  onPreviewContextMenu,
+  onEditableTextSave,
+  iframeRefCallback,
+  selectedPreviewTarget,
+}: FrontendTemplateIframeProps) {
+  const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
+  const [mountNode, setMountNode] = React.useState<HTMLElement | null>(null);
+  const cacheRef = React.useRef<ReturnType<typeof createCache> | null>(null);
+  const onReadyRef = React.useRef(onReady);
+  const onEditableElementSelectedRef = React.useRef(onEditableElementSelected);
+  const onImageSelectedRef = React.useRef(onImageSelected);
+  const onSectionSelectedRef = React.useRef(onSectionSelected);
+  const onPreviewContextMenuRef = React.useRef(onPreviewContextMenu);
+  const onEditableTextSaveRef = React.useRef(onEditableTextSave);
+  const activeEditableRef = React.useRef<HTMLElement | null>(null);
+  const activeEditableMetaRef = React.useRef<{ blockId: string; fieldPath: string; initialValue: string } | null>(null);
+  const activeSectionRef = React.useRef<HTMLElement | null>(null);
+  const iframeDocumentRef = React.useRef<Document | null>(null);
+  const showSelectionOverlayRef = React.useRef((
+    _target: HTMLElement | null,
+    _label: string,
+    _kind: 'editable' | 'image' | 'section',
+  ) => {});
+  const hideSelectionOverlayRef = React.useRef(() => {});
+  const inferEditableLabelRef = React.useRef<(editableEl: HTMLElement, fieldPath: string) => string>(
+    () => 'Text'
+  );
+
+  React.useEffect(() => {
+    onReadyRef.current = onReady;
+  }, [onReady]);
+
+  React.useEffect(() => {
+    onEditableElementSelectedRef.current = onEditableElementSelected;
+  }, [onEditableElementSelected]);
+
+  React.useEffect(() => {
+    onImageSelectedRef.current = onImageSelected;
+  }, [onImageSelected]);
+
+  React.useEffect(() => {
+    onSectionSelectedRef.current = onSectionSelected;
+  }, [onSectionSelected]);
+
+  React.useEffect(() => {
+    onPreviewContextMenuRef.current = onPreviewContextMenu;
+  }, [onPreviewContextMenu]);
+
+  React.useEffect(() => {
+    onEditableTextSaveRef.current = onEditableTextSave;
+  }, [onEditableTextSave]);
+
+  React.useEffect(() => {
+    iframeRefCallback?.(iframeRef);
+  }, [iframeRefCallback]);
+
+  React.useEffect(() => {
+    const iframe = iframeRef.current;
+    const doc = iframe?.contentDocument;
+    const win = iframe?.contentWindow;
+
+    if (!iframe || !doc || !win) {
+      return;
+    }
+
+    win.scrollTo(0, 0);
+    doc.documentElement.scrollTop = 0;
+    doc.body.scrollTop = 0;
+  }, [pageId, templateId]);
+
+  React.useEffect(() => {
+    const iframe = iframeRef.current;
+    const doc = iframe?.contentDocument;
+    const win = iframe?.contentWindow;
+
+    if (!iframe || !doc || !win) {
+      return undefined;
+    }
+
+    doc.open();
+    doc.write(
+      '<!DOCTYPE html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body><div id="preview-root"></div></body></html>'
+    );
+    doc.close();
+    iframeDocumentRef.current = doc;
+
+    copyParentHeadStyles(doc);
+
+    doc.body.style.margin = '0';
+    doc.body.style.background = '#ffffff';
+    doc.body.style.overflowX = 'hidden';
+
+    const placeCaretAtEnd = (element: HTMLElement) => {
+      const selection = doc.defaultView?.getSelection?.();
+      if (!selection) return;
+      const range = doc.createRange();
+      range.selectNodeContents(element);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
+
+    const finishEditing = (commit: boolean) => {
+      const activeEditable = activeEditableRef.current;
+      const activeMeta = activeEditableMetaRef.current;
+
+      if (!activeEditable || !activeMeta) {
+        return;
+      }
+
+      const nextValue = activeEditable.textContent || '';
+      activeEditable.contentEditable = 'false';
+      activeEditable.removeAttribute('data-inline-editing');
+
+      if (commit && nextValue !== activeMeta.initialValue) {
+        onEditableTextSaveRef.current?.(activeMeta.blockId, activeMeta.fieldPath, nextValue);
+      } else if (!commit) {
+        activeEditable.textContent = activeMeta.initialValue;
+      }
+
+      activeEditableRef.current = null;
+      activeEditableMetaRef.current = null;
+    };
+
+    const overlayEl = doc.createElement('div');
+    overlayEl.className = 'tt-selection-overlay';
+    overlayEl.setAttribute('aria-hidden', 'true');
+    overlayEl.innerHTML = `
+      <div class="tt-selection-label"></div>
+      <div class="tt-selection-handle tt-selection-handle--top-left"></div>
+      <div class="tt-selection-handle tt-selection-handle--top"></div>
+      <div class="tt-selection-handle tt-selection-handle--top-right"></div>
+      <div class="tt-selection-handle tt-selection-handle--right"></div>
+      <div class="tt-selection-handle tt-selection-handle--bottom-right"></div>
+      <div class="tt-selection-handle tt-selection-handle--bottom"></div>
+      <div class="tt-selection-handle tt-selection-handle--bottom-left"></div>
+      <div class="tt-selection-handle tt-selection-handle--left"></div>
+    `;
+    doc.body.appendChild(overlayEl);
+
+    let overlayTarget: HTMLElement | null = null;
+    let overlayLabel = '';
+    let overlayKind: 'editable' | 'image' | 'section' | null = null;
+    let overlayFrame: number | null = null;
+
+    const queueOverlayUpdate = () => {
+      if (overlayFrame !== null) {
+        return;
+      }
+
+      overlayFrame = win.requestAnimationFrame(() => {
+        overlayFrame = null;
+
+        if (!overlayTarget || !doc.body.contains(overlayTarget)) {
+          overlayEl.classList.remove('tt-selection-overlay--visible');
+          return;
+        }
+
+        const rect = overlayTarget.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) {
+          overlayEl.classList.remove('tt-selection-overlay--visible');
+          return;
+        }
+
+        overlayEl.classList.add('tt-selection-overlay--visible');
+        overlayEl.setAttribute('data-selected-kind', overlayKind || 'section');
+        overlayEl.style.top = `${Math.max(rect.top - 1, 0)}px`;
+        overlayEl.style.left = `${Math.max(rect.left - 1, 0)}px`;
+        overlayEl.style.width = `${Math.max(rect.width, 10)}px`;
+        overlayEl.style.height = `${Math.max(rect.height, 10)}px`;
+
+        const labelEl = overlayEl.querySelector('.tt-selection-label');
+        if (labelEl) {
+          labelEl.textContent = overlayLabel || 'Element';
+        }
+      });
+    };
+
+    const hideSelectionOverlay = () => {
+      overlayTarget = null;
+      overlayKind = null;
+      overlayLabel = '';
+
+      if (overlayFrame !== null) {
+        win.cancelAnimationFrame(overlayFrame);
+        overlayFrame = null;
+      }
+
+      overlayEl.classList.remove('tt-selection-overlay--visible');
+    };
+
+    const showSelectionOverlay = (
+      target: HTMLElement | null,
+      label: string,
+      kind: 'editable' | 'image' | 'section',
+    ) => {
+      overlayTarget = target;
+      overlayLabel = label;
+      overlayKind = kind;
+      queueOverlayUpdate();
+    };
+
+    const inferEditableLabel = (editableEl: HTMLElement, fieldPath: string) => {
+      const explicitLabel = editableEl.getAttribute('data-preview-label')
+        || editableEl.getAttribute('data-element-label')
+        || editableEl.getAttribute('aria-label');
+      if (explicitLabel) {
+        return explicitLabel;
+      }
+
+      const lowerFieldPath = fieldPath.toLowerCase();
+      const tagName = editableEl.tagName.toLowerCase();
+
+      if (
+        tagName === 'button'
+        || tagName === 'a'
+        || lowerFieldPath.includes('button')
+        || lowerFieldPath.includes('cta')
+        || lowerFieldPath.includes('link')
+      ) {
+        return 'Button';
+      }
+
+      if (
+        lowerFieldPath.includes('title')
+        || lowerFieldPath.includes('heading')
+        || lowerFieldPath.includes('headline')
+        || lowerFieldPath.includes('brandname')
+      ) {
+        return 'Heading';
+      }
+
+      return 'Text';
+    };
+
+    showSelectionOverlayRef.current = showSelectionOverlay;
+    hideSelectionOverlayRef.current = hideSelectionOverlay;
+    inferEditableLabelRef.current = inferEditableLabel;
+
+    const clearVisualSelections = () => {
+      Array.from(doc.querySelectorAll('.tt-editable-selected')).forEach((node) => {
+        node.classList.remove('tt-editable-selected');
+      });
+      Array.from(doc.querySelectorAll('.tt-image-selected')).forEach((node) => {
+        node.classList.remove('tt-image-selected');
+      });
+      Array.from(doc.querySelectorAll('.tt-section-selected')).forEach((node) => {
+        node.classList.remove('tt-section-selected');
+      });
+      hideSelectionOverlay();
+    };
+
+    const getSectionChain = (sectionEl: HTMLElement | null) => {
+      const chain: HTMLElement[] = [];
+      let currentSection = sectionEl;
+      while (currentSection) {
+        chain.push(currentSection);
+        currentSection = currentSection.parentElement?.closest?.('[data-preview-section="true"]') as HTMLElement | null;
+      }
+      return chain;
+    };
+
+    const buildSectionSelection = (sectionEl: HTMLElement | null): SectionSelectionData | null => {
+      if (!sectionEl) {
+        return null;
+      }
+
+      const blockId = sectionEl.getAttribute('data-preview-block-id');
+      if (!blockId) {
+        return null;
+      }
+
+      const label = sectionEl.getAttribute('data-preview-label') || 'Section';
+      const styleKey =
+        (sectionEl.getAttribute('data-preview-style-key') as 'sectionStyle' | 'outerSectionStyle' | null)
+        || 'sectionStyle';
+      const rect = sectionEl.getBoundingClientRect();
+
+      return {
+        blockId,
+        label,
+        styleKey,
+        rect: {
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        },
+      };
+    };
+
+    const humanizeFieldPath = (fieldPath: string) => (
+      fieldPath
+        .split('.')
+        .slice(-1)[0]
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (char) => char.toUpperCase())
+        .trim()
+    );
+
+    const buildEditableSelection = (editableEl: HTMLElement | null): EditableElementSelectionData | null => {
+      if (!editableEl) {
+        return null;
+      }
+
+      const blockId = editableEl.getAttribute('data-block-id');
+      const fieldPath = editableEl.getAttribute('data-editable');
+      if (!blockId || !fieldPath) {
+        return null;
+      }
+
+      const editType = (editableEl.getAttribute('data-edit-type') as 'single' | 'multi' | null) || 'single';
+      const rect = editableEl.getBoundingClientRect();
+
+      return {
+        blockId,
+        fieldPath,
+        value: editableEl.textContent || '',
+        editType,
+        label: inferEditableLabel(editableEl, fieldPath),
+        rect: {
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        },
+      };
+    };
+
+    const buildImageSelection = (imageEl: HTMLElement | null): ImageSelectionData | null => {
+      if (!imageEl) {
+        return null;
+      }
+
+      const blockId = imageEl.getAttribute('data-block-id');
+      const fieldPath = imageEl.getAttribute('data-edit-image');
+      if (!blockId || !fieldPath) {
+        return null;
+      }
+
+      const rect = imageEl.getBoundingClientRect();
+      return {
+        blockId,
+        fieldPath,
+        src: imageEl.getAttribute('src') || imageEl.getAttribute('data-image-src') || '',
+        label: imageEl.getAttribute('data-image-label') || 'Image',
+        rect: {
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        },
+      };
+    };
+
+    const applySectionSelection = (sectionEl: HTMLElement | null) => {
+      const selection = buildSectionSelection(sectionEl);
+      if (!selection || !sectionEl) {
+        return null;
+      }
+
+      finishEditing(true);
+      clearVisualSelections();
+      sectionEl.classList.add('tt-section-selected');
+      showSelectionOverlay(sectionEl, selection.label || 'Section', 'section');
+      activeSectionRef.current = sectionEl;
+      onSectionSelectedRef.current?.(selection);
+      return selection;
+    };
+
+    const applyEditableSelection = (editableEl: HTMLElement | null, options?: { startEditing?: boolean }) => {
+      const selection = buildEditableSelection(editableEl);
+      if (!selection || !editableEl) {
+        return null;
+      }
+
+      clearVisualSelections();
+      activeSectionRef.current = null;
+      editableEl.classList.add('tt-editable-selected');
+      showSelectionOverlay(editableEl, selection.label || 'Text', 'editable');
+      onEditableElementSelectedRef.current?.(selection);
+      onSectionSelectedRef.current?.(null);
+
+      if (options?.startEditing === false) {
+        activeEditableRef.current = null;
+        activeEditableMetaRef.current = null;
+        return selection;
+      }
+
+      if (activeEditableRef.current && activeEditableRef.current !== editableEl) {
+        finishEditing(true);
+      }
+
+      if (activeEditableRef.current !== editableEl) {
+        activeEditableRef.current = editableEl;
+        activeEditableMetaRef.current = {
+          blockId: selection.blockId,
+          fieldPath: selection.fieldPath,
+          initialValue: editableEl.textContent || '',
+        };
+      }
+
+      editableEl.contentEditable = 'true';
+      editableEl.setAttribute('data-inline-editing', 'true');
+      editableEl.focus();
+      placeCaretAtEnd(editableEl);
+      return selection;
+    };
+
+    const applyImageSelection = (imageEl: HTMLElement | null) => {
+      const selection = buildImageSelection(imageEl);
+      if (!selection || !imageEl) {
+        return null;
+      }
+
+      finishEditing(true);
+      clearVisualSelections();
+      activeSectionRef.current = null;
+      imageEl.classList.add('tt-image-selected');
+      showSelectionOverlay(imageEl, selection.label || 'Image', 'image');
+      onImageSelectedRef.current?.(selection);
+      onSectionSelectedRef.current?.(null);
+      return selection;
+    };
+
+    const buildLayerItems = (
+      editableEl: HTMLElement | null,
+      imageEl: HTMLElement | null,
+      sectionEl: HTMLElement | null,
+    ): PreviewLayerNodeData[] => {
+      const sectionLayers = getSectionChain(sectionEl).reverse().flatMap((node, index) => {
+        const selection = buildSectionSelection(node);
+        if (!selection) {
+          return [];
+        }
+
+        return [{
+          id: `section:${selection.blockId}:${selection.styleKey || 'sectionStyle'}:${index}`,
+          kind: 'section' as const,
+          label: selection.label,
+          depth: index,
+          section: selection,
+        }];
+      });
+
+      const imageSelection = buildImageSelection(imageEl);
+      if (imageSelection) {
+        return [
+          ...sectionLayers,
+          {
+            id: `image:${imageSelection.blockId}:${imageSelection.fieldPath}`,
+            kind: 'image' as const,
+            label: imageSelection.label,
+            depth: sectionLayers.length,
+            image: imageSelection,
+          },
+        ];
+      }
+
+      const editableSelection = buildEditableSelection(editableEl);
+      if (!editableSelection) {
+        return sectionLayers;
+      }
+
+      return [
+        ...sectionLayers,
+        {
+          id: `editable:${editableSelection.blockId}:${editableSelection.fieldPath}`,
+          kind: 'editable' as const,
+          label: editableSelection.label || humanizeFieldPath(editableSelection.fieldPath),
+          depth: sectionLayers.length,
+          editable: editableSelection,
+        },
+      ];
+    };
+
+    const styleEl = doc.createElement('style');
+    styleEl.textContent = `
+      [data-editable] {
+        cursor: text;
+        transition: box-shadow 0.15s ease, outline-color 0.15s ease;
+      }
+      [data-editable]:hover {
+        outline: 1px dashed rgba(25, 118, 210, 0.45);
+        outline-offset: 2px;
+      }
+      .tt-editable-selected {
+        outline: 1px solid rgba(37, 99, 235, 0.18);
+        outline-offset: 0;
+        border-radius: 4px;
+      }
+      [data-edit-image] {
+        cursor: pointer;
+        transition: box-shadow 0.15s ease, outline-color 0.15s ease;
+      }
+      [data-edit-image]:hover {
+        outline: 2px dashed rgba(37, 99, 235, 0.42);
+        outline-offset: 3px;
+      }
+      .tt-image-selected {
+        outline: 1px solid rgba(37, 99, 235, 0.18);
+        outline-offset: 0;
+        box-shadow: none;
+      }
+      [data-preview-section="true"] {
+        transition: outline-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      [data-preview-section="true"]:hover {
+        outline: 2px dashed rgba(37, 99, 235, 0.42);
+        outline-offset: 3px;
+      }
+      .tt-section-selected {
+        outline: 1px solid rgba(37, 99, 235, 0.18);
+        outline-offset: 0;
+        box-shadow: none;
+      }
+      [data-inline-editing="true"] {
+        cursor: text;
+        outline: none !important;
+      }
+      .tt-selection-overlay {
+        position: fixed;
+        z-index: 2147483647;
+        pointer-events: none;
+        display: none;
+        box-sizing: border-box;
+        border: 2px solid #2563eb;
+        border-radius: 4px;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.92);
+      }
+      .tt-selection-overlay--visible {
+        display: block;
+      }
+      .tt-selection-label {
+        position: absolute;
+        top: -24px;
+        left: -2px;
+        max-width: calc(100% + 4px);
+        padding: 3px 8px;
+        border-radius: 6px 6px 6px 0;
+        background: #2563eb;
+        color: #ffffff;
+        font-family: Inter, "Segoe UI", sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tt-selection-handle {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border: 1.5px solid #2563eb;
+        border-radius: 999px;
+        background: #ffffff;
+        box-sizing: border-box;
+      }
+      .tt-selection-handle--top-left {
+        top: -5px;
+        left: -5px;
+      }
+      .tt-selection-handle--top {
+        top: -5px;
+        left: calc(50% - 4px);
+      }
+      .tt-selection-handle--top-right {
+        top: -5px;
+        right: -5px;
+      }
+      .tt-selection-handle--right {
+        top: calc(50% - 4px);
+        right: -5px;
+      }
+      .tt-selection-handle--bottom-right {
+        right: -5px;
+        bottom: -5px;
+      }
+      .tt-selection-handle--bottom {
+        bottom: -5px;
+        left: calc(50% - 4px);
+      }
+      .tt-selection-handle--bottom-left {
+        bottom: -5px;
+        left: -5px;
+      }
+      .tt-selection-handle--left {
+        top: calc(50% - 4px);
+        left: -5px;
+      }
+    `;
+    doc.head.appendChild(styleEl);
+
+    win.addEventListener('scroll', queueOverlayUpdate, { passive: true });
+    win.addEventListener('resize', queueOverlayUpdate);
+
+    const root = doc.getElementById('preview-root');
+    if (!root) {
+      return undefined;
+    }
+
+    cacheRef.current = createCache({
+      key: 'preview-mui',
+      container: doc.head,
+      nonce: getNonce(),
+      prepend: true,
+    });
+
+    setMountNode(root);
+    onReadyRef.current?.();
+
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const editableEl = target?.closest?.('[data-editable]') as HTMLElement | null;
+      const imageEl = target?.closest?.('[data-edit-image]') as HTMLElement | null;
+      const sectionEl = target?.closest?.('[data-preview-section="true"]') as HTMLElement | null;
+
+      if (!editableEl && !imageEl && !sectionEl) {
+        finishEditing(true);
+        clearVisualSelections();
+        activeSectionRef.current = null;
+        onSectionSelectedRef.current?.(null);
+        onPreviewContextMenuRef.current?.(null);
+        return;
+      }
+
+      if (!editableEl && imageEl) {
+        event.preventDefault();
+        event.stopPropagation();
+        applyImageSelection(imageEl);
+        onPreviewContextMenuRef.current?.(null);
+        return;
+      }
+
+      if (!editableEl && !imageEl && sectionEl) {
+        const sectionChain = getSectionChain(sectionEl);
+        let resolvedSectionEl = sectionChain[0];
+        if (activeSectionRef.current) {
+          const activeIndex = sectionChain.findIndex((node) => node === activeSectionRef.current);
+          if (activeIndex >= 0) {
+            resolvedSectionEl = sectionChain[Math.min(activeIndex + 1, sectionChain.length - 1)];
+          }
+        }
+        applySectionSelection(resolvedSectionEl);
+        onPreviewContextMenuRef.current?.(null);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      applyEditableSelection(editableEl);
+      onPreviewContextMenuRef.current?.(null);
+    };
+
+    const handleContextMenu = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      event.preventDefault();
+      event.stopPropagation();
+      const editableEl = target?.closest?.('[data-editable]') as HTMLElement | null;
+      const imageEl = target?.closest?.('[data-edit-image]') as HTMLElement | null;
+      const directSectionEl = target?.closest?.('[data-preview-section="true"]') as HTMLElement | null;
+      const resolvedSectionEl = (editableEl || imageEl)
+        ? ((editableEl || imageEl)?.closest('[data-preview-section="true"]') as HTMLElement | null)
+        : directSectionEl || activeSectionRef.current;
+
+      if (!editableEl && !imageEl && !resolvedSectionEl) {
+        onPreviewContextMenuRef.current?.(null);
+        return;
+      }
+
+      const sectionSelection = resolvedSectionEl ? applySectionSelection(resolvedSectionEl) : null;
+      const imageSelection = imageEl ? applyImageSelection(imageEl) : null;
+      const editableSelection = editableEl ? applyEditableSelection(editableEl, { startEditing: false }) : null;
+      const layers = buildLayerItems(editableEl, imageEl, resolvedSectionEl);
+      const targetLayer = imageSelection
+        ? layers.find((layer) => (
+            layer.kind === 'image'
+            && layer.image?.blockId === imageSelection.blockId
+            && layer.image?.fieldPath === imageSelection.fieldPath
+          )) || null
+        : editableSelection
+        ? layers.find((layer) => (
+            layer.kind === 'editable'
+            && layer.editable?.blockId === editableSelection.blockId
+            && layer.editable?.fieldPath === editableSelection.fieldPath
+          )) || null
+        : layers.find((layer) => (
+            layer.kind === 'section'
+            && layer.section?.blockId === sectionSelection?.blockId
+            && layer.section?.styleKey === sectionSelection?.styleKey
+          )) || null;
+      const iframeRect = iframe.getBoundingClientRect();
+
+      onPreviewContextMenuRef.current?.({
+        x: iframeRect.left + event.clientX,
+        y: iframeRect.top + event.clientY,
+        target: targetLayer,
+        layers,
+      });
+    };
+
+    const handleFocusOut = (event: FocusEvent) => {
+      const activeEditable = activeEditableRef.current;
+      if (!activeEditable) {
+        return;
+      }
+
+      const nextTarget = event.relatedTarget as Node | null;
+      if (nextTarget && activeEditable.contains(nextTarget)) {
+        return;
+      }
+
+      finishEditing(true);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const activeEditable = activeEditableRef.current;
+      if (!activeEditable || event.target !== activeEditable) {
+        return;
+      }
+
+      const editType = activeEditable.getAttribute('data-edit-type') || 'single';
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        finishEditing(false);
+        return;
+      }
+
+      if (event.key === 'Enter' && editType === 'single') {
+        event.preventDefault();
+        finishEditing(true);
+      }
+    };
+
+    doc.addEventListener('click', handleClick, true);
+    doc.addEventListener('contextmenu', handleContextMenu, true);
+    doc.documentElement.addEventListener('contextmenu', handleContextMenu, true);
+    doc.body.addEventListener('contextmenu', handleContextMenu, true);
+    doc.addEventListener('focusout', handleFocusOut, true);
+    doc.addEventListener('keydown', handleKeyDown, true);
+
+    return () => {
+      finishEditing(true);
+      doc.removeEventListener('click', handleClick, true);
+      doc.removeEventListener('contextmenu', handleContextMenu, true);
+      doc.documentElement.removeEventListener('contextmenu', handleContextMenu, true);
+      doc.body.removeEventListener('contextmenu', handleContextMenu, true);
+      doc.removeEventListener('focusout', handleFocusOut, true);
+      doc.removeEventListener('keydown', handleKeyDown, true);
+      win.removeEventListener('scroll', queueOverlayUpdate);
+      win.removeEventListener('resize', queueOverlayUpdate);
+      hideSelectionOverlay();
+      overlayEl.remove();
+      styleEl.remove();
+      showSelectionOverlayRef.current = () => {};
+      hideSelectionOverlayRef.current = () => {};
+      inferEditableLabelRef.current = () => 'Text';
+      setMountNode(null);
+      cacheRef.current = null;
+      iframeDocumentRef.current = null;
+    };
+  }, [width]);
+
+  React.useEffect(() => {
+    const doc = iframeDocumentRef.current;
+    if (!doc || !selectedPreviewTarget) {
+      return;
+    }
+
+    Array.from(doc.querySelectorAll('.tt-editable-selected')).forEach((node) => {
+      node.classList.remove('tt-editable-selected');
+    });
+    Array.from(doc.querySelectorAll('.tt-image-selected')).forEach((node) => {
+      node.classList.remove('tt-image-selected');
+    });
+    Array.from(doc.querySelectorAll('.tt-section-selected')).forEach((node) => {
+      node.classList.remove('tt-section-selected');
+    });
+    hideSelectionOverlayRef.current();
+
+    if (selectedPreviewTarget.kind === 'section') {
+      const matchingSection = Array.from(doc.querySelectorAll('[data-preview-section="true"]')).find((node) => {
+        const element = node as HTMLElement;
+        return (
+          element.getAttribute('data-preview-block-id') === String(selectedPreviewTarget.blockId)
+          && (element.getAttribute('data-preview-style-key') || 'sectionStyle') === (selectedPreviewTarget.styleKey || 'sectionStyle')
+        );
+      }) as HTMLElement | undefined;
+
+      matchingSection?.classList.add('tt-section-selected');
+      if (matchingSection) {
+        const label = matchingSection.getAttribute('data-preview-label') || 'Section';
+        showSelectionOverlayRef.current(matchingSection, label, 'section');
+      }
+      activeSectionRef.current = matchingSection || null;
+      return;
+    }
+
+    if (selectedPreviewTarget.kind === 'image') {
+      const matchingImage = Array.from(doc.querySelectorAll('[data-edit-image]')).find((node) => {
+        const element = node as HTMLElement;
+        return (
+          element.getAttribute('data-block-id') === String(selectedPreviewTarget.blockId)
+          && element.getAttribute('data-edit-image') === selectedPreviewTarget.fieldPath
+        );
+      }) as HTMLElement | undefined;
+
+      matchingImage?.classList.add('tt-image-selected');
+      if (matchingImage) {
+        const label = matchingImage.getAttribute('data-image-label') || 'Image';
+        showSelectionOverlayRef.current(matchingImage, label, 'image');
+      }
+      activeSectionRef.current = null;
+      return;
+    }
+
+    const matchingEditable = Array.from(doc.querySelectorAll('[data-editable]')).find((node) => {
+      const element = node as HTMLElement;
+      return (
+        element.getAttribute('data-block-id') === String(selectedPreviewTarget.blockId)
+        && element.getAttribute('data-editable') === selectedPreviewTarget.fieldPath
+      );
+    }) as HTMLElement | undefined;
+
+    matchingEditable?.classList.add('tt-editable-selected');
+    if (matchingEditable) {
+      const fieldPath = matchingEditable.getAttribute('data-editable') || '';
+      showSelectionOverlayRef.current(
+        matchingEditable,
+        inferEditableLabelRef.current(matchingEditable, fieldPath),
+        'editable'
+      );
+    }
+    activeSectionRef.current = null;
+  }, [selectedPreviewTarget]);
+
+  const portal = mountNode && cacheRef.current
+    ? createPortal(
+        <CacheProvider value={cacheRef.current}>
+          <MuiThemeProvider theme={muiTheme}>
+            <CssBaseline />
+            <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: '#fff' }}>
+              <TemplateEngine templateId={templateId} data={data} />
+            </Box>
+          </MuiThemeProvider>
+        </CacheProvider>,
+        mountNode
+      )
+    : null;
+
+  return (
+    <>
+      <iframe
+        ref={iframeRef}
+        title={title}
+        onContextMenu={(event) => {
+          event.preventDefault();
+        }}
+        style={{
+          width: '100%',
+          height: '100%',
+          minHeight,
+          border: 'none',
+          display: 'block',
+          backgroundColor: '#fff',
+        }}
+      />
+      {portal}
+    </>
+  );
+});
+
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
 /* ------------------------------------------------------------------ */
@@ -71,9 +1012,61 @@ export interface InlineEditStartData {
   editType: 'single' | 'multi';
 }
 
+export interface EditableElementSelectionData {
+  blockId: string;
+  fieldPath: string;
+  value: string;
+  editType: 'single' | 'multi';
+  label?: string;
+  rect?: { top: number; left: number; width: number; height: number };
+}
+
+export interface ImageSelectionData {
+  blockId: string;
+  fieldPath: string;
+  src: string;
+  label: string;
+  rect?: { top: number; left: number; width: number; height: number };
+}
+
+export interface SectionSelectionData {
+  blockId: string;
+  label: string;
+  styleKey?: 'sectionStyle' | 'outerSectionStyle';
+  rect?: { top: number; left: number; width: number; height: number };
+}
+
+export interface PreviewLayerNodeData {
+  id: string;
+  kind: 'section' | 'editable' | 'image';
+  label: string;
+  depth: number;
+  section?: SectionSelectionData;
+  editable?: EditableElementSelectionData;
+  image?: ImageSelectionData;
+}
+
+export interface PreviewContextMenuData {
+  x: number;
+  y: number;
+  target: PreviewLayerNodeData | null;
+  layers: PreviewLayerNodeData[];
+}
+
+export interface PreviewSelectionTarget {
+  kind: 'section' | 'editable' | 'image';
+  blockId: string;
+  fieldPath?: string;
+  styleKey?: 'sectionStyle' | 'outerSectionStyle';
+  nonce: number;
+}
+
 interface PreviewPanelProps {
   websiteId: string | number;
   pageId: string | number;
+  pageTitle?: string;
+  pages?: Array<{ id: string | number; title: string }>;
+  onPageChange?: (pageId: string) => void;
   /** Step 9.14.3: Called when a block is clicked in the iframe preview */
   onBlockSelected?: (blockId: string) => void;
   /** Step 9.14.3: Called when a block is hovered/unhovered in the iframe preview */
@@ -82,8 +1075,20 @@ interface PreviewPanelProps {
   selectedBlockId?: string | null;
   /** Step 9.16.3: Called when a data-editable element is double-clicked in the iframe */
   onInlineEditStart?: (data: InlineEditStartData) => void;
+  /** Called when an editable text element is selected in the iframe preview */
+  onEditableElementSelected?: (data: EditableElementSelectionData) => void;
+  /** Called when an editable image element is selected in the iframe preview */
+  onImageSelected?: (data: ImageSelectionData) => void;
+  /** Called when a section wrapper is selected in the iframe preview */
+  onSectionSelected?: (data: SectionSelectionData | null) => void;
+  /** Called when a custom preview context menu should open */
+  onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
+  /** Called when inline text editing inside the preview is saved */
+  onEditableTextSave?: (blockId: string, fieldPath: string, value: string) => void;
   /** Step 9.16.3: Exposes the iframe ref for InlineTextEditor positioning */
-  iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement>) => void;
+  iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
+  /** Syncs visual selection inside the iframe from the parent editor */
+  selectedPreviewTarget?: PreviewSelectionTarget | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -93,17 +1098,29 @@ interface PreviewPanelProps {
 const PreviewPanel = React.memo(function PreviewPanel({
   websiteId,
   pageId,
+  pageTitle,
+  pages = [],
+  onPageChange,
   onBlockSelected,
   onBlockHover,
   selectedBlockId,
   onInlineEditStart,
+  onEditableElementSelected,
+  onImageSelected,
+  onSectionSelected,
+  onPreviewContextMenu,
+  onEditableTextSave,
   iframeRefCallback,
+  selectedPreviewTarget,
 }: PreviewPanelProps) {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
 
   // Editor-preview state bridge
   const previewCtx = usePreview();
+  const selectedPageValue = pages.some((page) => String(page.id) === String(pageId))
+    ? String(pageId)
+    : '';
 
   // Local state
   const [viewport, setViewport] = React.useState<Viewport>('desktop');
@@ -134,23 +1151,28 @@ const PreviewPanel = React.memo(function PreviewPanel({
     onError: staticOnError,
     refresh,
   } = usePreviewIframe(websiteId, pageId, viewport);
+  const isSyntheticTemplatePage =
+    typeof pageId === 'string' && /^page-\d+$/.test(pageId);
+  const allowStaticTemplatePreview = !isSyntheticTemplatePage;
 
   // Auto-fallback: if previewError is set and we're in live mode, switch to static
   const effectiveMode = React.useMemo(() => {
-    if (mode === 'live' && previewCtx.previewError) {
+    if (mode === 'live' && previewCtx.previewError && allowStaticTemplatePreview) {
       return 'static';
     }
     return mode;
-  }, [mode, previewCtx.previewError]);
+  }, [mode, previewCtx.previewError, allowStaticTemplatePreview]);
 
   // Track fallback state
   React.useEffect(() => {
-    if (mode === 'live' && previewCtx.previewError) {
+    if (mode === 'live' && previewCtx.previewError && allowStaticTemplatePreview) {
       setFallbackActive(true);
     } else if (mode === 'live' && !previewCtx.previewError) {
       setFallbackActive(false);
+    } else if (!allowStaticTemplatePreview) {
+      setFallbackActive(false);
     }
-  }, [mode, previewCtx.previewError]);
+  }, [mode, previewCtx.previewError, allowStaticTemplatePreview]);
 
   // Generate srcdoc for live mode
   const srcdocHtml = React.useMemo(() => {
@@ -171,6 +1193,38 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
     return generateLivePreview(website, page, blocks, window.location.origin);
   }, [effectiveMode, previewCtx.currentPageContent, previewCtx.revision]);
+
+  const frontendTemplateId = previewCtx.currentPageContent?.websiteMeta?.frontendTemplateId || null;
+  const frontendTemplateData = React.useMemo(() => {
+    const override = previewCtx.currentPageContent?.websiteMeta?.templateDataOverride;
+    if (override && frontendTemplateId) {
+      return override as unknown as BusinessData;
+    }
+
+    if (!frontendTemplateId || !hasFrontendTemplateBaseData(frontendTemplateId)) {
+      return null;
+    }
+
+    const websiteMeta = previewCtx.currentPageContent?.websiteMeta;
+    if (!websiteMeta) {
+      return null;
+    }
+
+    return buildFrontendTemplateBusinessData(frontendTemplateId, {
+      name: websiteMeta.name || 'Preview Website',
+      businessName: websiteMeta.businessName,
+      primaryColor: websiteMeta.primaryColor,
+      secondaryColor: websiteMeta.secondaryColor,
+      metaDescription: websiteMeta.metaDescription,
+      shortDescription: websiteMeta.shortDescription,
+      logoUrl: websiteMeta.logoUrl,
+      fullAddress: websiteMeta.fullAddress,
+      tags: websiteMeta.tags,
+    });
+  }, [frontendTemplateId, previewCtx.currentPageContent]);
+
+  const isFrontendTemplatePreview =
+    effectiveMode === 'live' && !!frontendTemplateId && !!frontendTemplateData;
 
   // PostMessage: send CONTENT_UPDATE to iframe
   const sendPostMessage = React.useCallback((message: Record<string, unknown>) => {
@@ -213,11 +1267,21 @@ const PreviewPanel = React.memo(function PreviewPanel({
           editType: (data.editType as 'single' | 'multi') || 'single',
         });
       }
+
+      if (data.type === 'EDITABLE_SELECTED' && data.blockId && data.fieldPath) {
+        onEditableElementSelected?.({
+          blockId: data.blockId as string,
+          fieldPath: data.fieldPath as string,
+          value: String(data.value || ''),
+          editType: (data.editType as 'single' | 'multi') || 'single',
+          rect: data.rect as { top: number; left: number; width: number; height: number } | undefined,
+        });
+      }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onBlockSelected, onBlockHover, onInlineEditStart]);
+  }, [onBlockSelected, onBlockHover, onInlineEditStart, onEditableElementSelected]);
 
   // Send VIEWPORT_CHANGE when viewport or zoom changes
   React.useEffect(() => {
@@ -264,11 +1328,13 @@ const PreviewPanel = React.memo(function PreviewPanel({
   const liveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
-    if (effectiveMode === 'live' && srcdocHtml) {
+    if (effectiveMode === 'live' && srcdocHtml && !isFrontendTemplatePreview) {
       setLiveTimedOut(false);
       liveTimeoutRef.current = setTimeout(() => {
         setLiveTimedOut(true);
       }, TIMEOUT_MS);
+    } else {
+      setLiveTimedOut(false);
     }
     return () => {
       if (liveTimeoutRef.current) {
@@ -276,7 +1342,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
         liveTimeoutRef.current = null;
       }
     };
-  }, [effectiveMode, srcdocHtml]);
+  }, [effectiveMode, srcdocHtml, isFrontendTemplatePreview]);
 
   // Clear live timeout when iframe loads
   const handleLiveIframeLoad = React.useCallback(() => {
@@ -375,11 +1441,17 @@ const PreviewPanel = React.memo(function PreviewPanel({
     return () => clearTimeout(timer);
   }, [viewport]);
 
-  // Should show device frame (mobile only)
   const showDeviceFrame = viewport === 'mobile';
+  const previewSurfaceWidth = displayWidth;
+  const previewSurfaceHeight = scaleToFit ? `${100 / effectiveScale}%` : '100%';
+  const previewSurfaceTransform = `scale(${effectiveScale})`;
+  const previewSurfaceMinHeight = scaleToFit ? 0 : 600;
+  const previewSurfaceTransition = 'width 0.3s ease, transform 0.3s ease';
 
   // Determine if we show the "no src" placeholder
-  const hasContent = effectiveMode === 'live' ? !!previewCtx.currentPageContent : !!src;
+  const hasContent = effectiveMode === 'live'
+    ? (!!previewCtx.currentPageContent || isFrontendTemplatePreview)
+    : !!src;
 
   if (!hasContent && !src) {
     return (
@@ -410,9 +1482,14 @@ const PreviewPanel = React.memo(function PreviewPanel({
         flexDirection: 'column',
         height: '100%',
         border: `1px solid ${colors.border}`,
-        borderRadius: 2,
+        borderRadius: 3,
         overflow: 'hidden',
-        backgroundColor: colors.panelBg,
+        // background: actualTheme === 'dark'
+        //   ? 'linear-gradient(180deg, rgba(14,18,19,0.96) 0%, rgba(9,12,13,0.98) 100%)'
+        //   : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(247,250,252,0.98) 100%)',
+        boxShadow: actualTheme === 'dark'
+          ? '0 30px 80px rgba(0,0,0,0.45)'
+          : '0 24px 60px rgba(15,23,42,0.08)',
       }}
     >
       {/* Screen reader announcement */}
@@ -437,15 +1514,84 @@ const PreviewPanel = React.memo(function PreviewPanel({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          px: 2,
-          py: 1,
-          borderBottom: `1px solid ${colors.border}`,
+          px: { xs: 1.2, md: 1.5 },
+          py: 0.9,
+          borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
           gap: 1,
           flexWrap: 'wrap',
+          background: 'linear-gradient(180deg, #f8f8f8 0%, #f1f1f1 100%)',
         }}
       >
-        {/* Left: Viewport toggle + Mode toggle */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        {/* Left: Browser chrome + page selector */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+            {['#e5e7eb', '#e5e7eb', '#e5e7eb'].map((dot, index) => (
+              <Box
+                key={index}
+                sx={{
+                  width: 9,
+                  height: 9,
+                  borderRadius: '50%',
+                  bgcolor: dot,
+                  border: '1px solid rgba(15,23,42,0.05)',
+                }}
+              />
+            ))}
+          </Box>
+
+          <Select
+            value={selectedPageValue}
+            onChange={(event) => onPageChange?.(String(event.target.value))}
+            size="small"
+            IconComponent={ChevronDown}
+            displayEmpty
+            sx={{
+              minWidth: 180,
+              height: 34,
+              borderRadius: '10px',
+              bgcolor: '#f7f4f2',
+              color: '#000000',
+              fontSize: '0.95rem',
+              fontWeight: 500,
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)',
+              '& .MuiSelect-select': {
+                py: 0.7,
+                pl: 1.2,
+                pr: '2rem !important',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgb(255, 255, 255)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgb(0, 0, 0)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgb(0, 0, 0)',
+              },
+              '& .MuiSelect-icon': {
+                color: '#000000',
+                right: 8,
+                width: 16,
+                height: 16,
+              },
+            }}
+            renderValue={(value) => {
+              const activePage = pages.find((page) => String(page.id) === String(value));
+              return `Page: ${activePage?.title || pageTitle || 'Homepage'}`;
+            }}
+          >
+            {!pages.length && (
+              <MenuItem value="" disabled>
+                {pageTitle || 'Homepage'}
+              </MenuItem>
+            )}
+            {pages.map((page) => (
+              <MenuItem key={page.id} value={String(page.id)}>
+                {page.title}
+              </MenuItem>
+            ))}
+          </Select>
+
           {/* Viewport toggle */}
           <ToggleButtonGroup
             value={viewport}
@@ -455,15 +1601,16 @@ const PreviewPanel = React.memo(function PreviewPanel({
             aria-label="Preview viewport"
             sx={{
               '& .MuiToggleButton-root': {
-                border: `1px solid ${colors.border}`,
-                color: colors.textSecondary,
+                border: '1px solid rgba(15, 23, 42, 0.08)',
+                color: '#6b7280',
                 minWidth: 44,
-                minHeight: 36,
+                minHeight: 34,
+                backgroundColor: '#ffffff',
                 '&.Mui-selected': {
-                  backgroundColor: 'rgba(55,140,146,0.15)',
-                  color: '#378C92',
-                  borderColor: '#378C92',
-                  '&:hover': { backgroundColor: 'rgba(55,140,146,0.25)' },
+                  backgroundColor: 'rgba(55, 140, 146, 0.22)',
+                  color: 'rgb(0, 0, 0)',
+                  borderColor: 'rgba(55, 140, 146, 0.22)',
+                  '&:hover': { backgroundColor: 'rgba(59, 130, 246, 0.12)' },
                 },
               },
             }}
@@ -485,45 +1632,6 @@ const PreviewPanel = React.memo(function PreviewPanel({
             </ToggleButton>
           </ToggleButtonGroup>
 
-          {/* Mode toggle (Live / Static) */}
-          <ToggleButtonGroup
-            value={effectiveMode}
-            exclusive
-            onChange={handleModeChange}
-            size="small"
-            aria-label="Preview mode"
-            sx={{
-              '& .MuiToggleButton-root': {
-                border: `1px solid ${colors.border}`,
-                color: colors.textSecondary,
-                fontSize: '0.75rem',
-                px: 1.5,
-                minHeight: 36,
-                textTransform: 'none',
-                '&.Mui-selected': {
-                  backgroundColor: 'rgba(55,140,146,0.15)',
-                  color: '#378C92',
-                  borderColor: '#378C92',
-                  '&:hover': { backgroundColor: 'rgba(55,140,146,0.25)' },
-                },
-              },
-            }}
-          >
-            <ToggleButton value="live" aria-label="Live mode">
-              Live
-            </ToggleButton>
-            <ToggleButton value="static" aria-label="Static mode">
-              Static
-            </ToggleButton>
-          </ToggleButtonGroup>
-
-          {/* Viewport size display */}
-          <Typography
-            variant="caption"
-            sx={{ color: colors.textSecondary, fontFamily: 'monospace', minWidth: 80 }}
-          >
-            {displayWidth} &times; {displayHeight}
-          </Typography>
         </Box>
 
         {/* Right: Zoom + Rotation + Scale-to-fit + Refresh */}
@@ -537,15 +1645,16 @@ const PreviewPanel = React.memo(function PreviewPanel({
             aria-label="Zoom level"
             sx={{
               '& .MuiToggleButton-root': {
-                border: `1px solid ${colors.border}`,
-                color: colors.textSecondary,
+                border: '1px solid rgba(15, 23, 42, 0.08)',
+                color: '#6b7280',
                 fontSize: '0.7rem',
                 px: 1,
                 minHeight: 32,
+                backgroundColor: '#ffffff',
                 '&.Mui-selected': {
-                  backgroundColor: 'rgba(55,140,146,0.15)',
-                  color: '#378C92',
-                  borderColor: '#378C92',
+                  backgroundColor: 'rgba(55, 140, 146, 0.22)',
+                  color: 'rgb(0, 0, 0)',
+                  borderColor: 'rgba(55, 140, 146, 0.22)',
                 },
               },
             }}
@@ -569,8 +1678,8 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 size="small"
                 aria-label="Rotate viewport"
                 sx={{
-                  color: colors.textSecondary,
-                  '&:hover': { color: '#378C92' },
+                  color: '#6b7280',
+                  '&:hover': { color: '#2563eb' },
                 }}
               >
                 <RotateCw size={16} />
@@ -589,7 +1698,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {scaleToFit ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                <Typography variant="caption" sx={{ color: '#6b7280' }}>
                   {scaleToFit ? 'Fit' : 'Actual'}
                 </Typography>
               </Box>
@@ -603,10 +1712,10 @@ const PreviewPanel = React.memo(function PreviewPanel({
               size="small"
               aria-label="Refresh preview"
               sx={{
-                color: colors.textSecondary,
+                color: '#6b7280',
                 minWidth: 44,
                 minHeight: 44,
-                '&:hover': { color: '#378C92' },
+                '&:hover': { color: '#2563eb' },
               }}
             >
               <RefreshCw size={16} />
@@ -644,15 +1753,19 @@ const PreviewPanel = React.memo(function PreviewPanel({
       )}
 
       {/* Preview Area */}
-      <Box
-        ref={containerRef}
-        sx={{
-          flex: 1,
-          overflow: scaleToFit ? 'hidden' : 'auto',
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'center',
-          backgroundColor: actualTheme === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.03)',
+        <Box
+          ref={containerRef}
+          sx={{
+            flex: 1,
+            overflow: scaleToFit ? 'hidden' : 'auto',
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            padding: { xs: 1.25, md: 0 },
+            background: actualTheme === 'dark'
+              ? 'radial-gradient(circle at top, rgba(45,212,191,0.08), transparent 26%), linear-gradient(180deg, rgba(248,250,252,1), rgba(241,245,249,1))'
+              : 'radial-gradient(circle at top, rgba(45,212,191,0.08), transparent 26%), linear-gradient(180deg, rgba(248,250,252,1), rgba(241,245,249,1))',
         }}
       >
         {/* Loading overlay */}
@@ -746,17 +1859,80 @@ const PreviewPanel = React.memo(function PreviewPanel({
           ) : (
             <PreviewImageError onRetry={refresh} message="Failed to load website preview" />
           )
+        ) : isFrontendTemplatePreview && frontendTemplateId && frontendTemplateData ? (
+          <Box
+            sx={{
+              width: previewSurfaceWidth,
+              height: previewSurfaceHeight,
+              transform: previewSurfaceTransform,
+              transformOrigin: 'top center',
+              minHeight: previewSurfaceMinHeight,
+              transition: previewSurfaceTransition,
+              position: 'relative',
+              boxShadow: actualTheme === 'dark'
+                ? '0 32px 70px rgba(0, 0, 0, 0.52)'
+                : '0 24px 50px rgba(15, 23, 42, 0.12)',
+              borderRadius: showDeviceFrame ? '24px' : '20px',
+              overflow: 'hidden',
+              backgroundColor: '#fff',
+              ...(showDeviceFrame && {
+                border: '3px solid #333',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 80,
+                  height: 4,
+                  backgroundColor: '#555',
+                  borderRadius: '0 0 4px 4px',
+                  zIndex: 1,
+                },
+              }),
+            }}
+          >
+            <Box
+              sx={{
+                width: '100%',
+                minHeight: 600,
+                height: '100%',
+                overflow: scaleToFit ? 'hidden' : 'auto',
+                backgroundColor: '#fff',
+              }}
+            >
+              <FrontendTemplateIframePreview
+                title={`Website preview - ${viewport}`}
+                width={displayWidth}
+                minHeight={600}
+                templateId={frontendTemplateId}
+                pageId={pageId}
+                data={frontendTemplateData}
+                onEditableElementSelected={onEditableElementSelected}
+                onImageSelected={onImageSelected}
+                onSectionSelected={onSectionSelected}
+                onPreviewContextMenu={onPreviewContextMenu}
+                onEditableTextSave={onEditableTextSave}
+                iframeRefCallback={iframeRefCallback}
+                selectedPreviewTarget={selectedPreviewTarget}
+              />
+            </Box>
+          </Box>
         ) : (
           /* Iframe container with optional device frame */
           <Box
             sx={{
-              width: scaleToFit ? displayWidth : displayWidth,
-              height: scaleToFit ? `${100 / effectiveScale}%` : '100%',
-              transform: `scale(${effectiveScale})`,
+              width: previewSurfaceWidth,
+              height: previewSurfaceHeight,
+              transform: previewSurfaceTransform,
               transformOrigin: 'top center',
-              minHeight: scaleToFit ? 0 : 600,
-              transition: 'width 0.3s ease, transform 0.3s ease',
+              minHeight: previewSurfaceMinHeight,
+              transition: previewSurfaceTransition,
               position: 'relative',
+              boxShadow: actualTheme === 'dark'
+                ? '0 32px 70px rgba(0, 0, 0, 0.52)'
+                : '0 24px 50px rgba(15, 23, 42, 0.12)',
+              borderRadius: showDeviceFrame ? '24px' : '20px',
               ...(showDeviceFrame && {
                 border: '3px solid #333',
                 borderRadius: '24px',
@@ -789,6 +1965,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 border: 'none',
                 display: 'block',
                 minHeight: 600,
+                backgroundColor: '#fff',
               }}
               aria-label={`Website preview in ${viewport} mode`}
             />

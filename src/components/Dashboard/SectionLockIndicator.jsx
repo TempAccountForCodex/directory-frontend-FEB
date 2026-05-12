@@ -20,9 +20,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Badge, Box, CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { Lock as LockIcon } from 'lucide-react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { apiClient } from '../../api/client';
 
 // ---------------------------------------------------------------------------
 // Lock type → visual config
@@ -72,8 +70,8 @@ const SectionLockIndicator = React.memo(function SectionLockIndicator({
       setFetching(true);
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await axios.get(
-        `${API_URL}/websites/${websiteId}/sections/${sectionId}/lock`,
+      const res = await apiClient.get(
+        `/websites/${websiteId}/sections/${sectionId}/lock`,
         { headers }
       );
       setLockData(res.data?.data ?? res.data ?? null);

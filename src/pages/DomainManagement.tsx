@@ -45,12 +45,12 @@ import {
   TabNavigation,
   ConfirmationDialog,
 } from '../components/Dashboard/shared';
+import { API_URL } from '@/config/api';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const SUBDOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
@@ -982,3 +982,4 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
 DomainManagement.displayName = 'DomainManagement';
 
 export default DomainManagement;
+

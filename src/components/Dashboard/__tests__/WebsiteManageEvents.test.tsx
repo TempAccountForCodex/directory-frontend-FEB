@@ -151,7 +151,7 @@ function setupFetchError() {
   mockFetch.mockRejectedValue(new Error('Network error'));
 }
 
-function renderComponent(websiteId = '123') {
+function renderComponent(websiteId = 'website-123') {
   return render(
     <MemoryRouter initialEntries={[`/dashboard/websites/${websiteId}/events`]}>
       <Routes>
@@ -388,7 +388,7 @@ describe('WebsiteManageEvents', () => {
     expect(container.firstChild).not.toBeNull();
     // Re-render with same route — should not crash
     rerender(
-      <MemoryRouter initialEntries={['/dashboard/websites/123/events']}>
+      <MemoryRouter initialEntries={['/dashboard/websites/website-123/events']}>
         <Routes>
           <Route path="/dashboard/websites/:websiteId/events" element={<WebsiteManageEvents />} />
         </Routes>

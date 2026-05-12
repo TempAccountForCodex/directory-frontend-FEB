@@ -24,12 +24,26 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 const mockAxiosGet = vi.fn();
 const mockAxiosPost = vi.fn();
 
-vi.mock('axios', () => ({
-  default: {
+vi.mock('axios', () => {
+  const axiosInstance = {
     get: (...args: unknown[]) => mockAxiosGet(...args),
     post: (...args: unknown[]) => mockAxiosPost(...args),
-  },
-}));
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  return {
+    default: {
+      ...axiosInstance,
+      create: vi.fn(() => axiosInstance),
+    },
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Import hook after mocks

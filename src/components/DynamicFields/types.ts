@@ -30,6 +30,11 @@ export const FieldType = {
   COLOR: 'COLOR',
   LINK: 'LINK',
   EMAIL: 'EMAIL',
+  URL: 'URL',
+  RICH_TEXT: 'RICH_TEXT',
+  RICHTEXT: 'RICHTEXT',
+  ICON: 'ICON',
+  DATE: 'DATE',
   REPEATER: 'REPEATER',
   TOKEN: 'TOKEN',
 } as const;

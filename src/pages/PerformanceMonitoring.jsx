@@ -23,7 +23,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Alert from '@mui/material/Alert';
@@ -83,7 +83,6 @@ import { useTheme as useCustomTheme } from '../context/ThemeContext';
 // Constants
 // ──────────────────────────────────────────────
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const POLL_INTERVAL_MS = 30000; // 30s polling fallback
 const MAX_ALERT_HISTORY = 10;
 
@@ -246,7 +245,7 @@ const PerformanceMonitoring = memo(({ colors: colorsProp }) => {
     if (!mountedRef.current) return;
     if (showRefreshing) setRefreshing(true);
     try {
-      const { data } = await axios.get(`${API_URL}/metrics/health`, {
+      const { data } = await apiClient.get(`/metrics/health`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (mountedRef.current) {
@@ -268,7 +267,7 @@ const PerformanceMonitoring = memo(({ colors: colorsProp }) => {
   const fetchHistory = useCallback(async () => {
     if (!mountedRef.current) return;
     try {
-      const { data } = await axios.get(`${API_URL}/metrics/history?duration=24h`, {
+      const { data } = await apiClient.get(`/metrics/history?duration=24h`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (mountedRef.current && data.averages?.hourly) {
@@ -290,7 +289,7 @@ const PerformanceMonitoring = memo(({ colors: colorsProp }) => {
   const fetchAlerts = useCallback(async () => {
     if (!mountedRef.current) return;
     try {
-      const { data } = await axios.get(`${API_URL}/metrics/alerts`, {
+      const { data } = await apiClient.get(`/metrics/alerts`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (mountedRef.current && data.alerts) {

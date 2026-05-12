@@ -19,14 +19,12 @@ import {
   CircleX as InactiveIcon,
   Tag as CategoryIcon,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { DashboardDataGrid } from './grid';
 import { DashboardActionButton, DashboardInput, DashboardPanel } from './shared';
 import { isAdmin as checkIsAdmin } from '../../constants/roles';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const CategoryManagement = ({ user, searchQuery = '', addTrigger = 0 }) => {
   const { actualTheme } = useCustomTheme();
@@ -63,7 +61,7 @@ const CategoryManagement = ({ user, searchQuery = '', addTrigger = 0 }) => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${API_URL}/categories?includeInactive=true`);
+      const response = await apiClient.get(`/categories?includeInactive=true`);
 
       if (response.data.success) {
         setCategories(response.data.data || []);
@@ -112,9 +110,9 @@ const CategoryManagement = ({ user, searchQuery = '', addTrigger = 0 }) => {
   const handleSubmit = async () => {
     try {
       if (isEditing) {
-        await axios.put(`${API_URL}/categories/${currentCategory.id}`, formData);
+        await apiClient.put(`/categories/${currentCategory.id}`, formData);
       } else {
-        await axios.post(`${API_URL}/categories`, formData);
+        await apiClient.post(`/categories`, formData);
       }
 
       // IMMEDIATELY refetch data for real-time updates
@@ -138,7 +136,7 @@ const CategoryManagement = ({ user, searchQuery = '', addTrigger = 0 }) => {
 
   const handleToggleStatus = async (category) => {
     try {
-      await axios.patch(`${API_URL}/categories/${category.id}/toggle-status`, {});
+      await apiClient.patch(`/categories/${category.id}/toggle-status`, {});
 
       // IMMEDIATELY refetch data for real-time updates
       await fetchCategories();
@@ -165,7 +163,7 @@ const CategoryManagement = ({ user, searchQuery = '', addTrigger = 0 }) => {
 
   const handleDeleteConfirm = async () => {
     try {
-      await axios.delete(`${API_URL}/categories/${currentCategory.id}`);
+      await apiClient.delete(`/categories/${currentCategory.id}`);
 
       // IMMEDIATELY refetch data for real-time updates
       await fetchCategories();

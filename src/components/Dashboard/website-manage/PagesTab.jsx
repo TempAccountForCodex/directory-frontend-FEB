@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import {
   Box,
   Alert,
@@ -40,7 +40,6 @@ import DashboardCancelButton from '../shared/DashboardCancelButton';
 import DashboardConfirmButton from '../shared/DashboardConfirmButton';
 import DashboardTooltip from '../shared/DashboardTooltip';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 
 const generateSlug = (title) =>
@@ -78,7 +77,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`${API_URL}/websites/${websiteId}/pages`);
+      const res = await apiClient.get(`/websites/${websiteId}/pages`);
       // Backend returns { success, data: [...pages] }
       setPages(res.data?.data || res.data?.pages || []);
     } catch (err) {
@@ -111,7 +110,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
       setAddLoading(true);
       setAddError(null);
       // Backend expects { title, path } — not { title, slug }
-      const res = await axios.post(`${API_URL}/websites/${websiteId}/pages`, {
+      const res = await apiClient.post(`/websites/${websiteId}/pages`, {
         title: newPageTitle.trim(),
         path: newPageSlug || generateSlug(newPageTitle),
       });
@@ -130,7 +129,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     try {
       // Backend page update is PUT /api/pages/:pageId (standalone route, not nested under website).
       // The backend accepts isPublished (boolean) — not visible.
-      const res = await axios.put(`${API_URL}/pages/${page.id}`, {
+      const res = await apiClient.put(`/pages/${page.id}`, {
         isPublished: !page.isPublished,
       });
       const updatedPage = res.data?.data || res.data?.page || res.data;
@@ -147,7 +146,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     try {
       setDeleteLoading(true);
       // Backend page delete is DELETE /api/pages/:pageId (standalone route)
-      await axios.delete(`${API_URL}/pages/${pageToDelete.id}`);
+      await apiClient.delete(`/pages/${pageToDelete.id}`);
       setPages((prev) => prev.filter((p) => p.id !== pageToDelete.id));
       setDeleteDialogOpen(false);
       setPageToDelete(null);

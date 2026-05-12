@@ -16,7 +16,7 @@ import {
   Button,
   Alert,
 } from '@mui/material';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 import DynamicBlockRenderer from '../components/PublicWebsite/DynamicBlockRenderer';
 import BlockErrorBoundary from '../components/PublicWebsite/BlockErrorBoundary';
 import { DynamicBlockProvider } from '../context/DynamicBlockContext';
@@ -27,23 +27,34 @@ import {
 import ImageWithLoader from '../components/UI/ImageWithLoader';
 import { useGoogleAnalytics } from '../hooks/useGoogleAnalytics';
 import LanguageSelector from '../components/LanguageSelector';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import TemplateEngine from '../landingTemplates/templateEngine/TemplateEngine';
+import {
+  buildTemplatePreviewBusinessData,
+  inferFrontendTemplateIdFromPages,
+  supportsFrontendTemplateEditor,
+  type TemplateEditorPage,
+} from '../templates/frontendTemplateEditorSupport';
+import {
+  buildFrontendTemplateBusinessData,
+  hasFrontendTemplateBaseData,
+} from '../templates/frontendTemplateSiteData';
+import { getStoredWebsiteFrontendTemplateId } from '../templates/frontendTemplatePersistence';
 
 interface Page {
   id: number;
   title: string;
   path: string;
   isHome: boolean;
-  sortOrder?: number;
   blocks: Block[];
 }
 
 interface Block {
   id: number;
   blockType: string;
+  type?: string;
   content: any;
   sortOrder: number;
+  isVisible?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -82,6 +93,7 @@ interface Website {
   id: number;
   name: string;
   slug: string;
+  frontendTemplateId?: string | null;
   primaryColor: string;
   secondaryColor?: string;
   headingTextColor?: string;
@@ -92,21 +104,40 @@ interface Website {
   metaDescription?: string;
   businessName?: string;
   shortDescription?: string;
+  fullAddress?: string;
+  tags?: string[];
   gaMeasurementId?: string;
   fontPreset?: string;
   headingLetterSpacing?: string;
   headingTextTransform?: string;
+  templateSnapshot?: {
+    themeSettings?: {
+      primaryColor?: string;
+      secondaryColor?: string;
+      headingFont?: string;
+      bodyFont?: string;
+      paletteId?: string;
+      fontPackId?: string;
+    };
+    pages?: Array<{
+      id?: string | number;
+      title?: string;
+      path?: string;
+      isHome?: boolean;
+      isPublished?: boolean;
+      sortOrder?: number;
+      blocks?: Array<{
+        id?: string | number;
+        blockType?: string;
+        type?: string;
+        content?: any;
+        sortOrder?: number;
+        isVisible?: boolean;
+      }>;
+    }>;
+  };
   pages: Page[];
 }
-
-const unwrapWebsiteResponse = (payload: any): Website =>
-  payload?.data?.website || payload?.data || payload?.website || payload;
-
-const fetchWebsiteByIdentifier = async (identifier: string): Promise<Website> => {
-  const encodedIdentifier = encodeURIComponent(identifier);
-  const response = await axios.get(`${API_URL}/websites/slug/${encodedIdentifier}`);
-  return unwrapWebsiteResponse(response.data);
-};
 
 const PublicWebsite: React.FC = () => {
   const { slug, '*': splatPath } = useParams<{ slug: string; '*': string }>();
@@ -119,6 +150,9 @@ const PublicWebsite: React.FC = () => {
 
   // Blog article SEO override — populated by BlogArticleBlock via context
   const [blogSeoData, setBlogSeoData] = useState<BlogArticleSeoData | null>(null);
+  const resolvedFrontendTemplateId = website?.frontendTemplateId
+    || getStoredWebsiteFrontendTemplateId(website?.id)
+    || null;
 
   const handleSetBlogSeoData = useCallback((data: BlogArticleSeoData | null) => {
     setBlogSeoData(data);
@@ -183,12 +217,25 @@ const PublicWebsite: React.FC = () => {
           return;
         }
 
-        const websiteData = await fetchWebsiteByIdentifier(websiteSlug);
+        // Fetch website by slug
+        const response = await apiClient.get(`/websites/slug/${websiteSlug}`);
+        const websiteData = response.data;
 
         // Sort pages by sortOrder
-        const sortedPages = [...websiteData.pages].sort(
-          (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
-        );
+        const rawPages = Array.isArray(websiteData.pages)
+          ? websiteData.pages
+          : (Array.isArray(websiteData.blocks)
+            ? [{
+                id: websiteData.id ?? websiteData.pageId ?? 'page-0',
+                title: websiteData.title || 'Home',
+                path: websiteData.path || '/',
+                isHome: websiteData.isHome ?? true,
+                sortOrder: websiteData.sortOrder ?? 0,
+                isPublished: websiteData.isPublished ?? true,
+                blocks: websiteData.blocks,
+              }]
+            : []);
+        const sortedPages = [...rawPages].sort((a, b) => a.sortOrder - b.sortOrder);
 
         // Sort blocks within each page
         sortedPages.forEach((page) => {
@@ -196,7 +243,17 @@ const PublicWebsite: React.FC = () => {
         });
 
         websiteData.pages = sortedPages;
-        setWebsite(websiteData);
+        const inferredFrontendTemplateId = inferFrontendTemplateIdFromPages(sortedPages);
+        const normalizedWebsiteData = {
+          ...websiteData,
+          pages: sortedPages,
+          frontendTemplateId:
+            websiteData.frontendTemplateId
+            || inferredFrontendTemplateId
+            || getStoredWebsiteFrontendTemplateId(websiteData.id || websiteData.websiteId)
+            || null,
+        };
+        setWebsite(normalizedWebsiteData);
 
         // Find the current page based on path.
         // When accessed via /site/:slug/*, extract the sub-path after the slug
@@ -220,7 +277,19 @@ const PublicWebsite: React.FC = () => {
           page = sortedPages.find((p) => p.isHome) || sortedPages[0];
         }
 
-        setCurrentPage(page || null);
+        const websiteFrontendTemplateId = normalizedWebsiteData.frontendTemplateId;
+
+        if (!page && websiteFrontendTemplateId && hasFrontendTemplateBaseData(websiteFrontendTemplateId)) {
+          setCurrentPage({
+            id: -1,
+            title: 'Home',
+            path: '/',
+            isHome: true,
+            blocks: [],
+          });
+        } else {
+          setCurrentPage(page || null);
+        }
         setLoading(false);
       } catch (err: any) {
         // Log to the error boundary / monitoring layer rather than console
@@ -371,6 +440,75 @@ h1, h2, h3, h4, h5, h6 {
     return JSON.stringify(data).replace(/<\/script/gi, '<\\/script');
   }, [isBlogArticle, blogSeoData, metaTitle, metaDescription, siteUrl, website?.name]);
 
+  const persistedTemplatePages = useMemo<TemplateEditorPage[]>(() => {
+    if (!website || !resolvedFrontendTemplateId || !supportsFrontendTemplateEditor(resolvedFrontendTemplateId)) {
+      return [];
+    }
+
+    const sourcePages = website.pages?.length
+      ? website.pages
+      : (website.templateSnapshot?.pages || []);
+
+    return sourcePages.map((page: any, pageIndex: number) => ({
+      id: String(page.id ?? `page-${pageIndex}`),
+      title: page.title || `Page ${pageIndex + 1}`,
+      path: page.path || '/',
+      isHome: !!page.isHome,
+      sortOrder: page.sortOrder ?? pageIndex,
+      isPublished: page.isPublished ?? true,
+      blocks: Array.isArray(page.blocks)
+        ? page.blocks.map((block: any, blockIndex: number) => ({
+            id: String(block.id ?? `${page.id ?? pageIndex}-block-${blockIndex}`),
+            blockType: block.blockType || block.type || '',
+            content: block.content || {},
+            sortOrder: block.sortOrder ?? blockIndex,
+            isVisible: block.isVisible ?? true,
+          }))
+        : [],
+    }));
+  }, [website, resolvedFrontendTemplateId]);
+
+  const frontendTemplateData = useMemo(() => {
+    if (!resolvedFrontendTemplateId || !website) {
+      return null;
+    }
+
+    if (
+      supportsFrontendTemplateEditor(resolvedFrontendTemplateId)
+      && persistedTemplatePages.length > 0
+    ) {
+      return buildTemplatePreviewBusinessData(
+        resolvedFrontendTemplateId,
+        {
+          name: website.name,
+          businessName: website.businessName,
+          primaryColor: website.primaryColor,
+          secondaryColor: website.secondaryColor,
+          themeSettings: website.templateSnapshot?.themeSettings,
+          metaDescription: website.metaDescription,
+          shortDescription: website.shortDescription,
+          logoUrl: website.logoUrl,
+          fullAddress: website.fullAddress,
+          tags: website.tags as string[] | null | undefined,
+        },
+        persistedTemplatePages
+      );
+    }
+
+    return buildFrontendTemplateBusinessData(resolvedFrontendTemplateId, {
+      name: website.name,
+      businessName: website.businessName,
+      primaryColor: website.primaryColor,
+      secondaryColor: website.secondaryColor,
+      themeSettings: website.templateSnapshot?.themeSettings,
+      metaDescription: website.metaDescription,
+      shortDescription: website.shortDescription,
+      logoUrl: website.logoUrl,
+      fullAddress: website.fullAddress,
+      tags: website.tags as string[] | null | undefined,
+    });
+  }, [website, persistedTemplatePages, resolvedFrontendTemplateId]);
+
   if (loading) {
     return (
       <Box
@@ -406,6 +544,34 @@ h1, h2, h3, h4, h5, h6 {
             The website you're looking for doesn't exist or is not published.
           </Typography>
         </Container>
+      </Box>
+    );
+  }
+
+  if (
+    resolvedFrontendTemplateId
+    && hasFrontendTemplateBaseData(resolvedFrontendTemplateId)
+    && frontendTemplateData
+  ) {
+    return (
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        <Helmet>
+          <title>{metaTitle}</title>
+          <meta name="description" content={metaDescription} />
+          {website.faviconUrl && <link rel="icon" href={website.faviconUrl} />}
+          <link rel="canonical" href={canonicalUrl} />
+          <meta property="og:type" content="website" />
+          <meta property="og:title" content={metaTitle} />
+          <meta property="og:description" content={metaDescription} />
+          <meta property="og:url" content={canonicalUrl} />
+          {ogImage && <meta property="og:image" content={ogImage} />}
+          <meta property="og:site_name" content={website.name} />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={metaTitle} />
+          <meta name="twitter:description" content={metaDescription} />
+          {ogImage && <meta name="twitter:image" content={ogImage} />}
+        </Helmet>
+        <TemplateEngine templateId={resolvedFrontendTemplateId} data={frontendTemplateData} />
       </Box>
     );
   }

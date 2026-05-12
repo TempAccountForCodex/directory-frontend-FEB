@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { useMemo, useState, useCallback } from 'react';
+import type { AxiosError } from 'axios';
+import {
+  useListingComments,
+  useCreateComment,
+  useReactComment as useReactCommentMutation,
+} from '../api/queries/content';
 
 /* ---------- Types ---------- */
 export interface CommentAuthor {
@@ -56,113 +59,92 @@ export interface ReactCommentResult {
 }
 
 /* ---------- useComments ---------- */
+/**
+ * Backwards-compatible wrapper over `useListingComments`. Preserves the
+ * legacy `{ comments, pagination, loading, error, requiresAuth, refetch }`
+ * shape so existing consumers (ListingDetail, ReviewsTab) need no change.
+ */
 export function useComments(
   websiteId: string | number | null | undefined,
   page: number = 1
 ): CommentsResult {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [pagination, setPagination] = useState<CommentPagination | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [requiresAuth, setRequiresAuth] = useState(false);
-  const fetchCountRef = useRef(0);
+  const query = useListingComments(websiteId, { page, limit: 20 });
+  const err = query.error as AxiosError<{ message?: string }> | null;
+  const requiresAuth = err?.response?.status === 401;
+  const errorMsg = err && !requiresAuth
+    ? (err.response?.data?.message ?? 'Failed to load comments')
+    : null;
 
-  const fetchComments = useCallback(async () => {
-    if (!websiteId) return;
-    const currentFetch = ++fetchCountRef.current;
-    setLoading(true);
-    setError(null);
-    setRequiresAuth(false);
-
-    try {
-      const response = await axios.get(`${API_URL}/comments/listings/${websiteId}`, {
-        params: { page, limit: 20 },
-        withCredentials: true,
-      });
-      if (currentFetch !== fetchCountRef.current) return;
-      const data = response.data;
-      setComments(data.comments || []);
-      setPagination(data.pagination || null);
-    } catch (err: any) {
-      if (currentFetch !== fetchCountRef.current) return;
-      if (err.response?.status === 401) {
-        setRequiresAuth(true);
-      } else {
-        setError(err.response?.data?.message || 'Failed to load comments');
-      }
-    } finally {
-      if (currentFetch === fetchCountRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [websiteId, page]);
-
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
-
-  return { comments, pagination, loading, error, requiresAuth, refetch: fetchComments };
+  return {
+    comments: (query.data?.comments as Comment[]) ?? [],
+    pagination: (query.data?.pagination as CommentPagination | null) ?? null,
+    loading: query.isFetching,
+    error: errorMsg,
+    requiresAuth,
+    refetch: () => {
+      query.refetch();
+    },
+  };
 }
 
 /* ---------- useSubmitComment ---------- */
 export function useSubmitComment(
   websiteId: string | number | null | undefined
 ): SubmitCommentResult {
-  const [loading, setLoading] = useState(false);
+  const mutation = useCreateComment();
   const [error, setError] = useState<string | null>(null);
   const [requiresAuth, setRequiresAuth] = useState(false);
 
   const submitComment = useCallback(
     async (data: { content: string; parentCommentId?: number }): Promise<Comment | null> => {
       if (!websiteId) return null;
-      setLoading(true);
       setError(null);
       setRequiresAuth(false);
-
       try {
-        const response = await axios.post(`${API_URL}/comments/listings/${websiteId}`, data, {
-          withCredentials: true,
+        const result = await mutation.mutateAsync({
+          listingId: websiteId,
+          payload: data,
         });
-        return response.data.comment as Comment;
-      } catch (err: any) {
-        if (err.response?.status === 401) {
+        return (result as Comment) ?? null;
+      } catch (err) {
+        const axiosErr = err as AxiosError<{ message?: string }>;
+        if (axiosErr?.response?.status === 401) {
           setRequiresAuth(true);
         } else {
-          setError(err.response?.data?.message || 'Failed to submit comment');
+          setError(axiosErr?.response?.data?.message || 'Failed to submit comment');
         }
         return null;
-      } finally {
-        setLoading(false);
       }
     },
-    [websiteId]
+    [websiteId, mutation]
   );
 
-  return { submitComment, loading, error, requiresAuth };
+  return {
+    submitComment,
+    loading: mutation.isPending,
+    error,
+    requiresAuth,
+  };
 }
 
 /* ---------- useReactComment ---------- */
 export function useReactComment(): ReactCommentResult {
-  const [loading, setLoading] = useState(false);
+  const mutation = useReactCommentMutation();
 
   const reactComment = useCallback(
     async (commentId: number, reactionType: string): Promise<boolean> => {
-      setLoading(true);
       try {
-        await axios.post(
-          `${API_URL}/comments/${commentId}/react`,
-          { reactionType },
-          { withCredentials: true }
-        );
+        await mutation.mutateAsync({ commentId, reactionType });
         return true;
       } catch {
         return false;
-      } finally {
-        setLoading(false);
       }
     },
-    []
+    [mutation]
   );
 
-  return { reactComment, loading };
+  return useMemo(
+    () => ({ reactComment, loading: mutation.isPending }),
+    [reactComment, mutation.isPending]
+  );
 }

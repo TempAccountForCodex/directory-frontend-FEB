@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { isValidElement, useEffect, useRef, useState } from 'react';
 import { Box, Card, CardContent, LinearProgress, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -33,13 +33,7 @@ const parseValueFormat = (value) => {
   const decimalMatch = numericString.match(/\.(\d+)/);
   const decimals = decimalMatch ? decimalMatch[1].length : 0;
 
-  return {
-    numericValue: isNaN(numericValue) ? null : numericValue,
-    prefix,
-    suffix,
-    hasCommas,
-    decimals,
-  };
+  return { numericValue: isNaN(numericValue) ? null : numericValue, prefix, suffix, hasCommas, decimals };
 };
 
 /**
@@ -100,7 +94,7 @@ const AnimatedCounter = ({ value }) => {
           animate();
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
 
     const el = ref.current;
@@ -203,45 +197,35 @@ const DashboardMetricCard = ({
 
   const safeProgress = hasProgress ? clamp(Number(progress) || 0, 0, 100) : 0;
   const showFooter = hasProgress || shouldShowDiff;
-  const valueIsNumeric = parseValueFormat(value).numericValue !== null;
 
   const baseCardSx = {
     position: 'relative',
     height: '100%',
-    minHeight: 160,
     borderRadius: '18px',
     background: colors.panelBg,
-    transition: 'transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease',
-    '&:hover': {
-      transform: 'translateY(-3px)',
-    },
   };
 
   return (
     <Card sx={{ ...baseCardSx, ...(sx || {}) }}>
       <CardContent
         sx={{
-          height: '100%',
-          minHeight: 160,
-          p: { xs: '20px', sm: '22px' },
-          display: 'flex',
-          flexDirection: 'column',
-          boxSizing: 'border-box',
-          '&:last-child': { pb: { xs: '20px', sm: '22px' } },
+          py: hasDiff || hasProgress ? '20px' : '25px',
+          minHeight: hasDiff || hasProgress ? 160 : 110,
+          transition: 'transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease',
+          '&:hover': {
+            transform: 'translateY(-3px)',
+          },
+          '&:last-child': { pb: 2 },
         }}
       >
-        <Box
-          display="flex"
-          alignItems="flex-start"
-          gap={{ xs: '14px', sm: '16px' }}
-          sx={{ minWidth: 0 }}
-        >
+        <Box display="flex" alignItems="center" gap="18px">
           <Box
             sx={{
-              width: { xs: 48, sm: 52 },
-              height: { xs: 48, sm: 52 },
-              minWidth: { xs: 48, sm: 52 },
-              minHeight: { xs: 48, sm: 52 },
+              width: 56,
+              height: 56,
+              minWidth: 56,
+              minHeight: 56,
+              mx: 1.6,
               flexShrink: 0,
               borderRadius: '50%',
               display: 'flex',
@@ -255,25 +239,22 @@ const DashboardMetricCard = ({
               },
             }}
           >
-            <Icon
-              size={22}
-              sx={{ fontSize: 22, color: colors.text }}
-              style={{ width: 22, height: 22, color: colors.text }}
-            />
+            {isValidElement(Icon)
+              ? Icon
+              : <Icon sx={{ fontSize: 22, color: colors.text }} />}
           </Box>
 
-          <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Box>
             <Typography
               variant="body2"
               sx={{
                 color: alpha(colors.text, 0.65),
-                letterSpacing: 0,
+                letterSpacing: '0.12em',
                 fontSize: '0.82rem',
                 fontWeight: 600,
-                lineHeight: 1.2,
+                lineHeight: 1,
                 mb: '4px',
                 textTransform: hasDiff || hasProgress ? 'none' : 'uppercase',
-                overflowWrap: 'anywhere',
               }}
             >
               {title}
@@ -282,22 +263,9 @@ const DashboardMetricCard = ({
             <Typography
               sx={{
                 color: colors.text,
-                fontSize: valueIsNumeric
-                  ? {
-                      xs: '2rem',
-                      sm: '1.75rem',
-                      lg: '1.5rem',
-                      xl: '1.7rem',
-                    }
-                  : {
-                      xs: '1.45rem',
-                      sm: '1.35rem',
-                      lg: '1.15rem',
-                      xl: '1.25rem',
-                    },
-                fontWeight: 600,
-                lineHeight: valueIsNumeric ? 1.05 : 1.12,
-                overflowWrap: 'anywhere',
+                fontSize: { xs: '2.05rem', sm: '2.2rem' },
+                fontWeight: 400,
+                lineHeight: 1.05,
               }}
             >
               <AnimatedCounter value={value} />
@@ -307,7 +275,7 @@ const DashboardMetricCard = ({
 
         {showFooter && (
           <>
-            <Box sx={{ flex: 1, minHeight: 18 }} />
+            <Box sx={{ height: 1, my: 4.4 }} />
 
             {hasProgress ? (
               <Box sx={{ borderTop: `1px solid ${colors.panelBorder}`, pt: 1.6 }}>

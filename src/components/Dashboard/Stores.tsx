@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Box,
   Container,
@@ -49,8 +49,6 @@ import {
   SearchBar,
 } from './shared';
 import React from 'react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const SkeletonCard = () => {
   const { actualTheme } = useCustomTheme();
@@ -251,7 +249,7 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
       setError(null);
       const params: Record<string, any> = { page, limit: PAGE_SIZE };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
-      const response = await axios.get(`${API_URL}/stores`, {
+      const response = await apiClient.get(`/stores`, {
         headers: {},
         params,
       });
@@ -304,7 +302,7 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
   const fetchWebsites = async () => {
     try {
       setWebsitesLoading(true);
-      const response = await axios.get(`${API_URL}/websites`, {
+      const response = await apiClient.get(`/websites`, {
         headers: {},
       });
       // Filter to only show websites without stores
@@ -331,7 +329,7 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
         websiteId: parseInt(formData.websiteId, 10),
       };
 
-      const response = await axios.post(`${API_URL}/stores`, payload, {
+      const response = await apiClient.post(`/stores`, payload, {
         headers: {},
       });
 

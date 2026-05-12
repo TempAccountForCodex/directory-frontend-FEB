@@ -11,6 +11,7 @@ export { default as IntegrationsTab } from './IntegrationsTab';
 export { default as ListingTab } from './ListingTab';
 export { default as ReviewsTab } from './ReviewsTab';
 export { default as PagesTab } from './PagesTab';
+export { default as MediaTab } from './MediaTab';
 export { default as DesignTab } from './DesignTab';
 export { default as SeoTab } from './SeoTab';
 export { default as DomainTab } from './DomainTab';

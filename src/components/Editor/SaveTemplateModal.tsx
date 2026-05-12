@@ -28,8 +28,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
+import { API_URL } from '@/config/api';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -201,3 +201,4 @@ const SaveTemplateModal = React.memo<SaveTemplateModalProps>(function SaveTempla
 SaveTemplateModal.displayName = 'SaveTemplateModal';
 
 export default SaveTemplateModal;
+

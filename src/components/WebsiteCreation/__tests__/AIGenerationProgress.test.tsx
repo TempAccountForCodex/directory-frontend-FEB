@@ -298,7 +298,7 @@ describe('AIGenerationProgress', () => {
     });
   });
 
-  it('calls fetch with correct Authorization header', async () => {
+  it('calls fetch with credentials include and correct headers', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       body: createMockSSEStream([
@@ -314,7 +314,6 @@ describe('AIGenerationProgress', () => {
       ]),
     });
     global.fetch = mockFetch;
-    (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue('my-jwt-token');
 
     render(<AIGenerationProgress {...defaultProps} />);
 
@@ -322,8 +321,9 @@ describe('AIGenerationProgress', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/ai/progress/test-session-123'),
         expect.objectContaining({
+          credentials: 'include',
           headers: expect.objectContaining({
-            Authorization: 'Bearer my-jwt-token',
+            Accept: 'text/event-stream',
           }),
         })
       );

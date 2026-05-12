@@ -24,9 +24,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const MAX_CHANGE_SUMMARY = 2000;
 
 // ---------------------------------------------------------------------------
@@ -94,8 +93,8 @@ const RequestApprovalDialog = React.memo(function RequestApprovalDialog({
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      await axios.post(
-        `${API_URL}/websites/${websiteId}/approval/request`,
+      await apiClient.post(
+        `/websites/${websiteId}/approval/request`,
         { changeSummary: trimmed },
         { headers }
       );

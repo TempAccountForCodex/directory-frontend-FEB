@@ -8,10 +8,8 @@
  * - Reverts on API failure
  */
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 import { type TemplateSummary, normalizeTemplateSummary } from '../templates/templateApi';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 export interface UseTemplateFavoritesReturn {
   favorites: TemplateSummary[];
@@ -36,7 +34,7 @@ export const useTemplateFavorites = (): UseTemplateFavoritesReturn => {
       setError(null);
 
       try {
-        const response = await axios.get(`${API_URL}/templates/favorites?page=1&limit=50`);
+        const response = await apiClient.get(`/templates/favorites?page=1&limit=50`);
         if (!cancelled) {
           // API returns UserTemplateFavorite records with nested template object.
           // Use centralized normalizer for consistent preview field mapping.
@@ -93,7 +91,7 @@ export const useTemplateFavorites = (): UseTemplateFavoritesReturn => {
       }
 
       // Fire API
-      axios.post(`${API_URL}/templates/${templateId}/favorite`).catch((err: unknown) => {
+      apiClient.post(`/templates/${templateId}/favorite`).catch((err: unknown) => {
         // Revert on failure
         console.error('[useTemplateFavorites] toggleFavorite failed:', err);
         setFavorites(previousFavorites);

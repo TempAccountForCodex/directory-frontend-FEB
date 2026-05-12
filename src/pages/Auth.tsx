@@ -31,6 +31,7 @@ import CodeInput from '../components/CodeInput';
 import { ResendLink } from '../components/auth/ResendLink';
 import { useResendTimer } from '../hooks/useResendTimer';
 import WhiteLogo from '/assets/images/header/WhiteLogo.png';
+import { API_URL } from '@/config/api';
 
 const star = '/assets/publicAssets/images/common/star.svg';
 const darkhole = 'assets/publicAssets/images/common/darkhole.svg';
@@ -386,11 +387,6 @@ const Auth = () => {
     name: '',
   });
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
-
-    console.log("api url", API_URL);
-
 
   // Handle mode from URL query string
   useEffect(() => {
@@ -419,7 +415,7 @@ const Auth = () => {
       document.cookie = `ref_code=${encodeURIComponent(code)}; max-age=${30 * 86400}; path=/; SameSite=Lax`;
 
       // Track click (non-blocking)
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      const apiUrl = API_URL;
       fetch(`${apiUrl}/referral/track-click`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1781,7 +1777,7 @@ const Auth = () => {
             }}
           >
             Create stunning landing pages in minutes and get discovered in our curated business
-            directory—all for free.
+            directory�all for free.
           </Typography>
 
           {/* Feature List */}
@@ -1930,3 +1926,5 @@ const Auth = () => {
 };
 
 export default Auth;
+
+

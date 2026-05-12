@@ -1,10 +1,10 @@
-import * as React from "react";
-import ImageList from "@mui/material/ImageList";
-import ImageListItem from "@mui/material/ImageListItem";
-import { Box, Typography } from "@mui/material";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useTheme } from "@mui/material/styles";
-import { useInView } from "react-intersection-observer";
+import * as React from 'react';
+import ImageList from '@mui/material/ImageList';
+import ImageListItem from '@mui/material/ImageListItem';
+import { Box, Typography } from '@mui/material';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import { useInView } from 'react-intersection-observer';
 
 /* ---------------- Types ---------------- */
 interface CompanyLatestProjectProps {
@@ -45,11 +45,11 @@ const CompanyLatestProject: React.FC<CompanyLatestProjectProps> = ({
   ].filter((item) => !!item.img);
 
   const theme = useTheme();
-  const isXS = useMediaQuery(theme.breakpoints.only("xs"));
-  const isSM = useMediaQuery(theme.breakpoints.only("sm"));
-  const isMd = useMediaQuery(theme.breakpoints.only("md"));
-  const isLg = useMediaQuery(theme.breakpoints.only("lg"));
-  const isXl = useMediaQuery(theme.breakpoints.only("xl"));
+  const isXS = useMediaQuery(theme.breakpoints.only('xs'));
+  const isSM = useMediaQuery(theme.breakpoints.only('sm'));
+  const isMd = useMediaQuery(theme.breakpoints.only('md'));
+  const isLg = useMediaQuery(theme.breakpoints.only('lg'));
+  const isXl = useMediaQuery(theme.breakpoints.only('xl'));
 
   let cols = 1;
   if (isXS) cols = 1;
@@ -69,24 +69,20 @@ const CompanyLatestProject: React.FC<CompanyLatestProjectProps> = ({
   });
 
   return (
-    <Box
-      ref={projRef}
-      id="proj-section"
-      sx={{ width: "90%", mx: "auto", height: "100%" }}
-    >
+    <Box ref={projRef} id="proj-section" sx={{ width: '90%', mx: 'auto', height: '100%' }}>
       <Typography
         variant="h5"
         color="#2d3954"
         sx={{
-          fontSize: "32px",
-          lineHeight: "42px",
-          textAlign: "center",
+          fontSize: '32px',
+          lineHeight: '42px',
+          textAlign: 'center',
           fontWeight: 600,
-          fontFamily: "poppins",
-          mb: "20px",
-          mt: "-25px",
-          transition: isXS ? "none" : "transform 0.5s ease-in-out",
-          transform: projInView || isXS ? "translateX(0)" : "translateX(-100%)",
+          fontFamily: 'poppins',
+          mb: '20px',
+          mt: '-25px',
+          transition: isXS ? 'none' : 'transform 0.5s ease-in-out',
+          transform: projInView || isXS ? 'translateX(0)' : 'translateX(-100%)',
         }}
       >
         Our Latest Projects
@@ -96,14 +92,14 @@ const CompanyLatestProject: React.FC<CompanyLatestProjectProps> = ({
         variant="h6"
         color="#72809d"
         sx={{
-          fontSize: "16px",
-          lineHeight: "22px",
-          textAlign: "center",
+          fontSize: '16px',
+          lineHeight: '22px',
+          textAlign: 'center',
           fontWeight: 400,
-          fontFamily: "poppins",
-          marginTop: "10px",
-          px: { lg: "150px", md: "auto" },
-          transition: isXS ? "none" : "opacity 1s ease-in-out",
+          fontFamily: 'poppins',
+          marginTop: '10px',
+          px: { lg: '150px', md: 'auto' },
+          transition: isXS ? 'none' : 'opacity 1s ease-in-out',
           opacity: projInView || isXS ? 1 : 0,
         }}
       >
@@ -112,23 +108,21 @@ const CompanyLatestProject: React.FC<CompanyLatestProjectProps> = ({
 
       <br />
 
-      <ImageList sx={{ gap: "30px" }} cols={cols}>
+      <ImageList sx={{ gap: '30px' }} cols={cols}>
         {itemData.map((item, index) => (
           <ImageListItem
             key={index}
             sx={{
-              padding: "10px",
-              transition: isXS
-                ? "none"
-                : "opacity 1s ease-in-out, transform 1s ease-in-out",
+              padding: '10px',
+              transition: isXS ? 'none' : 'opacity 1s ease-in-out, transform 1s ease-in-out',
               opacity: imageInView || isXS ? 1 : 0,
               transform:
                 imageInView || isXS
-                  ? "translateX(0)"
+                  ? 'translateX(0)'
                   : index > 3
-                    ? "translateX(-100%)"
-                    : "translateX(100%)",
-              "&:hover": { opacity: 0.9 },
+                    ? 'translateX(-100%)'
+                    : 'translateX(100%)',
+              '&:hover': { opacity: 0.9 },
             }}
           >
             <img
@@ -136,8 +130,8 @@ const CompanyLatestProject: React.FC<CompanyLatestProjectProps> = ({
               alt={`Project ${index + 1}`}
               loading="lazy"
               style={{
-                width: "100%",
-                height: "300px",
+                width: '100%',
+                height: '300px',
               }}
               ref={imageRef}
             />

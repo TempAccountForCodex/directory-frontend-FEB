@@ -5,7 +5,6 @@ import { ThemeProvider } from './context/ThemeContext';
 import { CookieConsentProvider } from './context/PreferencesContext';
 import { Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 const Home = lazy(() => import('../src/pages/publicPages/Home'));
 const Listings = lazy(() => import('../src/pages/publicPages/Listings'));
@@ -28,7 +27,6 @@ const CookiePolicy = lazy(() => import('../src/pages/publicPages/CookiePolicy'))
 import { DashboardProvider } from './context/DashboardContext';
 import { PendingCounterProvider } from './context/pending-counter';
 import { ListingsProvider } from './context/ListingsContext.js';
-import { PermissionProvider } from './context/PermissionContext';
 import { useCookieConsent } from './context/PreferencesContext';
 const PublicWebsite = lazy(() => import('./pages/PublicWebsite'));
 const TemplatePreview = lazy(() => import('./pages/TemplatePreview'));
@@ -235,13 +233,11 @@ const App = () => {
       <ThemeProvider>
         <CookieConsentProvider>
           <ListingsProvider>
-            <PermissionProvider>
-              <DashboardProvider>
-                <PendingCounterProvider>
-                  <AppRoutes />
-                </PendingCounterProvider>
-              </DashboardProvider>
-            </PermissionProvider>
+            <DashboardProvider>
+              <PendingCounterProvider>
+                <AppRoutes />
+              </PendingCounterProvider>
+            </DashboardProvider>
           </ListingsProvider>
         </CookieConsentProvider>
       </ThemeProvider>
@@ -264,13 +260,6 @@ const AppRoutes = () => {
     }
 
     const parts = hostname.split('.');
-
-    // Hosting platform domains — never treat as custom subdomains
-    const platformDomains = ['vercel.app', 'pages.dev'];
-    const hostLower = hostname.toLowerCase();
-    if (platformDomains.some((d) => hostLower.endsWith(d))) {
-      return false;
-    }
 
     // Reserved subdomains that should NOT be treated as website slugs
     const reservedSubdomains = [
@@ -414,22 +403,6 @@ const AppRoutes = () => {
           element: suspense(<CheckoutPage />),
         },
         {
-          path: '/site/:slug',
-          element: suspense(<PublicWebsite />),
-        },
-        {
-          path: '/site/:slug/*',
-          element: suspense(<PublicWebsite />),
-        },
-        {
-          path: '/s/:slug',
-          element: suspense(<PublicWebsite />),
-        },
-        {
-          path: '/s/:slug/*',
-          element: suspense(<PublicWebsite />),
-        },
-        {
           path: '*',
           element: <NotFoundLayout />,
         },
@@ -449,11 +422,7 @@ const AppRoutes = () => {
         },
         {
           path: '/dashboard/websites/:websiteId/editor',
-          element: suspense(
-            <ProtectedRoute>
-              <WebsiteEditor />
-            </ProtectedRoute>
-          ),
+          element: suspense(<WebsiteEditor />),
         },
         {
           path: '/dashboard/*',
@@ -466,6 +435,14 @@ const AppRoutes = () => {
         {
           path: '/landing-preview/:templateId/:pageId?',
           element: suspense(<LandingPreview />),
+        },
+        {
+          path: '/site/:slug',
+          element: suspense(<PublicWebsite />),
+        },
+        {
+          path: '/site/:slug/*',
+          element: suspense(<PublicWebsite />),
         },
       ],
     },

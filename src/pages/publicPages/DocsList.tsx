@@ -21,7 +21,7 @@ import Pagination from '@mui/material/Pagination';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import { Search as SearchIcon, ChevronRight, Eye as ViewIcon, Calendar } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import DocsLayout from '../../components/Docs/DocsLayout';
 
@@ -44,8 +44,6 @@ interface Article {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const CATEGORY_LABELS: Record<string, string> = {
   'getting-started': 'Getting Started',
@@ -166,7 +164,7 @@ const DocsList = memo(() => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await axios.get(`${API_URL}/docs`, {
+      const resp = await apiClient.get(`/docs`, {
         params: { category, page: pageParam, limit: PAGE_SIZE },
       });
       const data = resp.data;

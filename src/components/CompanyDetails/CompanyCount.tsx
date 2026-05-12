@@ -1,7 +1,7 @@
-import { Box, CardMedia, Grid, Typography } from "@mui/material";
-import { useInView } from "react-intersection-observer";
-import useFormatData from "../../hooks/useFormatData.tsx";
-import theme from "../../styles/theme.ts";
+import { Box, CardMedia, Grid, Typography } from '@mui/material';
+import { useInView } from 'react-intersection-observer';
+import useFormatData from '../../hooks/useFormatData.tsx';
+import theme from '../../styles/theme.ts';
 
 /* ---------------- Types ---------------- */
 interface CompanyCountProps {
@@ -23,11 +23,11 @@ const CompanyCount: React.FC<CompanyCountProps> = ({
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const truncateDesc = (desc: string, maxLength: number): string => {
-    const tempElement = document.createElement("div");
+    const tempElement = document.createElement('div');
     tempElement.innerHTML = desc;
-    const textContent = tempElement.textContent || "";
+    const textContent = tempElement.textContent || '';
     return textContent.length > maxLength
-      ? textContent.substring(0, maxLength) + "..."
+      ? textContent.substring(0, maxLength) + '...'
       : textContent;
   };
 
@@ -41,15 +41,12 @@ const CompanyCount: React.FC<CompanyCountProps> = ({
     threshold: 0.1,
   });
 
-  const truncateText = (
-    text: string | undefined,
-    maxLength: number,
-  ): string => {
-    if (!text) return "";
+  const truncateText = (text: string | undefined, maxLength: number): string => {
+    if (!text) return '';
     if (text.length <= maxLength) {
       return text;
     }
-    return text.slice(0, maxLength) + "...";
+    return text.slice(0, maxLength) + '...';
   };
 
   const truncatedwhyUs = truncateText(whyUs, 400);
@@ -61,17 +58,17 @@ const CompanyCount: React.FC<CompanyCountProps> = ({
       ref={aboutUsRef}
       id="about-us-section"
       sx={{
-        height: "auto",
-        position: "relative",
-        alignItems: "center",
+        height: 'auto',
+        position: 'relative',
+        alignItems: 'center',
         backgroundImage:
-          "url(https://redvisionexperts.com/wp-content/uploads/2020/10/bg-map-3.png)",
-        backgroundPosition: "0%",
-        backgroundRepeat: "no-repeat",
-        textAlign: "center",
-        display: "block",
-        justifyContent: "left",
-        overflow: "hidden",
+          'url(https://redvisionexperts.com/wp-content/uploads/2020/10/bg-map-3.png)',
+        backgroundPosition: '0%',
+        backgroundRepeat: 'no-repeat',
+        textAlign: 'center',
+        display: 'block',
+        justifyContent: 'left',
+        overflow: 'hidden',
         px: { lg: 10, md: 5, sm: 10, xs: 4 },
         py: { lg: 10, md: 10, sm: 8, xs: 5 },
       }}
@@ -83,10 +80,10 @@ const CompanyCount: React.FC<CompanyCountProps> = ({
         sm={12}
         md={6.5}
         sx={{
-          position: "relative",
-          ml: { lg: "570px", sm: "0px" },
-          maxWidth: "100%",
-          minWidth: { lg: "0", md: "100%" },
+          position: 'relative',
+          ml: { lg: '570px', sm: '0px' },
+          maxWidth: '100%',
+          minWidth: { lg: '0', md: '100%' },
         }}
         ref={imageRef}
         id="image-section"
@@ -98,65 +95,65 @@ const CompanyCount: React.FC<CompanyCountProps> = ({
           item
           direction="column"
           sx={{
-            display: "flex",
-            position: { lg: "absolute", md: "relative" },
-            right: { lg: "70%", md: "0" },
-            top: { lg: "11%", md: "0" },
-            width: { lg: "800px", xs: "100%" },
-            height: { lg: "400px", md: "auto", sm: "auto", xs: "auto" },
-            bgcolor: "#fff",
-            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            display: 'flex',
+            position: { lg: 'absolute', md: 'relative' },
+            right: { lg: '70%', md: '0' },
+            top: { lg: '11%', md: '0' },
+            width: { lg: '800px', xs: '100%' },
+            height: { lg: '400px', md: 'auto', sm: 'auto', xs: 'auto' },
+            bgcolor: '#fff',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
             px: { lg: 5, md: 5, sm: 5, xs: 0 },
             py: { lg: 5, md: 5, sm: 5, xs: 2 },
-            overflow: "hidden",
+            overflow: 'hidden',
             opacity: imageInView ? 1 : 0,
-            transform: imageInView ? "translateX(0)" : "translateX(100%)",
-            animation: imageInView ? "slideInRight 1s forwards" : "none",
-            zIndex: "99",
+            transform: imageInView ? 'translateX(0)' : 'translateX(100%)',
+            animation: imageInView ? 'slideInRight 1s forwards' : 'none',
+            zIndex: '99',
           }}
           component="div"
           {...({} as any)}
         >
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "left",
-              flexDirection: "column",
-              height: "100%",
-              with: "100%",
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'left',
+              flexDirection: 'column',
+              height: '100%',
+              with: '100%',
             }}
           >
             <Typography
               variant="h5"
               sx={{
-                fontSize: { md: "46px", sm: "40px", xs: "25px" },
-                fontWeight: "800",
-                lineHeight: "1.2",
-                textAlign: { lg: "left", xs: "center" },
+                fontSize: { md: '46px', sm: '40px', xs: '25px' },
+                fontWeight: '800',
+                lineHeight: '1.2',
+                textAlign: { lg: 'left', xs: 'center' },
                 color: (theme.palette.primary as any).hover,
                 mb: { sm: 2, xs: 1 },
-                fontFamily: "Barlow",
+                fontFamily: 'Barlow',
               }}
             >
               Why Us?
             </Typography>
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                width: "100%",
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
               }}
             >
               <Typography
                 variant="body2"
                 sx={{
-                  color: "grey",
-                  lineHeight: "1.5",
-                  textAlign: "left",
-                  fontSize: { md: "16px", sm: "16px", xs: "11px" },
-                  px: { sm: 0, xs: "20px" },
+                  color: 'grey',
+                  lineHeight: '1.5',
+                  textAlign: 'left',
+                  fontSize: { md: '16px', sm: '16px', xs: '11px' },
+                  px: { sm: 0, xs: '20px' },
                   ml: 8,
                 }}
               >
@@ -177,12 +174,12 @@ const CompanyCount: React.FC<CompanyCountProps> = ({
           image={isAPIRunning ? `${backendUrl}/${banner}` : `${banner}`}
           alt="ok"
           sx={{
-            cursor: "pointer",
-            maxWidth: "86.5%",
+            cursor: 'pointer',
+            maxWidth: '86.5%',
             opacity: imageInView ? 1 : 0,
-            height: { md: "500px", sm: "400px", xs: "200px" },
-            transform: aboutUsInView ? "translateX(0)" : "translateX(-100%)",
-            animation: aboutUsInView ? "slideInLeft 1s forwards" : "none",
+            height: { md: '500px', sm: '400px', xs: '200px' },
+            transform: aboutUsInView ? 'translateX(0)' : 'translateX(-100%)',
+            animation: aboutUsInView ? 'slideInLeft 1s forwards' : 'none',
           }}
         />
       </Grid>

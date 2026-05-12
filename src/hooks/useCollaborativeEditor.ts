@@ -21,6 +21,7 @@ import { isContentUpdate, isCursorMove, isLockMessage, isRoomState } from '../ty
 import type { CursorPosition, LockInfo } from './usePreviewSync';
 import { getUserColor } from './usePreviewSync';
 import type { PresenceUser } from '../components/Editor/PresenceIndicator';
+import { API_URL } from '@/config/api';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -340,7 +341,7 @@ export function useCollaborativeEditor(
   // ---- Request edit access (VIEWER → sends notification to OWNER) ----------
   const requestEditAccess = useCallback(async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      const apiUrl = API_URL;
       await fetch(`${apiUrl}/websites/${websiteId}/collaborators/request-edit`, {
         method: 'POST',
         credentials: 'include',
@@ -390,3 +391,4 @@ export function useCollaborativeEditor(
 }
 
 export default useCollaborativeEditor;
+

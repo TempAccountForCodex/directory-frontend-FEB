@@ -250,7 +250,7 @@ const TemplatePreviewModal = React.memo(function TemplatePreviewModal({
                   onError={() => setImgError(true)}
                   sx={{
                     maxWidth: viewport === 'mobile' ? 375 : '100%',
-                    maxHeight: 500,
+                    // maxHeight: 500,
                     width: viewport === 'mobile' ? 375 : '100%',
                     objectFit: 'contain',
                     display: 'block',

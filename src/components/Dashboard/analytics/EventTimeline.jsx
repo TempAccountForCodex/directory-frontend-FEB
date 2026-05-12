@@ -4,10 +4,8 @@ import { Activity, ClipboardList, Download, Eye, Link, MousePointerClick } from 
 import { useTheme } from '../../../context/ThemeContext';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { AnalyticsPanelHeader, DashboardPanel } from '../shared';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import PageSelector from './PageSelector';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const EventTimeline = ({ limit = 20, period = '30', customDateRange = {} }) => {
   const { actualTheme } = useTheme();
@@ -24,7 +22,7 @@ const EventTimeline = ({ limit = 20, period = '30', customDateRange = {} }) => {
         params.page = selectedPage;
       }
 
-      const response = await axios.get(`${API_URL}/analytics/events`, {
+      const response = await apiClient.get(`/analytics/events`, {
         params,
       });
       setData(response.data.data);

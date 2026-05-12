@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Box, Typography, TableHead, TableBody, TableCell, Skeleton, MenuItem, Button } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { ScrollText, Download } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
 import DashboardCard from './DashboardCard';
@@ -14,7 +14,6 @@ import DashboardTable, {
 import DashboardSelect from './DashboardSelect';
 import DashboardDateField from './DashboardDateField';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 /**
  * Hardcoded fallbacks -- used only if /api/audit/meta fetch fails.
@@ -59,8 +58,8 @@ const AuditLogCard = () => {
   useEffect(() => {
     if (metaFetched.current) return;
     metaFetched.current = true;
-    axios
-      .get(`${API_URL}/audit/meta`)
+    apiClient
+      .get(`/audit/meta`)
       .then(({ data }) => {
         if (Array.isArray(data.actions) && data.actions.length > 0) {
           setActionOptions(data.actions.map(toOption));
@@ -103,7 +102,7 @@ const AuditLogCard = () => {
         offset: page * rowsPerPage,
         ...buildFilterParams(),
       };
-      const response = await axios.get(`${API_URL}/audit/admin/logs`, { params });
+      const response = await apiClient.get(`/audit/admin/logs`, { params });
       setLogs(response.data.data?.logs || []);
       setTotalCount(response.data.data?.total || 0);
     } catch (err) {
@@ -152,7 +151,7 @@ const AuditLogCard = () => {
     setExporting(true);
     try {
       const params = { format: 'csv', ...buildFilterParams() };
-      const response = await axios.get(`${API_URL}/audit/admin/logs/export`, {
+      const response = await apiClient.get(`/audit/admin/logs/export`, {
         params,
         responseType: 'blob',
       });

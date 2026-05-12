@@ -30,10 +30,8 @@ import {
   Share2,
   ExternalLink,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import { DashboardCard } from '../shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const MetricCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2.5),
@@ -63,8 +61,8 @@ const ReferralDashboard = ({ colors }) => {
     setError('');
     try {
       const [statsRes, rewardsRes] = await Promise.all([
-        axios.get(`${API_URL}/referral/my-code`, { withCredentials: true }),
-        axios.get(`${API_URL}/referral/rewards?limit=10`, { withCredentials: true }),
+        apiClient.get(`/referral/my-code`, { withCredentials: true }),
+        apiClient.get(`/referral/rewards?limit=10`, { withCredentials: true }),
       ]);
       setStats(statsRes.data);
       setRewards(rewardsRes.data.rewards || []);

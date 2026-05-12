@@ -17,9 +17,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { apiClient } from '../api/client';
 
 /** States that require no further editorial action */
 const TERMINAL_STATES = new Set(['PUBLISHED', 'DRAFT']);
@@ -53,8 +51,8 @@ export function useApprovalWorkflow(websiteId, userRole, userId) {
     if (!websiteId) return;
 
     try {
-      const res = await axios.get(
-        `${API_URL}/websites/${websiteId}/approval`,
+      const res = await apiClient.get(
+        `/websites/${websiteId}/approval`,
         { headers: getAuthHeaders() }
       );
       if (mountedRef.current) {
@@ -74,8 +72,8 @@ export function useApprovalWorkflow(websiteId, userRole, userId) {
   const refreshSectionLocks = useCallback(async () => {
     if (!websiteId) return;
     try {
-      const res = await axios.get(
-        `${API_URL}/websites/${websiteId}/sections/locks`,
+      const res = await apiClient.get(
+        `/websites/${websiteId}/sections/locks`,
         { headers: getAuthHeaders() }
       );
       if (mountedRef.current) {
@@ -163,8 +161,8 @@ export function useApprovalWorkflow(websiteId, userRole, userId) {
   const requestApproval = useCallback(
     async (changeSummary) => {
       if (!websiteId) throw new Error('websiteId required');
-      const res = await axios.post(
-        `${API_URL}/websites/${websiteId}/approval/request`,
+      const res = await apiClient.post(
+        `/websites/${websiteId}/approval/request`,
         { changeSummary: changeSummary?.trim() ?? '' },
         { headers: getAuthHeaders() }
       );
@@ -177,8 +175,8 @@ export function useApprovalWorkflow(websiteId, userRole, userId) {
   const reviewApproval = useCallback(
     async ({ approved, rejectionReason }) => {
       if (!websiteId) throw new Error('websiteId required');
-      const res = await axios.post(
-        `${API_URL}/websites/${websiteId}/approval/review`,
+      const res = await apiClient.post(
+        `/websites/${websiteId}/approval/review`,
         {
           decision: approved ? 'approve' : 'reject',
           rejectionReason: rejectionReason?.trim() ?? undefined,
@@ -193,8 +191,8 @@ export function useApprovalWorkflow(websiteId, userRole, userId) {
 
   const publishAfterApproval = useCallback(async () => {
     if (!websiteId) throw new Error('websiteId required');
-    const res = await axios.post(
-      `${API_URL}/websites/${websiteId}/approval/publish`,
+    const res = await apiClient.post(
+      `/websites/${websiteId}/approval/publish`,
       null,
       { headers: getAuthHeaders() }
     );
@@ -204,8 +202,8 @@ export function useApprovalWorkflow(websiteId, userRole, userId) {
 
   const emergencyPublish = useCallback(async (reason) => {
     if (!websiteId) throw new Error('websiteId required');
-    const res = await axios.post(
-      `${API_URL}/websites/${websiteId}/approval/emergency-publish`,
+    const res = await apiClient.post(
+      `/websites/${websiteId}/approval/emergency-publish`,
       { reason: reason?.trim() || 'Emergency publish initiated by owner' },
       { headers: getAuthHeaders() }
     );
@@ -215,8 +213,8 @@ export function useApprovalWorkflow(websiteId, userRole, userId) {
 
   const revokeApproval = useCallback(async () => {
     if (!websiteId) throw new Error('websiteId required');
-    const res = await axios.post(
-      `${API_URL}/websites/${websiteId}/approval/revoke`,
+    const res = await apiClient.post(
+      `/websites/${websiteId}/approval/revoke`,
       null,
       { headers: getAuthHeaders() }
     );

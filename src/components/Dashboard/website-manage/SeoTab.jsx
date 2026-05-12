@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import {
   Box,
   Alert,
@@ -23,8 +23,6 @@ import { DashboardCard } from '../shared';
 import DashboardActionButton from '../shared/DashboardActionButton';
 import DashboardGradientButton from '../shared/DashboardGradientButton';
 import DashboardInput from '../shared/DashboardInput';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const META_TITLE_RECOMMENDED = { min: 50, max: 60 };
 const META_DESC_RECOMMENDED = { min: 150, max: 160 };
@@ -157,7 +155,7 @@ const SeoTab = memo(({ website, websiteId, onSaved }) => {
     if (!websiteId) return;
     try {
       setPagesLoading(true);
-      const res = await axios.get(`${API_URL}/websites/${websiteId}/pages`);
+      const res = await apiClient.get(`/websites/${websiteId}/pages`);
       // Backend returns { success, data: [...pages] }
       setPages(res.data?.data || res.data?.pages || []);
     } catch {
@@ -198,7 +196,7 @@ const SeoTab = memo(({ website, websiteId, onSaved }) => {
     try {
       setSaving(true);
       setSaveError(null);
-      const res = await axios.put(`${API_URL}/websites/${websiteId}`, {
+      const res = await apiClient.put(`/websites/${websiteId}`, {
         metaTitle: form.metaTitle,
         metaDescription: form.metaDescription,
         ogImage: form.ogImage || null,

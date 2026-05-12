@@ -70,7 +70,7 @@ import {
   ArrowDown as ArrowDownwardIcon,
   Globe as PublishIcon,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import WebsiteCategoryManagement from './WebsiteCategoryManagement';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
@@ -87,8 +87,8 @@ import {
   getTrendProps,
 } from './shared';
 import { DashboardDataGrid } from './grid';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const WebsiteManageInsights = ({ user }) => {
   const { actualTheme } = useCustomTheme();
@@ -341,7 +341,7 @@ const WebsiteManageInsights = ({ user }) => {
   // -------------------------------------------------------------------------
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/categories`);
+      const response = await apiClient.get(`/categories`);
       if (response.data.success && response.data.data) {
         const categoryNames = response.data.data.map((cat) => cat.name);
         setCategories(categoryNames);
@@ -353,7 +353,7 @@ const WebsiteManageInsights = ({ user }) => {
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/blogs/my-stats`);
+      const response = await apiClient.get(`/blogs/my-stats`);
       if (response.data.success) {
         setStats({
           total: response.data.stats.total || 0,
@@ -370,8 +370,8 @@ const WebsiteManageInsights = ({ user }) => {
     if (!user?.id) return;
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${API_URL}/blogs?page=${page}&limit=${rowsPerPage}&authorId=${user.id}`
+      const response = await apiClient.get(
+        `/blogs?page=${page}&limit=${rowsPerPage}&authorId=${user.id}`
       );
       setBlogs(response.data.blogs || []);
       setTotalPages(response.data.pagination?.totalPages || 1);
@@ -788,11 +788,11 @@ const WebsiteManageInsights = ({ user }) => {
       }
 
       if (isEditing) {
-        await axios.put(`${API_URL}/blogs/${currentInsight.id}`, formDataToSend, {
+        await apiClient.put(`/blogs/${currentInsight.id}`, formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       } else {
-        await axios.post(`${API_URL}/blogs`, formDataToSend, {
+        await apiClient.post(`/blogs`, formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
@@ -818,7 +818,7 @@ const WebsiteManageInsights = ({ user }) => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${API_URL}/blogs/${currentInsight.id}`);
+      await apiClient.delete(`/blogs/${currentInsight.id}`);
 
       await fetchBlogs();
       await fetchStats();
@@ -844,8 +844,8 @@ const WebsiteManageInsights = ({ user }) => {
   // Publish toggle: approved ↔ draft
   const handleTogglePublish = useCallback(async (blog) => {
     try {
-      const response = await axios.patch(
-        `${API_URL}/blogs/${blog.id}/publish-toggle`,
+      const response = await apiClient.patch(
+        `/blogs/${blog.id}/publish-toggle`,
         {},
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -872,7 +872,7 @@ const WebsiteManageInsights = ({ user }) => {
   // Handle Add Category quick-create from dialog
   const handleAddCategorySubmit = async () => {
     try {
-      await axios.post(`${API_URL}/categories`, categoryFormData);
+      await apiClient.post(`/categories`, categoryFormData);
       await fetchCategories();
       setSnackbar({
         open: true,
@@ -896,7 +896,7 @@ const WebsiteManageInsights = ({ user }) => {
     if (!quickCategoryName.trim()) return;
     setQuickCategoryLoading(true);
     try {
-      await axios.post(`${API_URL}/categories`, { name: quickCategoryName.trim(), description: '' });
+      await apiClient.post(`/categories`, { name: quickCategoryName.trim(), description: '' });
       await fetchCategories();
       setFormData((prev) => ({ ...prev, category: quickCategoryName.trim() }));
       setSnackbar({ open: true, message: 'Category created', severity: 'success' });
@@ -2093,3 +2093,4 @@ const WebsiteManageInsights = ({ user }) => {
 };
 
 export default WebsiteManageInsights;
+

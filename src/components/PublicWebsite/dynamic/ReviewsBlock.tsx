@@ -42,6 +42,7 @@ import {
 import { motion } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import useDynamicBlockData from '../../../hooks/useDynamicBlockData';
+import { API_URL } from '@/config/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -103,7 +104,6 @@ interface ReviewsData {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -677,3 +677,4 @@ const ReviewsBlock = React.memo(ReviewsBlockBase);
 ReviewsBlock.displayName = 'ReviewsBlock';
 
 export default ReviewsBlock;
+

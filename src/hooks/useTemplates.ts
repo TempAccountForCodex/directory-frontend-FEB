@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios, { isAxiosError } from 'axios';
+import { apiClient, isAxiosError } from '../api/client';
 import { useDebouncedValue } from './useDebouncedValue';
 import { type TemplateSummary, normalizeTemplateSummary } from '../templates/templateApi';
 import type { TemplateFilters } from '../components/Templates/TemplateFilters';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface UseTemplatesReturn {
   templates: TemplateSummary[];
@@ -41,7 +39,7 @@ export const useTemplates = (): UseTemplatesReturn => {
         if (filters.category) params.append('category', filters.category);
         if (filters.type) params.append('type', filters.type);
 
-        const response = await axios.get(`${API_URL}/templates?${params.toString()}`);
+        const response = await apiClient.get(`/templates?${params.toString()}`);
 
         if (!cancelled) {
           const raw: Record<string, unknown>[] = response.data?.data || [];

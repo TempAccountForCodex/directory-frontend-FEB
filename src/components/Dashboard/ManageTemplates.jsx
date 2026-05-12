@@ -35,7 +35,7 @@ import {
   CheckSquare as ApprovedIcon,
   Globe as PublishedIcon,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import {
@@ -65,8 +65,6 @@ import {
   TEMPLATE_CATEGORIES,
   TEMPLATE_COMPLEXITY_OPTIONS as COMPLEXITY_OPTIONS,
 } from '../../constants/templateCategories';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const INITIAL_FORM = {
   name: '',
@@ -201,7 +199,7 @@ const ManageTemplates = ({
         else if (activeView === 'rejected') params.set('status', 'REJECTED');
       }
 
-      const response = await axios.get(`${API_URL}/templates?${params}`);
+      const response = await apiClient.get(`/templates?${params}`);
       if (response.data.success) {
         setTemplates(response.data.data || []);
         const pag = response.data.pagination || {};
@@ -218,7 +216,7 @@ const ManageTemplates = ({
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/templates/stats`);
+      const response = await apiClient.get(`/templates/stats`);
       if (response.data.success) {
         const d = response.data.data;
         setStats({ total: d.total || 0, approved: d.approved || 0, pending: d.pending || 0, published: d.published || 0 });
@@ -231,7 +229,7 @@ const ManageTemplates = ({
   const fetchHistory = useCallback(async (templateId) => {
     setHistoryLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/templates/${templateId}/history`);
+      const response = await apiClient.get(`/templates/${templateId}/history`);
       if (response.data.success) {
         setHistoryData(response.data.data || []);
       }
@@ -339,9 +337,9 @@ const ManageTemplates = ({
 
       let response;
       if (isEditing && currentTemplate) {
-        response = await axios.put(`${API_URL}/templates/${currentTemplate.id}`, payload);
+        response = await apiClient.put(`/templates/${currentTemplate.id}`, payload);
       } else {
-        response = await axios.post(`${API_URL}/templates`, payload);
+        response = await apiClient.post(`/templates`, payload);
       }
 
       if (response.data.success) {
@@ -364,7 +362,7 @@ const ManageTemplates = ({
     if (!currentTemplate) return;
     setActionLoading(true);
     try {
-      await axios.patch(`${API_URL}/templates/${currentTemplate.id}/approve`);
+      await apiClient.patch(`/templates/${currentTemplate.id}/approve`);
       setSnackbar({ open: true, message: 'Template approved successfully', severity: 'success' });
       setOpenApprovalDialog(false);
       fetchTemplates();
@@ -382,7 +380,7 @@ const ManageTemplates = ({
     if (!currentTemplate || !approvalData.rejectionReason?.trim()) return;
     setActionLoading(true);
     try {
-      await axios.patch(`${API_URL}/templates/${currentTemplate.id}/reject`, { rejectionReason: approvalData.rejectionReason });
+      await apiClient.patch(`/templates/${currentTemplate.id}/reject`, { rejectionReason: approvalData.rejectionReason });
       setSnackbar({ open: true, message: 'Template rejected', severity: 'success' });
       setOpenApprovalDialog(false);
       fetchTemplates();
@@ -399,7 +397,7 @@ const ManageTemplates = ({
   const handlePublishToggle = useCallback(async (template) => {
     try {
       const endpoint = template.isPublished ? 'unpublish' : 'publish';
-      await axios.patch(`${API_URL}/templates/${template.id}/${endpoint}`);
+      await apiClient.patch(`/templates/${template.id}/${endpoint}`);
       setSnackbar({ open: true, message: `Template ${template.isPublished ? 'unpublished' : 'published'} successfully`, severity: 'success' });
       fetchTemplates();
       if (isAdmin) fetchStats();
@@ -413,7 +411,7 @@ const ManageTemplates = ({
     if (!currentTemplate) return;
     setActionLoading(true);
     try {
-      await axios.delete(`${API_URL}/templates/${currentTemplate.id}`);
+      await apiClient.delete(`/templates/${currentTemplate.id}`);
       setSnackbar({ open: true, message: 'Template deleted permanently', severity: 'success' });
       setOpenDeleteDialog(false);
       fetchTemplates();

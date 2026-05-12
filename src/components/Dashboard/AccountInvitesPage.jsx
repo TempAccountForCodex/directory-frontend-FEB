@@ -24,7 +24,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Box,
   Typography,
@@ -46,8 +46,6 @@ import {
   DashboardActionButton,
   ConfirmationDialog,
 } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const ROLE_LABELS = {
   ACCOUNT_ADMIN: 'Account Admin',
@@ -387,7 +385,7 @@ const AccountInvitesPage = React.memo(function AccountInvitesPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_URL}/account/account-invites/pending`);
+      const response = await apiClient.get(`/account/account-invites/pending`);
       setInvites(response.data?.invites || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load account invites');
@@ -404,7 +402,7 @@ const AccountInvitesPage = React.memo(function AccountInvitesPage() {
     if (!invite.token) return;
     setAcceptingId(invite.id);
     try {
-      await axios.post(`${API_URL}/account/delegates/invite/${invite.token}/accept`);
+      await apiClient.post(`/account/delegates/invite/${invite.token}/accept`);
       setInvites((prev) => prev.filter((inv) => inv.id !== invite.id));
       const ownerName = invite.ownerName || invite.ownerEmail || 'the account';
       showToast(`You are now a delegate for ${ownerName}!`);
@@ -427,7 +425,7 @@ const AccountInvitesPage = React.memo(function AccountInvitesPage() {
     setDecliningId(inviteToDecline.id);
     setDeclineDialogOpen(false);
     try {
-      await axios.post(`${API_URL}/account/delegates/invite/${inviteToDecline.token}/decline`);
+      await apiClient.post(`/account/delegates/invite/${inviteToDecline.token}/decline`);
       setInvites((prev) => prev.filter((inv) => inv.id !== inviteToDecline.id));
       const ownerName = inviteToDecline.ownerName || inviteToDecline.ownerEmail || 'the account';
       showToast(`Invite from ${ownerName} declined`);

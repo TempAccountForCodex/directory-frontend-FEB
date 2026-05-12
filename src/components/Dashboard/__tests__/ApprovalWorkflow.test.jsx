@@ -20,9 +20,24 @@ import '@testing-library/jest-dom/vitest';
 // ---------------------------------------------------------------------------
 // Mock axios
 // ---------------------------------------------------------------------------
-vi.mock('axios');
+vi.mock('axios', () => {
+  const axiosInstance = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  axiosInstance.create = vi.fn(() => axiosInstance);
+  return { default: axiosInstance };
+});
 import axios from 'axios';
-const mockedAxios = vi.mocked(axios, true);
+const mockedAxios = axios;
 
 // ---------------------------------------------------------------------------
 // Mock useApprovalWorkflow for component tests (we test the hook separately)

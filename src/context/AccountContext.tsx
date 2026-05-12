@@ -27,7 +27,7 @@ import {
   useMemo,
   type ReactNode,
 } from 'react';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 import { useAuth } from './AuthContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -70,8 +70,6 @@ export interface AccountContextType {
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export const useAccountContext = (): AccountContextType => {
@@ -111,17 +109,17 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
   const isDelegating = delegateAccount !== null;
   const serviceScopes = useMemo(() => delegateAccount?.serviceScopes ?? [], [delegateAccount]);
 
-  // ── Axios interceptor: inject X-Account-Context header ──────────────────
+  // ── apiClient interceptor: inject X-Account-Context header ──────────────
 
   useEffect(() => {
     // Remove previous interceptor if any
     if (interceptorRef.current !== null) {
-      axios.interceptors.request.eject(interceptorRef.current);
+      apiClient.interceptors.request.eject(interceptorRef.current);
       interceptorRef.current = null;
     }
 
     if (delegateAccount) {
-      interceptorRef.current = axios.interceptors.request.use((config) => {
+      interceptorRef.current = apiClient.interceptors.request.use((config) => {
         const current = delegateAccountRef.current;
         if (current) {
           config.headers = config.headers || {};
@@ -133,7 +131,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
 
     return () => {
       if (interceptorRef.current !== null) {
-        axios.interceptors.request.eject(interceptorRef.current);
+        apiClient.interceptors.request.eject(interceptorRef.current);
         interceptorRef.current = null;
       }
     };
@@ -142,7 +140,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
   // ── Clear delegation on 401/403 during delegation ─────────────────────────
 
   useEffect(() => {
-    const responseInterceptor = axios.interceptors.response.use(
+    const responseInterceptor = apiClient.interceptors.response.use(
       (response) => response,
       (err) => {
         const status = err.response?.status;
@@ -159,7 +157,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
     );
 
     return () => {
-      axios.interceptors.response.eject(responseInterceptor);
+      apiClient.interceptors.response.eject(responseInterceptor);
     };
   }, []);
 
@@ -180,7 +178,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_URL}/account/delegated-accounts`);
+      const response = await apiClient.get(`/account/delegated-accounts`);
       setDelegatedAccounts(response.data.accounts || []);
     } catch (err: any) {
       const message = err.response?.data?.message || 'Failed to load delegated accounts';
@@ -238,7 +236,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
       setError(null);
 
       try {
-        await axios.post(`${API_URL}/account/switch-context`, {
+        await apiClient.post(`/account/switch-context`, {
           accountUserId: account.ownerUser.id,
         });
 
@@ -272,7 +270,7 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
     setError(null);
 
     try {
-      await axios.delete(`${API_URL}/account/switch-context`);
+      await apiClient.delete(`/account/switch-context`);
       setDelegateAccount(null);
       return true;
     } catch (err: any) {

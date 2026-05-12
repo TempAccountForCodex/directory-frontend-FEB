@@ -26,9 +26,7 @@ import {
 // @ts-ignore
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { apiClient } from '../../api/client';
 
 interface UsageData {
   plan: string;
@@ -70,7 +68,7 @@ export default function QuestionnaireNavigation({
     let cancelled = false;
     const fetchUsage = async () => {
       try {
-        const response = await axios.get(`${API_URL}/ai/usage`);
+        const response = await apiClient.get(`/ai/usage`);
         if (!cancelled) {
           setUsage(response.data);
         }

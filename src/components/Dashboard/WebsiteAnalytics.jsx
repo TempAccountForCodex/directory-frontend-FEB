@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Box,
   Typography,
@@ -20,8 +20,6 @@ import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { DashboardTable } from './shared';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
 const WebsiteAnalytics = ({ websiteId }) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -40,7 +38,7 @@ const WebsiteAnalytics = ({ websiteId }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${API_URL}/websites/${websiteId}/analytics/summary`, {
+      const response = await apiClient.get(`/websites/${websiteId}/analytics/summary`, {
         headers: {},
       });
       setAnalytics(response.data.data);

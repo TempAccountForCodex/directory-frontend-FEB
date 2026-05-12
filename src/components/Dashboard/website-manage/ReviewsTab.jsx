@@ -13,7 +13,11 @@ import {
   alpha,
 } from '@mui/material';
 import { Star, MessageSquare, EyeOff, Trash2, Reply, Flag } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
+import {
+  useDeleteReview,
+  useDeleteComment,
+} from '../../../api/queries/content';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
 import {
@@ -30,8 +34,6 @@ import {
   DashboardCancelButton,
   BottomSheet,
 } from '../shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 /* ---------- Helpers ---------- */
 const formatDate = (dateStr) => {
@@ -107,12 +109,13 @@ const ReviewsSubTab = memo(function ReviewsSubTab({ websiteId, colors }) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [mobileActionItem, setMobileActionItem] = useState(null);
   const isMobile = useMediaQuery('(max-width:600px)');
+  const deleteReviewMutation = useDeleteReview();
 
   const fetchReviews = useCallback(async () => {
     if (!websiteId) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/reviews/listings/${websiteId}`, {
+      const res = await apiClient.get(`/reviews/listings/${websiteId}`, {
         params: { limit: 50, status: statusFilter === 'all' ? undefined : statusFilter },
         withCredentials: true,
       });
@@ -141,8 +144,8 @@ const ReviewsSubTab = memo(function ReviewsSubTab({ websiteId, colors }) {
     const newStatus = review.status === 'visible' ? 'hidden' : 'visible';
     try {
       // Backend route: PATCH /api/reviews/:id/status
-      await axios.patch(
-        `${API_URL}/reviews/${review.id}/status`,
+      await apiClient.patch(
+        `/reviews/${review.id}/status`,
         { status: newStatus },
         { withCredentials: true }
       );
@@ -157,20 +160,21 @@ const ReviewsSubTab = memo(function ReviewsSubTab({ websiteId, colors }) {
     setDeleteLoading(true);
     try {
       // Backend route: DELETE /api/reviews/:id
-      await axios.delete(`${API_URL}/reviews/${deleteTarget.id}`, {
-        withCredentials: true,
+      await deleteReviewMutation.mutateAsync({
+        reviewId: deleteTarget.id,
+        listingId: websiteId,
       });
       setReviews((prev) => prev.filter((r) => r.id !== deleteTarget.id));
     } catch { /* silent */ }
     setDeleteLoading(false);
     setDeleteTarget(null);
-  }, [deleteTarget]);
+  }, [deleteTarget, deleteReviewMutation, websiteId]);
 
   const handleReplySubmit = useCallback(async (reviewId, content) => {
     try {
       // Backend expects { replyText } — not { content }
-      await axios.post(
-        `${API_URL}/reviews/${reviewId}/reply`,
+      await apiClient.post(
+        `/reviews/${reviewId}/reply`,
         { replyText: content },
         { withCredentials: true }
       );
@@ -396,12 +400,13 @@ const CommentsSubTab = memo(function CommentsSubTab({ websiteId, colors }) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [mobileActionItem, setMobileActionItem] = useState(null);
   const isMobile = useMediaQuery('(max-width:600px)');
+  const deleteCommentMutation = useDeleteComment();
 
   const fetchComments = useCallback(async () => {
     if (!websiteId) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/comments/listings/${websiteId}`, {
+      const res = await apiClient.get(`/comments/listings/${websiteId}`, {
         params: { limit: 50 },
         withCredentials: true,
       });
@@ -434,8 +439,8 @@ const CommentsSubTab = memo(function CommentsSubTab({ websiteId, colors }) {
     const newStatus = comment.status === 'visible' ? 'hidden' : 'visible';
     try {
       // Backend route: PATCH /api/comments/:id/status
-      await axios.patch(
-        `${API_URL}/comments/${comment.id}/status`,
+      await apiClient.patch(
+        `/comments/${comment.id}/status`,
         { status: newStatus },
         { withCredentials: true }
       );
@@ -456,8 +461,9 @@ const CommentsSubTab = memo(function CommentsSubTab({ websiteId, colors }) {
     setDeleteLoading(true);
     try {
       // Backend route: DELETE /api/comments/:id
-      await axios.delete(`${API_URL}/comments/${deleteTarget.id}`, {
-        withCredentials: true,
+      await deleteCommentMutation.mutateAsync({
+        commentId: deleteTarget.id,
+        listingId: websiteId,
       });
       setComments((prev) => {
         const remove = (arr) =>
@@ -469,7 +475,7 @@ const CommentsSubTab = memo(function CommentsSubTab({ websiteId, colors }) {
     } catch { /* silent */ }
     setDeleteLoading(false);
     setDeleteTarget(null);
-  }, [deleteTarget]);
+  }, [deleteTarget, deleteCommentMutation, websiteId]);
 
   const getRowActions = useCallback(
     (comment) => [

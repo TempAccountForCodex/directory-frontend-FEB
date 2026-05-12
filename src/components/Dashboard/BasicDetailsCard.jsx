@@ -7,6 +7,7 @@ import { DashboardCard, DashboardInput } from './shared';
 import DashboardActionButton from './shared/DashboardActionButton';
 import DashboardCancelButton from './shared/DashboardCancelButton';
 import { Link } from 'react-router-dom';
+import { API_URL } from '@/config/api';
 
 const BasicDetailsCard = ({ user, onSave, onCancel, loading }) => {
   const { actualTheme } = useCustomTheme();
@@ -40,7 +41,6 @@ const BasicDetailsCard = ({ user, onSave, onCancel, loading }) => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '';
     if (imagePath.startsWith('http')) return imagePath;
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
     return `${API_URL.replace('/api', '')}${imagePath}`;
   };
 
@@ -254,3 +254,4 @@ const BasicDetailsCard = ({ user, onSave, onCancel, loading }) => {
 };
 
 export default BasicDetailsCard;
+

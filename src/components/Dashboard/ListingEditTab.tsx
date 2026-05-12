@@ -19,7 +19,7 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import TextField from '@mui/material/TextField';
 import { Globe, Sparkles, X } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import DashboardInput from './shared/DashboardInput';
 import DashboardSelect from './shared/DashboardSelect';
 import DashboardActionButton from './shared/DashboardActionButton';
@@ -27,8 +27,6 @@ import DashboardGradientButton from './shared/DashboardGradientButton';
 import DashboardConfirmButton from './shared/DashboardConfirmButton';
 import DashboardCard from './shared/DashboardCard';
 import { EmptyState, ConfirmationDialog } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const PAID_PLANS = ['website_core', 'website_growth', 'website_agency'];
 
@@ -168,7 +166,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
   // Fetch completeness
   const fetchCompleteness = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/websites/${websiteId}/listing/completeness`);
+      const res = await apiClient.get(`/websites/${websiteId}/listing/completeness`);
       if (res.data?.success) {
         setCompleteness(res.data.data);
       }
@@ -261,7 +259,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     setError('');
     setSuccess('');
     try {
-      await axios.patch(`${API_URL}/websites/${websiteId}/listing`, {
+      await apiClient.patch(`/websites/${websiteId}/listing`, {
         businessName: form.businessName,
         shortDescription: form.shortDescription,
         businessCategory: form.businessCategory,
@@ -293,7 +291,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     setError('');
     setSuccess('');
     try {
-      const res = await axios.post(`${API_URL}/websites/${websiteId}/listing/publish`);
+      const res = await apiClient.post(`/websites/${websiteId}/listing/publish`);
       if (res.data?.success) {
         setSuccess('Listing published to directory');
         onUpdate?.();
@@ -316,7 +314,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     setError('');
     setSuccess('');
     try {
-      await axios.post(`${API_URL}/websites/${websiteId}/listing/archive`, {
+      await apiClient.post(`/websites/${websiteId}/listing/archive`, {
         reason: 'Unpublished by owner',
       });
       setSuccess('Listing unpublished');
@@ -334,7 +332,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     setError('');
     setSuccess('');
     try {
-      await axios.post(`${API_URL}/websites/${websiteId}/listing/republish`);
+      await apiClient.post(`/websites/${websiteId}/listing/republish`);
       setSuccess('Listing republished to directory');
       onUpdate?.();
     } catch (err: any) {
@@ -350,7 +348,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     setError('');
     setSuccess('');
     try {
-      await axios.post(`${API_URL}/websites/${websiteId}/listing/archive`);
+      await apiClient.post(`/websites/${websiteId}/listing/archive`);
       setSuccess('Listing archived');
       setShowArchiveConfirm(false);
       onUpdate?.();
@@ -367,7 +365,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     setError('');
     setSuccess('');
     try {
-      const res = await axios.post(`${API_URL}/websites/${websiteId}/listing/enhance`);
+      const res = await apiClient.post(`/websites/${websiteId}/listing/enhance`);
       if (res.data?.success) {
         const data = res.data.data;
         setForm((prev) => ({

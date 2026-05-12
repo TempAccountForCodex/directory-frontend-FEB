@@ -14,7 +14,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
 import Chip from '@mui/material/Chip';
 import { Search as SearchIcon, FileText as ArticleIcon } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { useNavigate } from 'react-router-dom';
 
 // ---------------------------------------------------------------------------
@@ -38,7 +38,6 @@ interface DocSearchProps {
 // Constants
 // ---------------------------------------------------------------------------
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 2;
 const MAX_RESULTS = 5;
@@ -77,7 +76,7 @@ const DocSearch = memo<DocSearchProps>(
         setLoading(true);
         setNoResults(false);
         try {
-          const resp = await axios.get(`${API_URL}/docs/search`, { params: { q: query } });
+          const resp = await apiClient.get(`/docs/search`, { params: { q: query } });
           const articles: SearchResult[] = resp.data?.articles ?? resp.data ?? [];
           const limited = articles.slice(0, MAX_RESULTS);
           setResults(limited);

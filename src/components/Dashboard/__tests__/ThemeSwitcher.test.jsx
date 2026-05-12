@@ -36,9 +36,28 @@ vi.mock('../../../context/ThemeContext', () => ({
 // ---------------------------------------------------------------------------
 // Mock axios
 // ---------------------------------------------------------------------------
-vi.mock('axios');
+vi.mock('axios', () => {
+  const axiosInstance = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  return {
+    default: {
+      ...axiosInstance,
+      create: vi.fn(() => axiosInstance),
+    },
+  };
+});
 import axios from 'axios';
-const mockedAxios = vi.mocked(axios, true);
+const mockedAxios = /** @type {any} */ (axios);
 
 // ---------------------------------------------------------------------------
 // Import component after mocks
@@ -75,7 +94,7 @@ const mockThemes = [
         primary: '#0288d1',
         secondary: '#006064',
         background: '#e3f2fd',
-        surface: '#bbdefb',
+        backgroundSecondary: '#bbdefb',
         text: '#01579b',
         textSecondary: '#0277bd',
       },

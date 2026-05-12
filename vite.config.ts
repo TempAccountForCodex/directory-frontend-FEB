@@ -4,7 +4,20 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-// https://vite.dev/config/
+const normalizeDevProxyCookies = (cookies?: string[]) => {
+  if (!Array.isArray(cookies)) return cookies;
+
+  return cookies.map((cookie) =>
+    cookie
+      // Strip backend-owned domains so the browser stores a host-only localhost cookie.
+      .replace(/;\s*Domain=[^;]+/gi, '')
+      // Local Vite dev runs on http://localhost, so drop Secure for proxied cookies.
+      .replace(/;\s*Secure/gi, '')
+      // SameSite=None requires Secure; use Lax for same-origin localhost proxy traffic.
+      .replace(/;\s*SameSite=None/gi, '; SameSite=Lax')
+  );
+};
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const apiUrl = env.VITE_API_URL || 'http://localhost:5001/api';
@@ -56,6 +69,13 @@ export default defineConfig(({ mode }) => {
           target: apiProxyTarget,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, '/api'),
+          configure: (proxy) => {
+            proxy.on('proxyRes', (proxyRes) => {
+              proxyRes.headers['set-cookie'] = normalizeDevProxyCookies(
+                proxyRes.headers['set-cookie'] as string[] | undefined
+              );
+            });
+          },
         },
         '/ws': {
           target: apiProxyTarget,

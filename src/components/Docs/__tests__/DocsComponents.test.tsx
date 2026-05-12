@@ -25,20 +25,60 @@ import '@testing-library/jest-dom/vitest';
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
-  Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => (
-    <a href={to} {...props}>
+  Link: React.forwardRef(({ to, children, ...props }: any, ref: any) => (
+    <a ref={ref} href={to} {...props}>
       {children}
     </a>
-  ),
+  )),
   useLocation: () => ({ pathname: '/docs' }),
 }));
 
 // ---------------------------------------------------------------------------
 // Mock axios
 // ---------------------------------------------------------------------------
-vi.mock('axios');
+vi.mock('axios', () => {
+  const axiosInstance = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  return {
+    default: {
+      ...axiosInstance,
+      create: vi.fn(() => axiosInstance),
+    },
+  };
+});
 import axios from 'axios';
-const mockedAxios = vi.mocked(axios, true);
+const mockedAxios = axios as any;
+
+// ---------------------------------------------------------------------------
+// Mock apiClient (DocSearch uses apiClient.get, not axios.get directly)
+// ---------------------------------------------------------------------------
+const mockApiGet = vi.fn();
+vi.mock('../../../api/client', () => ({
+  apiClient: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  },
+  isAxiosError: () => false,
+  isCancel: () => false,
+}));
 
 // ---------------------------------------------------------------------------
 // Mock useMediaQuery for mobile tests
@@ -106,7 +146,7 @@ describe('DocSearch', () => {
   });
 
   it('shows search results in dropdown after query', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValue({
+    mockApiGet.mockResolvedValue({
       data: {
         articles: [
           {
@@ -129,7 +169,7 @@ describe('DocSearch', () => {
     // Use a longer timeout to accommodate debounce
     await waitFor(
       () => {
-        expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect(mockApiGet).toHaveBeenCalledWith(
           expect.stringContaining('/docs/search'),
           expect.objectContaining({ params: expect.objectContaining({ q: 'getting' }) })
         );
@@ -146,7 +186,7 @@ describe('DocSearch', () => {
   });
 
   it('shows "no results" message when search returns empty', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValue({
+    mockApiGet.mockResolvedValue({
       data: { articles: [] },
     });
 
@@ -164,7 +204,7 @@ describe('DocSearch', () => {
   });
 
   it('navigates to article when result is clicked', async () => {
-    mockedAxios.get = vi.fn().mockResolvedValue({
+    mockApiGet.mockResolvedValue({
       data: {
         articles: [
           {
@@ -194,7 +234,6 @@ describe('DocSearch', () => {
   });
 
   it('does not call API when query is less than 2 characters', async () => {
-    mockedAxios.get = vi.fn() as typeof mockedAxios.get;
     render(<DocSearch />);
     const input = screen.getByRole('textbox');
 
@@ -202,7 +241,7 @@ describe('DocSearch', () => {
 
     // Wait a short while — API should NOT be called for 1-char input
     await new Promise((r) => setTimeout(r, 50));
-    expect(mockedAxios.get).not.toHaveBeenCalled();
+    expect(mockApiGet).not.toHaveBeenCalled();
   });
 });
 

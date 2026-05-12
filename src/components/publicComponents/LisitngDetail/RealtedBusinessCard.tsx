@@ -1,8 +1,8 @@
-import React from "react";
-import { Box, Grid } from "@mui/material";
-import { data } from "../Listing/data.ts";
-import TitleHeading from "../../UI/TitleHeading";
-import PropertyItemCard from "../Listing/PropertyCardItem";
+import React from 'react';
+import { Box, Grid } from '@mui/material';
+import { data } from '../Listing/data.ts';
+import TitleHeading from '../../UI/TitleHeading';
+import PropertyItemCard from '../Listing/PropertyCardItem';
 
 /* ---------------- Types ---------------- */
 interface ListingItem {
@@ -23,23 +23,20 @@ const RealtedBusinessCard: React.FC<RealtedBusinessCardProps> = ({
   const matchedCategories = data.filter((item) => {
     // Ensure both item.category and listingforCategory.category are defined
     if (
-      typeof item.category === "undefined" ||
-      typeof listingforCategory.category === "undefined"
+      typeof item.category === 'undefined' ||
+      typeof listingforCategory.category === 'undefined'
     ) {
       return false;
     }
 
     if (!Array.isArray(listingforCategory.category)) {
-      return (
-        item.category === listingforCategory.category &&
-        item.slug !== listing.slug
-      );
+      return item.category === listingforCategory.category && item.slug !== listing.slug;
     } else {
       return (
         (listingforCategory.category as string[]).some((category) =>
           Array.isArray(item.category)
             ? item.category.includes(category)
-            : item.category === category,
+            : item.category === category
         ) && item.slug !== listing.slug
       );
     }
@@ -59,14 +56,12 @@ const RealtedBusinessCard: React.FC<RealtedBusinessCardProps> = ({
             key={index}
             item={item}
             handleDeleteItem={function (id: string | number): void {
-              throw new Error("Function not implemented.");
+              throw new Error('Function not implemented.');
             }}
             totalPages={0}
             currentPage={0}
-            setCurrentPage={function (
-              value: React.SetStateAction<number>,
-            ): void {
-              throw new Error("Function not implemented.");
+            setCurrentPage={function (value: React.SetStateAction<number>): void {
+              throw new Error('Function not implemented.');
             }}
           />
         ))}

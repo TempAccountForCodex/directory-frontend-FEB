@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { Box, MenuItem, Typography, CircularProgress } from '@mui/material';
 import { useTheme } from '../../../context/ThemeContext';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import { DashboardSelect } from '../shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const PageSelector = ({ selectedPage, onPageChange, period = '30', customDateRange = {} }) => {
   const { actualTheme } = useTheme();
@@ -29,7 +27,7 @@ const PageSelector = ({ selectedPage, onPageChange, period = '30', customDateRan
       }
 
       // Fetch engagement data to get list of pages
-      const response = await axios.get(`${API_URL}/analytics/engagement`, {
+      const response = await apiClient.get(`/analytics/engagement`, {
         params,
       });
 

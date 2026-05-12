@@ -23,7 +23,7 @@ import {
   alpha,
 } from '@mui/material';
 import { Plus, Trash2, Navigation } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 
 import {
   DashboardCard,
@@ -56,7 +56,6 @@ interface NavbarBuilderProps {
   initialConfig?: Record<string, unknown>;
 }
 
-const API_BASE = '/api';
 const MAX_NAV_ITEMS = 8;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -114,8 +113,8 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({ websiteId, onSave, initia
     setLoading(true);
     setError(null);
 
-    axios
-      .get(`${API_BASE}/websites/${websiteId}/global-components/navbar`)
+    apiClient
+      .get(`/websites/${websiteId}/global-components/navbar`)
       .then(({ data }) => {
         if (!cancelled) {
           setConfig(configFromApi(data.data?.config || null));
@@ -193,7 +192,7 @@ const NavbarBuilder: React.FC<NavbarBuilderProps> = ({ websiteId, onSave, initia
     setSaving(true);
     setError(null);
     try {
-      await axios.put(`${API_BASE}/websites/${websiteId}/global-components/navbar`, {
+      await apiClient.put(`/websites/${websiteId}/global-components/navbar`, {
         config,
       });
       setSnackbar({ open: true, message: 'Navbar saved successfully.', severity: 'success' });

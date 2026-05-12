@@ -34,6 +34,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import DOMPurify from 'dompurify';
+import { API_URL } from '@/config/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -67,7 +68,6 @@ interface NewsletterBlockProps {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -301,3 +301,4 @@ const NewsletterBlock = React.memo(NewsletterBlockBase);
 NewsletterBlock.displayName = 'NewsletterBlock';
 
 export default NewsletterBlock;
+

@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 import type { User } from '../types/user';
 import { isSentryEnabled, getSentry } from '../config/sentry';
 
@@ -41,8 +41,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -77,15 +75,10 @@ interface AuthProviderProps {
  * - Auth middleware extracts token from cookie automatically
  * - Logout invalidates token via Redis blacklist + cookie clearing
  */
-// Configure axios defaults once (outside component to avoid re-running)
-axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-axios.defaults.withCredentials = true;
-
-// Clean up any bad Authorization header that might exist
-const existingAuth = axios.defaults.headers.common['Authorization'];
-if (existingAuth === 'Bearer null' || existingAuth === 'Bearer undefined' || !existingAuth) {
-  delete axios.defaults.headers.common['Authorization'];
-}
+// Axios defaults (withCredentials, X-Requested-With, Authorization cleanup) are
+// configured inside `src/api/client.ts` on the shared `apiClient` instance. The
+// raw-axios module-level mutations that used to live here are redundant now
+// that every caller goes through `apiClient`.
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
@@ -98,9 +91,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
    */
   const [token] = useState<string | null>(null);
 
-  // Set up axios response interceptor to handle auth errors globally
+  const applyAuthenticatedUser = (currentUser: User | null) => {
+    setUser(currentUser);
+    if (isSentryEnabled()) {
+      const sentry = getSentry();
+      if (currentUser) {
+        sentry?.setUser({ id: String(currentUser.id), email: currentUser.email });
+      } else {
+        sentry?.setUser(null);
+      }
+    }
+  };
+
+  const fetchCurrentUser = async (): Promise<User | null> => {
+    const response = await apiClient.get(`/auth/me`, {
+      withCredentials: true,
+    });
+    return response.data?.user ?? null;
+  };
+
+  // Set up apiClient response interceptor to handle auth errors globally
   useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
+    const interceptor = apiClient.interceptors.response.use(
       (response) => response,
       (error) => {
         const status = error.response?.status;
@@ -145,7 +157,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // Cleanup interceptor on unmount
     return () => {
-      axios.interceptors.response.eject(interceptor);
+      apiClient.interceptors.response.eject(interceptor);
     };
   }, []);
 
@@ -153,22 +165,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Token is in httpOnly cookie - browser automatically sends it
-        const response = await axios.get(`${API_URL}/auth/me`, {
-          withCredentials: true, // Important: send httpOnly cookies
-        });
-
-        const currentUser = response.data.user;
-        setUser(currentUser);
-        // Associate authenticated user with Sentry on page load (Step 10.23)
-        if (isSentryEnabled() && currentUser) {
-          const sentry = getSentry();
-          sentry?.setUser({ id: String(currentUser.id), email: currentUser.email });
-        }
+        const currentUser = await fetchCurrentUser();
+        applyAuthenticatedUser(currentUser);
       } catch (error) {
         console.error('Auth check failed:', error);
         // Clear user state on auth failure
-        setUser(null);
+        applyAuthenticatedUser(null);
       } finally {
         setLoading(false);
       }
@@ -180,7 +182,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Check if super admin exists
   const checkSuperAdmin = async (): Promise<SuperAdminCheckResult> => {
     try {
-      const response = await axios.get(`${API_URL}/auth/check-super-admin`);
+      const response = await apiClient.get(`/auth/check-super-admin`);
       const exists = response.data.exists;
 
       // Store the result in localStorage with TTL for offline reference
@@ -232,7 +234,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Sign up
   const signup = async (formData: FormData): Promise<AuthResult> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/signup`, formData, {
+      const response = await apiClient.post(`/auth/signup`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -256,8 +258,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Sign in
   const signin = async (email: string, password: string): Promise<AuthResult> => {
     try {
-      const response = await axios.post(
-        `${API_URL}/auth/signin`,
+      await apiClient.post(
+        `/auth/signin`,
         {
           email,
           password,
@@ -266,14 +268,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           withCredentials: true, // Ensure cookies are sent/received
         }
       );
-      const { user: newUser } = response.data;
-      // Token is now in httpOnly cookie (no localStorage needed)
-      setUser(newUser);
-      // Associate this user with Sentry error reports (Step 10.23)
-      if (isSentryEnabled() && newUser) {
-        const sentry = getSentry();
-        sentry?.setUser({ id: String(newUser.id), email: newUser.email });
+
+      let newUser: User | null = null;
+      try {
+        newUser = await fetchCurrentUser();
+      } catch (sessionError) {
+        console.error('Signin succeeded but session validation failed:', sessionError);
       }
+
+      if (!newUser) {
+        applyAuthenticatedUser(null);
+        return {
+          success: false,
+          message:
+            'Sign in succeeded, but your session was not established. Check backend cookie settings for the localhost proxy.',
+        };
+      }
+
+      applyAuthenticatedUser(newUser);
       return { success: true };
     } catch (error: any) {
       return {
@@ -286,7 +298,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Verify email
   const verifyEmail = async (email: string, code: string): Promise<AuthResult> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/verify-email`, {
+      const response = await apiClient.post(`/auth/verify-email`, {
         email,
         code,
       });
@@ -308,7 +320,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     email: string
   ): Promise<AuthResult & { retryAfter?: number }> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/resend-verification`, {
+      const response = await apiClient.post(`/auth/resend-verification`, {
         email,
       });
       return { success: true, message: response.data.message };
@@ -327,7 +339,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     email: string
   ): Promise<AuthResult & { retryAfter?: number }> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/request-signin-code`, {
+      const response = await apiClient.post(`/auth/request-signin-code`, {
         email,
       });
       return { success: true, message: response.data.message };
@@ -344,8 +356,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Sign in with code
   const signinCode = async (email: string, code: string): Promise<AuthResult> => {
     try {
-      const response = await axios.post(
-        `${API_URL}/auth/signin-code`,
+      await apiClient.post(
+        `/auth/signin-code`,
         {
           email,
           code,
@@ -354,14 +366,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           withCredentials: true, // Ensure cookies are sent/received
         }
       );
-      const { user: newUser } = response.data;
-      // Token is now in httpOnly cookie (no localStorage needed)
-      setUser(newUser);
-      // Associate this user with Sentry error reports (Step 10.23)
-      if (isSentryEnabled() && newUser) {
-        const sentry = getSentry();
-        sentry?.setUser({ id: String(newUser.id), email: newUser.email });
+
+      let newUser: User | null = null;
+      try {
+        newUser = await fetchCurrentUser();
+      } catch (sessionError) {
+        console.error('Signin with code succeeded but session validation failed:', sessionError);
       }
+
+      if (!newUser) {
+        applyAuthenticatedUser(null);
+        return {
+          success: false,
+          message:
+            'Sign in succeeded, but your session was not established. Check backend cookie settings for the localhost proxy.',
+        };
+      }
+
+      applyAuthenticatedUser(newUser);
       return { success: true };
     } catch (error: any) {
       return {
@@ -376,7 +398,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     email: string
   ): Promise<AuthResult & { retryAfter?: number }> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/request-password-reset`, {
+      const response = await apiClient.post(`/auth/request-password-reset`, {
         email,
       });
       return { success: true, message: response.data.message };
@@ -397,7 +419,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     newPassword: string
   ): Promise<AuthResult> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/reset-password`, {
+      const response = await apiClient.post(`/auth/reset-password`, {
         email,
         code,
         newPassword,
@@ -416,7 +438,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     newEmail: string
   ): Promise<AuthResult & { retryAfter?: number }> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/request-email-change`, {
+      const response = await apiClient.post(`/auth/request-email-change`, {
         newEmail,
       });
       return { success: true, message: response.data.message };
@@ -433,7 +455,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Confirm email change with code
   const confirmEmailChange = async (code: string): Promise<AuthResult & { newEmail?: string }> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/confirm-email-change`, {
+      const response = await apiClient.post(`/auth/confirm-email-change`, {
         code,
       });
       const newEmail = response.data.newEmail;
@@ -453,7 +475,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Unlink Google account
   const unlinkGoogle = async (): Promise<AuthResult> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/google/unlink`);
+      const response = await apiClient.post(`/auth/google/unlink`);
       // Update user state to remove googleId
       if (user) {
         setUser({ ...user, googleId: undefined });
@@ -470,7 +492,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Delete account
   const deleteAccount = async (): Promise<AuthResult> => {
     try {
-      await axios.delete(`${API_URL}/account`);
+      await apiClient.delete(`/account`);
 
       // After successful deletion, perform local signout
       localStorage.removeItem('superAdminExists');
@@ -497,8 +519,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       // Call backend signout endpoint with credentials
       // This clears the httpOnly cookie and blacklists the token
-      await axios.post(
-        `${API_URL}/auth/signout`,
+      await apiClient.post(
+        `/auth/signout`,
         {},
         {
           withCredentials: true,

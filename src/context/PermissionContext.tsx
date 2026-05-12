@@ -22,7 +22,7 @@ import {
   useMemo,
   type ReactNode,
 } from 'react';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 import { useAuth } from './AuthContext';
 
 // ── Permission Constants (mirrors backend/constants/permissions.js) ─────────
@@ -102,22 +102,13 @@ export interface PermissionContextType {
 
 const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
-const getWebsiteId = (website: any): number | null => {
-  const id = website?.websiteId ?? website?.website_id ?? website?.website?.id ?? website?.id;
-  const numericId = Number(id);
-  return Number.isFinite(numericId) ? numericId : null;
-};
-
-const extractWebsiteList = (payload: any): any[] => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.websites)) return payload.data.websites;
-  if (Array.isArray(payload?.websites)) return payload.websites;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.results)) return payload.results;
-  return [];
+const fallbackPermissionContext: PermissionContextType = {
+  websitePermissions: {},
+  currentWebsiteId: null,
+  setCurrentWebsite: () => {},
+  loading: false,
+  error: null,
+  refetch: () => {},
 };
 
 // ── Provider ────────────────────────────────────────────────────────────────
@@ -145,22 +136,17 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     setError(null);
 
     try {
-      const response = await axios.get(`${API_URL}/websites`, {
+      const response = await apiClient.get(`/websites`, {
         withCredentials: true,
       });
 
-      const websites = extractWebsiteList(response.data);
+      const websites = response.data?.data || [];
       const permissions: WebsitePermissions = {};
 
       for (const website of websites) {
         // If the API response includes a role field, use it; otherwise default to VIEWER
         // (safest fallback — backend enforces real permissions)
-        const websiteId = getWebsiteId(website);
-        if (websiteId === null) continue;
-
-        permissions[websiteId] =
-          (website.role || website.website?.role || website.permissionRole)?.toUpperCase() ||
-          'VIEWER';
+        permissions[website.id] = website.role?.toUpperCase() || 'VIEWER';
       }
 
       setWebsitePermissions(permissions);
@@ -203,10 +189,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
  */
 export function usePermissionContext(): PermissionContextType {
   const context = useContext(PermissionContext);
-  if (!context) {
-    throw new Error('usePermissionContext must be used within a PermissionProvider');
-  }
-  return context;
+  return context ?? fallbackPermissionContext;
 }
 
 /**

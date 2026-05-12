@@ -14,6 +14,7 @@ import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
+import { getSectionStyleSx } from "../../utils/sectionStyle";
 
 const palette = {
   bg: "#f4efe7",
@@ -30,6 +31,7 @@ const palette = {
 
 const defaultHeadingFont = '"Plus Jakarta Sans", "Inter", sans-serif';
 const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
+const defaultSectionOrder = ["overview", "about", "why-us", "process", "contact"] as const;
 
 const visualSet = {
   heroPortrait:
@@ -119,12 +121,75 @@ const isLightColor = (hex: string) => {
 };
 
 const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const templateContent = (data.templateContent as Record<string, any> | undefined) || {};
+  const homeContent = templateContent.home || {};
+  const featuresContent = templateContent.features || {};
+  const aboutContent = templateContent.about || {};
+  const processContent = templateContent.process || {};
+  const testimonialsContent = templateContent.testimonials || {};
+  const contactContent = templateContent.contact || {};
   const headingFont = data.themeSettings?.headingFont || defaultHeadingFont;
   const bodyFont = data.themeSettings?.bodyFont || defaultBodyFont;
-  const features = (data.features || []).slice(0, 4);
+  const features = (((featuresContent.items as typeof data.features) || data.features) || []).slice(0, 4);
   const stats = (data.stats || []).slice(0, 3);
   const team = (data.team || []).slice(0, 2);
   const reviews = (data.reviews || []).slice(0, 1);
+  const heroHeading = homeContent.heading || homeContent.heroHeading || data.tagline || "Delivering Trusted Solutions";
+  const heroSubheading =
+    homeContent.subheading ||
+    homeContent.heroDescription ||
+    "Built to showcase business services, executive credibility, and client confidence in a clearer and more professional way.";
+  const heroPrimaryCta =
+    homeContent.primaryCtaText || homeContent.ctaText || homeContent.heroCtaText || "Explore services";
+  const heroSecondaryCta =
+    homeContent.secondaryCtaText || contactContent.ctaText || contactContent.buttonLabel || "Contact";
+  const aboutHeading = aboutContent.heading || "Driving innovation and excellence for corporate success worldwide.";
+  const aboutBody =
+    aboutContent.body ||
+    "Built to showcase business services, executive credibility, and client confidence in a clearer and more professional way.";
+  const whyHeading = featuresContent.heading || "Built for business trust, clarity, and conversion.";
+  const contactPrimary = contactContent.heading || contactContent.buttonLabel || contactContent.ctaText || "Contact Us";
+  const whyBody = featuresContent.description || aboutBody;
+  const processHeading =
+    processContent.heading || testimonialsContent.heading || "How it works.";
+  const processDescription =
+    processContent.subheading || "A simple executive flow built to move from strategy to launch with clarity.";
+  const processCtaText = processContent.ctaText || contactPrimary;
+  const heroImage = homeContent.heroImage || homeContent.image || visualSet.heroPortrait;
+  const heroImageStyle = homeContent.heroImageStyle || homeContent.imageStyle || {};
+  const heroImageFit = heroImageStyle.objectFit || "contain";
+  const aboutImage = aboutContent.image || aboutContent.imageUrl || visualSet.strategy;
+  const aboutImageStyle = aboutContent.imageStyle || {};
+  const aboutImageFit = aboutImageStyle.objectFit || "cover";
+  const whyUsImage = featuresContent.image || featuresContent.imageUrl || visualSet.office;
+  const whyUsImageStyle = featuresContent.imageStyle || {};
+  const whyUsImageFit = whyUsImageStyle.objectFit || "cover";
+  const processImage = processContent.image || processContent.imageUrl || visualSet.team;
+  const processImageStyle = processContent.imageStyle || {};
+  const processImageFit = processImageStyle.objectFit || "cover";
+  const aboutBlockId = aboutContent.blockId;
+  const whyUsBlockId = featuresContent.blockId;
+  const processBlockId = processContent.blockId;
+  const contactBlockId = contactContent.blockId;
+  const processItems = (((processContent.items as Array<Record<string, unknown>> | undefined)
+    || (testimonialsContent.items as Array<Record<string, unknown>> | undefined))
+    || [
+      {
+        icon: "01",
+        title: "Discovery & planning",
+        description: "We define the brand story, service positioning, and the sections that matter most for a professional company site.",
+      },
+      {
+        icon: "02",
+        title: "Structure & delivery",
+        description: "The design system, imagery, and motion are shaped into a clear website flow built for trust and executive presence.",
+      },
+      {
+        icon: "03",
+        title: "Review & support",
+        description: "The final experience is refined for readability, conversion, and easy reuse across different client brands.",
+      },
+    ]).slice(0, 3);
   const themeColor =
     data.themeSettings?.primaryColor || data.primaryColor || "#124d4e";
   const rawSecondaryColor =
@@ -170,19 +235,41 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     Boolean(data.socialLinks?.[item.key as keyof typeof data.socialLinks]),
   );
 
-  const navItems = [
-    { label: "Overview", id: "overview" },
-    { label: "About", id: "about" },
-    { label: "Why Us", id: "why-us" },
-    { label: "Process", id: "work" },
-    { label: "Contact", id: "contact" },
-  ];
+  const orderedSectionKeys = (Array.isArray(templateContent.sectionOrder)
+    ? templateContent.sectionOrder
+    : defaultSectionOrder
+  ).filter((key, index, collection) =>
+    defaultSectionOrder.includes(key) && collection.indexOf(key) === index
+  );
+  const resolvedSectionOrder = orderedSectionKeys.length
+    ? [
+        ...orderedSectionKeys,
+        ...defaultSectionOrder.filter((key) => !orderedSectionKeys.includes(key)),
+      ]
+    : [...defaultSectionOrder];
+  const sectionPosition = Object.fromEntries(
+    resolvedSectionOrder.map((key, index) => [key, index + 1]),
+  ) as Record<string, number>;
+  const navItems = resolvedSectionOrder.map((key) => ({
+    label:
+      key === "overview"
+        ? "Overview"
+        : key === "about"
+          ? "About"
+          : key === "why-us"
+            ? "Why Us"
+            : key === "process"
+              ? "Process"
+              : "Contact",
+    id: key === "process" ? "work" : key,
+  }));
 
   const scrollToSection = (sectionId: string) => {
     const target = document.getElementById(sectionId);
     if (!target) return;
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+  const overviewBlockId = homeContent.blockId;
 
   return (
     <Box
@@ -255,21 +342,25 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 borderRadius: 999,
               }}
             >
-              Contact Us
+              {contactPrimary}
             </Button>
           </Stack>
         </Container>
       </Box>
 
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
       <Box
         id="overview"
         data-preview-section="true"
-        data-preview-label="Hero"
+        data-preview-label="Overview"
+        data-preview-block-id={overviewBlockId}
         sx={{
+          order: sectionPosition["overview"] ?? 1,
           position: "relative",
           overflow: "hidden",
           bgcolor: themeColor,
           minHeight: { xs: 700, md: 760 },
+          ...getSectionStyleSx(homeContent),
         }}
       >
         <Box
@@ -312,14 +403,22 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               ease: [0.22, 1, 0.36, 1],
               delay: 0.16,
             }}
-            src={visualSet.heroPortrait}
+            src={heroImage}
             alt="Executive portrait"
+            data-edit-image="heroImage"
+            data-image-label="Hero Image"
+            data-block-id={homeContent.blockId}
             sx={{
               width: "100%",
               height: "100%",
-              objectFit: "contain",
+              objectFit: heroImageFit,
               objectPosition: "bottom center",
               filter: "drop-shadow(0 30px 80px rgba(0,0,0,0.35))",
+              pointerEvents: "auto",
+              borderRadius: heroImageStyle.borderRadius,
+              borderWidth: heroImageStyle.borderWidth,
+              borderColor: heroImageStyle.borderColor,
+              borderStyle: heroImageStyle.borderWidth ? "solid" : undefined,
             }}
           />
         </Box>
@@ -394,6 +493,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Typography
                 component={motion.h1}
                 variants={fadeUp}
+                data-editable="heading"
+                data-edit-type="single"
+                data-block-id={overviewBlockId}
                 sx={{
                   fontFamily: headingFont,
                   fontSize: { xs: "3rem", md: "6.7rem" },
@@ -402,13 +504,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontWeight: 800,
                   color: palette.white,
                   maxWidth: 880,
+                  ...(homeContent.headingStyle || {}),
                 }}
               >
-                Delivering
-                <br />
-                Trusted
-                <br />
-                Solutions
+                {heroHeading}
               </Typography>
 
               <Stack
@@ -421,6 +520,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Button
                   onClick={() => scrollToSection("about")}
                   variant="contained"
+                  data-editable="ctaText"
+                  data-edit-type="single"
+                  data-block-id={overviewBlockId}
                   sx={{
                     bgcolor: palette.white,
                     color: palette.dark,
@@ -430,6 +532,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     py: 1.15,
                     fontWeight: 800,
                     boxShadow: "none",
+                    ...(homeContent.ctaTextStyle || {}),
                     "&:hover": {
                       bgcolor: palette.white,
                       boxShadow: "none",
@@ -437,11 +540,14 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  Explore services
+                  {heroPrimaryCta}
                 </Button>
                 <Button
                   onClick={() => scrollToSection("contact")}
                   variant="outlined"
+                  data-editable="primaryCtaText"
+                  data-edit-type="single"
+                  data-block-id={overviewBlockId}
                   sx={{
                     color: palette.white,
                     borderColor: "rgba(255,255,255,0.32)",
@@ -450,9 +556,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     px: 2.8,
                     py: 1.15,
                     fontWeight: 700,
+                    ...(homeContent.ctaTextStyle || {}),
                   }}
                 >
-                  Contact
+                  {heroSecondaryCta}
                 </Button>
               </Stack>
 
@@ -518,12 +625,24 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Container>
       </Box>
 
-      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
+      <Box
+        data-preview-section="true"
+        data-preview-label="About Parent"
+        data-preview-block-id={aboutBlockId}
+        data-preview-style-key="outerSectionStyle"
+        sx={{
+          order: sectionPosition["about"] ?? 2,
+          ...getSectionStyleSx(aboutContent, "outerSectionStyle"),
+        }}
+      >
+        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
         <Box
           id="about"
           data-preview-section="true"
           data-preview-label="About"
-          sx={{ py: { xs: 4, md: 6 } }}
+          data-preview-block-id={aboutBlockId}
+          data-preview-style-key="sectionStyle"
+          sx={{ py: { xs: 4, md: 6 }, ...getSectionStyleSx(aboutContent) }}
         >
           <Box
             sx={{
@@ -545,13 +664,20 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Box
                 component="img"
-                src={visualSet.strategy}
+                src={aboutImage}
                 alt="Business collaboration"
+                data-edit-image="image"
+                data-image-label="About Image"
+                data-block-id={aboutBlockId}
                 sx={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
+                  objectFit: aboutImageFit,
                   display: "block",
+                  borderRadius: aboutImageStyle.borderRadius,
+                  borderWidth: aboutImageStyle.borderWidth,
+                  borderColor: aboutImageStyle.borderColor,
+                  borderStyle: aboutImageStyle.borderWidth ? "solid" : undefined,
                 }}
               />
               <Box
@@ -651,6 +777,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 />
 
                 <Typography
+                  data-editable="heading"
+                  data-edit-type="single"
+                  data-block-id={aboutBlockId}
                   sx={{
                     mt: 2.3,
                     fontFamily: headingFont,
@@ -659,13 +788,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     letterSpacing: "-0.07em",
                     fontWeight: 800,
                     maxWidth: 620,
+                    ...(aboutContent.headingStyle || {}),
                   }}
                 >
-                  Driving innovation and
-                  <br />
-                  excellence for corporate
-                  <br />
-                  success worldwide.
+                  {aboutHeading}
                 </Typography>
 
                 <Box
@@ -750,6 +876,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Button
                   variant="contained"
                   endIcon={<ArrowOutwardIcon />}
+                  data-editable="ctaText"
+                  data-edit-type="single"
+                  data-block-id={aboutBlockId}
                   sx={{
                     mt: 2.2,
                     bgcolor: themeColor,
@@ -760,6 +889,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     py: 1.15,
                     fontWeight: 700,
                     boxShadow: "none",
+                    ...(aboutContent.buttonTextStyle || aboutContent.ctaTextStyle || {}),
                     "&:hover": {
                       bgcolor: themeColor,
                       boxShadow: "none",
@@ -767,17 +897,33 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  Learn more about us
+                  {heroPrimaryCta}
                 </Button>
               </Box>
             </Box>
           </Box>
         </Box>
 
+        </Container>
+      </Box>
+
+      <Box
+        data-preview-section="true"
+        data-preview-label="Why Choose Us Parent"
+        data-preview-block-id={whyUsBlockId}
+        data-preview-style-key="outerSectionStyle"
+        sx={{
+          order: sectionPosition["why-us"] ?? 3,
+          ...getSectionStyleSx(featuresContent, "outerSectionStyle"),
+        }}
+      >
+        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
         <Box
           id="why-us"
           data-preview-section="true"
           data-preview-label="Why Choose Us"
+          data-preview-block-id={whyUsBlockId}
+          data-preview-style-key="sectionStyle"
           sx={{
             py: { xs: 2, md: 3 },
             px: { xs: 2, md: 3 },
@@ -787,6 +933,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             bgcolor: themeColor,
             color: palette.white,
             overflow: "hidden",
+            ...getSectionStyleSx(featuresContent),
           }}
         >
           <Box
@@ -818,6 +965,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   Why choose us
                 </Typography>
                 <Typography
+                  data-editable="heading"
+                  data-edit-type="single"
+                  data-block-id={whyUsBlockId}
                   sx={{
                     fontFamily: headingFont,
                     fontSize: { xs: "2.1rem", md: "3.9rem" },
@@ -825,23 +975,27 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     letterSpacing: "-0.07em",
                     fontWeight: 800,
                     maxWidth: 480,
+                    ...(featuresContent.headingStyle || {}),
                   }}
                 >
-                  Built for business trust, clarity, and conversion.
+                  {whyHeading}
                 </Typography>
               </Box>
 
               <Typography
+                data-editable="description"
+                data-edit-type="multi"
+                data-block-id={whyUsBlockId}
                 sx={{
                   mt: 3,
                   maxWidth: 420,
                   color: "rgba(255,255,255,0.72)",
                   lineHeight: 1.8,
                   fontSize: { xs: "1rem", md: "1.08rem" },
+                  ...(featuresContent.descriptionStyle || {}),
                 }}
               >
-                Built to showcase business services, executive credibility, and
-                client confidence in a clearer and more professional way.
+                {whyBody}
               </Typography>
             </Box>
 
@@ -860,15 +1014,22 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Box
                 component={motion.img}
-                src={visualSet.office}
+                src={whyUsImage}
                 alt="Business meeting room"
+                data-edit-image="image"
+                data-image-label="Why Choose Us Image"
+                data-block-id={whyUsBlockId}
                 style={{ scale: whyChooseImageScale }}
                 sx={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
+                  objectFit: whyUsImageFit,
                   display: "block",
                   transformOrigin: "center center",
+                  borderRadius: whyUsImageStyle.borderRadius,
+                  borderWidth: whyUsImageStyle.borderWidth,
+                  borderColor: whyUsImageStyle.borderColor,
+                  borderStyle: whyUsImageStyle.borderWidth ? "solid" : undefined,
                 }}
               />
               <Box
@@ -908,10 +1069,26 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Box>
         </Box>
 
+        </Container>
+      </Box>
+
+      <Box
+        sx={{
+          order: sectionPosition["process"] ?? 4,
+          ...getSectionStyleSx(processContent, "outerSectionStyle"),
+        }}
+        data-preview-section="true"
+        data-preview-label="Work Parent"
+        data-preview-block-id={processBlockId}
+        data-preview-style-key="outerSectionStyle"
+      >
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
         <Box
           id="work"
           data-preview-section="true"
           data-preview-label="Work"
+          data-preview-block-id={processBlockId}
+          data-preview-style-key="sectionStyle"
           sx={{
             py: { xs: 5, md: 15 },
             px: { xs: 2, md: 4 },
@@ -921,6 +1098,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             color: palette.white,
             overflow: "hidden",
             position: "relative",
+            ...getSectionStyleSx(processContent),
           }}
         >
           <Box
@@ -964,6 +1142,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 />
                 <Typography
+                  data-editable="heading"
+                  data-edit-type="single"
+                  data-block-id={processBlockId}
                   sx={{
                     fontFamily: headingFont,
                     fontSize: { xs: "2.45rem", md: "4.5rem" },
@@ -971,18 +1152,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     letterSpacing: "-0.07em",
                     fontWeight: 800,
                     maxWidth: 680,
+                    ...(processContent.headingStyle || {}),
                   }}
                 >
-                  Seamless process,
-                  <br />
-                  great
-                  <Box
-                    component="span"
-                    sx={{ color: "rgba(255,255,255,0.58)" }}
-                  >
-                    {" "}
-                    business results.
-                  </Box>
+                  {processHeading}
                 </Typography>
               </Box>
 
@@ -994,19 +1167,25 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography
                   component={motion.p}
                   {...sectionReveal}
+                  data-editable="subheading"
+                  data-edit-type="multi"
+                  data-block-id={processBlockId}
                   sx={{
                     maxWidth: 360,
                     color: "rgba(255,255,255,0.7)",
                     lineHeight: 1.7,
+                    ...(processContent.subheadingStyle || processContent.descriptionStyle || {}),
                   }}
                 >
-                  A simple executive flow built to move from strategy to launch
-                  with clarity.
+                  {processDescription}
                 </Typography>
 
                 <Button
                   variant="contained"
                   endIcon={<ArrowOutwardIcon />}
+                  data-editable="ctaText"
+                  data-edit-type="single"
+                  data-block-id={processBlockId}
                   sx={{
                     bgcolor: themeColor,
                     color: palette.white,
@@ -1016,6 +1195,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     py: 1.15,
                     fontWeight: 800,
                     boxShadow: "none",
+                    ...(processContent.ctaTextStyle || processContent.buttonTextStyle || {}),
                     "&:hover": {
                       bgcolor: themeColor,
                       boxShadow: "none",
@@ -1023,7 +1203,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  Contact Us
+                  {processCtaText}
                 </Button>
               </Stack>
             </Stack>
@@ -1037,25 +1217,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 mt: 10.5,
               }}
             >
-              {[
-                {
-                  number: "01",
-                  title: "Discovery & planning",
-                  text: "We define the brand story, service positioning, and the sections that matter most for a professional company site.",
-                },
-                {
-                  number: "02",
-                  title: "Structure & delivery",
-                  text: "The design system, imagery, and motion are shaped into a clear website flow built for trust and executive presence.",
-                },
-                {
-                  number: "03",
-                  title: "Review & support",
-                  text: "The final experience is refined for readability, conversion, and easy reuse across different client brands.",
-                },
-              ].map((item, index) => (
+              {processItems.map((item, index) => (
                 <Box
-                  key={item.number}
+                  key={`${String(item.icon || index)}-${String(item.title || '')}`}
                   component={motion.div}
                   {...sectionReveal}
                   transition={{
@@ -1083,7 +1247,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       mb: 2.2,
                     }}
                   >
-                    {item.number}
+                    {String(item.icon || `0${index + 1}`)}
                   </Typography>
                   <Typography
                     sx={{
@@ -1095,7 +1259,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       maxWidth: 280,
                     }}
                   >
-                    {item.title}
+                    {String(item.title || `Step ${index + 1}`)}
                   </Typography>
                   <Typography
                     sx={{
@@ -1105,7 +1269,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       maxWidth: 320,
                     }}
                   >
-                    {item.text}
+                    {String(item.description || "")}
                   </Typography>
                 </Box>
               ))}
@@ -1114,8 +1278,6 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
 
         <Box
-          data-preview-section="true"
-          data-preview-label="Team"
           sx={{ py: { xs: 4, md: 12 } }}
         >
           <Box
@@ -1136,13 +1298,20 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Box
                 component="img"
-                src={visualSet.team}
+                src={processImage}
                 alt="Company team"
+                data-edit-image="image"
+                data-image-label="Process Image"
+                data-block-id={processBlockId}
                 sx={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
+                  objectFit: processImageFit,
                   display: "block",
+                  borderRadius: processImageStyle.borderRadius,
+                  borderWidth: processImageStyle.borderWidth,
+                  borderColor: processImageStyle.borderColor,
+                  borderStyle: processImageStyle.borderWidth ? "solid" : undefined,
                 }}
               />
             </Box>
@@ -1225,10 +1394,27 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Box>
         </Box>
 
+      </Container>
+      </Box>
+
+      <Container
+        maxWidth="xl"
+        data-preview-section="true"
+        data-preview-label="Contact Parent"
+        data-preview-block-id={contactBlockId}
+        data-preview-style-key="outerSectionStyle"
+        sx={{
+          px: { xs: 2, md: 4 },
+          order: sectionPosition["contact"] ?? 5,
+          ...getSectionStyleSx(contactContent, "outerSectionStyle"),
+        }}
+      >
         <Box
           id="contact"
           data-preview-section="true"
           data-preview-label="Contact"
+          data-preview-block-id={contactBlockId}
+          data-preview-style-key="sectionStyle"
           sx={{
             py: { xs: 5, md: 7 },
             px: { xs: 2, md: 4 },
@@ -1238,6 +1424,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             color: palette.white,
             overflow: "hidden",
             position: "relative",
+            ...getSectionStyleSx(contactContent),
           }}
         >
           <Box
@@ -1361,6 +1548,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 />
 
                 <Typography
+                  data-editable="heading"
+                  data-edit-type="single"
+                  data-block-id={contactBlockId}
                   sx={{
                     fontFamily: headingFont,
                     fontSize: { xs: "2.1rem", md: "3.5rem" },
@@ -1368,9 +1558,24 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     letterSpacing: "-0.07em",
                     fontWeight: 800,
                     mb: 2.5,
+                    ...(contactContent.headingStyle || {}),
                   }}
                 >
-                  Drop us a line.
+                  {contactContent.heading || "Drop us a line."}
+                </Typography>
+
+                <Typography
+                  data-editable="description"
+                  data-edit-type="multi"
+                  data-block-id={contactBlockId}
+                  sx={{
+                    mb: 2.5,
+                    color: "rgba(255,255,255,0.74)",
+                    lineHeight: 1.7,
+                    ...(contactContent.descriptionStyle || {}),
+                  }}
+                >
+                  {contactContent.description || contactContent.subheading || "Share your goals and we will follow up with the right next step."}
                 </Typography>
 
                 <Stack spacing={1.6}>
@@ -1441,6 +1646,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Button
                     variant="contained"
                     endIcon={<EastIcon />}
+                    data-editable="buttonText"
+                    data-edit-type="single"
+                    data-block-id={contactBlockId}
                     sx={{
                       alignSelf: "flex-start",
                       bgcolor: themeColor,
@@ -1451,6 +1659,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       py: 1.15,
                       fontWeight: 800,
                       boxShadow: "none",
+                      ...(contactContent.buttonTextStyle || contactContent.ctaTextStyle || {}),
                       "&:hover": {
                         bgcolor: themeColor,
                         boxShadow: "none",
@@ -1458,7 +1667,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       },
                     }}
                   >
-                    Send message
+                    {contactContent.buttonLabel || contactContent.ctaText || "Send message"}
                   </Button>
                 </Stack>
               </Box>
@@ -1503,6 +1712,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Box>
         </Box>
       </Container>
+      </Box>
     </Box>
   );
 };

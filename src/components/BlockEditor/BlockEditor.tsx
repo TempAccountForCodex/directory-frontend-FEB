@@ -37,6 +37,7 @@ import FormGenerator from '../FormGenerator';
 import SaveStatus from '../Editor/SaveStatus';
 import type { SaveStatusType } from '../Editor/SaveStatus';
 import { useShortcutManager } from '../../hooks/useShortcutManager';
+import { API_URL } from '@/config/api';
 
 // ---------------------------------------------------------------------------
 // Block type defaults — fetched from registry via API on mount.
@@ -44,7 +45,6 @@ import { useShortcutManager } from '../../hooks/useShortcutManager';
 // Now dynamically loads defaults for all 34 block types from the registry.
 // ---------------------------------------------------------------------------
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -455,3 +455,4 @@ BlockEditor.displayName = 'BlockEditor';
 
 export { BlockEditor };
 export default BlockEditor;
+

@@ -17,12 +17,10 @@ import Alert from '@mui/material/Alert';
 import Skeleton from '@mui/material/Skeleton';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Globe, Sparkles } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import DashboardCard from './shared/DashboardCard';
 import DashboardGradientButton from './shared/DashboardGradientButton';
 import { ConfirmationDialog } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const PAID_PLANS = ['website_core', 'website_growth', 'website_agency'];
 
@@ -68,7 +66,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
 
   const fetchCompleteness = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/websites/${websiteId}/listing/completeness`);
+      const res = await apiClient.get(`/websites/${websiteId}/listing/completeness`);
       if (res.data?.success) {
         setCompleteness(res.data.data);
       }
@@ -82,13 +80,13 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
     setError('');
     try {
       // Patch directoryOptedIn
-      await axios.patch(`${API_URL}/websites/${websiteId}/listing`, {
+      await apiClient.patch(`/websites/${websiteId}/listing`, {
         directoryOptedIn: true,
       });
 
       // Extract listing data
       try {
-        await axios.post(`${API_URL}/websites/${websiteId}/listing/extract`);
+        await apiClient.post(`/websites/${websiteId}/listing/extract`);
       } catch {
         // Non-blocking
       }
@@ -109,7 +107,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
     setToggling(true);
     setError('');
     try {
-      await axios.patch(`${API_URL}/websites/${websiteId}/listing`, {
+      await apiClient.patch(`/websites/${websiteId}/listing`, {
         directoryOptedIn: false,
       });
       setOptedIn(false);
@@ -146,7 +144,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
     setEnhancing(true);
     setError('');
     try {
-      await axios.post(`${API_URL}/websites/${websiteId}/listing/enhance`);
+      await apiClient.post(`/websites/${websiteId}/listing/enhance`);
       await fetchCompleteness();
       onUpdate?.();
     } catch (err: any) {

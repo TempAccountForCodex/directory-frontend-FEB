@@ -20,8 +20,8 @@ import {
   DashboardGradientButton,
   DashboardCancelButton,
 } from '../Dashboard/shared';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 /** Block types that support AI regeneration (text-based blocks) */
 const AI_REGENERABLE_TYPES = ['HERO', 'FEATURES', 'TESTIMONIALS', 'CTA', 'TEXT', 'ABOUT'];
@@ -189,3 +189,4 @@ const RegenerateButton: React.FC<RegenerateButtonProps> = React.memo(
 RegenerateButton.displayName = 'RegenerateButton';
 
 export default RegenerateButton;
+

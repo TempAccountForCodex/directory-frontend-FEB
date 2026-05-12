@@ -1,5 +1,5 @@
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import {
   Box,
   Alert,
@@ -35,11 +35,23 @@ import DashboardCancelButton from '../shared/DashboardCancelButton';
 import DashboardInput from '../shared/DashboardInput';
 import DashboardIconButton from '../shared/DashboardIconButton';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
 const SUBDOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
 const PLAN_ALLOWS_CUSTOM_DOMAIN = ['website_growth', 'website_agency'];
+
+const normalizeWebsitePlanCode = (plan) => {
+  const value = String(plan || '').trim().toLowerCase();
+
+  if (!value) return 'website_free';
+  if (value.startsWith('website_')) return value;
+
+  if (value === 'free') return 'website_free';
+  if (value === 'core') return 'website_core';
+  if (value === 'growth' || value === 'business') return 'website_growth';
+  if (value === 'agency' || value === 'pro') return 'website_agency';
+
+  return value;
+};
 
 const DNS_PROVIDERS = ['GoDaddy', 'Namecheap', 'Cloudflare', 'Other'];
 
@@ -52,7 +64,7 @@ const DNS_INSTRUCTIONS = {
 
 const DOMAIN_WIZARD_STEPS = ['Enter Domain', 'Configure DNS', 'Verify Domain', 'SSL Provisioning'];
 
-const DomainTab = memo(({ website, websiteId, onSaved, userPlan = 'free' }) => {
+const DomainTab = memo(({ website, websiteId, onSaved, userPlan = 'website_free' }) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
 
@@ -81,7 +93,8 @@ const DomainTab = memo(({ website, websiteId, onSaved, userPlan = 'free' }) => {
 
   const subdomain = website?.subdomain || website?.slug || '';
   const subdomainUrl = `${subdomain}.techietribe.app`;
-  const canUseCustomDomain = PLAN_ALLOWS_CUSTOM_DOMAIN.includes(userPlan || '');
+  const normalizedPlanCode = normalizeWebsitePlanCode(userPlan);
+  const canUseCustomDomain = PLAN_ALLOWS_CUSTOM_DOMAIN.includes(normalizedPlanCode);
 
   const handleCopySubdomain = useCallback(() => {
     navigator.clipboard?.writeText(subdomainUrl).catch(() => {});
@@ -96,7 +109,7 @@ const DomainTab = memo(({ website, websiteId, onSaved, userPlan = 'free' }) => {
     }
     try {
       setSubdomainChecking(true);
-      const res = await axios.get(`${API_URL}/domains/check-availability?subdomain=${encodeURIComponent(value)}`);
+      const res = await apiClient.get(`/domains/check-availability?subdomain=${encodeURIComponent(value)}`);
       setSubdomainAvailable(res.data?.available !== false);
     } catch {
       setSubdomainAvailable(null);
@@ -133,7 +146,7 @@ const DomainTab = memo(({ website, websiteId, onSaved, userPlan = 'free' }) => {
   const handleSubdomainSave = async () => {
     try {
       setSubdomainSaving(true);
-      const res = await axios.patch(`${API_URL}/domains/${websiteId}/subdomain`, {
+      const res = await apiClient.patch(`/domains/${websiteId}/subdomain`, {
         subdomain: newSubdomain,
       });
       // Backend returns { subdomain, canonicalUrl }
@@ -153,7 +166,7 @@ const DomainTab = memo(({ website, websiteId, onSaved, userPlan = 'free' }) => {
 
   const handleAddCustomDomain = async () => {
     try {
-      const res = await axios.post(`${API_URL}/domains/${websiteId}/custom-domain`, {
+      const res = await apiClient.post(`/domains/${websiteId}/custom-domain`, {
         domain: customDomain,
       });
       // Backend returns { domain, verifyRecord: { type, name, value }, status }
@@ -169,7 +182,7 @@ const DomainTab = memo(({ website, websiteId, onSaved, userPlan = 'free' }) => {
     try {
       setVerifying(true);
       setVerifyError(null);
-      const res = await axios.post(`${API_URL}/domains/${websiteId}/custom-domain/verify`);
+      const res = await apiClient.post(`/domains/${websiteId}/custom-domain/verify`);
       // Backend returns { verified: boolean, status?: string, error?: string }
       if (res.data?.verified) {
         setWizardStep(3);
@@ -185,7 +198,7 @@ const DomainTab = memo(({ website, websiteId, onSaved, userPlan = 'free' }) => {
 
   const handleRemoveCustomDomain = async () => {
     try {
-      await axios.delete(`${API_URL}/domains/${websiteId}/custom-domain`);
+      await apiClient.delete(`/domains/${websiteId}/custom-domain`);
       if (onSaved) onSaved({ ...website, customDomain: null, domainStatus: 'NONE' });
     } catch {
       // Silently fail removal errors — user can retry
@@ -377,7 +390,13 @@ const DomainTab = memo(({ website, websiteId, onSaved, userPlan = 'free' }) => {
             </Typography>
             <DashboardGradientButton
               startIcon={<ChevronRight size={16} />}
-              onClick={() => setDomainWizardOpen(true)}
+              onClick={() => {
+                setVerifyError(null);
+                if (!canUseCustomDomain) {
+                  return;
+                }
+                setDomainWizardOpen(true);
+              }}
               aria-label="Add custom domain"
             >
               Add Custom Domain

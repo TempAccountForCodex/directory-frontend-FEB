@@ -4,9 +4,7 @@ import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { AnalyticsPanelHeader, DashboardPanel } from '../shared';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { apiClient } from '../../../api/client';
 
 const UserJourneyFunnel = ({ period = '30', customDateRange = {} }) => {
   const { actualTheme } = useTheme();
@@ -30,7 +28,7 @@ const UserJourneyFunnel = ({ period = '30', customDateRange = {} }) => {
         params.endDate = customDateRange.endDate;
       }
 
-      const response = await axios.get(`${API_URL}/analytics/funnel`, {
+      const response = await apiClient.get(`/analytics/funnel`, {
         params,
       });
       setData(response.data.data);

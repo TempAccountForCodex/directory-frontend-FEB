@@ -73,11 +73,22 @@ vi.mock('@dnd-kit/utilities', () => ({
   CSS: { Transform: { toString: vi.fn(() => '') } },
 }));
 
-const mockAxiosPut = vi.fn().mockResolvedValue({ data: { success: true } });
-vi.mock('axios', () => ({
-  default: {
+const { mockApiClient, mockAxiosPut } = vi.hoisted(() => {
+  const mockAxiosPut = vi.fn().mockResolvedValue({ data: { success: true } });
+  const mockApiClient: Record<string, any> = {
+    get: vi.fn(),
+    post: vi.fn(),
     put: (...args: any[]) => mockAxiosPut(...args),
-  },
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} } },
+    interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+  };
+  return { mockApiClient, mockAxiosPut };
+});
+vi.mock('../../../api/client', () => ({
+  apiClient: mockApiClient,
+  default: mockApiClient,
 }));
 
 // ---------------------------------------------------------------------------

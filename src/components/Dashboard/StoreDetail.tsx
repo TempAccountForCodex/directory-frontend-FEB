@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Box,
   Container,
@@ -21,8 +21,6 @@ import type { PlanSummary } from '../../hooks/usePlanSummary';
 import StoreProducts from './StoreProducts';
 import StoreOrders from './StoreOrders';
 import { DashboardActionButton, DashboardInput, DashboardSelect } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface Store {
   id: string;
@@ -81,7 +79,7 @@ const StoreDetail = ({
   const fetchStoreDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/stores/${initialStore.id}`, {
+      const response = await apiClient.get(`/stores/${initialStore.id}`, {
         headers: {},
       });
       const storeData = response.data.data;
@@ -104,7 +102,7 @@ const StoreDetail = ({
       setSaving(true);
       setError(null);
 
-      const response = await axios.put(`${API_URL}/stores/${store.id}`, settingsForm, {
+      const response = await apiClient.put(`/stores/${store.id}`, settingsForm, {
         headers: {},
       });
 

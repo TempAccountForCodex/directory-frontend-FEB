@@ -19,6 +19,7 @@ import type {
   UseWebSocketReturn,
   UserMetadata,
 } from '../types/websocket';
+import { buildWebSocketUrl } from '@/config/api';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -29,16 +30,7 @@ const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000, 30000];
 
 /** Derive ws(s) URL from the HTTP API base URL */
 function buildWsUrl(token: string, websiteId?: number | string): string {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-  // Use the Vite proxy in dev when VITE_API_URL is relative (for same-origin cookies).
-  const base = apiUrl.startsWith('/')
-    ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
-    : apiUrl.replace(/^http/, 'ws').replace(/\/api$/, '');
-  let url = `${base}/ws?token=${encodeURIComponent(token)}`;
-  if (websiteId) {
-    url += `&websiteId=${encodeURIComponent(String(websiteId))}`;
-  }
-  return url;
+  return buildWebSocketUrl(token, websiteId ? { websiteId } : undefined);
 }
 
 /**
@@ -377,3 +369,4 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 }
 
 export default useWebSocket;
+

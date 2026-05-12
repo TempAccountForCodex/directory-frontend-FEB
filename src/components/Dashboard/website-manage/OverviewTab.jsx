@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import {
   Box,
   Grid,
@@ -32,7 +32,6 @@ import {
 import DashboardActionButton from '../shared/DashboardActionButton';
 import DashboardGradientButton from '../shared/DashboardGradientButton';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const STATUS_COLORS = {
   PUBLISHED: 'success',
@@ -50,12 +49,36 @@ const OverviewTab = memo(({ website, websiteId, onSaved, onNavigateToSection }) 
   const [activityError, setActivityError] = useState(null);
   const [publishLoading, setPublishLoading] = useState(false);
   const [publishError, setPublishError] = useState(null);
+  const [publishedUrl, setPublishedUrl] = useState(null);
+
+  const getViewUrl = useCallback(() => {
+    const subdomain = website?.subdomain || website?.slug || '';
+    const domain = import.meta.env.VITE_WEBSITE_DOMAIN || 'techietribe.app';
+    if (import.meta.env.PROD) {
+      return `https://${subdomain}.${domain}`;
+    }
+    if (import.meta.env.VITE_WEBSITE_BASE_URL) {
+      return `${import.meta.env.VITE_WEBSITE_BASE_URL.replace(/\/+$/, '')}/s/${website?.slug || subdomain}`;
+    }
+    return `/site/${website?.slug || subdomain}`;
+  }, [website]);
+
+  const handleViewSite = useCallback(() => {
+    if (!website) return;
+
+    if (website.status === 'PUBLISHED') {
+      window.open(getViewUrl(), '_blank', 'noopener');
+      return;
+    }
+
+    window.open(`/dashboard/websites/${websiteId}/editor`, '_blank', 'noopener');
+  }, [website, websiteId, getViewUrl]);
 
   const fetchActivity = useCallback(async () => {
     if (!websiteId) return;
     try {
       setActivityLoading(true);
-      const res = await axios.get(`${API_URL}/websites/${websiteId}/activity`);
+      const res = await apiClient.get(`/websites/${websiteId}/activity`);
       // Backend returns { success, data: { activities, total, hasMore } }
       setActivity(res.data?.data?.activities || res.data?.activity || []);
     } catch {
@@ -76,8 +99,14 @@ const OverviewTab = memo(({ website, websiteId, onSaved, onNavigateToSection }) 
       setPublishLoading(true);
       setPublishError(null);
       const action = website.status === 'PUBLISHED' ? 'unpublish' : 'publish';
-      const res = await axios.post(`${API_URL}/websites/${websiteId}/${action}`);
-      if (onSaved) onSaved(res.data?.data || res.data);
+      const res = await apiClient.post(`/websites/${websiteId}/${action}`);
+      const responseData = res.data?.data || res.data;
+      if (action === 'publish' && responseData.publicUrl) {
+        setPublishedUrl(responseData.publicUrl);
+      } else if (action === 'unpublish') {
+        setPublishedUrl(null);
+      }
+      if (onSaved) onSaved(responseData);
     } catch (err) {
       setPublishError(err?.response?.data?.message || 'Failed to update status.');
     } finally {
@@ -102,6 +131,26 @@ const OverviewTab = memo(({ website, websiteId, onSaved, onNavigateToSection }) 
       {publishError && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPublishError(null)}>
           {publishError}
+        </Alert>
+      )}
+
+      {website?.status !== 'PUBLISHED' && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          This website is currently in draft. Publish it to open the public `/site/...` URL. Until
+          then, preview it in the editor.
+        </Alert>
+      )}
+
+      {publishedUrl && website.status === 'PUBLISHED' && (
+        <Alert
+          severity="success"
+          sx={{ mb: 2 }}
+          onClose={() => setPublishedUrl(null)}
+        >
+          Your website is live at:{' '}
+          <a href={publishedUrl} target="_blank" rel="noopener noreferrer">
+            {publishedUrl}
+          </a>
         </Alert>
       )}
 
@@ -183,16 +232,14 @@ const OverviewTab = memo(({ website, websiteId, onSaved, onNavigateToSection }) 
             {publishLoading ? 'Updating...' : isPublished ? 'Unpublish' : 'Publish'}
           </DashboardGradientButton>
 
-          {website.subdomain && (
+          {(website.slug || website.subdomain) && (
             <DashboardActionButton
               startIcon={<Globe size={16} />}
-              onClick={() =>
-                window.open(`https://${website.subdomain}.techietribe.app`, '_blank', 'noopener')
-              }
+              onClick={handleViewSite}
               variant="outlined"
               aria-label="View live site"
             >
-              View Live Site
+              {isPublished ? 'View Live Site' : 'Preview Draft'}
             </DashboardActionButton>
           )}
 

@@ -7,12 +7,24 @@ import axios from 'axios';
 
 vi.mock('axios', async () => {
   const actual = await vi.importActual('axios');
+  const axiosInstance = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    isCancel: (actual as any).isCancel ?? (() => false),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
   return {
     ...actual,
     default: {
-      get: vi.fn(),
-      post: vi.fn(),
-      isCancel: (actual as any).isCancel ?? (() => false),
+      ...axiosInstance,
+      create: vi.fn(() => axiosInstance),
     },
     isAxiosError: (actual as any).isAxiosError,
   };
@@ -102,7 +114,7 @@ describe('usePreviewGallery', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(result.current.items).toEqual([{ id: 'tpl-1', name: 'Test' }]);
+    expect(result.current.items).toEqual([{ id: 'tpl-1', name: 'Test', previewImage: null, screenshots: { desktop: null, mobile: null, thumbnail: null } }]);
     expect(result.current.pagination).toEqual(mockResp.data.pagination);
     expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining('category=business'));
   });

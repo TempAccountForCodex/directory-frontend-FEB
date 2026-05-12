@@ -3,10 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useUserLocation } from '../hooks/useUserLocation';
 import { usePersistentState } from '../hooks/usePersistentState';
 import DirectoryMap from '../components/Directory/DirectoryMap';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 import './Directory.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DIRECTORY === 'true';
 
 const DUMMY_LISTINGS: DirectoryListing[] = [
@@ -282,7 +281,7 @@ const Directory: React.FC = () => {
         return;
       }
       try {
-        const response = await axios.get(`${API_URL}/directory/meta`);
+        const response = await apiClient.get(`/directory/meta`);
         setMeta(response.data);
       } catch (err) {
         console.error('Error fetching directory metadata:', err);
@@ -311,8 +310,8 @@ const Directory: React.FC = () => {
         if (city) params.append('city', city);
         if (category) params.append('category', category);
 
-        const response = await axios.get(
-          `${API_URL}/directory/location-page-data?${params.toString()}`
+        const response = await apiClient.get(
+          `/directory/location-page-data?${params.toString()}`
         );
         setLocationPageData(response.data);
 
@@ -442,8 +441,8 @@ const Directory: React.FC = () => {
       params.append('page', page.toString());
       params.append('pageSize', pageSize.toString());
 
-      const response = await axios.get(
-        `${API_URL}/directory/listings?${params.toString()}`
+      const response = await apiClient.get(
+        `/directory/listings?${params.toString()}`
       );
 
       setListings(response.data.results);

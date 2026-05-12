@@ -11,7 +11,7 @@
  */
 
 import { memo, useState, useEffect, useCallback, useMemo, Suspense } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -78,8 +78,6 @@ import {
 import { isAdmin } from '../../constants/roles';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -189,7 +187,7 @@ const DashboardOverview = memo(({ user }) => {
   // ── Fetch helpers ──────────────────────────────────────────────────────────
   const fetchCharts = useCallback(async (period) => {
     try {
-      const res = await axios.get(`${API_URL}/dashboard/overview/charts?period=${period}`);
+      const res = await apiClient.get(`/dashboard/overview/charts?period=${period}`);
       setChartsData(res.data?.data ?? res.data);
     } catch {
       // Charts failure is non-critical — silently ignore
@@ -201,8 +199,8 @@ const DashboardOverview = memo(({ user }) => {
     setError(null);
     try {
       const [overviewRes, chartsRes] = await Promise.all([
-        axios.get(`${API_URL}/dashboard/overview`),
-        axios.get(`${API_URL}/dashboard/overview/charts?period=${chartPeriod}`),
+        apiClient.get(`/dashboard/overview`),
+        apiClient.get(`/dashboard/overview/charts?period=${chartPeriod}`),
       ]);
       setOverviewData(overviewRes.data?.data ?? overviewRes.data);
       setChartsData(chartsRes.data?.data ?? chartsRes.data);
@@ -221,7 +219,7 @@ const DashboardOverview = memo(({ user }) => {
     setAdminLoading(true);
     setAdminError(null);
     try {
-      const res = await axios.get(`${API_URL}/dashboard/admin/overview`);
+      const res = await apiClient.get(`/dashboard/admin/overview`);
       setAdminData(res.data?.data ?? res.data);
     } catch (err) {
       setAdminError(

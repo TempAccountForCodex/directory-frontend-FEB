@@ -3527,58 +3527,50 @@
 
 // pro
 
-import React from "react";
-import {
-  Box,
-  Typography,
-  Button,
-  Container,
-  Stack,
-  Link as MuiLink,
-} from "@mui/material";
-import { styled, useTheme, alpha } from "@mui/material/styles";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
-import Grid from "@mui/material/Grid";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import NewsLetter from "./Newsletter";
+import React from 'react';
+import { Box, Typography, Button, styled, Container, Stack, Link as MuiLink } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import Grid from '@mui/material/Grid';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import NewsLetter from './Newsletter';
 
-const LandingPage = "/assets/publicAssets/images/home/LandingPage.webp";
-const BusinessDirectory =
-  "/assets/publicAssets/images/home/BusinessDirectory.webp";
-const AITools = "/assets/publicAssets/images/home/AITools.webp";
+const LandingPage = '/assets/publicAssets/images/home/LandingPage.webp';
+const BusinessDirectory = '/assets/publicAssets/images/home/BusinessDirectory.webp';
+const AITools = '/assets/publicAssets/images/home/AITools.webp';
 
 const CardVisualBox = styled(Box)(({ theme }) => ({
-  position: "relative",
+  position: 'relative',
   height: 600,
-  overflow: "hidden",
+  overflow: 'hidden',
   borderRadius: 8,
-  border: "1px solid rgba(0,242,254,0.12)",
-  backgroundColor: "rgba(255,255,255,0.03)",
-  cursor: "pointer",
-  transition: "transform 0.35s ease, border-color 0.35s ease",
-  "&:hover": {
-    transform: "translateY(-2px)",
-    borderColor: "rgba(0,242,254,0.25)",
+  border: '1px solid rgba(0,242,254,0.12)',
+  backgroundColor: 'rgba(255,255,255,0.03)',
+  cursor: 'pointer',
+  transition: 'transform 0.35s ease, border-color 0.35s ease',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    borderColor: 'rgba(0,242,254,0.25)',
   },
-  [theme.breakpoints.down("lg")]: { height: 450 },
+  [theme.breakpoints.down('lg')]: { height: 450 },
 }));
 
 const ImageWrapper = styled(Box)(() => ({
-  position: "absolute",
+  position: 'absolute',
   inset: 0,
-  transition: "transform 0.45s ease",
-  ".platform-card:hover &": { transform: "scale(1.05)" },
+  transition: 'transform 0.45s ease',
+  '.platform-card:hover &': { transform: 'scale(1.05)' },
 }));
 
 const ContentWrapper = styled(Box)(() => ({
-  position: "absolute",
+  position: 'absolute',
   inset: 0,
   zIndex: 2,
 }));
 
 const TextWrapper = styled(Box)(() => ({
-  position: "absolute",
+  position: 'absolute',
   bottom: 24,
   left: 24,
   right: 80,
@@ -3587,14 +3579,14 @@ const TextWrapper = styled(Box)(() => ({
 const HiddenContent = styled(Box)(({ theme }) => ({
   opacity: 0,
   maxHeight: 0,
-  overflow: "hidden",
-  transition: "opacity 0.25s ease, max-height 0.35s ease",
+  overflow: 'hidden',
+  transition: 'opacity 0.25s ease, max-height 0.35s ease',
   marginTop: theme.spacing(2),
-  ".platform-card:hover &": { opacity: 1, maxHeight: 300 },
+  '.platform-card:hover &': { opacity: 1, maxHeight: 300 },
 }));
 
 const IconWrapper = styled(Box)(() => ({
-  position: "absolute",
+  position: 'absolute',
   bottom: 24,
   right: 24,
   zIndex: 3,
@@ -3607,21 +3599,21 @@ const HighPerformanceSection: React.FC = () => {
 
   const cardsData = [
     {
-      title: "Create a Free Business Landing Page",
+      title: 'Create a Free Business Landing Page',
       description:
-        "Generate a clean, professional landing page for your business instantly. No coding, no hosting setup, and no design work required — just enter your details and publish.",
+        'Generate a clean, professional landing page for your business instantly. No coding, no hosting setup, and no design work required — just enter your details and publish.',
       imageSrc: LandingPage,
     },
     {
-      title: "Get Listed in Our Business Directory",
+      title: 'Get Listed in Our Business Directory',
       description:
         "Your business doesn't just get a website — it also appears in our public directory, making it easy for customers to discover, search, and contact you.",
       imageSrc: BusinessDirectory,
     },
     {
-      title: "Launch Faster with Built-in AI Tools",
+      title: 'Launch Faster with Built-in AI Tools',
       description:
-        "Use AI-powered tools to generate images, write business descriptions, and create professional content for your landing page — all without design or writing skills.",
+        'Use AI-powered tools to generate images, write business descriptions, and create professional content for your landing page — all without design or writing skills.',
       imageSrc: AITools,
     },
   ];
@@ -3630,12 +3622,12 @@ const HighPerformanceSection: React.FC = () => {
     <Box
       component="section"
       sx={{
-        backgroundColor: "#080808",
+        backgroundColor: '#080808',
         pt: { xs: 6, md: 16 },
         pb: { xs: 6, md: 3 },
         color: textColorSecondary,
-        position: "relative",
-        overflow: "hidden",
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
       {/* ════════════════════════════════════════════════════
@@ -3646,15 +3638,15 @@ const HighPerformanceSection: React.FC = () => {
       <Box
         aria-hidden="true"
         sx={{
-          position: "absolute",
-          top: "-20%",
-          right: "-12%",
-          width: "72%",
-          height: "72%",
+          position: 'absolute',
+          top: '-20%',
+          right: '-12%',
+          width: '72%',
+          height: '72%',
           background:
-            "radial-gradient(ellipse at top right, rgba(0,242,254,0.22) 0%, rgba(0,210,190,0.10) 40%, transparent 68%)",
-          transform: "rotate(12deg)",
-          pointerEvents: "none",
+            'radial-gradient(ellipse at top right, rgba(0,242,254,0.22) 0%, rgba(0,210,190,0.10) 40%, transparent 68%)',
+          transform: 'rotate(12deg)',
+          pointerEvents: 'none',
           zIndex: 0,
         }}
       />
@@ -3663,12 +3655,12 @@ const HighPerformanceSection: React.FC = () => {
       <Box
         aria-hidden="true"
         sx={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          clipPath: "polygon(30% 0, 100% 0, 100% 100%, 55% 100%)",
+          clipPath: 'polygon(30% 0, 100% 0, 100% 100%, 55% 100%)',
           background:
-            "linear-gradient(225deg, rgba(0,242,254,0.09) 0%, rgba(0,220,200,0.04) 45%, transparent 78%)",
-          pointerEvents: "none",
+            'linear-gradient(225deg, rgba(0,242,254,0.09) 0%, rgba(0,220,200,0.04) 45%, transparent 78%)',
+          pointerEvents: 'none',
           zIndex: 0,
         }}
       />
@@ -3677,12 +3669,12 @@ const HighPerformanceSection: React.FC = () => {
       <Box
         aria-hidden="true"
         sx={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          clipPath: "polygon(52% 0, 100% 0, 100% 100%, 72% 100%)",
+          clipPath: 'polygon(52% 0, 100% 0, 100% 100%, 72% 100%)',
           background:
-            "linear-gradient(225deg, rgba(0,242,254,0.11) 0%, rgba(0,210,190,0.05) 48%, transparent 80%)",
-          pointerEvents: "none",
+            'linear-gradient(225deg, rgba(0,242,254,0.11) 0%, rgba(0,210,190,0.05) 48%, transparent 80%)',
+          pointerEvents: 'none',
           zIndex: 0,
         }}
       />
@@ -3691,13 +3683,13 @@ const HighPerformanceSection: React.FC = () => {
       <Box
         aria-hidden="true"
         sx={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          clipPath: "polygon(50% 0, 55% 0, 78% 100%, 73% 100%)",
+          clipPath: 'polygon(50% 0, 55% 0, 78% 100%, 73% 100%)',
           background:
-            "linear-gradient(225deg, rgba(0,242,254,0.55) 0%, rgba(0,235,215,0.22) 45%, transparent 75%)",
-          filter: "blur(1px)",
-          pointerEvents: "none",
+            'linear-gradient(225deg, rgba(0,242,254,0.55) 0%, rgba(0,235,215,0.22) 45%, transparent 75%)',
+          filter: 'blur(1px)',
+          pointerEvents: 'none',
           zIndex: 1,
         }}
       />
@@ -3706,12 +3698,12 @@ const HighPerformanceSection: React.FC = () => {
       <Box
         aria-hidden="true"
         sx={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          clipPath: "polygon(51.5% 0, 53% 0, 76% 100%, 74.5% 100%)",
+          clipPath: 'polygon(51.5% 0, 53% 0, 76% 100%, 74.5% 100%)',
           background:
-            "linear-gradient(225deg, rgba(0, 241, 254, 0.07) 0%, rgba(0, 241, 254, 0.03) 40%, transparent 70%)",
-          pointerEvents: "none",
+            'linear-gradient(225deg, rgba(0, 241, 254, 0.07) 0%, rgba(0, 241, 254, 0.03) 40%, transparent 70%)',
+          pointerEvents: 'none',
           zIndex: 2,
         }}
       />
@@ -3720,13 +3712,13 @@ const HighPerformanceSection: React.FC = () => {
       <Box
         aria-hidden="true"
         sx={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          clipPath: "polygon(68% 0, 72% 0, 94% 100%, 90% 100%)",
+          clipPath: 'polygon(68% 0, 72% 0, 94% 100%, 90% 100%)',
           background:
-            "linear-gradient(225deg, rgba(0,242,254,0.35) 0%, rgba(0,230,210,0.12) 48%, transparent 76%)",
-          filter: "blur(0.5px)",
-          pointerEvents: "none",
+            'linear-gradient(225deg, rgba(0,242,254,0.35) 0%, rgba(0,230,210,0.12) 48%, transparent 76%)',
+          filter: 'blur(0.5px)',
+          pointerEvents: 'none',
           zIndex: 1,
         }}
       />
@@ -3735,15 +3727,15 @@ const HighPerformanceSection: React.FC = () => {
       <Box
         aria-hidden="true"
         sx={{
-          position: "absolute",
-          top: "20%",
-          right: "15%",
-          width: "42%",
-          height: "50%",
+          position: 'absolute',
+          top: '20%',
+          right: '15%',
+          width: '42%',
+          height: '50%',
           background:
-            "radial-gradient(ellipse at 65% 35%, rgba(0,210,185,0.08) 0%, transparent 65%)",
-          transform: "rotate(10deg)",
-          pointerEvents: "none",
+            'radial-gradient(ellipse at 65% 35%, rgba(0,210,185,0.08) 0%, transparent 65%)',
+          transform: 'rotate(10deg)',
+          pointerEvents: 'none',
           zIndex: 0,
         }}
       />
@@ -3752,14 +3744,14 @@ const HighPerformanceSection: React.FC = () => {
       <Box
         aria-hidden="true"
         sx={{
-          position: "absolute",
-          bottom: "5%",
-          left: "5%",
-          width: "30%",
-          height: "35%",
+          position: 'absolute',
+          bottom: '5%',
+          left: '5%',
+          width: '30%',
+          height: '35%',
           background:
-            "radial-gradient(ellipse at bottom left, rgba(0,190,170,0.06) 0%, transparent 68%)",
-          pointerEvents: "none",
+            'radial-gradient(ellipse at bottom left, rgba(0,190,170,0.06) 0%, transparent 68%)',
+          pointerEvents: 'none',
           zIndex: 0,
         }}
       />
@@ -3768,27 +3760,26 @@ const HighPerformanceSection: React.FC = () => {
       <Box
         aria-hidden="true"
         sx={{
-          position: "absolute",
+          position: 'absolute',
           bottom: 0,
           left: 0,
-          width: "100%",
-          height: "30%",
-          background:
-            "linear-gradient(to bottom, transparent 0%, #080808 100%)",
-          pointerEvents: "none",
+          width: '100%',
+          height: '30%',
+          background: 'linear-gradient(to bottom, transparent 0%, #080808 100%)',
+          pointerEvents: 'none',
           zIndex: 3,
         }}
       />
 
       {/* ── END ── */}
 
-      <Container maxWidth="xl" sx={{ position: "relative", zIndex: 4 }}>
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 4 }}>
         <Stack alignItems="center" textAlign="center" mb={10}>
           <Typography
             variant="h2"
             sx={{
               fontWeight: 900,
-              fontSize: { xs: "1.8rem", sm: "2.4rem", md: "3rem" },
+              fontSize: { xs: '1.8rem', sm: '2.4rem', md: '3rem' },
               maxWidth: 1000,
               color: textColorSecondary,
             }}
@@ -3797,11 +3788,7 @@ const HighPerformanceSection: React.FC = () => {
           </Typography>
         </Stack>
 
-        <Grid
-          container
-          spacing={{ xs: 3, md: 4 }}
-          px={{ xs: 2, sm: 15, md: 0, lg: 4 }}
-        >
+        <Grid container spacing={{ xs: 3, md: 4 }} px={{ xs: 2, sm: 15, md: 0, lg: 4 }}>
           {cardsData.map((card, index) => (
             <Grid item xs={12} md={4} key={index}>
               <CardVisualBox className="platform-card">
@@ -3813,24 +3800,24 @@ const HighPerformanceSection: React.FC = () => {
                     loading="lazy"
                     decoding="async"
                     sx={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      filter: "brightness(0.7)",
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      filter: 'brightness(0.7)',
                     }}
                   />
                 </ImageWrapper>
 
                 <Box
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     inset: 0,
                     zIndex: 1,
-                    pointerEvents: "none",
-                    backdropFilter: "blur(10px)",
-                    WebkitBackdropFilter: "blur(10px)",
-                    mask: "linear-gradient(#0000, #000)",
-                    background: `linear-gradient(${alpha(textColorSecondary!, 0.16)} 10%, ${alpha("#080808", 0.35)} 40%, ${alpha("#080808", 0.7)} 90%)`,
+                    pointerEvents: 'none',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    mask: 'linear-gradient(#0000, #000)',
+                    background: `linear-gradient(${alpha(textColorSecondary!, 0.16)} 10%, ${alpha('#080808', 0.35)} 40%, ${alpha('#080808', 0.7)} 90%)`,
                   }}
                 />
 
@@ -3839,7 +3826,7 @@ const HighPerformanceSection: React.FC = () => {
                     <Typography
                       variant="h3"
                       sx={{
-                        fontSize: "1.5rem",
+                        fontSize: '1.5rem',
                         fontWeight: 500,
                         mb: 2,
                         color: textColorSecondary,
@@ -3858,11 +3845,11 @@ const HighPerformanceSection: React.FC = () => {
                         href="#"
                         underline="none"
                         sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
+                          display: 'inline-flex',
+                          alignItems: 'center',
                           color: textColorSecondary,
                           fontWeight: 500,
-                          "&:hover": { color: primaryFocus },
+                          '&:hover': { color: primaryFocus },
                         }}
                       >
                         Get started — it's free
@@ -3877,19 +3864,19 @@ const HighPerformanceSection: React.FC = () => {
                       sx={{
                         minWidth: 40,
                         height: 40,
-                        borderRadius: "50%",
+                        borderRadius: '50%',
                         backgroundColor: alpha(textColorSecondary!, 0.15),
                         boxShadow: `0 0 6px ${alpha(textColorSecondary!, 0.35)}`,
                         p: 0,
                         color: textColorSecondary,
-                        "& .plus": { display: "block" },
-                        "& .minus": { display: "none" },
-                        ".platform-card:hover &": {
+                        '& .plus': { display: 'block' },
+                        '& .minus': { display: 'none' },
+                        '.platform-card:hover &': {
                           backgroundColor: primaryFocus,
-                          color: "#fff",
+                          color: '#fff',
                         },
-                        ".platform-card:hover & .plus": { display: "none" },
-                        ".platform-card:hover & .minus": { display: "block" },
+                        '.platform-card:hover & .plus': { display: 'none' },
+                        '.platform-card:hover & .minus': { display: 'block' },
                       }}
                     >
                       <AddIcon className="plus" />

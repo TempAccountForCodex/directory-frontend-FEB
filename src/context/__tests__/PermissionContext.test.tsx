@@ -21,18 +21,29 @@ import '@testing-library/jest-dom/vitest';
 
 const mockAxiosGet = vi.fn();
 
-vi.mock('axios', () => ({
-  default: {
+vi.mock('axios', () => {
+  const axiosInstance = {
     get: (...args: unknown[]) => mockAxiosGet(...args),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
     defaults: {
       headers: { common: {} },
       withCredentials: true,
     },
     interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
       response: { use: vi.fn(), eject: vi.fn() },
     },
-  },
-}));
+  };
+  return {
+    default: {
+      ...axiosInstance,
+      create: vi.fn(() => axiosInstance),
+    },
+  };
+});
 
 // ── Mock AuthContext ────────────────────────────────────────────────────────
 
@@ -64,6 +75,7 @@ function makeWebsitesResponse(websites: Array<{ id: number; role?: string }>) {
   return Promise.resolve({
     data: {
       data: websites.map((w) => ({
+        role: 'OWNER',
         ...w,
         name: `Website ${w.id}`,
         slug: `website-${w.id}`,

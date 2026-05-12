@@ -21,15 +21,13 @@ import {
   Eye as ViewIcon,
   ArrowLeftRight as CompareIcon,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import ReactDiffViewer from 'react-diff-viewer-continued';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { DashboardInput, DashboardPanel } from './shared';
 import { DashboardDataGrid } from './grid';
 import { isAdmin as checkIsAdmin } from '../../constants/roles';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const PendingApproval = ({ user, searchQuery = '' }) => {
   const { actualTheme } = useCustomTheme();
@@ -86,8 +84,8 @@ const PendingApproval = ({ user, searchQuery = '' }) => {
   const fetchPendingInsights = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${API_URL}/insights?status=PENDING_APPROVAL&page=${page + 1}&limit=${rowsPerPage}`
+      const response = await apiClient.get(
+        `/insights?status=PENDING_APPROVAL&page=${page + 1}&limit=${rowsPerPage}`
       );
 
       setPendingInsights(response.data.insights || []);
@@ -117,13 +115,13 @@ const PendingApproval = ({ user, searchQuery = '' }) => {
     try {
       const endpoint =
         approvalAction === 'approve'
-          ? `${API_URL}/insights/${currentInsight.id}/approve`
-          : `${API_URL}/insights/${currentInsight.id}/reject`;
+          ? `/insights/${currentInsight.id}/approve`
+          : `/insights/${currentInsight.id}/reject`;
 
       const payload =
         approvalAction === 'reject' && rejectionReason ? { rejectionReason: rejectionReason } : {};
 
-      await axios.patch(endpoint, payload);
+      await apiClient.patch(endpoint, payload);
 
       // IMMEDIATELY refetch data for real-time updates
       await fetchPendingInsights();

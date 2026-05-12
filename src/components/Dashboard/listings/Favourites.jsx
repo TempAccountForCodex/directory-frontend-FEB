@@ -26,9 +26,7 @@ import {
   DashboardTablePagination,
 } from '../shared';
 import { useUserFavourites } from '../../../hooks/useFavourites';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { apiClient } from '../../../api/client';
 
 /* ---------- EmptyState ---------- */
 const EmptyState = memo(function EmptyState({ colors, onBrowseListings }) {
@@ -291,8 +289,8 @@ const Favourites = ({ pageTitle, pageSubtitle }) => {
         });
         // Call API
         try {
-          await axios.post(
-            `${API_URL}/favourites/listings/${id}/favourite`,
+          await apiClient.post(
+            `/favourites/listings/${id}/favourite`,
             {},
             { withCredentials: true }
           );

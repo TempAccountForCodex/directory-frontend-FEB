@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Box,
   Container,
@@ -20,8 +20,6 @@ import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import StripeProviderWrapper from '../../components/Checkout/StripeProviderWrapper';
 import { ArrowBack as BackIcon, CheckCircle as SuccessIcon } from '@mui/icons-material';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // Cart item interface
 interface CartItem {
@@ -213,7 +211,7 @@ const CheckoutPage = () => {
 
         // Load store information (optional but nice for display)
         try {
-          const storeResponse = await axios.get(`${API_URL}/stores/${storeId}`);
+          const storeResponse = await apiClient.get(`/stores/${storeId}`);
           setStore(storeResponse.data.data);
         } catch (storeErr: any) {
           console.warn('Could not load store info:', storeErr);
@@ -244,7 +242,7 @@ const CheckoutPage = () => {
         // customerName: user?.name,
       };
 
-      const response = await axios.post<CheckoutResponse>(`${API_URL}/checkout/create`, payload);
+      const response = await apiClient.post<CheckoutResponse>(`/checkout/create`, payload);
 
       if (response.data.success && response.data.data.clientSecret) {
         setClientSecret(response.data.data.clientSecret);

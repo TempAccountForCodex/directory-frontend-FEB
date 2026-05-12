@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { apiClient } from '../api/client';
 
 interface WebsiteFormData {
   name: string;
@@ -79,8 +77,8 @@ export const useStoreWebsiteCreation = (): UseStoreWebsiteCreationResult => {
       // Step 1: Create the website
       // TODO: When template system is implemented, add template selection here
       // e.g., templateKey: 'store-default' or layoutType: 'ecommerce'
-      const websiteResponse = await axios.post<{ data: CreatedWebsite }>(
-        `${API_URL}/websites`,
+      const websiteResponse = await apiClient.post<{ data: CreatedWebsite }>(
+        `/websites`,
         websiteData,
         { headers: {} }
       );
@@ -94,8 +92,8 @@ export const useStoreWebsiteCreation = (): UseStoreWebsiteCreationResult => {
           ...storeData,
         };
 
-        const storeResponse = await axios.post<{ data: CreatedStore }>(
-          `${API_URL}/stores`,
+        const storeResponse = await apiClient.post<{ data: CreatedStore }>(
+          `/stores`,
           storePayload,
           { headers: {} }
         );

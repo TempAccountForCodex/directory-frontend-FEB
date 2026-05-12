@@ -18,8 +18,8 @@ import AIQuestionnaire from '../components/WebsiteCreation/AIQuestionnaire';
 import QuestionnaireNavigation from '../components/WebsiteCreation/QuestionnaireNavigation';
 import AIGenerationProgress from '../components/WebsiteCreation/AIGenerationProgress';
 import { useAIQuestionnaire, type ValidationErrors } from '../hooks/useAIQuestionnaire';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface AIQuestionnairePageProps {
   embedded?: boolean;
@@ -242,3 +242,4 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
     </Box>
   );
 }
+

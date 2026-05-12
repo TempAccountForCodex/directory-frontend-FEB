@@ -23,7 +23,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useDropzone } from 'react-dropzone';
 import type { FileRejection } from 'react-dropzone';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import { registerFieldComponent } from '../registry';
 import { FieldType } from '../types';
 
@@ -120,7 +120,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
         formData.append('image', file);
 
         try {
-          const response = await axios.post('/api/upload/image', formData, {
+          const response = await apiClient.post('/upload/image', formData, {
             onUploadProgress: (e) => {
               if (e.total) {
                 setUploadProgress(Math.round((e.loaded * 100) / e.total));

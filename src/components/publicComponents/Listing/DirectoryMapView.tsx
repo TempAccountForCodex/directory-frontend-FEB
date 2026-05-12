@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -13,9 +13,9 @@ import {
   Button,
   Divider,
   useTheme,
-} from "@mui/material";
-import RoomIcon from "@mui/icons-material/Room";
-import StarIcon from "@mui/icons-material/Star";
+} from '@mui/material';
+import RoomIcon from '@mui/icons-material/Room';
+import StarIcon from '@mui/icons-material/Star';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -40,12 +40,7 @@ export interface MapListing {
 
 interface DirectoryMapViewProps {
   results: MapListing[];
-  onBoundsChange?: (bounds: {
-    north: number;
-    south: number;
-    east: number;
-    west: number;
-  }) => void;
+  onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
   loading?: boolean;
 }
 
@@ -53,24 +48,19 @@ interface DirectoryMapViewProps {
 /*  Listing row in the sidebar                                         */
 /* ------------------------------------------------------------------ */
 
-const MapListingRow = React.memo(function MapListingRow({
-  listing,
-}: {
-  listing: MapListing;
-}) {
+const MapListingRow = React.memo(function MapListingRow({ listing }: { listing: MapListing }) {
   const theme = useTheme();
-  const name = listing.businessName ?? listing.title ?? "Unnamed";
-  const location = [listing.city, listing.country].filter(Boolean).join(", ");
-  const showRating =
-    typeof listing.averageRating === "number" && listing.averageRating > 0;
+  const name = listing.businessName ?? listing.title ?? 'Unnamed';
+  const location = [listing.city, listing.country].filter(Boolean).join(', ');
+  const showRating = typeof listing.averageRating === 'number' && listing.averageRating > 0;
 
   return (
     <>
       <ListItem
         alignItems="flex-start"
         sx={{
-          cursor: "pointer",
-          "&:hover": { backgroundColor: (theme.palette.action as any).hover },
+          cursor: 'pointer',
+          '&:hover': { backgroundColor: (theme.palette.action as any).hover },
           borderRadius: 1,
         }}
       >
@@ -97,15 +87,8 @@ const MapListingRow = React.memo(function MapListingRow({
                 </Typography>
               )}
               {showRating && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.3,
-                    mt: 0.2,
-                  }}
-                >
-                  <StarIcon sx={{ fontSize: 12, color: "#faaf00" }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, mt: 0.2 }}>
+                  <StarIcon sx={{ fontSize: 12, color: '#faaf00' }} />
                   <Typography variant="caption" color="text.secondary">
                     {(listing.averageRating as number).toFixed(1)}
                   </Typography>
@@ -134,18 +117,13 @@ const DirectoryMapView: React.FC<DirectoryMapViewProps> = ({
   /* ---- Calculate mean coordinates for map center ---- */
   const { centerLat, centerLng } = useMemo(() => {
     const geoResults = results.filter(
-      (r) =>
-        r.location?.latitude !== undefined &&
-        r.location?.longitude !== undefined,
+      (r) => r.location?.latitude !== undefined && r.location?.longitude !== undefined
     );
     if (geoResults.length === 0) {
       return { centerLat: 51.505, centerLng: -0.09 }; // default: London
     }
     const sumLat = geoResults.reduce((acc, r) => acc + r.location!.latitude, 0);
-    const sumLng = geoResults.reduce(
-      (acc, r) => acc + r.location!.longitude,
-      0,
-    );
+    const sumLng = geoResults.reduce((acc, r) => acc + r.location!.longitude, 0);
     return {
       centerLat: sumLat / geoResults.length,
       centerLng: sumLng / geoResults.length,
@@ -156,7 +134,7 @@ const DirectoryMapView: React.FC<DirectoryMapViewProps> = ({
   const iframeSrc = useMemo(
     () =>
       `https://www.openstreetmap.org/export/embed.html?bbox=${centerLng - 0.1}%2C${centerLat - 0.1}%2C${centerLng + 0.1}%2C${centerLat + 0.1}&layer=mapnik`,
-    [centerLat, centerLng],
+    [centerLat, centerLng]
   );
 
   /* ---- Search this area stub ---- */
@@ -175,24 +153,23 @@ const DirectoryMapView: React.FC<DirectoryMapViewProps> = ({
       elevation={2}
       sx={{
         borderRadius: 2,
-        overflow: "hidden",
-        boxShadow:
-          "rgba(0, 0, 0, 0.05) 0px 6px 24px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px",
+        overflow: 'hidden',
+        boxShadow: 'rgba(0, 0, 0, 0.05) 0px 6px 24px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px',
       }}
     >
       <Box
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          height: { xs: "auto", md: 560 },
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          height: { xs: 'auto', md: 560 },
         }}
       >
         {/* ---- Map iframe ---- */}
         <Box
           sx={{
-            flex: "1 1 auto",
-            position: "relative",
-            height: { xs: 300, md: "100%" },
+            flex: '1 1 auto',
+            position: 'relative',
+            height: { xs: 300, md: '100%' },
             minHeight: 300,
           }}
         >
@@ -200,12 +177,12 @@ const DirectoryMapView: React.FC<DirectoryMapViewProps> = ({
           {loading && (
             <Box
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "rgba(255,255,255,0.75)",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(255,255,255,0.75)',
                 zIndex: 10,
               }}
               role="status"
@@ -220,10 +197,10 @@ const DirectoryMapView: React.FC<DirectoryMapViewProps> = ({
             src={iframeSrc}
             title="Directory listings map"
             sx={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-              display: "block",
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              display: 'block',
             }}
             loading="lazy"
             aria-label="Map showing listing locations"
@@ -232,10 +209,10 @@ const DirectoryMapView: React.FC<DirectoryMapViewProps> = ({
           {/* Search this area button */}
           <Box
             sx={{
-              position: "absolute",
+              position: 'absolute',
               bottom: 16,
-              left: "50%",
-              transform: "translateX(-50%)",
+              left: '50%',
+              transform: 'translateX(-50%)',
               zIndex: 5,
             }}
           >
@@ -245,15 +222,13 @@ const DirectoryMapView: React.FC<DirectoryMapViewProps> = ({
               onClick={handleSearchThisArea}
               sx={{
                 backgroundColor: theme.palette.common.white,
-                color:
-                  (theme.palette.primary as any).focus ??
-                  theme.palette.primary.main,
+                color: (theme.palette.primary as any).focus ?? theme.palette.primary.main,
                 boxShadow: 2,
-                "&:hover": {
+                '&:hover': {
                   backgroundColor: theme.palette.grey[100],
                 },
                 fontWeight: 600,
-                fontSize: "12px",
+                fontSize: '12px',
               }}
               aria-label="Search this area"
             >
@@ -265,25 +240,22 @@ const DirectoryMapView: React.FC<DirectoryMapViewProps> = ({
         {/* ---- Sidebar listing list ---- */}
         <Box
           sx={{
-            width: { xs: "100%", md: 280 },
+            width: { xs: '100%', md: 280 },
             flexShrink: 0,
             borderLeft: { md: `1px solid ${theme.palette.divider}` },
-            borderTop: { xs: `1px solid ${theme.palette.divider}`, md: "none" },
-            overflowY: "auto",
+            borderTop: { xs: `1px solid ${theme.palette.divider}`, md: 'none' },
+            overflowY: 'auto',
           }}
         >
           <CardContent sx={{ pb: 0, px: 2, pt: 2 }}>
             <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-              {results.length} listing{results.length !== 1 ? "s" : ""} in this
-              area
+              {results.length} listing{results.length !== 1 ? 's' : ''} in this area
             </Typography>
           </CardContent>
 
           {results.length === 0 ? (
-            <Box sx={{ px: 2, py: 3, textAlign: "center" }}>
-              <RoomIcon
-                sx={{ fontSize: 40, color: theme.palette.text.disabled, mb: 1 }}
-              />
+            <Box sx={{ px: 2, py: 3, textAlign: 'center' }}>
+              <RoomIcon sx={{ fontSize: 40, color: theme.palette.text.disabled, mb: 1 }} />
               <Typography variant="body2" color="text.secondary">
                 No listings in this area.
                 <br />

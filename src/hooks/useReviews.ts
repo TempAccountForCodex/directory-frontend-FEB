@@ -1,7 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { useCallback, useState } from 'react';
+import type { AxiosError } from 'axios';
+import {
+  useListingReviews,
+  useCreateReview,
+  useVoteReview as useVoteReviewMutation,
+  useReplyReview as useReplyReviewMutation,
+} from '../api/queries/content';
 
 /* ---------- Types ---------- */
 export interface ReviewAuthor {
@@ -79,60 +83,40 @@ export interface ReplyReviewResult {
 }
 
 /* ---------- useReviews ---------- */
+/**
+ * Backwards-compatible wrapper around `useListingReviews` — preserves the
+ * `{ reviews, stats, pagination, loading, error, requiresAuth, refetch }`
+ * contract so existing consumers (ListingDetail, ReviewsTab) don't need to
+ * change.
+ */
 export function useReviews(
   websiteId: string | number | null | undefined,
   sort: string = 'recent',
   page: number = 1
 ): ReviewsResult {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [stats, setStats] = useState<RatingStats | null>(null);
-  const [pagination, setPagination] = useState<ReviewPagination | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [requiresAuth, setRequiresAuth] = useState(false);
-  const fetchCountRef = useRef(0);
+  const query = useListingReviews(websiteId, { sort, page, limit: 10 });
+  const err = query.error as AxiosError<{ message?: string }> | null;
+  const requiresAuth = err?.response?.status === 401;
+  const errorMsg = err && !requiresAuth
+    ? (err.response?.data?.message ?? 'Failed to load reviews')
+    : null;
 
-  const fetchReviews = useCallback(async () => {
-    if (!websiteId) return;
-    const currentFetch = ++fetchCountRef.current;
-    setLoading(true);
-    setError(null);
-    setRequiresAuth(false);
-
-    try {
-      const response = await axios.get(`${API_URL}/reviews/listings/${websiteId}`, {
-        params: { sort, page, limit: 10 },
-        withCredentials: true,
-      });
-      if (currentFetch !== fetchCountRef.current) return;
-      const data = response.data;
-      setReviews(data.reviews || []);
-      setStats(data.stats || null);
-      setPagination(data.pagination || null);
-    } catch (err: any) {
-      if (currentFetch !== fetchCountRef.current) return;
-      if (err.response?.status === 401) {
-        setRequiresAuth(true);
-      } else {
-        setError(err.response?.data?.message || 'Failed to load reviews');
-      }
-    } finally {
-      if (currentFetch === fetchCountRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [websiteId, sort, page]);
-
-  useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews]);
-
-  return { reviews, stats, pagination, loading, error, requiresAuth, refetch: fetchReviews };
+  return {
+    reviews: (query.data?.reviews as Review[]) ?? [],
+    stats: (query.data?.stats as RatingStats | null) ?? null,
+    pagination: (query.data?.pagination as ReviewPagination | null) ?? null,
+    loading: query.isFetching,
+    error: errorMsg,
+    requiresAuth,
+    refetch: () => {
+      query.refetch();
+    },
+  };
 }
 
 /* ---------- useSubmitReview ---------- */
 export function useSubmitReview(websiteId: string | number | null | undefined): SubmitReviewResult {
-  const [loading, setLoading] = useState(false);
+  const mutation = useCreateReview();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [requiresAuth, setRequiresAuth] = useState(false);
@@ -140,88 +124,80 @@ export function useSubmitReview(websiteId: string | number | null | undefined): 
   const submitReview = useCallback(
     async (data: { rating: number; title: string; content: string }): Promise<Review | null> => {
       if (!websiteId) return null;
-      setLoading(true);
       setError(null);
       setFieldErrors({});
       setRequiresAuth(false);
-
       try {
-        const response = await axios.post(`${API_URL}/reviews/listings/${websiteId}`, data, {
-          withCredentials: true,
-        });
-        return response.data.review as Review;
-      } catch (err: any) {
-        if (err.response?.status === 401) {
+        const result = await mutation.mutateAsync({ listingId: websiteId, payload: data });
+        return (result as Review) ?? null;
+      } catch (err) {
+        const axiosErr = err as AxiosError<{ message?: string; errors?: Record<string, string> }>;
+        const status = axiosErr?.response?.status;
+        if (status === 401) {
           setRequiresAuth(true);
-        } else if (err.response?.status === 400) {
-          const errData = err.response.data;
-          if (errData.errors && typeof errData.errors === 'object') {
+        } else if (status === 400) {
+          const errData = axiosErr.response?.data;
+          if (errData?.errors && typeof errData.errors === 'object') {
             setFieldErrors(errData.errors);
           } else {
-            setError(errData.message || 'Validation error');
+            setError(errData?.message || 'Validation error');
           }
         } else {
-          setError(err.response?.data?.message || 'Failed to submit review');
+          setError(axiosErr?.response?.data?.message || 'Failed to submit review');
         }
         return null;
-      } finally {
-        setLoading(false);
       }
     },
-    [websiteId]
+    [websiteId, mutation]
   );
 
-  return { submitReview, loading, error, fieldErrors, requiresAuth };
+  return {
+    submitReview,
+    loading: mutation.isPending,
+    error,
+    fieldErrors,
+    requiresAuth,
+  };
 }
 
 /* ---------- useVoteReview ---------- */
 export function useVoteReview(): VoteReviewResult {
-  const [loading, setLoading] = useState(false);
+  const mutation = useVoteReviewMutation();
 
   const voteReview = useCallback(
     async (reviewId: number, vote: 'helpful' | 'not_helpful'): Promise<boolean> => {
-      setLoading(true);
       try {
-        await axios.post(
-          `${API_URL}/reviews/${reviewId}/vote`,
-          { vote },
-          { withCredentials: true }
-        );
+        await mutation.mutateAsync({ reviewId, vote });
         return true;
       } catch {
         return false;
-      } finally {
-        setLoading(false);
       }
     },
-    []
+    [mutation]
   );
 
-  return { voteReview, loading };
+  return { voteReview, loading: mutation.isPending };
 }
 
 /* ---------- useReplyReview ---------- */
 export function useReplyReview(): ReplyReviewResult {
-  const [loading, setLoading] = useState(false);
+  const mutation = useReplyReviewMutation();
   const [error, setError] = useState<string | null>(null);
 
-  const replyReview = useCallback(async (reviewId: number, content: string): Promise<boolean> => {
-    setLoading(true);
-    setError(null);
-    try {
-      await axios.post(
-        `${API_URL}/reviews/${reviewId}/reply`,
-        { content },
-        { withCredentials: true }
-      );
-      return true;
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to submit reply');
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const replyReview = useCallback(
+    async (reviewId: number, content: string): Promise<boolean> => {
+      setError(null);
+      try {
+        await mutation.mutateAsync({ reviewId, content });
+        return true;
+      } catch (err) {
+        const axiosErr = err as AxiosError<{ message?: string }>;
+        setError(axiosErr?.response?.data?.message || 'Failed to submit reply');
+        return false;
+      }
+    },
+    [mutation]
+  );
 
-  return { replyReview, loading, error };
+  return { replyReview, loading: mutation.isPending, error };
 }

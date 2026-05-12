@@ -15,7 +15,7 @@ import Skeleton from '@mui/material/Skeleton';
 import Grid from '@mui/material/Grid';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Clock, LayoutTemplate } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 import {
   PageHeader,
   TabNavigation,
@@ -27,8 +27,6 @@ import TemplateFilters from '../components/Templates/TemplateFilters';
 import { useTemplates } from '../hooks/useTemplates';
 import { useTemplateFavorites } from '../hooks/useTemplateFavorites';
 import { type TemplateSummary, normalizeTemplateSummary } from '../templates/templateApi';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const TAB_FAVORITES = 'favorites';
 const TAB_RECENT = 'recently-used';
@@ -86,8 +84,8 @@ const MyTemplates = () => {
     let cancelled = false;
     setHistoryLoading(true);
 
-    axios
-      .get(`${API_URL}/templates/history?page=1&limit=20`)
+    apiClient
+      .get(`/templates/history?page=1&limit=20`)
       .then((res) => {
         if (!cancelled) {
           const entries: HistoryEntry[] = res.data?.data || [];

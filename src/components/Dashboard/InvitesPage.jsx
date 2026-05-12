@@ -18,7 +18,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Box,
   Typography,
@@ -41,8 +41,6 @@ import {
   DashboardActionButton,
   ConfirmationDialog,
 } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const ROLE_COLORS = {
   ADMIN: '#2196f3',
@@ -329,7 +327,7 @@ const InvitesPage = React.memo(function InvitesPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_URL}/users/me/invites`);
+      const response = await apiClient.get(`/users/me/invites`);
       setInvites(response.data || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load invites');
@@ -345,7 +343,7 @@ const InvitesPage = React.memo(function InvitesPage() {
   const handleAccept = useCallback(async (invite) => {
     setAcceptingId(invite.id);
     try {
-      const response = await axios.post(`${API_URL}/invites/${invite.token}/accept`);
+      const response = await apiClient.post(`/invites/${invite.token}/accept`);
       const websiteName = response.data?.websiteName || invite.websiteName;
       setInvites((prev) => prev.filter((inv) => inv.id !== invite.id));
       showToast(`You joined "${websiteName}"!`);
@@ -372,7 +370,7 @@ const InvitesPage = React.memo(function InvitesPage() {
     setDecliningId(inviteToDecline.id);
     setDeclineDialogOpen(false);
     try {
-      await axios.post(`${API_URL}/invites/${inviteToDecline.token}/decline`);
+      await apiClient.post(`/invites/${inviteToDecline.token}/decline`);
       setInvites((prev) => prev.filter((inv) => inv.id !== inviteToDecline.id));
       showToast(`Invite to "${inviteToDecline.websiteName}" declined`);
     } catch (err) {

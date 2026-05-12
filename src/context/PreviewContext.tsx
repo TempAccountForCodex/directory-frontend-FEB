@@ -39,6 +39,17 @@ export interface PageContent {
     theme?: Record<string, unknown>;
     fonts?: Record<string, string>;
     colors?: Record<string, string>;
+    slug?: string;
+    frontendTemplateId?: string | null;
+    businessName?: string;
+    primaryColor?: string | null;
+    secondaryColor?: string | null;
+    metaDescription?: string | null;
+    shortDescription?: string | null;
+    logoUrl?: string | null;
+    fullAddress?: string | null;
+    tags?: string[] | null;
+    templateDataOverride?: Record<string, unknown> | null;
   };
 }
 

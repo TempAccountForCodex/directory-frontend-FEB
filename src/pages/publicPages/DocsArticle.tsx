@@ -19,7 +19,7 @@ import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { ChevronRight, ThumbsUp, ThumbsDown, Calendar } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { Link, useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -45,8 +45,6 @@ interface DocArticle {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const CATEGORY_LABELS: Record<string, string> = {
   'getting-started': 'Getting Started',
@@ -185,7 +183,7 @@ const DocsArticle = memo(() => {
     setError(null);
     setNotFound(false);
     try {
-      const resp = await axios.get(`${API_URL}/docs/${slug}`);
+      const resp = await apiClient.get(`/docs/${slug}`);
       setArticle(resp.data?.article ?? resp.data);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { status: number } };

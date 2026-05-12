@@ -19,14 +19,13 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Search } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
-import axios from "axios";
+import { apiClient } from "../../../api/client";
 import {
   InsightData,
   getFallbackCategories,
   getFallbackRecentInsights,
 } from "../../../utils/data/Insights";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5001";
 
 // Helper function to get full image URL
@@ -472,7 +471,7 @@ const InsightCards = () => {
         params.search = searchQuery;
       }
 
-      const response = await axios.get(`${API_URL}/insights/public`, {
+      const response = await apiClient.get(`/insights/public`, {
         params,
       });
 
@@ -504,7 +503,7 @@ const InsightCards = () => {
 
   const fetchRecentPosts = async () => {
     try {
-      const response = await axios.get(`${API_URL}/insights/public`, {
+      const response = await apiClient.get(`/insights/public`, {
         params: { page: 1, limit: 5, sortBy: "publishedAt", sortOrder: "desc" },
       });
       const insights = response.data.insights || response.data.blogs || [];
@@ -517,7 +516,7 @@ const InsightCards = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${API_URL}/insights/categories`);
+      const response = await apiClient.get(`/insights/categories`);
       setAvailableCategories(response.data.categories || []);
     } catch (error) {
       console.error("Error fetching categories:", error);

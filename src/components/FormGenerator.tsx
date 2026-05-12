@@ -48,6 +48,7 @@ import useFieldMetadata from '../hooks/useFieldMetadata';
 import useDebouncedValue from '../hooks/useDebouncedValue';
 import { useValidation } from '../hooks/useValidation';
 import { FieldRenderer } from './DynamicFields/FieldRenderer';
+import './DynamicFields/fields';
 import { shouldShowField } from '../utils/conditionalLogic';
 import type { FieldDefinition as ConditionalFieldDef } from '../utils/conditionalLogic';
 
@@ -64,7 +65,7 @@ import type { FieldDefinition as MetaFieldDef } from '../hooks/useFieldMetadata'
  * are passed through; FieldRenderer/registry will handle unknowns gracefully.
  */
 function castToRendererField(field: MetaFieldDef): RendererFieldDef {
-  return field as unknown as RendererFieldDef;
+  return { ...field, type: (field.type || '').toUpperCase() } as unknown as RendererFieldDef;
 }
 
 // ---------------------------------------------------------------------------

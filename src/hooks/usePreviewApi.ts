@@ -5,9 +5,9 @@
  * from the Preview API endpoints (Step 4.5).
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import axios, { isAxiosError } from 'axios';
+import { apiClient, isAxiosError, isCancel } from '../api/client';
+import { API_URL } from '@/config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ===================================================================
 // Types
@@ -97,8 +97,8 @@ export function useTemplateScreenshots(templateId: string | null): UseTemplateSc
     setLoading(true);
     setError(null);
 
-    axios
-      .get(`${API_URL}/previews/templates/${templateId}/screenshots`)
+    apiClient
+      .get(`/previews/templates/${templateId}/screenshots`)
       .then((res) => {
         if (!cancelled) {
           // Backend wraps screenshots in a data envelope: { data: { templateId, name, screenshots: {...} } }
@@ -170,8 +170,8 @@ export function usePreviewGallery(options: UsePreviewGalleryOptions = {}): UsePr
     if (category) params.append('category', category);
     if (sort) params.append('sortBy', sort); // backend expects 'sortBy', not 'sort'
 
-    axios
-      .get(`${API_URL}/previews/templates?${params.toString()}`)
+    apiClient
+      .get(`/previews/templates?${params.toString()}`)
       .then((res) => {
         if (!cancelled) {
           const body = res.data;
@@ -263,8 +263,8 @@ export function useWebsitePreviewStatus(
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    axios
-      .get(`${API_URL}/previews/websites/${websiteId}/status`, { headers })
+    apiClient
+      .get(`/previews/websites/${websiteId}/status`, { headers })
       .then((res) => {
         if (!cancelled) setStatus(res.data?.data || res.data);
       })
@@ -314,6 +314,8 @@ export function usePreviewIframe(
   pageId: string | number | null,
   viewport: 'desktop' | 'tablet' | 'mobile'
 ): UsePreviewIframeReturn {
+  const isSyntheticTemplatePage =
+    typeof pageId === 'string' && /^page-\d+$/.test(pageId);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState(false);
   const [tokenExpired, setTokenExpired] = useState(false);
@@ -332,7 +334,7 @@ export function usePreviewIframe(
     abortRef.current = controller;
 
     try {
-      const res = await axios.post(`${API_URL}/previews/websites/${wId}/pages/${pId}/token`, null, {
+      const res = await apiClient.post(`/previews/websites/${wId}/pages/${pId}/token`, null, {
         signal: controller.signal,
       });
       if (controller.signal.aborted) return null;
@@ -349,7 +351,7 @@ export function usePreviewIframe(
 
       return { token, ttlMs };
     } catch (err) {
-      if (axios.isCancel(err)) return null;
+      if (isCancel(err)) return null;
       setIframeError(true);
       setPreviewToken(null);
       return null;
@@ -375,9 +377,10 @@ export function usePreviewIframe(
 
   // Acquire token on mount and when websiteId/pageId changes
   useEffect(() => {
-    if (!websiteId || !pageId) {
+    if (!websiteId || !pageId || isSyntheticTemplatePage) {
       setPreviewToken(null);
-      setIframeLoading(true);
+      setIframeLoading(false);
+      setIframeError(false);
       return;
     }
 
@@ -397,7 +400,7 @@ export function usePreviewIframe(
       if (abortRef.current) abortRef.current.abort();
       if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
     };
-  }, [websiteId, pageId, acquireToken, scheduleRefresh]);
+  }, [websiteId, pageId, acquireToken, scheduleRefresh, isSyntheticTemplatePage]);
 
   // Debounce viewport changes
   useEffect(() => {
@@ -416,7 +419,7 @@ export function usePreviewIframe(
 
   // Build iframe src with token instead of relying on bearer headers
   const src =
-    websiteId && pageId && previewToken
+    websiteId && pageId && previewToken && !isSyntheticTemplatePage
       ? `${API_URL}/previews/websites/${websiteId}/pages/${pageId}/html?viewport=${apiViewport}&token=${encodeURIComponent(previewToken)}&_t=${cacheBuster}`
       : '';
 
@@ -431,7 +434,7 @@ export function usePreviewIframe(
   }, []);
 
   const refresh = useCallback(async () => {
-    if (!websiteId || !pageId) return;
+    if (!websiteId || !pageId || isSyntheticTemplatePage) return;
     setIframeLoading(true);
     setIframeError(false);
     setTokenExpired(false);
@@ -441,7 +444,8 @@ export function usePreviewIframe(
       setCacheBuster(Date.now());
       scheduleRefresh(result.ttlMs, websiteId, pageId);
     }
-  }, [websiteId, pageId, acquireToken, scheduleRefresh]);
+  }, [websiteId, pageId, acquireToken, scheduleRefresh, isSyntheticTemplatePage]);
 
   return { src, iframeLoading, iframeError, tokenExpired, onLoad, onError, refresh };
 }
+

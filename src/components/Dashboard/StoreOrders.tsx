@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Box,
   Card,
@@ -23,8 +23,6 @@ import { CircleX, Eye, Receipt, X } from 'lucide-react';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { DashboardSelect, DashboardTable, SearchBar } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface OrderItem {
   id: string;
@@ -92,7 +90,7 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
       if (statusFilter !== 'ALL') params.status = statusFilter;
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
 
-      const response = await axios.get(`${API_URL}/orders`, {
+      const response = await apiClient.get(`/orders`, {
         params,
         headers: {},
       });
@@ -108,7 +106,7 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
   const fetchOrderDetail = async (orderId: string) => {
     try {
       setLoadingDetail(true);
-      const response = await axios.get(`${API_URL}/orders/${orderId}`, {
+      const response = await apiClient.get(`/orders/${orderId}`, {
         headers: {},
       });
       setSelectedOrder(response.data.data);
@@ -127,7 +125,7 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
 
     try {
       setCancellingOrder(true);
-      await axios.post(`${API_URL}/orders/${selectedOrder.id}/cancel`, {}, { headers: {} });
+      await apiClient.post(`/orders/${selectedOrder.id}/cancel`, {}, { headers: {} });
 
       // Update order in state
       setSelectedOrder({

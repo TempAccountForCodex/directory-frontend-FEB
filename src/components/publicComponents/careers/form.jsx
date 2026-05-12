@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { apiClient } from "../../../api/client";
 import { useFormik } from "formik";
 import {
   Box,
@@ -19,8 +19,6 @@ import { MuiTelInput } from "mui-tel-input";
 import { motion } from "framer-motion";
 import SectionHeader from "../../UI/SectionHeader";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 const cardVariantsBottom = {
   offscreen: { y: 40, opacity: 0 },
@@ -165,8 +163,8 @@ const DynamicForm = ({
           headers = { "Content-Type": "application/json" };
         }
 
-        const response = await axios.post(
-          `${API_URL}${apiEndpoint}`,
+        const response = await apiClient.post(
+          `${apiEndpoint}`,
           requestData,
           { headers },
         );

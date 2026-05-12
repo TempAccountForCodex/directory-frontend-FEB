@@ -82,7 +82,7 @@ const mockPlanSummary = {
 
 const mockFreePlanSummary = {
   websitePlan: {
-    code: 'free',
+    code: 'website_free',
     name: 'Free',
     priceMonthlyUsd: 0,
     maxSites: 1,
@@ -118,9 +118,46 @@ vi.mock('react-router-dom', () => ({
 // ---------------------------------------------------------------------------
 // Mock axios
 // ---------------------------------------------------------------------------
-vi.mock('axios');
+vi.mock('axios', () => {
+  const axiosInstance = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  return {
+    default: {
+      ...axiosInstance,
+      create: vi.fn(() => axiosInstance),
+    },
+  };
+});
 import axios from 'axios';
-const mockedAxios = vi.mocked(axios, true);
+const mockedAxios = /** @type {any} */ (axios);
+
+// Phase H.account: useBilling (consumed by Settings) now reads through React
+// Query (`useBillingDetail`/`usePaymentMethods`) via `apiClient`. Stub the
+// apiClient module to forward every call to the already-mocked axios so the
+// existing `mockedAxios.get/post/...` assertions continue to work, and wrap
+// renders below in a QueryClientProvider.
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+vi.mock('../../../api/client', () => {
+  const get = (...args) => axios.get(...args);
+  const put = (...args) => axios.put(...args);
+  const post = (...args) => axios.post(...args);
+  const del = (...args) => axios.delete(...args);
+  const patch = (...args) => axios.patch(...args);
+  return {
+    apiClient: { get, put, post, delete: del, patch },
+    default: { get, put, post, delete: del, patch },
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Import components after mocks
@@ -175,7 +212,16 @@ function setupAxiosMocks(delegates = mockDelegates, pendingInvites = mockPending
 }
 
 function renderSettings(props = {}) {
-  return render(<Settings subtab="team" pageTitle="Settings" pageSubtitle="Manage your account" {...props} />);
+  // Fresh QueryClient per render so cached data from a previous test doesn't
+  // leak; retries off so axios rejections surface immediately.
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <Settings subtab="team" pageTitle="Settings" pageSubtitle="Manage your account" {...props} />
+    </QueryClientProvider>
+  );
 }
 
 /** Helper: open the invite modal after waiting for delegate list to load */

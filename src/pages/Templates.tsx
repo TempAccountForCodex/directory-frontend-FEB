@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import Box from '@mui/material/Box';
@@ -8,8 +8,10 @@ import TemplateFilters from '../components/Templates/TemplateFilters';
 import TemplateGallery from '../components/Templates/TemplateGallery';
 import TemplatePreviewModal from '../components/Templates/TemplatePreviewModal';
 import CreateWebsiteModal from '../components/Templates/CreateWebsiteModal';
-import { useTemplates } from '../hooks/useTemplates';
+import { usePlanSummary } from '../hooks/usePlanSummary';
 import { type TemplateSummary } from '../templates/templateApi';
+import { getFrontendWebsiteTemplates } from '../templates/frontendTemplateCatalog';
+import type { TemplateFilters as TemplateFiltersState } from '../components/Templates/TemplateFilters';
 
 interface TemplatesPageProps {
   pageTitle?: string;
@@ -21,13 +23,36 @@ const TemplatesPage = ({
   pageSubtitle = 'Browse and preview website templates',
 }: TemplatesPageProps) => {
   const navigate = useNavigate();
-  const { templates, loading, error, filters, setFilters } = useTemplates();
+  const { planSummary } = usePlanSummary();
+  const [filters, setFilters] = useState<TemplateFiltersState>({
+    search: '',
+    category: '',
+    type: '',
+  });
 
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateSummary | null>(null);
   const [previewOpen, setPreviewOpen] = useState<boolean>(false);
   const [createOpen, setCreateOpen] = useState<boolean>(false);
   const [createTemplate, setCreateTemplate] = useState<TemplateSummary | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+
+  const templates = useMemo(() => {
+    const search = filters.search.trim().toLowerCase();
+
+    return getFrontendWebsiteTemplates()
+      .filter((template) => {
+        const matchesSearch =
+          search.length === 0
+            ? true
+            : `${template.name} ${template.description} ${template.category}`
+                .toLowerCase()
+                .includes(search);
+        const matchesCategory = filters.category ? template.category === filters.category : true;
+        const matchesType = filters.type ? template.type === filters.type : true;
+        return matchesSearch && matchesCategory && matchesType;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [filters]);
 
   const onPreviewTemplate = useCallback((template: TemplateSummary) => {
     setSelectedTemplate(template);
@@ -96,15 +121,14 @@ const TemplatesPage = ({
         <TemplateFilters filters={filters} onFiltersChange={setFilters} />
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
+      <Alert severity="info" sx={{ mb: 3 }}>
+        Website creation now uses the frontend landing template catalog so dashboard selection
+        matches the live landing previews.
+      </Alert>
 
       <TemplateGallery
         templates={templates}
-        loading={loading}
+        loading={false}
         onSelectTemplate={onSelectTemplate}
         onPreviewTemplate={onPreviewTemplate}
       />
@@ -123,6 +147,7 @@ const TemplatesPage = ({
         template={createTemplate}
         onClose={onCloseCreate}
         onSuccess={onCreateSuccess}
+        planCode={planSummary?.websitePlan?.code || 'website_free'}
       />
 
       <Snackbar

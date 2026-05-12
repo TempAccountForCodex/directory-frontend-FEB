@@ -12,6 +12,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { buildWebSocketUrl } from '@/config/api';
 
 // ──────────────────────────────────────────────
 // Constants
@@ -32,13 +33,7 @@ const MESSAGE_TYPES = {
  * @returns {string} WebSocket URL
  */
 function buildWsUrl(token) {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-  const base = apiUrl.startsWith('/')
-    ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
-    : apiUrl.replace(/^http/, 'ws').replace(/\/api$/, '');
-  // Metrics WS uses the same /ws endpoint but with no websiteId requirement
-  // Server allows connections without websiteId for non-website channels
-  return `${base}/ws?token=${encodeURIComponent(token)}`;
+  return buildWebSocketUrl(token);
 }
 
 // ──────────────────────────────────────────────
@@ -247,3 +242,4 @@ export function usePerformanceWebSocket({ token, enabled = true, onMetricsUpdate
 }
 
 export default usePerformanceWebSocket;
+

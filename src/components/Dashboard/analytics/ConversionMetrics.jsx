@@ -5,9 +5,7 @@ import MetricCard from './MetricCard';
 import { useTheme } from '../../../context/ThemeContext';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { AnalyticsPanelHeader, DashboardPanel } from '../shared';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { apiClient } from '../../../api/client';
 
 const ConversionMetrics = ({ period = '30', customDateRange = {} }) => {
   const { actualTheme } = useTheme();
@@ -31,7 +29,7 @@ const ConversionMetrics = ({ period = '30', customDateRange = {} }) => {
         params.endDate = customDateRange.endDate;
       }
 
-      const response = await axios.get(`${API_URL}/analytics/conversions`, {
+      const response = await apiClient.get(`/analytics/conversions`, {
         params,
       });
       setData(response.data.data);

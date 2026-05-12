@@ -52,6 +52,7 @@ import DOMPurify from 'dompurify';
 import useTenantUrl from '../../../hooks/useTenantUrl';
 import useDynamicBlockData from '../../../hooks/useDynamicBlockData';
 import BlogCard, { type BlogPost, type BlogCardConfig, type BlogCardColors } from './BlogCard';
+import { API_URL } from '@/config/api';
 
 /* ===================== SEO Context ===================== */
 
@@ -133,7 +134,6 @@ interface BlogArticleBlockProps {
 
 /* ===================== Constants ===================== */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const WORDS_PER_MINUTE = 200;
 
 /* ===================== Helpers ===================== */
@@ -781,3 +781,4 @@ const BlogArticleBlock = React.memo(BlogArticleBlockBase);
 BlogArticleBlock.displayName = 'BlogArticleBlock';
 
 export default BlogArticleBlock;
+

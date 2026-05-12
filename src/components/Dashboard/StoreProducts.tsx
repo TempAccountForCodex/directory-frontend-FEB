@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Box,
   Button,
@@ -36,8 +36,6 @@ import {
   EmptyState,
 } from './shared';
 import type { PlanSummary } from '../../hooks/usePlanSummary';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface Product {
   id: string;
@@ -104,7 +102,7 @@ const StoreProducts = ({
       const params: Record<string, string> = { storeId };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (activeFilter !== 'all') params.isActive = activeFilter;
-      const response = await axios.get(`${API_URL}/products`, {
+      const response = await apiClient.get(`/products`, {
         params,
         headers: {},
       });
@@ -158,13 +156,13 @@ const StoreProducts = ({
 
       if (editingProduct) {
         // Update existing product
-        const response = await axios.put(`${API_URL}/products/${editingProduct.id}`, payload, {
+        const response = await apiClient.put(`/products/${editingProduct.id}`, payload, {
           headers: {},
         });
         setProducts(products.map((p) => (p.id === editingProduct.id ? response.data.data : p)));
       } else {
         // Create new product
-        const response = await axios.post(`${API_URL}/products`, payload, {
+        const response = await apiClient.post(`/products`, payload, {
           headers: {},
         });
         setProducts([...products, response.data.data]);
@@ -192,7 +190,7 @@ const StoreProducts = ({
     }
 
     try {
-      await axios.delete(`${API_URL}/products/${productId}`, {
+      await apiClient.delete(`/products/${productId}`, {
         headers: {},
       });
       setProducts(products.map((p) => (p.id === productId ? { ...p, isActive: false } : p)));

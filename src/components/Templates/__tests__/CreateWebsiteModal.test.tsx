@@ -22,9 +22,28 @@ import '@testing-library/jest-dom/vitest';
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('axios');
+vi.mock('axios', () => {
+  const axiosInstance = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    defaults: { headers: { common: {} }, withCredentials: true },
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  return {
+    default: {
+      ...axiosInstance,
+      create: vi.fn(() => axiosInstance),
+    },
+  };
+});
 import axios from 'axios';
-const mockedAxios = vi.mocked(axios);
+const mockedAxios = axios as any;
 
 vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ actualTheme: 'dark' }),

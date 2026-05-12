@@ -14,11 +14,9 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { Helmet } from 'react-helmet';
 import { getFallbackInsightByIdentifier } from '../../utils/data/Insights';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface Blog {
   metaTitle?: string;
@@ -59,7 +57,7 @@ const InsightsDetailsNew = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${API_URL}/insights/public/${id}`);
+      const response = await apiClient.get(`/insights/public/${id}`);
       // Support both 'insight' and 'blog' keys for backward compatibility
       const insight = response.data.insight || response.data.blog;
       if (insight) {

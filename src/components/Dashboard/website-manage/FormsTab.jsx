@@ -20,7 +20,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
 import { MessageSquare, Download, Trash2, Eye, EyeOff, AlertTriangle, Mail } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
 import {
@@ -37,8 +37,6 @@ import {
   ConfirmationDialog,
 } from '../shared';
 import { useNavigate } from 'react-router-dom';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const FILTER_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -89,8 +87,8 @@ const FormsTab = memo(({ website, websiteId }) => {
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate);
 
-      const res = await axios.get(
-        `${API_URL}/forms/websites/${websiteId}/submissions?${params.toString()}`,
+      const res = await apiClient.get(
+        `/forms/websites/${websiteId}/submissions?${params.toString()}`,
         { withCredentials: true }
       );
       const data = res.data?.data || {};
@@ -147,8 +145,8 @@ const FormsTab = memo(({ website, websiteId }) => {
 
   const handleOpenDetail = useCallback(async (submission) => {
     try {
-      const res = await axios.get(
-        `${API_URL}/forms/websites/${websiteId}/submissions/${submission.id}`,
+      const res = await apiClient.get(
+        `/forms/websites/${websiteId}/submissions/${submission.id}`,
         { withCredentials: true }
       );
       setDetailSubmission(res.data?.data || submission);
@@ -167,8 +165,8 @@ const FormsTab = memo(({ website, websiteId }) => {
 
   const handleMarkRead = useCallback(async (id, isRead) => {
     try {
-      await axios.patch(
-        `${API_URL}/forms/websites/${websiteId}/submissions/${id}`,
+      await apiClient.patch(
+        `/forms/websites/${websiteId}/submissions/${id}`,
         { isRead },
         { withCredentials: true }
       );
@@ -181,8 +179,8 @@ const FormsTab = memo(({ website, websiteId }) => {
 
   const handleMarkSpam = useCallback(async (id, isSpam) => {
     try {
-      await axios.patch(
-        `${API_URL}/forms/websites/${websiteId}/submissions/${id}`,
+      await apiClient.patch(
+        `/forms/websites/${websiteId}/submissions/${id}`,
         { isSpam },
         { withCredentials: true }
       );
@@ -197,15 +195,15 @@ const FormsTab = memo(({ website, websiteId }) => {
     if (!deleteTarget) return;
     try {
       if (Array.isArray(deleteTarget)) {
-        await axios.post(
-          `${API_URL}/forms/websites/${websiteId}/submissions/bulk-delete`,
+        await apiClient.post(
+          `/forms/websites/${websiteId}/submissions/bulk-delete`,
           { ids: deleteTarget },
           { withCredentials: true }
         );
         setSelected([]);
       } else {
-        await axios.delete(
-          `${API_URL}/forms/websites/${websiteId}/submissions/${deleteTarget}`,
+        await apiClient.delete(
+          `/forms/websites/${websiteId}/submissions/${deleteTarget}`,
           { withCredentials: true }
         );
         if (detailSubmission?.id === deleteTarget) handleCloseDetail();
@@ -220,8 +218,8 @@ const FormsTab = memo(({ website, websiteId }) => {
     if (selected.length === 0) return;
     try {
       setBulkLoading(true);
-      await axios.post(
-        `${API_URL}/forms/websites/${websiteId}/submissions/bulk-update`,
+      await apiClient.post(
+        `/forms/websites/${websiteId}/submissions/bulk-update`,
         { ids: selected, isRead: true },
         { withCredentials: true }
       );
@@ -241,8 +239,8 @@ const FormsTab = memo(({ website, websiteId }) => {
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate);
 
-      const res = await axios.get(
-        `${API_URL}/forms/websites/${websiteId}/submissions/export?${params.toString()}`,
+      const res = await apiClient.get(
+        `/forms/websites/${websiteId}/submissions/export?${params.toString()}`,
         { withCredentials: true, responseType: 'blob' }
       );
       const url = window.URL.createObjectURL(new Blob([res.data]));

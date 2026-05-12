@@ -22,6 +22,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
+import { alpha } from '@mui/material/styles';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { DndContext, DragOverlay, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
 import {
@@ -31,17 +32,15 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface DraggableBlock {
-  id: number;
+  id: number | string;
   blockType: string;
   content: Record<string, unknown>;
   isVisible: boolean;
@@ -49,22 +48,37 @@ export interface DraggableBlock {
   variant?: string;
 }
 
+const getBlockLabel = (block: DraggableBlock): string => {
+  const customLabel = block.content?.editorLabel;
+  return typeof customLabel === 'string' && customLabel.trim()
+    ? customLabel.trim()
+    : block.blockType;
+};
+
 export interface DraggableBlockListProps {
   /** Array of blocks to render */
   blocks: DraggableBlock[];
   /** Page ID for API calls */
-  pageId: number;
+  pageId: number | string;
   /** Website ID for API calls */
   websiteId: number | string;
   /** Called when blocks are reordered (optimistic update) */
   onBlocksChange: (blocks: DraggableBlock[]) => void;
   /** Called when a block is selected */
-  onBlockSelect?: (blockId: number) => void;
+  onBlockSelect?: (blockId: number | string) => void;
   /** Currently selected block ID */
-  selectedBlockId?: number | null;
+  selectedBlockId?: number | string | null;
   /** Disables drag interaction */
   disabled?: boolean;
+  /** Skip backend reorder persistence for local-only template pages */
+  persistReorder?: boolean;
 }
+
+const normalizeBlockOrder = (items: DraggableBlock[]): DraggableBlock[] =>
+  items.map((block, index) => ({
+    ...block,
+    sortOrder: index,
+  }));
 
 // ---------------------------------------------------------------------------
 // SortableBlock — individual draggable block row
@@ -75,7 +89,7 @@ interface SortableBlockProps {
   isSelected: boolean;
   isDragging: boolean;
   disabled: boolean;
-  onSelect: (blockId: number) => void;
+  onSelect: (blockId: number | string) => void;
 }
 
 const SortableBlock = React.memo(function SortableBlock({
@@ -109,39 +123,96 @@ const SortableBlock = React.memo(function SortableBlock({
     e.stopPropagation();
   }, []);
 
+  const blockLabel = getBlockLabel(block);
+
   return (
     <li
       ref={setNodeRef}
       style={style}
       role="listitem"
-      aria-label={`Block: ${block.blockType}${isSelected ? ' (selected)' : ''}`}
+      aria-label={`Block: ${blockLabel}${isSelected ? ' (selected)' : ''}`}
     >
       <Paper
         variant="outlined"
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 0.5,
-          p: 1,
-          mb: 0.5,
+          gap: 1.2,
+          px: 1.35,
+          py: 1.1,
+          mb: 1,
           cursor: disabled ? 'default' : 'pointer',
-          borderColor: isSelected ? 'primary.main' : 'divider',
-          bgcolor: isSelected ? 'action.selected' : 'background.paper',
-          opacity: block.isVisible ? 1 : 0.6,
-          '&:hover': disabled ? {} : { borderColor: 'primary.light', bgcolor: 'action.hover' },
-          transition: 'all 0.15s ease',
+          borderRadius: 3,
+          borderColor: isSelected ? 'primary.main' : alpha('#8fbfc1', 0.14),
+          borderWidth: 1,
+          bgcolor: isSelected ? alpha('#16383b', 0.92) : alpha('#f6f8f8', 0.96),
+          color: isSelected ? '#f5fbfb' : '#142022',
+          opacity: block.isVisible ? 1 : 0.58,
+          boxShadow: isSelected
+            ? '0 14px 30px rgba(0, 0, 0, 0.24)'
+            : '0 8px 18px rgba(3, 12, 14, 0.08)',
+          '&:hover': disabled
+            ? {}
+            : {
+                borderColor: isSelected ? 'primary.main' : alpha('#378C92', 0.55),
+                bgcolor: isSelected ? alpha('#1b4448', 0.96) : '#ffffff',
+                transform: 'translateY(-2px)',
+                boxShadow: isSelected
+                  ? '0 18px 34px rgba(0, 0, 0, 0.28)'
+                  : '0 16px 28px rgba(3, 12, 14, 0.12)',
+              },
+          transition: 'transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease',
           position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            background: isSelected
+              ? 'linear-gradient(90deg, rgba(55,140,146,0.18), transparent 42%)'
+              : 'linear-gradient(90deg, rgba(55,140,146,0.08), transparent 36%)',
+            pointerEvents: 'none',
+          },
         }}
         onClick={handleSelect}
       >
+        <Typography
+          variant="caption"
+          sx={{
+            minWidth: 28,
+            height: 28,
+            display: 'grid',
+            placeItems: 'center',
+            borderRadius: 999,
+            bgcolor: isSelected ? '#2da4ad' : alpha('#10282b', 0.08),
+            color: isSelected ? '#081416' : alpha('#10282b', 0.72),
+            fontWeight: 700,
+            fontSize: '0.68rem',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          {block.sortOrder + 1}
+        </Typography>
+
         {/* Drag handle */}
         <IconButton
           {...attributes}
           {...listeners}
           size="small"
           disabled={disabled}
-          aria-label={`Drag block ${block.blockType}`}
-          sx={{ cursor: disabled ? 'not-allowed' : 'grab' }}
+          aria-label={`Drag block ${blockLabel}`}
+          sx={{
+            cursor: disabled ? 'not-allowed' : 'grab',
+            color: isSelected ? alpha('#f5fbfb', 0.72) : alpha('#10282b', 0.45),
+            borderRadius: 2,
+            position: 'relative',
+            zIndex: 1,
+            '&:hover': {
+              bgcolor: isSelected ? alpha('#ffffff', 0.08) : alpha('#10282b', 0.06),
+              color: isSelected ? '#ffffff' : '#10282b',
+            },
+          }}
           onClick={handleDragHandleClick}
         >
           <DragIndicatorIcon fontSize="small" />
@@ -152,16 +223,29 @@ const SortableBlock = React.memo(function SortableBlock({
           variant="body2"
           sx={{
             flexGrow: 1,
-            color: 'text.primary',
-            fontWeight: isSelected ? 600 : 400,
+            color: 'inherit',
+            fontWeight: isSelected ? 700 : 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            fontSize: '0.84rem',
+            position: 'relative',
+            zIndex: 1,
           }}
         >
-          {block.blockType}
+          {blockLabel}
         </Typography>
 
         {/* Visibility indicator */}
         {!block.isVisible && (
-          <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: isSelected ? alpha('#f5fbfb', 0.72) : 'text.disabled',
+              fontSize: '0.65rem',
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
             Hidden
           </Typography>
         )}
@@ -181,24 +265,50 @@ const DragOverlayBlock = React.memo(function DragOverlayBlock({
 }) {
   if (!block) return null;
 
+  const blockLabel = getBlockLabel(block);
+
   return (
     <Paper
       variant="outlined"
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 0.5,
-        p: 1,
+        gap: 1,
+        px: 1.3,
+        py: 1,
+        borderRadius: 3,
         borderColor: 'primary.main',
-        bgcolor: 'background.paper',
-        boxShadow: 4,
+        bgcolor: alpha('#16383b', 0.96),
+        color: '#f5fbfb',
+        boxShadow: '0 20px 38px rgba(0, 0, 0, 0.28)',
         opacity: 1,
         cursor: 'grabbing',
       }}
     >
-      <DragIndicatorIcon fontSize="small" sx={{ color: 'primary.main' }} />
-      <Typography variant="body2" sx={{ flexGrow: 1, fontWeight: 600 }}>
-        {block.blockType}
+      <Box
+        sx={{
+          width: 28,
+          height: 28,
+          borderRadius: 999,
+          display: 'grid',
+          placeItems: 'center',
+          bgcolor: alpha('#2da4ad', 0.18),
+          color: '#7fe3ea',
+        }}
+      >
+        <DragIndicatorIcon fontSize="small" />
+      </Box>
+      <Typography
+        variant="body2"
+        sx={{
+          flexGrow: 1,
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          fontSize: '0.84rem',
+        }}
+      >
+        {blockLabel}
       </Typography>
     </Paper>
   );
@@ -216,12 +326,13 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
   onBlockSelect,
   selectedBlockId = null,
   disabled = false,
+  persistReorder = true,
 }: DraggableBlockListProps) {
   // Track active dragged block for DragOverlay
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const [activeId, setActiveId] = useState<number | string | null>(null);
 
   // Track selected block for keyboard shortcuts
-  const [localSelectedId, setLocalSelectedId] = useState<number | null>(selectedBlockId ?? null);
+  const [localSelectedId, setLocalSelectedId] = useState<number | string | null>(selectedBlockId ?? null);
 
   // Keep ref to previous blocks for rollback
   const previousBlocksRef = useRef<DraggableBlock[]>(blocks);
@@ -233,7 +344,7 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
 
   // ── Drag start ─────────────────────────────────────────────────────────────
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as number);
+    setActiveId(event.active.id as number | string);
   }, []);
 
   // ── Drag end with optimistic update + API call ─────────────────────────────
@@ -253,26 +364,26 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
       previousBlocksRef.current = blocks;
 
       // Optimistic update
-      const reordered = arrayMove(blocks, oldIndex, newIndex);
+      const reordered = normalizeBlockOrder(arrayMove(blocks, oldIndex, newIndex));
       onBlocksChange(reordered);
 
-      // API call
-      try {
-        await axios.patch(`${API_URL}/blocks/reorder`, {
-          pageId,
-          blockIds: reordered.map((b) => b.id),
-        });
-      } catch {
-        // Rollback on error
-        onBlocksChange(previousBlocksRef.current);
+      if (persistReorder) {
+        try {
+          await apiClient.patch(`/blocks/reorder`, {
+            pageId,
+            blockIds: reordered.map((b) => b.id),
+          });
+        } catch {
+          onBlocksChange(previousBlocksRef.current);
+        }
       }
     },
-    [blocks, pageId, onBlocksChange]
+    [blocks, pageId, onBlocksChange, persistReorder]
   );
 
   // ── Block selection ────────────────────────────────────────────────────────
   const handleSelect = useCallback(
-    (blockId: number) => {
+    (blockId: number | string) => {
       setLocalSelectedId(blockId);
       onBlockSelect?.(blockId);
     },
@@ -303,25 +414,27 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
       }
 
       previousBlocksRef.current = blocks;
-      const reordered = arrayMove(blocks, idx, newIdx);
+      const reordered = normalizeBlockOrder(arrayMove(blocks, idx, newIdx));
       onBlocksChange(reordered);
 
       // Persist via API
-      axios
-        .patch(`${API_URL}/blocks/reorder`, {
-          pageId,
-          blockIds: reordered.map((b) => b.id),
-        })
-        .catch(() => {
-          onBlocksChange(previousBlocksRef.current);
-        });
+      if (persistReorder) {
+        apiClient
+          .patch(`/blocks/reorder`, {
+            pageId,
+            blockIds: reordered.map((b) => b.id),
+          })
+          .catch(() => {
+            onBlocksChange(previousBlocksRef.current);
+          });
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [blocks, localSelectedId, selectedBlockId, pageId, onBlocksChange]);
+  }, [blocks, localSelectedId, selectedBlockId, pageId, onBlocksChange, persistReorder]);
 
   // ── Empty state ────────────────────────────────────────────────────────────
   if (blocks.length === 0) {

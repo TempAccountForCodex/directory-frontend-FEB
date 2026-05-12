@@ -165,6 +165,45 @@ function buildCssVariables(website: PreviewWebsite): string {
   return vars.length > 0 ? `:root {\n${vars.join('\n')}\n}` : '';
 }
 
+function buildStyleAttr(
+  base: Record<string, string | undefined>,
+  overrides?: Record<string, unknown>,
+): string {
+  const styles: string[] = [];
+  const merged = {
+    ...base,
+    ...(overrides && typeof overrides === 'object' ? overrides : {}),
+  } as Record<string, unknown>;
+
+  const allowedKeys = [
+    'display',
+    'fontFamily',
+    'fontSize',
+    'color',
+    'fontWeight',
+    'fontStyle',
+    'textDecoration',
+    'textAlign',
+    'lineHeight',
+    'letterSpacing',
+    'margin',
+    'padding',
+    'background',
+    'borderRadius',
+    'opacity',
+  ];
+
+  for (const key of allowedKeys) {
+    const rawValue = merged[key];
+    if (rawValue === undefined || rawValue === null || rawValue === '') continue;
+    const safeKey = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+    const safeValue = sanitizeCssValue(String(rawValue));
+    styles.push(`${safeKey}:${safeValue}`);
+  }
+
+  return styles.join(';');
+}
+
 /* ------------------------------------------------------------------ */
 /*  Block → HTML renderers                                             */
 /* ------------------------------------------------------------------ */
@@ -174,20 +213,58 @@ function renderHeroBlock(content: Record<string, unknown>): string {
   const subtitle = escapeHtml(content.subtitle);
   const buttonText = escapeHtml(content.buttonText);
   const buttonUrl = sanitizeUrl(content.buttonUrl || '#');
+  const titleStyle = buildStyleAttr(
+    {
+      margin: '0 0 16px',
+      fontFamily: 'var(--font-heading,sans-serif)',
+      fontSize: '2.5rem',
+      textAlign: 'center',
+    } as Record<string, string>,
+    content.titleStyle as Record<string, unknown> | undefined,
+  );
+  const subtitleStyle = buildStyleAttr(
+    {
+      margin: '0 0 24px',
+      fontSize: '1.2rem',
+      opacity: '0.9',
+      textAlign: 'center',
+    } as Record<string, string>,
+    content.subtitleStyle as Record<string, unknown> | undefined,
+  );
+  const buttonTextStyle = buildStyleAttr(
+    {
+      display: 'inline-block',
+      padding: '12px 32px',
+      background: '#fff',
+      color: 'var(--color-primary,#378C92)',
+      borderRadius: '6px',
+      textDecoration: 'none',
+      fontWeight: '600',
+    } as Record<string, string>,
+    content.buttonTextStyle as Record<string, unknown> | undefined,
+  );
 
   return `
     <section style="padding:60px 20px;text-align:center;background:var(--color-primary,#378C92);color:#fff;">
-      ${title ? `<h1 data-editable="title" data-edit-type="single" style="margin:0 0 16px;font-family:var(--font-heading,sans-serif);font-size:2.5rem;">${title}</h1>` : ''}
-      ${subtitle ? `<p data-editable="subtitle" data-edit-type="single" style="margin:0 0 24px;font-size:1.2rem;opacity:0.9;">${subtitle}</p>` : ''}
-      ${buttonText ? `<a data-editable="buttonText" data-edit-type="single" href="${buttonUrl}" style="display:inline-block;padding:12px 32px;background:#fff;color:var(--color-primary,#378C92);border-radius:6px;text-decoration:none;font-weight:600;">${buttonText}</a>` : ''}
+      ${title ? `<h1 data-editable="title" data-edit-type="single" style="${titleStyle}">${title}</h1>` : ''}
+      ${subtitle ? `<p data-editable="subtitle" data-edit-type="single" style="${subtitleStyle}">${subtitle}</p>` : ''}
+      ${buttonText ? `<a data-editable="buttonText" data-edit-type="single" href="${buttonUrl}" style="${buttonTextStyle}">${buttonText}</a>` : ''}
     </section>`;
 }
 
 function renderTextBlock(content: Record<string, unknown>): string {
   const text = escapeHtml(content.text);
+  const textStyle = buildStyleAttr(
+    {
+      fontFamily: 'var(--font-body,sans-serif)',
+      lineHeight: '1.7',
+      color: 'var(--color-text,#111)',
+    },
+    (content.textStyle || content.bodyStyle) as Record<string, unknown> | undefined,
+  );
   return `
     <section style="padding:40px 20px;max-width:800px;margin:0 auto;">
-      <div data-editable="text" data-edit-type="multi" style="font-family:var(--font-body,sans-serif);line-height:1.7;color:var(--color-text,#111);">${text}</div>
+      <div data-editable="text" data-edit-type="multi" style="${textStyle}">${text}</div>
     </section>`;
 }
 
@@ -196,12 +273,40 @@ function renderCtaBlock(content: Record<string, unknown>): string {
   const description = escapeHtml(content.description);
   const buttonText = escapeHtml(content.buttonText);
   const buttonUrl = sanitizeUrl(content.buttonUrl || '#');
+  const headingStyle = buildStyleAttr(
+    {
+      margin: '0 0 12px',
+      fontFamily: 'var(--font-heading,sans-serif)',
+      textAlign: 'center',
+    },
+    content.headingStyle as Record<string, unknown> | undefined,
+  );
+  const descriptionStyle = buildStyleAttr(
+    {
+      margin: '0 0 24px',
+      color: 'var(--color-text,#444)',
+      textAlign: 'center',
+    },
+    (content.descriptionStyle || content.bodyStyle) as Record<string, unknown> | undefined,
+  );
+  const buttonTextStyle = buildStyleAttr(
+    {
+      display: 'inline-block',
+      padding: '12px 32px',
+      background: 'var(--color-primary,#378C92)',
+      color: '#fff',
+      borderRadius: '6px',
+      textDecoration: 'none',
+      fontWeight: '600',
+    },
+    content.buttonTextStyle as Record<string, unknown> | undefined,
+  );
 
   return `
     <section style="padding:60px 20px;text-align:center;background:var(--color-secondary,#f5f5f5);">
-      ${heading ? `<h2 data-editable="heading" data-edit-type="single" style="margin:0 0 12px;font-family:var(--font-heading,sans-serif);">${heading}</h2>` : ''}
-      ${description ? `<p data-editable="description" data-edit-type="multi" style="margin:0 0 24px;color:var(--color-text,#444);">${description}</p>` : ''}
-      ${buttonText ? `<a data-editable="buttonText" data-edit-type="single" href="${buttonUrl}" style="display:inline-block;padding:12px 32px;background:var(--color-primary,#378C92);color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">${buttonText}</a>` : ''}
+      ${heading ? `<h2 data-editable="heading" data-edit-type="single" style="${headingStyle}">${heading}</h2>` : ''}
+      ${description ? `<p data-editable="description" data-edit-type="multi" style="${descriptionStyle}">${description}</p>` : ''}
+      ${buttonText ? `<a data-editable="buttonText" data-edit-type="single" href="${buttonUrl}" style="${buttonTextStyle}">${buttonText}</a>` : ''}
     </section>`;
 }
 
@@ -242,10 +347,18 @@ function renderFeaturesBlock(content: Record<string, unknown>): string {
 
 function renderContactBlock(content: Record<string, unknown>): string {
   const heading = escapeHtml(content.heading || 'Contact Us');
+  const headingStyle = buildStyleAttr(
+    {
+      margin: '0 0 24px',
+      fontFamily: 'var(--font-heading,sans-serif)',
+      textAlign: 'center',
+    },
+    content.headingStyle as Record<string, unknown> | undefined,
+  );
 
   return `
     <section style="padding:60px 20px;text-align:center;">
-      <h2 data-editable="heading" data-edit-type="single" style="margin:0 0 24px;font-family:var(--font-heading,sans-serif);">${heading}</h2>
+      <h2 data-editable="heading" data-edit-type="single" style="${headingStyle}">${heading}</h2>
       <div style="max-width:500px;margin:0 auto;padding:20px;border:1px solid #ddd;border-radius:8px;color:#999;">
         Contact form placeholder
       </div>
@@ -284,11 +397,19 @@ export function renderNavbarBlock(content: Record<string, unknown>): string {
       ? `<img src="${sanitizeUrl(content.logo)}" alt="${brandName}" style="height:32px;margin-right:8px;" />`
       : '';
 
+  const brandNameStyle = buildStyleAttr(
+    {
+      fontFamily: 'var(--font-heading,sans-serif)',
+      fontSize: '1.2rem',
+    },
+    content.brandNameStyle as Record<string, unknown> | undefined,
+  );
+
   return `
     <nav data-block-type="NAVBAR" data-global-component="navbar" style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--color-primary,#378C92);color:#fff;${sticky}">
       <div style="display:flex;align-items:center;">
         ${logoImg}
-        <strong data-editable="brandName" data-edit-type="single" style="font-family:var(--font-heading,sans-serif);font-size:1.2rem;">${brandName}</strong>
+        <strong data-editable="brandName" data-edit-type="single" style="${brandNameStyle}">${brandName}</strong>
       </div>
       <div style="display:flex;align-items:center;">
         ${navHtml}
@@ -299,6 +420,14 @@ export function renderNavbarBlock(content: Record<string, unknown>): string {
 
 export function renderFooterBlock(content: Record<string, unknown>): string {
   const copyright = escapeHtml(content.copyright);
+  const copyrightStyle = buildStyleAttr(
+    {
+      margin: '0',
+      textAlign: 'center',
+      opacity: '0.7',
+    },
+    content.copyrightStyle as Record<string, unknown> | undefined,
+  );
 
   // Logo
   const logoImg =
@@ -353,7 +482,7 @@ export function renderFooterBlock(content: Record<string, unknown>): string {
       ${columnsHtml ? `<div style="display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;">${columnsHtml}</div>` : ''}
       ${legacyHtml ? `<div style="text-align:center;margin-bottom:8px;">${legacyHtml}</div>` : ''}
       ${socialHtml ? `<div style="text-align:center;margin-bottom:8px;">${socialHtml}</div>` : ''}
-      ${copyright ? `<p data-editable="copyright" data-edit-type="single" style="margin:0;text-align:center;opacity:0.7;">${copyright}</p>` : ''}
+      ${copyright ? `<p data-editable="copyright" data-edit-type="single" style="${copyrightStyle}">${copyright}</p>` : ''}
     </footer>`;
 }
 
@@ -465,18 +594,61 @@ function buildPostMessageScript(parentOrigin: string): string {
         }
       }
     }
+
+    if (data.type === 'SELECT_EDITABLE' && data.blockId && data.fieldPath) {
+      var current = document.querySelectorAll('.tt-editable-selected');
+      for (var s = 0; s < current.length; s++) {
+        current[s].classList.remove('tt-editable-selected');
+      }
+      var targetBlock = document.getElementById('block-' + data.blockId);
+      if (targetBlock) {
+        var targetEditable = targetBlock.querySelector('[data-editable="' + data.fieldPath + '"]');
+        if (targetEditable) {
+          targetEditable.classList.add('tt-editable-selected');
+        }
+      }
+    }
   });
 
   // Step 9.14.1: Click handler — select block on click
   document.addEventListener('click', function(event) {
-    event.preventDefault();
-    event.stopPropagation();
     var blockEl = event.target.closest('[data-block-id]');
     if (blockEl) {
+      event.preventDefault();
+      event.stopPropagation();
       var blockId = blockEl.getAttribute('data-block-id');
       try {
         window.parent.postMessage({ type: 'BLOCK_SELECTED', blockId: blockId }, allowedOrigin);
       } catch (_) { /* silent */ }
+    }
+
+    var editableEl = event.target.closest ? event.target.closest('[data-editable]') : null;
+    if (editableEl && blockEl) {
+      var editableFieldPath = editableEl.getAttribute('data-editable');
+      var editableType = editableEl.getAttribute('data-edit-type') || 'single';
+      if (editableFieldPath && /^[a-zA-Z0-9.]+$/.test(editableFieldPath)) {
+        var existing = document.querySelectorAll('.tt-editable-selected');
+        for (var e = 0; e < existing.length; e++) {
+          existing[e].classList.remove('tt-editable-selected');
+        }
+        editableEl.classList.add('tt-editable-selected');
+        try {
+          var editableRect = editableEl.getBoundingClientRect();
+          window.parent.postMessage({
+            type: 'EDITABLE_SELECTED',
+            blockId: blockEl.getAttribute('data-block-id'),
+            fieldPath: editableFieldPath,
+            value: editableEl.textContent || '',
+            editType: editableType,
+            rect: {
+              top: editableRect.top,
+              left: editableRect.left,
+              width: editableRect.width,
+              height: editableRect.height
+            }
+          }, allowedOrigin);
+        } catch (_) { /* silent */ }
+      }
     }
   }, true);
 
@@ -642,6 +814,11 @@ function buildResponsiveCss(): string {
     .tt-editing-active {
       outline: 2px dashed rgba(25, 118, 210, 0.6);
       outline-offset: 2px;
+    }
+    .tt-editable-selected {
+      outline: 2px solid rgba(25, 118, 210, 0.45);
+      outline-offset: 2px;
+      border-radius: 4px;
     }
 
     /* Desktop-first responsive breakpoints */

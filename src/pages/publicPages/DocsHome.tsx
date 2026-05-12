@@ -18,7 +18,7 @@ import Skeleton from '@mui/material/Skeleton';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import { BookOpen, Zap, AlertCircle, Code2, ChevronRight } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { Link } from 'react-router-dom';
 import DocSearch from '../../components/Docs/DocSearch';
 
@@ -36,8 +36,6 @@ interface DocSection {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const SECTION_ICONS: Record<string, React.ReactNode> = {
   'getting-started': <BookOpen size={28} />,
@@ -190,7 +188,7 @@ const DocsHome = memo(() => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await axios.get(`${API_URL}/docs/sections`);
+      const resp = await apiClient.get(`/docs/sections`);
       const data: DocSection[] = resp.data?.sections ?? resp.data ?? DEFAULT_SECTIONS;
       setSections(
         data.length >= 4

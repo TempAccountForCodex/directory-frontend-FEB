@@ -20,12 +20,11 @@ import {
   Trash2 as DeleteIcon,
   X as CloseIcon,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { useNavigate } from 'react-router-dom';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+import { API_URL } from '@/config/api';
 
 const NotificationPopup = () => {
   const { actualTheme } = useCustomTheme();
@@ -52,7 +51,7 @@ const NotificationPopup = () => {
   const fetchNotifications = async (pageNum = 1, append = false) => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/notifications?page=${pageNum}&limit=6`);
+      const response = await apiClient.get(`/notifications?page=${pageNum}&limit=6`);
 
       const newNotifications = response.data.notifications || [];
       setNotifications((prev) => (append ? [...prev, ...newNotifications] : newNotifications));
@@ -71,7 +70,7 @@ const NotificationPopup = () => {
 
   const fetchUnreadCount = async () => {
     try {
-      const response = await axios.get(`${API_URL}/notifications/unread-count`);
+      const response = await apiClient.get(`/notifications/unread-count`);
       const count = response.data.unreadCount || 0;
       setUnreadCount(count);
       return count;
@@ -134,9 +133,9 @@ const NotificationPopup = () => {
 
   // Stream unread count updates via SSE
   useEffect(() => {
-    const streamUrl = `${API_URL}/notifications/stream`;
+    const streamUrl = new URL(`${API_URL}/notifications/stream`, window.location.origin);
 
-    const eventSource = new EventSource(streamUrl, {
+    const eventSource = new EventSource(streamUrl.toString(), {
       withCredentials: true,
     });
 
@@ -210,7 +209,7 @@ const NotificationPopup = () => {
     if (isRead) return; // Already read
 
     try {
-      await axios.patch(`${API_URL}/notifications/${notificationId}/read`, {});
+      await apiClient.patch(`/notifications/${notificationId}/read`, {});
 
       // IMMEDIATELY refetch data for real-time updates
       await fetchNotifications(page, false);
@@ -223,7 +222,7 @@ const NotificationPopup = () => {
   // Mark all as read
   const markAllAsRead = async () => {
     try {
-      await axios.patch(`${API_URL}/notifications/read-all`, {});
+      await apiClient.patch(`/notifications/read-all`, {});
 
       // IMMEDIATELY refetch data for real-time updates
       await fetchNotifications(page, false);
@@ -237,7 +236,7 @@ const NotificationPopup = () => {
   const deleteNotification = async (notificationId, event) => {
     event.stopPropagation();
     try {
-      await axios.delete(`${API_URL}/notifications/${notificationId}`);
+      await apiClient.delete(`/notifications/${notificationId}`);
 
       // IMMEDIATELY refetch data for real-time updates
       await fetchNotifications(page, false);

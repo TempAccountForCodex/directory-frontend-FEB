@@ -9,6 +9,9 @@ import createCache from '@emotion/cache';
 import { I18nProvider } from './context/I18nContext';
 import { FeatureFlagsProvider } from './context/FeatureFlagsContext';
 import { ABTestProvider } from './context/ABTestContext';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from './api/queryClient';
 import { initSentry, isSentryEnabled, getSentry } from './config/sentry';
 
 /**
@@ -85,25 +88,28 @@ const _sentry = getSentry();
 function AppWithErrorBoundary(): JSX.Element {
   const inner = (
     <StrictMode>
-      <CacheProvider value={emotionCache}>
-        <ThemeProvider theme={theme}>
-          <I18nProvider defaultLanguage="en">
-            <FeatureFlagsProvider
-              defaultFlags={{
-                analytics_enabled: true,
-                contact_form_enabled: true,
-                lazy_load_images: true,
-              }}
-              source="local"
-            >
-              <ABTestProvider tests={[]}>
-                <CssBaseline />
-                <App />
-              </ABTestProvider>
-            </FeatureFlagsProvider>
-          </I18nProvider>
-        </ThemeProvider>
-      </CacheProvider>
+      <QueryClientProvider client={queryClient}>
+        <CacheProvider value={emotionCache}>
+          <ThemeProvider theme={theme}>
+            <I18nProvider defaultLanguage="en">
+              <FeatureFlagsProvider
+                defaultFlags={{
+                  analytics_enabled: true,
+                  contact_form_enabled: true,
+                  lazy_load_images: true,
+                }}
+                source="local"
+              >
+                <ABTestProvider tests={[]}>
+                  <CssBaseline />
+                  <App />
+                  {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+                </ABTestProvider>
+              </FeatureFlagsProvider>
+            </I18nProvider>
+          </ThemeProvider>
+        </CacheProvider>
+      </QueryClientProvider>
     </StrictMode>
   );
 

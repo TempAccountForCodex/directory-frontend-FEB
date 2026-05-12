@@ -1,19 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Grid,
-  Paper,
-  Stack,
-  Chip,
-  Divider,
-} from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
-import BoltIcon from "@mui/icons-material/Bolt";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import React, { useEffect, useRef, useState } from 'react';
+import { Box, Container, Typography, Grid, Paper, Stack, Chip, Divider } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
+import BoltIcon from '@mui/icons-material/Bolt';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
-const uniqueLinesbg = "/assets/publicAssets/images/common/uniqueLinesbg.webp";
+const uniqueLinesbg = '/assets/publicAssets/images/common/uniqueLinesbg.webp';
 
 const WhyChooseUsSection = () => {
   const theme = useTheme();
@@ -28,7 +19,7 @@ const WhyChooseUsSection = () => {
           observer.disconnect();
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0.2 }
     );
 
     if (sectionRef.current) observer.observe(sectionRef.current);
@@ -37,22 +28,22 @@ const WhyChooseUsSection = () => {
   }, []);
 
   const stats = [
-    { value: "92%", label: "Client retention rate over the past 3 years" },
-    { value: "1M+", label: "Users reached through our platforms" },
+    { value: '92%', label: 'Client retention rate over the past 3 years' },
+    { value: '1M+', label: 'Users reached through our platforms' },
   ];
 
   const comparisonData = [
     {
-      feature: "The Experience",
-      traditional: "Manual editors",
-      ours: "AI-Powered generation",
+      feature: 'The Experience',
+      traditional: 'Manual editors',
+      ours: 'AI-Powered generation',
     },
     {
-      feature: "Discovery",
-      traditional: "Hidden on web",
-      ours: "Built-in traffic",
+      feature: 'Discovery',
+      traditional: 'Hidden on web',
+      ours: 'Built-in traffic',
     },
-    { feature: "Mobile", traditional: "Responsive hacks", ours: "Native-feel" },
+    { feature: 'Mobile', traditional: 'Responsive hacks', ours: 'Native-feel' },
   ];
 
   return (
@@ -60,27 +51,27 @@ const WhyChooseUsSection = () => {
       ref={sectionRef}
       sx={{
         py: { xs: 10, md: 18 },
-        position: "relative",
-        overflow: "hidden",
-        backgroundSize: "32px 32px",
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundSize: '32px 32px',
 
-        transition: "all 1.2s ease",
+        transition: 'all 1.2s ease',
         opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0px)" : "translateY(40px)",
+        transform: isVisible ? 'translateY(0px)' : 'translateY(40px)',
 
-        "&::before": {
+        '&::before': {
           content: '""',
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
           backgroundImage: `url(${uniqueLinesbg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           opacity: 0.8,
           zIndex: 0,
         },
 
-        "& > *": {
-          position: "relative",
+        '& > *': {
+          position: 'relative',
           zIndex: 1,
         },
       }}
@@ -91,23 +82,23 @@ const WhyChooseUsSection = () => {
           <Grid item xs={12} md={6}>
             <Stack spacing={3}>
               <Chip
-                icon={<AutoAwesomeIcon sx={{ fontSize: 16, fill: "black" }} />}
+                icon={<AutoAwesomeIcon sx={{ fontSize: 16, fill: 'black' }} />}
                 label=" WHY CHOOSE US"
                 sx={{
                   px: 1.5,
                   py: 1.8,
-                  height: "auto",
+                  height: 'auto',
                   borderRadius: 999,
-                  background: "transparent",
+                  background: 'transparent',
                   border: `1px solid ${theme.palette.text.primary}`,
-                  "& .MuiChip-label": {
+                  '& .MuiChip-label': {
                     fontWeight: 700,
-                    fontSize: "0.75rem",
+                    fontSize: '0.75rem',
                     color: theme.palette.text.primary,
-                    letterSpacing: "0.5px",
+                    letterSpacing: '0.5px',
                     pl: 2,
                   },
-                  width: "fit-content",
+                  width: 'fit-content',
                 }}
               />
 
@@ -115,17 +106,17 @@ const WhyChooseUsSection = () => {
                 variant="h2"
                 sx={{
                   fontWeight: 800,
-                  fontSize: { xs: "2rem", md: "2.5rem", lg: "3.5rem" },
-                  color: "#1A1A1A",
+                  fontSize: { xs: '2rem', md: '2.5rem', lg: '3.5rem' },
+                  color: '#1A1A1A',
                   lineHeight: 1.1,
                 }}
               >
                 The Platform Built for <br />
-                <Box component="span" sx={{ color: "#888" }}>
+                <Box component="span" sx={{ color: '#888' }}>
                   Results, Not Just
                 </Box>
                 <br />
-                <Box component="span" sx={{ color: "#1A1A1A" }}>
+                <Box component="span" sx={{ color: '#1A1A1A' }}>
                   Design.
                 </Box>
               </Typography>
@@ -135,9 +126,9 @@ const WhyChooseUsSection = () => {
                 sx={{
                   p: 4,
                   borderRadius: 6,
-                  background: "white",
-                  border: "1px solid #E5E7EB",
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.03)",
+                  background: 'white',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.03)',
                 }}
               >
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
@@ -149,10 +140,10 @@ const WhyChooseUsSection = () => {
                     <Box key={idx}>
                       <Typography
                         sx={{
-                          fontSize: "0.7rem",
+                          fontSize: '0.7rem',
                           fontWeight: 800,
-                          color: "#000000ff",
-                          textTransform: "uppercase",
+                          color: '#000000ff',
+                          textTransform: 'uppercase',
                           mb: 1,
                         }}
                       >
@@ -163,9 +154,9 @@ const WhyChooseUsSection = () => {
                         <Grid item xs={5}>
                           <Typography
                             sx={{
-                              fontSize: "0.85rem",
-                              color: "#9CA3AF",
-                              textDecoration: "line-through",
+                              fontSize: '0.85rem',
+                              color: '#9CA3AF',
+                              textDecoration: 'line-through',
                             }}
                           >
                             {item.traditional}
@@ -176,10 +167,10 @@ const WhyChooseUsSection = () => {
                           item
                           xs={1}
                           sx={{
-                            textAlign: "center",
-                            color: "#378C92",
+                            textAlign: 'center',
+                            color: '#378C92',
                             fontWeight: 900,
-                            fontSize: "0.7rem",
+                            fontSize: '0.7rem',
                           }}
                         >
                           VS
@@ -188,9 +179,9 @@ const WhyChooseUsSection = () => {
                         <Grid item xs={6}>
                           <Typography
                             sx={{
-                              fontSize: { xs: "0.85rem", sm: "0.95rem" },
+                              fontSize: { xs: '0.85rem', sm: '0.95rem' },
                               fontWeight: 700,
-                              color: "#1A1A1A",
+                              color: '#1A1A1A',
                             }}
                           >
                             {item.ours}
@@ -198,9 +189,7 @@ const WhyChooseUsSection = () => {
                         </Grid>
                       </Grid>
 
-                      {idx !== comparisonData.length - 1 && (
-                        <Divider sx={{ mt: 2 }} />
-                      )}
+                      {idx !== comparisonData.length - 1 && <Divider sx={{ mt: 2 }} />}
                     </Box>
                   ))}
                 </Stack>
@@ -216,20 +205,14 @@ const WhyChooseUsSection = () => {
                   sx={{
                     p: { xs: 4, lg: 5 },
                     borderRadius: 6,
-                    background: "#061a1c",
-                    color: "white",
-                    position: "relative",
-                    overflow: "hidden",
+                    background: '#061a1c',
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden',
                   }}
                 >
-                  <svg width={0} height={0} style={{ position: "absolute" }}>
-                    <linearGradient
-                      id="goldGradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="100%"
-                    >
+                  <svg width={0} height={0} style={{ position: 'absolute' }}>
+                    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#BF953F" />
                       <stop offset="25%" stopColor="#FCF6BA" />
                       <stop offset="50%" stopColor="#B38728" />
@@ -239,25 +222,25 @@ const WhyChooseUsSection = () => {
 
                   <BoltIcon
                     sx={{
-                      position: "absolute",
-                      top: "-20px",
-                      right: "-30px",
-                      fontSize: "15rem",
-                      color: "rgba(255, 255, 255, 0.03)",
-                      transform: "rotate(-10deg)",
-                      userSelect: "none",
-                      pointerEvents: "none",
+                      position: 'absolute',
+                      top: '-20px',
+                      right: '-30px',
+                      fontSize: '15rem',
+                      color: 'rgba(255, 255, 255, 0.03)',
+                      transform: 'rotate(-10deg)',
+                      userSelect: 'none',
+                      pointerEvents: 'none',
                       zIndex: 0,
                     }}
                   />
 
-                  <Box sx={{ position: "relative", zIndex: 1 }}>
+                  <Box sx={{ position: 'relative', zIndex: 1 }}>
                     <BoltIcon
                       sx={{
                         fontSize: 48,
                         mb: 2,
-                        fill: "url(#goldGradient)",
-                        filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.5))",
+                        fill: 'url(#goldGradient)',
+                        filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.5))',
                       }}
                     />
                     <Typography
@@ -265,7 +248,7 @@ const WhyChooseUsSection = () => {
                       sx={{
                         fontWeight: 800,
                         mb: 1.5,
-                        fontSize: { xs: "25px", lg: "35px" },
+                        fontSize: { xs: '25px', lg: '35px' },
                       }}
                     >
                       Built for Speed
@@ -273,13 +256,13 @@ const WhyChooseUsSection = () => {
                     <Typography
                       sx={{
                         opacity: 0.8,
-                        fontSize: { xs: "0.9rem", lg: "1rem" },
+                        fontSize: { xs: '0.9rem', lg: '1rem' },
                         lineHeight: 1.6,
-                        maxWidth: "60%",
+                        maxWidth: '60%',
                       }}
                     >
-                      Your page is live in under 10 minutes. No hosting to
-                      setup, no plugins to configure. Just pure growth.
+                      Your page is live in under 10 minutes. No hosting to setup, no plugins to
+                      configure. Just pure growth.
                     </Typography>
                   </Box>
                 </Paper>
@@ -291,50 +274,50 @@ const WhyChooseUsSection = () => {
                     elevation={0}
                     sx={{
                       p: 4,
-                      height: "100%",
+                      height: '100%',
                       borderRadius: 4,
-                      background: "white",
-                      border: "1px solid #E5E7EB",
-                      position: "relative",
-                      overflow: "hidden",
-                      transition: "transform 0.3s ease",
-                      "&:hover": { transform: "translateY(-5px)" },
+                      background: 'white',
+                      border: '1px solid #E5E7EB',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'transform 0.3s ease',
+                      '&:hover': { transform: 'translateY(-5px)' },
                     }}
                   >
                     <Typography
                       sx={{
-                        position: "absolute",
-                        top: "-16px",
-                        right: "-38px",
-                        fontSize: "7rem",
+                        position: 'absolute',
+                        top: '-16px',
+                        right: '-38px',
+                        fontSize: '7rem',
                         fontWeight: 900,
-                        color: "rgb(247 248 250)",
+                        color: 'rgb(247 248 250)',
                         lineHeight: 1,
-                        userSelect: "none",
+                        userSelect: 'none',
                       }}
                     >
                       {stat.value}
                     </Typography>
 
-                    <Stack spacing={1} sx={{ position: "relative", zIndex: 1 }}>
+                    <Stack spacing={1} sx={{ position: 'relative', zIndex: 1 }}>
                       <Typography
                         variant="h3"
                         sx={{
                           fontWeight: 400,
-                          color: "#1A1A1A",
-                          fontSize: "4rem",
-                          marginTop: "20px",
+                          color: '#1A1A1A',
+                          fontSize: '4rem',
+                          marginTop: '20px',
                         }}
                       >
                         {stat.value}
                       </Typography>
                       <Typography
                         sx={{
-                          color: "#666",
-                          fontSize: "0.95rem",
+                          color: '#666',
+                          fontSize: '0.95rem',
                           lineHeight: 1.5,
-                          maxWidth: "80%",
-                          paddingTop: { md: "73px", lg: "146px" },
+                          maxWidth: '80%',
+                          paddingTop: { md: '73px', lg: '146px' },
                         }}
                       >
                         {stat.label}

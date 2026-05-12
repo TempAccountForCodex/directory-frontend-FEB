@@ -16,7 +16,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Dialog,
   DialogTitle,
@@ -46,8 +46,6 @@ import {
   DashboardGradientButton,
   DashboardCancelButton,
 } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const DELEGATE_ROLES = [
   {
@@ -159,7 +157,7 @@ const AccountDelegateInviteModal = React.memo(function AccountDelegateInviteModa
         payload.serviceScopes = serviceScopes;
       }
 
-      await axios.post(`${API_URL}/account/delegates/invite`, payload);
+      await apiClient.post(`/account/delegates/invite`, payload);
       resetForm();
       onClose();
       if (onSuccess) {

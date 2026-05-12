@@ -46,7 +46,7 @@ import {
   Users,
   Loader,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { isAdmin, isContentManager, hasRole, ROLES } from '../../constants/roles';
@@ -65,8 +65,6 @@ import {
   DashboardSelect,
   ConfirmationDialog,
 } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -205,7 +203,7 @@ const Communications = memo(({ user, pageTitle, pageSubtitle }) => {
     if (targetType !== 'template_users') return;
     setTemplatesLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/templates`, {
+      const res = await apiClient.get(`/templates`, {
         params: { status: 'approved', limit: 100, userId: user?.id },
         withCredentials: true,
       });
@@ -246,7 +244,7 @@ const Communications = memo(({ user, pageTitle, pageSubtitle }) => {
       try {
         const params = { targetType };
         if (targetValue) params.targetValue = targetValue;
-        const res = await axios.get(`${API_URL}/admin/broadcasts/preview-count`, {
+        const res = await apiClient.get(`/admin/broadcasts/preview-count`, {
           params,
           withCredentials: true,
         });
@@ -273,7 +271,7 @@ const Communications = memo(({ user, pageTitle, pageSubtitle }) => {
         limit: historyRowsPerPage,
       };
       if (statusFilter) params.status = statusFilter;
-      const res = await axios.get(`${API_URL}/admin/broadcasts`, {
+      const res = await apiClient.get(`/admin/broadcasts`, {
         params,
         withCredentials: true,
       });
@@ -316,8 +314,8 @@ const Communications = memo(({ user, pageTitle, pageSubtitle }) => {
     if (!validateForm()) return;
     setComposing(true);
     try {
-      await axios.post(
-        `${API_URL}/admin/broadcasts`,
+      await apiClient.post(
+        `/admin/broadcasts`,
         {
           title: title.trim(),
           message: message.trim(),
@@ -347,8 +345,8 @@ const Communications = memo(({ user, pageTitle, pageSubtitle }) => {
     setComposing(true);
     try {
       // First create the broadcast as a draft
-      const createRes = await axios.post(
-        `${API_URL}/admin/broadcasts`,
+      const createRes = await apiClient.post(
+        `/admin/broadcasts`,
         {
           title: title.trim(),
           message: message.trim(),
@@ -364,8 +362,8 @@ const Communications = memo(({ user, pageTitle, pageSubtitle }) => {
       if (!broadcastId) throw new Error('Failed to create broadcast');
 
       // Then trigger the send
-      await axios.post(
-        `${API_URL}/admin/broadcasts/${broadcastId}/send`,
+      await apiClient.post(
+        `/admin/broadcasts/${broadcastId}/send`,
         {},
         { withCredentials: true },
       );
@@ -411,7 +409,7 @@ const Communications = memo(({ user, pageTitle, pageSubtitle }) => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
-      await axios.delete(`${API_URL}/admin/broadcasts/${deleteTarget.id}`, {
+      await apiClient.delete(`/admin/broadcasts/${deleteTarget.id}`, {
         withCredentials: true,
       });
       showToast('Broadcast deleted');
@@ -429,8 +427,8 @@ const Communications = memo(({ user, pageTitle, pageSubtitle }) => {
   const handleSendFromHistory = useCallback(async () => {
     if (!sendConfirmTarget) return;
     try {
-      await axios.post(
-        `${API_URL}/admin/broadcasts/${sendConfirmTarget.id}/send`,
+      await apiClient.post(
+        `/admin/broadcasts/${sendConfirmTarget.id}/send`,
         {},
         { withCredentials: true },
       );

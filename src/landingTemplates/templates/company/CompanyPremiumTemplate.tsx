@@ -1,9 +1,19 @@
 import React from 'react';
 import { Box, Button, Stack, TextField, Typography } from '@mui/material';
-import { ArrowRight, Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter } from 'lucide-react';
+import {
+  ArrowRight,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Mail,
+  MapPin,
+  Phone,
+  Quote,
+  Twitter,
+} from 'lucide-react';
 import FadeIn from '../../blocks/FadeIn';
 import type { TemplateProps } from '../../templateEngine/types';
-import { blendHex, buildCompanyTheme, rgba } from './theme';
+import { getSectionStyleSx } from '../../utils/sectionStyle';
 
 const editorialImages = {
   hero: 'https://images.unsplash.com/photo-1525258946800-98cfd641d0de?auto=format&fit=crop&w=1600&q=80',
@@ -21,20 +31,45 @@ const editorialImages = {
     'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=1100&q=80',
   servicesRight:
     'https://images.unsplash.com/photo-1460036521480-ff49c08c2781?auto=format&fit=crop&w=1100&q=80',
+  detailLeft:
+    'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1000&q=80',
+  detailRight:
+    'https://images.unsplash.com/photo-1459666644539-a9755287d6b0?auto=format&fit=crop&w=1000&q=80',
 };
 
-const defaultHeadingFont = 'Georgia, "Times New Roman", serif';
-const defaultBodyFont = '"DM Sans", "Inter", sans-serif';
+const serifFont = '"Bodoni Moda", "Didot", "Times New Roman", serif';
+const sansFont = '"Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 
 const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
-  const theme = buildCompanyTheme({
-    data,
-    defaultPrimary: '#101010',
-    defaultSecondary: '#f3ede3',
-    defaultHeadingFont,
-    defaultBodyFont,
-  });
-  const features = data.features?.slice(0, 6) || [];
+  const templateContent = (data.templateContent as Record<string, any> | undefined) || {};
+  const homeContent = templateContent.home || {};
+  const featuresContent = templateContent.features || {};
+  const galleryContent = templateContent.gallery || {};
+  const aboutContent = templateContent.about || {};
+  const testimonialsContent = templateContent.testimonials || {};
+  const contactContent = templateContent.contact || {};
+  const primary = data.primaryColor || '#101010';
+  const secondary = data.secondaryColor || '#f3ede3';
+  const features = ((featuresContent.items as typeof data.features) || data.features)?.slice(0, 6) || [];
+  const stats = data.stats?.slice(0, 3) || [];
+  const reviews = data.reviews?.slice(0, 2) || [];
+  const team = data.team?.slice(0, 3) || [];
+  const heroHeading = homeContent.heading || homeContent.heroHeading || data.tagline || 'Beautiful presentation for modern brands.';
+  const heroSubheading = homeContent.subheading || homeContent.heroDescription || data.description;
+  const heroCtaText = homeContent.primaryCtaText || homeContent.ctaText || homeContent.heroCtaText || 'Explore our work';
+  const aboutHeading = aboutContent.heading || 'Featured selections';
+  const aboutBody =
+    aboutContent.body ||
+    'A premium showcase for signature offerings, designed to feel elevated and editorial without turning the page into a storefront.';
+  const galleryHeading = galleryContent.heading || 'Direction for launches, events, and polished company moments.';
+  const testimonialsHeading = testimonialsContent.heading || 'What we do';
+  const contactHeading = contactContent.heading || contactContent.buttonLabel || "Let's shape something memorable.";
+  const contactDescription = contactContent.description || 'Contact';
+  const homeBlockId = homeContent.blockId;
+  const aboutBlockId = aboutContent.blockId;
+  const galleryBlockId = galleryContent.blockId;
+  const servicesBlockId = testimonialsContent.blockId || featuresContent.blockId;
+  const contactBlockId = contactContent.blockId;
 
   const socialIcons = [
     { key: 'instagram', icon: Instagram },
@@ -109,9 +144,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: theme.pageBackground,
-        color: theme.ink,
-        fontFamily: theme.bodyFont,
+        bgcolor: '#f4f0e8',
+        color: '#141414',
+        fontFamily: sansFont,
       }}
     >
       <Box
@@ -120,9 +155,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           position: 'sticky',
           top: 0,
           zIndex: 20,
-          bgcolor: rgba(theme.secondary, 0.9),
+          bgcolor: 'rgba(244,240,232,0.9)',
           backdropFilter: 'blur(16px)',
-          borderBottom: `1px solid ${theme.line}`,
+          borderBottom: '1px solid rgba(20,20,20,0.08)',
         }}
       >
         <FadeIn direction="down">
@@ -150,11 +185,11 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     background: 'transparent',
                     p: 0,
                     cursor: 'pointer',
-                    fontFamily: theme.bodyFont,
+                    fontFamily: sansFont,
                     fontSize: '0.76rem',
                     letterSpacing: '0.18em',
                     textTransform: 'uppercase',
-                    color: theme.inkSoft,
+                    color: 'rgba(20,20,20,0.68)',
                   }}
                 >
                   {item.label}
@@ -164,7 +199,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
             <Typography
               sx={{
-                fontFamily: theme.headingFont,
+                fontFamily: serifFont,
                 fontSize: { xs: '1.2rem', md: '1.5rem' },
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
@@ -178,8 +213,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               variant="text"
               endIcon={<ArrowRight size={14} />}
               sx={{
-                color: theme.ink,
-                fontFamily: theme.bodyFont,
+                color: '#111',
+                fontFamily: sansFont,
                 fontSize: '0.76rem',
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
@@ -195,14 +230,22 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="about"
+        data-preview-section="true"
+        data-preview-label="Home"
+        data-preview-block-id={homeBlockId}
         sx={{
           position: 'relative',
           minHeight: { xs: 'auto', md: '78vh' },
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '1.15fr 0.85fr' },
           alignItems: 'stretch',
-          '& > .company-premium-hero-left': { height: '100%' },
-          '& > .company-premium-hero-right': { height: '100%' },
+          '& > .company-premium-hero-left': {
+            height: '100%',
+          },
+          '& > .company-premium-hero-right': {
+            height: '100%',
+          },
+          ...getSectionStyleSx(homeContent),
         }}
       >
         <FadeIn className="company-premium-hero-left">
@@ -214,14 +257,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               alignItems: 'center',
               px: { xs: 2, sm: 4, md: 7 },
               py: { xs: 8, md: 10 },
-              color: theme.light,
-              backgroundImage: `linear-gradient(90deg, ${rgba(
-                theme.darkest,
-                0.5,
-              )} 0%, ${rgba(theme.dark, 0.18)} 46%, ${rgba(
-                theme.dark,
-                0.1,
-              )} 100%), url(${data.gallery?.[0]?.url || editorialImages.hero})`,
+              color: '#f9f6ef',
+              backgroundImage: `linear-gradient(90deg, rgba(19,19,19,0.5) 0%, rgba(19,19,19,0.18) 46%, rgba(19,19,19,0.1) 100%), url(${data.gallery?.[0]?.url || editorialImages.hero})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
@@ -232,86 +269,101 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontSize: '0.74rem',
                   letterSpacing: '0.24em',
                   textTransform: 'uppercase',
-                  color: rgba(theme.light, 0.72),
+                  color: 'rgba(249,246,239,0.72)',
                   mb: 2,
                 }}
               >
                 Premium company presentation
               </Typography>
               <Typography
+                data-editable="heading"
+                data-edit-type="single"
+                data-block-id={homeBlockId}
                 sx={{
-                  fontFamily: theme.headingFont,
+                  fontFamily: serifFont,
                   fontSize: { xs: '3.5rem', sm: '4.3rem', md: '5.8rem' },
                   lineHeight: 0.9,
                   letterSpacing: '-0.05em',
+                  ...(homeContent.headingStyle || {}),
                 }}
               >
-                {data.tagline || 'Beautiful presentation for modern brands.'}
+                {heroHeading}
               </Typography>
               <Typography
+                data-editable="subheading"
+                data-edit-type="multi"
+                data-block-id={homeBlockId}
                 sx={{
                   mt: 2.5,
                   maxWidth: 470,
                   fontSize: { xs: '1rem', md: '1.08rem' },
                   lineHeight: 1.85,
-                  color: rgba(theme.light, 0.82),
+                  color: 'rgba(249,246,239,0.82)',
+                  ...(homeContent.subheadingStyle || homeContent.descriptionStyle || {}),
                 }}
               >
-                {data.description}
+                {heroSubheading}
               </Typography>
               <Button
                 onClick={() => scrollToSection('services')}
                 variant="contained"
+                data-editable="ctaText"
+                data-edit-type="single"
+                data-block-id={homeBlockId}
                 sx={{
                   mt: 4,
                   px: 3.25,
                   py: 1.5,
                   borderRadius: 0,
-                  bgcolor: theme.light,
-                  color: theme.ink,
+                  bgcolor: '#f8f2e8',
+                  color: '#121212',
                   boxShadow: 'none',
-                  fontFamily: theme.bodyFont,
+                  fontFamily: sansFont,
                   fontSize: '0.76rem',
                   letterSpacing: '0.18em',
                   textTransform: 'uppercase',
+                  ...(homeContent.ctaTextStyle || {}),
                   '&:hover': {
-                    bgcolor: theme.light,
+                    bgcolor: '#f8f2e8',
                     boxShadow: 'none',
                     opacity: 0.92,
                   },
                 }}
               >
-                Explore our work
+                {heroCtaText}
               </Button>
             </Box>
           </Box>
         </FadeIn>
 
         <Box
-          className="company-premium-hero-right"
           sx={{
             position: 'relative',
             minHeight: { xs: 360, md: '78vh' },
-            backgroundColor: theme.lightPanelStrong,
+            backgroundColor: '#d9d0c1',
             overflow: 'hidden',
           }}
         >
-          <Box
-            component="img"
-            src={data.gallery?.[1]?.url || editorialImages.heroAccent}
-            alt={data.name}
-            sx={{
-              width: '100%',
-              minHeight: { xs: 360, md: '78vh' },
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-            }}
-          />
+          <Box sx={{ width: '100%', height: '100%' }}>
+            <Box sx={{ width: '100%', height: '100%' }}>
+              <Box
+                component="img"
+                src={data.gallery?.[1]?.url || editorialImages.heroAccent}
+                alt={data.name}
+                sx={{
+                  width: '100%',
+                  minHeight: { xs: 360, md: '78vh' },
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+            </Box>
+          </Box>
         </Box>
       </Box>
 
-      <Box sx={{ bgcolor: blendHex(theme.primary, '#4c5522', 0.38), color: theme.light }}>
+      <Box sx={{ bgcolor: '#40461c', color: '#f6f1e8' }}>
         <FadeIn>
           <Box
             sx={{
@@ -325,8 +377,20 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               alignItems: 'center',
             }}
           >
-            <Typography sx={{ fontFamily: theme.headingFont, fontSize: { xs: '2rem', md: '2.6rem' }, lineHeight: 0.9 }} />
-            <Typography sx={{ maxWidth: 760, lineHeight: 1.9, color: rgba(theme.light, 0.82) }}>
+            <Typography
+              sx={{
+                fontFamily: serifFont,
+                fontSize: { xs: '2rem', md: '2.6rem' },
+                lineHeight: 0.9,
+              }}
+            ></Typography>
+            <Typography
+              sx={{
+                maxWidth: 760,
+                lineHeight: 1.9,
+                color: 'rgba(246,241,232,0.82)',
+              }}
+            >
               {data.name} works with a deliberately small roster of clients, shaping premium brand
               experiences, spaces, and presentation systems with detail, restraint, and a polished
               editorial point of view.
@@ -337,6 +401,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="work"
+        data-preview-section="true"
+        data-preview-label="Work"
+        data-preview-block-id={aboutBlockId}
         sx={{
           maxWidth: 1280,
           mx: 'auto',
@@ -345,18 +412,33 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '320px 1fr' },
           gap: { xs: 4, md: 6 },
+          ...getSectionStyleSx(aboutContent),
         }}
       >
         <FadeIn>
           <Box>
-            <Typography sx={{ fontFamily: theme.headingFont, fontSize: { xs: '2.8rem', md: '4.4rem' }, lineHeight: 0.95 }}>
-              Featured
+            <Typography
+              data-editable="heading"
+              data-edit-type="single"
+              data-block-id={aboutBlockId}
+              sx={{
+                fontFamily: serifFont,
+                fontSize: { xs: '2.8rem', md: '4.4rem' },
+                lineHeight: 0.95,
+                ...(aboutContent.headingStyle || {}),
+              }}
+            >
+              {aboutHeading.split(' ')[0] || 'Featured'}
               <br />
-              selections
+              {aboutHeading.split(' ').slice(1).join(' ') || 'selections'}
             </Typography>
-            <Typography sx={{ mt: 2, color: theme.inkSoft, lineHeight: 1.85 }}>
-              A premium showcase for signature offerings, designed to feel elevated and editorial
-              without turning the page into a storefront.
+            <Typography
+              data-editable="description"
+              data-edit-type="multi"
+              data-block-id={aboutBlockId}
+              sx={{ mt: 2, color: 'rgba(20,20,20,0.7)', lineHeight: 1.85, ...(aboutContent.descriptionStyle || {}) }}
+            >
+              {aboutBody}
             </Typography>
             <Button
               onClick={() => scrollToSection('contact')}
@@ -364,8 +446,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 mt: 4,
                 borderRadius: 0,
-                bgcolor: theme.darkest,
-                color: theme.light,
+                bgcolor: '#0f1110',
+                color: '#fff',
                 px: 3,
                 py: 1.4,
                 fontSize: '0.76rem',
@@ -373,7 +455,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 textTransform: 'uppercase',
                 boxShadow: 'none',
                 '&:hover': {
-                  bgcolor: theme.darkest,
+                  bgcolor: '#0f1110',
                   boxShadow: 'none',
                   opacity: 0.92,
                 },
@@ -384,7 +466,13 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Box>
         </FadeIn>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 3 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+            gap: 3,
+          }}
+        >
           {featuredCards.map((card, index) => (
             <FadeIn key={card.title} delay={index * 0.08}>
               <Box>
@@ -397,13 +485,13 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     aspectRatio: index === 1 ? '0.85 / 1' : '0.82 / 1',
                     objectFit: 'cover',
                     display: 'block',
-                    bgcolor: theme.lightPanelStrong,
+                    bgcolor: '#ddd6c9',
                   }}
                 />
-                <Typography sx={{ mt: 1.5, fontFamily: theme.headingFont, fontSize: '1.35rem' }}>
+                <Typography sx={{ mt: 1.5, fontFamily: serifFont, fontSize: '1.35rem' }}>
                   {card.title}
                 </Typography>
-                <Typography sx={{ mt: 0.75, color: theme.inkSoft, lineHeight: 1.7 }}>
+                <Typography sx={{ mt: 0.75, color: 'rgba(20,20,20,0.7)', lineHeight: 1.7 }}>
                   {card.description}
                 </Typography>
               </Box>
@@ -412,7 +500,12 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box sx={{ bgcolor: theme.secondary }}>
+      <Box
+        data-preview-section="true"
+        data-preview-label="Gallery"
+        data-preview-block-id={galleryBlockId}
+        sx={{ bgcolor: secondary, ...getSectionStyleSx(galleryContent) }}
+      >
         <Box
           sx={{
             maxWidth: 1280,
@@ -446,27 +539,45 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontSize: '0.74rem',
                   letterSpacing: '0.22em',
                   textTransform: 'uppercase',
-                  color: rgba(theme.ink, 0.58),
+                  color: 'rgba(20,20,20,0.58)',
                 }}
               >
                 Brand occasions
               </Typography>
               <Typography
+                data-editable="heading"
+                data-edit-type="single"
+                data-block-id={galleryBlockId}
                 sx={{
                   mt: 1.5,
-                  fontFamily: theme.headingFont,
+                  fontFamily: serifFont,
                   fontSize: { xs: '3rem', md: '4.5rem' },
                   lineHeight: 0.94,
                   letterSpacing: '-0.04em',
+                  ...(galleryContent.headingStyle || {}),
                 }}
               >
-                Direction for launches, events, and polished company moments.
+                {galleryHeading}
               </Typography>
-              <Typography sx={{ mt: 2.5, maxWidth: 470, lineHeight: 1.9, color: theme.inkSoft }}>
+              <Typography
+                sx={{
+                  mt: 2.5,
+                  maxWidth: 470,
+                  lineHeight: 1.9,
+                  color: 'rgba(20,20,20,0.72)',
+                }}
+              >
                 Built for premium service companies, studios, consultancies, and boutique brands
                 that need visual storytelling rather than product-cart behavior.
               </Typography>
-              <Typography sx={{ mt: 2, maxWidth: 470, lineHeight: 1.9, color: theme.inkSoft }}>
+              <Typography
+                sx={{
+                  mt: 2,
+                  maxWidth: 470,
+                  lineHeight: 1.9,
+                  color: 'rgba(20,20,20,0.72)',
+                }}
+              >
                 Use this section for campaigns, seasonal messaging, private appointments, or company
                 capabilities without introducing any checkout or add-to-cart flow.
               </Typography>
@@ -477,27 +588,60 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="services"
+        data-preview-section="true"
+        data-preview-label="Services"
+        data-preview-block-id={servicesBlockId}
         sx={{
           maxWidth: 1280,
           mx: 'auto',
           px: { xs: 2, md: 4 },
           py: { xs: 7, md: 10 },
           textAlign: 'center',
+          ...getSectionStyleSx(testimonialsContent.blockId ? testimonialsContent : featuresContent),
         }}
       >
         <FadeIn>
-          <Typography sx={{ fontFamily: theme.headingFont, fontSize: { xs: '3rem', md: '4.4rem' }, lineHeight: 0.95 }}>
-            What we do
-          </Typography>
+              <Typography
+                data-editable="heading"
+                data-edit-type="single"
+                data-block-id={servicesBlockId}
+                sx={{
+                  fontFamily: serifFont,
+                  fontSize: { xs: '3rem', md: '4.4rem' },
+                  lineHeight: 0.95,
+                  ...(testimonialsContent.headingStyle || featuresContent.headingStyle || {}),
+                }}
+              >
+                {testimonialsHeading}
+              </Typography>
         </FadeIn>
         <FadeIn delay={0.08}>
-          <Typography sx={{ mt: 1.5, maxWidth: 720, mx: 'auto', color: theme.inkSoft, lineHeight: 1.85 }}>
+          <Typography
+            data-editable="description"
+            data-edit-type="multi"
+            data-block-id={servicesBlockId}
+            sx={{
+              mt: 1.5,
+              maxWidth: 720,
+              mx: 'auto',
+              color: 'rgba(20,20,20,0.68)',
+              lineHeight: 1.85,
+              ...(testimonialsContent.descriptionStyle || featuresContent.descriptionStyle || {}),
+            }}
+          >
             A premium multi-section template for company storytelling, services, and trust-building.
             It is structured around enquiries, not e-commerce actions.
           </Typography>
         </FadeIn>
 
-        <Box sx={{ mt: 5, display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+        <Box
+          sx={{
+            mt: 5,
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gap: 3,
+          }}
+        >
           {serviceTiles.map((tile, index) => (
             <FadeIn key={tile.title} delay={index * 0.08}>
               <Box>
@@ -512,10 +656,16 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     display: 'block',
                   }}
                 />
-                <Typography sx={{ mt: 1.6, fontFamily: theme.headingFont, fontSize: '1.4rem' }}>
+                <Typography sx={{ mt: 1.6, fontFamily: serifFont, fontSize: '1.4rem' }}>
                   {tile.title}
                 </Typography>
-                <Typography sx={{ mt: 0.75, color: theme.inkSoft, lineHeight: 1.75 }}>
+                <Typography
+                  sx={{
+                    mt: 0.75,
+                    color: 'rgba(20,20,20,0.72)',
+                    lineHeight: 1.75,
+                  }}
+                >
                   {tile.description}
                 </Typography>
               </Box>
@@ -524,7 +674,17 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box id="contact" sx={{ bgcolor: theme.lightPanelStrong, color: theme.ink }}>
+      <Box
+        id="contact"
+        data-preview-section="true"
+        data-preview-label="Contact"
+        data-preview-block-id={contactBlockId}
+        sx={{
+          bgcolor: '#e4ded2',
+          color: '#141414',
+          ...getSectionStyleSx(contactContent),
+        }}
+      >
         <Box
           sx={{
             maxWidth: 1280,
@@ -539,11 +699,33 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         >
           <FadeIn>
             <Box>
-              <Typography sx={{ fontSize: '0.74rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: rgba(theme.ink, 0.58) }}>
-                Contact
+              <Typography
+                data-editable="description"
+                data-edit-type="multi"
+                data-block-id={contactBlockId}
+                sx={{
+                  fontSize: '0.74rem',
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(20,20,20,0.58)',
+                  ...(contactContent.descriptionStyle || {}),
+                }}
+              >
+                {contactDescription}
               </Typography>
-              <Typography sx={{ mt: 1.5, fontFamily: theme.headingFont, fontSize: { xs: '2.8rem', md: '4rem' }, lineHeight: 0.96 }}>
-                Let&apos;s shape something memorable.
+              <Typography
+                data-editable="heading"
+                data-edit-type="single"
+                data-block-id={contactBlockId}
+                sx={{
+                  mt: 1.5,
+                  fontFamily: serifFont,
+                  fontSize: { xs: '2.8rem', md: '4rem' },
+                  lineHeight: 0.96,
+                  ...(contactContent.headingStyle || {}),
+                }}
+              >
+                {contactHeading}
               </Typography>
 
               <Stack spacing={1.4} sx={{ mt: 3.5 }}>
@@ -577,10 +759,21 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
           <FadeIn delay={0.08}>
             <Box>
-              <Typography sx={{ fontSize: '0.74rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: rgba(theme.ink, 0.58) }}>
+              <Typography
+                sx={{
+                  fontSize: '0.74rem',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(20,20,20,0.58)',
+                }}
+              >
                 Join the mailing list
               </Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ mt: 2.5, alignItems: 'stretch' }}>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1.25}
+                sx={{ mt: 2.5, alignItems: 'stretch' }}
+              >
                 <TextField
                   fullWidth
                   placeholder="Email address"
@@ -590,9 +783,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     '& .MuiOutlinedInput-root': {
                       minHeight: 58,
                       borderRadius: 0,
-                      bgcolor: theme.lightPanel,
+                      bgcolor: '#f7f2e8',
                       '& fieldset': {
-                        borderColor: theme.line,
+                        borderColor: 'rgba(20,20,20,0.14)',
                       },
                     },
                     '& .MuiOutlinedInput-input': {
@@ -603,24 +796,28 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 />
                 <Button
                   variant="contained"
+                  data-editable="buttonText"
+                  data-edit-type="single"
+                  data-block-id={contactBlockId}
                   sx={{
                     minHeight: 58,
                     px: 3.2,
                     borderRadius: 0,
-                    bgcolor: theme.darkest,
-                    color: theme.light,
+                    bgcolor: '#111',
+                    color: '#fff',
                     boxShadow: 'none',
                     fontSize: '0.76rem',
                     letterSpacing: '0.18em',
                     textTransform: 'uppercase',
+                    ...(contactContent.buttonTextStyle || {}),
                     '&:hover': {
-                      bgcolor: theme.darkest,
+                      bgcolor: '#111',
                       boxShadow: 'none',
                       opacity: 0.92,
                     },
                   }}
                 >
-                  Sign up
+                  {contactContent.buttonLabel || 'Sign up'}
                 </Button>
               </Stack>
 
@@ -635,8 +832,8 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          border: `1px solid ${theme.line}`,
-                          bgcolor: theme.lightPanel,
+                          border: '1px solid rgba(20,20,20,0.14)',
+                          bgcolor: '#f7f2e8',
                         }}
                       >
                         <Icon size={16} />

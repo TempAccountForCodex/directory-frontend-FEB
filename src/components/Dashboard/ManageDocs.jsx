@@ -41,7 +41,7 @@ import {
   Eye as PublishedIcon,
   EyeOff as DraftIcon,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -59,8 +59,6 @@ import {
   DashboardSelect,
   ConfirmationDialog,
 } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -156,7 +154,7 @@ const ManageDocs = memo(({ user, pageTitle, pageSubtitle }) => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await axios.get(`${API_URL}/docs/admin/articles`, authHeaders);
+      const resp = await apiClient.get(`/docs/admin/articles`, authHeaders);
       const data = resp.data;
       setArticles(Array.isArray(data?.articles) ? data.articles : Array.isArray(data) ? data : []);
     } catch (err) {
@@ -266,14 +264,14 @@ const ManageDocs = memo(({ user, pageTitle, pageSubtitle }) => {
 
     try {
       if (editingArticle) {
-        await axios.put(
-          `${API_URL}/docs/articles/${editingArticle.id}`,
+        await apiClient.put(
+          `/docs/articles/${editingArticle.id}`,
           payload,
           authHeaders,
         );
         setToast({ open: true, message: 'Article updated successfully!', severity: 'success' });
       } else {
-        await axios.post(`${API_URL}/docs/articles`, payload, authHeaders);
+        await apiClient.post(`/docs/articles`, payload, authHeaders);
         setToast({ open: true, message: 'Article created successfully!', severity: 'success' });
       }
 
@@ -305,7 +303,7 @@ const ManageDocs = memo(({ user, pageTitle, pageSubtitle }) => {
     if (!articleToDelete) return;
     setDeleting(true);
     try {
-      await axios.delete(`${API_URL}/docs/articles/${articleToDelete.id}`, authHeaders);
+      await apiClient.delete(`/docs/articles/${articleToDelete.id}`, authHeaders);
       setToast({ open: true, message: 'Article deleted successfully!', severity: 'success' });
       setDeleteDialogOpen(false);
       setArticleToDelete(null);

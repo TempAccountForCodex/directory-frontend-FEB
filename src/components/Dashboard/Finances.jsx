@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import axios from "axios";
+import { apiClient } from '../../api/client';
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
@@ -55,8 +55,6 @@ import {
 } from "./shared";
 import { getDashboardColors } from "../../styles/dashboardTheme";
 import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-
-const API_URL = import.meta.env.VITE_API_URL || "";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -146,8 +144,8 @@ const OverviewTab = React.memo(function OverviewTab() {
     setError(null);
     try {
       const [metricsRes, breakdownRes] = await Promise.all([
-        axios.get(`${API_URL}/admin/finances/metrics`, { withCredentials: true }),
-        axios.get(`${API_URL}/admin/finances/revenue?period=12m`, { withCredentials: true }),
+        apiClient.get(`/admin/finances/metrics`, { withCredentials: true }),
+        apiClient.get(`/admin/finances/revenue?period=12m`, { withCredentials: true }),
       ]);
       setMetrics(metricsRes.data.data);
       setBreakdown(breakdownRes.data.data);
@@ -339,7 +337,7 @@ const SubscriptionsTab = React.memo(function SubscriptionsTab() {
         status,
       });
       if (search) params.set("search", search);
-      const res = await axios.get(`${API_URL}/admin/finances/subscriptions?${params}`, {
+      const res = await apiClient.get(`/admin/finances/subscriptions?${params}`, {
         withCredentials: true,
       });
       setData(res.data.data);
@@ -459,7 +457,7 @@ const TransactionsTab = React.memo(function TransactionsTab() {
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
       if (search) params.set("search", search);
-      const res = await axios.get(`${API_URL}/admin/finances/transactions?${params}`, {
+      const res = await apiClient.get(`/admin/finances/transactions?${params}`, {
         withCredentials: true,
       });
       setData(res.data.data);
@@ -583,7 +581,7 @@ const ReportsTab = React.memo(function ReportsTab() {
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
 
-      const res = await axios.get(`${API_URL}/admin/finances/reports/export?${params}`, {
+      const res = await apiClient.get(`/admin/finances/reports/export?${params}`, {
         withCredentials: true,
         responseType: format === "csv" ? "text" : "json",
       });

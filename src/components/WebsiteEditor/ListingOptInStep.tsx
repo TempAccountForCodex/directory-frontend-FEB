@@ -17,14 +17,12 @@ import Skeleton from '@mui/material/Skeleton';
 import CircularProgress from '@mui/material/CircularProgress';
 import MenuItem from '@mui/material/MenuItem';
 import { Lock, ChevronDown, ChevronUp } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import DashboardInput from '../Dashboard/shared/DashboardInput';
 import DashboardSelect from '../Dashboard/shared/DashboardSelect';
 import DashboardCard from '../Dashboard/shared/DashboardCard';
 import DashboardGradientButton from '../Dashboard/shared/DashboardGradientButton';
 import DashboardActionButton from '../Dashboard/shared/DashboardActionButton';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const PAID_PLANS = ['website_core', 'website_growth', 'website_agency'];
 
@@ -95,7 +93,7 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
     setError('');
 
     try {
-      await axios.post(`${API_URL}/websites/${websiteId}/listing/extract`);
+      await apiClient.post(`/websites/${websiteId}/listing/extract`);
     } catch {
       // Non-blocking: extraction failure should not prevent wizard completion
       setError(

@@ -92,12 +92,12 @@ import dashboardStars from "../../assets/common/star.svg";
 import dashboardDarkHole from "../../assets/common/darkhole.svg";
 import brandIcon from "../../assets/images/navbar/collapsedLogo.png";
 import { isAdmin, isSuperAdmin, hasRole, isContentManager, ROLES } from "../../constants/roles";
+import { API_URL } from '@/config/api';
 
 // Collapsible sidebar dimensions
 const SIDEBAR_COLLAPSED_WIDTH = 70;
 const SIDEBAR_EXPANDED_WIDTH = 300;
 const DRAWER_WIDTH = 290;
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 const extractWebsiteList = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -701,8 +701,8 @@ const Dashboard = ({ user }) => {
     };
   }, [fetchTemplatePendingCount, fetchAccountInvitesPendingCount]);
 
-  // Fetch active promo deal on mount â€” 5-minute stale window (step 10.36)
-  // Silent fetch: no loading state, no error state â€” banner simply not shown on failure
+  // Fetch active promo deal on mount — 5-minute stale window (step 10.36)
+  // Silent fetch: no loading state, no error state — banner simply not shown on failure
   useEffect(() => {
     if (activeDealFetchedRef.current) return;
     activeDealFetchedRef.current = true;
@@ -721,7 +721,7 @@ const Dashboard = ({ user }) => {
         }
       }
     } catch {
-      // Storage unavailable â€” proceed with fetch
+      // Storage unavailable — proceed with fetch
     }
 
     axios
@@ -2159,7 +2159,7 @@ const Dashboard = ({ user }) => {
               backgroundRepeat: "repeat",
               overflow: "hidden",
               position: "relative",
-              // Hide dashboard content until ready â€” prevents any flash
+              // Hide dashboard content until ready — prevents any flash
               visibility: dashboardReady ? "visible" : "hidden",
               // Light mode: blurred background image (only shown after dashboard is ready)
               ...(colors.mode === "light" &&
@@ -2281,7 +2281,7 @@ const Dashboard = ({ user }) => {
                 colors={colors}
               />
 
-              {/* Active promo deal banner â€” sticky below nav (step 10.36) */}
+              {/* Active promo deal banner — sticky below nav (step 10.36) */}
               {activeDeal && <DealBanner deal={activeDeal} userId={user?.id} />}
 
               <Box
@@ -2378,3 +2378,4 @@ const Dashboard = ({ user }) => {
 };
 
 export default Dashboard;
+

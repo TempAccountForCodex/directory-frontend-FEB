@@ -49,7 +49,7 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import toast from 'react-hot-toast';
 import { getDashboardColors } from '../../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
@@ -64,8 +64,6 @@ import {
   DashboardIconButton,
   ConfirmationDialog,
 } from '../shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -782,7 +780,7 @@ const IntegrationsTab = memo(({ website, websiteId }) => {
   // ---------------------------------------------------------------------------
 
   const baseUrl = useMemo(
-    () => `${API_URL}/websites/${websiteId}/integrations`,
+    () => `/websites/${websiteId}/integrations`,
     [websiteId]
   );
 
@@ -791,7 +789,7 @@ const IntegrationsTab = memo(({ website, websiteId }) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(baseUrl, { withCredentials: true });
+      const res = await apiClient.get(baseUrl, { withCredentials: true });
       setIntegrations(res.data?.data || []);
     } catch (err) {
       setError(err?.response?.data?.error || 'Failed to load integrations. Please try again.');
@@ -861,10 +859,10 @@ const IntegrationsTab = memo(({ website, websiteId }) => {
     setSaving(true);
     try {
       if (dialogMode === 'edit' && editingIntegration) {
-        await axios.put(`${baseUrl}/${editingIntegration.id}`, { config }, { withCredentials: true });
+        await apiClient.put(`${baseUrl}/${editingIntegration.id}`, { config }, { withCredentials: true });
         toast.success('Integration updated');
       } else {
-        await axios.post(baseUrl, { integrationType: selectedType, config }, { withCredentials: true });
+        await apiClient.post(baseUrl, { integrationType: selectedType, config }, { withCredentials: true });
         toast.success('Integration added successfully');
       }
       await fetchIntegrations();
@@ -883,7 +881,7 @@ const IntegrationsTab = memo(({ website, websiteId }) => {
 
   const handleToggle = useCallback(async (integrationId) => {
     try {
-      await axios.patch(`${baseUrl}/${integrationId}/toggle`, {}, { withCredentials: true });
+      await apiClient.patch(`${baseUrl}/${integrationId}/toggle`, {}, { withCredentials: true });
       setIntegrations((prev) =>
         prev.map((i) => (i.id === integrationId ? { ...i, isActive: !i.isActive } : i))
       );
@@ -905,7 +903,7 @@ const IntegrationsTab = memo(({ website, websiteId }) => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await axios.delete(`${baseUrl}/${deleteTarget.id}`, { withCredentials: true });
+      await apiClient.delete(`${baseUrl}/${deleteTarget.id}`, { withCredentials: true });
       setIntegrations((prev) => prev.filter((i) => i.id !== deleteTarget.id));
       toast.success('Integration removed');
       setDeleteDialogOpen(false);

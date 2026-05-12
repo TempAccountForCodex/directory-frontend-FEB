@@ -14,6 +14,19 @@ vi.mock('../BlockWrapper', () => ({
   ),
 }));
 
+// Mock useScrollParallax — Framer Motion useScroll cannot hydrate refs in JSDOM
+vi.mock('../hooks', async () => {
+  const actual = await vi.importActual('../hooks');
+  return {
+    ...actual,
+    useScrollParallax: () => ({
+      y: { get: () => '0px', set: () => {} },
+      scale: { get: () => 1, set: () => {} },
+      enabled: false,
+    }),
+  };
+});
+
 // Mock useNavigate
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),

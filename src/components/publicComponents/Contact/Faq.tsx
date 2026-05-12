@@ -459,7 +459,7 @@
 
 // export default ContactFAQSection;
 
-import React from "react";
+import React from 'react';
 import {
   Box,
   Container,
@@ -469,45 +469,43 @@ import {
   AccordionDetails,
   Button,
   Stack,
-} from "@mui/material";
-import Grid from "@mui/material/Grid";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+} from '@mui/material';
+import Grid from '@mui/material/Grid';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 
-const uniqueLinesbg = "/assets/publicAssets/images/common/uniqueLinesbg.webp";
+const uniqueLinesbg = '/assets/publicAssets/images/common/uniqueLinesbg.webp';
 
 const contactFAQs = [
   {
-    question: "How can I contact your team?",
+    question: 'How can I contact your team?',
     answer:
-      "You can reach us via live chat, email, or phone. Choose the option that’s most convenient for you and our team will assist you.",
+      'You can reach us via live chat, email, or phone. Choose the option that’s most convenient for you and our team will assist you.',
   },
   {
-    question: "What is the fastest way to get support?",
+    question: 'What is the fastest way to get support?',
     answer:
-      "Live chat is the quickest way to get help for most questions. For detailed inquiries, email support is also available.",
+      'Live chat is the quickest way to get help for most questions. For detailed inquiries, email support is also available.',
   },
   {
-    question: "What are your support hours?",
+    question: 'What are your support hours?',
     answer:
-      "Our support team is available during regular business hours, Monday to Friday. Messages received outside these hours are answered as soon as possible.",
+      'Our support team is available during regular business hours, Monday to Friday. Messages received outside these hours are answered as soon as possible.',
   },
   {
-    question: "Can you help me set up or update my business page?",
+    question: 'Can you help me set up or update my business page?',
     answer:
-      "Yes. Our team can guide you through creating, editing, or updating your business landing page and listing.",
+      'Yes. Our team can guide you through creating, editing, or updating your business landing page and listing.',
   },
   {
-    question: "How long does it take to get a response?",
-    answer:
-      "We aim to respond to most inquiries within a few hours during business hours.",
+    question: 'How long does it take to get a response?',
+    answer: 'We aim to respond to most inquiries within a few hours during business hours.',
   },
   {
-    question: "Is my information safe when I contact you?",
-    answer:
-      "Yes. Your information is kept private and is only used to respond to your inquiry.",
+    question: 'Is my information safe when I contact you?',
+    answer: 'Yes. Your information is kept private and is only used to respond to your inquiry.',
   },
 ];
 
@@ -516,9 +514,9 @@ const ContactFAQSection: React.FC = () => {
     <Box
       sx={{
         py: { xs: 10, md: 16 },
-        background: "#f7f5f3",
-        position: "relative",
-        overflow: "hidden",
+        background: '#f7f5f3',
+        position: 'relative',
+        overflow: 'hidden',
         // "&::before": {
         //   content: '""',
         //   position: "absolute",
@@ -530,42 +528,42 @@ const ContactFAQSection: React.FC = () => {
         //   zIndex: 0,
         // },
 
-        "&::before": {
+        '&::before': {
           content: '""',
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
           backgroundImage: `url(https://img.freepik.com/free-vector/white-abstract-background_23-2148809724.jpg?t=st=1772125881~exp=1772129481~hmac=223b17ecc5b84519a52a75dcf43d9f4e11136ad7b71ac9a830d8bdc605339de4&w=2000)`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           opacity: 0.7,
           zIndex: 0,
         },
       }}
     >
-      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <Grid container spacing={8}>
           {/* LEFT SIDE — ENHANCED STICKY HEADER */}
           <Grid item xs={12} md={5}>
             <Box
               sx={{
-                position: { xs: "relative", md: "sticky" },
+                position: { xs: 'relative', md: 'sticky' },
                 top: { xs: 0, md: 150 },
-                display: "flex",
-                flexDirection: "column",
-                alignItems: { xs: "flex-start", md: "flex-end" },
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: { xs: 'flex-start', md: 'flex-end' },
               }}
             >
               <Box
                 sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
+                  display: 'inline-flex',
+                  alignItems: 'center',
                   gap: 1.5,
                   px: 2.5,
                   py: 1,
-                  borderRadius: "100px",
-                  bgcolor: "#fff",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
-                  border: "1px solid rgba(0,0,0,0.05)",
+                  borderRadius: '100px',
+                  bgcolor: '#fff',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                  border: '1px solid rgba(0,0,0,0.05)',
                   mb: 4,
                 }}
               >
@@ -573,18 +571,18 @@ const ContactFAQSection: React.FC = () => {
                   sx={{
                     width: 8,
                     height: 8,
-                    bgcolor: "#378C92",
-                    borderRadius: "50%",
-                    animation: "pulse 2s infinite",
+                    bgcolor: '#378C92',
+                    borderRadius: '50%',
+                    animation: 'pulse 2s infinite',
                   }}
                 />
                 <Typography
                   sx={{
                     fontSize: 12,
                     fontWeight: 800,
-                    letterSpacing: "1.5px",
-                    textTransform: "uppercase",
-                    color: "#1f1f1f",
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    color: '#1f1f1f',
                   }}
                 >
                   Support Online
@@ -593,23 +591,23 @@ const ContactFAQSection: React.FC = () => {
 
               <Typography
                 sx={{
-                  fontSize: { xs: "2.8rem", md: "3.5rem", lg: "4.8rem" },
+                  fontSize: { xs: '2.8rem', md: '3.5rem', lg: '4.8rem' },
                   fontWeight: 900,
                   lineHeight: 0.95,
-                  textAlign: { xs: "left", md: "right" },
-                  color: "#1f1f1f",
-                  letterSpacing: "-0.05em",
+                  textAlign: { xs: 'left', md: 'right' },
+                  color: '#1f1f1f',
+                  letterSpacing: '-0.05em',
                   mb: 4,
                 }}
               >
                 Everything <br />
                 you need <br />
-                to{" "}
+                to{' '}
                 <Box
                   component="span"
                   sx={{
-                    color: "transparent",
-                    WebkitTextStroke: "1px #378C92",
+                    color: 'transparent',
+                    WebkitTextStroke: '1px #378C92',
                   }}
                 >
                   know
@@ -618,30 +616,30 @@ const ContactFAQSection: React.FC = () => {
 
               <Typography
                 sx={{
-                  fontSize: "1.15rem",
-                  color: "#666",
-                  textAlign: { xs: "left", md: "right" },
-                  maxWidth: "360px",
+                  fontSize: '1.15rem',
+                  color: '#666',
+                  textAlign: { xs: 'left', md: 'right' },
+                  maxWidth: '360px',
                   lineHeight: 1.7,
                   mb: 6,
                 }}
               >
-                Transparent answers for a seamless experience. Our mission is to
-                make your digital transition as smooth as possible.
+                Transparent answers for a seamless experience. Our mission is to make your digital
+                transition as smooth as possible.
               </Typography>
 
               {/* Floating Contact Card to fill empty space below text */}
               <Box
                 sx={{
-                  width: "100%",
-                  maxWidth: "320px",
-                  bgcolor: "#fff",
+                  width: '100%',
+                  maxWidth: '320px',
+                  bgcolor: '#fff',
                   p: 3,
-                  borderRadius: "24px",
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.04)",
-                  border: "1px solid rgba(0,0,0,0.05)",
-                  display: "flex",
-                  flexDirection: "column",
+                  borderRadius: '24px',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                  border: '1px solid rgba(0,0,0,0.05)',
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: 2,
                   mb: 4,
                 }}
@@ -650,17 +648,17 @@ const ContactFAQSection: React.FC = () => {
                   <Box
                     sx={{
                       p: 1.5,
-                      bgcolor: "rgba(55,140,146,0.1)",
-                      borderRadius: "12px",
+                      bgcolor: 'rgba(55,140,146,0.1)',
+                      borderRadius: '12px',
                     }}
                   >
-                    <ChatBubbleOutlineIcon sx={{ color: "#378C92" }} />
+                    <ChatBubbleOutlineIcon sx={{ color: '#378C92' }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: "14px" }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: '14px' }}>
                       Still confused?
                     </Typography>
-                    <Typography sx={{ fontSize: "12px", color: "#888" }}>
+                    <Typography sx={{ fontSize: '12px', color: '#888' }}>
                       Response time: ~2 hours
                     </Typography>
                   </Box>
@@ -669,13 +667,13 @@ const ContactFAQSection: React.FC = () => {
                   variant="contained"
                   fullWidth
                   sx={{
-                    bgcolor: "#1f1f1f",
-                    color: "#fff",
-                    borderRadius: "12px",
+                    bgcolor: '#1f1f1f',
+                    color: '#fff',
+                    borderRadius: '12px',
                     py: 1.5,
-                    textTransform: "none",
+                    textTransform: 'none',
                     fontWeight: 700,
-                    "&:hover": { bgcolor: "#378C92" },
+                    '&:hover': { bgcolor: '#378C92' },
                   }}
                 >
                   Message Support
@@ -685,11 +683,11 @@ const ContactFAQSection: React.FC = () => {
           </Grid>
 
           {/* RIGHT SIDE — ACCORDIONS */}
-          <Grid item xs={12} md={7} sx={{ position: "relative" }}>
+          <Grid item xs={12} md={7} sx={{ position: 'relative' }}>
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 2,
               }}
             >
@@ -699,49 +697,47 @@ const ContactFAQSection: React.FC = () => {
                   elevation={0}
                   disableGutters
                   sx={{
-                    background: "transparent",
-                    borderBottom: "1px solid rgba(0,0,0,0.1)",
-                    "&::before": { display: "none" },
+                    background: 'transparent',
+                    borderBottom: '1px solid rgba(0,0,0,0.1)',
+                    '&::before': { display: 'none' },
                     py: 1,
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      transform: "translateX(10px)",
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateX(10px)',
                     },
                   }}
                 >
                   <AccordionSummary
-                    expandIcon={
-                      <ExpandMoreIcon sx={{ color: "#1f1f1f", fontSize: 28 }} />
-                    }
+                    expandIcon={<ExpandMoreIcon sx={{ color: '#1f1f1f', fontSize: 28 }} />}
                     sx={{
                       px: 0,
-                      "& .MuiAccordionSummary-content": {
-                        display: "flex",
-                        alignItems: "center",
+                      '& .MuiAccordionSummary-content': {
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: { xs: 2, md: 4 },
                       },
                     }}
                   >
                     <Typography
                       sx={{
-                        fontSize: { xs: "1.2rem", md: "1.8rem" },
+                        fontSize: { xs: '1.2rem', md: '1.8rem' },
                         fontWeight: 900,
-                        color: "#1f1f1f",
+                        color: '#1f1f1f',
                         opacity: 0.15,
                         fontFamily: "'Space Mono', monospace",
-                        minWidth: "40px",
+                        minWidth: '40px',
                       }}
                     >
-                      {(index + 1).toString().padStart(2, "0")}
+                      {(index + 1).toString().padStart(2, '0')}
                     </Typography>
 
                     <Typography
                       sx={{
                         fontWeight: 800,
-                        fontSize: { xs: "1.1rem", md: "1.45rem" },
-                        color: "#1f1f1f",
+                        fontSize: { xs: '1.1rem', md: '1.45rem' },
+                        color: '#1f1f1f',
                         lineHeight: 1.2,
-                        letterSpacing: "-0.01em",
+                        letterSpacing: '-0.01em',
                       }}
                     >
                       {faq.question}
@@ -751,10 +747,10 @@ const ContactFAQSection: React.FC = () => {
                   <AccordionDetails sx={{ px: { xs: 0, md: 9 }, pb: 4 }}>
                     <Typography
                       sx={{
-                        color: "#555",
-                        fontSize: "1.1rem",
+                        color: '#555',
+                        fontSize: '1.1rem',
                         lineHeight: 1.8,
-                        maxWidth: "520px",
+                        maxWidth: '520px',
                       }}
                     >
                       {faq.answer}

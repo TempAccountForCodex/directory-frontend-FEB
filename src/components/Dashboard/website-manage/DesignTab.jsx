@@ -1,5 +1,5 @@
 import { memo, useState, useCallback } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import {
   Box,
   Alert,
@@ -23,8 +23,6 @@ import DashboardActionButton from '../shared/DashboardActionButton';
 import DashboardGradientButton from '../shared/DashboardGradientButton';
 import DashboardCancelButton from '../shared/DashboardCancelButton';
 import DashboardInput from '../shared/DashboardInput';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const THEME_PRESETS = [
   { id: 'light', label: 'Light', icon: Sun, bg: '#ffffff', text: '#111111' },
@@ -128,7 +126,7 @@ const DesignTab = memo(({ website, websiteId, onSaved }) => {
     try {
       setSaving(true);
       setSaveError(null);
-      const res = await axios.put(`${API_URL}/websites/${websiteId}`, {
+      const res = await apiClient.put(`/websites/${websiteId}`, {
         primaryColor: form.primaryColor,
         secondaryColor: form.secondaryColor,
         headingTextColor: form.headingTextColor,

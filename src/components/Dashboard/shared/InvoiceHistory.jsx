@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
-import axios from 'axios';
+import { apiClient } from '../../../api/client';
 import {
   Box,
   Typography,
@@ -28,7 +28,6 @@ import DashboardSelect from './DashboardSelect';
 import SearchBar from './SearchBar';
 import EmptyState from './EmptyState';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const ITEMS_PER_PAGE = 10;
 
 // Format date for display
@@ -103,7 +102,7 @@ const InvoiceHistory = () => {
       const params = { page, limit: ITEMS_PER_PAGE };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (statusFilter !== 'all') params.status = statusFilter;
-      const response = await axios.get(`${API_URL}/invoices`, {
+      const response = await apiClient.get(`/invoices`, {
         params,
       });
 

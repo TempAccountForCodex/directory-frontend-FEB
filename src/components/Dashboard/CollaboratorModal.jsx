@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
+import { apiClient } from '../../api/client';
 import {
   Dialog,
   DialogTitle,
@@ -40,8 +40,6 @@ import {
   DashboardSelect,
   ConfirmationDialog,
 } from './shared';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const COLLABORATOR_ROLES = ['ADMIN', 'EDITOR', 'VIEWER'];
 
@@ -360,7 +358,7 @@ const CollaboratorModal = React.memo(function CollaboratorModal({
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_URL}/websites/${websiteId}/collaborators`);
+      const response = await apiClient.get(`/websites/${websiteId}/collaborators`);
       setCollaborators(response.data || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load collaborators');
@@ -373,7 +371,7 @@ const CollaboratorModal = React.memo(function CollaboratorModal({
     if (!websiteId || !canManageCollaborators) return;
     setLoadingInvites(true);
     try {
-      const response = await axios.get(`${API_URL}/invites/website/${websiteId}`);
+      const response = await apiClient.get(`/invites/website/${websiteId}`);
       // Only show expired/declined invites in the modal (pending ones are active)
       const staleInvites = (response.data || []).filter(
         (inv) => inv.status === 'EXPIRED' || inv.status === 'DECLINED'
@@ -408,7 +406,7 @@ const CollaboratorModal = React.memo(function CollaboratorModal({
     setAddError(null);
     setSuccessMessage(null);
     try {
-      await axios.post(`${API_URL}/websites/${websiteId}/collaborators/invite`, {
+      await apiClient.post(`/websites/${websiteId}/collaborators/invite`, {
         email: email.trim(),
         role,
       });
@@ -427,8 +425,8 @@ const CollaboratorModal = React.memo(function CollaboratorModal({
     if (!collaboratorToRemove) return;
     setRemoving(true);
     try {
-      await axios.delete(
-        `${API_URL}/websites/${websiteId}/collaborators/${collaboratorToRemove.userId}`
+      await apiClient.delete(
+        `/websites/${websiteId}/collaborators/${collaboratorToRemove.userId}`
       );
       setRemoveDialogOpen(false);
       setCollaboratorToRemove(null);
@@ -446,7 +444,7 @@ const CollaboratorModal = React.memo(function CollaboratorModal({
     async (userId, newRole) => {
       try {
         setError(null);
-        await axios.patch(`${API_URL}/websites/${websiteId}/collaborators/${userId}`, {
+        await apiClient.patch(`/websites/${websiteId}/collaborators/${userId}`, {
           role: newRole,
         });
         setSuccessMessage('Role updated');
@@ -463,7 +461,7 @@ const CollaboratorModal = React.memo(function CollaboratorModal({
     setAddError(null);
     setSuccessMessage(null);
     try {
-      await axios.post(`${API_URL}/websites/${websiteId}/collaborators/invite`, {
+      await apiClient.post(`/websites/${websiteId}/collaborators/invite`, {
         email: invite.email,
         role: invite.role,
       });

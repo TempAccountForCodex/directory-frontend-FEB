@@ -129,6 +129,7 @@ export interface BusinessData {
   heroBannerUrl?: string;
   primaryColor: string;
   secondaryColor?: string;
+  templateContent?: Record<string, unknown>;
   themeSettings?: {
     primaryColor?: string;
     secondaryColor?: string;

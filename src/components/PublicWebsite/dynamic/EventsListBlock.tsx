@@ -40,10 +40,10 @@ import SearchIcon from '@mui/icons-material/Search';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import useTenantUrl from '../../../hooks/useTenantUrl';
+import { API_URL } from '@/config/api';
 
 /* ===================== Constants ===================== */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const DEBOUNCE_MS = 300;
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -908,3 +908,4 @@ const EventsListBlock = React.memo(EventsListBlockBase);
 EventsListBlock.displayName = 'EventsListBlock';
 
 export default EventsListBlock;
+

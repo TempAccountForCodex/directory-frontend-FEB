@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { apiClient } from '../api/client';
 
 export interface WebsitePlan {
   code: string;
@@ -83,7 +81,7 @@ export function usePlanSummary(): UsePlanSummaryReturn {
       setLoading(true);
       setError(null);
 
-      const response = await axios.get(`${API_URL}/billing/plan-summary`);
+      const response = await apiClient.get(`/billing/plan-summary`);
 
       setPlanSummary(response.data.planSummary);
     } catch (err: any) {

@@ -75,11 +75,11 @@ export interface LayoutPanelProps {
   onPagesChange: (pages: PageItem[]) => void;
   onToggleSection: (pageTitle: string, sectionIndex: number) => void;
   blocks?: DraggableBlock[];
-  pageId?: number | null;
+  pageId?: number | string | null;
   websiteId?: number | null;
   onBlocksChange?: (blocks: DraggableBlock[]) => void;
-  onBlockSelect?: (blockId: number) => void;
-  selectedBlockId?: number | null;
+  onBlockSelect?: (blockId: number | string) => void;
+  selectedBlockId?: number | string | null;
   disabled?: boolean;
   colors: DashboardColors;
 }

@@ -1,41 +1,35 @@
-import React from "react";
-import { Box, Container, Typography, Paper, Stack } from "@mui/material";
-import Grid from "@mui/material/Grid";
-import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
-import EditNoteIcon from "@mui/icons-material/EditNote";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import PublicIcon from "@mui/icons-material/Public";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { useTheme, alpha } from "@mui/material/styles";
-import { PrimaryActionButton } from "../../../components/UI/PrimaryActionButton";
-import { motion } from "framer-motion";
+import React from 'react';
+import { Box, Container, Typography, Paper, Stack } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import PublicIcon from '@mui/icons-material/Public';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { useTheme, alpha } from '@mui/material/styles';
+import { PrimaryActionButton } from '../../../components/UI/PrimaryActionButton';
+import { motion } from 'framer-motion';
 
-const star = "/assets/publicAssets/images/common/star.svg";
-const darkhole = "assets/publicAssets/images/common/darkhole.svg";
+const star = '/assets/publicAssets/images/common/star.svg';
+const darkhole = 'assets/publicAssets/images/common/darkhole.svg';
 
-const StepIllustration = ({
-  stepIndex,
-  color,
-}: {
-  stepIndex: number;
-  color: string;
-}) => {
+const StepIllustration = ({ stepIndex, color }: { stepIndex: number; color: string }) => {
   const bg = alpha(color, 0.08);
   const elementBg = alpha(color, 0.15);
 
   return (
     <Box
       sx={{
-        width: "100%",
+        width: '100%',
         height: 140,
         background: bg,
-        borderRadius: "12px",
+        borderRadius: '12px',
         mb: 3,
-        position: "relative",
-        overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        position: 'relative',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         border: `1px solid ${alpha(color, 0.05)}`,
       }}
     >
@@ -49,13 +43,7 @@ const StepIllustration = ({
           width="60%"
           alignItems="center"
         >
-          <Box
-            width={40}
-            height={40}
-            borderRadius="50%"
-            bgcolor={elementBg}
-            mb={1}
-          />
+          <Box width={40} height={40} borderRadius="50%" bgcolor={elementBg} mb={1} />
           <Box width="100%" height={8} borderRadius={4} bgcolor={elementBg} />
           <Box width="100%" height={8} borderRadius={4} bgcolor={elementBg} />
           <Box
@@ -107,26 +95,10 @@ const StepIllustration = ({
           boxShadow="0 4px 12px rgba(0,0,0,0.05)"
           p={1}
         >
-          <Box
-            width="100%"
-            height={30}
-            bgcolor={alpha(color, 0.2)}
-            borderRadius={1}
-            mb={1}
-          />
+          <Box width="100%" height={30} bgcolor={alpha(color, 0.2)} borderRadius={1} mb={1} />
           <Box display="flex" gap={1}>
-            <Box
-              flex={1}
-              height={40}
-              bgcolor={alpha(color, 0.1)}
-              borderRadius={1}
-            />
-            <Box
-              flex={1}
-              height={40}
-              bgcolor={alpha(color, 0.1)}
-              borderRadius={1}
-            />
+            <Box flex={1} height={40} bgcolor={alpha(color, 0.1)} borderRadius={1} />
+            <Box flex={1} height={40} bgcolor={alpha(color, 0.1)} borderRadius={1} />
           </Box>
         </Box>
       )}
@@ -138,25 +110,25 @@ const StepIllustration = ({
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ repeat: Infinity, duration: 3 }}
             sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
               width: 120,
               height: 120,
-              borderRadius: "50%",
+              borderRadius: '50%',
               border: `1px dashed ${alpha(color, 0.3)}`,
             }}
           />
           <Box
             sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
               width: 12,
               height: 12,
-              borderRadius: "50%",
+              borderRadius: '50%',
               bgcolor: color,
               boxShadow: `0 0 0 8px ${alpha(color, 0.1)}`,
             }}
@@ -187,65 +159,65 @@ const StepIllustration = ({
 
 const steps = [
   {
-    title: "Create Account",
-    description: "Sign up in seconds. No credit card required.",
+    title: 'Create Account',
+    description: 'Sign up in seconds. No credit card required.',
     icon: PersonAddAltIcon,
   },
   {
-    title: "Add Details",
-    description: "Input your services, hours, and images easily.",
+    title: 'Add Details',
+    description: 'Input your services, hours, and images easily.',
     icon: EditNoteIcon,
   },
   {
-    title: "AI Generation",
-    description: "Our engine builds a pro landing page instantly.",
+    title: 'AI Generation',
+    description: 'Our engine builds a pro landing page instantly.',
     icon: AutoAwesomeIcon,
   },
   {
-    title: "Get Discovered",
-    description: "Auto-listed in our directory for maximum SEO.",
+    title: 'Get Discovered',
+    description: 'Auto-listed in our directory for maximum SEO.',
     icon: PublicIcon,
   },
 ];
 
 const HowItWorks: React.FC = () => {
   const theme = useTheme();
-  const primaryColor = theme.palette.text.main || "#008080";
+  const primaryColor = theme.palette.text.main || '#008080';
 
   return (
     <Box
       sx={{
-        minHeight: "auto",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#041e18",
+        minHeight: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#041e18',
         py: { xs: 8, md: 12 },
-        position: "relative",
+        position: 'relative',
         backgroundImage: `url(${star})`,
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "cover",
-        overflow: "hidden",
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover',
+        overflow: 'hidden',
       }}
     >
       <Box
         sx={{
-          position: "absolute",
-          height: "auto",
+          position: 'absolute',
+          height: 'auto',
           zIndex: 0,
           backgroundImage: `url(${darkhole})`,
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "contain",
-          aspectRatio: "2074 / 1333",
-          top: "12%",
-          left: "-70%",
-          width: { xs: "auto", md: "280%" },
-          "@media (min-width: 640px)": {
-            top: "-4%",
-            width: "100%",
-            left: "-15%",
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'contain',
+          aspectRatio: '2074 / 1333',
+          top: '12%',
+          left: '-70%',
+          width: { xs: 'auto', md: '280%' },
+          '@media (min-width: 640px)': {
+            top: '-4%',
+            width: '100%',
+            left: '-15%',
           },
         }}
       />
@@ -265,7 +237,7 @@ const HowItWorks: React.FC = () => {
             variant="h2"
             sx={{
               fontWeight: 900,
-              fontSize: { xs: "2.2rem", md: "3rem" },
+              fontSize: { xs: '2.2rem', md: '3rem' },
               lineHeight: 1.1,
               color: theme.palette.text.secondary,
             }}
@@ -278,11 +250,11 @@ const HowItWorks: React.FC = () => {
               color: theme.palette.text.secondary,
               maxWidth: 550,
               fontWeight: 400,
-              fontSize: "1.1rem",
+              fontSize: '1.1rem',
             }}
           >
-            Stop wrestling with website builders. We automated the entire
-            pipeline so you can focus on business.
+            Stop wrestling with website builders. We automated the entire pipeline so you can focus
+            on business.
           </Typography>
         </Stack>
 
@@ -305,42 +277,42 @@ const HowItWorks: React.FC = () => {
                 <Paper
                   elevation={0}
                   sx={{
-                    height: "100%",
+                    height: '100%',
                     p: 2,
                     borderRadius: 4,
-                    border: "1px solid",
-                    borderColor: "rgba(0,0,0,0.06)",
-                    background: "#fff",
-                    transition: "all 0.3s ease",
-                    position: "relative",
-                    "&:hover": {
+                    border: '1px solid',
+                    borderColor: 'rgba(0,0,0,0.06)',
+                    background: '#fff',
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    '&:hover': {
                       borderColor: alpha(primaryColor, 0.5),
-                      transform: "translateY(-8px)",
+                      transform: 'translateY(-8px)',
                       boxShadow: `0 20px 40px ${alpha(primaryColor, 0.08)}`,
-                      "& .icon-box": {
-                        transform: "scale(1.1) rotate(5deg)",
+                      '& .icon-box': {
+                        transform: 'scale(1.1) rotate(5deg)',
                         background: primaryColor,
-                        color: "#fff",
+                        color: '#fff',
                       },
                     },
                   }}
                 >
                   <Box
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       top: -12,
                       left: 24,
                       bgcolor: theme.palette.text.primary,
-                      color: "#fff",
+                      color: '#fff',
                       width: 28,
                       height: 28,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "0.8rem",
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.8rem',
                       fontWeight: 700,
-                      border: "4px solid #fafafa",
+                      border: '4px solid #fafafa',
                       zIndex: 2,
                     }}
                   >
@@ -356,22 +328,19 @@ const HowItWorks: React.FC = () => {
                         width: 40,
                         height: 40,
                         borderRadius: 2,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         bgcolor: alpha(primaryColor, 0.1),
                         color: primaryColor,
-                        transition: "all 0.3s ease",
+                        transition: 'all 0.3s ease',
                         mb: 1,
                       }}
                     >
                       <Icon fontSize="small" />
                     </Box>
 
-                    <Typography
-                      variant="h6"
-                      sx={{ fontWeight: 700, fontSize: "1.1rem" }}
-                    >
+                    <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
                       {step.title}
                     </Typography>
 
@@ -390,14 +359,14 @@ const HowItWorks: React.FC = () => {
 
                 <Box
                   sx={{
-                    display: { xs: "flex", md: "none" },
-                    justifyContent: "center",
+                    display: { xs: 'flex', md: 'none' },
+                    justifyContent: 'center',
                     py: 2,
                     opacity: 0.3,
                   }}
                 >
                   {index < steps.length - 1 && (
-                    <ArrowForwardIcon sx={{ transform: "rotate(90deg)" }} />
+                    <ArrowForwardIcon sx={{ transform: 'rotate(90deg)' }} />
                   )}
                 </Box>
               </Grid>
@@ -423,7 +392,7 @@ const HowItWorks: React.FC = () => {
             variant="caption"
             sx={{
               color: theme.palette.text.secondary,
-              fontSize: "0.8rem",
+              fontSize: '0.8rem',
             }}
           >
             No credit card required • Easy sign up
