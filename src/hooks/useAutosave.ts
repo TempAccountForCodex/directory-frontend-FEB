@@ -61,7 +61,7 @@ export interface UseAutosaveReturn {
   hasUnsavedChanges: boolean;
   saveStatus: SaveStatus;
   conflictData: ConflictData | null;
-  triggerSave: () => Promise<void>;
+  triggerSave: (overrideData?: Record<string, unknown>) => Promise<void>;
   clearDirty: () => void;
   resolveConflict: (resolution: ConflictResolution) => void;
 }
@@ -333,7 +333,10 @@ export function useAutosave({
   // Public API
   // ---------------------------------------------------------------------------
 
-  const triggerSave = useCallback(async (): Promise<void> => {
+  const triggerSave = useCallback(async (overrideData?: Record<string, unknown>): Promise<void> => {
+    if (overrideData) {
+      dataRef.current = overrideData;
+    }
     await performSave();
   }, [performSave]);
 

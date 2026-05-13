@@ -653,9 +653,27 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
 
   
   const getWebsitePreviewImage = useCallback((website) => {
-    if (website?.previewImage) return website.previewImage;
-    if (website?.thumbnailUrl) return website.thumbnailUrl;
-    if (website?.frontendTemplateId) return getFrontendTemplatePreviewImage(website.frontendTemplateId);
+    const resolvedPreviewImage =
+      website?.previewImage
+      || website?.preview_image
+      || website?.website?.previewImage
+      || website?.website?.preview_image;
+    if (resolvedPreviewImage) return resolvedPreviewImage;
+
+    const resolvedThumbnailUrl =
+      website?.thumbnailUrl
+      || website?.thumbnail_url
+      || website?.website?.thumbnailUrl
+      || website?.website?.thumbnail_url;
+    if (resolvedThumbnailUrl) return resolvedThumbnailUrl;
+
+    const resolvedFrontendTemplateId =
+      website?.frontendTemplateId
+      || website?.frontend_template_id
+      || website?.website?.frontendTemplateId
+      || website?.website?.frontend_template_id;
+    if (resolvedFrontendTemplateId) return getFrontendTemplatePreviewImage(resolvedFrontendTemplateId);
+
     return null;
   }, []);
 

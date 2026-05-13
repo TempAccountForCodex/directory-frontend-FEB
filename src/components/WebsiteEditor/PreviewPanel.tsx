@@ -110,6 +110,11 @@ interface FrontendTemplateIframeProps {
   onSectionSelected?: (data: SectionSelectionData | null) => void;
   onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
   onEditableTextSave?: (blockId: string, fieldPath: string, value: string) => void;
+  onElementTransform?: (
+    target: PreviewSelectionTarget,
+    patch: Record<string, string>,
+  ) => void;
+  saveSignal?: number;
   iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
   selectedPreviewTarget?: PreviewSelectionTarget | null;
 }
@@ -127,6 +132,8 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
   onSectionSelected,
   onPreviewContextMenu,
   onEditableTextSave,
+  onElementTransform,
+  saveSignal,
   iframeRefCallback,
   selectedPreviewTarget,
 }: FrontendTemplateIframeProps) {
@@ -139,10 +146,13 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
   const onSectionSelectedRef = React.useRef(onSectionSelected);
   const onPreviewContextMenuRef = React.useRef(onPreviewContextMenu);
   const onEditableTextSaveRef = React.useRef(onEditableTextSave);
+  const onElementTransformRef = React.useRef(onElementTransform);
   const activeEditableRef = React.useRef<HTMLElement | null>(null);
   const activeEditableMetaRef = React.useRef<{ blockId: string; fieldPath: string; initialValue: string } | null>(null);
+  const activeEditableInputCleanupRef = React.useRef<(() => void) | null>(null);
   const activeSectionRef = React.useRef<HTMLElement | null>(null);
   const iframeDocumentRef = React.useRef<Document | null>(null);
+  const activeSelectionTargetRef = React.useRef<PreviewSelectionTarget | null>(null);
   const showSelectionOverlayRef = React.useRef((
     _target: HTMLElement | null,
     _label: string,
@@ -176,6 +186,28 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
   React.useEffect(() => {
     onEditableTextSaveRef.current = onEditableTextSave;
   }, [onEditableTextSave]);
+
+  React.useEffect(() => {
+    onElementTransformRef.current = onElementTransform;
+  }, [onElementTransform]);
+
+  React.useEffect(() => {
+    if (!saveSignal) {
+      return;
+    }
+
+    const doc = iframeDocumentRef.current;
+    if (!doc) {
+      return;
+    }
+
+    const activeEditable = activeEditableRef.current;
+    if (!activeEditable) {
+      return;
+    }
+
+    activeEditable.blur();
+  }, [saveSignal]);
 
   React.useEffect(() => {
     iframeRefCallback?.(iframeRef);
@@ -235,6 +267,9 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
         return;
       }
 
+      activeEditableInputCleanupRef.current?.();
+      activeEditableInputCleanupRef.current = null;
+
       const nextValue = activeEditable.textContent || '';
       activeEditable.contentEditable = 'false';
       activeEditable.removeAttribute('data-inline-editing');
@@ -269,6 +304,7 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
     let overlayLabel = '';
     let overlayKind: 'editable' | 'image' | 'section' | null = null;
     let overlayFrame: number | null = null;
+    let interactionCleanup: (() => void) | null = null;
 
     const queueOverlayUpdate = () => {
       if (overlayFrame !== null) {
@@ -360,6 +396,114 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       return 'Text';
     };
 
+    const normalizeSize = (value: number) => `${Math.max(24, Math.round(value))}px`;
+
+    const parseTranslate = (transformValue: string) => {
+      const match = /translate\(\s*(-?\d+(?:\.\d+)?)px(?:,\s*|\s+)(-?\d+(?:\.\d+)?)px\s*\)/.exec(transformValue);
+      return {
+        x: match ? Number(match[1]) : 0,
+        y: match ? Number(match[2]) : 0,
+      };
+    };
+
+    const stripTranslate = (transformValue: string) =>
+      transformValue
+        .replace(/translate\(\s*-?\d+(?:\.\d+)?px(?:,\s*|\s+)-?\d+(?:\.\d+)?px\s*\)/g, '')
+        .trim();
+
+    const buildTransformValue = (baseTransform: string, x: number, y: number) => {
+      const translate = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+      return baseTransform ? `${baseTransform} ${translate}` : translate;
+    };
+
+    const startInteraction = (
+      event: MouseEvent,
+      target: HTMLElement,
+      selectionTarget: PreviewSelectionTarget,
+      mode: 'move' | 'resize',
+      handle?: string,
+    ) => {
+      interactionCleanup?.();
+      finishEditing(true);
+      event.preventDefault();
+      event.stopPropagation();
+
+      const startRect = target.getBoundingClientRect();
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const computed = win.getComputedStyle(target);
+      const inlineWidth = target.style.width || computed.width;
+      const inlineHeight = target.style.height || computed.height;
+      const existingTransform = target.style.transform
+        || (computed.transform && computed.transform !== 'none' ? computed.transform : '');
+      const translateStart = parseTranslate(existingTransform);
+      const baseTransform = stripTranslate(existingTransform);
+
+      const handleMove = (moveEvent: MouseEvent) => {
+        moveEvent.preventDefault();
+        const deltaX = moveEvent.clientX - startX;
+        const deltaY = moveEvent.clientY - startY;
+
+        if (mode === 'move') {
+          target.style.transform = buildTransformValue(
+            baseTransform,
+            translateStart.x + deltaX,
+            translateStart.y + deltaY,
+          );
+          queueOverlayUpdate();
+          return;
+        }
+
+        let nextWidth = startRect.width;
+        let nextHeight = startRect.height;
+
+        if (handle?.includes('right')) {
+          nextWidth = startRect.width + deltaX;
+        }
+        if (handle?.includes('left')) {
+          nextWidth = startRect.width - deltaX;
+        }
+        if (handle?.includes('bottom')) {
+          nextHeight = startRect.height + deltaY;
+        }
+        if (handle?.includes('top')) {
+          nextHeight = startRect.height - deltaY;
+        }
+
+        target.style.width = normalizeSize(nextWidth);
+        target.style.height = normalizeSize(nextHeight);
+        queueOverlayUpdate();
+      };
+
+      const handleUp = (upEvent: MouseEvent) => {
+        upEvent.preventDefault();
+        doc.removeEventListener('mousemove', handleMove, true);
+        doc.removeEventListener('mouseup', handleUp, true);
+        interactionCleanup = null;
+
+        const patch =
+          mode === 'move'
+            ? {
+                transform: target.style.transform || buildTransformValue(baseTransform, translateStart.x, translateStart.y),
+              }
+            : {
+                width: target.style.width || inlineWidth,
+                height: target.style.height || inlineHeight,
+              };
+
+        onElementTransformRef.current?.(selectionTarget, patch);
+        queueOverlayUpdate();
+      };
+
+      doc.addEventListener('mousemove', handleMove, true);
+      doc.addEventListener('mouseup', handleUp, true);
+      interactionCleanup = () => {
+        doc.removeEventListener('mousemove', handleMove, true);
+        doc.removeEventListener('mouseup', handleUp, true);
+        interactionCleanup = null;
+      };
+    };
+
     showSelectionOverlayRef.current = showSelectionOverlay;
     hideSelectionOverlayRef.current = hideSelectionOverlay;
     inferEditableLabelRef.current = inferEditableLabel;
@@ -374,6 +518,7 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       Array.from(doc.querySelectorAll('.tt-section-selected')).forEach((node) => {
         node.classList.remove('tt-section-selected');
       });
+      activeSelectionTargetRef.current = null;
       hideSelectionOverlay();
     };
 
@@ -490,6 +635,12 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       clearVisualSelections();
       sectionEl.classList.add('tt-section-selected');
       showSelectionOverlay(sectionEl, selection.label || 'Section', 'section');
+      activeSelectionTargetRef.current = {
+        kind: 'section',
+        blockId: selection.blockId,
+        styleKey: selection.styleKey || 'sectionStyle',
+        nonce: Date.now(),
+      };
       activeSectionRef.current = sectionEl;
       onSectionSelectedRef.current?.(selection);
       return selection;
@@ -505,6 +656,12 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       activeSectionRef.current = null;
       editableEl.classList.add('tt-editable-selected');
       showSelectionOverlay(editableEl, selection.label || 'Text', 'editable');
+      activeSelectionTargetRef.current = {
+        kind: 'editable',
+        blockId: selection.blockId,
+        fieldPath: selection.fieldPath,
+        nonce: Date.now(),
+      };
       onEditableElementSelectedRef.current?.(selection);
       onSectionSelectedRef.current?.(null);
 
@@ -524,6 +681,19 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
           blockId: selection.blockId,
           fieldPath: selection.fieldPath,
           initialValue: editableEl.textContent || '',
+        };
+
+        const handleEditableInput = () => {
+          onEditableTextSaveRef.current?.(
+            selection.blockId,
+            selection.fieldPath,
+            editableEl.textContent || ''
+          );
+        };
+
+        editableEl.addEventListener('input', handleEditableInput);
+        activeEditableInputCleanupRef.current = () => {
+          editableEl.removeEventListener('input', handleEditableInput);
         };
       }
 
@@ -545,6 +715,12 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       activeSectionRef.current = null;
       imageEl.classList.add('tt-image-selected');
       showSelectionOverlay(imageEl, selection.label || 'Image', 'image');
+      activeSelectionTargetRef.current = {
+        kind: 'image',
+        blockId: selection.blockId,
+        fieldPath: selection.fieldPath,
+        nonce: Date.now(),
+      };
       onImageSelectedRef.current?.(selection);
       onSectionSelectedRef.current?.(null);
       return selection;
@@ -648,12 +824,12 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       .tt-selection-overlay {
         position: fixed;
         z-index: 2147483647;
-        pointer-events: none;
         display: none;
         box-sizing: border-box;
         border: 2px solid #2563eb;
         border-radius: 4px;
         box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.92);
+        pointer-events: none;
       }
       .tt-selection-overlay--visible {
         display: block;
@@ -683,6 +859,8 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
         border-radius: 999px;
         background: #ffffff;
         box-sizing: border-box;
+        pointer-events: auto;
+        cursor: nwse-resize;
       }
       .tt-selection-handle--top-left {
         top: -5px;
@@ -691,14 +869,17 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       .tt-selection-handle--top {
         top: -5px;
         left: calc(50% - 4px);
+        cursor: ns-resize;
       }
       .tt-selection-handle--top-right {
         top: -5px;
         right: -5px;
+        cursor: nesw-resize;
       }
       .tt-selection-handle--right {
         top: calc(50% - 4px);
         right: -5px;
+        cursor: ew-resize;
       }
       .tt-selection-handle--bottom-right {
         right: -5px;
@@ -707,14 +888,17 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       .tt-selection-handle--bottom {
         bottom: -5px;
         left: calc(50% - 4px);
+        cursor: ns-resize;
       }
       .tt-selection-handle--bottom-left {
         bottom: -5px;
         left: -5px;
+        cursor: nesw-resize;
       }
       .tt-selection-handle--left {
         top: calc(50% - 4px);
         left: -5px;
+        cursor: ew-resize;
       }
     `;
     doc.head.appendChild(styleEl);
@@ -738,6 +922,10 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
     onReadyRef.current?.();
 
     const handleClick = (event: MouseEvent) => {
+      if ((event.target as HTMLElement | null)?.closest?.('.tt-selection-handle')) {
+        return;
+      }
+
       const target = event.target as HTMLElement | null;
       const editableEl = target?.closest?.('[data-editable]') as HTMLElement | null;
       const imageEl = target?.closest?.('[data-edit-image]') as HTMLElement | null;
@@ -771,6 +959,19 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
         }
         applySectionSelection(resolvedSectionEl);
         onPreviewContextMenuRef.current?.(null);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      applyEditableSelection(editableEl, { startEditing: false });
+      onPreviewContextMenuRef.current?.(null);
+    };
+
+    const handleDoubleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const editableEl = target?.closest?.('[data-editable]') as HTMLElement | null;
+      if (!editableEl) {
         return;
       }
 
@@ -861,7 +1062,42 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       }
     };
 
+    const handleMouseDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const handleEl = target?.closest?.('.tt-selection-handle') as HTMLElement | null;
+
+      if (handleEl && overlayTarget && activeSelectionTargetRef.current) {
+        const handleName = Array.from(handleEl.classList).find((className) =>
+          className.startsWith('tt-selection-handle--')
+        )?.replace('tt-selection-handle--', '');
+
+        if (handleName) {
+          startInteraction(event, overlayTarget, activeSelectionTargetRef.current, 'resize', handleName);
+        }
+        return;
+      }
+
+      if (
+        event.button !== 0
+        || !activeSelectionTargetRef.current
+        || !overlayTarget
+        || !target
+        || target.closest('.tt-selection-overlay')
+      ) {
+        return;
+      }
+
+      if (
+        overlayTarget.contains(target)
+        && !target.closest('a, button, input, textarea, select, [contenteditable="true"]')
+      ) {
+        startInteraction(event, overlayTarget, activeSelectionTargetRef.current, 'move');
+      }
+    };
+
     doc.addEventListener('click', handleClick, true);
+    doc.addEventListener('dblclick', handleDoubleClick, true);
+    doc.addEventListener('mousedown', handleMouseDown, true);
     doc.addEventListener('contextmenu', handleContextMenu, true);
     doc.documentElement.addEventListener('contextmenu', handleContextMenu, true);
     doc.body.addEventListener('contextmenu', handleContextMenu, true);
@@ -870,7 +1106,10 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
 
     return () => {
       finishEditing(true);
+      interactionCleanup?.();
       doc.removeEventListener('click', handleClick, true);
+      doc.removeEventListener('dblclick', handleDoubleClick, true);
+      doc.removeEventListener('mousedown', handleMouseDown, true);
       doc.removeEventListener('contextmenu', handleContextMenu, true);
       doc.documentElement.removeEventListener('contextmenu', handleContextMenu, true);
       doc.body.removeEventListener('contextmenu', handleContextMenu, true);
@@ -920,6 +1159,12 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       if (matchingSection) {
         const label = matchingSection.getAttribute('data-preview-label') || 'Section';
         showSelectionOverlayRef.current(matchingSection, label, 'section');
+        activeSelectionTargetRef.current = {
+          kind: 'section',
+          blockId: selectedPreviewTarget.blockId,
+          styleKey: selectedPreviewTarget.styleKey || 'sectionStyle',
+          nonce: selectedPreviewTarget.nonce,
+        };
       }
       activeSectionRef.current = matchingSection || null;
       return;
@@ -938,6 +1183,12 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
       if (matchingImage) {
         const label = matchingImage.getAttribute('data-image-label') || 'Image';
         showSelectionOverlayRef.current(matchingImage, label, 'image');
+        activeSelectionTargetRef.current = {
+          kind: 'image',
+          blockId: selectedPreviewTarget.blockId,
+          fieldPath: selectedPreviewTarget.fieldPath,
+          nonce: selectedPreviewTarget.nonce,
+        };
       }
       activeSectionRef.current = null;
       return;
@@ -959,6 +1210,12 @@ const FrontendTemplateIframePreview = React.memo(function FrontendTemplateIframe
         inferEditableLabelRef.current(matchingEditable, fieldPath),
         'editable'
       );
+      activeSelectionTargetRef.current = {
+        kind: 'editable',
+        blockId: selectedPreviewTarget.blockId,
+        fieldPath: selectedPreviewTarget.fieldPath,
+        nonce: selectedPreviewTarget.nonce,
+      };
     }
     activeSectionRef.current = null;
   }, [selectedPreviewTarget]);
@@ -1061,6 +1318,12 @@ export interface PreviewSelectionTarget {
   nonce: number;
 }
 
+export interface PreviewElementTransformPatch {
+  width?: string;
+  height?: string;
+  transform?: string;
+}
+
 interface PreviewPanelProps {
   websiteId: string | number;
   pageId: string | number;
@@ -1073,8 +1336,6 @@ interface PreviewPanelProps {
   onBlockHover?: (blockId: string | null) => void;
   /** Step 9.14.3: Currently selected block ID — synced back to iframe for visual highlight */
   selectedBlockId?: string | null;
-  /** Step 9.16.3: Called when a data-editable element is double-clicked in the iframe */
-  onInlineEditStart?: (data: InlineEditStartData) => void;
   /** Called when an editable text element is selected in the iframe preview */
   onEditableElementSelected?: (data: EditableElementSelectionData) => void;
   /** Called when an editable image element is selected in the iframe preview */
@@ -1085,6 +1346,12 @@ interface PreviewPanelProps {
   onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
   /** Called when inline text editing inside the preview is saved */
   onEditableTextSave?: (blockId: string, fieldPath: string, value: string) => void;
+  /** Commits drag/resize style changes for the selected preview element */
+  onElementTransform?: (
+    target: PreviewSelectionTarget,
+    patch: PreviewElementTransformPatch,
+  ) => void;
+  saveSignal?: number;
   /** Step 9.16.3: Exposes the iframe ref for InlineTextEditor positioning */
   iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
   /** Syncs visual selection inside the iframe from the parent editor */
@@ -1104,12 +1371,13 @@ const PreviewPanel = React.memo(function PreviewPanel({
   onBlockSelected,
   onBlockHover,
   selectedBlockId,
-  onInlineEditStart,
   onEditableElementSelected,
   onImageSelected,
   onSectionSelected,
   onPreviewContextMenu,
   onEditableTextSave,
+  onElementTransform,
+  saveSignal,
   iframeRefCallback,
   selectedPreviewTarget,
 }: PreviewPanelProps) {
@@ -1281,7 +1549,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onBlockSelected, onBlockHover, onInlineEditStart, onEditableElementSelected]);
+  }, [onBlockSelected, onBlockHover, onEditableElementSelected]);
 
   // Send VIEWPORT_CHANGE when viewport or zoom changes
   React.useEffect(() => {
@@ -1913,6 +2181,8 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 onSectionSelected={onSectionSelected}
                 onPreviewContextMenu={onPreviewContextMenu}
                 onEditableTextSave={onEditableTextSave}
+                onElementTransform={onElementTransform}
+                saveSignal={saveSignal}
                 iframeRefCallback={iframeRefCallback}
                 selectedPreviewTarget={selectedPreviewTarget}
               />

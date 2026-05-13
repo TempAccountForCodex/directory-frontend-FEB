@@ -191,6 +191,9 @@ function buildStyleAttr(
     'background',
     'borderRadius',
     'opacity',
+    'width',
+    'height',
+    'transform',
   ];
 
   for (const key of allowedKeys) {

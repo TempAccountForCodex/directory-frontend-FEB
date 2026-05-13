@@ -7,6 +7,7 @@
 // Page reorder: Uses pages from API, reordered via PATCH /api/blocks/reorder
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { flushSync } from "react-dom";
 import { apiClient } from "../../api/client";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -85,7 +86,6 @@ import ConflictModal from "../Editor/ConflictModal";
 import RecoveryModal from "../Editor/RecoveryModal";
 import ConnectionStatus from "../Editor/ConnectionStatus";
 import BlockLibrary from "../Editor/BlockLibrary";
-import InlineTextEditor from "../Editor/InlineTextEditor";
 import EditorStyleToolbar from "../Editor/EditorStyleToolbar";
 import EditorSectionStyleToolbar from "../Editor/EditorSectionStyleToolbar";
 import ResponsiveEditorLayout from "../Editor/ResponsiveEditorLayout";
@@ -225,6 +225,7 @@ const WebsiteEditorInner = () => {
   const [persistedPages, setPersistedPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState(null);
   const [blocks, setBlocks] = useState([]);
+  const blocksRef = useRef([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [blockError, setBlockError] = useState(null);
@@ -242,8 +243,6 @@ const WebsiteEditorInner = () => {
   const [sidebarMode, setSidebarMode] = useState("blocks");
   const [templateThemeSelection, setTemplateThemeSelection] = useState(null);
 
-  // Inline editing state — Step 9.24
-  const [inlineEditState, setInlineEditState] = useState(null);
   const [selectedEditableElement, setSelectedEditableElement] = useState(null);
   const [selectedImageElement, setSelectedImageElement] = useState(null);
   const [selectedSectionElement, setSelectedSectionElement] = useState(null);
@@ -251,6 +250,7 @@ const WebsiteEditorInner = () => {
   const [uploadedLibraryImages, setUploadedLibraryImages] = useState([]);
   const [previewContextMenu, setPreviewContextMenu] = useState(null);
   const [selectedPreviewTarget, setSelectedPreviewTarget] = useState(null);
+  const [previewSaveSignal, setPreviewSaveSignal] = useState(0);
   const iframeRef = useRef(null);
   const previewContextMenuRef = useRef(null);
   const imageLibraryInputRef = useRef(null);
@@ -312,6 +312,10 @@ const WebsiteEditorInner = () => {
     () => ({ blocks: blocks.map(sanitizeBlockForSave) }),
     [blocks],
   );
+
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
   const isLoadingRef = useRef(true);
 
   // ETag + updatedAt refs for conflict detection (Step 5.9)
@@ -553,7 +557,61 @@ const WebsiteEditorInner = () => {
 
   const triggerManualSave = useCallback(async () => {
     localConflictRetryRef.current = false;
-    await triggerSave();
+    const iframeDoc = iframeRef.current?.contentDocument || null;
+    const activeIframeElement =
+      iframeDoc?.querySelector('[data-inline-editing="true"]')
+      || (iframeDoc?.activeElement instanceof HTMLElement ? iframeDoc.activeElement : null);
+    let nextBlocks = blocksRef.current;
+
+    if (
+      activeIframeElement &&
+      activeIframeElement instanceof HTMLElement &&
+      (
+        activeIframeElement.getAttribute("data-inline-editing") === "true"
+        || activeIframeElement.isContentEditable
+      )
+    ) {
+      const blockId = activeIframeElement.getAttribute("data-block-id");
+      const fieldPath = activeIframeElement.getAttribute("data-editable");
+      const nextValue = activeIframeElement.textContent || "";
+
+      if (blockId && fieldPath) {
+        flushSync(() => {
+          pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
+          nextBlocks = blocksRef.current.map((block) => {
+              if (String(block.id) !== String(blockId)) return block;
+
+              const updated = {
+                ...block,
+                content: {
+                  ...(block.content || {}),
+                },
+              };
+
+              const parts = fieldPath.split(".");
+              let obj = updated.content;
+              for (let i = 0; i < parts.length - 1; i++) {
+                obj[parts[i]] = {
+                  ...(obj[parts[i]] && typeof obj[parts[i]] === "object"
+                    ? obj[parts[i]]
+                    : {}),
+                };
+                obj = obj[parts[i]];
+              }
+              obj[parts[parts.length - 1]] = nextValue;
+              return updated;
+            });
+          blocksRef.current = nextBlocks;
+          setBlocks(nextBlocks);
+        });
+      }
+
+      activeIframeElement.blur();
+    }
+
+    setPreviewSaveSignal((prev) => prev + 1);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await triggerSave({ blocks: nextBlocks.map(sanitizeBlockForSave) });
   }, [triggerSave]);
 
   useEffect(() => {
@@ -685,7 +743,6 @@ const WebsiteEditorInner = () => {
       key: "escape",
       action: () => {
         setEditingBlock(null);
-        setInlineEditState(null);
       },
       description: "Deselect block / cancel inline edit",
       category: "Editing",
@@ -1492,6 +1549,89 @@ const WebsiteEditorInner = () => {
     [syncPreviewSelection],
   );
 
+  const handlePreviewElementTransform = useCallback((target, patch) => {
+    if (!target?.blockId || !patch) {
+      return;
+    }
+
+    pendingHistoryDescriptionRef.current =
+      target.kind === "section"
+        ? "Moved or resized section"
+        : target.kind === "image"
+          ? "Moved or resized image"
+          : "Moved or resized text";
+
+    setBlocks((prev) =>
+      prev.map((block) => {
+        if (String(block.id) !== String(target.blockId)) {
+          return block;
+        }
+
+        if (target.kind === "section") {
+          const styleKey = target.styleKey || "sectionStyle";
+          const existingStyle =
+            block.content?.[styleKey] &&
+            typeof block.content[styleKey] === "object"
+              ? block.content[styleKey]
+              : {};
+
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              [styleKey]: {
+                ...existingStyle,
+                ...patch,
+              },
+            },
+          };
+        }
+
+        if (target.kind === "image" && target.fieldPath) {
+          const styleKey = `${target.fieldPath}Style`;
+          const existingStyle =
+            block.content?.[styleKey] &&
+            typeof block.content[styleKey] === "object"
+              ? block.content[styleKey]
+              : {};
+
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              [styleKey]: {
+                ...existingStyle,
+                ...patch,
+              },
+            },
+          };
+        }
+
+        if (target.kind === "editable" && target.fieldPath) {
+          const { styleKey } = getEditableStyleConfig(target.fieldPath);
+          const existingStyle =
+            block.content?.[styleKey] &&
+            typeof block.content[styleKey] === "object"
+              ? block.content[styleKey]
+              : {};
+
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              [styleKey]: {
+                ...existingStyle,
+                ...patch,
+              },
+            },
+          };
+        }
+
+        return block;
+      }),
+    );
+  }, []);
+
   const handleContextMenuLayerSelect = useCallback(
     (layer) => {
       if (!layer) {
@@ -1729,29 +1869,30 @@ const WebsiteEditorInner = () => {
   // Inline edit save handler — Step 9.24: nested path update for content fields
   const handleInlineEditSave = useCallback((blockId, fieldPath, newValue) => {
     pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
-    setBlocks((prev) =>
-      prev.map((block) => {
-        if (String(block.id) !== String(blockId)) return block;
-        const updated = {
-          ...block,
-          content: {
-            ...(block.content || {}),
-          },
+    const nextBlocks = blocksRef.current.map((block) => {
+      if (String(block.id) !== String(blockId)) return block;
+      const updated = {
+        ...block,
+        content: {
+          ...(block.content || {}),
+        },
+      };
+      const parts = fieldPath.split(".");
+      let obj = updated.content;
+      for (let i = 0; i < parts.length - 1; i++) {
+        obj[parts[i]] = {
+          ...(obj[parts[i]] && typeof obj[parts[i]] === "object"
+            ? obj[parts[i]]
+            : {}),
         };
-        const parts = fieldPath.split(".");
-        let obj = updated.content;
-        for (let i = 0; i < parts.length - 1; i++) {
-          obj[parts[i]] = {
-            ...(obj[parts[i]] && typeof obj[parts[i]] === "object"
-              ? obj[parts[i]]
-              : {}),
-          };
-          obj = obj[parts[i]];
-        }
-        obj[parts[parts.length - 1]] = newValue;
-        return updated;
-      }),
-    );
+        obj = obj[parts[i]];
+      }
+      obj[parts[parts.length - 1]] = newValue;
+      return updated;
+    });
+
+    blocksRef.current = nextBlocks;
+    setBlocks(nextBlocks);
   }, []);
 
   // BlockLibrary insert handler — creates a block via API (Phase 9 gap fix)
@@ -2930,15 +3071,8 @@ const WebsiteEditorInner = () => {
                             onSectionSelected={handlePreviewSectionSelection}
                             onPreviewContextMenu={handlePreviewContextMenu}
                             onEditableTextSave={handleInlineEditSave}
-                            onInlineEditStart={(data) => {
-                              setSelectedEditableElement({
-                                blockId: data.blockId,
-                                fieldPath: data.fieldPath,
-                                value: data.value,
-                                editType: data.editType,
-                              });
-                              setInlineEditState(data);
-                            }}
+                            onElementTransform={handlePreviewElementTransform}
+                            saveSignal={previewSaveSignal}
                             iframeRefCallback={(ref) => {
                               iframeRef.current = ref?.current ?? null;
                             }}
@@ -2979,28 +3113,6 @@ const WebsiteEditorInner = () => {
             </Grid>
           </Grid>
         </ResponsiveEditorLayout>
-
-        {/* InlineTextEditor overlay — Step 9.24 */}
-        {inlineEditState && (
-          <InlineTextEditor
-            open={!!inlineEditState}
-            initialValue={inlineEditState.value}
-            fieldPath={inlineEditState.fieldPath}
-            editType={inlineEditState.editType || "single"}
-            rect={inlineEditState.rect}
-            iframeRef={{ current: iframeRef.current }}
-            onSave={(newValue) => {
-              handleInlineEditSave(
-                inlineEditState.blockId,
-                inlineEditState.fieldPath,
-                newValue,
-              );
-              setInlineEditState(null);
-            }}
-            onCancel={() => setInlineEditState(null)}
-          />
-        )}
-
         <Dialog
           open={!!selectedImageElement}
           onClose={() => setSelectedImageElement(null)}

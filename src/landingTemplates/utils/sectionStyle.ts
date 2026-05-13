@@ -8,6 +8,9 @@ export type SectionStyleValue = {
   paddingBottom?: string | number;
   marginTop?: string | number;
   marginBottom?: string | number;
+  width?: string | number;
+  height?: string | number;
+  transform?: string;
 };
 
 type ContentLike = Record<string, unknown> | null | undefined;
@@ -52,6 +55,15 @@ export const getSectionStyleSx = (
   }
   if (sectionStyle.marginBottom !== undefined) {
     sx.marginBottom = sectionStyle.marginBottom;
+  }
+  if (sectionStyle.width !== undefined) {
+    sx.width = sectionStyle.width;
+  }
+  if (sectionStyle.height !== undefined) {
+    sx.height = sectionStyle.height;
+  }
+  if (sectionStyle.transform) {
+    sx.transform = sectionStyle.transform;
   }
 
   return sx;

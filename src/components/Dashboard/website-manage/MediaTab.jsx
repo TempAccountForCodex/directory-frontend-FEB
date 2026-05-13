@@ -74,6 +74,39 @@ function extractBlocksPayload(responseData) {
   return [];
 }
 
+function extractWebsiteMediaPayload(responseData) {
+  if (Array.isArray(responseData)) return responseData;
+  if (Array.isArray(responseData?.data?.media)) return responseData.data.media;
+  if (Array.isArray(responseData?.media)) return responseData.media;
+  if (Array.isArray(responseData?.data)) return responseData.data;
+  return [];
+}
+
+function mapWebsiteMediaItem(item, fallbackName = 'Uploaded Asset') {
+  const rawUrl =
+    item?.url ||
+    item?.imageUrl ||
+    item?.fileUrl ||
+    item?.path ||
+    item?.src;
+
+  const normalizedUrl = toAbsoluteUrl(rawUrl);
+  if (!normalizedUrl) return null;
+
+  return {
+    id: String(item?.id || normalizedUrl),
+    url: normalizedUrl,
+    name:
+      item?.name ||
+      item?.fileName ||
+      item?.originalName ||
+      sanitizeFileName(normalizedUrl, fallbackName),
+    sourceType: item?.sourceType || 'Uploaded Asset',
+    pages: Array.isArray(item?.pages) ? item.pages : [],
+    blocks: Array.isArray(item?.blocks) ? item.blocks : [],
+  };
+}
+
 function createCollector() {
   const seen = new Map();
 
@@ -216,6 +249,7 @@ const MediaTab = memo(({ website, websiteId }) => {
       }
       setError(null);
 
+      const mediaResponse = await apiClient.get(`/websites/${websiteId}/media`);
       const pagesResponse = await apiClient.get(`/websites/${websiteId}/pages`);
       const pages = pagesResponse.data?.data || pagesResponse.data?.pages || [];
 
@@ -228,12 +262,11 @@ const MediaTab = memo(({ website, websiteId }) => {
 
       const pageBlocks = new Map(blockResponses);
       const discovered = buildMediaItems(website, pages, pageBlocks);
-      setMediaItems((previous) =>
-        mergeMediaItems(
-          discovered,
-          previous.filter((item) => item.sourceType === 'Uploaded Asset')
-        )
-      );
+      const persistedMedia = extractWebsiteMediaPayload(mediaResponse.data)
+        .map((item) => mapWebsiteMediaItem(item))
+        .filter(Boolean);
+
+      setMediaItems(mergeMediaItems(persistedMedia, discovered));
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load website media.');
     } finally {
@@ -285,7 +318,7 @@ const MediaTab = memo(({ website, websiteId }) => {
     } catch {
       setUploadError('Could not copy image URL.');
     }
-  }, []);
+  }, [websiteId]);
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -302,34 +335,21 @@ const MediaTab = memo(({ website, websiteId }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await apiClient.post('/upload/image', formData, {
+      const response = await apiClient.post(`/websites/${websiteId}/media`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      const uploadedUrl =
-        response.data?.url ||
-        response.data?.data?.url ||
-        response.data?.data?.imageUrl ||
-        response.data?.imageUrl;
+      const uploadedItem =
+        mapWebsiteMediaItem(response.data?.data, file.name) ||
+        mapWebsiteMediaItem(response.data, file.name);
 
-      if (!uploadedUrl) {
+      if (!uploadedItem) {
         throw new Error('Upload response missing image URL.');
       }
 
-      const normalizedUrl = toAbsoluteUrl(uploadedUrl);
       setMediaItems((prev) => {
-        if (prev.some((item) => item.url === normalizedUrl)) return prev;
-        return [
-          {
-            id: normalizedUrl,
-            url: normalizedUrl,
-            name: file.name,
-            sourceType: 'Uploaded Asset',
-            pages: [],
-            blocks: [],
-          },
-          ...prev,
-        ];
+        if (prev.some((item) => item.url === uploadedItem.url)) return prev;
+        return [uploadedItem, ...prev];
       });
     } catch (err) {
       setUploadError(err?.response?.data?.message || 'Failed to upload image.');
