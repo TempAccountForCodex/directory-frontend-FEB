@@ -14,7 +14,7 @@
  * - React.memo for performance
  */
 
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback } from "react";
 import {
   Alert,
   Box,
@@ -26,15 +26,15 @@ import {
   Stack,
   TextField,
   Button,
-} from '@mui/material';
-import Facebook from '@mui/icons-material/Facebook';
-import Twitter from '@mui/icons-material/Twitter';
-import Instagram from '@mui/icons-material/Instagram';
-import LinkedIn from '@mui/icons-material/LinkedIn';
-import YouTube from '@mui/icons-material/YouTube';
-import X from '@mui/icons-material/X';
-import { BlockWrapper } from '../BlockWrapper';
-import { API_URL } from '@/config/api';
+} from "@mui/material";
+import Facebook from "@mui/icons-material/Facebook";
+import Twitter from "@mui/icons-material/Twitter";
+import Instagram from "@mui/icons-material/Instagram";
+import LinkedIn from "@mui/icons-material/LinkedIn";
+import YouTube from "@mui/icons-material/YouTube";
+import X from "@mui/icons-material/X";
+import { BlockWrapper } from "../BlockWrapper";
+import { API_URL } from "@/config/api";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ interface SocialLink {
 
 interface FooterBlockProps {
   content: {
-    variant?: 'simple' | 'multi-column' | 'centered';
+    variant?: "simple" | "multi-column" | "centered";
     copyright?: string;
     logo?: string;
     columns?: FooterColumn[];
@@ -75,9 +75,17 @@ interface FooterBlockProps {
 
 // ── Social Icon Map ────────────────────────────────────────────────────────────
 
-type SocialPlatform = 'facebook' | 'twitter' | 'instagram' | 'linkedin' | 'youtube';
+type SocialPlatform =
+  | "facebook"
+  | "twitter"
+  | "instagram"
+  | "linkedin"
+  | "youtube";
 
-const SOCIAL_ICONS: Record<SocialPlatform, React.ComponentType<{ fontSize?: 'small' | 'medium' | 'large' | 'inherit' }>> = {
+const SOCIAL_ICONS: Record<
+  SocialPlatform,
+  React.ComponentType<{ fontSize?: "small" | "medium" | "large" | "inherit" }>
+> = {
   facebook: Facebook,
   twitter: X,
   instagram: Instagram,
@@ -86,25 +94,33 @@ const SOCIAL_ICONS: Record<SocialPlatform, React.ComponentType<{ fontSize?: 'sma
 };
 
 const SOCIAL_LABELS: Record<SocialPlatform, string> = {
-  facebook: 'Facebook',
-  twitter: 'X (Twitter)',
-  instagram: 'Instagram',
-  linkedin: 'LinkedIn',
-  youtube: 'YouTube',
+  facebook: "Facebook",
+  twitter: "X (Twitter)",
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
+  youtube: "YouTube",
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 interface SocialIconsRowProps {
   socialLinks: SocialLink[];
-  justify?: 'center' | 'flex-start' | 'flex-end';
+  justify?: "center" | "flex-start" | "flex-end";
 }
 
-const SocialIconsRow: React.FC<SocialIconsRowProps> = ({ socialLinks, justify = 'center' }) => {
+const SocialIconsRow: React.FC<SocialIconsRowProps> = ({
+  socialLinks,
+  justify = "center",
+}) => {
   if (!socialLinks || socialLinks.length === 0) return null;
 
   return (
-    <Stack direction="row" spacing={0.5} justifyContent={justify} flexWrap="wrap">
+    <Stack
+      direction="row"
+      spacing={0.5}
+      justifyContent={justify}
+      flexWrap="wrap"
+    >
       {socialLinks.map((link, idx) => {
         const platform = link.platform as SocialPlatform;
         const IconComponent = SOCIAL_ICONS[platform];
@@ -121,11 +137,11 @@ const SocialIconsRow: React.FC<SocialIconsRowProps> = ({ socialLinks, justify = 
               rel="noopener noreferrer"
               aria-label={label}
               size="small"
-              sx={{ color: 'grey.400', '&:hover': { color: 'white' } }}
+              sx={{ color: "grey.400", "&:hover": { color: "white" } }}
             >
               <Typography
                 variant="caption"
-                sx={{ fontSize: '0.65rem', textTransform: 'uppercase' }}
+                sx={{ fontSize: "0.65rem", textTransform: "uppercase" }}
               >
                 {label.slice(0, 1)}
               </Typography>
@@ -142,7 +158,7 @@ const SocialIconsRow: React.FC<SocialIconsRowProps> = ({ socialLinks, justify = 
             rel="noopener noreferrer"
             aria-label={label}
             size="small"
-            sx={{ color: 'grey.400', '&:hover': { color: 'white' } }}
+            sx={{ color: "grey.400", "&:hover": { color: "white" } }}
           >
             <IconComponent fontSize="small" />
           </IconButton>
@@ -158,11 +174,17 @@ interface NewsletterFormProps {
   websiteId?: number;
 }
 
-const NewsletterForm: React.FC<NewsletterFormProps> = ({ heading, placeholder, websiteId }) => {
-  const [email, setEmail] = useState('');
-  const [honeypot, setHoneypot] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+const NewsletterForm: React.FC<NewsletterFormProps> = ({
+  heading,
+  placeholder,
+  websiteId,
+}) => {
+  const [email, setEmail] = useState("");
+  const [honeypot, setHoneypot] = useState("");
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -174,47 +196,53 @@ const NewsletterForm: React.FC<NewsletterFormProps> = ({ heading, placeholder, w
 
       // Honeypot check — silently succeed for bots
       if (honeypot) {
-        setStatus('success');
+        setStatus("success");
         return;
       }
 
       // Client-side email validation
       if (!email.trim() || !EMAIL_REGEX.test(email.trim())) {
-        setErrorMessage('Please enter a valid email address.');
-        setStatus('error');
+        setErrorMessage("Please enter a valid email address.");
+        setStatus("error");
         return;
       }
 
-      setStatus('loading');
+      setStatus("loading");
 
       try {
         const res = await fetch(`${API_URL}/newsletter/subscribe`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), websiteId, source: 'footer' }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim(),
+            websiteId,
+            source: "footer",
+          }),
         });
 
         if (res.status === 429) {
-          setErrorMessage('Too many requests. Please try again later.');
-          setStatus('error');
+          setErrorMessage("Too many requests. Please try again later.");
+          setStatus("error");
           return;
         }
 
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          setErrorMessage(body.message || 'Something went wrong. Please try again.');
-          setStatus('error');
+          setErrorMessage(
+            body.message || "Something went wrong. Please try again.",
+          );
+          setStatus("error");
           return;
         }
 
-        setStatus('success');
-        setEmail('');
+        setStatus("success");
+        setEmail("");
       } catch {
-        setErrorMessage('Unable to subscribe. Please check your connection.');
-        setStatus('error');
+        setErrorMessage("Unable to subscribe. Please check your connection.");
+        setStatus("error");
       }
     },
-    [email, honeypot, websiteId]
+    [email, honeypot, websiteId],
   );
 
   return (
@@ -222,34 +250,43 @@ const NewsletterForm: React.FC<NewsletterFormProps> = ({ heading, placeholder, w
       sx={{
         mt: 4,
         pt: 3,
-        borderTop: '1px solid rgba(255,255,255,0.1)',
+        borderTop: "1px solid rgba(255,255,255,0.1)",
       }}
     >
       {heading && (
         <Typography
           variant="subtitle2"
-          sx={{ color: 'grey.300', mb: 1.5, fontWeight: 600, textAlign: 'center' }}
+          sx={{
+            color: "grey.300",
+            mb: 1.5,
+            fontWeight: 600,
+            textAlign: "center",
+          }}
         >
           {heading}
         </Typography>
       )}
 
-      {status === 'success' && (
+      {status === "success" && (
         <Alert
           severity="success"
           sx={{
             mb: 1.5,
-            bgcolor: 'transparent',
-            '& .MuiAlert-message': { color: 'success.light' },
+            bgcolor: "transparent",
+            "& .MuiAlert-message": { color: "success.light" },
           }}
         >
           Thanks for subscribing!
         </Alert>
       )}
-      {status === 'error' && (
+      {status === "error" && (
         <Alert
           severity="error"
-          sx={{ mb: 1.5, bgcolor: 'transparent', '& .MuiAlert-message': { color: 'error.light' } }}
+          sx={{
+            mb: 1.5,
+            bgcolor: "transparent",
+            "& .MuiAlert-message": { color: "error.light" },
+          }}
         >
           {errorMessage}
         </Alert>
@@ -266,39 +303,45 @@ const NewsletterForm: React.FC<NewsletterFormProps> = ({ heading, placeholder, w
           component="input"
           name="website"
           value={honeypot}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHoneypot(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setHoneypot(e.target.value)
+          }
           aria-hidden="true"
           tabIndex={-1}
           autoComplete="off"
           style={{
-            position: 'absolute',
-            left: '-9999px',
-            width: '1px',
-            height: '1px',
-            overflow: 'hidden',
-            display: 'none',
+            position: "absolute",
+            left: "-9999px",
+            width: "1px",
+            height: "1px",
+            overflow: "hidden",
+            display: "none",
           }}
         />
 
-        {status !== 'success' && (
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="center">
+        {status !== "success" && (
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            justifyContent="center"
+          >
             <TextField
               size="small"
               type="email"
               placeholder={placeholder}
               value={email}
               onChange={handleChange}
-              disabled={status === 'loading'}
-              inputProps={{ 'aria-label': 'Email address' }}
+              disabled={status === "loading"}
+              inputProps={{ "aria-label": "Email address" }}
               sx={{
-                bgcolor: 'grey.800',
+                bgcolor: "grey.800",
                 borderRadius: 1,
-                '& .MuiInputBase-input': { color: 'grey.200' },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'grey.700',
+                "& .MuiInputBase-input": { color: "grey.200" },
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "grey.700",
                 },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'grey.500',
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "grey.500",
                 },
                 minWidth: { sm: 220 },
               }}
@@ -307,10 +350,14 @@ const NewsletterForm: React.FC<NewsletterFormProps> = ({ heading, placeholder, w
               type="submit"
               variant="contained"
               size="small"
-              disabled={status === 'loading'}
-              sx={{ whiteSpace: 'nowrap' }}
+              disabled={status === "loading"}
+              sx={{ whiteSpace: "nowrap" }}
             >
-              {status === 'loading' ? <CircularProgress size={18} color="inherit" /> : 'Subscribe'}
+              {status === "loading" ? (
+                <CircularProgress size={18} color="inherit" />
+              ) : (
+                "Subscribe"
+              )}
             </Button>
           </Stack>
         )}
@@ -341,7 +388,10 @@ const SimpleVariant: React.FC<VariantProps> = ({
   newsletterPlaceholder,
   websiteId,
 }) => (
-  <Box component="footer" sx={{ bgcolor: 'grey.900', color: 'grey.300', py: 4 }}>
+  <Box
+    component="footer"
+    sx={{ bgcolor: "grey.900", color: "grey.300", py: 4 }}
+  >
     <Container maxWidth="md">
       <Stack spacing={2} alignItems="center">
         {logo && (
@@ -350,14 +400,17 @@ const SimpleVariant: React.FC<VariantProps> = ({
             src={logo}
             alt="Footer logo"
             data-testid="footer-logo"
-            sx={{ maxHeight: 48, maxWidth: 160, objectFit: 'contain' }}
+            sx={{ maxHeight: 48, maxWidth: 160, objectFit: "contain" }}
           />
         )}
 
         <SocialIconsRow socialLinks={socialLinks} justify="center" />
 
         {copyright && (
-          <Typography variant="body2" sx={{ color: 'grey.500', textAlign: 'center' }}>
+          <Typography
+            variant="body2"
+            sx={{ color: "grey.500", textAlign: "center" }}
+          >
             {copyright}
           </Typography>
         )}
@@ -384,7 +437,10 @@ const MultiColumnVariant: React.FC<VariantProps> = ({
   newsletterPlaceholder,
   websiteId,
 }) => (
-  <Box component="footer" sx={{ bgcolor: 'grey.900', color: 'grey.300', pt: 6, pb: 3 }}>
+  <Box
+    component="footer"
+    sx={{ bgcolor: "grey.900", color: "grey.300", pt: 6, pb: 3 }}
+  >
     <Container maxWidth="lg">
       <Grid container spacing={4}>
         {/* Logo column */}
@@ -395,7 +451,7 @@ const MultiColumnVariant: React.FC<VariantProps> = ({
               src={logo}
               alt="Footer logo"
               data-testid="footer-logo"
-              sx={{ maxHeight: 48, maxWidth: 160, objectFit: 'contain', mb: 2 }}
+              sx={{ maxHeight: 48, maxWidth: 160, objectFit: "contain", mb: 2 }}
             />
           </Grid>
         )}
@@ -403,7 +459,10 @@ const MultiColumnVariant: React.FC<VariantProps> = ({
         {/* Link columns */}
         {columns.map((col, idx) => (
           <Grid item xs={12} sm={6} md key={idx}>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 700, color: 'white' }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ mb: 2, fontWeight: 700, color: "white" }}
+            >
               {col.title}
             </Typography>
             {col.links?.map((link, linkIdx) => (
@@ -413,10 +472,10 @@ const MultiColumnVariant: React.FC<VariantProps> = ({
                 href={link.url}
                 display="block"
                 sx={{
-                  color: 'grey.400',
-                  textDecoration: 'none',
+                  color: "grey.400",
+                  textDecoration: "none",
                   mb: 0.5,
-                  '&:hover': { color: 'white' },
+                  "&:hover": { color: "white" },
                 }}
               >
                 {link.label}
@@ -440,16 +499,16 @@ const MultiColumnVariant: React.FC<VariantProps> = ({
         sx={{
           mt: 4,
           pt: 3,
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: "center",
+          justifyContent: "space-between",
           gap: 2,
         }}
       >
         {copyright && (
-          <Typography variant="body2" sx={{ color: 'grey.500' }}>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>
             {copyright}
           </Typography>
         )}
@@ -473,7 +532,10 @@ const CenteredVariant: React.FC<VariantProps> = ({
   const allLinks: FooterLink[] = columns.flatMap((col) => col.links ?? []);
 
   return (
-    <Box component="footer" sx={{ bgcolor: 'grey.900', color: 'grey.300', py: 4 }}>
+    <Box
+      component="footer"
+      sx={{ bgcolor: "grey.900", color: "grey.300", py: 4 }}
+    >
       <Container maxWidth="lg">
         <Stack spacing={2} alignItems="center">
           {logo && (
@@ -482,13 +544,18 @@ const CenteredVariant: React.FC<VariantProps> = ({
               src={logo}
               alt="Footer logo"
               data-testid="footer-logo"
-              sx={{ maxHeight: 48, maxWidth: 160, objectFit: 'contain' }}
+              sx={{ maxHeight: 48, maxWidth: 160, objectFit: "contain" }}
             />
           )}
 
           {/* Inline horizontal links */}
           {allLinks.length > 0 && (
-            <Stack direction="row" spacing={2} flexWrap="wrap" justifyContent="center">
+            <Stack
+              direction="row"
+              spacing={2}
+              flexWrap="wrap"
+              justifyContent="center"
+            >
               {allLinks.map((link, idx) => (
                 <Typography
                   key={idx}
@@ -496,9 +563,9 @@ const CenteredVariant: React.FC<VariantProps> = ({
                   href={link.url}
                   variant="body2"
                   sx={{
-                    color: 'grey.400',
-                    textDecoration: 'none',
-                    '&:hover': { color: 'white' },
+                    color: "grey.400",
+                    textDecoration: "none",
+                    "&:hover": { color: "white" },
                   }}
                 >
                   {link.label}
@@ -510,7 +577,10 @@ const CenteredVariant: React.FC<VariantProps> = ({
           <SocialIconsRow socialLinks={socialLinks} justify="center" />
 
           {copyright && (
-            <Typography variant="body2" sx={{ color: 'grey.500', textAlign: 'center' }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "grey.500", textAlign: "center" }}
+            >
               {copyright}
             </Typography>
           )}
@@ -532,14 +602,14 @@ const CenteredVariant: React.FC<VariantProps> = ({
 
 const FooterBlockBase: React.FC<FooterBlockProps> = ({ content }) => {
   const {
-    variant = 'multi-column',
+    variant = "multi-column",
     copyright,
     logo,
     columns = [],
     socialLinks = [],
     showNewsletter = false,
-    newsletterHeading = 'Stay in the loop',
-    newsletterPlaceholder = 'Enter your email',
+    newsletterHeading = "Stay in the loop",
+    newsletterPlaceholder = "Enter your email",
     websiteId,
     ...rest
   } = content;
@@ -557,11 +627,11 @@ const FooterBlockBase: React.FC<FooterBlockProps> = ({ content }) => {
 
   const renderVariant = () => {
     switch (variant) {
-      case 'simple':
+      case "simple":
         return <SimpleVariant {...sharedProps} />;
-      case 'centered':
+      case "centered":
         return <CenteredVariant {...sharedProps} />;
-      case 'multi-column':
+      case "multi-column":
       default:
         return <MultiColumnVariant {...sharedProps} />;
     }
@@ -570,11 +640,10 @@ const FooterBlockBase: React.FC<FooterBlockProps> = ({ content }) => {
   return <BlockWrapper fields={{ ...rest }}>{renderVariant()}</BlockWrapper>;
 };
 
-FooterBlockBase.displayName = 'FooterBlock';
+FooterBlockBase.displayName = "FooterBlock";
 
 const FooterBlock = memo(FooterBlockBase);
-FooterBlock.displayName = 'FooterBlock';
+FooterBlock.displayName = "FooterBlock";
 
 export { Twitter, X, SOCIAL_ICONS };
 export default FooterBlock;
-

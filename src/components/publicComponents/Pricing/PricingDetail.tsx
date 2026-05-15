@@ -1,19 +1,28 @@
-import React from 'react';
-import { Box, Container, Typography, Grid, Button, Stack, Divider, Chip } from '@mui/material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import React from "react";
+import {
+  Box,
+  Container,
+  Typography,
+  Grid,
+  Button,
+  Stack,
+  Divider,
+  Chip,
+} from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 /* Feature Icons */
-import LinkIcon from '@mui/icons-material/Link';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import BoltIcon from '@mui/icons-material/Bolt';
-import SearchIcon from '@mui/icons-material/Search';
-import SlideshowIcon from '@mui/icons-material/Slideshow';
-import ViewListIcon from '@mui/icons-material/ViewList';
-import SupportAgentIcon from '@mui/icons-material/SupportAgent';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import LinkIcon from "@mui/icons-material/Link";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import BoltIcon from "@mui/icons-material/Bolt";
+import SearchIcon from "@mui/icons-material/Search";
+import SlideshowIcon from "@mui/icons-material/Slideshow";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 
-const star = '/assets/publicAssets/images/common/star.svg';
+const star = "/assets/publicAssets/images/common/star.svg";
 
 /* ============================
    Theme & Config
@@ -21,83 +30,83 @@ const star = '/assets/publicAssets/images/common/star.svg';
 
 const gradientText = {
   background:
-    'linear-gradient(135deg, #2dd4bf 0%, #378C92 25%, #06b6d4 50%, #0ea5e9 75%, #3b82f6 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
+    "linear-gradient(135deg, #2dd4bf 0%, #378C92 25%, #06b6d4 50%, #0ea5e9 75%, #3b82f6 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  backgroundClip: "text",
   fontWeight: 700,
-  animation: 'shimmer 3s ease-in-out infinite',
-  backgroundSize: '200% 200%',
+  animation: "shimmer 3s ease-in-out infinite",
+  backgroundSize: "200% 200%",
 };
 const avatarStyle = {
   width: 44,
   height: 44,
-  borderRadius: '12px',
-  border: '3px solid #FFFFFF',
-  objectFit: 'cover',
-  backgroundColor: '#fff',
+  borderRadius: "12px",
+  border: "3px solid #FFFFFF",
+  objectFit: "cover",
+  backgroundColor: "#fff",
 };
 
 const avatarWrapper = {
-  display: 'flex',
-  alignItems: 'center',
-  marginLeft: '-10px',
+  display: "flex",
+  alignItems: "center",
+  marginLeft: "-10px",
 };
 
 const COLORS = {
-  bg: '#020303',
-  card: '#071c1e',
-  cardDark: '#050f11',
-  teal: '#2fb8b3',
-  tealSoft: 'rgba(47,184,179,0.25)',
-  border: 'rgba(255,255,255,0.08)',
+  bg: "#020303",
+  card: "#071c1e",
+  cardDark: "#050f11",
+  teal: "#2fb8b3",
+  tealSoft: "rgba(47,184,179,0.25)",
+  border: "rgba(255,255,255,0.08)",
 };
 
 const BASE_FEATURES = [
-  'Custom Domain URLs',
-  'Premium Templates',
-  'Business Listing',
-  'Slideshows',
-  'SEO Structure',
-  'Forms',
+  "Custom Domain URLs",
+  "Premium Templates",
+  "Business Listing",
+  "Slideshows",
+  "SEO Structure",
+  "Forms",
 ];
-const STANDARD_EXTRAS = ['Priority Support', 'Verified Badge'];
-const PLUS_EXTRAS = ['AI Copywriter', 'AI Image Gen'];
+const STANDARD_EXTRAS = ["Priority Support", "Verified Badge"];
+const PLUS_EXTRAS = ["AI Copywriter", "AI Image Gen"];
 
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
-  'Custom Domain URLs': <LinkIcon />,
-  'Premium Templates': <ViewListIcon />,
-  'Business Listing': <ViewListIcon />,
+  "Custom Domain URLs": <LinkIcon />,
+  "Premium Templates": <ViewListIcon />,
+  "Business Listing": <ViewListIcon />,
   Slideshows: <SlideshowIcon />,
-  'SEO Structure': <SearchIcon />,
+  "SEO Structure": <SearchIcon />,
   Forms: <ViewListIcon />,
-  'Priority Support': <SupportAgentIcon />,
-  'Verified Badge': <VerifiedUserIcon />,
-  'AI Copywriter': <AutoAwesomeIcon />,
-  'AI Image Gen': <AutoAwesomeIcon />,
+  "Priority Support": <SupportAgentIcon />,
+  "Verified Badge": <VerifiedUserIcon />,
+  "AI Copywriter": <AutoAwesomeIcon />,
+  "AI Image Gen": <AutoAwesomeIcon />,
 };
 
-type BillingCycle = 'annual' | 'monthly';
+type BillingCycle = "annual" | "monthly";
 type Plan = { label: string; price: number; sites: number };
 
 const pricingConfig = {
   lite: [
-    { label: 'Pro Lite', price: 9, sites: 3 },
-    { label: 'Pro Lite 10', price: 19, sites: 10 },
-    { label: 'Pro Lite 25', price: 49, sites: 25 },
+    { label: "Pro Lite", price: 9, sites: 3 },
+    { label: "Pro Lite 10", price: 19, sites: 10 },
+    { label: "Pro Lite 25", price: 49, sites: 25 },
   ],
   standard: [
-    { label: 'Pro Standard', price: 19, sites: 25 },
-    { label: 'Pro Standard 50', price: 29, sites: 50 },
-    { label: 'Pro Standard 100', price: 49, sites: 100 },
-    { label: 'Pro Standard 150', price: 69, sites: 150 },
-    { label: 'Pro Standard 250', price: 99, sites: 250 },
+    { label: "Pro Standard", price: 19, sites: 25 },
+    { label: "Pro Standard 50", price: 29, sites: 50 },
+    { label: "Pro Standard 100", price: 49, sites: 100 },
+    { label: "Pro Standard 150", price: 69, sites: 150 },
+    { label: "Pro Standard 250", price: 99, sites: 250 },
   ],
   plus: [
-    { label: 'Pro Plus', price: 49, sites: 50 },
-    { label: 'Pro Plus 100', price: 79, sites: 100 },
-    { label: 'Pro Plus 150', price: 109, sites: 150 },
-    { label: 'Pro Plus 200', price: 149, sites: 200 },
+    { label: "Pro Plus", price: 49, sites: 50 },
+    { label: "Pro Plus 100", price: 79, sites: 100 },
+    { label: "Pro Plus 150", price: 109, sites: 150 },
+    { label: "Pro Plus 200", price: 149, sites: 200 },
   ],
 };
 
@@ -111,33 +120,33 @@ const BillingToggle = ({
   value: BillingCycle;
   onChange: (v: BillingCycle) => void;
 }) => (
-  <Box sx={{ textAlign: 'center', mb: 10 }}>
+  <Box sx={{ textAlign: "center", mb: 10 }}>
     <Box
       sx={{
-        display: 'inline-flex',
-        background: 'rgba(255,255,255,0.06)',
-        borderRadius: '999px',
+        display: "inline-flex",
+        background: "rgba(255,255,255,0.06)",
+        borderRadius: "999px",
         p: 0.5,
       }}
     >
-      {(['annual', 'monthly'] as BillingCycle[]).map((type) => (
+      {(["annual", "monthly"] as BillingCycle[]).map((type) => (
         <Button
           key={type}
           onClick={() => onChange(type)}
           sx={{
             px: 4,
             py: 1.3,
-            borderRadius: '999px',
+            borderRadius: "999px",
             fontWeight: 700,
-            textTransform: 'none',
-            background: value === type ? 'white' : 'transparent',
-            color: value === type ? '#000' : 'rgba(255,255,255,0.7)',
-            '&:hover': {
-              background: value === type ? 'white' : 'rgba(255,255,255,0.08)',
+            textTransform: "none",
+            background: value === type ? "white" : "transparent",
+            color: value === type ? "#000" : "rgba(255,255,255,0.7)",
+            "&:hover": {
+              background: value === type ? "white" : "rgba(255,255,255,0.08)",
             },
           }}
         >
-          {type === 'annual' ? 'Pay annually' : 'Pay monthly'}
+          {type === "annual" ? "Pay annually" : "Pay monthly"}
         </Button>
       ))}
     </Box>
@@ -145,14 +154,15 @@ const BillingToggle = ({
 );
 
 const PlanHeader = ({ plan, index, max, onPrev, onNext, billing }: any) => {
-  const displayPrice = billing === 'annual' ? plan.price : Math.round(plan.price / 12);
+  const displayPrice =
+    billing === "annual" ? plan.price : Math.round(plan.price / 12);
   return (
-    <Box sx={{ textAlign: 'center', mb: 3 }}>
+    <Box sx={{ textAlign: "center", mb: 3 }}>
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
         <Button
@@ -160,7 +170,7 @@ const PlanHeader = ({ plan, index, max, onPrev, onNext, billing }: any) => {
           disabled={index === 0}
           aria-label={`Previous ${plan.label} plan`}
           title={`Previous ${plan.label} plan`}
-          sx={{ color: 'white', minWidth: 40 }}
+          sx={{ color: "white", minWidth: 40 }}
         >
           <ChevronLeftIcon />
         </Button>
@@ -170,19 +180,21 @@ const PlanHeader = ({ plan, index, max, onPrev, onNext, billing }: any) => {
           disabled={index === max - 1}
           aria-label={`Next ${plan.label} plan`}
           title={`Next ${plan.label} plan`}
-          sx={{ color: 'white', minWidth: 40 }}
+          sx={{ color: "white", minWidth: 40 }}
         >
           <ChevronRightIcon />
         </Button>
       </Box>
-      <Typography sx={{ fontSize: '2.2rem', fontWeight: 900, mt: 1 }}>
+      <Typography sx={{ fontSize: "2.2rem", fontWeight: 900, mt: 1 }}>
         ${displayPrice}
-        <Box component="span" sx={{ opacity: 0.5, fontSize: '0.9rem' }}>
-          {' '}
-          /{billing === 'annual' ? 'year' : 'month'}
+        <Box component="span" sx={{ opacity: 0.5, fontSize: "0.9rem" }}>
+          {" "}
+          /{billing === "annual" ? "year" : "month"}
         </Box>
       </Typography>
-      <Typography sx={{ opacity: 0.78, mt: 0.5 }}>{plan.sites} Sites</Typography>
+      <Typography sx={{ opacity: 0.78, mt: 0.5 }}>
+        {plan.sites} Sites
+      </Typography>
     </Box>
   );
 };
@@ -190,27 +202,39 @@ const PlanHeader = ({ plan, index, max, onPrev, onNext, billing }: any) => {
 /* ============================
    Main Pricing Card
 ============================ */
-const PricingCard = ({ plan, index, max, onPrev, onNext, billing, tier, recommended }: any) => {
+const PricingCard = ({
+  plan,
+  index,
+  max,
+  onPrev,
+  onNext,
+  billing,
+  tier,
+  recommended,
+}: any) => {
   const features =
-    tier === 'lite'
+    tier === "lite"
       ? BASE_FEATURES
-      : tier === 'standard'
+      : tier === "standard"
         ? [...BASE_FEATURES, ...STANDARD_EXTRAS]
         : [...BASE_FEATURES, ...STANDARD_EXTRAS, ...PLUS_EXTRAS];
-  const displayPrice = billing === 'annual' ? plan.price : Math.round(plan.price / 12);
+  const displayPrice =
+    billing === "annual" ? plan.price : Math.round(plan.price / 12);
 
   return (
-    <Grid item xs={12} sm={6} md={4} sx={{ display: 'flex' }}>
+    <Grid item xs={12} sm={6} md={4} sx={{ display: "flex" }}>
       <Box
         sx={{
           flexGrow: 1,
-          position: 'relative',
+          position: "relative",
           mt: recommended ? 0 : 4,
-          background: recommended ? COLORS.card : '#03181a',
-          borderRadius: '24px',
-          border: recommended ? `1px solid ${COLORS.tealSoft}` : `1px solid ${COLORS.border}`,
-          display: 'flex',
-          flexDirection: 'column',
+          background: recommended ? COLORS.card : "#03181a",
+          borderRadius: "24px",
+          border: recommended
+            ? `1px solid ${COLORS.tealSoft}`
+            : `1px solid ${COLORS.border}`,
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {/* RECOMMENDED CHIP */}
@@ -219,15 +243,15 @@ const PricingCard = ({ plan, index, max, onPrev, onNext, billing, tier, recommen
             label="MOST POPULAR"
             sx={{
               height: 26,
-              fontSize: '0.65rem',
+              fontSize: "0.65rem",
               fontWeight: 800,
               letterSpacing: 1,
               background: COLORS.teal,
-              color: 'white',
-              position: 'absolute',
+              color: "white",
+              position: "absolute",
               top: -13,
-              left: '50%',
-              transform: 'translateX(-50%)',
+              left: "50%",
+              transform: "translateX(-50%)",
               zIndex: 10,
             }}
           />
@@ -236,31 +260,31 @@ const PricingCard = ({ plan, index, max, onPrev, onNext, billing, tier, recommen
         {/* INTERNAL CONTENT WRAPPER */}
         <Box
           sx={{
-            position: 'relative',
-            overflow: 'hidden',
-            borderRadius: '24px',
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: "24px",
             p: 4,
             flexGrow: 1,
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {/* WATERMARK */}
           <Typography
             variant="h1"
             sx={{
-              position: 'absolute',
-              right: '-30px',
-              bottom: '10%',
-              transform: 'rotate(-15deg)',
-              fontSize: '12rem',
+              position: "absolute",
+              right: "-30px",
+              bottom: "10%",
+              transform: "rotate(-15deg)",
+              fontSize: "12rem",
               fontWeight: 900,
-              color: 'rgba(255, 255, 255, 0.03)',
-              pointerEvents: 'none',
-              userSelect: 'none',
+              color: "rgba(255, 255, 255, 0.03)",
+              pointerEvents: "none",
+              userSelect: "none",
               zIndex: 0,
               lineHeight: 1,
-              whiteSpace: 'nowrap',
+              whiteSpace: "nowrap",
             }}
           >
             ${displayPrice}
@@ -269,11 +293,11 @@ const PricingCard = ({ plan, index, max, onPrev, onNext, billing, tier, recommen
           {/* CONTENT LAYERS */}
           <Box
             sx={{
-              position: 'relative',
+              position: "relative",
               zIndex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
             }}
           >
             <PlanHeader
@@ -293,13 +317,15 @@ const PricingCard = ({ plan, index, max, onPrev, onNext, billing, tier, recommen
                     spacing={1.5}
                     alignItems="center"
                     sx={{
-                      marginTop: '5.8px !important',
+                      marginTop: "5.8px !important",
                     }}
                   >
-                    <Box sx={{ '& svg': { fontSize: 18 } }}>
+                    <Box sx={{ "& svg": { fontSize: 18 } }}>
                       {FEATURE_ICONS[item] ?? <BoltIcon />}
                     </Box>
-                    <Typography sx={{ fontSize: '0.95rem', opacity: 0.9 }}>{item}</Typography>
+                    <Typography sx={{ fontSize: "0.95rem", opacity: 0.9 }}>
+                      {item}
+                    </Typography>
                   </Stack>
                   {/* <Divider
                     sx={{
@@ -315,18 +341,20 @@ const PricingCard = ({ plan, index, max, onPrev, onNext, billing, tier, recommen
               fullWidth
               variant="outlined"
               sx={{
-                mt: 'auto',
+                mt: "auto",
                 py: 1.6,
-                borderRadius: '12px',
+                borderRadius: "12px",
                 fontWeight: 900,
-                textTransform: 'none',
-                background: recommended ? 'white' : 'transparent',
-                color: recommended ? '#000' : 'white',
-                borderColor: recommended ? 'white' : 'rgba(255,255,255,0.2)',
-                '&:hover': {
-                  background: recommended ? COLORS.teal : 'rgba(255,255,255,0.1)',
+                textTransform: "none",
+                background: recommended ? "white" : "transparent",
+                color: recommended ? "#000" : "white",
+                borderColor: recommended ? "white" : "rgba(255,255,255,0.2)",
+                "&:hover": {
+                  background: recommended
+                    ? COLORS.teal
+                    : "rgba(255,255,255,0.1)",
                   borderColor: COLORS.teal,
-                  color: '#ffffff',
+                  color: "#ffffff",
                 },
               }}
             >
@@ -343,7 +371,7 @@ const PricingCard = ({ plan, index, max, onPrev, onNext, billing, tier, recommen
    Main Section
 ============================ */
 const PricingSection: React.FC = () => {
-  const [billing, setBilling] = React.useState<BillingCycle>('annual');
+  const [billing, setBilling] = React.useState<BillingCycle>("annual");
   const [indices, setIndices] = React.useState({
     lite: 0,
     standard: 0,
@@ -355,7 +383,10 @@ const PricingSection: React.FC = () => {
       ...prev,
       [tier]: Math.max(
         0,
-        Math.min((pricingConfig as any)[tier].length - 1, (prev as any)[tier] + delta)
+        Math.min(
+          (pricingConfig as any)[tier].length - 1,
+          (prev as any)[tier] + delta,
+        ),
       ),
     }));
   };
@@ -364,10 +395,10 @@ const PricingSection: React.FC = () => {
     <>
       <Box
         sx={{
-          backgroundColor: '#041e18',
+          backgroundColor: "#041e18",
           backgroundImage: `url(${star})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
       >
         <Box>
@@ -377,23 +408,23 @@ const PricingSection: React.FC = () => {
             <Box textAlign="center" mb={6}>
               <Box
                 sx={{
-                  textAlign: 'center',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  position: 'relative',
+                  textAlign: "center",
+                  display: "flex",
+                  justifyContent: "center",
+                  position: "relative",
                 }}
               >
                 <Box
                   sx={{
-                    position: 'absolute',
-                    top: '-21%',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '100%',
-                    height: '100%',
+                    position: "absolute",
+                    top: "-21%",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: "100%",
+                    height: "100%",
                     backgroundImage: `radial-gradient(circle at 50% -20%, rgba(55, 140, 146, 0.33) 0%, transparent 50%)`,
                     zIndex: 0,
-                    display: { xs: 'none', lg: 'block' },
+                    display: { xs: "none", lg: "block" },
                   }}
                 />
                 <Typography
@@ -401,31 +432,31 @@ const PricingSection: React.FC = () => {
                   component="h1"
                   fontWeight={700}
                   sx={{
-                    color: 'white',
+                    color: "white",
                     fontSize: {
-                      xs: '25px',
-                      sm: '35px',
-                      md: '45px',
-                      lg: '55px',
+                      xs: "25px",
+                      sm: "35px",
+                      md: "45px",
+                      lg: "55px",
                     },
-                    marginTop: { xs: '30px', md: '50px', lg: '90px' },
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    gap: '10px',
+                    marginTop: { xs: "30px", md: "50px", lg: "90px" },
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    gap: "10px",
                     lineHeight: 0.9,
-                    justifyContent: 'center',
-                    fontFamily: 'Plus Jakarta Sans',
+                    justifyContent: "center",
+                    fontFamily: "Plus Jakarta Sans",
                   }}
                 >
                   Plans that grow with your business needs.
-                  <Box component="span" sx={{ width: '100%' }} />
-                  Start with a{' '}
+                  <Box component="span" sx={{ width: "100%" }} />
+                  Start with a{" "}
                   <Box component="span" sx={gradientText}>
                     FREE
-                  </Box>{' '}
+                  </Box>{" "}
                   {/* Avatars */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', ml: 0 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", ml: 0 }}>
                     <Box sx={{ ...avatarWrapper, marginLeft: 0 }}>
                       <Box
                         component="img"
@@ -433,7 +464,7 @@ const PricingSection: React.FC = () => {
                         alt="user"
                         sx={{
                           ...avatarStyle,
-                          transform: 'rotate(352deg)',
+                          transform: "rotate(352deg)",
                           zIndex: 10,
                         }}
                       />
@@ -447,7 +478,7 @@ const PricingSection: React.FC = () => {
                         sx={{
                           ...avatarStyle,
                           zIndex: 9,
-                          marginTop: '-10px',
+                          marginTop: "-10px",
                         }}
                       />
                     </Box>
@@ -459,7 +490,7 @@ const PricingSection: React.FC = () => {
                         alt="user"
                         sx={{
                           ...avatarStyle,
-                          transform: 'rotate(12deg)',
+                          transform: "rotate(12deg)",
                           zIndex: 1,
                         }}
                       />
@@ -473,7 +504,7 @@ const PricingSection: React.FC = () => {
                 variant="h6"
                 maxWidth="800px"
                 mx="auto"
-                sx={{ color: 'white', marginTop: '30px' }}
+                sx={{ color: "white", marginTop: "30px" }}
               >
                 Build for free, upgrade when your website grows.
               </Typography>
@@ -485,8 +516,8 @@ const PricingSection: React.FC = () => {
           sx={{
             pb: 10,
             pt: 0,
-            color: 'white',
-            minHeight: '100vh',
+            color: "white",
+            minHeight: "100vh",
           }}
         >
           <Container maxWidth="lg">
@@ -499,8 +530,8 @@ const PricingSection: React.FC = () => {
                 plan={pricingConfig.lite[indices.lite]}
                 index={indices.lite}
                 max={pricingConfig.lite.length}
-                onPrev={() => updateIdx('lite', -1)}
-                onNext={() => updateIdx('lite', 1)}
+                onPrev={() => updateIdx("lite", -1)}
+                onNext={() => updateIdx("lite", 1)}
                 billing={billing}
               />
               <PricingCard
@@ -509,8 +540,8 @@ const PricingSection: React.FC = () => {
                 plan={pricingConfig.standard[indices.standard]}
                 index={indices.standard}
                 max={pricingConfig.standard.length}
-                onPrev={() => updateIdx('standard', -1)}
-                onNext={() => updateIdx('standard', 1)}
+                onPrev={() => updateIdx("standard", -1)}
+                onNext={() => updateIdx("standard", 1)}
                 billing={billing}
               />
               <PricingCard
@@ -518,8 +549,8 @@ const PricingSection: React.FC = () => {
                 plan={pricingConfig.plus[indices.plus]}
                 index={indices.plus}
                 max={pricingConfig.plus.length}
-                onPrev={() => updateIdx('plus', -1)}
-                onNext={() => updateIdx('plus', 1)}
+                onPrev={() => updateIdx("plus", -1)}
+                onNext={() => updateIdx("plus", 1)}
                 billing={billing}
               />
             </Grid>

@@ -1,5 +1,5 @@
-import type { ComponentType } from 'react';
-import type { BusinessData } from '../types/BusinessData';
+import type { ComponentType } from "react";
+import type { BusinessData } from "../types/BusinessData";
 
 export interface TemplateTheme {
   primaryColor: string;

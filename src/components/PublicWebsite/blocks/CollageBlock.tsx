@@ -11,11 +11,11 @@
  * Mobile: all variants collapse to single column (grid-template-columns: 1fr).
  */
 
-import React from 'react';
-import { Box, Container, Typography, Button } from '@mui/material';
-import { motion } from 'framer-motion';
-import { BlockWrapper } from '../BlockWrapper';
-import { getStaggerDelay } from '../hooks/useBlockAnimation';
+import React from "react";
+import { Box, Container, Typography, Button } from "@mui/material";
+import { motion } from "framer-motion";
+import { BlockWrapper } from "../BlockWrapper";
+import { getStaggerDelay } from "../hooks/useBlockAnimation";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -39,9 +39,9 @@ interface CollageBlockProps {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const COLUMN_RATIO_MAP: Record<string, string> = {
-  equal: '1fr 1fr',
-  'wide-left': '1.15fr 0.85fr',
-  'wide-right': '0.85fr 1.15fr',
+  equal: "1fr 1fr",
+  "wide-left": "1.15fr 0.85fr",
+  "wide-right": "0.85fr 1.15fr",
 };
 
 const STAGGER_EASE: [number, number, number, number] = [0.22, 0.61, 0.36, 1];
@@ -49,9 +49,9 @@ const STAGGER_EASE: [number, number, number, number] = [0.22, 0.61, 0.36, 1];
 // ── Security: sanitize image src — allow http/https/relative only ─────────────
 
 const sanitizeImageSrc = (src: string): string => {
-  if (!src) return '';
+  if (!src) return "";
   if (/^(https?:\/\/|\/)/i.test(src)) return src;
-  return '';
+  return "";
 };
 
 // ── Shared: animated image item wrapper ──────────────────────────────────────
@@ -63,20 +63,25 @@ interface AnimatedImageProps {
   sx?: object;
 }
 
-const AnimatedImage: React.FC<AnimatedImageProps> = ({ img, index, height, sx }) => {
+const AnimatedImage: React.FC<AnimatedImageProps> = ({
+  img,
+  index,
+  height,
+  sx,
+}) => {
   const src = sanitizeImageSrc(img.image);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px 0px' }}
+      viewport={{ once: true, margin: "-60px 0px" }}
       transition={{
         duration: 0.5,
         delay: getStaggerDelay(index, 0, 80) / 1000,
         ease: STAGGER_EASE,
       }}
-      style={{ position: 'relative' }}
+      style={{ position: "relative" }}
     >
       {src ? (
         <Box
@@ -84,25 +89,25 @@ const AnimatedImage: React.FC<AnimatedImageProps> = ({ img, index, height, sx })
           src={src}
           alt={img.caption || `Collage image ${index + 1}`}
           sx={{
-            width: '100%',
+            width: "100%",
             height,
-            objectFit: 'cover',
-            borderRadius: '8px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-            display: 'block',
+            objectFit: "cover",
+            borderRadius: "8px",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
+            display: "block",
             ...sx,
           }}
         />
       ) : (
         <Box
           sx={{
-            width: '100%',
+            width: "100%",
             height,
-            borderRadius: '8px',
-            bgcolor: 'grey.200',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            borderRadius: "8px",
+            bgcolor: "grey.200",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             ...sx,
           }}
         >
@@ -132,17 +137,17 @@ const LeftCenterRightLayout: React.FC<LeftCenterRightProps> = ({
 }) => (
   <Box
     sx={{
-      display: 'grid',
-      gridTemplateColumns: { xs: '1fr', md: 'repeat(12, 1fr)' },
+      display: "grid",
+      gridTemplateColumns: { xs: "1fr", md: "repeat(12, 1fr)" },
       gap: 2,
     }}
   >
     {/* Left panel: images[0] and images[1] stacked */}
     <Box
       sx={{
-        gridColumn: { xs: '1 / -1', md: '1 / 4' },
-        display: 'flex',
-        flexDirection: 'column',
+        gridColumn: { xs: "1 / -1", md: "1 / 4" },
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       {images[0] && (
@@ -156,11 +161,11 @@ const LeftCenterRightLayout: React.FC<LeftCenterRightProps> = ({
     {/* Center panel: text + CTA */}
     <Box
       sx={{
-        gridColumn: { xs: '1 / -1', md: '4 / 10' },
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+        gridColumn: { xs: "1 / -1", md: "4 / 10" },
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
         px: { xs: 0, md: 4 },
         py: { xs: 3, md: 0 },
       }}
@@ -170,13 +175,16 @@ const LeftCenterRightLayout: React.FC<LeftCenterRightProps> = ({
           variant="h3"
           component="h3"
           gutterBottom
-          sx={{ fontWeight: 700, textAlign: 'center' }}
+          sx={{ fontWeight: 700, textAlign: "center" }}
         >
           {textContent.heading}
         </Typography>
       )}
       {textContent?.body && (
-        <Typography variant="body1" sx={{ textAlign: 'center', color: 'text.secondary', mb: 3 }}>
+        <Typography
+          variant="body1"
+          sx={{ textAlign: "center", color: "text.secondary", mb: 3 }}
+        >
           {textContent.body}
         </Typography>
       )}
@@ -190,9 +198,9 @@ const LeftCenterRightLayout: React.FC<LeftCenterRightProps> = ({
     {/* Right panel: images[3] and images[4] stacked */}
     <Box
       sx={{
-        gridColumn: { xs: '1 / -1', md: '10 / 13' },
-        display: 'flex',
-        flexDirection: 'column',
+        gridColumn: { xs: "1 / -1", md: "10 / 13" },
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       {images[3] && (
@@ -215,19 +223,21 @@ interface TwoColumnProps {
 const TwoColumnLayout: React.FC<TwoColumnProps> = ({ images, columnRatio }) => (
   <Box
     sx={{
-      display: 'grid',
+      display: "grid",
       gridTemplateColumns: {
-        xs: '1fr',
+        xs: "1fr",
         md: COLUMN_RATIO_MAP[columnRatio] ?? COLUMN_RATIO_MAP.equal,
       },
       gap: 3,
     }}
   >
     {/* Left: single large image */}
-    <Box>{images[0] && <AnimatedImage img={images[0]} index={0} height={340} />}</Box>
+    <Box>
+      {images[0] && <AnimatedImage img={images[0]} index={0} height={340} />}
+    </Box>
 
     {/* Right: two stacked smaller images */}
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {images[1] && <AnimatedImage img={images[1]} index={1} height={160} />}
       {images[2] && <AnimatedImage img={images[2]} index={2} height={160} />}
     </Box>
@@ -243,12 +253,17 @@ interface ScatteredProps {
   ctaLink?: string;
 }
 
-const ScatteredLayout: React.FC<ScatteredProps> = ({ images, textContent, ctaText, ctaLink }) => (
+const ScatteredLayout: React.FC<ScatteredProps> = ({
+  images,
+  textContent,
+  ctaText,
+  ctaLink,
+}) => (
   <Box
     sx={{
-      display: 'grid',
-      gridTemplateColumns: { xs: '1fr', md: 'repeat(6, 1fr)' },
-      gridTemplateRows: { xs: 'auto', md: 'repeat(3, 140px)' },
+      display: "grid",
+      gridTemplateColumns: { xs: "1fr", md: "repeat(6, 1fr)" },
+      gridTemplateRows: { xs: "auto", md: "repeat(3, 140px)" },
       gap: 2,
     }}
   >
@@ -257,40 +272,49 @@ const ScatteredLayout: React.FC<ScatteredProps> = ({ images, textContent, ctaTex
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px 0px' }}
-        transition={{ duration: 0.5, delay: getStaggerDelay(0, 0, 80) / 1000, ease: STAGGER_EASE }}
+        viewport={{ once: true, margin: "-60px 0px" }}
+        transition={{
+          duration: 0.5,
+          delay: getStaggerDelay(0, 0, 80) / 1000,
+          ease: STAGGER_EASE,
+        }}
         style={{
-          gridColumn: 'span 1',
-          position: 'relative',
+          gridColumn: "span 1",
+          position: "relative",
         }}
       >
         <Box
           sx={{
-            gridColumn: { xs: '1 / -1', md: '1 / 4' },
-            gridRow: { xs: 'auto', md: '1 / 3' },
-            position: 'relative',
-            overflow: 'hidden',
-            borderRadius: '8px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-            height: { xs: 220, md: '100%' },
+            gridColumn: { xs: "1 / -1", md: "1 / 4" },
+            gridRow: { xs: "auto", md: "1 / 3" },
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: "8px",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
+            height: { xs: 220, md: "100%" },
           }}
         >
           {sanitizeImageSrc(images[0].image) ? (
             <Box
               component="img"
               src={sanitizeImageSrc(images[0].image)}
-              alt={images[0].caption || 'Collage image 1'}
-              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              alt={images[0].caption || "Collage image 1"}
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
             />
           ) : (
             <Box
               sx={{
-                width: '100%',
-                height: '100%',
-                bgcolor: 'grey.200',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                width: "100%",
+                height: "100%",
+                bgcolor: "grey.200",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <Typography variant="body2" color="text.secondary">
@@ -301,21 +325,26 @@ const ScatteredLayout: React.FC<ScatteredProps> = ({ images, textContent, ctaTex
           {/* Text overlay on largest image */}
           <Box
             sx={{
-              position: 'absolute',
+              position: "absolute",
               bottom: 0,
               left: 0,
               right: 0,
               p: 2,
-              background: 'rgba(0,0,0,0.55)',
+              background: "rgba(0,0,0,0.55)",
             }}
           >
             {textContent?.heading && (
-              <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700 }}>
+              <Typography variant="h5" sx={{ color: "#fff", fontWeight: 700 }}>
                 {textContent.heading}
               </Typography>
             )}
             {ctaText && ctaLink && (
-              <Button href={ctaLink} variant="contained" size="small" sx={{ mt: 1 }}>
+              <Button
+                href={ctaLink}
+                variant="contained"
+                size="small"
+                sx={{ mt: 1 }}
+              >
                 {ctaText}
               </Button>
             )}
@@ -329,29 +358,38 @@ const ScatteredLayout: React.FC<ScatteredProps> = ({ images, textContent, ctaTex
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px 0px' }}
-        transition={{ duration: 0.5, delay: getStaggerDelay(1, 0, 80) / 1000, ease: STAGGER_EASE }}
-        style={{ position: 'relative' }}
+        viewport={{ once: true, margin: "-60px 0px" }}
+        transition={{
+          duration: 0.5,
+          delay: getStaggerDelay(1, 0, 80) / 1000,
+          ease: STAGGER_EASE,
+        }}
+        style={{ position: "relative" }}
       >
         <Box
           sx={{
-            gridColumn: { xs: '1 / -1', md: '4 / 7' },
-            gridRow: { xs: 'auto', md: '1 / 2' },
-            overflow: 'hidden',
-            borderRadius: '8px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-            height: { xs: 220, md: '100%' },
+            gridColumn: { xs: "1 / -1", md: "4 / 7" },
+            gridRow: { xs: "auto", md: "1 / 2" },
+            overflow: "hidden",
+            borderRadius: "8px",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
+            height: { xs: 220, md: "100%" },
           }}
         >
           {sanitizeImageSrc(images[1].image) ? (
             <Box
               component="img"
               src={sanitizeImageSrc(images[1].image)}
-              alt={images[1].caption || 'Collage image 2'}
-              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              alt={images[1].caption || "Collage image 2"}
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
             />
           ) : (
-            <Box sx={{ width: '100%', height: '100%', bgcolor: 'grey.200' }} />
+            <Box sx={{ width: "100%", height: "100%", bgcolor: "grey.200" }} />
           )}
         </Box>
       </motion.div>
@@ -362,29 +400,38 @@ const ScatteredLayout: React.FC<ScatteredProps> = ({ images, textContent, ctaTex
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px 0px' }}
-        transition={{ duration: 0.5, delay: getStaggerDelay(2, 0, 80) / 1000, ease: STAGGER_EASE }}
-        style={{ position: 'relative' }}
+        viewport={{ once: true, margin: "-60px 0px" }}
+        transition={{
+          duration: 0.5,
+          delay: getStaggerDelay(2, 0, 80) / 1000,
+          ease: STAGGER_EASE,
+        }}
+        style={{ position: "relative" }}
       >
         <Box
           sx={{
-            gridColumn: { xs: '1 / -1', md: '4 / 6' },
-            gridRow: { xs: 'auto', md: '2 / 3' },
-            overflow: 'hidden',
-            borderRadius: '8px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-            height: { xs: 220, md: '100%' },
+            gridColumn: { xs: "1 / -1", md: "4 / 6" },
+            gridRow: { xs: "auto", md: "2 / 3" },
+            overflow: "hidden",
+            borderRadius: "8px",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
+            height: { xs: 220, md: "100%" },
           }}
         >
           {sanitizeImageSrc(images[2].image) ? (
             <Box
               component="img"
               src={sanitizeImageSrc(images[2].image)}
-              alt={images[2].caption || 'Collage image 3'}
-              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              alt={images[2].caption || "Collage image 3"}
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
             />
           ) : (
-            <Box sx={{ width: '100%', height: '100%', bgcolor: 'grey.200' }} />
+            <Box sx={{ width: "100%", height: "100%", bgcolor: "grey.200" }} />
           )}
         </Box>
       </motion.div>
@@ -395,29 +442,38 @@ const ScatteredLayout: React.FC<ScatteredProps> = ({ images, textContent, ctaTex
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px 0px' }}
-        transition={{ duration: 0.5, delay: getStaggerDelay(3, 0, 80) / 1000, ease: STAGGER_EASE }}
-        style={{ position: 'relative' }}
+        viewport={{ once: true, margin: "-60px 0px" }}
+        transition={{
+          duration: 0.5,
+          delay: getStaggerDelay(3, 0, 80) / 1000,
+          ease: STAGGER_EASE,
+        }}
+        style={{ position: "relative" }}
       >
         <Box
           sx={{
-            gridColumn: { xs: '1 / -1', md: '6 / 7' },
-            gridRow: { xs: 'auto', md: '2 / 4' },
-            overflow: 'hidden',
-            borderRadius: '8px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-            height: { xs: 220, md: '100%' },
+            gridColumn: { xs: "1 / -1", md: "6 / 7" },
+            gridRow: { xs: "auto", md: "2 / 4" },
+            overflow: "hidden",
+            borderRadius: "8px",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
+            height: { xs: 220, md: "100%" },
           }}
         >
           {sanitizeImageSrc(images[3].image) ? (
             <Box
               component="img"
               src={sanitizeImageSrc(images[3].image)}
-              alt={images[3].caption || 'Collage image 4'}
-              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              alt={images[3].caption || "Collage image 4"}
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
             />
           ) : (
-            <Box sx={{ width: '100%', height: '100%', bgcolor: 'grey.200' }} />
+            <Box sx={{ width: "100%", height: "100%", bgcolor: "grey.200" }} />
           )}
         </Box>
       </motion.div>
@@ -428,29 +484,38 @@ const ScatteredLayout: React.FC<ScatteredProps> = ({ images, textContent, ctaTex
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px 0px' }}
-        transition={{ duration: 0.5, delay: getStaggerDelay(4, 0, 80) / 1000, ease: STAGGER_EASE }}
-        style={{ position: 'relative' }}
+        viewport={{ once: true, margin: "-60px 0px" }}
+        transition={{
+          duration: 0.5,
+          delay: getStaggerDelay(4, 0, 80) / 1000,
+          ease: STAGGER_EASE,
+        }}
+        style={{ position: "relative" }}
       >
         <Box
           sx={{
-            gridColumn: { xs: '1 / -1', md: '1 / 3' },
-            gridRow: { xs: 'auto', md: '3 / 4' },
-            overflow: 'hidden',
-            borderRadius: '8px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-            height: { xs: 220, md: '100%' },
+            gridColumn: { xs: "1 / -1", md: "1 / 3" },
+            gridRow: { xs: "auto", md: "3 / 4" },
+            overflow: "hidden",
+            borderRadius: "8px",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
+            height: { xs: 220, md: "100%" },
           }}
         >
           {sanitizeImageSrc(images[4].image) ? (
             <Box
               component="img"
               src={sanitizeImageSrc(images[4].image)}
-              alt={images[4].caption || 'Collage image 5'}
-              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              alt={images[4].caption || "Collage image 5"}
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
             />
           ) : (
-            <Box sx={{ width: '100%', height: '100%', bgcolor: 'grey.200' }} />
+            <Box sx={{ width: "100%", height: "100%", bgcolor: "grey.200" }} />
           )}
         </Box>
       </motion.div>
@@ -461,29 +526,38 @@ const ScatteredLayout: React.FC<ScatteredProps> = ({ images, textContent, ctaTex
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px 0px' }}
-        transition={{ duration: 0.5, delay: getStaggerDelay(5, 0, 80) / 1000, ease: STAGGER_EASE }}
-        style={{ position: 'relative' }}
+        viewport={{ once: true, margin: "-60px 0px" }}
+        transition={{
+          duration: 0.5,
+          delay: getStaggerDelay(5, 0, 80) / 1000,
+          ease: STAGGER_EASE,
+        }}
+        style={{ position: "relative" }}
       >
         <Box
           sx={{
-            gridColumn: { xs: '1 / -1', md: '3 / 6' },
-            gridRow: { xs: 'auto', md: '3 / 4' },
-            overflow: 'hidden',
-            borderRadius: '8px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-            height: { xs: 220, md: '100%' },
+            gridColumn: { xs: "1 / -1", md: "3 / 6" },
+            gridRow: { xs: "auto", md: "3 / 4" },
+            overflow: "hidden",
+            borderRadius: "8px",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
+            height: { xs: 220, md: "100%" },
           }}
         >
           {sanitizeImageSrc(images[5].image) ? (
             <Box
               component="img"
               src={sanitizeImageSrc(images[5].image)}
-              alt={images[5].caption || 'Collage image 6'}
-              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              alt={images[5].caption || "Collage image 6"}
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
             />
           ) : (
-            <Box sx={{ width: '100%', height: '100%', bgcolor: 'grey.200' }} />
+            <Box sx={{ width: "100%", height: "100%", bgcolor: "grey.200" }} />
           )}
         </Box>
       </motion.div>
@@ -504,17 +578,17 @@ const CollageBlock = React.memo(function CollageBlock({
     textContent,
     ctaText,
     ctaLink,
-    layout = 'left-center-right',
-    columnRatio = 'equal',
+    layout = "left-center-right",
+    columnRatio = "equal",
   } = content;
 
   const renderLayout = () => {
     if (images.length === 0) return null;
 
     switch (layout) {
-      case 'two-column':
+      case "two-column":
         return <TwoColumnLayout images={images} columnRatio={columnRatio} />;
-      case 'scattered':
+      case "scattered":
         return (
           <ScatteredLayout
             images={images}
@@ -523,7 +597,7 @@ const CollageBlock = React.memo(function CollageBlock({
             ctaLink={ctaLink}
           />
         );
-      case 'left-center-right':
+      case "left-center-right":
       default:
         return (
           <LeftCenterRightLayout
@@ -548,14 +622,18 @@ const CollageBlock = React.memo(function CollageBlock({
             sx={{
               fontWeight: 700,
               mb: 2,
-              color: headingColor || 'text.primary',
+              color: headingColor || "text.primary",
             }}
           >
             {heading}
           </Typography>
         )}
         {description && (
-          <Typography variant="body1" align="center" sx={{ mb: 6, color: 'text.secondary' }}>
+          <Typography
+            variant="body1"
+            align="center"
+            sx={{ mb: 6, color: "text.secondary" }}
+          >
             {description}
           </Typography>
         )}

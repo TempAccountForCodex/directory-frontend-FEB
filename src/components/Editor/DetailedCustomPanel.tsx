@@ -13,12 +13,12 @@
  * - useCallback on onChange handlers
  */
 
-import React, { useCallback } from 'react';
-import { Box, Paper, Typography, TextField, Stack, alpha } from '@mui/material';
-import BlockEditor from '../BlockEditor/BlockEditor';
-import type { Block } from '../BlockEditor/BlockList';
-import SaveStatus from './SaveStatus';
-import type { SaveStatusType } from './SaveStatus';
+import React, { useCallback } from "react";
+import { Box, Paper, Typography, TextField, Stack, alpha } from "@mui/material";
+import BlockEditor from "../BlockEditor/BlockEditor";
+import type { Block } from "../BlockEditor/BlockList";
+import SaveStatus from "./SaveStatus";
+import type { SaveStatusType } from "./SaveStatus";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -67,14 +67,14 @@ const DetailedCustomPanel: React.FC<DetailedCustomPanelProps> = React.memo(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         onWebsiteNameChange(e.target.value);
       },
-      [onWebsiteNameChange]
+      [onWebsiteNameChange],
     );
 
     const handleSlugChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         onSlugChange(e.target.value);
       },
-      [onSlugChange]
+      [onSlugChange],
     );
 
     const hasBlockEditor = blockEditorWebsiteId != null;
@@ -89,7 +89,10 @@ const DetailedCustomPanel: React.FC<DetailedCustomPanelProps> = React.memo(
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 3 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: colors.text, fontWeight: 600, mb: 3 }}
+          >
             Website Details
           </Typography>
 
@@ -110,7 +113,7 @@ const DetailedCustomPanel: React.FC<DetailedCustomPanelProps> = React.memo(
             onChange={handleSlugChange}
             disabled={disabled}
             error={!!slugError}
-            helperText={slugError || `/site/${slug || 'your-slug'}`}
+            helperText={slugError || `/site/${slug || "your-slug"}`}
             placeholder="e.g., my-services"
           />
         </Paper>
@@ -125,20 +128,26 @@ const DetailedCustomPanel: React.FC<DetailedCustomPanelProps> = React.memo(
         >
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
               mb: 2,
             }}
           >
-            <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
+            <Typography
+              variant="h6"
+              sx={{ color: colors.text, fontWeight: 600 }}
+            >
               Block Content Editor
             </Typography>
 
             {/* Save Status — only shown when a website has been created */}
             {hasBlockEditor && blockSaveStatus && (
               <Box data-testid="block-save-status">
-                <SaveStatus status={blockSaveStatus} onRetry={onTriggerBlockSave} />
+                <SaveStatus
+                  status={blockSaveStatus}
+                  onRetry={onTriggerBlockSave}
+                />
               </Box>
             )}
           </Box>
@@ -153,9 +162,9 @@ const DetailedCustomPanel: React.FC<DetailedCustomPanelProps> = React.memo(
         </Paper>
       </Stack>
     );
-  }
+  },
 );
 
-DetailedCustomPanel.displayName = 'DetailedCustomPanel';
+DetailedCustomPanel.displayName = "DetailedCustomPanel";
 
 export default DetailedCustomPanel;

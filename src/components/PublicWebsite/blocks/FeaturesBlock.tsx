@@ -7,11 +7,20 @@
  *   - stacked:   horizontal rows — icon on left, title + description on right
  */
 
-import React, { memo } from 'react';
-import { Box, Container, Typography, Grid, Card, CardContent, Avatar, Stack } from '@mui/material';
-import { BlockWrapper } from '../BlockWrapper';
-import { getIconComponent } from '../utils/iconMap';
-import AnimatedList from '../utils/AnimatedList';
+import React, { memo } from "react";
+import {
+  Box,
+  Container,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  Avatar,
+  Stack,
+} from "@mui/material";
+import { BlockWrapper } from "../BlockWrapper";
+import { getIconComponent } from "../utils/iconMap";
+import AnimatedList from "../utils/AnimatedList";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -25,9 +34,9 @@ interface FeaturesBlockProps {
   content: {
     heading?: string;
     features?: Feature[];
-    variant?: 'default' | '4-column' | 'stacked' | 'badges';
+    variant?: "default" | "4-column" | "stacked" | "badges";
     badgeBackgroundColor?: string;
-    badgeSpacing?: 'compact' | 'normal' | 'wide';
+    badgeSpacing?: "compact" | "normal" | "wide";
   };
   primaryColor?: string;
   headingColor?: string;
@@ -62,7 +71,7 @@ const FeatureIcon: React.FC<{
     </Avatar>
   );
 });
-FeatureIcon.displayName = 'FeatureIcon';
+FeatureIcon.displayName = "FeatureIcon";
 
 // ── Variant renderers ──────────────────────────────────────────────────────────
 
@@ -76,22 +85,27 @@ const DefaultVariant: React.FC<{
   bodyColor: string;
 }> = memo(({ features, primaryColor, headingColor, bodyColor }) => (
   <Grid container spacing={4}>
-    <AnimatedList staggerMs={80} wrapperStyle={{ display: 'contents' }}>
+    <AnimatedList staggerMs={80} wrapperStyle={{ display: "contents" }}>
       {features.map((feature, index) => (
         <Grid item xs={12} md={4} key={index}>
           <Card
             elevation={2}
             sx={{
-              height: '100%',
-              transition: 'transform 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-8px)',
+              height: "100%",
+              transition: "transform 0.3s ease",
+              "&:hover": {
+                transform: "translateY(-8px)",
                 boxShadow: 4,
               },
             }}
           >
             <CardContent sx={{ p: 3 }}>
-              <FeatureIcon icon={feature.icon} bgcolor={primaryColor} size={56} mb={2} />
+              <FeatureIcon
+                icon={feature.icon}
+                bgcolor={primaryColor}
+                size={56}
+                mb={2}
+              />
               <Typography
                 variant="h5"
                 component="h3"
@@ -110,7 +124,7 @@ const DefaultVariant: React.FC<{
     </AnimatedList>
   </Grid>
 ));
-DefaultVariant.displayName = 'DefaultVariant';
+DefaultVariant.displayName = "DefaultVariant";
 
 /**
  * FourColumnVariant — compact 4-column card grid.
@@ -123,27 +137,36 @@ const FourColumnVariant: React.FC<{
   bodyColor: string;
 }> = memo(({ features, primaryColor, headingColor, bodyColor }) => (
   <Grid container spacing={3} data-testid="four-column-grid">
-    <AnimatedList staggerMs={80} wrapperStyle={{ display: 'contents' }}>
+    <AnimatedList staggerMs={80} wrapperStyle={{ display: "contents" }}>
       {features.map((feature, index) => (
         <Grid item xs={12} sm={6} md={3} key={index}>
           <Card
             elevation={2}
             sx={{
-              height: '100%',
-              transition: 'transform 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-6px)',
+              height: "100%",
+              transition: "transform 0.3s ease",
+              "&:hover": {
+                transform: "translateY(-6px)",
                 boxShadow: 4,
               },
             }}
           >
             <CardContent sx={{ p: 2 }}>
-              <FeatureIcon icon={feature.icon} bgcolor={primaryColor} size={44} mb={1.5} />
+              <FeatureIcon
+                icon={feature.icon}
+                bgcolor={primaryColor}
+                size={44}
+                mb={1.5}
+              />
               <Typography
                 variant="h6"
                 component="h3"
                 gutterBottom
-                sx={{ color: primaryColor, fontWeight: 600, fontSize: '0.95rem' }}
+                sx={{
+                  color: primaryColor,
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                }}
               >
                 {feature.title}
               </Typography>
@@ -157,7 +180,7 @@ const FourColumnVariant: React.FC<{
     </AnimatedList>
   </Grid>
 ));
-FourColumnVariant.displayName = 'FourColumnVariant';
+FourColumnVariant.displayName = "FourColumnVariant";
 
 /**
  * StackedVariant — horizontal rows: icon on left, title + description on right.
@@ -169,22 +192,27 @@ const StackedVariant: React.FC<{
   headingColor: string;
   bodyColor: string;
 }> = memo(({ features, primaryColor, headingColor, bodyColor }) => (
-  <Box sx={{ maxWidth: 800, mx: 'auto' }} data-testid="stacked-list">
+  <Box sx={{ maxWidth: 800, mx: "auto" }} data-testid="stacked-list">
     <AnimatedList staggerMs={80}>
       {features.map((feature, index) => (
         <Box
           key={index}
           sx={{
-            display: 'flex',
-            alignItems: 'flex-start',
+            display: "flex",
+            alignItems: "flex-start",
             gap: 3,
             py: 3,
-            borderBottom: index < features.length - 1 ? '1px solid' : 'none',
-            borderColor: 'divider',
+            borderBottom: index < features.length - 1 ? "1px solid" : "none",
+            borderColor: "divider",
           }}
           data-testid="stacked-row"
         >
-          <FeatureIcon icon={feature.icon} bgcolor={primaryColor} size={52} mb={0} />
+          <FeatureIcon
+            icon={feature.icon}
+            bgcolor={primaryColor}
+            size={52}
+            mb={0}
+          />
           <Box sx={{ flex: 1 }}>
             <Typography
               variant="h6"
@@ -203,7 +231,7 @@ const StackedVariant: React.FC<{
     </AnimatedList>
   </Box>
 ));
-StackedVariant.displayName = 'StackedVariant';
+StackedVariant.displayName = "StackedVariant";
 
 /**
  * BadgesVariant — compact horizontal icon + label strip for trust badges.
@@ -216,9 +244,15 @@ const BadgesVariant: React.FC<{
   primaryColor: string;
   headingColor: string;
   badgeBackgroundColor?: string;
-  badgeSpacing?: 'compact' | 'normal' | 'wide';
+  badgeSpacing?: "compact" | "normal" | "wide";
 }> = memo(
-  ({ features, primaryColor, headingColor, badgeBackgroundColor, badgeSpacing = 'normal' }) => {
+  ({
+    features,
+    primaryColor,
+    headingColor,
+    badgeBackgroundColor,
+    badgeSpacing = "normal",
+  }) => {
     const gap = BADGE_SPACING_MAP[badgeSpacing] ?? 3;
     return (
       <Box
@@ -232,12 +266,12 @@ const BadgesVariant: React.FC<{
         <Stack
           direction="row"
           sx={{
-            flexWrap: 'wrap',
-            justifyContent: { xs: 'center', md: 'space-evenly' },
+            flexWrap: "wrap",
+            justifyContent: { xs: "center", md: "space-evenly" },
             gap,
           }}
         >
-          <AnimatedList staggerMs={60} wrapperStyle={{ display: 'contents' }}>
+          <AnimatedList staggerMs={60} wrapperStyle={{ display: "contents" }}>
             {features.map((feature, index) => (
               <Stack
                 key={index}
@@ -246,19 +280,27 @@ const BadgesVariant: React.FC<{
                 spacing={1}
                 data-testid="badge-item"
                 sx={{
-                  minWidth: { xs: '40%', sm: 'auto' },
-                  justifyContent: 'center',
+                  minWidth: { xs: "40%", sm: "auto" },
+                  justifyContent: "center",
                 }}
               >
                 {feature.icon &&
                   (() => {
                     const IconComponent = getIconComponent(feature.icon);
-                    return <IconComponent sx={{ fontSize: 20, color: primaryColor }} />;
+                    return (
+                      <IconComponent
+                        sx={{ fontSize: 20, color: primaryColor }}
+                      />
+                    );
                   })()}
                 <Typography
                   variant="body2"
                   component="span"
-                  sx={{ color: headingColor, fontWeight: 600, whiteSpace: 'nowrap' }}
+                  sx={{
+                    color: headingColor,
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                  }}
                 >
                   {feature.title}
                 </Typography>
@@ -268,20 +310,25 @@ const BadgesVariant: React.FC<{
         </Stack>
       </Box>
     );
-  }
+  },
 );
-BadgesVariant.displayName = 'BadgesVariant';
+BadgesVariant.displayName = "BadgesVariant";
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
 const FeaturesBlock: React.FC<FeaturesBlockProps> = memo(
-  ({ content, primaryColor = '#2563eb', headingColor = '#1e293b', bodyColor = '#475569' }) => {
+  ({
+    content,
+    primaryColor = "#2563eb",
+    headingColor = "#1e293b",
+    bodyColor = "#475569",
+  }) => {
     const features = content.features ?? [];
-    const variant = content.variant ?? 'default';
+    const variant = content.variant ?? "default";
 
     const renderVariant = () => {
       switch (variant) {
-        case '4-column':
+        case "4-column":
           return (
             <FourColumnVariant
               features={features}
@@ -290,7 +337,7 @@ const FeaturesBlock: React.FC<FeaturesBlockProps> = memo(
               bodyColor={bodyColor}
             />
           );
-        case 'stacked':
+        case "stacked":
           return (
             <StackedVariant
               features={features}
@@ -299,7 +346,7 @@ const FeaturesBlock: React.FC<FeaturesBlockProps> = memo(
               bodyColor={bodyColor}
             />
           );
-        case 'badges':
+        case "badges":
           return (
             <BadgesVariant
               features={features}
@@ -309,7 +356,7 @@ const FeaturesBlock: React.FC<FeaturesBlockProps> = memo(
               badgeSpacing={content.badgeSpacing}
             />
           );
-        case 'default':
+        case "default":
         default:
           return (
             <DefaultVariant
@@ -323,8 +370,12 @@ const FeaturesBlock: React.FC<FeaturesBlockProps> = memo(
     };
 
     return (
-      <BlockWrapper fields={content as unknown as import('../BlockWrapper').BlockWrapperFields}>
-        <Box sx={{ bgcolor: 'background.default' }}>
+      <BlockWrapper
+        fields={
+          content as unknown as import("../BlockWrapper").BlockWrapperFields
+        }
+      >
+        <Box sx={{ bgcolor: "background.default" }}>
           <Container maxWidth="lg">
             <Typography
               variant="h3"
@@ -333,16 +384,16 @@ const FeaturesBlock: React.FC<FeaturesBlockProps> = memo(
               gutterBottom
               sx={{ mb: 6, fontWeight: 600, color: headingColor }}
             >
-              {content.heading || 'Features'}
+              {content.heading || "Features"}
             </Typography>
             {renderVariant()}
           </Container>
         </Box>
       </BlockWrapper>
     );
-  }
+  },
 );
 
-FeaturesBlock.displayName = 'FeaturesBlock';
+FeaturesBlock.displayName = "FeaturesBlock";
 
 export default FeaturesBlock;

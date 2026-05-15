@@ -11,8 +11,8 @@
  * SECURITY: Role sourced from server metadata via presenceData
  */
 
-import React, { useMemo } from 'react';
-import { Avatar, Badge, Box, Tooltip, Typography } from '@mui/material';
+import React, { useMemo } from "react";
+import { Avatar, Badge, Box, Tooltip, Typography } from "@mui/material";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -22,10 +22,10 @@ const MAX_VISIBLE = 5;
 
 // Role badge colors per role hierarchy
 const ROLE_BADGE_COLORS: Record<string, string> = {
-  OWNER: '#f59e0b', // gold
-  ADMIN: '#3b82f6', // blue
-  EDITOR: '#22c55e', // green
-  VIEWER: '#9ca3af', // gray
+  OWNER: "#f59e0b", // gold
+  ADMIN: "#3b82f6", // blue
+  EDITOR: "#22c55e", // green
+  VIEWER: "#9ca3af", // gray
 };
 
 // ---------------------------------------------------------------------------
@@ -50,33 +50,42 @@ interface PresenceIndicatorProps {
 // ---------------------------------------------------------------------------
 
 function getInitials(name: string): string {
-  if (!name) return '?';
+  if (!name) return "?";
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 function isEditorRole(role: string): boolean {
-  return role === 'OWNER' || role === 'ADMIN' || role === 'EDITOR';
+  return role === "OWNER" || role === "ADMIN" || role === "EDITOR";
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-const PresenceIndicatorInner: React.FC<PresenceIndicatorProps> = ({ users, currentUserId }) => {
+const PresenceIndicatorInner: React.FC<PresenceIndicatorProps> = ({
+  users,
+  currentUserId,
+}) => {
   const visibleUsers = useMemo(() => users.slice(0, MAX_VISIBLE), [users]);
-  const overflowCount = useMemo(() => Math.max(0, users.length - MAX_VISIBLE), [users]);
+  const overflowCount = useMemo(
+    () => Math.max(0, users.length - MAX_VISIBLE),
+    [users],
+  );
 
   const summary = useMemo(() => {
     const editors = users.filter((u) => isEditorRole(u.role)).length;
-    const viewers = users.filter((u) => u.role === 'VIEWER').length;
+    const viewers = users.filter((u) => u.role === "VIEWER").length;
     return { editors, viewers };
   }, [users]);
 
   if (users.length === 0) {
     return (
-      <Box data-testid="presence-indicator" sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box
+        data-testid="presence-indicator"
+        sx={{ display: "flex", alignItems: "center" }}
+      >
         <Typography variant="caption" color="text.secondary">
           No collaborators
         </Typography>
@@ -85,18 +94,25 @@ const PresenceIndicatorInner: React.FC<PresenceIndicatorProps> = ({ users, curre
   }
 
   return (
-    <Box data-testid="presence-indicator" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Box
+      data-testid="presence-indicator"
+      sx={{ display: "flex", alignItems: "center", gap: 1 }}
+    >
       {/* Avatar group */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
         {visibleUsers.map((user) => {
-          const badgeColor = ROLE_BADGE_COLORS[user.role] || '#9ca3af';
+          const badgeColor = ROLE_BADGE_COLORS[user.role] || "#9ca3af";
           const initials = getInitials(user.userName);
 
           return (
-            <Tooltip key={user.userId} title={`${user.userName} (${user.role})`} arrow>
+            <Tooltip
+              key={user.userId}
+              title={`${user.userName} (${user.role})`}
+              arrow
+            >
               <Badge
                 overlap="circular"
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 badgeContent={
                   <Box
                     data-testid={`role-badge-${user.userId}`}
@@ -104,20 +120,20 @@ const PresenceIndicatorInner: React.FC<PresenceIndicatorProps> = ({ users, curre
                       minWidth: 28,
                       height: 14,
                       bgcolor: badgeColor,
-                      borderRadius: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      px: '3px',
+                      borderRadius: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      px: "3px",
                     }}
                   >
                     <Typography
                       sx={{
-                        fontSize: '8px',
+                        fontSize: "8px",
                         fontWeight: 700,
-                        color: '#fff',
+                        color: "#fff",
                         lineHeight: 1,
-                        letterSpacing: '0.02em',
+                        letterSpacing: "0.02em",
                       }}
                     >
                       {user.role}
@@ -133,11 +149,12 @@ const PresenceIndicatorInner: React.FC<PresenceIndicatorProps> = ({ users, curre
                     width: 32,
                     height: 32,
                     bgcolor: user.color,
-                    fontSize: '0.7rem',
+                    fontSize: "0.7rem",
                     fontWeight: 600,
-                    border: user.userId === currentUserId ? '2px solid' : 'none',
-                    borderColor: 'primary.main',
-                    cursor: 'default',
+                    border:
+                      user.userId === currentUserId ? "2px solid" : "none",
+                    borderColor: "primary.main",
+                    cursor: "default",
                   }}
                 >
                   {initials}
@@ -155,11 +172,11 @@ const PresenceIndicatorInner: React.FC<PresenceIndicatorProps> = ({ users, curre
               sx={{
                 width: 32,
                 height: 32,
-                bgcolor: 'action.selected',
-                fontSize: '0.7rem',
+                bgcolor: "action.selected",
+                fontSize: "0.7rem",
                 fontWeight: 600,
-                color: 'text.secondary',
-                cursor: 'default',
+                color: "text.secondary",
+                cursor: "default",
               }}
             >
               <Typography variant="caption" sx={{ fontWeight: 700 }}>
@@ -175,11 +192,13 @@ const PresenceIndicatorInner: React.FC<PresenceIndicatorProps> = ({ users, curre
         data-testid="presence-summary"
         variant="caption"
         color="text.secondary"
-        sx={{ whiteSpace: 'nowrap' }}
+        sx={{ whiteSpace: "nowrap" }}
       >
-        {summary.editors > 0 && `${summary.editors} editor${summary.editors !== 1 ? 's' : ''}`}
-        {summary.editors > 0 && summary.viewers > 0 && ', '}
-        {summary.viewers > 0 && `${summary.viewers} viewer${summary.viewers !== 1 ? 's' : ''}`}
+        {summary.editors > 0 &&
+          `${summary.editors} editor${summary.editors !== 1 ? "s" : ""}`}
+        {summary.editors > 0 && summary.viewers > 0 && ", "}
+        {summary.viewers > 0 &&
+          `${summary.viewers} viewer${summary.viewers !== 1 ? "s" : ""}`}
       </Typography>
     </Box>
   );

@@ -12,7 +12,7 @@
  * - MUI Select for party size (1–20)
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from "react";
 import {
   Box,
   Container,
@@ -25,15 +25,15 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
-} from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
-import DOMPurify from 'dompurify';
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
+import DOMPurify from "dompurify";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -57,7 +57,7 @@ interface ReservationFormContent {
   submitEmail?: string;
   openTime?: string; // e.g. '09:00' — restricts TimePicker minTime
   closeTime?: string; // e.g. '22:00' — restricts TimePicker maxTime
-  fieldVariant?: 'outlined' | 'standard' | 'filled';
+  fieldVariant?: "outlined" | "standard" | "filled";
   fieldColor?: string;
 }
 
@@ -91,21 +91,23 @@ interface FormData {
 
 function getFieldColorSx(variant: string, color: string): object {
   if (!color) return {};
-  if (variant === 'standard') {
+  if (variant === "standard") {
     return {
-      '& .MuiInput-underline:after': { borderBottomColor: color },
-      '& .MuiInputLabel-root.Mui-focused': { color },
+      "& .MuiInput-underline:after": { borderBottomColor: color },
+      "& .MuiInputLabel-root.Mui-focused": { color },
     };
   }
-  if (variant === 'filled') {
+  if (variant === "filled") {
     return {
-      '& .MuiFilledInput-root:after': { borderBottomColor: color },
-      '& .MuiInputLabel-root.Mui-focused': { color },
+      "& .MuiFilledInput-root:after": { borderBottomColor: color },
+      "& .MuiInputLabel-root.Mui-focused": { color },
     };
   }
   return {
-    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: color },
-    '& .MuiInputLabel-root.Mui-focused': { color },
+    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: color,
+    },
+    "& .MuiInputLabel-root.Mui-focused": { color },
   };
 }
 
@@ -113,9 +115,9 @@ function getFieldColorSx(variant: string, color: string): object {
 
 const ReservationFormBlock = React.memo(function ReservationFormBlock({
   block,
-  primaryColor = '#2563eb',
-  headingColor = '#1e293b',
-  bodyColor = '#475569',
+  primaryColor = "#2563eb",
+  headingColor = "#1e293b",
+  bodyColor = "#475569",
   onFormSubmit,
 }: ReservationFormBlockProps) {
   const content = (block.content ?? {}) as ReservationFormContent;
@@ -130,30 +132,31 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
     showMessage: true,
   };
 
-  const heading = content.heading ?? 'Make a Reservation';
-  const description = content.description ?? '';
-  const submitText = content.submitText ?? 'Reserve Now';
-  const successMessage = content.successMessage ?? 'Your reservation has been received.';
-  const submitEndpoint = content.submitEndpoint ?? '';
-  const submitEmail = content.submitEmail ?? '';
+  const heading = content.heading ?? "Make a Reservation";
+  const description = content.description ?? "";
+  const submitText = content.submitText ?? "Reserve Now";
+  const successMessage =
+    content.successMessage ?? "Your reservation has been received.";
+  const submitEndpoint = content.submitEndpoint ?? "";
+  const submitEmail = content.submitEmail ?? "";
   const openTime = content.openTime;
   const closeTime = content.closeTime;
-  const fieldVariant = content.fieldVariant ?? 'outlined';
-  const fieldColor = content.fieldColor ?? '';
+  const fieldVariant = content.fieldVariant ?? "outlined";
+  const fieldColor = content.fieldColor ?? "";
   const fieldColorSx = getFieldColorSx(fieldVariant, fieldColor);
 
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    phone: '',
-    date: '',
-    time: '',
+    name: "",
+    email: "",
+    phone: "",
+    date: "",
+    time: "",
     partySize: 2,
-    message: '',
+    message: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
-  const [status, setStatus] = useState<'success' | 'error' | null>(null);
+  const [status, setStatus] = useState<"success" | "error" | null>(null);
 
   const { ref, inView } = useInView({ threshold: 0.15, triggerOnce: true });
 
@@ -162,7 +165,7 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
       const { name, value } = e.target;
       setFormData((prev) => ({ ...prev, [name]: value }));
     },
-    []
+    [],
   );
 
   const handleSelectChange = useCallback((e: SelectChangeEvent<number>) => {
@@ -178,33 +181,36 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
       try {
         if (submitEndpoint) {
           const res = await fetch(submitEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
             signal: AbortSignal.timeout(10000),
           });
-          if (!res.ok) throw new Error('Submission failed');
+          if (!res.ok) throw new Error("Submission failed");
         } else if (submitEmail) {
           const body = encodeURIComponent(JSON.stringify(formData, null, 2));
           window.location.href = `mailto:${submitEmail}?subject=Reservation Request&body=${body}`;
         }
-        setStatus('success');
-        onFormSubmit?.('RESERVATION_FORM', true);
+        setStatus("success");
+        onFormSubmit?.("RESERVATION_FORM", true);
       } catch {
-        setStatus('error');
-        onFormSubmit?.('RESERVATION_FORM', false);
+        setStatus("error");
+        onFormSubmit?.("RESERVATION_FORM", false);
       } finally {
         setSubmitting(false);
       }
     },
-    [submitEndpoint, submitEmail, formData, onFormSubmit]
+    [submitEndpoint, submitEmail, formData, onFormSubmit],
   );
 
   const safeHeading = DOMPurify.sanitize(heading);
   const safeDescription = DOMPurify.sanitize(description);
 
   return (
-    <Box component="section" sx={{ py: { xs: 4, md: 6 }, bgcolor: 'background.default' }}>
+    <Box
+      component="section"
+      sx={{ py: { xs: 4, md: 6 }, bgcolor: "background.default" }}
+    >
       <Container maxWidth="sm">
         <motion.div
           ref={ref}
@@ -231,27 +237,27 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
           )}
 
           {/* Success state */}
-          {status === 'success' && (
+          {status === "success" && (
             <Alert severity="success" sx={{ mb: 3 }}>
               {successMessage}
             </Alert>
           )}
 
           {/* Error state */}
-          {status === 'error' && (
+          {status === "error" && (
             <Alert severity="error" sx={{ mb: 3 }}>
               Something went wrong. Please try again.
             </Alert>
           )}
 
           {/* Form (hide after success) */}
-          {status !== 'success' && (
+          {status !== "success" && (
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <Box
                 component="form"
                 onSubmit={handleSubmit}
                 noValidate
-                sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                sx={{ display: "flex", flexDirection: "column", gap: 2 }}
               >
                 {/* Name */}
                 {fieldFlags.showName !== false && (
@@ -263,7 +269,7 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
                     onChange={handleChange}
                     variant={fieldVariant}
                     sx={fieldColorSx}
-                    inputProps={{ 'aria-label': 'Name' }}
+                    inputProps={{ "aria-label": "Name" }}
                   />
                 )}
 
@@ -278,7 +284,7 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
                     onChange={handleChange}
                     variant={fieldVariant}
                     sx={fieldColorSx}
-                    inputProps={{ 'aria-label': 'Email' }}
+                    inputProps={{ "aria-label": "Email" }}
                   />
                 )}
 
@@ -293,7 +299,7 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
                     onChange={handleChange}
                     variant={fieldVariant}
                     sx={fieldColorSx}
-                    inputProps={{ 'aria-label': 'Phone' }}
+                    inputProps={{ "aria-label": "Phone" }}
                   />
                 )}
 
@@ -305,7 +311,9 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
                     onChange={(newValue) => {
                       setFormData((prev) => ({
                         ...prev,
-                        date: newValue ? newValue.toISOString().split('T')[0] : '',
+                        date: newValue
+                          ? newValue.toISOString().split("T")[0]
+                          : "",
                       }));
                     }}
                     disablePast
@@ -314,7 +322,7 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
                         fullWidth: true,
                         variant: fieldVariant,
                         sx: fieldColorSx,
-                        inputProps: { 'aria-label': 'Date' },
+                        inputProps: { "aria-label": "Date" },
                       },
                     }}
                   />
@@ -324,25 +332,44 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
                 {fieldFlags.showTime !== false && (
                   <TimePicker
                     label="Time"
-                    value={formData.time ? new Date(`1970-01-01T${formData.time}`) : null}
+                    value={
+                      formData.time
+                        ? new Date(`1970-01-01T${formData.time}`)
+                        : null
+                    }
                     onChange={(newValue) => {
                       if (newValue) {
-                        const hours = String(newValue.getHours()).padStart(2, '0');
-                        const minutes = String(newValue.getMinutes()).padStart(2, '0');
-                        setFormData((prev) => ({ ...prev, time: `${hours}:${minutes}` }));
+                        const hours = String(newValue.getHours()).padStart(
+                          2,
+                          "0",
+                        );
+                        const minutes = String(newValue.getMinutes()).padStart(
+                          2,
+                          "0",
+                        );
+                        setFormData((prev) => ({
+                          ...prev,
+                          time: `${hours}:${minutes}`,
+                        }));
                       } else {
-                        setFormData((prev) => ({ ...prev, time: '' }));
+                        setFormData((prev) => ({ ...prev, time: "" }));
                       }
                     }}
                     minutesStep={15}
-                    minTime={openTime ? new Date(`1970-01-01T${openTime}`) : undefined}
-                    maxTime={closeTime ? new Date(`1970-01-01T${closeTime}`) : undefined}
+                    minTime={
+                      openTime ? new Date(`1970-01-01T${openTime}`) : undefined
+                    }
+                    maxTime={
+                      closeTime
+                        ? new Date(`1970-01-01T${closeTime}`)
+                        : undefined
+                    }
                     slotProps={{
                       textField: {
                         fullWidth: true,
                         variant: fieldVariant,
                         sx: fieldColorSx,
-                        inputProps: { 'aria-label': 'Time' },
+                        inputProps: { "aria-label": "Time" },
                       },
                     }}
                   />
@@ -380,7 +407,7 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
                     onChange={handleChange}
                     variant={fieldVariant}
                     sx={fieldColorSx}
-                    inputProps={{ 'aria-label': 'Message' }}
+                    inputProps={{ "aria-label": "Message" }}
                   />
                 )}
 
@@ -392,12 +419,17 @@ const ReservationFormBlock = React.memo(function ReservationFormBlock({
                   sx={{
                     mt: 1,
                     bgcolor: primaryColor,
-                    '&:hover': { bgcolor: primaryColor, filter: 'brightness(0.9)' },
+                    "&:hover": {
+                      bgcolor: primaryColor,
+                      filter: "brightness(0.9)",
+                    },
                     fontWeight: 600,
                     py: 1.5,
                   }}
                   startIcon={
-                    submitting ? <CircularProgress size={16} color="inherit" /> : undefined
+                    submitting ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : undefined
                   }
                 >
                   {submitText}

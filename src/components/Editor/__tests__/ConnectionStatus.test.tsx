@@ -16,27 +16,42 @@
  * - React.memo: component is memoized
  * - No XSS: user count rendered safely via React
  */
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
-import { ConnectionStatus } from '../ConnectionStatus';
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import { ConnectionStatus } from "../ConnectionStatus";
 
 // ---------------------------------------------------------------------------
 // Mock framer-motion to avoid animation issues in jsdom
 // ---------------------------------------------------------------------------
-vi.mock('framer-motion', () => ({
-  useScroll: () => ({ scrollYProgress: { get: () => 0, onChange: () => () => {} } }),
-  useTransform: (..._args) => ({ get: () => '0%', onChange: () => () => {} }),
-  useMotionValue: (v) => ({ get: () => v, set: () => {}, onChange: () => () => {} }),
+vi.mock("framer-motion", () => ({
+  useScroll: () => ({
+    scrollYProgress: { get: () => 0, onChange: () => () => {} },
+  }),
+  useTransform: (..._args) => ({ get: () => "0%", onChange: () => () => {} }),
+  useMotionValue: (v) => ({
+    get: () => v,
+    set: () => {},
+    onChange: () => () => {},
+  }),
   motion: {
     span: React.forwardRef(
       (
         {
           children,
           ...props
-        }: React.HTMLAttributes<HTMLSpanElement> & { animate?: unknown; transition?: unknown },
-        ref: React.Ref<HTMLSpanElement>
+        }: React.HTMLAttributes<HTMLSpanElement> & {
+          animate?: unknown;
+          transition?: unknown;
+        },
+        ref: React.Ref<HTMLSpanElement>,
       ) => {
         // Strip framer-motion-specific props before passing to DOM
         const {
@@ -52,15 +67,18 @@ vi.mock('framer-motion', () => ({
             {children}
           </span>
         );
-      }
+      },
     ),
     div: React.forwardRef(
       (
         {
           children,
           ...props
-        }: React.HTMLAttributes<HTMLDivElement> & { animate?: unknown; transition?: unknown },
-        ref: React.Ref<HTMLDivElement>
+        }: React.HTMLAttributes<HTMLDivElement> & {
+          animate?: unknown;
+          transition?: unknown;
+        },
+        ref: React.Ref<HTMLDivElement>,
       ) => {
         const {
           animate: _a,
@@ -75,19 +93,21 @@ vi.mock('framer-motion', () => ({
             {children}
           </div>
         );
-      }
+      },
     ),
   },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('ConnectionStatus', () => {
+describe("ConnectionStatus", () => {
   const defaultProps = {
-    connectionState: 'connected' as const,
+    connectionState: "connected" as const,
     connectedUsers: 1,
     onReconnect: vi.fn(),
   };
@@ -98,154 +118,183 @@ describe('ConnectionStatus', () => {
 
   // ---- Renders without crashing -------------------------------------------
 
-  it('renders without crashing', () => {
+  it("renders without crashing", () => {
     const { container } = render(<ConnectionStatus {...defaultProps} />);
     expect(container).toBeTruthy();
   });
 
   // ---- Dot colors ---------------------------------------------------------
 
-  it('renders green dot for connected state', () => {
+  it("renders green dot for connected state", () => {
     render(<ConnectionStatus connectionState="connected" />);
-    const dot = screen.getByTestId('connection-dot');
+    const dot = screen.getByTestId("connection-dot");
     expect(dot).toBeInTheDocument();
     // Check inline style for background color (green)
     const style = window.getComputedStyle(dot);
     // The dot's backgroundColor should be green-ish
     // Since we apply sx prop which compiles to inline or class, check via style attribute
-    expect(dot).toHaveStyle({ backgroundColor: '#4caf50' });
+    expect(dot).toHaveStyle({ backgroundColor: "#4caf50" });
   });
 
-  it('renders amber/yellow dot for connecting state', () => {
+  it("renders amber/yellow dot for connecting state", () => {
     render(<ConnectionStatus connectionState="connecting" />);
-    const dot = screen.getByTestId('connection-dot');
+    const dot = screen.getByTestId("connection-dot");
     expect(dot).toBeInTheDocument();
-    expect(dot).toHaveStyle({ backgroundColor: '#ff9800' });
+    expect(dot).toHaveStyle({ backgroundColor: "#ff9800" });
   });
 
-  it('renders red dot for disconnected state', () => {
+  it("renders red dot for disconnected state", () => {
     render(<ConnectionStatus connectionState="disconnected" />);
-    const dot = screen.getByTestId('connection-dot');
+    const dot = screen.getByTestId("connection-dot");
     expect(dot).toBeInTheDocument();
-    expect(dot).toHaveStyle({ backgroundColor: '#f44336' });
+    expect(dot).toHaveStyle({ backgroundColor: "#f44336" });
   });
 
-  it('renders red dot for error state', () => {
+  it("renders red dot for error state", () => {
     render(<ConnectionStatus connectionState="error" />);
-    const dot = screen.getByTestId('connection-dot');
+    const dot = screen.getByTestId("connection-dot");
     expect(dot).toBeInTheDocument();
-    expect(dot).toHaveStyle({ backgroundColor: '#f44336' });
+    expect(dot).toHaveStyle({ backgroundColor: "#f44336" });
   });
 
   // ---- Connected users count -----------------------------------------------
 
-  it('shows user count text when >1 connected user', () => {
+  it("shows user count text when >1 connected user", () => {
     render(<ConnectionStatus connectionState="connected" connectedUsers={3} />);
-    expect(screen.getByTestId('user-count')).toBeInTheDocument();
-    expect(screen.getByText('3 users editing')).toBeInTheDocument();
+    expect(screen.getByTestId("user-count")).toBeInTheDocument();
+    expect(screen.getByText("3 users editing")).toBeInTheDocument();
   });
 
-  it('does NOT show user count when connectedUsers=1', () => {
+  it("does NOT show user count when connectedUsers=1", () => {
     render(<ConnectionStatus connectionState="connected" connectedUsers={1} />);
-    expect(screen.queryByTestId('user-count')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("user-count")).not.toBeInTheDocument();
   });
 
-  it('does NOT show user count when connectedUsers=0', () => {
+  it("does NOT show user count when connectedUsers=0", () => {
     render(<ConnectionStatus connectionState="connected" connectedUsers={0} />);
-    expect(screen.queryByTestId('user-count')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("user-count")).not.toBeInTheDocument();
   });
 
-  it('does NOT show user count when disconnected even if connectedUsers>1', () => {
-    render(<ConnectionStatus connectionState="disconnected" connectedUsers={5} />);
-    expect(screen.queryByTestId('user-count')).not.toBeInTheDocument();
+  it("does NOT show user count when disconnected even if connectedUsers>1", () => {
+    render(
+      <ConnectionStatus connectionState="disconnected" connectedUsers={5} />,
+    );
+    expect(screen.queryByTestId("user-count")).not.toBeInTheDocument();
   });
 
   // ---- Click to reconnect --------------------------------------------------
 
-  it('calls onReconnect when disconnected dot is clicked', () => {
+  it("calls onReconnect when disconnected dot is clicked", () => {
     const onReconnect = vi.fn();
-    render(<ConnectionStatus connectionState="disconnected" onReconnect={onReconnect} />);
-    fireEvent.click(screen.getByTestId('connection-status-container'));
+    render(
+      <ConnectionStatus
+        connectionState="disconnected"
+        onReconnect={onReconnect}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("connection-status-container"));
     expect(onReconnect).toHaveBeenCalledOnce();
   });
 
-  it('does NOT call onReconnect when connected dot is clicked', () => {
+  it("does NOT call onReconnect when connected dot is clicked", () => {
     const onReconnect = vi.fn();
-    render(<ConnectionStatus connectionState="connected" onReconnect={onReconnect} />);
-    fireEvent.click(screen.getByTestId('connection-status-container'));
+    render(
+      <ConnectionStatus
+        connectionState="connected"
+        onReconnect={onReconnect}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("connection-status-container"));
     expect(onReconnect).not.toHaveBeenCalled();
   });
 
-  it('does NOT call onReconnect when onReconnect is not provided (disconnected)', () => {
+  it("does NOT call onReconnect when onReconnect is not provided (disconnected)", () => {
     render(<ConnectionStatus connectionState="disconnected" />);
     // Should not throw on click when no handler provided
-    expect(() => fireEvent.click(screen.getByTestId('connection-status-container'))).not.toThrow();
+    expect(() =>
+      fireEvent.click(screen.getByTestId("connection-status-container")),
+    ).not.toThrow();
   });
 
   // ---- Toast notifications ------------------------------------------------
 
   it('shows "Connection lost" toast on transition connected → disconnected', async () => {
-    const { rerender } = render(<ConnectionStatus connectionState="connected" />);
+    const { rerender } = render(
+      <ConnectionStatus connectionState="connected" />,
+    );
     act(() => {
       rerender(<ConnectionStatus connectionState="disconnected" />);
     });
     await waitFor(() => {
-      expect(screen.getByText('Connection lost')).toBeInTheDocument();
+      expect(screen.getByText("Connection lost")).toBeInTheDocument();
     });
   });
 
   it('shows "Connection restored" toast on transition disconnected → connected', async () => {
-    const { rerender } = render(<ConnectionStatus connectionState="disconnected" />);
+    const { rerender } = render(
+      <ConnectionStatus connectionState="disconnected" />,
+    );
     act(() => {
       rerender(<ConnectionStatus connectionState="connected" />);
     });
     await waitFor(() => {
-      expect(screen.getByText('Connection restored')).toBeInTheDocument();
+      expect(screen.getByText("Connection restored")).toBeInTheDocument();
     });
   });
 
   it('shows "Connection restored" toast on transition connecting → connected', async () => {
-    const { rerender } = render(<ConnectionStatus connectionState="connecting" />);
+    const { rerender } = render(
+      <ConnectionStatus connectionState="connecting" />,
+    );
     act(() => {
       rerender(<ConnectionStatus connectionState="connected" />);
     });
     await waitFor(() => {
-      expect(screen.getByText('Connection restored')).toBeInTheDocument();
+      expect(screen.getByText("Connection restored")).toBeInTheDocument();
     });
   });
 
-  it('does NOT show toast on first render (connected)', () => {
+  it("does NOT show toast on first render (connected)", () => {
     render(<ConnectionStatus connectionState="connected" />);
-    expect(screen.queryByText('Connection lost')).not.toBeInTheDocument();
-    expect(screen.queryByText('Connection restored')).not.toBeInTheDocument();
+    expect(screen.queryByText("Connection lost")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connection restored")).not.toBeInTheDocument();
   });
 
-  it('does NOT show toast on first render (disconnected)', () => {
+  it("does NOT show toast on first render (disconnected)", () => {
     render(<ConnectionStatus connectionState="disconnected" />);
-    expect(screen.queryByText('Connection lost')).not.toBeInTheDocument();
-    expect(screen.queryByText('Connection restored')).not.toBeInTheDocument();
+    expect(screen.queryByText("Connection lost")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connection restored")).not.toBeInTheDocument();
   });
 
-  it('does NOT show toast on transition connected → connecting (no loss event yet)', () => {
-    const { rerender } = render(<ConnectionStatus connectionState="connected" />);
+  it("does NOT show toast on transition connected → connecting (no loss event yet)", () => {
+    const { rerender } = render(
+      <ConnectionStatus connectionState="connected" />,
+    );
     act(() => {
       rerender(<ConnectionStatus connectionState="connecting" />);
     });
-    expect(screen.queryByText('Connection lost')).not.toBeInTheDocument();
+    expect(screen.queryByText("Connection lost")).not.toBeInTheDocument();
   });
 
   // ---- Accessibility -------------------------------------------------------
 
-  it('disconnected dot has role=button when onReconnect is provided', () => {
+  it("disconnected dot has role=button when onReconnect is provided", () => {
     const onReconnect = vi.fn();
-    render(<ConnectionStatus connectionState="disconnected" onReconnect={onReconnect} />);
-    const container = screen.getByTestId('connection-status-container');
-    expect(container).toHaveAttribute('role', 'button');
+    render(
+      <ConnectionStatus
+        connectionState="disconnected"
+        onReconnect={onReconnect}
+      />,
+    );
+    const container = screen.getByTestId("connection-status-container");
+    expect(container).toHaveAttribute("role", "button");
   });
 
-  it('connected dot does NOT have role=button', () => {
-    render(<ConnectionStatus connectionState="connected" onReconnect={vi.fn()} />);
-    const container = screen.getByTestId('connection-status-container');
-    expect(container).not.toHaveAttribute('role', 'button');
+  it("connected dot does NOT have role=button", () => {
+    render(
+      <ConnectionStatus connectionState="connected" onReconnect={vi.fn()} />,
+    );
+    const container = screen.getByTestId("connection-status-container");
+    expect(container).not.toHaveAttribute("role", "button");
   });
 });

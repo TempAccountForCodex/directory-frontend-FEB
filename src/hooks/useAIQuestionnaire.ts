@@ -6,34 +6,42 @@
  * Step 3.17
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from "react";
 
 // 15 business types matching BUSINESS_TYPE_PROMPTS keys in promptTemplateService.js
 export const BUSINESS_TYPES = [
-  { value: 'restaurant', label: 'Restaurant' },
-  { value: 'law-firm', label: 'Law Firm' },
-  { value: 'agency', label: 'Agency' },
-  { value: 'photography', label: 'Photography' },
-  { value: 'fitness', label: 'Fitness' },
-  { value: 'real-estate', label: 'Real Estate' },
-  { value: 'e-commerce', label: 'E-Commerce' },
-  { value: 'portfolio', label: 'Portfolio' },
-  { value: 'blog', label: 'Blog' },
-  { value: 'medical', label: 'Medical' },
-  { value: 'education', label: 'Education' },
-  { value: 'saas', label: 'SaaS' },
-  { value: 'construction', label: 'Construction' },
-  { value: 'salon', label: 'Salon' },
-  { value: 'accounting', label: 'Accounting' },
+  { value: "restaurant", label: "Restaurant" },
+  { value: "law-firm", label: "Law Firm" },
+  { value: "agency", label: "Agency" },
+  { value: "photography", label: "Photography" },
+  { value: "fitness", label: "Fitness" },
+  { value: "real-estate", label: "Real Estate" },
+  { value: "e-commerce", label: "E-Commerce" },
+  { value: "portfolio", label: "Portfolio" },
+  { value: "blog", label: "Blog" },
+  { value: "medical", label: "Medical" },
+  { value: "education", label: "Education" },
+  { value: "saas", label: "SaaS" },
+  { value: "construction", label: "Construction" },
+  { value: "salon", label: "Salon" },
+  { value: "accounting", label: "Accounting" },
 ] as const;
 
 export const BRAND_PERSONALITIES = [
-  { value: 'professional', label: 'Professional', description: 'Formal and authoritative tone' },
-  { value: 'friendly', label: 'Friendly', description: 'Warm and approachable tone' },
-  { value: 'bold', label: 'Bold', description: 'Confident and direct tone' },
-  { value: 'minimal', label: 'Minimal', description: 'Clean and concise tone' },
-  { value: 'luxury', label: 'Luxury', description: 'Elegant and premium tone' },
-  { value: 'playful', label: 'Playful', description: 'Fun and energetic tone' },
+  {
+    value: "professional",
+    label: "Professional",
+    description: "Formal and authoritative tone",
+  },
+  {
+    value: "friendly",
+    label: "Friendly",
+    description: "Warm and approachable tone",
+  },
+  { value: "bold", label: "Bold", description: "Confident and direct tone" },
+  { value: "minimal", label: "Minimal", description: "Clean and concise tone" },
+  { value: "luxury", label: "Luxury", description: "Elegant and premium tone" },
+  { value: "playful", label: "Playful", description: "Fun and energetic tone" },
 ] as const;
 
 export interface SocialLinks {
@@ -70,32 +78,32 @@ export interface ValidationErrors {
 }
 
 const INITIAL_STATE: QuestionnaireData = {
-  websiteName: '',
-  businessType: '',
-  email: '',
-  services: '',
-  phone: '',
-  address: '',
+  websiteName: "",
+  businessType: "",
+  email: "",
+  services: "",
+  phone: "",
+  address: "",
   logoFile: null,
-  logoFileName: '',
-  brandPersonality: '',
-  targetAudience: '',
-  usp: '',
-  socialLinks: { facebook: '', instagram: '', twitter: '', linkedin: '' },
-  businessHours: '',
-  serviceArea: '',
+  logoFileName: "",
+  brandPersonality: "",
+  targetAudience: "",
+  usp: "",
+  socialLinks: { facebook: "", instagram: "", twitter: "", linkedin: "" },
+  businessHours: "",
+  serviceArea: "",
 };
 
 const OPTIONAL_FIELDS: (keyof QuestionnaireData)[] = [
-  'phone',
-  'address',
-  'logoFile',
-  'brandPersonality',
-  'targetAudience',
-  'usp',
-  'socialLinks',
-  'businessHours',
-  'serviceArea',
+  "phone",
+  "address",
+  "logoFile",
+  "brandPersonality",
+  "targetAudience",
+  "usp",
+  "socialLinks",
+  "businessHours",
+  "serviceArea",
 ];
 
 function getStorageKey(templateId: string): string {
@@ -150,52 +158,67 @@ export function useAIQuestionnaire(templateId: string) {
   }, [data, templateId]);
 
   const updateField = useCallback(
-    <K extends keyof QuestionnaireData>(field: K, value: QuestionnaireData[K]) => {
+    <K extends keyof QuestionnaireData>(
+      field: K,
+      value: QuestionnaireData[K],
+    ) => {
       setData((prev) => {
         const next = { ...prev, [field]: value };
         // When logoFile changes, persist fileName
-        if (field === 'logoFile' && value instanceof File) {
+        if (field === "logoFile" && value instanceof File) {
           next.logoFileName = value.name;
-        } else if (field === 'logoFile' && value === null) {
-          next.logoFileName = '';
+        } else if (field === "logoFile" && value === null) {
+          next.logoFileName = "";
         }
         return next;
       });
     },
-    []
+    [],
   );
 
-  const updateSocialLink = useCallback((platform: keyof SocialLinks, value: string) => {
-    setData((prev) => ({
-      ...prev,
-      socialLinks: { ...prev.socialLinks, [platform]: value },
-    }));
-  }, []);
+  const updateSocialLink = useCallback(
+    (platform: keyof SocialLinks, value: string) => {
+      setData((prev) => ({
+        ...prev,
+        socialLinks: { ...prev.socialLinks, [platform]: value },
+      }));
+    },
+    [],
+  );
 
-  const validateRequired = useCallback((): { valid: boolean; errors: ValidationErrors } => {
+  const validateRequired = useCallback((): {
+    valid: boolean;
+    errors: ValidationErrors;
+  } => {
     const errors: ValidationErrors = {};
 
-    if (!data.websiteName || data.websiteName.length < 3 || data.websiteName.length > 255) {
+    if (
+      !data.websiteName ||
+      data.websiteName.length < 3 ||
+      data.websiteName.length > 255
+    ) {
       errors.websiteName =
         data.websiteName.length === 0
-          ? 'Website name is required'
+          ? "Website name is required"
           : data.websiteName.length < 3
-            ? 'Website name must be at least 3 characters'
-            : 'Website name must be 255 characters or less';
+            ? "Website name must be at least 3 characters"
+            : "Website name must be 255 characters or less";
     }
 
     if (!data.businessType) {
-      errors.businessType = 'Business type is required';
+      errors.businessType = "Business type is required";
     }
 
     if (!data.email || !isValidEmail(data.email)) {
-      errors.email = !data.email ? 'Email is required' : 'Please enter a valid email address';
+      errors.email = !data.email
+        ? "Email is required"
+        : "Please enter a valid email address";
     }
 
     if (!data.services || data.services.length < 10) {
       errors.services = !data.services
-        ? 'Services description is required'
-        : 'Services must be at least 10 characters';
+        ? "Services description is required"
+        : "Services must be at least 10 characters";
     }
 
     return { valid: Object.keys(errors).length === 0, errors };
@@ -205,12 +228,17 @@ export function useAIQuestionnaire(templateId: string) {
     let filled = 0;
     for (const field of OPTIONAL_FIELDS) {
       const val = data[field];
-      if (field === 'socialLinks') {
+      if (field === "socialLinks") {
         const links = val as SocialLinks;
-        if (links.facebook || links.instagram || links.twitter || links.linkedin) {
+        if (
+          links.facebook ||
+          links.instagram ||
+          links.twitter ||
+          links.linkedin
+        ) {
           filled++;
         }
-      } else if (field === 'logoFile') {
+      } else if (field === "logoFile") {
         if (data.logoFile || data.logoFileName) filled++;
       } else if (val) {
         filled++;
@@ -223,10 +251,16 @@ export function useAIQuestionnaire(templateId: string) {
     let filled = 0;
     for (const field of OPTIONAL_FIELDS) {
       const val = data[field];
-      if (field === 'socialLinks') {
+      if (field === "socialLinks") {
         const links = val as SocialLinks;
-        if (links.facebook || links.instagram || links.twitter || links.linkedin) filled++;
-      } else if (field === 'logoFile') {
+        if (
+          links.facebook ||
+          links.instagram ||
+          links.twitter ||
+          links.linkedin
+        )
+          filled++;
+      } else if (field === "logoFile") {
         if (data.logoFile || data.logoFileName) filled++;
       } else if (val) {
         filled++;
@@ -257,10 +291,13 @@ export function useAIQuestionnaire(templateId: string) {
         sessionStorage.setItem(`ai_questionnaire_${websiteId}`, stored);
       } else {
         // Persist current in-memory state to the website key
-        sessionStorage.setItem(`ai_questionnaire_${websiteId}`, serializeState(data));
+        sessionStorage.setItem(
+          `ai_questionnaire_${websiteId}`,
+          serializeState(data),
+        );
       }
     },
-    [templateId, data]
+    [templateId, data],
   );
 
   return {

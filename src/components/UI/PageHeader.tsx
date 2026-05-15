@@ -1,7 +1,14 @@
-import React from 'react';
-import { Box, Stack, Typography, styled, keyframes, useTheme } from '@mui/material';
-import BlogHeaderPic from '../../assets/images/BlogHeader.avif';
-import { Link } from 'react-router-dom';
+import React from "react";
+import {
+  Box,
+  Stack,
+  Typography,
+  styled,
+  keyframes,
+  useTheme,
+} from "@mui/material";
+import BlogHeaderPic from "../../assets/images/BlogHeader.avif";
+import { Link } from "react-router-dom";
 
 const fadeInBottom = keyframes`
   0% {
@@ -15,35 +22,36 @@ const fadeInBottom = keyframes`
 `;
 
 const StyledHeader = styled(Box)(({ theme }) => ({
-  width: '100%',
-  backgroundSize: 'cover',
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'center',
-  position: 'relative',
-  minHeight: '64vh',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
+  width: "100%",
+  backgroundSize: "cover",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "center",
+  position: "relative",
+  minHeight: "64vh",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
   animation: `${fadeInBottom} 3s ease`,
   letterSpacing: 1,
-  '&::after': {
+  "&::after": {
     content: '""',
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0))',
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    backgroundImage:
+      "linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0))",
     zIndex: 1,
   },
-  [theme.breakpoints.down('sm')]: {
-    minHeight: '50vh',
+  [theme.breakpoints.down("sm")]: {
+    minHeight: "50vh",
   },
 }));
 
 const StyledHeaderItem = styled(Box)(() => ({
-  width: '100%',
+  width: "100%",
   zIndex: 2,
-  color: 'primary.main',
-  textAlign: 'center',
+  color: "primary.main",
+  textAlign: "center",
 }));
 
 interface PageHeaderProps {
@@ -53,7 +61,7 @@ interface PageHeaderProps {
 
 const PageHeader: React.FC<PageHeaderProps> = ({
   image = BlogHeaderPic,
-  page = 'Latest Posts',
+  page = "Latest Posts",
 }) => {
   const theme = useTheme();
   return (
@@ -61,11 +69,11 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       <StyledHeaderItem px={{ xs: 4, sm: 8 }}>
         <Typography
           sx={{
-            fontSize: { xs: '30px', sm: '36px' },
-            fontWeight: 'bold',
-            lineHeight: '3rem',
+            fontSize: { xs: "30px", sm: "36px" },
+            fontWeight: "bold",
+            lineHeight: "3rem",
             mt: 5,
-            textTransform: 'uppercase',
+            textTransform: "uppercase",
             color: theme.palette.primary.main,
           }}
         >
@@ -77,10 +85,10 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             component={Link}
             to="/"
             sx={{
-              fontSize: { xs: '12px', sm: '16px' },
-              marginY: '6px',
+              fontSize: { xs: "12px", sm: "16px" },
+              marginY: "6px",
               ml: 0.5,
-              textDecoration: 'none',
+              textDecoration: "none",
               color: (theme.palette.primary as any).focus,
             }}
           >
@@ -89,8 +97,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
           <Typography
             sx={{
-              fontSize: { xs: '12px', sm: '16px' },
-              marginY: '6px',
+              fontSize: { xs: "12px", sm: "16px" },
+              marginY: "6px",
               ml: 0.6,
               color: theme.palette.primary.main,
             }}

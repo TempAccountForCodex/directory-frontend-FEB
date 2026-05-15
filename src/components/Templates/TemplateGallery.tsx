@@ -1,9 +1,9 @@
-import React from 'react';
-import { Box, Grid, Skeleton } from '@mui/material';
-import { LayoutTemplate } from 'lucide-react';
-import { type TemplateSummary } from '../../templates/templateApi';
-import { EmptyState } from '../Dashboard/shared';
-import TemplateCard from './TemplateCard';
+import React from "react";
+import { Box, Grid, Skeleton } from "@mui/material";
+import { LayoutTemplate } from "lucide-react";
+import { type TemplateSummary } from "../../templates/templateApi";
+import { EmptyState } from "../Dashboard/shared";
+import TemplateCard from "./TemplateCard";
 
 interface TemplateGalleryProps {
   templates: TemplateSummary[];
@@ -31,7 +31,11 @@ const TemplateGallery = React.memo(function TemplateGallery({
       <Grid container spacing={3}>
         {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-            <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+            <Skeleton
+              variant="rectangular"
+              height={280}
+              sx={{ borderRadius: 2 }}
+            />
           </Grid>
         ))}
       </Grid>
@@ -40,7 +44,7 @@ const TemplateGallery = React.memo(function TemplateGallery({
 
   if (templates.length === 0) {
     return (
-      <Box sx={{ width: '100%' }}>
+      <Box sx={{ width: "100%" }}>
         <EmptyState
           icon={<LayoutTemplate size={40} color="currentColor" />}
           title="No templates found"

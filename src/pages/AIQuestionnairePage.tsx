@@ -7,28 +7,32 @@
  * Step 3.17 + 4.16 (AI Intake Restructuring).
  */
 
-import React, { useState, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
-import axios from 'axios';
+import React, { useState, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
+import axios from "axios";
 // @ts-ignore
-import { getDashboardColors } from '../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../context/ThemeContext';
-import AIQuestionnaire from '../components/WebsiteCreation/AIQuestionnaire';
-import QuestionnaireNavigation from '../components/WebsiteCreation/QuestionnaireNavigation';
-import AIGenerationProgress from '../components/WebsiteCreation/AIGenerationProgress';
-import { useAIQuestionnaire, type ValidationErrors } from '../hooks/useAIQuestionnaire';
-import { API_URL } from '@/config/api';
-
+import { getDashboardColors } from "../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../context/ThemeContext";
+import AIQuestionnaire from "../components/WebsiteCreation/AIQuestionnaire";
+import QuestionnaireNavigation from "../components/WebsiteCreation/QuestionnaireNavigation";
+import AIGenerationProgress from "../components/WebsiteCreation/AIGenerationProgress";
+import {
+  useAIQuestionnaire,
+  type ValidationErrors,
+} from "../hooks/useAIQuestionnaire";
+import { API_URL } from "@/config/api";
 
 interface AIQuestionnairePageProps {
   embedded?: boolean;
 }
 
-export default function AIQuestionnairePage({ embedded }: AIQuestionnairePageProps) {
+export default function AIQuestionnairePage({
+  embedded,
+}: AIQuestionnairePageProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const templateId = searchParams.get('template') || '';
+  const templateId = searchParams.get("template") || "";
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
 
@@ -45,7 +49,7 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
 
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
+  const [submitError, setSubmitError] = useState("");
 
   // AI progress state — when set, we show AIGenerationProgress instead of the form
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
@@ -71,35 +75,37 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
       businessHours: data.businessHours,
       serviceArea: data.serviceArea,
     }),
-    [data]
+    [data],
   );
 
   /** Create website with template defaults, then optionally run AI generation */
   const createWebsite = useCallback(
     async (withAI: boolean) => {
       setSubmitting(true);
-      setSubmitError('');
+      setSubmitError("");
       try {
         // Step 1: Create website via the correct from-template endpoint
         const websitePayload = {
-          name: data.websiteName || 'My Website',
+          name: data.websiteName || "My Website",
           templateId: templateId || undefined, // Pass as-is (UUID string), not Number()
         };
 
         const createResponse = await axios.post(
           `${API_URL}/websites/from-template`,
-          websitePayload
+          websitePayload,
         );
 
         if (!createResponse.data.success) {
-          throw new Error(createResponse.data.message || 'Failed to create website');
+          throw new Error(
+            createResponse.data.message || "Failed to create website",
+          );
         }
 
         const website = createResponse.data.data || createResponse.data.website;
         const websiteId = website?.id;
 
         if (!websiteId) {
-          throw new Error('Website created but no ID returned');
+          throw new Error("Website created but no ID returned");
         }
 
         // Copy questionnaire data to website key so the editor can find it later
@@ -110,12 +116,16 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
           const questionnaireData = buildQuestionnairePayload();
 
           try {
-            const aiResponse = await axios.post(`${API_URL}/ai/generate-content`, {
-              websiteId,
-              questionnaireData,
-            });
+            const aiResponse = await axios.post(
+              `${API_URL}/ai/generate-content`,
+              {
+                websiteId,
+                questionnaireData,
+              },
+            );
 
-            const sessionId = aiResponse.data?.data?.sessionId || aiResponse.data?.sessionId;
+            const sessionId =
+              aiResponse.data?.data?.sessionId || aiResponse.data?.sessionId;
 
             if (sessionId) {
               // Show AI progress view instead of navigating away
@@ -132,18 +142,29 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
         reset();
 
         // Navigate to the website list
-        navigate('/dashboard/websites');
+        navigate("/dashboard/websites");
       } catch (err: any) {
         if (err.response?.status === 401) {
-          navigate('/auth');
+          navigate("/auth");
           return;
         }
-        setSubmitError(err.response?.data?.message || err.message || 'Failed to create website');
+        setSubmitError(
+          err.response?.data?.message ||
+            err.message ||
+            "Failed to create website",
+        );
       } finally {
         setSubmitting(false);
       }
     },
-    [data, templateId, navigate, reset, copyToWebsiteKey, buildQuestionnairePayload]
+    [
+      data,
+      templateId,
+      navigate,
+      reset,
+      copyToWebsiteKey,
+      buildQuestionnairePayload,
+    ],
   );
 
   /** Retry AI generation for the already-created website */
@@ -156,16 +177,18 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
           websiteId: createdWebsiteId,
           questionnaireData,
         });
-        return aiResponse.data?.data?.sessionId || aiResponse.data?.sessionId || null;
+        return (
+          aiResponse.data?.data?.sessionId || aiResponse.data?.sessionId || null
+        );
       } catch {
         return null;
       }
     },
-    [createdWebsiteId, buildQuestionnairePayload]
+    [createdWebsiteId, buildQuestionnairePayload],
   );
 
   const handleGenerate = useCallback(async () => {
-    setSubmitError('');
+    setSubmitError("");
     const { valid, errors: validationErrors } = validateRequired();
     setErrors(validationErrors);
     if (!valid) return;
@@ -173,7 +196,7 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
   }, [validateRequired, createWebsite]);
 
   const handleSkip = useCallback(async () => {
-    setSubmitError('');
+    setSubmitError("");
     await createWebsite(false);
   }, [createWebsite]);
 
@@ -183,7 +206,7 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
       <AIGenerationProgress
         sessionId={aiSessionId}
         websiteId={createdWebsiteId}
-        websiteName={data.websiteName || 'Your Website'}
+        websiteName={data.websiteName || "Your Website"}
         questionnaireData={buildQuestionnairePayload()}
         onRetrySession={handleRetrySession}
       />
@@ -194,8 +217,10 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
     }
 
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.bgDefault, py: 4 }}>
-        <Box sx={{ maxWidth: 'xl', mx: 'auto', px: { xs: 2, md: 3 } }}>{progressContent}</Box>
+      <Box sx={{ minHeight: "100vh", bgcolor: colors.bgDefault, py: 4 }}>
+        <Box sx={{ maxWidth: "xl", mx: "auto", px: { xs: 2, md: 3 } }}>
+          {progressContent}
+        </Box>
       </Box>
     );
   }
@@ -203,12 +228,15 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
   const content = (
     <Box sx={{ py: { xs: 2, md: 3 } }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" sx={{ color: colors.text, fontWeight: 700, mb: 0.5 }}>
+        <Typography
+          variant="h5"
+          sx={{ color: colors.text, fontWeight: 700, mb: 0.5 }}
+        >
           Tell Us About Your Business
         </Typography>
         <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-          This information helps our AI generate tailored content for your website. You can skip
-          this step and use template defaults instead.
+          This information helps our AI generate tailored content for your
+          website. You can skip this step and use template defaults instead.
         </Typography>
       </Box>
 
@@ -226,7 +254,7 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
         onGenerate={handleGenerate}
         onSkip={handleSkip}
         errorMessage={submitError}
-        onClearError={() => setSubmitError('')}
+        onClearError={() => setSubmitError("")}
         submitting={submitting}
       />
     </Box>
@@ -237,9 +265,10 @@ export default function AIQuestionnairePage({ embedded }: AIQuestionnairePagePro
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: colors.bgDefault, py: 4 }}>
-      <Box sx={{ maxWidth: 'xl', mx: 'auto', px: { xs: 2, md: 3 } }}>{content}</Box>
+    <Box sx={{ minHeight: "100vh", bgcolor: colors.bgDefault, py: 4 }}>
+      <Box sx={{ maxWidth: "xl", mx: "auto", px: { xs: 2, md: 3 } }}>
+        {content}
+      </Box>
     </Box>
   );
 }
-

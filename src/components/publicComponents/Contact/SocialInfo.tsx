@@ -1,19 +1,19 @@
-import { Box, Typography, Grid, Paper, Container } from '@mui/material';
-import { keyframes } from '@mui/system';
+import { Box, Typography, Grid, Paper, Container } from "@mui/material";
+import { keyframes } from "@mui/system";
 
-const earthImage = '/assets/publicAssets/images/ContactUs/earth.avif';
-const star = '/assets/publicAssets/images/common/star.svg';
-const darkhole = '/assets/publicAssets/images/common/darkhole.svg';
+const earthImage = "/assets/publicAssets/images/ContactUs/earth.avif";
+const star = "/assets/publicAssets/images/common/star.svg";
+const darkhole = "/assets/publicAssets/images/common/darkhole.svg";
 
-const instagramImage = '/assets/publicAssets/images/ContactUs/instagram.webp';
-const github = '/assets/publicAssets/images/ContactUs/github.webp';
-const linkedin = '/assets/publicAssets/images/ContactUs/linkedin.webp';
-const facebook = '/assets/publicAssets/images/ContactUs/facebook.webp';
+const instagramImage = "/assets/publicAssets/images/ContactUs/instagram.webp";
+const github = "/assets/publicAssets/images/ContactUs/github.webp";
+const linkedin = "/assets/publicAssets/images/ContactUs/linkedin.webp";
+const facebook = "/assets/publicAssets/images/ContactUs/facebook.webp";
 
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import CallOutlinedIcon from '@mui/icons-material/CallOutlined';
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import CallOutlinedIcon from "@mui/icons-material/CallOutlined";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 
 const pulse = keyframes`
   0% {
@@ -30,25 +30,25 @@ const pulse = keyframes`
   }
 `;
 
-const StatCard = ({ icon: Icon, value, label, color = '#fff' }: any) => {
-  const isImage = typeof Icon === 'string';
+const StatCard = ({ icon: Icon, value, label, color = "#fff" }: any) => {
+  const isImage = typeof Icon === "string";
 
   return (
     <Paper
       elevation={0}
       sx={{
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '12px',
-        padding: { xs: '18px', md: '24px' },
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: { xs: '180', lg: '240px' },
-        height: { xs: '200', lg: '246px' },
-        color: 'white',
+        background: "rgba(255, 255, 255, 0.03)",
+        backdropFilter: "blur(10px)",
+        border: "1px solid rgba(255, 255, 255, 0.05)",
+        borderRadius: "12px",
+        padding: { xs: "18px", md: "24px" },
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        width: { xs: "180", lg: "240px" },
+        height: { xs: "200", lg: "246px" },
+        color: "white",
       }}
     >
       <Box sx={{ mb: 1.5, opacity: 0.9 }}>
@@ -67,7 +67,7 @@ const StatCard = ({ icon: Icon, value, label, color = '#fff' }: any) => {
       <Typography
         variant="h6"
         fontWeight="700"
-        sx={{ mb: 0.5, fontSize: { xs: '11px', md: '13px', lg: '17px' } }}
+        sx={{ mb: 0.5, fontSize: { xs: "11px", md: "13px", lg: "17px" } }}
       >
         {value}
       </Typography>
@@ -75,8 +75,8 @@ const StatCard = ({ icon: Icon, value, label, color = '#fff' }: any) => {
       <Typography
         variant="body2"
         sx={{
-          color: 'rgba(255,255,255,0.5)',
-          fontSize: { xs: '0.6rem', sm: '0.8rem', md: '1rem' },
+          color: "rgba(255,255,255,0.5)",
+          fontSize: { xs: "0.6rem", sm: "0.8rem", md: "1rem" },
         }}
       >
         {label}
@@ -90,46 +90,46 @@ const ScaleShowcase = () => {
     <Box
       sx={{
         backgroundImage: `url(${star})`,
-        backgroundColor: '#041e18',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        minHeight: { xs: 'auto', sm: '77vh', md: '90vh' },
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        backgroundColor: "#041e18",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        minHeight: { xs: "auto", sm: "77vh", md: "90vh" },
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         pt: 10,
-        overflow: 'hidden',
-        position: 'relative',
+        overflow: "hidden",
+        position: "relative",
       }}
     >
       <Box
         sx={{
-          position: 'absolute',
-          height: 'auto',
+          position: "absolute",
+          height: "auto",
           zIndex: 0,
           backgroundImage: `url("${darkhole}")`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'contain',
-          aspectRatio: '2074 / 1333',
-          top: '12%',
-          left: '-70%',
-          width: '280%',
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "contain",
+          aspectRatio: "2074 / 1333",
+          top: "12%",
+          left: "-70%",
+          width: "280%",
 
-          '@media (min-width: 640px)': {
-            top: '-4%',
-            width: '130%',
-            left: '-15%',
+          "@media (min-width: 640px)": {
+            top: "-4%",
+            width: "130%",
+            left: "-15%",
           },
         }}
       />
       <Typography
         variant="h1"
         sx={{
-          color: 'white',
+          color: "white",
           fontWeight: 600,
           mb: 10,
           zIndex: 1,
-          fontSize: { xs: '2.5rem', sm: '3rem' },
+          fontSize: { xs: "2.5rem", sm: "3rem" },
         }}
       >
         Let's Connect
@@ -138,10 +138,10 @@ const ScaleShowcase = () => {
       {/* Main Container for the angled sections */}
       <Box
         sx={{
-          display: { xs: 'block', sm: 'flex' },
+          display: { xs: "block", sm: "flex" },
           gap: { xs: 2, md: 4 },
-          perspective: '1200px',
-          position: { xs: 'relative', sm: 'absolute' },
+          perspective: "1200px",
+          position: { xs: "relative", sm: "absolute" },
           bottom: 0,
           zIndex: 2,
           px: { xs: 3, md: 0 },
@@ -150,25 +150,25 @@ const ScaleShowcase = () => {
         {/* Left Section (Last 30 Days) */}
         <Box
           sx={{
-            textAlign: 'center',
-            transform: { xs: 'rotate(360deg)', md: 'rotate(345deg)' },
-            position: 'relative',
-            top: '-40px',
-            transition: 'all 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+            textAlign: "center",
+            transform: { xs: "rotate(360deg)", md: "rotate(345deg)" },
+            position: "relative",
+            top: "-40px",
+            transition: "all 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
 
-            '&:hover': {
-              top: '-210px',
-              transform: 'rotate(355deg)',
+            "&:hover": {
+              top: "-210px",
+              transform: "rotate(355deg)",
             },
           }}
         >
           <Typography
             sx={{
-              color: 'white',
+              color: "white",
               mb: 3,
               opacity: 0.9,
               fontWeight: 500,
-              fontSize: '30px',
+              fontSize: "30px",
             }}
           >
             Get in touch
@@ -191,11 +191,19 @@ const ScaleShowcase = () => {
             </Grid>
 
             <Grid item xs={6}>
-              <StatCard value="Call us" label="(251) 373-2325" icon={CallOutlinedIcon} />
+              <StatCard
+                value="Call us"
+                label="(251) 373-2325"
+                icon={CallOutlinedIcon}
+              />
             </Grid>
 
             <Grid item xs={6}>
-              <StatCard value="Visit us" label="Houston, TX Office" icon={LocationOnOutlinedIcon} />
+              <StatCard
+                value="Visit us"
+                label="Houston, TX Office"
+                icon={LocationOnOutlinedIcon}
+              />
             </Grid>
           </Grid>
         </Box>
@@ -203,21 +211,22 @@ const ScaleShowcase = () => {
         {/* Center Divider Dot */}
         <Box
           sx={{
-            width: '2px',
-            height: '350px',
-            background: 'linear-gradient(to bottom, transparent, #00f2fe, transparent)',
-            position: 'relative',
+            width: "2px",
+            height: "350px",
+            background:
+              "linear-gradient(to bottom, transparent, #00f2fe, transparent)",
+            position: "relative",
             mx: 4,
             mt: 10,
-            display: { xs: 'none', sm: 'flex' },
+            display: { xs: "none", sm: "flex" },
           }}
         >
           <Box
             sx={{
-              position: 'absolute',
+              position: "absolute",
               top: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
+              left: "50%",
+              transform: "translateX(-50%)",
               width: 15,
               height: 15,
               zIndex: 3,
@@ -228,10 +237,10 @@ const ScaleShowcase = () => {
               sx={{
                 width: 15,
                 height: 15,
-                borderRadius: '50%',
-                bgcolor: '#00f2fe',
-                boxShadow: '0 0 15px #00f2fe',
-                position: 'relative',
+                borderRadius: "50%",
+                bgcolor: "#00f2fe",
+                boxShadow: "0 0 15px #00f2fe",
+                position: "relative",
                 zIndex: 2,
               }}
             />
@@ -239,14 +248,14 @@ const ScaleShowcase = () => {
             {/* Pulsing ring */}
             <Box
               sx={{
-                position: 'absolute',
-                top: '-2px',
-                left: '-7%',
+                position: "absolute",
+                top: "-2px",
+                left: "-7%",
                 width: 20,
                 height: 20,
-                borderRadius: '50%',
-                bgcolor: '#00f2fe',
-                transform: 'translate(-50%, -50%)',
+                borderRadius: "50%",
+                bgcolor: "#00f2fe",
+                transform: "translate(-50%, -50%)",
                 animation: `${pulse} 4s ease-out infinite`,
                 zIndex: 1,
               }}
@@ -257,45 +266,64 @@ const ScaleShowcase = () => {
         {/* Right Section (Total) */}
         <Box
           sx={{
-            textAlign: 'center',
-            transform: { xs: 'rotate(360deg)', md: 'rotate(15deg)' },
-            paddingTop: { xs: '25px', sm: 0 },
-            position: 'relative',
-            top: '-40px',
+            textAlign: "center",
+            transform: { xs: "rotate(360deg)", md: "rotate(15deg)" },
+            paddingTop: { xs: "25px", sm: 0 },
+            position: "relative",
+            top: "-40px",
 
-            transition: 'all 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+            transition: "all 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
 
-            '&:hover': {
-              top: '-210px',
-              transform: 'rotate(5deg)',
+            "&:hover": {
+              top: "-210px",
+              transform: "rotate(5deg)",
             },
           }}
         >
           <Typography
             sx={{
-              color: 'white',
+              color: "white",
               mb: 3,
               opacity: 0.9,
               fontWeight: 500,
-              fontSize: '30px',
+              fontSize: "30px",
             }}
           >
             Follow us
           </Typography>
           <Grid container spacing={1} sx={{ maxWidth: 500 }}>
             <Grid item xs={6}>
-              <StatCard value="GitHub" label="Open source work" icon={github} color="#ffffff" />
+              <StatCard
+                value="GitHub"
+                label="Open source work"
+                icon={github}
+                color="#ffffff"
+              />
             </Grid>
             <Grid item xs={6}>
-              <StatCard value="Instagram" label="Daily updates" icon={instagramImage} />
+              <StatCard
+                value="Instagram"
+                label="Daily updates"
+                icon={instagramImage}
+              />
             </Grid>
 
             <Grid item xs={6}>
-              <StatCard value="LinkedIn" label="Company profile" icon={linkedin} color="#0A66C2" />
+              <StatCard
+                value="LinkedIn"
+                label="Company profile"
+                icon={linkedin}
+                color="#0A66C2"
+              />
             </Grid>
 
             <Grid item xs={6}>
-              <StatCard value="Facebook" label="Community" icon={facebook} color="#1877F2" />
+              <StatCard
+                value="Facebook"
+                label="Community"
+                icon={facebook}
+                color="#1877F2"
+              />
             </Grid>
           </Grid>
         </Box>
@@ -309,10 +337,10 @@ const ScaleShowcase = () => {
         src={earthImage}
         alt="Earth Glow"
         sx={{
-          position: 'absolute',
-          bottom: { xs: '-13%', md: '-32%' },
-          width: '45%',
-          height: 'auto',
+          position: "absolute",
+          bottom: { xs: "-13%", md: "-32%" },
+          width: "45%",
+          height: "auto",
           zIndex: 2,
         }}
       />

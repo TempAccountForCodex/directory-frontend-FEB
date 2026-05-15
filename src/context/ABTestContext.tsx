@@ -1,6 +1,6 @@
-import React, { type ReactNode } from 'react';
-import { ABTestContext, useABTest } from '../hooks/useABTest';
-import type { ABTest } from '../hooks/useABTest';
+import React, { type ReactNode } from "react";
+import { ABTestContext, useABTest } from "../hooks/useABTest";
+import type { ABTest } from "../hooks/useABTest";
 
 interface ABTestProviderProps {
   children: ReactNode;
@@ -28,10 +28,15 @@ interface ABTestProviderProps {
  * </ABTestProvider>
  * ```
  */
-export const ABTestProvider: React.FC<ABTestProviderProps> = ({ children, tests = [] }) => {
+export const ABTestProvider: React.FC<ABTestProviderProps> = ({
+  children,
+  tests = [],
+}) => {
   const abTest = useABTest(tests);
 
-  return <ABTestContext.Provider value={abTest}>{children}</ABTestContext.Provider>;
+  return (
+    <ABTestContext.Provider value={abTest}>{children}</ABTestContext.Provider>
+  );
 };
 
 export default ABTestProvider;

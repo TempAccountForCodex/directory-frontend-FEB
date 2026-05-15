@@ -16,7 +16,7 @@
  *   - Lazy loading: first 2 images eager, rest lazy
  */
 
-import React, { useRef, useCallback, useState, useEffect, memo } from 'react';
+import React, { useRef, useCallback, useState, useEffect, memo } from "react";
 import {
   Box,
   Container,
@@ -27,12 +27,12 @@ import {
   IconButton,
   Modal,
   Fade,
-} from '@mui/material';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import CloseIcon from '@mui/icons-material/Close';
-import { BlockWrapper } from '../BlockWrapper';
-import AnimatedList from '../utils/AnimatedList';
+} from "@mui/material";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import CloseIcon from "@mui/icons-material/Close";
+import { BlockWrapper } from "../BlockWrapper";
+import AnimatedList from "../utils/AnimatedList";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -51,26 +51,26 @@ interface GalleryBlockProps {
 // ── Gap / Radius / AspectRatio helpers ────────────────────────────────────────
 
 const GAP_MAP: Record<string, number> = { sm: 8, md: 16, lg: 24 };
-const RADIUS_MAP: Record<string, number> = { '0': 0, '4': 4, '8': 8, '16': 16 };
+const RADIUS_MAP: Record<string, number> = { "0": 0, "4": 4, "8": 8, "16": 16 };
 const ASPECT_MAP: Record<string, string> = {
-  auto: 'unset',
-  square: '1 / 1',
-  landscape: '16 / 9',
-  portrait: '3 / 4',
+  auto: "unset",
+  square: "1 / 1",
+  landscape: "16 / 9",
+  portrait: "3 / 4",
 };
 
-const resolveGap = (v?: string): number => GAP_MAP[v ?? ''] ?? 16;
-const resolveRadius = (v?: string): number => RADIUS_MAP[v ?? ''] ?? 0;
-const resolveAspect = (v?: string): string => ASPECT_MAP[v ?? ''] ?? 'unset';
+const resolveGap = (v?: string): number => GAP_MAP[v ?? ""] ?? 16;
+const resolveRadius = (v?: string): number => RADIUS_MAP[v ?? ""] ?? 0;
+const resolveAspect = (v?: string): string => ASPECT_MAP[v ?? ""] ?? "unset";
 
 // ── Security: sanitize image src — allow http/https/relative only ────────────
 
 const sanitizeImageSrc = (src: string): string => {
-  if (!src) return '';
+  if (!src) return "";
   if (/^(https?:)?\/\//i.test(src) || !/^[a-z][a-z0-9+\-.]*:/i.test(src)) {
-    return src.replace(/[()'"\\]/g, '');
+    return src.replace(/[()'"\\]/g, "");
   }
-  return '';
+  return "";
 };
 
 // ── Shared: placeholder when image URL is missing ────────────────────────────
@@ -78,12 +78,12 @@ const sanitizeImageSrc = (src: string): string => {
 const ImagePlaceholder: React.FC = () => (
   <Box
     sx={{
-      width: '100%',
+      width: "100%",
       height: 200,
-      bgcolor: 'grey.200',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      bgcolor: "grey.200",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
     }}
   >
     <Typography variant="body2" color="text.secondary">
@@ -107,7 +107,7 @@ const SectionHeading: React.FC<HeadingProps> = ({ text, color }) => {
       component="h2"
       align="center"
       gutterBottom
-      sx={{ mb: 6, fontWeight: 600, color: color || 'text.primary' }}
+      sx={{ mb: 6, fontWeight: 600, color: color || "text.primary" }}
     >
       {text}
     </Typography>
@@ -135,19 +135,19 @@ const LightboxModal: React.FC<LightboxProps> = memo(
         open={open}
         onClose={onClose}
         aria-label="image lightbox"
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
       >
         <Fade in={open} unmountOnExit>
           <Box
             data-testid="lightbox-modal"
             sx={{
-              position: 'relative',
-              maxWidth: '90vw',
-              maxHeight: '90vh',
-              outline: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              position: "relative",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              outline: "none",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
             {/* Close button */}
@@ -155,12 +155,12 @@ const LightboxModal: React.FC<LightboxProps> = memo(
               aria-label="close lightbox"
               onClick={onClose}
               sx={{
-                position: 'absolute',
+                position: "absolute",
                 top: -48,
                 right: 0,
-                color: 'white',
-                bgcolor: 'rgba(0,0,0,0.5)',
-                '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                color: "white",
+                bgcolor: "rgba(0,0,0,0.5)",
+                "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
               }}
             >
               <CloseIcon />
@@ -172,13 +172,13 @@ const LightboxModal: React.FC<LightboxProps> = memo(
                 aria-label="lightbox previous"
                 onClick={onPrev}
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   left: -56,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'white',
-                  bgcolor: 'rgba(0,0,0,0.5)',
-                  '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "white",
+                  bgcolor: "rgba(0,0,0,0.5)",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
                 }}
               >
                 <ArrowBackIosNewIcon />
@@ -191,17 +191,20 @@ const LightboxModal: React.FC<LightboxProps> = memo(
               src={sanitizeImageSrc(current.image)}
               alt={current.caption || `Gallery image ${currentIndex + 1}`}
               sx={{
-                maxWidth: '90vw',
-                maxHeight: '80vh',
-                objectFit: 'contain',
+                maxWidth: "90vw",
+                maxHeight: "80vh",
+                objectFit: "contain",
                 borderRadius: 1,
-                display: 'block',
+                display: "block",
               }}
             />
 
             {/* Caption */}
             {current.caption && (
-              <Typography variant="body2" sx={{ color: 'white', mt: 1, textAlign: 'center' }}>
+              <Typography
+                variant="body2"
+                sx={{ color: "white", mt: 1, textAlign: "center" }}
+              >
                 {current.caption}
               </Typography>
             )}
@@ -212,13 +215,13 @@ const LightboxModal: React.FC<LightboxProps> = memo(
                 aria-label="lightbox next"
                 onClick={onNext}
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   right: -56,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'white',
-                  bgcolor: 'rgba(0,0,0,0.5)',
-                  '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "white",
+                  bgcolor: "rgba(0,0,0,0.5)",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
                 }}
               >
                 <ArrowForwardIosIcon />
@@ -228,10 +231,10 @@ const LightboxModal: React.FC<LightboxProps> = memo(
         </Fade>
       </Modal>
     );
-  }
+  },
 );
 
-LightboxModal.displayName = 'LightboxModal';
+LightboxModal.displayName = "LightboxModal";
 
 // ── Grid variant ─────────────────────────────────────────────────────────────
 
@@ -243,7 +246,11 @@ interface GridVariantProps {
   imageBorderRadius?: string;
   imageAspectRatio?: string;
   lightbox?: boolean;
-  itemLayout?: Array<{ colSpan?: number; rowSpan?: number; aspectRatio?: string }>;
+  itemLayout?: Array<{
+    colSpan?: number;
+    rowSpan?: number;
+    aspectRatio?: string;
+  }>;
 }
 
 const GridVariant: React.FC<GridVariantProps> = memo(
@@ -272,22 +279,22 @@ const GridVariant: React.FC<GridVariantProps> = memo(
         setLightboxIndex(idx);
         setLightboxOpen(true);
       },
-      [lightbox]
+      [lightbox],
     );
 
     const closeLightbox = useCallback(() => setLightboxOpen(false), []);
     const prevImage = useCallback(
       () => setLightboxIndex((i) => (i - 1 + images.length) % images.length),
-      [images.length]
+      [images.length],
     );
     const nextImage = useCallback(
       () => setLightboxIndex((i) => (i + 1) % images.length),
-      [images.length]
+      [images.length],
     );
 
     if (images.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Box sx={{ textAlign: "center", py: 4 }}>
           <Typography variant="body2" color="text.secondary">
             No images to display
           </Typography>
@@ -304,7 +311,7 @@ const GridVariant: React.FC<GridVariantProps> = memo(
           <Box
             data-testid="css-grid-container"
             sx={{
-              display: 'grid',
+              display: "grid",
               gridTemplateColumns: `repeat(${columns}, 1fr)`,
               gap: `${gap}px`,
             }}
@@ -313,24 +320,26 @@ const GridVariant: React.FC<GridVariantProps> = memo(
               const layout = itemLayout![idx];
               const colSpan = Math.min(Math.max(layout?.colSpan ?? 1, 1), 4);
               const rowSpan = Math.min(Math.max(layout?.rowSpan ?? 1, 1), 2);
-              const imgAspect = img.itemAspectRatio ? img.itemAspectRatio : aspect;
+              const imgAspect = img.itemAspectRatio
+                ? img.itemAspectRatio
+                : aspect;
               return (
                 <Box
                   key={idx}
                   sx={{
-                    gridColumn: { xs: 'span 1', md: `span ${colSpan}` },
+                    gridColumn: { xs: "span 1", md: `span ${colSpan}` },
                     gridRow: `span ${rowSpan}`,
                   }}
                 >
                   <Card
                     elevation={1}
                     sx={{
-                      height: '100%',
-                      overflow: 'hidden',
+                      height: "100%",
+                      overflow: "hidden",
                       borderRadius: `${radius}px`,
-                      cursor: lightbox ? 'pointer' : 'default',
-                      transition: 'transform 0.2s ease',
-                      '&:hover': { transform: 'scale(1.02)' },
+                      cursor: lightbox ? "pointer" : "default",
+                      transition: "transform 0.2s ease",
+                      "&:hover": { transform: "scale(1.02)" },
                     }}
                     onClick={() => openLightbox(idx)}
                   >
@@ -339,13 +348,14 @@ const GridVariant: React.FC<GridVariantProps> = memo(
                         component="img"
                         src={sanitizeImageSrc(img.image)}
                         alt={img.caption || `Gallery image ${idx + 1}`}
-                        loading={idx < 2 ? 'eager' : 'lazy'}
+                        loading={idx < 2 ? "eager" : "lazy"}
                         sx={{
-                          width: '100%',
-                          height: imgAspect === 'unset' ? 200 : 'auto',
-                          aspectRatio: imgAspect !== 'unset' ? imgAspect : undefined,
-                          objectFit: 'cover',
-                          display: 'block',
+                          width: "100%",
+                          height: imgAspect === "unset" ? 200 : "auto",
+                          aspectRatio:
+                            imgAspect !== "unset" ? imgAspect : undefined,
+                          objectFit: "cover",
+                          display: "block",
                         }}
                       />
                     ) : (
@@ -382,17 +392,17 @@ const GridVariant: React.FC<GridVariantProps> = memo(
     return (
       <>
         <Grid container spacing={spacingUnits}>
-          <AnimatedList staggerMs={80} wrapperStyle={{ display: 'contents' }}>
+          <AnimatedList staggerMs={80} wrapperStyle={{ display: "contents" }}>
             {images.map((img, idx) => (
               <Grid item xs={12} sm={6} md={mdCols as any} key={idx}>
                 <Card
                   elevation={1}
                   sx={{
-                    overflow: 'hidden',
+                    overflow: "hidden",
                     borderRadius: `${radius}px`,
-                    cursor: lightbox ? 'pointer' : 'default',
-                    transition: 'transform 0.2s ease',
-                    '&:hover': { transform: 'scale(1.02)' },
+                    cursor: lightbox ? "pointer" : "default",
+                    transition: "transform 0.2s ease",
+                    "&:hover": { transform: "scale(1.02)" },
                   }}
                   onClick={() => openLightbox(idx)}
                 >
@@ -401,13 +411,13 @@ const GridVariant: React.FC<GridVariantProps> = memo(
                       component="img"
                       src={sanitizeImageSrc(img.image)}
                       alt={img.caption || `Gallery image ${idx + 1}`}
-                      loading={idx < 2 ? 'eager' : 'lazy'}
+                      loading={idx < 2 ? "eager" : "lazy"}
                       sx={{
-                        width: '100%',
-                        height: aspect === 'unset' ? 200 : 'auto',
-                        aspectRatio: aspect !== 'unset' ? aspect : undefined,
-                        objectFit: 'cover',
-                        display: 'block',
+                        width: "100%",
+                        height: aspect === "unset" ? 200 : "auto",
+                        aspectRatio: aspect !== "unset" ? aspect : undefined,
+                        objectFit: "cover",
+                        display: "block",
                       }}
                     />
                   ) : (
@@ -438,10 +448,10 @@ const GridVariant: React.FC<GridVariantProps> = memo(
         )}
       </>
     );
-  }
+  },
 );
 
-GridVariant.displayName = 'GridVariant';
+GridVariant.displayName = "GridVariant";
 
 // ── Masonry variant ───────────────────────────────────────────────────────────
 
@@ -468,22 +478,22 @@ const MasonryVariant: React.FC<MasonryVariantProps> = memo(
         setLightboxIndex(idx);
         setLightboxOpen(true);
       },
-      [lightbox]
+      [lightbox],
     );
 
     const closeLightbox = useCallback(() => setLightboxOpen(false), []);
     const prevImage = useCallback(
       () => setLightboxIndex((i) => (i - 1 + images.length) % images.length),
-      [images.length]
+      [images.length],
     );
     const nextImage = useCallback(
       () => setLightboxIndex((i) => (i + 1) % images.length),
-      [images.length]
+      [images.length],
     );
 
     if (images.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Box sx={{ textAlign: "center", py: 4 }}>
           <Typography variant="body2" color="text.secondary">
             No images to display
           </Typography>
@@ -505,19 +515,19 @@ const MasonryVariant: React.FC<MasonryVariantProps> = memo(
               <Box
                 key={idx}
                 sx={{
-                  breakInside: 'avoid',
+                  breakInside: "avoid",
                   marginBottom: `${gap}px`,
-                  cursor: lightbox ? 'pointer' : 'default',
+                  cursor: lightbox ? "pointer" : "default",
                 }}
                 onClick={() => openLightbox(idx)}
               >
                 <Card
                   elevation={1}
                   sx={{
-                    overflow: 'hidden',
+                    overflow: "hidden",
                     borderRadius: `${radius}px`,
-                    transition: 'transform 0.2s ease',
-                    '&:hover': { transform: 'scale(1.02)' },
+                    transition: "transform 0.2s ease",
+                    "&:hover": { transform: "scale(1.02)" },
                   }}
                 >
                   {sanitizeImageSrc(img.image) ? (
@@ -525,8 +535,8 @@ const MasonryVariant: React.FC<MasonryVariantProps> = memo(
                       component="img"
                       src={sanitizeImageSrc(img.image)}
                       alt={img.caption || `Gallery image ${idx + 1}`}
-                      loading={idx < 2 ? 'eager' : 'lazy'}
-                      sx={{ width: '100%', height: 'auto', display: 'block' }}
+                      loading={idx < 2 ? "eager" : "lazy"}
+                      sx={{ width: "100%", height: "auto", display: "block" }}
                     />
                   ) : (
                     <ImagePlaceholder />
@@ -556,10 +566,10 @@ const MasonryVariant: React.FC<MasonryVariantProps> = memo(
         )}
       </>
     );
-  }
+  },
 );
 
-MasonryVariant.displayName = 'MasonryVariant';
+MasonryVariant.displayName = "MasonryVariant";
 
 // ── Carousel variant ──────────────────────────────────────────────────────────
 
@@ -573,18 +583,23 @@ interface CarouselVariantProps {
 }
 
 const CarouselVariant: React.FC<CarouselVariantProps> = memo(
-  ({ images, imageBorderRadius, autoRotate = false, autoRotateInterval = 5000 }) => {
+  ({
+    images,
+    imageBorderRadius,
+    autoRotate = false,
+    autoRotateInterval = 5000,
+  }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const isPaused = useRef(false);
     const radius = resolveRadius(imageBorderRadius);
     const interval = Math.min(15000, Math.max(2000, autoRotateInterval));
 
     const scrollLeft = useCallback(() => {
-      scrollRef.current?.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' });
+      scrollRef.current?.scrollBy({ left: -SCROLL_STEP, behavior: "smooth" });
     }, []);
 
     const scrollRight = useCallback(() => {
-      scrollRef.current?.scrollBy({ left: SCROLL_STEP, behavior: 'smooth' });
+      scrollRef.current?.scrollBy({ left: SCROLL_STEP, behavior: "smooth" });
     }, []);
 
     // Auto-rotate: scroll right, wrap to start at end
@@ -596,9 +611,9 @@ const CarouselVariant: React.FC<CarouselVariantProps> = memo(
         if (!el) return;
         const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
         if (atEnd) {
-          el.scrollTo({ left: 0, behavior: 'smooth' });
+          el.scrollTo({ left: 0, behavior: "smooth" });
         } else {
-          el.scrollBy({ left: SCROLL_STEP, behavior: 'smooth' });
+          el.scrollBy({ left: SCROLL_STEP, behavior: "smooth" });
         }
       }, interval);
       return () => clearInterval(timer);
@@ -613,7 +628,7 @@ const CarouselVariant: React.FC<CarouselVariantProps> = memo(
 
     if (images.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Box sx={{ textAlign: "center", py: 4 }}>
           <Typography variant="body2" color="text.secondary">
             No images to display
           </Typography>
@@ -622,20 +637,24 @@ const CarouselVariant: React.FC<CarouselVariantProps> = memo(
     }
 
     return (
-      <Box position="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <Box
+        position="relative"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         {/* Left arrow */}
         <IconButton
           aria-label="scroll gallery left"
           onClick={scrollLeft}
           sx={{
-            position: 'absolute',
+            position: "absolute",
             left: -20,
-            top: '50%',
-            transform: 'translateY(-50%)',
+            top: "50%",
+            transform: "translateY(-50%)",
             zIndex: 2,
-            bgcolor: 'background.paper',
+            bgcolor: "background.paper",
             boxShadow: 2,
-            '&:hover': { bgcolor: 'grey.100' },
+            "&:hover": { bgcolor: "grey.100" },
           }}
         >
           <ArrowBackIosNewIcon fontSize="small" />
@@ -646,15 +665,15 @@ const CarouselVariant: React.FC<CarouselVariantProps> = memo(
           ref={scrollRef}
           data-testid="carousel-scroll-container"
           sx={{
-            display: 'flex',
-            overflowX: 'auto',
-            scrollSnapType: 'x mandatory',
-            scrollBehavior: 'smooth',
+            display: "flex",
+            overflowX: "auto",
+            scrollSnapType: "x mandatory",
+            scrollBehavior: "smooth",
             gap: 2,
             pb: 1,
-            '&::-webkit-scrollbar': { display: 'none' },
-            msOverflowStyle: 'none',
-            scrollbarWidth: 'none',
+            "&::-webkit-scrollbar": { display: "none" },
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
           }}
         >
           {images.map((img, idx) => (
@@ -662,17 +681,17 @@ const CarouselVariant: React.FC<CarouselVariantProps> = memo(
               key={idx}
               sx={{
                 flexShrink: 0,
-                width: { xs: '85%', sm: '45%', md: '30%' },
-                scrollSnapAlign: 'start',
+                width: { xs: "85%", sm: "45%", md: "30%" },
+                scrollSnapAlign: "start",
               }}
             >
               <Card
                 elevation={1}
                 sx={{
-                  overflow: 'hidden',
+                  overflow: "hidden",
                   borderRadius: `${radius}px`,
-                  transition: 'transform 0.2s ease',
-                  '&:hover': { transform: 'scale(1.02)' },
+                  transition: "transform 0.2s ease",
+                  "&:hover": { transform: "scale(1.02)" },
                 }}
               >
                 {img.image ? (
@@ -680,8 +699,8 @@ const CarouselVariant: React.FC<CarouselVariantProps> = memo(
                     component="img"
                     src={img.image}
                     alt={img.caption || `Gallery image ${idx + 1}`}
-                    loading={idx < 2 ? 'eager' : 'lazy'}
-                    sx={{ width: '100%', height: 200, objectFit: 'cover' }}
+                    loading={idx < 2 ? "eager" : "lazy"}
+                    sx={{ width: "100%", height: 200, objectFit: "cover" }}
                   />
                 ) : (
                   <ImagePlaceholder />
@@ -703,35 +722,35 @@ const CarouselVariant: React.FC<CarouselVariantProps> = memo(
           aria-label="scroll gallery right"
           onClick={scrollRight}
           sx={{
-            position: 'absolute',
+            position: "absolute",
             right: -20,
-            top: '50%',
-            transform: 'translateY(-50%)',
+            top: "50%",
+            transform: "translateY(-50%)",
             zIndex: 2,
-            bgcolor: 'background.paper',
+            bgcolor: "background.paper",
             boxShadow: 2,
-            '&:hover': { bgcolor: 'grey.100' },
+            "&:hover": { bgcolor: "grey.100" },
           }}
         >
           <ArrowForwardIosIcon fontSize="small" />
         </IconButton>
       </Box>
     );
-  }
+  },
 );
 
-CarouselVariant.displayName = 'CarouselVariant';
+CarouselVariant.displayName = "CarouselVariant";
 
 // ── Main component ────────────────────────────────────────────────────────────
 
 const GalleryBlock: React.FC<GalleryBlockProps> = memo(
-  ({ content, variant = 'grid', headingColor }) => {
+  ({ content, variant = "grid", headingColor }) => {
     const images: GalleryImage[] = content?.images ?? [];
     const columns = Math.max(1, Number(content?.columns) || 3);
 
     const renderVariant = () => {
       switch (variant) {
-        case 'masonry':
+        case "masonry":
           return (
             <MasonryVariant
               images={images}
@@ -741,7 +760,7 @@ const GalleryBlock: React.FC<GalleryBlockProps> = memo(
               lightbox={content?.lightbox}
             />
           );
-        case 'carousel':
+        case "carousel":
           return (
             <CarouselVariant
               images={images}
@@ -768,7 +787,7 @@ const GalleryBlock: React.FC<GalleryBlockProps> = memo(
 
     return (
       <BlockWrapper fields={content ?? {}}>
-        <Box sx={{ bgcolor: 'background.default' }}>
+        <Box sx={{ bgcolor: "background.default" }}>
           <Container maxWidth="lg">
             <SectionHeading text={content?.heading} color={headingColor} />
             {renderVariant()}
@@ -776,9 +795,9 @@ const GalleryBlock: React.FC<GalleryBlockProps> = memo(
         </Box>
       </BlockWrapper>
     );
-  }
+  },
 );
 
-GalleryBlock.displayName = 'GalleryBlock';
+GalleryBlock.displayName = "GalleryBlock";
 
 export default GalleryBlock;

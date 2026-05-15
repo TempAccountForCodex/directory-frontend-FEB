@@ -5,17 +5,24 @@
  * shows top 5 results. Click navigates to article.
  */
 
-import React, { memo, useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
-import CircularProgress from '@mui/material/CircularProgress';
-import InputAdornment from '@mui/material/InputAdornment';
-import TextField from '@mui/material/TextField';
-import Chip from '@mui/material/Chip';
-import { Search as SearchIcon, FileText as ArticleIcon } from 'lucide-react';
-import { apiClient } from '../../api/client';
-import { useNavigate } from 'react-router-dom';
+import React, {
+  memo,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+import CircularProgress from "@mui/material/CircularProgress";
+import InputAdornment from "@mui/material/InputAdornment";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import { Search as SearchIcon, FileText as ArticleIcon } from "lucide-react";
+import { apiClient } from "../../api/client";
+import { useNavigate } from "react-router-dom";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -47,10 +54,10 @@ const MAX_RESULTS = 5;
 // ---------------------------------------------------------------------------
 
 const DocSearch = memo<DocSearchProps>(
-  ({ placeholder = 'Search documentation...', fullWidth = true }) => {
+  ({ placeholder = "Search documentation...", fullWidth = true }) => {
     const navigate = useNavigate();
 
-    const [query, setQuery] = useState('');
+    const [query, setQuery] = useState("");
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
@@ -76,8 +83,11 @@ const DocSearch = memo<DocSearchProps>(
         setLoading(true);
         setNoResults(false);
         try {
-          const resp = await apiClient.get(`/docs/search`, { params: { q: query } });
-          const articles: SearchResult[] = resp.data?.articles ?? resp.data ?? [];
+          const resp = await apiClient.get(`/docs/search`, {
+            params: { q: query },
+          });
+          const articles: SearchResult[] =
+            resp.data?.articles ?? resp.data ?? [];
           const limited = articles.slice(0, MAX_RESULTS);
           setResults(limited);
           setOpen(true);
@@ -99,32 +109,39 @@ const DocSearch = memo<DocSearchProps>(
     // Close dropdown on outside click
     useEffect(() => {
       const handleClickOutside = (e: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        if (
+          containerRef.current &&
+          !containerRef.current.contains(e.target as Node)
+        ) {
           setOpen(false);
         }
       };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     // ---------------------------------------------------------------------------
     // Handlers
     // ---------------------------------------------------------------------------
-    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      setQuery(e.target.value);
-    }, []);
+    const handleChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setQuery(e.target.value);
+      },
+      [],
+    );
 
     const handleResultClick = useCallback(
       (result: SearchResult) => {
         navigate(`/docs/${result.slug}`);
         setOpen(false);
-        setQuery('');
+        setQuery("");
       },
-      [navigate]
+      [navigate],
     );
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setOpen(false);
       }
     }, []);
@@ -133,7 +150,10 @@ const DocSearch = memo<DocSearchProps>(
     // Render
     // ---------------------------------------------------------------------------
     return (
-      <Box ref={containerRef} sx={{ position: 'relative', width: fullWidth ? '100%' : 'auto' }}>
+      <Box
+        ref={containerRef}
+        sx={{ position: "relative", width: fullWidth ? "100%" : "auto" }}
+      >
         <TextField
           value={query}
           onChange={handleChange}
@@ -144,13 +164,17 @@ const DocSearch = memo<DocSearchProps>(
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                {loading ? <CircularProgress size={16} /> : <SearchIcon size={18} />}
+                {loading ? (
+                  <CircularProgress size={16} />
+                ) : (
+                  <SearchIcon size={18} />
+                )}
               </InputAdornment>
             ),
           }}
           sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '10px',
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "10px",
             },
           }}
         />
@@ -159,21 +183,21 @@ const DocSearch = memo<DocSearchProps>(
           <Paper
             elevation={4}
             sx={{
-              position: 'absolute',
-              top: '100%',
+              position: "absolute",
+              top: "100%",
               left: 0,
               right: 0,
               mt: 0.5,
               zIndex: 1400,
-              borderRadius: '10px',
-              overflow: 'hidden',
+              borderRadius: "10px",
+              overflow: "hidden",
               maxHeight: 320,
-              overflowY: 'auto',
+              overflowY: "auto",
             }}
           >
             {noResults && (
-              <Box sx={{ p: 2, textAlign: 'center' }}>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              <Box sx={{ p: 2, textAlign: "center" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   No articles match your search.
                 </Typography>
               </Box>
@@ -184,16 +208,16 @@ const DocSearch = memo<DocSearchProps>(
                 key={result.id}
                 onClick={() => handleResultClick(result)}
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                   gap: 1.5,
                   px: 2,
                   py: 1.5,
-                  cursor: 'pointer',
-                  '&:hover': { bgcolor: 'action.hover' },
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  '&:last-of-type': { borderBottom: 'none' },
+                  cursor: "pointer",
+                  "&:hover": { bgcolor: "action.hover" },
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
+                  "&:last-of-type": { borderBottom: "none" },
                 }}
               >
                 <ArticleIcon size={16} />
@@ -202,10 +226,10 @@ const DocSearch = memo<DocSearchProps>(
                     variant="body2"
                     sx={{
                       fontWeight: 600,
-                      color: 'text.primary',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      color: "text.primary",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {result.title}
@@ -214,11 +238,11 @@ const DocSearch = memo<DocSearchProps>(
                     <Typography
                       variant="caption"
                       sx={{
-                        color: 'text.secondary',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        display: 'block',
+                        color: "text.secondary",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        display: "block",
                       }}
                     >
                       {result.excerpt}
@@ -228,7 +252,7 @@ const DocSearch = memo<DocSearchProps>(
                 <Chip
                   label={result.category}
                   size="small"
-                  sx={{ fontSize: '0.65rem', height: 20 }}
+                  sx={{ fontSize: "0.65rem", height: 20 }}
                 />
               </Box>
             ))}
@@ -236,9 +260,9 @@ const DocSearch = memo<DocSearchProps>(
         )}
       </Box>
     );
-  }
+  },
 );
 
-DocSearch.displayName = 'DocSearch';
+DocSearch.displayName = "DocSearch";
 
 export default DocSearch;

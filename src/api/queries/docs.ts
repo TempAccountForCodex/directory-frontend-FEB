@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
 
 /**
  * Public docs React Query hooks.
@@ -98,9 +98,9 @@ const DOCS_GC_MS = 30 * 60_000;
  */
 export function useDocsSections() {
   return useQuery<DocsSectionsResponse | DocSection[]>({
-    queryKey: [...queryKeys.docs.all(), 'sections'] as const,
+    queryKey: [...queryKeys.docs.all(), "sections"] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/docs/sections', { signal });
+      const response = await apiClient.get("/docs/sections", { signal });
       return response.data;
     },
     staleTime: DOCS_STALE_MS,
@@ -121,9 +121,13 @@ export function useDocsList(params?: DocsListParams) {
   const limit = params?.limit ?? 10;
 
   return useQuery<DocsListResponse>({
-    queryKey: [...queryKeys.docs.all(), 'list', { category, page, limit }] as const,
+    queryKey: [
+      ...queryKeys.docs.all(),
+      "list",
+      { category, page, limit },
+    ] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/docs', {
+      const response = await apiClient.get("/docs", {
         params: { category, page, limit },
         signal,
       });
@@ -149,9 +153,9 @@ export function useDocsSearch(query: string, minLength = 2) {
   const enabled = trimmed.length >= minLength;
 
   return useQuery<DocsSearchResponse | DocSearchResult[]>({
-    queryKey: [...queryKeys.docs.all(), 'search', trimmed] as const,
+    queryKey: [...queryKeys.docs.all(), "search", trimmed] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/docs/search', {
+      const response = await apiClient.get("/docs/search", {
         params: { q: trimmed },
         signal,
       });
@@ -172,7 +176,7 @@ export function useDocsSearch(query: string, minLength = 2) {
  */
 export function useDocsArticle(slug: string | null | undefined) {
   return useQuery<DocsArticleResponse | DocArticle>({
-    queryKey: [...queryKeys.docs.all(), 'article', slug ?? ''] as const,
+    queryKey: [...queryKeys.docs.all(), "article", slug ?? ""] as const,
     queryFn: async ({ signal }) => {
       const response = await apiClient.get(`/docs/${slug}`, { signal });
       return response.data;

@@ -7,10 +7,10 @@
  * Cleans up interval on unmount.
  */
 
-import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
-import { Box, Container, Typography, Button } from '@mui/material';
-import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
+import { Box, Container, Typography, Button } from "@mui/material";
+import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ interface CountdownContent {
   showHours?: boolean;
   showMinutes?: boolean;
   showSeconds?: boolean;
-  style?: 'simple' | 'flip' | 'circular';
+  style?: "simple" | "flip" | "circular";
   ctaText?: string;
   ctaLink?: string;
   // Standard styling fields
@@ -86,7 +86,14 @@ function calculateTimeRemaining(targetDate: string): TimeRemaining {
   const diff = target - now;
 
   if (diff <= 0) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true, totalSeconds: 0 };
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      isExpired: true,
+      totalSeconds: 0,
+    };
   }
 
   const totalSeconds = Math.floor(diff / 1000);
@@ -122,42 +129,50 @@ interface SimpleUnitBoxProps {
   primaryColor: string;
 }
 
-const SimpleUnitBox: React.FC<SimpleUnitBoxProps> = ({ value, label, primaryColor }) => (
+const SimpleUnitBox: React.FC<SimpleUnitBoxProps> = ({
+  value,
+  label,
+  primaryColor,
+}) => (
   <Box
     sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
       gap: 1,
     }}
   >
     <Box
       sx={{
         bgcolor: primaryColor,
-        color: 'white',
+        color: "white",
         borderRadius: 2,
         px: { xs: 2, md: 3 },
         py: { xs: 1.5, md: 2 },
         minWidth: { xs: 56, md: 80 },
-        textAlign: 'center',
+        textAlign: "center",
         boxShadow: 3,
       }}
     >
       <Typography
         variant="h3"
         component="span"
-        sx={{ fontWeight: 800, fontSize: { xs: '1.8rem', md: '2.5rem' }, lineHeight: 1 }}
+        sx={{
+          fontWeight: 800,
+          fontSize: { xs: "1.8rem", md: "2.5rem" },
+          lineHeight: 1,
+        }}
       >
-        {String(value).padStart(2, '0')}
+        {String(value).padStart(2, "0")}
       </Typography>
     </Box>
     <Typography
       variant="caption"
       sx={{
         fontWeight: 600,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
         letterSpacing: 1,
-        color: 'text.secondary',
+        color: "text.secondary",
       }}
     >
       {label}
@@ -174,10 +189,17 @@ interface FlipUnitProps {
 }
 
 const FlipUnit: React.FC<FlipUnitProps> = ({ value, label, primaryColor }) => (
-  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+  <Box
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 1,
+    }}
+  >
     <Box
       sx={{
-        position: 'relative',
+        position: "relative",
         perspective: 300,
         width: { xs: 56, md: 80 },
         height: { xs: 56, md: 80 },
@@ -185,37 +207,41 @@ const FlipUnit: React.FC<FlipUnitProps> = ({ value, label, primaryColor }) => (
     >
       <Box
         sx={{
-          width: '100%',
-          height: '100%',
+          width: "100%",
+          height: "100%",
           bgcolor: primaryColor,
-          color: 'white',
+          color: "white",
           borderRadius: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           boxShadow: `0 4px 12px ${primaryColor}55`,
           // Simulated flip card — full CSS 3D flip animation
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.3s cubic-bezier(0.455, 0.03, 0.515, 0.955)',
+          transformStyle: "preserve-3d",
+          transition: "transform 0.3s cubic-bezier(0.455, 0.03, 0.515, 0.955)",
         }}
       >
         <Typography
           variant="h4"
           component="span"
-          sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', md: '2rem' }, lineHeight: 1 }}
+          sx={{
+            fontWeight: 800,
+            fontSize: { xs: "1.5rem", md: "2rem" },
+            lineHeight: 1,
+          }}
         >
-          {String(value).padStart(2, '0')}
+          {String(value).padStart(2, "0")}
         </Typography>
       </Box>
       {/* Top half fold line */}
       <Box
         sx={{
-          position: 'absolute',
-          top: '50%',
+          position: "absolute",
+          top: "50%",
           left: 0,
           right: 0,
-          height: '1px',
-          bgcolor: 'rgba(0,0,0,0.25)',
+          height: "1px",
+          bgcolor: "rgba(0,0,0,0.25)",
           zIndex: 1,
         }}
       />
@@ -224,9 +250,9 @@ const FlipUnit: React.FC<FlipUnitProps> = ({ value, label, primaryColor }) => (
       variant="caption"
       sx={{
         fontWeight: 600,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
         letterSpacing: 1,
-        color: 'text.secondary',
+        color: "text.secondary",
       }}
     >
       {label}
@@ -243,7 +269,12 @@ interface CircularUnitProps {
   primaryColor: string;
 }
 
-const CircularUnit: React.FC<CircularUnitProps> = ({ value, maxValue, label, primaryColor }) => {
+const CircularUnit: React.FC<CircularUnitProps> = ({
+  value,
+  maxValue,
+  label,
+  primaryColor,
+}) => {
   const size = 80;
   const strokeWidth = 6;
   const radius = (size - strokeWidth) / 2;
@@ -252,13 +283,20 @@ const CircularUnit: React.FC<CircularUnitProps> = ({ value, maxValue, label, pri
   const dashOffset = circumference * (1 - progress);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-      <Box sx={{ position: 'relative', width: size, height: size }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 1,
+      }}
+    >
+      <Box sx={{ position: "relative", width: size, height: size }}>
         <svg
           width={size}
           height={size}
           viewBox={`0 0 ${size} ${size}`}
-          style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}
+          style={{ transform: "rotate(-90deg)", overflow: "visible" }}
         >
           {/* Background ring */}
           <circle
@@ -280,25 +318,25 @@ const CircularUnit: React.FC<CircularUnitProps> = ({ value, maxValue, label, pri
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
             strokeLinecap="round"
-            style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+            style={{ transition: "stroke-dashoffset 0.5s ease" }}
           />
         </svg>
         {/* Center value */}
         <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <Typography
             variant="h6"
             component="span"
-            sx={{ fontWeight: 800, color: primaryColor, fontSize: '1.1rem' }}
+            sx={{ fontWeight: 800, color: primaryColor, fontSize: "1.1rem" }}
           >
-            {String(value).padStart(2, '0')}
+            {String(value).padStart(2, "0")}
           </Typography>
         </Box>
       </Box>
@@ -306,9 +344,9 @@ const CircularUnit: React.FC<CircularUnitProps> = ({ value, maxValue, label, pri
         variant="caption"
         sx={{
           fontWeight: 600,
-          textTransform: 'uppercase',
+          textTransform: "uppercase",
           letterSpacing: 1,
-          color: 'text.secondary',
+          color: "text.secondary",
         }}
       >
         {label}
@@ -321,9 +359,9 @@ const CircularUnit: React.FC<CircularUnitProps> = ({ value, maxValue, label, pri
 
 const CountdownBlock: React.FC<CountdownBlockProps> = ({
   block,
-  primaryColor = '#2563eb',
-  headingColor = '#1e293b',
-  bodyColor = '#475569',
+  primaryColor = "#2563eb",
+  headingColor = "#1e293b",
+  bodyColor = "#475569",
   onCtaClick,
 }) => {
   const content = block.content || {};
@@ -331,16 +369,16 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
     heading,
     description,
     targetDate = getDefaultTargetDate(),
-    expiredMessage = 'Time is up!',
+    expiredMessage = "Time is up!",
     showDays = true,
     showHours = true,
     showMinutes = true,
     showSeconds = true,
-    style = 'simple',
+    style = "simple",
     ctaText,
-    ctaLink = '#',
-    spacingPaddingTop = 'md',
-    spacingPaddingBottom = 'md',
+    ctaLink = "#",
+    spacingPaddingTop = "md",
+    spacingPaddingBottom = "md",
     responsiveHideOnMobile = false,
     responsiveHideOnTablet = false,
     responsiveHideOnDesktop = false,
@@ -349,7 +387,7 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
 
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining>(() =>
-    calculateTimeRemaining(targetDate)
+    calculateTimeRemaining(targetDate),
   );
 
   const pt = SPACING_MAP[spacingPaddingTop] ?? 6;
@@ -384,13 +422,13 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
   }, [onCtaClick, ctaText, block.blockType]);
 
   // SSR fallback
-  const isSSR = typeof window === 'undefined';
+  const isSSR = typeof window === "undefined";
   const formattedDate = useMemo(() => {
     try {
-      return new Date(targetDate).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+      return new Date(targetDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     } catch {
       return targetDate;
@@ -400,24 +438,36 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
   // Unit definitions
   const units = useMemo(
     () => [
-      { key: 'days', show: showDays, value: timeRemaining.days, label: 'Days', maxValue: 365 },
-      { key: 'hours', show: showHours, value: timeRemaining.hours, label: 'Hours', maxValue: 24 },
       {
-        key: 'minutes',
+        key: "days",
+        show: showDays,
+        value: timeRemaining.days,
+        label: "Days",
+        maxValue: 365,
+      },
+      {
+        key: "hours",
+        show: showHours,
+        value: timeRemaining.hours,
+        label: "Hours",
+        maxValue: 24,
+      },
+      {
+        key: "minutes",
         show: showMinutes,
         value: timeRemaining.minutes,
-        label: 'Minutes',
+        label: "Minutes",
         maxValue: 60,
       },
       {
-        key: 'seconds',
+        key: "seconds",
         show: showSeconds,
         value: timeRemaining.seconds,
-        label: 'Seconds',
+        label: "Seconds",
         maxValue: 60,
       },
     ],
-    [showDays, showHours, showMinutes, showSeconds, timeRemaining]
+    [showDays, showHours, showMinutes, showSeconds, timeRemaining],
   );
 
   const visibleUnits = units.filter((u) => u.show);
@@ -433,11 +483,11 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
         py: { xs: pt / 2 + 2, md: pt },
         pb: { xs: pb / 2 + 2, md: pb },
         display: {
-          xs: responsiveHideOnMobile ? 'none' : 'block',
-          sm: responsiveHideOnTablet ? 'none' : 'block',
-          lg: responsiveHideOnDesktop ? 'none' : 'block',
+          xs: responsiveHideOnMobile ? "none" : "block",
+          sm: responsiveHideOnTablet ? "none" : "block",
+          lg: responsiveHideOnDesktop ? "none" : "block",
         },
-        textAlign: 'center',
+        textAlign: "center",
       }}
     >
       <Container maxWidth="md">
@@ -453,7 +503,10 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
         )}
 
         {description && (
-          <Typography variant="h6" sx={{ color: bodyColor, mb: 4, fontWeight: 400 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: bodyColor, mb: 4, fontWeight: 400 }}
+          >
             {description}
           </Typography>
         )}
@@ -466,7 +519,10 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
         ) : timeRemaining.isExpired ? (
           /* Expired state */
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: primaryColor, mb: 3 }}>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: 700, color: primaryColor, mb: 3 }}
+            >
               {expiredMessage}
             </Typography>
             {ctaText && (
@@ -475,13 +531,13 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
                 size="large"
                 onClick={() => {
                   handleCtaClick();
-                  if (ctaLink && ctaLink !== '#') {
+                  if (ctaLink && ctaLink !== "#") {
                     window.location.href = ctaLink;
                   }
                 }}
                 sx={{
                   bgcolor: primaryColor,
-                  '&:hover': { bgcolor: primaryColor, opacity: 0.9 },
+                  "&:hover": { bgcolor: primaryColor, opacity: 0.9 },
                   px: 4,
                   py: 1.5,
                 }}
@@ -495,15 +551,15 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
           <Box>
             <Box
               sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'flex-start',
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "flex-start",
                 gap: { xs: 2, md: 4 },
-                flexWrap: 'wrap',
+                flexWrap: "wrap",
                 mb: 4,
               }}
             >
-              {style === 'simple' &&
+              {style === "simple" &&
                 visibleUnits.map((unit) => (
                   <SimpleUnitBox
                     key={unit.key}
@@ -513,7 +569,7 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
                   />
                 ))}
 
-              {style === 'flip' &&
+              {style === "flip" &&
                 visibleUnits.map((unit) => (
                   <FlipUnit
                     key={unit.key}
@@ -523,7 +579,7 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
                   />
                 ))}
 
-              {style === 'circular' &&
+              {style === "circular" &&
                 visibleUnits.map((unit) => (
                   <CircularUnit
                     key={unit.key}
@@ -541,13 +597,13 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
                 size="large"
                 onClick={() => {
                   handleCtaClick();
-                  if (ctaLink && ctaLink !== '#') {
+                  if (ctaLink && ctaLink !== "#") {
                     window.location.href = ctaLink;
                   }
                 }}
                 sx={{
                   bgcolor: primaryColor,
-                  '&:hover': { bgcolor: primaryColor, opacity: 0.9 },
+                  "&:hover": { bgcolor: primaryColor, opacity: 0.9 },
                   px: 4,
                   py: 1.5,
                 }}
@@ -562,6 +618,6 @@ const CountdownBlock: React.FC<CountdownBlockProps> = ({
   );
 };
 
-CountdownBlock.displayName = 'CountdownBlock';
+CountdownBlock.displayName = "CountdownBlock";
 
 export default memo(CountdownBlock);

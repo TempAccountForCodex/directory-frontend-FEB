@@ -7,8 +7,8 @@
  *   abstract-dots  — 8x8 dot grid with staggered opacity
  */
 
-import React, { useMemo } from 'react';
-import { Box } from '@mui/material';
+import React, { useMemo } from "react";
+import { Box } from "@mui/material";
 
 interface DecorativeBlockProps {
   content: Record<string, any>;
@@ -36,7 +36,7 @@ const CircularTextSvg: React.FC<{
   speed: string;
 }> = React.memo(({ text, size, color, speed }) => {
   const radius = size * 0.4;
-  const separator = ' \u2022 ';
+  const separator = " \u2022 ";
   const circumference = 2 * Math.PI * radius;
   const charWidth = size * 0.035;
   const charsNeeded = Math.ceil(circumference / charWidth);
@@ -46,11 +46,16 @@ const CircularTextSvg: React.FC<{
 
   const half = size / 2;
   const d = `M${half},${half} m-${radius},0 a${radius},${radius} 0 1,1 ${radius * 2},0 a${radius},${radius} 0 1,1 -${radius * 2},0`;
-  const duration = speed !== 'none' ? (SPEED_MAP[speed] ?? 20) : 0;
+  const duration = speed !== "none" ? (SPEED_MAP[speed] ?? 20) : 0;
   const fontSize = Math.max(8, size * 0.06);
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} aria-hidden="true">
+    <svg
+      viewBox={`0 0 ${size} ${size}`}
+      width={size}
+      height={size}
+      aria-hidden="true"
+    >
       <defs>
         <path id="decorCirclePath" d={d} fill="none" />
       </defs>
@@ -59,7 +64,7 @@ const CircularTextSvg: React.FC<{
           duration > 0
             ? {
                 animation: `decorRotate ${duration}s linear infinite`,
-                transformOrigin: 'center',
+                transformOrigin: "center",
               }
             : undefined
         }
@@ -69,7 +74,7 @@ const CircularTextSvg: React.FC<{
           fontSize={fontSize}
           fontWeight={600}
           letterSpacing="3px"
-          style={{ textTransform: 'uppercase' }}
+          style={{ textTransform: "uppercase" }}
         >
           <textPath href="#decorCirclePath">{repeatedText}</textPath>
         </text>
@@ -83,7 +88,7 @@ const CircularTextSvg: React.FC<{
     </svg>
   );
 });
-CircularTextSvg.displayName = 'CircularTextSvg';
+CircularTextSvg.displayName = "CircularTextSvg";
 
 /* ── Wave Divider ───────────────────────────────────────────────────────────── */
 
@@ -116,7 +121,7 @@ const WaveDividerSvg: React.FC<{
     </svg>
   );
 });
-WaveDividerSvg.displayName = 'WaveDividerSvg';
+WaveDividerSvg.displayName = "WaveDividerSvg";
 
 /* ── Abstract Dots ──────────────────────────────────────────────────────────── */
 
@@ -142,7 +147,7 @@ const AbstractDotsSvg: React.FC<{
             r={r}
             fill={color}
             opacity={op}
-          />
+          />,
         );
       }
     }
@@ -150,35 +155,44 @@ const AbstractDotsSvg: React.FC<{
   }, [size, color, gap, r]);
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} aria-hidden="true">
+    <svg
+      viewBox={`0 0 ${size} ${size}`}
+      width={size}
+      height={size}
+      aria-hidden="true"
+    >
       {dots}
     </svg>
   );
 });
-AbstractDotsSvg.displayName = 'AbstractDotsSvg';
+AbstractDotsSvg.displayName = "AbstractDotsSvg";
 
 /* ── Position wrapper helpers ───────────────────────────────────────────────── */
 
 const getPositionSx = (position: string): Record<string, any> => {
-  if (position === 'inline') {
-    return { display: 'flex', justifyContent: 'center', position: 'relative' };
+  if (position === "inline") {
+    return { display: "flex", justifyContent: "center", position: "relative" };
   }
   const base: Record<string, any> = {
-    position: 'absolute',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    pointerEvents: 'none',
+    position: "absolute",
+    top: "50%",
+    transform: "translateY(-50%)",
+    pointerEvents: "none",
     zIndex: 0,
   };
   switch (position) {
-    case 'absolute-left':
+    case "absolute-left":
       return { ...base, left: 0 };
-    case 'absolute-right':
+    case "absolute-right":
       return { ...base, right: 0 };
-    case 'absolute-center':
-      return { ...base, left: '50%', transform: 'translate(-50%, -50%)' };
+    case "absolute-center":
+      return { ...base, left: "50%", transform: "translate(-50%, -50%)" };
     default:
-      return { display: 'flex', justifyContent: 'center', position: 'relative' };
+      return {
+        display: "flex",
+        justifyContent: "center",
+        position: "relative",
+      };
   }
 };
 
@@ -186,25 +200,38 @@ const getPositionSx = (position: string): Record<string, any> => {
 
 const DecorativeBlock: React.FC<DecorativeBlockProps> = ({ content }) => {
   const {
-    variant = 'circular-text',
-    text = 'YOUR BRAND',
-    rotationSpeed = 'normal',
-    color = '#000000',
+    variant = "circular-text",
+    text = "YOUR BRAND",
+    rotationSpeed = "normal",
+    color = "#000000",
     secondaryColor,
-    size: sizeKey = 'md',
+    size: sizeKey = "md",
     opacity = 100,
-    position = 'inline',
+    position = "inline",
   } = content;
 
   const size = SIZE_MAP[sizeKey] ?? 200;
 
   const svgElement = useMemo(() => {
     switch (variant) {
-      case 'circular-text':
-        return <CircularTextSvg text={text} size={size} color={color} speed={rotationSpeed} />;
-      case 'wave-divider':
-        return <WaveDividerSvg size={size} color={color} secondaryColor={secondaryColor} />;
-      case 'abstract-dots':
+      case "circular-text":
+        return (
+          <CircularTextSvg
+            text={text}
+            size={size}
+            color={color}
+            speed={rotationSpeed}
+          />
+        );
+      case "wave-divider":
+        return (
+          <WaveDividerSvg
+            size={size}
+            color={color}
+            secondaryColor={secondaryColor}
+          />
+        );
+      case "abstract-dots":
         return <AbstractDotsSvg size={size} color={color} />;
       default:
         return null;
@@ -216,7 +243,7 @@ const DecorativeBlock: React.FC<DecorativeBlockProps> = ({ content }) => {
       sx={{
         ...getPositionSx(position),
         opacity: opacity / 100,
-        width: variant === 'wave-divider' ? '100%' : undefined,
+        width: variant === "wave-divider" ? "100%" : undefined,
       }}
     >
       {svgElement}

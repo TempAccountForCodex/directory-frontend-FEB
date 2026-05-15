@@ -18,9 +18,9 @@
  * - ping messages receive pong responses
  * - Invalid JSON from server is safely caught
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useWebSocket } from '../useWebSocket';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { useWebSocket } from "../useWebSocket";
 
 // ---------------------------------------------------------------------------
 // Mock WebSocket
@@ -57,7 +57,7 @@ class MockWebSocket {
       this.readyState = MockWebSocket.CLOSED;
       this.onclose?.({
         code: code ?? 1000,
-        reason: reason ?? '',
+        reason: reason ?? "",
         wasClean: true,
       } as CloseEvent);
     }, 0);
@@ -66,22 +66,22 @@ class MockWebSocket {
   // Test helpers to simulate server events
   simulateOpen() {
     this.readyState = MockWebSocket.OPEN;
-    this.onopen?.(new Event('open'));
+    this.onopen?.(new Event("open"));
   }
 
   simulateMessage(data: unknown) {
     this.onmessage?.({
-      data: typeof data === 'string' ? data : JSON.stringify(data),
+      data: typeof data === "string" ? data : JSON.stringify(data),
     } as MessageEvent);
   }
 
   simulateClose(code = 1000) {
     this.readyState = MockWebSocket.CLOSED;
-    this.onclose?.({ code, wasClean: code === 1000, reason: '' } as CloseEvent);
+    this.onclose?.({ code, wasClean: code === 1000, reason: "" } as CloseEvent);
   }
 
   simulateError() {
-    this.onerror?.(new Event('error'));
+    this.onerror?.(new Event("error"));
   }
 }
 
@@ -98,7 +98,9 @@ beforeEach(() => {
   global.WebSocket = MockWebSocket as unknown as typeof WebSocket;
 
   // Default: token is present
-  (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue('test-jwt-token');
+  (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue(
+    "test-jwt-token",
+  );
 });
 
 afterEach(() => {
@@ -115,7 +117,7 @@ afterEach(() => {
 
 function latestWs(): MockWebSocket {
   const ws = MockWebSocket.instances[MockWebSocket.instances.length - 1];
-  if (!ws) throw new Error('No MockWebSocket instance created');
+  if (!ws) throw new Error("No MockWebSocket instance created");
   return ws;
 }
 
@@ -123,31 +125,31 @@ function latestWs(): MockWebSocket {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('useWebSocket', () => {
+describe("useWebSocket", () => {
   // ---- Initial connection --------------------------------------------------
 
-  it('creates a WebSocket on mount when enabled=true and token exists', () => {
+  it("creates a WebSocket on mount when enabled=true and token exists", () => {
     renderHook(() => useWebSocket());
     expect(MockWebSocket.instances).toHaveLength(1);
   });
 
-  it('includes token in WebSocket URL', () => {
+  it("includes token in WebSocket URL", () => {
     renderHook(() => useWebSocket());
     const ws = latestWs();
-    expect(ws.url).toContain('test-jwt-token');
+    expect(ws.url).toContain("test-jwt-token");
   });
 
-  it('does NOT create a WebSocket when token is absent', () => {
+  it("does NOT create a WebSocket when token is absent", () => {
     (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue(null);
     const { result } = renderHook(() => useWebSocket());
     expect(MockWebSocket.instances).toHaveLength(0);
-    expect(result.current.connectionState).toBe('disconnected');
+    expect(result.current.connectionState).toBe("disconnected");
   });
 
-  it('does NOT create a WebSocket when enabled=false', () => {
+  it("does NOT create a WebSocket when enabled=false", () => {
     const { result } = renderHook(() => useWebSocket({ enabled: false }));
     expect(MockWebSocket.instances).toHaveLength(0);
-    expect(result.current.connectionState).toBe('disconnected');
+    expect(result.current.connectionState).toBe("disconnected");
   });
 
   // ---- connectionState transitions ----------------------------------------
@@ -155,26 +157,26 @@ describe('useWebSocket', () => {
   it('starts in "connecting" state while WebSocket is connecting', () => {
     const { result } = renderHook(() => useWebSocket());
     // Before onopen fires
-    expect(result.current.connectionState).toBe('connecting');
+    expect(result.current.connectionState).toBe("connecting");
   });
 
   it('transitions to "connected" when WebSocket opens', () => {
     const { result } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
-    expect(result.current.connectionState).toBe('connected');
+    expect(result.current.connectionState).toBe("connected");
   });
 
   it('transitions to "disconnected" on clean close', () => {
     const { result } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
     act(() => latestWs().simulateClose(1000));
-    expect(result.current.connectionState).toBe('disconnected');
+    expect(result.current.connectionState).toBe("disconnected");
   });
 
   it('transitions to "error" on onerror event', () => {
     const { result } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateError());
-    expect(result.current.connectionState).toBe('error');
+    expect(result.current.connectionState).toBe("error");
   });
 
   it('transitions to "error" and does not reconnect on auth failure (4001)', () => {
@@ -183,7 +185,7 @@ describe('useWebSocket', () => {
       latestWs().simulateOpen();
       latestWs().simulateClose(4001);
     });
-    expect(result.current.connectionState).toBe('error');
+    expect(result.current.connectionState).toBe("error");
     // No reconnect timer should fire
     act(() => vi.advanceTimersByTime(60000));
     // Still only 1 WS instance
@@ -192,7 +194,7 @@ describe('useWebSocket', () => {
 
   // ---- Auto-reconnect with exponential backoff ----------------------------
 
-  it('schedules reconnect after close (1s first attempt)', () => {
+  it("schedules reconnect after close (1s first attempt)", () => {
     renderHook(() => useWebSocket());
     act(() => {
       latestWs().simulateOpen();
@@ -204,7 +206,7 @@ describe('useWebSocket', () => {
     expect(MockWebSocket.instances).toHaveLength(2);
   });
 
-  it('increases backoff delay on successive failures', () => {
+  it("increases backoff delay on successive failures", () => {
     renderHook(() => useWebSocket());
 
     // Attempt 1 — close immediately, expect reconnect after 1s
@@ -221,7 +223,7 @@ describe('useWebSocket', () => {
     expect(MockWebSocket.instances).toHaveLength(3);
   });
 
-  it('resets reconnect delay on successful connection', () => {
+  it("resets reconnect delay on successful connection", () => {
     const { result } = renderHook(() => useWebSocket());
 
     // Fail once to increment delay
@@ -231,11 +233,11 @@ describe('useWebSocket', () => {
 
     // Connect successfully — resets delay index
     act(() => latestWs().simulateOpen());
-    expect(result.current.connectionState).toBe('connected');
+    expect(result.current.connectionState).toBe("connected");
     expect(result.current.reconnectAttempt).toBe(0);
   });
 
-  it('caps reconnect delay at 30s', () => {
+  it("caps reconnect delay at 30s", () => {
     renderHook(() => useWebSocket());
 
     // Fail 6+ times to push past the cap
@@ -257,10 +259,13 @@ describe('useWebSocket', () => {
     expect(MockWebSocket.instances).toHaveLength(totalInstances + 1);
   });
 
-  it('does not reconnect when enabled=false after disconnect', () => {
-    const { rerender } = renderHook(({ enabled }) => useWebSocket({ enabled }), {
-      initialProps: { enabled: true },
-    });
+  it("does not reconnect when enabled=false after disconnect", () => {
+    const { rerender } = renderHook(
+      ({ enabled }) => useWebSocket({ enabled }),
+      {
+        initialProps: { enabled: true },
+      },
+    );
     act(() => latestWs().simulateOpen());
 
     // Disable before disconnect
@@ -270,7 +275,7 @@ describe('useWebSocket', () => {
     expect(MockWebSocket.instances).toHaveLength(1);
   });
 
-  it('does not reconnect after unmount', () => {
+  it("does not reconnect after unmount", () => {
     const { unmount } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
     unmount();
@@ -280,82 +285,88 @@ describe('useWebSocket', () => {
 
   // ---- send() --------------------------------------------------------------
 
-  it('send() sends JSON message when connected', () => {
+  it("send() sends JSON message when connected", () => {
     const { result } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
 
-    const sent = result.current.send({ type: 'JOIN_ROOM', roomId: 'website:1' });
+    const sent = result.current.send({
+      type: "JOIN_ROOM",
+      roomId: "website:1",
+    });
     expect(sent).toBe(true);
     expect(latestWs().sentMessages).toHaveLength(1);
     expect(JSON.parse(latestWs().sentMessages[0])).toEqual({
-      type: 'JOIN_ROOM',
-      roomId: 'website:1',
+      type: "JOIN_ROOM",
+      roomId: "website:1",
     });
   });
 
-  it('send() returns false when disconnected', () => {
+  it("send() returns false when disconnected", () => {
     const { result } = renderHook(() => useWebSocket());
     // Do not open — still connecting/disconnected
-    const sent = result.current.send({ type: 'JOIN_ROOM', roomId: 'website:1' });
+    const sent = result.current.send({
+      type: "JOIN_ROOM",
+      roomId: "website:1",
+    });
     expect(sent).toBe(false);
   });
 
   // ---- joinRoom / leaveRoom ------------------------------------------------
 
-  it('joinRoom() sends JOIN_ROOM message and tracks room', () => {
+  it("joinRoom() sends JOIN_ROOM message and tracks room", () => {
     const { result } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
 
-    result.current.joinRoom('website:42');
+    result.current.joinRoom("website:42");
     expect(
       latestWs().sentMessages.some((m) => {
         const parsed = JSON.parse(m);
-        return parsed.type === 'JOIN_ROOM' && parsed.roomId === 'website:42';
-      })
+        return parsed.type === "JOIN_ROOM" && parsed.roomId === "website:42";
+      }),
     ).toBe(true);
   });
 
-  it('leaveRoom() sends LEAVE_ROOM message', () => {
+  it("leaveRoom() sends LEAVE_ROOM message", () => {
     const { result } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
 
-    result.current.joinRoom('website:42');
-    result.current.leaveRoom('website:42');
+    result.current.joinRoom("website:42");
+    result.current.leaveRoom("website:42");
 
     expect(
       latestWs().sentMessages.some((m) => {
         const parsed = JSON.parse(m);
-        return parsed.type === 'LEAVE_ROOM' && parsed.roomId === 'website:42';
-      })
+        return parsed.type === "LEAVE_ROOM" && parsed.roomId === "website:42";
+      }),
     ).toBe(true);
   });
 
-  it('leaveAllRooms() sends LEAVE_ROOM for all tracked rooms', () => {
+  it("leaveAllRooms() sends LEAVE_ROOM for all tracked rooms", () => {
     const { result } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
 
-    result.current.joinRoom('website:1');
-    result.current.joinRoom('page:2');
+    result.current.joinRoom("website:1");
+    result.current.joinRoom("page:2");
     result.current.leaveAllRooms();
 
     const leaveMessages = latestWs()
       .sentMessages.map((m) => JSON.parse(m))
-      .filter((m) => m.type === 'LEAVE_ROOM');
+      .filter((m) => m.type === "LEAVE_ROOM");
 
     expect(leaveMessages).toHaveLength(2);
     const rooms = leaveMessages.map((m) => m.roomId);
-    expect(rooms).toContain('website:1');
-    expect(rooms).toContain('page:2');
+    expect(rooms).toContain("website:1");
+    expect(rooms).toContain("page:2");
   });
 
   // ---- Reconnect rejoins rooms --------------------------------------------
 
-  it('rejoins previously joined rooms on reconnect', () => {
+  it("rejoins previously joined rooms on reconnect", () => {
     const { result } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
 
-    result.current.joinRoom('website:5');
-    result.current.joinRoom('page:10');
+    result.current.joinRoom("website:5");
+    result.current.joinRoom("page:10");
 
     // Disconnect and trigger reconnect
     act(() => latestWs().simulateClose(1001));
@@ -367,40 +378,40 @@ describe('useWebSocket', () => {
     // After reconnect, JOIN_ROOM should be sent for both rooms
     const joinMessages = latestWs()
       .sentMessages.map((m) => JSON.parse(m))
-      .filter((m) => m.type === 'JOIN_ROOM');
+      .filter((m) => m.type === "JOIN_ROOM");
 
     const rooms = joinMessages.map((m) => m.roomId);
-    expect(rooms).toContain('website:5');
-    expect(rooms).toContain('page:10');
+    expect(rooms).toContain("website:5");
+    expect(rooms).toContain("page:10");
   });
 
   // ---- onMessage callback -------------------------------------------------
 
-  it('calls onMessage callback when server sends a message', () => {
+  it("calls onMessage callback when server sends a message", () => {
     const onMessage = vi.fn();
     renderHook(() => useWebSocket({ onMessage }));
     act(() => latestWs().simulateOpen());
 
-    const msg = { type: 'USER_JOINED', roomId: 'website:1', userId: 7 };
+    const msg = { type: "USER_JOINED", roomId: "website:1", userId: 7 };
     act(() => latestWs().simulateMessage(msg));
 
     expect(onMessage).toHaveBeenCalledOnce();
     expect(onMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'USER_JOINED',
-        roomId: 'website:1',
-      })
+        type: "USER_JOINED",
+        roomId: "website:1",
+      }),
     );
   });
 
-  it('safely ignores invalid JSON from server', () => {
+  it("safely ignores invalid JSON from server", () => {
     const onMessage = vi.fn();
     renderHook(() => useWebSocket({ onMessage }));
     act(() => latestWs().simulateOpen());
 
     // Should not throw
     expect(() => {
-      act(() => latestWs().simulateMessage('not-valid-json{{{'));
+      act(() => latestWs().simulateMessage("not-valid-json{{{"));
     }).not.toThrow();
 
     expect(onMessage).not.toHaveBeenCalled();
@@ -408,21 +419,21 @@ describe('useWebSocket', () => {
 
   // ---- ROOM_STATE → connectedUsers ----------------------------------------
 
-  it('updates connectedUsers from ROOM_STATE message', () => {
+  it("updates connectedUsers from ROOM_STATE message", () => {
     const { result } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
 
     act(() =>
       latestWs().simulateMessage({
-        type: 'ROOM_STATE',
+        type: "ROOM_STATE",
         data: {
-          roomId: 'website:1',
+          roomId: "website:1",
           members: [
-            { userId: 1, username: 'alice' },
-            { userId: 2, username: 'bob' },
+            { userId: 1, username: "alice" },
+            { userId: 2, username: "bob" },
           ],
         },
-      })
+      }),
     );
 
     expect(result.current.connectedUsers).toBe(2);
@@ -430,23 +441,23 @@ describe('useWebSocket', () => {
 
   // ---- Ping/pong ----------------------------------------------------------
 
-  it('responds to JSON ping message with pong', () => {
+  it("responds to JSON ping message with pong", () => {
     renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
 
-    act(() => latestWs().simulateMessage({ type: 'ping' }));
+    act(() => latestWs().simulateMessage({ type: "ping" }));
 
     expect(
       latestWs().sentMessages.some((m) => {
         const parsed = JSON.parse(m);
-        return parsed.type === 'pong';
-      })
+        return parsed.type === "pong";
+      }),
     ).toBe(true);
   });
 
   // ---- Cleanup on unmount -------------------------------------------------
 
-  it('closes WebSocket on unmount', () => {
+  it("closes WebSocket on unmount", () => {
     const { unmount } = renderHook(() => useWebSocket());
     act(() => latestWs().simulateOpen());
     const ws = latestWs();
@@ -454,14 +465,14 @@ describe('useWebSocket', () => {
     expect(ws.readyState).not.toBe(MockWebSocket.OPEN);
   });
 
-  it('does not throw on unmount with no connection', () => {
+  it("does not throw on unmount with no connection", () => {
     const { unmount } = renderHook(() => useWebSocket({ enabled: false }));
     expect(() => unmount()).not.toThrow();
   });
 
   // ---- Stable function references -----------------------------------------
 
-  it('send, joinRoom, leaveRoom, leaveAllRooms are stable across renders', () => {
+  it("send, joinRoom, leaveRoom, leaveAllRooms are stable across renders", () => {
     const { result, rerender } = renderHook(() => useWebSocket());
     const first = {
       send: result.current.send,
@@ -478,7 +489,7 @@ describe('useWebSocket', () => {
 
   // ---- reconnectAttempt counter -------------------------------------------
 
-  it('increments reconnectAttempt on each retry', () => {
+  it("increments reconnectAttempt on each retry", () => {
     const { result } = renderHook(() => useWebSocket());
 
     act(() => latestWs().simulateClose(1001));
@@ -490,7 +501,7 @@ describe('useWebSocket', () => {
     expect(result.current.reconnectAttempt).toBe(2);
   });
 
-  it('resets reconnectAttempt to 0 on successful reconnect', () => {
+  it("resets reconnectAttempt to 0 on successful reconnect", () => {
     const { result } = renderHook(() => useWebSocket());
 
     act(() => latestWs().simulateClose(1001));

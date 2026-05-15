@@ -1,4 +1,9 @@
-import React, { createContext, useEffect, useState, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 /* ---------------- Types ---------------- */
 interface DashboardContextType {
@@ -13,21 +18,27 @@ interface DashboardProviderProps {
 }
 
 /* ---------------- Context ---------------- */
-const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
+const DashboardContext = createContext<DashboardContextType | undefined>(
+  undefined,
+);
 
 const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }) => {
-  const [selectedSection, setSelectedSection] = useState<string>('/dashboard/createuser');
+  const [selectedSection, setSelectedSection] = useState<string>(
+    "/dashboard/createuser",
+  );
   const [user, setUser] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
-      const userName = localStorage.getItem('userName');
+      const userName = localStorage.getItem("userName");
       if (userName) setUser(userName);
     }
   }, [user]);
 
   return (
-    <DashboardContext.Provider value={{ selectedSection, setSelectedSection, user, setUser }}>
+    <DashboardContext.Provider
+      value={{ selectedSection, setSelectedSection, user, setUser }}
+    >
       {children}
     </DashboardContext.Provider>
   );

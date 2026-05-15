@@ -15,10 +15,10 @@
  * content injected into JSX, no dangerouslySetInnerHTML.
  */
 
-import React, { useEffect, useRef, memo } from 'react';
-import { Box, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
-import { motion } from 'framer-motion';
-import type { WebSocketConnectionState } from '../../types/websocket';
+import React, { useEffect, useRef, memo } from "react";
+import { Box, Tooltip, Typography, Snackbar, Alert } from "@mui/material";
+import { motion } from "framer-motion";
+import type { WebSocketConnectionState } from "../../types/websocket";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,23 +37,23 @@ interface ConnectionStatusProps {
 const DOT_SIZE = 8;
 
 const STATE_COLORS: Record<WebSocketConnectionState, string> = {
-  connected: '#4caf50', // green
-  connecting: '#ff9800', // amber / warning
-  disconnected: '#f44336', // red
-  error: '#f44336', // red
+  connected: "#4caf50", // green
+  connecting: "#ff9800", // amber / warning
+  disconnected: "#f44336", // red
+  error: "#f44336", // red
 };
 
 const TOOLTIPS: Record<WebSocketConnectionState, string> = {
-  connected: 'Connected',
-  connecting: 'Reconnecting...',
-  disconnected: 'Disconnected — click to reconnect',
-  error: 'Connection error',
+  connected: "Connected",
+  connecting: "Reconnecting...",
+  disconnected: "Disconnected — click to reconnect",
+  error: "Connection error",
 };
 
 // Framer Motion pulse animation for the reconnecting/connecting state
 const pulseAnimation = {
   animate: { scale: [1, 1.35, 1], opacity: [1, 0.55, 1] },
-  transition: { repeat: Infinity, duration: 1.4, ease: 'easeInOut' as const },
+  transition: { repeat: Infinity, duration: 1.4, ease: "easeInOut" as const },
 };
 
 // ---------------------------------------------------------------------------
@@ -65,8 +65,8 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = memo(
     const [snackbar, setSnackbar] = React.useState<{
       open: boolean;
       message: string;
-      severity: 'success' | 'warning';
-    }>({ open: false, message: '', severity: 'warning' });
+      severity: "success" | "warning";
+    }>({ open: false, message: "", severity: "warning" });
 
     // Track previous state to detect transitions
     const prevStateRef = useRef<WebSocketConnectionState | null>(null);
@@ -82,19 +82,29 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = memo(
 
       // Transition: connected → disconnected/error = connection lost
       if (
-        prev === 'connected' &&
-        (connectionState === 'disconnected' || connectionState === 'error')
+        prev === "connected" &&
+        (connectionState === "disconnected" || connectionState === "error")
       ) {
-        setSnackbar({ open: true, message: 'Connection lost', severity: 'warning' });
+        setSnackbar({
+          open: true,
+          message: "Connection lost",
+          severity: "warning",
+        });
         return;
       }
 
       // Transition: connecting/disconnected → connected = connection restored
       if (
-        (prev === 'connecting' || prev === 'disconnected' || prev === 'error') &&
-        connectionState === 'connected'
+        (prev === "connecting" ||
+          prev === "disconnected" ||
+          prev === "error") &&
+        connectionState === "connected"
       ) {
-        setSnackbar({ open: true, message: 'Connection restored', severity: 'success' });
+        setSnackbar({
+          open: true,
+          message: "Connection restored",
+          severity: "success",
+        });
         return;
       }
     }, [connectionState]);
@@ -105,28 +115,29 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = memo(
 
     const color = STATE_COLORS[connectionState];
     const tooltipText = TOOLTIPS[connectionState];
-    const isPulsing = connectionState === 'connecting';
-    const isClickable = connectionState === 'disconnected' && Boolean(onReconnect);
-    const showUserCount = connectionState === 'connected' && connectedUsers > 1;
+    const isPulsing = connectionState === "connecting";
+    const isClickable =
+      connectionState === "disconnected" && Boolean(onReconnect);
+    const showUserCount = connectionState === "connected" && connectedUsers > 1;
 
     const dot = (
       <Box
-        component={isPulsing ? 'span' : 'span'}
+        component={isPulsing ? "span" : "span"}
         sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          cursor: isClickable ? 'pointer' : 'default',
+          display: "inline-flex",
+          alignItems: "center",
+          cursor: isClickable ? "pointer" : "default",
           gap: 0.75,
-          userSelect: 'none',
+          userSelect: "none",
         }}
         onClick={isClickable ? onReconnect : undefined}
-        role={isClickable ? 'button' : undefined}
-        aria-label={isClickable ? 'Click to reconnect' : undefined}
+        role={isClickable ? "button" : undefined}
+        aria-label={isClickable ? "Click to reconnect" : undefined}
         tabIndex={isClickable ? 0 : undefined}
         onKeyDown={
           isClickable
             ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   onReconnect?.();
                 }
@@ -140,10 +151,10 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = memo(
             animate={pulseAnimation.animate}
             transition={pulseAnimation.transition}
             style={{
-              display: 'inline-block',
+              display: "inline-block",
               width: DOT_SIZE,
               height: DOT_SIZE,
-              borderRadius: '50%',
+              borderRadius: "50%",
               backgroundColor: color,
               flexShrink: 0,
             }}
@@ -154,10 +165,10 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = memo(
             component="span"
             data-testid="connection-dot"
             sx={{
-              display: 'inline-block',
+              display: "inline-block",
               width: DOT_SIZE,
               height: DOT_SIZE,
-              borderRadius: '50%',
+              borderRadius: "50%",
               backgroundColor: color,
               flexShrink: 0,
             }}
@@ -169,7 +180,7 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = memo(
             component="span"
             variant="caption"
             data-testid="user-count"
-            sx={{ fontSize: '0.7rem', color: 'text.secondary', lineHeight: 1 }}
+            sx={{ fontSize: "0.7rem", color: "text.secondary", lineHeight: 1 }}
           >
             {connectedUsers} users editing
           </Typography>
@@ -187,19 +198,23 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = memo(
           open={snackbar.open}
           autoHideDuration={3500}
           onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           data-testid="connection-snackbar"
         >
-          <Alert severity={snackbar.severity} onClose={handleCloseSnackbar} sx={{ width: '100%' }}>
+          <Alert
+            severity={snackbar.severity}
+            onClose={handleCloseSnackbar}
+            sx={{ width: "100%" }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>
       </>
     );
-  }
+  },
 );
 
-ConnectionStatus.displayName = 'ConnectionStatus';
+ConnectionStatus.displayName = "ConnectionStatus";
 
 export default ConnectionStatus;
 export { ConnectionStatus };

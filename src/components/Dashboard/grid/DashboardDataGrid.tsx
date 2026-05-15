@@ -1,16 +1,21 @@
-import { useMemo, useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
-import { alpha, ThemeProvider, createTheme, useTheme } from '@mui/material/styles';
+import { useMemo, useEffect, useState } from "react";
+import { Box, Typography } from "@mui/material";
+import {
+  alpha,
+  ThemeProvider,
+  createTheme,
+  useTheme,
+} from "@mui/material/styles";
 import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnOrderState,
   type MRT_VisibilityState,
-} from 'material-react-table';
-import { getDashboardColors } from '../../../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
-import RowActionButtonGroup from '../shared/RowActionButtonGroup';
-import type { DashboardDataGridProps, ActionConfig } from './types';
+} from "material-react-table";
+import { getDashboardColors } from "../../../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../../../context/ThemeContext";
+import RowActionButtonGroup from "../shared/RowActionButtonGroup";
+import type { DashboardDataGridProps, ActionConfig } from "./types";
 // import './DashboardDataGrid.css';
 
 /**
@@ -44,7 +49,7 @@ const DashboardDataGrid = <T extends object>({
 
   // Loading & empty
   loading = false,
-  emptyMessage = 'No data to display',
+  emptyMessage = "No data to display",
   emptyIcon,
 
   // Callbacks
@@ -56,8 +61,8 @@ const DashboardDataGrid = <T extends object>({
   enableMultiRowSelection = true,
 
   // Styling
-  className = '',
-  height = 'auto',
+  className = "",
+  height = "auto",
 
   // Search
   globalFilter,
@@ -81,7 +86,7 @@ const DashboardDataGrid = <T extends object>({
     () =>
       createTheme(muiTheme, {
         palette: {
-          mode: actualTheme === 'dark' ? 'dark' : 'light',
+          mode: actualTheme === "dark" ? "dark" : "light",
           background: {
             default: colors.panelBg,
             paper: colors.panelBg,
@@ -95,13 +100,13 @@ const DashboardDataGrid = <T extends object>({
           MuiPaper: {
             styleOverrides: {
               root: {
-                backgroundImage: 'none',
+                backgroundImage: "none",
               },
             },
           },
         },
       }),
-    [actualTheme, colors, muiTheme]
+    [actualTheme, colors, muiTheme],
   );
 
   // Column State Persistence
@@ -116,14 +121,16 @@ const DashboardDataGrid = <T extends object>({
     }
   });
 
-  const [columnVisibility, setColumnVisibility] = useState<MRT_VisibilityState>(() => {
-    try {
-      const saved = localStorage.getItem(`${storageKey}-visibility`);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [columnVisibility, setColumnVisibility] = useState<MRT_VisibilityState>(
+    () => {
+      try {
+        const saved = localStorage.getItem(`${storageKey}-visibility`);
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
+      }
+    },
+  );
 
   // Save state effects
   useEffect(() => {
@@ -134,7 +141,10 @@ const DashboardDataGrid = <T extends object>({
 
   useEffect(() => {
     if (Object.keys(columnVisibility).length > 0) {
-      localStorage.setItem(`${storageKey}-visibility`, JSON.stringify(columnVisibility));
+      localStorage.setItem(
+        `${storageKey}-visibility`,
+        JSON.stringify(columnVisibility),
+      );
     }
   }, [columnVisibility, storageKey]);
 
@@ -166,27 +176,28 @@ const DashboardDataGrid = <T extends object>({
     },
     initialState: {
       pagination: { pageSize: paginationPageSize, pageIndex: 0 },
-      density: 'comfortable',
+      density: "comfortable",
     },
     muiSearchTextFieldProps: {
-      size: 'small',
-      variant: 'outlined',
+      size: "small",
+      variant: "outlined",
     },
     // Pagination
     muiPaginationProps: {
       rowsPerPageOptions: paginationPageSizeSelector,
       SelectProps: {
-        size: 'small',
+        size: "small",
       },
       sx: {
-        '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-          fontSize: '0.85rem',
-          color: colors.textSecondary,
-        },
-        '& .MuiTablePagination-select': {
+        "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
+          {
+            fontSize: "0.85rem",
+            color: colors.textSecondary,
+          },
+        "& .MuiTablePagination-select": {
           color: colors.text,
         },
-        '& .MuiIconButton-root': {
+        "& .MuiIconButton-root": {
           color: colors.text,
         },
       },
@@ -201,7 +212,7 @@ const DashboardDataGrid = <T extends object>({
     rowCount: serverSidePagination?.totalRows ?? rowData.length,
     onPaginationChange: (updater) => {
       if (serverSidePagination) {
-        if (typeof updater === 'function') {
+        if (typeof updater === "function") {
           const newState = updater({
             pageIndex: serverSidePagination.currentPage - 1,
             pageSize: paginationPageSize,
@@ -224,27 +235,27 @@ const DashboardDataGrid = <T extends object>({
         zIndex: table.getState().isFullScreen ? 1000 : undefined,
       },
       sx: {
-        backgroundColor: 'transparent',
-        border: 'none',
-        '& .MuiIconButton-root:not(.row-action-button)': {
+        backgroundColor: "transparent",
+        border: "none",
+        "& .MuiIconButton-root:not(.row-action-button)": {
           color: colors.text,
-          '&:hover': {
+          "&:hover": {
             color: colors.panelAccent || colors.primary,
           },
         },
-        '& .MuiSvgIcon-root:not(.row-action-button *)': {
+        "& .MuiSvgIcon-root:not(.row-action-button *)": {
           color: colors.text,
         },
       },
     }),
     muiTableContainerProps: {
       sx: {
-        maxHeight: '760px',
+        maxHeight: "760px",
       },
     },
     muiTableProps: {
       sx: {
-        border: 'none',
+        border: "none",
       },
     },
     muiTableHeadCellProps: {
@@ -254,7 +265,7 @@ const DashboardDataGrid = <T extends object>({
         fontWeight: 600,
         py: 2.6,
         borderBottom: `0.5px solid ${colors.border}`,
-        '&:hover': {
+        "&:hover": {
           color: colors.panelAccent || colors.primary,
         },
       },
@@ -270,41 +281,41 @@ const DashboardDataGrid = <T extends object>({
     muiTableBodyRowProps: ({ row }) => ({
       onClick: onRowClick ? () => onRowClick(row.original) : undefined,
       sx: {
-        cursor: onRowClick ? 'pointer' : 'default',
+        cursor: onRowClick ? "pointer" : "default",
         backgroundColor: colors.panelBg,
-        '&:hover': {
+        "&:hover": {
           backgroundColor: `${colors.rowHover} !important`,
         },
-        '&.Mui-selected': {
+        "&.Mui-selected": {
           backgroundColor: `${alpha(colors.primary, 0.12)} !important`,
         },
-        '&.Mui-selected:hover': {
+        "&.Mui-selected:hover": {
           backgroundColor: `${alpha(colors.primary, 0.18)} !important`,
         },
       },
     }),
     muiCircularProgressProps: {
-      color: 'secondary',
+      color: "secondary",
       thickness: 5,
       size: 55,
     },
     muiSkeletonProps: {
-      animation: 'pulse',
+      animation: "pulse",
       height: 28,
     },
 
     // Actions
     enableRowActions: enableRowActions,
-    positionActionsColumn: actionColumn?.pinned === 'left' ? 'first' : 'last',
+    positionActionsColumn: actionColumn?.pinned === "left" ? "first" : "last",
     displayColumnDefOptions: {
-      'mrt-row-actions': {
-        header: actionColumn?.headerName ?? 'Actions',
+      "mrt-row-actions": {
+        header: actionColumn?.headerName ?? "Actions",
         size: actionColumn?.width ?? 150,
         muiTableHeadCellProps: {
-          align: 'center',
+          align: "center",
         },
         muiTableBodyCellProps: {
-          align: 'center',
+          align: "center",
         },
       },
     },
@@ -312,7 +323,7 @@ const DashboardDataGrid = <T extends object>({
       if (!actionColumn) return null;
 
       let initialActions: ActionConfig<T>[] = [];
-      if (typeof actionColumn.actions === 'function') {
+      if (typeof actionColumn.actions === "function") {
         initialActions = actionColumn.actions(row.original);
       } else {
         initialActions = actionColumn.actions ?? [];
@@ -329,7 +340,7 @@ const DashboardDataGrid = <T extends object>({
           actions={actions}
           colors={colors}
           size="small"
-          sx={{ justifyContent: 'center' }}
+          sx={{ justifyContent: "center" }}
         />
       );
     },
@@ -337,7 +348,7 @@ const DashboardDataGrid = <T extends object>({
     // UI Features
     enableColumnOrdering: true,
     enableColumnResizing: true,
-    layoutMode: 'grid',
+    layoutMode: "grid",
     defaultColumn: {
       minSize: 60,
       maxSize: 1000,
@@ -351,16 +362,16 @@ const DashboardDataGrid = <T extends object>({
     enableDensityToggle: true, // Enable density toggle
     enableFullScreenToggle: true, // Enable fullscreen toggle
     enableHiding: true, // Enable column hiding
-    globalFilterFn: 'contains', // Strict matching as requested
+    globalFilterFn: "contains", // Strict matching as requested
 
     // Empty State
     renderEmptyRowsFallback: () => (
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           p: 4,
           gap: 2,
           color: colors.textSecondary,
@@ -378,12 +389,14 @@ const DashboardDataGrid = <T extends object>({
   // Callbacks
   useEffect(() => {
     if (onSelectionChanged) {
-      onSelectionChanged(table.getSelectedRowModel().rows.map((row) => row.original));
+      onSelectionChanged(
+        table.getSelectedRowModel().rows.map((row) => row.original),
+      );
     }
   }, [table.getState().rowSelection, onSelectionChanged, table]);
 
   // Height styling
-  const containerStyle = height === 'auto' ? {} : { height, overflow: 'auto' };
+  const containerStyle = height === "auto" ? {} : { height, overflow: "auto" };
 
   return (
     <ThemeProvider theme={tableTheme}>
@@ -391,7 +404,7 @@ const DashboardDataGrid = <T extends object>({
         className={`dashboard-data-grid ${className}`}
         sx={{
           ...containerStyle,
-          width: '100%',
+          width: "100%",
         }}
       >
         <MaterialReactTable table={table} />

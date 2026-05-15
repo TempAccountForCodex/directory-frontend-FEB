@@ -11,7 +11,7 @@
  *  - Empty state with placeholder cards
  */
 
-import React, { useState, memo, useCallback, useMemo } from 'react';
+import React, { useState, memo, useCallback, useMemo } from "react";
 import {
   Box,
   Container,
@@ -23,13 +23,13 @@ import {
   IconButton,
   Stack,
   Button,
-} from '@mui/material';
-import { useTheme, useMediaQuery } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
-import AnimatedList from '../utils/AnimatedList';
+} from "@mui/material";
+import { useTheme, useMediaQuery } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { AnimatePresence, motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
+import AnimatedList from "../utils/AnimatedList";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -91,31 +91,37 @@ const SPACING_MAP: Record<string, number> = {
 
 // ── Placeholder Card ───────────────────────────────────────────────────────────
 
-const PlaceholderCard: React.FC<{ primaryColor: string }> = memo(({ primaryColor }) => (
-  <Box
-    data-testid="portfolio-placeholder"
-    sx={{
-      width: '100%',
-      aspectRatio: '4/3',
-      borderRadius: 2,
-      bgcolor: 'grey.100',
-      border: `1px dashed ${primaryColor}44`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'column',
-      gap: 1,
-    }}
-  >
-    <Typography variant="caption" color="text.disabled">
-      Portfolio Item
-    </Typography>
-    <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.65rem' }}>
-      Add your work
-    </Typography>
-  </Box>
-));
-PlaceholderCard.displayName = 'PlaceholderCard';
+const PlaceholderCard: React.FC<{ primaryColor: string }> = memo(
+  ({ primaryColor }) => (
+    <Box
+      data-testid="portfolio-placeholder"
+      sx={{
+        width: "100%",
+        aspectRatio: "4/3",
+        borderRadius: 2,
+        bgcolor: "grey.100",
+        border: `1px dashed ${primaryColor}44`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        gap: 1,
+      }}
+    >
+      <Typography variant="caption" color="text.disabled">
+        Portfolio Item
+      </Typography>
+      <Typography
+        variant="caption"
+        color="text.disabled"
+        sx={{ fontSize: "0.65rem" }}
+      >
+        Add your work
+      </Typography>
+    </Box>
+  ),
+);
+PlaceholderCard.displayName = "PlaceholderCard";
 
 // ── Portfolio Card ─────────────────────────────────────────────────────────────
 
@@ -138,41 +144,41 @@ const PortfolioCard: React.FC<PortfolioCardProps> = memo(
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         sx={{
-          position: 'relative',
+          position: "relative",
           borderRadius: 2,
-          overflow: 'hidden',
-          cursor: showLightbox ? 'pointer' : 'default',
-          width: '100%',
-          aspectRatio: '4/3',
-          bgcolor: 'grey.200',
+          overflow: "hidden",
+          cursor: showLightbox ? "pointer" : "default",
+          width: "100%",
+          aspectRatio: "4/3",
+          bgcolor: "grey.200",
         }}
-        aria-label={item.title ? `View ${item.title}` : 'View portfolio item'}
+        aria-label={item.title ? `View ${item.title}` : "View portfolio item"}
       >
         {/* Project image */}
         {item.image ? (
           <Box
             component="img"
             src={item.image}
-            alt={item.title ?? 'Portfolio item'}
+            alt={item.title ?? "Portfolio item"}
             loading="lazy"
             sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-              transition: 'transform 0.3s ease',
-              transform: hovered ? 'scale(1.04)' : 'scale(1)',
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              transition: "transform 0.3s ease",
+              transform: hovered ? "scale(1.04)" : "scale(1)",
             }}
           />
         ) : (
           <Box
             sx={{
-              width: '100%',
-              height: '100%',
-              bgcolor: 'grey.200',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              width: "100%",
+              height: "100%",
+              bgcolor: "grey.200",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Typography variant="caption" color="text.disabled">
@@ -184,18 +190,18 @@ const PortfolioCard: React.FC<PortfolioCardProps> = memo(
         {/* Hover overlay */}
         <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             inset: 0,
-            bgcolor: 'rgba(0,0,0,0.55)',
+            bgcolor: "rgba(0,0,0,0.55)",
             opacity: 0,
-            transition: 'opacity 0.3s ease',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            justifyContent: 'flex-end',
+            transition: "opacity 0.3s ease",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            justifyContent: "flex-end",
             p: 2,
             gap: 0.75,
-            '&:hover': { opacity: 1 },
+            "&:hover": { opacity: 1 },
           }}
         >
           {item.category && (
@@ -204,16 +210,16 @@ const PortfolioCard: React.FC<PortfolioCardProps> = memo(
               size="small"
               sx={{
                 bgcolor: primaryColor,
-                color: 'white',
+                color: "white",
                 fontWeight: 600,
-                fontSize: '0.7rem',
+                fontSize: "0.7rem",
               }}
             />
           )}
           {item.title && (
             <Typography
               variant="subtitle1"
-              sx={{ color: 'white', fontWeight: 600, lineHeight: 1.2 }}
+              sx={{ color: "white", fontWeight: 600, lineHeight: 1.2 }}
             >
               {item.title}
             </Typography>
@@ -221,9 +227,9 @@ const PortfolioCard: React.FC<PortfolioCardProps> = memo(
         </Box>
       </Box>
     );
-  }
+  },
 );
-PortfolioCard.displayName = 'PortfolioCard';
+PortfolioCard.displayName = "PortfolioCard";
 
 // ── Lightbox Dialog ────────────────────────────────────────────────────────────
 
@@ -234,9 +240,14 @@ interface LightboxProps {
   primaryColor: string;
 }
 
-const LightboxDialog: React.FC<LightboxProps> = ({ item, open, onClose, primaryColor }) => {
+const LightboxDialog: React.FC<LightboxProps> = ({
+  item,
+  open,
+  onClose,
+  primaryColor,
+}) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   if (!item) return null;
 
@@ -249,19 +260,19 @@ const LightboxDialog: React.FC<LightboxProps> = ({ item, open, onClose, primaryC
       fullWidth
       aria-labelledby="lightbox-title"
     >
-      <DialogContent sx={{ p: 0, position: 'relative' }}>
+      <DialogContent sx={{ p: 0, position: "relative" }}>
         {/* Close button */}
         <IconButton
           onClick={onClose}
           aria-label="close lightbox"
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 8,
             right: 8,
             zIndex: 10,
-            bgcolor: 'rgba(0,0,0,0.5)',
-            color: 'white',
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+            bgcolor: "rgba(0,0,0,0.5)",
+            color: "white",
+            "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
           }}
           size="small"
         >
@@ -273,12 +284,12 @@ const LightboxDialog: React.FC<LightboxProps> = ({ item, open, onClose, primaryC
           <Box
             component="img"
             src={item.image}
-            alt={item.title ?? 'Portfolio item'}
+            alt={item.title ?? "Portfolio item"}
             sx={{
-              width: '100%',
+              width: "100%",
               maxHeight: 360,
-              objectFit: 'cover',
-              display: 'block',
+              objectFit: "cover",
+              display: "block",
             }}
           />
         )}
@@ -291,7 +302,7 @@ const LightboxDialog: React.FC<LightboxProps> = ({ item, open, onClose, primaryC
               id="lightbox-title"
               variant="h5"
               component="h2"
-              sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}
+              sx={{ fontWeight: 700, color: "text.primary", mb: 1 }}
             >
               {item.title}
             </Typography>
@@ -327,7 +338,7 @@ const LightboxDialog: React.FC<LightboxProps> = ({ item, open, onClose, primaryC
                   label={tag}
                   size="small"
                   variant="outlined"
-                  sx={{ borderColor: primaryColor, color: 'text.primary' }}
+                  sx={{ borderColor: primaryColor, color: "text.primary" }}
                 />
               ))}
             </Stack>
@@ -344,7 +355,7 @@ const LightboxDialog: React.FC<LightboxProps> = ({ item, open, onClose, primaryC
               endIcon={<OpenInNewIcon />}
               sx={{
                 bgcolor: primaryColor,
-                '&:hover': { bgcolor: primaryColor, filter: 'brightness(0.9)' },
+                "&:hover": { bgcolor: primaryColor, filter: "brightness(0.9)" },
               }}
             >
               View Project
@@ -360,7 +371,7 @@ const LightboxDialog: React.FC<LightboxProps> = ({ item, open, onClose, primaryC
 
 const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
   block,
-  primaryColor = '#2563eb',
+  primaryColor = "#2563eb",
   headingColor,
   bodyColor,
 }) => {
@@ -372,8 +383,8 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
     showFilters = true,
     columns = 3,
     showLightbox = true,
-    spacingPaddingTop = 'md',
-    spacingPaddingBottom = 'md',
+    spacingPaddingTop = "md",
+    spacingPaddingBottom = "md",
     responsiveHideOnMobile = false,
     responsiveHideOnTablet = false,
     responsiveHideOnDesktop = false,
@@ -382,7 +393,11 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [lightboxItem, setLightboxItem] = useState<PortfolioItem | null>(null);
 
-  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1, rootMargin: '-60px 0px' });
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    rootMargin: "-60px 0px",
+  });
 
   const pt = SPACING_MAP[spacingPaddingTop] ?? 6;
   const pb = SPACING_MAP[spacingPaddingBottom] ?? 6;
@@ -391,16 +406,22 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
   const categories = useMemo(
     () =>
       Array.from(
-        new Set(items.map((item) => item.category).filter((c): c is string => Boolean(c)))
+        new Set(
+          items
+            .map((item) => item.category)
+            .filter((c): c is string => Boolean(c)),
+        ),
       ),
-    [items]
+    [items],
   );
 
   // Filter items by active category — memoized for stable reference
   const filteredItems = useMemo(
     () =>
-      activeCategory === null ? items : items.filter((item) => item.category === activeCategory),
-    [items, activeCategory]
+      activeCategory === null
+        ? items
+        : items.filter((item) => item.category === activeCategory),
+    [items, activeCategory],
   );
 
   // Compute Grid xs/sm/md per column setting
@@ -414,7 +435,7 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
         setLightboxItem(item);
       }
     },
-    [showLightbox]
+    [showLightbox],
   );
 
   const handleCloseLightbox = useCallback(() => {
@@ -435,9 +456,9 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
         py: { xs: Math.max(2, pt / 2), md: pt },
         pb: { xs: Math.max(2, pb / 2), md: pb },
         display: {
-          xs: responsiveHideOnMobile ? 'none' : 'block',
-          sm: responsiveHideOnTablet ? 'none' : 'block',
-          lg: responsiveHideOnDesktop ? 'none' : 'block',
+          xs: responsiveHideOnMobile ? "none" : "block",
+          sm: responsiveHideOnTablet ? "none" : "block",
+          lg: responsiveHideOnDesktop ? "none" : "block",
         },
       }}
     >
@@ -451,7 +472,7 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
             sx={{
               fontWeight: 700,
               mb: description ? 1 : 4,
-              color: headingColor ?? 'text.primary',
+              color: headingColor ?? "text.primary",
             }}
           >
             {heading}
@@ -464,10 +485,10 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
             variant="body1"
             align="center"
             sx={{
-              color: bodyColor ?? 'text.secondary',
+              color: bodyColor ?? "text.secondary",
               mb: 4,
               maxWidth: 640,
-              mx: 'auto',
+              mx: "auto",
             }}
           >
             {description}
@@ -476,12 +497,18 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
 
         {/* Category filter chips */}
         {showFilters && categories.length > 0 && (
-          <Stack direction="row" flexWrap="wrap" gap={1} justifyContent="center" sx={{ mb: 4 }}>
+          <Stack
+            direction="row"
+            flexWrap="wrap"
+            gap={1}
+            justifyContent="center"
+            sx={{ mb: 4 }}
+          >
             <Chip
               label="All"
               onClick={() => setActiveCategory(null)}
-              color={activeCategory === null ? 'primary' : 'default'}
-              variant={activeCategory === null ? 'filled' : 'outlined'}
+              color={activeCategory === null ? "primary" : "default"}
+              variant={activeCategory === null ? "filled" : "outlined"}
               sx={{ fontWeight: 600 }}
             />
             {categories.map((cat) => (
@@ -489,8 +516,8 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
                 key={cat}
                 label={cat}
                 onClick={() => setActiveCategory(cat)}
-                color={activeCategory === cat ? 'primary' : 'default'}
-                variant={activeCategory === cat ? 'filled' : 'outlined'}
+                color={activeCategory === cat ? "primary" : "default"}
+                variant={activeCategory === cat ? "filled" : "outlined"}
                 sx={{ fontWeight: 500 }}
               />
             ))}
@@ -501,7 +528,13 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
         {showEmpty ? (
           <Grid container spacing={3}>
             {Array.from({ length: placeholderCount }).map((_, idx) => (
-              <Grid item xs={12} sm={colSm} md={colMd} key={`placeholder-${idx}`}>
+              <Grid
+                item
+                xs={12}
+                sm={colSm}
+                md={colMd}
+                key={`placeholder-${idx}`}
+              >
                 <PlaceholderCard primaryColor={primaryColor} />
               </Grid>
             ))}
@@ -510,9 +543,9 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
           <Grid container spacing={3}>
             <AnimatePresence mode="popLayout">
               <AnimatedList
-                key={activeCategory ?? '__all__'}
+                key={activeCategory ?? "__all__"}
                 staggerMs={60}
-                wrapperStyle={{ display: 'contents' }}
+                wrapperStyle={{ display: "contents" }}
               >
                 {filteredItems.map((item, idx) => (
                   <Grid
@@ -535,10 +568,12 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
                         sx={{
                           mt: 1,
                           fontWeight: 600,
-                          color: 'text.primary',
-                          cursor: showLightbox ? 'pointer' : 'default',
+                          color: "text.primary",
+                          cursor: showLightbox ? "pointer" : "default",
                         }}
-                        onClick={showLightbox ? () => handleCardClick(item) : undefined}
+                        onClick={
+                          showLightbox ? () => handleCardClick(item) : undefined
+                        }
                       >
                         {item.title}
                       </Typography>
@@ -567,6 +602,6 @@ const PortfolioGridBlock: React.FC<PortfolioGridBlockProps> = ({
   );
 };
 
-PortfolioGridBlock.displayName = 'PortfolioGridBlock';
+PortfolioGridBlock.displayName = "PortfolioGridBlock";
 
 export default memo(PortfolioGridBlock);

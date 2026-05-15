@@ -64,8 +64,7 @@ export const buildCompanyTheme = ({
   const secondary = isLightColor(rawSecondary)
     ? rawSecondary
     : blendHex(rawSecondary, "#ffffff", 0.78);
-  const headingFont =
-    data.themeSettings?.headingFont || defaultHeadingFont;
+  const headingFont = data.themeSettings?.headingFont || defaultHeadingFont;
   const bodyFont = data.themeSettings?.bodyFont || defaultBodyFont;
 
   const ink = blendHex(primary, "#111111", 0.9);

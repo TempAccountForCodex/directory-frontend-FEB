@@ -6,15 +6,15 @@
  * a complete preview layout matching server-rendered HTML output.
  */
 
-import React, { useMemo } from 'react';
-import type { PreviewRendererProps, PreviewBlock } from './types';
-import { VIEWPORT_WIDTHS } from './types';
-import BlockRenderer from './index';
-import { getGlobalStyles, getBlockStyles } from './styles';
+import React, { useMemo } from "react";
+import type { PreviewRendererProps, PreviewBlock } from "./types";
+import { VIEWPORT_WIDTHS } from "./types";
+import BlockRenderer from "./index";
+import { getGlobalStyles, getBlockStyles } from "./styles";
 
 const PreviewRenderer: React.FC<PreviewRendererProps> = ({
   blocks,
-  viewport = 'desktop',
+  viewport = "desktop",
   isPreview = true,
   siteName,
 }) => {
@@ -22,15 +22,18 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
 
   const cssText = useMemo(
     () => `${getGlobalStyles(viewportWidth)}\n${getBlockStyles()}`,
-    [viewportWidth]
+    [viewportWidth],
   );
 
   const visibleBlocks = useMemo(
     () =>
       (blocks || [])
         .filter((b: PreviewBlock) => b.isVisible !== false)
-        .sort((a: PreviewBlock, b: PreviewBlock) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
-    [blocks]
+        .sort(
+          (a: PreviewBlock, b: PreviewBlock) =>
+            (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+        ),
+    [blocks],
   );
 
   return (
@@ -40,19 +43,24 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
         className="preview-wrapper"
         data-viewport={viewport}
         data-site-name={siteName}
-        style={{ maxWidth: viewportWidth, margin: '0 auto' }}
+        style={{ maxWidth: viewportWidth, margin: "0 auto" }}
       >
         {visibleBlocks.length > 0 ? (
           visibleBlocks.map((block: PreviewBlock) => (
-            <BlockRenderer key={block.id} block={block} viewport={viewport} isPreview={isPreview} />
+            <BlockRenderer
+              key={block.id}
+              block={block}
+              viewport={viewport}
+              isPreview={isPreview}
+            />
           ))
         ) : (
           <div
             style={{
-              padding: '60px 24px',
-              textAlign: 'center',
-              color: '#999',
-              fontSize: '1rem',
+              padding: "60px 24px",
+              textAlign: "center",
+              color: "#999",
+              fontSize: "1rem",
             }}
           >
             No blocks to display

@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { Grid, Typography, Box, useTheme } from '@mui/material';
-import CheckboxFilter from './CheckboxFilter';
+import React, { useEffect } from "react";
+import { Grid, Typography, Box, useTheme } from "@mui/material";
+import CheckboxFilter from "./CheckboxFilter";
 
 /* ---------------- Types ---------------- */
 interface SideFilterProps {
@@ -20,15 +20,15 @@ const SideFilter: React.FC<SideFilterProps> = ({
 }) => {
   /* ---------------- Categories ---------------- */
   const categories: string[] = [
-    'Accounting and Bookkeeping',
-    'Marketing and Advertising',
-    'IT and Technical Support',
-    'Consulting Services',
-    'Legal Services',
-    'Human Resources and Recruitment',
-    'Financial Planning and Advisory',
-    'Cleaning and Maintenance',
-    'Others',
+    "Accounting and Bookkeeping",
+    "Marketing and Advertising",
+    "IT and Technical Support",
+    "Consulting Services",
+    "Legal Services",
+    "Human Resources and Recruitment",
+    "Financial Planning and Advisory",
+    "Cleaning and Maintenance",
+    "Others",
   ];
 
   /* ---------------- Filtering Logic ---------------- */
@@ -37,7 +37,9 @@ const SideFilter: React.FC<SideFilterProps> = ({
 
     // filter by categories
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter((item) => selectedCategories.includes(item.category));
+      filtered = filtered.filter((item) =>
+        selectedCategories.includes(item.category),
+      );
     }
 
     setItems(filtered);
@@ -54,7 +56,7 @@ const SideFilter: React.FC<SideFilterProps> = ({
   const theme = useTheme();
 
   return (
-    <Grid container spacing={2} sx={{ width: 'auto' }}>
+    <Grid container spacing={2} sx={{ width: "auto" }}>
       {/* Categories */}
       <Grid component="div" {...({} as any)}>
         <Box sx={{ paddingLeft: { xs: 2, sm: 0 } }}>
@@ -62,14 +64,14 @@ const SideFilter: React.FC<SideFilterProps> = ({
             variant="h5"
             sx={{
               px: {
-                textAlign: 'left',
+                textAlign: "left",
                 fontWeight: 600,
-                lineHeight: '22px',
-                fontSize: '20px',
+                lineHeight: "22px",
+                fontSize: "20px",
                 color: (theme.palette.primary as any).hover,
-                marginBottom: '10px',
-                paddingLeft: '25px',
-                paddingTop: '20px',
+                marginBottom: "10px",
+                paddingLeft: "25px",
+                paddingTop: "20px",
               },
             }}
           >

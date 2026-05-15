@@ -6,38 +6,38 @@
  * On completion with opt-in checked, calls POST /api/websites/:id/listing/extract.
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Collapse from '@mui/material/Collapse';
-import Alert from '@mui/material/Alert';
-import Skeleton from '@mui/material/Skeleton';
-import CircularProgress from '@mui/material/CircularProgress';
-import MenuItem from '@mui/material/MenuItem';
-import { Lock, ChevronDown, ChevronUp } from 'lucide-react';
-import { apiClient } from '../../api/client';
-import DashboardInput from '../Dashboard/shared/DashboardInput';
-import DashboardSelect from '../Dashboard/shared/DashboardSelect';
-import DashboardCard from '../Dashboard/shared/DashboardCard';
-import DashboardGradientButton from '../Dashboard/shared/DashboardGradientButton';
-import DashboardActionButton from '../Dashboard/shared/DashboardActionButton';
+import React, { useState, useCallback, useMemo } from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Collapse from "@mui/material/Collapse";
+import Alert from "@mui/material/Alert";
+import Skeleton from "@mui/material/Skeleton";
+import CircularProgress from "@mui/material/CircularProgress";
+import MenuItem from "@mui/material/MenuItem";
+import { Lock, ChevronDown, ChevronUp } from "lucide-react";
+import { apiClient } from "../../api/client";
+import DashboardInput from "../Dashboard/shared/DashboardInput";
+import DashboardSelect from "../Dashboard/shared/DashboardSelect";
+import DashboardCard from "../Dashboard/shared/DashboardCard";
+import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
+import DashboardActionButton from "../Dashboard/shared/DashboardActionButton";
 
-const PAID_PLANS = ['website_core', 'website_growth', 'website_agency'];
+const PAID_PLANS = ["website_core", "website_growth", "website_agency"];
 
 const BUSINESS_CATEGORIES = [
-  'Restaurant',
-  'Retail',
-  'Professional Services',
-  'Health & Wellness',
-  'Technology',
-  'Education',
-  'Real Estate',
-  'Automotive',
-  'Home Services',
-  'Entertainment',
-  'Other',
+  "Restaurant",
+  "Retail",
+  "Professional Services",
+  "Health & Wellness",
+  "Technology",
+  "Education",
+  "Real Estate",
+  "Automotive",
+  "Home Services",
+  "Entertainment",
+  "Other",
 ];
 
 export interface ListingOptInStepProps {
@@ -59,25 +59,28 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
 
   const [optedIn, setOptedIn] = useState(isPaidPlan);
   const [expanded, setExpanded] = useState(false);
-  const [shortDescription, setShortDescription] = useState('');
-  const [businessCategory, setBusinessCategory] = useState('');
+  const [shortDescription, setShortDescription] = useState("");
+  const [businessCategory, setBusinessCategory] = useState("");
   const [extracting, setExtracting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleOptInChange = useCallback(
     (_e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
       setOptedIn(checked);
     },
-    []
+    [],
   );
 
   const handleToggleExpand = useCallback(() => {
     setExpanded((prev) => !prev);
   }, []);
 
-  const handleShortDescChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setShortDescription(e.target.value);
-  }, []);
+  const handleShortDescChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setShortDescription(e.target.value);
+    },
+    [],
+  );
 
   const handleCategoryChange = useCallback((e: any) => {
     setBusinessCategory(e.target.value as string);
@@ -90,14 +93,14 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
     }
 
     setExtracting(true);
-    setError('');
+    setError("");
 
     try {
       await apiClient.post(`/websites/${websiteId}/listing/extract`);
     } catch {
       // Non-blocking: extraction failure should not prevent wizard completion
       setError(
-        'Directory listing extraction encountered an issue. You can configure it later in settings.'
+        "Directory listing extraction encountered an issue. You can configure it later in settings.",
       );
     } finally {
       setExtracting(false);
@@ -108,21 +111,30 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
   const previewData = useMemo(
     () => ({
       businessName: websiteName,
-      category: businessCategory || 'Business',
-      shortDescription: shortDescription || 'Your business description will appear here...',
+      category: businessCategory || "Business",
+      shortDescription:
+        shortDescription || "Your business description will appear here...",
     }),
-    [websiteName, businessCategory, shortDescription]
+    [websiteName, businessCategory, shortDescription],
   );
 
   if (extracting) {
     return (
       <Box sx={{ py: 4 }}>
-        <Skeleton variant="rectangular" height={40} sx={{ mb: 2, borderRadius: 1 }} />
-        <Skeleton variant="rectangular" height={80} sx={{ mb: 2, borderRadius: 1 }} />
+        <Skeleton
+          variant="rectangular"
+          height={40}
+          sx={{ mb: 2, borderRadius: 1 }}
+        />
+        <Skeleton
+          variant="rectangular"
+          height={80}
+          sx={{ mb: 2, borderRadius: 1 }}
+        />
         <Skeleton variant="rectangular" height={40} sx={{ borderRadius: 1 }} />
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2 }}>
           <CircularProgress size={16} />
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             Extracting listing data from your website...
           </Typography>
         </Box>
@@ -138,9 +150,9 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
         title="Directory Listing"
         subtitle="Available on Core plan and above"
       >
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-          List your business in the Techietribe Directory to reach more customers. Upgrade to a paid
-          plan to unlock directory listings.
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          List your business in the Techietribe Directory to reach more
+          customers. Upgrade to a paid plan to unlock directory listings.
         </Typography>
         <DashboardGradientButton href="/pricing" data-testid="upgrade-cta">
           Upgrade to Unlock
@@ -152,7 +164,7 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
   return (
     <Box sx={{ py: 1 }}>
       {error && (
-        <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setError('')}>
+        <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setError("")}>
           {error}
         </Alert>
       )}
@@ -163,11 +175,17 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
             checked={optedIn}
             onChange={handleOptInChange}
             data-testid="opt-in-checkbox"
-            sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }}
+            sx={{
+              color: "primary.main",
+              "&.Mui-checked": { color: "primary.main" },
+            }}
           />
         }
         label={
-          <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 500 }}>
+          <Typography
+            variant="body1"
+            sx={{ color: "text.primary", fontWeight: 500 }}
+          >
             List my business in the Techietribe Directory
           </Typography>
         }
@@ -181,20 +199,26 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
             sx={{
               p: 2,
               borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider',
+              border: "1px solid",
+              borderColor: "divider",
               mb: 2,
-              bgcolor: 'background.paper',
+              bgcolor: "background.paper",
             }}
             data-testid="listing-preview"
           >
-            <Typography variant="subtitle1" sx={{ color: 'text.primary', fontWeight: 600 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "text.primary", fontWeight: 600 }}
+            >
               {previewData.businessName}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'primary.main' }}>
+            <Typography variant="caption" sx={{ color: "primary.main" }}>
               {previewData.category}
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", mt: 0.5 }}
+            >
               {previewData.shortDescription}
             </Typography>
           </Box>
@@ -203,31 +227,36 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
           <Box
             onClick={handleToggleExpand}
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              cursor: 'pointer',
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
               mb: 1,
-              userSelect: 'none',
+              userSelect: "none",
             }}
             role="button"
             tabIndex={0}
             aria-expanded={expanded}
             aria-label="Customize Listing Details"
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+              if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 handleToggleExpand();
               }
             }}
           >
-            <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 500, mr: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "primary.main", fontWeight: 500, mr: 0.5 }}
+            >
               Customize Listing Details
             </Typography>
             {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </Box>
 
           <Collapse in={expanded}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+            >
               <DashboardInput
                 label="Short Description"
                 placeholder="A brief description of your business"
@@ -257,7 +286,7 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
         </>
       )}
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}>
         <DashboardActionButton onClick={onSkip} disabled={extracting}>
           Skip
         </DashboardActionButton>
@@ -266,7 +295,11 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
           disabled={extracting}
           data-testid="complete-btn"
         >
-          {extracting ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : 'Continue'}
+          {extracting ? (
+            <CircularProgress size={16} sx={{ color: "inherit" }} />
+          ) : (
+            "Continue"
+          )}
         </DashboardGradientButton>
       </Box>
     </Box>

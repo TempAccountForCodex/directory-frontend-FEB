@@ -20,28 +20,36 @@
  * 16. No link when linkText/linkUrl absent
  */
 
-import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
+import React from "react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('framer-motion', () => ({
-  useScroll: () => ({ scrollYProgress: { get: () => 0, onChange: () => () => {} } }),
-  useTransform: (..._args) => ({ get: () => '0%', onChange: () => () => {} }),
-  useMotionValue: (v) => ({ get: () => v, set: () => {}, onChange: () => () => {} }),
+vi.mock("framer-motion", () => ({
+  useScroll: () => ({
+    scrollYProgress: { get: () => 0, onChange: () => () => {} },
+  }),
+  useTransform: (..._args) => ({ get: () => "0%", onChange: () => () => {} }),
+  useMotionValue: (v) => ({
+    get: () => v,
+    set: () => {},
+    onChange: () => () => {},
+  }),
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    section: ({ children, ...props }: any) => <section {...props}>{children}</section>,
+    section: ({ children, ...props }: any) => (
+      <section {...props}>{children}</section>
+    ),
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
   useInView: () => [null, true],
 }));
 
-vi.mock('react-intersection-observer', () => ({
+vi.mock("react-intersection-observer", () => ({
   useInView: () => ({ ref: null, inView: true }),
 }));
 
@@ -53,19 +61,19 @@ let sessionStore: Record<string, string> = {};
 
 beforeEach(() => {
   sessionStore = {};
-  (global.sessionStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation(
-    (key: string) => sessionStore[key] ?? null
-  );
-  (global.sessionStorage.setItem as ReturnType<typeof vi.fn>).mockImplementation(
-    (key: string, value: string) => {
-      sessionStore[key] = value;
-    }
-  );
-  (global.sessionStorage.removeItem as ReturnType<typeof vi.fn>).mockImplementation(
-    (key: string) => {
-      delete sessionStore[key];
-    }
-  );
+  (
+    global.sessionStorage.getItem as ReturnType<typeof vi.fn>
+  ).mockImplementation((key: string) => sessionStore[key] ?? null);
+  (
+    global.sessionStorage.setItem as ReturnType<typeof vi.fn>
+  ).mockImplementation((key: string, value: string) => {
+    sessionStore[key] = value;
+  });
+  (
+    global.sessionStorage.removeItem as ReturnType<typeof vi.fn>
+  ).mockImplementation((key: string) => {
+    delete sessionStore[key];
+  });
 });
 
 afterEach(() => {
@@ -75,7 +83,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 // Import subject (will fail until implemented — RED phase)
 // ---------------------------------------------------------------------------
-import AnnouncementBarBlock from '../AnnouncementBarBlock';
+import AnnouncementBarBlock from "../AnnouncementBarBlock";
 
 // ---------------------------------------------------------------------------
 // Test data
@@ -90,17 +98,17 @@ type BlockLike = {
 
 const makeBlock = (contentOverrides = {}): BlockLike => ({
   id: 42,
-  blockType: 'ANNOUNCEMENT_BAR',
+  blockType: "ANNOUNCEMENT_BAR",
   sortOrder: 1,
   content: {
-    text: 'Special offer! 50% off today only.',
-    linkText: 'Shop Now',
-    linkUrl: 'https://example.com/shop',
-    backgroundColor: '#1d4ed8',
-    textColor: '#ffffff',
+    text: "Special offer! 50% off today only.",
+    linkText: "Shop Now",
+    linkUrl: "https://example.com/shop",
+    backgroundColor: "#1d4ed8",
+    textColor: "#ffffff",
     dismissible: true,
-    position: 'inline',
-    icon: '',
+    position: "inline",
+    icon: "",
     ...contentOverrides,
   },
 });
@@ -109,146 +117,168 @@ const makeBlock = (contentOverrides = {}): BlockLike => ({
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('AnnouncementBarBlock', () => {
-  it('1. renders announcement text', () => {
+describe("AnnouncementBarBlock", () => {
+  it("1. renders announcement text", () => {
     render(<AnnouncementBarBlock block={makeBlock()} primaryColor="#2563eb" />);
     expect(screen.getByText(/Special offer/)).toBeInTheDocument();
   });
 
-  it('2. renders link with target=_blank and rel=noopener noreferrer', () => {
+  it("2. renders link with target=_blank and rel=noopener noreferrer", () => {
     render(<AnnouncementBarBlock block={makeBlock()} primaryColor="#2563eb" />);
-    const link = screen.getByRole('link', { name: /Shop Now/i });
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    const link = screen.getByRole("link", { name: /Shop Now/i });
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it('3. renders close button when dismissible=true', () => {
+  it("3. renders close button when dismissible=true", () => {
     render(
-      <AnnouncementBarBlock block={makeBlock({ dismissible: true })} primaryColor="#2563eb" />
+      <AnnouncementBarBlock
+        block={makeBlock({ dismissible: true })}
+        primaryColor="#2563eb"
+      />,
     );
-    const closeBtn = screen.getByRole('button');
+    const closeBtn = screen.getByRole("button");
     expect(closeBtn).toBeInTheDocument();
   });
 
-  it('4. does NOT render close button when dismissible=false', () => {
+  it("4. does NOT render close button when dismissible=false", () => {
     render(
-      <AnnouncementBarBlock block={makeBlock({ dismissible: false })} primaryColor="#2563eb" />
+      <AnnouncementBarBlock
+        block={makeBlock({ dismissible: false })}
+        primaryColor="#2563eb"
+      />,
     );
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it('5. dismiss button hides the bar', () => {
+  it("5. dismiss button hides the bar", () => {
     render(
-      <AnnouncementBarBlock block={makeBlock({ dismissible: true })} primaryColor="#2563eb" />
+      <AnnouncementBarBlock
+        block={makeBlock({ dismissible: true })}
+        primaryColor="#2563eb"
+      />,
     );
-    const closeBtn = screen.getByRole('button');
+    const closeBtn = screen.getByRole("button");
     fireEvent.click(closeBtn);
     expect(screen.queryByText(/Special offer/)).not.toBeInTheDocument();
   });
 
-  it('6. dismiss stores state in sessionStorage with block id key', () => {
+  it("6. dismiss stores state in sessionStorage with block id key", () => {
     render(
-      <AnnouncementBarBlock block={makeBlock({ dismissible: true })} primaryColor="#2563eb" />
+      <AnnouncementBarBlock
+        block={makeBlock({ dismissible: true })}
+        primaryColor="#2563eb"
+      />,
     );
-    fireEvent.click(screen.getByRole('button'));
-    expect(global.sessionStorage.setItem).toHaveBeenCalledWith('announcement-dismissed-42', '1');
+    fireEvent.click(screen.getByRole("button"));
+    expect(global.sessionStorage.setItem).toHaveBeenCalledWith(
+      "announcement-dismissed-42",
+      "1",
+    );
   });
 
-  it('7. bar does not render when sessionStorage key already set', () => {
-    sessionStore['announcement-dismissed-42'] = '1';
+  it("7. bar does not render when sessionStorage key already set", () => {
+    sessionStore["announcement-dismissed-42"] = "1";
     render(<AnnouncementBarBlock block={makeBlock()} primaryColor="#2563eb" />);
     expect(screen.queryByText(/Special offer/)).not.toBeInTheDocument();
   });
 
-  it('8. renders inline position without fixed positioning', () => {
+  it("8. renders inline position without fixed positioning", () => {
     const { container } = render(
       <AnnouncementBarBlock
-        block={makeBlock({ position: 'inline', dismissible: false })}
+        block={makeBlock({ position: "inline", dismissible: false })}
         primaryColor="#2563eb"
-      />
+      />,
     );
     // position 'inline' should not use fixed in style
     expect(container.firstChild).toBeTruthy();
   });
 
-  it('9. renders top position with fixed or sticky', () => {
+  it("9. renders top position with fixed or sticky", () => {
     const { container } = render(
       <AnnouncementBarBlock
-        block={makeBlock({ position: 'top', dismissible: false })}
+        block={makeBlock({ position: "top", dismissible: false })}
         primaryColor="#2563eb"
-      />
+      />,
     );
     expect(container.firstChild).toBeTruthy();
   });
 
-  it('10. icon renders when icon prop provided', () => {
+  it("10. icon renders when icon prop provided", () => {
     const { container } = render(
-      <AnnouncementBarBlock block={makeBlock({ icon: 'star' })} primaryColor="#2563eb" />
+      <AnnouncementBarBlock
+        block={makeBlock({ icon: "star" })}
+        primaryColor="#2563eb"
+      />,
     );
     // Icon should create a svg element
-    const svgOrIcon = container.querySelector('svg');
+    const svgOrIcon = container.querySelector("svg");
     expect(svgOrIcon).toBeInTheDocument();
   });
 
-  it('11. no icon element when icon prop is empty string', () => {
+  it("11. no icon element when icon prop is empty string", () => {
     const { container } = render(
       <AnnouncementBarBlock
-        block={makeBlock({ icon: '', dismissible: false })}
+        block={makeBlock({ icon: "", dismissible: false })}
         primaryColor="#2563eb"
-      />
+      />,
     );
     // Without icon or close button, no svg should be present
-    const svgs = container.querySelectorAll('svg');
+    const svgs = container.querySelectorAll("svg");
     expect(svgs.length).toBe(0);
   });
 
-  it('12. text is NOT injected via dangerouslySetInnerHTML (XSS safety)', () => {
-    const xssPayload = '<img src=x onerror=alert(1)>';
+  it("12. text is NOT injected via dangerouslySetInnerHTML (XSS safety)", () => {
+    const xssPayload = "<img src=x onerror=alert(1)>";
     render(
       <AnnouncementBarBlock
         block={makeBlock({ text: xssPayload, dismissible: false })}
         primaryColor="#2563eb"
-      />
+      />,
     );
     // The raw <img> tag should NOT have been rendered as an actual img element from text
     // Find all img elements
-    const imgs = screen.queryAllByRole('img');
+    const imgs = screen.queryAllByRole("img");
     // Should be 0 (no image injected from XSS payload)
     expect(imgs.length).toBe(0);
     // The text content should contain the escaped text
     expect(screen.getByText(xssPayload)).toBeInTheDocument();
   });
 
-  it('13. component is React.memo (has displayName)', () => {
+  it("13. component is React.memo (has displayName)", () => {
     expect(
-      AnnouncementBarBlock.displayName ?? (AnnouncementBarBlock as any).type?.displayName
+      AnnouncementBarBlock.displayName ??
+        (AnnouncementBarBlock as any).type?.displayName,
     ).toBeTruthy();
   });
 
-  it('14. custom background color applied (no crash with custom color)', () => {
+  it("14. custom background color applied (no crash with custom color)", () => {
     expect(() =>
       render(
         <AnnouncementBarBlock
-          block={makeBlock({ backgroundColor: '#ff0000', textColor: '#000000' })}
+          block={makeBlock({
+            backgroundColor: "#ff0000",
+            textColor: "#000000",
+          })}
           primaryColor="#2563eb"
-        />
-      )
+        />,
+      ),
     ).not.toThrow();
   });
 
-  it('15. link text and url render correctly', () => {
+  it("15. link text and url render correctly", () => {
     render(<AnnouncementBarBlock block={makeBlock()} primaryColor="#2563eb" />);
-    const link = screen.getByRole('link', { name: /Shop Now/i });
-    expect(link).toHaveAttribute('href', 'https://example.com/shop');
+    const link = screen.getByRole("link", { name: /Shop Now/i });
+    expect(link).toHaveAttribute("href", "https://example.com/shop");
   });
 
-  it('16. no link rendered when linkText/linkUrl absent', () => {
+  it("16. no link rendered when linkText/linkUrl absent", () => {
     render(
       <AnnouncementBarBlock
-        block={makeBlock({ linkText: '', linkUrl: '' })}
+        block={makeBlock({ linkText: "", linkUrl: "" })}
         primaryColor="#2563eb"
-      />
+      />,
     );
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 });

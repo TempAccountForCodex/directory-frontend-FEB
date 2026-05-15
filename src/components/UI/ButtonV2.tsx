@@ -1,13 +1,13 @@
-import React from 'react';
-import { Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 export default function ScrollButton({
-  label = 'Click Here',
-  to = '/contact',
-  accentColor = '#378C92', // underline + arrow color
-  textColor = 'black',
-  size = 'medium',
+  label = "Click Here",
+  to = "/contact",
+  accentColor = "#378C92", // underline + arrow color
+  textColor = "black",
+  size = "medium",
 }) {
   const navigate = useNavigate();
 
@@ -15,7 +15,7 @@ export default function ScrollButton({
     e.preventDefault();
 
     // ✅ Check if target includes route (like /contact-us#contact-section)
-    const [path, hash] = target.split('#');
+    const [path, hash] = target.split("#");
 
     if (path && path !== window.location.pathname) {
       // Navigate to the target page first
@@ -25,22 +25,24 @@ export default function ScrollButton({
       setTimeout(() => {
         const element = document.querySelector(`#${hash}`);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }, 500); // small delay to allow page transition
     } else {
       // Same-page scroll
-      const element = document.querySelector(`#${hash || target.replace('#', '')}`);
+      const element = document.querySelector(
+        `#${hash || target.replace("#", "")}`,
+      );
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }
   };
 
   const sizeStyles = {
-    small: { fontSize: '14px', gap: '0.3rem', arrowSize: '18px' },
-    medium: { fontSize: '18px', gap: '0.4rem', arrowSize: '25px' },
-    large: { fontSize: '24px', gap: '0.5rem', arrowSize: '32px' },
+    small: { fontSize: "14px", gap: "0.3rem", arrowSize: "18px" },
+    medium: { fontSize: "18px", gap: "0.4rem", arrowSize: "25px" },
+    large: { fontSize: "24px", gap: "0.5rem", arrowSize: "32px" },
   };
 
   const { fontSize, gap, arrowSize } = sizeStyles[size] || sizeStyles.medium;
@@ -52,37 +54,37 @@ export default function ScrollButton({
         fontSize,
         fontWeight: 400,
         color: textColor,
-        textTransform: 'none',
-        background: 'transparent',
-        border: 'none',
-        display: 'inline-flex',
-        alignItems: 'center',
+        textTransform: "none",
+        background: "transparent",
+        border: "none",
+        display: "inline-flex",
+        alignItems: "center",
         gap,
-        whiteSpace: 'nowrap',
-        cursor: 'pointer',
-        '&:hover': { background: 'transparent' },
-        '& .text': {
-          position: 'relative',
-          '&::after': {
+        whiteSpace: "nowrap",
+        cursor: "pointer",
+        "&:hover": { background: "transparent" },
+        "& .text": {
+          position: "relative",
+          "&::after": {
             content: '""',
-            position: 'absolute',
+            position: "absolute",
             left: 0,
             bottom: 0,
-            width: '20%',
-            height: '2px',
+            width: "20%",
+            height: "2px",
             backgroundColor: accentColor,
-            transition: 'width 0.4s ease-in-out',
+            transition: "width 0.4s ease-in-out",
           },
         },
-        '& .arrow': {
-          display: 'inline-block',
-          transform: 'translateX(0)',
+        "& .arrow": {
+          display: "inline-block",
+          transform: "translateX(0)",
           fontSize: arrowSize,
           color: accentColor,
-          transition: 'transform 0.4s ease-in-out',
+          transition: "transform 0.4s ease-in-out",
         },
-        '&:hover .text::after': { width: '100%' },
-        '&:hover .arrow': { transform: 'translateX(6px)' },
+        "&:hover .text::after": { width: "100%" },
+        "&:hover .arrow": { transform: "translateX(6px)" },
       }}
     >
       <span className="text">{label}</span>

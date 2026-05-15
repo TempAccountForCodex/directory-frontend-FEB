@@ -18,7 +18,7 @@
  * Performance: React.memo prevents re-renders when parent updates unrelated state
  */
 
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -30,8 +30,11 @@ import {
   Alert,
   Divider,
   Stack,
-} from '@mui/material';
-import { Warning as WarningIcon, CompareArrows as CompareIcon } from '@mui/icons-material';
+} from "@mui/material";
+import {
+  Warning as WarningIcon,
+  CompareArrows as CompareIcon,
+} from "@mui/icons-material";
 
 // ---------------------------------------------------------------------------
 // Types (exported for use by useAutosave and tests)
@@ -43,7 +46,7 @@ export interface ConflictData {
   localData: Record<string, unknown>;
 }
 
-export type ConflictResolution = 'keep-local' | 'use-server';
+export type ConflictResolution = "keep-local" | "use-server";
 
 export interface ConflictModalProps {
   open: boolean;
@@ -63,18 +66,22 @@ interface DiffRowProps {
   serverValue: unknown;
 }
 
-const DiffRow: React.FC<DiffRowProps> = ({ field, localValue, serverValue }) => {
+const DiffRow: React.FC<DiffRowProps> = ({
+  field,
+  localValue,
+  serverValue,
+}) => {
   const localStr =
     localValue === null || localValue === undefined
-      ? '(empty)'
-      : typeof localValue === 'object'
+      ? "(empty)"
+      : typeof localValue === "object"
         ? JSON.stringify(localValue, null, 2)
         : String(localValue);
 
   const serverStr =
     serverValue === null || serverValue === undefined
-      ? '(empty)'
-      : typeof serverValue === 'object'
+      ? "(empty)"
+      : typeof serverValue === "object"
         ? JSON.stringify(serverValue, null, 2)
         : String(serverValue);
 
@@ -83,30 +90,33 @@ const DiffRow: React.FC<DiffRowProps> = ({ field, localValue, serverValue }) => 
   return (
     <Box
       sx={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
         gap: 1,
         mb: 1.5,
         p: 1,
         borderRadius: 1,
-        bgcolor: isDifferent ? 'action.hover' : 'transparent',
-        border: isDifferent ? '1px solid' : '1px solid transparent',
-        borderColor: isDifferent ? 'warning.light' : 'transparent',
+        bgcolor: isDifferent ? "action.hover" : "transparent",
+        border: isDifferent ? "1px solid" : "1px solid transparent",
+        borderColor: isDifferent ? "warning.light" : "transparent",
       }}
     >
       <Box>
-        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+        <Typography
+          variant="caption"
+          sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
+        >
           {field}
         </Typography>
         <Typography
           variant="body2"
           component="pre"
           sx={{
-            color: isDifferent ? 'success.main' : 'text.primary',
-            fontSize: '0.75rem',
-            fontFamily: 'monospace',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
+            color: isDifferent ? "success.main" : "text.primary",
+            fontSize: "0.75rem",
+            fontFamily: "monospace",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
             m: 0,
           }}
         >
@@ -115,18 +125,21 @@ const DiffRow: React.FC<DiffRowProps> = ({ field, localValue, serverValue }) => 
         </Typography>
       </Box>
       <Box>
-        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+        <Typography
+          variant="caption"
+          sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
+        >
           {field}
         </Typography>
         <Typography
           variant="body2"
           component="pre"
           sx={{
-            color: isDifferent ? 'error.main' : 'text.primary',
-            fontSize: '0.75rem',
-            fontFamily: 'monospace',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
+            color: isDifferent ? "error.main" : "text.primary",
+            fontSize: "0.75rem",
+            fontFamily: "monospace",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
             m: 0,
           }}
         >
@@ -147,11 +160,11 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
     const [showDiff, setShowDiff] = useState(false);
 
     const handleKeepLocal = useCallback(() => {
-      onResolve('keep-local');
+      onResolve("keep-local");
     }, [onResolve]);
 
     const handleUseServer = useCallback(() => {
-      onResolve('use-server');
+      onResolve("use-server");
     }, [onResolve]);
 
     const handleToggleDiff = useCallback(() => {
@@ -160,10 +173,13 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
 
     // Collect all field keys from both versions
     const allFields = Array.from(
-      new Set([...Object.keys(conflictData.localData), ...Object.keys(conflictData.serverData)])
+      new Set([
+        ...Object.keys(conflictData.localData),
+        ...Object.keys(conflictData.serverData),
+      ]),
     );
 
-    const dialogTitleId = 'conflict-modal-title';
+    const dialogTitleId = "conflict-modal-title";
 
     return (
       <Dialog
@@ -177,13 +193,13 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
         <DialogTitle
           id={dialogTitleId}
           sx={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 1.5,
             pb: 1,
           }}
         >
-          <WarningIcon sx={{ color: 'warning.main', fontSize: 24 }} />
+          <WarningIcon sx={{ color: "warning.main", fontSize: 24 }} />
           <Typography variant="h6" component="span">
             Editing Conflict
           </Typography>
@@ -191,9 +207,10 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
 
         <DialogContent sx={{ pt: 1 }}>
           {/* Warning message */}
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            Someone else edited this content while you were working. Your changes haven&apos;t been
-            saved yet. Choose how to resolve this conflict:
+          <Typography variant="body1" sx={{ mb: 2, color: "text.secondary" }}>
+            Someone else edited this content while you were working. Your
+            changes haven&apos;t been saved yet. Choose how to resolve this
+            conflict:
           </Typography>
 
           {/* Fetch error alert */}
@@ -209,26 +226,32 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
               sx={{
                 mt: 1,
                 mb: 2,
-                border: '1px solid',
-                borderColor: 'divider',
+                border: "1px solid",
+                borderColor: "divider",
                 borderRadius: 1,
-                overflow: 'hidden',
+                overflow: "hidden",
               }}
             >
               {/* Column headers */}
               <Box
                 sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
                   gap: 1,
                   p: 1.5,
-                  bgcolor: 'action.hover',
+                  bgcolor: "action.hover",
                 }}
               >
-                <Typography variant="subtitle2" sx={{ color: 'success.main', fontWeight: 700 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: "success.main", fontWeight: 700 }}
+                >
                   Your version
                 </Typography>
-                <Typography variant="subtitle2" sx={{ color: 'error.main', fontWeight: 700 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: "error.main", fontWeight: 700 }}
+                >
                   Server version
                 </Typography>
               </Box>
@@ -245,7 +268,7 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
                   />
                 ))}
                 {allFields.length === 0 && (
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     No field differences to display.
                   </Typography>
                 )}
@@ -259,8 +282,8 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
             px: 3,
             pb: 2,
             gap: 1,
-            flexWrap: 'wrap',
-            justifyContent: 'flex-end',
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
           }}
         >
           <Button
@@ -268,13 +291,13 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
             size="small"
             startIcon={<CompareIcon />}
             onClick={handleToggleDiff}
-            aria-label={showDiff ? 'Hide diff' : 'View diff'}
+            aria-label={showDiff ? "Hide diff" : "View diff"}
             sx={{
-              mr: 'auto',
-              textTransform: 'none',
+              mr: "auto",
+              textTransform: "none",
             }}
           >
-            {showDiff ? 'Hide diff' : 'View diff'}
+            {showDiff ? "Hide diff" : "View diff"}
           </Button>
 
           <Stack direction="row" spacing={1}>
@@ -283,7 +306,7 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
               color="error"
               onClick={handleUseServer}
               aria-label="Use theirs — discard your changes and use the server version"
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: "none" }}
             >
               Use theirs
             </Button>
@@ -293,7 +316,7 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
               color="primary"
               onClick={handleKeepLocal}
               aria-label="Keep yours — save your version and overwrite the server version"
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: "none" }}
             >
               Keep yours
             </Button>
@@ -301,9 +324,9 @@ const ConflictModal: React.FC<ConflictModalProps> = memo(
         </DialogActions>
       </Dialog>
     );
-  }
+  },
 );
 
-ConflictModal.displayName = 'ConflictModal';
+ConflictModal.displayName = "ConflictModal";
 
 export default ConflictModal;

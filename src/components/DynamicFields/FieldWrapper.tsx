@@ -6,8 +6,8 @@
  * Label pattern follows DashboardInput's `Typography component="label"` approach
  * for visual consistency across the dashboard (lighter than FormControl/fieldset).
  */
-import React, { useId } from 'react';
-import { Box, FormHelperText, Tooltip, Typography } from '@mui/material';
+import React, { useId } from "react";
+import { Box, FormHelperText, Tooltip, Typography } from "@mui/material";
 
 export interface FieldWrapperProps {
   /** Human-readable label for the field */
@@ -41,7 +41,8 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
     const errorId = errors.length > 0 ? `${uid}-error` : undefined;
 
     // Build aria-describedby — join all descriptor IDs
-    const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined;
+    const describedBy =
+      [helpId, errorId].filter(Boolean).join(" ") || undefined;
 
     const hasErrors = errors.length > 0;
 
@@ -57,9 +58,9 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
             color="text.secondary"
             id={helpId}
             sx={{
-              cursor: 'help',
-              textDecoration: 'underline dotted',
-              display: 'inline-block',
+              cursor: "help",
+              textDecoration: "underline dotted",
+              display: "inline-block",
               mt: 0.25,
             }}
           >
@@ -73,7 +74,7 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
           variant="caption"
           color="text.secondary"
           id={helpId}
-          sx={{ display: 'block', mt: 0.25 }}
+          sx={{ display: "block", mt: 0.25 }}
         >
           {help}
         </Typography>
@@ -87,11 +88,11 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
           <Typography
             component="label"
             sx={{
-              display: 'block',
-              fontSize: '0.875rem',
+              display: "block",
+              fontSize: "0.875rem",
               fontWeight: 500,
-              color: hasErrors ? 'error.main' : 'text.secondary',
-              transition: 'color 0.2s ease',
+              color: hasErrors ? "error.main" : "text.secondary",
+              transition: "color 0.2s ease",
               mb: help ? 0.25 : 0,
             }}
           >
@@ -100,7 +101,7 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
               <Typography
                 component="span"
                 aria-hidden="true"
-                sx={{ color: 'error.main', ml: 0.25 }}
+                sx={{ color: "error.main", ml: 0.25 }}
               >
                 *
               </Typography>
@@ -132,9 +133,9 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
         )}
       </Box>
     );
-  }
+  },
 );
 
-FieldWrapper.displayName = 'FieldWrapper';
+FieldWrapper.displayName = "FieldWrapper";
 
 export default FieldWrapper;

@@ -5,7 +5,13 @@
  * Uses Dashboard shared components. Step 3.17.
  */
 
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import {
   Box,
   Grid,
@@ -17,34 +23,37 @@ import {
   alpha,
   useMediaQuery,
   useTheme,
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import DeleteIcon from '@mui/icons-material/Delete';
-import IconButton from '@mui/material/IconButton';
-import { motion, AnimatePresence } from 'framer-motion';
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DeleteIcon from "@mui/icons-material/Delete";
+import IconButton from "@mui/material/IconButton";
+import { motion, AnimatePresence } from "framer-motion";
 // @ts-ignore
-import { DashboardInput, DashboardSelect } from '../Dashboard/shared';
+import { DashboardInput, DashboardSelect } from "../Dashboard/shared";
 // @ts-ignore
-import { getDashboardColors } from '../../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../../context/ThemeContext';
+import { getDashboardColors } from "../../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
 import {
   BUSINESS_TYPES,
   BRAND_PERSONALITIES,
   type QuestionnaireData,
   type ValidationErrors,
   type SocialLinks,
-} from '../../hooks/useAIQuestionnaire';
+} from "../../hooks/useAIQuestionnaire";
 
 interface AIQuestionnaireProps {
   data: QuestionnaireData;
   errors: ValidationErrors;
-  updateField: <K extends keyof QuestionnaireData>(field: K, value: QuestionnaireData[K]) => void;
+  updateField: <K extends keyof QuestionnaireData>(
+    field: K,
+    value: QuestionnaireData[K],
+  ) => void;
   updateSocialLink: (platform: keyof SocialLinks, value: string) => void;
   optionalFieldsFilled: number;
 }
 
-const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml'];
+const ACCEPTED_LOGO_TYPES = ["image/jpeg", "image/png", "image/svg+xml"];
 const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB
 
 const RequiredFields = React.memo(function RequiredFields({
@@ -65,54 +74,58 @@ const RequiredFields = React.memo(function RequiredFields({
           {bt.label}
         </MenuItem>
       )),
-    []
+    [],
   );
 
   const handleWebsiteName = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      onFieldChange('websiteName', e.target.value);
+      onFieldChange("websiteName", e.target.value);
     },
-    [onFieldChange]
+    [onFieldChange],
   );
 
   const handleBusinessType = useCallback(
     (e: { target: { value: string } }) => {
-      onFieldChange('businessType', e.target.value);
+      onFieldChange("businessType", e.target.value);
     },
-    [onFieldChange]
+    [onFieldChange],
   );
 
   const handleEmail = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      onFieldChange('email', e.target.value);
+      onFieldChange("email", e.target.value);
     },
-    [onFieldChange]
+    [onFieldChange],
   );
 
   const handlePhone = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      onFieldChange('phone', e.target.value);
+      onFieldChange("phone", e.target.value);
     },
-    [onFieldChange]
+    [onFieldChange],
   );
 
   const handleAddress = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      onFieldChange('address', e.target.value);
+      onFieldChange("address", e.target.value);
     },
-    [onFieldChange]
+    [onFieldChange],
   );
 
   const handleServices = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      onFieldChange('services', e.target.value);
+      onFieldChange("services", e.target.value);
     },
-    [onFieldChange]
+    [onFieldChange],
   );
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }} id="required-fields-heading">
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 600, mb: 2 }}
+        id="required-fields-heading"
+      >
         Business Information
       </Typography>
       <Typography variant="body2" sx={{ mb: 3, opacity: 0.7 }}>
@@ -131,7 +144,9 @@ const RequiredFields = React.memo(function RequiredFields({
               required
               aria-label="Website name"
               aria-required="true"
-              aria-describedby={errors.websiteName ? 'websiteName-error' : undefined}
+              aria-describedby={
+                errors.websiteName ? "websiteName-error" : undefined
+              }
               inputProps={{ minLength: 3, maxLength: 255 }}
               placeholder="e.g. My Business Website"
             />
@@ -203,7 +218,8 @@ const RequiredFields = React.memo(function RequiredFields({
               rows={3}
               error={!!errors.services}
               helperText={
-                errors.services || 'Describe what your business offers (min. 10 characters)'
+                errors.services ||
+                "Describe what your business offers (min. 10 characters)"
               }
               required
               aria-label="Services and products"
@@ -225,13 +241,13 @@ const OptionalFields = React.memo(function OptionalFields({
   colors,
 }: {
   data: QuestionnaireData;
-  updateField: AIQuestionnaireProps['updateField'];
-  updateSocialLink: AIQuestionnaireProps['updateSocialLink'];
+  updateField: AIQuestionnaireProps["updateField"];
+  updateSocialLink: AIQuestionnaireProps["updateSocialLink"];
   optionalFieldsFilled: number;
   colors: ReturnType<typeof getDashboardColors>;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [logoError, setLogoError] = useState('');
+  const [logoError, setLogoError] = useState("");
 
   const brandOptions = useMemo(
     () =>
@@ -240,25 +256,25 @@ const OptionalFields = React.memo(function OptionalFields({
           {bp.label} — {bp.description}
         </MenuItem>
       )),
-    []
+    [],
   );
 
   const handleLogoChange = useCallback(
     (files: FileList | null) => {
-      setLogoError('');
+      setLogoError("");
       if (!files || files.length === 0) return;
       const file = files[0];
       if (!ACCEPTED_LOGO_TYPES.includes(file.type)) {
-        setLogoError('Only JPG, PNG, and SVG files are accepted');
+        setLogoError("Only JPG, PNG, and SVG files are accepted");
         return;
       }
       if (file.size > MAX_LOGO_SIZE) {
-        setLogoError('File must be under 2MB');
+        setLogoError("File must be under 2MB");
         return;
       }
-      updateField('logoFile', file);
+      updateField("logoFile", file);
     },
-    [updateField]
+    [updateField],
   );
 
   const handleDrop = useCallback(
@@ -266,7 +282,7 @@ const OptionalFields = React.memo(function OptionalFields({
       e.preventDefault();
       handleLogoChange(e.dataTransfer.files);
     },
-    [handleLogoChange]
+    [handleLogoChange],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -274,71 +290,71 @@ const OptionalFields = React.memo(function OptionalFields({
   }, []);
 
   const removeLogo = useCallback(() => {
-    updateField('logoFile', null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    updateField("logoFile", null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }, [updateField]);
 
   const handleBrandPersonality = useCallback(
     (e: { target: { value: string } }) => {
-      updateField('brandPersonality', e.target.value);
+      updateField("brandPersonality", e.target.value);
     },
-    [updateField]
+    [updateField],
   );
 
   const handleTargetAudience = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateField('targetAudience', e.target.value);
+      updateField("targetAudience", e.target.value);
     },
-    [updateField]
+    [updateField],
   );
 
   const handleUsp = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateField('usp', e.target.value);
+      updateField("usp", e.target.value);
     },
-    [updateField]
+    [updateField],
   );
 
   const handleBusinessHours = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateField('businessHours', e.target.value);
+      updateField("businessHours", e.target.value);
     },
-    [updateField]
+    [updateField],
   );
 
   const handleServiceArea = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateField('serviceArea', e.target.value);
+      updateField("serviceArea", e.target.value);
     },
-    [updateField]
+    [updateField],
   );
 
   const handleSocialFacebook = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateSocialLink('facebook', e.target.value);
+      updateSocialLink("facebook", e.target.value);
     },
-    [updateSocialLink]
+    [updateSocialLink],
   );
 
   const handleSocialInstagram = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateSocialLink('instagram', e.target.value);
+      updateSocialLink("instagram", e.target.value);
     },
-    [updateSocialLink]
+    [updateSocialLink],
   );
 
   const handleSocialTwitter = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateSocialLink('twitter', e.target.value);
+      updateSocialLink("twitter", e.target.value);
     },
-    [updateSocialLink]
+    [updateSocialLink],
   );
 
   const handleSocialLinkedin = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateSocialLink('linkedin', e.target.value);
+      updateSocialLink("linkedin", e.target.value);
     },
-    [updateSocialLink]
+    [updateSocialLink],
   );
 
   return (
@@ -356,26 +372,29 @@ const OptionalFields = React.memo(function OptionalFields({
           tabIndex={0}
           aria-label="Upload logo"
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
+            if (e.key === "Enter" || e.key === " ")
+              fileInputRef.current?.click();
           }}
           sx={{
             border: `2px dashed ${alpha(colors.border, 0.5)}`,
             borderRadius: 2,
             p: 3,
-            textAlign: 'center',
-            cursor: 'pointer',
-            transition: 'border-color 0.2s',
+            textAlign: "center",
+            cursor: "pointer",
+            transition: "border-color 0.2s",
             minHeight: 44,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             gap: 1,
-            '&:hover': { borderColor: colors.primary },
+            "&:hover": { borderColor: colors.primary },
           }}
         >
           {data.logoFile || data.logoFileName ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2">{data.logoFile?.name || data.logoFileName}</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="body2">
+                {data.logoFile?.name || data.logoFileName}
+              </Typography>
               <IconButton
                 size="small"
                 onClick={(e) => {
@@ -401,11 +420,15 @@ const OptionalFields = React.memo(function OptionalFields({
           type="file"
           accept=".jpg,.jpeg,.png,.svg"
           onChange={(e) => handleLogoChange(e.target.files)}
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
           aria-hidden="true"
         />
         {logoError && (
-          <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
+          <Typography
+            variant="caption"
+            color="error"
+            sx={{ mt: 0.5, display: "block" }}
+          >
             {logoError}
           </Typography>
         )}
@@ -527,7 +550,7 @@ export default function AIQuestionnaire({
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
   const muiTheme = useTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
   const [expanded, setExpanded] = useState(!isMobile);
   const firstErrorRef = useRef<HTMLDivElement>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
@@ -535,7 +558,7 @@ export default function AIQuestionnaire({
   // Auto-focus website name on mount
   useEffect(() => {
     const timer = setTimeout(() => {
-      const input = formContainerRef.current?.querySelector('input');
+      const input = formContainerRef.current?.querySelector("input");
       if (input) input.focus();
     }, 300);
     return () => clearTimeout(timer);
@@ -544,8 +567,11 @@ export default function AIQuestionnaire({
   // Scroll to first error when errors change
   useEffect(() => {
     if (Object.keys(errors).length > 0 && firstErrorRef.current) {
-      firstErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const input = firstErrorRef.current.querySelector('input, textarea');
+      firstErrorRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      const input = firstErrorRef.current.querySelector("input, textarea");
       if (input) (input as HTMLElement).focus();
     }
   }, [errors]);
@@ -554,14 +580,22 @@ export default function AIQuestionnaire({
     (field: keyof QuestionnaireData, value: string) => {
       updateField(field, value as any);
     },
-    [updateField]
+    [updateField],
   );
 
   return (
-    <Box role="form" aria-label="AI content questionnaire" sx={{ maxWidth: 900, mx: 'auto' }}>
+    <Box
+      role="form"
+      aria-label="AI content questionnaire"
+      sx={{ maxWidth: 900, mx: "auto" }}
+    >
       {/* Validation error announcements for screen readers */}
-      <Box aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', left: -9999 }}>
-        {Object.values(errors).filter(Boolean).join('. ')}
+      <Box
+        aria-live="polite"
+        aria-atomic="true"
+        sx={{ position: "absolute", left: -9999 }}
+      >
+        {Object.values(errors).filter(Boolean).join(". ")}
       </Box>
 
       {/* Group 1: Required Fields */}
@@ -591,9 +625,9 @@ export default function AIQuestionnaire({
         sx={{
           bgcolor: alpha(colors.panelBg, 0.8),
           border: `1px solid ${alpha(colors.panelBorder || colors.border, 0.5)}`,
-          borderRadius: '8px !important',
-          '&:before': { display: 'none' },
-          boxShadow: 'none',
+          borderRadius: "8px !important",
+          "&:before": { display: "none" },
+          boxShadow: "none",
         }}
       >
         <AccordionSummary
@@ -602,7 +636,10 @@ export default function AIQuestionnaire({
           id="optional-fields-header"
           sx={{ minHeight: 44 }}
         >
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: colors.text }}>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600, color: colors.text }}
+          >
             Enhance your content (optional)
           </Typography>
         </AccordionSummary>

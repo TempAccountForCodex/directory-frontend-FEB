@@ -16,18 +16,18 @@
  * Features: anchor scroll (dynamic offset), mobile drawer, backdropBlur, sticky shadow
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
-import { BlockWrapper } from '../BlockWrapper';
-import { escapeHtml, sanitizeUrl } from '../../BlockRenderer/utils';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import { BlockWrapper } from "../BlockWrapper";
+import { escapeHtml, sanitizeUrl } from "../../BlockRenderer/utils";
 
 interface NavItem {
   label?: unknown;
   link?: unknown;
 }
 
-const BLUR_MAP: Record<string, string> = { sm: '4px', md: '8px', lg: '16px' };
+const BLUR_MAP: Record<string, string> = { sm: "4px", md: "8px", lg: "16px" };
 
 interface NavbarContent {
   brandName?: unknown;
@@ -50,9 +50,11 @@ interface NavbarBlockProps {
   };
 }
 
-const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) => {
+const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({
+  content: c,
+}) => {
   // Support both new schema (brandName/navigationItems) and legacy (logo/links)
-  const brandName = String(c.brandName || c.logo || 'My Brand');
+  const brandName = String(c.brandName || c.logo || "My Brand");
 
   const rawItems: NavItem[] = Array.isArray(c.navigationItems)
     ? (c.navigationItems as NavItem[])
@@ -65,18 +67,21 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
 
   const navItems = rawItems.slice(0, 8);
 
-  const ctaText = c.ctaText ? String(c.ctaText) : '';
-  const ctaLink = c.ctaLink ? sanitizeUrl(String(c.ctaLink)) : '#';
+  const ctaText = c.ctaText ? String(c.ctaText) : "";
+  const ctaLink = c.ctaLink ? sanitizeUrl(String(c.ctaLink)) : "#";
 
   const isSticky = Boolean(c.sticky);
 
-  const blurLevel = c.backdropBlur && c.backdropBlur !== 'none' ? String(c.backdropBlur) : null;
+  const blurLevel =
+    c.backdropBlur && c.backdropBlur !== "none" ? String(c.backdropBlur) : null;
   const blurPx = blurLevel ? BLUR_MAP[blurLevel] : null;
 
-  const variant = c.variant ? String(c.variant) : 'solid';
+  const variant = c.variant ? String(c.variant) : "solid";
 
   const logoSrc =
-    c.logo && typeof c.logo === 'string' && c.logo.startsWith('http') ? sanitizeUrl(c.logo) : null;
+    c.logo && typeof c.logo === "string" && c.logo.startsWith("http")
+      ? sanitizeUrl(c.logo)
+      : null;
 
   // ── Dynamic height measurement ────────────────────────────────────────────
   const navRef = useRef<HTMLElement>(null);
@@ -97,45 +102,46 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    if (variant !== 'transparent') return;
+    if (variant !== "transparent") return;
     const handler = () => {
       setScrolled(window.scrollY > 50);
     };
-    window.addEventListener('scroll', handler, { passive: true });
+    window.addEventListener("scroll", handler, { passive: true });
     return () => {
-      window.removeEventListener('scroll', handler);
+      window.removeEventListener("scroll", handler);
     };
   }, [variant]);
 
   // ── Mobile state ──────────────────────────────────────────────────────────
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
   );
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
   // ── Anchor scroll handler ─────────────────────────────────────────────────
   const handleNavClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>, link: string) => {
-      if (link.startsWith('#')) {
+      if (link.startsWith("#")) {
         e.preventDefault();
         const target = document.querySelector(link);
         if (target) {
-          const top = target.getBoundingClientRect().top + window.scrollY - navHeight;
-          window.scrollTo({ top, behavior: 'smooth' });
+          const top =
+            target.getBoundingClientRect().top + window.scrollY - navHeight;
+          window.scrollTo({ top, behavior: "smooth" });
         }
       }
     },
-    [navHeight]
+    [navHeight],
   );
 
   const closeMobileDrawer = useCallback(() => setMobileOpen(false), []);
@@ -145,43 +151,44 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
   const getNavBackground = (): React.CSSProperties => {
     if (blurPx) {
       return {
-        background: 'rgba(255,255,255,0.7)',
+        background: "rgba(255,255,255,0.7)",
         backdropFilter: `blur(${blurPx})`,
         WebkitBackdropFilter: `blur(${blurPx})`,
       };
     }
-    if (variant === 'transparent') {
+    if (variant === "transparent") {
       return {
-        background: scrolled ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0)',
-        color: scrolled ? '#333' : '#fff',
-        boxShadow: scrolled ? '0 2px 12px rgba(0,0,0,0.08)' : 'none',
-        transition: 'background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease',
+        background: scrolled ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0)",
+        color: scrolled ? "#333" : "#fff",
+        boxShadow: scrolled ? "0 2px 12px rgba(0,0,0,0.08)" : "none",
+        transition:
+          "background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease",
       };
     }
     return {
-      background: 'var(--color-primary, #378C92)',
-      ...(isSticky ? { boxShadow: '0 2px 8px rgba(0,0,0,0.12)' } : {}),
+      background: "var(--color-primary, #378C92)",
+      ...(isSticky ? { boxShadow: "0 2px 8px rgba(0,0,0,0.12)" } : {}),
     };
   };
 
   // ── Layout style per variant ───────────────────────────────────────────────
   const getNavLayout = (): React.CSSProperties => {
-    if (variant === 'centered') {
+    if (variant === "centered") {
       return {
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "center",
       };
     }
-    if (variant === 'left-aligned') {
+    if (variant === "left-aligned") {
       return {
-        justifyContent: 'flex-start',
+        justifyContent: "flex-start",
         gap: 24,
       };
     }
     return {
-      justifyContent: 'space-between',
+      justifyContent: "space-between",
     };
   };
 
@@ -202,11 +209,11 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
             if (inDrawer) closeMobileDrawer();
           }}
           style={{
-            color: inDrawer ? '#333' : 'inherit',
-            textDecoration: 'none',
+            color: inDrawer ? "#333" : "inherit",
+            textDecoration: "none",
             ...(inDrawer
-              ? { padding: '8px 0', fontSize: '1rem', fontWeight: 500 }
-              : { margin: variant === 'left-aligned' ? '0 8px' : '0 12px' }),
+              ? { padding: "8px 0", fontSize: "1rem", fontWeight: 500 }
+              : { margin: variant === "left-aligned" ? "0 8px" : "0 12px" }),
           }}
         >
           {label}
@@ -221,28 +228,28 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
         data-block-type="NAVBAR"
         data-global-component="navbar"
         data-variant={variant}
-        {...(blurPx ? { 'data-backdrop-blur': blurLevel! } : {})}
+        {...(blurPx ? { "data-backdrop-blur": blurLevel! } : {})}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '16px 24px',
-          color: '#fff',
+          display: "flex",
+          alignItems: "center",
+          padding: "16px 24px",
+          color: "#fff",
           ...bgStyle,
           ...layoutStyle,
-          ...(isSticky ? { position: 'sticky', top: 0, zIndex: 1000 } : {}),
+          ...(isSticky ? { position: "sticky", top: 0, zIndex: 1000 } : {}),
         }}
       >
-        {variant === 'centered' ? (
+        {variant === "centered" ? (
           <>
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
               }}
             >
-              {logoSrc && logoSrc !== '#' && (
+              {logoSrc && logoSrc !== "#" && (
                 <img
                   src={logoSrc}
                   alt={escapeHtml(brandName)}
@@ -252,7 +259,10 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
               <strong
                 data-editable="brandName"
                 data-edit-type="single"
-                style={{ fontFamily: 'var(--font-heading, sans-serif)', fontSize: '1.2rem' }}
+                style={{
+                  fontFamily: "var(--font-heading, sans-serif)",
+                  fontSize: "1.2rem",
+                }}
               >
                 {escapeHtml(brandName)}
               </strong>
@@ -261,11 +271,11 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
             {!isMobile && (
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexWrap: 'wrap',
-                  width: '100%',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                  width: "100%",
                 }}
               >
                 {renderNavLinks()}
@@ -274,13 +284,13 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
                     href={ctaLink}
                     onClick={(e) => handleNavClick(e, ctaLink)}
                     style={{
-                      background: '#fff',
-                      color: 'var(--color-primary, #378C92)',
-                      padding: '8px 16px',
+                      background: "#fff",
+                      color: "var(--color-primary, #378C92)",
+                      padding: "8px 16px",
                       borderRadius: 4,
-                      textDecoration: 'none',
+                      textDecoration: "none",
                       fontWeight: 600,
-                      margin: '0 12px',
+                      margin: "0 12px",
                     }}
                   >
                     {escapeHtml(ctaText)}
@@ -294,13 +304,13 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
                 aria-label="Open menu"
                 onClick={openMobileDrawer}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'inherit',
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "inherit",
                   padding: 4,
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
                 <MenuIcon />
@@ -309,8 +319,8 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
           </>
         ) : (
           <>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              {logoSrc && logoSrc !== '#' && (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {logoSrc && logoSrc !== "#" && (
                 <img
                   src={logoSrc}
                   alt={escapeHtml(brandName)}
@@ -320,7 +330,10 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
               <strong
                 data-editable="brandName"
                 data-edit-type="single"
-                style={{ fontFamily: 'var(--font-heading, sans-serif)', fontSize: '1.2rem' }}
+                style={{
+                  fontFamily: "var(--font-heading, sans-serif)",
+                  fontSize: "1.2rem",
+                }}
               >
                 {escapeHtml(brandName)}
               </strong>
@@ -329,9 +342,9 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
             {!isMobile && (
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  ...(variant === 'left-aligned' ? { gap: 16 } : {}),
+                  display: "flex",
+                  alignItems: "center",
+                  ...(variant === "left-aligned" ? { gap: 16 } : {}),
                 }}
               >
                 {renderNavLinks()}
@@ -340,11 +353,11 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
                     href={ctaLink}
                     onClick={(e) => handleNavClick(e, ctaLink)}
                     style={{
-                      background: '#fff',
-                      color: 'var(--color-primary, #378C92)',
-                      padding: '8px 16px',
+                      background: "#fff",
+                      color: "var(--color-primary, #378C92)",
+                      padding: "8px 16px",
                       borderRadius: 4,
-                      textDecoration: 'none',
+                      textDecoration: "none",
                       fontWeight: 600,
                     }}
                   >
@@ -359,13 +372,13 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
                 aria-label="Open menu"
                 onClick={openMobileDrawer}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'inherit',
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "inherit",
                   padding: 4,
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
                 <MenuIcon />
@@ -380,33 +393,33 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
         <div
           data-testid="mobile-drawer"
           style={{
-            position: 'fixed',
+            position: "fixed",
             top: 0,
             right: 0,
-            height: '100vh',
+            height: "100vh",
             width: 280,
-            background: '#fff',
-            color: '#333',
+            background: "#fff",
+            color: "#333",
             zIndex: 2000,
-            padding: '24px 16px',
-            display: 'flex',
-            flexDirection: 'column',
+            padding: "24px 16px",
+            display: "flex",
+            flexDirection: "column",
             gap: 16,
-            boxShadow: '-4px 0 16px rgba(0,0,0,0.15)',
+            boxShadow: "-4px 0 16px rgba(0,0,0,0.15)",
           }}
         >
           <button
             aria-label="Close menu"
             onClick={closeMobileDrawer}
             style={{
-              alignSelf: 'flex-end',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#333',
+              alignSelf: "flex-end",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#333",
               padding: 4,
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
             }}
           >
             <CloseIcon />
@@ -422,13 +435,13 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
                 closeMobileDrawer();
               }}
               style={{
-                background: 'var(--color-primary, #378C92)',
-                color: '#fff',
-                padding: '10px 16px',
+                background: "var(--color-primary, #378C92)",
+                color: "#fff",
+                padding: "10px 16px",
                 borderRadius: 4,
-                textDecoration: 'none',
+                textDecoration: "none",
                 fontWeight: 600,
-                textAlign: 'center',
+                textAlign: "center",
                 marginTop: 8,
               }}
             >
@@ -444,13 +457,17 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({ content: c }) 
 const NavbarBlock: React.FC<NavbarBlockProps> = ({ block }) => {
   const content = (block.content || {}) as NavbarContent;
   return (
-    <BlockWrapper fields={content as unknown as import('../BlockWrapper').BlockWrapperFields}>
+    <BlockWrapper
+      fields={
+        content as unknown as import("../BlockWrapper").BlockWrapperFields
+      }
+    >
       <NavbarBlockInner content={content} />
     </BlockWrapper>
   );
 };
 
 const NavbarBlockMemo = React.memo(NavbarBlock);
-NavbarBlockMemo.displayName = 'NavbarBlock';
+NavbarBlockMemo.displayName = "NavbarBlock";
 
 export default NavbarBlockMemo;

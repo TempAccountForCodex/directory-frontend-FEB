@@ -10,7 +10,7 @@
  *           Image URLs validated to reject javascript: protocol
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState } from "react";
 import {
   Box,
   Card,
@@ -21,7 +21,7 @@ import {
   Button,
   Select,
   MenuItem,
-} from '@mui/material';
+} from "@mui/material";
 
 /* ===================== Types ===================== */
 
@@ -37,8 +37,8 @@ export interface Product {
   description?: string | null;
   priceCents: number;
   currency?: string | null;
-  status: 'active' | 'draft' | 'archived';
-  stockStatus: 'in_stock' | 'out_of_stock' | 'pre_order' | 'discontinued';
+  status: "active" | "draft" | "archived";
+  stockStatus: "in_stock" | "out_of_stock" | "pre_order" | "discontinued";
   imageUrls?: string[] | null;
   category?: string | null;
   badgeText?: string;
@@ -57,7 +57,7 @@ export interface ProductCardConfig {
   ctaLink?: string;
   showVariantSelector?: boolean;
   hoverOverlay?: boolean;
-  cardStyle?: 'default' | 'minimal' | 'elevated';
+  cardStyle?: "default" | "minimal" | "elevated";
 }
 
 export interface ProductCardColors {
@@ -81,9 +81,9 @@ export interface ProductCardProps {
  * Returns the URL if safe, empty string otherwise.
  */
 function safeUrl(url: string | null | undefined): string {
-  if (!url) return '';
+  if (!url) return "";
   const trimmed = url.trim().toLowerCase();
-  if (trimmed.startsWith('javascript:')) return '';
+  if (trimmed.startsWith("javascript:")) return "";
   return url.trim();
 }
 
@@ -92,9 +92,9 @@ function safeUrl(url: string | null | undefined): string {
  */
 function formatPrice(priceCents: number, currency: string): string {
   try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
     }).format(priceCents / 100);
   } catch {
     return `$${(priceCents / 100).toFixed(2)}`;
@@ -105,21 +105,21 @@ function formatPrice(priceCents: number, currency: string): string {
  * Truncate text to a maximum character count.
  */
 function truncate(text: string | null | undefined, maxLength: number): string {
-  if (!text) return '';
+  if (!text) return "";
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
+  return text.slice(0, maxLength) + "...";
 }
 
 /* ===================== Stock Badge ===================== */
 
 const STOCK_CONFIG: Record<
-  Product['stockStatus'],
-  { label: string; color: 'success' | 'error' | 'warning' | 'default' }
+  Product["stockStatus"],
+  { label: string; color: "success" | "error" | "warning" | "default" }
 > = {
-  in_stock: { label: 'In Stock', color: 'success' },
-  out_of_stock: { label: 'Out of Stock', color: 'error' },
-  pre_order: { label: 'Pre-order', color: 'warning' },
-  discontinued: { label: 'Discontinued', color: 'default' },
+  in_stock: { label: "In Stock", color: "success" },
+  out_of_stock: { label: "Out of Stock", color: "error" },
+  pre_order: { label: "Pre-order", color: "warning" },
+  discontinued: { label: "Discontinued", color: "default" },
 };
 
 /* ===================== Component ===================== */
@@ -128,22 +128,22 @@ const STOCK_CONFIG: Record<
 
 const CARD_STYLE_SX: Record<string, object> = {
   default: {
-    transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-    '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 },
+    transition: "transform 0.25s ease, box-shadow 0.25s ease",
+    "&:hover": { transform: "translateY(-4px)", boxShadow: 6 },
   },
   minimal: {
-    boxShadow: 'none',
-    border: '1px solid',
-    borderColor: 'divider',
+    boxShadow: "none",
+    border: "1px solid",
+    borderColor: "divider",
     borderRadius: 1,
-    transition: 'border-color 0.25s ease',
-    '&:hover': { borderColor: 'text.primary' },
+    transition: "border-color 0.25s ease",
+    "&:hover": { borderColor: "text.primary" },
   },
   elevated: {
     boxShadow: 8,
     borderRadius: 3,
-    transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-    '&:hover': { transform: 'translateY(-6px)', boxShadow: 12 },
+    transition: "transform 0.25s ease, box-shadow 0.25s ease",
+    "&:hover": { transform: "translateY(-6px)", boxShadow: 12 },
   },
 };
 
@@ -162,22 +162,25 @@ const ProductCard: React.FC<ProductCardProps> = ({
     ctaText,
     showVariantSelector = false,
     hoverOverlay = false,
-    cardStyle = 'default',
+    cardStyle = "default",
   } = config;
   const { primaryColor, headingColor, bodyColor } = colors;
 
-  const currency = product.currency || 'USD';
+  const currency = product.currency || "USD";
   const imageUrl = safeUrl(product.imageUrls?.[0]);
   const descriptionExcerpt = truncate(product.description, 100);
   const formattedPrice = formatPrice(product.priceCents, currency);
-  const stockInfo = STOCK_CONFIG[product.stockStatus] ?? STOCK_CONFIG.discontinued;
+  const stockInfo =
+    STOCK_CONFIG[product.stockStatus] ?? STOCK_CONFIG.discontinued;
 
   const resolvedCtaText = product.ctaText || ctaText;
   const hasBadge = Boolean(product.badgeText);
   const hasVariants =
-    showVariantSelector && Array.isArray(product.variants) && product.variants.length > 0;
+    showVariantSelector &&
+    Array.isArray(product.variants) &&
+    product.variants.length > 0;
 
-  const [selectedVariant, setSelectedVariant] = useState('');
+  const [selectedVariant, setSelectedVariant] = useState("");
 
   const handleCardClick = useCallback(() => {
     if (showQuickView && onQuickView) {
@@ -192,10 +195,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
         onCtaClick(product);
       }
     },
-    [onCtaClick, product]
+    [onCtaClick, product],
   );
 
-  const cardElevation = cardStyle === 'minimal' ? 0 : cardStyle === 'elevated' ? 8 : 2;
+  const cardElevation =
+    cardStyle === "minimal" ? 0 : cardStyle === "elevated" ? 8 : 2;
 
   return (
     <Card
@@ -205,24 +209,24 @@ const ProductCard: React.FC<ProductCardProps> = ({
       onClick={handleCardClick}
       elevation={cardElevation}
       sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        cursor: showQuickView && onQuickView ? 'pointer' : 'default',
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        cursor: showQuickView && onQuickView ? "pointer" : "default",
         ...(CARD_STYLE_SX[cardStyle] ?? CARD_STYLE_SX.default),
       }}
     >
       {/* Product Image — 4:3 aspect ratio with optional badge + hover overlay */}
       <Box
         sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          aspectRatio: '4/3',
-          bgcolor: 'grey.100',
+          position: "relative",
+          overflow: "hidden",
+          aspectRatio: "4/3",
+          bgcolor: "grey.100",
           ...(hoverOverlay
             ? {
-                '@media (hover: hover)': {
-                  '&:hover .product-hover-overlay': { opacity: 1 },
+                "@media (hover: hover)": {
+                  "&:hover .product-hover-overlay": { opacity: 1 },
                 },
               }
             : {}),
@@ -235,22 +239,22 @@ const ProductCard: React.FC<ProductCardProps> = ({
             alt={product.name}
             loading="lazy"
             sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transition: 'transform 0.3s ease',
-              '&:hover': { transform: 'scale(1.05)' },
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              transition: "transform 0.3s ease",
+              "&:hover": { transform: "scale(1.05)" },
             }}
           />
         ) : (
           <Box
             data-testid="product-card-image-placeholder"
             sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             aria-label="No product image available"
           >
@@ -267,13 +271,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
             size="small"
             data-testid="product-card-badge"
             sx={{
-              position: 'absolute',
+              position: "absolute",
               top: 8,
               left: 8,
               bgcolor: product.badgeColor || primaryColor,
-              color: 'white',
+              color: "white",
               fontWeight: 700,
-              fontSize: '0.7rem',
+              fontSize: "0.7rem",
               zIndex: 1,
             }}
           />
@@ -286,14 +290,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
             data-testid="product-card-hover-overlay"
             onClick={handleCtaClick}
             sx={{
-              position: 'absolute',
+              position: "absolute",
               inset: 0,
-              bgcolor: 'rgba(0,0,0,0.55)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              bgcolor: "rgba(0,0,0,0.55)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               opacity: 0,
-              transition: 'opacity 0.3s ease',
+              transition: "opacity 0.3s ease",
               zIndex: 2,
             }}
           >
@@ -302,10 +306,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
               size="small"
               aria-label={`${resolvedCtaText}: ${product.name}`}
               sx={{
-                bgcolor: 'white',
+                bgcolor: "white",
                 color: primaryColor,
                 fontWeight: 700,
-                '&:hover': { bgcolor: 'grey.100' },
+                "&:hover": { bgcolor: "grey.100" },
               }}
             >
               {resolvedCtaText}
@@ -314,7 +318,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
       </Box>
 
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, p: 2 }}>
+      <CardContent
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          p: 2,
+        }}
+      >
         {/* Category chip */}
         {product.category && (
           <Box>
@@ -325,7 +337,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 bgcolor: `${primaryColor}1A`,
                 color: primaryColor,
                 fontWeight: 600,
-                fontSize: '0.7rem',
+                fontSize: "0.7rem",
               }}
             />
           </Box>
@@ -339,7 +351,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             color: headingColor,
             fontWeight: 700,
             lineHeight: 1.3,
-            fontSize: { xs: '0.95rem', sm: '1rem' },
+            fontSize: { xs: "0.95rem", sm: "1rem" },
           }}
         >
           {product.name}
@@ -351,7 +363,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             variant="subtitle1"
             component="p"
             aria-label={`Price: ${formattedPrice}`}
-            sx={{ color: primaryColor, fontWeight: 700, fontSize: '1.1rem' }}
+            sx={{ color: primaryColor, fontWeight: 700, fontSize: "1.1rem" }}
           >
             {formattedPrice}
           </Typography>
@@ -391,7 +403,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             data-testid="product-card-variant-selector"
             onClick={(e) => e.stopPropagation()}
             aria-label={`Select variant for ${product.name}`}
-            sx={{ fontSize: '0.8rem' }}
+            sx={{ fontSize: "0.8rem" }}
           >
             <MenuItem value="" disabled>
               Select option
@@ -406,7 +418,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* CTA Button */}
         {resolvedCtaText && !hoverOverlay && (
-          <Box sx={{ mt: 'auto', pt: 1 }}>
+          <Box sx={{ mt: "auto", pt: 1 }}>
             <Button
               variant="contained"
               size="small"
@@ -414,11 +426,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
               aria-label={`${resolvedCtaText}: ${product.name}`}
               sx={{
                 bgcolor: primaryColor,
-                color: 'white',
+                color: "white",
                 fontWeight: 600,
-                fontSize: '0.8rem',
-                width: '100%',
-                '&:hover': {
+                fontSize: "0.8rem",
+                width: "100%",
+                "&:hover": {
                   bgcolor: primaryColor,
                   opacity: 0.9,
                 },
@@ -433,6 +445,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
   );
 };
 
-ProductCard.displayName = 'ProductCard';
+ProductCard.displayName = "ProductCard";
 
 export default React.memo(ProductCard);

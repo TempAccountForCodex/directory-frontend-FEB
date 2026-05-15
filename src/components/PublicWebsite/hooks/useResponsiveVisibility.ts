@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
 export interface ResponsiveVisibilityFields {
   hideOnMobile?: boolean;
@@ -12,10 +12,14 @@ export interface ResponsiveVisibilityResult {
 }
 
 export function useResponsiveVisibility(
-  fields: ResponsiveVisibilityFields
+  fields: ResponsiveVisibilityFields,
 ): ResponsiveVisibilityResult {
   return useMemo(() => {
-    const { hideOnMobile = false, hideOnTablet = false, hideOnDesktop = false } = fields;
+    const {
+      hideOnMobile = false,
+      hideOnTablet = false,
+      hideOnDesktop = false,
+    } = fields;
 
     if (!hideOnMobile && !hideOnTablet && !hideOnDesktop) {
       return { isHidden: false, visibilitySx: {} };
@@ -28,17 +32,17 @@ export function useResponsiveVisibility(
     const display: Record<string, string> = {};
 
     if (hideOnMobile) {
-      display.xs = 'none';
-      display.sm = 'none';
+      display.xs = "none";
+      display.sm = "none";
     }
 
     if (hideOnTablet) {
-      display.md = 'none';
+      display.md = "none";
     }
 
     if (hideOnDesktop) {
-      display.lg = 'none';
-      display.xl = 'none';
+      display.lg = "none";
+      display.xl = "none";
     }
 
     return {

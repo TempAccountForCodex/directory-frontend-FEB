@@ -63,6 +63,7 @@ import {
   Trash2,
   Undo2,
   Upload,
+  X,
   Ellipsis,
 } from "lucide-react";
 import { getDashboardColors } from "../../styles/dashboardTheme";
@@ -145,10 +146,41 @@ const DEFAULT_SECTION_STYLE = {
   backgroundSize: "cover",
   backgroundPosition: "center",
   backgroundRepeat: "no-repeat",
+  layoutWidth: "page",
+  heightPreset: "auto",
+  customHeight: "0px",
+  contentAlign: "left",
+  borderStyle: "none",
+  borderWidth: "",
+  borderRadius: "",
+  borderColor: "#dbe3ea",
+  opacity: 1,
+  boxShadowPreset: "none",
+  showOnDesktop: true,
+  showOnTablet: true,
+  showOnMobile: true,
+  entranceAnimation: "none",
+  layoutDirection: "",
+  layoutGap: "",
+  overflowMode: "",
+  positionMode: "",
+  minHeightValue: "",
+  maxWidthValue: "",
+  parallaxEnabled: false,
+  parallaxSpeed: 50,
+  stickySection: false,
+  stickyOffset: "",
+  cssClass: "",
+  anchorId: "",
+  zIndex: "",
   paddingTop: "0px",
   paddingBottom: "0px",
+  paddingLeft: "0px",
+  paddingRight: "0px",
   marginTop: "0px",
   marginBottom: "0px",
+  marginLeft: "0px",
+  marginRight: "0px",
 };
 
 const DEFAULT_IMAGE_VALUE = {
@@ -247,6 +279,7 @@ const WebsiteEditorInner = () => {
   const [selectedImageElement, setSelectedImageElement] = useState(null);
   const [selectedSectionElement, setSelectedSectionElement] = useState(null);
   const [activeToolbarMode, setActiveToolbarMode] = useState("text");
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [uploadedLibraryImages, setUploadedLibraryImages] = useState([]);
   const [previewContextMenu, setPreviewContextMenu] = useState(null);
   const [selectedPreviewTarget, setSelectedPreviewTarget] = useState(null);
@@ -559,17 +592,17 @@ const WebsiteEditorInner = () => {
     localConflictRetryRef.current = false;
     const iframeDoc = iframeRef.current?.contentDocument || null;
     const activeIframeElement =
-      iframeDoc?.querySelector('[data-inline-editing="true"]')
-      || (iframeDoc?.activeElement instanceof HTMLElement ? iframeDoc.activeElement : null);
+      iframeDoc?.querySelector('[data-inline-editing="true"]') ||
+      (iframeDoc?.activeElement instanceof HTMLElement
+        ? iframeDoc.activeElement
+        : null);
     let nextBlocks = blocksRef.current;
 
     if (
       activeIframeElement &&
       activeIframeElement instanceof HTMLElement &&
-      (
-        activeIframeElement.getAttribute("data-inline-editing") === "true"
-        || activeIframeElement.isContentEditable
-      )
+      (activeIframeElement.getAttribute("data-inline-editing") === "true" ||
+        activeIframeElement.isContentEditable)
     ) {
       const blockId = activeIframeElement.getAttribute("data-block-id");
       const fieldPath = activeIframeElement.getAttribute("data-editable");
@@ -579,28 +612,28 @@ const WebsiteEditorInner = () => {
         flushSync(() => {
           pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
           nextBlocks = blocksRef.current.map((block) => {
-              if (String(block.id) !== String(blockId)) return block;
+            if (String(block.id) !== String(blockId)) return block;
 
-              const updated = {
-                ...block,
-                content: {
-                  ...(block.content || {}),
-                },
+            const updated = {
+              ...block,
+              content: {
+                ...(block.content || {}),
+              },
+            };
+
+            const parts = fieldPath.split(".");
+            let obj = updated.content;
+            for (let i = 0; i < parts.length - 1; i++) {
+              obj[parts[i]] = {
+                ...(obj[parts[i]] && typeof obj[parts[i]] === "object"
+                  ? obj[parts[i]]
+                  : {}),
               };
-
-              const parts = fieldPath.split(".");
-              let obj = updated.content;
-              for (let i = 0; i < parts.length - 1; i++) {
-                obj[parts[i]] = {
-                  ...(obj[parts[i]] && typeof obj[parts[i]] === "object"
-                    ? obj[parts[i]]
-                    : {}),
-                };
-                obj = obj[parts[i]];
-              }
-              obj[parts[parts.length - 1]] = nextValue;
-              return updated;
-            });
+              obj = obj[parts[i]];
+            }
+            obj[parts[parts.length - 1]] = nextValue;
+            return updated;
+          });
           blocksRef.current = nextBlocks;
           setBlocks(nextBlocks);
         });
@@ -1165,6 +1198,9 @@ const WebsiteEditorInner = () => {
 
   const handleSelectPage = useCallback((page) => {
     setSelectedEditableElement(null);
+    setSelectedSectionElement(null);
+    setSelectedImageElement(null);
+    setIsInspectorOpen(false);
     if (page?.localOnly) {
       const localBlocks = Array.isArray(page.blocks) ? page.blocks : [];
       localTemplateHydratedPageRef.current = page.id;
@@ -1481,6 +1517,7 @@ const WebsiteEditorInner = () => {
             },
       );
       setActiveToolbarMode("text");
+      setIsInspectorOpen(true);
       setBlockDialogOpen(false);
       setEditingBlock(null);
       syncPreviewSelection({
@@ -1501,6 +1538,7 @@ const WebsiteEditorInner = () => {
       setSelectedSectionElement(data);
       if (data) {
         setActiveToolbarMode("section");
+        setIsInspectorOpen(true);
         syncPreviewSelection({
           kind: "section",
           blockId: data.blockId,
@@ -1538,6 +1576,7 @@ const WebsiteEditorInner = () => {
       setSelectedEditableElement(null);
       setSelectedImageElement(data);
       setSelectedSectionElement((prev) => prev || null);
+      setIsInspectorOpen(false);
       setBlockDialogOpen(false);
       setEditingBlock(null);
       syncPreviewSelection({
@@ -1981,46 +2020,94 @@ const WebsiteEditorInner = () => {
   const headerMenuOpen = Boolean(headerMenuAnchorEl);
   const pageCount = pages.length;
   const activeBlockCount = blocks.length;
+  const inspectorTitle =
+    activeToolbarMode === "section"
+      ? selectedSectionElement?.label || "Section"
+      : selectedEditableElement
+        ? getEditableStyleConfig(selectedEditableElement.fieldPath).label
+        : selectedImageElement?.label || "Inspector";
+  const inspectorCaption = selectedImageElement
+    ? "Manage selected image from the media dialog."
+    : activeToolbarMode === "section"
+      ? "Adjust section background, padding, and spacing."
+      : selectedEditableElement
+        ? "Edit typography and alignment for the selected text."
+        : "Select text or a section on the canvas to edit its settings.";
+  const sidebarModeMeta =
+    sidebarMode === "theme"
+      ? {
+          key: "theme",
+          label: "Theme",
+          icon: Palette,
+        }
+      : sidebarMode === "media"
+        ? {
+            key: "media",
+            label: "Media",
+            icon: ImageIcon,
+          }
+        : {
+            key: "blocks",
+            label: "Blocks",
+            icon: Layers,
+          };
+  const showDesktopInspector =
+    !isMobile &&
+    isInspectorOpen &&
+    (Boolean(selectedEditableElement) || Boolean(selectedSectionElement));
 
   const builderPanelSx = {
     position: "relative",
     overflow: "hidden",
     background: isEditorDark
-      ? "linear-gradient(180deg, rgba(18,24,26,0.96) 0%, rgba(12,17,19,0.94) 100%)"
-      : "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.93) 100%)",
-    border: `1px solid ${alpha(colors.primary, isEditorDark ? 0.18 : 0.12)}`,
-    borderRadius: 4,
+      ? "linear-gradient(180deg, rgba(18,24,26,0.98) 0%, rgba(12,17,19,0.96) 100%)"
+      : "white",
+    border: `1px solid ${alpha(colors.primary, isEditorDark ? 0.18 : 0.1)}`,
+    borderRadius: 1,
     boxShadow: isEditorDark
-      ? "0 24px 60px rgba(0, 0, 0, 0.45)"
-      : "0 24px 50px rgba(15, 23, 42, 0.08)",
-    backdropFilter: "blur(18px)",
+      ? "0 28px 70px rgba(0, 0, 0, 0.48)"
+      : "0 18px 40px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04)",
+    backdropFilter: "blur(20px)",
     "&::before": {
       content: '""',
       position: "absolute",
       inset: 0,
       background: isEditorDark
-        ? "radial-gradient(circle at top right, rgba(45, 212, 191, 0.12), transparent 34%)"
-        : "radial-gradient(circle at top right, rgba(45, 212, 191, 0.08), transparent 34%)",
+        ? "radial-gradient(circle at top right, rgba(45, 212, 191, 0.14), transparent 34%)"
+        : "radial-gradient(circle at top right, rgb(99 99 99 / 8%), transparent 32%), radial-gradient(circle at bottom left, rgb(181 181 181 / 5%), transparent 28%)",
+      pointerEvents: "none",
+    },
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      inset: 1,
+      borderRadius: "inherit",
+      border: "1px solid rgba(255,255,255,0.68)",
       pointerEvents: "none",
     },
   };
 
   const builderSectionLabelSx = {
-    fontSize: "0.72rem",
-    letterSpacing: "0.18em",
+    fontSize: "0.68rem",
+    letterSpacing: "0.22em",
     textTransform: "uppercase",
-    color: editorLabelText,
+    color: alpha(editorLabelText, 0.88),
+    fontWeight: 700,
   };
 
   const sidebarHeaderButtonSx = {
     textTransform: "none",
-    minHeight: 36,
-    borderRadius: 2.5,
+    minHeight: 40,
+    px: 1.25,
+    borderRadius: 999,
     boxShadow: "none",
     transition:
-      "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
+      "transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease",
+    fontWeight: 700,
+    letterSpacing: "-0.01em",
     "&:hover": {
-      boxShadow: "none",
+      boxShadow: "0 8px 18px rgba(15,23,42,0.08)",
+      transform: "translateY(-1px)",
     },
     "&.Mui-disabled": {
       color: alpha(editorText, 0.34),
@@ -2054,140 +2141,107 @@ const WebsiteEditorInner = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        background: "#f3f3f6",
-        backgroundColor: "#f3f3f6",
-        backgroundImage: "none",
-        px: { xs: 1.25, sm: 2, lg: 3 },
-        py: { xs: 1.5, md: 2.5 },
+        height: { md: "100vh" },
+        background: "#ffffff",
+        px: { xs: 1.25, sm: 2.25, lg: "0px" },
+        overflowX: "hidden",
+        overflowY: { md: "hidden" },
       }}
     >
-      <Container maxWidth={false} sx={{ px: 0 }}>
+      <Container
+        maxWidth={false}
+        sx={{
+          px: 0,
+          height: { md: "100%" },
+          display: "flex",
+          flexDirection: "column",
+          overflow: { md: "hidden" },
+        }}
+        disableGutters
+      >
         {/* Header */}
         <Box
           sx={{
             ...builderPanelSx,
-            mb: 2,
-            px: { xs: 1.1, sm: 1.75 },
-            py: { xs: 1.1, sm: 1.35 },
+            mb: 0,
+            px: { xs: 1, sm: 1.2 },
+            py: { xs: 0.65, sm: 0.7 },
             display: "flex",
-            flexDirection: { xs: "column", xl: "row" },
+            flexDirection: "row",
             justifyContent: "space-between",
-            alignItems: { xs: "stretch", xl: "center" },
-            gap: 1.1,
+            alignItems: "center",
+            gap: 1,
+            minHeight: 60,
           }}
         >
-          <Box
-            display="flex"
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            gap={1.4}
-          >
+          <Box display="flex" alignItems="center" gap={0.9} minWidth={0}>
             <IconButton
               onClick={() => navigate("/dashboard?tab=websites")}
               sx={{
-                width: 42,
-                height: 42,
-                border: `1px solid ${alpha(colors.primary, 0.24)}`,
-                backgroundColor: alpha(
-                  colors.primary,
-                  isEditorDark ? 0.08 : 0.04,
-                ),
+                width: 32,
+                height: 32,
+                border: `1px solid ${alpha(colors.primary, 0.1)}`,
+                backgroundColor: "rgba(255,255,255,0.94)",
                 color: colors.text,
+                boxShadow: "none",
+                "&:hover": { backgroundColor: "#ffffff" },
               }}
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={15} />
             </IconButton>
-            <Box>
-              <Typography sx={builderSectionLabelSx}>
-                Website Builder
-              </Typography>
+            <Box sx={{ minWidth: 0 }}>
               <Typography
-                variant="h5"
                 sx={{
                   mt: 0.15,
                   color: colors.text,
-                  fontWeight: 800,
-                  letterSpacing: "-0.04em",
-                  lineHeight: 1,
-                  fontSize: { xs: "1.45rem", md: "1.8rem" },
+                  fontWeight: 700,
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1.1,
+                  fontSize: { xs: "1.02rem", md: "1.08rem" },
+                  maxWidth: { xs: 120, sm: 180, md: 220 },
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
                 {website?.name || "Untitled Website"}
               </Typography>
-              <Box
-                display="flex"
-                gap={0.8}
-                mt={0.7}
-                flexWrap="wrap"
-                alignItems="center"
-              >
-                <Chip
-                  label={website?.status || "Draft"}
-                  size="small"
-                  sx={{
-                    height: 28,
-                    fontWeight: 700,
-                    color: colors.text,
-                    backgroundColor: alpha(
-                      website?.status === "PUBLISHED"
-                        ? colors.success
-                        : colors.warning,
-                      0.16,
-                    ),
-                    border: `1px solid ${alpha(
-                      website?.status === "PUBLISHED"
-                        ? colors.success
-                        : colors.warning,
-                      0.3,
-                    )}`,
-                  }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={(event) =>
-                    setHeaderMenuAnchorEl(event.currentTarget)
-                  }
-                  sx={{
-                    width: 30,
-                    height: 30,
-                    border: `1px solid ${alpha(colors.primary, 0.18)}`,
-                    color: editorMutedText,
-                    backgroundColor: alpha(colors.primary, 0.05),
-                  }}
-                  aria-label="Open website details"
-                >
-                  <Ellipsis size={14} />
-                </IconButton>
-              </Box>
             </Box>
           </Box>
 
           <Box
             display="flex"
             alignItems="center"
-            gap={1.25}
-            flexWrap="wrap"
-            justifyContent={{ xs: "space-between", xl: "flex-end" }}
+            gap={0.45}
+            flexWrap="nowrap"
+            justifyContent="flex-end"
+            sx={{ ml: "auto" }}
           >
-            <Box display="flex" alignItems="center" gap={0.75} flexWrap="wrap">
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.25,
+                p: 0.25,
+                borderRadius: 999,
+                backgroundColor: "rgba(255,255,255,0.88)",
+                border: `1px solid ${alpha(colors.primary, 0.08)}`,
+              }}
+            >
               <Tooltip title="Undo last block change">
                 <span>
                   <IconButton
                     onClick={handleUndoBlocks}
                     disabled={!canUndo}
                     sx={{
-                      minWidth: 42,
-                      minHeight: 42,
-                      border: `1px solid ${alpha(colors.primary, 0.18)}`,
+                      minWidth: 28,
+                      minHeight: 28,
+                      border: `1px solid transparent`,
                       color: canUndo ? colors.text : alpha(colors.text, 0.42),
-                      backgroundColor: canUndo
-                        ? alpha(colors.primary, isEditorDark ? 0.1 : 0.05)
-                        : alpha(colors.text, 0.03),
+                      backgroundColor: "transparent",
                       "&:hover": canUndo
                         ? {
-                            backgroundColor: alpha(
-                              colors.primary,
-                              isEditorDark ? 0.18 : 0.1,
-                            ),
+                            backgroundColor: "rgba(15,23,42,0.05)",
                             color: colors.text,
                           }
                         : {},
@@ -2197,7 +2251,7 @@ const WebsiteEditorInner = () => {
                       },
                     }}
                   >
-                    <Undo2 size={16} />
+                    <Undo2 size={14} />
                   </IconButton>
                 </span>
               </Tooltip>
@@ -2207,19 +2261,14 @@ const WebsiteEditorInner = () => {
                     onClick={handleRedoBlocks}
                     disabled={!canRedo}
                     sx={{
-                      minWidth: 42,
-                      minHeight: 42,
-                      border: `1px solid ${alpha(colors.primary, 0.18)}`,
+                      minWidth: 28,
+                      minHeight: 28,
+                      border: `1px solid transparent`,
                       color: canRedo ? colors.text : alpha(colors.text, 0.42),
-                      backgroundColor: canRedo
-                        ? alpha(colors.primary, isEditorDark ? 0.1 : 0.05)
-                        : alpha(colors.text, 0.03),
+                      backgroundColor: "transparent",
                       "&:hover": canRedo
                         ? {
-                            backgroundColor: alpha(
-                              colors.primary,
-                              isEditorDark ? 0.18 : 0.1,
-                            ),
+                            backgroundColor: "rgba(15,23,42,0.05)",
                             color: colors.text,
                           }
                         : {},
@@ -2229,10 +2278,22 @@ const WebsiteEditorInner = () => {
                       },
                     }}
                   >
-                    <Redo2 size={16} />
+                    <Redo2 size={14} />
                   </IconButton>
                 </span>
               </Tooltip>
+            </Box>
+
+            <Box
+              sx={{
+                display: { xs: "none", md: "flex" },
+                alignItems: "center",
+                p: 0.25,
+                borderRadius: 999,
+                backgroundColor: "rgba(255,255,255,0.88)",
+                border: `1px solid ${alpha(colors.primary, 0.08)}`,
+              }}
+            >
               <Button
                 variant="outlined"
                 startIcon={<Eye size={16} />}
@@ -2240,13 +2301,34 @@ const WebsiteEditorInner = () => {
                 sx={{
                   textTransform: "none",
                   borderRadius: 999,
-                  minHeight: 42,
-                  borderColor: alpha(colors.primary, 0.24),
+                  minHeight: 30,
+                  px: 1,
+                  borderColor: "transparent",
                   color: colors.text,
+                  backgroundColor: "transparent",
+                  boxShadow: "none",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  "&:hover": {
+                    borderColor: "transparent",
+                    backgroundColor: "rgba(15,23,42,0.05)",
+                  },
                 }}
               >
                 Live Preview
               </Button>
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                p: 0.25,
+                borderRadius: 999,
+                backgroundColor: "rgba(255,255,255,0.88)",
+                border: `1px solid ${alpha(colors.primary, 0.08)}`,
+              }}
+            >
               <Button
                 variant="contained"
                 startIcon={<Save size={16} />}
@@ -2255,12 +2337,19 @@ const WebsiteEditorInner = () => {
                 sx={{
                   textTransform: "none",
                   borderRadius: 999,
-                  minHeight: 42,
-                  px: 2,
-                  background: "black",
-                  color: "white",
+                  minHeight: 30,
+                  px: 1.5,
+                  background:
+                    "linear-gradient(135deg, #111827 0%, #020617 100%)",
+                  color: "white !important",
                   fontWeight: 700,
+                  fontSize: "0.82rem",
                   boxShadow: "none",
+                  "&:hover": {
+                    background:
+                      "linear-gradient(135deg, #0f172a 0%, #000000 100%)",
+                    boxShadow: "none",
+                  },
                 }}
               >
                 {saveStatus === "saving" ? "Saving..." : "Save Changes"}
@@ -2268,12 +2357,16 @@ const WebsiteEditorInner = () => {
             </Box>
 
             {/* Autosave status indicator */}
-            <SaveStatus status={saveStatus} onRetry={triggerManualSave} />
+            <Box sx={{ display: { xs: "none", xl: "block" } }}>
+              <SaveStatus status={saveStatus} onRetry={triggerManualSave} />
+            </Box>
             {/* WebSocket connection status (Step 7.5) */}
-            <ConnectionStatus
-              connectionState={connectionState}
-              connectedUsers={activeUsers.length}
-            />
+            <Box sx={{ display: { xs: "none", xl: "block" } }}>
+              <ConnectionStatus
+                connectionState={connectionState}
+                connectedUsers={activeUsers.length}
+              />
+            </Box>
 
             {liveSiteHref && website?.status === "PUBLISHED" && (
               <Button
@@ -2281,12 +2374,15 @@ const WebsiteEditorInner = () => {
                 startIcon={<Eye size={16} />}
                 onClick={() => window.open(liveSiteHref, "_blank")}
                 sx={{
+                  display: { xs: "none", xl: "inline-flex" },
                   textTransform: "none",
                   borderRadius: 999,
-                  px: 2,
+                  px: 1.05,
+                  minHeight: 30,
                   background: `linear-gradient(135deg, ${colors.primary} 0%, ${alpha(colors.primary, 0.78)} 100%)`,
                   color: "#061214",
                   fontWeight: 700,
+                  fontSize: "0.82rem",
                   boxShadow: "none",
                 }}
               >
@@ -2296,41 +2392,42 @@ const WebsiteEditorInner = () => {
           </Box>
         </Box>
 
-        {activeToolbarMode === "text" ? (
-          <EditorStyleToolbar
-            selection={
-              selectedEditableElement
-                ? {
-                    blockId: selectedEditableElement.blockId,
-                    fieldPath: selectedEditableElement.fieldPath,
-                    label: getEditableStyleConfig(
-                      selectedEditableElement.fieldPath,
-                    ).label,
-                    editType: selectedEditableElement.editType,
-                  }
-                : null
-            }
-            value={selectedEditableStyle}
-            disabled={!selectedEditableElement}
-            onStyleChange={handleEditableStyleChange}
-            containerSx={{ mb: 2 }}
-          />
-        ) : (
-          <EditorSectionStyleToolbar
-            selection={
-              selectedSectionElement
-                ? {
-                    blockId: selectedSectionElement.blockId,
-                    label: selectedSectionElement.label,
-                  }
-                : null
-            }
-            value={selectedSectionStyle}
-            disabled={!selectedSectionElement}
-            onStyleChange={handleSectionStyleChange}
-            containerSx={{ mb: 2 }}
-          />
-        )}
+        {isMobile &&
+          (activeToolbarMode === "text" ? (
+            <EditorStyleToolbar
+              selection={
+                selectedEditableElement
+                  ? {
+                      blockId: selectedEditableElement.blockId,
+                      fieldPath: selectedEditableElement.fieldPath,
+                      label: getEditableStyleConfig(
+                        selectedEditableElement.fieldPath,
+                      ).label,
+                      editType: selectedEditableElement.editType,
+                    }
+                  : null
+              }
+              value={selectedEditableStyle}
+              disabled={!selectedEditableElement}
+              onStyleChange={handleEditableStyleChange}
+              containerSx={{ mb: 2.25 }}
+            />
+          ) : (
+            <EditorSectionStyleToolbar
+              selection={
+                selectedSectionElement
+                  ? {
+                      blockId: selectedSectionElement.blockId,
+                      label: selectedSectionElement.label,
+                    }
+                  : null
+              }
+              value={selectedSectionStyle}
+              disabled={!selectedSectionElement}
+              onStyleChange={handleSectionStyleChange}
+              containerSx={{ mb: 2.25 }}
+            />
+          ))}
 
         <ClickAwayListener onClickAway={() => setPreviewContextMenu(null)}>
           <Menu
@@ -2530,7 +2627,14 @@ const WebsiteEditorInner = () => {
         </Alert>
       )} */}
 
-        <ResponsiveEditorLayout sx={{ mt: 2 }}>
+        <ResponsiveEditorLayout
+          sx={{
+            mt: 0,
+            flex: 1,
+            minHeight: 0,
+            overflow: { md: "hidden" },
+          }}
+        >
           <Grid container spacing={2.5}>
             {/* Compact page switcher */}
             {/* {pages.length > 0 && (
@@ -2650,149 +2754,199 @@ const WebsiteEditorInner = () => {
                     </Box>
                   </Box>
 
-                  <Grid container spacing={2.5} alignItems="stretch">
+                  <Grid container spacing={1} alignItems="stretch">
                     {/* Blocks List */}
-                    <Grid item xs={12} lg={3}>
+                    <Grid item xs={12} lg={2.1}>
                       <Paper
                         sx={{
                           ...builderPanelSx,
-                          p: 2,
+                          pl: 2,
                           height: "100%",
+                          borderRadius: 5,
+                          minHeight: { lg: 860 },
                         }}
                       >
                         <Box
-                          display="flex"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          mb={2}
+                          sx={{
+                            px: 1.3,
+                            py: 1.1,
+                            borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
+                            backgroundColor: "rgba(255,255,255,0.74)",
+                          }}
                         >
-                          {/* <Box>
-                            <Typography sx={builderSectionLabelSx}>
-                              Sections
-                            </Typography>
-                            <Typography
-                              variant="h6"
-                              sx={{ color: colors.text, fontWeight: 700 }}
-                            >
-                              {sidebarMode === "theme"
-                                ? "Theme"
-                                : sidebarMode === "media"
-                                  ? "Media"
-                                  : "Blocks"}
-                            </Typography>
-                          </Box> */}
-                          <Box display="flex" gap={0.5}>
-                            <Button
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 0.7,
+                              p: 0,
+                              backgroundColor: "transparent",
+                            }}
+                          >
+                            <FormControl
                               size="small"
-                              variant={
-                                sidebarMode === "blocks"
-                                  ? "contained"
-                                  : "outlined"
-                              }
-                              startIcon={<Layers size={16} />}
-                              onClick={() => setSidebarMode("blocks")}
                               sx={{
-                                ...sidebarHeaderButtonSx,
-                                color:
-                                  sidebarMode === "blocks"
-                                    ? "#ffffff"
-                                    : editorText,
-                                borderColor: alpha(colors.primary, 0.22),
-                                backgroundColor:
-                                  sidebarMode === "blocks"
-                                    ? "black"
-                                    : "rgba(255,255,255,0.72)",
+                                flex: 1,
+                                minWidth: 0,
                               }}
-                              aria-label="Show blocks panel"
                             >
-                              Blocks
-                            </Button>
-                            <Button
-                              size="small"
-                              variant={
-                                sidebarMode === "theme"
-                                  ? "contained"
-                                  : "outlined"
-                              }
-                              startIcon={<Palette size={16} />}
-                              onClick={() => setSidebarMode("theme")}
-                              disabled={!supportsTemplateThemeSidebar}
-                              sx={{
-                                ...sidebarHeaderButtonSx,
-                                borderColor: alpha(colors.primary, 0.18),
-                                color:
-                                  sidebarMode === "theme"
-                                    ? "#ffffff"
-                                    : editorText,
-                                backgroundColor:
-                                  sidebarMode === "theme"
-                                    ? "black"
-                                    : "rgba(255,255,255,0.72)",
-                              }}
-                              aria-label="Show theme panel"
-                            >
-                              Theme
-                            </Button>
+                              <Select
+                                value={sidebarMode}
+                                onChange={(event) =>
+                                  setSidebarMode(event.target.value)
+                                }
+                                IconComponent={ArrowDown}
+                                displayEmpty
+                                renderValue={() => {
+                                  const Icon = sidebarModeMeta.icon;
+
+                                  return (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 0.8,
+                                        minWidth: 0,
+                                      }}
+                                    >
+                                      <Icon size={15} color={editorMutedText} />
+                                      <Typography
+                                        sx={{
+                                          fontSize: "0.9rem",
+                                          fontWeight: 600,
+                                          color: colors.text,
+                                          whiteSpace: "nowrap",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                        }}
+                                      >
+                                        {sidebarModeMeta.label}
+                                      </Typography>
+                                    </Box>
+                                  );
+                                }}
+                                sx={{
+                                  height: 40,
+                                  borderRadius: 3,
+                                  backgroundColor: "rgba(255,255,255,0.96)",
+                                  boxShadow:
+                                    "0 1px 2px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.9)",
+                                  "& .MuiSelect-select": {
+                                    display: "flex",
+                                    alignItems: "center",
+                                    py: 0.9,
+                                    pl: 1.05,
+                                    pr: "2rem !important",
+                                  },
+                                  "& .MuiOutlinedInput-notchedOutline": {
+                                    borderColor: alpha(colors.primary, 0.16),
+                                  },
+                                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                                    borderColor: alpha(colors.primary, 0.26),
+                                  },
+                                  "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                    {
+                                      borderColor: alpha(colors.primary, 0.3),
+                                    },
+                                  "& .MuiSelect-icon": {
+                                    right: 10,
+                                    width: 16,
+                                    height: 16,
+                                    color: editorMutedText,
+                                  },
+                                }}
+                                aria-label="Select sidebar mode"
+                              >
+                                {[
+                                  {
+                                    key: "blocks",
+                                    label: "Blocks",
+                                    icon: Layers,
+                                    disabled: false,
+                                  },
+                                  {
+                                    key: "theme",
+                                    label: "Theme",
+                                    icon: Palette,
+                                    disabled: !supportsTemplateThemeSidebar,
+                                  },
+                                  {
+                                    key: "media",
+                                    label: "Media",
+                                    icon: ImageIcon,
+                                    disabled: false,
+                                  },
+                                ].map((option) => {
+                                  const Icon = option.icon;
+
+                                  return (
+                                    <MenuItem
+                                      key={option.key}
+                                      value={option.key}
+                                      disabled={option.disabled}
+                                      sx={{
+                                        minHeight: 42,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                      }}
+                                    >
+                                      <Icon size={15} color={editorMutedText} />
+                                      <Typography
+                                        sx={{
+                                          fontSize: "0.9rem",
+                                          fontWeight: 500,
+                                          color: editorMutedText,
+                                        }}
+                                      >
+                                        {option.label}
+                                      </Typography>
+                                    </MenuItem>
+                                  );
+                                })}
+                              </Select>
+                            </FormControl>
                             <Button
                               size="small"
                               variant="outlined"
-                              startIcon={<Layers size={16} />}
+                              startIcon={<Layers size={15} />}
                               onClick={() => setBlockLibraryOpen(true)}
-                              // disabled={sidebarMode !== "blocks"}
                               sx={{
                                 ...sidebarHeaderButtonSx,
+                                minWidth: 0,
+                                px: 1,
                                 color: editorText,
-                                borderColor: alpha(colors.primary, 0.22),
-                                backgroundColor: "rgba(255,255,255,0.72)",
+                                borderColor: alpha(colors.primary, 0.16),
+                                backgroundColor: "rgba(255,255,255,0.86)",
+                                "& .MuiButton-startIcon": {
+                                  mr: 0.6,
+                                },
                                 "&:hover": {
-                                  backgroundColor: "rgba(255,255,255,0.92)",
-                                  borderColor: alpha(colors.primary, 0.3),
+                                  backgroundColor: "#ffffff",
+                                  borderColor: alpha(colors.primary, 0.28),
                                 },
                               }}
                               aria-label="Open block library"
                             >
                               Library
                             </Button>
-                            <Button
-                              size="small"
-                              variant={
-                                sidebarMode === "media"
-                                  ? "contained"
-                                  : "outlined"
-                              }
-                              startIcon={<ImageIcon size={16} />}
-                              onClick={() => setSidebarMode("media")}
-                              sx={{
-                                ...sidebarHeaderButtonSx,
-                                color:
-                                  sidebarMode === "media"
-                                    ? "#ffffff"
-                                    : editorText,
-                                borderColor: alpha(colors.primary, 0.22),
-                                backgroundColor:
-                                  sidebarMode === "media"
-                                    ? alpha(colors.primary, 0.22)
-                                    : "rgba(255,255,255,0.72)",
-                              }}
-                              aria-label="Show media panel"
-                            >
-                              Media
-                            </Button>
                             <IconButton
                               size="small"
                               onClick={() => setBlockDialogOpen(true)}
-                              // disabled={sidebarMode !== "blocks"}
                               sx={{
-                                minWidth: 48,
-                                minHeight: 48,
-                                borderRadius: 2.5,
-                                border: `1px solid ${alpha(colors.primary, 0.18)}`,
-                                backgroundColor: alpha(colors.primary, 0.08),
+                                minWidth: 38,
+                                minHeight: 38,
+                                flexShrink: 0,
+                                borderRadius: 3,
+                                border: `1px solid ${alpha(colors.primary, 0.16)}`,
+                                backgroundColor: "rgba(255,255,255,0.86)",
                                 color: colors.text,
                                 transition:
                                   "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
                                 "&:hover": {
-                                  backgroundColor: "black",
+                                  background:
+                                    "linear-gradient(135deg, #111827 0%, #020617 100%)",
                                   borderColor: alpha(colors.primary, 0.3),
                                   color: "#ffffff",
                                 },
@@ -2809,180 +2963,195 @@ const WebsiteEditorInner = () => {
                           </Box>
                         </Box>
 
-                        {blockError && (
-                          <Alert
-                            severity="error"
-                            sx={{ mb: 2 }}
-                            action={
-                              <Button
-                                color="inherit"
-                                size="small"
-                                onClick={() =>
-                                  selectedPage && fetchBlocks(selectedPage.id)
-                                }
-                              >
-                                Retry
-                              </Button>
-                            }
-                          >
-                            {blockError}
-                          </Alert>
-                        )}
-
-                        {sidebarMode === "blocks" ? (
-                          <>
-                            <DraggableBlockList
-                              blocks={blocks}
-                              pageId={selectedPage?.id}
-                              websiteId={websiteId}
-                              selectedBlockId={editingBlock?.id ?? null}
-                              disabled={false}
-                              persistReorder={!isLocalTemplateEditorPage}
-                              onBlocksChange={(reordered) => {
-                                setBlocks(reordered);
-                              }}
-                              onBlockSelect={(blockId) => {
-                                const block = blocks.find(
-                                  (b) => b.id === blockId,
-                                );
-                                if (block) {
-                                  setEditingBlock(block);
-                                  setBlockForm({
-                                    blockType: block.blockType,
-                                    content: block.content,
-                                  });
-                                }
-                              }}
-                            />
-                          </>
-                        ) : sidebarMode === "media" ? (
-                          <Box>
-                            <input
-                              ref={imageLibraryInputRef}
-                              type="file"
-                              accept="image/*"
-                              hidden
-                              onChange={(event) => {
-                                void handleLibraryUpload(
-                                  event.target.files?.[0] || null,
-                                );
-                                event.target.value = "";
-                              }}
-                            />
-                            <Box
-                              sx={{
-                                display: "grid",
-                                gridTemplateColumns:
-                                  "repeat(2, minmax(0, 1fr))",
-                                gap: 1.2,
-                                maxHeight: { xs: 420, lg: 700 },
-                                overflowY: "auto",
-                                pr: 0.5,
-                              }}
+                        <Box sx={{ p: 1.4 }}>
+                          {blockError && (
+                            <Alert
+                              severity="error"
+                              sx={{ mb: 2 }}
+                              action={
+                                <Button
+                                  color="inherit"
+                                  size="small"
+                                  onClick={() =>
+                                    selectedPage && fetchBlocks(selectedPage.id)
+                                  }
+                                >
+                                  Retry
+                                </Button>
+                              }
                             >
-                              {imageLibraryItems.map((item) => (
+                              {blockError}
+                            </Alert>
+                          )}
+
+                          {sidebarMode === "blocks" ? (
+                            <>
+                              <DraggableBlockList
+                                blocks={blocks}
+                                pageId={selectedPage?.id}
+                                websiteId={websiteId}
+                                selectedBlockId={editingBlock?.id ?? null}
+                                disabled={false}
+                                persistReorder={!isLocalTemplateEditorPage}
+                                onBlocksChange={(reordered) => {
+                                  setBlocks(reordered);
+                                }}
+                                onBlockSelect={(blockId) => {
+                                  const block = blocks.find(
+                                    (b) => b.id === blockId,
+                                  );
+                                  if (block) {
+                                    setEditingBlock(block);
+                                    setBlockForm({
+                                      blockType: block.blockType,
+                                      content: block.content,
+                                    });
+                                  }
+                                }}
+                              />
+                            </>
+                          ) : sidebarMode === "media" ? (
+                            <Box>
+                              <input
+                                ref={imageLibraryInputRef}
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                onChange={(event) => {
+                                  void handleLibraryUpload(
+                                    event.target.files?.[0] || null,
+                                  );
+                                  event.target.value = "";
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  display: "grid",
+                                  gridTemplateColumns:
+                                    "repeat(2, minmax(0, 1fr))",
+                                  gap: 1.3,
+                                  maxHeight: { xs: 420, lg: 700 },
+                                  overflowY: "auto",
+                                  pr: 0.6,
+                                }}
+                              >
+                                {imageLibraryItems.map((item) => (
+                                  <ButtonBase
+                                    key={item.id}
+                                    onClick={() => handleOpenLibraryImage(item)}
+                                    disabled={!item.blockId}
+                                    sx={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "stretch",
+                                      textAlign: "left",
+                                      borderRadius: 3,
+                                      overflow: "hidden",
+                                      border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                                      backgroundColor: "rgba(255,255,255,0.88)",
+                                      transition:
+                                        "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+                                      "&:hover": {
+                                        transform: item.blockId
+                                          ? "translateY(-2px)"
+                                          : "none",
+                                        boxShadow: item.blockId
+                                          ? "0 14px 30px rgba(15,23,42,0.1)"
+                                          : "none",
+                                        borderColor: alpha(
+                                          colors.primary,
+                                          0.26,
+                                        ),
+                                      },
+                                      "&.Mui-disabled": {
+                                        opacity: 0.86,
+                                      },
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        height: 108,
+                                        backgroundImage: `url(${item.src})`,
+                                        backgroundSize: "cover",
+                                        backgroundPosition: "center",
+                                        backgroundColor: "#e5e7eb",
+                                      }}
+                                    />
+                                    <Box sx={{ p: 1.1 }}>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          color: colors.text,
+                                          fontWeight: 700,
+                                          whiteSpace: "nowrap",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                        }}
+                                      >
+                                        {item.label}
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ color: editorMutedText }}
+                                      >
+                                        {item.blockId
+                                          ? "Template image"
+                                          : "Uploaded asset"}
+                                      </Typography>
+                                    </Box>
+                                  </ButtonBase>
+                                ))}
                                 <ButtonBase
-                                  key={item.id}
-                                  onClick={() => handleOpenLibraryImage(item)}
-                                  disabled={!item.blockId}
+                                  onClick={() =>
+                                    imageLibraryInputRef.current?.click()
+                                  }
                                   sx={{
+                                    minHeight: 156,
+                                    borderRadius: 3,
+                                    border: `1px dashed ${alpha(colors.primary, 0.32)}`,
+                                    backgroundColor: "rgba(255,255,255,0.82)",
                                     display: "flex",
                                     flexDirection: "column",
-                                    alignItems: "stretch",
-                                    textAlign: "left",
-                                    borderRadius: 3,
-                                    overflow: "hidden",
-                                    border: `1px solid ${alpha(colors.primary, 0.14)}`,
-                                    backgroundColor: "rgba(255,255,255,0.82)",
+                                    gap: 1,
+                                    color: colors.text,
                                     transition:
-                                      "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+                                      "transform 160ms ease, border-color 160ms ease, background-color 160ms ease",
                                     "&:hover": {
-                                      transform: item.blockId
-                                        ? "translateY(-2px)"
-                                        : "none",
-                                      boxShadow: item.blockId
-                                        ? "0 12px 28px rgba(15,23,42,0.08)"
-                                        : "none",
-                                      borderColor: alpha(colors.primary, 0.26),
-                                    },
-                                    "&.Mui-disabled": {
-                                      opacity: 0.86,
+                                      transform: "translateY(-2px)",
+                                      borderColor: alpha(colors.primary, 0.44),
+                                      backgroundColor: "rgba(255,255,255,0.94)",
                                     },
                                   }}
                                 >
-                                  <Box
+                                  <Upload size={20} />
+                                  <Typography
                                     sx={{
-                                      height: 108,
-                                      backgroundImage: `url(${item.src})`,
-                                      backgroundSize: "cover",
-                                      backgroundPosition: "center",
-                                      backgroundColor: "#e5e7eb",
+                                      fontSize: "0.92rem",
+                                      fontWeight: 700,
                                     }}
-                                  />
-                                  <Box sx={{ p: 1.1 }}>
-                                    <Typography
-                                      variant="body2"
-                                      sx={{
-                                        color: colors.text,
-                                        fontWeight: 700,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                      }}
-                                    >
-                                      {item.label}
-                                    </Typography>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{ color: editorMutedText }}
-                                    >
-                                      {item.blockId
-                                        ? "Template image"
-                                        : "Uploaded asset"}
-                                    </Typography>
-                                  </Box>
+                                  >
+                                    Upload
+                                  </Typography>
                                 </ButtonBase>
-                              ))}
-                              <ButtonBase
-                                onClick={() =>
-                                  imageLibraryInputRef.current?.click()
-                                }
-                                sx={{
-                                  minHeight: 156,
-                                  borderRadius: 3,
-                                  border: `1px dashed ${alpha(colors.primary, 0.32)}`,
-                                  backgroundColor: "rgba(255,255,255,0.72)",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  gap: 1,
-                                  color: colors.text,
-                                }}
-                              >
-                                <Upload size={20} />
-                                <Typography
-                                  sx={{ fontSize: "0.92rem", fontWeight: 700 }}
-                                >
-                                  Upload
-                                </Typography>
-                              </ButtonBase>
+                              </Box>
                             </Box>
-                          </Box>
-                        ) : (
-                          <Box
-                            sx={{
-                              fontFamily: '"Poppins", "Inter", sans-serif',
-                              "& .MuiTypography-root, & .MuiButton-root, & .MuiChip-root, & .MuiInputBase-root, & .MuiFormLabel-root, & .MuiFormHelperText-root":
-                                {
-                                  fontFamily: '"Poppins", "Inter", sans-serif',
-                                },
-                            }}
-                          >
-                            <FrontendTemplateThemePanel
-                              templateId={resolvedFrontendTemplateId}
-                              selection={templateThemeSelection}
-                              onChange={setTemplateThemeSelection}
-                            />
-                            {/* <ThemeManager
+                          ) : (
+                            <Box
+                              sx={{
+                                fontFamily: '"Poppins", "Inter", sans-serif',
+                                "& .MuiTypography-root, & .MuiButton-root, & .MuiChip-root, & .MuiInputBase-root, & .MuiFormLabel-root, & .MuiFormHelperText-root":
+                                  {
+                                    fontFamily:
+                                      '"Poppins", "Inter", sans-serif',
+                                  },
+                              }}
+                            >
+                              <FrontendTemplateThemePanel
+                                templateId={resolvedFrontendTemplateId}
+                                selection={templateThemeSelection}
+                                onChange={setTemplateThemeSelection}
+                              />
+                              {/* <ThemeManager
                               websiteId={websiteId}
                               currentThemeId={website?.themeId || null}
                               onThemeChange={() => {
@@ -2990,20 +3159,22 @@ const WebsiteEditorInner = () => {
                                 fetchWebsiteData();
                               }}
                             /> */}
-                          </Box>
-                        )}
+                            </Box>
+                          )}
+                        </Box>
                       </Paper>
                     </Grid>
 
                     {/* Preview — Step 4.11: PreviewPanel with live srcdoc */}
-                    <Grid item xs={12} lg={9}>
+                    <Grid item xs={12} lg={showDesktopInspector ? 8 : 9.9}>
                       <Paper
                         sx={{
                           ...builderPanelSx,
-                          p: 1,
+                          p: 1.15,
                           overflow: "hidden",
                           position: { md: "sticky" },
                           top: { md: 16 },
+                          borderRadius: 5,
                         }}
                       >
                         {/* <Box
@@ -3060,6 +3231,7 @@ const WebsiteEditorInner = () => {
                               setSelectedImageElement(null);
                               setSelectedSectionElement(null);
                               setActiveToolbarMode("text");
+                              setIsInspectorOpen(false);
                               setPreviewContextMenu(null);
                               setBlockDialogOpen(false);
                               setEditingBlock(null);
@@ -3081,6 +3253,209 @@ const WebsiteEditorInner = () => {
                         </Box>
                       </Paper>
                     </Grid>
+                    {showDesktopInspector && (
+                      <Grid item xs={12} lg={1.9}>
+                        <Paper
+                          sx={{
+                            ...builderPanelSx,
+                            p: 0,
+                            borderRadius: 5,
+                            minHeight: { lg: 860 },
+                            position: { md: "sticky" },
+                            top: { md: 16 },
+                            display: "flex",
+                            flexDirection: "column",
+                            height: { md: "calc(100vh - 32px)" },
+                            maxHeight: { md: "calc(100vh - 32px)" },
+                            overflow: "hidden",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              px: 1.45,
+                              py: 1.15,
+                              borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 1,
+                              backgroundColor: "rgba(255,255,255,0.74)",
+                            }}
+                          >
+                            <Box>
+                              <Typography sx={builderSectionLabelSx}>
+                                {activeToolbarMode === "section"
+                                  ? "Section"
+                                  : selectedImageElement
+                                    ? "Media"
+                                    : "Typography"}
+                              </Typography>
+                              <Typography
+                                variant="subtitle1"
+                                sx={{
+                                  mt: 0.35,
+                                  color: colors.text,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {inspectorTitle}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              size="small"
+                              label={
+                                activeToolbarMode === "section"
+                                  ? "Layout"
+                                  : selectedImageElement
+                                    ? "Image"
+                                    : "Style"
+                              }
+                              sx={{
+                                borderRadius: 999,
+                                backgroundColor: alpha(colors.primary, 0.08),
+                                color: colors.text,
+                                fontWeight: 700,
+                              }}
+                            />
+                            <IconButton
+                              size="small"
+                              onClick={() => setIsInspectorOpen(false)}
+                              sx={{
+                                width: 30,
+                                height: 30,
+                                border: `1px solid ${alpha(colors.primary, 0.12)}`,
+                                backgroundColor: "rgba(255,255,255,0.84)",
+                                color: editorMutedText,
+                                ml: 0.5,
+                              }}
+                              aria-label="Hide inspector"
+                            >
+                              <X size={15} />
+                            </IconButton>
+                          </Box>
+
+                          <Box
+                            sx={{
+                              p: 1.45,
+                              paddingBottom: "70px !important",
+                              flex: 1,
+                              minHeight: 0,
+                              overflowY: "auto",
+                              overflowX: "hidden",
+                              "&::-webkit-scrollbar": {
+                                width: 8,
+                              },
+                              "&::-webkit-scrollbar-thumb": {
+                                backgroundColor: "rgba(148,163,184,0.38)",
+                                borderRadius: 999,
+                              },
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                mb: 1.6,
+                                color: editorMutedText,
+                                lineHeight: 1.6,
+                              }}
+                            >
+                              {inspectorCaption}
+                            </Typography>
+
+                            {selectedImageElement ? (
+                              <Box
+                                sx={{
+                                  p: 1.4,
+                                  borderRadius: 3,
+                                  border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                                  backgroundColor: "rgba(255,255,255,0.84)",
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{ color: colors.text, fontWeight: 600 }}
+                                >
+                                  Image editing opens in the media popup so the
+                                  existing replace flow keeps working.
+                                </Typography>
+                              </Box>
+                            ) : activeToolbarMode === "section" ? (
+                              <EditorSectionStyleToolbar
+                                selection={
+                                  selectedSectionElement
+                                    ? {
+                                        blockId: selectedSectionElement.blockId,
+                                        label: selectedSectionElement.label,
+                                      }
+                                    : null
+                                }
+                                value={selectedSectionStyle}
+                                disabled={!selectedSectionElement}
+                                onStyleChange={handleSectionStyleChange}
+                                layout="panel"
+                                containerSx={{
+                                  flexWrap: "wrap",
+                                  alignItems: "flex-start",
+                                  overflowX: "visible",
+                                  rowGap: 1.1,
+                                  p: "0 !important",
+                                  background: "transparent",
+                                  boxShadow: "none",
+                                  border: "none",
+                                  "& .MuiDivider-root": { display: "none" },
+                                  "& .editor-toolbar-selection-label": {
+                                    display: "none",
+                                  },
+                                  "& .MuiFormControl-root": {
+                                    width: "100%",
+                                    minWidth: "100% !important",
+                                  },
+                                }}
+                              />
+                            ) : (
+                              <EditorStyleToolbar
+                                selection={
+                                  selectedEditableElement
+                                    ? {
+                                        blockId:
+                                          selectedEditableElement.blockId,
+                                        fieldPath:
+                                          selectedEditableElement.fieldPath,
+                                        label: getEditableStyleConfig(
+                                          selectedEditableElement.fieldPath,
+                                        ).label,
+                                        editType:
+                                          selectedEditableElement.editType,
+                                      }
+                                    : null
+                                }
+                                value={selectedEditableStyle}
+                                disabled={!selectedEditableElement}
+                                onStyleChange={handleEditableStyleChange}
+                                containerSx={{
+                                  flexWrap: "wrap",
+                                  alignItems: "flex-start",
+                                  overflowX: "visible",
+                                  rowGap: 1.1,
+                                  p: 0,
+                                  background: "transparent",
+                                  boxShadow: "none",
+                                  border: "none",
+                                  "& .MuiDivider-root": { display: "none" },
+                                  "& .editor-toolbar-selection-label": {
+                                    display: "none",
+                                  },
+                                  "& .MuiFormControl-root": {
+                                    width: "100%",
+                                    minWidth: "100% !important",
+                                  },
+                                }}
+                              />
+                            )}
+                          </Box>
+                        </Paper>
+                      </Grid>
+                    )}
                   </Grid>
                 </Box>
               ) : (

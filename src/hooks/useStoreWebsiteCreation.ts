@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { apiClient } from '../api/client';
+import { useState } from "react";
+import { apiClient } from "../api/client";
 
 interface WebsiteFormData {
   name: string;
@@ -35,7 +35,7 @@ interface CreatedStore {
 interface UseStoreWebsiteCreationResult {
   createStoreWebsite: (
     websiteData: WebsiteFormData,
-    storeData: Omit<StoreFormData, 'websiteId'>
+    storeData: Omit<StoreFormData, "websiteId">,
   ) => Promise<{
     website: CreatedWebsite;
     store: CreatedStore;
@@ -67,7 +67,7 @@ export const useStoreWebsiteCreation = (): UseStoreWebsiteCreationResult => {
 
   const createStoreWebsite = async (
     websiteData: WebsiteFormData,
-    storeData: Omit<StoreFormData, 'websiteId'>
+    storeData: Omit<StoreFormData, "websiteId">,
   ) => {
     setLoading(true);
     setError(null);
@@ -80,7 +80,7 @@ export const useStoreWebsiteCreation = (): UseStoreWebsiteCreationResult => {
       const websiteResponse = await apiClient.post<{ data: CreatedWebsite }>(
         `/websites`,
         websiteData,
-        { headers: {} }
+        { headers: {} },
       );
 
       const createdWebsite = websiteResponse.data.data;
@@ -95,7 +95,7 @@ export const useStoreWebsiteCreation = (): UseStoreWebsiteCreationResult => {
         const storeResponse = await apiClient.post<{ data: CreatedStore }>(
           `/stores`,
           storePayload,
-          { headers: {} }
+          { headers: {} },
         );
 
         const createdStore = storeResponse.data.data;
@@ -107,11 +107,15 @@ export const useStoreWebsiteCreation = (): UseStoreWebsiteCreationResult => {
         };
       } catch (storeError: any) {
         // Website was created but store creation failed
-        console.error('Store creation failed after website creation:', storeError);
+        console.error(
+          "Store creation failed after website creation:",
+          storeError,
+        );
 
-        const errorMessage = storeError.response?.data?.message || 'Failed to create store';
+        const errorMessage =
+          storeError.response?.data?.message || "Failed to create store";
         setPartialError(
-          `Your website "${createdWebsite.name}" was created successfully, but the store creation failed: ${errorMessage}. You can try adding a store later from the Stores tab.`
+          `Your website "${createdWebsite.name}" was created successfully, but the store creation failed: ${errorMessage}. You can try adding a store later from the Stores tab.`,
         );
 
         setLoading(false);
@@ -120,19 +124,21 @@ export const useStoreWebsiteCreation = (): UseStoreWebsiteCreationResult => {
         throw new Error(errorMessage);
       }
     } catch (err: any) {
-      console.error('Error creating store website:', err);
+      console.error("Error creating store website:", err);
 
       // Check if this is a plan limit error
-      if (err.response?.data?.code === 'PLAN_LIMIT_REACHED') {
+      if (err.response?.data?.code === "PLAN_LIMIT_REACHED") {
         setError(err.response.data.message);
         throw {
-          code: 'PLAN_LIMIT_REACHED',
+          code: "PLAN_LIMIT_REACHED",
           message: err.response.data.message,
         };
       }
 
       const errorMessage =
-        err.response?.data?.message || err.message || 'Failed to create store website';
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to create store website";
       setError(errorMessage);
       setLoading(false);
       throw new Error(errorMessage);

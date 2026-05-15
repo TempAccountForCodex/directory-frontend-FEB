@@ -4,10 +4,9 @@
  * React hooks for fetching template/website preview data
  * from the Preview API endpoints (Step 4.5).
  */
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { apiClient, isAxiosError, isCancel } from '../api/client';
-import { API_URL } from '@/config/api';
-
+import { useState, useEffect, useCallback, useRef } from "react";
+import { apiClient, isAxiosError, isCancel } from "../api/client";
+import { API_URL } from "@/config/api";
 
 // ===================================================================
 // Types
@@ -58,8 +57,8 @@ export interface PreviewGalleryResponse {
 export interface WebsitePageStatus {
   pageId: number;
   title: string;
-  desktop: 'cached' | 'not_cached';
-  mobile: 'cached' | 'not_cached';
+  desktop: "cached" | "not_cached";
+  mobile: "cached" | "not_cached";
 }
 
 export interface WebsitePreviewStatus {
@@ -80,8 +79,12 @@ interface UseTemplateScreenshotsReturn {
   refetch: () => void;
 }
 
-export function useTemplateScreenshots(templateId: string | null): UseTemplateScreenshotsReturn {
-  const [screenshots, setScreenshots] = useState<TemplateScreenshots | null>(null);
+export function useTemplateScreenshots(
+  templateId: string | null,
+): UseTemplateScreenshotsReturn {
+  const [screenshots, setScreenshots] = useState<TemplateScreenshots | null>(
+    null,
+  );
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [trigger, setTrigger] = useState(0);
@@ -112,7 +115,7 @@ export function useTemplateScreenshots(templateId: string | null): UseTemplateSc
         if (!cancelled) {
           const msg = isAxiosError(err)
             ? (err.response?.data?.message ?? err.message)
-            : 'Failed to load screenshots';
+            : "Failed to load screenshots";
           setError(msg);
         }
       })
@@ -138,21 +141,25 @@ interface UsePreviewGalleryOptions {
   page?: number;
   limit?: number;
   category?: string;
-  sort?: 'popular' | 'recent' | 'name';
+  sort?: "popular" | "recent" | "name";
 }
 
 interface UsePreviewGalleryReturn {
   items: PreviewGalleryItem[];
-  pagination: PreviewGalleryResponse['pagination'] | null;
+  pagination: PreviewGalleryResponse["pagination"] | null;
   loading: boolean;
   error: string | null;
   refetch: () => void;
 }
 
-export function usePreviewGallery(options: UsePreviewGalleryOptions = {}): UsePreviewGalleryReturn {
+export function usePreviewGallery(
+  options: UsePreviewGalleryOptions = {},
+): UsePreviewGalleryReturn {
   const { page = 1, limit = 20, category, sort } = options;
   const [items, setItems] = useState<PreviewGalleryItem[]>([]);
-  const [pagination, setPagination] = useState<PreviewGalleryResponse['pagination'] | null>(null);
+  const [pagination, setPagination] = useState<
+    PreviewGalleryResponse["pagination"] | null
+  >(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [trigger, setTrigger] = useState(0);
@@ -165,10 +172,10 @@ export function usePreviewGallery(options: UsePreviewGalleryOptions = {}): UsePr
     const params = new URLSearchParams();
     // Convert page-based to offset-based for backend
     const offset = (page - 1) * limit;
-    params.append('offset', String(offset));
-    params.append('limit', String(limit));
-    if (category) params.append('category', category);
-    if (sort) params.append('sortBy', sort); // backend expects 'sortBy', not 'sort'
+    params.append("offset", String(offset));
+    params.append("limit", String(limit));
+    if (category) params.append("category", category);
+    if (sort) params.append("sortBy", sort); // backend expects 'sortBy', not 'sort'
 
     apiClient
       .get(`/previews/templates?${params.toString()}`)
@@ -179,17 +186,22 @@ export function usePreviewGallery(options: UsePreviewGalleryOptions = {}): UsePr
           // Normalize gallery items: map previews.thumbnail to previewImage for TemplateSummary compat
           setItems(
             rawItems.map((item: Record<string, unknown>) => {
-              const previews = item.previews as Record<string, string | null> | undefined;
+              const previews = item.previews as
+                | Record<string, string | null>
+                | undefined;
               return {
                 ...item,
-                previewImage: previews?.thumbnail || (item.previewImage as string | null) || null,
+                previewImage:
+                  previews?.thumbnail ||
+                  (item.previewImage as string | null) ||
+                  null,
                 screenshots: {
                   desktop: previews?.desktop || null,
                   mobile: previews?.mobile || null,
                   thumbnail: previews?.thumbnail || null,
                 },
               };
-            }) as PreviewGalleryItem[]
+            }) as PreviewGalleryItem[],
           );
 
           // Convert offset-based pagination to page-based for frontend consumers
@@ -212,7 +224,7 @@ export function usePreviewGallery(options: UsePreviewGalleryOptions = {}): UsePr
         if (!cancelled) {
           const msg = isAxiosError(err)
             ? (err.response?.data?.message ?? err.message)
-            : 'Failed to load preview gallery';
+            : "Failed to load preview gallery";
           setError(msg);
         }
       })
@@ -243,7 +255,7 @@ interface UseWebsitePreviewStatusReturn {
 
 export function useWebsitePreviewStatus(
   websiteId: string | number | null,
-  token?: string
+  token?: string,
 ): UseWebsitePreviewStatusReturn {
   const [status, setStatus] = useState<WebsitePreviewStatus | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -272,7 +284,7 @@ export function useWebsitePreviewStatus(
         if (!cancelled) {
           const msg = isAxiosError(err)
             ? (err.response?.data?.message ?? err.message)
-            : 'Failed to load preview status';
+            : "Failed to load preview status";
           setError(msg);
         }
       })
@@ -312,10 +324,10 @@ const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 min fallback
 export function usePreviewIframe(
   websiteId: string | number | null,
   pageId: string | number | null,
-  viewport: 'desktop' | 'tablet' | 'mobile'
+  viewport: "desktop" | "tablet" | "mobile",
 ): UsePreviewIframeReturn {
   const isSyntheticTemplatePage =
-    typeof pageId === 'string' && /^page-\d+$/.test(pageId);
+    typeof pageId === "string" && /^page-\d+$/.test(pageId);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState(false);
   const [tokenExpired, setTokenExpired] = useState(false);
@@ -327,36 +339,45 @@ export function usePreviewIframe(
   const abortRef = useRef<AbortController | null>(null);
 
   // Acquire a preview token from the backend
-  const acquireToken = useCallback(async (wId: string | number, pId: string | number) => {
-    // Cancel any in-flight request
-    if (abortRef.current) abortRef.current.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+  const acquireToken = useCallback(
+    async (wId: string | number, pId: string | number) => {
+      // Cancel any in-flight request
+      if (abortRef.current) abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    try {
-      const res = await apiClient.post(`/previews/websites/${wId}/pages/${pId}/token`, null, {
-        signal: controller.signal,
-      });
-      if (controller.signal.aborted) return null;
+      try {
+        const res = await apiClient.post(
+          `/previews/websites/${wId}/pages/${pId}/token`,
+          null,
+          {
+            signal: controller.signal,
+          },
+        );
+        if (controller.signal.aborted) return null;
 
-      const { previewToken: token, expiresAt } = res.data?.data || {};
-      if (!token) throw new Error('No token returned');
+        const { previewToken: token, expiresAt } = res.data?.data || {};
+        if (!token) throw new Error("No token returned");
 
-      setPreviewToken(token);
-      setTokenExpired(false);
-      setIframeError(false);
+        setPreviewToken(token);
+        setTokenExpired(false);
+        setIframeError(false);
 
-      // Calculate TTL for auto-refresh scheduling
-      const ttlMs = expiresAt ? new Date(expiresAt).getTime() - Date.now() : DEFAULT_TTL_MS;
+        // Calculate TTL for auto-refresh scheduling
+        const ttlMs = expiresAt
+          ? new Date(expiresAt).getTime() - Date.now()
+          : DEFAULT_TTL_MS;
 
-      return { token, ttlMs };
-    } catch (err) {
-      if (isCancel(err)) return null;
-      setIframeError(true);
-      setPreviewToken(null);
-      return null;
-    }
-  }, []);
+        return { token, ttlMs };
+      } catch (err) {
+        if (isCancel(err)) return null;
+        setIframeError(true);
+        setPreviewToken(null);
+        return null;
+      }
+    },
+    [],
+  );
 
   // Setup auto-refresh timer
   const scheduleRefresh = useCallback(
@@ -372,7 +393,7 @@ export function usePreviewIframe(
         }
       }, refreshMs);
     },
-    [acquireToken]
+    [acquireToken],
   );
 
   // Acquire token on mount and when websiteId/pageId changes
@@ -400,7 +421,13 @@ export function usePreviewIframe(
       if (abortRef.current) abortRef.current.abort();
       if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
     };
-  }, [websiteId, pageId, acquireToken, scheduleRefresh, isSyntheticTemplatePage]);
+  }, [
+    websiteId,
+    pageId,
+    acquireToken,
+    scheduleRefresh,
+    isSyntheticTemplatePage,
+  ]);
 
   // Debounce viewport changes
   useEffect(() => {
@@ -415,13 +442,14 @@ export function usePreviewIframe(
     };
   }, [viewport]);
 
-  const apiViewport = debouncedViewport === 'tablet' ? 'desktop' : debouncedViewport;
+  const apiViewport =
+    debouncedViewport === "tablet" ? "desktop" : debouncedViewport;
 
   // Build iframe src with token instead of relying on bearer headers
   const src =
     websiteId && pageId && previewToken && !isSyntheticTemplatePage
       ? `${API_URL}/previews/websites/${websiteId}/pages/${pageId}/html?viewport=${apiViewport}&token=${encodeURIComponent(previewToken)}&_t=${cacheBuster}`
-      : '';
+      : "";
 
   const onLoad = useCallback(() => {
     setIframeLoading(false);
@@ -444,8 +472,21 @@ export function usePreviewIframe(
       setCacheBuster(Date.now());
       scheduleRefresh(result.ttlMs, websiteId, pageId);
     }
-  }, [websiteId, pageId, acquireToken, scheduleRefresh, isSyntheticTemplatePage]);
+  }, [
+    websiteId,
+    pageId,
+    acquireToken,
+    scheduleRefresh,
+    isSyntheticTemplatePage,
+  ]);
 
-  return { src, iframeLoading, iframeError, tokenExpired, onLoad, onError, refresh };
+  return {
+    src,
+    iframeLoading,
+    iframeError,
+    tokenExpired,
+    onLoad,
+    onError,
+    refresh,
+  };
 }
-

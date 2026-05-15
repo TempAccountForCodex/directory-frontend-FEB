@@ -14,8 +14,8 @@
  */
 export function generateTemplatePlaceholder(
   templateName: string,
-  primaryColor: string = '#2563eb',
-  category: string = 'template'
+  primaryColor: string = "#2563eb",
+  category: string = "template",
 ): string {
   // Create gradient colors from primary color
   const color1 = primaryColor;
@@ -53,11 +53,11 @@ export function generateTemplatePlaceholder(
  */
 function escapeXml(text: string): string {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 /**
@@ -68,7 +68,7 @@ function escapeXml(text: string): string {
  */
 function adjustBrightness(hex: string, percent: number): string {
   // Remove # if present
-  hex = hex.replace('#', '');
+  hex = hex.replace("#", "");
 
   // Parse RGB components
   const r = parseInt(hex.substring(0, 2), 16);
@@ -86,7 +86,7 @@ function adjustBrightness(hex: string, percent: number): string {
   const newB = adjust(b);
 
   // Convert back to hex
-  const toHex = (value: number) => value.toString(16).padStart(2, '0');
+  const toHex = (value: number) => value.toString(16).padStart(2, "0");
 
   return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
 }
@@ -97,5 +97,5 @@ function adjustBrightness(hex: string, percent: number): string {
  * @returns True if it's a placeholder path
  */
 export function isPlaceholderPath(imagePath: string): boolean {
-  return imagePath.startsWith('/templates/') && imagePath.endsWith('.png');
+  return imagePath.startsWith("/templates/") && imagePath.endsWith(".png");
 }

@@ -1,6 +1,6 @@
-import React from 'react';
-import { CardMedia, Grid, Typography, useTheme } from '@mui/material';
-import { useInView } from 'react-intersection-observer';
+import React from "react";
+import { CardMedia, Grid, Typography, useTheme } from "@mui/material";
+import { useInView } from "react-intersection-observer";
 
 /* ---------------- Types ---------------- */
 interface CompanyBanTextProps {
@@ -37,16 +37,16 @@ const CompanyBanText: React.FC<CompanyBanTextProps> = ({
       ref={usRef}
       id="about-us-section"
       sx={{
-        width: '100%',
-        textAlign: 'center',
-        mt: '20px',
-        display: 'flex',
-        position: 'relative',
+        width: "100%",
+        textAlign: "center",
+        mt: "20px",
+        display: "flex",
+        position: "relative",
         opacity: 0,
-        px: { lg: '60px', sm: '35px', xs: '40px' },
-        pt: { xs: '25px', lg: 10 },
-        pb: { xs: '25px', lg: 10 },
-        justifyContent: 'space-between',
+        px: { lg: "60px", sm: "35px", xs: "40px" },
+        pt: { xs: "25px", lg: 10 },
+        pb: { xs: "25px", lg: 10 },
+        justifyContent: "space-between",
         background: `linear-gradient(to bottom, ${(theme.palette.primary as any).hover} 60%, ${(theme.palette.primary as any).hero} 90%)`,
       }}
       rowSpacing={1}
@@ -58,10 +58,10 @@ const CompanyBanText: React.FC<CompanyBanTextProps> = ({
         sm={12}
         lg={6}
         sx={{
-          position: 'relative',
-          height: { md: '100%', sm: '325px', xs: '100%' },
+          position: "relative",
+          height: { md: "100%", sm: "325px", xs: "100%" },
           opacity: 0,
-          paddingRight: '20px',
+          paddingRight: "20px",
         }}
         ref={imageeRef}
         id="image-section"
@@ -73,12 +73,12 @@ const CompanyBanText: React.FC<CompanyBanTextProps> = ({
           image={isAPIRunning ? `${backendUrl}/${banner}` : `${banner}`}
           alt="ok"
           sx={{
-            mt: { xs: '20px', lg: '20px' },
-            maxWidth: '100%',
-            height: { md: '450px', sm: '325px', xs: '225px' },
-            width: '100%',
-            transform: imageeInView ? 'translateX(0)' : 'translateX(-100%)',
-            animation: imageeInView ? 'slideInLeft 1s forwards' : 'none',
+            mt: { xs: "20px", lg: "20px" },
+            maxWidth: "100%",
+            height: { md: "450px", sm: "325px", xs: "225px" },
+            width: "100%",
+            transform: imageeInView ? "translateX(0)" : "translateX(-100%)",
+            animation: imageeInView ? "slideInLeft 1s forwards" : "none",
             opacity: imageeInView ? 1 : 0,
           }}
         />
@@ -92,11 +92,11 @@ const CompanyBanText: React.FC<CompanyBanTextProps> = ({
         lg={6}
         direction="column"
         sx={{
-          alignItems: 'center',
-          justifyContent: 'center',
-          display: 'flex',
-          mt: { lg: 0, md: 0, sm: '-250px', xs: '10px' },
-          mb: { xs: '20px' },
+          alignItems: "center",
+          justifyContent: "center",
+          display: "flex",
+          mt: { lg: 0, md: 0, sm: "-250px", xs: "10px" },
+          mb: { xs: "20px" },
         }}
         component="div"
         {...({} as any)}
@@ -106,23 +106,23 @@ const CompanyBanText: React.FC<CompanyBanTextProps> = ({
           container
           direction="column"
           sx={{
-            alignItems: { sm: 'center', xs: 'center' },
-            transform: usInView ? 'translateX(0)' : 'translateX(-100%)',
-            animation: usInView ? 'slideInRight 1s forwards' : 'none',
+            alignItems: { sm: "center", xs: "center" },
+            transform: usInView ? "translateX(0)" : "translateX(-100%)",
+            animation: usInView ? "slideInRight 1s forwards" : "none",
           }}
         >
           <Typography
             variant="body2"
             sx={{
               color: theme.palette.common.white,
-              textAlign: { sm: 'center', xs: 'center' },
-              lineHeight: '1.5',
-              width: '100%',
-              overflow: 'hidden',
-              display: '-webkit-box',
+              textAlign: { sm: "center", xs: "center" },
+              lineHeight: "1.5",
+              width: "100%",
+              overflow: "hidden",
+              display: "-webkit-box",
               WebkitLineClamp: 6,
-              WebkitBoxOrient: 'vertical',
-              fontSize: { md: '24px', sm: '24px', xs: '16px' },
+              WebkitBoxOrient: "vertical",
+              fontSize: { md: "24px", sm: "24px", xs: "16px" },
               mb: { sm: 2, xs: 1 },
               mt: { sm: 2, xs: 3 },
             }}
@@ -133,13 +133,13 @@ const CompanyBanText: React.FC<CompanyBanTextProps> = ({
             variant="h5"
             sx={{
               color: theme.palette.common.white,
-              fontSize: { md: '42px', sm: '38px', xs: '14px' },
-              fontWeight: '800',
-              width: '100%',
-              lineHeight: '1.2',
-              textAlign: { sm: 'center', xs: 'center' },
+              fontSize: { md: "42px", sm: "38px", xs: "14px" },
+              fontWeight: "800",
+              width: "100%",
+              lineHeight: "1.2",
+              textAlign: { sm: "center", xs: "center" },
               mb: { sm: 3, xs: 1 },
-              fontFamily: 'Barlow',
+              fontFamily: "Barlow",
             }}
           >
             The Best In {category}
@@ -148,19 +148,19 @@ const CompanyBanText: React.FC<CompanyBanTextProps> = ({
             variant="body2"
             sx={{
               color: theme.palette.common.white,
-              textAlign: { sm: 'center', xs: 'center' },
-              lineHeight: '1.5',
-              overflow: 'hidden',
-              display: '-webkit-box',
+              textAlign: { sm: "center", xs: "center" },
+              lineHeight: "1.5",
+              overflow: "hidden",
+              display: "-webkit-box",
               WebkitLineClamp: 6,
-              WebkitBoxOrient: 'vertical',
-              width: { sm: '480px', xs: '90%' },
-              fontSize: { md: '18px', sm: '18px', xs: '12px' },
+              WebkitBoxOrient: "vertical",
+              width: { sm: "480px", xs: "90%" },
+              fontSize: { md: "18px", sm: "18px", xs: "12px" },
             }}
           >
-            You can trust us to deliver exceptional and quality service every time. Our commitment
-            to integrity and excellence is unwavering. Rely on us for reliable solutions tailored to
-            your needs.
+            You can trust us to deliver exceptional and quality service every
+            time. Our commitment to integrity and excellence is unwavering. Rely
+            on us for reliable solutions tailored to your needs.
           </Typography>
         </Grid>
       </Grid>

@@ -3,13 +3,13 @@
  * Covers: conditional visibility, validation, registry resolution,
  *         React.memo, displayName, and evaluateConditional all operators.
  */
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { FieldRenderer, evaluateConditional } from '../FieldRenderer';
-import { registerFieldComponent, getFieldComponent } from '../registry';
-import { ConditionalOperator, FieldType } from '../types';
-import type { FieldDefinition, FieldRendererProps } from '../types';
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { FieldRenderer, evaluateConditional } from "../FieldRenderer";
+import { registerFieldComponent, getFieldComponent } from "../registry";
+import { ConditionalOperator, FieldType } from "../types";
+import type { FieldDefinition, FieldRendererProps } from "../types";
 
 // ---------------------------------------------------------------------------
 // Test doubles
@@ -17,12 +17,12 @@ import type { FieldDefinition, FieldRendererProps } from '../types';
 
 // A simple mock field component that renders its value
 const MockField: React.FC<FieldRendererProps> = ({ field, value }) =>
-  React.createElement('input', {
-    'data-testid': `field-${field.name}`,
-    value: String(value ?? ''),
+  React.createElement("input", {
+    "data-testid": `field-${field.name}`,
+    value: String(value ?? ""),
     readOnly: true,
   });
-MockField.displayName = 'MockField';
+MockField.displayName = "MockField";
 
 // Register MockField for TEXT so FieldRenderer resolves it
 beforeEach(() => {
@@ -34,19 +34,21 @@ beforeEach(() => {
 // Minimal FieldDefinition factory
 function makeField(overrides: Partial<FieldDefinition> = {}): FieldDefinition {
   return {
-    name: 'testField',
-    label: 'Test Field',
+    name: "testField",
+    label: "Test Field",
     type: FieldType.TEXT,
     ...overrides,
   };
 }
 
 // Render FieldRenderer with sensible defaults
-function renderField(props: Partial<FieldRendererProps> & { onBlur?: () => void } = {}) {
+function renderField(
+  props: Partial<FieldRendererProps> & { onBlur?: () => void } = {},
+) {
   const { onBlur, ...rest } = props;
   const defaults: FieldRendererProps = {
     field: makeField(),
-    value: 'hello',
+    value: "hello",
     onChange: vi.fn(),
     allValues: {},
     ...rest,
@@ -58,156 +60,205 @@ function renderField(props: Partial<FieldRendererProps> & { onBlur?: () => void 
 // evaluateConditional
 // ---------------------------------------------------------------------------
 
-describe('evaluateConditional', () => {
+describe("evaluateConditional", () => {
   const values = {
-    stringField: 'hello',
+    stringField: "hello",
     numberField: 42,
-    emptyField: '',
+    emptyField: "",
     falseField: false,
     zeroField: 0,
   };
 
-  it('EQUALS — returns true when values match', () => {
+  it("EQUALS — returns true when values match", () => {
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: ConditionalOperator.EQUALS, value: 'hello' },
-        values
-      )
+        {
+          field: "stringField",
+          operator: ConditionalOperator.EQUALS,
+          value: "hello",
+        },
+        values,
+      ),
     ).toBe(true);
   });
 
-  it('EQUALS — returns false when values do not match', () => {
+  it("EQUALS — returns false when values do not match", () => {
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: ConditionalOperator.EQUALS, value: 'world' },
-        values
-      )
+        {
+          field: "stringField",
+          operator: ConditionalOperator.EQUALS,
+          value: "world",
+        },
+        values,
+      ),
     ).toBe(false);
   });
 
-  it('NOT_EQUALS — returns true when values differ', () => {
+  it("NOT_EQUALS — returns true when values differ", () => {
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: ConditionalOperator.NOT_EQUALS, value: 'world' },
-        values
-      )
+        {
+          field: "stringField",
+          operator: ConditionalOperator.NOT_EQUALS,
+          value: "world",
+        },
+        values,
+      ),
     ).toBe(true);
   });
 
-  it('NOT_EQUALS — returns false when values are the same', () => {
+  it("NOT_EQUALS — returns false when values are the same", () => {
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: ConditionalOperator.NOT_EQUALS, value: 'hello' },
-        values
-      )
+        {
+          field: "stringField",
+          operator: ConditionalOperator.NOT_EQUALS,
+          value: "hello",
+        },
+        values,
+      ),
     ).toBe(false);
   });
 
-  it('IS_EMPTY — returns true for an empty string', () => {
+  it("IS_EMPTY — returns true for an empty string", () => {
     expect(
-      evaluateConditional({ field: 'emptyField', operator: ConditionalOperator.IS_EMPTY }, values)
+      evaluateConditional(
+        { field: "emptyField", operator: ConditionalOperator.IS_EMPTY },
+        values,
+      ),
     ).toBe(true);
   });
 
-  it('IS_EMPTY — returns false for a non-empty string', () => {
-    expect(
-      evaluateConditional({ field: 'stringField', operator: ConditionalOperator.IS_EMPTY }, values)
-    ).toBe(false);
-  });
-
-  it('IS_EMPTY — returns false for 0 (zero is not empty)', () => {
-    expect(
-      evaluateConditional({ field: 'zeroField', operator: ConditionalOperator.IS_EMPTY }, values)
-    ).toBe(false);
-  });
-
-  it('IS_NOT_EMPTY — returns true for a non-empty string', () => {
+  it("IS_EMPTY — returns false for a non-empty string", () => {
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: ConditionalOperator.IS_NOT_EMPTY },
-        values
-      )
+        { field: "stringField", operator: ConditionalOperator.IS_EMPTY },
+        values,
+      ),
+    ).toBe(false);
+  });
+
+  it("IS_EMPTY — returns false for 0 (zero is not empty)", () => {
+    expect(
+      evaluateConditional(
+        { field: "zeroField", operator: ConditionalOperator.IS_EMPTY },
+        values,
+      ),
+    ).toBe(false);
+  });
+
+  it("IS_NOT_EMPTY — returns true for a non-empty string", () => {
+    expect(
+      evaluateConditional(
+        { field: "stringField", operator: ConditionalOperator.IS_NOT_EMPTY },
+        values,
+      ),
     ).toBe(true);
   });
 
-  it('IS_NOT_EMPTY — returns true for 0 (zero is not empty)', () => {
+  it("IS_NOT_EMPTY — returns true for 0 (zero is not empty)", () => {
     expect(
       evaluateConditional(
-        { field: 'zeroField', operator: ConditionalOperator.IS_NOT_EMPTY },
-        values
-      )
+        { field: "zeroField", operator: ConditionalOperator.IS_NOT_EMPTY },
+        values,
+      ),
     ).toBe(true);
   });
 
-  it('IS_NOT_EMPTY — returns false for an empty string', () => {
+  it("IS_NOT_EMPTY — returns false for an empty string", () => {
     expect(
       evaluateConditional(
-        { field: 'emptyField', operator: ConditionalOperator.IS_NOT_EMPTY },
-        values
-      )
+        { field: "emptyField", operator: ConditionalOperator.IS_NOT_EMPTY },
+        values,
+      ),
     ).toBe(false);
   });
 
-  it('GREATER_THAN — returns true when field value is greater', () => {
+  it("GREATER_THAN — returns true when field value is greater", () => {
     expect(
       evaluateConditional(
-        { field: 'numberField', operator: ConditionalOperator.GREATER_THAN, value: 10 },
-        values
-      )
+        {
+          field: "numberField",
+          operator: ConditionalOperator.GREATER_THAN,
+          value: 10,
+        },
+        values,
+      ),
     ).toBe(true);
   });
 
-  it('GREATER_THAN — returns false when field value is less', () => {
+  it("GREATER_THAN — returns false when field value is less", () => {
     expect(
       evaluateConditional(
-        { field: 'numberField', operator: ConditionalOperator.GREATER_THAN, value: 100 },
-        values
-      )
+        {
+          field: "numberField",
+          operator: ConditionalOperator.GREATER_THAN,
+          value: 100,
+        },
+        values,
+      ),
     ).toBe(false);
   });
 
-  it('LESS_THAN — returns true when field value is less', () => {
+  it("LESS_THAN — returns true when field value is less", () => {
     expect(
       evaluateConditional(
-        { field: 'numberField', operator: ConditionalOperator.LESS_THAN, value: 100 },
-        values
-      )
+        {
+          field: "numberField",
+          operator: ConditionalOperator.LESS_THAN,
+          value: 100,
+        },
+        values,
+      ),
     ).toBe(true);
   });
 
-  it('LESS_THAN — returns false when field value is greater', () => {
+  it("LESS_THAN — returns false when field value is greater", () => {
     expect(
       evaluateConditional(
-        { field: 'numberField', operator: ConditionalOperator.LESS_THAN, value: 10 },
-        values
-      )
+        {
+          field: "numberField",
+          operator: ConditionalOperator.LESS_THAN,
+          value: 10,
+        },
+        values,
+      ),
     ).toBe(false);
   });
 
-  it('CONTAINS — returns true when field value contains the substring', () => {
+  it("CONTAINS — returns true when field value contains the substring", () => {
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: ConditionalOperator.CONTAINS, value: 'ell' },
-        values
-      )
+        {
+          field: "stringField",
+          operator: ConditionalOperator.CONTAINS,
+          value: "ell",
+        },
+        values,
+      ),
     ).toBe(true);
   });
 
-  it('CONTAINS — returns false when field value does not contain substring', () => {
+  it("CONTAINS — returns false when field value does not contain substring", () => {
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: ConditionalOperator.CONTAINS, value: 'xyz' },
-        values
-      )
+        {
+          field: "stringField",
+          operator: ConditionalOperator.CONTAINS,
+          value: "xyz",
+        },
+        values,
+      ),
     ).toBe(false);
   });
 
-  it('unknown operator — returns true by default', () => {
+  it("unknown operator — returns true by default", () => {
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: 'UNKNOWN' as ConditionalOperator },
-        values
-      )
+        { field: "stringField", operator: "UNKNOWN" as ConditionalOperator },
+        values,
+      ),
     ).toBe(true);
   });
 });
@@ -216,38 +267,38 @@ describe('evaluateConditional', () => {
 // FieldRenderer — conditional visibility
 // ---------------------------------------------------------------------------
 
-describe('FieldRenderer — conditional visibility', () => {
-  it('renders the field when no conditional is set', () => {
+describe("FieldRenderer — conditional visibility", () => {
+  it("renders the field when no conditional is set", () => {
     renderField({ field: makeField() });
-    expect(screen.getByTestId('field-testField')).toBeInTheDocument();
+    expect(screen.getByTestId("field-testField")).toBeInTheDocument();
   });
 
-  it('renders the field when conditional evaluates to true', () => {
+  it("renders the field when conditional evaluates to true", () => {
     renderField({
       field: makeField({
         conditional: {
-          field: 'toggle',
+          field: "toggle",
           operator: ConditionalOperator.EQUALS,
           value: true,
         },
       }),
       allValues: { toggle: true },
     });
-    expect(screen.getByTestId('field-testField')).toBeInTheDocument();
+    expect(screen.getByTestId("field-testField")).toBeInTheDocument();
   });
 
-  it('hides the field when conditional evaluates to false', () => {
+  it("hides the field when conditional evaluates to false", () => {
     renderField({
       field: makeField({
         conditional: {
-          field: 'toggle',
+          field: "toggle",
           operator: ConditionalOperator.EQUALS,
           value: true,
         },
       }),
       allValues: { toggle: false },
     });
-    expect(screen.queryByTestId('field-testField')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("field-testField")).not.toBeInTheDocument();
   });
 });
 
@@ -255,99 +306,106 @@ describe('FieldRenderer — conditional visibility', () => {
 // FieldRenderer — validation
 // ---------------------------------------------------------------------------
 
-describe('FieldRenderer — validation', () => {
-  it('shows required error when field is required and value is empty', () => {
+describe("FieldRenderer — validation", () => {
+  it("shows required error when field is required and value is empty", () => {
     renderField({
-      field: makeField({ required: true, label: 'Username' }),
-      value: '',
+      field: makeField({ required: true, label: "Username" }),
+      value: "",
     });
-    expect(screen.getByText('Username is required.')).toBeInTheDocument();
+    expect(screen.getByText("Username is required.")).toBeInTheDocument();
   });
 
-  it('does not show required error when field is required but has a value', () => {
+  it("does not show required error when field is required but has a value", () => {
     renderField({
       field: makeField({ required: true }),
-      value: 'present',
+      value: "present",
     });
     expect(screen.queryByText(/is required/i)).not.toBeInTheDocument();
   });
 
-  it('shows minLength error when value is too short', () => {
+  it("shows minLength error when value is too short", () => {
     renderField({
       field: makeField({
         validation: { minLength: 5 },
-        label: 'Bio',
+        label: "Bio",
       }),
-      value: 'Hi',
+      value: "Hi",
     });
-    expect(screen.getByText('Bio must be at least 5 characters.')).toBeInTheDocument();
+    expect(
+      screen.getByText("Bio must be at least 5 characters."),
+    ).toBeInTheDocument();
   });
 
-  it('shows maxLength error when value is too long', () => {
+  it("shows maxLength error when value is too long", () => {
     renderField({
       field: makeField({
         validation: { maxLength: 5 },
-        label: 'Code',
+        label: "Code",
       }),
-      value: 'toolongvalue',
+      value: "toolongvalue",
     });
-    expect(screen.getByText('Code must be no more than 5 characters.')).toBeInTheDocument();
+    expect(
+      screen.getByText("Code must be no more than 5 characters."),
+    ).toBeInTheDocument();
   });
 
-  it('shows pattern error when value does not match', () => {
+  it("shows pattern error when value does not match", () => {
     renderField({
       field: makeField({
-        validation: { pattern: '^[0-9]+$' },
-        label: 'Number Only',
+        validation: { pattern: "^[0-9]+$" },
+        label: "Number Only",
       }),
-      value: 'abc',
+      value: "abc",
     });
-    expect(screen.getByText('Number Only has an invalid format.')).toBeInTheDocument();
+    expect(
+      screen.getByText("Number Only has an invalid format."),
+    ).toBeInTheDocument();
   });
 
-  it('shows custom validation error', () => {
+  it("shows custom validation error", () => {
     renderField({
       field: makeField({
         validation: {
-          custom: (v) => (v === 'forbidden' ? 'That word is not allowed.' : undefined),
+          custom: (v) =>
+            v === "forbidden" ? "That word is not allowed." : undefined,
         },
       }),
-      value: 'forbidden',
+      value: "forbidden",
     });
-    expect(screen.getByText('That word is not allowed.')).toBeInTheDocument();
+    expect(screen.getByText("That word is not allowed.")).toBeInTheDocument();
   });
 
-  it('uses external errors when provided — parent owns validation', () => {
+  it("uses external errors when provided — parent owns validation", () => {
     renderField({
-      field: makeField({ required: true, label: 'Email' }),
-      value: '',
-      errors: ['Server says no.'],
+      field: makeField({ required: true, label: "Email" }),
+      value: "",
+      errors: ["Server says no."],
     });
     // When errors prop is provided, FieldRenderer defers to the parent
-    expect(screen.getByText('Server says no.')).toBeInTheDocument();
+    expect(screen.getByText("Server says no.")).toBeInTheDocument();
     // Internal validation is skipped (parent handles it via useValidation)
-    expect(screen.queryByText('Email is required.')).not.toBeInTheDocument();
+    expect(screen.queryByText("Email is required.")).not.toBeInTheDocument();
   });
 
-  it('runs internal validation when errors prop is not provided (standalone usage)', () => {
+  it("runs internal validation when errors prop is not provided (standalone usage)", () => {
     renderField({
-      field: makeField({ required: true, label: 'Email' }),
-      value: '',
+      field: makeField({ required: true, label: "Email" }),
+      value: "",
       // No errors prop — FieldRenderer runs its own validation
     });
-    expect(screen.getByText('Email is required.')).toBeInTheDocument();
+    expect(screen.getByText("Email is required.")).toBeInTheDocument();
   });
 
-  it('uses custom message override for built-in validators', () => {
+  it("uses custom message override for built-in validators", () => {
     renderField({
       field: makeField({
         required: true,
-        validation: { message: 'Custom required msg' },
-        label: 'Name',
+        validation: { message: "Custom required msg" },
+        label: "Name",
       }),
-      value: '',
+      value: "",
     });
-    expect(screen.getByText('Custom required msg')).toBeInTheDocument();
+    expect(screen.getByText("Custom required msg")).toBeInTheDocument();
   });
 });
 
@@ -355,17 +413,22 @@ describe('FieldRenderer — validation', () => {
 // FieldRenderer — registry resolution
 // ---------------------------------------------------------------------------
 
-describe('FieldRenderer — registry resolution', () => {
-  it('renders FallbackField (Unsupported) for unregistered COLOR type', () => {
+describe("FieldRenderer — registry resolution", () => {
+  it("renders FallbackField (Unsupported) for unregistered COLOR type", () => {
     renderField({ field: makeField({ type: FieldType.COLOR }) });
-    expect(screen.getByText(/Unsupported field type: COLOR/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Unsupported field type: COLOR/i),
+    ).toBeInTheDocument();
   });
 
-  it('renders registered MockField for TEXT type', () => {
-    renderField({ field: makeField({ type: FieldType.TEXT }), value: 'test-value' });
-    const input = screen.getByTestId('field-testField');
+  it("renders registered MockField for TEXT type", () => {
+    renderField({
+      field: makeField({ type: FieldType.TEXT }),
+      value: "test-value",
+    });
+    const input = screen.getByTestId("field-testField");
     expect(input).toBeInTheDocument();
-    expect(input).toHaveValue('test-value');
+    expect(input).toHaveValue("test-value");
   });
 });
 
@@ -373,23 +436,23 @@ describe('FieldRenderer — registry resolution', () => {
 // FieldRenderer — label and wrapper integration
 // ---------------------------------------------------------------------------
 
-describe('FieldRenderer — wrapper integration', () => {
-  it('renders the field label via FieldWrapper', () => {
-    renderField({ field: makeField({ label: 'Display Name' }) });
-    expect(screen.getByText('Display Name')).toBeInTheDocument();
+describe("FieldRenderer — wrapper integration", () => {
+  it("renders the field label via FieldWrapper", () => {
+    renderField({ field: makeField({ label: "Display Name" }) });
+    expect(screen.getByText("Display Name")).toBeInTheDocument();
   });
 
-  it('renders help text via FieldWrapper', () => {
+  it("renders help text via FieldWrapper", () => {
     renderField({
-      field: makeField({ ui: { help: 'Helpful hint here.' } }),
+      field: makeField({ ui: { help: "Helpful hint here." } }),
     });
-    expect(screen.getByText('Helpful hint here.')).toBeInTheDocument();
+    expect(screen.getByText("Helpful hint here.")).toBeInTheDocument();
   });
 
-  it('disabled state is passed through to the field component', () => {
+  it("disabled state is passed through to the field component", () => {
     renderField({ disabled: true });
     // MockField renders an input — disabled prop would show as attribute
-    const input = screen.getByTestId('field-testField');
+    const input = screen.getByTestId("field-testField");
     expect(input).toBeInTheDocument();
   });
 });
@@ -398,9 +461,9 @@ describe('FieldRenderer — wrapper integration', () => {
 // FieldRenderer — memoization / identity
 // ---------------------------------------------------------------------------
 
-describe('FieldRenderer — memoization', () => {
+describe("FieldRenderer — memoization", () => {
   it('has displayName set to "FieldRenderer"', () => {
-    expect(FieldRenderer.displayName).toBe('FieldRenderer');
+    expect(FieldRenderer.displayName).toBe("FieldRenderer");
   });
 });
 
@@ -408,38 +471,38 @@ describe('FieldRenderer — memoization', () => {
 // FieldRenderer — onBlur forwarding (Step 2.7.3)
 // ---------------------------------------------------------------------------
 
-describe('FieldRenderer — onBlur forwarding', () => {
-  it('fires onBlur callback when the field component loses focus', () => {
+describe("FieldRenderer — onBlur forwarding", () => {
+  it("fires onBlur callback when the field component loses focus", () => {
     const handleBlur = vi.fn();
     renderField({
       field: makeField(),
-      value: 'test',
+      value: "test",
       onBlur: handleBlur,
     });
 
-    const input = screen.getByTestId('field-testField');
+    const input = screen.getByTestId("field-testField");
     fireEvent.blur(input);
 
     expect(handleBlur).toHaveBeenCalledTimes(1);
   });
 
-  it('does not throw when onBlur is not provided', () => {
+  it("does not throw when onBlur is not provided", () => {
     expect(() => {
-      renderField({ field: makeField(), value: 'test' });
-      const input = screen.getByTestId('field-testField');
+      renderField({ field: makeField(), value: "test" });
+      const input = screen.getByTestId("field-testField");
       fireEvent.blur(input);
     }).not.toThrow();
   });
 
-  it('fires onBlur only once per blur event (no duplicates from bubbling)', () => {
+  it("fires onBlur only once per blur event (no duplicates from bubbling)", () => {
     const handleBlur = vi.fn();
     renderField({
       field: makeField(),
-      value: 'test',
+      value: "test",
       onBlur: handleBlur,
     });
 
-    const input = screen.getByTestId('field-testField');
+    const input = screen.getByTestId("field-testField");
     fireEvent.blur(input);
     fireEvent.blur(input);
 
@@ -451,87 +514,103 @@ describe('FieldRenderer — onBlur forwarding', () => {
 // PROD QA edge-case tests — evaluateConditional data integrity
 // ---------------------------------------------------------------------------
 
-describe('evaluateConditional — PROD QA edge cases', () => {
-  it('CONTAINS — returns false when rule.value is undefined (no false-positive)', () => {
+describe("evaluateConditional — PROD QA edge cases", () => {
+  it("CONTAINS — returns false when rule.value is undefined (no false-positive)", () => {
     // Bug fix: previously String(undefined) = "undefined" would match if fieldValue contained "undefined"
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: ConditionalOperator.CONTAINS, value: undefined },
-        { stringField: 'hello undefined world' }
-      )
+        {
+          field: "stringField",
+          operator: ConditionalOperator.CONTAINS,
+          value: undefined,
+        },
+        { stringField: "hello undefined world" },
+      ),
     ).toBe(false);
   });
 
-  it('CONTAINS — returns false when rule.value is null', () => {
+  it("CONTAINS — returns false when rule.value is null", () => {
     expect(
       evaluateConditional(
-        { field: 'stringField', operator: ConditionalOperator.CONTAINS, value: null },
-        { stringField: 'hello null world' }
-      )
+        {
+          field: "stringField",
+          operator: ConditionalOperator.CONTAINS,
+          value: null,
+        },
+        { stringField: "hello null world" },
+      ),
     ).toBe(false);
   });
 
-  it('CONTAINS — returns true when field value contains the rule.value string', () => {
+  it("CONTAINS — returns true when field value contains the rule.value string", () => {
     expect(
       evaluateConditional(
-        { field: 'text', operator: ConditionalOperator.CONTAINS, value: 'foo' },
-        { text: 'foobar' }
-      )
+        { field: "text", operator: ConditionalOperator.CONTAINS, value: "foo" },
+        { text: "foobar" },
+      ),
     ).toBe(true);
   });
 
-  it('GREATER_THAN — returns false when fieldValue coerces to NaN (string)', () => {
+  it("GREATER_THAN — returns false when fieldValue coerces to NaN (string)", () => {
     // Bug fix: previously NaN > 10 evaluated silently to false without NaN guard
     expect(
       evaluateConditional(
-        { field: 'str', operator: ConditionalOperator.GREATER_THAN, value: 10 },
-        { str: 'not-a-number' }
-      )
+        { field: "str", operator: ConditionalOperator.GREATER_THAN, value: 10 },
+        { str: "not-a-number" },
+      ),
     ).toBe(false);
   });
 
-  it('GREATER_THAN — returns false when rule.value coerces to NaN', () => {
+  it("GREATER_THAN — returns false when rule.value coerces to NaN", () => {
     expect(
       evaluateConditional(
-        { field: 'num', operator: ConditionalOperator.GREATER_THAN, value: 'not-a-number' },
-        { num: 42 }
-      )
+        {
+          field: "num",
+          operator: ConditionalOperator.GREATER_THAN,
+          value: "not-a-number",
+        },
+        { num: 42 },
+      ),
     ).toBe(false);
   });
 
-  it('GREATER_THAN — returns true for valid numeric strings that coerce correctly', () => {
+  it("GREATER_THAN — returns true for valid numeric strings that coerce correctly", () => {
     expect(
       evaluateConditional(
-        { field: 'str', operator: ConditionalOperator.GREATER_THAN, value: 10 },
-        { str: '50' }
-      )
+        { field: "str", operator: ConditionalOperator.GREATER_THAN, value: 10 },
+        { str: "50" },
+      ),
     ).toBe(true);
   });
 
-  it('LESS_THAN — returns false when fieldValue coerces to NaN', () => {
+  it("LESS_THAN — returns false when fieldValue coerces to NaN", () => {
     expect(
       evaluateConditional(
-        { field: 'str', operator: ConditionalOperator.LESS_THAN, value: 100 },
-        { str: 'not-a-number' }
-      )
+        { field: "str", operator: ConditionalOperator.LESS_THAN, value: 100 },
+        { str: "not-a-number" },
+      ),
     ).toBe(false);
   });
 
-  it('LESS_THAN — returns false when rule.value coerces to NaN', () => {
+  it("LESS_THAN — returns false when rule.value coerces to NaN", () => {
     expect(
       evaluateConditional(
-        { field: 'num', operator: ConditionalOperator.LESS_THAN, value: 'not-a-number' },
-        { num: 5 }
-      )
+        {
+          field: "num",
+          operator: ConditionalOperator.LESS_THAN,
+          value: "not-a-number",
+        },
+        { num: 5 },
+      ),
     ).toBe(false);
   });
 
-  it('LESS_THAN — returns true for valid numeric strings that coerce correctly', () => {
+  it("LESS_THAN — returns true for valid numeric strings that coerce correctly", () => {
     expect(
       evaluateConditional(
-        { field: 'str', operator: ConditionalOperator.LESS_THAN, value: 100 },
-        { str: '5' }
-      )
+        { field: "str", operator: ConditionalOperator.LESS_THAN, value: 100 },
+        { str: "5" },
+      ),
     ).toBe(true);
   });
 });
@@ -540,8 +619,8 @@ describe('evaluateConditional — PROD QA edge cases', () => {
 // PROD QA edge-case tests — custom validator error handling
 // ---------------------------------------------------------------------------
 
-describe('FieldRenderer — PROD QA custom validator safety', () => {
-  it('does not crash when custom validator throws an exception', () => {
+describe("FieldRenderer — PROD QA custom validator safety", () => {
+  it("does not crash when custom validator throws an exception", () => {
     // Bug fix: previously a throwing custom validator would propagate uncaught
     // and crash the component. Now it is silently swallowed.
     expect(() =>
@@ -549,47 +628,49 @@ describe('FieldRenderer — PROD QA custom validator safety', () => {
         field: makeField({
           validation: {
             custom: () => {
-              throw new Error('Validator exploded!');
+              throw new Error("Validator exploded!");
             },
           },
         }),
-        value: 'some-value',
-      })
+        value: "some-value",
+      }),
     ).not.toThrow();
     // Field should still render normally
-    expect(screen.getByTestId('field-testField')).toBeInTheDocument();
+    expect(screen.getByTestId("field-testField")).toBeInTheDocument();
   });
 
-  it('does not show an error when custom validator throws (graceful degradation)', () => {
+  it("does not show an error when custom validator throws (graceful degradation)", () => {
     renderField({
       field: makeField({
-        label: 'My Field',
+        label: "My Field",
         validation: {
           custom: () => {
-            throw new TypeError('Unexpected null');
+            throw new TypeError("Unexpected null");
           },
         },
       }),
-      value: 'test',
+      value: "test",
     });
     // No error alert should appear — thrown error is swallowed
     expect(document.querySelector('[role="alert"]')).not.toBeInTheDocument();
   });
 
-  it('still runs other validators after a custom validator throws', () => {
+  it("still runs other validators after a custom validator throws", () => {
     // If custom throws, the component should still show minLength error
     renderField({
       field: makeField({
-        label: 'Bio',
+        label: "Bio",
         validation: {
           minLength: 10,
           custom: () => {
-            throw new Error('crash');
+            throw new Error("crash");
           },
         },
       }),
-      value: 'short',
+      value: "short",
     });
-    expect(screen.getByText('Bio must be at least 10 characters.')).toBeInTheDocument();
+    expect(
+      screen.getByText("Bio must be at least 10 characters."),
+    ).toBeInTheDocument();
   });
 });

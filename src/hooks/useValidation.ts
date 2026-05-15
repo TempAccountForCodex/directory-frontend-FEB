@@ -6,14 +6,14 @@
  * Generic — not tied to FormGenerator.
  */
 
-import { useState, useCallback, useMemo, useRef } from 'react';
-import { validateField as runValidation } from '../utils/validation';
+import { useState, useCallback, useMemo, useRef } from "react";
+import { validateField as runValidation } from "../utils/validation";
 
 import type {
   FieldDefinition,
   ValidationRules as FieldValidationRules,
-} from '../components/DynamicFields/types';
-import type { ValidationRules as ValidatorRules } from '../utils/validation';
+} from "../components/DynamicFields/types";
+import type { ValidationRules as ValidatorRules } from "../utils/validation";
 
 /**
  * Maximum character length for pattern strings.
@@ -29,7 +29,7 @@ const MAX_PATTERN_LENGTH = 500;
  */
 function toValidatorRules(
   validation: FieldValidationRules | undefined,
-  required: boolean | undefined
+  required: boolean | undefined,
 ): ValidatorRules {
   const rules: ValidatorRules = {};
 
@@ -37,13 +37,18 @@ function toValidatorRules(
 
   if (!validation) return rules;
 
-  if (typeof validation.minLength === 'number') rules.minLength = validation.minLength;
-  if (typeof validation.maxLength === 'number') rules.maxLength = validation.maxLength;
-  if (typeof validation.min === 'number') rules.min = validation.min;
-  if (typeof validation.max === 'number') rules.max = validation.max;
+  if (typeof validation.minLength === "number")
+    rules.minLength = validation.minLength;
+  if (typeof validation.maxLength === "number")
+    rules.maxLength = validation.maxLength;
+  if (typeof validation.min === "number") rules.min = validation.min;
+  if (typeof validation.max === "number") rules.max = validation.max;
 
   // Convert string pattern → RegExp with ReDoS guard
-  if (typeof validation.pattern === 'string' && validation.pattern.length <= MAX_PATTERN_LENGTH) {
+  if (
+    typeof validation.pattern === "string" &&
+    validation.pattern.length <= MAX_PATTERN_LENGTH
+  ) {
     try {
       rules.pattern = new RegExp(validation.pattern);
     } catch {
@@ -52,7 +57,7 @@ function toValidatorRules(
   }
 
   // Forward custom validator, adapting undefined → null return
-  if (typeof validation.custom === 'function') {
+  if (typeof validation.custom === "function") {
     const original = validation.custom;
     rules.custom = (value: unknown) => original(value) ?? null;
   }
@@ -85,7 +90,7 @@ export interface UseValidationReturn {
  */
 export function useValidation(
   fields: FieldDefinition[],
-  values: Record<string, unknown>
+  values: Record<string, unknown>,
 ): UseValidationReturn {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());

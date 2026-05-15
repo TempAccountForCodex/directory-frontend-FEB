@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 /**
  * Admin React Query hooks — gate-kept endpoints under `/api/admin/*` plus the
@@ -37,7 +37,12 @@ export type AdminUserListParams = {
 
 export type AdminUsersListResponse = {
   users?: Array<Record<string, unknown>>;
-  pagination?: { total?: number; totalPages?: number; page?: number; limit?: number };
+  pagination?: {
+    total?: number;
+    totalPages?: number;
+    page?: number;
+    limit?: number;
+  };
 };
 
 export type AdminUserStatsResponse = {
@@ -131,7 +136,11 @@ export type AdminFinancesRevenueParams = {
 
 export type AdminFinancesRevenueResponse = {
   data?: {
-    byPlan?: Array<{ planCode: string; planName: string; revenueCents: number }>;
+    byPlan?: Array<{
+      planCode: string;
+      planName: string;
+      revenueCents: number;
+    }>;
     mrrTrend?: Array<{ month: string; mrrCents: number }>;
   };
 };
@@ -168,15 +177,15 @@ export type AdminFinancesTransactionsResponse = {
 };
 
 export type AdminFinancesExportPayload = {
-  reportType: 'invoices' | 'revenue' | 'tax' | string;
-  format: 'csv' | 'json';
+  reportType: "invoices" | "revenue" | "tax" | string;
+  format: "csv" | "json";
   startDate?: string;
   endDate?: string;
 };
 
 export type AdminFinancesExportResult = {
   content: string;
-  format: 'csv' | 'json';
+  format: "csv" | "json";
   reportType: string;
 };
 
@@ -209,9 +218,11 @@ export function useAdminUsers(params?: AdminUserListParams) {
   const { data: user } = useAuthMe();
 
   return useQuery<AdminUsersListResponse>({
-    queryKey: queryKeys.admin.users.list(params as Record<string, unknown> | undefined),
+    queryKey: queryKeys.admin.users.list(
+      params as Record<string, unknown> | undefined,
+    ),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/users', { params, signal });
+      const response = await apiClient.get("/users", { params, signal });
       return response.data;
     },
     enabled: !!user,
@@ -229,7 +240,7 @@ export function useAdminUserStats() {
   return useQuery<AdminUserStatsResponse>({
     queryKey: queryKeys.admin.users.stats(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/users/stats', { signal });
+      const response = await apiClient.get("/users/stats", { signal });
       return response.data;
     },
     enabled: !!user,
@@ -242,18 +253,23 @@ export function useAdminUserStats() {
  * consent ledger for a single user, rendered inside the billing tab of the
  * user edit dialog. Disabled until a `userId` is provided.
  */
-export function useAdminUserBillingHistory(userId: number | string | null | undefined) {
+export function useAdminUserBillingHistory(
+  userId: number | string | null | undefined,
+) {
   const { data: user } = useAuthMe();
 
   return useQuery<AdminUserBillingHistoryResponse>({
-    queryKey: queryKeys.admin.users.billingHistory(userId ?? ''),
+    queryKey: queryKeys.admin.users.billingHistory(userId ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/admin/users/${userId}/billing-history`, {
-        signal,
-      });
+      const response = await apiClient.get(
+        `/admin/users/${userId}/billing-history`,
+        {
+          signal,
+        },
+      );
       return response.data;
     },
-    enabled: !!user && userId !== undefined && userId !== null && userId !== '',
+    enabled: !!user && userId !== undefined && userId !== null && userId !== "",
     staleTime: 30_000,
   });
 }
@@ -266,8 +282,8 @@ export function useCreateAdminUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiClient.post('/users', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await apiClient.post("/users", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
       return response.data;
     },
@@ -284,15 +300,23 @@ export function useCreateAdminUser() {
 export function useUpdateAdminUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, formData }: { id: number | string; formData: FormData }) => {
+    mutationFn: async ({
+      id,
+      formData,
+    }: {
+      id: number | string;
+      formData: FormData;
+    }) => {
       const response = await apiClient.put(`/users/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       });
       return response.data;
     },
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.users.all() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.users.detail(vars.id) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.users.detail(vars.id),
+      });
     },
   });
 }
@@ -310,12 +334,16 @@ export function useToggleAdminUserBlock() {
       userId: number | string;
       blocked: boolean;
     }) => {
-      const response = await apiClient.patch(`/users/${userId}/block`, { blocked });
+      const response = await apiClient.patch(`/users/${userId}/block`, {
+        blocked,
+      });
       return response.data;
     },
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.users.all() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.users.detail(vars.userId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.users.detail(vars.userId),
+      });
     },
   });
 }
@@ -346,7 +374,10 @@ export function useApplyPlanOverride() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId, ...body }: ApplyPlanOverridePayload) => {
-      const response = await apiClient.post(`/admin/users/${userId}/plan-override`, body);
+      const response = await apiClient.post(
+        `/admin/users/${userId}/plan-override`,
+        body,
+      );
       return response.data;
     },
     onSuccess: (_data, vars) => {
@@ -366,7 +397,9 @@ export function useRevokePlanOverride() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId: number | string) => {
-      const response = await apiClient.delete(`/admin/users/${userId}/plan-override`);
+      const response = await apiClient.delete(
+        `/admin/users/${userId}/plan-override`,
+      );
       return response.data;
     },
     onSuccess: (_data, userId) => {
@@ -387,7 +420,10 @@ export function useGrantUserCredits() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId, ...body }: GrantCreditsPayload) => {
-      const response = await apiClient.post(`/admin/users/${userId}/credits`, body);
+      const response = await apiClient.post(
+        `/admin/users/${userId}/credits`,
+        body,
+      );
       return response.data;
     },
     onSuccess: (_data, vars) => {
@@ -413,7 +449,10 @@ export function useRefundInvoice() {
       userId: _userId, // eslint-disable-line @typescript-eslint/no-unused-vars
       ...body
     }: RefundInvoicePayload & { userId?: number | string }) => {
-      const response = await apiClient.post(`/admin/invoices/${invoiceId}/refund`, body);
+      const response = await apiClient.post(
+        `/admin/invoices/${invoiceId}/refund`,
+        body,
+      );
       return response.data;
     },
     onSuccess: (_data, vars) => {
@@ -422,7 +461,9 @@ export function useRefundInvoice() {
           queryKey: queryKeys.admin.users.billingHistory(vars.userId),
         });
       } else {
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.users.all() });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.users.all(),
+        });
       }
     },
   });
@@ -445,7 +486,10 @@ export function useAdminBroadcasts(params?: AdminBroadcastListParams) {
       params as Record<string, unknown> | undefined,
     ),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/admin/broadcasts', { params, signal });
+      const response = await apiClient.get("/admin/broadcasts", {
+        params,
+        signal,
+      });
       return response.data;
     },
     enabled: !!user,
@@ -467,7 +511,7 @@ export function useBroadcastPreviewCount(params?: BroadcastPreviewCountParams) {
 
   const needsValue =
     !!params?.targetType &&
-    ['role', 'plan', 'activity', 'template_users'].includes(params.targetType);
+    ["role", "plan", "activity", "template_users"].includes(params.targetType);
   const enabled =
     !!user && !!params?.targetType && (!needsValue || !!params?.targetValue);
 
@@ -476,7 +520,7 @@ export function useBroadcastPreviewCount(params?: BroadcastPreviewCountParams) {
       params as Record<string, unknown> | undefined,
     ),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/admin/broadcasts/preview-count', {
+      const response = await apiClient.get("/admin/broadcasts/preview-count", {
         params,
         signal,
       });
@@ -495,11 +539,13 @@ export function useCreateBroadcast() {
   const queryClient = useQueryClient();
   return useMutation<CreateBroadcastResponse, Error, CreateBroadcastPayload>({
     mutationFn: async (payload) => {
-      const response = await apiClient.post('/admin/broadcasts', payload);
+      const response = await apiClient.post("/admin/broadcasts", payload);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.broadcasts.all() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.broadcasts.all(),
+      });
     },
   });
 }
@@ -513,11 +559,15 @@ export function useSendBroadcast() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (broadcastId: number | string) => {
-      const response = await apiClient.post(`/admin/broadcasts/${broadcastId}/send`);
+      const response = await apiClient.post(
+        `/admin/broadcasts/${broadcastId}/send`,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.broadcasts.all() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.broadcasts.all(),
+      });
     },
   });
 }
@@ -531,11 +581,15 @@ export function useDeleteBroadcast() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (broadcastId: number | string) => {
-      const response = await apiClient.delete(`/admin/broadcasts/${broadcastId}`);
+      const response = await apiClient.delete(
+        `/admin/broadcasts/${broadcastId}`,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.broadcasts.all() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.broadcasts.all(),
+      });
     },
   });
 }
@@ -554,7 +608,9 @@ export function useAdminFinancesMetrics() {
   return useQuery<AdminFinancesMetricsResponse>({
     queryKey: queryKeys.admin.finances.metrics(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/admin/finances/metrics', { signal });
+      const response = await apiClient.get("/admin/finances/metrics", {
+        signal,
+      });
       return response.data;
     },
     enabled: !!user,
@@ -575,7 +631,7 @@ export function useAdminFinancesRevenue(params?: AdminFinancesRevenueParams) {
       params as Record<string, unknown> | undefined,
     ),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/admin/finances/revenue', {
+      const response = await apiClient.get("/admin/finances/revenue", {
         params,
         signal,
       });
@@ -600,7 +656,7 @@ export function useAdminFinancesSubscriptions(
       params as Record<string, unknown> | undefined,
     ),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/admin/finances/subscriptions', {
+      const response = await apiClient.get("/admin/finances/subscriptions", {
         params,
         signal,
       });
@@ -625,7 +681,7 @@ export function useAdminFinancesTransactions(
       params as Record<string, unknown> | undefined,
     ),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/admin/finances/transactions', {
+      const response = await apiClient.get("/admin/finances/transactions", {
         params,
         signal,
       });
@@ -644,19 +700,27 @@ export function useAdminFinancesTransactions(
  * so the caller can mint its own Blob and filename.
  */
 export function useExportAdminFinancesReport() {
-  return useMutation<AdminFinancesExportResult, Error, AdminFinancesExportPayload>({
+  return useMutation<
+    AdminFinancesExportResult,
+    Error,
+    AdminFinancesExportPayload
+  >({
     mutationFn: async ({ reportType, format, startDate, endDate }) => {
       const params: Record<string, string> = { reportType, format };
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
-      const response = await apiClient.get('/admin/finances/reports/export', {
+      const response = await apiClient.get("/admin/finances/reports/export", {
         params,
-        responseType: format === 'csv' ? 'text' : 'json',
+        responseType: format === "csv" ? "text" : "json",
       });
       const content =
-        format === 'csv'
+        format === "csv"
           ? (response.data as string)
-          : JSON.stringify((response.data as { data?: unknown })?.data ?? response.data, null, 2);
+          : JSON.stringify(
+              (response.data as { data?: unknown })?.data ?? response.data,
+              null,
+              2,
+            );
       return { content, format, reportType };
     },
   });
@@ -670,13 +734,13 @@ export function useExportAdminFinancesReport() {
  * `GET /api/referral/admin/analytics?period=...` — admin-only funnel +
  * top-referrers + reward-ledger payload.
  */
-export function useAdminReferralAnalytics(period: string = '30d') {
+export function useAdminReferralAnalytics(period: string = "30d") {
   const { data: user } = useAuthMe();
 
   return useQuery<ReferralAnalyticsResponse>({
     queryKey: queryKeys.admin.referrals.analytics(period),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/referral/admin/analytics', {
+      const response = await apiClient.get("/referral/admin/analytics", {
         params: { period },
         signal,
       });
@@ -696,11 +760,16 @@ export function useUpdateReferralCode() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ codeId, ...body }: UpdateReferralCodePayload) => {
-      const response = await apiClient.put(`/referral/admin/codes/${codeId}`, body);
+      const response = await apiClient.put(
+        `/referral/admin/codes/${codeId}`,
+        body,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.referrals.all() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.referrals.all(),
+      });
     },
   });
 }

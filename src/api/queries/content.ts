@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { QueryKey } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { QueryKey } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
 
 /**
  * Content React Query hooks (Phase H.content).
@@ -38,17 +38,22 @@ import { queryKeys } from '../queryKeys';
 /* Types                                                                  */
 /* --------------------------------------------------------------------- */
 
-export type ListingsParams = Record<string, string | number | boolean | undefined>;
+export type ListingsParams = Record<
+  string,
+  string | number | boolean | undefined
+>;
 
 /* --------------------------------------------------------------------- */
 /* Helpers                                                                */
 /* --------------------------------------------------------------------- */
 
-function cleanParams<T extends Record<string, unknown>>(input?: T): Record<string, unknown> {
+function cleanParams<T extends Record<string, unknown>>(
+  input?: T,
+): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(input ?? {})) {
     if (value === undefined || value === null) continue;
-    if (typeof value === 'string' && value.trim() === '') continue;
+    if (typeof value === "string" && value.trim() === "") continue;
     out[key] = value;
   }
   return out;
@@ -69,8 +74,13 @@ export function useListings(params?: ListingsParams) {
   return useQuery({
     queryKey: queryKeys.content.listings(cleaned),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/places', { params: cleaned, signal });
-      return response.data?.data ?? response.data ?? { data: [], pagination: null };
+      const response = await apiClient.get("/places", {
+        params: cleaned,
+        signal,
+      });
+      return (
+        response.data?.data ?? response.data ?? { data: [], pagination: null }
+      );
     },
     staleTime: 5 * 60_000,
   });
@@ -82,7 +92,7 @@ export function useListings(params?: ListingsParams) {
  */
 export function useListing(id: string | number | null | undefined) {
   return useQuery({
-    queryKey: queryKeys.content.listing(id ?? ''),
+    queryKey: queryKeys.content.listing(id ?? ""),
     queryFn: async ({ signal }) => {
       const response = await apiClient.get(`/places/${id}`, { signal });
       return response.data?.data ?? response.data ?? null;
@@ -97,7 +107,7 @@ export function useListing(id: string | number | null | undefined) {
  */
 export function useListingBySlug(slug: string | null | undefined) {
   return useQuery({
-    queryKey: ['content', 'listingBySlug', slug ?? ''] as const,
+    queryKey: ["content", "listingBySlug", slug ?? ""] as const,
     queryFn: async ({ signal }) => {
       const response = await apiClient.get(`/places/slug/${slug}`, { signal });
       return response.data?.data ?? response.data ?? null;
@@ -115,11 +125,13 @@ export function useCreateListing() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
-      const response = await apiClient.post('/places', payload);
+      const response = await apiClient.post("/places", payload);
       return response.data?.data ?? response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['content', 'listings'] as QueryKey });
+      queryClient.invalidateQueries({
+        queryKey: ["content", "listings"] as QueryKey,
+      });
     },
   });
 }
@@ -131,13 +143,23 @@ export function useCreateListing() {
 export function useUpdateListing() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, payload }: { id: string | number; payload: Record<string, unknown> }) => {
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string | number;
+      payload: Record<string, unknown>;
+    }) => {
       const response = await apiClient.put(`/places/${id}`, payload);
       return response.data?.data ?? response.data;
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['content', 'listings'] as QueryKey });
-      queryClient.invalidateQueries({ queryKey: queryKeys.content.listing(vars.id) });
+      queryClient.invalidateQueries({
+        queryKey: ["content", "listings"] as QueryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.content.listing(vars.id),
+      });
     },
   });
 }
@@ -153,8 +175,12 @@ export function useDeleteListing() {
       return response.data;
     },
     onSuccess: (_data, id) => {
-      queryClient.invalidateQueries({ queryKey: ['content', 'listings'] as QueryKey });
-      queryClient.invalidateQueries({ queryKey: queryKeys.content.listing(id) });
+      queryClient.invalidateQueries({
+        queryKey: ["content", "listings"] as QueryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.content.listing(id),
+      });
     },
   });
 }
@@ -179,14 +205,11 @@ export type ListingReviewsParams = {
  */
 export function useListingReviews(
   listingId: string | number | null | undefined,
-  params?: ListingReviewsParams
+  params?: ListingReviewsParams,
 ) {
   const cleaned = cleanParams(params);
   return useQuery({
-    queryKey: [
-      ...queryKeys.content.reviews(listingId ?? ''),
-      cleaned,
-    ] as const,
+    queryKey: [...queryKeys.content.reviews(listingId ?? ""), cleaned] as const,
     queryFn: async ({ signal }) => {
       const response = await apiClient.get(`/reviews/listings/${listingId}`, {
         params: cleaned,
@@ -213,7 +236,10 @@ export function useCreateReview() {
       listingId: string | number;
       payload: { rating: number; title: string; content: string };
     }) => {
-      const response = await apiClient.post(`/reviews/listings/${listingId}`, payload);
+      const response = await apiClient.post(
+        `/reviews/listings/${listingId}`,
+        payload,
+      );
       return response.data?.review ?? response.data;
     },
     onSuccess: (_data, vars) => {
@@ -247,7 +273,9 @@ export function useDeleteReview() {
         });
       } else {
         // Unknown listing scope — broadly invalidate all reviews.
-        queryClient.invalidateQueries({ queryKey: ['content', 'reviews'] as QueryKey });
+        queryClient.invalidateQueries({
+          queryKey: ["content", "reviews"] as QueryKey,
+        });
       }
     },
   });
@@ -264,10 +292,12 @@ export function useVoteReview() {
       vote,
     }: {
       reviewId: string | number;
-      vote: 'helpful' | 'not_helpful';
+      vote: "helpful" | "not_helpful";
       listingId?: string | number;
     }) => {
-      const response = await apiClient.post(`/reviews/${reviewId}/vote`, { vote });
+      const response = await apiClient.post(`/reviews/${reviewId}/vote`, {
+        vote,
+      });
       return response.data;
     },
     onSuccess: (_data, vars) => {
@@ -327,12 +357,12 @@ export type ListingCommentsParams = {
  */
 export function useListingComments(
   listingId: string | number | null | undefined,
-  params?: ListingCommentsParams
+  params?: ListingCommentsParams,
 ) {
   const cleaned = cleanParams(params);
   return useQuery({
     queryKey: [
-      ...queryKeys.content.comments(listingId ?? ''),
+      ...queryKeys.content.comments(listingId ?? ""),
       cleaned,
     ] as const,
     queryFn: async ({ signal }) => {
@@ -360,7 +390,10 @@ export function useCreateComment() {
       listingId: string | number;
       payload: { content: string; parentCommentId?: number };
     }) => {
-      const response = await apiClient.post(`/comments/listings/${listingId}`, payload);
+      const response = await apiClient.post(
+        `/comments/listings/${listingId}`,
+        payload,
+      );
       return response.data?.comment ?? response.data;
     },
     onSuccess: (_data, vars) => {
@@ -392,7 +425,9 @@ export function useDeleteComment() {
           queryKey: queryKeys.content.comments(vars.listingId),
         });
       } else {
-        queryClient.invalidateQueries({ queryKey: ['content', 'comments'] as QueryKey });
+        queryClient.invalidateQueries({
+          queryKey: ["content", "comments"] as QueryKey,
+        });
       }
     },
   });
@@ -442,17 +477,19 @@ export type FavouriteStatus = {
  * Auth-gated on the backend; when anonymous, the query still fires and the
  * consumer hook surfaces `requiresAuth` on 401.
  */
-export function useFavouriteStatus(websiteId: string | number | null | undefined) {
+export function useFavouriteStatus(
+  websiteId: string | number | null | undefined,
+) {
   return useQuery<FavouriteStatus>({
     queryKey: [
       ...queryKeys.content.favourites(),
-      'status',
-      websiteId ?? '',
+      "status",
+      websiteId ?? "",
     ] as const,
     queryFn: async ({ signal }) => {
       const response = await apiClient.get(
         `/favourites/listings/${websiteId}/status`,
-        { signal }
+        { signal },
       );
       return {
         isFavourited: response.data?.isFavourited ?? false,
@@ -478,13 +515,9 @@ export type UserFavouritesParams = {
 export function useUserFavourites(params?: UserFavouritesParams) {
   const cleaned = cleanParams(params);
   return useQuery({
-    queryKey: [
-      ...queryKeys.content.favourites(),
-      'userList',
-      cleaned,
-    ] as const,
+    queryKey: [...queryKeys.content.favourites(), "userList", cleaned] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/favourites/user/favourites', {
+      const response = await apiClient.get("/favourites/user/favourites", {
         params: cleaned,
         signal,
       });
@@ -502,18 +535,14 @@ export function useUserFavourites(params?: UserFavouritesParams) {
  * repeated calls with the same id set share a cache slot.
  */
 export function useBatchFavouriteCheck(websiteIds: (string | number)[]) {
-  const idsKey = websiteIds.join(',');
+  const idsKey = websiteIds.join(",");
   return useQuery<Record<number | string, boolean>>({
-    queryKey: [
-      ...queryKeys.content.favourites(),
-      'batch',
-      idsKey,
-    ] as const,
+    queryKey: [...queryKeys.content.favourites(), "batch", idsKey] as const,
     queryFn: async ({ signal }) => {
       const response = await apiClient.post(
-        '/favourites/user/favourites/check',
+        "/favourites/user/favourites/check",
         { websiteIds },
-        { signal }
+        { signal },
       );
       return response.data?.statusMap ?? {};
     },
@@ -536,14 +565,14 @@ export function useToggleFavourite() {
     mutationFn: async ({ websiteId }: { websiteId: string | number }) => {
       const response = await apiClient.post(
         `/favourites/listings/${websiteId}/favourite`,
-        {}
+        {},
       );
       return response.data;
     },
     onMutate: async ({ websiteId }) => {
       const statusKey = [
         ...queryKeys.content.favourites(),
-        'status',
+        "status",
         websiteId,
       ] as const;
       await queryClient.cancelQueries({ queryKey: statusKey });
@@ -568,16 +597,16 @@ export function useToggleFavourite() {
       queryClient.invalidateQueries({
         queryKey: [
           ...queryKeys.content.favourites(),
-          'status',
+          "status",
           vars.websiteId,
         ] as QueryKey,
       });
       // User's list of favourites changed too.
       queryClient.invalidateQueries({
-        queryKey: [...queryKeys.content.favourites(), 'userList'] as QueryKey,
+        queryKey: [...queryKeys.content.favourites(), "userList"] as QueryKey,
       });
       queryClient.invalidateQueries({
-        queryKey: [...queryKeys.content.favourites(), 'batch'] as QueryKey,
+        queryKey: [...queryKeys.content.favourites(), "batch"] as QueryKey,
       });
     },
   });

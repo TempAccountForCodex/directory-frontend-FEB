@@ -1,5 +1,5 @@
-import React, { type ReactNode } from 'react';
-import { useABTestContext } from '../hooks/useABTest';
+import React, { type ReactNode } from "react";
+import { useABTestContext } from "../hooks/useABTest";
 
 interface ABTestVariantProps {
   /**
@@ -77,7 +77,10 @@ interface ABTestSwitchProps {
   children: (variant: string | null) => ReactNode;
 }
 
-export const ABTestSwitch: React.FC<ABTestSwitchProps> = ({ testId, children }) => {
+export const ABTestSwitch: React.FC<ABTestSwitchProps> = ({
+  testId,
+  children,
+}) => {
   const { getVariant } = useABTestContext();
   const variant = getVariant(testId);
 

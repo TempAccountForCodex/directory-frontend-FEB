@@ -7,13 +7,13 @@
  * React.memo wrapped per vercel-react-best-practices.
  */
 
-import React, { memo, isValidElement, Children } from 'react';
-import { motion } from 'framer-motion';
-import { getStaggerDelay } from '../hooks';
+import React, { memo, isValidElement, Children } from "react";
+import { motion } from "framer-motion";
+import { getStaggerDelay } from "../hooks";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-export type AnimatedListDirection = 'up' | 'down' | 'left' | 'right' | 'none';
+export type AnimatedListDirection = "up" | "down" | "left" | "right" | "none";
 
 export interface AnimatedListProps {
   children?: React.ReactNode;
@@ -34,13 +34,14 @@ export interface AnimatedListProps {
 
 // ── Direction offset map ───────────────────────────────────────────────────────
 
-const DIRECTION_MAP: Record<AnimatedListDirection, { y?: number; x?: number }> = {
-  up: { y: 32 },
-  down: { y: -32 },
-  left: { x: 32 },
-  right: { x: -32 },
-  none: {},
-};
+const DIRECTION_MAP: Record<AnimatedListDirection, { y?: number; x?: number }> =
+  {
+    up: { y: 32 },
+    down: { y: -32 },
+    left: { x: 32 },
+    right: { x: -32 },
+    none: {},
+  };
 
 // ── Easing (matching FadeIn.tsx pattern) ──────────────────────────────────────
 
@@ -49,8 +50,8 @@ const EASING = [0.22, 0.61, 0.36, 1] as const;
 // ── Check prefers-reduced-motion ──────────────────────────────────────────────
 
 function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 // ── AnimatedList component ────────────────────────────────────────────────────
@@ -60,7 +61,7 @@ const AnimatedList: React.FC<AnimatedListProps> = memo(
     children,
     staggerMs = 80,
     baseDelay = 0,
-    direction = 'up',
+    direction = "up",
     disabled = false,
     wrapperStyle,
   }) => {
@@ -85,14 +86,18 @@ const AnimatedList: React.FC<AnimatedListProps> = memo(
             return child;
           }
 
-          const delayMs = getStaggerDelay(validChildIndex, baseDelay, staggerMs);
+          const delayMs = getStaggerDelay(
+            validChildIndex,
+            baseDelay,
+            staggerMs,
+          );
           validChildIndex += 1;
 
           return (
             <motion.div
               initial={initial}
               whileInView={animate}
-              viewport={{ once: true, margin: '-60px 0px' }}
+              viewport={{ once: true, margin: "-60px 0px" }}
               transition={{
                 duration: 0.6,
                 delay: delayMs / 1000,
@@ -106,9 +111,9 @@ const AnimatedList: React.FC<AnimatedListProps> = memo(
         })}
       </>
     );
-  }
+  },
 );
 
-AnimatedList.displayName = 'AnimatedList';
+AnimatedList.displayName = "AnimatedList";
 
 export default AnimatedList;

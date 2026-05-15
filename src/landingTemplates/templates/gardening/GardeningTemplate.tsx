@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef } from "react";
 import {
   AppBar,
   Box,
@@ -9,15 +9,24 @@ import {
   TextField,
   Toolbar,
   Typography,
-} from '@mui/material';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Facebook, Instagram, Mail, MapPin, Phone, Twitter } from 'lucide-react';
-import type { TemplateProps } from '../../templateEngine/types';
-import { buildModernTheme } from '../modern/modernTheme';
-import FadeIn from '../../blocks/FadeIn';
+} from "@mui/material";
+import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  ArrowRight,
+  Facebook,
+  Instagram,
+  Mail,
+  MapPin,
+  Phone,
+  Twitter,
+} from "lucide-react";
+import type { TemplateProps } from "../../templateEngine/types";
+import { buildModernTheme } from "../modern/modernTheme";
+import FadeIn from "../../blocks/FadeIn";
 
 const serifFont = '"Cormorant Garamond", Georgia, serif';
-const bodyFont = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const bodyFont =
+  '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
 const sectionOffset = 108;
 
@@ -25,24 +34,24 @@ function ScrollZoomImage({ src, alt }: { src: string; alt: string }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ['start 92%', 'end 30%'],
+    offset: ["start 92%", "end 30%"],
   });
 
   const scale = useTransform(scrollYProgress, [0, 1], [1.16, 1]);
   const y = useTransform(scrollYProgress, [0, 1], [22, 0]);
 
   return (
-    <Box ref={ref} sx={{ width: '100%', height: '100%', overflow: 'hidden' }}>
+    <Box ref={ref} sx={{ width: "100%", height: "100%", overflow: "hidden" }}>
       <Box
         component={motion.img}
         src={src}
         alt={alt}
         style={{ scale, y }}
         sx={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          willChange: 'transform',
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          willChange: "transform",
         }}
       />
     </Box>
@@ -53,18 +62,18 @@ function scrollToSection(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
   const y = el.getBoundingClientRect().top + window.scrollY - sectionOffset;
-  window.scrollTo({ top: y, behavior: 'smooth' });
+  window.scrollTo({ top: y, behavior: "smooth" });
 }
 
 const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
   const theme = {
     ...buildModernTheme(data.primaryColor, data.secondaryColor),
-    bgPrimary: '#f7f4ea',
-    bgSecondary: '#edf6df',
-    surfaceColor: '#fbf8ef',
-    headingColor: '#224c24',
-    bodyColor: '#51634f',
-    borderColor: 'rgba(34,76,36,0.12)',
+    bgPrimary: "#f7f4ea",
+    bgSecondary: "#edf6df",
+    surfaceColor: "#fbf8ef",
+    headingColor: "#224c24",
+    bodyColor: "#51634f",
+    borderColor: "rgba(34,76,36,0.12)",
   };
 
   const gallery = data.gallery ?? [];
@@ -72,20 +81,20 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
   const reviews = data.reviews ?? [];
 
   const navItems = [
-    { label: 'About', id: 'about' },
-    { label: 'Portfolio', id: 'portfolio' },
-    { label: 'Services', id: 'services' },
-    { label: 'Testimonials', id: 'testimonials' },
-    { label: 'Contact', id: 'contact' },
+    { label: "About", id: "about" },
+    { label: "Portfolio", id: "portfolio" },
+    { label: "Services", id: "services" },
+    { label: "Testimonials", id: "testimonials" },
+    { label: "Contact", id: "contact" },
   ];
 
   const heroImage =
     data.heroBannerUrl ||
-    'https://img.freepik.com/free-photo/portrait-young-male-female-gardener-couple-working-garden_23-2148165278.jpg?t=st=1774468898~exp=1774472498~hmac=60c21f6a33e6297a520419e4534e1cea0a128e100ab8846e22760e6b18376a3d&w=2000';
+    "https://img.freepik.com/free-photo/portrait-young-male-female-gardener-couple-working-garden_23-2148165278.jpg?t=st=1774468898~exp=1774472498~hmac=60c21f6a33e6297a520419e4534e1cea0a128e100ab8846e22760e6b18376a3d&w=2000";
 
   const aboutImage =
     gallery[1]?.url ||
-    'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=1200&q=80';
+    "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=1200&q=80";
 
   const portfolioImages = [
     gallery[0]?.url || heroImage,
@@ -96,9 +105,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
   ];
 
   const serviceImages = [
-    'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1492496913980-501348b61469?auto=format&fit=crop&w=1200&q=80',
+    "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1492496913980-501348b61469?auto=format&fit=crop&w=1200&q=80",
   ];
 
   return (
@@ -114,27 +123,32 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         elevation={0}
         sx={{
           top: { xs: 0, md: 50 },
-          bgcolor: 'rgba(247,244,234,0.88)',
+          bgcolor: "rgba(247,244,234,0.88)",
           color: theme.headingColor,
-          backdropFilter: 'blur(14px)',
+          backdropFilter: "blur(14px)",
           borderBottom: `1px solid ${theme.borderColor}`,
-          boxShadow: 'none',
+          boxShadow: "none",
         }}
       >
         <Toolbar
           sx={{
             maxWidth: 1240,
-            width: '100%',
-            mx: 'auto',
+            width: "100%",
+            mx: "auto",
             px: { xs: 2, md: 3 },
             py: { xs: 1.15, md: 1.4 },
-            minHeight: 'auto !important',
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr auto', md: '220px 1fr 180px' },
+            minHeight: "auto !important",
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr auto", md: "220px 1fr 180px" },
             gap: 2,
           }}
         >
-          <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0 }}>
+          <Stack
+            direction="row"
+            spacing={1.1}
+            alignItems="center"
+            sx={{ minWidth: 0 }}
+          >
             {data.logoUrl && (
               <Box
                 component="img"
@@ -143,7 +157,7 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   width: { xs: 38, md: 44 },
                   height: { xs: 38, md: 44 },
-                  objectFit: 'contain',
+                  objectFit: "contain",
                   borderRadius: 1.5,
                 }}
               />
@@ -151,9 +165,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Typography
               sx={{
                 fontFamily: serifFont,
-                fontSize: { xs: '1.1rem', md: '1.28rem' },
+                fontSize: { xs: "1.1rem", md: "1.28rem" },
                 fontWeight: 600,
-                whiteSpace: 'nowrap',
+                whiteSpace: "nowrap",
               }}
             >
               Green Roots
@@ -164,7 +178,7 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             direction="row"
             spacing={3}
             justifyContent="center"
-            sx={{ display: { xs: 'none', md: 'flex' } }}
+            sx={{ display: { xs: "none", md: "flex" } }}
           >
             {navItems.map((item) => (
               <Box
@@ -175,14 +189,14 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   border: 0,
                   p: 0,
-                  bgcolor: 'transparent',
+                  bgcolor: "transparent",
                   color: theme.headingColor,
-                  cursor: 'pointer',
+                  cursor: "pointer",
                   fontFamily: bodyFont,
-                  fontSize: '0.82rem',
+                  fontSize: "0.82rem",
                   fontWeight: 600,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
                 }}
               >
                 {item.label}
@@ -193,18 +207,18 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Stack direction="row" justifyContent="flex-end">
             <Button
               variant="contained"
-              onClick={() => scrollToSection('contact')}
+              onClick={() => scrollToSection("contact")}
               sx={{
-                bgcolor: '#2f6b2a',
-                color: '#fff',
+                bgcolor: "#2f6b2a",
+                color: "#fff",
                 borderRadius: 999,
                 px: 2.6,
                 py: 0.9,
                 fontWeight: 700,
-                '&:hover': {
-                  bgcolor: '#2f6b2a',
-                  color: '#fff',
-                  filter: 'brightness(0.95)',
+                "&:hover": {
+                  bgcolor: "#2f6b2a",
+                  color: "#fff",
+                  filter: "brightness(0.95)",
                 },
               }}
             >
@@ -214,13 +228,16 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 3, md: 4 } }}>
+      <Container
+        maxWidth="lg"
+        sx={{ px: { xs: 2, md: 3 }, pt: { xs: 3, md: 4 } }}
+      >
         <Box id="hero" data-preview-section="Hero">
           <FadeIn>
             <Box
               sx={{
-                overflow: 'hidden',
-                borderRadius: { xs: 4, md: '28px' },
+                overflow: "hidden",
+                borderRadius: { xs: 4, md: "28px" },
                 height: { xs: 280, md: 570 },
               }}
             >
@@ -228,16 +245,20 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Box>
           </FadeIn>
 
-          <Grid container spacing={2} sx={{ pt: { xs: 3, md: 4 }, alignItems: 'end' }}>
+          <Grid
+            container
+            spacing={2}
+            sx={{ pt: { xs: 3, md: 4 }, alignItems: "end" }}
+          >
             <Grid item xs={12} md={9}>
               <FadeIn delay={0.06}>
                 <Typography
                   sx={{
                     fontFamily: serifFont,
-                    fontSize: { xs: '2.8rem', md: '4.45rem' },
+                    fontSize: { xs: "2.8rem", md: "4.45rem" },
                     lineHeight: 0.96,
-                    color: '#235322',
-                    letterSpacing: '-0.03em',
+                    color: "#235322",
+                    letterSpacing: "-0.03em",
                     fontWeight: 500,
                     maxWidth: 780,
                   }}
@@ -250,31 +271,34 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 520,
                     color: theme.bodyColor,
                     lineHeight: 1.8,
-                    fontSize: { xs: '0.98rem', md: '1.02rem' },
+                    fontSize: { xs: "0.98rem", md: "1.02rem" },
                   }}
                 >
-                  We create calm outdoor environments that feel natural, refined, and deeply
-                  connected to everyday living.
+                  We create calm outdoor environments that feel natural,
+                  refined, and deeply connected to everyday living.
                 </Typography>
               </FadeIn>
             </Grid>
             <Grid item xs={12} md={3}>
               <FadeIn delay={0.12}>
-                <Stack direction="row" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
+                <Stack
+                  direction="row"
+                  justifyContent={{ xs: "flex-start", md: "flex-end" }}
+                >
                   <Button
                     variant="contained"
-                    onClick={() => scrollToSection('portfolio')}
+                    onClick={() => scrollToSection("portfolio")}
                     sx={{
-                      bgcolor: '#2f6b2a',
-                      color: '#fff',
+                      bgcolor: "#2f6b2a",
+                      color: "#fff",
                       borderRadius: 999,
                       px: 2.6,
                       py: 0.95,
                       fontWeight: 700,
-                      '&:hover': {
-                        bgcolor: '#2f6b2a',
-                        color: '#fff',
-                        filter: 'brightness(0.95)',
+                      "&:hover": {
+                        bgcolor: "#2f6b2a",
+                        color: "#fff",
+                        filter: "brightness(0.95)",
                       },
                     }}
                   >
@@ -291,24 +315,24 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         sx={{
           mt: { xs: 5, md: 6 },
           py: 1.2,
-          bgcolor: '#2f6b2a',
-          color: '#eef7dc',
-          overflow: 'hidden',
-          whiteSpace: 'nowrap',
+          bgcolor: "#2f6b2a",
+          color: "#eef7dc",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
         }}
       >
         <Box
           sx={{
-            display: 'inline-block',
-            minWidth: '100%',
-            fontSize: '0.78rem',
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
+            display: "inline-block",
+            minWidth: "100%",
+            fontSize: "0.78rem",
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
             px: 3,
           }}
         >
-          Sustainable Landscape Design • Garden Styling Studio • Outdoor Space Planning • Seasonal
-          Planting • Landscape Care
+          Sustainable Landscape Design • Garden Styling Studio • Outdoor Space
+          Planning • Seasonal Planting • Landscape Care
         </Box>
       </Box>
 
@@ -317,7 +341,7 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-section="About"
         sx={{
           py: { xs: 8, md: 12 },
-          background: 'linear-gradient(180deg, #edf6df 0%, #f7f4ea 100%)',
+          background: "linear-gradient(180deg, #edf6df 0%, #f7f4ea 100%)",
         }}
       >
         <Container maxWidth="lg">
@@ -327,9 +351,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography
                   sx={{
                     fontFamily: serifFont,
-                    fontSize: { xs: '2.2rem', md: '3.2rem' },
+                    fontSize: { xs: "2.2rem", md: "3.2rem" },
                     fontWeight: 500,
-                    color: '#224c24',
+                    color: "#224c24",
                   }}
                 >
                   About
@@ -342,24 +366,24 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 420,
                   }}
                 >
-                  We shape outdoor spaces with a careful balance of structure, softness, and
-                  plant-led calm. Every garden is designed to feel lived-in, seasonal, and quietly
-                  memorable.
+                  We shape outdoor spaces with a careful balance of structure,
+                  softness, and plant-led calm. Every garden is designed to feel
+                  lived-in, seasonal, and quietly memorable.
                 </Typography>
                 <Button
                   variant="contained"
                   sx={{
                     mt: 3,
-                    bgcolor: '#2f6b2a',
-                    color: '#fff',
+                    bgcolor: "#2f6b2a",
+                    color: "#fff",
                     borderRadius: 999,
                     px: 2.4,
                     py: 0.9,
                     fontWeight: 700,
-                    '&:hover': {
-                      bgcolor: '#2f6b2a',
-                      color: '#fff',
-                      filter: 'brightness(0.95)',
+                    "&:hover": {
+                      bgcolor: "#2f6b2a",
+                      color: "#fff",
+                      filter: "brightness(0.95)",
                     },
                   }}
                 >
@@ -371,8 +395,8 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
               <FadeIn delay={0.08}>
                 <Box
                   sx={{
-                    overflow: 'hidden',
-                    borderRadius: '24px',
+                    overflow: "hidden",
+                    borderRadius: "24px",
                     height: { xs: 280, md: 420 },
                   }}
                 >
@@ -393,26 +417,26 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
           <FadeIn>
             <Typography
               sx={{
-                textAlign: 'center',
+                textAlign: "center",
                 fontFamily: serifFont,
-                fontSize: { xs: '2.3rem', md: '3.3rem' },
-                color: '#224c24',
+                fontSize: { xs: "2.3rem", md: "3.3rem" },
+                color: "#224c24",
               }}
             >
               Portfolio
             </Typography>
             <Typography
               sx={{
-                textAlign: 'center',
+                textAlign: "center",
                 mt: 1.2,
                 color: theme.bodyColor,
                 maxWidth: 620,
-                mx: 'auto',
+                mx: "auto",
                 lineHeight: 1.8,
               }}
             >
-              Selected gardens, courtyards, and outdoor compositions designed to feel balanced,
-              bright, and deeply rooted in place.
+              Selected gardens, courtyards, and outdoor compositions designed to
+              feel balanced, bright, and deeply rooted in place.
             </Typography>
           </FadeIn>
 
@@ -421,12 +445,15 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
               <FadeIn delay={0.04}>
                 <Box
                   sx={{
-                    overflow: 'hidden',
-                    borderRadius: '24px',
+                    overflow: "hidden",
+                    borderRadius: "24px",
                     height: { xs: 230, md: 290 },
                   }}
                 >
-                  <ScrollZoomImage src={portfolioImages[0]} alt="Portfolio garden 1" />
+                  <ScrollZoomImage
+                    src={portfolioImages[0]}
+                    alt="Portfolio garden 1"
+                  />
                 </Box>
               </FadeIn>
               <Grid container spacing={2.2} sx={{ mt: 0.1 }}>
@@ -434,12 +461,15 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <FadeIn delay={0.08}>
                     <Box
                       sx={{
-                        overflow: 'hidden',
-                        borderRadius: '24px',
+                        overflow: "hidden",
+                        borderRadius: "24px",
                         height: 120,
                       }}
                     >
-                      <ScrollZoomImage src={portfolioImages[1]} alt="Portfolio garden 2" />
+                      <ScrollZoomImage
+                        src={portfolioImages[1]}
+                        alt="Portfolio garden 2"
+                      />
                     </Box>
                   </FadeIn>
                 </Grid>
@@ -447,12 +477,15 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <FadeIn delay={0.12}>
                     <Box
                       sx={{
-                        overflow: 'hidden',
-                        borderRadius: '24px',
+                        overflow: "hidden",
+                        borderRadius: "24px",
                         height: 120,
                       }}
                     >
-                      <ScrollZoomImage src={portfolioImages[2]} alt="Portfolio garden 3" />
+                      <ScrollZoomImage
+                        src={portfolioImages[2]}
+                        alt="Portfolio garden 3"
+                      />
                     </Box>
                   </FadeIn>
                 </Grid>
@@ -465,12 +498,15 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <FadeIn delay={0.08}>
                     <Box
                       sx={{
-                        overflow: 'hidden',
-                        borderRadius: '24px',
+                        overflow: "hidden",
+                        borderRadius: "24px",
                         height: 120,
                       }}
                     >
-                      <ScrollZoomImage src={portfolioImages[3]} alt="Portfolio garden 4" />
+                      <ScrollZoomImage
+                        src={portfolioImages[3]}
+                        alt="Portfolio garden 4"
+                      />
                     </Box>
                   </FadeIn>
                 </Grid>
@@ -478,12 +514,15 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <FadeIn delay={0.12}>
                     <Box
                       sx={{
-                        overflow: 'hidden',
-                        borderRadius: '24px',
+                        overflow: "hidden",
+                        borderRadius: "24px",
                         height: 120,
                       }}
                     >
-                      <ScrollZoomImage src={portfolioImages[4]} alt="Portfolio garden 5" />
+                      <ScrollZoomImage
+                        src={portfolioImages[4]}
+                        alt="Portfolio garden 5"
+                      />
                     </Box>
                   </FadeIn>
                 </Grid>
@@ -492,12 +531,15 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Box
                   sx={{
                     mt: 2.2,
-                    overflow: 'hidden',
-                    borderRadius: '28px',
+                    overflow: "hidden",
+                    borderRadius: "28px",
                     height: { xs: 240, md: 290 },
                   }}
                 >
-                  <ScrollZoomImage src={portfolioImages[0]} alt="Portfolio feature garden" />
+                  <ScrollZoomImage
+                    src={portfolioImages[0]}
+                    alt="Portfolio feature garden"
+                  />
                 </Box>
               </FadeIn>
             </Grid>
@@ -507,16 +549,16 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Button
               variant="contained"
               sx={{
-                bgcolor: '#2f6b2a',
-                color: '#fff',
+                bgcolor: "#2f6b2a",
+                color: "#fff",
                 borderRadius: 999,
                 px: 2.8,
                 py: 0.95,
                 fontWeight: 700,
-                '&:hover': {
-                  bgcolor: '#2f6b2a',
-                  color: '#fff',
-                  filter: 'brightness(0.95)',
+                "&:hover": {
+                  bgcolor: "#2f6b2a",
+                  color: "#fff",
+                  filter: "brightness(0.95)",
                 },
               }}
             >
@@ -531,7 +573,7 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-section="Services"
         sx={{
           py: { xs: 8, md: 11 },
-          background: 'linear-gradient(180deg, #f7f4ea 0%, #edf6df 100%)',
+          background: "linear-gradient(180deg, #f7f4ea 0%, #edf6df 100%)",
         }}
       >
         <Container maxWidth="lg">
@@ -539,8 +581,8 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Typography
               sx={{
                 fontFamily: serifFont,
-                fontSize: { xs: '2.35rem', md: '3.4rem' },
-                color: '#224c24',
+                fontSize: { xs: "2.35rem", md: "3.4rem" },
+                color: "#224c24",
                 mb: 5.5,
               }}
             >
@@ -558,19 +600,22 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 key={service.name}
                 sx={{
                   mb: { xs: 6, md: 8 },
-                  flexDirection: reverse ? { md: 'row-reverse' } : undefined,
+                  flexDirection: reverse ? { md: "row-reverse" } : undefined,
                 }}
               >
                 <Grid item xs={12} md={6}>
                   <FadeIn delay={index * 0.06}>
                     <Box
                       sx={{
-                        overflow: 'hidden',
-                        borderRadius: '26px',
+                        overflow: "hidden",
+                        borderRadius: "26px",
                         height: { xs: 260, md: 320 },
                       }}
                     >
-                      <ScrollZoomImage src={serviceImages[index] || heroImage} alt={service.name} />
+                      <ScrollZoomImage
+                        src={serviceImages[index] || heroImage}
+                        alt={service.name}
+                      />
                     </Box>
                   </FadeIn>
                 </Grid>
@@ -579,12 +624,12 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Typography
                       sx={{
                         fontFamily: serifFont,
-                        fontSize: { xs: '2rem', md: '2.65rem' },
-                        color: '#224c24',
+                        fontSize: { xs: "2rem", md: "2.65rem" },
+                        color: "#224c24",
                         mb: 1.5,
                       }}
                     >
-                      {service.name.replace('& ', '')}
+                      {service.name.replace("& ", "")}
                     </Typography>
                     <Typography
                       sx={{
@@ -595,7 +640,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     >
                       {service.description}
                     </Typography>
-                    <Typography sx={{ mt: 1.5, color: '#2f6b2a', fontWeight: 700 }}>
+                    <Typography
+                      sx={{ mt: 1.5, color: "#2f6b2a", fontWeight: 700 }}
+                    >
                       {service.price}
                     </Typography>
                   </FadeIn>
@@ -616,8 +663,8 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Typography
               sx={{
                 fontFamily: serifFont,
-                fontSize: { xs: '2.2rem', md: '3.2rem' },
-                color: '#224c24',
+                fontSize: { xs: "2.2rem", md: "3.2rem" },
+                color: "#224c24",
               }}
             >
               Testimonials
@@ -641,10 +688,10 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Typography
                       sx={{
                         mt: 2.2,
-                        color: '#224c24',
+                        color: "#224c24",
                         fontWeight: 700,
                         fontFamily: serifFont,
-                        fontSize: '1.15rem',
+                        fontSize: "1.15rem",
                       }}
                     >
                       {review.author}
@@ -666,31 +713,31 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
           <FadeIn>
             <Typography
               sx={{
-                textAlign: 'center',
+                textAlign: "center",
                 fontFamily: serifFont,
-                fontSize: { xs: '2.3rem', md: '3.1rem' },
-                color: '#224c24',
+                fontSize: { xs: "2.3rem", md: "3.1rem" },
+                color: "#224c24",
               }}
             >
               Contact Us
             </Typography>
             <Typography
               sx={{
-                textAlign: 'center',
+                textAlign: "center",
                 mt: 1.2,
                 color: theme.bodyColor,
                 maxWidth: 560,
-                mx: 'auto',
+                mx: "auto",
                 lineHeight: 1.8,
               }}
             >
-              Share your space, goals, and style direction. We’ll help shape an outdoor environment
-              that feels effortless and alive.
+              Share your space, goals, and style direction. We’ll help shape an
+              outdoor environment that feels effortless and alive.
             </Typography>
           </FadeIn>
 
           <FadeIn delay={0.08}>
-            <Box sx={{ mt: 4.5, maxWidth: 620, mx: 'auto' }}>
+            <Box sx={{ mt: 4.5, maxWidth: 620, mx: "auto" }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField fullWidth placeholder="Name" variant="outlined" />
@@ -702,7 +749,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <TextField fullWidth placeholder="Phone" variant="outlined" />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth placeholder="Project Type" variant="outlined" />
+                  <TextField
+                    fullWidth
+                    placeholder="Project Type"
+                    variant="outlined"
+                  />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
@@ -719,16 +770,16 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                   variant="contained"
                   sx={{
                     mt: 2.8,
-                    bgcolor: '#2f6b2a',
-                    color: '#fff',
+                    bgcolor: "#2f6b2a",
+                    color: "#fff",
                     borderRadius: 999,
                     px: 3.5,
                     py: 0.95,
                     fontWeight: 700,
-                    '&:hover': {
-                      bgcolor: '#2f6b2a',
-                      color: '#fff',
-                      filter: 'brightness(0.95)',
+                    "&:hover": {
+                      bgcolor: "#2f6b2a",
+                      color: "#fff",
+                      filter: "brightness(0.95)",
                     },
                   }}
                 >
@@ -744,7 +795,7 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         sx={{
           pt: { xs: 6, md: 8 },
           pb: { xs: 5, md: 6 },
-          bgcolor: '#f3efdf',
+          bgcolor: "#f3efdf",
           borderTop: `1px solid ${theme.borderColor}`,
         }}
       >
@@ -754,14 +805,17 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Typography
                 sx={{
                   fontFamily: serifFont,
-                  fontSize: '1.8rem',
-                  color: '#224c24',
+                  fontSize: "1.8rem",
+                  color: "#224c24",
                 }}
               >
                 D. Chen
               </Typography>
-              <Typography sx={{ mt: 1.3, color: theme.bodyColor, lineHeight: 1.8 }}>
-                Landscape designer creating gardens that feel calm, rooted, and naturally elegant.
+              <Typography
+                sx={{ mt: 1.3, color: theme.bodyColor, lineHeight: 1.8 }}
+              >
+                Landscape designer creating gardens that feel calm, rooted, and
+                naturally elegant.
               </Typography>
               <Stack direction="row" spacing={1.1} sx={{ mt: 2 }}>
                 {[Facebook, Instagram, Twitter].map((Icon, index) => (
@@ -770,11 +824,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     sx={{
                       width: 34,
                       height: 34,
-                      borderRadius: '50%',
-                      display: 'grid',
-                      placeItems: 'center',
+                      borderRadius: "50%",
+                      display: "grid",
+                      placeItems: "center",
                       border: `1px solid ${theme.borderColor}`,
-                      color: '#224c24',
+                      color: "#224c24",
                     }}
                   >
                     <Icon size={15} />
@@ -784,43 +838,55 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Typography sx={{ fontWeight: 700, color: '#224c24', mb: 1.5 }}>Say Hello</Typography>
+              <Typography sx={{ fontWeight: 700, color: "#224c24", mb: 1.5 }}>
+                Say Hello
+              </Typography>
               <Stack spacing={1.3}>
                 <Stack direction="row" spacing={1.1} alignItems="center">
                   <Phone size={16} />
-                  <Typography sx={{ color: theme.bodyColor }}>{data.contact.phone}</Typography>
+                  <Typography sx={{ color: theme.bodyColor }}>
+                    {data.contact.phone}
+                  </Typography>
                 </Stack>
                 <Stack direction="row" spacing={1.1} alignItems="center">
                   <Mail size={16} />
-                  <Typography sx={{ color: theme.bodyColor }}>{data.contact.email}</Typography>
+                  <Typography sx={{ color: theme.bodyColor }}>
+                    {data.contact.email}
+                  </Typography>
                 </Stack>
                 <Stack direction="row" spacing={1.1} alignItems="center">
                   <MapPin size={16} />
-                  <Typography sx={{ color: theme.bodyColor }}>{data.contact.address}</Typography>
+                  <Typography sx={{ color: theme.bodyColor }}>
+                    {data.contact.address}
+                  </Typography>
                 </Stack>
               </Stack>
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Typography sx={{ fontWeight: 700, color: '#224c24', mb: 1.5 }}>
+              <Typography sx={{ fontWeight: 700, color: "#224c24", mb: 1.5 }}>
                 Newsletter
               </Typography>
-              <TextField fullWidth placeholder="Enter your email address" variant="outlined" />
+              <TextField
+                fullWidth
+                placeholder="Enter your email address"
+                variant="outlined"
+              />
               <Button
                 variant="contained"
                 endIcon={<ArrowRight size={16} />}
                 sx={{
                   mt: 1.5,
-                  bgcolor: '#2f6b2a',
-                  color: '#fff',
+                  bgcolor: "#2f6b2a",
+                  color: "#fff",
                   borderRadius: 999,
                   px: 3,
                   py: 0.95,
                   fontWeight: 700,
-                  '&:hover': {
-                    bgcolor: '#2f6b2a',
-                    color: '#fff',
-                    filter: 'brightness(0.95)',
+                  "&:hover": {
+                    bgcolor: "#2f6b2a",
+                    color: "#fff",
+                    filter: "brightness(0.95)",
                   },
                 }}
               >

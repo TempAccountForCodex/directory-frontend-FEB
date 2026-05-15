@@ -14,7 +14,7 @@
  * - React.memo prevents parent-triggered re-renders
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback } from "react";
 import {
   Box,
   Paper,
@@ -29,16 +29,16 @@ import {
   Tooltip,
   Alert,
   alpha,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowUpward as UpIcon,
   ArrowDownward as DownIcon,
   Warning as WarningIcon,
   InfoOutlined as InfoIcon,
-} from '@mui/icons-material';
-import DraggablePageList from './DraggablePageList';
-import DraggableBlockList, { type DraggableBlock } from './DraggableBlockList';
-import type { PageItem } from './DraggablePageList';
+} from "@mui/icons-material";
+import DraggablePageList from "./DraggablePageList";
+import DraggableBlockList, { type DraggableBlock } from "./DraggableBlockList";
+import type { PageItem } from "./DraggablePageList";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -71,7 +71,7 @@ export interface LayoutPanelProps {
   sections: SectionToggle[];
   maxPagesPerWebsite: number;
   onTogglePage: (pageId: string) => void;
-  onMovePage: (index: number, direction: 'up' | 'down') => void;
+  onMovePage: (index: number, direction: "up" | "down") => void;
   onPagesChange: (pages: PageItem[]) => void;
   onToggleSection: (pageTitle: string, sectionIndex: number) => void;
   blocks?: DraggableBlock[];
@@ -112,46 +112,49 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
     const getTooltipMessage = useCallback(
       (page: PageSelection): string => {
         if (page.isHome) {
-          return 'Home page is required and cannot be deselected';
+          return "Home page is required and cannot be deselected";
         }
         if (!page.selected && isMaxReached) {
           return `Maximum of ${maxPagesPerWebsite} pages reached. Deselect another page to enable this one.`;
         }
-        return '';
+        return "";
       },
-      [isMaxReached, maxPagesPerWebsite]
+      [isMaxReached, maxPagesPerWebsite],
     );
 
     const handleTogglePage = useCallback(
       (id: string) => () => {
         onTogglePage(id);
       },
-      [onTogglePage]
+      [onTogglePage],
     );
 
     const handleMoveUp = useCallback(
       (index: number) => () => {
-        onMovePage(index, 'up');
+        onMovePage(index, "up");
       },
-      [onMovePage]
+      [onMovePage],
     );
 
     const handleMoveDown = useCallback(
       (index: number) => () => {
-        onMovePage(index, 'down');
+        onMovePage(index, "down");
       },
-      [onMovePage]
+      [onMovePage],
     );
 
     const handleToggleSection = useCallback(
       (pageTitle: string, sectionIndex: number) => () => {
         onToggleSection(pageTitle, sectionIndex);
       },
-      [onToggleSection]
+      [onToggleSection],
     );
 
     const hasDraggableBlocks =
-      blocks != null && pageId != null && websiteId != null && onBlocksChange != null;
+      blocks != null &&
+      pageId != null &&
+      websiteId != null &&
+      onBlocksChange != null;
 
     return (
       <Stack spacing={3}>
@@ -163,8 +166,11 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
             borderRadius: 2,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <Typography
+              variant="h6"
+              sx={{ color: colors.text, fontWeight: 600 }}
+            >
               Page Selection & Order
             </Typography>
             <Tooltip
@@ -175,7 +181,7 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
                 sx={{
                   fontSize: 18,
                   color: colors.textSecondary,
-                  cursor: 'help',
+                  cursor: "help",
                 }}
               />
             </Tooltip>
@@ -183,12 +189,12 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
 
           <Typography
             variant="caption"
-            sx={{ color: colors.textSecondary, mb: 1, display: 'block' }}
+            sx={{ color: colors.textSecondary, mb: 1, display: "block" }}
           >
             Choose which pages to include. Home page is required.
           </Typography>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
             <Typography
               variant="caption"
               sx={{
@@ -204,35 +210,40 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
                 label="Maximum reached"
                 size="small"
                 color="warning"
-                sx={{ height: 20, fontSize: '0.7rem' }}
+                sx={{ height: 20, fontSize: "0.7rem" }}
               />
             )}
           </Box>
 
           {isMaxReached && (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              You've reached the maximum of {maxPagesPerWebsite} pages. To add more pages, deselect
-              an existing page first.
+              You've reached the maximum of {maxPagesPerWebsite} pages. To add
+              more pages, deselect an existing page first.
             </Alert>
           )}
 
           <Stack spacing={1}>
             {pages.map((page, index) => {
-              const isDisabled = page.isHome || (!page.selected && isMaxReached);
+              const isDisabled =
+                page.isHome || (!page.selected && isMaxReached);
               const tooltip = getTooltipMessage(page);
 
               return (
                 <Card
                   key={page.id}
                   sx={{
-                    bgcolor: page.selected ? alpha(colors.primary, 0.1) : alpha(colors.dark, 0.3),
-                    border: `1px solid ${page.selected ? colors.primary : 'transparent'}`,
+                    bgcolor: page.selected
+                      ? alpha(colors.primary, 0.1)
+                      : alpha(colors.dark, 0.3),
+                    border: `1px solid ${page.selected ? colors.primary : "transparent"}`,
                     opacity: isDisabled && !page.isHome ? 0.5 : 1,
-                    transition: 'all 0.2s ease',
+                    transition: "all 0.2s ease",
                   }}
                 >
-                  <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CardContent
+                    sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Tooltip
                         title={tooltip}
                         arrow
@@ -249,7 +260,11 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
                         </Box>
                       </Tooltip>
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="body2" component="div" sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant="body2"
+                          component="div"
+                          sx={{ fontWeight: 600 }}
+                        >
                           {page.title}
                           {page.isHome && (
                             <Chip
@@ -268,7 +283,10 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
                             />
                           )}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: colors.textSecondary }}
+                        >
                           {page.path}
                         </Typography>
                       </Box>
@@ -277,7 +295,10 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
                           <IconButton
                             size="small"
                             onClick={handleMoveUp(index)}
-                            disabled={disabled || !pages.slice(0, index).some((p) => p.selected)}
+                            disabled={
+                              disabled ||
+                              !pages.slice(0, index).some((p) => p.selected)
+                            }
                             aria-label={`Move ${page.title} up`}
                           >
                             <UpIcon fontSize="small" />
@@ -285,7 +306,10 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
                           <IconButton
                             size="small"
                             onClick={handleMoveDown(index)}
-                            disabled={disabled || !pages.slice(index + 1).some((p) => p.selected)}
+                            disabled={
+                              disabled ||
+                              !pages.slice(index + 1).some((p) => p.selected)
+                            }
                             aria-label={`Move ${page.title} down`}
                           >
                             <DownIcon fontSize="small" />
@@ -304,7 +328,7 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
             <Box sx={{ mt: 2 }}>
               <Typography
                 variant="caption"
-                sx={{ color: colors.textSecondary, mb: 1, display: 'block' }}
+                sx={{ color: colors.textSecondary, mb: 1, display: "block" }}
               >
                 Drag to reorder selected pages:
               </Typography>
@@ -326,36 +350,49 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
               borderRadius: 2,
             }}
           >
-            <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 1 }}>
+            <Typography
+              variant="h6"
+              sx={{ color: colors.text, fontWeight: 600, mb: 1 }}
+            >
               Section Visibility
             </Typography>
             <Typography
               variant="caption"
-              sx={{ color: colors.textSecondary, mb: 3, display: 'block' }}
+              sx={{ color: colors.textSecondary, mb: 3, display: "block" }}
             >
               Enable or disable specific sections for Home and Services pages.
             </Typography>
 
             {/* Home Sections */}
-            {sections.filter((s) => s.pageTitle === 'Home').length > 0 && (
+            {sections.filter((s) => s.pageTitle === "Home").length > 0 && (
               <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 600, mb: 1 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: colors.text, fontWeight: 600, mb: 1 }}
+                >
                   Home Page Sections
                 </Typography>
                 <Stack spacing={0.5}>
                   {sections
-                    .filter((s) => s.pageTitle === 'Home')
+                    .filter((s) => s.pageTitle === "Home")
                     .map((section, idx) => (
                       <FormControlLabel
                         key={`home-${idx}`}
                         control={
                           <Checkbox
                             checked={section.enabled}
-                            onChange={handleToggleSection(section.pageTitle, section.sectionIndex)}
+                            onChange={handleToggleSection(
+                              section.pageTitle,
+                              section.sectionIndex,
+                            )}
                             size="small"
                           />
                         }
-                        label={<Typography variant="body2">{section.sectionName}</Typography>}
+                        label={
+                          <Typography variant="body2">
+                            {section.sectionName}
+                          </Typography>
+                        }
                       />
                     ))}
                 </Stack>
@@ -363,25 +400,35 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
             )}
 
             {/* Services Sections */}
-            {sections.filter((s) => s.pageTitle === 'Services').length > 0 && (
+            {sections.filter((s) => s.pageTitle === "Services").length > 0 && (
               <Box>
-                <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 600, mb: 1 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: colors.text, fontWeight: 600, mb: 1 }}
+                >
                   Services Page Sections
                 </Typography>
                 <Stack spacing={0.5}>
                   {sections
-                    .filter((s) => s.pageTitle === 'Services')
+                    .filter((s) => s.pageTitle === "Services")
                     .map((section, idx) => (
                       <FormControlLabel
                         key={`services-${idx}`}
                         control={
                           <Checkbox
                             checked={section.enabled}
-                            onChange={handleToggleSection(section.pageTitle, section.sectionIndex)}
+                            onChange={handleToggleSection(
+                              section.pageTitle,
+                              section.sectionIndex,
+                            )}
                             size="small"
                           />
                         }
-                        label={<Typography variant="body2">{section.sectionName}</Typography>}
+                        label={
+                          <Typography variant="body2">
+                            {section.sectionName}
+                          </Typography>
+                        }
                       />
                     ))}
                 </Stack>
@@ -399,7 +446,10 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
               borderRadius: 2,
             }}
           >
-            <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant="h6"
+              sx={{ color: colors.text, fontWeight: 600, mb: 2 }}
+            >
               Block Order
             </Typography>
             <DraggableBlockList
@@ -415,9 +465,9 @@ const LayoutPanel: React.FC<LayoutPanelProps> = React.memo(
         )}
       </Stack>
     );
-  }
+  },
 );
 
-LayoutPanel.displayName = 'LayoutPanel';
+LayoutPanel.displayName = "LayoutPanel";
 
 export default LayoutPanel;

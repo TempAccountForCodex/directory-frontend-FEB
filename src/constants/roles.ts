@@ -8,10 +8,10 @@
  */
 
 export const ROLES = {
-  USER: 'USER',
-  CONTENT_CREATOR: 'CONTENT_CREATOR',
-  ADMIN: 'ADMIN',
-  SUPER_ADMIN: 'SUPER_ADMIN',
+  USER: "USER",
+  CONTENT_CREATOR: "CONTENT_CREATOR",
+  ADMIN: "ADMIN",
+  SUPER_ADMIN: "SUPER_ADMIN",
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -24,10 +24,10 @@ export const ADMIN_ROLES: Role[] = [ROLES.ADMIN, ROLES.SUPER_ADMIN];
 
 /** Human-readable labels for each role */
 export const ROLE_LABELS: Record<Role, string> = {
-  [ROLES.USER]: 'User',
-  [ROLES.CONTENT_CREATOR]: 'Content Creator',
-  [ROLES.ADMIN]: 'Admin',
-  [ROLES.SUPER_ADMIN]: 'Super Admin',
+  [ROLES.USER]: "User",
+  [ROLES.CONTENT_CREATOR]: "Content Creator",
+  [ROLES.ADMIN]: "Admin",
+  [ROLES.SUPER_ADMIN]: "Super Admin",
 };
 
 /**
@@ -36,7 +36,7 @@ export const ROLE_LABELS: Record<Role, string> = {
  */
 export const isAdmin = (role: string | undefined | null): boolean => {
   if (!role) return false;
-  const normalized = role.toUpperCase().replace(/\s+/g, '_');
+  const normalized = role.toUpperCase().replace(/\s+/g, "_");
   return normalized === ROLES.ADMIN || normalized === ROLES.SUPER_ADMIN;
 };
 
@@ -46,16 +46,19 @@ export const isAdmin = (role: string | undefined | null): boolean => {
  */
 export const isSuperAdmin = (role: string | undefined | null): boolean => {
   if (!role) return false;
-  return role.toUpperCase().replace(/\s+/g, '_') === ROLES.SUPER_ADMIN;
+  return role.toUpperCase().replace(/\s+/g, "_") === ROLES.SUPER_ADMIN;
 };
 
 /**
  * Check if a role matches a specific target role.
  * Handles case-insensitive comparison and legacy space format.
  */
-export const hasRole = (role: string | undefined | null, target: Role): boolean => {
+export const hasRole = (
+  role: string | undefined | null,
+  target: Role,
+): boolean => {
   if (!role) return false;
-  return role.toUpperCase().replace(/\s+/g, '_') === target;
+  return role.toUpperCase().replace(/\s+/g, "_") === target;
 };
 
 /**
@@ -63,7 +66,7 @@ export const hasRole = (role: string | undefined | null, target: Role): boolean 
  */
 export const isContentManager = (role: string | undefined | null): boolean => {
   if (!role) return false;
-  const normalized = role.toUpperCase().replace(/\s+/g, '_');
+  const normalized = role.toUpperCase().replace(/\s+/g, "_");
   return (
     normalized === ROLES.ADMIN ||
     normalized === ROLES.SUPER_ADMIN ||

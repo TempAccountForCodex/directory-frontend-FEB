@@ -17,23 +17,28 @@
  * - useCallback on all event handlers
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import { alpha } from '@mui/material/styles';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import { DndContext, DragOverlay, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import { alpha } from "@mui/material/styles";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import {
+  DndContext,
+  DragOverlay,
+  type DragStartEvent,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
   arrayMove,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { apiClient } from '../../api/client';
-import { useDragAndDrop } from '../../hooks/useDragAndDrop';
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { apiClient } from "../../api/client";
+import { useDragAndDrop } from "../../hooks/useDragAndDrop";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,7 +55,7 @@ export interface DraggableBlock {
 
 const getBlockLabel = (block: DraggableBlock): string => {
   const customLabel = block.content?.editorLabel;
-  return typeof customLabel === 'string' && customLabel.trim()
+  return typeof customLabel === "string" && customLabel.trim()
     ? customLabel.trim()
     : block.blockType;
 };
@@ -130,48 +135,60 @@ const SortableBlock = React.memo(function SortableBlock({
       ref={setNodeRef}
       style={style}
       role="listitem"
-      aria-label={`Block: ${blockLabel}${isSelected ? ' (selected)' : ''}`}
+      aria-label={`Block: ${blockLabel}${isSelected ? " (selected)" : ""}`}
     >
       <Paper
+        {...attributes}
+        {...listeners}
         variant="outlined"
         sx={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 1.2,
           px: 1.35,
-          py: 1.1,
-          mb: 1,
-          cursor: disabled ? 'default' : 'pointer',
-          borderRadius: 3,
-          borderColor: isSelected ? 'primary.main' : alpha('#8fbfc1', 0.14),
-          borderWidth: 1,
-          bgcolor: isSelected ? alpha('#16383b', 0.92) : alpha('#f6f8f8', 0.96),
-          color: isSelected ? '#f5fbfb' : '#142022',
+          py: 1.4,
+          // mb: 1,
+          cursor: disabled
+            ? "default"
+            : isSortableDragging
+              ? "grabbing"
+              : "grab",
+
+          border: "none",
+          borderBottom: "1px solid",
+          borderBottomColor: isSelected
+            ? "primary.main"
+            : alpha("#999999", 0.14),
+          bgcolor: isSelected ? alpha("#16383b", 0.92) : alpha("#f6f8f8", 0.96),
+          color: isSelected ? "#f5fbfb" : "#142022",
           opacity: block.isVisible ? 1 : 0.58,
-          boxShadow: isSelected
-            ? '0 14px 30px rgba(0, 0, 0, 0.24)'
-            : '0 8px 18px rgba(3, 12, 14, 0.08)',
-          '&:hover': disabled
+          borderRadius: "0px !important",
+          // boxShadow: isSelected
+          //   ? "0 14px 30px rgba(0, 0, 0, 0.24)"
+          //   : "0 8px 18px rgba(3, 12, 14, 0.08)",
+          "&:hover": disabled
             ? {}
             : {
-                borderColor: isSelected ? 'primary.main' : alpha('#378C92', 0.55),
-                bgcolor: isSelected ? alpha('#1b4448', 0.96) : '#ffffff',
-                transform: 'translateY(-2px)',
+                borderColor: isSelected
+                  ? "primary.main"
+                  : alpha("#378C92", 0.55),
+                bgcolor: isSelected ? alpha("#1b4448", 0.96) : "#ffffff",
+                transform: "translateY(-2px)",
                 boxShadow: isSelected
-                  ? '0 18px 34px rgba(0, 0, 0, 0.28)'
-                  : '0 16px 28px rgba(3, 12, 14, 0.12)',
+                  ? "0 18px 34px rgba(0, 0, 0, 0.28)"
+                  : "0 16px 28px rgba(3, 12, 14, 0.12)",
               },
-          transition: 'transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
+          transition:
+            "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease",
+          position: "relative",
+          overflow: "hidden",
+          touchAction: disabled ? "auto" : "none",
+          "&::before": {
             content: '""',
-            position: 'absolute',
+            position: "absolute",
             inset: 0,
-            background: isSelected
-              ? 'linear-gradient(90deg, rgba(55,140,146,0.18), transparent 42%)'
-              : 'linear-gradient(90deg, rgba(55,140,146,0.08), transparent 36%)',
-            pointerEvents: 'none',
+            background: isSelected ? "black" : "white",
+            pointerEvents: "none",
           },
         }}
         onClick={handleSelect}
@@ -181,15 +198,16 @@ const SortableBlock = React.memo(function SortableBlock({
           sx={{
             minWidth: 28,
             height: 28,
-            display: 'grid',
-            placeItems: 'center',
+            // display: "grid",
+            placeItems: "center",
             borderRadius: 999,
-            bgcolor: isSelected ? '#2da4ad' : alpha('#10282b', 0.08),
-            color: isSelected ? '#081416' : alpha('#10282b', 0.72),
+            bgcolor: isSelected ? "#ffffff" : alpha("#10282b", 0.08),
+            color: isSelected ? "#081416" : alpha("#10282b", 0.72),
             fontWeight: 700,
-            fontSize: '0.68rem',
-            position: 'relative',
+            fontSize: "0.68rem",
+            position: "relative",
             zIndex: 1,
+            display: "none",
           }}
         >
           {block.sortOrder + 1}
@@ -197,20 +215,24 @@ const SortableBlock = React.memo(function SortableBlock({
 
         {/* Drag handle */}
         <IconButton
-          {...attributes}
-          {...listeners}
           size="small"
           disabled={disabled}
           aria-label={`Drag block ${blockLabel}`}
           sx={{
-            cursor: disabled ? 'not-allowed' : 'grab',
-            color: isSelected ? alpha('#f5fbfb', 0.72) : alpha('#10282b', 0.45),
+            cursor: disabled
+              ? "not-allowed"
+              : isSortableDragging
+                ? "grabbing"
+                : "grab",
+            color: isSelected ? alpha("#f5fbfb", 0.72) : "black",
             borderRadius: 2,
-            position: 'relative',
+            position: "relative",
             zIndex: 1,
-            '&:hover': {
-              bgcolor: isSelected ? alpha('#ffffff', 0.08) : alpha('#10282b', 0.06),
-              color: isSelected ? '#ffffff' : '#10282b',
+            "&:hover": {
+              bgcolor: isSelected
+                ? alpha("#ffffff", 0.08)
+                : alpha("#10282b", 0.06),
+              color: isSelected ? "#ffffff" : "#10282b",
             },
           }}
           onClick={handleDragHandleClick}
@@ -223,12 +245,12 @@ const SortableBlock = React.memo(function SortableBlock({
           variant="body2"
           sx={{
             flexGrow: 1,
-            color: 'inherit',
+            color: "inherit",
             fontWeight: isSelected ? 700 : 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            fontSize: '0.84rem',
-            position: 'relative',
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            fontSize: "0.84rem",
+            position: "relative",
             zIndex: 1,
           }}
         >
@@ -240,9 +262,9 @@ const SortableBlock = React.memo(function SortableBlock({
           <Typography
             variant="caption"
             sx={{
-              color: isSelected ? alpha('#f5fbfb', 0.72) : 'text.disabled',
-              fontSize: '0.65rem',
-              position: 'relative',
+              color: isSelected ? alpha("#f5fbfb", 0.72) : "text.disabled",
+              fontSize: "0.65rem",
+              position: "relative",
               zIndex: 1,
             }}
           >
@@ -271,18 +293,18 @@ const DragOverlayBlock = React.memo(function DragOverlayBlock({
     <Paper
       variant="outlined"
       sx={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 1,
         px: 1.3,
         py: 1,
         borderRadius: 3,
-        borderColor: 'primary.main',
-        bgcolor: alpha('#16383b', 0.96),
-        color: '#f5fbfb',
-        boxShadow: '0 20px 38px rgba(0, 0, 0, 0.28)',
+        borderColor: "primary.main",
+        bgcolor: alpha("#16383b", 0.96),
+        color: "#f5fbfb",
+        boxShadow: "0 20px 38px rgba(0, 0, 0, 0.28)",
         opacity: 1,
-        cursor: 'grabbing',
+        cursor: "grabbing",
       }}
     >
       <Box
@@ -290,10 +312,10 @@ const DragOverlayBlock = React.memo(function DragOverlayBlock({
           width: 28,
           height: 28,
           borderRadius: 999,
-          display: 'grid',
-          placeItems: 'center',
-          bgcolor: alpha('#2da4ad', 0.18),
-          color: '#7fe3ea',
+          display: "grid",
+          placeItems: "center",
+          bgcolor: alpha("#2da4ad", 0.18),
+          color: "#7fe3ea",
         }}
       >
         <DragIndicatorIcon fontSize="small" />
@@ -303,9 +325,9 @@ const DragOverlayBlock = React.memo(function DragOverlayBlock({
         sx={{
           flexGrow: 1,
           fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          fontSize: '0.84rem',
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          fontSize: "0.84rem",
         }}
       >
         {blockLabel}
@@ -332,7 +354,9 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
   const [activeId, setActiveId] = useState<number | string | null>(null);
 
   // Track selected block for keyboard shortcuts
-  const [localSelectedId, setLocalSelectedId] = useState<number | string | null>(selectedBlockId ?? null);
+  const [localSelectedId, setLocalSelectedId] = useState<
+    number | string | null
+  >(selectedBlockId ?? null);
 
   // Keep ref to previous blocks for rollback
   const previousBlocksRef = useRef<DraggableBlock[]>(blocks);
@@ -364,7 +388,9 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
       previousBlocksRef.current = blocks;
 
       // Optimistic update
-      const reordered = normalizeBlockOrder(arrayMove(blocks, oldIndex, newIndex));
+      const reordered = normalizeBlockOrder(
+        arrayMove(blocks, oldIndex, newIndex),
+      );
       onBlocksChange(reordered);
 
       if (persistReorder) {
@@ -378,7 +404,7 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
         }
       }
     },
-    [blocks, pageId, onBlocksChange, persistReorder]
+    [blocks, pageId, onBlocksChange, persistReorder],
   );
 
   // ── Block selection ────────────────────────────────────────────────────────
@@ -387,14 +413,14 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
       setLocalSelectedId(blockId);
       onBlockSelect?.(blockId);
     },
-    [onBlockSelect]
+    [onBlockSelect],
   );
 
   // ── Keyboard shortcuts: Ctrl+ArrowUp / Ctrl+ArrowDown ─────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!e.ctrlKey) return;
-      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
 
       const effectiveSelectedId = localSelectedId ?? selectedBlockId;
       if (effectiveSelectedId === null) return;
@@ -405,9 +431,9 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
       e.preventDefault();
 
       let newIdx: number;
-      if (e.key === 'ArrowUp' && idx > 0) {
+      if (e.key === "ArrowUp" && idx > 0) {
         newIdx = idx - 1;
-      } else if (e.key === 'ArrowDown' && idx < blocks.length - 1) {
+      } else if (e.key === "ArrowDown" && idx < blocks.length - 1) {
         newIdx = idx + 1;
       } else {
         return;
@@ -430,27 +456,36 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [blocks, localSelectedId, selectedBlockId, pageId, onBlocksChange, persistReorder]);
+  }, [
+    blocks,
+    localSelectedId,
+    selectedBlockId,
+    pageId,
+    onBlocksChange,
+    persistReorder,
+  ]);
 
   // ── Empty state ────────────────────────────────────────────────────────────
   if (blocks.length === 0) {
     return (
       <Box
         sx={{
-          textAlign: 'center',
+          textAlign: "center",
           py: 4,
           px: 2,
-          color: 'text.secondary',
-          border: '1px dashed',
-          borderColor: 'divider',
+          color: "text.secondary",
+          border: "1px dashed",
+          borderColor: "divider",
           borderRadius: 1,
         }}
       >
-        <Typography variant="body2">No blocks yet. Add a block to get started.</Typography>
+        <Typography variant="body2">
+          No blocks yet. Add a block to get started.
+        </Typography>
       </Box>
     );
   }
@@ -467,8 +502,11 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+      <SortableContext
+        items={blocks.map((b) => b.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {blocks.map((block) => (
             <SortableBlock
               key={block.id}
@@ -489,6 +527,6 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
   );
 });
 
-DraggableBlockList.displayName = 'DraggableBlockList';
+DraggableBlockList.displayName = "DraggableBlockList";
 
 export default DraggableBlockList;

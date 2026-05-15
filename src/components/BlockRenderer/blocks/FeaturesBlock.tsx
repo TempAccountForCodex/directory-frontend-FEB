@@ -1,6 +1,6 @@
-import React from 'react';
-import type { BlockRendererProps } from '../types';
-import { escapeHtml } from '../utils';
+import React from "react";
+import type { BlockRendererProps } from "../types";
+import { escapeHtml } from "../utils";
 
 interface Feature {
   icon?: string;
@@ -43,17 +43,23 @@ const FeaturesBlock: React.FC<BlockRendererProps> = ({ block }) => {
           {items.length > 0 ? (
             items.map((feature, idx) => (
               <div className="feature__card" key={idx}>
-                {feature.icon && <div className="feature__icon">{feature.icon}</div>}
+                {feature.icon && (
+                  <div className="feature__icon">{feature.icon}</div>
+                )}
                 {feature.title && (
                   <h3
                     className="feature__title"
-                    dangerouslySetInnerHTML={{ __html: escapeHtml(feature.title) }}
+                    dangerouslySetInnerHTML={{
+                      __html: escapeHtml(feature.title),
+                    }}
                   />
                 )}
                 {feature.description && (
                   <p
                     className="feature__desc"
-                    dangerouslySetInnerHTML={{ __html: escapeHtml(feature.description) }}
+                    dangerouslySetInnerHTML={{
+                      __html: escapeHtml(feature.description),
+                    }}
                   />
                 )}
               </div>

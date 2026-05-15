@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 /**
  * Analytics & insights React Query hooks.
@@ -140,7 +140,7 @@ export type InsightsListParams = {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
   category?: string | null;
   search?: string;
 };
@@ -154,11 +154,13 @@ export type InsightsListParams = {
  * generated URLs stable for the query cache key and avoids the backend seeing
  * `?category=&search=` noise.
  */
-function cleanParams<T extends Record<string, unknown>>(input: T): Record<string, unknown> {
+function cleanParams<T extends Record<string, unknown>>(
+  input: T,
+): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(input ?? {})) {
     if (value === undefined || value === null) continue;
-    if (typeof value === 'string' && value.trim() === '') continue;
+    if (typeof value === "string" && value.trim() === "") continue;
     out[key] = value;
   }
   return out;
@@ -177,9 +179,9 @@ export function useEngagementAnalytics(params: PageScopedParams = {}) {
   const cleaned = cleanParams(params);
 
   return useQuery<EngagementResponse>({
-    queryKey: ['analytics', 'engagement', 'global', cleaned] as const,
+    queryKey: ["analytics", "engagement", "global", cleaned] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/analytics/engagement', {
+      const response = await apiClient.get("/analytics/engagement", {
         params: cleaned,
         signal,
       });
@@ -199,9 +201,11 @@ export function useRealtimeAnalytics() {
   const { data: user } = useAuthMe();
 
   return useQuery<RealTimeAnalyticsResponse>({
-    queryKey: ['analytics', 'realtime', 'global'] as const,
+    queryKey: ["analytics", "realtime", "global"] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/analytics/realtime-advanced', { signal });
+      const response = await apiClient.get("/analytics/realtime-advanced", {
+        signal,
+      });
       return response.data?.data ?? {};
     },
     enabled: !!user,
@@ -222,7 +226,7 @@ export function useConversionMetrics(params: TimePeriodParams = {}) {
   return useQuery<ConversionMetricsResponse>({
     queryKey: queryKeys.analytics.conversions(cleaned),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/analytics/conversions', {
+      const response = await apiClient.get("/analytics/conversions", {
         params: cleaned,
         signal,
       });
@@ -244,7 +248,7 @@ export function useFunnelAnalytics(params: TimePeriodParams = {}) {
   return useQuery<FunnelResponse>({
     queryKey: queryKeys.analytics.funnel(cleaned),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/analytics/funnel', {
+      const response = await apiClient.get("/analytics/funnel", {
         params: cleaned,
         signal,
       });
@@ -266,7 +270,7 @@ export function useWebVitals(params: PageScopedParams = {}) {
   return useQuery<WebVitalsResponse>({
     queryKey: queryKeys.analytics.webVitals(cleaned),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/analytics/web-vitals', {
+      const response = await apiClient.get("/analytics/web-vitals", {
         params: cleaned,
         signal,
       });
@@ -288,7 +292,7 @@ export function useAnalyticsEvents(params: EventsParams = {}) {
   return useQuery<EventsResponse>({
     queryKey: queryKeys.analytics.events(cleaned),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/analytics/events', {
+      const response = await apiClient.get("/analytics/events", {
         params: cleaned,
         signal,
       });
@@ -307,16 +311,19 @@ export function useAnalyticsEvents(params: EventsParams = {}) {
  * hook is safe to mount before a website is selected.
  */
 export function useWebsiteAnalyticsSummary(
-  websiteId: number | string | null | undefined
+  websiteId: number | string | null | undefined,
 ) {
   const { data: user } = useAuthMe();
 
   return useQuery<WebsiteAnalyticsSummaryResponse>({
-    queryKey: queryKeys.analytics.websiteSummary(websiteId ?? ''),
+    queryKey: queryKeys.analytics.websiteSummary(websiteId ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/websites/${websiteId}/analytics/summary`, {
-        signal,
-      });
+      const response = await apiClient.get(
+        `/websites/${websiteId}/analytics/summary`,
+        {
+          signal,
+        },
+      );
       return response.data?.data ?? response.data ?? {};
     },
     enabled: !!user && !!websiteId,
@@ -345,7 +352,7 @@ export function useInsights(params: InsightsListParams = {}) {
   return useQuery<InsightsListResponse>({
     queryKey: queryKeys.insights.publicList(cleaned),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/insights/public', {
+      const response = await apiClient.get("/insights/public", {
         params: cleaned,
         signal,
       });
@@ -362,9 +369,11 @@ export function useInsights(params: InsightsListParams = {}) {
  */
 export function useInsightDetail(id: string | number | null | undefined) {
   return useQuery<InsightDetailResponse>({
-    queryKey: queryKeys.insights.publicDetail(id ?? ''),
+    queryKey: queryKeys.insights.publicDetail(id ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/insights/public/${id}`, { signal });
+      const response = await apiClient.get(`/insights/public/${id}`, {
+        signal,
+      });
       return response.data;
     },
     enabled: !!id,
@@ -381,7 +390,7 @@ export function useInsightsCategories(options?: { enabled?: boolean }) {
   return useQuery<InsightsCategoriesResponse>({
     queryKey: queryKeys.insights.categories(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/insights/categories', { signal });
+      const response = await apiClient.get("/insights/categories", { signal });
       return response.data;
     },
     enabled: options?.enabled ?? true,

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { apiClient } from '../../api/client';
+import { useState, useEffect } from "react";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { apiClient } from "../../api/client";
 import {
   Box,
   Button,
@@ -22,10 +22,10 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
-} from '@mui/material';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
-import { getDashboardColors } from '../../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../../context/ThemeContext';
+} from "@mui/material";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { getDashboardColors } from "../../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
 import {
   DashboardActionButton,
   DashboardInput,
@@ -34,8 +34,8 @@ import {
   SearchBar,
   FilterBar,
   EmptyState,
-} from './shared';
-import type { PlanSummary } from '../../hooks/usePlanSummary';
+} from "./shared";
+import type { PlanSummary } from "../../hooks/usePlanSummary";
 
 interface Product {
   id: string;
@@ -54,7 +54,7 @@ interface Product {
 interface StoreProductsProps {
   storeId: string;
   storeCurrency: string;
-  onPlanLimitReached: (message: string, type: 'stores' | 'products') => void;
+  onPlanLimitReached: (message: string, type: "stores" | "products") => void;
   planSummary: PlanSummary | null;
 }
 
@@ -72,20 +72,20 @@ const StoreProducts = ({
   const [error, setError] = useState<string | null>(null);
 
   // Search and filter state
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'true' | 'false'
+  const [activeFilter, setActiveFilter] = useState("all"); // 'all' | 'true' | 'false'
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    priceCents: '',
-    description: '',
-    productType: 'physical',
-    stockStatus: 'in_stock',
+    name: "",
+    slug: "",
+    priceCents: "",
+    description: "",
+    productType: "physical",
+    stockStatus: "in_stock",
     isActive: true,
   });
   const [formError, setFormError] = useState<string | null>(null);
@@ -101,15 +101,15 @@ const StoreProducts = ({
       setError(null);
       const params: Record<string, string> = { storeId };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
-      if (activeFilter !== 'all') params.isActive = activeFilter;
+      if (activeFilter !== "all") params.isActive = activeFilter;
       const response = await apiClient.get(`/products`, {
         params,
         headers: {},
       });
       setProducts(response.data.data || []);
     } catch (err: any) {
-      console.error('Error fetching products:', err);
-      setError(err.response?.data?.message || 'Failed to load products');
+      console.error("Error fetching products:", err);
+      setError(err.response?.data?.message || "Failed to load products");
     } finally {
       setLoading(false);
     }
@@ -122,20 +122,20 @@ const StoreProducts = ({
         name: product.name,
         slug: product.slug,
         priceCents: (product.priceCents / 100).toString(),
-        description: product.description || '',
-        productType: product.productType || 'physical',
-        stockStatus: product.stockStatus || 'in_stock',
+        description: product.description || "",
+        productType: product.productType || "physical",
+        stockStatus: product.stockStatus || "in_stock",
         isActive: product.isActive,
       });
     } else {
       setEditingProduct(null);
       setFormData({
-        name: '',
-        slug: '',
-        priceCents: '',
-        description: '',
-        productType: 'physical',
-        stockStatus: 'in_stock',
+        name: "",
+        slug: "",
+        priceCents: "",
+        description: "",
+        productType: "physical",
+        stockStatus: "in_stock",
         isActive: true,
       });
     }
@@ -156,10 +156,18 @@ const StoreProducts = ({
 
       if (editingProduct) {
         // Update existing product
-        const response = await apiClient.put(`/products/${editingProduct.id}`, payload, {
-          headers: {},
-        });
-        setProducts(products.map((p) => (p.id === editingProduct.id ? response.data.data : p)));
+        const response = await apiClient.put(
+          `/products/${editingProduct.id}`,
+          payload,
+          {
+            headers: {},
+          },
+        );
+        setProducts(
+          products.map((p) =>
+            p.id === editingProduct.id ? response.data.data : p,
+          ),
+        );
       } else {
         // Create new product
         const response = await apiClient.post(`/products`, payload, {
@@ -170,14 +178,14 @@ const StoreProducts = ({
 
       setDialogOpen(false);
     } catch (err: any) {
-      console.error('Error saving product:', err);
+      console.error("Error saving product:", err);
 
       // Check if error is a plan limit error
-      if (err.response?.data?.code === 'PLAN_LIMIT_REACHED') {
+      if (err.response?.data?.code === "PLAN_LIMIT_REACHED") {
         setDialogOpen(false);
-        onPlanLimitReached(err.response.data.message, 'products');
+        onPlanLimitReached(err.response.data.message, "products");
       } else {
-        setFormError(err.response?.data?.message || 'Failed to save product');
+        setFormError(err.response?.data?.message || "Failed to save product");
       }
     } finally {
       setSubmitting(false);
@@ -185,7 +193,7 @@ const StoreProducts = ({
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm('Are you sure you want to deactivate this product?')) {
+    if (!confirm("Are you sure you want to deactivate this product?")) {
       return;
     }
 
@@ -193,25 +201,29 @@ const StoreProducts = ({
       await apiClient.delete(`/products/${productId}`, {
         headers: {},
       });
-      setProducts(products.map((p) => (p.id === productId ? { ...p, isActive: false } : p)));
+      setProducts(
+        products.map((p) =>
+          p.id === productId ? { ...p, isActive: false } : p,
+        ),
+      );
     } catch (err: any) {
-      console.error('Error deleting product:', err);
-      alert(err.response?.data?.message || 'Failed to delete product');
+      console.error("Error deleting product:", err);
+      alert(err.response?.data?.message || "Failed to delete product");
     }
   };
 
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
       .trim();
   };
 
   const formatPrice = (cents: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
       currency: currency,
     }).format(cents / 100);
   };
@@ -224,7 +236,12 @@ const StoreProducts = ({
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
         <CircularProgress sx={{ color: colors.primary }} />
       </Box>
     );
@@ -242,8 +259,16 @@ const StoreProducts = ({
           p: 2,
         }}
       >
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-          <Typography variant="body2" sx={{ color: colors.text, fontWeight: 600 }}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={1}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: colors.text, fontWeight: 600 }}
+          >
             Products
           </Typography>
           <Typography variant="body2" sx={{ color: colors.textSecondary }}>
@@ -252,25 +277,26 @@ const StoreProducts = ({
         </Box>
         <Box
           sx={{
-            width: '100%',
+            width: "100%",
             height: 8,
             background: alpha(colors.primary, 0.1),
             borderRadius: 4,
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
         >
           <Box
             sx={{
               width: `${Math.min(usagePercentage, 100)}%`,
-              height: '100%',
+              height: "100%",
               background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
-              transition: 'width 0.3s ease',
+              transition: "width 0.3s ease",
             }}
           />
         </Box>
         {usagePercentage >= 80 && (
           <Alert severity="warning" sx={{ mt: 2 }}>
-            You're approaching your product limit. Consider upgrading for more products.
+            You're approaching your product limit. Consider upgrading for more
+            products.
           </Alert>
         )}
       </Card>
@@ -283,11 +309,18 @@ const StoreProducts = ({
       )}
 
       {/* Search and Filters */}
-      <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2} mb={3}>
-        <Box sx={{ flex: 1, maxWidth: { xs: '100%', md: 350 } }}>
+      <Box
+        display="flex"
+        flexDirection={{ xs: "column", sm: "row" }}
+        gap={2}
+        mb={3}
+      >
+        <Box sx={{ flex: 1, maxWidth: { xs: "100%", md: 350 } }}>
           <SearchBar
             value={searchQuery}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearchQuery(e.target.value)
+            }
             placeholder="Search by name or SKU..."
           />
         </Box>
@@ -296,15 +329,20 @@ const StoreProducts = ({
           value={activeFilter}
           onChange={(e: any) => setActiveFilter(e.target.value)}
           options={[
-            { value: 'all', label: 'All' },
-            { value: 'true', label: 'Active' },
-            { value: 'false', label: 'Inactive' },
+            { value: "all", label: "All" },
+            { value: "true", label: "Active" },
+            { value: "false", label: "Inactive" },
           ]}
         />
       </Box>
 
       {/* Add Product Button */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
         <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700 }}>
           Products ({productsCount})
         </Typography>
@@ -324,13 +362,19 @@ const StoreProducts = ({
             borderRadius: 3,
             border: `1px solid ${colors.border}`,
             p: 6,
-            textAlign: 'center',
+            textAlign: "center",
           }}
         >
-          <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700, mb: 1 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: colors.text, fontWeight: 700, mb: 1 }}
+          >
             No products yet
           </Typography>
-          <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 3 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: colors.textSecondary, mb: 3 }}
+          >
             Add your first product to start selling
           </Typography>
           {canAddProduct && (
@@ -357,23 +401,43 @@ const StoreProducts = ({
         >
           <TableHead>
             <TableRow sx={{ background: colors.panelHover }}>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>Name</TableCell>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>Price</TableCell>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>Stock</TableCell>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>Status</TableCell>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }} align="right">
+              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>
+                Name
+              </TableCell>
+              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>
+                Price
+              </TableCell>
+              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>
+                Stock
+              </TableCell>
+              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>
+                Status
+              </TableCell>
+              <TableCell
+                sx={{ color: colors.text, fontWeight: 700 }}
+                align="right"
+              >
                 Actions
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {products.map((product) => (
-              <TableRow key={product.id} sx={{ '&:hover': { background: colors.panelHover } }}>
+              <TableRow
+                key={product.id}
+                sx={{ "&:hover": { background: colors.panelHover } }}
+              >
                 <TableCell>
-                  <Typography variant="body2" sx={{ color: colors.text, fontWeight: 600 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: colors.text, fontWeight: 600 }}
+                  >
                     {product.name}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: colors.textSecondary }}
+                  >
                     /{product.slug}
                   </Typography>
                 </TableCell>
@@ -382,23 +446,27 @@ const StoreProducts = ({
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={product.stockStatus?.replace('_', ' ') || 'in stock'}
+                    label={product.stockStatus?.replace("_", " ") || "in stock"}
                     size="small"
                     sx={{
                       background:
-                        product.stockStatus === 'in_stock' ? colors.success : colors.warning,
-                      color: '#fff',
-                      textTransform: 'capitalize',
+                        product.stockStatus === "in_stock"
+                          ? colors.success
+                          : colors.warning,
+                      color: "#fff",
+                      textTransform: "capitalize",
                     }}
                   />
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={product.isActive ? 'Active' : 'Inactive'}
+                    label={product.isActive ? "Active" : "Inactive"}
                     size="small"
                     sx={{
-                      background: product.isActive ? colors.success : colors.error,
-                      color: '#fff',
+                      background: product.isActive
+                        ? colors.success
+                        : colors.error,
+                      color: "#fff",
                     }}
                   />
                 </TableCell>
@@ -443,24 +511,28 @@ const StoreProducts = ({
           sx={{
             color: colors.text,
             fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          {editingProduct ? 'Edit Product' : 'Add New Product'}
+          {editingProduct ? "Edit Product" : "Add New Product"}
           <IconButton onClick={() => setDialogOpen(false)} size="small">
             <X size={18} />
           </IconButton>
         </DialogTitle>
         <DialogContent>
           {formError && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
+            <Alert
+              severity="error"
+              sx={{ mb: 2 }}
+              onClose={() => setFormError(null)}
+            >
               {formError}
             </Alert>
           )}
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <DashboardInput
               label="Product Name"
               labelPlacement="floating"
@@ -481,12 +553,16 @@ const StoreProducts = ({
               label="Product Slug"
               labelPlacement="floating"
               value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, slug: e.target.value })
+              }
               fullWidth
               required
               disabled={!!editingProduct}
               helperText={
-                editingProduct ? 'Slug cannot be changed after creation' : 'Used in product URL'
+                editingProduct
+                  ? "Slug cannot be changed after creation"
+                  : "Used in product URL"
               }
             />
 
@@ -494,7 +570,9 @@ const StoreProducts = ({
               label={`Price (${storeCurrency})`}
               labelPlacement="floating"
               value={formData.priceCents}
-              onChange={(e) => setFormData({ ...formData, priceCents: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, priceCents: e.target.value })
+              }
               fullWidth
               required
               type="number"
@@ -506,7 +584,9 @@ const StoreProducts = ({
               label="Description"
               labelPlacement="floating"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               fullWidth
               multiline
               rows={3}
@@ -517,7 +597,9 @@ const StoreProducts = ({
                 fullWidth
                 label="Product Type"
                 value={formData.productType}
-                onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, productType: e.target.value })
+                }
               >
                 <MenuItem value="physical">Physical</MenuItem>
                 <MenuItem value="digital">Digital</MenuItem>
@@ -527,7 +609,9 @@ const StoreProducts = ({
                 fullWidth
                 label="Stock Status"
                 value={formData.stockStatus}
-                onChange={(e) => setFormData({ ...formData, stockStatus: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, stockStatus: e.target.value })
+                }
               >
                 <MenuItem value="in_stock">In Stock</MenuItem>
                 <MenuItem value="out_of_stock">Out of Stock</MenuItem>
@@ -539,12 +623,14 @@ const StoreProducts = ({
               control={
                 <Switch
                   checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isActive: e.target.checked })
+                  }
                   sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
+                    "& .MuiSwitch-switchBase.Mui-checked": {
                       color: colors.primary,
                     },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
                       backgroundColor: colors.primary,
                     },
                   }}
@@ -560,22 +646,27 @@ const StoreProducts = ({
             onClick={() => setDialogOpen(false)}
             sx={{
               color: colors.textSecondary,
-              '&:hover': { background: alpha(colors.textSecondary, 0.1) },
+              "&:hover": { background: alpha(colors.textSecondary, 0.1) },
             }}
           >
             Cancel
           </Button>
           <DashboardActionButton
             onClick={handleSubmit}
-            disabled={!formData.name || !formData.slug || !formData.priceCents || submitting}
+            disabled={
+              !formData.name ||
+              !formData.slug ||
+              !formData.priceCents ||
+              submitting
+            }
             sx={{ px: 3 }}
           >
             {submitting ? (
-              <CircularProgress size={20} sx={{ color: 'inherit' }} />
+              <CircularProgress size={20} sx={{ color: "inherit" }} />
             ) : editingProduct ? (
-              'Save Changes'
+              "Save Changes"
             ) : (
-              'Add Product'
+              "Add Product"
             )}
           </DashboardActionButton>
         </DialogActions>

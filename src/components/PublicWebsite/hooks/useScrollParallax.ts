@@ -21,14 +21,19 @@
  *   - touch/coarse-pointer device (mobile)
  */
 
-import { type RefObject } from 'react';
-import { useScroll, useTransform, useMotionValue, type MotionValue } from 'framer-motion';
+import { type RefObject } from "react";
+import {
+  useScroll,
+  useTransform,
+  useMotionValue,
+  type MotionValue,
+} from "framer-motion";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-export type ParallaxIntensity = 'none' | 'subtle' | 'medium' | 'strong';
+export type ParallaxIntensity = "none" | "subtle" | "medium" | "strong";
 
-export type ParallaxTransformType = 'translate' | 'scale' | 'both';
+export type ParallaxTransformType = "translate" | "scale" | "both";
 
 export interface ScrollParallaxOptions {
   /** Which transform to apply. Default: 'translate' (backward compat) */
@@ -64,9 +69,10 @@ const DEFAULT_SCALE_TO = 1;
 
 function checkParallaxEnabled(intensity: ParallaxIntensity): boolean {
   if (INTENSITY_PCT[intensity] === 0) return false;
-  if (typeof window === 'undefined') return false;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-  if (window.matchMedia('(pointer: coarse)').matches) return false;
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    return false;
+  if (window.matchMedia("(pointer: coarse)").matches) return false;
   return true;
 }
 
@@ -74,33 +80,42 @@ function checkParallaxEnabled(intensity: ParallaxIntensity): boolean {
 
 export function useScrollParallax(
   ref: RefObject<HTMLElement | null>,
-  intensity: ParallaxIntensity = 'none',
-  options?: ScrollParallaxOptions
+  intensity: ParallaxIntensity = "none",
+  options?: ScrollParallaxOptions,
 ): ScrollParallaxResult {
   const enabled = checkParallaxEnabled(intensity);
   const pct = INTENSITY_PCT[intensity] ?? 0;
-  const transformType = options?.transformType ?? 'translate';
+  const transformType = options?.transformType ?? "translate";
   const scaleFrom = options?.scaleFrom ?? DEFAULT_SCALE_FROM;
   const scaleTo = options?.scaleTo ?? DEFAULT_SCALE_TO;
 
   // Always call scroll hooks (Rules of Hooks — no conditionals)
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ['start end', 'end start'],
+    offset: ["start end", "end start"],
   });
 
   // Y-axis translation: MotionValue driven by scroll position
-  const yActive = useTransform(scrollYProgress, [0, 1], [`-${pct}%`, `${pct}%`]);
+  const yActive = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [`-${pct}%`, `${pct}%`],
+  );
 
   // Scale: MotionValue driven by scroll position
-  const scaleActive = useTransform(scrollYProgress, [0, 1], [scaleFrom, scaleTo]);
+  const scaleActive = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [scaleFrom, scaleTo],
+  );
 
   // Inert: static values when disabled
-  const yInert = useMotionValue('0%');
+  const yInert = useMotionValue("0%");
   const scaleInert = useMotionValue(1);
 
-  const useTranslate = transformType === 'translate' || transformType === 'both';
-  const useScale = transformType === 'scale' || transformType === 'both';
+  const useTranslate =
+    transformType === "translate" || transformType === "both";
+  const useScale = transformType === "scale" || transformType === "both";
 
   return {
     y: enabled && useTranslate ? yActive : yInert,

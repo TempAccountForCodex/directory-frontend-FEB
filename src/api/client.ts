@@ -1,5 +1,5 @@
-import axios, { isAxiosError, isCancel } from 'axios';
-import { API_URL } from '@/config/api';
+import axios, { isAxiosError, isCancel } from "axios";
+import { API_URL } from "@/config/api";
 
 /**
  * Shared axios instance for the app. All future HTTP traffic routes through
@@ -9,7 +9,7 @@ export const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true,
   headers: {
-    'X-Requested-With': 'XMLHttpRequest',
+    "X-Requested-With": "XMLHttpRequest",
   },
 });
 
@@ -24,7 +24,7 @@ export { isAxiosError, isCancel };
 // Optional chaining guards against partially-mocked axios in test environments
 // where `axios.create()` may return an object without full defaults/headers.
 const existingAuth = apiClient?.defaults?.headers?.common?.Authorization;
-if (typeof existingAuth === 'string' && existingAuth.includes('null')) {
+if (typeof existingAuth === "string" && existingAuth.includes("null")) {
   delete apiClient.defaults.headers.common.Authorization;
 }
 

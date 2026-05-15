@@ -1,18 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
 export type AnimationEntranceType =
-  | 'none'
-  | 'fade-in'
-  | 'slide-up'
-  | 'slide-down'
-  | 'scale-up'
-  | 'bounce'
-  | 'text-reveal';
+  | "none"
+  | "fade-in"
+  | "slide-up"
+  | "slide-down"
+  | "scale-up"
+  | "bounce"
+  | "text-reveal";
 
-export type AnimationDirection = 'up' | 'down' | 'left' | 'right';
+export type AnimationDirection = "up" | "down" | "left" | "right";
 
-export type FloatSpeed = 'slow' | 'normal' | 'fast';
-export type FloatIntensity = 'subtle' | 'normal' | 'dramatic';
+export type FloatSpeed = "slow" | "normal" | "fast";
+export type FloatIntensity = "subtle" | "normal" | "dramatic";
 
 export interface BlockAnimationFields {
   animationEntranceType?: AnimationEntranceType;
@@ -61,25 +61,37 @@ const FLOAT_INTENSITY_MAP: Record<FloatIntensity, number> = {
   dramatic: 20,
 };
 
-const DIRECTION_OFFSETS: Record<AnimationDirection, { x?: number; y?: number }> = {
+const DIRECTION_OFFSETS: Record<
+  AnimationDirection,
+  { x?: number; y?: number }
+> = {
   up: { y: 40 },
   down: { y: -40 },
   left: { x: 40 },
   right: { x: -40 },
 };
 
-function buildInitialAnimate(type: AnimationEntranceType, direction: AnimationDirection) {
+function buildInitialAnimate(
+  type: AnimationEntranceType,
+  direction: AnimationDirection,
+) {
   switch (type) {
-    case 'fade-in':
+    case "fade-in":
       return { initial: { opacity: 0 }, animate: { opacity: 1 } };
-    case 'slide-up':
-    case 'slide-down': {
+    case "slide-up":
+    case "slide-down": {
       const offset = DIRECTION_OFFSETS[direction];
-      return { initial: { opacity: 0, ...offset }, animate: { opacity: 1, x: 0, y: 0 } };
+      return {
+        initial: { opacity: 0, ...offset },
+        animate: { opacity: 1, x: 0, y: 0 },
+      };
     }
-    case 'scale-up':
-      return { initial: { opacity: 0, scale: 0.8 }, animate: { opacity: 1, scale: 1 } };
-    case 'bounce': {
+    case "scale-up":
+      return {
+        initial: { opacity: 0, scale: 0.8 },
+        animate: { opacity: 1, scale: 1 },
+      };
+    case "bounce": {
       const offset = DIRECTION_OFFSETS[direction];
       return {
         initial: { opacity: 0, scale: 0.8, ...offset },
@@ -95,39 +107,42 @@ function buildFloatSx(
   blockId: string,
   speed: FloatSpeed,
   intensity: FloatIntensity,
-  entranceDurationMs: number
+  entranceDurationMs: number,
 ): Record<string, unknown> {
   const durationS = FLOAT_SPEED_MAP[speed];
   const px = FLOAT_INTENSITY_MAP[intensity];
   const keyframeName = `drift-${blockId}`;
-  const delayS = entranceDurationMs > 0 ? `${entranceDurationMs / 1000}s` : '0s';
+  const delayS =
+    entranceDurationMs > 0 ? `${entranceDurationMs / 1000}s` : "0s";
 
   return {
     [`@keyframes ${keyframeName}`]: {
-      '0%': { transform: 'translateY(0) scale(1)' },
-      '50%': { transform: `translateY(-${px}px) scale(1.015)` },
-      '100%': { transform: 'translateY(0) scale(1)' },
+      "0%": { transform: "translateY(0) scale(1)" },
+      "50%": { transform: `translateY(-${px}px) scale(1.015)` },
+      "100%": { transform: "translateY(0) scale(1)" },
     },
     animation: `${keyframeName} ${durationS}s ease-in-out infinite`,
     animationDelay: delayS,
-    '@media (prefers-reduced-motion: reduce)': {
-      animation: 'none',
+    "@media (prefers-reduced-motion: reduce)": {
+      animation: "none",
     },
   };
 }
 
-export function useBlockAnimation(fields: BlockAnimationFields): BlockAnimationResult {
+export function useBlockAnimation(
+  fields: BlockAnimationFields,
+): BlockAnimationResult {
   return useMemo(() => {
     const {
-      animationEntranceType = 'none',
+      animationEntranceType = "none",
       animationDuration = 400,
       animationDelay = 0,
       animationScrollTriggered = false,
       animationDirection,
       animationFloat = false,
-      animationFloatSpeed = 'normal',
-      animationFloatIntensity = 'normal',
-      blockId = 'block',
+      animationFloatSpeed = "normal",
+      animationFloatIntensity = "normal",
+      blockId = "block",
     } = fields;
 
     // Compute floatSx if float is enabled
@@ -136,20 +151,22 @@ export function useBlockAnimation(fields: BlockAnimationFields): BlockAnimationR
           blockId,
           animationFloatSpeed,
           animationFloatIntensity,
-          animationEntranceType !== 'none' ? animationDuration + animationDelay : 0
+          animationEntranceType !== "none"
+            ? animationDuration + animationDelay
+            : 0,
         )
       : undefined;
 
-    if (animationEntranceType === 'none') {
+    if (animationEntranceType === "none") {
       return { shouldAnimate: false, motionProps: {}, floatSx };
     }
 
     // ── Text-reveal: word-by-word staggered entrance ──────────────────────────
-    if (animationEntranceType === 'text-reveal') {
+    if (animationEntranceType === "text-reveal") {
       const staggerChildren = (fields.animationStaggerMs ?? 40) / 1000;
 
       const childVariants = {
-        hidden: { y: '110%', opacity: 0 },
+        hidden: { y: "110%", opacity: 0 },
         visible: {
           y: 0,
           opacity: 1,
@@ -173,9 +190,13 @@ export function useBlockAnimation(fields: BlockAnimationFields): BlockAnimationR
 
     // Backward compat: slide-down defaults to 'down', everything else to 'up'
     const effectiveDirection: AnimationDirection =
-      animationDirection ?? (animationEntranceType === 'slide-down' ? 'down' : 'up');
+      animationDirection ??
+      (animationEntranceType === "slide-down" ? "down" : "up");
 
-    const states = buildInitialAnimate(animationEntranceType, effectiveDirection);
+    const states = buildInitialAnimate(
+      animationEntranceType,
+      effectiveDirection,
+    );
     if (!states) {
       return { shouldAnimate: false, motionProps: {}, floatSx };
     }
@@ -183,10 +204,10 @@ export function useBlockAnimation(fields: BlockAnimationFields): BlockAnimationR
     const durationS = animationDuration / 1000;
     const delayS = animationDelay / 1000;
 
-    const isSpring = animationEntranceType === 'bounce';
+    const isSpring = animationEntranceType === "bounce";
 
     const transition = isSpring
-      ? { type: 'spring', stiffness: 300, damping: 20, delay: delayS }
+      ? { type: "spring", stiffness: 300, damping: 20, delay: delayS }
       : { duration: durationS, delay: delayS, ease: EASING };
 
     if (animationScrollTriggered) {
@@ -195,7 +216,7 @@ export function useBlockAnimation(fields: BlockAnimationFields): BlockAnimationR
         motionProps: {
           initial: states.initial,
           whileInView: states.animate,
-          viewport: { once: true, margin: '-60px 0px' },
+          viewport: { once: true, margin: "-60px 0px" },
           transition,
         },
         floatSx,
@@ -214,6 +235,10 @@ export function useBlockAnimation(fields: BlockAnimationFields): BlockAnimationR
   }, [fields]);
 }
 
-export function getStaggerDelay(index: number, baseDelay = 0, staggerMs = 60): number {
+export function getStaggerDelay(
+  index: number,
+  baseDelay = 0,
+  staggerMs = 60,
+): number {
   return baseDelay + index * staggerMs;
 }

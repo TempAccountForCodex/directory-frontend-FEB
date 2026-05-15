@@ -38,22 +38,28 @@
  *   closure reads when fields change rapidly in succession.
  */
 
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Skeleton from '@mui/material/Skeleton';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Skeleton from "@mui/material/Skeleton";
+import { AnimatePresence, motion } from "framer-motion";
 
-import useFieldMetadata from '../hooks/useFieldMetadata';
-import useDebouncedValue from '../hooks/useDebouncedValue';
-import { useValidation } from '../hooks/useValidation';
-import { FieldRenderer } from './DynamicFields/FieldRenderer';
-import './DynamicFields/fields';
-import { shouldShowField } from '../utils/conditionalLogic';
-import type { FieldDefinition as ConditionalFieldDef } from '../utils/conditionalLogic';
+import useFieldMetadata from "../hooks/useFieldMetadata";
+import useDebouncedValue from "../hooks/useDebouncedValue";
+import { useValidation } from "../hooks/useValidation";
+import { FieldRenderer } from "./DynamicFields/FieldRenderer";
+import "./DynamicFields/fields";
+import { shouldShowField } from "../utils/conditionalLogic";
+import type { FieldDefinition as ConditionalFieldDef } from "../utils/conditionalLogic";
 
-import type { FieldDefinition as RendererFieldDef } from './DynamicFields/types';
-import type { FieldDefinition as MetaFieldDef } from '../hooks/useFieldMetadata';
+import type { FieldDefinition as RendererFieldDef } from "./DynamicFields/types";
+import type { FieldDefinition as MetaFieldDef } from "../hooks/useFieldMetadata";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -65,7 +71,10 @@ import type { FieldDefinition as MetaFieldDef } from '../hooks/useFieldMetadata'
  * are passed through; FieldRenderer/registry will handle unknowns gracefully.
  */
 function castToRendererField(field: MetaFieldDef): RendererFieldDef {
-  return { ...field, type: (field.type || '').toUpperCase() } as unknown as RendererFieldDef;
+  return {
+    ...field,
+    type: (field.type || "").toUpperCase(),
+  } as unknown as RendererFieldDef;
 }
 
 // ---------------------------------------------------------------------------
@@ -93,9 +102,9 @@ export interface FormGeneratorProps {
 
 /** Renders multiple Skeleton rows to preserve layout during data fetch */
 const FormSkeleton: React.FC = () => (
-  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
     {[1, 2, 3, 4].map((n) => (
-      <Box key={n} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box key={n} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         <Skeleton variant="text" width="30%" height={20} />
         <Skeleton variant="rectangular" width="100%" height={40} />
       </Box>
@@ -108,19 +117,30 @@ const FormSkeleton: React.FC = () => (
 // ---------------------------------------------------------------------------
 
 const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
-  ({ blockType, initialValues = {}, onChange, onValidate, onSubmit, disabled = false }) => {
+  ({
+    blockType,
+    initialValues = {},
+    onChange,
+    onValidate,
+    onSubmit,
+    disabled = false,
+  }) => {
     // -----------------------------------------------------------------------
     // State
     // -----------------------------------------------------------------------
 
-    const [values, setValues] = useState<Record<string, unknown>>(initialValues);
+    const [values, setValues] =
+      useState<Record<string, unknown>>(initialValues);
 
     // Reset form values when initialValues changes (e.g. user selects a different block).
     // Uses JSON.stringify comparison to avoid resetting on every render when the parent
     // creates a new object reference with identical content. The functional updater
     // checks whether the serialized state actually differs to avoid redundant re-renders
     // when the parent echoes back the same content (e.g. after an onChange round-trip).
-    const serializedInitial = useMemo(() => JSON.stringify(initialValues), [initialValues]);
+    const serializedInitial = useMemo(
+      () => JSON.stringify(initialValues),
+      [initialValues],
+    );
     useEffect(() => {
       setValues((prev) => {
         const next = JSON.parse(serializedInitial);
@@ -145,7 +165,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
 
     const allFields = useMemo<RendererFieldDef[]>(() => {
       if (!metadata) return [];
-      return metadata.groups.flatMap((g) => g.fields.map((f) => castToRendererField(f)));
+      return metadata.groups.flatMap((g) =>
+        g.fields.map((f) => castToRendererField(f)),
+      );
     }, [metadata]);
 
     // -----------------------------------------------------------------------
@@ -185,7 +207,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
     // Map of field name → stable per-field onChange callback.
     // The map is cleared when `onChange` identity changes (see effect below)
     // so that stale closures over the old onChange are never called.
-    const fieldHandlersRef = useRef<Map<string, (newValue: unknown) => void>>(new Map());
+    const fieldHandlersRef = useRef<Map<string, (newValue: unknown) => void>>(
+      new Map(),
+    );
 
     // Invalidate the handler map whenever the parent onChange prop changes
     useEffect(() => {
@@ -202,19 +226,22 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
      * called inside the functional updater (same as original) so it receives
      * the correct updated values object derived from the latest prev.
      */
-    const getFieldHandler = useCallback((fieldName: string): ((newValue: unknown) => void) => {
-      if (!fieldHandlersRef.current.has(fieldName)) {
-        const handler = (newValue: unknown) => {
-          setValues((prev) => {
-            const updated = { ...prev, [fieldName]: newValue };
-            onChangePropRef.current?.(updated);
-            return updated;
-          });
-        };
-        fieldHandlersRef.current.set(fieldName, handler);
-      }
-      return fieldHandlersRef.current.get(fieldName)!;
-    }, []); // no deps — the handler itself reads from refs, not closures
+    const getFieldHandler = useCallback(
+      (fieldName: string): ((newValue: unknown) => void) => {
+        if (!fieldHandlersRef.current.has(fieldName)) {
+          const handler = (newValue: unknown) => {
+            setValues((prev) => {
+              const updated = { ...prev, [fieldName]: newValue };
+              onChangePropRef.current?.(updated);
+              return updated;
+            });
+          };
+          fieldHandlersRef.current.set(fieldName, handler);
+        }
+        return fieldHandlersRef.current.get(fieldName)!;
+      },
+      [],
+    ); // no deps — the handler itself reads from refs, not closures
 
     // -----------------------------------------------------------------------
     // Stable per-field onBlur handlers (same ref-map pattern as onChange)
@@ -233,7 +260,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
         }
         return blurHandlersRef.current.get(fieldName)!;
       },
-      [markFieldTouched, hookValidateField]
+      [markFieldTouched, hookValidateField],
     );
 
     // -----------------------------------------------------------------------
@@ -252,7 +279,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
 
     const sortedGroupsWithSortedFields = useMemo(() => {
       return sortedGroups.map((group) => {
-        const sortedFields = [...group.fields].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        const sortedFields = [...group.fields].sort(
+          (a, b) => (a.order ?? 0) - (b.order ?? 0),
+        );
         return { group, sortedFields };
       });
     }, [sortedGroups]);
@@ -267,7 +296,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
       return sortedGroupsWithSortedFields.map(({ group, sortedFields }) => ({
         group,
         visibleFields: sortedFields.filter((field) =>
-          shouldShowField(field as unknown as ConditionalFieldDef, values)
+          shouldShowField(field as unknown as ConditionalFieldDef, values),
         ),
       }));
     }, [sortedGroupsWithSortedFields, values]);
@@ -287,8 +316,11 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
     const visibleFieldsForValidation = useMemo<MetaFieldDef[]>(() => {
       return sortedGroupsWithSortedFields.flatMap(({ sortedFields }) =>
         sortedFields.filter((field) =>
-          shouldShowField(field as unknown as ConditionalFieldDef, debouncedValues)
-        )
+          shouldShowField(
+            field as unknown as ConditionalFieldDef,
+            debouncedValues,
+          ),
+        ),
       );
     }, [sortedGroupsWithSortedFields, debouncedValues]);
 
@@ -302,7 +334,12 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
       for (const field of visibleFieldsForValidation) {
         hookValidateField(field.name);
       }
-    }, [metadata, debouncedValues, visibleFieldsForValidation, hookValidateField]);
+    }, [
+      metadata,
+      debouncedValues,
+      visibleFieldsForValidation,
+      hookValidateField,
+    ]);
 
     // -----------------------------------------------------------------------
     // Bridge: fire onValidate when errors change (visible fields only)
@@ -310,7 +347,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
 
     const visibleFieldNamesForValidation = useMemo(
       () => new Set(visibleFieldsForValidation.map((f) => f.name)),
-      [visibleFieldsForValidation]
+      [visibleFieldsForValidation],
     );
 
     useEffect(() => {
@@ -318,7 +355,10 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
 
       const visibleErrors: Record<string, string[]> = {};
       for (const [name, fieldErrors] of Object.entries(errors)) {
-        if (visibleFieldNamesForValidation.has(name) && fieldErrors.length > 0) {
+        if (
+          visibleFieldNamesForValidation.has(name) &&
+          fieldErrors.length > 0
+        ) {
           visibleErrors[name] = fieldErrors;
         }
       }
@@ -406,7 +446,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
           onSubmit?.(values);
         }
       },
-      [validateForm, values, onSubmit]
+      [validateForm, values, onSubmit],
     );
 
     // -----------------------------------------------------------------------
@@ -443,63 +483,83 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
         onSubmit={handleSubmit}
         noValidate
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: 3,
         }}
       >
-        {sortedGroupsWithVisible.map(({ group, visibleFields: groupVisibleFields }) => (
-          <Box key={group.id} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Group heading */}
-            <Typography variant="subtitle1" sx={{ color: 'text.primary', fontWeight: 600 }}>
-              {group.label}
-            </Typography>
-
-            {/* Fields — responsive: stack on mobile, two-column on sm+ */}
+        {sortedGroupsWithVisible.map(
+          ({ group, visibleFields: groupVisibleFields }) => (
             <Box
-              sx={{
-                display: 'grid',
-                gap: 2,
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: 'repeat(auto-fill, minmax(280px, 1fr))',
-                },
-              }}
+              key={group.id}
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
             >
-              <AnimatePresence mode="sync">
-                {groupVisibleFields.map((field) => {
-                  const rendererField = castToRendererField(field);
-                  return (
-                    <motion.div
-                      key={field.name}
-                      initial={hasMountedRef.current ? { opacity: 0, height: 0 } : false}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2, ease: 'easeInOut' }}
-                      style={{ overflow: 'hidden' }}
-                    >
-                      <FieldRenderer
-                        field={rendererField}
-                        value={values[field.name] ?? rendererField.defaultValue ?? ''}
-                        onChange={getFieldHandler(field.name)}
-                        onBlur={getBlurHandler(field.name)}
-                        disabled={disabled}
-                        errors={touchedFields.has(field.name) ? errors[field.name] || [] : []}
-                        allValues={values}
-                      />
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+              {/* Group heading */}
+              <Typography
+                variant="subtitle1"
+                sx={{ color: "text.primary", fontWeight: 600 }}
+              >
+                {group.label}
+              </Typography>
+
+              {/* Fields — responsive: stack on mobile, two-column on sm+ */}
+              <Box
+                sx={{
+                  display: "grid",
+                  gap: 2,
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "repeat(auto-fill, minmax(280px, 1fr))",
+                  },
+                }}
+              >
+                <AnimatePresence mode="sync">
+                  {groupVisibleFields.map((field) => {
+                    const rendererField = castToRendererField(field);
+                    return (
+                      <motion.div
+                        key={field.name}
+                        initial={
+                          hasMountedRef.current
+                            ? { opacity: 0, height: 0 }
+                            : false
+                        }
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        style={{ overflow: "hidden" }}
+                      >
+                        <FieldRenderer
+                          field={rendererField}
+                          value={
+                            values[field.name] ??
+                            rendererField.defaultValue ??
+                            ""
+                          }
+                          onChange={getFieldHandler(field.name)}
+                          onBlur={getBlurHandler(field.name)}
+                          disabled={disabled}
+                          errors={
+                            touchedFields.has(field.name)
+                              ? errors[field.name] || []
+                              : []
+                          }
+                          allValues={values}
+                        />
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </Box>
             </Box>
-          </Box>
-        ))}
+          ),
+        )}
       </Box>
     );
-  }
+  },
 );
 
-FormGenerator.displayName = 'FormGenerator';
+FormGenerator.displayName = "FormGenerator";
 
 export default FormGenerator;
 export { FormGenerator };

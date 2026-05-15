@@ -15,10 +15,10 @@
 
 /** Maps headingTextShadow enum values to CSS text-shadow strings (heading). */
 export const TEXT_SHADOW_MAP: Record<string, string> = {
-  none: 'none',
-  subtle: '0 2px 8px rgba(0,0,0,0.15)',
-  medium: '0 4px 16px rgba(0,0,0,0.25)',
-  dramatic: '0 8px 32px rgba(0,0,0,0.35)',
+  none: "none",
+  subtle: "0 2px 8px rgba(0,0,0,0.15)",
+  medium: "0 4px 16px rgba(0,0,0,0.25)",
+  dramatic: "0 8px 32px rgba(0,0,0,0.35)",
 };
 
 /**
@@ -26,10 +26,10 @@ export const TEXT_SHADOW_MAP: Record<string, string> = {
  * Subheading shadows use 70% of the heading shadow alpha value.
  */
 export const TEXT_SHADOW_MAP_SUBHEADING: Record<string, string> = {
-  none: 'none',
-  subtle: '0 2px 8px rgba(0,0,0,0.10)',
-  medium: '0 4px 16px rgba(0,0,0,0.17)',
-  dramatic: '0 8px 32px rgba(0,0,0,0.25)',
+  none: "none",
+  subtle: "0 2px 8px rgba(0,0,0,0.10)",
+  medium: "0 4px 16px rgba(0,0,0,0.17)",
+  dramatic: "0 8px 32px rgba(0,0,0,0.25)",
 };
 
 /** Maps headingLineHeight enum values to numeric line-height values. */
@@ -42,10 +42,10 @@ export const LINE_HEIGHT_MAP: Record<string, number> = {
 // ── Gradient Direction Map ─────────────────────────────────────────────────────
 
 const GRADIENT_DIRECTION_MAP: Record<string, string> = {
-  'to-r': '90deg',
-  'to-b': '180deg',
-  'to-br': '135deg',
-  'to-bl': '225deg',
+  "to-r": "90deg",
+  "to-b": "180deg",
+  "to-br": "135deg",
+  "to-bl": "225deg",
 };
 
 // ── Interface ──────────────────────────────────────────────────────────────────
@@ -84,18 +84,20 @@ export interface HeadingTypographySx {
  * resolveHeadingTypographySx({ headingTextShadow: 'dramatic', headingOpacity: 80, headingLineHeight: 'tight' })
  * // { textShadow: '0 8px 32px rgba(0,0,0,0.35)', opacity: 0.8, lineHeight: 0.9 }
  */
-export function resolveHeadingTypographySx(fields: HeadingTypographyFields): HeadingTypographySx {
-  const shadowKey = fields.headingTextShadow ?? 'none';
+export function resolveHeadingTypographySx(
+  fields: HeadingTypographyFields,
+): HeadingTypographySx {
+  const shadowKey = fields.headingTextShadow ?? "none";
   const opacityValue = fields.headingOpacity ?? 100;
-  const lineHeightKey = fields.headingLineHeight ?? 'normal';
+  const lineHeightKey = fields.headingLineHeight ?? "normal";
 
-  const textShadow = TEXT_SHADOW_MAP[shadowKey] ?? 'none';
+  const textShadow = TEXT_SHADOW_MAP[shadowKey] ?? "none";
   const lineHeight = LINE_HEIGHT_MAP[lineHeightKey] ?? LINE_HEIGHT_MAP.normal;
 
   const sx: HeadingTypographySx = { lineHeight };
 
   // Only emit textShadow when non-default (avoids no-op CSS)
-  if (textShadow !== 'none') {
+  if (textShadow !== "none") {
     sx.textShadow = textShadow;
   }
 
@@ -118,19 +120,19 @@ export function resolveHeadingTypographySx(fields: HeadingTypographyFields): Hea
  * @returns Partial sx object with textShadow (subheading intensity), opacity (when non-default), and lineHeight.
  */
 export function resolveSubheadingTypographySx(
-  fields: HeadingTypographyFields
+  fields: HeadingTypographyFields,
 ): HeadingTypographySx {
-  const shadowKey = fields.headingTextShadow ?? 'none';
+  const shadowKey = fields.headingTextShadow ?? "none";
   const opacityValue = fields.headingOpacity ?? 100;
-  const lineHeightKey = fields.headingLineHeight ?? 'normal';
+  const lineHeightKey = fields.headingLineHeight ?? "normal";
 
-  const textShadow = TEXT_SHADOW_MAP_SUBHEADING[shadowKey] ?? 'none';
+  const textShadow = TEXT_SHADOW_MAP_SUBHEADING[shadowKey] ?? "none";
   const lineHeight = LINE_HEIGHT_MAP[lineHeightKey] ?? LINE_HEIGHT_MAP.normal;
 
   const sx: HeadingTypographySx = { lineHeight };
 
   // Only emit textShadow when non-default (avoids no-op CSS)
-  if (textShadow !== 'none') {
+  if (textShadow !== "none") {
     sx.textShadow = textShadow;
   }
 
@@ -151,18 +153,22 @@ export function resolveSubheadingTypographySx(
  *
  * @returns Empty object when disabled; gradient fill sx when enabled.
  */
-export function resolveGradientTextSx(fields: HeadingTypographyFields): Record<string, any> {
+export function resolveGradientTextSx(
+  fields: HeadingTypographyFields,
+): Record<string, any> {
   if (!fields.headingGradientText) return {};
 
-  const from = fields.headingGradientFrom || '#ff6b6b';
-  const to = fields.headingGradientTo || '#4ecdc4';
-  const dir = GRADIENT_DIRECTION_MAP[fields.headingGradientDirection ?? 'to-r'] ?? '90deg';
+  const from = fields.headingGradientFrom || "#ff6b6b";
+  const to = fields.headingGradientTo || "#4ecdc4";
+  const dir =
+    GRADIENT_DIRECTION_MAP[fields.headingGradientDirection ?? "to-r"] ??
+    "90deg";
 
   return {
     background: `linear-gradient(${dir}, ${from}, ${to})`,
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
   };
 }
 
@@ -175,11 +181,13 @@ export function resolveGradientTextSx(fields: HeadingTypographyFields): Record<s
  *
  * @returns Empty object when disabled; stroke sx when enabled.
  */
-export function resolveTextStrokeSx(fields: HeadingTypographyFields): Record<string, any> {
+export function resolveTextStrokeSx(
+  fields: HeadingTypographyFields,
+): Record<string, any> {
   if (!fields.headingTextStroke) return {};
 
-  const width = fields.headingTextStrokeWidth || '2';
-  const color = fields.headingTextStrokeColor || '#ffffff';
+  const width = fields.headingTextStrokeWidth || "2";
+  const color = fields.headingTextStrokeColor || "#ffffff";
 
   const sx: Record<string, any> = {
     WebkitTextStroke: `${width}px ${color}`,
@@ -187,7 +195,7 @@ export function resolveTextStrokeSx(fields: HeadingTypographyFields): Record<str
 
   // Only set transparent color when gradient is NOT active (gradient handles fill)
   if (!fields.headingGradientText) {
-    sx.color = 'transparent';
+    sx.color = "transparent";
   }
 
   return sx;

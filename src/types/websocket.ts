@@ -12,26 +12,30 @@
 // Connection state
 // ---------------------------------------------------------------------------
 
-export type WebSocketConnectionState = 'connecting' | 'connected' | 'disconnected' | 'error';
+export type WebSocketConnectionState =
+  | "connecting"
+  | "connected"
+  | "disconnected"
+  | "error";
 
 // ---------------------------------------------------------------------------
 // Message type literals
 // ---------------------------------------------------------------------------
 
 export type WebSocketMessageType =
-  | 'JOIN_ROOM'
-  | 'LEAVE_ROOM'
-  | 'USER_JOINED'
-  | 'USER_LEFT'
-  | 'CONTENT_UPDATE'
-  | 'CURSOR_MOVE'
-  | 'LOCK_ACQUIRE'
-  | 'LOCK_RELEASE'
-  | 'ERROR'
-  | 'ROOM_STATE'
-  | 'USER_METADATA'
-  | 'LOCK_ACQUIRED'
-  | 'LOCK_RELEASED';
+  | "JOIN_ROOM"
+  | "LEAVE_ROOM"
+  | "USER_JOINED"
+  | "USER_LEFT"
+  | "CONTENT_UPDATE"
+  | "CURSOR_MOVE"
+  | "LOCK_ACQUIRE"
+  | "LOCK_RELEASE"
+  | "ERROR"
+  | "ROOM_STATE"
+  | "USER_METADATA"
+  | "LOCK_ACQUIRED"
+  | "LOCK_RELEASED";
 
 // ---------------------------------------------------------------------------
 // Base interface
@@ -96,69 +100,102 @@ export interface ErrorData {
 // Discriminated union types for each message
 // ---------------------------------------------------------------------------
 
-export interface JoinRoomMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'JOIN_ROOM';
+export interface JoinRoomMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "JOIN_ROOM";
   roomId: string;
   data?: Record<string, unknown>;
 }
 
-export interface LeaveRoomMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'LEAVE_ROOM';
+export interface LeaveRoomMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "LEAVE_ROOM";
   roomId: string;
   data?: Record<string, unknown>;
 }
 
-export interface UserJoinedMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'USER_JOINED';
+export interface UserJoinedMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "USER_JOINED";
   roomId: string;
   userId: number;
   data?: Record<string, unknown>;
 }
 
-export interface UserLeftMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'USER_LEFT';
+export interface UserLeftMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "USER_LEFT";
   roomId: string;
   userId: number;
   data?: Record<string, unknown>;
 }
 
-export interface ContentUpdateMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'CONTENT_UPDATE';
+export interface ContentUpdateMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "CONTENT_UPDATE";
   data: ContentUpdateData & Record<string, unknown>;
 }
 
-export interface CursorMoveMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'CURSOR_MOVE';
+export interface CursorMoveMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "CURSOR_MOVE";
   data: CursorMoveData & Record<string, unknown>;
 }
 
-export interface LockAcquireMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'LOCK_ACQUIRE';
+export interface LockAcquireMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "LOCK_ACQUIRE";
   data: LockData & Record<string, unknown>;
 }
 
-export interface LockReleaseMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'LOCK_RELEASE';
+export interface LockReleaseMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "LOCK_RELEASE";
   data: LockData & Record<string, unknown>;
 }
 
-export interface LockAcquiredMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'LOCK_ACQUIRED';
+export interface LockAcquiredMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "LOCK_ACQUIRED";
   data: LockData & Record<string, unknown>;
 }
 
-export interface LockReleasedMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'LOCK_RELEASED';
+export interface LockReleasedMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "LOCK_RELEASED";
   data: LockData & Record<string, unknown>;
 }
 
-export interface ErrorMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'ERROR';
+export interface ErrorMessage extends Omit<WebSocketMessage, "type" | "data"> {
+  type: "ERROR";
   data: ErrorData & Record<string, unknown>;
 }
 
-export interface RoomStateMessage extends Omit<WebSocketMessage, 'type' | 'data'> {
-  type: 'ROOM_STATE';
+export interface RoomStateMessage extends Omit<
+  WebSocketMessage,
+  "type" | "data"
+> {
+  type: "ROOM_STATE";
   roomId: string;
   data: RoomStateData & Record<string, unknown>;
 }
@@ -167,41 +204,51 @@ export interface RoomStateMessage extends Omit<WebSocketMessage, 'type' | 'data'
 // Type guard functions — validate and narrow without unsafe `as` assertion
 // ---------------------------------------------------------------------------
 
-export function isContentUpdate(msg: WebSocketMessage): msg is ContentUpdateMessage {
-  if (msg.type !== 'CONTENT_UPDATE') return false;
+export function isContentUpdate(
+  msg: WebSocketMessage,
+): msg is ContentUpdateMessage {
+  if (msg.type !== "CONTENT_UPDATE") return false;
   const d = msg.data;
   if (!d) return false;
-  return typeof d.blockId === 'number' && typeof d.fieldPath === 'string';
+  return typeof d.blockId === "number" && typeof d.fieldPath === "string";
 }
 
 export function isCursorMove(msg: WebSocketMessage): msg is CursorMoveMessage {
-  if (msg.type !== 'CURSOR_MOVE') return false;
+  if (msg.type !== "CURSOR_MOVE") return false;
   const d = msg.data;
   if (!d) return false;
-  return typeof d.blockId === 'number' && typeof d.x === 'number' && typeof d.y === 'number';
+  return (
+    typeof d.blockId === "number" &&
+    typeof d.x === "number" &&
+    typeof d.y === "number"
+  );
 }
 
 export function isLockMessage(
-  msg: WebSocketMessage
-): msg is LockAcquireMessage | LockReleaseMessage | LockAcquiredMessage | LockReleasedMessage {
+  msg: WebSocketMessage,
+): msg is
+  | LockAcquireMessage
+  | LockReleaseMessage
+  | LockAcquiredMessage
+  | LockReleasedMessage {
   if (
-    msg.type !== 'LOCK_ACQUIRE' &&
-    msg.type !== 'LOCK_RELEASE' &&
-    msg.type !== 'LOCK_ACQUIRED' &&
-    msg.type !== 'LOCK_RELEASED'
+    msg.type !== "LOCK_ACQUIRE" &&
+    msg.type !== "LOCK_RELEASE" &&
+    msg.type !== "LOCK_ACQUIRED" &&
+    msg.type !== "LOCK_RELEASED"
   )
     return false;
   const d = msg.data;
   if (!d) return false;
-  return typeof d.blockId === 'number';
+  return typeof d.blockId === "number";
 }
 
 export function isRoomState(msg: WebSocketMessage): msg is RoomStateMessage {
-  if (msg.type !== 'ROOM_STATE') return false;
+  if (msg.type !== "ROOM_STATE") return false;
   const d = msg.data as Record<string, unknown> | undefined;
   if (d === undefined) return false;
   const rd = d as Partial<RoomStateData>;
-  return typeof rd.roomId === 'string' && Array.isArray(rd.members);
+  return typeof rd.roomId === "string" && Array.isArray(rd.members);
 }
 
 // ---------------------------------------------------------------------------
@@ -210,7 +257,7 @@ export function isRoomState(msg: WebSocketMessage): msg is RoomStateMessage {
 
 export interface UseWebSocketReturn {
   connectionState: WebSocketConnectionState;
-  send: (message: Omit<WebSocketMessage, 'timestamp' | 'userId'>) => boolean;
+  send: (message: Omit<WebSocketMessage, "timestamp" | "userId">) => boolean;
   joinRoom: (roomId: string) => void;
   leaveRoom: (roomId: string) => void;
   leaveAllRooms: () => void;

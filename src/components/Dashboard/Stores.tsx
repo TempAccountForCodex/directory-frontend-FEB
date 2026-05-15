@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { apiClient } from '../../api/client';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { apiClient } from "../../api/client";
 import {
   Box,
   Container,
@@ -21,24 +21,24 @@ import {
   LinearProgress,
   MenuItem,
   Skeleton,
-} from '@mui/material';
-import { CircleCheck, Plus, Store as StoreLucide, X } from 'lucide-react';
-import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import { useNavigate } from 'react-router-dom';
-import { getDashboardColors } from '../../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-import { usePlanSummary } from '../../hooks/usePlanSummary';
-import { useStoreWebsiteCreation } from '../../hooks/useStoreWebsiteCreation';
-import StoreDetail from './StoreDetail';
-import StorePlanUpgradeDialog from './StorePlanUpgradeDialog';
+} from "@mui/material";
+import { CircleCheck, Plus, Store as StoreLucide, X } from "lucide-react";
+import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import { useNavigate } from "react-router-dom";
+import { getDashboardColors } from "../../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import { usePlanSummary } from "../../hooks/usePlanSummary";
+import { useStoreWebsiteCreation } from "../../hooks/useStoreWebsiteCreation";
+import StoreDetail from "./StoreDetail";
+import StorePlanUpgradeDialog from "./StorePlanUpgradeDialog";
 import {
   getStoreTemplates,
   refreshTemplateCache,
   type TemplateSummary,
-} from '../../templates/templateApi';
+} from "../../templates/templateApi";
 import {
   DashboardActionButton,
   DashboardGradientButton,
@@ -47,8 +47,8 @@ import {
   DashboardSelect,
   PageHeader,
   SearchBar,
-} from './shared';
-import React from 'react';
+} from "./shared";
+import React from "react";
 
 const SkeletonCard = () => {
   const { actualTheme } = useCustomTheme();
@@ -57,9 +57,9 @@ const SkeletonCard = () => {
   return (
     <Card
       sx={{
-        aspectRatio: '16/10',
-        position: 'relative',
-        overflow: 'hidden',
+        aspectRatio: "16/10",
+        position: "relative",
+        overflow: "hidden",
         borderRadius: 2,
         border: `1px solid ${alpha(colors.border, 0.5)}`,
       }}
@@ -73,7 +73,7 @@ const SkeletonCard = () => {
       />
       <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           top: 12,
           right: 12,
         }}
@@ -119,7 +119,13 @@ interface Website {
   } | null;
 }
 
-const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?: string }) => {
+const Stores = ({
+  pageTitle,
+  pageSubtitle,
+}: {
+  pageTitle?: string;
+  pageSubtitle?: string;
+}) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
   const navigate = useNavigate();
@@ -136,10 +142,10 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
   const PAGE_SIZE = 12;
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
-    websiteId: '',
-    name: '',
-    slug: '',
-    currency: 'USD',
+    websiteId: "",
+    name: "",
+    slug: "",
+    currency: "USD",
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -152,24 +158,25 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
 
   // Search state
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   // Upgrade dialog state
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
-  const [planLimitMessage, setPlanLimitMessage] = useState('');
-  const [limitType, setLimitType] = useState<'stores' | 'products'>('stores');
+  const [planLimitMessage, setPlanLimitMessage] = useState("");
+  const [limitType, setLimitType] = useState<"stores" | "products">("stores");
 
   // Store Website creation state (shared flow from Websites tab)
-  const [createStoreWebsiteDialogOpen, setCreateStoreWebsiteDialogOpen] = useState(false);
+  const [createStoreWebsiteDialogOpen, setCreateStoreWebsiteDialogOpen] =
+    useState(false);
   const [storeWebsiteFormData, setStoreWebsiteFormData] = useState({
-    websiteName: '',
-    websiteSlug: '',
-    primaryColor: '#378C92',
-    storeName: '',
-    storeSlug: '',
-    currency: 'USD',
-    templateId: '',
+    websiteName: "",
+    websiteSlug: "",
+    primaryColor: "#378C92",
+    storeName: "",
+    storeSlug: "",
+    currency: "USD",
+    templateId: "",
   });
   const {
     createStoreWebsite,
@@ -195,7 +202,7 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
       .catch(() => {
         if (!cancelled) {
           setStoreTemplates([]);
-          setTemplatesError('Failed to load templates');
+          setTemplatesError("Failed to load templates");
         }
       })
       .finally(() => {
@@ -214,12 +221,16 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
     const handleFocus = () => {
       loadTemplates(true);
     };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, [loadTemplates]);
 
   // Fetch plan summary for limits
-  const { planSummary, loading: planLoading, refetch: refetchPlan } = usePlanSummary();
+  const {
+    planSummary,
+    loading: planLoading,
+    refetch: refetchPlan,
+  } = usePlanSummary();
 
   useEffect(() => {
     fetchStores(1, true);
@@ -264,8 +275,8 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
       setActiveHasMore(newData.length === PAGE_SIZE);
       setActivePage(page);
     } catch (err: any) {
-      console.error('Error fetching stores:', err);
-      setError(err.response?.data?.message || 'Failed to load stores');
+      console.error("Error fetching stores:", err);
+      setError(err.response?.data?.message || "Failed to load stores");
     } finally {
       setLoading(false);
       setActiveLoadingMore(false);
@@ -285,7 +296,7 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
           loadMoreStores();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (observerTarget.current) {
@@ -307,12 +318,12 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
       });
       // Filter to only show websites without stores
       const availableWebsites = (response.data.data || []).filter(
-        (website: Website) => !website.hasStore
+        (website: Website) => !website.hasStore,
       );
       setWebsites(availableWebsites);
     } catch (err: any) {
-      console.error('Error fetching websites:', err);
-      setFormError('Failed to load websites. Please try again.');
+      console.error("Error fetching websites:", err);
+      setFormError("Failed to load websites. Please try again.");
     } finally {
       setWebsitesLoading(false);
     }
@@ -335,19 +346,19 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
 
       setStores([...stores, response.data.data]);
       setCreateDialogOpen(false);
-      setFormData({ websiteId: '', name: '', slug: '', currency: 'USD' });
+      setFormData({ websiteId: "", name: "", slug: "", currency: "USD" });
       refetchPlan(); // Refresh plan summary
     } catch (err: any) {
-      console.error('Error creating store:', err);
+      console.error("Error creating store:", err);
 
       // Check if error is a plan limit error
-      if (err.response?.data?.code === 'PLAN_LIMIT_REACHED') {
+      if (err.response?.data?.code === "PLAN_LIMIT_REACHED") {
         setCreateDialogOpen(false);
         setPlanLimitMessage(err.response.data.message);
-        setLimitType('stores');
+        setLimitType("stores");
         setUpgradeDialogOpen(true);
       } else {
-        setFormError(err.response?.data?.message || 'Failed to create store');
+        setFormError(err.response?.data?.message || "Failed to create store");
       }
     } finally {
       setSubmitting(false);
@@ -359,7 +370,10 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
     refetchPlan();
   };
 
-  const handlePlanLimitReached = (message: string, type: 'stores' | 'products') => {
+  const handlePlanLimitReached = (
+    message: string,
+    type: "stores" | "products",
+  ) => {
     setPlanLimitMessage(message);
     setLimitType(type);
     setUpgradeDialogOpen(true);
@@ -368,9 +382,9 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
       .trim();
   };
 
@@ -387,7 +401,7 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
           name: storeWebsiteFormData.storeName,
           slug: storeWebsiteFormData.storeSlug,
           currency: storeWebsiteFormData.currency,
-        }
+        },
       );
 
       // Success - refresh stores list and close dialog
@@ -395,22 +409,22 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
       await refetchPlan();
       setCreateStoreWebsiteDialogOpen(false);
       setStoreWebsiteFormData({
-        websiteName: '',
-        websiteSlug: '',
-        primaryColor: '#378C92',
-        storeName: '',
-        storeSlug: '',
-        currency: 'USD',
-        templateId: '',
+        websiteName: "",
+        websiteSlug: "",
+        primaryColor: "#378C92",
+        storeName: "",
+        storeSlug: "",
+        currency: "USD",
+        templateId: "",
       });
     } catch (err: any) {
-      console.error('Error creating store website:', err);
+      console.error("Error creating store website:", err);
 
       // Check if error is a plan limit error
-      if (err.code === 'PLAN_LIMIT_REACHED') {
+      if (err.code === "PLAN_LIMIT_REACHED") {
         setCreateStoreWebsiteDialogOpen(false);
         setPlanLimitMessage(err.message);
-        setLimitType('stores');
+        setLimitType("stores");
         setUpgradeDialogOpen(true);
       }
       // Error is already set in the hook, it will be displayed in the dialog
@@ -435,7 +449,12 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
     return (
       <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0 } }}>
         <PageHeader title={pageTitle} subtitle={pageSubtitle} />
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="400px"
+        >
           <CircularProgress sx={{ color: colors.primary }} />
         </Box>
       </Container>
@@ -453,7 +472,11 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
       <PageHeader title={pageTitle} subtitle={pageSubtitle} />
 
       {/* Statistics Cards */}
-      <Grid container spacing={{ xs: 2, sm: 2, md: 3 }} sx={{ mb: { xs: 2, md: 3 } }}>
+      <Grid
+        container
+        spacing={{ xs: 2, sm: 2, md: 3 }}
+        sx={{ mb: { xs: 2, md: 3 } }}
+      >
         <Grid item xs={12} sm={6} md={3}>
           <DashboardMetricCard
             title="Total Stores"
@@ -476,7 +499,11 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <DashboardMetricCard title="Store Limit" value={maxStores || 0} icon={TrendingUpIcon} />
+          <DashboardMetricCard
+            title="Store Limit"
+            value={maxStores || 0}
+            icon={TrendingUpIcon}
+          />
         </Grid>
       </Grid>
 
@@ -487,9 +514,9 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             mb: 4,
             background: `linear-gradient(135deg, ${alpha(
               colors.primary,
-              0.1
+              0.1,
             )} 0%, ${alpha(colors.primaryDark, 0.05)} 100%)`,
-            backdropFilter: 'blur(20px)',
+            backdropFilter: "blur(20px)",
             borderRadius: 3,
             border: `1px solid ${alpha(colors.primary, 0.2)}`,
             boxShadow: `0 2px 8px ${alpha(colors.darker, 0.2)}`,
@@ -504,24 +531,43 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
               gap={2}
             >
               <Box>
-                <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700, mb: 0.5 }}>
-                  {storePlan.name || 'No Store Plan'}
+                <Typography
+                  variant="h6"
+                  sx={{ color: colors.text, fontWeight: 700, mb: 0.5 }}
+                >
+                  {storePlan.name || "No Store Plan"}
                 </Typography>
-                <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 2 }}>
-                  {storePlan.priceMonthlyUsd ? `$${storePlan.priceMonthlyUsd}/month` : 'Free'}
-                  {' • '}
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary, mb: 2 }}
+                >
+                  {storePlan.priceMonthlyUsd
+                    ? `$${storePlan.priceMonthlyUsd}/month`
+                    : "Free"}
+                  {" • "}
                   {storePlan.platformFeePercent
                     ? `${storePlan.platformFeePercent / 100}% platform fee`
-                    : '0% platform fee'}
+                    : "0% platform fee"}
                 </Typography>
 
                 {/* Stores Usage */}
                 <Box sx={{ mb: 2 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                    <Typography variant="body2" sx={{ color: colors.text, fontWeight: 600 }}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={1}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: colors.text, fontWeight: 600 }}
+                    >
                       Stores
                     </Typography>
-                    <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: colors.textSecondary }}
+                    >
                       {storesOwned} / {maxStores}
                     </Typography>
                   </Box>
@@ -532,7 +578,7 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                       height: 8,
                       borderRadius: 4,
                       backgroundColor: alpha(colors.primary, 0.1),
-                      '& .MuiLinearProgress-bar': {
+                      "& .MuiLinearProgress-bar": {
                         borderRadius: 4,
                         background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
                       },
@@ -542,13 +588,20 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
 
                 {/* Products Usage */}
                 <Box>
-                  <Typography variant="body2" sx={{ color: colors.text, fontWeight: 600, mb: 0.5 }}>
-                    Products per store: up to {storePlan.maxProductsPerStore?.toLocaleString() || 0}
+                  <Typography
+                    variant="body2"
+                    sx={{ color: colors.text, fontWeight: 600, mb: 0.5 }}
+                  >
+                    Products per store: up to{" "}
+                    {storePlan.maxProductsPerStore?.toLocaleString() || 0}
                   </Typography>
                 </Box>
               </Box>
 
-              <DashboardGradientButton size="small" onClick={() => navigate('/pricing#stores')}>
+              <DashboardGradientButton
+                size="small"
+                onClick={() => navigate("/pricing#stores")}
+              >
                 Upgrade Plan
               </DashboardGradientButton>
             </Box>
@@ -565,16 +618,18 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
 
       {!canCreateStore && (
         <Alert severity="warning" sx={{ mb: 3 }}>
-          You've reached the maximum number of stores ({maxStores}) for your current plan. Upgrade
-          to create more stores.
+          You've reached the maximum number of stores ({maxStores}) for your
+          current plan. Upgrade to create more stores.
         </Alert>
       )}
 
       {/* Search Bar */}
-      <Box sx={{ mb: 3, maxWidth: { xs: '100%', md: 400 } }}>
+      <Box sx={{ mb: 3, maxWidth: { xs: "100%", md: 400 } }}>
         <SearchBar
           value={searchQuery}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setSearchQuery(e.target.value)
+          }
           placeholder="Search stores..."
         />
       </Box>
@@ -584,24 +639,26 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
         {/* Create New Store Card */}
         <Grid item xs={12} sm={6} md={4}>
           <Card
-            onClick={() => canCreateStore && navigate('/dashboard/stores/create')}
+            onClick={() =>
+              canCreateStore && navigate("/dashboard/stores/create")
+            }
             sx={{
-              aspectRatio: '16/10',
+              aspectRatio: "16/10",
               border: `2px dashed ${alpha(colors.textSecondary, 0.3)}`,
               borderRadius: 2,
               background: alpha(colors.bgCard, 0.3),
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: canCreateStore ? 'pointer' : 'not-allowed',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: canCreateStore ? "pointer" : "not-allowed",
               opacity: canCreateStore ? 1 : 0.5,
-              transition: 'all 0.3s ease',
-              '&:hover': canCreateStore
+              transition: "all 0.3s ease",
+              "&:hover": canCreateStore
                 ? {
                     borderColor: colors.primary,
                     background: alpha(colors.primary, 0.05),
-                    transform: 'translateY(-4px)',
+                    transform: "translateY(-4px)",
                   }
                 : {},
             }}
@@ -609,19 +666,24 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             <Box sx={{ color: colors.textSecondary, mb: 2 }}>
               <Plus size={48} />
             </Box>
-            <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
-              {canCreateStore ? 'Create New Store' : 'Limit Reached'}
+            <Typography
+              variant="h6"
+              sx={{ color: colors.text, fontWeight: 600 }}
+            >
+              {canCreateStore ? "Create New Store" : "Limit Reached"}
             </Typography>
             <Typography
               variant="body2"
               sx={{
                 color: colors.textSecondary,
                 mt: 1,
-                textAlign: 'center',
+                textAlign: "center",
                 px: 2,
               }}
             >
-              {canCreateStore ? 'Start selling online' : `Max ${maxStores} stores`}
+              {canCreateStore
+                ? "Start selling online"
+                : `Max ${maxStores} stores`}
             </Typography>
           </Card>
         </Grid>
@@ -641,18 +703,18 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
               <Card
                 onClick={() => setSelectedStore(store)}
                 sx={{
-                  aspectRatio: '16/10',
-                  position: 'relative',
-                  overflow: 'hidden',
+                  aspectRatio: "16/10",
+                  position: "relative",
+                  overflow: "hidden",
                   borderRadius: 2,
                   border: `1px solid ${alpha(colors.border, 0.5)}`,
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
                     boxShadow: `0 8px 24px ${alpha(colors.primary, 0.2)}`,
                     border: `1px solid ${alpha(colors.primary, 0.5)}`,
-                    '& .hover-actions': {
+                    "& .hover-actions": {
                       opacity: 1,
                     },
                   },
@@ -661,37 +723,42 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                 {/* Preview Background */}
                 <Box
                   sx={{
-                    position: 'absolute',
+                    position: "absolute",
                     top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
                     background: `linear-gradient(135deg, ${alpha(
                       colors.primary,
-                      0.1
+                      0.1,
                     )} 0%, ${alpha(colors.primaryDark, 0.05)} 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  <StoreLucide size={64} color={alpha(colors.textSecondary, 0.2)} />
+                  <StoreLucide
+                    size={64}
+                    color={alpha(colors.textSecondary, 0.2)}
+                  />
                 </Box>
 
                 {/* Status Badge */}
                 <Chip
-                  label={store.isPublished ? 'PUBLISHED' : 'DRAFT'}
+                  label={store.isPublished ? "PUBLISHED" : "DRAFT"}
                   size="small"
                   sx={{
-                    position: 'absolute',
+                    position: "absolute",
                     top: 12,
                     right: 12,
-                    bgcolor: store.isPublished ? alpha('#22c55e', 0.9) : alpha('#f59e0b', 0.9),
-                    color: '#fff',
+                    bgcolor: store.isPublished
+                      ? alpha("#22c55e", 0.9)
+                      : alpha("#f59e0b", 0.9),
+                    color: "#fff",
                     fontWeight: 600,
-                    fontSize: '0.7rem',
-                    textTransform: 'uppercase',
-                    backdropFilter: 'blur(10px)',
+                    fontSize: "0.7rem",
+                    textTransform: "uppercase",
+                    backdropFilter: "blur(10px)",
                   }}
                 />
 
@@ -699,20 +766,20 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                 <Box
                   className="hover-actions"
                   sx={{
-                    position: 'absolute',
+                    position: "absolute",
                     bottom: 0,
                     left: 0,
                     right: 0,
                     p: 2,
                     background: `linear-gradient(to top, ${alpha(
                       colors.bgCard,
-                      0.95
+                      0.95,
                     )} 0%, ${alpha(colors.bgCard, 0.8)} 100%)`,
-                    backdropFilter: 'blur(10px)',
+                    backdropFilter: "blur(10px)",
                     opacity: 0,
-                    transition: 'opacity 0.3s ease',
-                    display: 'flex',
-                    flexDirection: 'column',
+                    transition: "opacity 0.3s ease",
+                    display: "flex",
+                    flexDirection: "column",
                     gap: 1,
                   }}
                 >
@@ -722,9 +789,9 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                       color: colors.text,
                       fontWeight: 700,
                       mb: 0.5,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {store.name}
@@ -733,8 +800,8 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                     variant="body2"
                     sx={{
                       color: colors.textSecondary,
-                      fontFamily: 'monospace',
-                      fontSize: '0.75rem',
+                      fontFamily: "monospace",
+                      fontSize: "0.75rem",
                       mb: 1,
                     }}
                   >
@@ -749,9 +816,9 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                       }}
                       sx={{
                         color: colors.primary,
-                        textTransform: 'none',
+                        textTransform: "none",
                         fontWeight: 600,
-                        '&:hover': { bgcolor: alpha(colors.primary, 0.1) },
+                        "&:hover": { bgcolor: alpha(colors.primary, 0.1) },
                       }}
                     >
                       Manage
@@ -797,9 +864,9 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             color: colors.text,
             fontWeight: 700,
             borderBottom: `0.5px solid ${colors.border}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
           Create New Store
@@ -809,7 +876,11 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
         </DialogTitle>
         <DialogContent dividers sx={{ borderColor: colors.border }}>
           {formError && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
+            <Alert
+              severity="error"
+              sx={{ mb: 2 }}
+              onClose={() => setFormError(null)}
+            >
               {formError}
             </Alert>
           )}
@@ -820,28 +891,32 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             </Box>
           ) : websites.length === 0 ? (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              You don't have any websites available to create a store. All your websites already
-              have stores, or you need to{' '}
+              You don't have any websites available to create a store. All your
+              websites already have stores, or you need to{" "}
               <Button
                 size="small"
                 onClick={() => {
                   setCreateDialogOpen(false);
-                  navigate('/websites');
+                  navigate("/websites");
                 }}
-                sx={{ textTransform: 'none', p: 0, minWidth: 'auto' }}
+                sx={{ textTransform: "none", p: 0, minWidth: "auto" }}
               >
                 create a website first
               </Button>
               .
             </Alert>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+            >
               <DashboardSelect
                 fullWidth
                 required
                 label="Select Website"
                 value={formData.websiteId}
-                onChange={(e) => setFormData({ ...formData, websiteId: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, websiteId: e.target.value })
+                }
               >
                 {websites.map((website) => (
                   <MenuItem key={website.id} value={website.id.toString()}>
@@ -870,7 +945,9 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                 label="Store Slug"
                 labelPlacement="floating"
                 value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, slug: e.target.value })
+                }
                 fullWidth
                 required
                 helperText="Used in your store URL"
@@ -880,7 +957,9 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                 fullWidth
                 label="Currency"
                 value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, currency: e.target.value })
+                }
               >
                 <MenuItem value="USD">USD - US Dollar</MenuItem>
                 <MenuItem value="EUR">EUR - Euro</MenuItem>
@@ -895,17 +974,26 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             onClick={() => setCreateDialogOpen(false)}
             sx={{
               color: colors.textSecondary,
-              '&:hover': { background: alpha(colors.textSecondary, 0.1) },
+              "&:hover": { background: alpha(colors.textSecondary, 0.1) },
             }}
           >
             Cancel
           </Button>
           <DashboardActionButton
             onClick={handleCreateStore}
-            disabled={!formData.websiteId || !formData.name || !formData.slug || submitting}
+            disabled={
+              !formData.websiteId ||
+              !formData.name ||
+              !formData.slug ||
+              submitting
+            }
             sx={{ px: 3 }}
           >
-            {submitting ? <CircularProgress size={20} sx={{ color: 'inherit' }} /> : 'Create Store'}
+            {submitting ? (
+              <CircularProgress size={20} sx={{ color: "inherit" }} />
+            ) : (
+              "Create Store"
+            )}
           </DashboardActionButton>
         </DialogActions>
       </Dialog>
@@ -913,7 +1001,9 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
       {/* Create Store Website Dialog */}
       <Dialog
         open={createStoreWebsiteDialogOpen}
-        onClose={() => !storeWebsiteLoading && setCreateStoreWebsiteDialogOpen(false)}
+        onClose={() =>
+          !storeWebsiteLoading && setCreateStoreWebsiteDialogOpen(false)
+        }
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -931,7 +1021,11 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             borderBottom: `0.5px solid ${colors.border}`,
           }}
         >
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="h6" fontWeight={700}>
               Create Store Website
             </Typography>
@@ -958,11 +1052,18 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             </Alert>
           )}
 
-          <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 3 }}>
-            Create a website with a built-in e-commerce store for selling products online.
+          <Typography
+            variant="body2"
+            sx={{ color: colors.textSecondary, mb: 3 }}
+          >
+            Create a website with a built-in e-commerce store for selling
+            products online.
           </Typography>
 
-          <Typography variant="subtitle2" sx={{ mb: 2, color: colors.text, fontWeight: 600 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 2, color: colors.text, fontWeight: 600 }}
+          >
             Select a Store Template *
           </Typography>
 
@@ -974,8 +1075,8 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
 
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
               gap: 2,
               mb: 3,
             }}
@@ -998,33 +1099,33 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                   });
                 }}
                 sx={{
-                  cursor: 'pointer',
+                  cursor: "pointer",
                   border:
                     storeWebsiteFormData.templateId === template.id
                       ? `2px solid ${colors.primary}`
                       : `1px solid ${colors.border}`,
                   borderRadius: 2,
-                  transition: 'all 0.2s',
-                  position: 'relative',
-                  '&:hover': {
+                  transition: "all 0.2s",
+                  position: "relative",
+                  "&:hover": {
                     borderColor: colors.primary,
-                    transform: 'translateY(-2px)',
+                    transform: "translateY(-2px)",
                   },
                 }}
               >
                 {storeWebsiteFormData.templateId === template.id && (
                   <Box
                     sx={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: 8,
                       right: 8,
                       background: colors.primary,
-                      borderRadius: '50%',
+                      borderRadius: "50%",
                       width: 24,
                       height: 24,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
                     <CircleCheck size={16} color="#fff" />
@@ -1039,7 +1140,7 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
                   </Typography>
                   <Typography
                     variant="caption"
-                    sx={{ color: colors.textSecondary, display: 'block' }}
+                    sx={{ color: colors.textSecondary, display: "block" }}
                   >
                     {template.description}
                   </Typography>
@@ -1048,7 +1149,10 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             ))}
           </Box>
 
-          <Typography variant="subtitle2" sx={{ mb: 2, color: colors.text, fontWeight: 600 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 2, color: colors.text, fontWeight: 600 }}
+          >
             Website Details
           </Typography>
 
@@ -1061,8 +1165,8 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
               const name = e.target.value;
               const slug = name
                 .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/^-|-$/g, '');
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "");
               setStoreWebsiteFormData({
                 ...storeWebsiteFormData,
                 websiteName: name,
@@ -1109,7 +1213,10 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             helperText="Brand color for your store"
           />
 
-          <Typography variant="subtitle2" sx={{ mb: 2, color: colors.text, fontWeight: 600 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 2, color: colors.text, fontWeight: 600 }}
+          >
             Store Details
           </Typography>
 
@@ -1122,8 +1229,8 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
               const name = e.target.value;
               const slug = name
                 .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/^-|-$/g, '');
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "");
               setStoreWebsiteFormData({
                 ...storeWebsiteFormData,
                 storeName: name,
@@ -1191,9 +1298,9 @@ const Stores = ({ pageTitle, pageSubtitle }: { pageTitle?: string; pageSubtitle?
             sx={{ px: 3 }}
           >
             {storeWebsiteLoading ? (
-              <CircularProgress size={24} sx={{ color: 'inherit' }} />
+              <CircularProgress size={24} sx={{ color: "inherit" }} />
             ) : (
-              'Create Store Website'
+              "Create Store Website"
             )}
           </DashboardActionButton>
         </DialogActions>

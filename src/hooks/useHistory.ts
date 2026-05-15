@@ -17,8 +17,8 @@
  * Returns: { canUndo, canRedo, undo, redo, push, clear, currentIndex, historyLength, lastActionDescription }
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { compressHistory, decompressHistory } from '../utils/historySerializer';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { compressHistory, decompressHistory } from "../utils/historySerializer";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,7 +56,7 @@ export interface UseHistoryReturn<T> {
 // ---------------------------------------------------------------------------
 
 const MAX_HISTORY_DEPTH = 50;
-const SESSION_KEY = 'undo_redo_history';
+const SESSION_KEY = "undo_redo_history";
 
 /** 4MB in bytes — sessionStorage limit for compressed history */
 const MAX_COMPRESSED_BYTES = 4 * 1024 * 1024;
@@ -80,9 +80,12 @@ function persistToStorage<T>(stack: HistorySnapshot<T>[], index: number): void {
     let compressed = compressHistory(payload);
 
     if (compressed === null) {
-      console.warn('[useHistory] Failed to compress history for storage — memory-only mode.', {
-        actionCount: stack.length,
-      });
+      console.warn(
+        "[useHistory] Failed to compress history for storage — memory-only mode.",
+        {
+          actionCount: stack.length,
+        },
+      );
       return;
     }
 
@@ -95,22 +98,27 @@ function persistToStorage<T>(stack: HistorySnapshot<T>[], index: number): void {
       const evicted = stack.slice(EVICTION_COUNT);
       const newIndex = Math.max(0, index - EVICTION_COUNT);
 
-      console.warn('[useHistory] Compressed history exceeded 4MB cap — evicting oldest entries.', {
-        evictedCount: EVICTION_COUNT,
-        remaining: evicted.length,
-        estimatedBytes,
-      });
+      console.warn(
+        "[useHistory] Compressed history exceeded 4MB cap — evicting oldest entries.",
+        {
+          evictedCount: EVICTION_COUNT,
+          remaining: evicted.length,
+          estimatedBytes,
+        },
+      );
 
       compressed = compressHistory({ stack: evicted, index: newIndex });
 
       if (compressed === null) {
-        console.warn('[useHistory] Post-eviction compression failed — memory-only mode.');
+        console.warn(
+          "[useHistory] Post-eviction compression failed — memory-only mode.",
+        );
         return;
       }
     }
 
     // Log history size and action count on each save attempt (Dev requirement)
-    console.warn('[useHistory] Persisting history to sessionStorage.', {
+    console.warn("[useHistory] Persisting history to sessionStorage.", {
       actionCount: stack.length,
       compressedChars: compressed.length,
     });
@@ -120,8 +128,8 @@ function persistToStorage<T>(stack: HistorySnapshot<T>[], index: number): void {
     // QuotaExceededError or other storage error — fall back to memory-only
     const errorName = err instanceof Error ? err.name : String(err);
     console.warn(
-      '[useHistory] sessionStorage.setItem failed — history may not persist across refreshes (storage full).',
-      { error: errorName }
+      "[useHistory] sessionStorage.setItem failed — history may not persist across refreshes (storage full).",
+      { error: errorName },
     );
   }
 }
@@ -130,7 +138,10 @@ function persistToStorage<T>(stack: HistorySnapshot<T>[], index: number): void {
  * Load history from sessionStorage on mount.
  * Returns { stack, index } or null if not found / decompression failed.
  */
-function loadFromStorage<T>(): { stack: HistorySnapshot<T>[]; index: number } | null {
+function loadFromStorage<T>(): {
+  stack: HistorySnapshot<T>[];
+  index: number;
+} | null {
   try {
     const stored = sessionStorage.getItem(SESSION_KEY);
     if (!stored) return null;
@@ -172,7 +183,8 @@ export function useHistory<T>(): UseHistoryReturn<T> {
   const [canRedo, setCanRedo] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [historyLength, setHistoryLength] = useState<number>(0);
-  const [lastActionDescription, setLastActionDescription] = useState<string>('');
+  const [lastActionDescription, setLastActionDescription] =
+    useState<string>("");
 
   // ---------------------------------------------------------------------------
   // Restore from sessionStorage on mount
@@ -190,7 +202,9 @@ export function useHistory<T>(): UseHistoryReturn<T> {
       setCanRedo(idx < len - 1);
       setCurrentIndex(idx);
       setHistoryLength(len);
-      setLastActionDescription(idx >= 0 && saved.stack[idx] ? saved.stack[idx].description : '');
+      setLastActionDescription(
+        idx >= 0 && saved.stack[idx] ? saved.stack[idx].description : "",
+      );
     }
     // Empty dependency array — run once on mount only
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -207,7 +221,9 @@ export function useHistory<T>(): UseHistoryReturn<T> {
     setCurrentIndex(idx);
     setHistoryLength(len);
     setLastActionDescription(
-      idx >= 0 && stackRef.current[idx] ? stackRef.current[idx].description : ''
+      idx >= 0 && stackRef.current[idx]
+        ? stackRef.current[idx].description
+        : "",
     );
   }, []);
 
@@ -252,7 +268,7 @@ export function useHistory<T>(): UseHistoryReturn<T> {
       // Persist to sessionStorage (best-effort — errors handled internally)
       persistToStorage(newStack, newIndex);
     },
-    [syncState]
+    [syncState],
   );
 
   /**

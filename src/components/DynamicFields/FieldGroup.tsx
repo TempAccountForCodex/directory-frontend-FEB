@@ -10,10 +10,10 @@
  *              per-field onChange adapter via useCallback, preventing FieldRenderer
  *              from re-rendering when unrelated fields change.
  */
-import React, { useCallback, useMemo } from 'react';
-import { Box, Typography, Divider } from '@mui/material';
-import { FieldRenderer } from './FieldRenderer';
-import type { FieldDefinition, FieldGroupDefinition } from './types';
+import React, { useCallback, useMemo } from "react";
+import { Box, Typography, Divider } from "@mui/material";
+import { FieldRenderer } from "./FieldRenderer";
+import type { FieldDefinition, FieldGroupDefinition } from "./types";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -57,9 +57,11 @@ interface RenderGroup {
 
 function buildRenderGroups(
   fields: FieldDefinition[],
-  groups: FieldGroupDefinition[]
+  groups: FieldGroupDefinition[],
 ): RenderGroup[] {
-  const groupMap = new Map<string, FieldGroupDefinition>(groups.map((g) => [g.id, g]));
+  const groupMap = new Map<string, FieldGroupDefinition>(
+    groups.map((g) => [g.id, g]),
+  );
 
   // Bucket fields by group id
   const buckets = new Map<string, FieldDefinition[]>();
@@ -92,7 +94,7 @@ function buildRenderGroups(
   // Ungrouped fields — rendered after all named groups, sorted by field.order
   if (ungrouped.length > 0) {
     renderGroups.push({
-      id: '__ungrouped__',
+      id: "__ungrouped__",
       label: null,
       order: Infinity,
       fields: ungrouped.sort(byOrder),
@@ -135,7 +137,7 @@ const FieldRowRenderer: React.FC<FieldRowRendererProps> = React.memo(
   ({ field, value, onGroupChange, disabled, errors, allValues }) => {
     const handleChange = useCallback(
       (newValue: unknown) => onGroupChange(field.name, newValue),
-      [field.name, onGroupChange]
+      [field.name, onGroupChange],
     );
 
     return (
@@ -148,10 +150,10 @@ const FieldRowRenderer: React.FC<FieldRowRendererProps> = React.memo(
         allValues={allValues}
       />
     );
-  }
+  },
 );
 
-FieldRowRenderer.displayName = 'FieldRowRenderer';
+FieldRowRenderer.displayName = "FieldRowRenderer";
 
 // ---------------------------------------------------------------------------
 // FieldGroup
@@ -171,9 +173,19 @@ FieldRowRenderer.displayName = 'FieldRowRenderer';
  * Wrapped in React.memo for performance — only re-renders on prop changes.
  */
 export const FieldGroup: React.FC<FieldGroupProps> = React.memo(
-  ({ fields, groups = [], values, onChange, disabled = false, errors = {} }) => {
+  ({
+    fields,
+    groups = [],
+    values,
+    onChange,
+    disabled = false,
+    errors = {},
+  }) => {
     // Memoize the sorted group structure so it is not recomputed on every render
-    const renderGroups = useMemo(() => buildRenderGroups(fields, groups), [fields, groups]);
+    const renderGroups = useMemo(
+      () => buildRenderGroups(fields, groups),
+      [fields, groups],
+    );
 
     return (
       <Box data-testid="field-group-root">
@@ -189,8 +201,8 @@ export const FieldGroup: React.FC<FieldGroupProps> = React.memo(
                     mt: 2,
                     mb: 0.5,
                     fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
                   }}
                   data-testid={`field-group-label-${group.id}`}
                 >
@@ -205,7 +217,7 @@ export const FieldGroup: React.FC<FieldGroupProps> = React.memo(
               <FieldRowRenderer
                 key={field.name}
                 field={field}
-                value={values[field.name] ?? field.defaultValue ?? ''}
+                value={values[field.name] ?? field.defaultValue ?? ""}
                 onGroupChange={onChange}
                 disabled={disabled}
                 errors={errors[field.name]}
@@ -216,9 +228,9 @@ export const FieldGroup: React.FC<FieldGroupProps> = React.memo(
         ))}
       </Box>
     );
-  }
+  },
 );
 
-FieldGroup.displayName = 'FieldGroup';
+FieldGroup.displayName = "FieldGroup";
 
 export default FieldGroup;

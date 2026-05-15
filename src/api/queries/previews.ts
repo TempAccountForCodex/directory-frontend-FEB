@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-import type { AxiosRequestConfig } from 'axios';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useQuery } from "@tanstack/react-query";
+import type { AxiosRequestConfig } from "axios";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 /**
  * Preview token React Query hook.
@@ -43,17 +43,17 @@ type PreviewTokenEnvelope = {
 export async function fetchPreviewToken(
   websiteId: string | number,
   pageId: string | number,
-  config?: AxiosRequestConfig
+  config?: AxiosRequestConfig,
 ): Promise<PreviewTokenResponse> {
   const response = await apiClient.post<PreviewTokenEnvelope>(
     `/previews/websites/${websiteId}/pages/${pageId}/token`,
     null,
-    config
+    config,
   );
   const body = response.data ?? {};
   const previewToken = body.data?.previewToken ?? body.previewToken;
   if (!previewToken) {
-    throw new Error('No token returned');
+    throw new Error("No token returned");
   }
   const expiresAt = body.data?.expiresAt ?? body.expiresAt ?? null;
   return { previewToken, expiresAt };
@@ -67,12 +67,12 @@ export async function fetchPreviewToken(
  */
 export function usePreviewToken(
   websiteId: string | number | null | undefined,
-  pageId: string | number | null | undefined
+  pageId: string | number | null | undefined,
 ) {
   const { data: user } = useAuthMe();
 
   return useQuery<PreviewTokenResponse>({
-    queryKey: queryKeys.previews.token(websiteId ?? '', pageId ?? ''),
+    queryKey: queryKeys.previews.token(websiteId ?? "", pageId ?? ""),
     queryFn: ({ signal }) => fetchPreviewToken(websiteId!, pageId!, { signal }),
     enabled: Boolean(user && websiteId && pageId),
     staleTime: 4 * 60_000,

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, useCallback } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 export interface UsePersistentStateOptions {
   /**
@@ -8,7 +8,7 @@ export interface UsePersistentStateOptions {
    * - 'route': Specific to current route/page
    * @default 'global'
    */
-  scope?: 'global' | 'route';
+  scope?: "global" | "route";
 
   /**
    * Enable cross-tab synchronization via storage events
@@ -17,7 +17,7 @@ export interface UsePersistentStateOptions {
   syncAcrossTabs?: boolean;
 }
 
-const NAMESPACE_PREFIX = 'ttdir';
+const NAMESPACE_PREFIX = "ttdir";
 
 /**
  * Hook for persistent state that survives page reloads and optionally syncs across tabs
@@ -38,9 +38,9 @@ const NAMESPACE_PREFIX = 'ttdir';
 export function usePersistentState<T>(
   key: string,
   initialValue: T,
-  options: UsePersistentStateOptions = {}
+  options: UsePersistentStateOptions = {},
 ): [T, Dispatch<SetStateAction<T>>] {
-  const { scope = 'global', syncAcrossTabs = false } = options;
+  const { scope = "global", syncAcrossTabs = false } = options;
 
   // Build namespaced key
   const namespacedKey = `${NAMESPACE_PREFIX}:${scope}:${key}`;
@@ -53,7 +53,10 @@ export function usePersistentState<T>(
         return JSON.parse(item) as T;
       }
     } catch (error) {
-      console.warn(`Failed to parse localStorage key "${namespacedKey}":`, error);
+      console.warn(
+        `Failed to parse localStorage key "${namespacedKey}":`,
+        error,
+      );
     }
     return initialValue;
   });
@@ -63,7 +66,10 @@ export function usePersistentState<T>(
     try {
       window.localStorage.setItem(namespacedKey, JSON.stringify(state));
     } catch (error) {
-      console.error(`Failed to save to localStorage key "${namespacedKey}":`, error);
+      console.error(
+        `Failed to save to localStorage key "${namespacedKey}":`,
+        error,
+      );
     }
   }, [state, namespacedKey]);
 
@@ -78,13 +84,16 @@ export function usePersistentState<T>(
           const newValue = JSON.parse(e.newValue) as T;
           setState(newValue);
         } catch (error) {
-          console.warn(`Failed to sync storage event for key "${namespacedKey}":`, error);
+          console.warn(
+            `Failed to sync storage event for key "${namespacedKey}":`,
+            error,
+          );
         }
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, [namespacedKey, syncAcrossTabs]);
 
   // Wrapped setValue that accepts both values and updater functions
@@ -101,12 +110,18 @@ export function usePersistentState<T>(
 /**
  * Clear a specific persistent state key
  */
-export function clearPersistentState(key: string, scope: 'global' | 'route' = 'global'): void {
+export function clearPersistentState(
+  key: string,
+  scope: "global" | "route" = "global",
+): void {
   const namespacedKey = `${NAMESPACE_PREFIX}:${scope}:${key}`;
   try {
     window.localStorage.removeItem(namespacedKey);
   } catch (error) {
-    console.error(`Failed to clear localStorage key "${namespacedKey}":`, error);
+    console.error(
+      `Failed to clear localStorage key "${namespacedKey}":`,
+      error,
+    );
   }
 }
 
@@ -117,10 +132,13 @@ export function clearPersistentStateByPattern(pattern: string): void {
   try {
     const keys = Object.keys(window.localStorage);
     const matchingKeys = keys.filter(
-      (k) => k.startsWith(`${NAMESPACE_PREFIX}:`) && k.includes(pattern)
+      (k) => k.startsWith(`${NAMESPACE_PREFIX}:`) && k.includes(pattern),
     );
     matchingKeys.forEach((k) => window.localStorage.removeItem(k));
   } catch (error) {
-    console.error(`Failed to clear localStorage by pattern "${pattern}":`, error);
+    console.error(
+      `Failed to clear localStorage by pattern "${pattern}":`,
+      error,
+    );
   }
 }

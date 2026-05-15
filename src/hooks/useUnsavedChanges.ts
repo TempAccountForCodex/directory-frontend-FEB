@@ -22,9 +22,9 @@
  *   });
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useBlocker } from 'react-router-dom';
-import type { SaveStatus } from './useAutosave';
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useBlocker } from "react-router-dom";
+import type { SaveStatus } from "./useAutosave";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,7 +91,7 @@ export function useUnsavedChanges({
 
   // Track save status changes
   useEffect(() => {
-    if (saveStatus === 'saved') {
+    if (saveStatus === "saved") {
       lastSavedAtRef.current = Date.now();
     }
   }, [saveStatus]);
@@ -115,18 +115,24 @@ export function useUnsavedChanges({
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = '';
+      e.returnValue = "";
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [effectiveDirty, skipBeforeUnload]);
 
   // -------------------------------------------------------------------------
   // React Router useBlocker
   // -------------------------------------------------------------------------
   const shouldBlock = useCallback(
-    ({ currentLocation, nextLocation }: { currentLocation: any; nextLocation: any }) => {
+    ({
+      currentLocation,
+      nextLocation,
+    }: {
+      currentLocation: any;
+      nextLocation: any;
+    }) => {
       // Don't block same-location navigation
       if (currentLocation.pathname === nextLocation.pathname) {
         return false;
@@ -142,14 +148,14 @@ export function useUnsavedChanges({
 
       return effectiveDirty;
     },
-    [effectiveDirty]
+    [effectiveDirty],
   );
 
   const blocker = useBlocker(shouldBlock);
 
   // Reset proceeding guard when blocker state changes
   useEffect(() => {
-    if (blocker.state !== 'blocked') {
+    if (blocker.state !== "blocked") {
       proceedingRef.current = false;
     }
   }, [blocker.state]);
@@ -157,21 +163,21 @@ export function useUnsavedChanges({
   // -------------------------------------------------------------------------
   // Derived state
   // -------------------------------------------------------------------------
-  const isBlocked = blocker.state === 'blocked';
-  const showDialog = blocker.state === 'blocked';
+  const isBlocked = blocker.state === "blocked";
+  const showDialog = blocker.state === "blocked";
 
   // -------------------------------------------------------------------------
   // Navigation actions
   // -------------------------------------------------------------------------
   const confirmNavigation = useCallback(() => {
-    if (blocker.state !== 'blocked') return;
+    if (blocker.state !== "blocked") return;
     if (proceedingRef.current) return;
     proceedingRef.current = true;
     blocker.proceed();
   }, [blocker]);
 
   const cancelNavigation = useCallback(() => {
-    if (blocker.state !== 'blocked') return;
+    if (blocker.state !== "blocked") return;
     blocker.reset();
   }, [blocker]);
 
@@ -184,7 +190,7 @@ export function useUnsavedChanges({
       }
     }
 
-    if (blocker.state === 'blocked') {
+    if (blocker.state === "blocked") {
       if (!proceedingRef.current) {
         proceedingRef.current = true;
         blocker.proceed();

@@ -16,49 +16,52 @@
  * which expects a CSS opacity float.
  */
 
-import React, { useMemo } from 'react';
-import { Box } from '@mui/material';
-import { motion } from 'framer-motion';
+import React, { useMemo } from "react";
+import { Box } from "@mui/material";
+import { motion } from "framer-motion";
 import {
   useBlockAnimation,
   useBlockBackground,
   useBlockEffects,
   useBlockSpacing,
   useResponsiveVisibility,
-} from './hooks';
+} from "./hooks";
 import type {
   BlockAnimationFields,
   BlockBackgroundFields,
   BlockEffectsFields,
   BlockSpacingFields,
   ResponsiveVisibilityFields,
-} from './hooks';
-import { resolveSectionColors, type SectionColorMode } from './utils/sectionColors';
+} from "./hooks";
+import {
+  resolveSectionColors,
+  type SectionColorMode,
+} from "./utils/sectionColors";
 
 // ---------------------------------------------------------------------------
 // Registry → Hook field name mapping (additive: originals are preserved)
 // ---------------------------------------------------------------------------
 
 const REGISTRY_TO_HOOK_MAP: Record<string, string> = {
-  spacingPaddingTop: 'paddingTop',
-  spacingPaddingBottom: 'paddingBottom',
-  spacingMarginTop: 'marginTop',
-  spacingMarginBottom: 'marginBottom',
-  effectsShadow: 'shadowSize',
-  effectsBorderWidth: 'borderWidth',
-  effectsBorderColor: 'borderColor',
-  effectsBorderRadius: 'borderRadius',
-  effectsBackdropBlur: 'backdropBlur',
-  backgroundGradientStart: 'backgroundGradientFrom',
-  backgroundGradientEnd: 'backgroundGradientTo',
-  backgroundImage: 'backgroundImageUrl',
-  responsiveHideOnMobile: 'hideOnMobile',
-  responsiveHideOnTablet: 'hideOnTablet',
-  responsiveHideOnDesktop: 'hideOnDesktop',
+  spacingPaddingTop: "paddingTop",
+  spacingPaddingBottom: "paddingBottom",
+  spacingMarginTop: "marginTop",
+  spacingMarginBottom: "marginBottom",
+  effectsShadow: "shadowSize",
+  effectsBorderWidth: "borderWidth",
+  effectsBorderColor: "borderColor",
+  effectsBorderRadius: "borderRadius",
+  effectsBackdropBlur: "backdropBlur",
+  backgroundGradientStart: "backgroundGradientFrom",
+  backgroundGradientEnd: "backgroundGradientTo",
+  backgroundImage: "backgroundImageUrl",
+  responsiveHideOnMobile: "hideOnMobile",
+  responsiveHideOnTablet: "hideOnTablet",
+  responsiveHideOnDesktop: "hideOnDesktop",
 };
 
 /** Registry fields stored as string enums that hooks expect as numbers. */
-const NUMERIC_FIELDS = new Set(['effectsBorderWidth', 'effectsBorderRadius']);
+const NUMERIC_FIELDS = new Set(["effectsBorderWidth", "effectsBorderRadius"]);
 
 // ---------------------------------------------------------------------------
 // Props
@@ -96,11 +99,15 @@ export const BlockWrapper: React.FC<BlockWrapperProps> = React.memo(
     const fields: BlockWrapperFields = useMemo(() => {
       const raw = rawFields ?? {};
       const normalized: Record<string, unknown> = { ...raw };
-      for (const [registryKey, hookKey] of Object.entries(REGISTRY_TO_HOOK_MAP)) {
+      for (const [registryKey, hookKey] of Object.entries(
+        REGISTRY_TO_HOOK_MAP,
+      )) {
         if (registryKey in raw && !(hookKey in raw)) {
           const val = raw[registryKey as keyof typeof raw];
           normalized[hookKey] =
-            NUMERIC_FIELDS.has(registryKey) && typeof val === 'string' ? Number(val) : val;
+            NUMERIC_FIELDS.has(registryKey) && typeof val === "string"
+              ? Number(val)
+              : val;
         }
       }
       return normalized as BlockWrapperFields;
@@ -114,30 +121,37 @@ export const BlockWrapper: React.FC<BlockWrapperProps> = React.memo(
       () => ({
         ...fields,
         backgroundOverlayOpacity:
-          typeof fields.backgroundOverlayOpacity === 'number'
+          typeof fields.backgroundOverlayOpacity === "number"
             ? Math.min(1, Math.max(0, fields.backgroundOverlayOpacity / 100))
             : undefined,
       }),
-      [fields]
+      [fields],
     );
 
     const { shouldAnimate, motionProps, floatSx } = useBlockAnimation(fields);
-    const { hasBackground, backgroundSx, overlayElement, overlayElements, contentSx } =
-      useBlockBackground(backgroundFields);
+    const {
+      hasBackground,
+      backgroundSx,
+      overlayElement,
+      overlayElements,
+      contentSx,
+    } = useBlockBackground(backgroundFields);
     const { effectsSx } = useBlockEffects(fields);
     const { spacingSx } = useBlockSpacing(fields);
     const { isHidden, visibilitySx } = useResponsiveVisibility(fields);
 
     // Resolve per-section color override (mode: default/light/dark/custom).
     const sectionColorSx = useMemo(
-      () => resolveSectionColors(fields.sectionColorMode, fields.sectionTextColor),
-      [fields.sectionColorMode, fields.sectionTextColor]
+      () =>
+        resolveSectionColors(fields.sectionColorMode, fields.sectionTextColor),
+      [fields.sectionColorMode, fields.sectionTextColor],
     );
 
     // Fully hidden — return null with no DOM overhead.
     if (isHidden) return null;
 
-    const hasAnyOverlay = hasBackground && (!!overlayElement || overlayElements.length > 0);
+    const hasAnyOverlay =
+      hasBackground && (!!overlayElement || overlayElements.length > 0);
 
     // Merge all sx objects: spacing → background → effects → sectionColor → visibility.
     // Section color is applied after background so custom overrides take precedence.
@@ -149,7 +163,7 @@ export const BlockWrapper: React.FC<BlockWrapperProps> = React.memo(
       ...effectsSx,
       ...sectionColorSx,
       ...visibilitySx,
-      ...(hasAnyOverlay ? { position: 'relative' } : {}),
+      ...(hasAnyOverlay ? { position: "relative" } : {}),
       ...(floatSx ?? {}),
     };
 
@@ -176,9 +190,9 @@ export const BlockWrapper: React.FC<BlockWrapperProps> = React.memo(
 
     // Default path: single Box with merged sx — zero extra DOM nodes.
     return <Box sx={mergedSx}>{innerContent}</Box>;
-  }
+  },
 );
 
-BlockWrapper.displayName = 'BlockWrapper';
+BlockWrapper.displayName = "BlockWrapper";
 
 export default BlockWrapper;

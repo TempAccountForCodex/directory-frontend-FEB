@@ -34,15 +34,21 @@ let _enabled = false;
  * Sensitive data that must never be forwarded to Sentry.
  * Strip any Authorization-style headers from breadcrumb fetch calls.
  */
-const SENSITIVE_HEADERS = ['authorization', 'cookie', 'x-api-key'];
+const SENSITIVE_HEADERS = ["authorization", "cookie", "x-api-key"];
 
 /**
  * beforeSend hook — strip sensitive fields from the event before it is sent to Sentry.
  */
-function stripSensitiveData(event: Record<string, unknown>): Record<string, unknown> | null {
-  const typedEvent = event as { request?: { headers?: Record<string, unknown> } };
+function stripSensitiveData(
+  event: Record<string, unknown>,
+): Record<string, unknown> | null {
+  const typedEvent = event as {
+    request?: { headers?: Record<string, unknown> };
+  };
   if (typedEvent.request?.headers) {
-    const sanitized: Record<string, unknown> = { ...typedEvent.request.headers };
+    const sanitized: Record<string, unknown> = {
+      ...typedEvent.request.headers,
+    };
     for (const header of SENSITIVE_HEADERS) {
       delete sanitized[header];
       delete sanitized[header.toLowerCase()];
@@ -66,7 +72,9 @@ export function initSentry(): void {
 
   if (!dsn) {
     // Expected in local development — not an error
-    console.warn('[Sentry] VITE_SENTRY_DSN is not set. Frontend error tracking is disabled.');
+    console.warn(
+      "[Sentry] VITE_SENTRY_DSN is not set. Frontend error tracking is disabled.",
+    );
     return;
   }
 
@@ -75,12 +83,12 @@ export function initSentry(): void {
     // continues to work even when @sentry/react is not installed.
     // The cast to unknown then SentryLike avoids any compile-time @sentry/react dependency.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Sentry = require('@sentry/react') as unknown as SentryLike;
+    const Sentry = require("@sentry/react") as unknown as SentryLike;
 
     const environment =
       (import.meta.env.VITE_SENTRY_ENVIRONMENT as string | undefined) ||
       import.meta.env.MODE ||
-      'development';
+      "development";
     const release = import.meta.env.VITE_GIT_SHA as string | undefined;
 
     Sentry.init({
@@ -108,13 +116,13 @@ export function initSentry(): void {
     _enabled = true;
 
     console.info(
-      `[Sentry] Frontend initialized. Environment: ${environment}${release ? `, Release: ${release}` : ''}`
+      `[Sentry] Frontend initialized. Environment: ${environment}${release ? `, Release: ${release}` : ""}`,
     );
   } catch {
     // @sentry/react is not installed or init failed — app must continue normally
     console.warn(
-      '[Sentry] @sentry/react is not installed or failed to initialize. ' +
-        'Frontend error tracking is disabled. Run: npm install @sentry/react'
+      "[Sentry] @sentry/react is not installed or failed to initialize. " +
+        "Frontend error tracking is disabled. Run: npm install @sentry/react",
     );
     SentryModule = null;
     _enabled = false;

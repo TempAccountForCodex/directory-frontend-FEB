@@ -3,9 +3,9 @@
  * Renders template-generated websites based on slug from subdomain or path
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useLocation, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams, useLocation, Link } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import {
   Box,
   Container,
@@ -15,30 +15,30 @@ import {
   Toolbar,
   Button,
   Alert,
-} from '@mui/material';
-import { apiClient } from '../api/client';
-import DynamicBlockRenderer from '../components/PublicWebsite/DynamicBlockRenderer';
-import BlockErrorBoundary from '../components/PublicWebsite/BlockErrorBoundary';
-import { DynamicBlockProvider } from '../context/DynamicBlockContext';
+} from "@mui/material";
+import { apiClient } from "../api/client";
+import DynamicBlockRenderer from "../components/PublicWebsite/DynamicBlockRenderer";
+import BlockErrorBoundary from "../components/PublicWebsite/BlockErrorBoundary";
+import { DynamicBlockProvider } from "../context/DynamicBlockContext";
 import {
   BlogArticleSeoContext,
   type BlogArticleSeoData,
-} from '../components/PublicWebsite/dynamic/BlogArticleBlock';
-import ImageWithLoader from '../components/UI/ImageWithLoader';
-import { useGoogleAnalytics } from '../hooks/useGoogleAnalytics';
-import LanguageSelector from '../components/LanguageSelector';
-import TemplateEngine from '../landingTemplates/templateEngine/TemplateEngine';
+} from "../components/PublicWebsite/dynamic/BlogArticleBlock";
+import ImageWithLoader from "../components/UI/ImageWithLoader";
+import { useGoogleAnalytics } from "../hooks/useGoogleAnalytics";
+import LanguageSelector from "../components/LanguageSelector";
+import TemplateEngine from "../landingTemplates/templateEngine/TemplateEngine";
 import {
   buildTemplatePreviewBusinessData,
   inferFrontendTemplateIdFromPages,
   supportsFrontendTemplateEditor,
   type TemplateEditorPage,
-} from '../templates/frontendTemplateEditorSupport';
+} from "../templates/frontendTemplateEditorSupport";
 import {
   buildFrontendTemplateBusinessData,
   hasFrontendTemplateBaseData,
-} from '../templates/frontendTemplateSiteData';
-import { getStoredWebsiteFrontendTemplateId } from '../templates/frontendTemplatePersistence';
+} from "../templates/frontendTemplateSiteData";
+import { getStoredWebsiteFrontendTemplateId } from "../templates/frontendTemplatePersistence";
 
 interface Page {
   id: number;
@@ -65,27 +65,27 @@ const FONT_PRESETS_MAP: Record<
   { headingFont: string; bodyFont: string; googleFontsUrl: string | null }
 > = {
   system: {
-    headingFont: 'Inter, system-ui, sans-serif',
-    bodyFont: 'Inter, system-ui, sans-serif',
+    headingFont: "Inter, system-ui, sans-serif",
+    bodyFont: "Inter, system-ui, sans-serif",
     googleFontsUrl: null,
   },
   serif: {
     headingFont: "'Playfair Display', Georgia, serif",
     bodyFont: "'Lora', Georgia, serif",
     googleFontsUrl:
-      'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500&display=swap',
+      "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500&display=swap",
   },
   modern: {
     headingFont: "'Poppins', sans-serif",
     bodyFont: "'Poppins', sans-serif",
     googleFontsUrl:
-      'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap',
+      "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap",
   },
   editorial: {
     headingFont: "'Cormorant Garamond', Georgia, serif",
     bodyFont: "'Montserrat', sans-serif",
     googleFontsUrl:
-      'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;600&display=swap',
+      "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;600&display=swap",
   },
 };
 
@@ -140,7 +140,7 @@ interface Website {
 }
 
 const PublicWebsite: React.FC = () => {
-  const { slug, '*': splatPath } = useParams<{ slug: string; '*': string }>();
+  const { slug, "*": splatPath } = useParams<{ slug: string; "*": string }>();
   const location = useLocation();
   const [website, setWebsite] = useState<Website | null>(null);
   const currentYear = useMemo(() => new Date().getFullYear(), []);
@@ -149,23 +149,29 @@ const PublicWebsite: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Blog article SEO override — populated by BlogArticleBlock via context
-  const [blogSeoData, setBlogSeoData] = useState<BlogArticleSeoData | null>(null);
-  const resolvedFrontendTemplateId = website?.frontendTemplateId
-    || getStoredWebsiteFrontendTemplateId(website?.id)
-    || null;
+  const [blogSeoData, setBlogSeoData] = useState<BlogArticleSeoData | null>(
+    null,
+  );
+  const resolvedFrontendTemplateId =
+    website?.frontendTemplateId ||
+    getStoredWebsiteFrontendTemplateId(website?.id) ||
+    null;
 
-  const handleSetBlogSeoData = useCallback((data: BlogArticleSeoData | null) => {
-    setBlogSeoData(data);
-  }, []);
+  const handleSetBlogSeoData = useCallback(
+    (data: BlogArticleSeoData | null) => {
+      setBlogSeoData(data);
+    },
+    [],
+  );
 
   const blogArticleSeoContextValue = useMemo(
     () => ({ seoData: blogSeoData, setSeoData: handleSetBlogSeoData }),
-    [blogSeoData, handleSetBlogSeoData]
+    [blogSeoData, handleSetBlogSeoData],
   );
 
   // Initialize Google Analytics if configured
   const { trackClick, trackFormSubmit } = useGoogleAnalytics({
-    measurementId: website?.gaMeasurementId || '',
+    measurementId: website?.gaMeasurementId || "",
     enabled: !!website?.gaMeasurementId,
     debug: import.meta.env.DEV,
   });
@@ -177,23 +183,23 @@ const PublicWebsite: React.FC = () => {
 
     // Try to extract from subdomain
     const hostname = window.location.hostname;
-    const parts = hostname.split('.');
+    const parts = hostname.split(".");
 
     // Reserved subdomains that should NOT be treated as website slugs
     const reservedSubdomains = [
-      'www',
-      'api',
-      'admin',
-      'app',
-      'dashboard',
-      'staging',
-      'dev',
-      'test',
-      'localhost',
+      "www",
+      "api",
+      "admin",
+      "app",
+      "dashboard",
+      "staging",
+      "dev",
+      "test",
+      "localhost",
     ];
 
     // Check if it's a subdomain and not a reserved one
-    if (parts.length > 1 && parts[0] !== 'localhost') {
+    if (parts.length > 1 && parts[0] !== "localhost") {
       const subdomain = parts[0].toLowerCase();
       if (!reservedSubdomains.includes(subdomain)) {
         return subdomain;
@@ -212,7 +218,7 @@ const PublicWebsite: React.FC = () => {
         const websiteSlug = getWebsiteSlug();
 
         if (!websiteSlug) {
-          setError('No website specified');
+          setError("No website specified");
           setLoading(false);
           return;
         }
@@ -224,34 +230,43 @@ const PublicWebsite: React.FC = () => {
         // Sort pages by sortOrder
         const rawPages = Array.isArray(websiteData.pages)
           ? websiteData.pages
-          : (Array.isArray(websiteData.blocks)
-            ? [{
-                id: websiteData.id ?? websiteData.pageId ?? 'page-0',
-                title: websiteData.title || 'Home',
-                path: websiteData.path || '/',
-                isHome: websiteData.isHome ?? true,
-                sortOrder: websiteData.sortOrder ?? 0,
-                isPublished: websiteData.isPublished ?? true,
-                blocks: websiteData.blocks,
-              }]
-            : []);
-        const sortedPages = [...rawPages].sort((a, b) => a.sortOrder - b.sortOrder);
+          : Array.isArray(websiteData.blocks)
+            ? [
+                {
+                  id: websiteData.id ?? websiteData.pageId ?? "page-0",
+                  title: websiteData.title || "Home",
+                  path: websiteData.path || "/",
+                  isHome: websiteData.isHome ?? true,
+                  sortOrder: websiteData.sortOrder ?? 0,
+                  isPublished: websiteData.isPublished ?? true,
+                  blocks: websiteData.blocks,
+                },
+              ]
+            : [];
+        const sortedPages = [...rawPages].sort(
+          (a, b) => a.sortOrder - b.sortOrder,
+        );
 
         // Sort blocks within each page
         sortedPages.forEach((page) => {
-          page.blocks = [...page.blocks].sort((a, b) => a.sortOrder - b.sortOrder);
+          page.blocks = [...page.blocks].sort(
+            (a, b) => a.sortOrder - b.sortOrder,
+          );
         });
 
         websiteData.pages = sortedPages;
-        const inferredFrontendTemplateId = inferFrontendTemplateIdFromPages(sortedPages);
+        const inferredFrontendTemplateId =
+          inferFrontendTemplateIdFromPages(sortedPages);
         const normalizedWebsiteData = {
           ...websiteData,
           pages: sortedPages,
           frontendTemplateId:
-            websiteData.frontendTemplateId
-            || inferredFrontendTemplateId
-            || getStoredWebsiteFrontendTemplateId(websiteData.id || websiteData.websiteId)
-            || null,
+            websiteData.frontendTemplateId ||
+            inferredFrontendTemplateId ||
+            getStoredWebsiteFrontendTemplateId(
+              websiteData.id || websiteData.websiteId,
+            ) ||
+            null,
         };
         setWebsite(normalizedWebsiteData);
 
@@ -265,10 +280,10 @@ const PublicWebsite: React.FC = () => {
           pagePath = `/${splatPath}`;
         } else if (slug) {
           // /site/my-site (no sub-path) → home page
-          pagePath = '/';
+          pagePath = "/";
         } else {
           // Subdomain or custom domain access — pathname is the page path directly
-          pagePath = location.pathname === '/' ? '/' : location.pathname;
+          pagePath = location.pathname === "/" ? "/" : location.pathname;
         }
         let page = sortedPages.find((p) => p.path === pagePath);
 
@@ -277,13 +292,18 @@ const PublicWebsite: React.FC = () => {
           page = sortedPages.find((p) => p.isHome) || sortedPages[0];
         }
 
-        const websiteFrontendTemplateId = normalizedWebsiteData.frontendTemplateId;
+        const websiteFrontendTemplateId =
+          normalizedWebsiteData.frontendTemplateId;
 
-        if (!page && websiteFrontendTemplateId && hasFrontendTemplateBaseData(websiteFrontendTemplateId)) {
+        if (
+          !page &&
+          websiteFrontendTemplateId &&
+          hasFrontendTemplateBaseData(websiteFrontendTemplateId)
+        ) {
           setCurrentPage({
             id: -1,
-            title: 'Home',
-            path: '/',
+            title: "Home",
+            path: "/",
             isHome: true,
             blocks: [],
           });
@@ -296,9 +316,9 @@ const PublicWebsite: React.FC = () => {
         // in production. console.error is silenced in prod builds.
         if (import.meta.env.DEV) {
           // eslint-disable-next-line no-console
-          console.error('[PublicWebsite] Error fetching website:', err);
+          console.error("[PublicWebsite] Error fetching website:", err);
         }
-        setError(err.response?.data?.message || 'Failed to load website');
+        setError(err.response?.data?.message || "Failed to load website");
         setLoading(false);
       }
     };
@@ -312,19 +332,19 @@ const PublicWebsite: React.FC = () => {
   // properties whenever the website's fontPreset changes.
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    const presetKey = website?.fontPreset || 'system';
+    const presetKey = website?.fontPreset || "system";
     const preset = FONT_PRESETS_MAP[presetKey] ?? FONT_PRESETS_MAP.system;
 
-    const LINK_ID = 'tt-google-fonts-link';
-    const STYLE_ID = 'tt-font-preset-style';
+    const LINK_ID = "tt-google-fonts-link";
+    const STYLE_ID = "tt-font-preset-style";
 
     // Manage Google Fonts <link>
     let linkEl = document.getElementById(LINK_ID) as HTMLLinkElement | null;
     if (preset.googleFontsUrl) {
       if (!linkEl) {
-        linkEl = document.createElement('link');
+        linkEl = document.createElement("link");
         linkEl.id = LINK_ID;
-        linkEl.rel = 'stylesheet';
+        linkEl.rel = "stylesheet";
         document.head.appendChild(linkEl);
       }
       linkEl.href = preset.googleFontsUrl;
@@ -335,7 +355,7 @@ const PublicWebsite: React.FC = () => {
     // Manage CSS custom properties <style>
     let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
     if (!styleEl) {
-      styleEl = document.createElement('style');
+      styleEl = document.createElement("style");
       styleEl.id = STYLE_ID;
       document.head.appendChild(styleEl);
     }
@@ -359,27 +379,27 @@ body, p, span, div { font-family: var(--font-body); }
   // Step 12.2 — Heading letter-spacing and text-transform injection
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    const STYLE_ID = 'tt-heading-typography-style';
+    const STYLE_ID = "tt-heading-typography-style";
 
     // Map preset keys to CSS values
     const letterSpacingMap: Record<string, string> = {
-      normal: 'normal',
-      wide: '0.05em',
-      wider: '0.1em',
+      normal: "normal",
+      wide: "0.05em",
+      wider: "0.1em",
     };
     const textTransformMap: Record<string, string> = {
-      none: 'none',
-      uppercase: 'uppercase',
+      none: "none",
+      uppercase: "uppercase",
     };
 
-    const spacingKey = website?.headingLetterSpacing || 'normal';
-    const transformKey = website?.headingTextTransform || 'none';
-    const letterSpacing = letterSpacingMap[spacingKey] ?? 'normal';
-    const textTransform = textTransformMap[transformKey] ?? 'none';
+    const spacingKey = website?.headingLetterSpacing || "normal";
+    const transformKey = website?.headingTextTransform || "none";
+    const letterSpacing = letterSpacingMap[spacingKey] ?? "normal";
+    const textTransform = textTransformMap[transformKey] ?? "none";
 
     let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
     if (!styleEl) {
-      styleEl = document.createElement('style');
+      styleEl = document.createElement("style");
       styleEl.id = STYLE_ID;
       document.head.appendChild(styleEl);
     }
@@ -401,30 +421,37 @@ h1, h2, h3, h4, h5, h6 {
 
   // Prepare SEO meta values (must be computed before early returns so the
   // blogPostingJsonLd useMemo below never violates React hooks ordering)
-  const pageTitle = currentPage?.title || 'Home';
-  const baseMetaTitle = website?.metaTitle || `${pageTitle} - ${website?.name || ''}`;
+  const pageTitle = currentPage?.title || "Home";
+  const baseMetaTitle =
+    website?.metaTitle || `${pageTitle} - ${website?.name || ""}`;
   const baseMetaDescription =
     website?.metaDescription ||
     website?.shortDescription ||
-    `${website?.name || ''} - ${website?.businessName || ''}`.trim();
+    `${website?.name || ""} - ${website?.businessName || ""}`.trim();
   const siteUrl = window.location.origin + window.location.pathname;
-  const baseOgImage = website?.logoUrl || '';
+  const baseOgImage = website?.logoUrl || "";
 
   // Blog article SEO overrides (set by BlogArticleBlock when it loads a post)
   const isBlogArticle = !!blogSeoData;
-  const metaTitle = isBlogArticle ? blogSeoData!.title || baseMetaTitle : baseMetaTitle;
+  const metaTitle = isBlogArticle
+    ? blogSeoData!.title || baseMetaTitle
+    : baseMetaTitle;
   const metaDescription = isBlogArticle
     ? blogSeoData!.description || baseMetaDescription
     : baseMetaDescription;
-  const ogImage = isBlogArticle ? blogSeoData!.image || baseOgImage : baseOgImage;
-  const canonicalUrl = isBlogArticle ? blogSeoData!.canonicalUrl || siteUrl : siteUrl;
+  const ogImage = isBlogArticle
+    ? blogSeoData!.image || baseOgImage
+    : baseOgImage;
+  const canonicalUrl = isBlogArticle
+    ? blogSeoData!.canonicalUrl || siteUrl
+    : siteUrl;
 
   // Build schema.org BlogPosting JSON-LD when a blog article is present
   const blogPostingJsonLd = useMemo(() => {
     if (!isBlogArticle || !blogSeoData) return null;
     const data: Record<string, any> = {
-      '@context': 'https://schema.org',
-      '@type': 'BlogPosting',
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
       headline: blogSeoData.title || metaTitle,
       description: blogSeoData.description || metaDescription,
       url: blogSeoData.canonicalUrl || siteUrl,
@@ -432,34 +459,48 @@ h1, h2, h3, h4, h5, h6 {
     if (blogSeoData.image) data.image = blogSeoData.image;
     if (blogSeoData.publishedAt) data.datePublished = blogSeoData.publishedAt;
     if (blogSeoData.authorName) {
-      data.author = { '@type': 'Person', name: blogSeoData.authorName };
+      data.author = { "@type": "Person", name: blogSeoData.authorName };
     }
     if (blogSeoData.keywords) data.keywords = blogSeoData.keywords;
-    if (website?.name) data.publisher = { '@type': 'Organization', name: website.name };
+    if (website?.name)
+      data.publisher = { "@type": "Organization", name: website.name };
     // Escape </script to prevent injection
-    return JSON.stringify(data).replace(/<\/script/gi, '<\\/script');
-  }, [isBlogArticle, blogSeoData, metaTitle, metaDescription, siteUrl, website?.name]);
+    return JSON.stringify(data).replace(/<\/script/gi, "<\\/script");
+  }, [
+    isBlogArticle,
+    blogSeoData,
+    metaTitle,
+    metaDescription,
+    siteUrl,
+    website?.name,
+  ]);
 
   const persistedTemplatePages = useMemo<TemplateEditorPage[]>(() => {
-    if (!website || !resolvedFrontendTemplateId || !supportsFrontendTemplateEditor(resolvedFrontendTemplateId)) {
+    if (
+      !website ||
+      !resolvedFrontendTemplateId ||
+      !supportsFrontendTemplateEditor(resolvedFrontendTemplateId)
+    ) {
       return [];
     }
 
     const sourcePages = website.pages?.length
       ? website.pages
-      : (website.templateSnapshot?.pages || []);
+      : website.templateSnapshot?.pages || [];
 
     return sourcePages.map((page: any, pageIndex: number) => ({
       id: String(page.id ?? `page-${pageIndex}`),
       title: page.title || `Page ${pageIndex + 1}`,
-      path: page.path || '/',
+      path: page.path || "/",
       isHome: !!page.isHome,
       sortOrder: page.sortOrder ?? pageIndex,
       isPublished: page.isPublished ?? true,
       blocks: Array.isArray(page.blocks)
         ? page.blocks.map((block: any, blockIndex: number) => ({
-            id: String(block.id ?? `${page.id ?? pageIndex}-block-${blockIndex}`),
-            blockType: block.blockType || block.type || '',
+            id: String(
+              block.id ?? `${page.id ?? pageIndex}-block-${blockIndex}`,
+            ),
+            blockType: block.blockType || block.type || "",
             content: block.content || {},
             sortOrder: block.sortOrder ?? blockIndex,
             isVisible: block.isVisible ?? true,
@@ -474,8 +515,8 @@ h1, h2, h3, h4, h5, h6 {
     }
 
     if (
-      supportsFrontendTemplateEditor(resolvedFrontendTemplateId)
-      && persistedTemplatePages.length > 0
+      supportsFrontendTemplateEditor(resolvedFrontendTemplateId) &&
+      persistedTemplatePages.length > 0
     ) {
       return buildTemplatePreviewBusinessData(
         resolvedFrontendTemplateId,
@@ -491,7 +532,7 @@ h1, h2, h3, h4, h5, h6 {
           fullAddress: website.fullAddress,
           tags: website.tags as string[] | null | undefined,
         },
-        persistedTemplatePages
+        persistedTemplatePages,
       );
     }
 
@@ -513,11 +554,11 @@ h1, h2, h3, h4, h5, h6 {
     return (
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          bgcolor: 'background.default',
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          bgcolor: "background.default",
         }}
       >
         <CircularProgress size={60} />
@@ -529,16 +570,16 @@ h1, h2, h3, h4, h5, h6 {
     return (
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          bgcolor: 'background.default',
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          bgcolor: "background.default",
         }}
       >
         <Container maxWidth="md">
           <Alert severity="error" sx={{ mb: 2 }}>
-            {error || 'Website not found'}
+            {error || "Website not found"}
           </Alert>
           <Typography variant="body1" align="center">
             The website you're looking for doesn't exist or is not published.
@@ -549,12 +590,12 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   if (
-    resolvedFrontendTemplateId
-    && hasFrontendTemplateBaseData(resolvedFrontendTemplateId)
-    && frontendTemplateData
+    resolvedFrontendTemplateId &&
+    hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
+    frontendTemplateData
   ) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
         <Helmet>
           <title>{metaTitle}</title>
           <meta name="description" content={metaDescription} />
@@ -571,13 +612,16 @@ h1, h2, h3, h4, h5, h6 {
           <meta name="twitter:description" content={metaDescription} />
           {ogImage && <meta name="twitter:image" content={ogImage} />}
         </Helmet>
-        <TemplateEngine templateId={resolvedFrontendTemplateId} data={frontendTemplateData} />
+        <TemplateEngine
+          templateId={resolvedFrontendTemplateId}
+          data={frontendTemplateData}
+        />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <DynamicBlockProvider>
         <BlogArticleSeoContext.Provider value={blogArticleSeoContextValue}>
           {/* SEO Meta Tags */}
@@ -590,13 +634,18 @@ h1, h2, h3, h4, h5, h6 {
             )}
 
             {/* Favicon */}
-            {website.faviconUrl && <link rel="icon" href={website.faviconUrl} />}
+            {website.faviconUrl && (
+              <link rel="icon" href={website.faviconUrl} />
+            )}
 
             {/* Canonical URL */}
             <link rel="canonical" href={canonicalUrl} />
 
             {/* Open Graph Tags for Social Sharing */}
-            <meta property="og:type" content={isBlogArticle ? 'article' : 'website'} />
+            <meta
+              property="og:type"
+              content={isBlogArticle ? "article" : "website"}
+            />
             <meta property="og:title" content={metaTitle} />
             <meta property="og:description" content={metaDescription} />
             <meta property="og:url" content={canonicalUrl} />
@@ -605,10 +654,16 @@ h1, h2, h3, h4, h5, h6 {
 
             {/* Article-specific Open Graph tags */}
             {isBlogArticle && blogSeoData?.publishedAt && (
-              <meta property="article:published_time" content={blogSeoData.publishedAt} />
+              <meta
+                property="article:published_time"
+                content={blogSeoData.publishedAt}
+              />
             )}
             {isBlogArticle && blogSeoData?.authorName && (
-              <meta property="article:author" content={blogSeoData.authorName} />
+              <meta
+                property="article:author"
+                content={blogSeoData.authorName}
+              />
             )}
 
             {/* Twitter Card Tags */}
@@ -618,7 +673,9 @@ h1, h2, h3, h4, h5, h6 {
             {ogImage && <meta name="twitter:image" content={ogImage} />}
 
             {/* Schema.org BlogPosting JSON-LD */}
-            {blogPostingJsonLd && <script type="application/ld+json">{blogPostingJsonLd}</script>}
+            {blogPostingJsonLd && (
+              <script type="application/ld+json">{blogPostingJsonLd}</script>
+            )}
           </Helmet>
 
           {/* Navigation Bar */}
@@ -626,14 +683,21 @@ h1, h2, h3, h4, h5, h6 {
             position="sticky"
             elevation={1}
             sx={{
-              bgcolor: 'white',
-              color: 'text.primary',
-              borderBottom: '1px solid',
-              borderColor: 'divider',
+              bgcolor: "white",
+              color: "text.primary",
+              borderBottom: "1px solid",
+              borderColor: "divider",
             }}
           >
             <Toolbar>
-              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexGrow: 1,
+                  gap: 2,
+                }}
+              >
                 {website.logoUrl && (
                   <ImageWithLoader
                     src={website.logoUrl}
@@ -650,7 +714,7 @@ h1, h2, h3, h4, h5, h6 {
                   component="div"
                   sx={{
                     fontWeight: 700,
-                    color: website.primaryColor || '#2563eb',
+                    color: website.primaryColor || "#2563eb",
                   }}
                 >
                   {website.name}
@@ -662,16 +726,23 @@ h1, h2, h3, h4, h5, h6 {
                   component={Link}
                   to={`/site/${website.slug}${page.path}`}
                   sx={{
-                    color: currentPage?.id === page.id ? website.primaryColor : 'text.secondary',
+                    color:
+                      currentPage?.id === page.id
+                        ? website.primaryColor
+                        : "text.secondary",
                     fontWeight: currentPage?.id === page.id ? 600 : 400,
-                    textDecoration: 'none',
+                    textDecoration: "none",
                   }}
                 >
                   {page.title}
                 </Button>
               ))}
               <Box sx={{ ml: 2 }}>
-                <LanguageSelector variant="standard" size="small" showIcon={false} />
+                <LanguageSelector
+                  variant="standard"
+                  size="small"
+                  showIcon={false}
+                />
               </Box>
             </Toolbar>
           </AppBar>
@@ -686,13 +757,17 @@ h1, h2, h3, h4, h5, h6 {
               </Container>
             ) : (
               currentPage.blocks.map((block) => (
-                <BlockErrorBoundary key={block.id} blockType={block.blockType} blockId={block.id}>
+                <BlockErrorBoundary
+                  key={block.id}
+                  blockType={block.blockType}
+                  blockId={block.id}
+                >
                   <DynamicBlockRenderer
                     block={block}
-                    primaryColor={website.primaryColor || '#378C92'} // Techietribe teal
-                    secondaryColor={website.secondaryColor || '#D3EB63'} // Techietribe lime accent
-                    headingColor={website.headingTextColor || '#252525'} // Techietribe dark text
-                    bodyColor={website.bodyTextColor || '#6A6F78'} // Techietribe gray text
+                    primaryColor={website.primaryColor || "#378C92"} // Techietribe teal
+                    secondaryColor={website.secondaryColor || "#D3EB63"} // Techietribe lime accent
+                    headingColor={website.headingTextColor || "#252525"} // Techietribe dark text
+                    bodyColor={website.bodyTextColor || "#6A6F78"} // Techietribe gray text
                     onCtaClick={(blockType, ctaText) =>
                       trackClick(`${blockType}_CTA`, { cta_text: ctaText })
                     }
@@ -709,10 +784,10 @@ h1, h2, h3, h4, h5, h6 {
             sx={{
               py: 4,
               px: 2,
-              mt: 'auto',
-              bgcolor: 'grey.900',
-              color: 'white',
-              textAlign: 'center',
+              mt: "auto",
+              bgcolor: "grey.900",
+              color: "white",
+              textAlign: "center",
             }}
           >
             <Typography variant="body2">

@@ -22,7 +22,7 @@
  * - React.memo prevents re-renders when parent re-renders with same props
  * - useCallback for event handlers
  */
-import React, { useId, useState, useCallback } from 'react';
+import React, { useId, useState, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -33,12 +33,12 @@ import {
   FormHelperText,
   Checkbox,
   Link as MuiLink,
-} from '@mui/material';
-import LinkIcon from '@mui/icons-material/Link';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import DashboardInput from '../../Dashboard/shared/DashboardInput';
-import { registerFieldComponent } from '../registry';
-import { FieldType } from '../types';
+} from "@mui/material";
+import LinkIcon from "@mui/icons-material/Link";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import DashboardInput from "../../Dashboard/shared/DashboardInput";
+import { registerFieldComponent } from "../registry";
+import { FieldType } from "../types";
 
 /* ------------------------------------------------------------------ */
 /* Props interface                                                     */
@@ -70,7 +70,7 @@ export interface LinkFieldProps {
  * Allows internal paths starting with / or /.
  * Returns null when valid, an error message string when invalid.
  */
-const ALLOWED_PROTOCOLS = ['http:', 'https:', 'mailto:', 'tel:'];
+const ALLOWED_PROTOCOLS = ["http:", "https:", "mailto:", "tel:"];
 
 /**
  * Check if a URL string uses a safe protocol for rendering as href.
@@ -79,7 +79,7 @@ const ALLOWED_PROTOCOLS = ['http:', 'https:', 'mailto:', 'tel:'];
 const isSafeHref = (url: string): boolean => {
   if (!url) return false;
   // Internal paths are safe
-  if (url.startsWith('/') || url.startsWith('#')) return true;
+  if (url.startsWith("/") || url.startsWith("#")) return true;
   try {
     const parsed = new URL(url);
     return ALLOWED_PROTOCOLS.includes(parsed.protocol);
@@ -91,15 +91,15 @@ const isSafeHref = (url: string): boolean => {
 const validateURL = (url: string): string | null => {
   if (!url) return null;
   // Allow internal paths starting with / (but not //)
-  if (/^\/[^/]/.test(url) || url === '/') return null;
+  if (/^\/[^/]/.test(url) || url === "/") return null;
   try {
     const parsed = new URL(url);
     if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
-      return 'URL must use http, https, mailto, or tel protocol';
+      return "URL must use http, https, mailto, or tel protocol";
     }
     return null;
   } catch {
-    return 'Please enter a valid URL (e.g., https://example.com or /path)';
+    return "Please enter a valid URL (e.g., https://example.com or /path)";
   }
 };
 
@@ -108,26 +108,38 @@ const validateURL = (url: string): string | null => {
 /* ------------------------------------------------------------------ */
 
 const LinkField: React.FC<LinkFieldProps> = React.memo(
-  ({ value, onChange, disabled = false, allowInternal = true, error, errors = [], label }) => {
+  ({
+    value,
+    onChange,
+    disabled = false,
+    allowInternal = true,
+    error,
+    errors = [],
+    label,
+  }) => {
     const uid = useId();
     const inputId = `${uid}-link-input`;
     const errorId = `${uid}-error`;
     const hasErrors = errors.length > 0;
 
     /* ---- Internal state ---- */
-    const [linkType, setLinkType] = useState<'internal' | 'external'>(() =>
-      value && value.startsWith('/') ? 'internal' : 'external'
+    const [linkType, setLinkType] = useState<"internal" | "external">(() =>
+      value && value.startsWith("/") ? "internal" : "external",
     );
     const [openInNewTab, setOpenInNewTab] = useState(false);
     const [validationError, setValidationError] = useState<string | null>(null);
 
-    const isExternal = linkType === 'external';
+    const isExternal = linkType === "external";
 
     /* ---- Displayed error: external prop takes priority over internal validation ---- */
     const displayError = error ?? validationError;
 
     /* ---- Preview: only show when value is non-empty, URL is valid, and protocol is safe ---- */
-    const showPreview = value.length > 0 && validationError === null && !error && isSafeHref(value);
+    const showPreview =
+      value.length > 0 &&
+      validationError === null &&
+      !error &&
+      isSafeHref(value);
 
     /* ---- Handlers ---- */
     const handleChange = useCallback(
@@ -136,35 +148,50 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
         onChange(newUrl);
         setValidationError(validateURL(newUrl));
       },
-      [onChange]
+      [onChange],
     );
 
     const handleBlur = useCallback(() => {
-      if (value && !value.startsWith('http') && !value.startsWith('/') && !value.startsWith('#')) {
-        const prepended = 'https://' + value;
+      if (
+        value &&
+        !value.startsWith("http") &&
+        !value.startsWith("/") &&
+        !value.startsWith("#")
+      ) {
+        const prepended = "https://" + value;
         onChange(prepended);
         setValidationError(validateURL(prepended));
       }
     }, [value, onChange]);
 
     const handleLinkTypeChange = useCallback(
-      (_event: React.MouseEvent<HTMLElement>, newType: 'internal' | 'external' | null) => {
+      (
+        _event: React.MouseEvent<HTMLElement>,
+        newType: "internal" | "external" | null,
+      ) => {
         if (newType !== null) {
           setLinkType(newType);
         }
       },
-      []
+      [],
     );
 
     const handleOpenInNewTabChange = useCallback(
       (_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
         setOpenInNewTab(checked);
       },
-      []
+      [],
     );
 
     return (
-      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          gap: 1.5,
+        }}
+      >
         {/* ----- Link type toggle ----- */}
         {allowInternal && (
           <ToggleButtonGroup
@@ -173,16 +200,16 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
             onChange={handleLinkTypeChange}
             disabled={disabled}
             size="small"
-            sx={{ alignSelf: 'flex-start' }}
+            sx={{ alignSelf: "flex-start" }}
           >
             <ToggleButton value="external" aria-label="External link">
               <LinkIcon sx={{ mr: 0.5, fontSize: 18 }} />
-              <Typography variant="caption" sx={{ textTransform: 'none' }}>
+              <Typography variant="caption" sx={{ textTransform: "none" }}>
                 External
               </Typography>
             </ToggleButton>
             <ToggleButton value="internal" aria-label="Internal link">
-              <Typography variant="caption" sx={{ textTransform: 'none' }}>
+              <Typography variant="caption" sx={{ textTransform: "none" }}>
                 /path
               </Typography>
             </ToggleButton>
@@ -196,15 +223,15 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
           onChange={handleChange}
           onBlur={handleBlur}
           disabled={disabled}
-          placeholder={isExternal ? 'https://example.com' : '/about'}
+          placeholder={isExternal ? "https://example.com" : "/about"}
           error={!!displayError || hasErrors}
           helperText={displayError}
           type="url"
           fullWidth
           inputProps={{
-            'aria-label': label ?? 'URL',
-            'aria-invalid': displayError || hasErrors ? true : undefined,
-            'aria-describedby': hasErrors ? errorId : undefined,
+            "aria-label": label ?? "URL",
+            "aria-invalid": displayError || hasErrors ? true : undefined,
+            "aria-describedby": hasErrors ? errorId : undefined,
           }}
         />
 
@@ -217,11 +244,11 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
                 onChange={handleOpenInNewTabChange}
                 disabled={disabled}
                 size="small"
-                sx={{ color: 'text.secondary' }}
+                sx={{ color: "text.secondary" }}
               />
             }
             label={
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 Open in new tab
               </Typography>
             }
@@ -233,28 +260,28 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
         {showPreview && (
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 0.5,
               py: 0.5,
               px: 1,
               borderRadius: 1,
-              bgcolor: 'action.hover',
+              bgcolor: "action.hover",
             }}
           >
-            <OpenInNewIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <OpenInNewIcon sx={{ fontSize: 16, color: "text.secondary" }} />
             <MuiLink
               href={value}
-              target={openInNewTab ? '_blank' : '_self'}
+              target={openInNewTab ? "_blank" : "_self"}
               rel="noopener noreferrer"
               underline="hover"
               variant="body2"
               sx={{
-                color: 'primary.main',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                maxWidth: '100%',
+                color: "primary.main",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "100%",
               }}
             >
               {value}
@@ -278,10 +305,10 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
           ))}
       </Box>
     );
-  }
+  },
 );
 
-LinkField.displayName = 'LinkField';
+LinkField.displayName = "LinkField";
 
 /* ------------------------------------------------------------------ */
 /* Self-registration                                                   */
@@ -291,7 +318,7 @@ LinkField.displayName = 'LinkField';
 // Consistent with TEXT / TEXTAREA / NUMBER / COLOR self-registration pattern.
 registerFieldComponent(
   FieldType.LINK,
-  LinkField as React.ComponentType<import('../types').FieldRendererProps>
+  LinkField as React.ComponentType<import("../types").FieldRendererProps>,
 );
 
 export { LinkField };

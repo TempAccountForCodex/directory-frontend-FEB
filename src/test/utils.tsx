@@ -1,19 +1,19 @@
-import type { ReactElement, ReactNode } from 'react';
-import { render } from '@testing-library/react';
-import type { RenderOptions } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import { createTheme } from '@mui/material/styles';
+import type { ReactElement, ReactNode } from "react";
+import { render } from "@testing-library/react";
+import type { RenderOptions } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { ThemeProvider } from "@mui/material/styles";
+import { createTheme } from "@mui/material/styles";
 
 // Create a basic test theme
 const testTheme = createTheme({
   palette: {
-    mode: 'light',
+    mode: "light",
     primary: {
-      main: '#1976d2',
+      main: "#1976d2",
     },
     secondary: {
-      main: '#dc004e',
+      main: "#dc004e",
     },
   },
 });
@@ -32,14 +32,20 @@ function AllTheProviders({ children }: WrapperProps) {
 }
 
 // Custom render function with all providers
-export function renderWithProviders(ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) {
+export function renderWithProviders(
+  ui: ReactElement,
+  options?: Omit<RenderOptions, "wrapper">,
+) {
   return render(ui, { wrapper: AllTheProviders, ...options });
 }
 
 // Render with custom router initial entries
 export function renderWithRouter(
   ui: ReactElement,
-  { initialEntries = ['/'], ...options }: RenderOptions & { initialEntries?: string[] } = {}
+  {
+    initialEntries = ["/"],
+    ...options
+  }: RenderOptions & { initialEntries?: string[] } = {},
 ) {
   function RouterWrapper({ children }: WrapperProps) {
     return (
@@ -53,4 +59,4 @@ export function renderWithRouter(
 }
 
 // Re-export everything from React Testing Library
-export * from '@testing-library/react';
+export * from "@testing-library/react";

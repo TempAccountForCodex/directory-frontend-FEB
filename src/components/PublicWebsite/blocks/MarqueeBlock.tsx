@@ -7,11 +7,11 @@
  * Supports both text items (string[]) and logo items ({imageUrl, altText}[]).
  */
 
-import React, { useState, memo } from 'react';
-import { Box, Container, Typography } from '@mui/material';
-import { keyframes } from '@mui/material/styles';
-import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+import React, { useState, memo } from "react";
+import { Box, Container, Typography } from "@mui/material";
+import { keyframes } from "@mui/material/styles";
+import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -25,8 +25,8 @@ type MarqueeItem = string | LogoItem;
 interface MarqueeContent {
   heading?: string;
   items?: MarqueeItem[];
-  speed?: 'slow' | 'medium' | 'fast';
-  direction?: 'left' | 'right';
+  speed?: "slow" | "medium" | "fast";
+  direction?: "left" | "right";
   pauseOnHover?: boolean;
   separator?: string;
   // Standard styling fields
@@ -75,9 +75,9 @@ interface MarqueeBlockProps {
 // ── Speed mapping ──────────────────────────────────────────────────────────────
 
 const SPEED_MAP: Record<string, string> = {
-  slow: '40s',
-  medium: '28s',
-  fast: '16s',
+  slow: "40s",
+  medium: "28s",
+  fast: "16s",
 };
 
 // ── Spacing map ────────────────────────────────────────────────────────────────
@@ -105,12 +105,12 @@ const scrollLoopReverse = keyframes`
 // ── Helper: detect variant from items ─────────────────────────────────────────
 
 function isLogoItem(item: MarqueeItem): item is LogoItem {
-  return typeof item === 'object' && item !== null && 'imageUrl' in item;
+  return typeof item === "object" && item !== null && "imageUrl" in item;
 }
 
-function detectVariant(items: MarqueeItem[]): 'text' | 'logos' {
-  if (items.length === 0) return 'text';
-  return isLogoItem(items[0]) ? 'logos' : 'text';
+function detectVariant(items: MarqueeItem[]): "text" | "logos" {
+  if (items.length === 0) return "text";
+  return isLogoItem(items[0]) ? "logos" : "text";
 }
 
 // ── MarqueeTrack — the animated scrolling row ─────────────────────────────────
@@ -118,10 +118,10 @@ function detectVariant(items: MarqueeItem[]): 'text' | 'logos' {
 interface MarqueeTrackProps {
   items: MarqueeItem[];
   duration: string;
-  direction: 'left' | 'right';
+  direction: "left" | "right";
   pauseOnHover: boolean;
   separator: string;
-  variant: 'text' | 'logos';
+  variant: "text" | "logos";
   isVisible: boolean;
   primaryColor: string;
   bodyColor: string;
@@ -143,21 +143,22 @@ const MarqueeTrack: React.FC<MarqueeTrackProps> = ({
   // Duplicate array for seamless infinite loop
   const doubled = [...items, ...items];
 
-  const chosenKeyframe = direction === 'right' ? scrollLoopReverse : scrollLoop;
+  const chosenKeyframe = direction === "right" ? scrollLoopReverse : scrollLoop;
 
   // Use inline style for animationPlayState so tests can inspect it via element.style
   // MUI sx animationPlayState is compiled into a CSS class which is not inspectable via element.style
   const trackStyle: React.CSSProperties = {
-    animationPlayState: hovered ? 'paused' : 'running',
+    animationPlayState: hovered ? "paused" : "running",
   };
 
   return (
     <Box
       sx={{
-        overflow: 'hidden',
-        maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+        overflow: "hidden",
+        maskImage:
+          "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
         WebkitMaskImage:
-          'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+          "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
       }}
     >
       <Box
@@ -169,16 +170,18 @@ const MarqueeTrack: React.FC<MarqueeTrackProps> = ({
         onMouseEnter={() => pauseOnHover && setHovered(true)}
         onMouseLeave={() => pauseOnHover && setHovered(false)}
         sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: variant === 'logos' ? 6 : 0,
-          width: 'max-content',
-          animation: isVisible ? `${chosenKeyframe} ${duration} linear infinite` : 'none',
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: variant === "logos" ? 6 : 0,
+          width: "max-content",
+          animation: isVisible
+            ? `${chosenKeyframe} ${duration} linear infinite`
+            : "none",
         }}
       >
         {doubled.map((item, i) => {
-          if (variant === 'logos' && isLogoItem(item)) {
+          if (variant === "logos" && isLogoItem(item)) {
             return (
               <Box
                 key={`logo-${i}`}
@@ -189,8 +192,8 @@ const MarqueeTrack: React.FC<MarqueeTrackProps> = ({
                 sx={{
                   height: 48,
                   maxWidth: 120,
-                  objectFit: 'contain',
-                  userSelect: 'none',
+                  objectFit: "contain",
+                  userSelect: "none",
                   flexShrink: 0,
                 }}
               />
@@ -198,7 +201,7 @@ const MarqueeTrack: React.FC<MarqueeTrackProps> = ({
           }
 
           // Text variant
-          const text = typeof item === 'string' ? item : '';
+          const text = typeof item === "string" ? item : "";
           const isLast = i === doubled.length - 1;
           return (
             <React.Fragment key={`text-${i}`}>
@@ -207,10 +210,10 @@ const MarqueeTrack: React.FC<MarqueeTrackProps> = ({
                 sx={{
                   color: bodyColor,
                   fontWeight: 500,
-                  fontSize: { xs: '0.95rem', md: '1rem' },
-                  whiteSpace: 'nowrap',
+                  fontSize: { xs: "0.95rem", md: "1rem" },
+                  whiteSpace: "nowrap",
                   px: 1,
-                  userSelect: 'none',
+                  userSelect: "none",
                 }}
               >
                 {text}
@@ -223,7 +226,7 @@ const MarqueeTrack: React.FC<MarqueeTrackProps> = ({
                     color: primaryColor,
                     fontWeight: 700,
                     mx: 1,
-                    userSelect: 'none',
+                    userSelect: "none",
                     flexShrink: 0,
                   }}
                 >
@@ -242,20 +245,20 @@ const MarqueeTrack: React.FC<MarqueeTrackProps> = ({
 
 const MarqueeBlock: React.FC<MarqueeBlockProps> = ({
   block,
-  primaryColor = '#2563eb',
-  headingColor = '#1e293b',
-  bodyColor = '#334155',
+  primaryColor = "#2563eb",
+  headingColor = "#1e293b",
+  bodyColor = "#334155",
 }) => {
   const content = block.content || {};
   const {
     heading,
     items = [],
-    speed = 'medium',
-    direction = 'left',
+    speed = "medium",
+    direction = "left",
     pauseOnHover = true,
-    separator = '•',
-    spacingPaddingTop = 'md',
-    spacingPaddingBottom = 'md',
+    separator = "•",
+    spacingPaddingTop = "md",
+    spacingPaddingBottom = "md",
     responsiveHideOnMobile = false,
     responsiveHideOnTablet = false,
     responsiveHideOnDesktop = false,
@@ -270,7 +273,7 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({
   const variant = detectVariant(items);
 
   // SSR fallback: static display (no animation)
-  const isSSR = typeof window === 'undefined';
+  const isSSR = typeof window === "undefined";
 
   // Empty state
   if (items.length === 0) {
@@ -279,9 +282,9 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({
         data-testid="marquee-empty"
         sx={{
           py: { xs: 4, md: 6 },
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         <Typography variant="body2" color="text.secondary">
@@ -301,11 +304,11 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({
       sx={{
         py: { xs: pt / 2 + 2, md: pt },
         pb: { xs: pb / 2 + 2, md: pb },
-        overflow: 'hidden',
+        overflow: "hidden",
         display: {
-          xs: responsiveHideOnMobile ? 'none' : 'block',
-          sm: responsiveHideOnTablet ? 'none' : 'block',
-          lg: responsiveHideOnDesktop ? 'none' : 'block',
+          xs: responsiveHideOnMobile ? "none" : "block",
+          sm: responsiveHideOnTablet ? "none" : "block",
+          lg: responsiveHideOnDesktop ? "none" : "block",
         },
       }}
     >
@@ -330,11 +333,11 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({
           <Box
             data-testid="marquee-ssr"
             sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
+              display: "flex",
+              flexWrap: "wrap",
               gap: 2,
-              justifyContent: 'center',
-              alignItems: 'center',
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
             {items.map((item, i) => {
@@ -345,7 +348,7 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({
                     component="img"
                     src={item.imageUrl}
                     alt={item.altText}
-                    sx={{ height: 48, maxWidth: 120, objectFit: 'contain' }}
+                    sx={{ height: 48, maxWidth: 120, objectFit: "contain" }}
                   />
                 );
               }
@@ -353,7 +356,7 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({
                 <Typography
                   key={i}
                   component="span"
-                  sx={{ color: bodyColor, whiteSpace: 'nowrap' }}
+                  sx={{ color: bodyColor, whiteSpace: "nowrap" }}
                 >
                   {item as string}
                 </Typography>
@@ -378,6 +381,6 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({
   );
 };
 
-MarqueeBlock.displayName = 'MarqueeBlock';
+MarqueeBlock.displayName = "MarqueeBlock";
 
 export default memo(MarqueeBlock);

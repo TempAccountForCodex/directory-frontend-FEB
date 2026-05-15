@@ -11,23 +11,23 @@
  * - forceKeyboardMode: overrides detection, persists to localStorage
  * - Cleanup: listeners removed on unmount
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useInputMethod } from '../useInputMethod';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { useInputMethod } from "../useInputMethod";
 
 // ---------------------------------------------------------------------------
 // Setup / teardown
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-  vi.useFakeTimers({ toFake: ['Date'] });
-  document.body.classList.remove('keyboard-active');
+  vi.useFakeTimers({ toFake: ["Date"] });
+  document.body.classList.remove("keyboard-active");
   window.localStorage.clear();
 });
 
 afterEach(() => {
   vi.useRealTimers();
-  document.body.classList.remove('keyboard-active');
+  document.body.classList.remove("keyboard-active");
   window.localStorage.clear();
 });
 
@@ -35,118 +35,118 @@ afterEach(() => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('useInputMethod', () => {
-  it('returns the correct shape', () => {
+describe("useInputMethod", () => {
+  it("returns the correct shape", () => {
     const { result } = renderHook(() => useInputMethod());
-    expect(result.current).toHaveProperty('inputMethod');
-    expect(result.current).toHaveProperty('isKeyboardMode');
-    expect(result.current).toHaveProperty('forceKeyboardMode');
-    expect(result.current).toHaveProperty('setForceKeyboardMode');
-    expect(typeof result.current.setForceKeyboardMode).toBe('function');
+    expect(result.current).toHaveProperty("inputMethod");
+    expect(result.current).toHaveProperty("isKeyboardMode");
+    expect(result.current).toHaveProperty("forceKeyboardMode");
+    expect(result.current).toHaveProperty("setForceKeyboardMode");
+    expect(typeof result.current.setForceKeyboardMode).toBe("function");
   });
 
   it('defaults to inputMethod="mouse"', () => {
     const { result } = renderHook(() => useInputMethod());
-    expect(result.current.inputMethod).toBe('mouse');
+    expect(result.current.inputMethod).toBe("mouse");
     expect(result.current.isKeyboardMode).toBe(false);
   });
 
-  it('detects touch input after touchstart event', () => {
+  it("detects touch input after touchstart event", () => {
     const { result } = renderHook(() => useInputMethod());
     act(() => {
-      window.dispatchEvent(new Event('touchstart'));
+      window.dispatchEvent(new Event("touchstart"));
     });
-    expect(result.current.inputMethod).toBe('touch');
+    expect(result.current.inputMethod).toBe("touch");
     expect(result.current.isKeyboardMode).toBe(false);
   });
 
-  it('detects mouse input after mousemove event', () => {
+  it("detects mouse input after mousemove event", () => {
     const { result } = renderHook(() => useInputMethod());
     // Start with touch to ensure switch
     act(() => {
-      window.dispatchEvent(new Event('touchstart'));
+      window.dispatchEvent(new Event("touchstart"));
     });
-    expect(result.current.inputMethod).toBe('touch');
+    expect(result.current.inputMethod).toBe("touch");
 
     // Advance past 5s timeout and switch to mouse
     act(() => {
       vi.advanceTimersByTime(5100);
-      window.dispatchEvent(new Event('mousemove'));
+      window.dispatchEvent(new Event("mousemove"));
     });
-    expect(result.current.inputMethod).toBe('mouse');
+    expect(result.current.inputMethod).toBe("mouse");
   });
 
-  it('detects keyboard input after keydown with no recent touch', () => {
+  it("detects keyboard input after keydown with no recent touch", () => {
     const { result } = renderHook(() => useInputMethod());
     act(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
     });
-    expect(result.current.inputMethod).toBe('keyboard');
+    expect(result.current.inputMethod).toBe("keyboard");
     expect(result.current.isKeyboardMode).toBe(true);
   });
 
-  it('does NOT switch to keyboard mode if touch happened within 5 seconds', () => {
+  it("does NOT switch to keyboard mode if touch happened within 5 seconds", () => {
     const { result } = renderHook(() => useInputMethod());
 
     // Touch first
     act(() => {
-      window.dispatchEvent(new Event('touchstart'));
+      window.dispatchEvent(new Event("touchstart"));
     });
-    expect(result.current.inputMethod).toBe('touch');
+    expect(result.current.inputMethod).toBe("touch");
 
     // Keyboard within 5s
     act(() => {
       vi.advanceTimersByTime(3000);
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
     });
     // Should stay touch, not keyboard
-    expect(result.current.inputMethod).toBe('touch');
+    expect(result.current.inputMethod).toBe("touch");
     expect(result.current.isKeyboardMode).toBe(false);
   });
 
-  it('switches to keyboard mode after 5 seconds without touch', () => {
+  it("switches to keyboard mode after 5 seconds without touch", () => {
     const { result } = renderHook(() => useInputMethod());
 
     // Touch first
     act(() => {
-      window.dispatchEvent(new Event('touchstart'));
+      window.dispatchEvent(new Event("touchstart"));
     });
-    expect(result.current.inputMethod).toBe('touch');
+    expect(result.current.inputMethod).toBe("touch");
 
     // Wait 5.1s, then keyboard
     act(() => {
       vi.advanceTimersByTime(5100);
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
     });
-    expect(result.current.inputMethod).toBe('keyboard');
+    expect(result.current.inputMethod).toBe("keyboard");
     expect(result.current.isKeyboardMode).toBe(true);
   });
 
   it('adds "keyboard-active" class to document.body in keyboard mode', () => {
     renderHook(() => useInputMethod());
-    expect(document.body.classList.contains('keyboard-active')).toBe(false);
+    expect(document.body.classList.contains("keyboard-active")).toBe(false);
 
     act(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
     });
-    expect(document.body.classList.contains('keyboard-active')).toBe(true);
+    expect(document.body.classList.contains("keyboard-active")).toBe(true);
   });
 
   it('removes "keyboard-active" class when leaving keyboard mode', () => {
     renderHook(() => useInputMethod());
 
     act(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
     });
-    expect(document.body.classList.contains('keyboard-active')).toBe(true);
+    expect(document.body.classList.contains("keyboard-active")).toBe(true);
 
     act(() => {
-      window.dispatchEvent(new Event('touchstart'));
+      window.dispatchEvent(new Event("touchstart"));
     });
-    expect(document.body.classList.contains('keyboard-active')).toBe(false);
+    expect(document.body.classList.contains("keyboard-active")).toBe(false);
   });
 
-  it('forceKeyboardMode overrides touch detection', () => {
+  it("forceKeyboardMode overrides touch detection", () => {
     const { result } = renderHook(() => useInputMethod());
 
     act(() => {
@@ -157,52 +157,58 @@ describe('useInputMethod', () => {
 
     // Touch should NOT override forced keyboard mode
     act(() => {
-      window.dispatchEvent(new Event('touchstart'));
+      window.dispatchEvent(new Event("touchstart"));
     });
     expect(result.current.isKeyboardMode).toBe(true);
   });
 
-  it('persists forceKeyboardMode to localStorage', () => {
+  it("persists forceKeyboardMode to localStorage", () => {
     const { result } = renderHook(() => useInputMethod());
 
     act(() => {
       result.current.setForceKeyboardMode(true);
     });
-    expect(localStorage.setItem).toHaveBeenCalledWith('keyboardNavigationMode', 'true');
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "keyboardNavigationMode",
+      "true",
+    );
 
     act(() => {
       result.current.setForceKeyboardMode(false);
     });
-    expect(localStorage.setItem).toHaveBeenCalledWith('keyboardNavigationMode', 'false');
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "keyboardNavigationMode",
+      "false",
+    );
   });
 
-  it('reads forceKeyboardMode from localStorage on mount', () => {
+  it("reads forceKeyboardMode from localStorage on mount", () => {
     vi.mocked(localStorage.getItem).mockImplementation((key: string) =>
-      key === 'keyboardNavigationMode' ? 'true' : null
+      key === "keyboardNavigationMode" ? "true" : null,
     );
     const { result } = renderHook(() => useInputMethod());
     expect(result.current.forceKeyboardMode).toBe(true);
     expect(result.current.isKeyboardMode).toBe(true);
   });
 
-  it('cleans up event listeners on unmount', () => {
-    const addSpy = vi.spyOn(window, 'addEventListener');
-    const removeSpy = vi.spyOn(window, 'removeEventListener');
+  it("cleans up event listeners on unmount", () => {
+    const addSpy = vi.spyOn(window, "addEventListener");
+    const removeSpy = vi.spyOn(window, "removeEventListener");
 
     const { unmount } = renderHook(() => useInputMethod());
 
     // Should have added touchstart, mousemove, keydown
     const addedEvents = addSpy.mock.calls.map((c) => c[0]);
-    expect(addedEvents).toContain('touchstart');
-    expect(addedEvents).toContain('mousemove');
-    expect(addedEvents).toContain('keydown');
+    expect(addedEvents).toContain("touchstart");
+    expect(addedEvents).toContain("mousemove");
+    expect(addedEvents).toContain("keydown");
 
     unmount();
 
     const removedEvents = removeSpy.mock.calls.map((c) => c[0]);
-    expect(removedEvents).toContain('touchstart');
-    expect(removedEvents).toContain('mousemove');
-    expect(removedEvents).toContain('keydown');
+    expect(removedEvents).toContain("touchstart");
+    expect(removedEvents).toContain("mousemove");
+    expect(removedEvents).toContain("keydown");
 
     addSpy.mockRestore();
     removeSpy.mockRestore();

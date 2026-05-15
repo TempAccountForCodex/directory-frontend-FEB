@@ -14,11 +14,16 @@
  * Step 5.4.1–5.4.4
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useWebSocket } from './useWebSocket';
-import { usePreview } from '../context/PreviewContext';
-import type { WebSocketMessage, RoomStateMember } from '../types/websocket';
-import { isContentUpdate, isCursorMove, isLockMessage, isRoomState } from '../types/websocket';
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useWebSocket } from "./useWebSocket";
+import { usePreview } from "../context/PreviewContext";
+import type { WebSocketMessage, RoomStateMember } from "../types/websocket";
+import {
+  isContentUpdate,
+  isCursorMove,
+  isLockMessage,
+  isRoomState,
+} from "../types/websocket";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -66,16 +71,16 @@ export interface UsePreviewSyncReturn {
 
 /** Deterministic color from userId — maps to a palette of 10 colors */
 const CURSOR_PALETTE = [
-  '#e91e63',
-  '#9c27b0',
-  '#673ab7',
-  '#3f51b5',
-  '#2196f3',
-  '#009688',
-  '#4caf50',
-  '#ff9800',
-  '#ff5722',
-  '#795548',
+  "#e91e63",
+  "#9c27b0",
+  "#673ab7",
+  "#3f51b5",
+  "#2196f3",
+  "#009688",
+  "#4caf50",
+  "#ff9800",
+  "#ff5722",
+  "#795548",
 ];
 
 export function getUserColor(userId: number): string {
@@ -89,22 +94,24 @@ export function getUserColor(userId: number): string {
 export function usePreviewSync(
   pageId: string,
   currentUserId: number,
-  websiteId?: number | string
+  websiteId?: number | string,
 ): UsePreviewSyncReturn {
   const roomId = `page:${pageId}`;
 
   // ---- State ----------------------------------------------------------------
   const [activeUsers, setActiveUsers] = useState<RoomStateMember[]>([]);
-  const [cursorPositions, setCursorPositions] = useState<Map<number, CursorPosition>>(
-    () => new Map()
-  );
+  const [cursorPositions, setCursorPositions] = useState<
+    Map<number, CursorPosition>
+  >(() => new Map());
   const [locks, setLocks] = useState<Map<number, LockInfo>>(() => new Map());
 
   // ---- Refs -----------------------------------------------------------------
   const mountedRef = useRef(true);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cursorThrottleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cursorThrottleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const pendingUpdateRef = useRef<WebSocketMessage | null>(null);
   const sentTimestampsRef = useRef<Set<string>>(new Set());
   const lastBroadcastRef = useRef<number>(0);
@@ -131,7 +138,9 @@ export function usePreviewSync(
         // The client stores the timestamp inside data.timestamp, but the server
         // overwrites the top-level msg.timestamp with its own clock. So we must
         // read from msg.data.timestamp (the original client-generated value).
-        const msgDataTs = (msg.data as Record<string, unknown>)?.timestamp as string | undefined;
+        const msgDataTs = (msg.data as Record<string, unknown>)?.timestamp as
+          | string
+          | undefined;
         if (msgDataTs && sentTimestampsRef.current.has(msgDataTs)) return;
 
         // Debounce incoming updates
@@ -155,7 +164,7 @@ export function usePreviewSync(
           const updatedBlocks = content.blocks.map((block) => {
             if (String(block.id) === String(blockId)) {
               // Apply fieldPath update (e.g. "content.title")
-              const parts = fieldPath.split('.');
+              const parts = fieldPath.split(".");
               const updatedContent = { ...block.content };
               let target: Record<string, unknown> = updatedContent;
               for (let i = 0; i < parts.length - 1; i++) {
@@ -224,7 +233,7 @@ export function usePreviewSync(
       if (isLockMessage(msg)) {
         const blockId = msg.data.blockId;
 
-        if (msg.type === 'LOCK_ACQUIRE' || msg.type === 'LOCK_ACQUIRED') {
+        if (msg.type === "LOCK_ACQUIRE" || msg.type === "LOCK_ACQUIRED") {
           const userId = msg.userId!;
 
           setLocks((prev) => {
@@ -258,7 +267,7 @@ export function usePreviewSync(
       }
 
       // ---- USER_JOINED (Step 5.8: includes name + avatar metadata) ----------
-      if (msg.type === 'USER_JOINED' && msg.userId) {
+      if (msg.type === "USER_JOINED" && msg.userId) {
         const data = msg.data as Record<string, unknown> | undefined;
         const username = (data?.username as string) || `User ${msg.userId}`;
         const avatar = (data?.avatar as string) || null;
@@ -270,7 +279,7 @@ export function usePreviewSync(
       }
 
       // ---- USER_LEFT --------------------------------------------------------
-      if (msg.type === 'USER_LEFT' && msg.userId) {
+      if (msg.type === "USER_LEFT" && msg.userId) {
         setActiveUsers((prev) => prev.filter((u) => u.userId !== msg.userId));
         setCursorPositions((prev) => {
           if (!prev.has(msg.userId!)) return prev;
@@ -295,7 +304,7 @@ export function usePreviewSync(
         return;
       }
     },
-    [currentUserId, updatePreviewContent]
+    [currentUserId, updatePreviewContent],
   );
 
   // ---- WebSocket connection -------------------------------------------------
@@ -304,7 +313,7 @@ export function usePreviewSync(
     websiteId,
   });
 
-  const isConnected = connectionState === 'connected';
+  const isConnected = connectionState === "connected";
 
   // ---- Room lifecycle -------------------------------------------------------
   useEffect(() => {
@@ -320,7 +329,7 @@ export function usePreviewSync(
   // ---- Broadcast change (throttled) -----------------------------------------
   const broadcastChange = useCallback(
     (blockId: number, fieldPath: string, value: unknown) => {
-      if (connectionState !== 'connected') return;
+      if (connectionState !== "connected") return;
 
       const now = Date.now();
       const elapsed = now - lastBroadcastRef.current;
@@ -335,7 +344,7 @@ export function usePreviewSync(
         }
 
         send({
-          type: 'CONTENT_UPDATE',
+          type: "CONTENT_UPDATE",
           roomId: roomIdRef.current,
           data: { blockId, fieldPath, value, timestamp: ts },
         });
@@ -355,20 +364,20 @@ export function usePreviewSync(
         }, THROTTLE_MS - elapsed);
       }
     },
-    [connectionState, send]
+    [connectionState, send],
   );
 
   // ---- Broadcast cursor (throttled) -----------------------------------------
   const broadcastCursor = useCallback(
     (blockId: number, x: number, y: number) => {
-      if (connectionState !== 'connected') return;
+      if (connectionState !== "connected") return;
 
       const now = Date.now();
       const elapsed = now - lastCursorBroadcastRef.current;
 
       const doSend = () => {
         send({
-          type: 'CURSOR_MOVE',
+          type: "CURSOR_MOVE",
           roomId: roomIdRef.current,
           data: { blockId, x, y },
         });
@@ -387,7 +396,7 @@ export function usePreviewSync(
         }, THROTTLE_MS - elapsed);
       }
     },
-    [connectionState, send]
+    [connectionState, send],
   );
 
   // ---- Cleanup on unmount ---------------------------------------------------
@@ -395,9 +404,12 @@ export function usePreviewSync(
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      if (debounceTimerRef.current !== null) clearTimeout(debounceTimerRef.current);
-      if (throttleTimerRef.current !== null) clearTimeout(throttleTimerRef.current);
-      if (cursorThrottleTimerRef.current !== null) clearTimeout(cursorThrottleTimerRef.current);
+      if (debounceTimerRef.current !== null)
+        clearTimeout(debounceTimerRef.current);
+      if (throttleTimerRef.current !== null)
+        clearTimeout(throttleTimerRef.current);
+      if (cursorThrottleTimerRef.current !== null)
+        clearTimeout(cursorThrottleTimerRef.current);
     };
   }, []);
 
@@ -411,7 +423,14 @@ export function usePreviewSync(
       broadcastChange,
       broadcastCursor,
     }),
-    [isConnected, activeUsers, cursorPositions, locks, broadcastChange, broadcastCursor]
+    [
+      isConnected,
+      activeUsers,
+      cursorPositions,
+      locks,
+      broadcastChange,
+      broadcastCursor,
+    ],
   );
 }
 

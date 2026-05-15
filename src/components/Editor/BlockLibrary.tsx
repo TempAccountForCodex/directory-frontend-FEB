@@ -21,38 +21,37 @@
  * - useMemo for filtered/grouped block types
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Drawer from '@mui/material/Drawer';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import TextField from '@mui/material/TextField';
-import Chip from '@mui/material/Chip';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
-import Button from '@mui/material/Button';
-import Skeleton from '@mui/material/Skeleton';
-import Alert from '@mui/material/Alert';
-import InputAdornment from '@mui/material/InputAdornment';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import CloseIcon from '@mui/icons-material/Close';
-import SearchIcon from '@mui/icons-material/Search';
-import AddIcon from '@mui/icons-material/Add';
-import GridOnIcon from '@mui/icons-material/GridOn';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ShareIcon from '@mui/icons-material/Share';
-import { useDraggable } from '@dnd-kit/core';
-import BlockPreviewModal from './BlockPreviewModal';
-import SaveTemplateModal from './SaveTemplateModal';
-import { API_URL } from '@/config/api';
-
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import Drawer from "@mui/material/Drawer";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardActions from "@mui/material/CardActions";
+import Button from "@mui/material/Button";
+import Skeleton from "@mui/material/Skeleton";
+import Alert from "@mui/material/Alert";
+import InputAdornment from "@mui/material/InputAdornment";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from "@mui/icons-material/Add";
+import GridOnIcon from "@mui/icons-material/GridOn";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ShareIcon from "@mui/icons-material/Share";
+import { useDraggable } from "@dnd-kit/core";
+import BlockPreviewModal from "./BlockPreviewModal";
+import SaveTemplateModal from "./SaveTemplateModal";
+import { API_URL } from "@/config/api";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -103,11 +102,17 @@ export interface BlockLibraryProps {
   blocks: ExistingBlock[];
   onInsertBlock: (
     blockType: string,
-    position: 'end' | 'beginning' | number,
-    content?: Record<string, unknown>
+    position: "end" | "beginning" | number,
+    content?: Record<string, unknown>,
   ) => void;
-  onInsertFromTemplate?: (template: BlockTemplate, position: 'end' | 'beginning' | number) => void;
-  onSaveTemplate?: (blockType: string, content: Record<string, unknown>) => void;
+  onInsertFromTemplate?: (
+    template: BlockTemplate,
+    position: "end" | "beginning" | number,
+  ) => void;
+  onSaveTemplate?: (
+    blockType: string,
+    content: Record<string, unknown>,
+  ) => void;
   closeAfterInsert?: boolean;
   currentUserRole?: string;
   historyPush?: (state: unknown, description: string) => void;
@@ -118,25 +123,28 @@ export interface BlockLibraryProps {
 // ---------------------------------------------------------------------------
 
 const CATEGORIES = [
-  { key: 'all', label: 'All' },
-  { key: 'core', label: 'Core' },
-  { key: 'content', label: 'Content' },
-  { key: 'dynamic', label: 'Dynamic' },
-  { key: 'conversion', label: 'Conversion' },
-  { key: 'social-proof', label: 'Social Proof' },
-  { key: 'my-templates', label: 'My Templates' },
+  { key: "all", label: "All" },
+  { key: "core", label: "Core" },
+  { key: "content", label: "Content" },
+  { key: "dynamic", label: "Dynamic" },
+  { key: "conversion", label: "Conversion" },
+  { key: "social-proof", label: "Social Proof" },
+  { key: "my-templates", label: "My Templates" },
 ];
 
 // ---------------------------------------------------------------------------
 // Category chip color map
 // ---------------------------------------------------------------------------
 
-const CATEGORY_COLOR: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'default'> = {
-  core: 'primary',
-  content: 'success',
-  dynamic: 'info',
-  conversion: 'warning',
-  'social-proof': 'info',
+const CATEGORY_COLOR: Record<
+  string,
+  "primary" | "success" | "warning" | "info" | "default"
+> = {
+  core: "primary",
+  content: "success",
+  dynamic: "info",
+  conversion: "warning",
+  "social-proof": "info",
 };
 
 // ---------------------------------------------------------------------------
@@ -149,92 +157,99 @@ interface BlockLibraryCardProps {
   onPreview: (block: BlockLibraryItem) => void;
 }
 
-const BlockLibraryCard = React.memo<BlockLibraryCardProps>(({ block, onAddToPage, onPreview }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `library-${block.key}`,
-    data: { blockType: block.key, source: 'library' },
-  });
+const BlockLibraryCard = React.memo<BlockLibraryCardProps>(
+  ({ block, onAddToPage, onPreview }) => {
+    const { attributes, listeners, setNodeRef, transform, isDragging } =
+      useDraggable({
+        id: `library-${block.key}`,
+        data: { blockType: block.key, source: "library" },
+      });
 
-  const handleAdd = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onAddToPage(block.key);
-    },
-    [onAddToPage, block.key]
-  );
+    const handleAdd = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onAddToPage(block.key);
+      },
+      [onAddToPage, block.key],
+    );
 
-  const handleClick = useCallback(() => {
-    onPreview(block);
-  }, [onPreview, block]);
+    const handleClick = useCallback(() => {
+      onPreview(block);
+    }, [onPreview, block]);
 
-  const dragStyle: React.CSSProperties = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 999 : 'auto',
-        position: isDragging ? 'relative' : 'relative',
-        cursor: 'grab',
-      }
-    : { cursor: 'grab' };
+    const dragStyle: React.CSSProperties = transform
+      ? {
+          transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+          opacity: isDragging ? 0.5 : 1,
+          zIndex: isDragging ? 999 : "auto",
+          position: isDragging ? "relative" : "relative",
+          cursor: "grab",
+        }
+      : { cursor: "grab" };
 
-  return (
-    <Card
-      ref={setNodeRef}
-      elevation={3}
-      onClick={handleClick}
-      sx={{
-        mb: 1,
-        cursor: 'pointer',
-        border: '1px solid',
-        borderColor: 'transparent',
-        transition: 'all 150ms ease',
-        '&:hover': {
-          elevation: 6,
-          borderColor: 'primary.main',
-          transform: 'scale(1.02)',
-        },
-        ...dragStyle,
-      }}
-      {...attributes}
-      {...listeners}
-    >
-      <CardContent sx={{ pb: 0, pt: 1.5, px: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-          <GridOnIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-          <Typography variant="body2" fontWeight="bold" sx={{ color: 'text.primary', flex: 1 }}>
-            {block.label}
+    return (
+      <Card
+        ref={setNodeRef}
+        elevation={3}
+        onClick={handleClick}
+        sx={{
+          mb: 1,
+          cursor: "pointer",
+          border: "1px solid",
+          borderColor: "transparent",
+          transition: "all 150ms ease",
+          "&:hover": {
+            elevation: 6,
+            borderColor: "primary.main",
+            transform: "scale(1.02)",
+          },
+          ...dragStyle,
+        }}
+        {...attributes}
+        {...listeners}
+      >
+        <CardContent sx={{ pb: 0, pt: 1.5, px: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <GridOnIcon sx={{ fontSize: 20, color: "text.secondary" }} />
+            <Typography
+              variant="body2"
+              fontWeight="bold"
+              sx={{ color: "text.primary", flex: 1 }}
+            >
+              {block.label}
+            </Typography>
+            <Chip
+              label={block.category}
+              size="small"
+              color={CATEGORY_COLOR[block.category] || "default"}
+              sx={{ fontSize: "0.65rem", height: 18 }}
+            />
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{ color: "text.secondary", display: "block", lineHeight: 1.4 }}
+          >
+            {block.description}
           </Typography>
-          <Chip
-            label={block.category}
+        </CardContent>
+        <CardActions sx={{ pt: 0.5, px: 2, pb: 1 }}>
+          <Button
             size="small"
-            color={CATEGORY_COLOR[block.category] || 'default'}
-            sx={{ fontSize: '0.65rem', height: 18 }}
-          />
-        </Box>
-        <Typography
-          variant="caption"
-          sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.4 }}
-        >
-          {block.description}
-        </Typography>
-      </CardContent>
-      <CardActions sx={{ pt: 0.5, px: 2, pb: 1 }}>
-        <Button
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-          variant="contained"
-          sx={{ fontSize: '0.7rem', px: 1, py: 0.25, minWidth: 0 }}
-          aria-label={`Add ${block.label} to page`}
-        >
-          Add
-        </Button>
-      </CardActions>
-    </Card>
-  );
-});
+            startIcon={<AddIcon />}
+            onClick={handleAdd}
+            variant="contained"
+            sx={{ fontSize: "0.7rem", px: 1, py: 0.25, minWidth: 0 }}
+            aria-label={`Add ${block.label} to page`}
+          >
+            Add
+          </Button>
+        </CardActions>
+      </Card>
+    );
+  },
+);
 
-BlockLibraryCard.displayName = 'BlockLibraryCard';
+BlockLibraryCard.displayName = "BlockLibraryCard";
 
 // ---------------------------------------------------------------------------
 // SkeletonCard
@@ -263,33 +278,49 @@ interface TemplateCardProps {
 
 const TemplateCard = React.memo<TemplateCardProps>(
   ({ template, onInsert, onDelete, onToggleShare, isOwner }) => {
-    const handleInsert = useCallback(() => onInsert(template), [onInsert, template]);
-    const handleDelete = useCallback(() => onDelete(template.id), [onDelete, template.id]);
+    const handleInsert = useCallback(
+      () => onInsert(template),
+      [onInsert, template],
+    );
+    const handleDelete = useCallback(
+      () => onDelete(template.id),
+      [onDelete, template.id],
+    );
     const handleShare = useCallback(
       () => onToggleShare(template.id, !template.isShared),
-      [onToggleShare, template.id, template.isShared]
+      [onToggleShare, template.id, template.isShared],
     );
 
     return (
       <Card elevation={2} sx={{ mb: 1 }}>
         <CardContent sx={{ pb: 0, pt: 1.5, px: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            <Typography variant="body2" fontWeight="bold" sx={{ color: 'text.primary', flex: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              fontWeight="bold"
+              sx={{ color: "text.primary", flex: 1 }}
+            >
               {template.name}
             </Typography>
             <Chip
               label={template.blockType}
               size="small"
               color="primary"
-              sx={{ fontSize: '0.65rem', height: 18 }}
+              sx={{ fontSize: "0.65rem", height: 18 }}
             />
           </Box>
           {template.description && (
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{ color: "text.secondary", display: "block" }}
+            >
               {template.description}
             </Typography>
           )}
-          <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', mt: 0.25 }}>
+          <Typography
+            variant="caption"
+            sx={{ color: "text.disabled", display: "block", mt: 0.25 }}
+          >
             {new Date(template.createdAt).toLocaleDateString()}
           </Typography>
         </CardContent>
@@ -298,7 +329,7 @@ const TemplateCard = React.memo<TemplateCardProps>(
             size="small"
             variant="contained"
             onClick={handleInsert}
-            sx={{ fontSize: '0.7rem' }}
+            sx={{ fontSize: "0.7rem" }}
           >
             Insert
           </Button>
@@ -306,25 +337,35 @@ const TemplateCard = React.memo<TemplateCardProps>(
             <IconButton
               size="small"
               onClick={handleShare}
-              aria-label={template.isShared ? 'Unshare template' : 'Share template with team'}
-              title={template.isShared ? 'Stop sharing' : 'Share with team'}
+              aria-label={
+                template.isShared
+                  ? "Unshare template"
+                  : "Share template with team"
+              }
+              title={template.isShared ? "Stop sharing" : "Share with team"}
             >
               <ShareIcon
                 fontSize="small"
-                sx={{ color: template.isShared ? 'primary.main' : 'text.secondary' }}
+                sx={{
+                  color: template.isShared ? "primary.main" : "text.secondary",
+                }}
               />
             </IconButton>
           )}
-          <IconButton size="small" onClick={handleDelete} aria-label="Delete template">
-            <DeleteIcon fontSize="small" sx={{ color: 'error.main' }} />
+          <IconButton
+            size="small"
+            onClick={handleDelete}
+            aria-label="Delete template"
+          >
+            <DeleteIcon fontSize="small" sx={{ color: "error.main" }} />
           </IconButton>
         </CardActions>
       </Card>
     );
-  }
+  },
 );
 
-TemplateCard.displayName = 'TemplateCard';
+TemplateCard.displayName = "TemplateCard";
 
 // ---------------------------------------------------------------------------
 // BlockLibrary
@@ -344,9 +385,11 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   const [blockTypes, setBlockTypes] = useState<BlockLibraryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [insertPosition, setInsertPosition] = useState<'end' | 'beginning' | number>('end');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [insertPosition, setInsertPosition] = useState<
+    "end" | "beginning" | number
+  >("end");
 
   // Template state
   const [templates, setTemplates] = useState<BlockTemplate[]>([]);
@@ -354,7 +397,9 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   const [templatesError, setTemplatesError] = useState<string | null>(null);
 
   // Preview modal state (managed here, passed down via prop in 9.3.2)
-  const [previewBlock, setPreviewBlock] = useState<BlockLibraryItem | null>(null);
+  const [previewBlock, setPreviewBlock] = useState<BlockLibraryItem | null>(
+    null,
+  );
 
   // Save template modal state — Step 9.22
   const [saveTemplateBlock, setSaveTemplateBlock] = useState<{
@@ -382,7 +427,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
         }
       } catch (err) {
         if (!cancelled) {
-          setError('Failed to load block library. Please try again.');
+          setError("Failed to load block library. Please try again.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -397,14 +442,14 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
 
   // Fetch templates when My Templates tab is active
   useEffect(() => {
-    if (activeCategory !== 'my-templates' || !open) return;
+    if (activeCategory !== "my-templates" || !open) return;
     let cancelled = false;
 
     const fetchTemplates = async () => {
       setTemplatesLoading(true);
       setTemplatesError(null);
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         const res = await fetch(`${API_URL}/blocks/templates`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -414,7 +459,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
           setTemplates(Array.isArray(data.data) ? data.data : []);
         }
       } catch {
-        if (!cancelled) setTemplatesError('Failed to load templates.');
+        if (!cancelled) setTemplatesError("Failed to load templates.");
       } finally {
         if (!cancelled) setTemplatesLoading(false);
       }
@@ -430,7 +475,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   const filteredBlocks = useMemo(() => {
     let list = blockTypes;
 
-    if (activeCategory !== 'all' && activeCategory !== 'my-templates') {
+    if (activeCategory !== "all" && activeCategory !== "my-templates") {
       list = list.filter((b) => b.category === activeCategory);
     }
 
@@ -440,21 +485,27 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
         (b) =>
           b.label.toLowerCase().includes(q) ||
           b.description.toLowerCase().includes(q) ||
-          (b.searchKeywords || []).some((kw) => kw.toLowerCase().includes(q))
+          (b.searchKeywords || []).some((kw) => kw.toLowerCase().includes(q)),
       );
     }
 
     return list;
   }, [blockTypes, activeCategory, searchQuery]);
 
-  const handleCategoryChange = useCallback((_: React.SyntheticEvent, value: string) => {
-    setActiveCategory(value);
-    setSearchQuery('');
-  }, []);
+  const handleCategoryChange = useCallback(
+    (_: React.SyntheticEvent, value: string) => {
+      setActiveCategory(value);
+      setSearchQuery("");
+    },
+    [],
+  );
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+    },
+    [],
+  );
 
   const handleAddToPage = useCallback(
     (blockKey: string) => {
@@ -468,7 +519,14 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
       }
       if (closeAfterInsert) onClose();
     },
-    [blockTypes, onInsertBlock, insertPosition, historyPush, closeAfterInsert, onClose]
+    [
+      blockTypes,
+      onInsertBlock,
+      insertPosition,
+      historyPush,
+      closeAfterInsert,
+      onClose,
+    ],
   );
 
   const handlePreviewBlock = useCallback((block: BlockLibraryItem) => {
@@ -487,55 +545,69 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
         onInsertBlock(
           template.blockType,
           insertPosition,
-          template.content as Record<string, unknown>
+          template.content as Record<string, unknown>,
         );
       }
       setToastMessage(`${template.name} inserted`);
       setTimeout(() => setToastMessage(null), 3000);
       if (closeAfterInsert) onClose();
     },
-    [onInsertFromTemplate, onInsertBlock, insertPosition, closeAfterInsert, onClose]
+    [
+      onInsertFromTemplate,
+      onInsertBlock,
+      insertPosition,
+      closeAfterInsert,
+      onClose,
+    ],
   );
 
   const handleDeleteTemplate = useCallback(async (id: number) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       await fetch(`${API_URL}/blocks/templates/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       setTemplates((prev) => prev.filter((t) => t.id !== id));
     } catch {
-      setToastMessage('Failed to delete template.');
+      setToastMessage("Failed to delete template.");
       setTimeout(() => setToastMessage(null), 3000);
     }
   }, []);
 
-  const handleToggleShare = useCallback(async (id: number, isShared: boolean) => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_URL}/blocks/templates/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ isShared }),
-      });
-      if (!res.ok) throw new Error();
-      setTemplates((prev) => prev.map((t) => (t.id === id ? { ...t, isShared } : t)));
-    } catch {
-      setToastMessage('Failed to update sharing.');
-      setTimeout(() => setToastMessage(null), 3000);
-    }
-  }, []);
+  const handleToggleShare = useCallback(
+    async (id: number, isShared: boolean) => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_URL}/blocks/templates/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ isShared }),
+        });
+        if (!res.ok) throw new Error();
+        setTemplates((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, isShared } : t)),
+        );
+      } catch {
+        setToastMessage("Failed to update sharing.");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+    },
+    [],
+  );
 
-  const isOwner = currentUserRole === 'OWNER' || currentUserRole === 'owner';
+  const isOwner = currentUserRole === "OWNER" || currentUserRole === "owner";
 
   // Position options
-  const positionOptions: Array<{ value: 'end' | 'beginning' | number; label: string }> = [
-    { value: 'end', label: 'At End' },
-    { value: 'beginning', label: 'At Beginning' },
+  const positionOptions: Array<{
+    value: "end" | "beginning" | number;
+    label: string;
+  }> = [
+    { value: "end", label: "At End" },
+    { value: "beginning", label: "At Beginning" },
     ...blocks.map((b, i) => ({
       value: i as number,
       label: `After ${b.blockType} #${i + 1}`,
@@ -547,7 +619,9 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
       anchor="left"
       open={open}
       onClose={onClose}
-      PaperProps={{ sx: { width: 320, display: 'flex', flexDirection: 'column' } }}
+      PaperProps={{
+        sx: { width: 320, display: "flex", flexDirection: "column" },
+      }}
     >
       {/* Header */}
       <Box
@@ -555,15 +629,22 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
           px: 2,
           pt: 2,
           pb: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 700 }}>
+        <Typography
+          variant="h6"
+          sx={{ color: "text.primary", fontWeight: 700 }}
+        >
           Block Library
         </Typography>
-        <IconButton onClick={onClose} aria-label="Close block library" size="small">
+        <IconButton
+          onClick={onClose}
+          aria-label="Close block library"
+          size="small"
+        >
           <CloseIcon />
         </IconButton>
       </Box>
@@ -592,14 +673,14 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
         onChange={handleCategoryChange}
         variant="scrollable"
         scrollButtons="auto"
-        sx={{ borderBottom: 1, borderColor: 'divider', minHeight: 40 }}
+        sx={{ borderBottom: 1, borderColor: "divider", minHeight: 40 }}
       >
         {CATEGORIES.map((cat) => (
           <Tab
             key={cat.key}
             value={cat.key}
             label={cat.label}
-            sx={{ minHeight: 40, fontSize: '0.75rem', textTransform: 'none' }}
+            sx={{ minHeight: 40, fontSize: "0.75rem", textTransform: "none" }}
           />
         ))}
       </Tabs>
@@ -607,18 +688,24 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
       {/* Position Picker */}
       <Box sx={{ px: 2, pt: 1 }}>
         <FormControl size="small" fullWidth>
-          <InputLabel id="position-label" sx={{ fontSize: '0.75rem' }}>
+          <InputLabel id="position-label" sx={{ fontSize: "0.75rem" }}>
             Insert Position
           </InputLabel>
           <Select
             labelId="position-label"
             value={insertPosition}
             label="Insert Position"
-            onChange={(e) => setInsertPosition(e.target.value as 'end' | 'beginning' | number)}
-            sx={{ fontSize: '0.75rem' }}
+            onChange={(e) =>
+              setInsertPosition(e.target.value as "end" | "beginning" | number)
+            }
+            sx={{ fontSize: "0.75rem" }}
           >
             {positionOptions.map((opt) => (
-              <MenuItem key={String(opt.value)} value={opt.value} sx={{ fontSize: '0.75rem' }}>
+              <MenuItem
+                key={String(opt.value)}
+                value={opt.value}
+                sx={{ fontSize: "0.75rem" }}
+              >
                 {opt.label}
               </MenuItem>
             ))}
@@ -627,16 +714,16 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
       </Box>
 
       {/* Content */}
-      <Box sx={{ flex: 1, overflow: 'auto', px: 2, pt: 1, pb: 2 }}>
+      <Box sx={{ flex: 1, overflow: "auto", px: 2, pt: 1, pb: 2 }}>
         {/* Toast */}
         {toastMessage && (
-          <Alert severity="success" sx={{ mb: 1, fontSize: '0.75rem' }}>
+          <Alert severity="success" sx={{ mb: 1, fontSize: "0.75rem" }}>
             {toastMessage}
           </Alert>
         )}
 
         {/* My Templates Tab */}
-        {activeCategory === 'my-templates' ? (
+        {activeCategory === "my-templates" ? (
           <>
             {templatesLoading && (
               <>
@@ -653,9 +740,10 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
             {!templatesLoading && !templatesError && templates.length === 0 && (
               <Typography
                 variant="body2"
-                sx={{ color: 'text.secondary', textAlign: 'center', mt: 4 }}
+                sx={{ color: "text.secondary", textAlign: "center", mt: 4 }}
               >
-                No saved templates yet. Save a block to create your first template.
+                No saved templates yet. Save a block to create your first
+                template.
               </Typography>
             )}
             {!templatesLoading &&
@@ -692,7 +780,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
             {!loading && !error && filteredBlocks.length === 0 && (
               <Typography
                 variant="body2"
-                sx={{ color: 'text.secondary', textAlign: 'center', mt: 4 }}
+                sx={{ color: "text.secondary", textAlign: "center", mt: 4 }}
               >
                 No blocks found matching your search.
               </Typography>
@@ -737,7 +825,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
           onClose={() => setSaveTemplateBlock(null)}
           onSaveSuccess={() => {
             setSaveTemplateBlock(null);
-            setToastMessage('Template saved');
+            setToastMessage("Template saved");
             setTimeout(() => setToastMessage(null), 3000);
           }}
         />
@@ -746,8 +834,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   );
 });
 
-BlockLibrary.displayName = 'BlockLibrary';
+BlockLibrary.displayName = "BlockLibrary";
 
 export default BlockLibrary;
 export { BlockLibraryCard, CATEGORIES, CATEGORY_COLOR };
-

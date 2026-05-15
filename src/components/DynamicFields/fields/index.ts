@@ -13,22 +13,22 @@
  * Added Select (2.4.1), Toggle (2.4.2), and RepeaterField (2.4.3-2.4.6).
  */
 
-import { registerFieldComponent, hasFieldComponent } from '../registry';
-import { FieldType } from '../types';
-import TextField from './TextField';
-import TextArea from './TextArea';
-import LinkField from './LinkField';
+import { registerFieldComponent, hasFieldComponent } from "../registry";
+import { FieldType } from "../types";
+import TextField from "./TextField";
+import TextArea from "./TextArea";
+import LinkField from "./LinkField";
 
 export { TextField };
 export { TextArea };
-export { default as NumberInput } from './NumberInput';
-export { TokenPicker } from './TokenPicker';
-export { ColorPicker } from './ColorPicker';
-export { default as ImageUpload } from './ImageUpload';
+export { default as NumberInput } from "./NumberInput";
+export { TokenPicker } from "./TokenPicker";
+export { ColorPicker } from "./ColorPicker";
+export { default as ImageUpload } from "./ImageUpload";
 export { LinkField };
-export { default as Select } from './Select';
-export { default as Toggle } from './Toggle';
-export { default as RepeaterField } from './RepeaterField';
+export { default as Select } from "./Select";
+export { default as Toggle } from "./Toggle";
+export { default as RepeaterField } from "./RepeaterField";
 
 // Register fallback mappings for backend field types that have no dedicated component.
 // EMAIL reuses TextField — email validation comes from API metadata, not the component.

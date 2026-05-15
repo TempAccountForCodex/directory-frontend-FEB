@@ -11,37 +11,47 @@
  * - Custom validator support
  * - Required field handling (top-level + validation object)
  */
-import { describe, it, expect } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useValidation } from '../useValidation';
+import { describe, it, expect } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { useValidation } from "../useValidation";
 
-import type { FieldDefinition } from '../../components/DynamicFields/types';
+import type { FieldDefinition } from "../../components/DynamicFields/types";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeField(overrides: Partial<FieldDefinition> & { name: string }): FieldDefinition {
+function makeField(
+  overrides: Partial<FieldDefinition> & { name: string },
+): FieldDefinition {
   return {
     label: overrides.name,
-    type: 'TEXT' as const,
+    type: "TEXT" as const,
     ...overrides,
   };
 }
 
 const FIELDS: FieldDefinition[] = [
-  makeField({ name: 'title', required: true, validation: { minLength: 3, maxLength: 50 } }),
-  makeField({ name: 'email', validation: { pattern: '^[^@]+@[^@]+$' } }),
-  makeField({ name: 'age', type: 'NUMBER' as const, validation: { min: 0, max: 150 } }),
-  makeField({ name: 'optional' }),
+  makeField({
+    name: "title",
+    required: true,
+    validation: { minLength: 3, maxLength: 50 },
+  }),
+  makeField({ name: "email", validation: { pattern: "^[^@]+@[^@]+$" } }),
+  makeField({
+    name: "age",
+    type: "NUMBER" as const,
+    validation: { min: 0, max: 150 },
+  }),
+  makeField({ name: "optional" }),
 ];
 
 // ---------------------------------------------------------------------------
 // Initial state
 // ---------------------------------------------------------------------------
 
-describe('useValidation', () => {
-  it('returns empty errors and no touched fields on mount', () => {
+describe("useValidation", () => {
+  it("returns empty errors and no touched fields on mount", () => {
     const { result } = renderHook(() => useValidation(FIELDS, {}));
 
     expect(result.current.errors).toEqual({});
@@ -53,118 +63,131 @@ describe('useValidation', () => {
   // validateField — single field
   // -------------------------------------------------------------------------
 
-  describe('validateField', () => {
-    it('validates a required field and returns errors', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { title: '' }));
+  describe("validateField", () => {
+    it("validates a required field and returns errors", () => {
+      const { result } = renderHook(() => useValidation(FIELDS, { title: "" }));
 
       let fieldErrors: string[];
       act(() => {
-        fieldErrors = result.current.validateField('title');
+        fieldErrors = result.current.validateField("title");
       });
 
-      expect(fieldErrors!).toContain('Required');
-      expect(result.current.errors.title).toContain('Required');
+      expect(fieldErrors!).toContain("Required");
+      expect(result.current.errors.title).toContain("Required");
       expect(result.current.hasErrors).toBe(true);
     });
 
-    it('validates minLength rule', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { title: 'ab' }));
+    it("validates minLength rule", () => {
+      const { result } = renderHook(() =>
+        useValidation(FIELDS, { title: "ab" }),
+      );
 
       act(() => {
-        result.current.validateField('title');
+        result.current.validateField("title");
       });
 
-      expect(result.current.errors.title).toContain('Min 3 characters');
+      expect(result.current.errors.title).toContain("Min 3 characters");
     });
 
-    it('validates maxLength rule', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { title: 'a'.repeat(51) }));
+    it("validates maxLength rule", () => {
+      const { result } = renderHook(() =>
+        useValidation(FIELDS, { title: "a".repeat(51) }),
+      );
 
       act(() => {
-        result.current.validateField('title');
+        result.current.validateField("title");
       });
 
-      expect(result.current.errors.title).toContain('Max 50 characters');
+      expect(result.current.errors.title).toContain("Max 50 characters");
     });
 
-    it('validates pattern (string → RegExp conversion)', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { email: 'not-an-email' }));
+    it("validates pattern (string → RegExp conversion)", () => {
+      const { result } = renderHook(() =>
+        useValidation(FIELDS, { email: "not-an-email" }),
+      );
 
       act(() => {
-        result.current.validateField('email');
+        result.current.validateField("email");
       });
 
-      expect(result.current.errors.email).toContain('Invalid format');
+      expect(result.current.errors.email).toContain("Invalid format");
     });
 
-    it('passes pattern validation for a valid value', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { email: 'user@example.com' }));
+    it("passes pattern validation for a valid value", () => {
+      const { result } = renderHook(() =>
+        useValidation(FIELDS, { email: "user@example.com" }),
+      );
 
       act(() => {
-        result.current.validateField('email');
+        result.current.validateField("email");
       });
 
       expect(result.current.errors.email).toBeUndefined();
     });
 
-    it('validates min/max numeric rules', () => {
+    it("validates min/max numeric rules", () => {
       const { result } = renderHook(() => useValidation(FIELDS, { age: -5 }));
 
       act(() => {
-        result.current.validateField('age');
+        result.current.validateField("age");
       });
 
-      expect(result.current.errors.age).toContain('Must be at least 0');
+      expect(result.current.errors.age).toContain("Must be at least 0");
     });
 
-    it('validates max numeric rule', () => {
+    it("validates max numeric rule", () => {
       const { result } = renderHook(() => useValidation(FIELDS, { age: 200 }));
 
       act(() => {
-        result.current.validateField('age');
+        result.current.validateField("age");
       });
 
-      expect(result.current.errors.age).toContain('Must be at most 150');
+      expect(result.current.errors.age).toContain("Must be at most 150");
     });
 
-    it('returns empty array for a field with no errors', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { title: 'Valid Title' }));
+    it("returns empty array for a field with no errors", () => {
+      const { result } = renderHook(() =>
+        useValidation(FIELDS, { title: "Valid Title" }),
+      );
 
       let fieldErrors: string[];
       act(() => {
-        fieldErrors = result.current.validateField('title');
+        fieldErrors = result.current.validateField("title");
       });
 
       expect(fieldErrors!).toEqual([]);
       expect(result.current.errors.title).toBeUndefined();
     });
 
-    it('returns empty array for unknown field names', () => {
+    it("returns empty array for unknown field names", () => {
       const { result } = renderHook(() => useValidation(FIELDS, {}));
 
       let fieldErrors: string[];
       act(() => {
-        fieldErrors = result.current.validateField('nonexistent');
+        fieldErrors = result.current.validateField("nonexistent");
       });
 
       expect(fieldErrors!).toEqual([]);
     });
 
-    it('clears previous errors when field becomes valid', () => {
-      const { result, rerender } = renderHook(({ values }) => useValidation(FIELDS, values), {
-        initialProps: { values: { title: '' } as Record<string, unknown> },
-      });
+    it("clears previous errors when field becomes valid", () => {
+      const { result, rerender } = renderHook(
+        ({ values }) => useValidation(FIELDS, values),
+        {
+          initialProps: { values: { title: "" } as Record<string, unknown> },
+        },
+      );
 
       act(() => {
-        result.current.validateField('title');
+        result.current.validateField("title");
       });
       expect(result.current.hasErrors).toBe(true);
 
       // Update values and re-validate
-      rerender({ values: { title: 'Valid Title' } });
+      rerender({ values: { title: "Valid Title" } });
 
       act(() => {
-        result.current.validateField('title');
+        result.current.validateField("title");
       });
       expect(result.current.errors.title).toBeUndefined();
       expect(result.current.hasErrors).toBe(false);
@@ -175,15 +198,15 @@ describe('useValidation', () => {
   // validateForm — all fields
   // -------------------------------------------------------------------------
 
-  describe('validateForm', () => {
-    it('validates all fields and returns true when valid', () => {
+  describe("validateForm", () => {
+    it("validates all fields and returns true when valid", () => {
       const { result } = renderHook(() =>
         useValidation(FIELDS, {
-          title: 'Hello World',
-          email: 'user@example.com',
+          title: "Hello World",
+          email: "user@example.com",
           age: 25,
-          optional: '',
-        })
+          optional: "",
+        }),
       );
 
       let isValid: boolean;
@@ -196,9 +219,9 @@ describe('useValidation', () => {
       expect(result.current.errors).toEqual({});
     });
 
-    it('validates all fields and returns false when invalid', () => {
+    it("validates all fields and returns false when invalid", () => {
       const { result } = renderHook(() =>
-        useValidation(FIELDS, { title: '', email: 'bad', age: -1 })
+        useValidation(FIELDS, { title: "", email: "bad", age: -1 }),
       );
 
       let isValid: boolean;
@@ -213,7 +236,7 @@ describe('useValidation', () => {
       expect(result.current.errors.age).toBeDefined();
     });
 
-    it('marks all fields as touched after validateForm', () => {
+    it("marks all fields as touched after validateForm", () => {
       const { result } = renderHook(() => useValidation(FIELDS, {}));
 
       act(() => {
@@ -231,9 +254,11 @@ describe('useValidation', () => {
   // clearErrors
   // -------------------------------------------------------------------------
 
-  describe('clearErrors', () => {
-    it('clears errors for a single field', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { title: '', email: 'bad' }));
+  describe("clearErrors", () => {
+    it("clears errors for a single field", () => {
+      const { result } = renderHook(() =>
+        useValidation(FIELDS, { title: "", email: "bad" }),
+      );
 
       act(() => {
         result.current.validateForm();
@@ -242,15 +267,17 @@ describe('useValidation', () => {
       expect(result.current.errors.email).toBeDefined();
 
       act(() => {
-        result.current.clearErrors('title');
+        result.current.clearErrors("title");
       });
 
       expect(result.current.errors.title).toBeUndefined();
       expect(result.current.errors.email).toBeDefined();
     });
 
-    it('clears all errors when called without arguments', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { title: '', email: 'bad' }));
+    it("clears all errors when called without arguments", () => {
+      const { result } = renderHook(() =>
+        useValidation(FIELDS, { title: "", email: "bad" }),
+      );
 
       act(() => {
         result.current.validateForm();
@@ -265,11 +292,11 @@ describe('useValidation', () => {
       expect(result.current.hasErrors).toBe(false);
     });
 
-    it('is a no-op when clearing a field with no errors', () => {
+    it("is a no-op when clearing a field with no errors", () => {
       const { result } = renderHook(() => useValidation(FIELDS, {}));
 
       act(() => {
-        result.current.clearErrors('title');
+        result.current.clearErrors("title");
       });
 
       expect(result.current.errors).toEqual({});
@@ -280,42 +307,45 @@ describe('useValidation', () => {
   // markFieldTouched / touchedFields
   // -------------------------------------------------------------------------
 
-  describe('markFieldTouched', () => {
-    it('adds a field name to touchedFields', () => {
+  describe("markFieldTouched", () => {
+    it("adds a field name to touchedFields", () => {
       const { result } = renderHook(() => useValidation(FIELDS, {}));
 
       act(() => {
-        result.current.markFieldTouched('title');
+        result.current.markFieldTouched("title");
       });
 
-      expect(result.current.touchedFields.has('title')).toBe(true);
+      expect(result.current.touchedFields.has("title")).toBe(true);
       expect(result.current.touchedFields.size).toBe(1);
     });
 
-    it('handles multiple touches without duplicates', () => {
+    it("handles multiple touches without duplicates", () => {
       const { result } = renderHook(() => useValidation(FIELDS, {}));
 
       act(() => {
-        result.current.markFieldTouched('title');
-        result.current.markFieldTouched('title');
-        result.current.markFieldTouched('email');
+        result.current.markFieldTouched("title");
+        result.current.markFieldTouched("title");
+        result.current.markFieldTouched("email");
       });
 
       expect(result.current.touchedFields.size).toBe(2);
     });
 
-    it('preserves touched state across re-renders', () => {
-      const { result, rerender } = renderHook(({ values }) => useValidation(FIELDS, values), {
-        initialProps: { values: { title: 'a' } as Record<string, unknown> },
-      });
+    it("preserves touched state across re-renders", () => {
+      const { result, rerender } = renderHook(
+        ({ values }) => useValidation(FIELDS, values),
+        {
+          initialProps: { values: { title: "a" } as Record<string, unknown> },
+        },
+      );
 
       act(() => {
-        result.current.markFieldTouched('title');
+        result.current.markFieldTouched("title");
       });
 
-      rerender({ values: { title: 'ab' } });
+      rerender({ values: { title: "ab" } });
 
-      expect(result.current.touchedFields.has('title')).toBe(true);
+      expect(result.current.touchedFields.has("title")).toBe(true);
     });
   });
 
@@ -323,27 +353,29 @@ describe('useValidation', () => {
   // hasErrors
   // -------------------------------------------------------------------------
 
-  describe('hasErrors', () => {
-    it('is false when there are no errors', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { title: 'Valid' }));
+  describe("hasErrors", () => {
+    it("is false when there are no errors", () => {
+      const { result } = renderHook(() =>
+        useValidation(FIELDS, { title: "Valid" }),
+      );
       expect(result.current.hasErrors).toBe(false);
     });
 
-    it('is true when there are errors', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { title: '' }));
+    it("is true when there are errors", () => {
+      const { result } = renderHook(() => useValidation(FIELDS, { title: "" }));
 
       act(() => {
-        result.current.validateField('title');
+        result.current.validateField("title");
       });
 
       expect(result.current.hasErrors).toBe(true);
     });
 
-    it('becomes false after clearing all errors', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { title: '' }));
+    it("becomes false after clearing all errors", () => {
+      const { result } = renderHook(() => useValidation(FIELDS, { title: "" }));
 
       act(() => {
-        result.current.validateField('title');
+        result.current.validateField("title");
       });
       expect(result.current.hasErrors).toBe(true);
 
@@ -358,48 +390,64 @@ describe('useValidation', () => {
   // Pattern string → RegExp conversion edge cases
   // -------------------------------------------------------------------------
 
-  describe('pattern conversion', () => {
-    it('converts a valid pattern string to RegExp', () => {
-      const fields = [makeField({ name: 'zip', validation: { pattern: '^\\d{5}$' } })];
-      const { result } = renderHook(() => useValidation(fields, { zip: '12345' }));
+  describe("pattern conversion", () => {
+    it("converts a valid pattern string to RegExp", () => {
+      const fields = [
+        makeField({ name: "zip", validation: { pattern: "^\\d{5}$" } }),
+      ];
+      const { result } = renderHook(() =>
+        useValidation(fields, { zip: "12345" }),
+      );
 
       act(() => {
-        result.current.validateField('zip');
+        result.current.validateField("zip");
       });
 
       expect(result.current.errors.zip).toBeUndefined();
     });
 
-    it('rejects values that do not match the pattern', () => {
-      const fields = [makeField({ name: 'zip', validation: { pattern: '^\\d{5}$' } })];
-      const { result } = renderHook(() => useValidation(fields, { zip: 'abcde' }));
+    it("rejects values that do not match the pattern", () => {
+      const fields = [
+        makeField({ name: "zip", validation: { pattern: "^\\d{5}$" } }),
+      ];
+      const { result } = renderHook(() =>
+        useValidation(fields, { zip: "abcde" }),
+      );
 
       act(() => {
-        result.current.validateField('zip');
+        result.current.validateField("zip");
       });
 
-      expect(result.current.errors.zip).toContain('Invalid format');
+      expect(result.current.errors.zip).toContain("Invalid format");
     });
 
-    it('silently ignores malformed pattern strings', () => {
-      const fields = [makeField({ name: 'test', validation: { pattern: '[invalid' } })];
-      const { result } = renderHook(() => useValidation(fields, { test: 'value' }));
+    it("silently ignores malformed pattern strings", () => {
+      const fields = [
+        makeField({ name: "test", validation: { pattern: "[invalid" } }),
+      ];
+      const { result } = renderHook(() =>
+        useValidation(fields, { test: "value" }),
+      );
 
       act(() => {
-        result.current.validateField('test');
+        result.current.validateField("test");
       });
 
       // Should not throw and should have no pattern errors
       expect(result.current.errors.test).toBeUndefined();
     });
 
-    it('rejects patterns exceeding MAX_PATTERN_LENGTH (ReDoS guard)', () => {
-      const longPattern = 'a'.repeat(501);
-      const fields = [makeField({ name: 'test', validation: { pattern: longPattern } })];
-      const { result } = renderHook(() => useValidation(fields, { test: 'value' }));
+    it("rejects patterns exceeding MAX_PATTERN_LENGTH (ReDoS guard)", () => {
+      const longPattern = "a".repeat(501);
+      const fields = [
+        makeField({ name: "test", validation: { pattern: longPattern } }),
+      ];
+      const { result } = renderHook(() =>
+        useValidation(fields, { test: "value" }),
+      );
 
       act(() => {
-        result.current.validateField('test');
+        result.current.validateField("test");
       });
 
       // Long pattern silently discarded — no pattern error
@@ -411,44 +459,46 @@ describe('useValidation', () => {
   // Custom validator
   // -------------------------------------------------------------------------
 
-  describe('custom validator', () => {
-    it('runs custom validation function', () => {
+  describe("custom validator", () => {
+    it("runs custom validation function", () => {
       const fields = [
         makeField({
-          name: 'password',
+          name: "password",
           validation: {
             custom: (v: unknown) =>
-              typeof v === 'string' && v.length < 8 ? 'Too short' : undefined,
-          },
-        }),
-      ];
-
-      const { result } = renderHook(() => useValidation(fields, { password: 'short' }));
-
-      act(() => {
-        result.current.validateField('password');
-      });
-
-      expect(result.current.errors.password).toContain('Too short');
-    });
-
-    it('passes custom validation when returning undefined', () => {
-      const fields = [
-        makeField({
-          name: 'password',
-          validation: {
-            custom: (v: unknown) =>
-              typeof v === 'string' && v.length < 8 ? 'Too short' : undefined,
+              typeof v === "string" && v.length < 8 ? "Too short" : undefined,
           },
         }),
       ];
 
       const { result } = renderHook(() =>
-        useValidation(fields, { password: 'long-enough-password' })
+        useValidation(fields, { password: "short" }),
       );
 
       act(() => {
-        result.current.validateField('password');
+        result.current.validateField("password");
+      });
+
+      expect(result.current.errors.password).toContain("Too short");
+    });
+
+    it("passes custom validation when returning undefined", () => {
+      const fields = [
+        makeField({
+          name: "password",
+          validation: {
+            custom: (v: unknown) =>
+              typeof v === "string" && v.length < 8 ? "Too short" : undefined,
+          },
+        }),
+      ];
+
+      const { result } = renderHook(() =>
+        useValidation(fields, { password: "long-enough-password" }),
+      );
+
+      act(() => {
+        result.current.validateField("password");
       });
 
       expect(result.current.errors.password).toBeUndefined();
@@ -459,12 +509,14 @@ describe('useValidation', () => {
   // Fields without validation
   // -------------------------------------------------------------------------
 
-  describe('fields without validation rules', () => {
-    it('optional fields with no validation always pass', () => {
-      const { result } = renderHook(() => useValidation(FIELDS, { optional: '' }));
+  describe("fields without validation rules", () => {
+    it("optional fields with no validation always pass", () => {
+      const { result } = renderHook(() =>
+        useValidation(FIELDS, { optional: "" }),
+      );
 
       act(() => {
-        result.current.validateField('optional');
+        result.current.validateField("optional");
       });
 
       expect(result.current.errors.optional).toBeUndefined();
@@ -475,16 +527,16 @@ describe('useValidation', () => {
   // Dynamic field list changes
   // -------------------------------------------------------------------------
 
-  describe('dynamic fields', () => {
-    it('validateForm only validates current fields after field list changes', () => {
+  describe("dynamic fields", () => {
+    it("validateForm only validates current fields after field list changes", () => {
       const { result, rerender } = renderHook(
         ({ fields, values }) => useValidation(fields, values),
         {
           initialProps: {
             fields: FIELDS,
-            values: { title: '' } as Record<string, unknown>,
+            values: { title: "" } as Record<string, unknown>,
           },
-        }
+        },
       );
 
       act(() => {
@@ -493,8 +545,8 @@ describe('useValidation', () => {
       expect(result.current.errors.title).toBeDefined();
 
       // Remove 'title' from fields and re-validate all
-      const newFields = FIELDS.filter((f) => f.name !== 'title');
-      rerender({ fields: newFields, values: { title: '' } });
+      const newFields = FIELDS.filter((f) => f.name !== "title");
+      rerender({ fields: newFields, values: { title: "" } });
 
       act(() => {
         result.current.validateForm();
@@ -503,24 +555,24 @@ describe('useValidation', () => {
       expect(result.current.errors.title).toBeUndefined();
     });
 
-    it('validateField returns empty for unknown field names', () => {
+    it("validateField returns empty for unknown field names", () => {
       const { result, rerender } = renderHook(
         ({ fields, values }) => useValidation(fields, values),
         {
           initialProps: {
             fields: FIELDS,
-            values: { title: '' } as Record<string, unknown>,
+            values: { title: "" } as Record<string, unknown>,
           },
-        }
+        },
       );
 
       // Remove 'title' from fields
-      const newFields = FIELDS.filter((f) => f.name !== 'title');
-      rerender({ fields: newFields, values: { title: '' } });
+      const newFields = FIELDS.filter((f) => f.name !== "title");
+      rerender({ fields: newFields, values: { title: "" } });
 
       let fieldErrors: string[];
       act(() => {
-        fieldErrors = result.current.validateField('title');
+        fieldErrors = result.current.validateField("title");
       });
       expect(fieldErrors!).toEqual([]);
     });
@@ -530,18 +582,21 @@ describe('useValidation', () => {
   // Callback stability
   // -------------------------------------------------------------------------
 
-  describe('callback stability', () => {
-    it('returns stable callback references across re-renders', () => {
-      const { result, rerender } = renderHook(({ values }) => useValidation(FIELDS, values), {
-        initialProps: { values: { title: 'a' } as Record<string, unknown> },
-      });
+  describe("callback stability", () => {
+    it("returns stable callback references across re-renders", () => {
+      const { result, rerender } = renderHook(
+        ({ values }) => useValidation(FIELDS, values),
+        {
+          initialProps: { values: { title: "a" } as Record<string, unknown> },
+        },
+      );
 
       const firstValidateField = result.current.validateField;
       const firstValidateForm = result.current.validateForm;
       const firstClearErrors = result.current.clearErrors;
       const firstMarkTouched = result.current.markFieldTouched;
 
-      rerender({ values: { title: 'ab' } });
+      rerender({ values: { title: "ab" } });
 
       expect(result.current.validateField).toBe(firstValidateField);
       expect(result.current.validateForm).toBe(firstValidateForm);

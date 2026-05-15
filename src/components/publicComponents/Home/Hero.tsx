@@ -1,57 +1,59 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 
-const Gardening = '/assets/publicAssets/videos/Home/Gardening.mp4';
-const Consulting = '/assets/publicAssets/videos/Home/Consulting.mp4';
-const Education = '/assets/publicAssets/videos/Home/Education.mp4';
-const HeroMobile = '/assets/publicAssets/videos/Home/hero7.mp4';
-const Restaurant = '/assets/publicAssets/videos/Home/Restaurant.mp4';
-const Plumbing = '/assets/publicAssets/videos/Home/Plumbing.mp4';
-const TRANSPARENT_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
+const Gardening = "/assets/publicAssets/videos/Home/Gardening.mp4";
+const Consulting = "/assets/publicAssets/videos/Home/Consulting.mp4";
+const Education = "/assets/publicAssets/videos/Home/Education.mp4";
+const HeroMobile = "/assets/publicAssets/videos/Home/hero7.mp4";
+const Restaurant = "/assets/publicAssets/videos/Home/Restaurant.mp4";
+const Plumbing = "/assets/publicAssets/videos/Home/Plumbing.mp4";
+const TRANSPARENT_PIXEL =
+  "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
 
 const SLIDES = [
   {
     id: 1,
-    title: 'Education',
-    image: '/assets/publicAssets/images/home/Education.webp',
+    title: "Education",
+    image: "/assets/publicAssets/images/home/Education.webp",
     video: Education,
   },
   {
     id: 2,
-    title: 'Gardening',
-    image: '/assets/publicAssets/images/home/Gardening.webp',
+    title: "Gardening",
+    image: "/assets/publicAssets/images/home/Gardening.webp",
     video: Gardening,
   },
   {
     id: 3,
-    title: 'Consulting',
-    image: '/assets/publicAssets/images/home/Consulting.webp',
+    title: "Consulting",
+    image: "/assets/publicAssets/images/home/Consulting.webp",
     video: Consulting,
   },
   {
     id: 4,
-    title: 'Restaurant',
-    image: '/assets/publicAssets/images/home/Restaurant.webp',
+    title: "Restaurant",
+    image: "/assets/publicAssets/images/home/Restaurant.webp",
     video: Restaurant,
   },
   {
     id: 5,
-    title: 'Plumbing',
-    image: '/assets/publicAssets/images/home/Plumbing.webp',
+    title: "Plumbing",
+    image: "/assets/publicAssets/images/home/Plumbing.webp",
     video: Plumbing,
   },
 ];
 
-const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+const clamp = (v: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, v));
 
 function styleFor(offset: number, isMobile: boolean): React.CSSProperties {
   if (offset === 0) {
     return {
-      transform: 'translateX(-50%) translateZ(0) scale(1)',
+      transform: "translateX(-50%) translateZ(0) scale(1)",
       zIndex: 5,
       opacity: 1,
-      cursor: 'pointer',
+      cursor: "pointer",
     };
   }
 
@@ -66,8 +68,8 @@ function styleFor(offset: number, isMobile: boolean): React.CSSProperties {
     transform: `translateX(calc(-50% + ${tx}%)) translateZ(${tz}px) rotateY(${ry}deg) scale(${sc})`,
     zIndex: 5 - depth,
     opacity: depth === 2 ? 0.55 : 0.8,
-    filter: 'brightness(0.75)',
-    cursor: 'pointer',
+    filter: "brightness(0.75)",
+    cursor: "pointer",
   };
 }
 
@@ -80,20 +82,23 @@ export default function HeroDepthCarousel() {
   React.useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 900);
     onResize();
-    window.addEventListener('resize', onResize, { passive: true });
-    return () => window.removeEventListener('resize', onResize);
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   React.useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setPrefersReducedMotion(mq.matches);
     update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
   }, []);
 
   React.useEffect(() => {
-    const id = setInterval(() => setIndex((i) => (i + 1) % SLIDES.length), 6000);
+    const id = setInterval(
+      () => setIndex((i) => (i + 1) % SLIDES.length),
+      6000,
+    );
     return () => clearInterval(id);
   }, []);
 
@@ -118,10 +123,10 @@ export default function HeroDepthCarousel() {
   return (
     <section
       style={{
-        position: 'relative',
-        minHeight: 'auto',
-        overflow: 'hidden',
-        backgroundColor: '#0a0a0a',
+        position: "relative",
+        minHeight: "auto",
+        overflow: "hidden",
+        backgroundColor: "#0a0a0a",
         paddingBottom: 40,
       }}
     >
@@ -134,11 +139,11 @@ export default function HeroDepthCarousel() {
           preload="metadata"
           poster={SLIDES[0].image}
           style={{
-            position: 'absolute',
+            position: "absolute",
             inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
             zIndex: 0,
             opacity: 0.85,
           }}
@@ -149,29 +154,30 @@ export default function HeroDepthCarousel() {
 
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           inset: 0,
-          background: 'linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0.3))',
+          background: "linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0.3))",
         }}
       />
 
       <div
         style={{
-          position: 'relative',
+          position: "relative",
           zIndex: 2,
           maxWidth: 1100,
-          margin: '0 auto',
-          textAlign: 'center',
-          padding: '140px 16px 0',
+          margin: "0 auto",
+          textAlign: "center",
+          padding: "140px 16px 0",
         }}
       >
         <p
           style={{
-            color: '#fff',
-            letterSpacing: '0.18em',
+            color: "#fff",
+            letterSpacing: "0.18em",
             fontWeight: 600,
             opacity: 0.9,
-            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             margin: 0,
           }}
         >
@@ -180,31 +186,33 @@ export default function HeroDepthCarousel() {
 
         <h1
           style={{
-            fontSize: 'clamp(2rem, 7vw, 4.1rem)',
+            fontSize: "clamp(2rem, 7vw, 4.1rem)",
             fontWeight: 500,
             lineHeight: 1.15,
-            color: '#fff',
+            color: "#fff",
             maxWidth: 900,
-            margin: '24px auto 0',
-            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            margin: "24px auto 0",
+            fontFamily:
+              "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          Create a <strong>Free</strong> Landing Page for Your Business Instantly.
+          Create a <strong>Free</strong> Landing Page for Your Business
+          Instantly.
         </h1>
 
         <button
           type="button"
           style={{
             marginTop: 24,
-            border: 'none',
+            border: "none",
             borderRadius: 999,
-            padding: '14px 34px',
-            backgroundColor: '#fff',
-            color: '#000',
+            padding: "14px 34px",
+            backgroundColor: "#fff",
+            color: "#000",
             fontWeight: 700,
-            cursor: 'pointer',
+            cursor: "pointer",
             fontSize: 16,
-            boxShadow: '0 12px 40px rgba(0,0,0,0.45)',
+            boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
           }}
         >
           Sign Up to Build <span aria-hidden>→</span>
@@ -213,19 +221,19 @@ export default function HeroDepthCarousel() {
 
       <div
         style={{
-          position: 'relative',
+          position: "relative",
           zIndex: 2,
           maxWidth: 1400,
-          margin: '56px auto 0',
-          padding: '0 16px',
+          margin: "56px auto 0",
+          padding: "0 16px",
         }}
       >
         <div
           style={{
-            position: 'relative',
+            position: "relative",
             perspective: 1600,
             height: isMobile ? 300 : 520,
-            overflow: 'visible',
+            overflow: "visible",
           }}
         >
           <button
@@ -233,18 +241,18 @@ export default function HeroDepthCarousel() {
             onClick={prev}
             aria-label="Previous slide"
             style={{
-              position: 'absolute',
+              position: "absolute",
               left: 10,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: '#fff',
-              background: 'rgba(0,0,0,.5)',
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#fff",
+              background: "rgba(0,0,0,.5)",
               zIndex: 10,
-              border: 'none',
+              border: "none",
               borderRadius: 999,
               width: 40,
               height: 40,
-              cursor: 'pointer',
+              cursor: "pointer",
             }}
           >
             ‹
@@ -255,18 +263,18 @@ export default function HeroDepthCarousel() {
             onClick={next}
             aria-label="Next slide"
             style={{
-              position: 'absolute',
+              position: "absolute",
               right: 10,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: '#fff',
-              background: 'rgba(0,0,0,.5)',
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#fff",
+              background: "rgba(0,0,0,.5)",
               zIndex: 10,
-              border: 'none',
+              border: "none",
               borderRadius: 999,
               width: 40,
               height: 40,
-              cursor: 'pointer',
+              cursor: "pointer",
             }}
           >
             ›
@@ -284,36 +292,37 @@ export default function HeroDepthCarousel() {
                 key={it.id}
                 onClick={() => handleCardClick(i, off)}
                 style={{
-                  position: 'absolute',
+                  position: "absolute",
                   top: 0,
-                  left: '50%',
-                  transformStyle: 'preserve-3d',
+                  left: "50%",
+                  transformStyle: "preserve-3d",
                   width: isMobile ? 320 : 740,
-                  maxWidth: '88vw',
+                  maxWidth: "88vw",
                   height: isMobile ? 300 : 520,
                   borderRadius: 24,
-                  overflow: 'hidden',
-                  transition: 'transform 600ms cubic-bezier(.22,.61,.36,1), opacity 400ms',
-                  boxShadow: '0 30px 70px rgba(0,0,0,.6)',
-                  background: '#0e0e0e',
-                  outline: '1px solid rgba(255,255,255,.05)',
+                  overflow: "hidden",
+                  transition:
+                    "transform 600ms cubic-bezier(.22,.61,.36,1), opacity 400ms",
+                  boxShadow: "0 30px 70px rgba(0,0,0,.6)",
+                  background: "#0e0e0e",
+                  outline: "1px solid rgba(255,255,255,.05)",
                   ...styleFor(off, isMobile),
                 }}
               >
                 <img
                   src={shouldLoadImage ? it.image : TRANSPARENT_PIXEL}
                   alt={it.title}
-                  loading={off === 0 ? 'eager' : 'lazy'}
+                  loading={off === 0 ? "eager" : "lazy"}
                   decoding="async"
-                  fetchPriority={off === 0 ? 'high' : 'low'}
+                  fetchPriority={off === 0 ? "high" : "low"}
                   width={isMobile ? 320 : 740}
                   height={isMobile ? 300 : 520}
                   style={{
-                    position: 'absolute',
+                    position: "absolute",
                     inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
                   }}
                 />
 
@@ -321,41 +330,42 @@ export default function HeroDepthCarousel() {
                 {isCenter && (
                   <div
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       bottom: 0,
                       left: 0,
                       right: 0,
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)',
-                      padding: '40px 24px 24px',
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      justifyContent: 'space-between',
+                      background:
+                        "linear-gradient(to top, rgba(0,0,0,0.85), transparent)",
+                      padding: "40px 24px 24px",
+                      display: "flex",
+                      alignItems: "flex-end",
+                      justifyContent: "space-between",
                     }}
                   >
                     <span
                       style={{
-                        color: '#fff',
+                        color: "#fff",
                         fontWeight: 700,
                         fontSize: 18,
-                        fontFamily: 'system-ui, sans-serif',
+                        fontFamily: "system-ui, sans-serif",
                       }}
                     >
                       {it.title}
                     </span>
                     <span
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
+                        display: "flex",
+                        alignItems: "center",
                         gap: 6,
-                        color: '#fff',
-                        background: 'rgba(255,255,255,0.2)',
-                        backdropFilter: 'blur(8px)',
+                        color: "#fff",
+                        background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(8px)",
                         borderRadius: 999,
-                        padding: '6px 14px',
+                        padding: "6px 14px",
                         fontSize: 13,
                         fontWeight: 600,
-                        fontFamily: 'system-ui, sans-serif',
-                        border: '1px solid rgba(255,255,255,0.3)',
+                        fontFamily: "system-ui, sans-serif",
+                        border: "1px solid rgba(255,255,255,0.3)",
                       }}
                     >
                       <OpenInFullIcon style={{ fontSize: 14 }} />
@@ -368,27 +378,31 @@ export default function HeroDepthCarousel() {
                 {!isCenter && (
                   <div
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       inset: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'rgba(0,0,0,0.3)',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "rgba(0,0,0,0.3)",
                       opacity: 0,
-                      transition: 'opacity 0.25s',
+                      transition: "opacity 0.25s",
                     }}
-                    onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.opacity = '1')}
-                    onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.opacity = '0')}
+                    onMouseEnter={(e) =>
+                      ((e.currentTarget as HTMLDivElement).style.opacity = "1")
+                    }
+                    onMouseLeave={(e) =>
+                      ((e.currentTarget as HTMLDivElement).style.opacity = "0")
+                    }
                   >
                     <span
                       style={{
-                        color: '#fff',
+                        color: "#fff",
                         fontWeight: 700,
                         fontSize: 15,
-                        fontFamily: 'system-ui, sans-serif',
-                        background: 'rgba(0,0,0,0.5)',
+                        fontFamily: "system-ui, sans-serif",
+                        background: "rgba(0,0,0,0.5)",
                         borderRadius: 999,
-                        padding: '8px 18px',
+                        padding: "8px 18px",
                       }}
                     >
                       {it.title}

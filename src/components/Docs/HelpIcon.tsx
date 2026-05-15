@@ -5,10 +5,10 @@
  * Purely presentational — no API calls.
  */
 
-import React, { memo, useCallback } from 'react';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-import { HelpCircle } from 'lucide-react';
+import React, { memo, useCallback } from "react";
+import Tooltip from "@mui/material/Tooltip";
+import IconButton from "@mui/material/IconButton";
+import { HelpCircle } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -27,34 +27,36 @@ interface HelpIconProps {
 // Component
 // ---------------------------------------------------------------------------
 
-const HelpIcon = memo<HelpIconProps>(({ slug, tooltip = 'Learn more', size = 16 }) => {
-  const handleClick = useCallback(() => {
-    window.open(`/docs/${slug}`, '_blank', 'noopener,noreferrer');
-  }, [slug]);
+const HelpIcon = memo<HelpIconProps>(
+  ({ slug, tooltip = "Learn more", size = 16 }) => {
+    const handleClick = useCallback(() => {
+      window.open(`/docs/${slug}`, "_blank", "noopener,noreferrer");
+    }, [slug]);
 
-  return (
-    <Tooltip title={tooltip}>
-      <IconButton
-        size="small"
-        aria-label={`Help: ${tooltip}`}
-        onClick={handleClick}
-        sx={{
-          p: 0.25,
-          color: 'text.secondary',
-          opacity: 0.7,
-          '&:hover': {
-            opacity: 1,
-            color: 'primary.main',
-            bgcolor: 'transparent',
-          },
-        }}
-      >
-        <HelpCircle size={size} />
-      </IconButton>
-    </Tooltip>
-  );
-});
+    return (
+      <Tooltip title={tooltip}>
+        <IconButton
+          size="small"
+          aria-label={`Help: ${tooltip}`}
+          onClick={handleClick}
+          sx={{
+            p: 0.25,
+            color: "text.secondary",
+            opacity: 0.7,
+            "&:hover": {
+              opacity: 1,
+              color: "primary.main",
+              bgcolor: "transparent",
+            },
+          }}
+        >
+          <HelpCircle size={size} />
+        </IconButton>
+      </Tooltip>
+    );
+  },
+);
 
-HelpIcon.displayName = 'HelpIcon';
+HelpIcon.displayName = "HelpIcon";
 
 export default HelpIcon;

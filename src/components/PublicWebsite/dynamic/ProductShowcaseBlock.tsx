@@ -18,7 +18,13 @@
  * Security: no dangerouslySetInnerHTML, URL validation
  */
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
 import {
   Alert,
   Box,
@@ -43,20 +49,20 @@ import {
   Tabs,
   TextField,
   Typography,
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import CloseIcon from '@mui/icons-material/Close';
-import Checkbox from '@mui/material/Checkbox';
-import { useNavigate } from 'react-router-dom';
-import useTenantUrl from '../../../hooks/useTenantUrl';
-import useDynamicBlockData from '../../../hooks/useDynamicBlockData';
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import CloseIcon from "@mui/icons-material/Close";
+import Checkbox from "@mui/material/Checkbox";
+import { useNavigate } from "react-router-dom";
+import useTenantUrl from "../../../hooks/useTenantUrl";
+import useDynamicBlockData from "../../../hooks/useDynamicBlockData";
 import ProductCard, {
   type Product,
   type ProductCardConfig,
   type ProductCardColors,
-} from './ProductCard';
+} from "./ProductCard";
 
 /* ===================== Types ===================== */
 
@@ -82,7 +88,7 @@ interface TemplateItem {
 
 interface ProductShowcaseContent {
   heading?: string;
-  layout?: 'grid' | 'list' | 'carousel';
+  layout?: "grid" | "list" | "carousel";
   columns?: number;
   productsPerPage?: number;
   showPrice?: boolean;
@@ -95,10 +101,10 @@ interface ProductShowcaseContent {
   showQuickView?: boolean;
   showVariantSelector?: boolean;
   showCategoryFilter?: boolean;
-  categoryFilterStyle?: 'chips' | 'tabs' | 'dropdown';
+  categoryFilterStyle?: "chips" | "tabs" | "dropdown";
   allCategoryLabel?: string;
   hoverOverlay?: boolean;
-  cardStyle?: 'default' | 'minimal' | 'elevated';
+  cardStyle?: "default" | "minimal" | "elevated";
   categoryFilter?: string;
   priceMin?: number;
   priceMax?: number;
@@ -136,45 +142,64 @@ interface ProductShowcaseBlockProps {
 const DEBOUNCE_MS = 300;
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest First' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
-  { value: 'name', label: 'Name A-Z' },
+  { value: "newest", label: "Newest First" },
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
+  { value: "name", label: "Name A-Z" },
 ];
 
-const STOCK_STATUS_OPTIONS: Array<{ value: Product['stockStatus']; label: string }> = [
-  { value: 'in_stock', label: 'In Stock' },
-  { value: 'out_of_stock', label: 'Out of Stock' },
-  { value: 'pre_order', label: 'Pre-order' },
+const STOCK_STATUS_OPTIONS: Array<{
+  value: Product["stockStatus"];
+  label: string;
+}> = [
+  { value: "in_stock", label: "In Stock" },
+  { value: "out_of_stock", label: "Out of Stock" },
+  { value: "pre_order", label: "Pre-order" },
 ];
 
 /* ===================== Skeleton ===================== */
 
-const ProductShowcaseSkeleton: React.FC<{ columns: number }> = React.memo(({ columns }) => {
-  const colWidth = `repeat(${Math.min(columns, 4)}, 1fr)`;
-  return (
-    <Container sx={{ py: 6 }}>
-      <Skeleton variant="text" sx={{ fontSize: '2rem', mb: 4, width: '40%', mx: 'auto' }} />
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: colWidth },
-          gap: 3,
-        }}
-      >
-        {Array.from({ length: Math.min(columns * 2, 8) }).map((_, i) => (
-          <Box key={i}>
-            <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 1, mb: 1 }} />
-            <Skeleton variant="text" sx={{ fontSize: '1rem', mb: 0.5 }} />
-            <Skeleton variant="text" sx={{ fontSize: '0.875rem', width: '60%' }} />
-          </Box>
-        ))}
-      </Box>
-    </Container>
-  );
-});
+const ProductShowcaseSkeleton: React.FC<{ columns: number }> = React.memo(
+  ({ columns }) => {
+    const colWidth = `repeat(${Math.min(columns, 4)}, 1fr)`;
+    return (
+      <Container sx={{ py: 6 }}>
+        <Skeleton
+          variant="text"
+          sx={{ fontSize: "2rem", mb: 4, width: "40%", mx: "auto" }}
+        />
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: colWidth,
+            },
+            gap: 3,
+          }}
+        >
+          {Array.from({ length: Math.min(columns * 2, 8) }).map((_, i) => (
+            <Box key={i}>
+              <Skeleton
+                variant="rectangular"
+                height={160}
+                sx={{ borderRadius: 1, mb: 1 }}
+              />
+              <Skeleton variant="text" sx={{ fontSize: "1rem", mb: 0.5 }} />
+              <Skeleton
+                variant="text"
+                sx={{ fontSize: "0.875rem", width: "60%" }}
+              />
+            </Box>
+          ))}
+        </Box>
+      </Container>
+    );
+  },
+);
 
-ProductShowcaseSkeleton.displayName = 'ProductShowcaseSkeleton';
+ProductShowcaseSkeleton.displayName = "ProductShowcaseSkeleton";
 
 /* ===================== Quick View Dialog ===================== */
 
@@ -190,18 +215,30 @@ interface QuickViewDialogProps {
 }
 
 const QuickViewDialog: React.FC<QuickViewDialogProps> = React.memo(
-  ({ product, open, onClose, primaryColor, headingColor, bodyColor, ctaText, onCtaClick }) => {
+  ({
+    product,
+    open,
+    onClose,
+    primaryColor,
+    headingColor,
+    bodyColor,
+    ctaText,
+    onCtaClick,
+  }) => {
     if (!product) return null;
 
-    const imageUrl = product.imageUrls?.[0]?.trim().toLowerCase().startsWith('javascript:')
-      ? ''
-      : (product.imageUrls?.[0] ?? '');
+    const imageUrl = product.imageUrls?.[0]
+      ?.trim()
+      .toLowerCase()
+      .startsWith("javascript:")
+      ? ""
+      : (product.imageUrls?.[0] ?? "");
 
     const formattedPrice = (() => {
       try {
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: product.currency || 'USD',
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: product.currency || "USD",
         }).format(product.priceCents / 100);
       } catch {
         return `$${(product.priceCents / 100).toFixed(2)}`;
@@ -218,12 +255,24 @@ const QuickViewDialog: React.FC<QuickViewDialogProps> = React.memo(
       >
         <DialogTitle
           id="quick-view-title"
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
         >
-          <Typography variant="h6" component="span" sx={{ color: headingColor, fontWeight: 700 }}>
+          <Typography
+            variant="h6"
+            component="span"
+            sx={{ color: headingColor, fontWeight: 700 }}
+          >
             {product.name}
           </Typography>
-          <IconButton onClick={onClose} aria-label="Close quick view" size="small">
+          <IconButton
+            onClick={onClose}
+            aria-label="Close quick view"
+            size="small"
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -236,12 +285,12 @@ const QuickViewDialog: React.FC<QuickViewDialogProps> = React.memo(
               alt={product.name}
               loading="lazy"
               sx={{
-                width: '100%',
+                width: "100%",
                 maxHeight: 320,
-                objectFit: 'contain',
+                objectFit: "contain",
                 borderRadius: 1,
                 mb: 2,
-                bgcolor: 'grey.50',
+                bgcolor: "grey.50",
               }}
             />
           )}
@@ -259,22 +308,22 @@ const QuickViewDialog: React.FC<QuickViewDialogProps> = React.memo(
           {product.stockStatus && (
             <Chip
               label={
-                product.stockStatus === 'in_stock'
-                  ? 'In Stock'
-                  : product.stockStatus === 'out_of_stock'
-                    ? 'Out of Stock'
-                    : product.stockStatus === 'pre_order'
-                      ? 'Pre-order'
-                      : 'Discontinued'
+                product.stockStatus === "in_stock"
+                  ? "In Stock"
+                  : product.stockStatus === "out_of_stock"
+                    ? "Out of Stock"
+                    : product.stockStatus === "pre_order"
+                      ? "Pre-order"
+                      : "Discontinued"
               }
               color={
-                product.stockStatus === 'in_stock'
-                  ? 'success'
-                  : product.stockStatus === 'out_of_stock'
-                    ? 'error'
-                    : product.stockStatus === 'pre_order'
-                      ? 'warning'
-                      : 'default'
+                product.stockStatus === "in_stock"
+                  ? "success"
+                  : product.stockStatus === "out_of_stock"
+                    ? "error"
+                    : product.stockStatus === "pre_order"
+                      ? "warning"
+                      : "default"
               }
               variant="outlined"
               size="small"
@@ -284,14 +333,20 @@ const QuickViewDialog: React.FC<QuickViewDialogProps> = React.memo(
 
           {/* Full description */}
           {product.description && (
-            <Typography variant="body1" sx={{ color: bodyColor, lineHeight: 1.7, mb: 2 }}>
+            <Typography
+              variant="body1"
+              sx={{ color: bodyColor, lineHeight: 1.7, mb: 2 }}
+            >
               {product.description}
             </Typography>
           )}
 
           {/* Category */}
           {product.category && (
-            <Typography variant="caption" sx={{ color: bodyColor, display: 'block', mb: 2 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: bodyColor, display: "block", mb: 2 }}
+            >
               Category: {product.category}
             </Typography>
           )}
@@ -305,9 +360,9 @@ const QuickViewDialog: React.FC<QuickViewDialogProps> = React.memo(
               aria-label={`${ctaText}: ${product.name}`}
               sx={{
                 bgcolor: primaryColor,
-                color: 'white',
+                color: "white",
                 fontWeight: 600,
-                '&:hover': { bgcolor: primaryColor, opacity: 0.9 },
+                "&:hover": { bgcolor: primaryColor, opacity: 0.9 },
               }}
             >
               {ctaText}
@@ -316,25 +371,25 @@ const QuickViewDialog: React.FC<QuickViewDialogProps> = React.memo(
         </DialogContent>
       </Dialog>
     );
-  }
+  },
 );
 
-QuickViewDialog.displayName = 'QuickViewDialog';
+QuickViewDialog.displayName = "QuickViewDialog";
 
 /* ===================== Main Component ===================== */
 
 const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
   block,
-  primaryColor = '#378C92',
-  headingColor = '#252525',
-  bodyColor = '#6A6F78',
+  primaryColor = "#378C92",
+  headingColor = "#252525",
+  bodyColor = "#6A6F78",
   onCtaClick,
 }) => {
   const { content } = block;
 
   const {
-    heading = 'Our Products',
-    layout = 'grid',
+    heading = "Our Products",
+    layout = "grid",
     columns = 4,
     productsPerPage = 12,
     showPrice = true,
@@ -347,15 +402,15 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
     showQuickView = true,
     showVariantSelector = false,
     showCategoryFilter = false,
-    categoryFilterStyle = 'chips',
-    allCategoryLabel = 'All',
+    categoryFilterStyle = "chips",
+    allCategoryLabel = "All",
     hoverOverlay = false,
-    cardStyle = 'default',
-    emptyMessage = 'No products available yet. Check back soon!',
-    ctaText = 'View Details',
-    ctaLink = '',
-    currency = 'USD',
-    sortBy: configSortBy = 'newest',
+    cardStyle = "default",
+    emptyMessage = "No products available yet. Check back soon!",
+    ctaText = "View Details",
+    ctaLink = "",
+    currency = "USD",
+    sortBy: configSortBy = "newest",
   } = content;
 
   /* --- Tenant-aware navigation --- */
@@ -363,28 +418,37 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
   const { buildUrl } = useTenantUrl();
 
   /* --- Local state --- */
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentSortBy, setCurrentSortBy] = useState(configSortBy);
   const [currentPage, setCurrentPage] = useState(1);
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
+    null,
+  );
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [stockFilter, setStockFilter] = useState<Product['stockStatus'][]>([]);
-  const [priceMinFilter, setPriceMinFilter] = useState<number>(content.priceMin ?? 0);
-  const [priceMaxFilter, setPriceMaxFilter] = useState<number>(content.priceMax ?? 0);
+  const [stockFilter, setStockFilter] = useState<Product["stockStatus"][]>([]);
+  const [priceMinFilter, setPriceMinFilter] = useState<number>(
+    content.priceMin ?? 0,
+  );
+  const [priceMaxFilter, setPriceMaxFilter] = useState<number>(
+    content.priceMax ?? 0,
+  );
 
   /* --- Debounce search --- */
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => {
-      setDebouncedSearch(value);
-      setCurrentPage(1);
-    }, DEBOUNCE_MS);
-  }, []);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearchQuery(value);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
+        setDebouncedSearch(value);
+        setCurrentPage(1);
+      }, DEBOUNCE_MS);
+    },
+    [],
+  );
 
   /* --- Cleanup debounce on unmount --- */
   useEffect(() => {
@@ -400,35 +464,45 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
       limit: String(productsPerPage),
       sortBy: currentSortBy,
     });
-    if (debouncedSearch) params.set('search', debouncedSearch);
-    if (content.categoryFilter) params.set('category', content.categoryFilter);
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (content.categoryFilter) params.set("category", content.categoryFilter);
     return `products?${params.toString()}`;
-  }, [currentPage, productsPerPage, currentSortBy, debouncedSearch, content.categoryFilter]);
+  }, [
+    currentPage,
+    productsPerPage,
+    currentSortBy,
+    debouncedSearch,
+    content.categoryFilter,
+  ]);
 
   /* --- Fetch data via useDynamicBlockData --- */
-  const { data, loading, error } = useDynamicBlockData(block.id, block.blockType, dataSource);
+  const { data, loading, error } = useDynamicBlockData(
+    block.id,
+    block.blockType,
+    dataSource,
+  );
 
   /* --- Normalize template items to Product format --- */
   const templateProducts: Product[] = useMemo(() => {
     if (!content.items || content.items.length === 0) return [];
     return content.items.map((item, idx) => ({
       id: `tpl-${idx}`,
-      name: item.name || 'Product',
-      slug: (item.name || 'product').toLowerCase().replace(/\s+/g, '-'),
+      name: item.name || "Product",
+      slug: (item.name || "product").toLowerCase().replace(/\s+/g, "-"),
       description: item.description || null,
       priceCents: item.price
-        ? Math.round(parseFloat(item.price.replace(/[^0-9.]/g, '')) * 100) || 0
+        ? Math.round(parseFloat(item.price.replace(/[^0-9.]/g, "")) * 100) || 0
         : 0,
       currency: currency,
-      status: 'active' as const,
-      stockStatus: 'in_stock' as const,
+      status: "active" as const,
+      stockStatus: "in_stock" as const,
       imageUrls: item.image ? [item.image] : null,
       category: item.category || null,
-      badgeText: item.badgeText || '',
-      badgeColor: item.badgeColor || '',
+      badgeText: item.badgeText || "",
+      badgeColor: item.badgeColor || "",
       variants: item.variants || [],
-      ctaText: item.ctaText || '',
-      ctaLink: item.ctaLink || '',
+      ctaText: item.ctaText || "",
+      ctaLink: item.ctaLink || "",
     }));
   }, [content.items, currency]);
 
@@ -449,7 +523,11 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
   /* --- Extract unique categories for filter bar --- */
   const categories: string[] = useMemo(() => {
     if (!showCategoryFilter) return [];
-    return [...new Set(allProducts.filter((p) => p.category).map((p) => p.category as string))];
+    return [
+      ...new Set(
+        allProducts.filter((p) => p.category).map((p) => p.category as string),
+      ),
+    ];
   }, [allProducts, showCategoryFilter]);
 
   /* --- Category filter handler --- */
@@ -463,7 +541,9 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
 
     // Category filter — items without category always show
     if (activeCategory) {
-      result = result.filter((p) => !p.category || p.category === activeCategory);
+      result = result.filter(
+        (p) => !p.category || p.category === activeCategory,
+      );
     }
 
     // Stock filter
@@ -501,7 +581,7 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
   /* --- Responsive grid columns --- */
   const mdCols = useMemo(
     () => Math.floor(12 / Math.min(columns, 6)) as 1 | 2 | 3 | 4 | 6 | 12,
-    [columns]
+    [columns],
   );
 
   /* --- Card config and colors --- */
@@ -515,7 +595,7 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
       ctaLink,
       showVariantSelector,
       hoverOverlay,
-      cardStyle: cardStyle as 'default' | 'minimal' | 'elevated',
+      cardStyle: cardStyle as "default" | "minimal" | "elevated",
     }),
     [
       showPrice,
@@ -527,12 +607,12 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
       showVariantSelector,
       hoverOverlay,
       cardStyle,
-    ]
+    ],
   );
 
   const cardColors: ProductCardColors = useMemo(
     () => ({ primaryColor, headingColor, bodyColor }),
-    [primaryColor, headingColor, bodyColor]
+    [primaryColor, headingColor, bodyColor],
   );
 
   /* --- Event handlers --- */
@@ -551,18 +631,18 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
       }
       // Build URL: replace {slug} pattern or navigate
       let url = ctaLink || `/products/${product.slug}`;
-      if (url.includes('{slug}')) {
-        url = url.replace('{slug}', product.slug);
+      if (url.includes("{slug}")) {
+        url = url.replace("{slug}", product.slug);
       }
       // Safety: reject javascript: protocol
-      if (url.trim().toLowerCase().startsWith('javascript:')) return;
-      if (url.startsWith('http://') || url.startsWith('https://')) {
+      if (url.trim().toLowerCase().startsWith("javascript:")) return;
+      if (url.startsWith("http://") || url.startsWith("https://")) {
         window.location.href = url;
       } else {
         navigate(buildUrl(url));
       }
     },
-    [onCtaClick, block.blockType, ctaText, ctaLink, navigate, buildUrl]
+    [onCtaClick, block.blockType, ctaText, ctaLink, navigate, buildUrl],
   );
 
   const handleSortChange = useCallback((e: { target: { value: string } }) => {
@@ -570,26 +650,34 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
     setCurrentPage(1);
   }, []);
 
-  const handlePageChange = useCallback((_: React.ChangeEvent<unknown>, page: number) => {
-    setCurrentPage(page);
-  }, []);
+  const handlePageChange = useCallback(
+    (_: React.ChangeEvent<unknown>, page: number) => {
+      setCurrentPage(page);
+    },
+    [],
+  );
 
-  const handleStockFilterChange = useCallback((status: Product['stockStatus']) => {
-    setStockFilter((prev) =>
-      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
-    );
-  }, []);
+  const handleStockFilterChange = useCallback(
+    (status: Product["stockStatus"]) => {
+      setStockFilter((prev) =>
+        prev.includes(status)
+          ? prev.filter((s) => s !== status)
+          : [...prev, status],
+      );
+    },
+    [],
+  );
 
   /* --- Carousel state --- */
   const carouselRef = useRef<HTMLDivElement>(null);
   const handleCarouselPrev = useCallback(() => {
     if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: -280, behavior: 'smooth' });
+      carouselRef.current.scrollBy({ left: -280, behavior: "smooth" });
     }
   }, []);
   const handleCarouselNext = useCallback(() => {
     if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: 280, behavior: 'smooth' });
+      carouselRef.current.scrollBy({ left: 280, behavior: "smooth" });
     }
   }, []);
 
@@ -612,13 +700,13 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
   return (
     <Box
       component="section"
-      aria-label={heading || 'Product Showcase'}
-      sx={{ py: 8, bgcolor: 'background.default' }}
+      aria-label={heading || "Product Showcase"}
+      sx={{ py: 8, bgcolor: "background.default" }}
     >
       <Container maxWidth="lg">
         {/* Header */}
         {heading && (
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ textAlign: "center", mb: 4 }}>
             <Typography
               variant="h3"
               component="h2"
@@ -634,12 +722,12 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
         {(showSearch || showSort) && (
           <Box
             sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
+              display: "flex",
+              flexWrap: "wrap",
               gap: 2,
               mb: 3,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             {showSearch && (
@@ -648,7 +736,7 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                inputProps={{ 'aria-label': 'Search products' }}
+                inputProps={{ "aria-label": "Search products" }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -681,14 +769,16 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
         {/* Category Filter Bar */}
         {showCategoryFilter && categories.length > 0 && (
           <Box
-            sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}
+            sx={{ display: "flex", justifyContent: "center", mb: 3 }}
             role="navigation"
             aria-label="Product category filter"
           >
-            {categoryFilterStyle === 'tabs' ? (
+            {categoryFilterStyle === "tabs" ? (
               <Tabs
                 value={activeCategory || false}
-                onChange={(_, val) => handleCategoryChange(val === false ? null : val)}
+                onChange={(_, val) =>
+                  handleCategoryChange(val === false ? null : val)
+                }
                 variant="scrollable"
                 scrollButtons="auto"
                 textColor="inherit"
@@ -700,7 +790,7 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                   value={false}
                   sx={{
                     minHeight: 40,
-                    textTransform: 'none',
+                    textTransform: "none",
                     fontWeight: !activeCategory ? 700 : 400,
                     color: !activeCategory ? primaryColor : bodyColor,
                   }}
@@ -712,17 +802,17 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                     value={cat}
                     sx={{
                       minHeight: 40,
-                      textTransform: 'none',
+                      textTransform: "none",
                       fontWeight: activeCategory === cat ? 700 : 400,
                       color: activeCategory === cat ? primaryColor : bodyColor,
                     }}
                   />
                 ))}
               </Tabs>
-            ) : categoryFilterStyle === 'dropdown' ? (
+            ) : categoryFilterStyle === "dropdown" ? (
               <FormControl size="small" sx={{ minWidth: 200 }}>
                 <Select
-                  value={activeCategory || ''}
+                  value={activeCategory || ""}
                   onChange={(e) => handleCategoryChange(e.target.value || null)}
                   displayEmpty
                   aria-label="Filter by category"
@@ -738,18 +828,24 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
               </FormControl>
             ) : (
               /* Chips style (default) */
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap justifyContent="center">
+              <Stack
+                direction="row"
+                spacing={1}
+                flexWrap="wrap"
+                useFlexGap
+                justifyContent="center"
+              >
                 <Chip
                   label={allCategoryLabel}
                   onClick={() => handleCategoryChange(null)}
-                  variant={!activeCategory ? 'filled' : 'outlined'}
+                  variant={!activeCategory ? "filled" : "outlined"}
                   sx={{
                     fontWeight: 600,
-                    bgcolor: !activeCategory ? primaryColor : 'transparent',
-                    color: !activeCategory ? '#fff' : bodyColor,
-                    borderColor: !activeCategory ? primaryColor : 'divider',
-                    '&:hover': {
-                      bgcolor: !activeCategory ? primaryColor : 'action.hover',
+                    bgcolor: !activeCategory ? primaryColor : "transparent",
+                    color: !activeCategory ? "#fff" : bodyColor,
+                    borderColor: !activeCategory ? primaryColor : "divider",
+                    "&:hover": {
+                      bgcolor: !activeCategory ? primaryColor : "action.hover",
                     },
                   }}
                 />
@@ -758,14 +854,19 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                     key={cat}
                     label={cat}
                     onClick={() => handleCategoryChange(cat)}
-                    variant={activeCategory === cat ? 'filled' : 'outlined'}
+                    variant={activeCategory === cat ? "filled" : "outlined"}
                     sx={{
                       fontWeight: 600,
-                      bgcolor: activeCategory === cat ? primaryColor : 'transparent',
-                      color: activeCategory === cat ? '#fff' : bodyColor,
-                      borderColor: activeCategory === cat ? primaryColor : 'divider',
-                      '&:hover': {
-                        bgcolor: activeCategory === cat ? primaryColor : 'action.hover',
+                      bgcolor:
+                        activeCategory === cat ? primaryColor : "transparent",
+                      color: activeCategory === cat ? "#fff" : bodyColor,
+                      borderColor:
+                        activeCategory === cat ? primaryColor : "divider",
+                      "&:hover": {
+                        bgcolor:
+                          activeCategory === cat
+                            ? primaryColor
+                            : "action.hover",
                       },
                     }}
                   />
@@ -778,9 +879,9 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
         {/* Main layout: optional filter sidebar + product grid */}
         <Box
           sx={{
-            display: 'flex',
+            display: "flex",
             gap: 3,
-            alignItems: 'flex-start',
+            alignItems: "flex-start",
           }}
         >
           {/* Filter Sidebar */}
@@ -792,43 +893,56 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                 minWidth: 200,
                 maxWidth: 240,
                 p: 2,
-                border: '1px solid',
-                borderColor: 'divider',
+                border: "1px solid",
+                borderColor: "divider",
                 borderRadius: 2,
                 flexShrink: 0,
               }}
             >
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: headingColor }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 700, mb: 2, color: headingColor }}
+              >
                 Filters
               </Typography>
 
               {/* Price Range */}
-              <Typography variant="caption" sx={{ fontWeight: 600, color: bodyColor }}>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 600, color: bodyColor }}
+              >
                 Price Range
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1, mt: 0.5, mb: 2 }}>
+              <Box sx={{ display: "flex", gap: 1, mt: 0.5, mb: 2 }}>
                 <TextField
                   label="Min"
                   type="number"
                   size="small"
-                  value={priceMinFilter || ''}
-                  onChange={(e) => setPriceMinFilter(Number(e.target.value) || 0)}
-                  inputProps={{ min: 0, 'aria-label': 'Minimum price' }}
+                  value={priceMinFilter || ""}
+                  onChange={(e) =>
+                    setPriceMinFilter(Number(e.target.value) || 0)
+                  }
+                  inputProps={{ min: 0, "aria-label": "Minimum price" }}
                   sx={{ width: 80 }}
                 />
                 <TextField
                   label="Max"
                   type="number"
                   size="small"
-                  value={priceMaxFilter || ''}
-                  onChange={(e) => setPriceMaxFilter(Number(e.target.value) || 0)}
-                  inputProps={{ min: 0, 'aria-label': 'Maximum price' }}
+                  value={priceMaxFilter || ""}
+                  onChange={(e) =>
+                    setPriceMaxFilter(Number(e.target.value) || 0)
+                  }
+                  inputProps={{ min: 0, "aria-label": "Maximum price" }}
                   sx={{ width: 80 }}
                 />
               </Box>
 
               {/* Stock Status */}
-              <Typography variant="caption" sx={{ fontWeight: 600, color: bodyColor }}>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 600, color: bodyColor }}
+              >
                 Stock Status
               </Typography>
               <Stack spacing={0} sx={{ mt: 0.5 }}>
@@ -858,26 +972,30 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {/* Loading indicator for subsequent loads */}
             {loading && allProducts.length > 0 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
                 <CircularProgress size={24} />
               </Box>
             )}
 
             {/* Empty state */}
             {filteredProducts.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 8 }} role="status" aria-label="No products found">
+              <Box
+                sx={{ textAlign: "center", py: 8 }}
+                role="status"
+                aria-label="No products found"
+              >
                 <Typography variant="body1" sx={{ color: bodyColor }}>
                   {emptyMessage}
                 </Typography>
               </Box>
-            ) : layout === 'list' ? (
+            ) : layout === "list" ? (
               /* List Layout */
               <Stack spacing={2}>
                 {filteredProducts.map((product) => (
                   <Box
                     key={product.id}
                     sx={{
-                      transition: 'opacity 0.2s ease, transform 0.2s ease',
+                      transition: "opacity 0.2s ease, transform 0.2s ease",
                       opacity: 1,
                     }}
                   >
@@ -891,21 +1009,21 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                   </Box>
                 ))}
               </Stack>
-            ) : layout === 'carousel' ? (
+            ) : layout === "carousel" ? (
               /* Carousel Layout */
-              <Box sx={{ position: 'relative' }}>
+              <Box sx={{ position: "relative" }}>
                 <IconButton
                   onClick={handleCarouselPrev}
                   aria-label="Previous products"
                   sx={{
-                    position: 'absolute',
+                    position: "absolute",
                     left: -20,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
+                    top: "50%",
+                    transform: "translateY(-50%)",
                     zIndex: 1,
-                    bgcolor: 'white',
+                    bgcolor: "white",
                     boxShadow: 2,
-                    '&:hover': { bgcolor: 'grey.100' },
+                    "&:hover": { bgcolor: "grey.100" },
                   }}
                 >
                   <ArrowBackIosNewIcon fontSize="small" />
@@ -913,13 +1031,16 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                 <Box
                   ref={carouselRef}
                   sx={{
-                    display: 'flex',
+                    display: "flex",
                     gap: 2,
-                    overflowX: 'auto',
-                    scrollSnapType: 'x mandatory',
+                    overflowX: "auto",
+                    scrollSnapType: "x mandatory",
                     pb: 1,
-                    '&::-webkit-scrollbar': { height: 6 },
-                    '&::-webkit-scrollbar-thumb': { bgcolor: 'grey.300', borderRadius: 3 },
+                    "&::-webkit-scrollbar": { height: 6 },
+                    "&::-webkit-scrollbar-thumb": {
+                      bgcolor: "grey.300",
+                      borderRadius: 3,
+                    },
                   }}
                   role="list"
                   aria-label="Product carousel"
@@ -931,7 +1052,7 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                       sx={{
                         minWidth: 260,
                         maxWidth: 280,
-                        scrollSnapAlign: 'start',
+                        scrollSnapAlign: "start",
                         flexShrink: 0,
                       }}
                     >
@@ -939,7 +1060,9 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                         product={product}
                         config={cardConfig}
                         colors={cardColors}
-                        onQuickView={showQuickView ? handleQuickView : undefined}
+                        onQuickView={
+                          showQuickView ? handleQuickView : undefined
+                        }
                         onCtaClick={handleCtaClick}
                       />
                     </Box>
@@ -949,14 +1072,14 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                   onClick={handleCarouselNext}
                   aria-label="Next products"
                   sx={{
-                    position: 'absolute',
+                    position: "absolute",
                     right: -20,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
+                    top: "50%",
+                    transform: "translateY(-50%)",
                     zIndex: 1,
-                    bgcolor: 'white',
+                    bgcolor: "white",
                     boxShadow: 2,
-                    '&:hover': { bgcolor: 'grey.100' },
+                    "&:hover": { bgcolor: "grey.100" },
                   }}
                 >
                   <ArrowForwardIosIcon fontSize="small" />
@@ -973,7 +1096,7 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
                     md={mdCols}
                     key={product.id}
                     sx={{
-                      transition: 'opacity 0.2s ease, transform 0.2s ease',
+                      transition: "opacity 0.2s ease, transform 0.2s ease",
                       opacity: 1,
                     }}
                   >
@@ -991,7 +1114,7 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
 
             {/* Pagination */}
             {showPagination && pagination && pagination.totalPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
                 <Pagination
                   count={pagination.totalPages}
                   page={currentPage}
@@ -1020,9 +1143,9 @@ const ProductShowcaseBlockBase: React.FC<ProductShowcaseBlockProps> = ({
   );
 };
 
-ProductShowcaseBlockBase.displayName = 'ProductShowcaseBlock';
+ProductShowcaseBlockBase.displayName = "ProductShowcaseBlock";
 
 const ProductShowcaseBlock = React.memo(ProductShowcaseBlockBase);
-ProductShowcaseBlock.displayName = 'ProductShowcaseBlock';
+ProductShowcaseBlock.displayName = "ProductShowcaseBlock";
 
 export default ProductShowcaseBlock;

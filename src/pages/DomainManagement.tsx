@@ -16,25 +16,31 @@
  *   A) Subdomain management — availability check, debounced input, save
  *   B) Custom domain management — plan-gated, DNS verification, status
  */
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
-import Chip from '@mui/material/Chip';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import WarningIcon from '@mui/icons-material/Warning';
-import LockIcon from '@mui/icons-material/Lock';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import CircularProgress from "@mui/material/CircularProgress";
+import Chip from "@mui/material/Chip";
+import Alert from "@mui/material/Alert";
+import Snackbar from "@mui/material/Snackbar";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import WarningIcon from "@mui/icons-material/Warning";
+import LockIcon from "@mui/icons-material/Lock";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import {
   DashboardCard,
   DashboardInput,
@@ -44,25 +50,24 @@ import {
   DashboardTooltip,
   TabNavigation,
   ConfirmationDialog,
-} from '../components/Dashboard/shared';
-import { API_URL } from '@/config/api';
+} from "../components/Dashboard/shared";
+import { API_URL } from "@/config/api";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-
 const SUBDOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
-type SubdomainStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+type SubdomainStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
 type DomainStatus =
-  | 'NONE'
-  | 'PENDING_VERIFICATION'
-  | 'VERIFIED'
-  | 'SSL_PROVISIONING'
-  | 'ACTIVE'
-  | 'FAILED';
+  | "NONE"
+  | "PENDING_VERIFICATION"
+  | "VERIFIED"
+  | "SSL_PROVISIONING"
+  | "ACTIVE"
+  | "FAILED";
 
 interface WebsiteData {
   id: number;
@@ -85,56 +90,56 @@ interface DnsRecord {
 
 const DOMAIN_STATUS_COLORS: Record<
   DomainStatus,
-  'default' | 'warning' | 'info' | 'success' | 'error'
+  "default" | "warning" | "info" | "success" | "error"
 > = {
-  NONE: 'default',
-  PENDING_VERIFICATION: 'warning',
-  VERIFIED: 'info',
-  SSL_PROVISIONING: 'info',
-  ACTIVE: 'success',
-  FAILED: 'error',
+  NONE: "default",
+  PENDING_VERIFICATION: "warning",
+  VERIFIED: "info",
+  SSL_PROVISIONING: "info",
+  ACTIVE: "success",
+  FAILED: "error",
 };
 
 const DNS_PROVIDERS = [
-  { label: 'GoDaddy', value: 'godaddy' },
-  { label: 'Namecheap', value: 'namecheap' },
-  { label: 'Cloudflare', value: 'cloudflare' },
-  { label: 'Other', value: 'other' },
+  { label: "GoDaddy", value: "godaddy" },
+  { label: "Namecheap", value: "namecheap" },
+  { label: "Cloudflare", value: "cloudflare" },
+  { label: "Other", value: "other" },
 ];
 
 const DNS_INSTRUCTIONS: Record<string, string[]> = {
   godaddy: [
-    '1. Log in to your GoDaddy account.',
-    '2. Go to DNS → Manage DNS for your domain.',
+    "1. Log in to your GoDaddy account.",
+    "2. Go to DNS → Manage DNS for your domain.",
     '3. Click "Add" under DNS Records.',
-    '4. Select Type = TXT.',
-    '5. Enter the Host and TXT Value below.',
-    '6. Set TTL to 1 hour and save.',
+    "4. Select Type = TXT.",
+    "5. Enter the Host and TXT Value below.",
+    "6. Set TTL to 1 hour and save.",
     '7. Return here and click "Verify Domain" (may take up to 48 hours to propagate).',
   ],
   namecheap: [
-    '1. Log in to Namecheap and go to Domain List.',
+    "1. Log in to Namecheap and go to Domain List.",
     '2. Click "Manage" next to your domain.',
-    '3. Go to the Advanced DNS tab.',
-    '4. Add a new TXT Record.',
-    '5. Set the Host and Value fields as shown below.',
-    '6. Save changes.',
+    "3. Go to the Advanced DNS tab.",
+    "4. Add a new TXT Record.",
+    "5. Set the Host and Value fields as shown below.",
+    "6. Save changes.",
     '7. Return here and click "Verify Domain" (up to 48 hours).',
   ],
   cloudflare: [
-    '1. Log in to Cloudflare and select your domain.',
-    '2. Go to DNS → Records.',
+    "1. Log in to Cloudflare and select your domain.",
+    "2. Go to DNS → Records.",
     '3. Click "Add record".',
-    '4. Select Type = TXT, enter the Name and Content below.',
-    '5. Set Proxy status to DNS only (grey cloud).',
-    '6. Click Save.',
+    "4. Select Type = TXT, enter the Name and Content below.",
+    "5. Set Proxy status to DNS only (grey cloud).",
+    "6. Click Save.",
     '7. Return here and click "Verify Domain" (usually propagates quickly).',
   ],
   other: [
     "1. Log in to your DNS provider's control panel.",
-    '2. Navigate to DNS Management for your domain.',
-    '3. Add a new TXT record with the Host and Value shown below.',
-    '4. Save the changes.',
+    "2. Navigate to DNS Management for your domain.",
+    "3. Add a new TXT record with the Host and Value shown below.",
+    "4. Save the changes.",
     '5. Return here and click "Verify Domain" (may take up to 48 hours).',
   ],
 };
@@ -144,7 +149,8 @@ const DNS_INSTRUCTIONS: Record<string, string[]> = {
 // ---------------------------------------------------------------------------
 
 function validateDomainFormat(domain: string): boolean {
-  const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+  const domainRegex =
+    /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
   return domainRegex.test(domain);
 }
 
@@ -167,24 +173,27 @@ const CopyButton = React.memo(({ value }: CopyButtonProps) => {
   }, [value]);
 
   return (
-    <DashboardTooltip title={copied ? 'Copied!' : 'Copy to clipboard'} placement="top">
+    <DashboardTooltip
+      title={copied ? "Copied!" : "Copy to clipboard"}
+      placement="top"
+    >
       <Chip
         icon={<ContentCopyIcon sx={{ fontSize: 14 }} />}
-        label={copied ? 'Copied' : value}
+        label={copied ? "Copied" : value}
         size="small"
         onClick={handleCopy}
         sx={{
-          fontFamily: 'monospace',
-          fontSize: '0.78rem',
-          cursor: 'pointer',
-          maxWidth: '100%',
-          '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' },
+          fontFamily: "monospace",
+          fontSize: "0.78rem",
+          cursor: "pointer",
+          maxWidth: "100%",
+          "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
         }}
       />
     </DashboardTooltip>
   );
 });
-CopyButton.displayName = 'CopyButton';
+CopyButton.displayName = "CopyButton";
 
 // ---------------------------------------------------------------------------
 // Main component
@@ -195,7 +204,7 @@ interface DomainManagementProps {
 }
 
 const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
-  const isMobile = useMediaQuery('(max-width:768px)');
+  const isMobile = useMediaQuery("(max-width:768px)");
 
   // ----- Website data -----
   const [websiteData, setWebsiteData] = useState<WebsiteData | null>(null);
@@ -203,24 +212,25 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
   const [loadingData, setLoadingData] = useState(true);
 
   // ----- Subdomain state -----
-  const [subdomain, setSubdomain] = useState('');
-  const [subdomainStatus, setSubdomainStatus] = useState<SubdomainStatus>('idle');
+  const [subdomain, setSubdomain] = useState("");
+  const [subdomainStatus, setSubdomainStatus] =
+    useState<SubdomainStatus>("idle");
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [subdomainError, setSubdomainError] = useState('');
+  const [subdomainError, setSubdomainError] = useState("");
   const [isChangingSubdomain, setIsChangingSubdomain] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ----- Custom domain state -----
-  const [customDomain, setCustomDomain] = useState('');
-  const [domainStatus, setDomainStatus] = useState<DomainStatus>('NONE');
-  const [verifyToken, setVerifyToken] = useState('');
+  const [customDomain, setCustomDomain] = useState("");
+  const [domainStatus, setDomainStatus] = useState<DomainStatus>("NONE");
+  const [verifyToken, setVerifyToken] = useState("");
   const [verifyRecord, setVerifyRecord] = useState<DnsRecord | null>(null);
   const [isAddingDomain, setIsAddingDomain] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [showDnsGuide, setShowDnsGuide] = useState(false);
-  const [selectedDnsProvider, setSelectedDnsProvider] = useState('godaddy');
-  const [domainInputValue, setDomainInputValue] = useState('');
-  const [domainInputError, setDomainInputError] = useState('');
+  const [selectedDnsProvider, setSelectedDnsProvider] = useState("godaddy");
+  const [domainInputValue, setDomainInputValue] = useState("");
+  const [domainInputError, setDomainInputError] = useState("");
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [verifyResult, setVerifyResult] = useState<{
     success: boolean;
@@ -231,8 +241,8 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error' | 'info';
-  }>({ open: false, message: '', severity: 'success' });
+    severity: "success" | "error" | "info";
+  }>({ open: false, message: "", severity: "success" });
 
   // ----- Fetch data on mount -----
   useEffect(() => {
@@ -240,26 +250,26 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
       setLoadingData(true);
       try {
         const [websiteRes, planRes] = await Promise.all([
-          fetch(`${API_URL}/websites/${websiteId}`, { credentials: 'include' }),
-          fetch(`${API_URL}/billing/plan`, { credentials: 'include' }),
+          fetch(`${API_URL}/websites/${websiteId}`, { credentials: "include" }),
+          fetch(`${API_URL}/billing/plan`, { credentials: "include" }),
         ]);
 
         if (websiteRes.ok) {
           const data: WebsiteData = await websiteRes.json();
           setWebsiteData(data);
-          setSubdomain(data.subdomain || '');
-          setCustomDomain(data.customDomain || '');
-          setDomainStatus(data.domainStatus || 'NONE');
+          setSubdomain(data.subdomain || "");
+          setCustomDomain(data.customDomain || "");
+          setDomainStatus(data.domainStatus || "NONE");
           if (data.verifyToken) {
             setVerifyToken(data.verifyToken);
             if (data.customDomain) {
               setVerifyRecord({
-                type: 'TXT',
+                type: "TXT",
                 host: `_techietribe-verify.${data.customDomain}`,
                 value: data.verifyToken,
               });
             }
-            if (data.domainStatus === 'PENDING_VERIFICATION') {
+            if (data.domainStatus === "PENDING_VERIFICATION") {
               setShowDnsGuide(true);
             }
           }
@@ -270,7 +280,7 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
           setPlanData(pData);
         }
       } catch (err) {
-        console.error('Failed to load domain data:', err);
+        console.error("Failed to load domain data:", err);
       } finally {
         setLoadingData(false);
       }
@@ -280,26 +290,26 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
 
   // ----- Subdomain handlers -----
   const checkSubdomainAvailability = useCallback(async (value: string) => {
-    setSubdomainStatus('checking');
+    setSubdomainStatus("checking");
     try {
       const res = await fetch(
         `${API_URL}/domains/check-availability?subdomain=${encodeURIComponent(value)}`,
-        { credentials: 'include' }
+        { credentials: "include" },
       );
-      if (!res.ok) throw new Error('Check failed');
+      if (!res.ok) throw new Error("Check failed");
       const data = await res.json();
       if (data.available) {
-        setSubdomainStatus('available');
+        setSubdomainStatus("available");
         setSuggestions([]);
-        setSubdomainError('');
+        setSubdomainError("");
       } else {
-        setSubdomainStatus('taken');
+        setSubdomainStatus("taken");
         setSuggestions(data.suggestions || []);
         setSubdomainError(`${value}.techietribe.app is taken`);
       }
     } catch {
-      setSubdomainStatus('idle');
-      setSubdomainError('Could not check availability. Please try again.');
+      setSubdomainStatus("idle");
+      setSubdomainError("Could not check availability. Please try again.");
     }
   }, []);
 
@@ -313,17 +323,17 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
       }
 
       if (!value) {
-        setSubdomainStatus('idle');
-        setSubdomainError('');
+        setSubdomainStatus("idle");
+        setSubdomainError("");
         setSuggestions([]);
         return;
       }
 
       if (!SUBDOMAIN_REGEX.test(value)) {
-        setSubdomainStatus('invalid');
+        setSubdomainStatus("invalid");
         setSubdomainError(
-          'Subdomain must use lowercase letters, numbers and hyphens only. ' +
-            'Must start and end with a letter or number.'
+          "Subdomain must use lowercase letters, numbers and hyphens only. " +
+            "Must start and end with a letter or number.",
         );
         setSuggestions([]);
         return;
@@ -334,7 +344,7 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
         checkSubdomainAvailability(value);
       }, 500);
     },
-    [checkSubdomainAvailability]
+    [checkSubdomainAvailability],
   );
 
   const handleSuggestionClick = useCallback(
@@ -345,32 +355,34 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
       }
       checkSubdomainAvailability(suggestion);
     },
-    [checkSubdomainAvailability]
+    [checkSubdomainAvailability],
   );
 
   const handleSaveSubdomain = useCallback(async () => {
-    if (subdomainStatus !== 'available') return;
+    if (subdomainStatus !== "available") return;
     setIsChangingSubdomain(true);
     try {
       const res = await fetch(`${API_URL}/domains/${websiteId}/subdomain`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subdomain }),
       });
-      if (!res.ok) throw new Error('Save failed');
+      if (!res.ok) throw new Error("Save failed");
       const data = await res.json();
-      setWebsiteData((prev) => (prev ? { ...prev, subdomain: data.subdomain } : prev));
+      setWebsiteData((prev) =>
+        prev ? { ...prev, subdomain: data.subdomain } : prev,
+      );
       setSnackbar({
         open: true,
-        message: 'Subdomain updated successfully!',
-        severity: 'success',
+        message: "Subdomain updated successfully!",
+        severity: "success",
       });
     } catch {
       setSnackbar({
         open: true,
-        message: 'Failed to update subdomain. Please try again.',
-        severity: 'error',
+        message: "Failed to update subdomain. Please try again.",
+        severity: "error",
       });
     } finally {
       setIsChangingSubdomain(false);
@@ -379,51 +391,56 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
 
   // Derived: whether save is enabled
   const isSaveSubdomainEnabled = useMemo(
-    () => subdomainStatus === 'available' && subdomain !== (websiteData?.subdomain || ''),
-    [subdomainStatus, subdomain, websiteData?.subdomain]
+    () =>
+      subdomainStatus === "available" &&
+      subdomain !== (websiteData?.subdomain || ""),
+    [subdomainStatus, subdomain, websiteData?.subdomain],
   );
 
   // ----- Custom domain handlers -----
-  const handleDomainInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.trim().toLowerCase();
-    setDomainInputValue(value);
-    if (value && !validateDomainFormat(value)) {
-      setDomainInputError('Please enter a valid domain (e.g., example.com)');
-    } else {
-      setDomainInputError('');
-    }
-  }, []);
+  const handleDomainInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value.trim().toLowerCase();
+      setDomainInputValue(value);
+      if (value && !validateDomainFormat(value)) {
+        setDomainInputError("Please enter a valid domain (e.g., example.com)");
+      } else {
+        setDomainInputError("");
+      }
+    },
+    [],
+  );
 
   const handleAddDomain = useCallback(async () => {
     if (!domainInputValue || !validateDomainFormat(domainInputValue)) return;
     setIsAddingDomain(true);
     try {
       const res = await fetch(`${API_URL}/domains/${websiteId}/custom-domain`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ domain: domainInputValue }),
       });
-      if (!res.ok) throw new Error('Add domain failed');
+      if (!res.ok) throw new Error("Add domain failed");
       const data = await res.json();
       setCustomDomain(data.domain);
-      setDomainStatus(data.status || 'PENDING_VERIFICATION');
+      setDomainStatus(data.status || "PENDING_VERIFICATION");
       if (data.verifyRecord) {
         setVerifyRecord(data.verifyRecord);
-        setVerifyToken(data.verifyRecord.value || '');
+        setVerifyToken(data.verifyRecord.value || "");
       }
       setShowDnsGuide(true);
-      setDomainInputValue('');
+      setDomainInputValue("");
       setSnackbar({
         open: true,
-        message: 'Domain added. Complete DNS verification to activate.',
-        severity: 'info',
+        message: "Domain added. Complete DNS verification to activate.",
+        severity: "info",
       });
     } catch {
       setSnackbar({
         open: true,
-        message: 'Failed to add domain. Please try again.',
-        severity: 'error',
+        message: "Failed to add domain. Please try again.",
+        severity: "error",
       });
     } finally {
       setIsAddingDomain(false);
@@ -434,35 +451,41 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
     setIsVerifying(true);
     setVerifyResult(null);
     try {
-      const res = await fetch(`${API_URL}/domains/${websiteId}/custom-domain/verify`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) throw new Error('Verify failed');
+      const res = await fetch(
+        `${API_URL}/domains/${websiteId}/custom-domain/verify`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+      if (!res.ok) throw new Error("Verify failed");
       const data = await res.json();
       if (data.verified) {
-        setDomainStatus(data.status || 'VERIFIED');
-        setVerifyResult({ success: true, message: 'Domain verified successfully!' });
+        setDomainStatus(data.status || "VERIFIED");
+        setVerifyResult({
+          success: true,
+          message: "Domain verified successfully!",
+        });
         setShowDnsGuide(false);
         setSnackbar({
           open: true,
-          message: 'Domain verified! SSL provisioning in progress.',
-          severity: 'success',
+          message: "Domain verified! SSL provisioning in progress.",
+          severity: "success",
         });
       } else {
         setVerifyResult({
           success: false,
           message:
-            'Verification failed. DNS records may not have propagated yet. ' +
-            'This can take up to 48 hours. Please try again later.',
+            "Verification failed. DNS records may not have propagated yet. " +
+            "This can take up to 48 hours. Please try again later.",
         });
       }
     } catch {
       setVerifyResult({
         success: false,
         message:
-          'Verification check failed. Please try again. DNS can take up to 48 hours to propagate.',
+          "Verification check failed. Please try again. DNS can take up to 48 hours to propagate.",
       });
     } finally {
       setIsVerifying(false);
@@ -472,28 +495,28 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
   const handleRemoveDomain = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/domains/${websiteId}/custom-domain`, {
-        method: 'DELETE',
-        credentials: 'include',
+        method: "DELETE",
+        credentials: "include",
       });
-      if (!res.ok) throw new Error('Remove failed');
-      setCustomDomain('');
-      setDomainStatus('NONE');
+      if (!res.ok) throw new Error("Remove failed");
+      setCustomDomain("");
+      setDomainStatus("NONE");
       setVerifyRecord(null);
-      setVerifyToken('');
+      setVerifyToken("");
       setShowDnsGuide(false);
       setVerifyResult(null);
       setRemoveDialogOpen(false);
       setSnackbar({
         open: true,
-        message: 'Custom domain removed successfully.',
-        severity: 'success',
+        message: "Custom domain removed successfully.",
+        severity: "success",
       });
     } catch {
       setRemoveDialogOpen(false);
       setSnackbar({
         open: true,
-        message: 'Failed to remove domain. Please try again.',
-        severity: 'error',
+        message: "Failed to remove domain. Please try again.",
+        severity: "error",
       });
     }
   }, [websiteId]);
@@ -516,38 +539,41 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
 
   // ----- Derived: subdomain status display -----
   const subdomainStatusNode = useMemo(() => {
-    if (subdomainStatus === 'checking') {
+    if (subdomainStatus === "checking") {
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
           <CircularProgress size={16} />
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
             Checking availability…
           </Typography>
         </Box>
       );
     }
-    if (subdomainStatus === 'available') {
+    if (subdomainStatus === "available") {
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-          <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main' }} />
-          <Typography variant="caption" sx={{ color: 'success.main' }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1 }}>
+          <CheckCircleIcon sx={{ fontSize: 18, color: "success.main" }} />
+          <Typography variant="caption" sx={{ color: "success.main" }}>
             {subdomain}.techietribe.app is available
           </Typography>
         </Box>
       );
     }
-    if (subdomainStatus === 'taken') {
+    if (subdomainStatus === "taken") {
       return (
         <Box sx={{ mt: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-            <CancelIcon sx={{ fontSize: 18, color: 'error.main' }} />
-            <Typography variant="caption" sx={{ color: 'error.main' }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
+            <CancelIcon sx={{ fontSize: 18, color: "error.main" }} />
+            <Typography variant="caption" sx={{ color: "error.main" }}>
               {subdomain}.techietribe.app is taken
             </Typography>
           </Box>
           {suggestions.length > 0 && (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", mr: 0.5 }}
+              >
                 Try:
               </Typography>
               {suggestions.map((s) => (
@@ -556,7 +582,7 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                   label={s}
                   size="small"
                   onClick={() => handleSuggestionClick(s)}
-                  sx={{ cursor: 'pointer', fontSize: '0.78rem' }}
+                  sx={{ cursor: "pointer", fontSize: "0.78rem" }}
                 />
               ))}
             </Box>
@@ -564,13 +590,22 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
         </Box>
       );
     }
-    if (subdomainStatus === 'invalid') {
+    if (subdomainStatus === "invalid") {
       return (
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, mt: 1 }}>
-          <WarningIcon sx={{ fontSize: 18, color: 'warning.main', flexShrink: 0, mt: '1px' }} />
-          <Typography variant="caption" sx={{ color: 'warning.main' }}>
-            Subdomain must use lowercase letters, numbers and hyphens only. Must start and end with
-            a letter or number.
+        <Box
+          sx={{ display: "flex", alignItems: "flex-start", gap: 0.5, mt: 1 }}
+        >
+          <WarningIcon
+            sx={{
+              fontSize: 18,
+              color: "warning.main",
+              flexShrink: 0,
+              mt: "1px",
+            }}
+          />
+          <Typography variant="caption" sx={{ color: "warning.main" }}>
+            Subdomain must use lowercase letters, numbers and hyphens only. Must
+            start and end with a letter or number.
           </Typography>
         </Box>
       );
@@ -580,11 +615,16 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
 
   // ----- DNS guide content -----
   const dnsGuideContent = useMemo(() => {
-    const instructions = DNS_INSTRUCTIONS[selectedDnsProvider] || DNS_INSTRUCTIONS.other;
+    const instructions =
+      DNS_INSTRUCTIONS[selectedDnsProvider] || DNS_INSTRUCTIONS.other;
     return (
       <Stack spacing={1}>
         {instructions.map((step, i) => (
-          <Typography key={i} variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+          <Typography
+            key={i}
+            variant="body2"
+            sx={{ color: "text.secondary", lineHeight: 1.6 }}
+          >
             {step}
           </Typography>
         ))}
@@ -594,7 +634,7 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
 
   if (loadingData) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
         <CircularProgress size={32} />
       </Box>
     );
@@ -602,33 +642,35 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
 
   // ----- Render -----
   return (
-    <Box sx={{ maxWidth: 720, mx: 'auto', px: { xs: 2, sm: 0 } }}>
+    <Box sx={{ maxWidth: 720, mx: "auto", px: { xs: 2, sm: 0 } }}>
       <Stack spacing={3}>
         {/* ──────────────── SUBDOMAIN SECTION ──────────────── */}
         <DashboardCard title="Subdomain">
           <Stack spacing={2}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Your free subdomain on techietribe.app. Change it anytime.
             </Typography>
 
-            <Box sx={{ position: 'relative' }}>
+            <Box sx={{ position: "relative" }}>
               <DashboardInput
                 label="Subdomain"
                 value={subdomain}
                 onChange={handleSubdomainChange}
                 placeholder="yoursite"
                 disabled={isChangingSubdomain}
-                error={subdomainStatus === 'invalid'}
+                error={subdomainStatus === "invalid"}
                 InputProps={{
                   endAdornment:
-                    subdomainStatus === 'checking' ? <CircularProgress size={16} /> : undefined,
+                    subdomainStatus === "checking" ? (
+                      <CircularProgress size={16} />
+                    ) : undefined,
                 }}
               />
               <Typography
                 variant="caption"
-                sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}
+                sx={{ color: "text.secondary", mt: 0.5, display: "block" }}
               >
-                Your site URL: {subdomain || '…'}.techietribe.app
+                Your site URL: {subdomain || "…"}.techietribe.app
               </Typography>
             </Box>
 
@@ -639,7 +681,9 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                 onClick={handleSaveSubdomain}
                 disabled={!isSaveSubdomainEnabled || isChangingSubdomain}
                 startIcon={
-                  isChangingSubdomain ? <CircularProgress size={16} color="inherit" /> : undefined
+                  isChangingSubdomain ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : undefined
                 }
               >
                 Save Subdomain
@@ -655,30 +699,34 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
             <Stack spacing={2}>
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
+                  display: "flex",
+                  alignItems: "flex-start",
                   gap: 1.5,
                   p: 2,
                   borderRadius: 2,
-                  bgcolor: 'action.hover',
+                  bgcolor: "action.hover",
                 }}
               >
-                <LockIcon sx={{ color: 'text.secondary', mt: 0.25 }} />
+                <LockIcon sx={{ color: "text.secondary", mt: 0.25 }} />
                 <Box>
                   <Typography
                     variant="body1"
-                    sx={{ color: 'text.primary', fontWeight: 600, mb: 0.5 }}
+                    sx={{ color: "text.primary", fontWeight: 600, mb: 0.5 }}
                   >
                     Custom Domain Locked
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Custom domains are available on Growth plan and above. Upgrade to connect your
-                    own domain (e.g., example.com) to your site.
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Custom domains are available on Growth plan and above.
+                    Upgrade to connect your own domain (e.g., example.com) to
+                    your site.
                   </Typography>
                 </Box>
               </Box>
               <Box>
-                <DashboardGradientButton component="a" href="/dashboard/settings/billing">
+                <DashboardGradientButton
+                  component="a"
+                  href="/dashboard/settings/billing"
+                >
                   Upgrade to Growth Plan
                 </DashboardGradientButton>
               </Box>
@@ -689,27 +737,33 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
           <DashboardCard title="Custom Domain">
             <Stack spacing={3}>
               {/* Active domain status */}
-              {customDomain && domainStatus !== 'NONE' && (
+              {customDomain && domainStatus !== "NONE" && (
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
+                    display: "flex",
+                    alignItems: "center",
                     gap: 1.5,
-                    flexWrap: 'wrap',
+                    flexWrap: "wrap",
                   }}
                 >
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     Current domain:
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 600, color: "text.primary" }}
+                  >
                     {customDomain}
                   </Typography>
                   <Chip
                     label={domainStatus}
-                    color={DOMAIN_STATUS_COLORS[domainStatus] ?? 'default'}
+                    color={DOMAIN_STATUS_COLORS[domainStatus] ?? "default"}
                     size="small"
                   />
-                  <DashboardCancelButton onClick={handleOpenRemoveDialog} sx={{ ml: 'auto' }}>
+                  <DashboardCancelButton
+                    onClick={handleOpenRemoveDialog}
+                    sx={{ ml: "auto" }}
+                  >
                     Remove Domain
                   </DashboardCancelButton>
                 </Box>
@@ -718,7 +772,7 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
               {/* Add domain input (only when no domain set) */}
               {!customDomain && (
                 <Stack spacing={1.5}>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     Connect your own domain to this website.
                   </Typography>
                   <DashboardInput
@@ -733,9 +787,15 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                   <Box>
                     <DashboardConfirmButton
                       onClick={handleAddDomain}
-                      disabled={!domainInputValue || !!domainInputError || isAddingDomain}
+                      disabled={
+                        !domainInputValue ||
+                        !!domainInputError ||
+                        isAddingDomain
+                      }
                       startIcon={
-                        isAddingDomain ? <CircularProgress size={16} color="inherit" /> : undefined
+                        isAddingDomain ? (
+                          <CircularProgress size={16} color="inherit" />
+                        ) : undefined
                       }
                     >
                       Add Domain
@@ -745,12 +805,15 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
               )}
 
               {/* DNS Verification Section */}
-              {showDnsGuide && domainStatus === 'PENDING_VERIFICATION' && (
+              {showDnsGuide && domainStatus === "PENDING_VERIFICATION" && (
                 <DashboardCard title="DNS Verification">
                   <Stack spacing={2.5}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Add the following TXT record to your domain's DNS settings to verify
-                      ownership.
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      Add the following TXT record to your domain's DNS settings
+                      to verify ownership.
                     </Typography>
 
                     {/* TXT Record details */}
@@ -758,33 +821,33 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                       <Box
                         sx={{
                           borderRadius: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          overflow: 'hidden',
+                          border: "1px solid",
+                          borderColor: "divider",
+                          overflow: "hidden",
                         }}
                       >
                         {[
-                          { label: 'Record Type', value: verifyRecord.type },
-                          { label: 'Host', value: verifyRecord.host },
-                          { label: 'Value', value: verifyRecord.value },
+                          { label: "Record Type", value: verifyRecord.type },
+                          { label: "Host", value: verifyRecord.host },
+                          { label: "Value", value: verifyRecord.value },
                         ].map((row) => (
                           <Box
                             key={row.label}
                             sx={{
-                              display: 'flex',
-                              alignItems: 'center',
+                              display: "flex",
+                              alignItems: "center",
                               px: 2,
                               py: 1.25,
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
+                              borderBottom: "1px solid",
+                              borderColor: "divider",
                               gap: 2,
-                              '&:last-child': { borderBottom: 'none' },
+                              "&:last-child": { borderBottom: "none" },
                             }}
                           >
                             <Typography
                               variant="caption"
                               sx={{
-                                color: 'text.secondary',
+                                color: "text.secondary",
                                 minWidth: 100,
                                 fontWeight: 500,
                               }}
@@ -799,8 +862,18 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
 
                     {/* DNS Provider Guides */}
                     <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 1.5,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "text.primary", fontWeight: 600 }}
+                        >
                           Step-by-step instructions:
                         </Typography>
                         <DashboardTooltip
@@ -808,7 +881,11 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                           placement="top"
                         >
                           <HelpOutlineIcon
-                            sx={{ fontSize: 16, color: 'text.secondary', cursor: 'help' }}
+                            sx={{
+                              fontSize: 16,
+                              color: "text.secondary",
+                              cursor: "help",
+                            }}
                           />
                         </DashboardTooltip>
                       </Box>
@@ -822,28 +899,37 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                               expanded={selectedDnsProvider === provider.value}
                               onChange={() =>
                                 setSelectedDnsProvider(
-                                  selectedDnsProvider === provider.value ? '' : provider.value
+                                  selectedDnsProvider === provider.value
+                                    ? ""
+                                    : provider.value,
                                 )
                               }
                             >
                               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600 }}
+                                >
                                   {provider.label}
                                 </Typography>
                               </AccordionSummary>
                               <AccordionDetails>
                                 <Stack spacing={0.75}>
-                                  {(DNS_INSTRUCTIONS[provider.value] || DNS_INSTRUCTIONS.other).map(
-                                    (step, i) => (
-                                      <Typography
-                                        key={i}
-                                        variant="body2"
-                                        sx={{ color: 'text.secondary', lineHeight: 1.6 }}
-                                      >
-                                        {step}
-                                      </Typography>
-                                    )
-                                  )}
+                                  {(
+                                    DNS_INSTRUCTIONS[provider.value] ||
+                                    DNS_INSTRUCTIONS.other
+                                  ).map((step, i) => (
+                                    <Typography
+                                      key={i}
+                                      variant="body2"
+                                      sx={{
+                                        color: "text.secondary",
+                                        lineHeight: 1.6,
+                                      }}
+                                    >
+                                      {step}
+                                    </Typography>
+                                  ))}
                                 </Stack>
                               </AccordionDetails>
                             </Accordion>
@@ -866,15 +952,23 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                     <Box>
                       <Typography
                         variant="body2"
-                        sx={{ color: 'text.primary', fontWeight: 600, mb: 1 }}
+                        sx={{ color: "text.primary", fontWeight: 600, mb: 1 }}
                       >
                         Additional DNS records (optional):
                       </Typography>
                       <Stack spacing={1}>
                         <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            flexWrap: "wrap",
+                          }}
                         >
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
                             CNAME (www):
                           </Typography>
                           <DashboardTooltip
@@ -884,14 +978,25 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                             <Chip
                               label="www → sites.techietribe.app"
                               size="small"
-                              sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.75rem",
+                              }}
                             />
                           </DashboardTooltip>
                         </Box>
                         <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            flexWrap: "wrap",
+                          }}
                         >
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
                             A Record (apex):
                           </Typography>
                           <DashboardTooltip
@@ -901,7 +1006,10 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                             <Chip
                               label="@ → Contact support for server IP"
                               size="small"
-                              sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.75rem",
+                              }}
                             />
                           </DashboardTooltip>
                         </Box>
@@ -910,7 +1018,9 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
 
                     {/* Verify result */}
                     {verifyResult && (
-                      <Alert severity={verifyResult.success ? 'success' : 'warning'}>
+                      <Alert
+                        severity={verifyResult.success ? "success" : "warning"}
+                      >
                         {verifyResult.message}
                       </Alert>
                     )}
@@ -921,7 +1031,9 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
                         onClick={handleVerifyDomain}
                         disabled={isVerifying}
                         startIcon={
-                          isVerifying ? <CircularProgress size={16} color="inherit" /> : undefined
+                          isVerifying ? (
+                            <CircularProgress size={16} color="inherit" />
+                          ) : undefined
                         }
                       >
                         Verify Domain
@@ -932,19 +1044,22 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
               )}
 
               {/* Post-verification status details */}
-              {customDomain && domainStatus === 'ACTIVE' && (
+              {customDomain && domainStatus === "ACTIVE" && (
                 <Alert severity="success">
-                  Your domain <strong>{customDomain}</strong> is active and serving traffic.
+                  Your domain <strong>{customDomain}</strong> is active and
+                  serving traffic.
                 </Alert>
               )}
-              {customDomain && domainStatus === 'SSL_PROVISIONING' && (
+              {customDomain && domainStatus === "SSL_PROVISIONING" && (
                 <Alert severity="info">
-                  SSL certificate is being provisioned. This may take a few minutes.
+                  SSL certificate is being provisioned. This may take a few
+                  minutes.
                 </Alert>
               )}
-              {customDomain && domainStatus === 'FAILED' && (
+              {customDomain && domainStatus === "FAILED" && (
                 <Alert severity="error">
-                  Domain setup failed. Please remove the domain and try again, or contact support.
+                  Domain setup failed. Please remove the domain and try again,
+                  or contact support.
                 </Alert>
               )}
             </Stack>
@@ -969,9 +1084,13 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
@@ -979,7 +1098,6 @@ const DomainManagement = React.memo(({ websiteId }: DomainManagementProps) => {
   );
 });
 
-DomainManagement.displayName = 'DomainManagement';
+DomainManagement.displayName = "DomainManagement";
 
 export default DomainManagement;
-

@@ -86,7 +86,12 @@
       "city": "Chicago",
       "website": "https://it3.com",
       "priceRange": "$$$",
-      "accountingAndTaxService": ["Bookkeeping", "Payroll", "CFO Advisory", "Audit Support"],
+      "accountingAndTaxService": [
+        "Bookkeeping",
+        "Payroll",
+        "CFO Advisory",
+        "Audit Support"
+      ],
       "area": "Central District",
       "image1": "/uploads/images/it-and-technical-support-3-1.jpg",
       "image2": "/uploads/images/it-and-technical-support-3-2.jpg",
@@ -156,7 +161,12 @@
       "city": "Chicago",
       "website": "https://it5.com",
       "priceRange": "$$",
-      "accountingAndTaxService": ["Payroll", "Financial Planning", "CFO Advisory", "Tax Filing"],
+      "accountingAndTaxService": [
+        "Payroll",
+        "Financial Planning",
+        "CFO Advisory",
+        "Tax Filing"
+      ],
       "area": "Central District",
       "image1": "/uploads/images/it-and-technical-support-5-1.jpg",
       "image2": "/uploads/images/it-and-technical-support-5-2.jpg",
@@ -191,7 +201,12 @@
       "city": "Chicago",
       "website": "https://others6.com",
       "priceRange": "$$",
-      "accountingAndTaxService": ["Financial Planning", "CFO Advisory", "Payroll", "Bookkeeping"],
+      "accountingAndTaxService": [
+        "Financial Planning",
+        "CFO Advisory",
+        "Payroll",
+        "Bookkeeping"
+      ],
       "area": "Central District",
       "image1": "/uploads/images/others-6-1.jpg",
       "image2": "/uploads/images/others-6-2.jpg",
@@ -296,7 +311,12 @@
       "city": "Los Angeles",
       "website": "https://marketing9.com",
       "priceRange": "$$$",
-      "accountingAndTaxService": ["Audit Support", "CFO Advisory", "Bookkeeping", "Tax Filing"],
+      "accountingAndTaxService": [
+        "Audit Support",
+        "CFO Advisory",
+        "Bookkeeping",
+        "Tax Filing"
+      ],
       "area": "Central District",
       "image1": "/uploads/images/marketing-and-advertising-9-1.jpg",
       "image2": "/uploads/images/marketing-and-advertising-9-2.jpg",
@@ -331,7 +351,12 @@
       "city": "New York",
       "website": "https://cleaning10.com",
       "priceRange": "$",
-      "accountingAndTaxService": ["CFO Advisory", "Payroll", "Financial Planning", "Tax Filing"],
+      "accountingAndTaxService": [
+        "CFO Advisory",
+        "Payroll",
+        "Financial Planning",
+        "Tax Filing"
+      ],
       "area": "Central District",
       "image1": "/uploads/images/cleaning-and-maintenance-10-1.jpg",
       "image2": "/uploads/images/cleaning-and-maintenance-10-2.jpg",
@@ -436,7 +461,12 @@
       "city": "Chicago",
       "website": "https://cleaning13.com",
       "priceRange": "$",
-      "accountingAndTaxService": ["Tax Filing", "Payroll", "Financial Planning", "CFO Advisory"],
+      "accountingAndTaxService": [
+        "Tax Filing",
+        "Payroll",
+        "Financial Planning",
+        "CFO Advisory"
+      ],
       "area": "Central District",
       "image1": "/uploads/images/cleaning-and-maintenance-13-1.jpg",
       "image2": "/uploads/images/cleaning-and-maintenance-13-2.jpg",
@@ -611,7 +641,11 @@
       "city": "New York",
       "website": "https://consulting18.com",
       "priceRange": "$$",
-      "accountingAndTaxService": ["Financial Planning", "CFO Advisory", "Payroll"],
+      "accountingAndTaxService": [
+        "Financial Planning",
+        "CFO Advisory",
+        "Payroll"
+      ],
       "area": "Central District",
       "image1": "/uploads/images/consulting-services-18-1.jpg",
       "image2": "/uploads/images/consulting-services-18-2.jpg",
@@ -681,7 +715,11 @@
       "city": "New York",
       "website": "https://human20.com",
       "priceRange": "$$",
-      "accountingAndTaxService": ["CFO Advisory", "Financial Planning", "Audit Support"],
+      "accountingAndTaxService": [
+        "CFO Advisory",
+        "Financial Planning",
+        "Audit Support"
+      ],
       "area": "Central District",
       "image1": "/uploads/images/human-resources-and-recruitment-20-1.jpg",
       "image2": "/uploads/images/human-resources-and-recruitment-20-2.jpg",

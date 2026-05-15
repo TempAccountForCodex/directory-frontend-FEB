@@ -3,92 +3,105 @@
  * This component displays the visual content for template blocks
  */
 
-import React, { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { BlockWrapper } from './BlockWrapper';
-import { useCountUp } from './hooks/useCountUp';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { BlockWrapper } from "./BlockWrapper";
+import { useCountUp } from "./hooks/useCountUp";
 
 // Lazy-load FormBuilderBlock for code splitting (Step 2.29.2)
-const FormBuilderBlock = lazy(() => import('./dynamic/FormBuilderBlock'));
+const FormBuilderBlock = lazy(() => import("./dynamic/FormBuilderBlock"));
 
 // Lazy-load BlogFeedBlock for code splitting (Step 2.23)
-const BlogFeedBlock = lazy(() => import('./dynamic/BlogFeedBlock'));
+const BlogFeedBlock = lazy(() => import("./dynamic/BlogFeedBlock"));
 
 // Lazy-load BlogFeedStaticRenderer for code splitting (Step 17.5)
-const BlogFeedStaticRenderer = lazy(() => import('./blocks/BlogFeedStaticRenderer'));
+const BlogFeedStaticRenderer = lazy(
+  () => import("./blocks/BlogFeedStaticRenderer"),
+);
 
 // Lazy-load BlogArticleBlock for code splitting (Step 2.24)
-const BlogArticleBlock = lazy(() => import('./dynamic/BlogArticleBlock'));
+const BlogArticleBlock = lazy(() => import("./dynamic/BlogArticleBlock"));
 
 // Lazy-load ProductShowcaseBlock for code splitting (Step 2.26)
-const ProductShowcaseBlock = lazy(() => import('./dynamic/ProductShowcaseBlock'));
+const ProductShowcaseBlock = lazy(
+  () => import("./dynamic/ProductShowcaseBlock"),
+);
 
 // Lazy-load DirectoryListingBlock for code splitting (Step 2.27)
-const DirectoryListingBlock = lazy(() => import('./dynamic/DirectoryListingBlock'));
+const DirectoryListingBlock = lazy(
+  () => import("./dynamic/DirectoryListingBlock"),
+);
 
 // Lazy-load embed and menu display blocks for code splitting (Step 2.29B)
-const SocialEmbedBlock = lazy(() => import('./blocks/SocialEmbedBlock'));
-const EmbedBlock = lazy(() => import('./blocks/EmbedBlock'));
-const MenuDisplayBlock = lazy(() => import('./blocks/MenuDisplayBlock'));
+const SocialEmbedBlock = lazy(() => import("./blocks/SocialEmbedBlock"));
+const EmbedBlock = lazy(() => import("./blocks/EmbedBlock"));
+const MenuDisplayBlock = lazy(() => import("./blocks/MenuDisplayBlock"));
 
 // Lazy-load newsletter and reviews blocks for code splitting (Step 2.28)
-const NewsletterBlock = lazy(() => import('./blocks/NewsletterBlock'));
-const ReviewsBlock = lazy(() => import('./dynamic/ReviewsBlock'));
+const NewsletterBlock = lazy(() => import("./blocks/NewsletterBlock"));
+const ReviewsBlock = lazy(() => import("./dynamic/ReviewsBlock"));
 // Lazy-load MapLocationBlock for code splitting (Step 2.28.1)
-const MapLocationBlock = lazy(() => import('./blocks/MapLocationBlock'));
+const MapLocationBlock = lazy(() => import("./blocks/MapLocationBlock"));
 
 // Lazy-load EventsListBlock for code splitting (Step 2.29C)
-const EventsListBlock = lazy(() => import('./dynamic/EventsListBlock'));
+const EventsListBlock = lazy(() => import("./dynamic/EventsListBlock"));
 
 // Lazy-load CollageBlock for code splitting (Step 14.6)
-const CollageBlock = lazy(() => import('./blocks/CollageBlock'));
+const CollageBlock = lazy(() => import("./blocks/CollageBlock"));
 
 // Block components (Step 10.1)
-import HeroBlock from './blocks/HeroBlock';
+import HeroBlock from "./blocks/HeroBlock";
 // Block components (Step 10.2)
-import GalleryBlock from './blocks/GalleryBlock';
+import GalleryBlock from "./blocks/GalleryBlock";
 // Block components (Step 10.3)
-import FeaturesBlock from './blocks/FeaturesBlock';
+import FeaturesBlock from "./blocks/FeaturesBlock";
 // Block components (Step 11.2)
-import PortfolioGridBlock from './blocks/PortfolioGridBlock';
+import PortfolioGridBlock from "./blocks/PortfolioGridBlock";
 // Block components (Step 11.1)
-import MarqueeBlock from './blocks/MarqueeBlock';
+import MarqueeBlock from "./blocks/MarqueeBlock";
 // Block components (Step 11.3)
-import WorkingHoursBlock from './blocks/WorkingHoursBlock';
+import WorkingHoursBlock from "./blocks/WorkingHoursBlock";
 // Block components (Step 11.4)
-import ReservationFormBlock from './blocks/ReservationFormBlock';
+import ReservationFormBlock from "./blocks/ReservationFormBlock";
 // Block components (Step 15.4)
-import ContactBlock from './blocks/ContactBlock';
+import ContactBlock from "./blocks/ContactBlock";
 // Block components (Step 15.8)
-import StoryPanelBlock from './blocks/StoryPanelBlock';
+import StoryPanelBlock from "./blocks/StoryPanelBlock";
 // Block components (Step 17.8)
-import DecorativeBlock from './blocks/DecorativeBlock';
+import DecorativeBlock from "./blocks/DecorativeBlock";
 
 // Block components (Step 2.29A)
-import BeforeAfterBlock from './blocks/BeforeAfterBlock';
-import AnnouncementBarBlock from './blocks/AnnouncementBarBlock';
-import LogoCarouselBlock from './blocks/LogoCarouselBlock';
-import CountdownBlock from './blocks/CountdownBlock';
+import BeforeAfterBlock from "./blocks/BeforeAfterBlock";
+import AnnouncementBarBlock from "./blocks/AnnouncementBarBlock";
+import LogoCarouselBlock from "./blocks/LogoCarouselBlock";
+import CountdownBlock from "./blocks/CountdownBlock";
 // Block components (Step 2.29A.1-2, 2.29A.7)
-import TabsBlock from './blocks/TabsBlock';
-import StepsProcessBlock from './blocks/StepsProcessBlock';
-import TableBlock from './blocks/TableBlock';
+import TabsBlock from "./blocks/TabsBlock";
+import StepsProcessBlock from "./blocks/StepsProcessBlock";
+import TableBlock from "./blocks/TableBlock";
 // Block components (Step 10.6)
-import FooterBlock from './blocks/FooterBlock';
+import FooterBlock from "./blocks/FooterBlock";
 // Block components (Step 10.7)
-import ImageTextSplitBlock from './blocks/ImageTextSplitBlock';
+import ImageTextSplitBlock from "./blocks/ImageTextSplitBlock";
 // Block components (Step 10.5 / Step 14.10 — PublicWebsite-native with BlockWrapper)
-import NavbarBlock from './blocks/NavbarBlock';
+import NavbarBlock from "./blocks/NavbarBlock";
 // Step 14.1 — per-item stagger animation
-import AnimatedList from './utils/AnimatedList';
+import AnimatedList from "./utils/AnimatedList";
 // Heading typography resolver (Step 14.2)
 import {
   resolveHeadingTypographySx,
   resolveSubheadingTypographySx,
   resolveGradientTextSx,
   resolveTextStrokeSx,
-} from './utils/headingTypography';
-import { useNavigate } from 'react-router-dom';
+} from "./utils/headingTypography";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Container,
@@ -100,8 +113,8 @@ import {
   Avatar,
   TextField,
   Alert,
-} from '@mui/material';
-import DOMPurify from 'dompurify';
+} from "@mui/material";
+import DOMPurify from "dompurify";
 
 interface Block {
   id: number;
@@ -167,7 +180,7 @@ const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
       setActiveIndex(idx);
       startInterval();
     },
-    [stopInterval, startInterval]
+    [stopInterval, startInterval],
   );
 
   const goPrev = useCallback(() => {
@@ -181,7 +194,7 @@ const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
   if (count === 0) {
     return (
       <BlockWrapper fields={fields}>
-        <Box sx={{ bgcolor: 'grey.50', py: 8, textAlign: 'center' }}>
+        <Box sx={{ bgcolor: "grey.50", py: 8, textAlign: "center" }}>
           <Typography color="text.secondary">No testimonials yet.</Typography>
         </Box>
       </BlockWrapper>
@@ -190,12 +203,14 @@ const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
 
   const item = items[activeIndex];
   const starRating =
-    item.rating != null ? Math.min(5, Math.max(1, Math.round(Number(item.rating)))) : null;
+    item.rating != null
+      ? Math.min(5, Math.max(1, Math.round(Number(item.rating))))
+      : null;
 
   return (
     <BlockWrapper fields={fields}>
       <Box
-        sx={{ bgcolor: 'grey.50', py: 8 }}
+        sx={{ bgcolor: "grey.50", py: 8 }}
         onMouseEnter={stopInterval}
         onMouseLeave={startInterval}
       >
@@ -207,10 +222,10 @@ const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
             gutterBottom
             sx={{ mb: 6, fontWeight: 600, color: headingColor }}
           >
-            {heading || 'What Our Clients Say'}
+            {heading || "What Our Clients Say"}
           </Typography>
 
-          <Box sx={{ position: 'relative', minHeight: 260 }}>
+          <Box sx={{ position: "relative", minHeight: 260 }}>
             {/* Prev arrow */}
             {count > 1 && (
               <Box
@@ -218,17 +233,17 @@ const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
                 onClick={goPrev}
                 aria-label="Previous testimonial"
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   left: -40,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '2rem',
-                  cursor: 'pointer',
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  fontSize: "2rem",
+                  cursor: "pointer",
                   color: headingColor,
                   opacity: 0.6,
-                  '&:hover': { opacity: 1 },
+                  "&:hover": { opacity: 1 },
                   zIndex: 1,
                 }}
               >
@@ -244,30 +259,38 @@ const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <Card elevation={2} sx={{ p: 4, textAlign: 'center' }}>
+                <Card elevation={2} sx={{ p: 4, textAlign: "center" }}>
                   <Avatar
                     src={item.photo || item.avatar}
-                    alt={item.author || 'Author'}
-                    sx={{ width: 72, height: 72, mx: 'auto', mb: 2 }}
+                    alt={item.author || "Author"}
+                    sx={{ width: 72, height: 72, mx: "auto", mb: 2 }}
                   >
-                    {(item.author || 'A').charAt(0).toUpperCase()}
+                    {(item.author || "A").charAt(0).toUpperCase()}
                   </Avatar>
                   {starRating != null && (
                     <Box
                       aria-label={`${starRating} out of 5 stars`}
-                      sx={{ color: '#f59e0b', fontSize: '1.2em', mb: 1 }}
+                      sx={{ color: "#f59e0b", fontSize: "1.2em", mb: 1 }}
                     >
-                      {'★'.repeat(starRating)}
-                      {'☆'.repeat(5 - starRating)}
+                      {"★".repeat(starRating)}
+                      {"☆".repeat(5 - starRating)}
                     </Box>
                   )}
                   <Typography
                     variant="body1"
-                    sx={{ fontStyle: 'italic', color: bodyColor, mb: 3, fontSize: '1.1rem' }}
+                    sx={{
+                      fontStyle: "italic",
+                      color: bodyColor,
+                      mb: 3,
+                      fontSize: "1.1rem",
+                    }}
                   >
                     &ldquo;{item.quote}&rdquo;
                   </Typography>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: headingColor }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 600, color: headingColor }}
+                  >
                     {item.author}
                   </Typography>
                   {(item.position || item.role) && (
@@ -286,17 +309,17 @@ const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
                 onClick={goNext}
                 aria-label="Next testimonial"
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   right: -40,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '2rem',
-                  cursor: 'pointer',
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  fontSize: "2rem",
+                  cursor: "pointer",
                   color: headingColor,
                   opacity: 0.6,
-                  '&:hover': { opacity: 1 },
+                  "&:hover": { opacity: 1 },
                   zIndex: 1,
                 }}
               >
@@ -308,7 +331,7 @@ const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
           {/* Dot indicators */}
           {count > 1 && (
             <Box
-              sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 3 }}
+              sx={{ display: "flex", justifyContent: "center", gap: 1, mt: 3 }}
               role="tablist"
               aria-label="Testimonial navigation"
             >
@@ -323,12 +346,13 @@ const TestimonialsStackedMUI: React.FC<TestimonialsStackedMUIProps> = ({
                   sx={{
                     width: 10,
                     height: 10,
-                    borderRadius: '50%',
-                    border: 'none',
-                    cursor: 'pointer',
+                    borderRadius: "50%",
+                    border: "none",
+                    cursor: "pointer",
                     p: 0,
-                    background: idx === activeIndex ? '#f59e0b' : 'rgba(0,0,0,0.2)',
-                    transition: 'background 0.3s',
+                    background:
+                      idx === activeIndex ? "#f59e0b" : "rgba(0,0,0,0.2)",
+                    transition: "background 0.3s",
                   }}
                 />
               ))}
@@ -357,36 +381,41 @@ const StatItem = React.memo<StatItemProps>(
     });
 
     return (
-      <Grid item xs={6} md={4} sx={{ textAlign: 'center' }}>
-        <Typography variant="h2" sx={{ fontWeight: 800, color: 'white' }} ref={ref as React.Ref<HTMLElement>}>
-          {stat.prefix || ''}
+      <Grid item xs={6} md={4} sx={{ textAlign: "center" }}>
+        <Typography
+          variant="h2"
+          sx={{ fontWeight: 800, color: "white" }}
+          ref={ref as React.Ref<HTMLElement>}
+        >
+          {stat.prefix || ""}
           {displayValue}
-          {stat.suffix || ''}
+          {stat.suffix || ""}
         </Typography>
-        <Typography variant="h6" sx={{ opacity: 0.85, color: 'white' }}>
+        <Typography variant="h6" sx={{ opacity: 0.85, color: "white" }}>
           {stat.label}
         </Typography>
       </Grid>
     );
-  }
+  },
 );
 
-StatItem.displayName = 'StatItem';
+StatItem.displayName = "StatItem";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BlockRenderer: React.FC<BlockRendererProps> = ({
   block,
-  primaryColor = '#2563eb',
-  secondaryColor = '#64748b',
-  headingColor = '#1e293b',
-  bodyColor = '#475569',
+  primaryColor = "#2563eb",
+  secondaryColor = "#64748b",
+  headingColor = "#1e293b",
+  bodyColor = "#475569",
   onCtaClick,
   onFormSubmit,
 }) => {
   const { blockType, content } = block;
   const navigate = useNavigate();
-  const basePrimaryColor = primaryColor.length === 9 ? primaryColor.slice(0, 7) : primaryColor;
+  const basePrimaryColor =
+    primaryColor.length === 9 ? primaryColor.slice(0, 7) : primaryColor;
 
   /**
    * Check if a URL is internal (relative or same domain)
@@ -394,11 +423,11 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
   const isInternalLink = (url: string): boolean => {
     if (!url) return false;
     // Relative paths are internal
-    if (url.startsWith('/')) return true;
+    if (url.startsWith("/")) return true;
     // Hash links are internal
-    if (url.startsWith('#')) return true;
+    if (url.startsWith("#")) return true;
     // External links start with http:// or https://
-    if (url.startsWith('http://') || url.startsWith('https://')) return false;
+    if (url.startsWith("http://") || url.startsWith("https://")) return false;
     // Everything else is considered internal
     return true;
   };
@@ -407,7 +436,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
    * Handle CTA button clicks - navigate for internal links, open in same tab for external
    */
   const handleCtaClick = (url: string, ctaText?: string) => {
-    if (!url || url === '#') return;
+    if (!url || url === "#") return;
 
     // Track CTA click if analytics is enabled
     if (onCtaClick && ctaText) {
@@ -422,7 +451,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
   };
 
   switch (blockType) {
-    case 'HERO':
+    case "HERO":
       return (
         <HeroBlock
           content={content}
@@ -435,7 +464,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         />
       );
 
-    case 'FEATURES':
+    case "FEATURES":
       return (
         <FeaturesBlock
           content={content}
@@ -445,10 +474,11 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         />
       );
 
-    case 'TESTIMONIALS': {
-      const testimonialItems: any[] = content.testimonials || content.items || [];
+    case "TESTIMONIALS": {
+      const testimonialItems: any[] =
+        content.testimonials || content.items || [];
 
-      if ((content.variant || 'cards') === 'stacked') {
+      if ((content.variant || "cards") === "stacked") {
         return (
           <TestimonialsStackedMUI
             heading={content.heading}
@@ -463,7 +493,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       // cards variant (default) — 2-column grid with star ratings
       return (
         <BlockWrapper fields={content}>
-          <Box sx={{ bgcolor: 'grey.50' }}>
+          <Box sx={{ bgcolor: "grey.50" }}>
             <Container maxWidth="lg">
               <Typography
                 variant="h3"
@@ -472,35 +502,56 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                 gutterBottom
                 sx={{ mb: 6, fontWeight: 600, color: headingColor }}
               >
-                {content.heading || 'What Our Clients Say'}
+                {content.heading || "What Our Clients Say"}
               </Typography>
               <Grid container spacing={4}>
-                <AnimatedList staggerMs={100} wrapperStyle={{ display: 'contents' }}>
+                <AnimatedList
+                  staggerMs={100}
+                  wrapperStyle={{ display: "contents" }}
+                >
                   {testimonialItems.map((testimonial: any, index: number) => {
                     const starRating =
                       testimonial.rating != null
-                        ? Math.min(5, Math.max(1, Math.round(Number(testimonial.rating))))
+                        ? Math.min(
+                            5,
+                            Math.max(1, Math.round(Number(testimonial.rating))),
+                          )
                         : null;
                     return (
                       <Grid item xs={12} md={6} key={index}>
                         <Card elevation={1} sx={{ p: 3 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              mb: 2,
+                            }}
+                          >
                             <Avatar
                               src={testimonial.photo || testimonial.avatar}
-                              alt={testimonial.author || 'Author'}
+                              alt={testimonial.author || "Author"}
                               sx={{ width: 40, height: 40, mr: 1.5 }}
                             >
-                              {(testimonial.author || 'A').charAt(0).toUpperCase()}
+                              {(testimonial.author || "A")
+                                .charAt(0)
+                                .toUpperCase()}
                             </Avatar>
                             <Box>
                               <Typography
                                 variant="subtitle1"
-                                sx={{ fontWeight: 600, color: headingColor, lineHeight: 1.2 }}
+                                sx={{
+                                  fontWeight: 600,
+                                  color: headingColor,
+                                  lineHeight: 1.2,
+                                }}
                               >
                                 {testimonial.author}
                               </Typography>
                               {(testimonial.position || testimonial.role) && (
-                                <Typography variant="body2" color="text.secondary">
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
                                   {testimonial.position || testimonial.role}
                                 </Typography>
                               )}
@@ -509,15 +560,19 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                           {starRating != null && (
                             <Box
                               aria-label={`${starRating} out of 5 stars`}
-                              sx={{ color: '#f59e0b', fontSize: '1.1em', mb: 1 }}
+                              sx={{
+                                color: "#f59e0b",
+                                fontSize: "1.1em",
+                                mb: 1,
+                              }}
                             >
-                              {'★'.repeat(starRating)}
-                              {'☆'.repeat(5 - starRating)}
+                              {"★".repeat(starRating)}
+                              {"☆".repeat(5 - starRating)}
                             </Box>
                           )}
                           <Typography
                             variant="body1"
-                            sx={{ fontStyle: 'italic', color: bodyColor }}
+                            sx={{ fontStyle: "italic", color: bodyColor }}
                           >
                             &ldquo;{testimonial.quote}&rdquo;
                           </Typography>
@@ -533,7 +588,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       );
     }
 
-    case 'CTA': {
+    case "CTA": {
       const headingTypoSx = resolveHeadingTypographySx(content);
       const subheadingTypoSx = resolveSubheadingTypographySx(content);
       const ctaGradientTextSx = resolveGradientTextSx(content);
@@ -544,8 +599,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
           <Box
             sx={{
               background: `linear-gradient(135deg, ${basePrimaryColor}ee 0%, ${primaryColor} 100%)`,
-              color: 'white',
-              textAlign: 'center',
+              color: "white",
+              textAlign: "center",
             }}
           >
             <Container maxWidth="md">
@@ -558,29 +613,29 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                   <Box
                     data-testid="status-badge"
                     sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
+                      display: "inline-flex",
+                      alignItems: "center",
                       gap: 1,
                       mb: 1.5,
-                      justifyContent: 'center',
-                      width: '100%',
+                      justifyContent: "center",
+                      width: "100%",
                     }}
                   >
                     <Box
                       data-testid="status-badge-dot"
-                      data-animation={ctaStatusBadge.animation || 'none'}
+                      data-animation={ctaStatusBadge.animation || "none"}
                       sx={{
                         width: 12,
                         height: 12,
-                        borderRadius: '50%',
-                        backgroundColor: ctaStatusBadge.color || '#22c55e',
+                        borderRadius: "50%",
+                        backgroundColor: ctaStatusBadge.color || "#22c55e",
                         flexShrink: 0,
-                        ...(ctaStatusBadge.animation === 'pulse'
-                          ? { animation: 'statusPulse 2s ease-in-out infinite' }
-                          : ctaStatusBadge.animation === 'glow'
+                        ...(ctaStatusBadge.animation === "pulse"
+                          ? { animation: "statusPulse 2s ease-in-out infinite" }
+                          : ctaStatusBadge.animation === "glow"
                             ? {
-                                animation: 'statusGlow 2s ease-in-out infinite',
-                                color: ctaStatusBadge.color || '#22c55e',
+                                animation: "statusGlow 2s ease-in-out infinite",
+                                color: ctaStatusBadge.color || "#22c55e",
                               }
                             : {}),
                       }}
@@ -588,10 +643,10 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                     <Typography
                       component="span"
                       sx={{
-                        fontSize: '0.85rem',
+                        fontSize: "0.85rem",
                         fontWeight: 600,
-                        color: 'inherit',
-                        letterSpacing: '0.02em',
+                        color: "inherit",
+                        letterSpacing: "0.02em",
                       }}
                     >
                       {ctaStatusBadge.text}
@@ -606,40 +661,43 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                 sx={{
                   fontWeight: 700,
                   mb: 3,
-                  color: 'white',
+                  color: "white",
                   ...headingTypoSx,
                   ...ctaGradientTextSx,
                   ...ctaTextStrokeSx,
                 }}
               >
-                {content.heading || 'Ready to Get Started?'}
+                {content.heading || "Ready to Get Started?"}
               </Typography>
               <Typography
                 variant="h6"
                 sx={{
                   mb: 4,
-                  color: 'white',
+                  color: "white",
                   ...subheadingTypoSx,
                   opacity: 0.95 * ((content.headingOpacity ?? 100) / 100),
                 }}
               >
-                {content.subheading || 'Join us today and transform your business'}
+                {content.subheading ||
+                  "Join us today and transform your business"}
               </Typography>
               {content.ctaText && (
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={() => handleCtaClick(content.ctaLink, content.ctaText)}
+                  onClick={() =>
+                    handleCtaClick(content.ctaLink, content.ctaText)
+                  }
                   sx={{
-                    bgcolor: 'white',
+                    bgcolor: "white",
                     color: primaryColor,
                     px: 5,
                     py: 2,
-                    fontSize: '1.2rem',
+                    fontSize: "1.2rem",
                     fontWeight: 600,
-                    cursor: 'pointer',
-                    '&:hover': {
-                      bgcolor: 'rgba(255,255,255,0.9)',
+                    cursor: "pointer",
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.9)",
                     },
                   }}
                 >
@@ -652,7 +710,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       );
     }
 
-    case 'CONTACT':
+    case "CONTACT":
       return (
         <ContactBlock
           block={block}
@@ -664,7 +722,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         />
       );
 
-    case 'TEXT':
+    case "TEXT":
       return (
         <BlockWrapper fields={content}>
           <Box>
@@ -684,11 +742,11 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                 variant="body1"
                 sx={{
                   lineHeight: 1.8,
-                  fontSize: '1.1rem',
+                  fontSize: "1.1rem",
                   color: bodyColor,
                 }}
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(content.body || ''),
+                  __html: DOMPurify.sanitize(content.body || ""),
                 }}
               />
             </Container>
@@ -696,7 +754,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'FORM_BUILDER':
+    case "FORM_BUILDER":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -715,7 +773,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'BEFORE_AFTER':
+    case "BEFORE_AFTER":
       return (
         <BlockWrapper fields={content}>
           <BeforeAfterBlock
@@ -729,7 +787,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'ANNOUNCEMENT_BAR':
+    case "ANNOUNCEMENT_BAR":
       return (
         <BlockWrapper fields={content}>
           <AnnouncementBarBlock
@@ -743,7 +801,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'LOGO_CAROUSEL':
+    case "LOGO_CAROUSEL":
       return (
         <BlockWrapper fields={content}>
           <LogoCarouselBlock
@@ -757,7 +815,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'COUNTDOWN':
+    case "COUNTDOWN":
       return (
         <BlockWrapper fields={content}>
           <CountdownBlock
@@ -771,7 +829,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'TABS':
+    case "TABS":
       return (
         <BlockWrapper fields={content}>
           <TabsBlock
@@ -785,7 +843,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'STEPS_PROCESS':
+    case "STEPS_PROCESS":
       return (
         <BlockWrapper fields={content}>
           <StepsProcessBlock
@@ -799,7 +857,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'TABLE':
+    case "TABLE":
       return (
         <BlockWrapper fields={content}>
           <TableBlock
@@ -813,11 +871,13 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'BLOG_FEED': {
+    case "BLOG_FEED": {
       const staticPosts = content?.staticPosts;
       const useStaticWhenEmpty = content?.useStaticWhenEmpty !== false;
       const hasStaticPosts =
-        Array.isArray(staticPosts) && staticPosts.length > 0 && useStaticWhenEmpty;
+        Array.isArray(staticPosts) &&
+        staticPosts.length > 0 &&
+        useStaticWhenEmpty;
 
       return (
         <BlockWrapper fields={content}>
@@ -835,7 +895,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
             {hasStaticPosts ? (
               <BlogFeedStaticRenderer
                 posts={staticPosts}
-                columns={content?.staticPostColumns || '3'}
+                columns={content?.staticPostColumns || "3"}
                 showCategory={content?.showCategory !== false}
                 showDate={content?.showDate !== false}
                 showReadTime={content?.showReadTime !== false}
@@ -861,7 +921,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       );
     }
 
-    case 'BLOG_ARTICLE':
+    case "BLOG_ARTICLE":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -887,7 +947,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'PRODUCT_SHOWCASE':
+    case "PRODUCT_SHOWCASE":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -913,7 +973,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'DIRECTORY_LISTING':
+    case "DIRECTORY_LISTING":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -939,7 +999,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'SOCIAL_EMBED':
+    case "SOCIAL_EMBED":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -965,7 +1025,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'EMBED':
+    case "EMBED":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -991,7 +1051,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'MENU_DISPLAY':
+    case "MENU_DISPLAY":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -1017,7 +1077,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'EVENTS_LIST':
+    case "EVENTS_LIST":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -1043,7 +1103,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'MAP_LOCATION':
+    case "MAP_LOCATION":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -1069,7 +1129,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'NEWSLETTER':
+    case "NEWSLETTER":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -1095,7 +1155,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'REVIEWS':
+    case "REVIEWS":
       return (
         <BlockWrapper fields={content}>
           <Suspense
@@ -1121,10 +1181,10 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'IMAGE':
+    case "IMAGE":
       return (
         <BlockWrapper fields={content}>
-          <Box sx={{ textAlign: content.alignment || 'center' }}>
+          <Box sx={{ textAlign: content.alignment || "center" }}>
             <Container maxWidth="lg">
               {content.heading && (
                 <Typography
@@ -1140,22 +1200,32 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                 <Box
                   component="img"
                   src={content.image}
-                  alt={content.alt || 'Image'}
+                  alt={content.alt || "Image"}
                   sx={{
-                    maxWidth: '100%',
-                    height: 'auto',
+                    maxWidth: "100%",
+                    height: "auto",
                     borderRadius: 1,
                   }}
                 />
               ) : (
-                <Box sx={{ py: 4, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
+                <Box
+                  sx={{
+                    py: 4,
+                    bgcolor: "grey.100",
+                    borderRadius: 1,
+                    textAlign: "center",
+                  }}
+                >
                   <Typography variant="body2" color="text.secondary">
                     No image set
                   </Typography>
                 </Box>
               )}
               {content.caption && (
-                <Typography variant="body2" sx={{ mt: 1, color: bodyColor, fontStyle: 'italic' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 1, color: bodyColor, fontStyle: "italic" }}
+                >
                   {content.caption}
                 </Typography>
               )}
@@ -1164,34 +1234,47 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'NAVBAR':
+    case "NAVBAR":
       return (
         <BlockWrapper fields={content}>
-          <NavbarBlock block={block as unknown as { content?: Record<string, unknown>; [key: string]: unknown }} />
+          <NavbarBlock
+            block={
+              block as unknown as {
+                content?: Record<string, unknown>;
+                [key: string]: unknown;
+              }
+            }
+          />
         </BlockWrapper>
       );
 
-    case 'FOOTER':
+    case "FOOTER":
       return (
         <BlockWrapper fields={content}>
           <FooterBlock content={content} />
         </BlockWrapper>
       );
 
-    case 'GALLERY':
-      return <GalleryBlock content={content} variant={block.variant} headingColor={headingColor} />;
+    case "GALLERY":
+      return (
+        <GalleryBlock
+          content={content}
+          variant={block.variant}
+          headingColor={headingColor}
+        />
+      );
 
-    case 'COLLAGE':
+    case "COLLAGE":
       return (
         <BlockWrapper fields={content}>
           <CollageBlock content={content} headingColor={headingColor} />
         </BlockWrapper>
       );
 
-    case 'PRICING':
+    case "PRICING":
       return (
         <BlockWrapper fields={content}>
-          <Box sx={{ bgcolor: 'grey.50' }}>
+          <Box sx={{ bgcolor: "grey.50" }}>
             <Container maxWidth="lg">
               {content.heading && (
                 <Typography
@@ -1215,33 +1298,35 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                       ctaLink?: string;
                       highlighted?: boolean;
                     },
-                    idx: number
+                    idx: number,
                   ) => (
                     <Grid item xs={12} sm={6} md={4} key={idx}>
                       <Card
                         elevation={plan.highlighted ? 8 : 2}
                         sx={{
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          border: plan.highlighted ? `2px solid ${primaryColor}` : 'none',
-                          position: 'relative',
-                          overflow: 'visible',
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          border: plan.highlighted
+                            ? `2px solid ${primaryColor}`
+                            : "none",
+                          position: "relative",
+                          overflow: "visible",
                         }}
                       >
                         {plan.highlighted && (
                           <Box
                             sx={{
-                              position: 'absolute',
+                              position: "absolute",
                               top: -12,
-                              left: '50%',
-                              transform: 'translateX(-50%)',
+                              left: "50%",
+                              transform: "translateX(-50%)",
                               bgcolor: primaryColor,
-                              color: 'white',
+                              color: "white",
                               px: 2,
                               py: 0.5,
                               borderRadius: 1,
-                              fontSize: '0.75rem',
+                              fontSize: "0.75rem",
                               fontWeight: 700,
                             }}
                           >
@@ -1249,7 +1334,12 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                           </Box>
                         )}
                         <CardContent
-                          sx={{ p: 4, flex: 1, display: 'flex', flexDirection: 'column' }}
+                          sx={{
+                            p: 4,
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
                         >
                           <Typography
                             variant="h5"
@@ -1276,13 +1366,23 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                           </Box>
                           {plan.ctaText && (
                             <Button
-                              variant={plan.highlighted ? 'contained' : 'outlined'}
+                              variant={
+                                plan.highlighted ? "contained" : "outlined"
+                              }
                               fullWidth
-                              onClick={() => handleCtaClick(plan.ctaLink || '#', plan.ctaText)}
+                              onClick={() =>
+                                handleCtaClick(
+                                  plan.ctaLink || "#",
+                                  plan.ctaText,
+                                )
+                              }
                               sx={
                                 plan.highlighted
                                   ? { bgcolor: primaryColor }
-                                  : { borderColor: primaryColor, color: primaryColor }
+                                  : {
+                                      borderColor: primaryColor,
+                                      color: primaryColor,
+                                    }
                               }
                             >
                               {plan.ctaText}
@@ -1291,7 +1391,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                         </CardContent>
                       </Card>
                     </Grid>
-                  )
+                  ),
                 )}
               </Grid>
             </Container>
@@ -1299,7 +1399,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'FAQ':
+    case "FAQ":
       return (
         <BlockWrapper fields={content}>
           <Box>
@@ -1315,28 +1415,41 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                   {content.heading}
                 </Typography>
               )}
-              {content.items?.map((item: { question: string; answer: string }, idx: number) => (
-                <Box
-                  key={idx}
-                  sx={{ mb: 3, pb: 3, borderBottom: '1px solid', borderColor: 'divider' }}
-                >
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: headingColor }}>
-                    {item.question}
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: bodyColor, lineHeight: 1.8 }}>
-                    {item.answer}
-                  </Typography>
-                </Box>
-              ))}
+              {content.items?.map(
+                (item: { question: string; answer: string }, idx: number) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      mb: 3,
+                      pb: 3,
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 600, mb: 1, color: headingColor }}
+                    >
+                      {item.question}
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{ color: bodyColor, lineHeight: 1.8 }}
+                    >
+                      {item.answer}
+                    </Typography>
+                  </Box>
+                ),
+              )}
             </Container>
           </Box>
         </BlockWrapper>
       );
 
-    case 'STATS':
+    case "STATS":
       return (
         <BlockWrapper fields={content}>
-          <Box sx={{ bgcolor: primaryColor, color: 'white' }}>
+          <Box sx={{ bgcolor: primaryColor, color: "white" }}>
             <Container maxWidth="lg">
               {content.heading && (
                 <Typography
@@ -1344,7 +1457,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                   component="h2"
                   align="center"
                   gutterBottom
-                  sx={{ mb: 6, fontWeight: 700, color: 'white' }}
+                  sx={{ mb: 6, fontWeight: 700, color: "white" }}
                 >
                   {content.heading}
                 </Typography>
@@ -1352,8 +1465,13 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
               <Grid container spacing={4} justifyContent="center">
                 {content.stats?.map(
                   (
-                    stat: { number: string; label: string; prefix?: string; suffix?: string },
-                    idx: number
+                    stat: {
+                      number: string;
+                      label: string;
+                      prefix?: string;
+                      suffix?: string;
+                    },
+                    idx: number,
                   ) => (
                     <StatItem
                       key={idx}
@@ -1361,7 +1479,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                       animateNumbers={content.animateNumbers}
                       animationNumberDuration={content.animationNumberDuration}
                     />
-                  )
+                  ),
                 )}
               </Grid>
             </Container>
@@ -1369,10 +1487,10 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'TEAM':
+    case "TEAM":
       return (
         <BlockWrapper fields={content}>
-          <Box sx={{ bgcolor: 'background.default' }}>
+          <Box sx={{ bgcolor: "background.default" }}>
             <Container maxWidth="lg">
               {content.heading && (
                 <Typography
@@ -1388,28 +1506,39 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
               <Grid container spacing={4} justifyContent="center">
                 {content.members?.map(
                   (
-                    member: { name: string; role: string; bio?: string; avatar?: string },
-                    idx: number
+                    member: {
+                      name: string;
+                      role: string;
+                      bio?: string;
+                      avatar?: string;
+                    },
+                    idx: number,
                   ) => (
                     <Grid item xs={12} sm={6} md={4} key={idx}>
-                      <Card elevation={2} sx={{ textAlign: 'center', p: 3 }}>
+                      <Card elevation={2} sx={{ textAlign: "center", p: 3 }}>
                         <Avatar
                           src={member.avatar || undefined}
                           sx={{
                             width: 80,
                             height: 80,
-                            mx: 'auto',
+                            mx: "auto",
                             mb: 2,
                             bgcolor: primaryColor,
-                            fontSize: '2rem',
+                            fontSize: "2rem",
                           }}
                         >
                           {!member.avatar && member.name?.[0]}
                         </Avatar>
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: headingColor }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 600, color: headingColor }}
+                        >
                           {member.name}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: primaryColor, mb: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: primaryColor, mb: 1 }}
+                        >
                           {member.role}
                         </Typography>
                         {member.bio && (
@@ -1419,7 +1548,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                         )}
                       </Card>
                     </Grid>
-                  )
+                  ),
                 )}
               </Grid>
             </Container>
@@ -1427,13 +1556,17 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'VIDEO':
+    case "VIDEO":
       return (
         <BlockWrapper fields={content}>
           <Box>
             <Container
               maxWidth={
-                content.maxWidth === 'small' ? 'sm' : content.maxWidth === 'medium' ? 'md' : 'lg'
+                content.maxWidth === "small"
+                  ? "sm"
+                  : content.maxWidth === "medium"
+                    ? "md"
+                    : "lg"
               }
             >
               {content.heading && (
@@ -1450,30 +1583,31 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
               {content.videoUrl ? (
                 <Box
                   sx={{
-                    position: 'relative',
+                    position: "relative",
                     paddingTop:
-                      content.aspectRatio === '4:3'
-                        ? '75%'
-                        : content.aspectRatio === '1:1'
-                          ? '100%'
-                          : '56.25%',
-                    overflow: 'hidden',
+                      content.aspectRatio === "4:3"
+                        ? "75%"
+                        : content.aspectRatio === "1:1"
+                          ? "100%"
+                          : "56.25%",
+                    overflow: "hidden",
                     borderRadius: 1,
                   }}
                 >
-                  {content.videoUrl.includes('youtube') || content.videoUrl.includes('vimeo') ? (
+                  {content.videoUrl.includes("youtube") ||
+                  content.videoUrl.includes("vimeo") ? (
                     <Box
                       component="iframe"
                       src={content.videoUrl}
-                      title={content.heading || 'Video'}
+                      title={content.heading || "Video"}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       sx={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 0,
                         left: 0,
-                        width: '100%',
-                        height: '100%',
+                        width: "100%",
+                        height: "100%",
                         border: 0,
                       }}
                     />
@@ -1486,18 +1620,25 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                       muted={content.muted !== false}
                       loop={content.loop || false}
                       sx={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 0,
                         left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
                       }}
                     />
                   )}
                 </Box>
               ) : (
-                <Box sx={{ py: 8, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
+                <Box
+                  sx={{
+                    py: 8,
+                    bgcolor: "grey.100",
+                    borderRadius: 1,
+                    textAlign: "center",
+                  }}
+                >
                   <Typography variant="body2" color="text.secondary">
                     No video URL set
                   </Typography>
@@ -1506,7 +1647,12 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
               {content.caption && (
                 <Typography
                   variant="body2"
-                  sx={{ mt: 1, textAlign: 'center', color: bodyColor, fontStyle: 'italic' }}
+                  sx={{
+                    mt: 1,
+                    textAlign: "center",
+                    color: bodyColor,
+                    fontStyle: "italic",
+                  }}
                 >
                   {content.caption}
                 </Typography>
@@ -1516,7 +1662,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'PORTFOLIO_GRID':
+    case "PORTFOLIO_GRID":
       return (
         <BlockWrapper fields={content}>
           <PortfolioGridBlock
@@ -1530,7 +1676,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'WORKING_HOURS':
+    case "WORKING_HOURS":
       return (
         <BlockWrapper fields={content}>
           <WorkingHoursBlock
@@ -1544,7 +1690,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'RESERVATION_FORM':
+    case "RESERVATION_FORM":
       return (
         <BlockWrapper fields={content}>
           <ReservationFormBlock
@@ -1558,7 +1704,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'MARQUEE':
+    case "MARQUEE":
       return (
         <BlockWrapper fields={content}>
           <MarqueeBlock
@@ -1572,7 +1718,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'IMAGE_TEXT_SPLIT':
+    case "IMAGE_TEXT_SPLIT":
       return (
         <BlockWrapper fields={content}>
           <ImageTextSplitBlock
@@ -1580,12 +1726,16 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
             primaryColor={primaryColor}
             headingColor={headingColor}
             bodyColor={bodyColor}
-            onCtaClick={onCtaClick ? (link: string) => onCtaClick('IMAGE_TEXT_SPLIT', link) : undefined}
+            onCtaClick={
+              onCtaClick
+                ? (link: string) => onCtaClick("IMAGE_TEXT_SPLIT", link)
+                : undefined
+            }
           />
         </BlockWrapper>
       );
 
-    case 'STORY_PANEL':
+    case "STORY_PANEL":
       return (
         <BlockWrapper fields={content}>
           <StoryPanelBlock
@@ -1597,7 +1747,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case 'DECORATIVE':
+    case "DECORATIVE":
       return (
         <BlockWrapper fields={content}>
           <DecorativeBlock content={content} />
@@ -1606,9 +1756,11 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
 
     default:
       return (
-        <Box sx={{ py: 4, bgcolor: 'warning.light' }}>
+        <Box sx={{ py: 4, bgcolor: "warning.light" }}>
           <Container>
-            <Typography variant="body2">Unknown block type: {blockType}</Typography>
+            <Typography variant="body2">
+              Unknown block type: {blockType}
+            </Typography>
           </Container>
         </Box>
       );

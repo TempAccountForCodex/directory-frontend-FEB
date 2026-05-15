@@ -15,9 +15,9 @@
  * - useCallback for all handlers (PAT-003 compliance)
  */
 
-import React, { memo, useCallback } from 'react';
-import { Box, IconButton, Tooltip } from '@mui/material';
-import { Undo as UndoIcon, Redo as RedoIcon } from '@mui/icons-material';
+import React, { memo, useCallback } from "react";
+import { Box, IconButton, Tooltip } from "@mui/material";
+import { Undo as UndoIcon, Redo as RedoIcon } from "@mui/icons-material";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,8 +45,16 @@ export interface UndoRedoToolbarProps {
 // ---------------------------------------------------------------------------
 
 const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = memo(
-  ({ canUndo, canRedo, onUndo, onRedo, undoDescription, redoDescription, isMac }) => {
-    const modifier = isMac ? 'Cmd' : 'Ctrl';
+  ({
+    canUndo,
+    canRedo,
+    onUndo,
+    onRedo,
+    undoDescription,
+    redoDescription,
+    isMac,
+  }) => {
+    const modifier = isMac ? "Cmd" : "Ctrl";
 
     const undoLabel = undoDescription
       ? `Undo: ${undoDescription} (${modifier}+Z)`
@@ -70,7 +78,7 @@ const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = memo(
 
     return (
       <Box
-        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+        sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}
         data-testid="undo-redo-toolbar"
       >
         <Tooltip title={undoLabel} arrow>
@@ -82,11 +90,11 @@ const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = memo(
               disabled={!canUndo}
               aria-label={undoLabel}
               sx={{
-                color: canUndo ? 'text.secondary' : 'action.disabled',
-                transition: 'color 0.2s ease',
-                '&:hover': {
-                  color: canUndo ? 'primary.main' : 'action.disabled',
-                  bgcolor: canUndo ? 'action.hover' : 'transparent',
+                color: canUndo ? "text.secondary" : "action.disabled",
+                transition: "color 0.2s ease",
+                "&:hover": {
+                  color: canUndo ? "primary.main" : "action.disabled",
+                  bgcolor: canUndo ? "action.hover" : "transparent",
                 },
               }}
             >
@@ -103,11 +111,11 @@ const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = memo(
               disabled={!canRedo}
               aria-label={redoLabel}
               sx={{
-                color: canRedo ? 'text.secondary' : 'action.disabled',
-                transition: 'color 0.2s ease',
-                '&:hover': {
-                  color: canRedo ? 'primary.main' : 'action.disabled',
-                  bgcolor: canRedo ? 'action.hover' : 'transparent',
+                color: canRedo ? "text.secondary" : "action.disabled",
+                transition: "color 0.2s ease",
+                "&:hover": {
+                  color: canRedo ? "primary.main" : "action.disabled",
+                  bgcolor: canRedo ? "action.hover" : "transparent",
                 },
               }}
             >
@@ -117,9 +125,9 @@ const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = memo(
         </Tooltip>
       </Box>
     );
-  }
+  },
 );
 
-UndoRedoToolbar.displayName = 'UndoRedoToolbar';
+UndoRedoToolbar.displayName = "UndoRedoToolbar";
 
 export default UndoRedoToolbar;

@@ -8,16 +8,16 @@
  * All user-supplied URLs are passed through sanitizeUrl to block javascript: protocol.
  */
 
-import React from 'react';
-import type { BlockRendererProps } from '../types';
-import { escapeHtml, sanitizeUrl } from '../utils';
+import React from "react";
+import type { BlockRendererProps } from "../types";
+import { escapeHtml, sanitizeUrl } from "../utils";
 
 const PLATFORM_LABELS: Record<string, string> = {
-  facebook: 'FB',
-  twitter: 'TW',
-  instagram: 'IG',
-  linkedin: 'LI',
-  youtube: 'YT',
+  facebook: "FB",
+  twitter: "TW",
+  instagram: "IG",
+  linkedin: "LI",
+  youtube: "YT",
 };
 
 interface ColLink {
@@ -53,13 +53,16 @@ interface FooterContent {
 const FooterBlock: React.FC<BlockRendererProps> = ({ block }) => {
   const c = (block.content || {}) as FooterContent;
 
-  const copyright = c.copyright ? String(c.copyright) : '';
+  const copyright = c.copyright ? String(c.copyright) : "";
 
   // Logo
-  const logoSrc = c.logo && typeof c.logo === 'string' ? sanitizeUrl(c.logo) : null;
+  const logoSrc =
+    c.logo && typeof c.logo === "string" ? sanitizeUrl(c.logo) : null;
 
   // Columns (new schema, max 4)
-  const columns = Array.isArray(c.columns) ? (c.columns as FooterColumn[]).slice(0, 4) : [];
+  const columns = Array.isArray(c.columns)
+    ? (c.columns as FooterColumn[]).slice(0, 4)
+    : [];
 
   // Social links (max 5)
   const socialLinks = Array.isArray(c.socialLinks)
@@ -75,25 +78,38 @@ const FooterBlock: React.FC<BlockRendererProps> = ({ block }) => {
       data-global-component="footer"
       style={{
         padding: 24,
-        background: '#222',
-        color: '#ccc',
-        fontSize: '0.9rem',
+        background: "#222",
+        color: "#ccc",
+        fontSize: "0.9rem",
       }}
     >
       {/* Logo */}
-      {logoSrc && logoSrc !== '#' && (
-        <img src={logoSrc} alt="Logo" style={{ height: 40, marginBottom: 12, display: 'block' }} />
+      {logoSrc && logoSrc !== "#" && (
+        <img
+          src={logoSrc}
+          alt="Logo"
+          style={{ height: 40, marginBottom: 12, display: "block" }}
+        />
       )}
 
       {/* Columns */}
       {columns.length > 0 && (
-        <div style={{ display: 'flex', gap: 24, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            marginBottom: 16,
+            flexWrap: "wrap",
+          }}
+        >
           {columns.map((col, idx) => {
-            const colLinks = Array.isArray(col.links) ? (col.links as ColLink[]).slice(0, 8) : [];
+            const colLinks = Array.isArray(col.links)
+              ? (col.links as ColLink[]).slice(0, 8)
+              : [];
             return (
               <div key={idx} style={{ flex: 1, minWidth: 120 }}>
                 {col.title ? (
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem' }}>
+                  <h4 style={{ margin: "0 0 8px 0", fontSize: "0.95rem" }}>
                     {escapeHtml(col.title)}
                   </h4>
                 ) : null}
@@ -102,10 +118,10 @@ const FooterBlock: React.FC<BlockRendererProps> = ({ block }) => {
                     key={lIdx}
                     href={sanitizeUrl(link.url)}
                     style={{
-                      color: 'inherit',
-                      textDecoration: 'none',
-                      display: 'block',
-                      margin: '4px 0',
+                      color: "inherit",
+                      textDecoration: "none",
+                      display: "block",
+                      margin: "4px 0",
                     }}
                   >
                     {escapeHtml(link.label)}
@@ -119,9 +135,13 @@ const FooterBlock: React.FC<BlockRendererProps> = ({ block }) => {
 
       {/* Legacy links */}
       {legacyLinks.length > 0 && (
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+        <div style={{ textAlign: "center", marginBottom: 8 }}>
           {legacyLinks.map((link, idx) => (
-            <a key={idx} href={sanitizeUrl(link.url)} style={{ color: 'inherit', margin: '0 8px' }}>
+            <a
+              key={idx}
+              href={sanitizeUrl(link.url)}
+              style={{ color: "inherit", margin: "0 8px" }}
+            >
               {escapeHtml(link.text || link.label)}
             </a>
           ))}
@@ -130,15 +150,19 @@ const FooterBlock: React.FC<BlockRendererProps> = ({ block }) => {
 
       {/* Social links */}
       {socialLinks.length > 0 && (
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+        <div style={{ textAlign: "center", marginBottom: 8 }}>
           {socialLinks.map((s, idx) => {
-            const platform = String(s.platform || '');
+            const platform = String(s.platform || "");
             const label = PLATFORM_LABELS[platform] || escapeHtml(platform);
             return (
               <a
                 key={idx}
                 href={sanitizeUrl(s.url)}
-                style={{ color: 'inherit', margin: '0 6px', textDecoration: 'none' }}
+                style={{
+                  color: "inherit",
+                  margin: "0 6px",
+                  textDecoration: "none",
+                }}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -154,7 +178,7 @@ const FooterBlock: React.FC<BlockRendererProps> = ({ block }) => {
         <p
           data-editable="copyright"
           data-edit-type="single"
-          style={{ margin: 0, textAlign: 'center', opacity: 0.7 }}
+          style={{ margin: 0, textAlign: "center", opacity: 0.7 }}
         >
           {escapeHtml(copyright)}
         </p>

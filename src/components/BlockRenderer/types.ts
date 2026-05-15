@@ -5,7 +5,7 @@
  * that produces HTML matching backend previewService CSS classes.
  */
 
-export type ViewportType = 'desktop' | 'tablet' | 'mobile';
+export type ViewportType = "desktop" | "tablet" | "mobile";
 
 export interface PreviewBlock {
   id: number | string;
@@ -30,7 +30,7 @@ export interface PreviewRendererProps {
 
 /** Viewport width map matching backend previewService */
 export const VIEWPORT_WIDTHS: Record<ViewportType, string> = {
-  mobile: '375px',
-  tablet: '768px',
-  desktop: '100%',
+  mobile: "375px",
+  tablet: "768px",
+  desktop: "100%",
 };

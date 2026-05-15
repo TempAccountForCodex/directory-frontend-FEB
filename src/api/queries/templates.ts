@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys, type TemplateFilters } from '../queryKeys';
-import { useAuthMe } from './auth';
-import { normalizeTemplateSummary } from '../../templates/templateApi';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys, type TemplateFilters } from "../queryKeys";
+import { useAuthMe } from "./auth";
+import { normalizeTemplateSummary } from "../../templates/templateApi";
 
 export type { TemplateFilters };
 
@@ -66,16 +66,21 @@ export type TemplateHistoryResponse = {
  * cache keys, so paginated lists and filtered lists live side-by-side without
  * collisions. Callers with identical params share one network request.
  */
-export function useTemplates(filters?: TemplateFilters & Record<string, unknown>) {
+export function useTemplates(
+  filters?: TemplateFilters & Record<string, unknown>,
+) {
   return useQuery({
     queryKey: queryKeys.templates.list(filters as TemplateFilters | undefined),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/templates', { params: filters, signal });
+      const response = await apiClient.get("/templates", {
+        params: filters,
+        signal,
+      });
       const envelope = response.data;
       // Normalize each template so category→type mapping (e.g. ecommerce→store) is applied
       if (envelope?.data && Array.isArray(envelope.data)) {
         envelope.data = envelope.data.map((t: Record<string, unknown>) =>
-          normalizeTemplateSummary(t)
+          normalizeTemplateSummary(t),
         );
       }
       return envelope;
@@ -92,17 +97,23 @@ export function useTemplates(filters?: TemplateFilters & Record<string, unknown>
  */
 export function useTemplate(id: string | number | null | undefined) {
   return useQuery({
-    queryKey: queryKeys.templates.detail(id ?? ''),
+    queryKey: queryKeys.templates.detail(id ?? ""),
     queryFn: async ({ signal }) => {
       const response = await apiClient.get(`/templates/${id}`, { signal });
       const envelope = response.data;
       // Normalize single template so category→type mapping is applied
-      if (envelope?.data && typeof envelope.data === 'object' && !Array.isArray(envelope.data)) {
-        envelope.data = normalizeTemplateSummary(envelope.data as Record<string, unknown>);
+      if (
+        envelope?.data &&
+        typeof envelope.data === "object" &&
+        !Array.isArray(envelope.data)
+      ) {
+        envelope.data = normalizeTemplateSummary(
+          envelope.data as Record<string, unknown>,
+        );
       }
       return envelope;
     },
-    enabled: id !== undefined && id !== null && id !== '',
+    enabled: id !== undefined && id !== null && id !== "",
     staleTime: 5 * 60_000,
   });
 }
@@ -114,7 +125,8 @@ export function useTemplate(id: string | number | null | undefined) {
  */
 export function useInvalidateTemplates() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: queryKeys.templates.all() });
+  return () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.templates.all() });
 }
 
 /**
@@ -135,7 +147,7 @@ export function useTemplateFavorites() {
   return useQuery<TemplateFavoritesResponse>({
     queryKey: queryKeys.templates.favorites(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/templates/favorites', {
+      const response = await apiClient.get("/templates/favorites", {
         params: { page: 1, limit: 50 },
         signal,
       });
@@ -165,11 +177,15 @@ export function useFavoriteTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (templateId: string) => {
-      const response = await apiClient.post(`/templates/${templateId}/favorite`);
+      const response = await apiClient.post(
+        `/templates/${templateId}/favorite`,
+      );
       return response.data;
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.templates.favorites() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.templates.favorites(),
+      });
     },
   });
 }
@@ -184,11 +200,15 @@ export function useUnfavoriteTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (templateId: string) => {
-      const response = await apiClient.post(`/templates/${templateId}/favorite`);
+      const response = await apiClient.post(
+        `/templates/${templateId}/favorite`,
+      );
       return response.data;
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.templates.favorites() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.templates.favorites(),
+      });
     },
   });
 }
@@ -202,12 +222,14 @@ export function useUnfavoriteTemplate() {
  */
 export function useTemplateHistory(id: string | number | null | undefined) {
   return useQuery<TemplateHistoryResponse>({
-    queryKey: queryKeys.templates.history(id ?? ''),
+    queryKey: queryKeys.templates.history(id ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/templates/${id}/history`, { signal });
+      const response = await apiClient.get(`/templates/${id}/history`, {
+        signal,
+      });
       return response.data;
     },
-    enabled: id !== undefined && id !== null && id !== '',
+    enabled: id !== undefined && id !== null && id !== "",
     staleTime: 30_000,
   });
 }
@@ -223,12 +245,16 @@ export function useApproveTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (templateId: string | number) => {
-      const response = await apiClient.patch(`/templates/${templateId}/approve`);
+      const response = await apiClient.patch(
+        `/templates/${templateId}/approve`,
+      );
       return response.data;
     },
     onSuccess: (_data, templateId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.templates.all() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.templates.detail(templateId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.templates.detail(templateId),
+      });
     },
   });
 }
@@ -248,14 +274,19 @@ export function useRejectTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ templateId, rejectionReason }: RejectTemplateVars) => {
-      const response = await apiClient.patch(`/templates/${templateId}/reject`, {
-        rejectionReason,
-      });
+      const response = await apiClient.patch(
+        `/templates/${templateId}/reject`,
+        {
+          rejectionReason,
+        },
+      );
       return response.data;
     },
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.templates.all() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.templates.detail(vars.templateId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.templates.detail(vars.templateId),
+      });
     },
   });
 }

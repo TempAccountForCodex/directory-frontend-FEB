@@ -10,7 +10,7 @@
  *   custom   — caller-supplied sectionTextColor; no bg override
  */
 
-export type SectionColorMode = 'default' | 'light' | 'dark' | 'custom';
+export type SectionColorMode = "default" | "light" | "dark" | "custom";
 
 export interface SectionColorResult {
   /** CSS background-color value, or undefined when no override */
@@ -20,13 +20,13 @@ export interface SectionColorResult {
 }
 
 const LIGHT: SectionColorResult = {
-  backgroundColor: '#ffffff',
-  color: '#1a1a1a',
+  backgroundColor: "#ffffff",
+  color: "#1a1a1a",
 };
 
 const DARK: SectionColorResult = {
-  backgroundColor: '#1a1a1a',
-  color: '#ffffff',
+  backgroundColor: "#1a1a1a",
+  color: "#ffffff",
 };
 
 /**
@@ -37,16 +37,16 @@ const DARK: SectionColorResult = {
  */
 export function resolveSectionColors(
   mode: SectionColorMode | string | undefined,
-  sectionTextColor?: string
+  sectionTextColor?: string,
 ): SectionColorResult {
   switch (mode) {
-    case 'light':
+    case "light":
       return LIGHT;
-    case 'dark':
+    case "dark":
       return DARK;
-    case 'custom':
+    case "custom":
       return sectionTextColor ? { color: sectionTextColor } : {};
-    case 'default':
+    case "default":
     default:
       return {};
   }
@@ -55,6 +55,8 @@ export function resolveSectionColors(
 /**
  * Returns a boolean indicating whether the mode is anything other than default.
  */
-export function hasSectionColorOverride(mode: SectionColorMode | string | undefined): boolean {
-  return mode !== undefined && mode !== 'default';
+export function hasSectionColorOverride(
+  mode: SectionColorMode | string | undefined,
+): boolean {
+  return mode !== undefined && mode !== "default";
 }

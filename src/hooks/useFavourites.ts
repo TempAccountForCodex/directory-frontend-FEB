@@ -1,11 +1,11 @@
-import { useCallback } from 'react';
-import type { AxiosError } from 'axios';
+import { useCallback } from "react";
+import type { AxiosError } from "axios";
 import {
   useFavouriteStatus,
   useUserFavourites as useUserFavouritesQuery,
   useBatchFavouriteCheck,
   useToggleFavourite as useToggleFavouriteMutation,
-} from '../api/queries/content';
+} from "../api/queries/content";
 
 /* ---------- Types ---------- */
 export interface FavouriteListing {
@@ -57,7 +57,9 @@ export interface BatchFavouritesResult {
  * optimistic cache update in `useToggleFavourite` produces the same
  * instant UI feedback the legacy implementation provided.
  */
-export function useFavourite(websiteId: string | number | null | undefined): FavouriteResult {
+export function useFavourite(
+  websiteId: string | number | null | undefined,
+): FavouriteResult {
   const statusQuery = useFavouriteStatus(websiteId);
   const toggle = useToggleFavouriteMutation();
   const statusErr = statusQuery.error as AxiosError | null;
@@ -84,13 +86,17 @@ export function useFavourite(websiteId: string | number | null | undefined): Fav
 }
 
 /* ---------- useUserFavourites ---------- */
-export function useUserFavourites(sort: string = 'recent', page: number = 1): UserFavouritesResult {
+export function useUserFavourites(
+  sort: string = "recent",
+  page: number = 1,
+): UserFavouritesResult {
   const query = useUserFavouritesQuery({ sort, page, limit: 12 });
   const err = query.error as AxiosError<{ message?: string }> | null;
   const requiresAuth = err?.response?.status === 401;
-  const errorMsg = err && !requiresAuth
-    ? (err.response?.data?.message ?? 'Failed to load favourites')
-    : null;
+  const errorMsg =
+    err && !requiresAuth
+      ? (err.response?.data?.message ?? "Failed to load favourites")
+      : null;
 
   const data = query.data as
     | {
@@ -113,7 +119,9 @@ export function useUserFavourites(sort: string = 'recent', page: number = 1): Us
 }
 
 /* ---------- useBatchFavourites ---------- */
-export function useBatchFavourites(websiteIds: (string | number)[]): BatchFavouritesResult {
+export function useBatchFavourites(
+  websiteIds: (string | number)[],
+): BatchFavouritesResult {
   const query = useBatchFavouriteCheck(websiteIds);
   return {
     statusMap: query.data ?? {},

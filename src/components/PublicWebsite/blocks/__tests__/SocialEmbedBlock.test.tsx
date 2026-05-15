@@ -34,253 +34,334 @@
  *  30. Renders 'Loading embed…' skeleton before inView
  */
 
-import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
+import React from "react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
 
-vi.mock('framer-motion', () => ({
-  useScroll: () => ({ scrollYProgress: { get: () => 0, onChange: () => () => {} } }),
-  useTransform: (..._args) => ({ get: () => '0%', onChange: () => () => {} }),
-  useMotionValue: (v) => ({ get: () => v, set: () => {}, onChange: () => () => {} }),
+vi.mock("framer-motion", () => ({
+  useScroll: () => ({
+    scrollYProgress: { get: () => 0, onChange: () => () => {} },
+  }),
+  useTransform: (..._args) => ({ get: () => "0%", onChange: () => () => {} }),
+  useMotionValue: (v) => ({
+    get: () => v,
+    set: () => {},
+    onChange: () => () => {},
+  }),
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    section: ({ children, ...props }: any) => <section {...props}>{children}</section>,
+    section: ({ children, ...props }: any) => (
+      <section {...props}>{children}</section>
+    ),
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
 // Default useInView — inView true for outer component, but individual embeds also use it
 const mockUseInView = vi.fn(() => ({ ref: () => {}, inView: true }));
-vi.mock('react-intersection-observer', () => ({
+vi.mock("react-intersection-observer", () => ({
   useInView: () => mockUseInView(),
 }));
 
-import SocialEmbedBlock, { isValidPlatformUrl, getYouTubeEmbedUrl } from '../SocialEmbedBlock';
+import SocialEmbedBlock, {
+  isValidPlatformUrl,
+  getYouTubeEmbedUrl,
+} from "../SocialEmbedBlock";
 
 // ── Fixtures ───────────────────────────────────────────────────────────────────
 
 const makeBlock = (content: any) => ({
   id: 1,
-  blockType: 'SOCIAL_EMBED',
+  blockType: "SOCIAL_EMBED",
   sortOrder: 1,
   content,
 });
 
-describe('SocialEmbedBlock', () => {
+describe("SocialEmbedBlock", () => {
   // ── 1. Renders without crashing ─────────────────────────────────────────────
-  it('renders without crashing with default props', () => {
+  it("renders without crashing with default props", () => {
     const { container } = render(
       <SocialEmbedBlock
         block={makeBlock({ embeds: [] })}
         primaryColor="#2563eb"
         headingColor="#1e293b"
         bodyColor="#475569"
-      />
+      />,
     );
     expect(container.firstChild).toBeTruthy();
   });
 
   // ── 2. Renders heading ───────────────────────────────────────────────────────
-  it('renders heading when provided', () => {
-    render(<SocialEmbedBlock block={makeBlock({ heading: 'Our Social Feed', embeds: [] })} />);
-    expect(screen.getByText('Our Social Feed')).toBeInTheDocument();
+  it("renders heading when provided", () => {
+    render(
+      <SocialEmbedBlock
+        block={makeBlock({ heading: "Our Social Feed", embeds: [] })}
+      />,
+    );
+    expect(screen.getByText("Our Social Feed")).toBeInTheDocument();
   });
 
   // ── 3. Empty embeds message ──────────────────────────────────────────────────
-  it('shows no embeds message when embeds array is empty', () => {
+  it("shows no embeds message when embeds array is empty", () => {
     render(<SocialEmbedBlock block={makeBlock({ embeds: [] })} />);
     expect(screen.getByText(/no embeds configured/i)).toBeInTheDocument();
   });
 
   // ── URL Validation: YouTube ──────────────────────────────────────────────────
 
-  it('isValidPlatformUrl accepts valid YouTube watch URL', () => {
-    expect(isValidPlatformUrl('youtube', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(true);
+  it("isValidPlatformUrl accepts valid YouTube watch URL", () => {
+    expect(
+      isValidPlatformUrl(
+        "youtube",
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      ),
+    ).toBe(true);
   });
 
-  it('isValidPlatformUrl accepts valid YouTube youtu.be URL', () => {
-    expect(isValidPlatformUrl('youtube', 'https://youtu.be/dQw4w9WgXcQ')).toBe(true);
+  it("isValidPlatformUrl accepts valid YouTube youtu.be URL", () => {
+    expect(isValidPlatformUrl("youtube", "https://youtu.be/dQw4w9WgXcQ")).toBe(
+      true,
+    );
   });
 
-  it('isValidPlatformUrl accepts valid YouTube shorts URL', () => {
-    expect(isValidPlatformUrl('youtube', 'https://www.youtube.com/shorts/abc123')).toBe(true);
+  it("isValidPlatformUrl accepts valid YouTube shorts URL", () => {
+    expect(
+      isValidPlatformUrl("youtube", "https://www.youtube.com/shorts/abc123"),
+    ).toBe(true);
   });
 
-  it('isValidPlatformUrl rejects YouTube URL with wrong domain', () => {
-    expect(isValidPlatformUrl('youtube', 'https://evil.com/watch?v=dQw4w9WgXcQ')).toBe(false);
+  it("isValidPlatformUrl rejects YouTube URL with wrong domain", () => {
+    expect(
+      isValidPlatformUrl("youtube", "https://evil.com/watch?v=dQw4w9WgXcQ"),
+    ).toBe(false);
   });
 
-  it('isValidPlatformUrl rejects non-YouTube URL for youtube platform', () => {
-    expect(isValidPlatformUrl('youtube', 'https://instagram.com/p/ABC123/')).toBe(false);
+  it("isValidPlatformUrl rejects non-YouTube URL for youtube platform", () => {
+    expect(
+      isValidPlatformUrl("youtube", "https://instagram.com/p/ABC123/"),
+    ).toBe(false);
   });
 
   // ── URL Validation: Instagram ────────────────────────────────────────────────
 
-  it('isValidPlatformUrl accepts valid Instagram post URL', () => {
-    expect(isValidPlatformUrl('instagram', 'https://www.instagram.com/p/ABC123/')).toBe(true);
+  it("isValidPlatformUrl accepts valid Instagram post URL", () => {
+    expect(
+      isValidPlatformUrl("instagram", "https://www.instagram.com/p/ABC123/"),
+    ).toBe(true);
   });
 
-  it('isValidPlatformUrl accepts valid Instagram reel URL', () => {
-    expect(isValidPlatformUrl('instagram', 'https://www.instagram.com/reel/ABC123/')).toBe(true);
+  it("isValidPlatformUrl accepts valid Instagram reel URL", () => {
+    expect(
+      isValidPlatformUrl("instagram", "https://www.instagram.com/reel/ABC123/"),
+    ).toBe(true);
   });
 
-  it('isValidPlatformUrl rejects Instagram cross-platform (YouTube URL)', () => {
-    expect(isValidPlatformUrl('instagram', 'https://youtube.com/watch?v=abc')).toBe(false);
+  it("isValidPlatformUrl rejects Instagram cross-platform (YouTube URL)", () => {
+    expect(
+      isValidPlatformUrl("instagram", "https://youtube.com/watch?v=abc"),
+    ).toBe(false);
   });
 
   // ── URL Validation: Twitter ──────────────────────────────────────────────────
 
-  it('isValidPlatformUrl accepts valid Twitter status URL', () => {
-    expect(isValidPlatformUrl('twitter', 'https://twitter.com/user/status/123456789')).toBe(true);
+  it("isValidPlatformUrl accepts valid Twitter status URL", () => {
+    expect(
+      isValidPlatformUrl(
+        "twitter",
+        "https://twitter.com/user/status/123456789",
+      ),
+    ).toBe(true);
   });
 
-  it('isValidPlatformUrl accepts valid X (twitter) status URL', () => {
-    expect(isValidPlatformUrl('twitter', 'https://x.com/user/status/123456789')).toBe(true);
+  it("isValidPlatformUrl accepts valid X (twitter) status URL", () => {
+    expect(
+      isValidPlatformUrl("twitter", "https://x.com/user/status/123456789"),
+    ).toBe(true);
   });
 
   // ── URL Validation: TikTok ───────────────────────────────────────────────────
 
-  it('isValidPlatformUrl accepts valid TikTok video URL', () => {
-    expect(isValidPlatformUrl('tiktok', 'https://www.tiktok.com/@username/video/1234567890')).toBe(
-      true
-    );
+  it("isValidPlatformUrl accepts valid TikTok video URL", () => {
+    expect(
+      isValidPlatformUrl(
+        "tiktok",
+        "https://www.tiktok.com/@username/video/1234567890",
+      ),
+    ).toBe(true);
   });
 
   // ── URL Validation: Facebook ─────────────────────────────────────────────────
 
-  it('isValidPlatformUrl accepts valid Facebook watch URL', () => {
-    expect(isValidPlatformUrl('facebook', 'https://www.facebook.com/watch/?v=123456')).toBe(true);
+  it("isValidPlatformUrl accepts valid Facebook watch URL", () => {
+    expect(
+      isValidPlatformUrl(
+        "facebook",
+        "https://www.facebook.com/watch/?v=123456",
+      ),
+    ).toBe(true);
   });
 
   // ── URL Validation: empty ────────────────────────────────────────────────────
 
-  it('isValidPlatformUrl rejects empty URL', () => {
-    expect(isValidPlatformUrl('youtube', '')).toBe(false);
+  it("isValidPlatformUrl rejects empty URL", () => {
+    expect(isValidPlatformUrl("youtube", "")).toBe(false);
   });
 
   // ── getYouTubeEmbedUrl ───────────────────────────────────────────────────────
 
-  it('getYouTubeEmbedUrl extracts ID from watch URL', () => {
-    const result = getYouTubeEmbedUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-    expect(result).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+  it("getYouTubeEmbedUrl extracts ID from watch URL", () => {
+    const result = getYouTubeEmbedUrl(
+      "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    );
+    expect(result).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
   });
 
-  it('getYouTubeEmbedUrl extracts ID from youtu.be URL', () => {
-    const result = getYouTubeEmbedUrl('https://youtu.be/dQw4w9WgXcQ');
-    expect(result).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+  it("getYouTubeEmbedUrl extracts ID from youtu.be URL", () => {
+    const result = getYouTubeEmbedUrl("https://youtu.be/dQw4w9WgXcQ");
+    expect(result).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
   });
 
-  it('getYouTubeEmbedUrl returns null for non-youtube URL', () => {
-    const result = getYouTubeEmbedUrl('https://example.com/video');
+  it("getYouTubeEmbedUrl returns null for non-youtube URL", () => {
+    const result = getYouTubeEmbedUrl("https://example.com/video");
     expect(result).toBeNull();
   });
 
   // ── YouTube iframe rendering ─────────────────────────────────────────────────
 
-  it('renders YouTube iframe for valid YouTube URL', () => {
+  it("renders YouTube iframe for valid YouTube URL", () => {
     render(
       <SocialEmbedBlock
         block={makeBlock({
           embeds: [
             {
-              platform: 'youtube',
-              url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-              caption: 'Test video',
+              platform: "youtube",
+              url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+              caption: "Test video",
             },
           ],
         })}
-      />
+      />,
     );
-    const iframe = document.querySelector('iframe');
+    const iframe = document.querySelector("iframe");
     expect(iframe).toBeTruthy();
-    expect(iframe?.src).toContain('youtube-nocookie.com/embed/dQw4w9WgXcQ');
+    expect(iframe?.src).toContain("youtube-nocookie.com/embed/dQw4w9WgXcQ");
   });
 
-  it('YouTube iframe has sandbox attribute', () => {
+  it("YouTube iframe has sandbox attribute", () => {
     render(
       <SocialEmbedBlock
         block={makeBlock({
-          embeds: [{ platform: 'youtube', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }],
+          embeds: [
+            {
+              platform: "youtube",
+              url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            },
+          ],
         })}
-      />
+      />,
     );
-    const iframe = document.querySelector('iframe');
-    expect(iframe?.getAttribute('sandbox')).toContain('allow-scripts');
-    expect(iframe?.getAttribute('sandbox')).toContain('allow-same-origin');
+    const iframe = document.querySelector("iframe");
+    expect(iframe?.getAttribute("sandbox")).toContain("allow-scripts");
+    expect(iframe?.getAttribute("sandbox")).toContain("allow-same-origin");
   });
 
-  it('YouTube iframe has loading=lazy', () => {
+  it("YouTube iframe has loading=lazy", () => {
     render(
       <SocialEmbedBlock
         block={makeBlock({
-          embeds: [{ platform: 'youtube', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }],
+          embeds: [
+            {
+              platform: "youtube",
+              url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            },
+          ],
         })}
-      />
+      />,
     );
-    const iframe = document.querySelector('iframe');
-    expect(iframe?.getAttribute('loading')).toBe('lazy');
+    const iframe = document.querySelector("iframe");
+    expect(iframe?.getAttribute("loading")).toBe("lazy");
   });
 
   // ── Invalid URL error ────────────────────────────────────────────────────────
 
-  it('renders error alert for invalid platform URL', () => {
+  it("renders error alert for invalid platform URL", () => {
     render(
       <SocialEmbedBlock
         block={makeBlock({
-          embeds: [{ platform: 'youtube', url: 'https://evil.com/watch?v=abc' }],
+          embeds: [
+            { platform: "youtube", url: "https://evil.com/watch?v=abc" },
+          ],
         })}
-      />
+      />,
     );
     expect(screen.getByText(/invalid youtube url/i)).toBeInTheDocument();
   });
 
   // ── Platform placeholders ────────────────────────────────────────────────────
 
-  it('renders Twitter placeholder card with link for valid Twitter URL', () => {
-    render(
-      <SocialEmbedBlock
-        block={makeBlock({
-          embeds: [{ platform: 'twitter', url: 'https://twitter.com/user/status/12345' }],
-        })}
-      />
-    );
-    expect(screen.getByText(/View on Twitter/i)).toBeInTheDocument();
-  });
-
-  it('renders TikTok placeholder card for valid TikTok URL', () => {
+  it("renders Twitter placeholder card with link for valid Twitter URL", () => {
     render(
       <SocialEmbedBlock
         block={makeBlock({
           embeds: [
-            { platform: 'tiktok', url: 'https://www.tiktok.com/@username/video/1234567890' },
+            {
+              platform: "twitter",
+              url: "https://twitter.com/user/status/12345",
+            },
           ],
         })}
-      />
+      />,
+    );
+    expect(screen.getByText(/View on Twitter/i)).toBeInTheDocument();
+  });
+
+  it("renders TikTok placeholder card for valid TikTok URL", () => {
+    render(
+      <SocialEmbedBlock
+        block={makeBlock({
+          embeds: [
+            {
+              platform: "tiktok",
+              url: "https://www.tiktok.com/@username/video/1234567890",
+            },
+          ],
+        })}
+      />,
     );
     expect(screen.getByText(/View on TikTok/i)).toBeInTheDocument();
   });
 
-  it('renders Instagram placeholder card for valid Instagram URL', () => {
+  it("renders Instagram placeholder card for valid Instagram URL", () => {
     render(
       <SocialEmbedBlock
         block={makeBlock({
-          embeds: [{ platform: 'instagram', url: 'https://www.instagram.com/p/ABC123/' }],
+          embeds: [
+            {
+              platform: "instagram",
+              url: "https://www.instagram.com/p/ABC123/",
+            },
+          ],
         })}
-      />
+      />,
     );
     // Use getAllByText since "Instagram" appears in chip and description text
     const elements = screen.getAllByText(/View on Instagram/i);
     expect(elements.length).toBeGreaterThan(0);
   });
 
-  it('renders Facebook placeholder card for valid Facebook URL', () => {
+  it("renders Facebook placeholder card for valid Facebook URL", () => {
     render(
       <SocialEmbedBlock
         block={makeBlock({
-          embeds: [{ platform: 'facebook', url: 'https://www.facebook.com/watch/?v=123456' }],
+          embeds: [
+            {
+              platform: "facebook",
+              url: "https://www.facebook.com/watch/?v=123456",
+            },
+          ],
         })}
-      />
+      />,
     );
     // Use getAllByText since "Facebook" appears in chip and description text
     const elements = screen.getAllByText(/View on Facebook/i);
@@ -289,7 +370,7 @@ describe('SocialEmbedBlock', () => {
 
   // ── React.memo ───────────────────────────────────────────────────────────────
 
-  it('component is wrapped in React.memo (displayName or type defined)', () => {
+  it("component is wrapped in React.memo (displayName or type defined)", () => {
     expect(SocialEmbedBlock).toBeDefined();
     const name =
       (SocialEmbedBlock as any).displayName ||
@@ -300,9 +381,11 @@ describe('SocialEmbedBlock', () => {
 
   // ── Responsive hide ──────────────────────────────────────────────────────────
 
-  it('renders block even when responsiveHideOnMobile is true (CSS handles visibility)', () => {
+  it("renders block even when responsiveHideOnMobile is true (CSS handles visibility)", () => {
     const { container } = render(
-      <SocialEmbedBlock block={makeBlock({ embeds: [], responsiveHideOnMobile: true })} />
+      <SocialEmbedBlock
+        block={makeBlock({ embeds: [], responsiveHideOnMobile: true })}
+      />,
     );
     // Component still renders in DOM — CSS handles hiding
     expect(container.firstChild).toBeTruthy();
@@ -310,20 +393,20 @@ describe('SocialEmbedBlock', () => {
 
   // ── No URL info message ──────────────────────────────────────────────────────
 
-  it('renders info alert when embed URL is empty', () => {
+  it("renders info alert when embed URL is empty", () => {
     render(
       <SocialEmbedBlock
         block={makeBlock({
-          embeds: [{ platform: 'youtube', url: '' }],
+          embeds: [{ platform: "youtube", url: "" }],
         })}
-      />
+      />,
     );
     expect(screen.getByText(/No URL provided/i)).toBeInTheDocument();
   });
 
   // ── Lazy loading skeleton ────────────────────────────────────────────────────
 
-  it('renders loading skeleton when embed is not in view', () => {
+  it("renders loading skeleton when embed is not in view", () => {
     // First call (outer component) inView=true, second call (LazyEmbedWrapper) inView=false
     let callCount = 0;
     mockUseInView.mockImplementation(() => {
@@ -337,9 +420,14 @@ describe('SocialEmbedBlock', () => {
     render(
       <SocialEmbedBlock
         block={makeBlock({
-          embeds: [{ platform: 'youtube', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }],
+          embeds: [
+            {
+              platform: "youtube",
+              url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            },
+          ],
         })}
-      />
+      />,
     );
     expect(screen.getByText(/loading embed/i)).toBeInTheDocument();
 

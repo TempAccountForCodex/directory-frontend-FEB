@@ -32,22 +32,24 @@
  *  28. Form submits with picker-set date and time values
  */
 
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
-import { MemoryRouter } from 'react-router-dom';
-import ReservationFormBlock from '../ReservationFormBlock';
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import { MemoryRouter } from "react-router-dom";
+import ReservationFormBlock from "../ReservationFormBlock";
 
 // ---------------------------------------------------------------------------
 // Mocks — MUI x-date-pickers (same pattern as WebsiteManageEvents.test.tsx)
 // ---------------------------------------------------------------------------
 
-vi.mock('@mui/x-date-pickers', () => ({
-  LocalizationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+vi.mock("@mui/x-date-pickers", () => ({
+  LocalizationProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
-vi.mock('@mui/x-date-pickers/DatePicker', () => ({
+vi.mock("@mui/x-date-pickers/DatePicker", () => ({
   DatePicker: ({
     label,
     value,
@@ -62,10 +64,12 @@ vi.mock('@mui/x-date-pickers/DatePicker', () => ({
     slotProps?: { textField?: { inputProps?: Record<string, unknown> } };
   }) => (
     <input
-      aria-label={(slotProps?.textField?.inputProps?.['aria-label'] as string) ?? label}
+      aria-label={
+        (slotProps?.textField?.inputProps?.["aria-label"] as string) ?? label
+      }
       data-testid="date-picker"
-      data-disable-past={disablePast ? 'true' : 'false'}
-      value={value ? value.toISOString().split('T')[0] : ''}
+      data-disable-past={disablePast ? "true" : "false"}
+      value={value ? value.toISOString().split("T")[0] : ""}
       onChange={(e) => {
         const d = e.target.value ? new Date(e.target.value) : null;
         onChange(d);
@@ -75,7 +79,7 @@ vi.mock('@mui/x-date-pickers/DatePicker', () => ({
   ),
 }));
 
-vi.mock('@mui/x-date-pickers/TimePicker', () => ({
+vi.mock("@mui/x-date-pickers/TimePicker", () => ({
   TimePicker: ({
     label,
     value,
@@ -94,19 +98,21 @@ vi.mock('@mui/x-date-pickers/TimePicker', () => ({
     slotProps?: { textField?: { inputProps?: Record<string, unknown> } };
   }) => (
     <input
-      aria-label={(slotProps?.textField?.inputProps?.['aria-label'] as string) ?? label}
+      aria-label={
+        (slotProps?.textField?.inputProps?.["aria-label"] as string) ?? label
+      }
       data-testid="time-picker"
       data-minutes-step={minutesStep}
-      data-min-time={minTime ? minTime.toISOString() : ''}
-      data-max-time={maxTime ? maxTime.toISOString() : ''}
+      data-min-time={minTime ? minTime.toISOString() : ""}
+      data-max-time={maxTime ? maxTime.toISOString() : ""}
       value={
         value
-          ? `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`
-          : ''
+          ? `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`
+          : ""
       }
       onChange={(e) => {
         if (e.target.value) {
-          const [h, m] = e.target.value.split(':').map(Number);
+          const [h, m] = e.target.value.split(":").map(Number);
           const d = new Date(1970, 0, 1, h, m);
           onChange(d);
         } else {
@@ -118,7 +124,7 @@ vi.mock('@mui/x-date-pickers/TimePicker', () => ({
   ),
 }));
 
-vi.mock('@mui/x-date-pickers/AdapterDateFns', () => ({
+vi.mock("@mui/x-date-pickers/AdapterDateFns", () => ({
   AdapterDateFns: class AdapterDateFns {},
 }));
 
@@ -128,15 +134,15 @@ vi.mock('@mui/x-date-pickers/AdapterDateFns', () => ({
 
 const makeBlock = (overrides: Record<string, unknown> = {}) => ({
   id: 1,
-  blockType: 'RESERVATION_FORM',
+  blockType: "RESERVATION_FORM",
   sortOrder: 1,
   content: {
-    heading: 'Make a Reservation',
-    description: 'Book your table today.',
-    submitText: 'Reserve Now',
-    successMessage: 'Reservation confirmed!',
-    submitEndpoint: '',
-    submitEmail: '',
+    heading: "Make a Reservation",
+    description: "Book your table today.",
+    submitText: "Reserve Now",
+    successMessage: "Reservation confirmed!",
+    submitEndpoint: "",
+    submitEmail: "",
     fields: {
       showName: true,
       showEmail: true,
@@ -152,50 +158,54 @@ const makeBlock = (overrides: Record<string, unknown> = {}) => ({
 
 const renderBlock = (
   contentOverrides: Record<string, unknown> = {},
-  props: Record<string, unknown> = {}
+  props: Record<string, unknown> = {},
 ) =>
   render(
     <MemoryRouter>
-      <ReservationFormBlock block={makeBlock(contentOverrides)} primaryColor="#2563eb" {...props} />
-    </MemoryRouter>
+      <ReservationFormBlock
+        block={makeBlock(contentOverrides)}
+        primaryColor="#2563eb"
+        {...props}
+      />
+    </MemoryRouter>,
   );
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('ReservationFormBlock', () => {
+describe("ReservationFormBlock", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
   // 1
-  it('renders without crashing with minimal content', () => {
+  it("renders without crashing with minimal content", () => {
     renderBlock();
     expect(document.body).toBeTruthy();
   });
 
   // 2
-  it('renders the heading', () => {
+  it("renders the heading", () => {
     renderBlock();
-    expect(screen.getByText('Make a Reservation')).toBeInTheDocument();
+    expect(screen.getByText("Make a Reservation")).toBeInTheDocument();
   });
 
   // 3
-  it('renders the description', () => {
+  it("renders the description", () => {
     renderBlock();
-    expect(screen.getByText('Book your table today.')).toBeInTheDocument();
+    expect(screen.getByText("Book your table today.")).toBeInTheDocument();
   });
 
   // 4
-  it('shows DatePicker when showDate=true', () => {
+  it("shows DatePicker when showDate=true", () => {
     renderBlock();
-    expect(screen.getByTestId('date-picker')).toBeInTheDocument();
-    expect(screen.getByLabelText('Date')).toBeInTheDocument();
+    expect(screen.getByTestId("date-picker")).toBeInTheDocument();
+    expect(screen.getByLabelText("Date")).toBeInTheDocument();
   });
 
   // 5
-  it('hides DatePicker when showDate=false', () => {
+  it("hides DatePicker when showDate=false", () => {
     renderBlock({
       fields: {
         showName: true,
@@ -207,19 +217,19 @@ describe('ReservationFormBlock', () => {
         showMessage: true,
       },
     });
-    expect(screen.queryByTestId('date-picker')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Date')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("date-picker")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Date")).not.toBeInTheDocument();
   });
 
   // 6
-  it('shows TimePicker when showTime=true', () => {
+  it("shows TimePicker when showTime=true", () => {
     renderBlock();
-    expect(screen.getByTestId('time-picker')).toBeInTheDocument();
-    expect(screen.getByLabelText('Time')).toBeInTheDocument();
+    expect(screen.getByTestId("time-picker")).toBeInTheDocument();
+    expect(screen.getByLabelText("Time")).toBeInTheDocument();
   });
 
   // 7
-  it('hides TimePicker when showTime=false', () => {
+  it("hides TimePicker when showTime=false", () => {
     renderBlock({
       fields: {
         showName: true,
@@ -231,18 +241,18 @@ describe('ReservationFormBlock', () => {
         showMessage: true,
       },
     });
-    expect(screen.queryByTestId('time-picker')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Time')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("time-picker")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Time")).not.toBeInTheDocument();
   });
 
   // 8
-  it('shows party size select when showPartySize=true', () => {
+  it("shows party size select when showPartySize=true", () => {
     renderBlock();
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
   });
 
   // 9
-  it('hides party size when showPartySize=false', () => {
+  it("hides party size when showPartySize=false", () => {
     renderBlock({
       fields: {
         showName: true,
@@ -254,55 +264,57 @@ describe('ReservationFormBlock', () => {
         showMessage: true,
       },
     });
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
   // 10
-  it('shows name field when showName=true', () => {
+  it("shows name field when showName=true", () => {
     renderBlock();
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
   });
 
   // 11
-  it('shows email field when showEmail=true', () => {
+  it("shows email field when showEmail=true", () => {
     renderBlock();
     const emailInput = document.querySelector('input[type="email"]');
     expect(emailInput).toBeInTheDocument();
   });
 
   // 12
-  it('shows phone field when showPhone=true', () => {
+  it("shows phone field when showPhone=true", () => {
     renderBlock();
     const phoneInput = document.querySelector('input[type="tel"]');
     expect(phoneInput).toBeInTheDocument();
   });
 
   // 13
-  it('shows message field when showMessage=true', () => {
+  it("shows message field when showMessage=true", () => {
     renderBlock();
     expect(screen.getByLabelText(/message/i)).toBeInTheDocument();
   });
 
   // 14
-  it('submit button exists with submitText', () => {
+  it("submit button exists with submitText", () => {
     renderBlock();
-    expect(screen.getByRole('button', { name: /reserve now/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /reserve now/i }),
+    ).toBeInTheDocument();
   });
 
   // 15
-  it('button is disabled while submitting', async () => {
+  it("button is disabled while submitting", async () => {
     let resolveFetch!: () => void;
     const pendingFetch = new Promise<Response>((resolve) => {
       resolveFetch = () => resolve({ ok: true } as Response);
     });
     vi.stubGlobal(
-      'fetch',
-      vi.fn(() => pendingFetch)
+      "fetch",
+      vi.fn(() => pendingFetch),
     );
 
-    renderBlock({ submitEndpoint: 'https://example.com/api/reserve' });
+    renderBlock({ submitEndpoint: "https://example.com/api/reserve" });
 
-    const button = screen.getByRole('button', { name: /reserve now/i });
+    const button = screen.getByRole("button", { name: /reserve now/i });
     fireEvent.click(button);
 
     await waitFor(() => {
@@ -313,171 +325,175 @@ describe('ReservationFormBlock', () => {
   });
 
   // 16
-  it('renders success alert after successful fetch submission', async () => {
+  it("renders success alert after successful fetch submission", async () => {
     vi.stubGlobal(
-      'fetch',
-      vi.fn(() => Promise.resolve({ ok: true } as Response))
+      "fetch",
+      vi.fn(() => Promise.resolve({ ok: true } as Response)),
     );
 
-    renderBlock({ submitEndpoint: 'https://example.com/api/reserve' });
+    renderBlock({ submitEndpoint: "https://example.com/api/reserve" });
 
-    const button = screen.getByRole('button', { name: /reserve now/i });
+    const button = screen.getByRole("button", { name: /reserve now/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText('Reservation confirmed!')).toBeInTheDocument();
+      expect(screen.getByText("Reservation confirmed!")).toBeInTheDocument();
     });
   });
 
   // 17
-  it('renders error alert on failed fetch submission', async () => {
+  it("renders error alert on failed fetch submission", async () => {
     vi.stubGlobal(
-      'fetch',
-      vi.fn(() => Promise.resolve({ ok: false } as Response))
+      "fetch",
+      vi.fn(() => Promise.resolve({ ok: false } as Response)),
     );
 
-    renderBlock({ submitEndpoint: 'https://example.com/api/reserve' });
+    renderBlock({ submitEndpoint: "https://example.com/api/reserve" });
 
-    const button = screen.getByRole('button', { name: /reserve now/i });
+    const button = screen.getByRole("button", { name: /reserve now/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      const alerts = screen.getAllByRole('alert');
+      const alerts = screen.getAllByRole("alert");
       expect(alerts.length).toBeGreaterThan(0);
     });
   });
 
   // 18
-  it('falls back to mailto when submitEmail set and no submitEndpoint', async () => {
+  it("falls back to mailto when submitEmail set and no submitEndpoint", async () => {
     const locationSpy = vi.fn();
-    Object.defineProperty(window, 'location', {
-      value: { href: '', assign: locationSpy },
+    Object.defineProperty(window, "location", {
+      value: { href: "", assign: locationSpy },
       writable: true,
     });
 
-    renderBlock({ submitEmail: 'owner@example.com', submitEndpoint: '' });
+    renderBlock({ submitEmail: "owner@example.com", submitEndpoint: "" });
 
-    const button = screen.getByRole('button', { name: /reserve now/i });
+    const button = screen.getByRole("button", { name: /reserve now/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText('Reservation confirmed!')).toBeInTheDocument();
+      expect(screen.getByText("Reservation confirmed!")).toBeInTheDocument();
     });
   });
 
   // 19
-  it('shows success state directly when neither endpoint nor email is set', async () => {
-    renderBlock({ submitEndpoint: '', submitEmail: '' });
+  it("shows success state directly when neither endpoint nor email is set", async () => {
+    renderBlock({ submitEndpoint: "", submitEmail: "" });
 
-    const button = screen.getByRole('button', { name: /reserve now/i });
+    const button = screen.getByRole("button", { name: /reserve now/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText('Reservation confirmed!')).toBeInTheDocument();
+      expect(screen.getByText("Reservation confirmed!")).toBeInTheDocument();
     });
   });
 
   // 20
-  it('is wrapped with React.memo (displayName present)', () => {
+  it("is wrapped with React.memo (displayName present)", () => {
     expect(ReservationFormBlock).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sym = (ReservationFormBlock as any).$$typeof;
     expect(sym).toBeDefined();
-    expect(sym.toString()).toContain('memo');
+    expect(sym.toString()).toContain("memo");
   });
 
   // 21
-  it('DatePicker onChange updates formData.date as ISO date string', () => {
+  it("DatePicker onChange updates formData.date as ISO date string", () => {
     renderBlock();
-    const dateInput = screen.getByTestId('date-picker');
-    fireEvent.change(dateInput, { target: { value: '2026-06-15' } });
+    const dateInput = screen.getByTestId("date-picker");
+    fireEvent.change(dateInput, { target: { value: "2026-06-15" } });
     // After change, the value should reflect the selected date
-    expect(dateInput).toHaveValue('2026-06-15');
+    expect(dateInput).toHaveValue("2026-06-15");
   });
 
   // 22
-  it('TimePicker onChange updates formData.time as HH:mm string', () => {
+  it("TimePicker onChange updates formData.time as HH:mm string", () => {
     renderBlock();
-    const timeInput = screen.getByTestId('time-picker');
-    fireEvent.change(timeInput, { target: { value: '14:30' } });
-    expect(timeInput).toHaveValue('14:30');
+    const timeInput = screen.getByTestId("time-picker");
+    fireEvent.change(timeInput, { target: { value: "14:30" } });
+    expect(timeInput).toHaveValue("14:30");
   });
 
   // 23
-  it('TimePicker onChange with empty value clears formData.time', () => {
+  it("TimePicker onChange with empty value clears formData.time", () => {
     renderBlock();
-    const timeInput = screen.getByTestId('time-picker');
-    fireEvent.change(timeInput, { target: { value: '14:30' } });
-    fireEvent.change(timeInput, { target: { value: '' } });
-    expect(timeInput).toHaveValue('');
+    const timeInput = screen.getByTestId("time-picker");
+    fireEvent.change(timeInput, { target: { value: "14:30" } });
+    fireEvent.change(timeInput, { target: { value: "" } });
+    expect(timeInput).toHaveValue("");
   });
 
   // 24
-  it('LocalizationProvider wraps the form (renders without missing context errors)', () => {
+  it("LocalizationProvider wraps the form (renders without missing context errors)", () => {
     // If LocalizationProvider were missing, pickers would throw — verify renders cleanly
     expect(() => renderBlock()).not.toThrow();
-    expect(screen.getByTestId('date-picker')).toBeInTheDocument();
-    expect(screen.getByTestId('time-picker')).toBeInTheDocument();
+    expect(screen.getByTestId("date-picker")).toBeInTheDocument();
+    expect(screen.getByTestId("time-picker")).toBeInTheDocument();
   });
 
   // 25
-  it('passes openTime/closeTime as minTime/maxTime to TimePicker', () => {
-    renderBlock({ openTime: '09:00', closeTime: '22:00' });
-    const timePicker = screen.getByTestId('time-picker');
+  it("passes openTime/closeTime as minTime/maxTime to TimePicker", () => {
+    renderBlock({ openTime: "09:00", closeTime: "22:00" });
+    const timePicker = screen.getByTestId("time-picker");
     // Verify attributes are set (non-empty) — exact ISO string varies by timezone
-    expect(timePicker.getAttribute('data-min-time')).not.toBe('');
-    expect(timePicker.getAttribute('data-max-time')).not.toBe('');
+    expect(timePicker.getAttribute("data-min-time")).not.toBe("");
+    expect(timePicker.getAttribute("data-max-time")).not.toBe("");
     // Without openTime/closeTime the attributes should be empty
     const { rerender } = render(
       <MemoryRouter>
         <ReservationFormBlock block={makeBlock({})} primaryColor="#2563eb" />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     rerender(
       <MemoryRouter>
         <ReservationFormBlock block={makeBlock({})} primaryColor="#2563eb" />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
-    const timePickers = screen.getAllByTestId('time-picker');
+    const timePickers = screen.getAllByTestId("time-picker");
     // The new render's picker (last one) should have empty min/max
-    expect(timePickers[timePickers.length - 1].getAttribute('data-min-time')).toBe('');
-    expect(timePickers[timePickers.length - 1].getAttribute('data-max-time')).toBe('');
+    expect(
+      timePickers[timePickers.length - 1].getAttribute("data-min-time"),
+    ).toBe("");
+    expect(
+      timePickers[timePickers.length - 1].getAttribute("data-max-time"),
+    ).toBe("");
   });
 
   // 26
-  it('DatePicker has disablePast applied', () => {
+  it("DatePicker has disablePast applied", () => {
     renderBlock();
-    const datePicker = screen.getByTestId('date-picker');
-    expect(datePicker.getAttribute('data-disable-past')).toBe('true');
+    const datePicker = screen.getByTestId("date-picker");
+    expect(datePicker.getAttribute("data-disable-past")).toBe("true");
   });
 
   // 27
-  it('TimePicker has minutesStep=15 applied', () => {
+  it("TimePicker has minutesStep=15 applied", () => {
     renderBlock();
-    const timePicker = screen.getByTestId('time-picker');
-    expect(timePicker.getAttribute('data-minutes-step')).toBe('15');
+    const timePicker = screen.getByTestId("time-picker");
+    expect(timePicker.getAttribute("data-minutes-step")).toBe("15");
   });
 
   // 28
-  it('form submits successfully after setting date and time via pickers', async () => {
+  it("form submits successfully after setting date and time via pickers", async () => {
     vi.stubGlobal(
-      'fetch',
-      vi.fn(() => Promise.resolve({ ok: true } as Response))
+      "fetch",
+      vi.fn(() => Promise.resolve({ ok: true } as Response)),
     );
 
-    renderBlock({ submitEndpoint: 'https://example.com/api/reserve' });
+    renderBlock({ submitEndpoint: "https://example.com/api/reserve" });
 
-    const dateInput = screen.getByTestId('date-picker');
-    const timeInput = screen.getByTestId('time-picker');
+    const dateInput = screen.getByTestId("date-picker");
+    const timeInput = screen.getByTestId("time-picker");
 
-    fireEvent.change(dateInput, { target: { value: '2026-06-15' } });
-    fireEvent.change(timeInput, { target: { value: '19:00' } });
+    fireEvent.change(dateInput, { target: { value: "2026-06-15" } });
+    fireEvent.change(timeInput, { target: { value: "19:00" } });
 
-    const button = screen.getByRole('button', { name: /reserve now/i });
+    const button = screen.getByRole("button", { name: /reserve now/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText('Reservation confirmed!')).toBeInTheDocument();
+      expect(screen.getByText("Reservation confirmed!")).toBeInTheDocument();
     });
   });
 });

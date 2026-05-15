@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { Button, Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import type { SxProps, Theme } from '@mui/material';
+import React, { useState } from "react";
+import { Button, Box } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import type { SxProps, Theme } from "@mui/material";
 
 type PrimaryActionButtonProps = {
   children: React.ReactNode;
   onClick?: () => void;
   to?: string;
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
   fullWidth?: boolean;
   disabled?: boolean;
-  colorScheme?: 'white' | 'black';
+  colorScheme?: "white" | "black";
   sx?: SxProps<Theme>;
 };
 
@@ -18,21 +18,21 @@ export const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
   children,
   onClick,
   to,
-  size = 'large',
+  size = "large",
   fullWidth = false,
   disabled = false,
-  colorScheme = 'white',
+  colorScheme = "white",
   sx,
 }) => {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
 
   const sizeStyles = {
-    small: { px: 3.5, py: 1.1, fontSize: '0.85rem' },
-    medium: { px: 5, py: 1.5, fontSize: '0.95rem' },
-    large: { px: 7, py: 2, fontSize: '1rem' },
+    small: { px: 3.5, py: 1.1, fontSize: "0.85rem" },
+    medium: { px: 5, py: 1.5, fontSize: "0.95rem" },
+    large: { px: 7, py: 2, fontSize: "1rem" },
   };
-  const isWhite = colorScheme === 'white';
+  const isWhite = colorScheme === "white";
 
   const handleClick = () => {
     if (disabled) return;
@@ -54,29 +54,31 @@ export const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
         ...sizeStyles[size],
         borderRadius: 10,
         fontWeight: 600,
-        textTransform: 'none',
-        position: 'relative',
-        overflow: 'hidden',
+        textTransform: "none",
+        position: "relative",
+        overflow: "hidden",
 
         // 🎨 COLOR SCHEME
-        backgroundColor: isWhite ? '#fff' : '#000',
-        color: isWhite ? '#000' : '#fff',
+        backgroundColor: isWhite ? "#fff" : "#000",
+        color: isWhite ? "#000" : "#fff",
 
-        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.25)' : '0 4px 14px rgba(0,0,0,0.18)',
+        boxShadow: hovered
+          ? "0 8px 24px rgba(0,0,0,0.25)"
+          : "0 4px 14px rgba(0,0,0,0.18)",
 
-        transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
-        transition: 'all 0.25s ease',
+        transform: hovered ? "translateY(-2px)" : "translateY(0)",
+        transition: "all 0.25s ease",
 
-        '&:hover': {
-          backgroundColor: isWhite ? '#fff' : '#000',
+        "&:hover": {
+          backgroundColor: isWhite ? "#fff" : "#000",
         },
 
-        '&.Mui-disabled': {
+        "&.Mui-disabled": {
           opacity: 0.55,
-          transform: 'none',
-          boxShadow: 'none',
-          backgroundColor: isWhite ? '#fff' : '#000',
-          color: isWhite ? '#666' : '#aaa',
+          transform: "none",
+          boxShadow: "none",
+          backgroundColor: isWhite ? "#fff" : "#000",
+          color: isWhite ? "#666" : "#aaa",
         },
         ...sx,
       }}
@@ -84,10 +86,10 @@ export const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
       <Box
         component="span"
         sx={{
-          position: 'relative',
+          position: "relative",
           zIndex: 1,
-          display: 'inline-flex',
-          alignItems: 'center',
+          display: "inline-flex",
+          alignItems: "center",
           gap: 1,
         }}
       >

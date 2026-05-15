@@ -1,5 +1,5 @@
-import { QueryClient } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
+import { QueryClient } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 
 const RETRYABLE_MAX = 2;
 

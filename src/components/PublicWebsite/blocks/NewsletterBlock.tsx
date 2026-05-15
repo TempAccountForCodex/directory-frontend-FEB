@@ -19,7 +19,7 @@
  * Accessibility: aria-labels, semantic HTML
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from "react";
 import {
   Alert,
   Box,
@@ -31,10 +31,10 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material';
-import { motion } from 'framer-motion';
-import DOMPurify from 'dompurify';
-import { API_URL } from '@/config/api';
+} from "@mui/material";
+import { motion } from "framer-motion";
+import DOMPurify from "dompurify";
+import { API_URL } from "@/config/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ interface NewsletterContent {
   buttonText?: string;
   placeholder?: string;
   successMessage?: string;
-  layout?: 'inline' | 'stacked' | 'card';
+  layout?: "inline" | "stacked" | "card";
   showNameField?: boolean;
   spacingPaddingTop?: string;
   spacingPaddingBottom?: string;
@@ -74,26 +74,28 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const NewsletterBlockBase: React.FC<NewsletterBlockProps> = ({
   block,
-  primaryColor = '#378C92',
-  headingColor = '#1e293b',
-  bodyColor = '#475569',
+  primaryColor = "#378C92",
+  headingColor = "#1e293b",
+  bodyColor = "#475569",
 }) => {
   const {
-    heading = 'Stay Updated',
-    description = 'Subscribe to our newsletter for the latest updates.',
-    buttonText = 'Subscribe',
-    placeholder = 'Enter your email',
-    successMessage = 'Thanks for subscribing!',
-    layout = 'stacked',
+    heading = "Stay Updated",
+    description = "Subscribe to our newsletter for the latest updates.",
+    buttonText = "Subscribe",
+    placeholder = "Enter your email",
+    successMessage = "Thanks for subscribing!",
+    layout = "stacked",
     showNameField = false,
   } = block.content;
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [honeypot, setHoneypot] = useState(''); // bot trap
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [honeypot, setHoneypot] = useState(""); // bot trap
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -101,60 +103,64 @@ const NewsletterBlockBase: React.FC<NewsletterBlockProps> = ({
 
       // Honeypot check — if filled, silently succeed (bot trap)
       if (honeypot) {
-        setStatus('success');
+        setStatus("success");
         return;
       }
 
       // Client-side email validation
       if (!email.trim()) {
-        setEmailError('Email address is required.');
+        setEmailError("Email address is required.");
         return;
       }
       if (!EMAIL_REGEX.test(email.trim())) {
-        setEmailError('Please enter a valid email address.');
+        setEmailError("Please enter a valid email address.");
         return;
       }
-      setEmailError('');
-      setStatus('loading');
+      setEmailError("");
+      setStatus("loading");
 
       try {
         const payload: Record<string, any> = {
           email: email.trim(),
           websiteId: block.id,
-          source: 'block',
+          source: "block",
         };
         if (showNameField && name.trim()) {
           payload.name = name.trim();
         }
 
         const res = await fetch(`${API_URL}/newsletter/subscribe`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
         if (res.status === 429) {
-          setErrorMessage('Too many requests. Please try again later.');
-          setStatus('error');
+          setErrorMessage("Too many requests. Please try again later.");
+          setStatus("error");
           return;
         }
 
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          setErrorMessage(body.message || 'Something went wrong. Please try again.');
-          setStatus('error');
+          setErrorMessage(
+            body.message || "Something went wrong. Please try again.",
+          );
+          setStatus("error");
           return;
         }
 
-        setStatus('success');
-        setEmail('');
-        setName('');
+        setStatus("success");
+        setEmail("");
+        setName("");
       } catch {
-        setErrorMessage('Unable to subscribe. Please check your connection and try again.');
-        setStatus('error');
+        setErrorMessage(
+          "Unable to subscribe. Please check your connection and try again.",
+        );
+        setStatus("error");
       }
     },
-    [email, honeypot, name, block.id, showNameField]
+    [email, honeypot, name, block.id, showNameField],
   );
 
   const safeHeading = DOMPurify.sanitize(heading);
@@ -172,36 +178,40 @@ const NewsletterBlockBase: React.FC<NewsletterBlockProps> = ({
         component="input"
         name="website"
         value={honeypot}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHoneypot(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setHoneypot(e.target.value)
+        }
         aria-hidden="true"
         tabIndex={-1}
         autoComplete="off"
         style={{
-          position: 'absolute',
-          left: '-9999px',
-          width: '1px',
-          height: '1px',
-          overflow: 'hidden',
-          display: 'none',
+          position: "absolute",
+          left: "-9999px",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+          display: "none",
         }}
       />
 
-      {status === 'success' && (
+      {status === "success" && (
         <Alert severity="success" sx={{ mb: 2 }}>
           {safeDescription ? successMessage : successMessage}
         </Alert>
       )}
-      {status === 'error' && (
+      {status === "error" && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {errorMessage}
         </Alert>
       )}
 
-      {status !== 'success' && (
+      {status !== "success" && (
         <Stack
-          direction={layout === 'inline' ? { xs: 'column', sm: 'row' } : 'column'}
+          direction={
+            layout === "inline" ? { xs: "column", sm: "row" } : "column"
+          }
           spacing={2}
-          alignItems={layout === 'inline' ? { sm: 'flex-start' } : 'stretch'}
+          alignItems={layout === "inline" ? { sm: "flex-start" } : "stretch"}
         >
           {showNameField && (
             <TextField
@@ -210,9 +220,9 @@ const NewsletterBlockBase: React.FC<NewsletterBlockProps> = ({
               placeholder="Your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              disabled={status === 'loading'}
+              disabled={status === "loading"}
               size="small"
-              inputProps={{ 'aria-label': 'Name' }}
+              inputProps={{ "aria-label": "Name" }}
             />
           )}
           <TextField
@@ -223,28 +233,32 @@ const NewsletterBlockBase: React.FC<NewsletterBlockProps> = ({
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
-              if (emailError) setEmailError('');
+              if (emailError) setEmailError("");
             }}
             error={Boolean(emailError)}
             helperText={emailError}
-            disabled={status === 'loading'}
+            disabled={status === "loading"}
             required
             size="small"
-            inputProps={{ 'aria-label': 'Email address' }}
+            inputProps={{ "aria-label": "Email address" }}
           />
           <Button
             type="submit"
             variant="contained"
-            disabled={status === 'loading'}
+            disabled={status === "loading"}
             size="medium"
             sx={{
               bgcolor: primaryColor,
-              whiteSpace: 'nowrap',
-              minWidth: layout === 'inline' ? 'auto' : '100%',
-              '&:hover': { bgcolor: primaryColor, opacity: 0.9 },
+              whiteSpace: "nowrap",
+              minWidth: layout === "inline" ? "auto" : "100%",
+              "&:hover": { bgcolor: primaryColor, opacity: 0.9 },
             }}
           >
-            {status === 'loading' ? <CircularProgress size={20} color="inherit" /> : buttonText}
+            {status === "loading" ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              buttonText
+            )}
           </Button>
         </Stack>
       )}
@@ -265,7 +279,11 @@ const NewsletterBlockBase: React.FC<NewsletterBlockProps> = ({
         </Typography>
       )}
       {safeDescription && (
-        <Typography variant="body1" align="center" sx={{ color: bodyColor, mb: 3 }}>
+        <Typography
+          variant="body1"
+          align="center"
+          sx={{ color: bodyColor, mb: 3 }}
+        >
           {safeDescription}
         </Typography>
       )}
@@ -280,9 +298,13 @@ const NewsletterBlockBase: React.FC<NewsletterBlockProps> = ({
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
     >
-      <Box component="section" aria-label={safeHeading || 'Newsletter subscription'} sx={{ py: 6 }}>
+      <Box
+        component="section"
+        aria-label={safeHeading || "Newsletter subscription"}
+        sx={{ py: 6 }}
+      >
         <Container maxWidth="md">
-          {layout === 'card' ? (
+          {layout === "card" ? (
             <Card elevation={3} sx={{ borderRadius: 2 }}>
               <CardContent sx={{ p: 4 }}>{innerContent}</CardContent>
             </Card>
@@ -295,10 +317,9 @@ const NewsletterBlockBase: React.FC<NewsletterBlockProps> = ({
   );
 };
 
-NewsletterBlockBase.displayName = 'NewsletterBlock';
+NewsletterBlockBase.displayName = "NewsletterBlock";
 
 const NewsletterBlock = React.memo(NewsletterBlockBase);
-NewsletterBlock.displayName = 'NewsletterBlock';
+NewsletterBlock.displayName = "NewsletterBlock";
 
 export default NewsletterBlock;
-

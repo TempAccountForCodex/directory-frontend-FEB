@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext } from "react";
 
 export interface FeatureFlags {
   [key: string]: boolean | string | number;
@@ -12,12 +12,14 @@ interface FeatureFlagsContextValue {
   loading: boolean;
 }
 
-const FeatureFlagsContext = createContext<FeatureFlagsContextValue | null>(null);
+const FeatureFlagsContext = createContext<FeatureFlagsContextValue | null>(
+  null,
+);
 
 /**
  * Feature flag sources - can be extended to support remote configs
  */
-type FeatureFlagSource = 'local' | 'remote' | 'user';
+type FeatureFlagSource = "local" | "remote" | "user";
 
 interface FeatureFlagConfig {
   source?: FeatureFlagSource;
@@ -33,23 +35,25 @@ interface FeatureFlagConfig {
 const fetchRemoteFlags = async (
   apiUrl: string,
   websiteId?: number,
-  userId?: number
+  userId?: number,
 ): Promise<FeatureFlags> => {
   try {
     const params = new URLSearchParams();
-    if (websiteId) params.append('websiteId', websiteId.toString());
-    if (userId) params.append('userId', userId.toString());
+    if (websiteId) params.append("websiteId", websiteId.toString());
+    if (userId) params.append("userId", userId.toString());
 
-    const response = await fetch(`${apiUrl}/feature-flags?${params.toString()}`);
+    const response = await fetch(
+      `${apiUrl}/feature-flags?${params.toString()}`,
+    );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch feature flags');
+      throw new Error("Failed to fetch feature flags");
     }
 
     const data = await response.json();
     return data.flags || {};
   } catch (error) {
-    console.error('[FeatureFlags] Error fetching remote flags:', error);
+    console.error("[FeatureFlags] Error fetching remote flags:", error);
     return {};
   }
 };
@@ -57,12 +61,12 @@ const fetchRemoteFlags = async (
 /**
  * Get feature flags from local storage
  */
-const getLocalFlags = (key: string = 'featureFlags'): FeatureFlags => {
+const getLocalFlags = (key: string = "featureFlags"): FeatureFlags => {
   try {
     const stored = localStorage.getItem(key);
     return stored ? JSON.parse(stored) : {};
   } catch (error) {
-    console.error('[FeatureFlags] Error reading from local storage:', error);
+    console.error("[FeatureFlags] Error reading from local storage:", error);
     return {};
   }
 };
@@ -70,11 +74,14 @@ const getLocalFlags = (key: string = 'featureFlags'): FeatureFlags => {
 /**
  * Save feature flags to local storage
  */
-const saveLocalFlags = (flags: FeatureFlags, key: string = 'featureFlags'): void => {
+const saveLocalFlags = (
+  flags: FeatureFlags,
+  key: string = "featureFlags",
+): void => {
   try {
     localStorage.setItem(key, JSON.stringify(flags));
   } catch (error) {
-    console.error('[FeatureFlags] Error saving to local storage:', error);
+    console.error("[FeatureFlags] Error saving to local storage:", error);
   }
 };
 
@@ -82,7 +89,13 @@ const saveLocalFlags = (flags: FeatureFlags, key: string = 'featureFlags'): void
  * React hook for feature flags
  */
 export const useFeatureFlags = (config: FeatureFlagConfig = {}) => {
-  const { source = 'local', apiUrl, websiteId, userId, defaultFlags = {} } = config;
+  const {
+    source = "local",
+    apiUrl,
+    websiteId,
+    userId,
+    defaultFlags = {},
+  } = config;
 
   const [flags, setFlags] = useState<FeatureFlags>(defaultFlags);
   const [loading, setLoading] = useState(false);
@@ -93,11 +106,11 @@ export const useFeatureFlags = (config: FeatureFlagConfig = {}) => {
 
       let loadedFlags: FeatureFlags = { ...defaultFlags };
 
-      if (source === 'remote' && apiUrl) {
+      if (source === "remote" && apiUrl) {
         // Fetch from remote API
         const remoteFlags = await fetchRemoteFlags(apiUrl, websiteId, userId);
         loadedFlags = { ...loadedFlags, ...remoteFlags };
-      } else if (source === 'local') {
+      } else if (source === "local") {
         // Load from local storage
         const localFlags = getLocalFlags();
         loadedFlags = { ...loadedFlags, ...localFlags };
@@ -115,7 +128,7 @@ export const useFeatureFlags = (config: FeatureFlagConfig = {}) => {
    */
   const isEnabled = (flagName: string): boolean => {
     const value = flags[flagName];
-    return value === true || value === 'true';
+    return value === true || value === "true";
   };
 
   /**
@@ -150,7 +163,9 @@ export const useFeatureFlags = (config: FeatureFlagConfig = {}) => {
 export const useFeatureFlagsContext = (): FeatureFlagsContextValue => {
   const context = useContext(FeatureFlagsContext);
   if (!context) {
-    throw new Error('useFeatureFlagsContext must be used within a FeatureFlagsProvider');
+    throw new Error(
+      "useFeatureFlagsContext must be used within a FeatureFlagsProvider",
+    );
   }
   return context;
 };
@@ -162,29 +177,29 @@ export { FeatureFlagsContext };
  */
 export const FEATURE_FLAGS = {
   // Website Features
-  ANALYTICS_ENABLED: 'analytics_enabled',
-  CONTACT_FORM_ENABLED: 'contact_form_enabled',
-  SOCIAL_SHARING: 'social_sharing',
-  COOKIE_BANNER: 'cookie_banner',
-  LIVE_CHAT: 'live_chat',
-  NEWSLETTER_SIGNUP: 'newsletter_signup',
+  ANALYTICS_ENABLED: "analytics_enabled",
+  CONTACT_FORM_ENABLED: "contact_form_enabled",
+  SOCIAL_SHARING: "social_sharing",
+  COOKIE_BANNER: "cookie_banner",
+  LIVE_CHAT: "live_chat",
+  NEWSLETTER_SIGNUP: "newsletter_signup",
 
   // Experimental Features
-  NEW_EDITOR: 'new_editor',
-  BETA_FEATURES: 'beta_features',
-  DEBUG_MODE: 'debug_mode',
+  NEW_EDITOR: "new_editor",
+  BETA_FEATURES: "beta_features",
+  DEBUG_MODE: "debug_mode",
 
   // A/B Testing
-  AB_TEST_HERO_VARIANT: 'ab_test_hero_variant',
-  AB_TEST_CTA_VARIANT: 'ab_test_cta_variant',
+  AB_TEST_HERO_VARIANT: "ab_test_hero_variant",
+  AB_TEST_CTA_VARIANT: "ab_test_cta_variant",
 
   // Performance
-  LAZY_LOAD_IMAGES: 'lazy_load_images',
-  PREFETCH_PAGES: 'prefetch_pages',
+  LAZY_LOAD_IMAGES: "lazy_load_images",
+  PREFETCH_PAGES: "prefetch_pages",
 
   // Access Control
-  MAINTENANCE_MODE: 'maintenance_mode',
-  BETA_ACCESS: 'beta_access',
+  MAINTENANCE_MODE: "maintenance_mode",
+  BETA_ACCESS: "beta_access",
 } as const;
 
 export default useFeatureFlags;

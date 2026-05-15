@@ -14,15 +14,15 @@
  * - Stable keys (opt.value) in option .map() calls
  * - useCallback for handlers to avoid re-creating on every render
  */
-import React, { useState, useCallback } from 'react';
-import MenuItem from '@mui/material/MenuItem';
-import FormHelperText from '@mui/material/FormHelperText';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import DashboardSelect from '../../Dashboard/shared/DashboardSelect';
-import type { FieldRendererProps } from '../types';
-import { FieldType } from '../types';
-import { registerFieldComponent } from '../registry';
+import React, { useState, useCallback } from "react";
+import MenuItem from "@mui/material/MenuItem";
+import FormHelperText from "@mui/material/FormHelperText";
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
+import DashboardSelect from "../../Dashboard/shared/DashboardSelect";
+import type { FieldRendererProps } from "../types";
+import { FieldType } from "../types";
+import { registerFieldComponent } from "../registry";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -63,22 +63,24 @@ const Select: React.FC<FieldRendererProps> = React.memo(
     const searchable = uiProps.searchable ?? false;
 
     // Local search/filter state — only active when searchable=true
-    const [filterText, setFilterText] = useState<string>('');
+    const [filterText, setFilterText] = useState<string>("");
 
     // Derive filtered options for rendering
     const filteredOptions = searchable
-      ? options.filter((o) => o.label.toLowerCase().includes(filterText.toLowerCase()))
+      ? options.filter((o) =>
+          o.label.toLowerCase().includes(filterText.toLowerCase()),
+        )
       : options;
 
     // Normalise value: ensure string or string[] type safety
     const normaliseValue = (v: unknown): string | string[] => {
       if (multiple) {
         if (Array.isArray(v)) return v.map(String);
-        if (v === null || v === undefined || v === '') return [];
+        if (v === null || v === undefined || v === "") return [];
         return [String(v)];
       }
-      if (v === null || v === undefined) return '';
-      if (typeof v === 'string') return v;
+      if (v === null || v === undefined) return "";
+      if (typeof v === "string") return v;
       return String(v);
     };
 
@@ -89,12 +91,15 @@ const Select: React.FC<FieldRendererProps> = React.memo(
         const newValue = e.target.value as string | string[];
         onChange(newValue);
       },
-      [onChange]
+      [onChange],
     );
 
-    const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      setFilterText(e.target.value);
-    }, []);
+    const handleFilterChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFilterText(e.target.value);
+      },
+      [],
+    );
 
     const hasError = errors.length > 0;
     const errorMessage = hasError ? errors[0] : undefined;
@@ -108,8 +113,8 @@ const Select: React.FC<FieldRendererProps> = React.memo(
             value={filterText}
             onChange={handleFilterChange}
             disabled={disabled}
-            inputProps={{ 'aria-label': `Search ${field.label} options` }}
-            sx={{ mb: 1, width: '100%' }}
+            inputProps={{ "aria-label": `Search ${field.label} options` }}
+            sx={{ mb: 1, width: "100%" }}
           />
         )}
 
@@ -135,10 +140,10 @@ const Select: React.FC<FieldRendererProps> = React.memo(
         )}
       </Box>
     );
-  }
+  },
 );
 
-Select.displayName = 'Select';
+Select.displayName = "Select";
 
 // Self-register in the global field component registry (module scope — runs once on import)
 registerFieldComponent(FieldType.SELECT, Select);

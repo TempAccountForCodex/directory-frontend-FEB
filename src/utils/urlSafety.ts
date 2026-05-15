@@ -10,11 +10,11 @@
 export function isSafePreviewUrl(url: string | null | undefined): boolean {
   if (!url) return false;
   // Accept same-origin relative paths (e.g. /template-previews/foo.png)
-  if (url.startsWith('/')) return true;
+  if (url.startsWith("/")) return true;
   // Accept absolute http/https URLs
   try {
     const parsed = new URL(url);
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
   } catch {
     return false;
   }

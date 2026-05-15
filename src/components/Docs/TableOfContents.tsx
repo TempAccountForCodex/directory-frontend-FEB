@@ -5,9 +5,16 @@
  * Highlights current section using IntersectionObserver on scroll.
  */
 
-import React, { memo, useMemo, useState, useEffect, useCallback, useRef } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+import React, {
+  memo,
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,9 +38,9 @@ interface TableOfContentsProps {
 const slugifyHeading = (text: string): string =>
   text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
     .trim();
 
 /** Extract h2 and h3 headings from raw markdown */
@@ -57,7 +64,7 @@ const extractHeadings = (markdown: string): TocEntry[] => {
 // ---------------------------------------------------------------------------
 
 const TableOfContents = memo<TableOfContentsProps>(({ content }) => {
-  const [activeId, setActiveId] = useState<string>('');
+  const [activeId, setActiveId] = useState<string>("");
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const headings = useMemo(() => extractHeadings(content), [content]);
@@ -74,7 +81,7 @@ const TableOfContents = memo<TableOfContentsProps>(({ content }) => {
           }
         }
       },
-      { rootMargin: '-20% 0% -60% 0%', threshold: 0 }
+      { rootMargin: "-20% 0% -60% 0%", threshold: 0 },
     );
 
     const elements = headings
@@ -93,11 +100,11 @@ const TableOfContents = memo<TableOfContentsProps>(({ content }) => {
       e.preventDefault();
       const el = document.getElementById(id);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
         setActiveId(id);
       }
     },
-    []
+    [],
   );
 
   if (headings.length === 0) {
@@ -108,21 +115,21 @@ const TableOfContents = memo<TableOfContentsProps>(({ content }) => {
     <Box
       data-testid="toc"
       sx={{
-        position: { md: 'sticky' },
+        position: { md: "sticky" },
         top: { md: 88 },
-        maxHeight: { md: 'calc(100vh - 120px)' },
-        overflowY: 'auto',
+        maxHeight: { md: "calc(100vh - 120px)" },
+        overflowY: "auto",
         pr: 1,
       }}
     >
       <Typography
         variant="overline"
         sx={{
-          color: 'text.secondary',
+          color: "text.secondary",
           fontWeight: 700,
           letterSpacing: 1.2,
           mb: 1.5,
-          display: 'block',
+          display: "block",
         }}
       >
         On This Page
@@ -137,20 +144,20 @@ const TableOfContents = memo<TableOfContentsProps>(({ content }) => {
               component="a"
               href={`#${heading.id}`}
               onClick={handleClick(heading.id)}
-              aria-current={isActive ? 'location' : undefined}
+              aria-current={isActive ? "location" : undefined}
               sx={{
-                display: 'block',
+                display: "block",
                 py: 0.5,
-                textDecoration: 'none',
-                fontSize: heading.level === 3 ? '0.8rem' : '0.875rem',
+                textDecoration: "none",
+                fontSize: heading.level === 3 ? "0.8rem" : "0.875rem",
                 fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'primary.main' : 'text.secondary',
-                borderLeft: isActive ? '2px solid' : '2px solid transparent',
-                borderColor: isActive ? 'primary.main' : 'transparent',
+                color: isActive ? "primary.main" : "text.secondary",
+                borderLeft: isActive ? "2px solid" : "2px solid transparent",
+                borderColor: isActive ? "primary.main" : "transparent",
                 pl: heading.level === 3 ? 2.5 : 1,
-                transition: 'all 0.15s ease',
-                '&:hover': {
-                  color: 'text.primary',
+                transition: "all 0.15s ease",
+                "&:hover": {
+                  color: "text.primary",
                 },
               }}
             >
@@ -163,6 +170,6 @@ const TableOfContents = memo<TableOfContentsProps>(({ content }) => {
   );
 });
 
-TableOfContents.displayName = 'TableOfContents';
+TableOfContents.displayName = "TableOfContents";
 
 export default TableOfContents;

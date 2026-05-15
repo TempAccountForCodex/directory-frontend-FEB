@@ -1,13 +1,20 @@
-import { Grid, Typography, Card, Box, CardContent, useTheme } from '@mui/material';
-import React from 'react';
-import { useInView } from 'react-intersection-observer';
-import FormC from '../UI/FormC';
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
-import CallOutlinedIcon from '@mui/icons-material/CallOutlined';
-import LanguageIcon from '@mui/icons-material/Language';
-const addressBG = '';
-const phoneBG = '';
-const websiteBG = '';
+import {
+  Grid,
+  Typography,
+  Card,
+  Box,
+  CardContent,
+  useTheme,
+} from "@mui/material";
+import React from "react";
+import { useInView } from "react-intersection-observer";
+import FormC from "../UI/FormC";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+import CallOutlinedIcon from "@mui/icons-material/CallOutlined";
+import LanguageIcon from "@mui/icons-material/Language";
+const addressBG = "";
+const phoneBG = "";
+const websiteBG = "";
 
 /* ---------------- Types ---------------- */
 interface ContactUsProps {
@@ -43,41 +50,51 @@ const ContactUs: React.FC<ContactUsProps> = ({
   const contactData: ContactData[] = [
     {
       id: 1,
-      icon: <LocationOnOutlinedIcon sx={{ fontSize: '50px' }} />,
-      label: 'Office Location',
+      icon: <LocationOnOutlinedIcon sx={{ fontSize: "50px" }} />,
+      label: "Office Location",
       description: address,
       iconHover: (
-        <LocationOnOutlinedIcon sx={{ fontSize: { xs: '75px', sm: '110px', md: '150px' } }} />
+        <LocationOnOutlinedIcon
+          sx={{ fontSize: { xs: "75px", sm: "110px", md: "150px" } }}
+        />
       ),
       handleClick: null,
       image: addressBG,
-      animation: 'slideInLeft 0.5s ease-out',
+      animation: "slideInLeft 0.5s ease-out",
     },
     {
       id: 2,
-      icon: <LanguageIcon sx={{ fontSize: '50px' }} />,
-      label: 'Visit Our Website',
+      icon: <LanguageIcon sx={{ fontSize: "50px" }} />,
+      label: "Visit Our Website",
       description: website,
       image: websiteBG,
-      iconHover: <LanguageIcon sx={{ fontSize: { xs: '75px', sm: '110px', md: '150px' } }} />,
-      animation: 'slideInBackwardToForward 0.5s ease-out',
+      iconHover: (
+        <LanguageIcon
+          sx={{ fontSize: { xs: "75px", sm: "110px", md: "150px" } }}
+        />
+      ),
+      animation: "slideInBackwardToForward 0.5s ease-out",
     },
     {
       id: 3,
-      icon: <CallOutlinedIcon sx={{ fontSize: '50px' }} />,
-      label: 'Call Us',
+      icon: <CallOutlinedIcon sx={{ fontSize: "50px" }} />,
+      label: "Call Us",
       description: formattedNumber,
-      iconHover: <CallOutlinedIcon sx={{ fontSize: { xs: '75px', sm: '110px', md: '150px' } }} />,
+      iconHover: (
+        <CallOutlinedIcon
+          sx={{ fontSize: { xs: "75px", sm: "110px", md: "150px" } }}
+        />
+      ),
       handleClick: null,
       image: phoneBG,
-      animation: 'slideInRight 0.5s ease-out',
+      animation: "slideInRight 0.5s ease-out",
     },
   ];
 
   const handleClick = (label: string) => {
-    if (label === 'Visit Our Website' && website) {
+    if (label === "Visit Our Website" && website) {
       window.location.href = website;
-    } else if (label === 'Call Us' && phone) {
+    } else if (label === "Call Us" && phone) {
       window.location.href = `tel:${phone}`;
     }
   };
@@ -110,24 +127,24 @@ const ContactUs: React.FC<ContactUsProps> = ({
       sx={{
         px: { md: 7, sm: 15, xs: 3 },
         pb: { md: 8, sm: 6 },
-        pt: { xs: '40px', lg: '80px' },
-        width: '100%',
+        pt: { xs: "40px", lg: "80px" },
+        width: "100%",
         bgcolor: theme.palette.primary.main,
       }}
     >
-      <Grid item xs={12} component="div" {...({} as any)} width={'100%'}>
+      <Grid item xs={12} component="div" {...({} as any)} width={"100%"}>
         <Typography
           ref={textRef}
           variant="h5"
           color="primary.hero"
           sx={{
-            fontSize: '32px',
-            lineHeight: '42px',
-            textAlign: 'center',
+            fontSize: "32px",
+            lineHeight: "42px",
+            textAlign: "center",
             fontWeight: 600,
-            fontFamily: 'poppins',
-            mb: '35px',
-            animation: textInView ? 'slideInLeft 0.5s ease-out' : 'none',
+            fontFamily: "poppins",
+            mb: "35px",
+            animation: textInView ? "slideInLeft 0.5s ease-out" : "none",
           }}
         >
           Contact Us
@@ -137,13 +154,13 @@ const ContactUs: React.FC<ContactUsProps> = ({
           variant="h6"
           color="primary.hero"
           sx={{
-            fontSize: '16px',
-            lineHeight: '22px',
-            textAlign: 'center',
+            fontSize: "16px",
+            lineHeight: "22px",
+            textAlign: "center",
             fontWeight: 400,
-            fontFamily: 'poppins',
-            px: { lg: '150px', md: 'auto' },
-            animation: textInView ? 'slideInLeft 0.5s ease-out' : 'none',
+            fontFamily: "poppins",
+            px: { lg: "150px", md: "auto" },
+            animation: textInView ? "slideInLeft 0.5s ease-out" : "none",
           }}
         >
           {contactUsIntro}
@@ -152,18 +169,21 @@ const ContactUs: React.FC<ContactUsProps> = ({
           container
           spacing={7}
           sx={{
-            background: 'white',
-            textAlign: 'center',
-            display: 'flex',
-            justifyContent: 'center',
-            overflow: 'visible',
+            background: "white",
+            textAlign: "center",
+            display: "flex",
+            justifyContent: "center",
+            overflow: "visible",
           }}
           mt={{ md: 2, sm: 2, xs: 2 }}
           mb={{ md: 10 }}
           px={{ md: 8, sm: 1, xs: 0 }}
         >
           {contactData.map((item, index) => {
-            if (item.label === 'Visit Our Website' && website === 'https://www.example.com/') {
+            if (
+              item.label === "Visit Our Website" &&
+              website === "https://www.example.com/"
+            ) {
               return null;
             }
             return (
@@ -175,10 +195,10 @@ const ContactUs: React.FC<ContactUsProps> = ({
                 key={item.id}
                 sx={{
                   flex: 1,
-                  mb: '20px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  overflow: 'visible',
+                  mb: "20px",
+                  display: "flex",
+                  justifyContent: "center",
+                  overflow: "visible",
                   animation:
                     index === 0 && contactInView1
                       ? item.animation
@@ -186,52 +206,58 @@ const ContactUs: React.FC<ContactUsProps> = ({
                         ? item.animation
                         : index === 2 && contactInView3
                           ? item.animation
-                          : 'none',
+                          : "none",
                 }}
-                ref={index === 0 ? contactRef1 : index === 1 ? contactRef2 : contactRef3}
+                ref={
+                  index === 0
+                    ? contactRef1
+                    : index === 1
+                      ? contactRef2
+                      : contactRef3
+                }
                 component="div"
                 {...({} as any)}
               >
                 <Card
                   sx={{
-                    position: 'relative',
+                    position: "relative",
                     bgcolor: theme.palette.primary.main,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    width: '100%',
-                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: "100%",
+                    boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)",
                     borderRadius: 4,
                     mt: 7,
-                    textAlign: 'center',
-                    overflow: 'visible',
-                    borderBottom: '4px solid transparent',
-                    '&:hover': {
+                    textAlign: "center",
+                    overflow: "visible",
+                    borderBottom: "4px solid transparent",
+                    "&:hover": {
                       borderBottom: `4px solid ${(theme.palette.primary as any).focus}`,
-                      '& .hoverIcon': {
-                        animation: 'zoomInOut 1.8s infinite',
+                      "& .hoverIcon": {
+                        animation: "zoomInOut 1.8s infinite",
                       },
-                      '& .extraIcon': {
-                        animation: 'appearFromRight 0.8s forwards',
-                      },
-                    },
-                    '@keyframes zoomInOut': {
-                      '0%, 100%': {
-                        transform: 'scale(1)',
-                      },
-                      '50%': {
-                        transform: 'scale(1.2)',
+                      "& .extraIcon": {
+                        animation: "appearFromRight 0.8s forwards",
                       },
                     },
-                    '@keyframes appearFromRight': {
-                      '0%': {
+                    "@keyframes zoomInOut": {
+                      "0%, 100%": {
+                        transform: "scale(1)",
+                      },
+                      "50%": {
+                        transform: "scale(1.2)",
+                      },
+                    },
+                    "@keyframes appearFromRight": {
+                      "0%": {
                         opacity: 0,
-                        transform: 'translateX(20px) rotate(-25deg)',
+                        transform: "translateX(20px) rotate(-25deg)",
                       },
-                      '100%': {
+                      "100%": {
                         opacity: 1,
-                        transform: 'translateX(0) rotate(-25deg)',
+                        transform: "translateX(0) rotate(-25deg)",
                       },
                     },
                   }}
@@ -241,10 +267,10 @@ const ContactUs: React.FC<ContactUsProps> = ({
                     sx={{
                       border: `11px solid ${theme.palette.common.white}`,
                       bgcolor: (theme.palette.primary as any).focus,
-                      borderRadius: '50%',
-                      p: '20px',
-                      position: 'absolute',
-                      top: { md: '-40px', sm: '-35px', xs: '-35px' },
+                      borderRadius: "50%",
+                      p: "20px",
+                      position: "absolute",
+                      top: { md: "-40px", sm: "-35px", xs: "-35px" },
                       color: theme.palette.common.white,
                     }}
                   >
@@ -253,14 +279,14 @@ const ContactUs: React.FC<ContactUsProps> = ({
                   <Box
                     className="extraIcon"
                     sx={{
-                      position: 'absolute',
-                      bottom: '0px',
-                      right: '0px',
+                      position: "absolute",
+                      bottom: "0px",
+                      right: "0px",
                       opacity: 0,
-                      transform: 'rotate(-35deg)',
+                      transform: "rotate(-35deg)",
                       color: `${theme.palette.common.white} !important`,
-                      fontSize: '20px',
-                      p: '0px',
+                      fontSize: "20px",
+                      p: "0px",
                     }}
                   >
                     {item.iconHover}
@@ -269,29 +295,29 @@ const ContactUs: React.FC<ContactUsProps> = ({
                     sx={{
                       flexGrow: 1,
                       pb: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      cursor: 'pointer',
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
                       variant="h5"
                       sx={{
-                        fontSize: '20px',
-                        fontWeight: '600',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.9rem',
-                        cursor: 'pointer',
-                        '&:hover': {
+                        fontSize: "20px",
+                        fontWeight: "600",
+                        letterSpacing: "0.2px",
+                        lineHeight: "1.9rem",
+                        cursor: "pointer",
+                        "&:hover": {
                           color: (theme.palette.primary as any).focus,
                         },
-                        textAlign: 'center',
-                        textOverflow: 'ellipsis',
-                        wordBreak: 'break-all',
-                        WebkitHyphens: 'auto',
-                        color: 'inherit',
-                        mt: '80px',
+                        textAlign: "center",
+                        textOverflow: "ellipsis",
+                        wordBreak: "break-all",
+                        WebkitHyphens: "auto",
+                        color: "inherit",
+                        mt: "80px",
                         zIndex: 1,
                       }}
                     >
@@ -301,14 +327,14 @@ const ContactUs: React.FC<ContactUsProps> = ({
                       variant="body2"
                       sx={{
                         color: theme.palette.text.secondary,
-                        textAlign: 'center',
-                        overflow: 'hidden',
-                        display: '-webkit-box',
+                        textAlign: "center",
+                        overflow: "hidden",
+                        display: "-webkit-box",
                         WebkitLineClamp: 6,
-                        WebkitBoxOrient: 'vertical',
-                        mt: '10px',
+                        WebkitBoxOrient: "vertical",
+                        mt: "10px",
                         zIndex: 1,
-                        cursor: 'default',
+                        cursor: "default",
                       }}
                     >
                       {item.description}
@@ -326,11 +352,11 @@ const ContactUs: React.FC<ContactUsProps> = ({
         md={5}
         sx={{
           pr: { xs: 0, md: 4 },
-          pl: { md: '40px', lg: '95px' },
-          textAlign: { xs: 'center', md: 'left' },
+          pl: { md: "40px", lg: "95px" },
+          textAlign: { xs: "center", md: "left" },
           my: { xs: 6, md: 0 },
-          width: '41.5%',
-          flexDirection: 'row',
+          width: "41.5%",
+          flexDirection: "row",
         }}
         component="div"
         {...({} as any)}
@@ -339,7 +365,7 @@ const ContactUs: React.FC<ContactUsProps> = ({
           src={mapUrl}
           width="100%"
           height="450px"
-          style={{ border: 0, position: 'relative' }}
+          style={{ border: 0, position: "relative" }}
           allowFullScreen
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
@@ -349,22 +375,22 @@ const ContactUs: React.FC<ContactUsProps> = ({
         <FormC
           fields={[
             {
-              type: 'text',
-              name: 'first_name',
+              type: "text",
+              name: "first_name",
               required: true,
-              placeholder: 'Name',
+              placeholder: "Name",
             },
             {
-              type: 'email',
-              name: 'email',
+              type: "email",
+              name: "email",
               required: true,
-              placeholder: 'Email Address',
+              placeholder: "Email Address",
             },
             {
-              type: 'text',
-              name: 'subject',
+              type: "text",
+              name: "subject",
               required: true,
-              placeholder: 'Subject',
+              placeholder: "Subject",
             },
           ]}
           buttonText="Send Message"

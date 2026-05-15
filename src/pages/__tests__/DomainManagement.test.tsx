@@ -23,11 +23,11 @@
  * 19. Remove domain calls DELETE endpoint
  * 20. Domain status chip renders with correct label
  */
-import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
-import { BrowserRouter } from 'react-router-dom';
+import React from "react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import { BrowserRouter } from "react-router-dom";
 
 // ---------------------------------------------------------------------------
 // Mock global fetch
@@ -40,48 +40,48 @@ global.fetch = mockFetch as any;
 // ---------------------------------------------------------------------------
 // Mock theme context
 // ---------------------------------------------------------------------------
-vi.mock('../../context/ThemeContext', () => ({
-  useTheme: () => ({ actualTheme: 'dark' }),
+vi.mock("../../context/ThemeContext", () => ({
+  useTheme: () => ({ actualTheme: "dark" }),
 }));
 
-vi.mock('../../styles/dashboardTheme', () => ({
+vi.mock("../../styles/dashboardTheme", () => ({
   getDashboardColors: () => ({
-    panelBg: '#121517',
-    border: 'rgba(55,140,146,0.15)',
-    text: '#F5F5F5',
-    textSecondary: '#9FA6AE',
-    bgCard: '#121517',
-    cardBg: '#1a1d21',
-    mode: 'dark',
-    primary: '#378C92',
-    primaryDark: '#2a6f73',
-    primaryLight: '#4ab0b6',
-    panelBorder: 'rgba(55,140,146,0.15)',
-    panelText: '#F5F5F5',
-    panelMuted: '#9FA6AE',
-    panelSubtle: '#6b7280',
-    panelAccent: '#378C92',
-    panelDanger: '#ef4444',
-    panelShadow: 'none',
-    panelShadowSm: 'none',
-    shadow: 'none',
-    dark: '#0d0f11',
-    textTertiary: '#6b7280',
-    error: '#ef4444',
+    panelBg: "#121517",
+    border: "rgba(55,140,146,0.15)",
+    text: "#F5F5F5",
+    textSecondary: "#9FA6AE",
+    bgCard: "#121517",
+    cardBg: "#1a1d21",
+    mode: "dark",
+    primary: "#378C92",
+    primaryDark: "#2a6f73",
+    primaryLight: "#4ab0b6",
+    panelBorder: "rgba(55,140,146,0.15)",
+    panelText: "#F5F5F5",
+    panelMuted: "#9FA6AE",
+    panelSubtle: "#6b7280",
+    panelAccent: "#378C92",
+    panelDanger: "#ef4444",
+    panelShadow: "none",
+    panelShadowSm: "none",
+    shadow: "none",
+    dark: "#0d0f11",
+    textTertiary: "#6b7280",
+    error: "#ef4444",
   }),
 }));
 
 // ---------------------------------------------------------------------------
 // Mock MUI useMediaQuery
 // ---------------------------------------------------------------------------
-vi.mock('@mui/material/useMediaQuery', () => ({
+vi.mock("@mui/material/useMediaQuery", () => ({
   default: vi.fn().mockReturnValue(false),
 }));
 
 // ---------------------------------------------------------------------------
 // Mock shared Dashboard components
 // ---------------------------------------------------------------------------
-vi.mock('../../components/Dashboard/shared', () => ({
+vi.mock("../../components/Dashboard/shared", () => ({
   DashboardCard: ({
     title,
     children,
@@ -116,8 +116,8 @@ vi.mock('../../components/Dashboard/shared', () => ({
     <div data-testid="dashboard-input">
       {label && <label>{label}</label>}
       <input
-        data-testid={`input-${label?.toLowerCase().replace(/\s+/g, '-') || 'field'}`}
-        value={value || ''}
+        data-testid={`input-${label?.toLowerCase().replace(/\s+/g, "-") || "field"}`}
+        value={value || ""}
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
@@ -170,7 +170,13 @@ vi.mock('../../components/Dashboard/shared', () => ({
       {children}
     </button>
   ),
-  DashboardTooltip: ({ title, children }: { title?: string; children: React.ReactElement }) => (
+  DashboardTooltip: ({
+    title,
+    children,
+  }: {
+    title?: string;
+    children: React.ReactElement;
+  }) => (
     <div data-testid="dashboard-tooltip" data-tooltip={title}>
       {children}
     </div>
@@ -233,7 +239,7 @@ vi.mock('../../components/Dashboard/shared', () => ({
 // ---------------------------------------------------------------------------
 // Import component under test
 // ---------------------------------------------------------------------------
-import DomainManagement from '../DomainManagement';
+import DomainManagement from "../DomainManagement";
 
 // ---------------------------------------------------------------------------
 // Default fetch factory
@@ -246,80 +252,91 @@ function makeDefaultFetch(overrides?: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): any {
   return vi.fn((url: string, options?: RequestInit) => {
-    if (typeof url === 'string' && url.includes('/api/websites/')) {
+    if (typeof url === "string" && url.includes("/api/websites/")) {
       return Promise.resolve({
         ok: true,
         json: () =>
           Promise.resolve(
             overrides?.website ?? {
               id: 42,
-              subdomain: 'mysite',
+              subdomain: "mysite",
               customDomain: null,
-              domainStatus: 'NONE',
-            }
+              domainStatus: "NONE",
+            },
           ),
       });
     }
-    if (typeof url === 'string' && url.includes('/api/billing/plan')) {
+    if (typeof url === "string" && url.includes("/api/billing/plan")) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(overrides?.plan ?? { customDomain: true, plan: 'growth' }),
+        json: () =>
+          Promise.resolve(
+            overrides?.plan ?? { customDomain: true, plan: "growth" },
+          ),
       });
     }
-    if (typeof url === 'string' && url.includes('check-availability')) {
+    if (typeof url === "string" && url.includes("check-availability")) {
       return Promise.resolve({
         ok: true,
         json: () =>
           Promise.resolve(
             overrides?.availability ?? {
               available: true,
-              subdomain: 'newsite',
+              subdomain: "newsite",
               suggestions: [],
-            }
+            },
           ),
       });
     }
     // PATCH subdomain
-    if (options?.method === 'PATCH' && typeof url === 'string' && url.includes('/subdomain')) {
-      return Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            subdomain: 'newsite',
-            canonicalUrl: 'https://newsite.techietribe.app',
-          }),
-      });
-    }
-    // POST custom-domain
     if (
-      options?.method === 'POST' &&
-      typeof url === 'string' &&
-      url.includes('custom-domain') &&
-      !url.includes('verify')
+      options?.method === "PATCH" &&
+      typeof url === "string" &&
+      url.includes("/subdomain")
     ) {
       return Promise.resolve({
         ok: true,
         json: () =>
           Promise.resolve({
-            domain: 'example.com',
+            subdomain: "newsite",
+            canonicalUrl: "https://newsite.techietribe.app",
+          }),
+      });
+    }
+    // POST custom-domain
+    if (
+      options?.method === "POST" &&
+      typeof url === "string" &&
+      url.includes("custom-domain") &&
+      !url.includes("verify")
+    ) {
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            domain: "example.com",
             verifyRecord: {
-              type: 'TXT',
-              host: '_techietribe-verify.example.com',
-              value: 'abc123',
+              type: "TXT",
+              host: "_techietribe-verify.example.com",
+              value: "abc123",
             },
-            status: 'PENDING_VERIFICATION',
+            status: "PENDING_VERIFICATION",
           }),
       });
     }
     // POST verify
-    if (options?.method === 'POST' && typeof url === 'string' && url.includes('verify')) {
+    if (
+      options?.method === "POST" &&
+      typeof url === "string" &&
+      url.includes("verify")
+    ) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ verified: true, status: 'VERIFIED' }),
+        json: () => Promise.resolve({ verified: true, status: "VERIFIED" }),
       });
     }
     // DELETE
-    if (options?.method === 'DELETE') {
+    if (options?.method === "DELETE") {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ removed: true }),
@@ -336,13 +353,13 @@ const renderComponent = (websiteId = 42) =>
   render(
     <BrowserRouter>
       <DomainManagement websiteId={websiteId} />
-    </BrowserRouter>
+    </BrowserRouter>,
   );
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-describe('DomainManagement page', () => {
+describe("DomainManagement page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = makeDefaultFetch();
@@ -353,38 +370,42 @@ describe('DomainManagement page', () => {
   });
 
   // 1. Component renders without crashing
-  it('renders the component without crashing', async () => {
+  it("renders the component without crashing", async () => {
     renderComponent();
     await waitFor(() => {
-      expect(screen.getAllByTestId('dashboard-card').length).toBeGreaterThan(0);
+      expect(screen.getAllByTestId("dashboard-card").length).toBeGreaterThan(0);
     });
   });
 
   // 2. Subdomain section DashboardCard is rendered
-  it('renders subdomain DashboardCard section', async () => {
+  it("renders subdomain DashboardCard section", async () => {
     renderComponent();
     await waitFor(() => {
-      const cardTitles = screen.getAllByTestId('card-title');
-      const subdomainCard = cardTitles.find((el) => el.textContent === 'Subdomain');
+      const cardTitles = screen.getAllByTestId("card-title");
+      const subdomainCard = cardTitles.find(
+        (el) => el.textContent === "Subdomain",
+      );
       expect(subdomainCard).toBeDefined();
     });
   });
 
   // 3. Subdomain DashboardInput is rendered
-  it('renders subdomain DashboardInput', async () => {
+  it("renders subdomain DashboardInput", async () => {
     renderComponent();
     await waitFor(() => {
-      expect(screen.getAllByTestId('dashboard-input').length).toBeGreaterThan(0);
+      expect(screen.getAllByTestId("dashboard-input").length).toBeGreaterThan(
+        0,
+      );
     });
   });
 
   // 4. Invalid subdomain format shows Warning indicator
-  it('shows invalid format indicator for bad subdomain', async () => {
+  it("shows invalid format indicator for bad subdomain", async () => {
     renderComponent();
-    await waitFor(() => screen.getByTestId('input-subdomain'));
+    await waitFor(() => screen.getByTestId("input-subdomain"));
 
-    fireEvent.change(screen.getByTestId('input-subdomain'), {
-      target: { value: '-invalid-start' },
+    fireEvent.change(screen.getByTestId("input-subdomain"), {
+      target: { value: "-invalid-start" },
     });
 
     await waitFor(() => {
@@ -393,26 +414,26 @@ describe('DomainManagement page', () => {
   });
 
   // 5. Valid subdomain debounces and calls availability check after 500ms
-  it('calls availability check after debounce for valid subdomain', async () => {
+  it("calls availability check after debounce for valid subdomain", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       global.fetch = makeDefaultFetch();
       renderComponent();
 
       // Wait for initial data load
-      await waitFor(() => screen.getByTestId('input-subdomain'));
+      await waitFor(() => screen.getByTestId("input-subdomain"));
 
       // Clear fetch call count from initial load
       (global.fetch as ReturnType<typeof vi.fn>).mockClear();
 
-      fireEvent.change(screen.getByTestId('input-subdomain'), {
-        target: { value: 'newsite' },
+      fireEvent.change(screen.getByTestId("input-subdomain"), {
+        target: { value: "newsite" },
       });
 
       // Should not have called yet (within debounce window)
       expect(global.fetch).not.toHaveBeenCalledWith(
-        expect.stringContaining('check-availability'),
-        expect.anything()
+        expect.stringContaining("check-availability"),
+        expect.anything(),
       );
 
       // Advance time past debounce
@@ -420,8 +441,8 @@ describe('DomainManagement page', () => {
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('check-availability'),
-          expect.anything()
+          expect.stringContaining("check-availability"),
+          expect.anything(),
         );
       });
     } finally {
@@ -430,17 +451,21 @@ describe('DomainManagement page', () => {
   });
 
   // 6. Available subdomain shows "available" text
-  it('shows available indicator when subdomain is available', async () => {
+  it("shows available indicator when subdomain is available", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       global.fetch = makeDefaultFetch({
-        availability: { available: true, subdomain: 'newsite', suggestions: [] },
+        availability: {
+          available: true,
+          subdomain: "newsite",
+          suggestions: [],
+        },
       });
       renderComponent();
-      await waitFor(() => screen.getByTestId('input-subdomain'));
+      await waitFor(() => screen.getByTestId("input-subdomain"));
 
-      fireEvent.change(screen.getByTestId('input-subdomain'), {
-        target: { value: 'newsite' },
+      fireEvent.change(screen.getByTestId("input-subdomain"), {
+        target: { value: "newsite" },
       });
       vi.advanceTimersByTime(600);
 
@@ -453,28 +478,30 @@ describe('DomainManagement page', () => {
   });
 
   // 7. Taken subdomain shows "taken" text + suggestions
-  it('shows taken indicator and suggestions when subdomain is taken', async () => {
+  it("shows taken indicator and suggestions when subdomain is taken", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       global.fetch = makeDefaultFetch({
         availability: {
           available: false,
-          subdomain: 'takensite',
-          suggestions: ['takensite-1', 'takensite-2'],
+          subdomain: "takensite",
+          suggestions: ["takensite-1", "takensite-2"],
         },
       });
       renderComponent();
-      await waitFor(() => screen.getByTestId('input-subdomain'));
+      await waitFor(() => screen.getByTestId("input-subdomain"));
 
-      fireEvent.change(screen.getByTestId('input-subdomain'), {
-        target: { value: 'takensite' },
+      fireEvent.change(screen.getByTestId("input-subdomain"), {
+        target: { value: "takensite" },
       });
       vi.advanceTimersByTime(600);
 
       await waitFor(() => {
         // "is taken" text appears in the status indicator (not the URL display)
-        expect(screen.getByText(/\.techietribe\.app is taken/i)).toBeInTheDocument();
-        expect(screen.getByText('takensite-1')).toBeInTheDocument();
+        expect(
+          screen.getByText(/\.techietribe\.app is taken/i),
+        ).toBeInTheDocument();
+        expect(screen.getByText("takensite-1")).toBeInTheDocument();
       });
     } finally {
       vi.useRealTimers();
@@ -482,30 +509,32 @@ describe('DomainManagement page', () => {
   });
 
   // 8. Clicking suggestion chip fills input
-  it('fills input when suggestion chip is clicked', async () => {
+  it("fills input when suggestion chip is clicked", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       global.fetch = makeDefaultFetch({
         availability: {
           available: false,
-          subdomain: 'takensite',
-          suggestions: ['takensite-1'],
+          subdomain: "takensite",
+          suggestions: ["takensite-1"],
         },
       });
       renderComponent();
-      await waitFor(() => screen.getByTestId('input-subdomain'));
+      await waitFor(() => screen.getByTestId("input-subdomain"));
 
-      fireEvent.change(screen.getByTestId('input-subdomain'), {
-        target: { value: 'takensite' },
+      fireEvent.change(screen.getByTestId("input-subdomain"), {
+        target: { value: "takensite" },
       });
       vi.advanceTimersByTime(600);
 
-      await waitFor(() => screen.getByText('takensite-1'));
+      await waitFor(() => screen.getByText("takensite-1"));
 
-      fireEvent.click(screen.getByText('takensite-1'));
+      fireEvent.click(screen.getByText("takensite-1"));
 
       await waitFor(() => {
-        expect(screen.getByTestId('input-subdomain')).toHaveValue('takensite-1');
+        expect(screen.getByTestId("input-subdomain")).toHaveValue(
+          "takensite-1",
+        );
       });
     } finally {
       vi.useRealTimers();
@@ -513,19 +542,19 @@ describe('DomainManagement page', () => {
   });
 
   // 9. Save button disabled when subdomain is not available
-  it('disables save button when subdomain status is not available', async () => {
+  it("disables save button when subdomain status is not available", async () => {
     renderComponent();
-    await waitFor(() => screen.getByTestId('input-subdomain'));
+    await waitFor(() => screen.getByTestId("input-subdomain"));
 
     // Type an invalid subdomain
-    fireEvent.change(screen.getByTestId('input-subdomain'), {
-      target: { value: '-bad' },
+    fireEvent.change(screen.getByTestId("input-subdomain"), {
+      target: { value: "-bad" },
     });
 
     await waitFor(() => {
-      const saveButtons = screen.getAllByTestId('confirm-button');
+      const saveButtons = screen.getAllByTestId("confirm-button");
       const subdomainSaveBtn = saveButtons.find((btn) =>
-        btn.textContent?.includes('Save Subdomain')
+        btn.textContent?.includes("Save Subdomain"),
       );
       expect(subdomainSaveBtn).toBeDefined();
       expect(subdomainSaveBtn).toBeDisabled();
@@ -533,23 +562,29 @@ describe('DomainManagement page', () => {
   });
 
   // 10. Save button enabled when subdomain is available and different
-  it('enables save button when subdomain is available and different', async () => {
+  it("enables save button when subdomain is available and different", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       global.fetch = makeDefaultFetch({
-        availability: { available: true, subdomain: 'newsite', suggestions: [] },
+        availability: {
+          available: true,
+          subdomain: "newsite",
+          suggestions: [],
+        },
       });
       renderComponent();
-      await waitFor(() => screen.getByTestId('input-subdomain'));
+      await waitFor(() => screen.getByTestId("input-subdomain"));
 
-      fireEvent.change(screen.getByTestId('input-subdomain'), {
-        target: { value: 'newsite' },
+      fireEvent.change(screen.getByTestId("input-subdomain"), {
+        target: { value: "newsite" },
       });
       vi.advanceTimersByTime(600);
 
       await waitFor(() => {
-        const saveButtons = screen.getAllByTestId('confirm-button');
-        const btn = saveButtons.find((b) => b.textContent?.includes('Save Subdomain'));
+        const saveButtons = screen.getAllByTestId("confirm-button");
+        const btn = saveButtons.find((b) =>
+          b.textContent?.includes("Save Subdomain"),
+        );
         expect(btn).not.toBeDisabled();
       });
     } finally {
@@ -558,37 +593,41 @@ describe('DomainManagement page', () => {
   });
 
   // 11. Save button calls PATCH endpoint
-  it('calls PATCH /api/domains/:id/subdomain on save', async () => {
+  it("calls PATCH /api/domains/:id/subdomain on save", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       global.fetch = makeDefaultFetch({
-        availability: { available: true, subdomain: 'newsite', suggestions: [] },
+        availability: {
+          available: true,
+          subdomain: "newsite",
+          suggestions: [],
+        },
       });
       renderComponent();
-      await waitFor(() => screen.getByTestId('input-subdomain'));
+      await waitFor(() => screen.getByTestId("input-subdomain"));
 
-      fireEvent.change(screen.getByTestId('input-subdomain'), {
-        target: { value: 'newsite' },
+      fireEvent.change(screen.getByTestId("input-subdomain"), {
+        target: { value: "newsite" },
       });
       vi.advanceTimersByTime(600);
 
       await waitFor(() => {
         const btn = screen
-          .getAllByTestId('confirm-button')
-          .find((b) => b.textContent?.includes('Save Subdomain'));
+          .getAllByTestId("confirm-button")
+          .find((b) => b.textContent?.includes("Save Subdomain"));
         expect(btn).not.toBeDisabled();
       });
 
       const saveBtn = screen
-        .getAllByTestId('confirm-button')
-        .find((btn) => btn.textContent?.includes('Save Subdomain'))!;
+        .getAllByTestId("confirm-button")
+        .find((btn) => btn.textContent?.includes("Save Subdomain"))!;
 
       fireEvent.click(saveBtn);
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/subdomain'),
-          expect.objectContaining({ method: 'PATCH' })
+          expect.stringContaining("/subdomain"),
+          expect.objectContaining({ method: "PATCH" }),
         );
       });
     } finally {
@@ -597,31 +636,35 @@ describe('DomainManagement page', () => {
   });
 
   // 12. Save success shows snackbar
-  it('shows success snackbar after subdomain save', async () => {
+  it("shows success snackbar after subdomain save", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       global.fetch = makeDefaultFetch({
-        availability: { available: true, subdomain: 'newsite', suggestions: [] },
+        availability: {
+          available: true,
+          subdomain: "newsite",
+          suggestions: [],
+        },
       });
       renderComponent();
-      await waitFor(() => screen.getByTestId('input-subdomain'));
+      await waitFor(() => screen.getByTestId("input-subdomain"));
 
-      fireEvent.change(screen.getByTestId('input-subdomain'), {
-        target: { value: 'newsite' },
+      fireEvent.change(screen.getByTestId("input-subdomain"), {
+        target: { value: "newsite" },
       });
       vi.advanceTimersByTime(600);
 
       await waitFor(() => {
         const btn = screen
-          .getAllByTestId('confirm-button')
-          .find((b) => b.textContent?.includes('Save Subdomain'));
+          .getAllByTestId("confirm-button")
+          .find((b) => b.textContent?.includes("Save Subdomain"));
         expect(btn).not.toBeDisabled();
       });
 
       fireEvent.click(
         screen
-          .getAllByTestId('confirm-button')
-          .find((b) => b.textContent?.includes('Save Subdomain'))!
+          .getAllByTestId("confirm-button")
+          .find((b) => b.textContent?.includes("Save Subdomain"))!,
       );
 
       await waitFor(() => {
@@ -633,67 +676,71 @@ describe('DomainManagement page', () => {
   });
 
   // 13. Free/Core plan shows locked state with upgrade CTA
-  it('shows upgrade CTA for free/core plan users', async () => {
-    global.fetch = makeDefaultFetch({ plan: { customDomain: false, plan: 'free' } });
+  it("shows upgrade CTA for free/core plan users", async () => {
+    global.fetch = makeDefaultFetch({
+      plan: { customDomain: false, plan: "free" },
+    });
     renderComponent();
 
     await waitFor(() => {
       // Both locked message and button contain "Growth plan" — check for gradient button
-      expect(screen.getByTestId('gradient-button')).toBeInTheDocument();
+      expect(screen.getByTestId("gradient-button")).toBeInTheDocument();
       expect(screen.getByText(/Custom Domain Locked/i)).toBeInTheDocument();
     });
   });
 
   // 14. Growth plan shows custom domain UI
-  it('shows custom domain management for growth plan users', async () => {
+  it("shows custom domain management for growth plan users", async () => {
     renderComponent();
 
     await waitFor(() => {
-      const cardTitles = screen.getAllByTestId('card-title');
-      const customDomainCard = cardTitles.find((el) => el.textContent?.includes('Custom Domain'));
+      const cardTitles = screen.getAllByTestId("card-title");
+      const customDomainCard = cardTitles.find((el) =>
+        el.textContent?.includes("Custom Domain"),
+      );
       expect(customDomainCard).toBeDefined();
     });
   });
 
   // 15. Add domain button calls POST endpoint
-  it('calls POST /api/domains/:id/custom-domain on add domain', async () => {
+  it("calls POST /api/domains/:id/custom-domain on add domain", async () => {
     renderComponent();
-    await waitFor(() => screen.getByTestId('input-custom-domain'));
+    await waitFor(() => screen.getByTestId("input-custom-domain"));
 
-    fireEvent.change(screen.getByTestId('input-custom-domain'), {
-      target: { value: 'example.com' },
+    fireEvent.change(screen.getByTestId("input-custom-domain"), {
+      target: { value: "example.com" },
     });
 
     await waitFor(() => {
       const addBtn = screen
-        .getAllByTestId('confirm-button')
-        .find((btn) => btn.textContent?.includes('Add Domain'));
+        .getAllByTestId("confirm-button")
+        .find((btn) => btn.textContent?.includes("Add Domain"));
       expect(addBtn).not.toBeDisabled();
     });
 
     fireEvent.click(
       screen
-        .getAllByTestId('confirm-button')
-        .find((btn) => btn.textContent?.includes('Add Domain'))!
+        .getAllByTestId("confirm-button")
+        .find((btn) => btn.textContent?.includes("Add Domain"))!,
     );
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('custom-domain'),
-        expect.objectContaining({ method: 'POST' })
+        expect.stringContaining("custom-domain"),
+        expect.objectContaining({ method: "POST" }),
       );
     });
   });
 
   // 16. DNS verification section shown when domain is PENDING_VERIFICATION
-  it('shows DNS verification section when domain status is PENDING_VERIFICATION', async () => {
+  it("shows DNS verification section when domain status is PENDING_VERIFICATION", async () => {
     global.fetch = makeDefaultFetch({
       website: {
         id: 42,
-        subdomain: 'mysite',
-        customDomain: 'example.com',
-        domainStatus: 'PENDING_VERIFICATION',
-        verifyToken: 'tok_abc123',
+        subdomain: "mysite",
+        customDomain: "example.com",
+        domainStatus: "PENDING_VERIFICATION",
+        verifyToken: "tok_abc123",
       },
     });
     renderComponent();
@@ -704,47 +751,47 @@ describe('DomainManagement page', () => {
   });
 
   // 17. Verify button calls POST verify endpoint
-  it('calls POST verify endpoint on verify click', async () => {
+  it("calls POST verify endpoint on verify click", async () => {
     global.fetch = makeDefaultFetch({
       website: {
         id: 42,
-        subdomain: 'mysite',
-        customDomain: 'example.com',
-        domainStatus: 'PENDING_VERIFICATION',
-        verifyToken: 'tok_abc123',
+        subdomain: "mysite",
+        customDomain: "example.com",
+        domainStatus: "PENDING_VERIFICATION",
+        verifyToken: "tok_abc123",
       },
     });
     renderComponent();
 
     await waitFor(() => {
       const verifyBtn = screen
-        .getAllByTestId('confirm-button')
-        .find((btn) => btn.textContent?.includes('Verify'));
+        .getAllByTestId("confirm-button")
+        .find((btn) => btn.textContent?.includes("Verify"));
       expect(verifyBtn).toBeDefined();
     });
 
     const verifyBtn = screen
-      .getAllByTestId('confirm-button')
-      .find((btn) => btn.textContent?.includes('Verify'))!;
+      .getAllByTestId("confirm-button")
+      .find((btn) => btn.textContent?.includes("Verify"))!;
 
     fireEvent.click(verifyBtn);
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('verify'),
-        expect.objectContaining({ method: 'POST' })
+        expect.stringContaining("verify"),
+        expect.objectContaining({ method: "POST" }),
       );
     });
   });
 
   // 18. Remove domain button shows ConfirmationDialog
-  it('shows ConfirmationDialog when remove domain is clicked', async () => {
+  it("shows ConfirmationDialog when remove domain is clicked", async () => {
     global.fetch = makeDefaultFetch({
       website: {
         id: 42,
-        subdomain: 'mysite',
-        customDomain: 'example.com',
-        domainStatus: 'ACTIVE',
+        subdomain: "mysite",
+        customDomain: "example.com",
+        domainStatus: "ACTIVE",
         verifyToken: null,
       },
     });
@@ -752,28 +799,30 @@ describe('DomainManagement page', () => {
 
     await waitFor(() => {
       const removeBtn = screen
-        .getAllByTestId('cancel-button')
-        .find((btn) => btn.textContent?.includes('Remove'));
+        .getAllByTestId("cancel-button")
+        .find((btn) => btn.textContent?.includes("Remove"));
       expect(removeBtn).toBeDefined();
     });
 
     fireEvent.click(
-      screen.getAllByTestId('cancel-button').find((btn) => btn.textContent?.includes('Remove'))!
+      screen
+        .getAllByTestId("cancel-button")
+        .find((btn) => btn.textContent?.includes("Remove"))!,
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('confirmation-dialog')).toBeInTheDocument();
+      expect(screen.getByTestId("confirmation-dialog")).toBeInTheDocument();
     });
   });
 
   // 19. Remove domain calls DELETE endpoint
-  it('calls DELETE endpoint on domain removal confirmation', async () => {
+  it("calls DELETE endpoint on domain removal confirmation", async () => {
     global.fetch = makeDefaultFetch({
       website: {
         id: 42,
-        subdomain: 'mysite',
-        customDomain: 'example.com',
-        domainStatus: 'ACTIVE',
+        subdomain: "mysite",
+        customDomain: "example.com",
+        domainStatus: "ACTIVE",
         verifyToken: null,
       },
     });
@@ -781,42 +830,44 @@ describe('DomainManagement page', () => {
 
     await waitFor(() => {
       const removeBtn = screen
-        .getAllByTestId('cancel-button')
-        .find((btn) => btn.textContent?.includes('Remove'));
+        .getAllByTestId("cancel-button")
+        .find((btn) => btn.textContent?.includes("Remove"));
       expect(removeBtn).toBeDefined();
     });
 
     fireEvent.click(
-      screen.getAllByTestId('cancel-button').find((btn) => btn.textContent?.includes('Remove'))!
+      screen
+        .getAllByTestId("cancel-button")
+        .find((btn) => btn.textContent?.includes("Remove"))!,
     );
 
-    await waitFor(() => screen.getByTestId('confirmation-dialog'));
+    await waitFor(() => screen.getByTestId("confirmation-dialog"));
 
-    fireEvent.click(screen.getByTestId('dialog-confirm'));
+    fireEvent.click(screen.getByTestId("dialog-confirm"));
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('custom-domain'),
-        expect.objectContaining({ method: 'DELETE' })
+        expect.stringContaining("custom-domain"),
+        expect.objectContaining({ method: "DELETE" }),
       );
     });
   });
 
   // 20. Domain status chip renders
-  it('renders domain status chip when domain is ACTIVE', async () => {
+  it("renders domain status chip when domain is ACTIVE", async () => {
     global.fetch = makeDefaultFetch({
       website: {
         id: 42,
-        subdomain: 'mysite',
-        customDomain: 'example.com',
-        domainStatus: 'ACTIVE',
+        subdomain: "mysite",
+        customDomain: "example.com",
+        domainStatus: "ACTIVE",
         verifyToken: null,
       },
     });
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText('ACTIVE')).toBeInTheDocument();
+      expect(screen.getByText("ACTIVE")).toBeInTheDocument();
     });
   });
 });

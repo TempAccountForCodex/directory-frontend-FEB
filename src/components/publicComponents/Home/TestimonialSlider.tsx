@@ -9,14 +9,14 @@ import {
   Rating,
   Chip,
   Divider,
-} from '@mui/material';
-import { alpha, keyframes, useTheme } from '@mui/material/styles';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+} from "@mui/material";
+import { alpha, keyframes, useTheme } from "@mui/material/styles";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 
-const star = '/assets/publicAssets/images/common/star.svg';
-const darkhole = '/assets/publicAssets/images/common/darkhole.svg';
-const worlMap = '/assets/publicAssets/images/common/map.webp';
+const star = "/assets/publicAssets/images/common/star.svg";
+const darkhole = "/assets/publicAssets/images/common/darkhole.svg";
+const worlMap = "/assets/publicAssets/images/common/map.webp";
 
 const scrollLoop = keyframes`
   0% { transform: translateY(0); }
@@ -31,24 +31,25 @@ const TestimonialSection = () => {
 
   const testimonials = [
     {
-      quote: 'I created my business page in 5 minutes!',
-      author: 'Sarah J.',
-      role: 'Boutique Owner',
-      initials: 'SJ',
+      quote: "I created my business page in 5 minutes!",
+      author: "Sarah J.",
+      role: "Boutique Owner",
+      initials: "SJ",
       rating: 5,
     },
     {
-      quote: 'Professional results without the professional price tag.',
-      author: 'James W.',
-      role: 'Coffee Shop Owner',
-      initials: 'JW',
+      quote: "Professional results without the professional price tag.",
+      author: "James W.",
+      role: "Coffee Shop Owner",
+      initials: "JW",
       rating: 5,
     },
     {
-      quote: 'Mobile performance is incredible. Solid 9/10 experience for my customers.',
-      author: 'Linda M.',
-      role: 'E-commerce',
-      initials: 'LM',
+      quote:
+        "Mobile performance is incredible. Solid 9/10 experience for my customers.",
+      author: "Linda M.",
+      role: "E-commerce",
+      initials: "LM",
       rating: 4.5,
     },
   ];
@@ -57,33 +58,33 @@ const TestimonialSection = () => {
     <Box
       sx={{
         py: { xs: 12, md: 14 },
-        backgroundColor: '#041e18', // Dark Greenish Background
-        position: 'relative',
-        overflow: 'hidden',
+        backgroundColor: "#041e18", // Dark Greenish Background
+        position: "relative",
+        overflow: "hidden",
         backgroundImage: `url(${star})`,
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover',
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
         color: secondaryText,
       }}
     >
       {/* Dark Hole Effect */}
       <Box
         sx={{
-          position: 'absolute',
-          height: 'auto',
+          position: "absolute",
+          height: "auto",
           zIndex: 0,
           backgroundImage: `url("${darkhole}")`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'contain',
-          aspectRatio: '2074 / 1333',
-          top: '12%',
-          left: '-70%',
-          width: '280%',
-          '@media (min-width: 640px)': {
-            top: '-4%',
-            width: '130%',
-            left: '-15%',
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "contain",
+          aspectRatio: "2074 / 1333",
+          top: "12%",
+          left: "-70%",
+          width: "280%",
+          "@media (min-width: 640px)": {
+            top: "-4%",
+            width: "130%",
+            left: "-15%",
           },
         }}
       />
@@ -96,33 +97,35 @@ const TestimonialSection = () => {
         loading="lazy"
         decoding="async"
         sx={{
-          position: 'absolute',
-          top: '-5%',
-          right: '-5%',
-          width: { xs: '100%', md: '65%' },
+          position: "absolute",
+          top: "-5%",
+          right: "-5%",
+          width: { xs: "100%", md: "65%" },
           opacity: 0.6,
-          pointerEvents: 'none',
+          pointerEvents: "none",
         }}
       />
 
-      <Container maxWidth="lg" sx={{ zIndex: 1, position: 'relative' }}>
+      <Container maxWidth="lg" sx={{ zIndex: 1, position: "relative" }}>
         {/* Header */}
         <Stack spacing={2} alignItems="baseline" textAlign="center" mb={12}>
           <Chip
-            icon={<AutoAwesomeIcon sx={{ fontSize: 16, fill: secondaryText }} />}
+            icon={
+              <AutoAwesomeIcon sx={{ fontSize: 16, fill: secondaryText }} />
+            }
             label="SOCIAL PROOF"
             sx={{
               px: 1.5,
               py: 1.8,
-              height: 'auto',
+              height: "auto",
               borderRadius: 999,
               background: alpha(primaryMain!, 0.15),
               border: `1px solid ${primaryMain}`,
-              '& .MuiChip-label': {
+              "& .MuiChip-label": {
                 fontWeight: 700,
-                fontSize: '0.75rem',
+                fontSize: "0.75rem",
                 color: secondaryText,
-                letterSpacing: '0.5px',
+                letterSpacing: "0.5px",
                 pl: 2,
               },
             }}
@@ -131,10 +134,10 @@ const TestimonialSection = () => {
             variant="h2"
             sx={{
               fontWeight: 900,
-              fontSize: { xs: '2rem', sm: '3rem', md: '4rem' },
-              letterSpacing: '-0.04em',
+              fontSize: { xs: "2rem", sm: "3rem", md: "4rem" },
+              letterSpacing: "-0.04em",
               lineHeight: 1.1,
-              textAlign: 'left',
+              textAlign: "left",
             }}
           >
             Trusted by Builders. <br />
@@ -142,8 +145,8 @@ const TestimonialSection = () => {
               component="span"
               sx={{
                 background: `linear-gradient(90deg, ${secondaryText} 0%, ${alpha(secondaryText!, 0.65)} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
               }}
             >
               Discovered by Customers.
@@ -168,18 +171,18 @@ const TestimonialSection = () => {
             <Box
               sx={{
                 height: 520,
-                overflow: 'hidden',
+                overflow: "hidden",
                 maskImage:
-                  'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)',
+                  "linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)",
               }}
             >
               <Box
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
+                  display: "flex",
+                  flexDirection: "column",
                   gap: 3,
                   animation: `${scrollLoop} 28s linear infinite`,
-                  '&:hover': { animationPlayState: 'paused' },
+                  "&:hover": { animationPlayState: "paused" },
                 }}
               >
                 {[...testimonials, ...testimonials].map((t, i) => (
@@ -187,10 +190,10 @@ const TestimonialSection = () => {
                     key={i}
                     sx={{
                       p: 4,
-                      background: 'rgba(255,255,255,0.03)',
-                      backdropFilter: 'blur(20px)',
+                      background: "rgba(255,255,255,0.03)",
+                      backdropFilter: "blur(20px)",
                       borderRadius: 5,
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      border: "1px solid rgba(255,255,255,0.06)",
                     }}
                   >
                     <Stack spacing={2}>
@@ -199,13 +202,17 @@ const TestimonialSection = () => {
                         precision={0.5}
                         readOnly
                         size="small"
-                        sx={{ color: '#EAB308' }}
+                        sx={{ color: "#EAB308" }}
                       />
-                      <Typography sx={{ fontStyle: 'italic', color: '#E2E8F0' }}>
+                      <Typography
+                        sx={{ fontStyle: "italic", color: "#E2E8F0" }}
+                      >
                         “{t.quote}”
                       </Typography>
                       <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: primaryMain, fontWeight: 700 }}>{t.initials}</Avatar>
+                        <Avatar sx={{ bgcolor: primaryMain, fontWeight: 700 }}>
+                          {t.initials}
+                        </Avatar>
                         <Box>
                           <Typography fontWeight={700} color={secondaryText}>
                             {t.author}
@@ -226,7 +233,7 @@ const TestimonialSection = () => {
           <Grid item xs={12} md={6}>
             <Paper
               sx={{
-                height: '100%',
+                height: "100%",
                 p: { xs: 4, md: 6 },
                 borderRadius: 8,
                 background: `linear-gradient(135deg, ${alpha(primaryMain!, 0.18)}, rgba(0,0,0,0.9))`,
@@ -238,7 +245,7 @@ const TestimonialSection = () => {
                   icon={<TrendingUpIcon sx={{ fill: secondaryText }} />}
                   label="FEATURED SUCCESS STORY"
                   sx={{
-                    width: 'fit-content',
+                    width: "fit-content",
                     background: alpha(primaryMain!, 0.2),
                     color: secondaryText,
                     fontWeight: 700,
@@ -250,15 +257,15 @@ const TestimonialSection = () => {
                   fontWeight={800}
                   sx={{
                     color: secondaryText,
-                    fontSize: { xs: '1.5rem', sm: '1.8rem' },
+                    fontSize: { xs: "1.5rem", sm: "1.8rem" },
                   }}
                 >
                   From Invisible → Fully Booked
                 </Typography>
 
-                <Typography sx={{ color: '#E2E8F0', fontSize: '1.1rem' }}>
-                  “I started getting more customers after appearing in search results for my local
-                  area.”
+                <Typography sx={{ color: "#E2E8F0", fontSize: "1.1rem" }}>
+                  “I started getting more customers after appearing in search
+                  results for my local area.”
                 </Typography>
 
                 <Divider sx={{ borderColor: alpha(primaryMain!, 0.3) }} />

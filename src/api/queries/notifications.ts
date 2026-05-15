@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 /**
  * Shape of `GET /api/notifications` — paginated list + unread count.
@@ -74,7 +74,7 @@ export function useNotifications(params?: NotificationsListParams) {
   return useQuery<NotificationsListResponse>({
     queryKey: [...queryKeys.notifications.list(), { page, limit }] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/notifications', {
+      const response = await apiClient.get("/notifications", {
         params: { page, limit },
         signal,
       });
@@ -104,12 +104,14 @@ export function useMarkNotificationRead() {
     mutationFn: async (notificationId: number | string) => {
       const response = await apiClient.patch(
         `/notifications/${notificationId}/read`,
-        {}
+        {},
       );
       return response.data;
     },
     onMutate: async (notificationId) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.notifications.list() });
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.notifications.list(),
+      });
 
       // Snapshot every list-shaped cache entry (different pages live under
       // `[notifications, list, { page, limit }]`) so a rollback restores each.
@@ -130,7 +132,7 @@ export function useMarkNotificationRead() {
         });
         const unreadCount = didFlip
           ? Math.max(0, (prev.unreadCount ?? 0) - 1)
-          : prev.unreadCount ?? 0;
+          : (prev.unreadCount ?? 0);
         queryClient.setQueryData<NotificationsListResponse>(key, {
           ...prev,
           notifications: next,
@@ -147,7 +149,9 @@ export function useMarkNotificationRead() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.list(),
+      });
     },
   });
 }
@@ -165,7 +169,9 @@ export function useNotificationPreferences() {
   return useQuery<NotificationPreferencesResponse>({
     queryKey: queryKeys.notifications.preferences(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/notifications/preferences', { signal });
+      const response = await apiClient.get("/notifications/preferences", {
+        signal,
+      });
       return response.data;
     },
     enabled: !!user,
@@ -188,12 +194,17 @@ export function useUpdateNotificationPreferences() {
 
   return useMutation({
     mutationFn: async (payload: UpdateNotificationPreferencesPayload) => {
-      const response = await apiClient.put('/notifications/preferences', payload);
+      const response = await apiClient.put(
+        "/notifications/preferences",
+        payload,
+      );
       return response.data as NotificationPreferencesResponse;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(queryKeys.notifications.preferences(), data);
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.preferences() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.preferences(),
+      });
     },
   });
 }

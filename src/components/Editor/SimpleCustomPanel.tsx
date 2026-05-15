@@ -14,7 +14,7 @@
  * - useMemo for active preset detection
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from "react";
 import {
   Box,
   Paper,
@@ -24,7 +24,7 @@ import {
   Switch,
   Tooltip,
   alpha,
-} from '@mui/material';
+} from "@mui/material";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,60 +61,60 @@ export interface SimpleCustomPanelProps {
 
 const COLOR_PRESETS: ColorPreset[] = [
   {
-    name: 'Professional',
-    primaryColor: '#001f3f',
-    secondaryColor: '#39CCCC',
-    headingColor: '#111111',
-    bodyColor: '#444444',
+    name: "Professional",
+    primaryColor: "#001f3f",
+    secondaryColor: "#39CCCC",
+    headingColor: "#111111",
+    bodyColor: "#444444",
   },
   {
-    name: 'Modern',
-    primaryColor: '#111111',
-    secondaryColor: '#AEEA00',
-    headingColor: '#222222',
-    bodyColor: '#555555',
+    name: "Modern",
+    primaryColor: "#111111",
+    secondaryColor: "#AEEA00",
+    headingColor: "#222222",
+    bodyColor: "#555555",
   },
   {
-    name: 'Warm',
-    primaryColor: '#FF8F00',
-    secondaryColor: '#F4511E',
-    headingColor: '#3E2723',
-    bodyColor: '#5D4037',
+    name: "Warm",
+    primaryColor: "#FF8F00",
+    secondaryColor: "#F4511E",
+    headingColor: "#3E2723",
+    bodyColor: "#5D4037",
   },
   {
-    name: 'Cool',
-    primaryColor: '#1565C0',
-    secondaryColor: '#00BCD4',
-    headingColor: '#1A237E',
-    bodyColor: '#546E7A',
+    name: "Cool",
+    primaryColor: "#1565C0",
+    secondaryColor: "#00BCD4",
+    headingColor: "#1A237E",
+    bodyColor: "#546E7A",
   },
   {
-    name: 'Bold',
-    primaryColor: '#6A1B9A',
-    secondaryColor: '#E53935',
-    headingColor: '#4A148C',
-    bodyColor: '#37474F',
+    name: "Bold",
+    primaryColor: "#6A1B9A",
+    secondaryColor: "#E53935",
+    headingColor: "#4A148C",
+    bodyColor: "#37474F",
   },
   {
-    name: 'Minimal',
-    primaryColor: '#607D8B',
-    secondaryColor: '#263238',
-    headingColor: '#212121',
-    bodyColor: '#757575',
+    name: "Minimal",
+    primaryColor: "#607D8B",
+    secondaryColor: "#263238",
+    headingColor: "#212121",
+    bodyColor: "#757575",
   },
 ];
 
 const LAYOUT_OPTIONS = [
-  { label: 'Standard', value: 'standard' },
-  { label: 'Wide', value: 'wide' },
-  { label: 'Compact', value: 'compact' },
+  { label: "Standard", value: "standard" },
+  { label: "Wide", value: "wide" },
+  { label: "Compact", value: "compact" },
 ];
 
 const QUICK_SETTINGS = [
-  { key: 'showNavigation', label: 'Show Navigation Bar' },
-  { key: 'showFooter', label: 'Show Footer' },
-  { key: 'showSocialLinks', label: 'Show Social Links' },
-  { key: 'enableAnimations', label: 'Enable Animations' },
+  { key: "showNavigation", label: "Show Navigation Bar" },
+  { key: "showFooter", label: "Show Footer" },
+  { key: "showSocialLinks", label: "Show Social Links" },
+  { key: "enableAnimations", label: "Enable Animations" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -131,10 +131,11 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
     }, []);
 
     const handleToggle = useCallback(
-      (key: string) => (_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        onSettingChange(key, checked);
-      },
-      [onSettingChange]
+      (key: string) =>
+        (_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+          onSettingChange(key, checked);
+        },
+      [onSettingChange],
     );
 
     const handlePresetClick = useCallback(
@@ -146,7 +147,7 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
           bodyColor: preset.bodyColor,
         });
       },
-      [onPresetSelect]
+      [onPresetSelect],
     );
 
     const handleLayoutClick = useCallback(
@@ -155,7 +156,7 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
           onLayoutSelect(value);
         }
       },
-      [onLayoutSelect]
+      [onLayoutSelect],
     );
 
     return (
@@ -168,7 +169,10 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: colors.text, fontWeight: 600, mb: 2 }}
+          >
             Quick Settings
           </Typography>
           <Stack spacing={1}>
@@ -200,13 +204,16 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: colors.text, fontWeight: 600, mb: 2 }}
+          >
             Color Presets
           </Typography>
           <Box
             sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
+              display: "flex",
+              flexWrap: "wrap",
               gap: 1.5,
             }}
           >
@@ -220,50 +227,52 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
                     tabIndex={0}
                     onClick={handlePresetClick(preset)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
+                      if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         handlePresetClick(preset)();
                       }
                     }}
                     sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
                       gap: 0.5,
-                      cursor: 'pointer',
+                      cursor: "pointer",
                       p: 1,
                       borderRadius: 2,
-                      border: isActive ? `2px solid ${colors.primary}` : '2px solid transparent',
-                      '&:hover': {
+                      border: isActive
+                        ? `2px solid ${colors.primary}`
+                        : "2px solid transparent",
+                      "&:hover": {
                         bgcolor: alpha(colors.primary, 0.1),
                       },
-                      transition: 'all 0.2s ease',
+                      transition: "all 0.2s ease",
                     }}
                   >
                     {/* Color swatches */}
-                    <Box sx={{ display: 'flex', gap: 0.25 }}>
+                    <Box sx={{ display: "flex", gap: 0.25 }}>
                       <Box
                         sx={{
                           width: 20,
                           height: 20,
-                          borderRadius: '50%',
+                          borderRadius: "50%",
                           bgcolor: preset.primaryColor,
-                          border: '1px solid rgba(255,255,255,0.2)',
+                          border: "1px solid rgba(255,255,255,0.2)",
                         }}
                       />
                       <Box
                         sx={{
                           width: 20,
                           height: 20,
-                          borderRadius: '50%',
+                          borderRadius: "50%",
                           bgcolor: preset.secondaryColor,
-                          border: '1px solid rgba(255,255,255,0.2)',
+                          border: "1px solid rgba(255,255,255,0.2)",
                         }}
                       />
                     </Box>
                     <Typography
                       variant="caption"
-                      sx={{ color: colors.textSecondary, fontSize: '0.65rem' }}
+                      sx={{ color: colors.textSecondary, fontSize: "0.65rem" }}
                     >
                       {preset.name}
                     </Typography>
@@ -282,10 +291,13 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: colors.text, fontWeight: 600, mb: 2 }}
+          >
             Layout Presets
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Box sx={{ display: "flex", gap: 1.5 }}>
             {LAYOUT_OPTIONS.map((option) => (
               <Box
                 key={option.value}
@@ -294,7 +306,7 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
                 tabIndex={0}
                 onClick={handleLayoutClick(option.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+                  if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     handleLayoutClick(option.value)();
                   }
@@ -303,13 +315,13 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
                   px: 2,
                   py: 1,
                   borderRadius: 1,
-                  border: `1px solid ${colors.border ?? 'rgba(255,255,255,0.2)'}`,
-                  cursor: 'pointer',
-                  '&:hover': {
+                  border: `1px solid ${colors.border ?? "rgba(255,255,255,0.2)"}`,
+                  cursor: "pointer",
+                  "&:hover": {
                     bgcolor: alpha(colors.primary, 0.1),
                     borderColor: colors.primary,
                   },
-                  transition: 'all 0.2s ease',
+                  transition: "all 0.2s ease",
                 }}
               >
                 <Typography variant="body2" sx={{ color: colors.text }}>
@@ -321,9 +333,9 @@ const SimpleCustomPanel: React.FC<SimpleCustomPanelProps> = React.memo(
         </Paper>
       </Stack>
     );
-  }
+  },
 );
 
-SimpleCustomPanel.displayName = 'SimpleCustomPanel';
+SimpleCustomPanel.displayName = "SimpleCustomPanel";
 
 export default SimpleCustomPanel;

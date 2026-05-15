@@ -7,7 +7,7 @@
  * Usage:
  *   const { metadata, loading, error, refetch } = useFieldMetadata('hero');
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from "react";
 
 // ---------------------------------------------------------------------------
 // Types

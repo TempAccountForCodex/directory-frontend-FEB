@@ -6,7 +6,7 @@
  * No API calls — only props-driven rendering.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 import {
   Box,
   Card,
@@ -16,9 +16,9 @@ import {
   Container,
   Grid,
   Typography,
-} from '@mui/material';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+} from "@mui/material";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
 /* ===================== Types ===================== */
 
@@ -34,7 +34,7 @@ export interface StaticPost {
 
 export interface BlogFeedStaticRendererProps {
   posts: StaticPost[];
-  columns?: '2' | '3' | '4';
+  columns?: "2" | "3" | "4";
   showCategory?: boolean;
   showDate?: boolean;
   showReadTime?: boolean;
@@ -50,19 +50,19 @@ export interface BlogFeedStaticRendererProps {
 
 const BlogFeedStaticRenderer: React.FC<BlogFeedStaticRendererProps> = ({
   posts,
-  columns = '3',
+  columns = "3",
   showCategory = true,
   showDate = true,
   showReadTime = true,
   showExcerpt = true,
   heading,
   subheading,
-  primaryColor = '#378C92',
-  headingColor = '#252525',
-  bodyColor = '#6A6F78',
+  primaryColor = "#378C92",
+  headingColor = "#252525",
+  bodyColor = "#6A6F78",
 }) => {
   const mdCols = useMemo(() => {
-    const map: Record<string, number> = { '2': 6, '3': 4, '4': 3 };
+    const map: Record<string, number> = { "2": 6, "3": 4, "4": 3 };
     return map[columns] || 4;
   }, [columns]);
 
@@ -72,7 +72,7 @@ const BlogFeedStaticRenderer: React.FC<BlogFeedStaticRendererProps> = ({
     <Box sx={{ py: { xs: 4, md: 6 } }}>
       <Container maxWidth="lg">
         {(heading || subheading) && (
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ textAlign: "center", mb: 4 }}>
             {heading && (
               <Typography
                 variant="h3"
@@ -95,14 +95,14 @@ const BlogFeedStaticRenderer: React.FC<BlogFeedStaticRendererProps> = ({
             <Grid item xs={12} sm={6} md={mdCols} key={post.slug || index}>
               <Card
                 sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
                   borderRadius: 2,
-                  overflow: 'hidden',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
+                  overflow: "hidden",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
                     boxShadow: 6,
                   },
                 }}
@@ -114,22 +114,24 @@ const BlogFeedStaticRenderer: React.FC<BlogFeedStaticRendererProps> = ({
                     height={200}
                     image={post.image}
                     alt={post.title}
-                    sx={{ objectFit: 'cover' }}
+                    sx={{ objectFit: "cover" }}
                   />
                 )}
 
-                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                <CardContent
+                  sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}
+                >
                   {showCategory && post.category && (
                     <Chip
                       label={post.category}
                       size="small"
                       sx={{
-                        alignSelf: 'flex-start',
+                        alignSelf: "flex-start",
                         mb: 1,
                         bgcolor: primaryColor,
-                        color: '#fff',
+                        color: "#fff",
                         fontWeight: 600,
-                        fontSize: '0.7rem',
+                        fontSize: "0.7rem",
                       }}
                     />
                   )}
@@ -142,10 +144,10 @@ const BlogFeedStaticRenderer: React.FC<BlogFeedStaticRendererProps> = ({
                       fontWeight: 600,
                       mb: 1,
                       lineHeight: 1.3,
-                      display: '-webkit-box',
+                      display: "-webkit-box",
                       WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
                     }}
                   >
                     {post.title}
@@ -158,10 +160,10 @@ const BlogFeedStaticRenderer: React.FC<BlogFeedStaticRendererProps> = ({
                         color: bodyColor,
                         mb: 2,
                         flexGrow: 1,
-                        display: '-webkit-box',
+                        display: "-webkit-box",
                         WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
                       }}
                     >
                       {post.excerpt}
@@ -171,25 +173,47 @@ const BlogFeedStaticRenderer: React.FC<BlogFeedStaticRendererProps> = ({
                   {(showDate || showReadTime) && (
                     <Box
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
+                        display: "flex",
+                        alignItems: "center",
                         gap: 2,
-                        mt: 'auto',
+                        mt: "auto",
                         pt: 1,
                       }}
                     >
                       {showDate && post.date && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <CalendarTodayIcon sx={{ fontSize: 14, color: bodyColor }} />
-                          <Typography variant="caption" sx={{ color: bodyColor }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <CalendarTodayIcon
+                            sx={{ fontSize: 14, color: bodyColor }}
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{ color: bodyColor }}
+                          >
                             {post.date}
                           </Typography>
                         </Box>
                       )}
                       {showReadTime && post.readTime && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <AccessTimeIcon sx={{ fontSize: 14, color: bodyColor }} />
-                          <Typography variant="caption" sx={{ color: bodyColor }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <AccessTimeIcon
+                            sx={{ fontSize: 14, color: bodyColor }}
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{ color: bodyColor }}
+                          >
                             {post.readTime}
                           </Typography>
                         </Box>

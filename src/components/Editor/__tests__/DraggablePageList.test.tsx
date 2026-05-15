@@ -13,16 +13,16 @@
  * - React.memo: component is memoized
  * - DragOverlay rendered
  */
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('../../../hooks/useDragAndDrop', () => ({
+vi.mock("../../../hooks/useDragAndDrop", () => ({
   useDragAndDrop: vi.fn(() => ({
     sensors: [],
     collisionDetection: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock('../../../hooks/useDragAndDrop', () => ({
   })),
 }));
 
-vi.mock('@dnd-kit/core', () => ({
+vi.mock("@dnd-kit/core", () => ({
   DndContext: ({ children, onDragEnd, onDragStart }: any) => (
     <div
       data-testid="dnd-context"
@@ -42,12 +42,16 @@ vi.mock('@dnd-kit/core', () => ({
       {children}
     </div>
   ),
-  DragOverlay: ({ children }: any) => <div data-testid="drag-overlay">{children}</div>,
+  DragOverlay: ({ children }: any) => (
+    <div data-testid="drag-overlay">{children}</div>
+  ),
   closestCenter: vi.fn(),
 }));
 
-vi.mock('@dnd-kit/sortable', () => ({
-  SortableContext: ({ children }: any) => <div data-testid="sortable-context">{children}</div>,
+vi.mock("@dnd-kit/sortable", () => ({
+  SortableContext: ({ children }: any) => (
+    <div data-testid="sortable-context">{children}</div>
+  ),
   useSortable: () => ({
     attributes: {},
     listeners: {},
@@ -56,7 +60,7 @@ vi.mock('@dnd-kit/sortable', () => ({
     transition: null,
     isDragging: false,
   }),
-  verticalListSortingStrategy: 'vertical',
+  verticalListSortingStrategy: "vertical",
   arrayMove: vi.fn((arr: any[], from: number, to: number) => {
     const result = [...arr];
     const [removed] = result.splice(from, 1);
@@ -65,15 +69,15 @@ vi.mock('@dnd-kit/sortable', () => ({
   }),
 }));
 
-vi.mock('@dnd-kit/utilities', () => ({
-  CSS: { Transform: { toString: vi.fn(() => '') } },
+vi.mock("@dnd-kit/utilities", () => ({
+  CSS: { Transform: { toString: vi.fn(() => "") } },
 }));
 
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-import DraggablePageList from '../DraggablePageList';
+import DraggablePageList from "../DraggablePageList";
 
 // ---------------------------------------------------------------------------
 // Test data
@@ -89,9 +93,30 @@ interface PageItem {
 }
 
 const mockPages: PageItem[] = [
-  { id: 'page-1', title: 'Home', path: '/', isHome: true, selected: true, sortOrder: 0 },
-  { id: 'page-2', title: 'About', path: '/about', isHome: false, selected: true, sortOrder: 1 },
-  { id: 'page-3', title: 'Contact', path: '/contact', isHome: false, selected: true, sortOrder: 2 },
+  {
+    id: "page-1",
+    title: "Home",
+    path: "/",
+    isHome: true,
+    selected: true,
+    sortOrder: 0,
+  },
+  {
+    id: "page-2",
+    title: "About",
+    path: "/about",
+    isHome: false,
+    selected: true,
+    sortOrder: 1,
+  },
+  {
+    id: "page-3",
+    title: "Contact",
+    path: "/contact",
+    isHome: false,
+    selected: true,
+    sortOrder: 2,
+  },
 ];
 
 const defaultProps = {
@@ -103,32 +128,32 @@ const defaultProps = {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('DraggablePageList', () => {
+describe("DraggablePageList", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   // ── Rendering ────────────────────────────────────────────────────────────
 
-  it('renders page list without crashing', () => {
+  it("renders page list without crashing", () => {
     render(<DraggablePageList {...defaultProps} />);
-    expect(screen.getByTestId('dnd-context')).toBeInTheDocument();
+    expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
   });
 
-  it('renders all pages', () => {
+  it("renders all pages", () => {
     render(<DraggablePageList {...defaultProps} />);
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('About')).toBeInTheDocument();
-    expect(screen.getByText('Contact')).toBeInTheDocument();
+    expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.getByText("About")).toBeInTheDocument();
+    expect(screen.getByText("Contact")).toBeInTheDocument();
   });
 
-  it('shows empty state when pages array is empty', () => {
+  it("shows empty state when pages array is empty", () => {
     render(<DraggablePageList {...defaultProps} pages={[]} />);
     // No pages shown (empty state or null render)
-    expect(screen.queryByText('Home')).not.toBeInTheDocument();
+    expect(screen.queryByText("Home")).not.toBeInTheDocument();
   });
 
-  it('renders drag handles for each page', () => {
+  it("renders drag handles for each page", () => {
     render(<DraggablePageList {...defaultProps} />);
     const dragHandles = screen.getAllByLabelText(/drag/i);
     expect(dragHandles.length).toBeGreaterThanOrEqual(mockPages.length);
@@ -136,14 +161,14 @@ describe('DraggablePageList', () => {
 
   // ── DragOverlay ───────────────────────────────────────────────────────────
 
-  it('renders DragOverlay component', () => {
+  it("renders DragOverlay component", () => {
     render(<DraggablePageList {...defaultProps} />);
-    expect(screen.getByTestId('drag-overlay')).toBeInTheDocument();
+    expect(screen.getByTestId("drag-overlay")).toBeInTheDocument();
   });
 
   // ── Fallback up/down buttons ───────────────────────────────────────────────
 
-  it('renders up/down fallback buttons for each page', () => {
+  it("renders up/down fallback buttons for each page", () => {
     render(<DraggablePageList {...defaultProps} />);
     const upButtons = screen.getAllByLabelText(/move.*up/i);
     const downButtons = screen.getAllByLabelText(/move.*down/i);
@@ -151,21 +176,23 @@ describe('DraggablePageList', () => {
     expect(downButtons.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('up button disabled for first page', () => {
+  it("up button disabled for first page", () => {
     render(<DraggablePageList {...defaultProps} />);
     const upButtons = screen.getAllByLabelText(/move.*up/i);
     expect(upButtons[0]).toBeDisabled();
   });
 
-  it('down button disabled for last page', () => {
+  it("down button disabled for last page", () => {
     render(<DraggablePageList {...defaultProps} />);
     const downButtons = screen.getAllByLabelText(/move.*down/i);
     expect(downButtons[downButtons.length - 1]).toBeDisabled();
   });
 
-  it('clicking up button calls onPagesChange with swapped pages', () => {
+  it("clicking up button calls onPagesChange with swapped pages", () => {
     const onPagesChange = vi.fn();
-    render(<DraggablePageList {...defaultProps} onPagesChange={onPagesChange} />);
+    render(
+      <DraggablePageList {...defaultProps} onPagesChange={onPagesChange} />,
+    );
 
     // Click the up button on the second page (About)
     const upButtons = screen.getAllByLabelText(/move.*up/i);
@@ -176,9 +203,11 @@ describe('DraggablePageList', () => {
     expect(Array.isArray(newPages)).toBe(true);
   });
 
-  it('clicking down button calls onPagesChange with swapped pages', () => {
+  it("clicking down button calls onPagesChange with swapped pages", () => {
     const onPagesChange = vi.fn();
-    render(<DraggablePageList {...defaultProps} onPagesChange={onPagesChange} />);
+    render(
+      <DraggablePageList {...defaultProps} onPagesChange={onPagesChange} />,
+    );
 
     // Click the down button on the first page (Home)
     const downButtons = screen.getAllByLabelText(/move.*down/i);
@@ -189,7 +218,9 @@ describe('DraggablePageList', () => {
 
   // ── React.memo ────────────────────────────────────────────────────────────
 
-  it('component has a displayName (React.memo)', () => {
-    expect(DraggablePageList.displayName ?? DraggablePageList.name).toBeTruthy();
+  it("component has a displayName (React.memo)", () => {
+    expect(
+      DraggablePageList.displayName ?? DraggablePageList.name,
+    ).toBeTruthy();
   });
 });

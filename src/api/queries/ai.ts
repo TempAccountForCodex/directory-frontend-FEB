@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 /**
  * AI React Query hooks.
@@ -48,7 +48,7 @@ export function useAiUsage() {
   return useQuery<AIUsageResponse>({
     queryKey: queryKeys.ai.usage(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/ai/usage', { signal });
+      const response = await apiClient.get("/ai/usage", { signal });
       return response.data;
     },
     enabled: !!user,

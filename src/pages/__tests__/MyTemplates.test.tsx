@@ -15,11 +15,11 @@
  * 11. Loading skeletons shown while fetching favorites
  * 12. Template cards in favorites tab have isFavorited=true
  */
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
-import { BrowserRouter } from 'react-router-dom';
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import { BrowserRouter } from "react-router-dom";
 
 // ---------------------------------------------------------------------------
 // Mock axios
@@ -27,7 +27,7 @@ import { BrowserRouter } from 'react-router-dom';
 const mockAxiosGet = vi.fn();
 const mockAxiosPost = vi.fn();
 
-vi.mock('axios', () => {
+vi.mock("axios", () => {
   const axiosInstance = {
     get: (...args: unknown[]) => mockAxiosGet(...args),
     post: (...args: unknown[]) => mockAxiosPost(...args),
@@ -51,33 +51,39 @@ vi.mock('axios', () => {
 // ---------------------------------------------------------------------------
 // Mock theme context
 // ---------------------------------------------------------------------------
-vi.mock('../../context/ThemeContext', () => ({
-  useTheme: () => ({ actualTheme: 'dark' }),
+vi.mock("../../context/ThemeContext", () => ({
+  useTheme: () => ({ actualTheme: "dark" }),
 }));
 
-vi.mock('../../styles/dashboardTheme', () => ({
+vi.mock("../../styles/dashboardTheme", () => ({
   getDashboardColors: () => ({
-    panelBg: '#121517',
-    border: 'rgba(55,140,146,0.15)',
-    text: '#F5F5F5',
-    textSecondary: '#9FA6AE',
-    bgCard: '#121517',
-    mode: 'dark',
-    primary: '#378C92',
-    primaryDark: '#2a6f73',
-    panelBorder: 'rgba(55,140,146,0.15)',
-    panelShadowSm: 'none',
-    shadow: 'none',
+    panelBg: "#121517",
+    border: "rgba(55,140,146,0.15)",
+    text: "#F5F5F5",
+    textSecondary: "#9FA6AE",
+    bgCard: "#121517",
+    mode: "dark",
+    primary: "#378C92",
+    primaryDark: "#2a6f73",
+    panelBorder: "rgba(55,140,146,0.15)",
+    panelShadowSm: "none",
+    shadow: "none",
   }),
 }));
 
 // ---------------------------------------------------------------------------
 // Mock framer-motion
 // ---------------------------------------------------------------------------
-vi.mock('framer-motion', () => ({
-  useScroll: () => ({ scrollYProgress: { get: () => 0, onChange: () => () => {} } }),
-  useTransform: (..._args) => ({ get: () => '0%', onChange: () => () => {} }),
-  useMotionValue: (v) => ({ get: () => v, set: () => {}, onChange: () => () => {} }),
+vi.mock("framer-motion", () => ({
+  useScroll: () => ({
+    scrollYProgress: { get: () => 0, onChange: () => () => {} },
+  }),
+  useTransform: (..._args) => ({ get: () => "0%", onChange: () => () => {} }),
+  useMotionValue: (v) => ({
+    get: () => v,
+    set: () => {},
+    onChange: () => () => {},
+  }),
   motion: {
     div: ({
       children,
@@ -86,7 +92,7 @@ vi.mock('framer-motion', () => ({
       variants: _v,
       initial: _i,
       ...rest
-    }: React.ComponentPropsWithoutRef<'div'> & {
+    }: React.ComponentPropsWithoutRef<"div"> & {
       animate?: unknown;
       transition?: unknown;
       variants?: unknown;
@@ -97,17 +103,20 @@ vi.mock('framer-motion', () => ({
       animate: _a,
       transition: _t,
       ...rest
-    }: React.ComponentPropsWithoutRef<'button'> & { animate?: unknown; transition?: unknown }) => (
-      <button {...rest}>{children}</button>
-    ),
+    }: React.ComponentPropsWithoutRef<"button"> & {
+      animate?: unknown;
+      transition?: unknown;
+    }) => <button {...rest}>{children}</button>,
   },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 // ---------------------------------------------------------------------------
 // Mock shared components
 // ---------------------------------------------------------------------------
-vi.mock('../../components/Dashboard/shared', () => ({
+vi.mock("../../components/Dashboard/shared", () => ({
   PageHeader: ({ title, subtitle }: { title: string; subtitle?: string }) => (
     <div data-testid="page-header">
       <h1 data-testid="page-title">{title}</h1>
@@ -151,9 +160,13 @@ vi.mock('../../components/Dashboard/shared', () => ({
       {subtitle && <span data-testid="empty-subtitle">{subtitle}</span>}
     </div>
   ),
-  DashboardPanel: ({ children, sx: _sx }: { children: React.ReactNode; sx?: unknown }) => (
-    <div data-testid="dashboard-panel">{children}</div>
-  ),
+  DashboardPanel: ({
+    children,
+    sx: _sx,
+  }: {
+    children: React.ReactNode;
+    sx?: unknown;
+  }) => <div data-testid="dashboard-panel">{children}</div>,
   DashboardGradientButton: ({
     children,
     onClick,
@@ -170,9 +183,19 @@ vi.mock('../../components/Dashboard/shared', () => ({
 // ---------------------------------------------------------------------------
 // Mock TemplateGallery
 // ---------------------------------------------------------------------------
-vi.mock('../../components/Templates/TemplateGallery', () => ({
-  default: ({ templates, loading }: { templates: unknown[]; loading: boolean }) => (
-    <div data-testid="template-gallery" data-loading={loading} data-count={templates.length}>
+vi.mock("../../components/Templates/TemplateGallery", () => ({
+  default: ({
+    templates,
+    loading,
+  }: {
+    templates: unknown[];
+    loading: boolean;
+  }) => (
+    <div
+      data-testid="template-gallery"
+      data-loading={loading}
+      data-count={templates.length}
+    >
       {templates.map((t: any) => (
         <div key={t.id} data-testid={`template-${t.id}`}>
           {t.name}
@@ -185,7 +208,7 @@ vi.mock('../../components/Templates/TemplateGallery', () => ({
 // ---------------------------------------------------------------------------
 // Mock TemplateFilters
 // ---------------------------------------------------------------------------
-vi.mock('../../components/Templates/TemplateFilters', () => ({
+vi.mock("../../components/Templates/TemplateFilters", () => ({
   default: ({
     filters: _f,
     onFiltersChange: _o,
@@ -198,22 +221,22 @@ vi.mock('../../components/Templates/TemplateFilters', () => ({
 // ---------------------------------------------------------------------------
 // Mock useTemplates hook
 // ---------------------------------------------------------------------------
-vi.mock('../../hooks/useTemplates', () => ({
+vi.mock("../../hooks/useTemplates", () => ({
   useTemplates: () => ({
     templates: [
       {
-        id: 'all-1',
-        name: 'All Template 1',
-        type: 'website',
-        category: 'business',
-        description: 'D',
-        version: '1.0.0',
+        id: "all-1",
+        name: "All Template 1",
+        type: "website",
+        category: "business",
+        description: "D",
+        version: "1.0.0",
         previewImage: null,
       },
     ],
     loading: false,
     error: null,
-    filters: { search: '', category: '', type: '' },
+    filters: { search: "", category: "", type: "" },
     setFilters: vi.fn(),
     refetch: vi.fn(),
   }),
@@ -222,20 +245,20 @@ vi.mock('../../hooks/useTemplates', () => ({
 // ---------------------------------------------------------------------------
 // Mock useTemplateFavorites hook
 // ---------------------------------------------------------------------------
-const mockIsFavorited = vi.fn((id: string) => id === 'fav-1');
+const mockIsFavorited = vi.fn((id: string) => id === "fav-1");
 const mockToggleFavorite = vi.fn();
 const mockFetchFavorites = vi.fn();
 
-vi.mock('../../hooks/useTemplateFavorites', () => ({
+vi.mock("../../hooks/useTemplateFavorites", () => ({
   useTemplateFavorites: () => ({
     favorites: [
       {
-        id: 'fav-1',
-        name: 'Favorite Template',
-        type: 'website',
-        category: 'portfolio',
-        description: 'Fav',
-        version: '1.0.0',
+        id: "fav-1",
+        name: "Favorite Template",
+        type: "website",
+        category: "portfolio",
+        description: "Fav",
+        version: "1.0.0",
         previewImage: null,
       },
     ],
@@ -251,8 +274,11 @@ vi.mock('../../hooks/useTemplateFavorites', () => ({
 // Mock useNavigate
 // ---------------------------------------------------------------------------
 const mockNavigate = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+vi.mock("react-router-dom", async () => {
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom",
+    );
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -262,7 +288,7 @@ vi.mock('react-router-dom', async () => {
 // ---------------------------------------------------------------------------
 // Import component under test
 // ---------------------------------------------------------------------------
-import MyTemplates from '../MyTemplates';
+import MyTemplates from "../MyTemplates";
 
 // ---------------------------------------------------------------------------
 // Helper
@@ -271,17 +297,17 @@ const renderMyTemplates = () =>
   render(
     <BrowserRouter>
       <MyTemplates />
-    </BrowserRouter>
+    </BrowserRouter>,
   );
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-describe('MyTemplates page', () => {
+describe("MyTemplates page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset favorites mock
-    mockIsFavorited.mockImplementation((id: string) => id === 'fav-1');
+    mockIsFavorited.mockImplementation((id: string) => id === "fav-1");
 
     // Default axios mocks
     mockAxiosGet.mockResolvedValue({
@@ -290,41 +316,41 @@ describe('MyTemplates page', () => {
   });
 
   // 1. Renders PageHeader with title='My Templates'
-  it('renders PageHeader with title My Templates', () => {
+  it("renders PageHeader with title My Templates", () => {
     renderMyTemplates();
-    expect(screen.getByTestId('page-title')).toHaveTextContent('My Templates');
+    expect(screen.getByTestId("page-title")).toHaveTextContent("My Templates");
   });
 
   // 2. Renders PageHeader subtitle
-  it('renders PageHeader subtitle', () => {
+  it("renders PageHeader subtitle", () => {
     renderMyTemplates();
-    expect(screen.getByTestId('page-subtitle')).toHaveTextContent(
-      'Your saved and recently used templates'
+    expect(screen.getByTestId("page-subtitle")).toHaveTextContent(
+      "Your saved and recently used templates",
     );
   });
 
   // 3. Renders 3 tabs
-  it('renders three tab items', () => {
+  it("renders three tab items", () => {
     renderMyTemplates();
-    expect(screen.getByTestId('tab-navigation')).toBeInTheDocument();
+    expect(screen.getByTestId("tab-navigation")).toBeInTheDocument();
     // Check for Favorites, Recently Used, All Templates labels
-    expect(screen.getByText('Favorites')).toBeInTheDocument();
-    expect(screen.getByText('Recently Used')).toBeInTheDocument();
-    expect(screen.getByText('All Templates')).toBeInTheDocument();
+    expect(screen.getByText("Favorites")).toBeInTheDocument();
+    expect(screen.getByText("Recently Used")).toBeInTheDocument();
+    expect(screen.getByText("All Templates")).toBeInTheDocument();
   });
 
   // 4. Default tab is Favorites (tab 0 active)
-  it('shows Favorites tab content by default', () => {
+  it("shows Favorites tab content by default", () => {
     renderMyTemplates();
     // Favorites tab button has data-active=true
-    const favTab = screen.getByTestId('tab-favorites');
-    expect(favTab).toHaveAttribute('data-active', 'true');
+    const favTab = screen.getByTestId("tab-favorites");
+    expect(favTab).toHaveAttribute("data-active", "true");
   });
 
   // 5. Favorites tab shows EmptyState when no favorites
-  it('shows EmptyState on Favorites tab when favorites list is empty', () => {
+  it("shows EmptyState on Favorites tab when favorites list is empty", () => {
     // Override favorites to return empty
-    vi.doMock('../../hooks/useTemplateFavorites', () => ({
+    vi.doMock("../../hooks/useTemplateFavorites", () => ({
       useTemplateFavorites: () => ({
         favorites: [],
         loading: false,
@@ -337,59 +363,71 @@ describe('MyTemplates page', () => {
     // Re-check: the default favorites mock has 1 item; test with the gallery present
     renderMyTemplates();
     // With 1 favorite in mock, TemplateGallery should be rendered
-    expect(screen.getByTestId('template-gallery')).toBeInTheDocument();
+    expect(screen.getByTestId("template-gallery")).toBeInTheDocument();
   });
 
   // 6. Favorites tab shows TemplateGallery when favorites exist
-  it('renders TemplateGallery on Favorites tab when favorites exist', () => {
+  it("renders TemplateGallery on Favorites tab when favorites exist", () => {
     renderMyTemplates();
-    expect(screen.getByTestId('template-gallery')).toBeInTheDocument();
+    expect(screen.getByTestId("template-gallery")).toBeInTheDocument();
   });
 
   // 7. Recently Used tab click changes tab
-  it('switches to Recently Used tab on click', () => {
+  it("switches to Recently Used tab on click", () => {
     renderMyTemplates();
-    fireEvent.click(screen.getByTestId('tab-recently-used'));
-    expect(screen.getByTestId('tab-recently-used')).toHaveAttribute('data-active', 'true');
+    fireEvent.click(screen.getByTestId("tab-recently-used"));
+    expect(screen.getByTestId("tab-recently-used")).toHaveAttribute(
+      "data-active",
+      "true",
+    );
   });
 
   // 8. Recently Used tab shows DashboardPanel on recently-used tab
-  it('renders DashboardPanel when switching to Recently Used tab', async () => {
+  it("renders DashboardPanel when switching to Recently Used tab", async () => {
     mockAxiosGet.mockResolvedValue({
       data: { data: [], pagination: { total: 0, page: 1, limit: 20 } },
     });
 
     renderMyTemplates();
-    fireEvent.click(screen.getByTestId('tab-recently-used'));
+    fireEvent.click(screen.getByTestId("tab-recently-used"));
 
     // DashboardPanel should be rendered for the recently-used content
-    expect(screen.getByTestId('dashboard-panel')).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-panel")).toBeInTheDocument();
   });
 
   // 9. All Templates tab shows TemplateFilters and TemplateGallery
-  it('shows TemplateFilters and TemplateGallery on All Templates tab', () => {
+  it("shows TemplateFilters and TemplateGallery on All Templates tab", () => {
     renderMyTemplates();
-    fireEvent.click(screen.getByTestId('tab-all-templates'));
-    expect(screen.getByTestId('template-filters')).toBeInTheDocument();
-    expect(screen.getByTestId('template-gallery')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("tab-all-templates"));
+    expect(screen.getByTestId("template-filters")).toBeInTheDocument();
+    expect(screen.getByTestId("template-gallery")).toBeInTheDocument();
   });
 
   // 10. Clicking tab changes active tab
-  it('updates active tab state on tab click', () => {
+  it("updates active tab state on tab click", () => {
     renderMyTemplates();
     // Initially favorites is active
-    expect(screen.getByTestId('tab-favorites')).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId("tab-favorites")).toHaveAttribute(
+      "data-active",
+      "true",
+    );
     // Click Recently Used
-    fireEvent.click(screen.getByTestId('tab-recently-used'));
-    expect(screen.getByTestId('tab-recently-used')).toHaveAttribute('data-active', 'true');
-    expect(screen.getByTestId('tab-favorites')).toHaveAttribute('data-active', 'false');
+    fireEvent.click(screen.getByTestId("tab-recently-used"));
+    expect(screen.getByTestId("tab-recently-used")).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+    expect(screen.getByTestId("tab-favorites")).toHaveAttribute(
+      "data-active",
+      "false",
+    );
   });
 
   // 11. Template cards in favorites tab have isFavorited=true
-  it('renders favorite templates in the gallery on Favorites tab', () => {
+  it("renders favorite templates in the gallery on Favorites tab", () => {
     renderMyTemplates();
     // The gallery is rendered with the favorite templates
-    const gallery = screen.getByTestId('template-gallery');
-    expect(gallery).toHaveAttribute('data-count', '1');
+    const gallery = screen.getByTestId("template-gallery");
+    expect(gallery).toHaveAttribute("data-count", "1");
   });
 });

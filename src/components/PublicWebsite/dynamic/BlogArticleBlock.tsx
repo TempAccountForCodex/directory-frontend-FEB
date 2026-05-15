@@ -30,8 +30,8 @@ import React, {
   useRef,
   useContext,
   createContext,
-} from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+} from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -43,16 +43,20 @@ import {
   Link,
   Skeleton,
   Typography,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import PersonIcon from '@mui/icons-material/Person';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import DOMPurify from 'dompurify';
-import useTenantUrl from '../../../hooks/useTenantUrl';
-import useDynamicBlockData from '../../../hooks/useDynamicBlockData';
-import BlogCard, { type BlogPost, type BlogCardConfig, type BlogCardColors } from './BlogCard';
-import { API_URL } from '@/config/api';
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import PersonIcon from "@mui/icons-material/Person";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import DOMPurify from "dompurify";
+import useTenantUrl from "../../../hooks/useTenantUrl";
+import useDynamicBlockData from "../../../hooks/useDynamicBlockData";
+import BlogCard, {
+  type BlogPost,
+  type BlogCardConfig,
+  type BlogCardColors,
+} from "./BlogCard";
+import { API_URL } from "@/config/api";
 
 /* ===================== SEO Context ===================== */
 
@@ -73,7 +77,8 @@ export interface BlogArticleSeoContextType {
   setSeoData: (data: BlogArticleSeoData | null) => void;
 }
 
-export const BlogArticleSeoContext = createContext<BlogArticleSeoContextType | null>(null);
+export const BlogArticleSeoContext =
+  createContext<BlogArticleSeoContextType | null>(null);
 
 /* ===================== Types ===================== */
 
@@ -107,7 +112,7 @@ interface Block {
 
 interface BlogArticleContent {
   postIdentifier?: string;
-  layout?: 'standard' | 'magazine' | 'minimal';
+  layout?: "standard" | "magazine" | "minimal";
   showAuthor?: boolean;
   showDate?: boolean;
   showImage?: boolean;
@@ -145,7 +150,7 @@ const WORDS_PER_MINUTE = 200;
 function safeUrl(url: string | undefined, fallback: string): string {
   if (!url) return fallback;
   const trimmed = url.trim().toLowerCase();
-  if (trimmed.startsWith('javascript:')) return fallback;
+  if (trimmed.startsWith("javascript:")) return fallback;
   return url;
 }
 
@@ -153,16 +158,16 @@ function safeUrl(url: string | undefined, fallback: string): string {
  * Format a date string to locale string.
  */
 function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return '';
+  if (!dateStr) return "";
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
     });
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -172,7 +177,7 @@ function formatDate(dateStr: string | null | undefined): string {
  */
 function calcReadingTime(
   headings: ArticleHeading[] | undefined,
-  description: string | null | undefined
+  description: string | null | undefined,
 ): number {
   let wordCount = 0;
   if (headings && Array.isArray(headings)) {
@@ -199,9 +204,9 @@ function calcReadingTime(
 function headingToAnchor(heading: string): string {
   return heading
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
     .slice(0, 80);
 }
 
@@ -210,7 +215,7 @@ function headingToAnchor(heading: string): string {
  * Prevents XSS from user-generated content.
  */
 function sanitizeText(text: string | null | undefined): string {
-  if (!text) return '';
+  if (!text) return "";
   return DOMPurify.sanitize(text, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
 }
 
@@ -218,14 +223,21 @@ function sanitizeText(text: string | null | undefined): string {
 
 const BlogArticleSkeleton: React.FC = React.memo(() => (
   <Container maxWidth="lg" sx={{ py: 6 }}>
-    <Skeleton variant="text" sx={{ fontSize: '1rem', width: 120, mb: 3 }} />
-    <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2, mb: 4 }} />
+    <Skeleton variant="text" sx={{ fontSize: "1rem", width: 120, mb: 3 }} />
+    <Skeleton
+      variant="rectangular"
+      height={400}
+      sx={{ borderRadius: 2, mb: 4 }}
+    />
     <Grid container spacing={4}>
       <Grid item xs={12} md={8}>
-        <Skeleton variant="text" sx={{ fontSize: '2.5rem', mb: 1 }} />
-        <Skeleton variant="text" sx={{ fontSize: '1rem', width: '60%', mb: 3 }} />
+        <Skeleton variant="text" sx={{ fontSize: "2.5rem", mb: 1 }} />
+        <Skeleton
+          variant="text"
+          sx={{ fontSize: "1rem", width: "60%", mb: 3 }}
+        />
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} variant="text" sx={{ fontSize: '1rem', mb: 1 }} />
+          <Skeleton key={i} variant="text" sx={{ fontSize: "1rem", mb: 1 }} />
         ))}
       </Grid>
       <Grid item xs={12} md={4}>
@@ -235,7 +247,7 @@ const BlogArticleSkeleton: React.FC = React.memo(() => (
   </Container>
 ));
 
-BlogArticleSkeleton.displayName = 'BlogArticleSkeleton';
+BlogArticleSkeleton.displayName = "BlogArticleSkeleton";
 
 /* ===================== Table of Contents ===================== */
 
@@ -249,85 +261,95 @@ interface TocProps {
   primaryColor: string;
 }
 
-const TableOfContents: React.FC<TocProps> = React.memo(({ items, primaryColor }) => {
-  if (!items.length) return null;
+const TableOfContents: React.FC<TocProps> = React.memo(
+  ({ items, primaryColor }) => {
+    if (!items.length) return null;
 
-  const handleTocClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    const target = document.getElementById(id);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
+    const handleTocClick = (
+      e: React.MouseEvent<HTMLAnchorElement>,
+      id: string,
+    ) => {
+      e.preventDefault();
+      const target = document.getElementById(id);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
 
-  return (
-    <Box
-      component="nav"
-      aria-label="Table of contents"
-      sx={{
-        position: { md: 'sticky' },
-        top: { md: 80 },
-        bgcolor: 'grey.50',
-        borderRadius: 2,
-        p: 3,
-        border: '1px solid',
-        borderColor: 'grey.200',
-      }}
-    >
-      <Typography
-        variant="subtitle2"
+    return (
+      <Box
+        component="nav"
+        aria-label="Table of contents"
         sx={{
-          fontWeight: 700,
-          mb: 2,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          color: 'text.secondary',
+          position: { md: "sticky" },
+          top: { md: 80 },
+          bgcolor: "grey.50",
+          borderRadius: 2,
+          p: 3,
+          border: "1px solid",
+          borderColor: "grey.200",
         }}
       >
-        Table of Contents
-      </Typography>
-      <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0 }}>
-        {items.map((item, idx) => (
-          <Box component="li" key={item.id} sx={{ mb: 0.75 }}>
-            <Link
-              href={`#${item.id}`}
-              onClick={(e) => handleTocClick(e, item.id)}
-              sx={{
-                color: primaryColor,
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 1,
-                '&:hover': { textDecoration: 'underline' },
-              }}
-              aria-label={`Jump to section: ${item.heading}`}
-            >
-              <Box
-                component="span"
-                sx={{ color: 'text.disabled', minWidth: 20, fontSize: '0.8rem', pt: 0.1 }}
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 700,
+            mb: 2,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            color: "text.secondary",
+          }}
+        >
+          Table of Contents
+        </Typography>
+        <Box component="ol" sx={{ listStyle: "none", m: 0, p: 0 }}>
+          {items.map((item, idx) => (
+            <Box component="li" key={item.id} sx={{ mb: 0.75 }}>
+              <Link
+                href={`#${item.id}`}
+                onClick={(e) => handleTocClick(e, item.id)}
+                sx={{
+                  color: primaryColor,
+                  textDecoration: "none",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 1,
+                  "&:hover": { textDecoration: "underline" },
+                }}
+                aria-label={`Jump to section: ${item.heading}`}
               >
-                {idx + 1}.
-              </Box>
-              {item.heading}
-            </Link>
-          </Box>
-        ))}
+                <Box
+                  component="span"
+                  sx={{
+                    color: "text.disabled",
+                    minWidth: 20,
+                    fontSize: "0.8rem",
+                    pt: 0.1,
+                  }}
+                >
+                  {idx + 1}.
+                </Box>
+                {item.heading}
+              </Link>
+            </Box>
+          ))}
+        </Box>
       </Box>
-    </Box>
-  );
-});
+    );
+  },
+);
 
-TableOfContents.displayName = 'TableOfContents';
+TableOfContents.displayName = "TableOfContents";
 
 /* ===================== Main Component ===================== */
 
 const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
   block,
-  primaryColor = '#378C92',
-  headingColor = '#252525',
-  bodyColor = '#6A6F78',
+  primaryColor = "#378C92",
+  headingColor = "#252525",
+  bodyColor = "#6A6F78",
   onCtaClick,
 }) => {
   const { content } = block;
@@ -337,8 +359,8 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
   const seoContext = useContext(BlogArticleSeoContext);
 
   const {
-    postIdentifier: configPostIdentifier = '',
-    layout = 'standard',
+    postIdentifier: configPostIdentifier = "",
+    layout = "standard",
     showAuthor = true,
     showDate = true,
     showImage = true,
@@ -347,15 +369,21 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
     relatedCount = 3,
     showTableOfContents = true,
     showBackButton = true,
-    backButtonText = 'Back to Blog',
-    backButtonLink = '/blog',
+    backButtonText = "Back to Blog",
+    backButtonLink = "/blog",
   } = content;
 
   /* --- Resolve post identifier (config or URL slug) --- */
   const resolvedIdentifier = useMemo(() => {
     if (configPostIdentifier) return configPostIdentifier;
     // Try common URL params: slug, id, articleSlug, postSlug
-    return urlParams.slug || urlParams.id || urlParams.articleSlug || urlParams.postSlug || '';
+    return (
+      urlParams.slug ||
+      urlParams.id ||
+      urlParams.articleSlug ||
+      urlParams.postSlug ||
+      ""
+    );
   }, [configPostIdentifier, urlParams]);
 
   /* --- Related posts state --- */
@@ -371,7 +399,7 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
   const { data, loading, error, refresh } = useDynamicBlockData(
     block.id,
     block.blockType,
-    dataSource
+    dataSource,
   );
 
   /* --- Resolve post from data or prefetched SSR content --- */
@@ -391,7 +419,7 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
   const tocItems: TocItem[] = useMemo(() => {
     if (!post?.headings || !Array.isArray(post.headings)) return [];
     return post.headings
-      .filter((h) => h.heading && typeof h.heading === 'string')
+      .filter((h) => h.heading && typeof h.heading === "string")
       .map((h) => ({
         id: headingToAnchor(h.heading),
         heading: sanitizeText(h.heading),
@@ -410,13 +438,16 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
           category: post.category!,
           limit: String(relatedCount),
         });
-        const res = await fetch(`${API_URL}/insights/public?${params.toString()}`);
+        const res = await fetch(
+          `${API_URL}/insights/public?${params.toString()}`,
+        );
         if (!res.ok) return;
         const json = await res.json();
         if (!cancelled && Array.isArray(json.insights)) {
           // Exclude the current post
           const filtered = json.insights.filter(
-            (p: BlogPost) => String(p.id) !== String(post.id) && p.slug !== post.slug
+            (p: BlogPost) =>
+              String(p.id) !== String(post.id) && p.slug !== post.slug,
           );
           setRelatedPosts(filtered.slice(0, relatedCount));
         }
@@ -457,21 +488,31 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
 
   const handleBackClick = useCallback(() => {
     if (onCtaClick) onCtaClick(block.blockType, backButtonText);
-    const safeLinkUrl = safeUrl(backButtonLink, '/blog');
-    if (safeLinkUrl.startsWith('http://') || safeLinkUrl.startsWith('https://')) {
+    const safeLinkUrl = safeUrl(backButtonLink, "/blog");
+    if (
+      safeLinkUrl.startsWith("http://") ||
+      safeLinkUrl.startsWith("https://")
+    ) {
       window.location.href = safeLinkUrl;
-    } else if (safeLinkUrl.startsWith('/')) {
+    } else if (safeLinkUrl.startsWith("/")) {
       navigate(buildUrl(safeLinkUrl));
     } else {
       window.history.back();
     }
-  }, [navigate, buildUrl, onCtaClick, block.blockType, backButtonText, backButtonLink]);
+  }, [
+    navigate,
+    buildUrl,
+    onCtaClick,
+    block.blockType,
+    backButtonText,
+    backButtonLink,
+  ]);
 
   const handleRelatedCardClick = useCallback(
     (relPost: BlogPost) => {
       navigate(buildUrl(`/blog/${encodeURIComponent(relPost.slug)}`));
     },
-    [navigate, buildUrl]
+    [navigate, buildUrl],
   );
 
   /* --- Config for BlogCard --- */
@@ -482,14 +523,14 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
       showDate: true,
       showExcerpt: true,
       excerptLength: 100,
-      readMoreText: 'Read Article',
+      readMoreText: "Read Article",
     }),
-    []
+    [],
   );
 
   const relatedCardColors: BlogCardColors = useMemo(
     () => ({ primaryColor, headingColor, bodyColor }),
-    [primaryColor, headingColor, bodyColor]
+    [primaryColor, headingColor, bodyColor],
   );
 
   /* ---- Render states ---- */
@@ -521,26 +562,28 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
       <Container sx={{ py: 8 }}>
         <Alert severity="info">
           {resolvedIdentifier
-            ? 'Article not found.'
-            : 'No post identifier provided. Set the Post Identifier in block settings or navigate to a blog post URL.'}
+            ? "Article not found."
+            : "No post identifier provided. Set the Post Identifier in block settings or navigate to a blog post URL."}
         </Alert>
       </Container>
     );
   }
 
   const formattedDate = formatDate(post.publishedAt);
-  const isMinimal = layout === 'minimal';
-  const isMagazine = layout === 'magazine';
+  const isMinimal = layout === "minimal";
+  const isMagazine = layout === "magazine";
 
   /* ---- Hero Image ---- */
   const heroImage =
     showImage && post.image && !isMinimal ? (
       <Box
         sx={{
-          position: 'relative',
-          width: '100%',
-          height: isMagazine ? { xs: 280, sm: 400, md: 520 } : { xs: 200, sm: 300, md: 380 },
-          overflow: 'hidden',
+          position: "relative",
+          width: "100%",
+          height: isMagazine
+            ? { xs: 280, sm: 400, md: 520 }
+            : { xs: 200, sm: 300, md: 380 },
+          overflow: "hidden",
           borderRadius: isMagazine ? 0 : 2,
           mb: 4,
         }}
@@ -551,21 +594,22 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
           alt={sanitizeText(post.title)}
           loading="lazy"
           sx={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            display: 'block',
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: "block",
           }}
         />
         {/* Gradient overlay */}
         <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            height: '60%',
-            background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)',
+            height: "60%",
+            background:
+              "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)",
           }}
         />
       </Box>
@@ -574,7 +618,13 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
   /* ---- Meta bar ---- */
   const metaBar = (
     <Box
-      sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 3 }}
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 2,
+        alignItems: "center",
+        mb: 3,
+      }}
       aria-label="Article metadata"
     >
       {showCategory && post.category && (
@@ -585,28 +635,28 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
             bgcolor: `${primaryColor}1A`,
             color: primaryColor,
             fontWeight: 600,
-            fontSize: '0.75rem',
+            fontSize: "0.75rem",
           }}
         />
       )}
       {showAuthor && post.author?.name && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <PersonIcon sx={{ fontSize: '0.9rem', color: bodyColor }} />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <PersonIcon sx={{ fontSize: "0.9rem", color: bodyColor }} />
           <Typography variant="caption" sx={{ color: bodyColor }}>
             {sanitizeText(post.author.name)}
           </Typography>
         </Box>
       )}
       {showDate && formattedDate && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <CalendarTodayIcon sx={{ fontSize: '0.9rem', color: bodyColor }} />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <CalendarTodayIcon sx={{ fontSize: "0.9rem", color: bodyColor }} />
           <Typography variant="caption" sx={{ color: bodyColor }}>
-            <time dateTime={post.publishedAt || ''}>{formattedDate}</time>
+            <time dateTime={post.publishedAt || ""}>{formattedDate}</time>
           </Typography>
         </Box>
       )}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <AccessTimeIcon sx={{ fontSize: '0.9rem', color: bodyColor }} />
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <AccessTimeIcon sx={{ fontSize: "0.9rem", color: bodyColor }} />
         <Typography variant="caption" sx={{ color: bodyColor }}>
           {readingTime} min read
         </Typography>
@@ -617,7 +667,9 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
   /* ---- Article body sections ---- */
   const articleBody = (
     <Box component="article" aria-label={sanitizeText(post.title)}>
-      {post.headings && Array.isArray(post.headings) && post.headings.length > 0 ? (
+      {post.headings &&
+      Array.isArray(post.headings) &&
+      post.headings.length > 0 ? (
         post.headings.map((section, idx) => {
           if (!section.heading) return null;
           const anchorId = headingToAnchor(section.heading);
@@ -633,8 +685,8 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                   color: headingColor,
                   fontWeight: 700,
                   mb: 2,
-                  scrollMarginTop: '80px',
-                  fontSize: { xs: '1.25rem', md: '1.5rem' },
+                  scrollMarginTop: "80px",
+                  fontSize: { xs: "1.25rem", md: "1.5rem" },
                 }}
               >
                 {safeHeading}
@@ -652,7 +704,7 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                         color: bodyColor,
                         lineHeight: 1.8,
                         mb: 2,
-                        fontSize: '1rem',
+                        fontSize: "1rem",
                       }}
                     >
                       {safePara}
@@ -664,7 +716,10 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
         })
       ) : post.description ? (
         /* Fallback: render description as a single paragraph if no headings */
-        <Typography variant="body1" sx={{ color: bodyColor, lineHeight: 1.8, fontSize: '1rem' }}>
+        <Typography
+          variant="body1"
+          sx={{ color: bodyColor, lineHeight: 1.8, fontSize: "1rem" }}
+        >
           {sanitizeText(post.description)}
         </Typography>
       ) : null}
@@ -727,7 +782,7 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
           color: headingColor,
           mb: 2,
           lineHeight: 1.2,
-          fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
+          fontSize: { xs: "1.75rem", sm: "2.25rem", md: "2.75rem" },
         }}
       >
         {sanitizeText(post.title)}
@@ -737,7 +792,7 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
       {metaBar}
 
       {/* Standard: two-column (article + TOC sidebar), Magazine/Minimal: full-width */}
-      {layout === 'standard' && showTableOfContents && tocItems.length > 0 ? (
+      {layout === "standard" && showTableOfContents && tocItems.length > 0 ? (
         <Grid container spacing={4}>
           <Grid item xs={12} md={8}>
             {articleBody}
@@ -766,7 +821,7 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
     <Box
       component="main"
       aria-label={`Blog article: ${sanitizeText(post.title)}`}
-      sx={{ bgcolor: 'background.default', minHeight: '60vh' }}
+      sx={{ bgcolor: "background.default", minHeight: "60vh" }}
     >
       {/* Magazine: hero spans full width outside container */}
       {isMagazine && heroImage}
@@ -775,10 +830,9 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
   );
 };
 
-BlogArticleBlockBase.displayName = 'BlogArticleBlock';
+BlogArticleBlockBase.displayName = "BlogArticleBlock";
 
 const BlogArticleBlock = React.memo(BlogArticleBlockBase);
-BlogArticleBlock.displayName = 'BlogArticleBlock';
+BlogArticleBlock.displayName = "BlogArticleBlock";
 
 export default BlogArticleBlock;
-

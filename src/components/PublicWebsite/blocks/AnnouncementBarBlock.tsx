@@ -11,9 +11,9 @@
  * - SSR: renders visible banner with close button
  */
 
-import React, { memo, useState, useCallback } from 'react';
-import { Box, Container, IconButton, Typography } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import React, { memo, useState, useCallback } from "react";
+import { Box, Container, IconButton, Typography } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Business as BusinessIcon,
   Build as BuildIcon,
@@ -36,8 +36,8 @@ import {
   MenuBook as CertIcon,
   Web as WebIcon,
   Star as StarIcon,
-} from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+} from "@mui/icons-material";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ---------------------------------------------------------------------------
 // Icon helper (mirrors getIconComponent from BlockRenderer)
@@ -98,7 +98,7 @@ interface AnnouncementBarContent {
   backgroundColor?: string;
   textColor?: string;
   dismissible?: boolean;
-  position?: 'top' | 'inline';
+  position?: "top" | "inline";
   icon?: string;
   // Standard styling fields
   spacingPaddingTop?: string;
@@ -136,7 +136,7 @@ interface AnnouncementBarBlockProps {
 
 const AnnouncementBarBlock = memo(function AnnouncementBarBlock({
   block,
-  primaryColor = '#2563eb',
+  primaryColor = "#2563eb",
 }: AnnouncementBarBlockProps) {
   const { id, content } = block;
 
@@ -144,39 +144,39 @@ const AnnouncementBarBlock = memo(function AnnouncementBarBlock({
 
   // Check if already dismissed in this session
   const isAlreadyDismissed =
-    typeof window !== 'undefined' && sessionStorage.getItem(dismissKey) === '1';
+    typeof window !== "undefined" && sessionStorage.getItem(dismissKey) === "1";
 
   const [visible, setVisible] = useState<boolean>(!isAlreadyDismissed);
 
   const handleDismiss = useCallback(() => {
-    sessionStorage.setItem(dismissKey, '1');
+    sessionStorage.setItem(dismissKey, "1");
     setVisible(false);
   }, [dismissKey]);
 
   const backgroundColor = content.backgroundColor ?? primaryColor;
-  const textColor = content.textColor ?? '#ffffff';
+  const textColor = content.textColor ?? "#ffffff";
   const dismissible = content.dismissible !== false; // default true
-  const position = content.position ?? 'inline';
+  const position = content.position ?? "inline";
   const iconName = content.icon;
-  const text = content.text ?? '';
-  const linkText = content.linkText ?? '';
-  const linkUrl = content.linkUrl ?? '';
+  const text = content.text ?? "";
+  const linkText = content.linkText ?? "";
+  const linkUrl = content.linkUrl ?? "";
 
   const positionStyles =
-    position === 'top'
+    position === "top"
       ? {
-          position: 'fixed' as const,
+          position: "fixed" as const,
           top: 0,
           left: 0,
           right: 0,
           zIndex: 1300,
         }
       : {
-          position: 'relative' as const,
+          position: "relative" as const,
         };
 
   const bannerMotionVariants = {
-    visible: { opacity: 1, height: 'auto', scaleY: 1 },
+    visible: { opacity: 1, height: "auto", scaleY: 1 },
     hidden: { opacity: 0, height: 0, scaleY: 0 },
   };
 
@@ -191,13 +191,13 @@ const AnnouncementBarBlock = memo(function AnnouncementBarBlock({
           variants={bannerMotionVariants}
           initial="visible"
           exit="hidden"
-          transition={{ duration: 0.25, ease: 'easeInOut' }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
           sx={{
             ...positionStyles,
             backgroundColor,
             color: textColor,
-            overflow: 'hidden',
-            transformOrigin: 'top',
+            overflow: "hidden",
+            transformOrigin: "top",
           }}
           role="banner"
           aria-label="Announcement"
@@ -205,18 +205,20 @@ const AnnouncementBarBlock = memo(function AnnouncementBarBlock({
           <Container maxWidth="lg">
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 py: 1,
                 gap: 1,
-                flexWrap: 'wrap',
-                position: 'relative',
+                flexWrap: "wrap",
+                position: "relative",
               }}
             >
               {/* Icon */}
               {IconComponent && (
-                <IconComponent sx={{ fontSize: 18, color: textColor, flexShrink: 0 }} />
+                <IconComponent
+                  sx={{ fontSize: 18, color: textColor, flexShrink: 0 }}
+                />
               )}
 
               {/* Text — rendered as text node for XSS safety */}
@@ -227,7 +229,7 @@ const AnnouncementBarBlock = memo(function AnnouncementBarBlock({
                   color: textColor,
                   fontWeight: 500,
                   lineHeight: 1.4,
-                  textAlign: 'center',
+                  textAlign: "center",
                 }}
               >
                 {text}
@@ -244,10 +246,10 @@ const AnnouncementBarBlock = memo(function AnnouncementBarBlock({
                   sx={{
                     color: textColor,
                     fontWeight: 700,
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
+                    textDecoration: "underline",
+                    cursor: "pointer",
                     flexShrink: 0,
-                    '&:hover': { opacity: 0.85 },
+                    "&:hover": { opacity: 0.85 },
                   }}
                 >
                   {linkText}
@@ -264,7 +266,7 @@ const AnnouncementBarBlock = memo(function AnnouncementBarBlock({
                     color: textColor,
                     p: 0.5,
                     flexShrink: 0,
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' },
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.15)" },
                   }}
                 >
                   <CloseIcon sx={{ fontSize: 16 }} />
@@ -278,6 +280,6 @@ const AnnouncementBarBlock = memo(function AnnouncementBarBlock({
   );
 });
 
-AnnouncementBarBlock.displayName = 'AnnouncementBarBlock';
+AnnouncementBarBlock.displayName = "AnnouncementBarBlock";
 
 export default AnnouncementBarBlock;

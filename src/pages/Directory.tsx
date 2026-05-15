@@ -1,112 +1,112 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useUserLocation } from '../hooks/useUserLocation';
-import { usePersistentState } from '../hooks/usePersistentState';
-import DirectoryMap from '../components/Directory/DirectoryMap';
-import { apiClient } from '../api/client';
-import './Directory.css';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useUserLocation } from "../hooks/useUserLocation";
+import { usePersistentState } from "../hooks/usePersistentState";
+import DirectoryMap from "../components/Directory/DirectoryMap";
+import { apiClient } from "../api/client";
+import "./Directory.css";
 
-const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DIRECTORY === 'true';
+const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DIRECTORY === "true";
 
 const DUMMY_LISTINGS: DirectoryListing[] = [
   {
     id: 1,
-    slug: 'stellar-design',
-    businessName: 'Stellar Design Co.',
-    businessCategory: 'Design Studio',
-    shortDescription: 'Branding and web design for early-stage startups.',
-    city: 'Austin',
-    region: 'TX',
-    country: 'USA',
-    priceLevel: '$$',
-    tags: ['design', 'branding', 'web'],
+    slug: "stellar-design",
+    businessName: "Stellar Design Co.",
+    businessCategory: "Design Studio",
+    shortDescription: "Branding and web design for early-stage startups.",
+    city: "Austin",
+    region: "TX",
+    country: "USA",
+    priceLevel: "$$",
+    tags: ["design", "branding", "web"],
     hasStore: true,
-    websitePlan: 'website_agency',
+    websitePlan: "website_agency",
     score: 95,
     location: { latitude: 30.2672, longitude: -97.7431, isRemoteOnly: false },
     distance: 4.2,
   },
   {
     id: 2,
-    slug: 'northlight-marketing',
-    businessName: 'Northlight Marketing',
-    businessCategory: 'Marketing Agency',
-    shortDescription: 'Performance marketing and growth strategy.',
-    city: 'Chicago',
-    region: 'IL',
-    country: 'USA',
-    priceLevel: '$$$',
-    tags: ['marketing', 'seo', 'ads'],
+    slug: "northlight-marketing",
+    businessName: "Northlight Marketing",
+    businessCategory: "Marketing Agency",
+    shortDescription: "Performance marketing and growth strategy.",
+    city: "Chicago",
+    region: "IL",
+    country: "USA",
+    priceLevel: "$$$",
+    tags: ["marketing", "seo", "ads"],
     hasStore: false,
-    websitePlan: 'website_pro',
+    websitePlan: "website_pro",
     score: 88,
     location: { latitude: 41.8781, longitude: -87.6298, isRemoteOnly: false },
     distance: 12.7,
   },
   {
     id: 3,
-    slug: 'cloudline-dev',
-    businessName: 'Cloudline Dev',
-    businessCategory: 'Software Studio',
-    shortDescription: 'Custom software, web apps, and integrations.',
-    city: 'Toronto',
-    region: 'ON',
-    country: 'Canada',
-    priceLevel: '$$$',
-    tags: ['software', 'react', 'integrations'],
+    slug: "cloudline-dev",
+    businessName: "Cloudline Dev",
+    businessCategory: "Software Studio",
+    shortDescription: "Custom software, web apps, and integrations.",
+    city: "Toronto",
+    region: "ON",
+    country: "Canada",
+    priceLevel: "$$$",
+    tags: ["software", "react", "integrations"],
     hasStore: true,
-    websitePlan: 'website_agency',
+    websitePlan: "website_agency",
     score: 92,
     location: { latitude: 43.6532, longitude: -79.3832, isRemoteOnly: false },
     distance: 7.5,
   },
   {
     id: 4,
-    slug: 'brightpath-consulting',
-    businessName: 'Brightpath Consulting',
-    businessCategory: 'Business Consulting',
-    shortDescription: 'Operations and growth advisory for SMBs.',
-    city: 'London',
-    region: 'England',
-    country: 'UK',
-    priceLevel: '$$$',
-    tags: ['consulting', 'operations', 'strategy'],
+    slug: "brightpath-consulting",
+    businessName: "Brightpath Consulting",
+    businessCategory: "Business Consulting",
+    shortDescription: "Operations and growth advisory for SMBs.",
+    city: "London",
+    region: "England",
+    country: "UK",
+    priceLevel: "$$$",
+    tags: ["consulting", "operations", "strategy"],
     hasStore: false,
-    websitePlan: 'website_starter',
+    websitePlan: "website_starter",
     score: 81,
     location: { latitude: 51.5072, longitude: -0.1276, isRemoteOnly: false },
     distance: 18.9,
   },
   {
     id: 5,
-    slug: 'lumen-remote',
-    businessName: 'Lumen Remote Studio',
-    businessCategory: 'UX Research',
-    shortDescription: 'Remote UX research and product testing.',
+    slug: "lumen-remote",
+    businessName: "Lumen Remote Studio",
+    businessCategory: "UX Research",
+    shortDescription: "Remote UX research and product testing.",
     city: null,
     region: null,
-    country: 'Remote',
-    priceLevel: '$$',
-    tags: ['ux', 'research', 'remote'],
+    country: "Remote",
+    priceLevel: "$$",
+    tags: ["ux", "research", "remote"],
     hasStore: false,
-    websitePlan: 'website_pro',
+    websitePlan: "website_pro",
     score: 86,
     location: { latitude: null, longitude: null, isRemoteOnly: true },
     distance: null,
   },
   {
     id: 6,
-    slug: 'harbor-legal',
-    businessName: 'Harbor Legal',
-    businessCategory: 'Legal Services',
-    shortDescription: 'Business formation and contracts.',
-    city: 'Sydney',
-    region: 'NSW',
-    country: 'Australia',
-    priceLevel: '$$$',
-    tags: ['legal', 'contracts', 'business'],
+    slug: "harbor-legal",
+    businessName: "Harbor Legal",
+    businessCategory: "Legal Services",
+    shortDescription: "Business formation and contracts.",
+    city: "Sydney",
+    region: "NSW",
+    country: "Australia",
+    priceLevel: "$$$",
+    tags: ["legal", "contracts", "business"],
     hasStore: false,
-    websitePlan: 'website_starter',
+    websitePlan: "website_starter",
     score: 79,
     location: { latitude: -33.8688, longitude: 151.2093, isRemoteOnly: false },
     distance: 25.4,
@@ -115,40 +115,43 @@ const DUMMY_LISTINGS: DirectoryListing[] = [
 
 const DUMMY_META: DirectoryMeta = {
   locations: [
-    { country: 'USA', city: 'Austin', count: 1 },
-    { country: 'USA', city: 'Chicago', count: 1 },
-    { country: 'Canada', city: 'Toronto', count: 1 },
-    { country: 'UK', city: 'London', count: 1 },
-    { country: 'Australia', city: 'Sydney', count: 1 },
+    { country: "USA", city: "Austin", count: 1 },
+    { country: "USA", city: "Chicago", count: 1 },
+    { country: "Canada", city: "Toronto", count: 1 },
+    { country: "UK", city: "London", count: 1 },
+    { country: "Australia", city: "Sydney", count: 1 },
   ],
   categories: [
-    { category: 'Design Studio', count: 1 },
-    { category: 'Marketing Agency', count: 1 },
-    { category: 'Software Studio', count: 1 },
-    { category: 'Business Consulting', count: 1 },
-    { category: 'UX Research', count: 1 },
-    { category: 'Legal Services', count: 1 },
+    { category: "Design Studio", count: 1 },
+    { category: "Marketing Agency", count: 1 },
+    { category: "Software Studio", count: 1 },
+    { category: "Business Consulting", count: 1 },
+    { category: "UX Research", count: 1 },
+    { category: "Legal Services", count: 1 },
   ],
   priceLevels: [
-    { priceLevel: '$$', count: 2 },
-    { priceLevel: '$$$', count: 4 },
+    { priceLevel: "$$", count: 2 },
+    { priceLevel: "$$$", count: 4 },
   ],
 };
 
-const normalizeValue = (value: string | null | undefined) => (value || '').toLowerCase();
+const normalizeValue = (value: string | null | undefined) =>
+  (value || "").toLowerCase();
 
 const buildDummyLocationPageData = (
   country?: string,
   city?: string,
-  category?: string
+  category?: string,
 ): LocationPageData => {
   const labelParts = [category, city, country].filter(Boolean);
-  const label = labelParts.length ? labelParts.join(' · ') : 'Business Directory';
+  const label = labelParts.length
+    ? labelParts.join(" · ")
+    : "Business Directory";
   const h1 = category
-    ? `Top ${category} Businesses${city ? ` in ${city}` : ''}${country ? `, ${country}` : ''}`
+    ? `Top ${category} Businesses${city ? ` in ${city}` : ""}${country ? `, ${country}` : ""}`
     : city || country
-      ? `Top Businesses in ${[city, country].filter(Boolean).join(', ')}`
-      : 'Find the Best Local Businesses';
+      ? `Top Businesses in ${[city, country].filter(Boolean).join(", ")}`
+      : "Find the Best Local Businesses";
 
   return {
     location: { country: country || null, city: city || null },
@@ -160,8 +163,8 @@ const buildDummyLocationPageData = (
       description: `Explore trusted businesses in ${label}.`,
       h1,
       breadcrumbs: [
-        { label: 'Home', url: '/' },
-        { label: 'Directory', url: '/directory' },
+        { label: "Home", url: "/" },
+        { label: "Directory", url: "/directory" },
       ],
     },
   };
@@ -216,18 +219,18 @@ interface DirectoryFilters {
   hasStore: boolean;
   searchQuery: string;
   tags: string;
-  sortBy: 'best' | 'distance';
+  sortBy: "best" | "distance";
 }
 
 const defaultFilters: DirectoryFilters = {
-  country: '',
-  city: '',
-  category: '',
-  priceLevel: '',
+  country: "",
+  city: "",
+  category: "",
+  priceLevel: "",
   hasStore: false,
-  searchQuery: '',
-  tags: '',
-  sortBy: 'best',
+  searchQuery: "",
+  tags: "",
+  sortBy: "best",
 };
 
 const Directory: React.FC = () => {
@@ -250,7 +253,8 @@ const Directory: React.FC = () => {
   // State
   const [listings, setListings] = useState<DirectoryListing[]>([]);
   const [meta, setMeta] = useState<DirectoryMeta | null>(null);
-  const [locationPageData, setLocationPageData] = useState<LocationPageData | null>(null);
+  const [locationPageData, setLocationPageData] =
+    useState<LocationPageData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -259,13 +263,13 @@ const Directory: React.FC = () => {
 
   // Persistent filters - survive page reloads
   const [filters, setFilters] = usePersistentState<DirectoryFilters>(
-    'directory:filters:v1',
+    "directory:filters:v1",
     defaultFilters,
-    { scope: 'global', syncAcrossTabs: true }
+    { scope: "global", syncAcrossTabs: true },
   );
 
   // Debounce search query
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(filters.searchQuery);
@@ -284,7 +288,7 @@ const Directory: React.FC = () => {
         const response = await apiClient.get(`/directory/meta`);
         setMeta(response.data);
       } catch (err) {
-        console.error('Error fetching directory metadata:', err);
+        console.error("Error fetching directory metadata:", err);
       }
     };
     fetchMeta();
@@ -306,19 +310,19 @@ const Directory: React.FC = () => {
           return;
         }
         const params = new URLSearchParams();
-        if (country) params.append('country', country);
-        if (city) params.append('city', city);
-        if (category) params.append('category', category);
+        if (country) params.append("country", country);
+        if (city) params.append("city", city);
+        if (category) params.append("category", category);
 
         const response = await apiClient.get(
-          `/directory/location-page-data?${params.toString()}`
+          `/directory/location-page-data?${params.toString()}`,
         );
         setLocationPageData(response.data);
 
         // Update document title based on SEO meta
         document.title = response.data.meta.title;
       } catch (err) {
-        console.error('Error fetching location page data:', err);
+        console.error("Error fetching location page data:", err);
       }
     };
 
@@ -340,26 +344,32 @@ const Directory: React.FC = () => {
 
         if (effectiveCountry) {
           results = results.filter(
-            (listing) => normalizeValue(listing.country) === normalizeValue(effectiveCountry)
+            (listing) =>
+              normalizeValue(listing.country) ===
+              normalizeValue(effectiveCountry),
           );
         }
 
         if (effectiveCity) {
           results = results.filter(
-            (listing) => normalizeValue(listing.city) === normalizeValue(effectiveCity)
+            (listing) =>
+              normalizeValue(listing.city) === normalizeValue(effectiveCity),
           );
         }
 
         if (effectiveCategory) {
           results = results.filter(
             (listing) =>
-              normalizeValue(listing.businessCategory) === normalizeValue(effectiveCategory)
+              normalizeValue(listing.businessCategory) ===
+              normalizeValue(effectiveCategory),
           );
         }
 
         if (filters.priceLevel) {
           results = results.filter(
-            (listing) => normalizeValue(listing.priceLevel) === normalizeValue(filters.priceLevel)
+            (listing) =>
+              normalizeValue(listing.priceLevel) ===
+              normalizeValue(filters.priceLevel),
           );
         }
 
@@ -379,29 +389,35 @@ const Directory: React.FC = () => {
               listing.region,
             ]
               .map(normalizeValue)
-              .join(' ');
-            const tagMatch = listing.tags.some((tag) => tag.toLowerCase().includes(query));
+              .join(" ");
+            const tagMatch = listing.tags.some((tag) =>
+              tag.toLowerCase().includes(query),
+            );
             return haystack.includes(query) || tagMatch;
           });
         }
 
         if (filters.tags) {
           const requiredTags = filters.tags
-            .split(',')
+            .split(",")
             .map((tag) => tag.trim().toLowerCase())
             .filter(Boolean);
           if (requiredTags.length > 0) {
             results = results.filter((listing) =>
               requiredTags.every((tag) =>
-                listing.tags.some((listingTag) => listingTag.toLowerCase() === tag)
-              )
+                listing.tags.some(
+                  (listingTag) => listingTag.toLowerCase() === tag,
+                ),
+              ),
             );
           }
         }
 
-        if (filters.sortBy === 'distance') {
+        if (filters.sortBy === "distance") {
           results.sort(
-            (a, b) => (a.distance ?? Number.MAX_VALUE) - (b.distance ?? Number.MAX_VALUE)
+            (a, b) =>
+              (a.distance ?? Number.MAX_VALUE) -
+              (b.distance ?? Number.MAX_VALUE),
           );
         } else {
           results.sort((a, b) => b.score - a.score);
@@ -418,42 +434,53 @@ const Directory: React.FC = () => {
       const params = new URLSearchParams();
 
       // Location filters (from URL params or persistent filters)
-      if (country || filters.country) params.append('country', country || filters.country);
-      if (city || filters.city) params.append('city', city || filters.city);
+      if (country || filters.country)
+        params.append("country", country || filters.country);
+      if (city || filters.city) params.append("city", city || filters.city);
 
       // Category filter (from URL params or persistent filters)
-      if (category || filters.category) params.append('category', category || filters.category);
+      if (category || filters.category)
+        params.append("category", category || filters.category);
 
       // Other filters
-      if (filters.priceLevel) params.append('priceLevel', filters.priceLevel);
-      if (filters.hasStore) params.append('hasStore', 'true');
-      if (debouncedSearch) params.append('q', debouncedSearch);
-      if (filters.tags) params.append('tags', filters.tags);
+      if (filters.priceLevel) params.append("priceLevel", filters.priceLevel);
+      if (filters.hasStore) params.append("hasStore", "true");
+      if (debouncedSearch) params.append("q", debouncedSearch);
+      if (filters.tags) params.append("tags", filters.tags);
 
       // User location for distance-based sorting
       if (userLocation.latitude && userLocation.longitude) {
-        params.append('userLat', userLocation.latitude.toString());
-        params.append('userLng', userLocation.longitude.toString());
+        params.append("userLat", userLocation.latitude.toString());
+        params.append("userLng", userLocation.longitude.toString());
       }
 
       // Sorting and pagination
-      params.append('sort', filters.sortBy);
-      params.append('page', page.toString());
-      params.append('pageSize', pageSize.toString());
+      params.append("sort", filters.sortBy);
+      params.append("page", page.toString());
+      params.append("pageSize", pageSize.toString());
 
       const response = await apiClient.get(
-        `/directory/listings?${params.toString()}`
+        `/directory/listings?${params.toString()}`,
       );
 
       setListings(response.data.results);
       setTotal(response.data.total);
     } catch (err: any) {
-      console.error('Error fetching listings:', err);
-      setError(err.response?.data?.error || 'Failed to fetch listings');
+      console.error("Error fetching listings:", err);
+      setError(err.response?.data?.error || "Failed to fetch listings");
     } finally {
       setLoading(false);
     }
-  }, [country, city, category, filters, debouncedSearch, userLocation, page, pageSize]);
+  }, [
+    country,
+    city,
+    category,
+    filters,
+    debouncedSearch,
+    userLocation,
+    page,
+    pageSize,
+  ]);
 
   // Fetch listings whenever dependencies change
   useEffect(() => {
@@ -463,13 +490,15 @@ const Directory: React.FC = () => {
   // Handle geolocation request
   const handleRequestLocation = () => {
     requestLocation();
-    setFilters((prev) => ({ ...prev, sortBy: 'distance' })); // Switch to distance sorting when location is granted
+    setFilters((prev) => ({ ...prev, sortBy: "distance" })); // Switch to distance sorting when location is granted
   };
 
   // Available cities for selected country
   const availableCities = useMemo(() => {
     if (!meta || !filters.country) return [];
-    return meta.locations.filter((loc) => loc.country === filters.country).map((loc) => loc.city);
+    return meta.locations
+      .filter((loc) => loc.country === filters.country)
+      .map((loc) => loc.city);
   }, [meta, filters.country]);
 
   // Remote-only businesses (not shown on map)
@@ -482,7 +511,8 @@ const Directory: React.FC = () => {
   }, [listings]);
 
   // Page title and heading
-  const pageTitle = locationPageData?.meta.h1 || 'Find the Best Local Businesses';
+  const pageTitle =
+    locationPageData?.meta.h1 || "Find the Best Local Businesses";
   const isLandingPage = !country && !city && !category;
 
   return (
@@ -492,12 +522,14 @@ const Directory: React.FC = () => {
         <header className="directory-header">
           <h1>{pageTitle}</h1>
           {locationPageData?.meta.description && (
-            <p className="directory-description">{locationPageData.meta.description}</p>
+            <p className="directory-description">
+              {locationPageData.meta.description}
+            </p>
           )}
           {!locationPageData && (
             <p className="directory-description">
-              Discover the best businesses and services. Browse local businesses, read reviews, and
-              find trusted services near you.
+              Discover the best businesses and services. Browse local
+              businesses, read reviews, and find trusted services near you.
             </p>
           )}
         </header>
@@ -507,22 +539,22 @@ const Directory: React.FC = () => {
           <section className="location-prompt">
             <h2>Where are you located?</h2>
             <p className="location-help-text">
-              We'll use your location only to show nearby businesses. You can also type your city
-              manually.
+              We'll use your location only to show nearby businesses. You can
+              also type your city manually.
             </p>
 
             <div className="location-actions">
               <button
                 onClick={handleRequestLocation}
-                disabled={locationState === 'requesting'}
+                disabled={locationState === "requesting"}
                 className="btn btn-primary"
               >
-                {locationState === 'requesting'
-                  ? 'Getting location...'
-                  : '📍 Use my current location'}
+                {locationState === "requesting"
+                  ? "Getting location..."
+                  : "📍 Use my current location"}
               </button>
 
-              {locationState === 'granted' && (
+              {locationState === "granted" && (
                 <div className="location-status success">
                   ✅ Location detected! Showing businesses near you.
                   <button onClick={clearLocation} className="btn-link">
@@ -531,7 +563,9 @@ const Directory: React.FC = () => {
                 </div>
               )}
 
-              {locationError && <div className="location-status error">⚠️ {locationError}</div>}
+              {locationError && (
+                <div className="location-status error">⚠️ {locationError}</div>
+              )}
             </div>
           </section>
         )}
@@ -570,7 +604,7 @@ const Directory: React.FC = () => {
                     setFilters((prev) => ({
                       ...prev,
                       country: e.target.value,
-                      city: '',
+                      city: "",
                     })); // Reset city when country changes
                   }}
                   className="filter-select"
@@ -597,7 +631,9 @@ const Directory: React.FC = () => {
                 <select
                   id="city"
                   value={filters.city}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, city: e.target.value }))}
+                  onChange={(e) =>
+                    setFilters((prev) => ({ ...prev, city: e.target.value }))
+                  }
                   className="filter-select"
                   disabled={!filters.country && !country}
                 >
@@ -684,7 +720,9 @@ const Directory: React.FC = () => {
                 type="text"
                 placeholder="e.g., plumber, emergency, 24/7"
                 value={filters.tags}
-                onChange={(e) => setFilters((prev) => ({ ...prev, tags: e.target.value }))}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, tags: e.target.value }))
+                }
                 className="filter-input"
               />
             </div>
@@ -698,15 +736,19 @@ const Directory: React.FC = () => {
                 onChange={(e) =>
                   setFilters((prev) => ({
                     ...prev,
-                    sortBy: e.target.value as 'best' | 'distance',
+                    sortBy: e.target.value as "best" | "distance",
                   }))
                 }
                 className="filter-select"
-                disabled={filters.sortBy === 'distance' && !userLocation.latitude}
+                disabled={
+                  filters.sortBy === "distance" && !userLocation.latitude
+                }
               >
                 <option value="best">Best Match</option>
                 <option value="distance" disabled={!userLocation.latitude}>
-                  {userLocation.latitude ? 'Nearest to Me' : 'Nearest to Me (location needed)'}
+                  {userLocation.latitude
+                    ? "Nearest to Me"
+                    : "Nearest to Me (location needed)"}
                 </option>
               </select>
             </div>
@@ -716,8 +758,12 @@ const Directory: React.FC = () => {
         {/* Results Count */}
         <div className="results-summary">
           <p>
-            {loading ? 'Loading...' : `Found ${total} business${total !== 1 ? 'es' : ''}`}
-            {userLocation.latitude && filters.sortBy === 'distance' && ' sorted by distance'}
+            {loading
+              ? "Loading..."
+              : `Found ${total} business${total !== 1 ? "es" : ""}`}
+            {userLocation.latitude &&
+              filters.sortBy === "distance" &&
+              " sorted by distance"}
           </p>
         </div>
 
@@ -739,7 +785,10 @@ const Directory: React.FC = () => {
               listings={mappableBusinesses}
               userLocation={
                 userLocation.latitude != null && userLocation.longitude != null
-                  ? { latitude: userLocation.latitude, longitude: userLocation.longitude }
+                  ? {
+                      latitude: userLocation.latitude,
+                      longitude: userLocation.longitude,
+                    }
                   : null
               }
             />
@@ -750,7 +799,9 @@ const Directory: React.FC = () => {
         <section className="directory-listings">
           <h3>Listings</h3>
 
-          {loading && <div className="loading-spinner">Loading businesses...</div>}
+          {loading && (
+            <div className="loading-spinner">Loading businesses...</div>
+          )}
 
           {!loading && listings.length === 0 && (
             <div className="empty-state">
@@ -765,23 +816,31 @@ const Directory: React.FC = () => {
                 <div key={listing.id} className="listing-card">
                   <div className="listing-header">
                     <h4>{listing.businessName}</h4>
-                    {listing.hasStore && <span className="badge badge-store">Online Store</span>}
-                    {listing.websitePlan === 'website_agency' && (
+                    {listing.hasStore && (
+                      <span className="badge badge-store">Online Store</span>
+                    )}
+                    {listing.websitePlan === "website_agency" && (
                       <span className="badge badge-featured">Featured</span>
                     )}
                   </div>
 
                   {listing.businessCategory && (
-                    <div className="listing-category">{listing.businessCategory}</div>
+                    <div className="listing-category">
+                      {listing.businessCategory}
+                    </div>
                   )}
 
                   {listing.shortDescription && (
-                    <p className="listing-description">{listing.shortDescription}</p>
+                    <p className="listing-description">
+                      {listing.shortDescription}
+                    </p>
                   )}
 
                   <div className="listing-meta">
                     {listing.location.isRemoteOnly ? (
-                      <div className="listing-location">📍 Remote / Online Only</div>
+                      <div className="listing-location">
+                        📍 Remote / Online Only
+                      </div>
                     ) : (
                       <div className="listing-location">
                         📍 {listing.city}, {listing.country}
@@ -855,19 +914,28 @@ const Directory: React.FC = () => {
             </p>
             <div className="listings-grid">
               {remoteBusinesses.map((listing) => (
-                <div key={listing.id} className="listing-card listing-card-remote">
+                <div
+                  key={listing.id}
+                  className="listing-card listing-card-remote"
+                >
                   <div className="listing-header">
                     <h4>{listing.businessName}</h4>
-                    {listing.hasStore && <span className="badge badge-store">Online Store</span>}
+                    {listing.hasStore && (
+                      <span className="badge badge-store">Online Store</span>
+                    )}
                     <span className="badge badge-remote">Remote</span>
                   </div>
 
                   {listing.businessCategory && (
-                    <div className="listing-category">{listing.businessCategory}</div>
+                    <div className="listing-category">
+                      {listing.businessCategory}
+                    </div>
                   )}
 
                   {listing.shortDescription && (
-                    <p className="listing-description">{listing.shortDescription}</p>
+                    <p className="listing-description">
+                      {listing.shortDescription}
+                    </p>
                   )}
 
                   {listing.tags.length > 0 && (

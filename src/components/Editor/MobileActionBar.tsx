@@ -14,11 +14,11 @@
  * - Touch targets are >= 48px tall
  * - Uses MUI theme tokens only
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Button, CircularProgress, Tooltip } from '@mui/material';
-import SaveIcon from '@mui/icons-material/Save';
-import PublishIcon from '@mui/icons-material/Publish';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Box, Button, CircularProgress, Tooltip } from "@mui/material";
+import SaveIcon from "@mui/icons-material/Save";
+import PublishIcon from "@mui/icons-material/Publish";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 export interface MobileActionBarProps {
   onSave: () => void;
@@ -36,7 +36,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
   isSaving = false,
   isMac = false,
 }) => {
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState("");
   const announcementTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Cleanup timeout on unmount to prevent state update after unmount
@@ -56,47 +56,47 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
     // Set message, then clear after delay to allow re-announcement of same message
     setAnnouncement(message);
     announcementTimeoutRef.current = setTimeout(() => {
-      setAnnouncement('');
+      setAnnouncement("");
     }, 3000);
   }, []);
 
   const handleSave = useCallback(() => {
-    announce('Saving changes...');
+    announce("Saving changes...");
     onSave();
   }, [onSave, announce]);
 
   const handlePublish = useCallback(() => {
-    announce('Publishing...');
+    announce("Publishing...");
     onPublish();
   }, [onPublish, announce]);
 
   const handlePreview = useCallback(() => {
-    announce('Opening preview');
+    announce("Opening preview");
     onPreview();
   }, [onPreview, announce]);
 
-  const modKey = isMac ? 'Cmd' : 'Ctrl';
+  const modKey = isMac ? "Cmd" : "Ctrl";
 
   return (
     <Box
       data-testid="mobile-action-bar"
       sx={{
         // Hidden on md and above
-        display: { xs: 'flex', md: 'none' },
-        position: 'fixed',
+        display: { xs: "flex", md: "none" },
+        position: "fixed",
         bottom: 0,
         left: 0,
         right: 0,
-        bgcolor: 'background.paper',
+        bgcolor: "background.paper",
         borderTop: 1,
-        borderColor: 'divider',
+        borderColor: "divider",
         p: 1,
         gap: 1,
         zIndex: (theme) => theme.zIndex.appBar,
         // Ensure bar itself is tall enough for 48px touch targets
         minHeight: 64,
-        alignItems: 'center',
-        justifyContent: 'space-around',
+        alignItems: "center",
+        justifyContent: "space-around",
       }}
     >
       {/* Screen reader live region for action announcements */}
@@ -106,14 +106,14 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
         role="status"
         data-testid="action-announcer"
         sx={{
-          position: 'absolute',
+          position: "absolute",
           width: 1,
           height: 1,
           padding: 0,
           margin: -1,
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
+          overflow: "hidden",
+          clip: "rect(0, 0, 0, 0)",
+          whiteSpace: "nowrap",
           borderWidth: 0,
         }}
       >
@@ -121,18 +121,24 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
       </Box>
 
       <Tooltip title={`Save changes (${modKey}+S)`}>
-        <span style={{ flex: 1, display: 'flex' }}>
+        <span style={{ flex: 1, display: "flex" }}>
           <Button
             aria-label="Save changes"
             variant="contained"
             color="primary"
             onClick={handleSave}
             disabled={isSaving}
-            startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+            startIcon={
+              isSaving ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <SaveIcon />
+              )
+            }
             sx={{
               flex: 1,
               minHeight: 48,
-              textTransform: 'none',
+              textTransform: "none",
             }}
           >
             Save
@@ -150,7 +156,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
           sx={{
             flex: 1,
             minHeight: 48,
-            textTransform: 'none',
+            textTransform: "none",
           }}
         >
           Publish
@@ -167,7 +173,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
           sx={{
             flex: 1,
             minHeight: 48,
-            textTransform: 'none',
+            textTransform: "none",
           }}
         >
           Preview
@@ -177,6 +183,6 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
   );
 };
 
-MobileActionBar.displayName = 'MobileActionBar';
+MobileActionBar.displayName = "MobileActionBar";
 
 export default MobileActionBar;

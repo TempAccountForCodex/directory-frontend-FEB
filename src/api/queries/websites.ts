@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 export type WebsiteListParams = {
   page?: number;
@@ -35,7 +35,7 @@ export function useWebsites(params?: WebsiteListParams) {
   return useQuery({
     queryKey: queryKeys.websites.list(params),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/websites', { params, signal });
+      const response = await apiClient.get("/websites", { params, signal });
       return response.data;
     },
     enabled: !!user,
@@ -50,7 +50,8 @@ export function useWebsites(params?: WebsiteListParams) {
  */
 export function useInvalidateWebsites() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: queryKeys.websites.all() });
+  return () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.websites.all() });
 }
 
 /**
@@ -64,13 +65,17 @@ export function useInvalidateWebsites() {
  *
  * Gated on `useAuthMe().data` — the query is disabled until the user is loaded.
  */
-export function useApprovalState(websiteId: number | string | null | undefined) {
+export function useApprovalState(
+  websiteId: number | string | null | undefined,
+) {
   const { data: user } = useAuthMe();
 
   return useQuery({
-    queryKey: queryKeys.websites.approval(websiteId ?? ''),
+    queryKey: queryKeys.websites.approval(websiteId ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/websites/${websiteId}/approval`, { signal });
+      const response = await apiClient.get(`/websites/${websiteId}/approval`, {
+        signal,
+      });
       // Preserve the original hook's unwrap shape: res.data?.data ?? res.data ?? null
       return response.data?.data ?? response.data ?? null;
     },
@@ -96,9 +101,12 @@ export function useSectionLocks(websiteId: number | string | null | undefined) {
   const { data: user } = useAuthMe();
 
   return useQuery({
-    queryKey: queryKeys.websites.sectionLocks(websiteId ?? ''),
+    queryKey: queryKeys.websites.sectionLocks(websiteId ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/websites/${websiteId}/sections/locks`, { signal });
+      const response = await apiClient.get(
+        `/websites/${websiteId}/sections/locks`,
+        { signal },
+      );
       // Preserve the original hook's unwrap shape: res.data?.data ?? res.data ?? []
       return response.data?.data ?? response.data ?? [];
     },
@@ -124,9 +132,11 @@ export function useSectionLocks(websiteId: number | string | null | undefined) {
 export function useWebsitePages(websiteId: number | string | null | undefined) {
   const { data: user } = useAuthMe();
   return useQuery({
-    queryKey: queryKeys.websites.pages(websiteId ?? ''),
+    queryKey: queryKeys.websites.pages(websiteId ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/websites/${websiteId}/pages`, { signal });
+      const response = await apiClient.get(`/websites/${websiteId}/pages`, {
+        signal,
+      });
       return response.data?.data ?? response.data?.pages ?? response.data ?? [];
     },
     enabled: !!user && !!websiteId,
@@ -149,18 +159,24 @@ export function useWebsitePages(websiteId: number | string | null | undefined) {
  * `clearBlockEtags()` is exposed for the signout flow to explicitly wipe the
  * map (queryClient.clear() does not touch module state).
  */
-const blockEtagStore = new Map<string, { etag?: string; expectedUpdatedAt?: string }>();
+const blockEtagStore = new Map<
+  string,
+  { etag?: string; expectedUpdatedAt?: string }
+>();
 const blockEtagKey = (websiteId: number | string, pageId: number | string) =>
   `${websiteId}:${pageId}`;
 
-export function getBlockEtag(websiteId: number | string, pageId: number | string) {
+export function getBlockEtag(
+  websiteId: number | string,
+  pageId: number | string,
+) {
   return blockEtagStore.get(blockEtagKey(websiteId, pageId));
 }
 
 export function setBlockEtag(
   websiteId: number | string,
   pageId: number | string,
-  value: { etag?: string; expectedUpdatedAt?: string }
+  value: { etag?: string; expectedUpdatedAt?: string },
 ) {
   blockEtagStore.set(blockEtagKey(websiteId, pageId), value);
 }
@@ -179,16 +195,19 @@ export function clearBlockEtags() {
  */
 export function useWebsitePageBlocks(
   websiteId: number | string | null | undefined,
-  pageId: number | string | null | undefined
+  pageId: number | string | null | undefined,
 ) {
   const { data: user } = useAuthMe();
   return useQuery({
-    queryKey: queryKeys.websites.blocks(websiteId ?? '', pageId ?? ''),
+    queryKey: queryKeys.websites.blocks(websiteId ?? "", pageId ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/pages/${pageId}/blocks`, { signal });
+      const response = await apiClient.get(`/pages/${pageId}/blocks`, {
+        signal,
+      });
       // Capture ETag + updatedAt for subsequent PUTs.
       const etag = response.headers?.etag ?? response.headers?.ETag;
-      const updatedAt = response.data?.updatedAt ?? response.data?.data?.updatedAt;
+      const updatedAt =
+        response.data?.updatedAt ?? response.data?.data?.updatedAt;
       if (websiteId && pageId) {
         setBlockEtag(websiteId, pageId, { etag, expectedUpdatedAt: updatedAt });
       }
@@ -228,15 +247,16 @@ export function useUpdateWebsiteBlocks() {
       const { websiteId, pageId, blocks } = vars;
       const stored = getBlockEtag(websiteId, pageId);
       const headers: Record<string, string> = {};
-      if (stored?.etag) headers['If-Match'] = stored.etag;
+      if (stored?.etag) headers["If-Match"] = stored.etag;
       const body: Record<string, unknown> = { blocks };
-      if (stored?.expectedUpdatedAt) body.expectedUpdatedAt = stored.expectedUpdatedAt;
+      if (stored?.expectedUpdatedAt)
+        body.expectedUpdatedAt = stored.expectedUpdatedAt;
 
       try {
         const response = await apiClient.put(
           `/websites/${websiteId}/pages/${pageId}/blocks`,
           body,
-          { headers }
+          { headers },
         );
         // Persist fresh ETag + updatedAt for the next PUT.
         const newEtag = response.headers?.etag ?? response.headers?.ETag;
@@ -249,7 +269,7 @@ export function useUpdateWebsiteBlocks() {
         // Warm the cache so any subsequent GET is instant.
         queryClient.setQueryData(
           queryKeys.websites.blocks(websiteId, pageId),
-          response.data
+          response.data,
         );
         queryClient.invalidateQueries({
           queryKey: queryKeys.websites.detail(websiteId),
@@ -296,15 +316,18 @@ export function useUpdateWebsiteBlocks() {
 export function useWebsite(websiteId: number | string | null | undefined) {
   const { data: user } = useAuthMe();
   return useQuery({
-    queryKey: queryKeys.websites.detail(websiteId ?? ''),
+    queryKey: queryKeys.websites.detail(websiteId ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/websites/${websiteId}`, { signal });
-      const raw = response.data?.data ?? response.data?.website ?? response.data;
+      const response = await apiClient.get(`/websites/${websiteId}`, {
+        signal,
+      });
+      const raw =
+        response.data?.data ?? response.data?.website ?? response.data;
       if (!raw) return null;
       return {
         ...raw,
-        status: (raw.status || 'draft').toUpperCase(),
-        role: (raw.role || 'VIEWER').toUpperCase(),
+        status: (raw.status || "draft").toUpperCase(),
+        role: (raw.role || "VIEWER").toUpperCase(),
       };
     },
     enabled: !!user && !!websiteId,
@@ -322,15 +345,15 @@ export function useWebsite(websiteId: number | string | null | undefined) {
  * shape. Gated on `useAuthMe().data` + websiteId.
  */
 export function useWebsiteCollaborators(
-  websiteId: number | string | null | undefined
+  websiteId: number | string | null | undefined,
 ) {
   const { data: user } = useAuthMe();
   return useQuery({
-    queryKey: queryKeys.websites.collaborators(websiteId ?? ''),
+    queryKey: queryKeys.websites.collaborators(websiteId ?? ""),
     queryFn: async ({ signal }) => {
       const response = await apiClient.get(
         `/websites/${websiteId}/collaborators`,
-        { signal }
+        { signal },
       );
       if (Array.isArray(response.data)) return response.data;
       return response.data?.data ?? response.data?.collaborators ?? [];
@@ -359,7 +382,7 @@ export function useAddCollaborator() {
       const { websiteId, email, role } = vars;
       const response = await apiClient.post(
         `/websites/${websiteId}/collaborators/invite`,
-        { email, role }
+        { email, role },
       );
       return response.data;
     },
@@ -392,7 +415,7 @@ export function useUpdateCollaborator() {
       const { websiteId, userId, role } = vars;
       const response = await apiClient.patch(
         `/websites/${websiteId}/collaborators/${userId}`,
-        { role }
+        { role },
       );
       return response.data;
     },
@@ -422,7 +445,7 @@ export function useRemoveCollaborator() {
     }) => {
       const { websiteId, userId } = vars;
       const response = await apiClient.delete(
-        `/websites/${websiteId}/collaborators/${userId}`
+        `/websites/${websiteId}/collaborators/${userId}`,
       );
       return response.data;
     },
@@ -453,12 +476,12 @@ export function useRemoveCollaborator() {
  */
 export function useWebsiteActivity(
   websiteId: number | string | null | undefined,
-  params?: Record<string, string | number | undefined>
+  params?: Record<string, string | number | undefined>,
 ) {
   const { data: user } = useAuthMe();
   return useQuery({
     queryKey: [
-      ...queryKeys.websites.activity(websiteId ?? ''),
+      ...queryKeys.websites.activity(websiteId ?? ""),
       params ?? {},
     ] as const,
     queryFn: async ({ signal }) => {
@@ -466,7 +489,9 @@ export function useWebsiteActivity(
         params,
         signal,
       });
-      return response.data?.data ?? response.data ?? { activities: [], total: 0 };
+      return (
+        response.data?.data ?? response.data ?? { activities: [], total: 0 }
+      );
     },
     enabled: !!user && !!websiteId,
     staleTime: 30_000,
@@ -493,7 +518,7 @@ export function useTransferOwnership() {
       const { websiteId, newOwnerId } = vars;
       const response = await apiClient.post(
         `/websites/${websiteId}/transfer-ownership`,
-        { newOwnerId }
+        { newOwnerId },
       );
       return response.data;
     },
@@ -523,7 +548,9 @@ export function usePermanentDeleteWebsite() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (websiteId: number | string) => {
-      const response = await apiClient.delete(`/websites/${websiteId}/permanent`);
+      const response = await apiClient.delete(
+        `/websites/${websiteId}/permanent`,
+      );
       return response.data;
     },
     onSuccess: () => {
@@ -544,9 +571,11 @@ export function usePermanentDeleteWebsite() {
  */
 export function useWebsiteBySlug(slug: string | null | undefined) {
   return useQuery({
-    queryKey: ['websites', 'slug', slug ?? ''] as const,
+    queryKey: ["websites", "slug", slug ?? ""] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/websites/slug/${slug}`, { signal });
+      const response = await apiClient.get(`/websites/slug/${slug}`, {
+        signal,
+      });
       return response.data;
     },
     enabled: !!slug,
@@ -568,7 +597,7 @@ export function useCreateWebsiteFromTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
-      const response = await apiClient.post('/websites/from-template', payload);
+      const response = await apiClient.post("/websites/from-template", payload);
       return response.data;
     },
     onSuccess: () => {

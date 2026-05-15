@@ -8,10 +8,10 @@
  * Step 5.4.4
  */
 
-import React, { useMemo } from 'react';
-import { Box, Typography } from '@mui/material';
-import LockIcon from '@mui/icons-material/Lock';
-import type { LockInfo } from '../../hooks/usePreviewSync';
+import React, { useMemo } from "react";
+import { Box, Typography } from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
+import type { LockInfo } from "../../hooks/usePreviewSync";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -36,12 +36,13 @@ const BlockLockIndicatorInner: React.FC<BlockLockIndicatorProps> = ({
 }) => {
   const isLockedByOther = useMemo(
     () => lock !== null && lock.userId !== currentUserId,
-    [lock, currentUserId]
+    [lock, currentUserId],
   );
 
   const lockedByUsername = useMemo(
-    () => (isLockedByOther && lock ? (lock.username ?? `User ${lock.userId}`) : ''),
-    [isLockedByOther, lock]
+    () =>
+      isLockedByOther && lock ? (lock.username ?? `User ${lock.userId}`) : "",
+    [isLockedByOther, lock],
   );
 
   if (!isLockedByOther) {
@@ -52,40 +53,40 @@ const BlockLockIndicatorInner: React.FC<BlockLockIndicatorProps> = ({
     <Box
       data-testid={`block-lock-wrapper-${blockId}`}
       sx={{
-        position: 'relative',
+        position: "relative",
         border: 2,
-        borderColor: 'warning.main',
+        borderColor: "warning.main",
         borderRadius: 1,
-        overflow: 'visible',
+        overflow: "visible",
       }}
     >
       <Box
         data-testid={`lock-indicator-${blockId}`}
         aria-label={`Block locked by ${lockedByUsername}`}
         sx={{
-          position: 'absolute',
+          position: "absolute",
           top: -12,
           right: 8,
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 0.5,
-          bgcolor: 'warning.light',
-          color: 'warning.contrastText',
+          bgcolor: "warning.light",
+          color: "warning.contrastText",
           px: 1,
           py: 0.25,
           borderRadius: 1,
           zIndex: 1,
         }}
       >
-        <LockIcon sx={{ fontSize: 14, color: 'text.primary' }} />
+        <LockIcon sx={{ fontSize: 14, color: "text.primary" }} />
         <Typography
           variant="caption"
-          sx={{ color: 'text.primary', fontWeight: 500, lineHeight: 1 }}
+          sx={{ color: "text.primary", fontWeight: 500, lineHeight: 1 }}
         >
           Editing: {lockedByUsername}
         </Typography>
       </Box>
-      <Box sx={{ opacity: 0.7, pointerEvents: 'none' }}>{children}</Box>
+      <Box sx={{ opacity: 0.7, pointerEvents: "none" }}>{children}</Box>
     </Box>
   );
 };

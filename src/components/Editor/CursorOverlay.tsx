@@ -9,9 +9,9 @@
  * Step 5.4.3 + 7.5.4
  */
 
-import React, { useMemo } from 'react';
-import { Box, Tooltip, Typography } from '@mui/material';
-import type { CursorPosition } from '../../hooks/usePreviewSync';
+import React, { useMemo } from "react";
+import { Box, Tooltip, Typography } from "@mui/material";
+import type { CursorPosition } from "../../hooks/usePreviewSync";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -42,8 +42,13 @@ interface CursorOverlayProps {
 // Component
 // ---------------------------------------------------------------------------
 
-const CursorOverlayInner: React.FC<CursorOverlayProps> = ({ cursorPositions }) => {
-  const entries = useMemo(() => Array.from(cursorPositions.entries()), [cursorPositions]);
+const CursorOverlayInner: React.FC<CursorOverlayProps> = ({
+  cursorPositions,
+}) => {
+  const entries = useMemo(
+    () => Array.from(cursorPositions.entries()),
+    [cursorPositions],
+  );
 
   const now = Date.now();
 
@@ -51,13 +56,13 @@ const CursorOverlayInner: React.FC<CursorOverlayProps> = ({ cursorPositions }) =
     <Box
       data-testid="cursor-overlay"
       sx={{
-        position: 'absolute',
+        position: "absolute",
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        pointerEvents: 'none',
-        overflow: 'hidden',
+        pointerEvents: "none",
+        overflow: "hidden",
         zIndex: 10,
       }}
     >
@@ -67,7 +72,7 @@ const CursorOverlayInner: React.FC<CursorOverlayProps> = ({ cursorPositions }) =
         const isStale = elapsed > FADE_TIMEOUT_MS;
         const opacity = isStale ? 0 : 1;
         const displayName = cursor.username ?? `User ${userId}`;
-        const roleLabel = cursorData.role ? ` (${cursorData.role})` : '';
+        const roleLabel = cursorData.role ? ` (${cursorData.role})` : "";
         const tooltipTitle = `${displayName}${roleLabel}`;
 
         return (
@@ -76,29 +81,29 @@ const CursorOverlayInner: React.FC<CursorOverlayProps> = ({ cursorPositions }) =
               data-testid={`cursor-${userId}`}
               aria-label={`Cursor: ${displayName}${roleLabel}`}
               sx={{
-                position: 'absolute',
+                position: "absolute",
                 left: cursor.x,
                 top: cursor.y,
                 width: DOT_SIZE,
                 height: DOT_SIZE,
-                borderRadius: '50%',
-                backgroundColor: cursor.color ?? 'primary.main',
+                borderRadius: "50%",
+                backgroundColor: cursor.color ?? "primary.main",
                 opacity,
-                transition: 'opacity 0.5s ease, left 0.1s ease, top 0.1s ease',
-                pointerEvents: 'auto',
-                cursor: 'default',
+                transition: "opacity 0.5s ease, left 0.1s ease, top 0.1s ease",
+                pointerEvents: "auto",
+                cursor: "default",
                 boxShadow: 1,
-                '&::after': {
+                "&::after": {
                   content: '""',
-                  display: 'block',
-                  position: 'absolute',
+                  display: "block",
+                  position: "absolute",
                   top: -2,
                   left: -2,
                   right: -2,
                   bottom: -2,
-                  borderRadius: '50%',
-                  border: '2px solid',
-                  borderColor: cursor.color ?? 'primary.main',
+                  borderRadius: "50%",
+                  border: "2px solid",
+                  borderColor: cursor.color ?? "primary.main",
                   opacity: 0.3,
                 },
               }}

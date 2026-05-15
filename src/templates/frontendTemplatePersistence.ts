@@ -1,9 +1,9 @@
-const STORAGE_KEY = 'tt_frontend_template_website_map';
+const STORAGE_KEY = "tt_frontend_template_website_map";
 
 type FrontendTemplateWebsiteMap = Record<string, string>;
 
 const readMap = (): FrontendTemplateWebsiteMap => {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return {};
   }
 
@@ -14,7 +14,7 @@ const readMap = (): FrontendTemplateWebsiteMap => {
     }
 
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {};
     }
 
@@ -25,7 +25,7 @@ const readMap = (): FrontendTemplateWebsiteMap => {
 };
 
 const writeMap = (map: FrontendTemplateWebsiteMap) => {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
 
@@ -40,8 +40,8 @@ export const storeWebsiteFrontendTemplateId = (
   websiteId: string | number,
   frontendTemplateId: string,
 ) => {
-  const normalizedWebsiteId = String(websiteId || '').trim();
-  const normalizedTemplateId = String(frontendTemplateId || '').trim();
+  const normalizedWebsiteId = String(websiteId || "").trim();
+  const normalizedTemplateId = String(frontendTemplateId || "").trim();
 
   if (!normalizedWebsiteId || !normalizedTemplateId) {
     return;
@@ -57,12 +57,12 @@ export const storeWebsiteFrontendTemplateId = (
 export const getStoredWebsiteFrontendTemplateId = (
   websiteId: string | number | null | undefined,
 ): string | null => {
-  const normalizedWebsiteId = String(websiteId || '').trim();
+  const normalizedWebsiteId = String(websiteId || "").trim();
   if (!normalizedWebsiteId) {
     return null;
   }
 
   const current = readMap();
   const value = current[normalizedWebsiteId];
-  return typeof value === 'string' && value.trim() ? value : null;
+  return typeof value === "string" && value.trim() ? value : null;
 };

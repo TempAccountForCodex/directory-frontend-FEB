@@ -10,12 +10,12 @@
  * is not available (e.g., rendered outside DynamicBlockProvider).
  */
 
-import React, { useCallback, useContext } from 'react';
-import { Box, Alert, Button, Container } from '@mui/material';
-import BlockRenderer from './BlockRenderer';
-import BlockSkeleton from './BlockSkeleton';
-import { DynamicBlockContext } from '../../context/DynamicBlockContext';
-import useDynamicBlockData from '../../hooks/useDynamicBlockData';
+import React, { useCallback, useContext } from "react";
+import { Box, Alert, Button, Container } from "@mui/material";
+import BlockRenderer from "./BlockRenderer";
+import BlockSkeleton from "./BlockSkeleton";
+import { DynamicBlockContext } from "../../context/DynamicBlockContext";
+import useDynamicBlockData from "../../hooks/useDynamicBlockData";
 
 /* ---------------- Registry-driven dataSource mapping (reference) ----------- */
 // Maps block types to their valid endpoint prefixes as understood by
@@ -27,12 +27,12 @@ import useDynamicBlockData from '../../hooks/useDynamicBlockData';
 // explicitly set. Future blocks that depend on DynamicBlockInner to fetch on
 // their behalf should use these prefixes in block.content.dataSource.
 export const BLOCK_DATA_SOURCE: Readonly<Record<string, string>> = {
-  BLOG_FEED: 'blog',
-  BLOG_ARTICLE: 'blog-article',
-  PRODUCT_SHOWCASE: 'products',
-  DIRECTORY_LISTING: 'listing',
-  REVIEWS: 'review',
-  EVENTS_LIST: 'event',
+  BLOG_FEED: "blog",
+  BLOG_ARTICLE: "blog-article",
+  PRODUCT_SHOWCASE: "products",
+  DIRECTORY_LISTING: "listing",
+  REVIEWS: "review",
+  EVENTS_LIST: "event",
 };
 
 /* ---------------- Types ---------------- */
@@ -75,7 +75,7 @@ const DynamicBlockInner: React.FC<DynamicBlockRendererProps> = ({
   const { data, loading, error, refresh } = useDynamicBlockData(
     block.id,
     block.blockType,
-    dataSource
+    dataSource,
   );
 
   const handleRetry = useCallback(() => {
@@ -106,7 +106,9 @@ const DynamicBlockInner: React.FC<DynamicBlockRendererProps> = ({
   }
 
   // Merge dynamic data into block.content
-  const mergedBlock: Block = data ? { ...block, content: { ...block.content, ...data } } : block;
+  const mergedBlock: Block = data
+    ? { ...block, content: { ...block.content, ...data } }
+    : block;
 
   return (
     <BlockRenderer
@@ -122,7 +124,9 @@ const DynamicBlockInner: React.FC<DynamicBlockRendererProps> = ({
 };
 
 /* ---------------- Main component ---------------- */
-const DynamicBlockRendererBase: React.FC<DynamicBlockRendererProps> = (props) => {
+const DynamicBlockRendererBase: React.FC<DynamicBlockRendererProps> = (
+  props,
+) => {
   const { block } = props;
 
   // Safely access context — context may be undefined if provider is absent
@@ -153,7 +157,7 @@ const DynamicBlockRendererBase: React.FC<DynamicBlockRendererProps> = (props) =>
 /* ---------------- Custom memo comparator ---------------- */
 const arePropsEqual = (
   prev: DynamicBlockRendererProps,
-  next: DynamicBlockRendererProps
+  next: DynamicBlockRendererProps,
 ): boolean => {
   if (
     prev.block.id !== next.block.id ||
@@ -172,11 +176,15 @@ const arePropsEqual = (
   const prevContent = prev.block.content;
   const nextContent = next.block.content;
   if (prevContent === nextContent) return true;
-  if (prevContent == null || nextContent == null) return prevContent == nextContent;
+  if (prevContent == null || nextContent == null)
+    return prevContent == nextContent;
   return JSON.stringify(prevContent) === JSON.stringify(nextContent);
 };
 
-const DynamicBlockRenderer = React.memo(DynamicBlockRendererBase, arePropsEqual);
-DynamicBlockRenderer.displayName = 'DynamicBlockRenderer';
+const DynamicBlockRenderer = React.memo(
+  DynamicBlockRendererBase,
+  arePropsEqual,
+);
+DynamicBlockRenderer.displayName = "DynamicBlockRenderer";
 
 export default DynamicBlockRenderer;

@@ -5,13 +5,13 @@
  * Shows: block type badge, quick action buttons (Edit, Duplicate, Delete, Move Up/Down, Deselect).
  * Animates in/out using framer-motion AnimatePresence.
  */
-import React, { useCallback } from 'react';
-import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Edit3, Copy, Trash2, ChevronUp, ChevronDown, X } from 'lucide-react';
+import React, { useCallback } from "react";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import { AnimatePresence, motion } from "framer-motion";
+import { Edit3, Copy, Trash2, ChevronUp, ChevronDown, X } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -70,15 +70,15 @@ const SelectionOverlay = React.memo(function SelectionOverlay({
           <Box
             data-testid="selection-overlay"
             sx={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 1,
               px: 1.5,
               py: 0.75,
               mb: 1,
               borderRadius: 1,
-              backgroundColor: colors.panelBg || '#121517',
-              border: `1px solid ${colors.border || 'rgba(55,140,146,0.15)'}`,
+              backgroundColor: colors.panelBg || "#121517",
+              border: `1px solid ${colors.border || "rgba(55,140,146,0.15)"}`,
             }}
           >
             <Chip
@@ -86,9 +86,9 @@ const SelectionOverlay = React.memo(function SelectionOverlay({
               size="small"
               sx={{
                 fontWeight: 600,
-                fontSize: '0.7rem',
-                backgroundColor: 'rgba(25, 118, 210, 0.15)',
-                color: '#1976d2',
+                fontSize: "0.7rem",
+                backgroundColor: "rgba(25, 118, 210, 0.15)",
+                color: "#1976d2",
               }}
             />
 

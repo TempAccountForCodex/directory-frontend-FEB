@@ -14,35 +14,35 @@
  * - Stable key props (block.id) in list
  */
 
-import React, { useCallback } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+import React, { useCallback } from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
 import {
   SortableContext,
   useSortable,
   arrayMove,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // ---------------------------------------------------------------------------
 // Block type label mapping (matches backend BLOCK_TYPES registry labels)
 // ---------------------------------------------------------------------------
 
 const BLOCK_TYPE_LABELS: Record<string, string> = {
-  HERO: 'Hero',
-  FEATURES: 'Features',
-  TESTIMONIALS: 'Testimonials',
-  CTA: 'Call To Action',
-  CONTACT: 'Contact',
-  TEXT: 'Text',
+  HERO: "Hero",
+  FEATURES: "Features",
+  TESTIMONIALS: "Testimonials",
+  CTA: "Call To Action",
+  CONTACT: "Contact",
+  TEXT: "Text",
 };
 
 /**
@@ -104,10 +104,11 @@ function SortableBlockItem({
   onRemove,
   onToggleVisibility,
 }: SortableBlockItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: block.id,
-    disabled,
-  });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({
+      id: block.id,
+      disabled,
+    });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -123,7 +124,7 @@ function SortableBlockItem({
       e.stopPropagation();
       onRemove(block.id);
     },
-    [onRemove, block.id]
+    [onRemove, block.id],
   );
 
   const handleToggleVisibility = useCallback(
@@ -131,7 +132,7 @@ function SortableBlockItem({
       e.stopPropagation();
       onToggleVisibility(block.id);
     },
-    [onToggleVisibility, block.id]
+    [onToggleVisibility, block.id],
   );
 
   const label = getBlockLabel(block.blockType);
@@ -140,18 +141,20 @@ function SortableBlockItem({
     <Box ref={setNodeRef} style={style} sx={{ mb: 0.5 }}>
       <Paper
         variant="outlined"
-        aria-label={`Block: ${label}${isSelected ? ' (selected)' : ''}`}
+        aria-label={`Block: ${label}${isSelected ? " (selected)" : ""}`}
         sx={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 0.5,
           p: 1,
-          cursor: disabled ? 'default' : 'pointer',
-          borderColor: isSelected ? 'primary.main' : 'divider',
-          bgcolor: isSelected ? 'action.selected' : 'background.paper',
+          cursor: disabled ? "default" : "pointer",
+          borderColor: isSelected ? "primary.main" : "divider",
+          bgcolor: isSelected ? "action.selected" : "background.paper",
           opacity: block.isVisible ? 1 : 0.6,
-          '&:hover': disabled ? {} : { borderColor: 'primary.light', bgcolor: 'action.hover' },
-          transition: 'all 0.15s ease',
+          "&:hover": disabled
+            ? {}
+            : { borderColor: "primary.light", bgcolor: "action.hover" },
+          transition: "all 0.15s ease",
         }}
         onClick={handleSelect}
       >
@@ -162,7 +165,7 @@ function SortableBlockItem({
           size="small"
           disabled={disabled}
           aria-label={`Drag block ${label}`}
-          sx={{ cursor: disabled ? 'not-allowed' : 'grab' }}
+          sx={{ cursor: disabled ? "not-allowed" : "grab" }}
           onClick={(e: React.MouseEvent) => e.stopPropagation()}
         >
           <DragIndicatorIcon fontSize="small" />
@@ -173,7 +176,7 @@ function SortableBlockItem({
           variant="body2"
           sx={{
             flexGrow: 1,
-            color: 'text.primary',
+            color: "text.primary",
             fontWeight: isSelected ? 600 : 400,
           }}
         >
@@ -186,7 +189,7 @@ function SortableBlockItem({
           disabled={disabled}
           aria-label={`Toggle visibility for block ${label}`}
           onClick={handleToggleVisibility}
-          sx={{ color: block.isVisible ? 'text.secondary' : 'text.disabled' }}
+          sx={{ color: block.isVisible ? "text.secondary" : "text.disabled" }}
         >
           {block.isVisible ? (
             <VisibilityIcon fontSize="small" />
@@ -201,7 +204,7 @@ function SortableBlockItem({
           disabled={disabled}
           aria-label={`Remove block ${label}`}
           onClick={handleRemove}
-          sx={{ color: 'error.main' }}
+          sx={{ color: "error.main" }}
         >
           <DeleteIcon fontSize="small" />
         </IconButton>
@@ -236,7 +239,7 @@ const BlockList: React.FC<BlockListProps> = React.memo(
           }
         }
       },
-      [blocks, onReorder]
+      [blocks, onReorder],
     );
 
     // --- Empty state ---
@@ -244,16 +247,18 @@ const BlockList: React.FC<BlockListProps> = React.memo(
       return (
         <Box
           sx={{
-            textAlign: 'center',
+            textAlign: "center",
             py: 4,
             px: 2,
-            color: 'text.secondary',
-            border: '1px dashed',
-            borderColor: 'divider',
+            color: "text.secondary",
+            border: "1px dashed",
+            borderColor: "divider",
             borderRadius: 1,
           }}
         >
-          <Typography variant="body2">No blocks added yet. Add a block to get started.</Typography>
+          <Typography variant="body2">
+            No blocks added yet. Add a block to get started.
+          </Typography>
         </Box>
       );
     }
@@ -279,10 +284,10 @@ const BlockList: React.FC<BlockListProps> = React.memo(
         </SortableContext>
       </DndContext>
     );
-  }
+  },
 );
 
-BlockList.displayName = 'BlockList';
+BlockList.displayName = "BlockList";
 
 export { BlockList };
 export default BlockList;

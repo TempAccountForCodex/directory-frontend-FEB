@@ -14,29 +14,35 @@
  * 10. DocSearch click on result navigates to article
  */
 
-import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
+import React from "react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
 
 // ---------------------------------------------------------------------------
 // Mock react-router-dom
 // ---------------------------------------------------------------------------
 const mockNavigate = vi.fn();
-vi.mock('react-router-dom', () => ({
+vi.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
   Link: React.forwardRef(({ to, children, ...props }: any, ref: any) => (
     <a ref={ref} href={to} {...props}>
       {children}
     </a>
   )),
-  useLocation: () => ({ pathname: '/docs' }),
+  useLocation: () => ({ pathname: "/docs" }),
 }));
 
 // ---------------------------------------------------------------------------
 // Mock axios
 // ---------------------------------------------------------------------------
-vi.mock('axios', () => {
+vi.mock("axios", () => {
   const axiosInstance = {
     get: vi.fn(),
     post: vi.fn(),
@@ -56,14 +62,14 @@ vi.mock('axios', () => {
     },
   };
 });
-import axios from 'axios';
+import axios from "axios";
 const mockedAxios = axios as any;
 
 // ---------------------------------------------------------------------------
 // Mock apiClient (DocSearch uses apiClient.get, not axios.get directly)
 // ---------------------------------------------------------------------------
 const mockApiGet = vi.fn();
-vi.mock('../../../api/client', () => ({
+vi.mock("../../../api/client", () => ({
   apiClient: {
     get: (...args: unknown[]) => mockApiGet(...args),
     post: vi.fn(),
@@ -84,49 +90,57 @@ vi.mock('../../../api/client', () => ({
 // Mock useMediaQuery for mobile tests
 // ---------------------------------------------------------------------------
 const mockUseMediaQuery = vi.fn(() => false);
-vi.mock('@mui/material/useMediaQuery', () => ({ default: () => mockUseMediaQuery() }));
+vi.mock("@mui/material/useMediaQuery", () => ({
+  default: () => mockUseMediaQuery(),
+}));
 
 // ---------------------------------------------------------------------------
 // Import components under test
 // ---------------------------------------------------------------------------
-import DocsLayout from '../DocsLayout';
-import DocSearch from '../DocSearch';
-import TableOfContents from '../TableOfContents';
+import DocsLayout from "../DocsLayout";
+import DocSearch from "../DocSearch";
+import TableOfContents from "../TableOfContents";
 
 // ---------------------------------------------------------------------------
 // DocsLayout tests
 // ---------------------------------------------------------------------------
-describe('DocsLayout', () => {
-  it('renders sidebar and main content area', () => {
+describe("DocsLayout", () => {
+  it("renders sidebar and main content area", () => {
     render(
       <DocsLayout>
         <div data-testid="main-content">Article content here</div>
-      </DocsLayout>
+      </DocsLayout>,
     );
-    expect(screen.getByTestId('docs-sidebar')).toBeInTheDocument();
-    expect(screen.getByTestId('main-content')).toBeInTheDocument();
+    expect(screen.getByTestId("docs-sidebar")).toBeInTheDocument();
+    expect(screen.getByTestId("main-content")).toBeInTheDocument();
   }, 15000);
 
-  it('renders navigation sections in sidebar', () => {
+  it("renders navigation sections in sidebar", () => {
     render(
       <DocsLayout
-        sections={[{ slug: 'getting-started', title: 'Getting Started', articleCount: 5 }]}
+        sections={[
+          {
+            slug: "getting-started",
+            title: "Getting Started",
+            articleCount: 5,
+          },
+        ]}
       >
         <div>Content</div>
-      </DocsLayout>
+      </DocsLayout>,
     );
-    expect(screen.getByText('Getting Started')).toBeInTheDocument();
+    expect(screen.getByText("Getting Started")).toBeInTheDocument();
   });
 
-  it('renders docs title/brand in sidebar', () => {
+  it("renders docs title/brand in sidebar", () => {
     render(
       <DocsLayout>
         <div>Content</div>
-      </DocsLayout>
+      </DocsLayout>,
     );
-    expect(screen.getByTestId('docs-sidebar')).toBeInTheDocument();
+    expect(screen.getByTestId("docs-sidebar")).toBeInTheDocument();
     // Should have some navigation element
-    expect(screen.getByTestId('docs-nav')).toBeInTheDocument();
+    expect(screen.getByTestId("docs-nav")).toBeInTheDocument();
   });
 });
 
@@ -134,54 +148,56 @@ describe('DocsLayout', () => {
 // DocSearch tests — use a stub version of DocSearch that exposes searchable results
 // We mock DocSearch entirely since testing internal debounce timing is flaky
 // ---------------------------------------------------------------------------
-describe('DocSearch', () => {
+describe("DocSearch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders a search input', () => {
+  it("renders a search input", () => {
     render(<DocSearch />);
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole("textbox");
     expect(input).toBeInTheDocument();
   });
 
-  it('shows search results in dropdown after query', async () => {
+  it("shows search results in dropdown after query", async () => {
     mockApiGet.mockResolvedValue({
       data: {
         articles: [
           {
-            id: '1',
-            title: 'Getting Started',
-            slug: 'getting-started',
-            category: 'getting-started',
+            id: "1",
+            title: "Getting Started",
+            slug: "getting-started",
+            category: "getting-started",
           },
         ],
       },
     });
 
     render(<DocSearch />);
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole("textbox");
 
     // Type a query that passes the MIN_QUERY_LENGTH check (≥2 chars)
-    fireEvent.change(input, { target: { value: 'getting' } });
+    fireEvent.change(input, { target: { value: "getting" } });
 
     // Wait for the API to be called (debounce fires after 300ms)
     // Use a longer timeout to accommodate debounce
     await waitFor(
       () => {
         expect(mockApiGet).toHaveBeenCalledWith(
-          expect.stringContaining('/docs/search'),
-          expect.objectContaining({ params: expect.objectContaining({ q: 'getting' }) })
+          expect.stringContaining("/docs/search"),
+          expect.objectContaining({
+            params: expect.objectContaining({ q: "getting" }),
+          }),
         );
       },
-      { timeout: 2000 }
+      { timeout: 2000 },
     );
 
     await waitFor(
       () => {
-        expect(screen.getByText('Getting Started')).toBeInTheDocument();
+        expect(screen.getByText("Getting Started")).toBeInTheDocument();
       },
-      { timeout: 2000 }
+      { timeout: 2000 },
     );
   });
 
@@ -191,53 +207,55 @@ describe('DocSearch', () => {
     });
 
     render(<DocSearch />);
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole("textbox");
 
-    fireEvent.change(input, { target: { value: 'xyznotfound' } });
+    fireEvent.change(input, { target: { value: "xyznotfound" } });
 
     await waitFor(
       () => {
-        expect(screen.getByText(/No articles match your search/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/No articles match your search/i),
+        ).toBeInTheDocument();
       },
-      { timeout: 2000 }
+      { timeout: 2000 },
     );
   });
 
-  it('navigates to article when result is clicked', async () => {
+  it("navigates to article when result is clicked", async () => {
     mockApiGet.mockResolvedValue({
       data: {
         articles: [
           {
-            id: '1',
-            title: 'Getting Started',
-            slug: 'getting-started',
-            category: 'getting-started',
+            id: "1",
+            title: "Getting Started",
+            slug: "getting-started",
+            category: "getting-started",
           },
         ],
       },
     });
 
     render(<DocSearch />);
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole("textbox");
 
-    fireEvent.change(input, { target: { value: 'getting' } });
+    fireEvent.change(input, { target: { value: "getting" } });
 
     await waitFor(
       () => {
-        expect(screen.getByText('Getting Started')).toBeInTheDocument();
+        expect(screen.getByText("Getting Started")).toBeInTheDocument();
       },
-      { timeout: 2000 }
+      { timeout: 2000 },
     );
 
-    fireEvent.click(screen.getByText('Getting Started'));
-    expect(mockNavigate).toHaveBeenCalledWith('/docs/getting-started');
+    fireEvent.click(screen.getByText("Getting Started"));
+    expect(mockNavigate).toHaveBeenCalledWith("/docs/getting-started");
   });
 
-  it('does not call API when query is less than 2 characters', async () => {
+  it("does not call API when query is less than 2 characters", async () => {
     render(<DocSearch />);
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole("textbox");
 
-    fireEvent.change(input, { target: { value: 'g' } });
+    fireEvent.change(input, { target: { value: "g" } });
 
     // Wait a short while — API should NOT be called for 1-char input
     await new Promise((r) => setTimeout(r, 50));
@@ -248,32 +266,35 @@ describe('DocSearch', () => {
 // ---------------------------------------------------------------------------
 // TableOfContents tests
 // ---------------------------------------------------------------------------
-describe('TableOfContents', () => {
-  it('extracts h2 headings from markdown content', () => {
-    const content = '## Introduction\n\nSome text here.\n\n## Setup\n\nMore text.';
+describe("TableOfContents", () => {
+  it("extracts h2 headings from markdown content", () => {
+    const content =
+      "## Introduction\n\nSome text here.\n\n## Setup\n\nMore text.";
     render(<TableOfContents content={content} />);
-    expect(screen.getByText('Introduction')).toBeInTheDocument();
-    expect(screen.getByText('Setup')).toBeInTheDocument();
+    expect(screen.getByText("Introduction")).toBeInTheDocument();
+    expect(screen.getByText("Setup")).toBeInTheDocument();
   });
 
-  it('extracts h3 headings from markdown content', () => {
-    const content = '## Section One\n\n### Subsection A\n\nText.\n\n### Subsection B\n\nMore.';
+  it("extracts h3 headings from markdown content", () => {
+    const content =
+      "## Section One\n\n### Subsection A\n\nText.\n\n### Subsection B\n\nMore.";
     render(<TableOfContents content={content} />);
-    expect(screen.getByText('Section One')).toBeInTheDocument();
-    expect(screen.getByText('Subsection A')).toBeInTheDocument();
-    expect(screen.getByText('Subsection B')).toBeInTheDocument();
+    expect(screen.getByText("Section One")).toBeInTheDocument();
+    expect(screen.getByText("Subsection A")).toBeInTheDocument();
+    expect(screen.getByText("Subsection B")).toBeInTheDocument();
   });
 
-  it('renders anchor links for each heading', () => {
-    const content = '## Getting Started\n\nText.\n\n## Advanced Topics\n\nMore text.';
+  it("renders anchor links for each heading", () => {
+    const content =
+      "## Getting Started\n\nText.\n\n## Advanced Topics\n\nMore text.";
     render(<TableOfContents content={content} />);
 
-    const links = screen.getAllByRole('link');
+    const links = screen.getAllByRole("link");
     expect(links.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('shows empty state when no headings found', () => {
-    const content = 'Just a paragraph with no headings.';
+  it("shows empty state when no headings found", () => {
+    const content = "Just a paragraph with no headings.";
     const { container } = render(<TableOfContents content={content} />);
     // Should render nothing or empty container
     const toc = container.querySelector('[data-testid="toc"]');

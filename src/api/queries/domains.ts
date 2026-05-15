@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 /**
  * Domain / subdomain React Query hooks.
@@ -62,9 +62,11 @@ export function useDomains(websiteId: number | string | null | undefined) {
   const { data: user } = useAuthMe();
 
   return useQuery<DomainSummary>({
-    queryKey: queryKeys.domains.list(websiteId ?? ''),
+    queryKey: queryKeys.domains.list(websiteId ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(`/websites/${websiteId}`, { signal });
+      const response = await apiClient.get(`/websites/${websiteId}`, {
+        signal,
+      });
       const data = response.data?.data ?? response.data ?? {};
       return {
         websiteId: websiteId as number | string,
@@ -85,11 +87,11 @@ export function useDomains(websiteId: number | string | null | undefined) {
  * characters so idle typing does not issue stray requests.
  */
 export function useSubdomainCheck(subdomain: string) {
-  const trimmed = (subdomain ?? '').trim();
+  const trimmed = (subdomain ?? "").trim();
   return useQuery<SubdomainCheckResponse>({
     queryKey: queryKeys.domains.subdomainCheck(trimmed),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/domains/check-availability', {
+      const response = await apiClient.get("/domains/check-availability", {
         params: { subdomain: trimmed },
         signal,
       });
@@ -109,14 +111,21 @@ export function useChangeSubdomain() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ websiteId, subdomain }: ChangeSubdomainVars) => {
-      const response = await apiClient.patch(`/domains/${websiteId}/subdomain`, {
-        subdomain,
-      });
+      const response = await apiClient.patch(
+        `/domains/${websiteId}/subdomain`,
+        {
+          subdomain,
+        },
+      );
       return response.data;
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.domains.list(vars.websiteId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.websites.detail(vars.websiteId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.domains.list(vars.websiteId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.websites.detail(vars.websiteId),
+      });
     },
   });
 }
@@ -130,14 +139,21 @@ export function useCreateDomain() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ websiteId, domain }: AddCustomDomainVars) => {
-      const response = await apiClient.post(`/domains/${websiteId}/custom-domain`, {
-        domain,
-      });
+      const response = await apiClient.post(
+        `/domains/${websiteId}/custom-domain`,
+        {
+          domain,
+        },
+      );
       return response.data;
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.domains.list(vars.websiteId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.websites.detail(vars.websiteId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.domains.list(vars.websiteId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.websites.detail(vars.websiteId),
+      });
     },
   });
 }
@@ -152,12 +168,18 @@ export function useVerifyDomain() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ websiteId }: VerifyDomainVars) => {
-      const response = await apiClient.post(`/domains/${websiteId}/custom-domain/verify`);
+      const response = await apiClient.post(
+        `/domains/${websiteId}/custom-domain/verify`,
+      );
       return response.data;
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.domains.list(vars.websiteId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.websites.detail(vars.websiteId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.domains.list(vars.websiteId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.websites.detail(vars.websiteId),
+      });
     },
   });
 }
@@ -171,12 +193,18 @@ export function useDeleteDomain() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ websiteId }: DeleteDomainVars) => {
-      const response = await apiClient.delete(`/domains/${websiteId}/custom-domain`);
+      const response = await apiClient.delete(
+        `/domains/${websiteId}/custom-domain`,
+      );
       return response.data;
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.domains.list(vars.websiteId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.websites.detail(vars.websiteId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.domains.list(vars.websiteId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.websites.detail(vars.websiteId),
+      });
     },
   });
 }

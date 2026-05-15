@@ -17,9 +17,15 @@
  * Security: no dangerouslySetInnerHTML
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import useTenantUrl from '../../../hooks/useTenantUrl';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import { useNavigate } from "react-router-dom";
+import useTenantUrl from "../../../hooks/useTenantUrl";
 import {
   Alert,
   Box,
@@ -32,11 +38,15 @@ import {
   Skeleton,
   TextField,
   Typography,
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import useDynamicBlockData from '../../../hooks/useDynamicBlockData';
-import BlogCard, { type BlogPost, type BlogCardConfig, type BlogCardColors } from './BlogCard';
-import { API_URL } from '@/config/api';
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import useDynamicBlockData from "../../../hooks/useDynamicBlockData";
+import BlogCard, {
+  type BlogPost,
+  type BlogCardConfig,
+  type BlogCardColors,
+} from "./BlogCard";
+import { API_URL } from "@/config/api";
 
 /* ===================== Types ===================== */
 
@@ -50,7 +60,7 @@ interface Block {
 interface BlogFeedContent {
   heading?: string;
   subheading?: string;
-  layout?: 'grid' | 'list' | 'featured';
+  layout?: "grid" | "list" | "featured";
   columns?: number;
   postsPerPage?: number;
   showSearch?: boolean;
@@ -96,52 +106,67 @@ const DEBOUNCE_MS = 300;
 
 /* ===================== Helpers ===================== */
 
-function buildReadMorePath(readMoreLink: string | undefined, slug: string): string {
+function buildReadMorePath(
+  readMoreLink: string | undefined,
+  slug: string,
+): string {
   if (!readMoreLink) return `/blog/${slug}`;
-  if (readMoreLink.includes('{slug}')) {
-    return readMoreLink.replace('{slug}', slug);
+  if (readMoreLink.includes("{slug}")) {
+    return readMoreLink.replace("{slug}", slug);
   }
   return `/blog/${slug}`;
 }
 
 /* ===================== Skeleton ===================== */
 
-const BlogFeedSkeleton: React.FC<{ columns: number }> = React.memo(({ columns }) => {
-  const count = Math.min(columns * 3, 9);
-  const mdCols = Math.floor(12 / columns) as 1 | 2 | 3 | 4 | 6 | 12;
+const BlogFeedSkeleton: React.FC<{ columns: number }> = React.memo(
+  ({ columns }) => {
+    const count = Math.min(columns * 3, 9);
+    const mdCols = Math.floor(12 / columns) as 1 | 2 | 3 | 4 | 6 | 12;
 
-  return (
-    <Container sx={{ py: 6 }}>
-      <Skeleton variant="text" sx={{ fontSize: '2rem', mb: 1, width: '40%', mx: 'auto' }} />
-      <Skeleton variant="text" sx={{ fontSize: '1rem', mb: 4, width: '60%', mx: 'auto' }} />
-      <Grid container spacing={3}>
-        {Array.from({ length: count }).map((_, i) => (
-          <Grid item xs={12} sm={6} md={mdCols} key={i}>
-            <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 2 }} />
-          </Grid>
-        ))}
-      </Grid>
-    </Container>
-  );
-});
+    return (
+      <Container sx={{ py: 6 }}>
+        <Skeleton
+          variant="text"
+          sx={{ fontSize: "2rem", mb: 1, width: "40%", mx: "auto" }}
+        />
+        <Skeleton
+          variant="text"
+          sx={{ fontSize: "1rem", mb: 4, width: "60%", mx: "auto" }}
+        />
+        <Grid container spacing={3}>
+          {Array.from({ length: count }).map((_, i) => (
+            <Grid item xs={12} sm={6} md={mdCols} key={i}>
+              <Skeleton
+                variant="rectangular"
+                height={250}
+                sx={{ borderRadius: 2 }}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    );
+  },
+);
 
-BlogFeedSkeleton.displayName = 'BlogFeedSkeleton';
+BlogFeedSkeleton.displayName = "BlogFeedSkeleton";
 
 /* ===================== Main Component ===================== */
 
 const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
   block,
-  primaryColor = '#378C92',
-  headingColor = '#252525',
-  bodyColor = '#6A6F78',
+  primaryColor = "#378C92",
+  headingColor = "#252525",
+  bodyColor = "#6A6F78",
   onCtaClick,
 }) => {
   const { content } = block;
 
   const {
-    heading = '',
-    subheading = '',
-    layout = 'grid',
+    heading = "",
+    subheading = "",
+    layout = "grid",
     columns = 3,
     postsPerPage = 9,
     showSearch = true,
@@ -152,33 +177,36 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
     showExcerpt = true,
     showImage = true,
     excerptLength = 150,
-    sortBy = 'publishedAt',
-    sortOrder: configSortOrder = 'desc',
-    emptyMessage = 'No articles found.',
-    readMoreText = 'Read More',
-    readMoreLink = '/blog/{slug}',
+    sortBy = "publishedAt",
+    sortOrder: configSortOrder = "desc",
+    emptyMessage = "No articles found.",
+    readMoreText = "Read More",
+    readMoreLink = "/blog/{slug}",
   } = content;
 
   /* --- Local state --- */
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [categories, setCategories] = useState<string[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   /* --- Debounce search --- */
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => {
-      setDebouncedSearch(value);
-      setCurrentPage(1);
-    }, DEBOUNCE_MS);
-  }, []);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearchQuery(value);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
+        setDebouncedSearch(value);
+        setCurrentPage(1);
+      }, DEBOUNCE_MS);
+    },
+    [],
+  );
 
   /* --- Dynamic data source (query string) --- */
   const dataSource = useMemo(() => {
@@ -188,13 +216,24 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
       sortBy,
       sortOrder: configSortOrder,
     });
-    if (debouncedSearch) params.set('search', debouncedSearch);
-    if (selectedCategory) params.set('category', selectedCategory);
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (selectedCategory) params.set("category", selectedCategory);
     return `blog?${params.toString()}`;
-  }, [currentPage, postsPerPage, sortBy, configSortOrder, debouncedSearch, selectedCategory]);
+  }, [
+    currentPage,
+    postsPerPage,
+    sortBy,
+    configSortOrder,
+    debouncedSearch,
+    selectedCategory,
+  ]);
 
   /* --- Fetch data via useDynamicBlockData --- */
-  const { data, loading, error } = useDynamicBlockData(block.id, block.blockType, dataSource);
+  const { data, loading, error } = useDynamicBlockData(
+    block.id,
+    block.blockType,
+    dataSource,
+  );
 
   /* --- Resolve posts and pagination from data or content (initial SSR) --- */
   const posts: BlogPost[] = useMemo(() => {
@@ -253,25 +292,28 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
       const path = buildReadMorePath(readMoreLink, post.slug);
 
       // External links (http/https) use window.location.href
-      if (path.startsWith('http://') || path.startsWith('https://')) {
+      if (path.startsWith("http://") || path.startsWith("https://")) {
         window.location.href = path;
       } else {
         navigate(buildUrl(path));
       }
     },
-    [navigate, buildUrl, onCtaClick, block.blockType, readMoreLink]
+    [navigate, buildUrl, onCtaClick, block.blockType, readMoreLink],
   );
 
   /* --- Category chip click --- */
   const handleCategoryClick = useCallback((category: string) => {
-    setSelectedCategory((prev) => (prev === category ? '' : category));
+    setSelectedCategory((prev) => (prev === category ? "" : category));
     setCurrentPage(1);
   }, []);
 
   /* --- Page change --- */
-  const handlePageChange = useCallback((_: React.ChangeEvent<unknown>, page: number) => {
-    setCurrentPage(page);
-  }, []);
+  const handlePageChange = useCallback(
+    (_: React.ChangeEvent<unknown>, page: number) => {
+      setCurrentPage(page);
+    },
+    [],
+  );
 
   /* --- Config for BlogCard --- */
   const cardConfig: BlogCardConfig = useMemo(
@@ -284,16 +326,27 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
       readMoreText,
       readMoreLink,
     }),
-    [showImage, showAuthor, showDate, showExcerpt, excerptLength, readMoreText, readMoreLink]
+    [
+      showImage,
+      showAuthor,
+      showDate,
+      showExcerpt,
+      excerptLength,
+      readMoreText,
+      readMoreLink,
+    ],
   );
 
   const cardColors: BlogCardColors = useMemo(
     () => ({ primaryColor, headingColor, bodyColor }),
-    [primaryColor, headingColor, bodyColor]
+    [primaryColor, headingColor, bodyColor],
   );
 
   /* --- Responsive grid columns --- */
-  const mdCols = useMemo(() => Math.floor(12 / columns) as 1 | 2 | 3 | 4 | 6 | 12, [columns]);
+  const mdCols = useMemo(
+    () => Math.floor(12 / columns) as 1 | 2 | 3 | 4 | 6 | 12,
+    [columns],
+  );
 
   /* --- Render --- */
 
@@ -316,13 +369,13 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
   return (
     <Box
       component="section"
-      aria-label={heading || 'Blog Feed'}
-      sx={{ py: 8, bgcolor: 'background.default' }}
+      aria-label={heading || "Blog Feed"}
+      sx={{ py: 8, bgcolor: "background.default" }}
     >
       <Container maxWidth="lg">
         {/* Header */}
         {(heading || subheading) && (
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ textAlign: "center", mb: 4 }}>
             {heading && (
               <Typography
                 variant="h3"
@@ -336,7 +389,12 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
             {subheading && (
               <Typography
                 variant="h6"
-                sx={{ color: bodyColor, fontWeight: 400, maxWidth: 600, mx: 'auto' }}
+                sx={{
+                  color: bodyColor,
+                  fontWeight: 400,
+                  maxWidth: 600,
+                  mx: "auto",
+                }}
               >
                 {subheading}
               </Typography>
@@ -353,7 +411,7 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
               placeholder="Search articles..."
               value={searchQuery}
               onChange={handleSearchChange}
-              inputProps={{ 'aria-label': 'Search articles' }}
+              inputProps={{ "aria-label": "Search articles" }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -361,7 +419,7 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
                   </InputAdornment>
                 ),
               }}
-              sx={{ maxWidth: 480, display: 'block', mx: 'auto' }}
+              sx={{ maxWidth: 480, display: "block", mx: "auto" }}
             />
           </Box>
         )}
@@ -369,7 +427,13 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
         {/* Category Filter */}
         {showCategories && (categories.length > 0 || categoriesLoading) && (
           <Box
-            sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center', mb: 3 }}
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1,
+              justifyContent: "center",
+              mb: 3,
+            }}
             role="group"
             aria-label="Category filter"
           >
@@ -381,15 +445,19 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
                   key={cat}
                   label={cat}
                   clickable
-                  variant={selectedCategory === cat ? 'filled' : 'outlined'}
+                  variant={selectedCategory === cat ? "filled" : "outlined"}
                   onClick={() => handleCategoryClick(cat)}
                   aria-pressed={selectedCategory === cat}
                   sx={{
                     borderColor: primaryColor,
-                    color: selectedCategory === cat ? 'white' : primaryColor,
-                    bgcolor: selectedCategory === cat ? primaryColor : 'transparent',
-                    '&:hover': {
-                      bgcolor: selectedCategory === cat ? primaryColor : `${primaryColor}1A`,
+                    color: selectedCategory === cat ? "white" : primaryColor,
+                    bgcolor:
+                      selectedCategory === cat ? primaryColor : "transparent",
+                    "&:hover": {
+                      bgcolor:
+                        selectedCategory === cat
+                          ? primaryColor
+                          : `${primaryColor}1A`,
                     },
                   }}
                 />
@@ -400,19 +468,23 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
 
         {/* Loading indicator for subsequent loads (search/filter/page change) */}
         {loading && posts.length > 0 && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
             <CircularProgress size={24} />
           </Box>
         )}
 
         {/* Posts Grid */}
         {posts.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }} role="status" aria-label="No posts found">
+          <Box
+            sx={{ textAlign: "center", py: 8 }}
+            role="status"
+            aria-label="No posts found"
+          >
             <Typography variant="body1" sx={{ color: bodyColor }}>
               {emptyMessage}
             </Typography>
           </Box>
-        ) : layout === 'featured' ? (
+        ) : layout === "featured" ? (
           /* Featured Layout: first post large + rest in grid */
           <Box>
             {posts[0] && (
@@ -440,9 +512,9 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
               </Grid>
             )}
           </Box>
-        ) : layout === 'list' ? (
+        ) : layout === "list" ? (
           /* List Layout: single column stacked */
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {posts.map((post) => (
               <BlogCard
                 key={post.id}
@@ -471,7 +543,7 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
 
         {/* Pagination */}
         {showPagination && pagination && pagination.totalPages > 1 && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
             <Pagination
               count={pagination.totalPages}
               page={currentPage}
@@ -486,10 +558,9 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
   );
 };
 
-BlogFeedBlockBase.displayName = 'BlogFeedBlock';
+BlogFeedBlockBase.displayName = "BlogFeedBlock";
 
 const BlogFeedBlock = React.memo(BlogFeedBlockBase);
-BlogFeedBlock.displayName = 'BlogFeedBlock';
+BlogFeedBlock.displayName = "BlogFeedBlock";
 
 export default BlogFeedBlock;
-

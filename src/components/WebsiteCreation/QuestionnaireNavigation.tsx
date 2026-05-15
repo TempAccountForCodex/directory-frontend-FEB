@@ -5,7 +5,7 @@
  * Step 3.17.
  */
 
-import React, { useEffect, useCallback, useMemo, useState } from 'react';
+import React, { useEffect, useCallback, useMemo, useState } from "react";
 import {
   Box,
   Tooltip,
@@ -15,18 +15,18 @@ import {
   alpha,
   useMediaQuery,
   useTheme,
-} from '@mui/material';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+} from "@mui/material";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 // @ts-ignore
 import {
   DashboardGradientButton,
   DashboardCancelButton,
   DashboardActionButton,
-} from '../Dashboard/shared';
+} from "../Dashboard/shared";
 // @ts-ignore
-import { getDashboardColors } from '../../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-import { apiClient } from '../../api/client';
+import { getDashboardColors } from "../../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import { apiClient } from "../../api/client";
 
 interface UsageData {
   plan: string;
@@ -57,11 +57,11 @@ export default function QuestionnaireNavigation({
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
   const muiTheme = useTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
 
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
-  const displayError = externalError || '';
+  const displayError = externalError || "";
 
   // Fetch usage data on mount
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function QuestionnaireNavigation({
       } catch {
         // Fallback: assume free plan if usage endpoint fails
         if (!cancelled) {
-          setUsage({ plan: 'website_free', used: 0, limit: 0, remaining: 0 });
+          setUsage({ plan: "website_free", used: 0, limit: 0, remaining: 0 });
         }
       } finally {
         if (!cancelled) setUsageLoading(false);
@@ -87,41 +87,46 @@ export default function QuestionnaireNavigation({
     };
   }, []);
 
-  const isFree = usage?.plan === 'website_free';
-  const hasRemaining = usage ? usage.remaining > 0 || usage.plan === 'website_agency' : false;
+  const isFree = usage?.plan === "website_free";
+  const hasRemaining = usage
+    ? usage.remaining > 0 || usage.plan === "website_agency"
+    : false;
 
   const generateButtonText = useMemo(() => {
-    if (submitting) return 'Preparing...';
-    if (usageLoading) return 'Loading...';
-    if (!usage) return 'Generate with AI';
+    if (submitting) return "Preparing...";
+    if (usageLoading) return "Loading...";
+    if (!usage) return "Generate with AI";
 
     switch (usage.plan) {
-      case 'website_free':
-        return 'Upgrade to Generate with AI';
-      case 'website_core':
+      case "website_free":
+        return "Upgrade to Generate with AI";
+      case "website_core":
         return `Generate with AI (${usage.remaining} of 3 remaining)`;
-      case 'website_growth':
+      case "website_growth":
         return `Generate with AI (${usage.remaining} of 10 remaining)`;
-      case 'website_agency':
-        return 'Generate with AI';
+      case "website_agency":
+        return "Generate with AI";
       default:
-        return 'Generate with AI';
+        return "Generate with AI";
     }
   }, [usage, usageLoading, submitting]);
 
   const generateDisabled =
-    !isComplete || usageLoading || submitting || (usage && !hasRemaining && !isFree);
+    !isComplete ||
+    usageLoading ||
+    submitting ||
+    (usage && !hasRemaining && !isFree);
   const tooltipText = !isComplete
-    ? 'Fill in required fields'
+    ? "Fill in required fields"
     : isFree
-      ? 'Upgrade your plan to use AI generation'
+      ? "Upgrade your plan to use AI generation"
       : !hasRemaining
-        ? 'No AI generations remaining this month'
-        : '';
+        ? "No AI generations remaining this month"
+        : "";
 
   const handleGenerate = useCallback(() => {
     if (isFree) {
-      window.location.href = '/dashboard/settings/billing';
+      window.location.href = "/dashboard/settings/billing";
       return;
     }
     onGenerate();
@@ -133,10 +138,10 @@ export default function QuestionnaireNavigation({
         role="navigation"
         aria-label="Questionnaire actions"
         sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'stretch', sm: 'center' },
-          justifyContent: 'space-between',
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: { xs: "stretch", sm: "center" },
+          justifyContent: "space-between",
           gap: 2,
           p: { xs: 2, md: 3 },
           mt: 3,
@@ -144,29 +149,33 @@ export default function QuestionnaireNavigation({
           border: `1px solid ${alpha(colors.panelBorder || colors.border, 0.5)}`,
           borderRadius: 2,
           ...(isMobile && {
-            position: 'sticky',
+            position: "sticky",
             bottom: 0,
             zIndex: 10,
             borderRadius: 0,
-            borderLeft: 'none',
-            borderRight: 'none',
-            borderBottom: 'none',
+            borderLeft: "none",
+            borderRight: "none",
+            borderBottom: "none",
             mt: 0,
-            backdropFilter: 'blur(8px)',
+            backdropFilter: "blur(8px)",
           }),
         }}
       >
-        <DashboardCancelButton onClick={onBack} disabled={submitting} sx={{ minHeight: 44 }}>
+        <DashboardCancelButton
+          onClick={onBack}
+          disabled={submitting}
+          sx={{ minHeight: 44 }}
+        >
           Back
         </DashboardCancelButton>
 
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
             gap: 2,
             flex: 1,
-            justifyContent: 'flex-end',
+            justifyContent: "flex-end",
           }}
         >
           <DashboardActionButton
@@ -188,7 +197,11 @@ export default function QuestionnaireNavigation({
                 onClick={handleGenerate}
                 disabled={!!generateDisabled}
                 startIcon={
-                  submitting ? <CircularProgress size={18} color="inherit" /> : <AutoAwesomeIcon />
+                  submitting ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : (
+                    <AutoAwesomeIcon />
+                  )
                 }
                 sx={{ minHeight: 44, minWidth: 200 }}
               >
@@ -204,7 +217,7 @@ export default function QuestionnaireNavigation({
         open={!!displayError}
         autoHideDuration={5000}
         onClose={onClearError}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert onClose={onClearError} severity="error" variant="filled">
           {displayError}

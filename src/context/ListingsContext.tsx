@@ -1,6 +1,13 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 import {
   useListings as useListingsQuery,
   useListing as useListingQuery,
@@ -8,9 +15,9 @@ import {
   useCreateListing,
   useUpdateListing,
   useDeleteListing,
-} from '../api/queries/content';
-import { apiClient } from '../api/client';
-import { queryKeys } from '../api/queryKeys';
+} from "../api/queries/content";
+import { apiClient } from "../api/client";
+import { queryKeys } from "../api/queryKeys";
 
 // -------------------- Types --------------------
 export interface Place {
@@ -24,7 +31,7 @@ export interface Place {
   category: string;
   city: string;
   region: string;
-  status: 'active' | 'pending';
+  status: "active" | "pending";
   createdAt: string;
   updatedAt: string;
 
@@ -51,7 +58,7 @@ export interface Place {
     id: string;
     username: string;
     email: string;
-    role: 'user' | 'admin';
+    role: "user" | "admin";
   };
 }
 
@@ -70,7 +77,7 @@ interface ListingsContextType {
   fetchListings: (
     page?: number,
     limit?: number,
-    filters?: Record<string, string>
+    filters?: Record<string, string>,
   ) => Promise<Pagination | null>;
   fetchListingById: (id: string) => Promise<Place | null>;
   fetchListingBySlug: (slug: string) => Promise<Place | null>;
@@ -80,7 +87,9 @@ interface ListingsContextType {
 }
 
 // -------------------- Context --------------------
-const ListingsContext = createContext<ListingsContextType | undefined>(undefined);
+const ListingsContext = createContext<ListingsContextType | undefined>(
+  undefined,
+);
 
 /**
  * Listings provider — thin React Query shim preserving the original context
@@ -111,7 +120,8 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
     : (rawData?.data ?? []);
 
   const queryErrMessage =
-    (listQuery.error as AxiosError<{ message?: string }> | null)?.response?.data?.message ??
+    (listQuery.error as AxiosError<{ message?: string }> | null)?.response?.data
+      ?.message ??
     (listQuery.error as Error | null)?.message ??
     null;
 
@@ -119,16 +129,22 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
     async (
       page: number = 1,
       limit: number = 10,
-      filters: Record<string, string> = {}
+      filters: Record<string, string> = {},
     ): Promise<Pagination | null> => {
       try {
         setError(null);
         const params = { page, limit, ...filters };
-        const result = await queryClient.fetchQuery<{ data?: Place[]; pagination?: Pagination }>({
+        const result = await queryClient.fetchQuery<{
+          data?: Place[];
+          pagination?: Pagination;
+        }>({
           queryKey: queryKeys.content.listings(params),
           queryFn: async ({ signal }) => {
-            const response = await apiClient.get('/places', { params, signal });
-            return response.data?.data ?? response.data ?? { data: [], pagination: null };
+            const response = await apiClient.get("/places", { params, signal });
+            return (
+              response.data?.data ??
+              response.data ?? { data: [], pagination: null }
+            );
           },
           staleTime: 5 * 60_000,
         });
@@ -143,12 +159,14 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
       } catch (err) {
         const axiosErr = err as AxiosError<{ message?: string }>;
         setError(
-          axiosErr?.response?.data?.message || (err as Error)?.message || 'Failed to load listings'
+          axiosErr?.response?.data?.message ||
+            (err as Error)?.message ||
+            "Failed to load listings",
         );
         return null;
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   const fetchListingById = useCallback(
@@ -167,12 +185,14 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
       } catch (err) {
         const axiosErr = err as AxiosError<{ message?: string }>;
         setError(
-          axiosErr?.response?.data?.message || (err as Error)?.message || 'Failed to load listing'
+          axiosErr?.response?.data?.message ||
+            (err as Error)?.message ||
+            "Failed to load listing",
         );
         return null;
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   const fetchListingBySlug = useCallback(
@@ -180,9 +200,11 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
       try {
         setError(null);
         const data = await queryClient.fetchQuery<Place | null>({
-          queryKey: ['content', 'listingBySlug', slug] as const,
+          queryKey: ["content", "listingBySlug", slug] as const,
           queryFn: async ({ signal }) => {
-            const response = await apiClient.get(`/places/slug/${slug}`, { signal });
+            const response = await apiClient.get(`/places/slug/${slug}`, {
+              signal,
+            });
             return response.data?.data ?? response.data ?? null;
           },
           staleTime: 5 * 60_000,
@@ -191,31 +213,35 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
       } catch (err) {
         const axiosErr = err as AxiosError<{ message?: string }>;
         setError(
-          axiosErr?.response?.data?.message || (err as Error)?.message || 'Failed to load listing'
+          axiosErr?.response?.data?.message ||
+            (err as Error)?.message ||
+            "Failed to load listing",
         );
         return null;
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   const createListing = useCallback(
     async (data: Partial<Place>): Promise<Place | null> => {
       try {
         setError(null);
-        const place = await createMutation.mutateAsync(data as Record<string, unknown>);
+        const place = await createMutation.mutateAsync(
+          data as Record<string, unknown>,
+        );
         return (place as Place) ?? null;
       } catch (err) {
         const axiosErr = err as AxiosError<{ message?: string }>;
         setError(
           axiosErr?.response?.data?.message ||
             (err as Error)?.message ||
-            'Failed to create listing'
+            "Failed to create listing",
         );
         return null;
       }
     },
-    [createMutation]
+    [createMutation],
   );
 
   const updateListing = useCallback(
@@ -232,12 +258,12 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
         setError(
           axiosErr?.response?.data?.message ||
             (err as Error)?.message ||
-            'Failed to update listing'
+            "Failed to update listing",
         );
         return null;
       }
     },
-    [updateMutation]
+    [updateMutation],
   );
 
   const deleteListing = useCallback(
@@ -250,11 +276,11 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
         setError(
           axiosErr?.response?.data?.message ||
             (err as Error)?.message ||
-            'Failed to delete listing'
+            "Failed to delete listing",
         );
       }
     },
-    [deleteMutation]
+    [deleteMutation],
   );
 
   const loading =
@@ -286,17 +312,21 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
       createListing,
       updateListing,
       deleteListing,
-    ]
+    ],
   );
 
-  return <ListingsContext.Provider value={value}>{children}</ListingsContext.Provider>;
+  return (
+    <ListingsContext.Provider value={value}>
+      {children}
+    </ListingsContext.Provider>
+  );
 };
 
 // -------------------- Hooks --------------------
 export const useListings = () => {
   const context = useContext(ListingsContext);
   if (!context) {
-    throw new Error('useListings must be used within ListingsProvider');
+    throw new Error("useListings must be used within ListingsProvider");
   }
   return context;
 };

@@ -13,9 +13,9 @@
  * 9.  loading is false after error
  * 10. metadata is null on error
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
-import { useFieldMetadata } from '../useFieldMetadata';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, waitFor, act } from "@testing-library/react";
+import { useFieldMetadata } from "../useFieldMetadata";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -24,14 +24,14 @@ import { useFieldMetadata } from '../useFieldMetadata';
 const mockMetadata = {
   groups: [
     {
-      id: 'basic',
-      label: 'Basic',
+      id: "basic",
+      label: "Basic",
       order: 1,
       fields: [
         {
-          name: 'title',
-          type: 'text',
-          label: 'Title',
+          name: "title",
+          type: "text",
+          label: "Title",
         },
       ],
     },
@@ -64,7 +64,7 @@ function makeFetchNetworkError(message: string): () => Promise<Response> {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('useFieldMetadata', () => {
+describe("useFieldMetadata", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // Ensure global.fetch is a spy we control
@@ -79,10 +79,10 @@ describe('useFieldMetadata', () => {
   // 1. loading starts true, resolves to false on success
   // -------------------------------------------------------------------------
 
-  it('sets loading to true initially and false after fetch completes', async () => {
+  it("sets loading to true initially and false after fetch completes", async () => {
     vi.mocked(global.fetch).mockImplementation(makeFetchOk(mockMetadata));
 
-    const { result } = renderHook(() => useFieldMetadata('hero'));
+    const { result } = renderHook(() => useFieldMetadata("hero"));
 
     // Initially loading should be true
     expect(result.current.loading).toBe(true);
@@ -96,10 +96,10 @@ describe('useFieldMetadata', () => {
   // 2. metadata populated on success
   // -------------------------------------------------------------------------
 
-  it('populates metadata after a successful fetch', async () => {
+  it("populates metadata after a successful fetch", async () => {
     vi.mocked(global.fetch).mockImplementation(makeFetchOk(mockMetadata));
 
-    const { result } = renderHook(() => useFieldMetadata('hero'));
+    const { result } = renderHook(() => useFieldMetadata("hero"));
 
     await waitFor(() => {
       expect(result.current.metadata).toEqual(mockMetadata);
@@ -113,12 +113,12 @@ describe('useFieldMetadata', () => {
   // 3. Cache hit — same blockType should NOT trigger a second fetch
   // -------------------------------------------------------------------------
 
-  it('uses cache and does not re-fetch for the same blockType', async () => {
+  it("uses cache and does not re-fetch for the same blockType", async () => {
     vi.mocked(global.fetch).mockImplementation(makeFetchOk(mockMetadata));
 
     const { result, rerender } = renderHook(
       ({ blockType }: { blockType: string }) => useFieldMetadata(blockType),
-      { initialProps: { blockType: 'gallery' } }
+      { initialProps: { blockType: "gallery" } },
     );
 
     // Wait for first fetch to complete
@@ -129,7 +129,7 @@ describe('useFieldMetadata', () => {
     expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
 
     // Re-render with the same blockType — should use cache, not fetch again
-    rerender({ blockType: 'gallery' });
+    rerender({ blockType: "gallery" });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -144,8 +144,10 @@ describe('useFieldMetadata', () => {
   // 4. blockType change triggers a new fetch
   // -------------------------------------------------------------------------
 
-  it('triggers a new fetch when blockType changes', async () => {
-    const metadataB = { groups: [{ id: 'b', label: 'B', order: 1, fields: [] }] };
+  it("triggers a new fetch when blockType changes", async () => {
+    const metadataB = {
+      groups: [{ id: "b", label: "B", order: 1, fields: [] }],
+    };
 
     vi.mocked(global.fetch)
       .mockImplementationOnce(makeFetchOk(mockMetadata))
@@ -153,14 +155,14 @@ describe('useFieldMetadata', () => {
 
     const { result, rerender } = renderHook(
       ({ blockType }: { blockType: string }) => useFieldMetadata(blockType),
-      { initialProps: { blockType: 'hero' } }
+      { initialProps: { blockType: "hero" } },
     );
 
     await waitFor(() => {
       expect(result.current.metadata).toEqual(mockMetadata);
     });
 
-    rerender({ blockType: 'testimonial' });
+    rerender({ blockType: "testimonial" });
 
     await waitFor(() => {
       expect(result.current.metadata).toEqual(metadataB);
@@ -169,7 +171,7 @@ describe('useFieldMetadata', () => {
     expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(2);
     expect(vi.mocked(global.fetch)).toHaveBeenNthCalledWith(
       2,
-      '/api/content-types/testimonial/fields'
+      "/api/content-types/testimonial/fields",
     );
   });
 
@@ -177,16 +179,18 @@ describe('useFieldMetadata', () => {
   // 5. Network error sets error state
   // -------------------------------------------------------------------------
 
-  it('sets error to the network error message when fetch rejects', async () => {
-    vi.mocked(global.fetch).mockImplementation(makeFetchNetworkError('Network request failed'));
+  it("sets error to the network error message when fetch rejects", async () => {
+    vi.mocked(global.fetch).mockImplementation(
+      makeFetchNetworkError("Network request failed"),
+    );
 
-    const { result } = renderHook(() => useFieldMetadata('hero'));
+    const { result } = renderHook(() => useFieldMetadata("hero"));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe('Network request failed');
+    expect(result.current.error).toBe("Network request failed");
     expect(result.current.metadata).toBeNull();
   });
 
@@ -194,16 +198,16 @@ describe('useFieldMetadata', () => {
   // 6. 404 response sets error gracefully — does not crash
   // -------------------------------------------------------------------------
 
-  it('handles a 404 response gracefully — sets error, does not crash', async () => {
+  it("handles a 404 response gracefully — sets error, does not crash", async () => {
     vi.mocked(global.fetch).mockImplementation(makeFetchError(404));
 
-    const { result } = renderHook(() => useFieldMetadata('nonexistent'));
+    const { result } = renderHook(() => useFieldMetadata("nonexistent"));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe('HTTP 404');
+    expect(result.current.error).toBe("HTTP 404");
     expect(result.current.metadata).toBeNull();
   });
 
@@ -214,13 +218,13 @@ describe('useFieldMetadata', () => {
   it('sets error to "HTTP 500" on a server error response', async () => {
     vi.mocked(global.fetch).mockImplementation(makeFetchError(500));
 
-    const { result } = renderHook(() => useFieldMetadata('hero'));
+    const { result } = renderHook(() => useFieldMetadata("hero"));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe('HTTP 500');
+    expect(result.current.error).toBe("HTTP 500");
     expect(result.current.loading).toBe(false);
     expect(result.current.metadata).toBeNull();
   });
@@ -229,14 +233,16 @@ describe('useFieldMetadata', () => {
   // 8. refetch() clears cache and triggers a new fetch
   // -------------------------------------------------------------------------
 
-  it('refetch() evicts cache and re-fetches the data', async () => {
-    const updatedMetadata = { groups: [{ id: 'updated', label: 'Updated', order: 1, fields: [] }] };
+  it("refetch() evicts cache and re-fetches the data", async () => {
+    const updatedMetadata = {
+      groups: [{ id: "updated", label: "Updated", order: 1, fields: [] }],
+    };
 
     vi.mocked(global.fetch)
       .mockImplementationOnce(makeFetchOk(mockMetadata))
       .mockImplementationOnce(makeFetchOk(updatedMetadata));
 
-    const { result } = renderHook(() => useFieldMetadata('hero'));
+    const { result } = renderHook(() => useFieldMetadata("hero"));
 
     // Wait for first fetch
     await waitFor(() => {
@@ -262,10 +268,12 @@ describe('useFieldMetadata', () => {
   // 9. loading is false after an error
   // -------------------------------------------------------------------------
 
-  it('sets loading to false after a fetch error', async () => {
-    vi.mocked(global.fetch).mockImplementation(makeFetchNetworkError('timeout'));
+  it("sets loading to false after a fetch error", async () => {
+    vi.mocked(global.fetch).mockImplementation(
+      makeFetchNetworkError("timeout"),
+    );
 
-    const { result } = renderHook(() => useFieldMetadata('hero'));
+    const { result } = renderHook(() => useFieldMetadata("hero"));
 
     expect(result.current.loading).toBe(true);
 
@@ -273,33 +281,35 @@ describe('useFieldMetadata', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe('timeout');
+    expect(result.current.error).toBe("timeout");
   });
 
   // -------------------------------------------------------------------------
   // 10. Correct endpoint URL is called
   // -------------------------------------------------------------------------
 
-  it('fetches from the correct /api/content-types/:blockType/fields endpoint', async () => {
+  it("fetches from the correct /api/content-types/:blockType/fields endpoint", async () => {
     vi.mocked(global.fetch).mockImplementation(makeFetchOk(mockMetadata));
 
-    const { result } = renderHook(() => useFieldMetadata('pricing'));
+    const { result } = renderHook(() => useFieldMetadata("pricing"));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(vi.mocked(global.fetch)).toHaveBeenCalledWith('/api/content-types/pricing/fields');
+    expect(vi.mocked(global.fetch)).toHaveBeenCalledWith(
+      "/api/content-types/pricing/fields",
+    );
   });
 
   // -------------------------------------------------------------------------
   // PROD QA Step 2.5 — SECURITY: blockType URL encoding
   // -------------------------------------------------------------------------
 
-  it('[PROD QA] URL-encodes blockType to prevent path traversal', async () => {
+  it("[PROD QA] URL-encodes blockType to prevent path traversal", async () => {
     vi.mocked(global.fetch).mockImplementation(makeFetchOk(mockMetadata));
 
-    const { result } = renderHook(() => useFieldMetadata('../admin'));
+    const { result } = renderHook(() => useFieldMetadata("../admin"));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -307,14 +317,14 @@ describe('useFieldMetadata', () => {
 
     // The raw '../admin' must be percent-encoded, not passed verbatim
     const calledUrl = vi.mocked(global.fetch).mock.calls[0][0] as string;
-    expect(calledUrl).not.toContain('../');
-    expect(calledUrl).toContain(encodeURIComponent('../admin'));
+    expect(calledUrl).not.toContain("../");
+    expect(calledUrl).toContain(encodeURIComponent("../admin"));
   });
 
-  it('[PROD QA] URL-encodes blockType containing spaces and special chars', async () => {
+  it("[PROD QA] URL-encodes blockType containing spaces and special chars", async () => {
     vi.mocked(global.fetch).mockImplementation(makeFetchOk(mockMetadata));
 
-    const { result } = renderHook(() => useFieldMetadata('my type/v2'));
+    const { result } = renderHook(() => useFieldMetadata("my type/v2"));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -322,20 +332,22 @@ describe('useFieldMetadata', () => {
 
     const calledUrl = vi.mocked(global.fetch).mock.calls[0][0] as string;
     // Spaces and slash must be encoded
-    expect(calledUrl).not.toContain(' ');
-    expect(calledUrl).toContain(encodeURIComponent('my type/v2'));
+    expect(calledUrl).not.toContain(" ");
+    expect(calledUrl).toContain(encodeURIComponent("my type/v2"));
   });
 
-  it('[PROD QA] does not double-encode normal blockType identifiers', async () => {
+  it("[PROD QA] does not double-encode normal blockType identifiers", async () => {
     vi.mocked(global.fetch).mockImplementation(makeFetchOk(mockMetadata));
 
-    const { result } = renderHook(() => useFieldMetadata('hero-block'));
+    const { result } = renderHook(() => useFieldMetadata("hero-block"));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
     // Normal identifiers with hyphens must NOT be encoded (no change expected)
-    expect(vi.mocked(global.fetch)).toHaveBeenCalledWith('/api/content-types/hero-block/fields');
+    expect(vi.mocked(global.fetch)).toHaveBeenCalledWith(
+      "/api/content-types/hero-block/fields",
+    );
   });
 });

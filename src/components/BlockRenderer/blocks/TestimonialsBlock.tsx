@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import type { BlockRendererProps } from '../types';
-import { escapeHtml, escapeAttr, sanitizeUrl } from '../utils';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import type { BlockRendererProps } from "../types";
+import { escapeHtml, escapeAttr, sanitizeUrl } from "../utils";
 
 interface Testimonial {
   quote?: string;
@@ -15,7 +15,7 @@ interface TestimonialsContent {
   title?: string;
   items?: Testimonial[];
   testimonials?: Testimonial[];
-  variant?: 'cards' | 'stacked';
+  variant?: "cards" | "stacked";
 }
 
 const MAX_TESTIMONIALS = 12;
@@ -32,10 +32,10 @@ const StarRating: React.FC<StarRatingProps> = ({ rating }) => {
     <div
       className="testimonial__stars"
       aria-label={`${clamped} out of 5 stars`}
-      style={{ color: '#f59e0b', fontSize: '1.1em', letterSpacing: '0.05em' }}
+      style={{ color: "#f59e0b", fontSize: "1.1em", letterSpacing: "0.05em" }}
     >
-      {'★'.repeat(clamped)}
-      {'☆'.repeat(5 - clamped)}
+      {"★".repeat(clamped)}
+      {"☆".repeat(5 - clamped)}
     </div>
   );
 };
@@ -51,16 +51,25 @@ interface AvatarDisplayProps {
 const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
   avatar,
   author,
-  className = 'testimonial__avatar',
+  className = "testimonial__avatar",
 }) => {
   const avatarUrl = sanitizeUrl(avatar);
-  const hasAvatar = avatar && avatarUrl !== '#';
+  const hasAvatar = avatar && avatarUrl !== "#";
 
   if (hasAvatar) {
-    return <img className={className} src={avatarUrl} alt={escapeAttr(author)} loading="lazy" />;
+    return (
+      <img
+        className={className}
+        src={avatarUrl}
+        alt={escapeAttr(author)}
+        loading="lazy"
+      />
+    );
   }
   return (
-    <div className={`${className} ${className}--placeholder`}>{author.charAt(0).toUpperCase()}</div>
+    <div className={`${className} ${className}--placeholder`}>
+      {author.charAt(0).toUpperCase()}
+    </div>
   );
 };
 
@@ -83,20 +92,30 @@ const CardsVariant: React.FC<VariantProps> = ({ items, title }) => (
       <div className="testimonials__grid">
         {items.length > 0 ? (
           items.map((item, idx) => {
-            const author = item.author || 'Anonymous';
+            const author = item.author || "Anonymous";
             const rating =
-              item.rating != null ? Math.min(5, Math.max(1, Math.round(item.rating))) : null;
+              item.rating != null
+                ? Math.min(5, Math.max(1, Math.round(item.rating)))
+                : null;
 
             return (
               <blockquote className="testimonial__card" key={idx}>
                 <AvatarDisplay avatar={item.avatar} author={author} />
                 {rating != null && <StarRating rating={rating} />}
                 {item.quote && (
-                  <p className="testimonial__quote">&ldquo;{escapeHtml(item.quote)}&rdquo;</p>
+                  <p className="testimonial__quote">
+                    &ldquo;{escapeHtml(item.quote)}&rdquo;
+                  </p>
                 )}
                 <footer className="testimonial__footer">
-                  <cite className="testimonial__author">{escapeHtml(author)}</cite>
-                  {item.role && <span className="testimonial__role">{escapeHtml(item.role)}</span>}
+                  <cite className="testimonial__author">
+                    {escapeHtml(author)}
+                  </cite>
+                  {item.role && (
+                    <span className="testimonial__role">
+                      {escapeHtml(item.role)}
+                    </span>
+                  )}
                 </footer>
               </blockquote>
             );
@@ -151,7 +170,7 @@ const StackedVariant: React.FC<VariantProps> = ({ items, title }) => {
       setActiveIndex(idx);
       if (items.length > 1) startInterval();
     },
-    [items.length, startInterval, stopInterval]
+    [items.length, startInterval, stopInterval],
   );
 
   if (items.length === 0) {
@@ -168,8 +187,11 @@ const StackedVariant: React.FC<VariantProps> = ({ items, title }) => {
   }
 
   const item = items[activeIndex];
-  const author = item.author || 'Anonymous';
-  const rating = item.rating != null ? Math.min(5, Math.max(1, Math.round(item.rating))) : null;
+  const author = item.author || "Anonymous";
+  const rating =
+    item.rating != null
+      ? Math.min(5, Math.max(1, Math.round(item.rating)))
+      : null;
 
   return (
     <section
@@ -188,7 +210,10 @@ const StackedVariant: React.FC<VariantProps> = ({ items, title }) => {
           />
         )}
 
-        <div className="testimonials__stacked-wrapper" style={{ position: 'relative' }}>
+        <div
+          className="testimonials__stacked-wrapper"
+          style={{ position: "relative" }}
+        >
           {/* Prev / Next arrows */}
           {items.length > 1 && (
             <button
@@ -217,11 +242,19 @@ const StackedVariant: React.FC<VariantProps> = ({ items, title }) => {
                 />
                 {rating != null && <StarRating rating={rating} />}
                 {item.quote && (
-                  <p className="testimonial__quote">&ldquo;{escapeHtml(item.quote)}&rdquo;</p>
+                  <p className="testimonial__quote">
+                    &ldquo;{escapeHtml(item.quote)}&rdquo;
+                  </p>
                 )}
                 <footer className="testimonial__footer">
-                  <cite className="testimonial__author">{escapeHtml(author)}</cite>
-                  {item.role && <span className="testimonial__role">{escapeHtml(item.role)}</span>}
+                  <cite className="testimonial__author">
+                    {escapeHtml(author)}
+                  </cite>
+                  {item.role && (
+                    <span className="testimonial__role">
+                      {escapeHtml(item.role)}
+                    </span>
+                  )}
                 </footer>
               </blockquote>
             </motion.div>
@@ -240,11 +273,15 @@ const StackedVariant: React.FC<VariantProps> = ({ items, title }) => {
 
         {/* Dot indicators */}
         {items.length > 1 && (
-          <div className="testimonials__dots" role="tablist" aria-label="Testimonial navigation">
+          <div
+            className="testimonials__dots"
+            role="tablist"
+            aria-label="Testimonial navigation"
+          >
             {items.map((_, idx) => (
               <button
                 key={idx}
-                className={`testimonials__dot${idx === activeIndex ? ' testimonials__dot--active' : ''}`}
+                className={`testimonials__dot${idx === activeIndex ? " testimonials__dot--active" : ""}`}
                 onClick={() => handleDotClick(idx)}
                 role="tab"
                 aria-selected={idx === activeIndex}
@@ -252,13 +289,13 @@ const StackedVariant: React.FC<VariantProps> = ({ items, title }) => {
                 style={{
                   width: 10,
                   height: 10,
-                  borderRadius: '50%',
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: idx === activeIndex ? '#f59e0b' : '#cbd5e1',
-                  margin: '0 4px',
+                  borderRadius: "50%",
+                  border: "none",
+                  cursor: "pointer",
+                  background: idx === activeIndex ? "#f59e0b" : "#cbd5e1",
+                  margin: "0 4px",
                   padding: 0,
-                  display: 'inline-block',
+                  display: "inline-block",
                 }}
               />
             ))}
@@ -274,9 +311,9 @@ const StackedVariant: React.FC<VariantProps> = ({ items, title }) => {
 const TestimonialsBlock: React.FC<BlockRendererProps> = ({ block }) => {
   const c = (block.content || {}) as TestimonialsContent;
   const items = (c.items || c.testimonials || []).slice(0, MAX_TESTIMONIALS);
-  const variant = c.variant || 'cards';
+  const variant = c.variant || "cards";
 
-  if (variant === 'stacked') {
+  if (variant === "stacked") {
     return <StackedVariant items={items} title={c.title} />;
   }
   return <CardsVariant items={items} title={c.title} />;

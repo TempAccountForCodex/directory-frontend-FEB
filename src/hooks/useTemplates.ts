@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { apiClient, isAxiosError } from '../api/client';
-import { useDebouncedValue } from './useDebouncedValue';
-import { type TemplateSummary, normalizeTemplateSummary } from '../templates/templateApi';
-import type { TemplateFilters } from '../components/Templates/TemplateFilters';
+import { useState, useEffect, useCallback } from "react";
+import { apiClient, isAxiosError } from "../api/client";
+import { useDebouncedValue } from "./useDebouncedValue";
+import {
+  type TemplateSummary,
+  normalizeTemplateSummary,
+} from "../templates/templateApi";
+import type { TemplateFilters } from "../components/Templates/TemplateFilters";
 
 interface UseTemplatesReturn {
   templates: TemplateSummary[];
@@ -18,9 +21,9 @@ export const useTemplates = (): UseTemplatesReturn => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFiltersState] = useState<TemplateFilters>({
-    search: '',
-    category: '',
-    type: '',
+    search: "",
+    category: "",
+    type: "",
   });
   const [fetchTrigger, setFetchTrigger] = useState<number>(0);
 
@@ -35,9 +38,9 @@ export const useTemplates = (): UseTemplatesReturn => {
 
       try {
         const params = new URLSearchParams();
-        if (debouncedSearch) params.append('search', debouncedSearch);
-        if (filters.category) params.append('category', filters.category);
-        if (filters.type) params.append('type', filters.type);
+        if (debouncedSearch) params.append("search", debouncedSearch);
+        if (filters.category) params.append("category", filters.category);
+        if (filters.type) params.append("type", filters.type);
 
         const response = await apiClient.get(`/templates?${params.toString()}`);
 
@@ -47,11 +50,12 @@ export const useTemplates = (): UseTemplatesReturn => {
         }
       } catch (err: unknown) {
         if (!cancelled) {
-          let message = 'Failed to load templates';
+          let message = "Failed to load templates";
           if (isAxiosError(err)) {
             // Prefer server-provided message over generic axios network message
             message =
-              (err.response?.data as { message?: string } | undefined)?.message ?? err.message;
+              (err.response?.data as { message?: string } | undefined)
+                ?.message ?? err.message;
           } else if (err instanceof Error) {
             message = err.message;
           }

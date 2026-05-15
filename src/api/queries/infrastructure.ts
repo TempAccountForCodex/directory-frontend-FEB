@@ -1,7 +1,7 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys, type AuditLogFilters } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys, type AuditLogFilters } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 /**
  * Infrastructure React Query hooks — admin-only dashboards that read from
@@ -85,8 +85,8 @@ export type AuditLogsResponse = {
 };
 
 export type AuditExportPayload = {
-  format?: 'csv' | 'json';
-} & Omit<AuditLogFilters, 'limit' | 'offset'>;
+  format?: "csv" | "json";
+} & Omit<AuditLogFilters, "limit" | "offset">;
 
 export type AuditExportResult = {
   blob: Blob;
@@ -123,7 +123,7 @@ export function useHealthMetrics() {
   return useQuery<HealthMetricsResponse>({
     queryKey: queryKeys.infrastructure.health(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/metrics/health', { signal });
+      const response = await apiClient.get("/metrics/health", { signal });
       return response.data;
     },
     enabled: !!user,
@@ -141,13 +141,13 @@ export function useHealthMetrics() {
  * `staleTime: 5min` keeps the charts from refetching on every re-render while
  * still picking up new datapoints a few minutes after they land.
  */
-export function useMetricsHistory(duration: string = '24h') {
+export function useMetricsHistory(duration: string = "24h") {
   const { data: user } = useAuthMe();
 
   return useQuery<MetricsHistoryResponse>({
     queryKey: [...queryKeys.infrastructure.metricsHistory(), duration] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/metrics/history', {
+      const response = await apiClient.get("/metrics/history", {
         params: { duration },
         signal,
       });
@@ -177,7 +177,7 @@ export function useAuditLogs(filters?: AuditLogFilters) {
   return useQuery<AuditLogsResponse>({
     queryKey: queryKeys.audit.logs(filters),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/audit/admin/logs', {
+      const response = await apiClient.get("/audit/admin/logs", {
         params: filters,
         signal,
       });
@@ -200,17 +200,17 @@ export function useAuditLogs(filters?: AuditLogFilters) {
 export function useExportAuditLogs() {
   return useMutation<AuditExportResult, Error, AuditExportPayload | undefined>({
     mutationFn: async (payload) => {
-      const params = { format: 'csv', ...(payload ?? {}) };
-      const response = await apiClient.get('/audit/admin/logs/export', {
+      const params = { format: "csv", ...(payload ?? {}) };
+      const response = await apiClient.get("/audit/admin/logs/export", {
         params,
-        responseType: 'blob',
+        responseType: "blob",
       });
 
-      const disposition = response.headers?.['content-disposition'] as
+      const disposition = response.headers?.["content-disposition"] as
         | string
         | undefined;
       const match = disposition?.match(/filename="?([^"]+)"?/);
-      const filename = match?.[1] ?? 'audit-logs.csv';
+      const filename = match?.[1] ?? "audit-logs.csv";
 
       return { blob: response.data as Blob, filename };
     },

@@ -1,11 +1,11 @@
-import React, { type ReactNode } from 'react';
-import { FeatureFlagsContext, useFeatureFlags } from '../hooks/useFeatureFlags';
-import type { FeatureFlags } from '../hooks/useFeatureFlags';
+import React, { type ReactNode } from "react";
+import { FeatureFlagsContext, useFeatureFlags } from "../hooks/useFeatureFlags";
+import type { FeatureFlags } from "../hooks/useFeatureFlags";
 
 interface FeatureFlagsProviderProps {
   children: ReactNode;
   defaultFlags?: FeatureFlags;
-  source?: 'local' | 'remote' | 'user';
+  source?: "local" | "remote" | "user";
   apiUrl?: string;
   websiteId?: number;
   userId?: number;
@@ -25,7 +25,7 @@ interface FeatureFlagsProviderProps {
 export const FeatureFlagsProvider: React.FC<FeatureFlagsProviderProps> = ({
   children,
   defaultFlags = {},
-  source = 'local',
+  source = "local",
   apiUrl,
   websiteId,
   userId,
@@ -39,7 +39,9 @@ export const FeatureFlagsProvider: React.FC<FeatureFlagsProviderProps> = ({
   });
 
   return (
-    <FeatureFlagsContext.Provider value={featureFlags}>{children}</FeatureFlagsContext.Provider>
+    <FeatureFlagsContext.Provider value={featureFlags}>
+      {children}
+    </FeatureFlagsContext.Provider>
   );
 };
 

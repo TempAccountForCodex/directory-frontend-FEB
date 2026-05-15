@@ -19,7 +19,8 @@ import { buildStoreTheme, rgba } from "./theme";
 
 const defaultHeadingFont = '"Questrial", "Inter", sans-serif';
 const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
-const heroVideo = "https://videocdn.cdnpk.net/videos/76f0be3a-af58-4fc9-b0f0-6252b6b58f8f/horizontal/previews/clear/large.mp4?token=exp=1776093435~hmac=277fdf765864244a45431c287f25daf253a52c82f4e190d4698b2436f7aeb75b";
+const heroVideo =
+  "https://videocdn.cdnpk.net/videos/76f0be3a-af58-4fc9-b0f0-6252b6b58f8f/horizontal/previews/clear/large.mp4?token=exp=1776093435~hmac=277fdf765864244a45431c287f25daf253a52c82f4e190d4698b2436f7aeb75b";
 
 const fallbackProducts = [
   {
@@ -28,7 +29,8 @@ const fallbackProducts = [
     category: "Harness",
     price: "$48",
     badge: "Best Seller",
-    description: "Soft-touch harness, leash, and tag-ready clip in warm walnut tones.",
+    description:
+      "Soft-touch harness, leash, and tag-ready clip in warm walnut tones.",
     image:
       "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1200&q=80",
   },
@@ -38,7 +40,8 @@ const fallbackProducts = [
     category: "Rest",
     price: "$96",
     badge: "New",
-    description: "Supportive memory-foam bed built for calmer evenings and better naps.",
+    description:
+      "Supportive memory-foam bed built for calmer evenings and better naps.",
     image:
       "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&q=80",
   },
@@ -48,7 +51,8 @@ const fallbackProducts = [
     category: "Feeding",
     price: "$28",
     badge: "Gift Pick",
-    description: "Kitchen-friendly ceramic jar for treats, toppers, and training snacks.",
+    description:
+      "Kitchen-friendly ceramic jar for treats, toppers, and training snacks.",
     image:
       "https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?auto=format&fit=crop&w=1200&q=80",
   },
@@ -58,7 +62,8 @@ const fallbackProducts = [
     category: "Apparel",
     price: "$54",
     badge: "Seasonal",
-    description: "Lightweight outdoor coat with reflective trim and easy-fit chest closure.",
+    description:
+      "Lightweight outdoor coat with reflective trim and easy-fit chest closure.",
     image:
       "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80",
   },
@@ -68,7 +73,8 @@ const fallbackProducts = [
     category: "Travel",
     price: "$22",
     badge: "Everyday",
-    description: "Fold-flat silicone bowl for road trips, park walks, and cafe stops.",
+    description:
+      "Fold-flat silicone bowl for road trips, park walks, and cafe stops.",
     image:
       "https://images.unsplash.com/photo-1537151625747-768eb6cf92b2?auto=format&fit=crop&w=1200&q=80",
   },
@@ -78,7 +84,8 @@ const fallbackProducts = [
     category: "Collars",
     price: "$34",
     badge: "Core",
-    description: "Premium leather collar with brushed metal hardware and soft lining.",
+    description:
+      "Premium leather collar with brushed metal hardware and soft lining.",
     image:
       "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1200&q=80",
   },
@@ -92,12 +99,14 @@ const benefitItems = [
   },
   {
     title: "Fast shipping",
-    description: "Quick dispatch for gifts, restocks, and last-minute upgrades.",
+    description:
+      "Quick dispatch for gifts, restocks, and last-minute upgrades.",
     icon: <LocalShippingOutlinedIcon fontSize="small" />,
   },
   {
     title: "Quality materials",
-    description: "Comfort-first fabrics, durable trims, and easy-care finishes.",
+    description:
+      "Comfort-first fabrics, durable trims, and easy-care finishes.",
     icon: <WorkspacePremiumOutlinedIcon fontSize="small" />,
   },
 ];
@@ -189,7 +198,8 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
   const products = data.products?.length ? data.products : fallbackProducts;
   const featured = products.slice(0, 3);
   const essentials = products.slice(3, 6);
-  const heroImage = data.heroBannerUrl || featured[0]?.image || fallbackProducts[0].image;
+  const heroImage =
+    data.heroBannerUrl || featured[0]?.image || fallbackProducts[0].image;
   const [isPastHero, setIsPastHero] = React.useState(false);
 
   React.useEffect(() => {
@@ -264,7 +274,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 ? `1px solid ${palette.line}`
                 : "1px solid rgba(255,250,245,0.16)",
               backdropFilter: "blur(14px)",
-              boxShadow: isPastHero ? "0 10px 30px rgba(35,24,21,0.08)" : "none",
+              boxShadow: isPastHero
+                ? "0 10px 30px rgba(35,24,21,0.08)"
+                : "none",
               transition:
                 "background-color 220ms ease, border-color 220ms ease, box-shadow 220ms ease",
             }}
@@ -368,14 +380,20 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           />
 
-          <Container maxWidth="xl" sx={{ position: "relative", zIndex: 2, height: "100%" }}>
+          <Container
+            maxWidth="xl"
+            sx={{ position: "relative", zIndex: 2, height: "100%" }}
+          >
             <Stack
               component={motion.div}
               variants={staggerSection}
               initial="hidden"
               animate="show"
               justifyContent="flex-end"
-              sx={{ minHeight: { xs: "78vh", md: "92vh" }, pb: { xs: 5, md: 8 } }}
+              sx={{
+                minHeight: { xs: "78vh", md: "92vh" },
+                pb: { xs: 5, md: 8 },
+              }}
             >
               <Chip
                 component={motion.div}
@@ -490,7 +508,14 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               {(data.storeCategories?.length
                 ? data.storeCategories
-                : ["Harnesses", "Beds", "Feeding", "Walk Sets", "Travel", "Apparel"]
+                : [
+                    "Harnesses",
+                    "Beds",
+                    "Feeding",
+                    "Walk Sets",
+                    "Travel",
+                    "Apparel",
+                  ]
               ).map((item) => (
                 <Chip
                   key={item}
@@ -541,7 +566,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Typography sx={{ fontWeight: 700, fontSize: "0.92rem" }}>
                       {item.title}
                     </Typography>
-                    <Typography sx={{ color: palette.muted, fontSize: "0.8rem" }}>
+                    <Typography
+                      sx={{ color: palette.muted, fontSize: "0.8rem" }}
+                    >
                       {item.description}
                     </Typography>
                   </Box>
@@ -571,7 +598,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             sx={{ mb: 3 }}
           >
             <Box component={motion.div} variants={textReveal}>
-              <Typography sx={{ color: palette.muted, mb: 0.8 }}>Best sellers</Typography>
+              <Typography sx={{ color: palette.muted, mb: 0.8 }}>
+                Best sellers
+              </Typography>
               <Typography
                 component={motion.h2}
                 variants={headingReveal}
@@ -587,9 +616,13 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 dogs and real homes.
               </Typography>
             </Box>
-            <Typography component={motion.p} variants={textReveal} sx={{ maxWidth: 360, color: palette.muted, lineHeight: 1.7 }}>
-              Hero products, warm editorial imagery, and high-conversion cards for dog
-              accessories, beds, feeding, and walk essentials.
+            <Typography
+              component={motion.p}
+              variants={textReveal}
+              sx={{ maxWidth: 360, color: palette.muted, lineHeight: 1.7 }}
+            >
+              Hero products, warm editorial imagery, and high-conversion cards
+              for dog accessories, beds, feeding, and walk essentials.
             </Typography>
           </Stack>
 
@@ -651,21 +684,34 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                     color: palette.white,
                   }}
                 >
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
                     <Chip
                       label={product.badge || product.category}
                       size="small"
-                      sx={{ bgcolor: "rgba(255,250,245,0.88)", color: palette.ink }}
+                      sx={{
+                        bgcolor: "rgba(255,250,245,0.88)",
+                        color: palette.ink,
+                      }}
                     />
                     <FavoriteBorderIcon fontSize="small" />
                   </Stack>
-                  <Typography sx={{ fontFamily: headingFont, fontSize: "1.5rem" }}>
+                  <Typography
+                    sx={{ fontFamily: headingFont, fontSize: "1.5rem" }}
+                  >
                     {product.name}
                   </Typography>
-                  <Typography sx={{ color: "rgba(255,250,245,0.8)", fontSize: "0.92rem" }}>
+                  <Typography
+                    sx={{ color: "rgba(255,250,245,0.8)", fontSize: "0.92rem" }}
+                  >
                     {product.description}
                   </Typography>
-                  <Typography sx={{ fontWeight: 700 }}>{product.price}</Typography>
+                  <Typography sx={{ fontWeight: 700 }}>
+                    {product.price}
+                  </Typography>
                 </Stack>
               </Box>
             ))}
@@ -724,7 +770,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
               }}
             >
               <Box>
-                <Typography sx={{ color: palette.muted, mb: 1 }}>About the brand</Typography>
+                <Typography sx={{ color: palette.muted, mb: 1 }}>
+                  About the brand
+                </Typography>
                 <Typography
                   sx={{
                     fontFamily: headingFont,
@@ -736,7 +784,14 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   A softer retail direction for modern dog products.
                 </Typography>
-                <Typography sx={{ mt: 2, maxWidth: 500, color: palette.muted, lineHeight: 1.8 }}>
+                <Typography
+                  sx={{
+                    mt: 2,
+                    maxWidth: 500,
+                    color: palette.muted,
+                    lineHeight: 1.8,
+                  }}
+                >
                   {data.description}
                 </Typography>
               </Box>
@@ -750,8 +805,14 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 }}
               >
                 {[
-                  { value: "Premium Quality", label: "Comfort-first materials" },
-                  { value: "Fast Delivery", label: "Quick shipping on essentials" },
+                  {
+                    value: "Premium Quality",
+                    label: "Comfort-first materials",
+                  },
+                  {
+                    value: "Fast Delivery",
+                    label: "Quick shipping on essentials",
+                  },
                   { value: "Loved by Dogs", label: "Built for daily routines" },
                 ].map((item) => (
                   <Box
@@ -764,11 +825,17 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                     }}
                   >
                     <Typography
-                      sx={{ fontFamily: headingFont, fontSize: "1.45rem", letterSpacing: "-0.05em" }}
+                      sx={{
+                        fontFamily: headingFont,
+                        fontSize: "1.45rem",
+                        letterSpacing: "-0.05em",
+                      }}
                     >
                       {item.value}
                     </Typography>
-                    <Typography sx={{ color: palette.muted, fontSize: "0.82rem" }}>
+                    <Typography
+                      sx={{ color: palette.muted, fontSize: "0.82rem" }}
+                    >
                       {item.label}
                     </Typography>
                   </Box>
@@ -793,7 +860,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             sx={{ mb: 3 }}
           >
             <Box>
-              <Typography sx={{ color: palette.muted, mb: 0.8 }}>Curated bundles</Typography>
+              <Typography sx={{ color: palette.muted, mb: 0.8 }}>
+                Curated bundles
+              </Typography>
               <Typography
                 sx={{
                   fontFamily: headingFont,
@@ -846,14 +915,23 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 />
                 <Box sx={{ p: 2 }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography sx={{ color: palette.muted, fontSize: "0.8rem" }}>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Typography
+                      sx={{ color: palette.muted, fontSize: "0.8rem" }}
+                    >
                       {product.category}
                     </Typography>
                     <Chip
                       label={product.badge || "Featured"}
                       size="small"
-                      sx={{ bgcolor: palette.accentSoft, color: palette.accent }}
+                      sx={{
+                        bgcolor: palette.accentSoft,
+                        color: palette.accent,
+                      }}
                     />
                   </Stack>
                   <Typography
@@ -866,7 +944,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   >
                     {product.name}
                   </Typography>
-                  <Typography sx={{ mt: 1, color: palette.muted, lineHeight: 1.7 }}>
+                  <Typography
+                    sx={{ mt: 1, color: palette.muted, lineHeight: 1.7 }}
+                  >
                     {product.description}
                   </Typography>
                   <Stack
@@ -875,7 +955,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                     alignItems="center"
                     sx={{ mt: 2 }}
                   >
-                    <Typography sx={{ fontWeight: 700 }}>{product.price}</Typography>
+                    <Typography sx={{ fontWeight: 700 }}>
+                      {product.price}
+                    </Typography>
                     <Button
                       sx={{
                         textTransform: "none",
@@ -943,7 +1025,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography sx={{ fontSize: "1.15rem", lineHeight: 1.8 }}>
                   “{review.text}”
                 </Typography>
-                <Typography sx={{ mt: 2.5, fontWeight: 700 }}>{review.author}</Typography>
+                <Typography sx={{ mt: 2.5, fontWeight: 700 }}>
+                  {review.author}
+                </Typography>
                 <Typography sx={{ color: palette.muted, fontSize: "0.88rem" }}>
                   {review.role}
                 </Typography>
@@ -973,7 +1057,9 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <Box>
-              <Typography sx={{ opacity: 0.78, mb: 1 }}>Newsletter + contact</Typography>
+              <Typography sx={{ opacity: 0.78, mb: 1 }}>
+                Newsletter + contact
+              </Typography>
               <Typography
                 sx={{
                   fontFamily: headingFont,
@@ -985,9 +1071,11 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 Launch your next dog-product collection with style.
               </Typography>
-              <Typography sx={{ mt: 1.5, maxWidth: 460, opacity: 0.82, lineHeight: 1.7 }}>
-                Use this template for a premium pet brand, curated dog store, or campaign-led
-                ecommerce landing page.
+              <Typography
+                sx={{ mt: 1.5, maxWidth: 460, opacity: 0.82, lineHeight: 1.7 }}
+              >
+                Use this template for a premium pet brand, curated dog store, or
+                campaign-led ecommerce landing page.
               </Typography>
             </Box>
 
@@ -1087,9 +1175,16 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 {data.name}
               </Typography>
-              <Typography sx={{ mt: 1, maxWidth: 420, color: palette.muted, lineHeight: 1.7 }}>
-                Premium dog-product merchandising with editorial sections, video hero,
-                clean product cards, and a soft luxury retail mood.
+              <Typography
+                sx={{
+                  mt: 1,
+                  maxWidth: 420,
+                  color: palette.muted,
+                  lineHeight: 1.7,
+                }}
+              >
+                Premium dog-product merchandising with editorial sections, video
+                hero, clean product cards, and a soft luxury retail mood.
               </Typography>
             </Box>
 
@@ -1123,13 +1218,19 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Typography sx={{ fontWeight: 700, mb: 1 }}>Contact</Typography>
               <Stack spacing={0.8}>
                 {data.contact.email ? (
-                  <Typography sx={{ color: palette.muted }}>{data.contact.email}</Typography>
+                  <Typography sx={{ color: palette.muted }}>
+                    {data.contact.email}
+                  </Typography>
                 ) : null}
                 {data.contact.phone ? (
-                  <Typography sx={{ color: palette.muted }}>{data.contact.phone}</Typography>
+                  <Typography sx={{ color: palette.muted }}>
+                    {data.contact.phone}
+                  </Typography>
                 ) : null}
                 {data.contact.address ? (
-                  <Typography sx={{ color: palette.muted }}>{data.contact.address}</Typography>
+                  <Typography sx={{ color: palette.muted }}>
+                    {data.contact.address}
+                  </Typography>
                 ) : null}
               </Stack>
             </Box>

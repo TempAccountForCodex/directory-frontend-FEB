@@ -6,20 +6,20 @@
  * the old in-memory TTL + in-flight-Promise cache was removed in Phase I.
  */
 
-import { apiClient } from '../api/client';
+import { apiClient } from "../api/client";
 
-export type TemplateType = 'website' | 'store';
+export type TemplateType = "website" | "store";
 
 export type TemplateCategory =
-  | 'business'
-  | 'portfolio'
-  | 'agency'
-  | 'restaurant'
-  | 'real-estate'
-  | 'fitness'
-  | 'education'
-  | 'saas'
-  | 'ecommerce';
+  | "business"
+  | "portfolio"
+  | "agency"
+  | "restaurant"
+  | "real-estate"
+  | "fitness"
+  | "education"
+  | "saas"
+  | "ecommerce";
 
 export interface TemplateBlock {
   type: string;
@@ -58,38 +58,42 @@ export interface Template extends TemplateSummary {
 }
 
 export const CATEGORY_LABELS: Record<TemplateCategory, string> = {
-  business: 'Business',
-  portfolio: 'Portfolio',
-  agency: 'Agency',
-  restaurant: 'Restaurant',
-  'real-estate': 'Real Estate',
-  fitness: 'Fitness',
-  education: 'Education',
-  saas: 'SaaS',
-  ecommerce: 'E-commerce',
+  business: "Business",
+  portfolio: "Portfolio",
+  agency: "Agency",
+  restaurant: "Restaurant",
+  "real-estate": "Real Estate",
+  fitness: "Fitness",
+  education: "Education",
+  saas: "SaaS",
+  ecommerce: "E-commerce",
 };
 
 const fetchTemplates = async (): Promise<TemplateSummary[]> => {
-  const response = await apiClient.get('/templates');
+  const response = await apiClient.get("/templates");
   return response.data?.data || [];
 };
 
 export const getWebsiteTemplates = async (): Promise<TemplateSummary[]> => {
   const templates = await fetchTemplates();
-  return templates.filter((template) => template.type === 'website');
+  return templates.filter((template) => template.type === "website");
 };
 
 export const getStoreTemplates = async (): Promise<TemplateSummary[]> => {
   const templates = await fetchTemplates();
-  return templates.filter((template) => template.type === 'store');
+  return templates.filter((template) => template.type === "store");
 };
 
-export const getTemplateById = async (id: string): Promise<Template | undefined> => {
+export const getTemplateById = async (
+  id: string,
+): Promise<Template | undefined> => {
   const response = await apiClient.get(`/templates/${id}`);
   return response.data?.data;
 };
 
-export const getAllCategories = (templates: TemplateSummary[]): TemplateCategory[] => {
+export const getAllCategories = (
+  templates: TemplateSummary[],
+): TemplateCategory[] => {
   const categories = new Set<TemplateCategory>();
   templates.forEach((template) => {
     categories.add(template.category);
@@ -100,4 +104,5 @@ export const getAllCategories = (templates: TemplateSummary[]): TemplateCategory
 // Backward-compat shims — React Query owns caching now. Callers should prefer
 // `queryClient.invalidateQueries({ queryKey: queryKeys.templates.all() })`.
 export const clearTemplateCache = (): void => undefined;
-export const refreshTemplateCache = async (): Promise<TemplateSummary[]> => fetchTemplates();
+export const refreshTemplateCache = async (): Promise<TemplateSummary[]> =>
+  fetchTemplates();

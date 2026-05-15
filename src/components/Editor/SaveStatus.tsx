@@ -12,19 +12,25 @@
  * Theme: uses MUI sx theme tokens (no hardcoded hex values)
  */
 
-import React, { useState, useEffect, useCallback, memo } from 'react';
-import { Box, Typography, CircularProgress, Button, Tooltip } from '@mui/material';
+import React, { useState, useEffect, useCallback, memo } from "react";
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Button,
+  Tooltip,
+} from "@mui/material";
 import {
   CloudDone as CloudDoneIcon,
   CloudOff as CloudOffIcon,
   CloudSync as CloudSyncIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type SaveStatusType = 'idle' | 'saving' | 'saved' | 'error';
+export type SaveStatusType = "idle" | "saving" | "saved" | "error";
 
 export interface SaveStatusProps {
   status: SaveStatusType;
@@ -46,7 +52,7 @@ const SaveStatus: React.FC<SaveStatusProps> = memo(({ status, onRetry }) => {
   const [showSaved, setShowSaved] = useState(false);
 
   useEffect(() => {
-    if (status === 'saved') {
+    if (status === "saved") {
       setShowSaved(true);
       const timer = setTimeout(() => {
         setShowSaved(false);
@@ -62,9 +68,9 @@ const SaveStatus: React.FC<SaveStatusProps> = memo(({ status, onRetry }) => {
   }, [onRetry]);
 
   // Determine what to render
-  const isSaving = status === 'saving';
-  const isSaved = status === 'saved' && showSaved;
-  const isError = status === 'error';
+  const isSaving = status === "saving";
+  const isSaved = status === "saved" && showSaved;
+  const isError = status === "error";
 
   // Nothing to show in idle or after saved auto-hides
   const isVisible = isSaving || isSaved || isError;
@@ -74,8 +80,8 @@ const SaveStatus: React.FC<SaveStatusProps> = memo(({ status, onRetry }) => {
       aria-live="polite"
       aria-atomic="true"
       sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
+        display: "inline-flex",
+        alignItems: "center",
         gap: 0.75,
         minHeight: 32,
       }}
@@ -85,14 +91,18 @@ const SaveStatus: React.FC<SaveStatusProps> = memo(({ status, onRetry }) => {
           <CloudSyncIcon
             sx={{
               fontSize: 18,
-              color: 'text.secondary',
+              color: "text.secondary",
             }}
           />
-          <CircularProgress size={14} thickness={5} sx={{ color: 'text.secondary' }} />
+          <CircularProgress
+            size={14}
+            thickness={5}
+            sx={{ color: "text.secondary" }}
+          />
           <Typography
             variant="caption"
             sx={{
-              color: 'text.secondary',
+              color: "text.secondary",
               fontWeight: 500,
               lineHeight: 1,
             }}
@@ -107,13 +117,13 @@ const SaveStatus: React.FC<SaveStatusProps> = memo(({ status, onRetry }) => {
           <CloudDoneIcon
             sx={{
               fontSize: 18,
-              color: 'success.main',
+              color: "success.main",
             }}
           />
           <Typography
             variant="caption"
             sx={{
-              color: 'success.main',
+              color: "success.main",
               fontWeight: 500,
               lineHeight: 1,
             }}
@@ -128,13 +138,13 @@ const SaveStatus: React.FC<SaveStatusProps> = memo(({ status, onRetry }) => {
           <CloudOffIcon
             sx={{
               fontSize: 18,
-              color: 'error.main',
+              color: "error.main",
             }}
           />
           <Typography
             variant="caption"
             sx={{
-              color: 'error.main',
+              color: "error.main",
               fontWeight: 500,
               lineHeight: 1,
             }}
@@ -149,15 +159,15 @@ const SaveStatus: React.FC<SaveStatusProps> = memo(({ status, onRetry }) => {
                 onClick={handleRetry}
                 aria-label="Retry saving"
                 sx={{
-                  minWidth: 'auto',
-                  p: '2px 6px',
-                  fontSize: '0.7rem',
-                  color: 'error.main',
-                  textTransform: 'none',
+                  minWidth: "auto",
+                  p: "2px 6px",
+                  fontSize: "0.7rem",
+                  color: "error.main",
+                  textTransform: "none",
                   lineHeight: 1,
-                  '&:hover': {
-                    bgcolor: 'error.light',
-                    color: 'error.contrastText',
+                  "&:hover": {
+                    bgcolor: "error.light",
+                    color: "error.contrastText",
                   },
                 }}
               >
@@ -169,11 +179,13 @@ const SaveStatus: React.FC<SaveStatusProps> = memo(({ status, onRetry }) => {
       )}
 
       {/* Hidden span for idle/post-save visibility — keeps aria-live region stable */}
-      {!isVisible && <Box component="span" sx={{ display: 'none' }} aria-hidden="true" />}
+      {!isVisible && (
+        <Box component="span" sx={{ display: "none" }} aria-hidden="true" />
+      )}
     </Box>
   );
 });
 
-SaveStatus.displayName = 'SaveStatus';
+SaveStatus.displayName = "SaveStatus";
 
 export default SaveStatus;

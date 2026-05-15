@@ -1,5 +1,9 @@
-import type { MRT_ColumnDef, MRT_Row, MRT_TableOptions } from 'material-react-table';
-import type { ReactNode } from 'react';
+import type {
+  MRT_ColumnDef,
+  MRT_Row,
+  MRT_TableOptions,
+} from "material-react-table";
+import type { ReactNode } from "react";
 
 /**
  * Action configuration for row action buttons.
@@ -37,7 +41,7 @@ export interface ActionColumnConfig<T extends object = object> {
   /** Column width in pixels (default: 150) */
   width?: number;
   /** Pin column position (default: 'right') */
-  pinned?: 'left' | 'right';
+  pinned?: "left" | "right";
   /** Header name (default: 'Actions') */
   headerName?: string;
 }

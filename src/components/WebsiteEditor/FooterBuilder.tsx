@@ -10,10 +10,18 @@
  *   initialConfig — optional pre-populated config (skips initial fetch if provided)
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Typography, Alert, Skeleton, Snackbar, MenuItem, alpha } from '@mui/material';
-import { Plus, Trash2, LayoutTemplate } from 'lucide-react';
-import { apiClient } from '../../api/client';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  Box,
+  Typography,
+  Alert,
+  Skeleton,
+  Snackbar,
+  MenuItem,
+  alpha,
+} from "@mui/material";
+import { Plus, Trash2, LayoutTemplate } from "lucide-react";
+import { apiClient } from "../../api/client";
 
 import {
   DashboardCard,
@@ -21,13 +29,18 @@ import {
   DashboardSelect,
   DashboardIconButton,
   DashboardGradientButton,
-} from '../Dashboard/shared';
-import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-import { getDashboardColors } from '../../styles/dashboardTheme';
+} from "../Dashboard/shared";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import { getDashboardColors } from "../../styles/dashboardTheme";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type SocialPlatform = 'facebook' | 'twitter' | 'instagram' | 'linkedin' | 'youtube';
+type SocialPlatform =
+  | "facebook"
+  | "twitter"
+  | "instagram"
+  | "linkedin"
+  | "youtube";
 
 interface ColLink {
   label: string;
@@ -62,11 +75,11 @@ const MAX_COL_LINKS = 8;
 const MAX_SOCIAL_LINKS = 5;
 
 const SOCIAL_PLATFORMS: { value: SocialPlatform; label: string }[] = [
-  { value: 'facebook', label: 'Facebook' },
-  { value: 'twitter', label: 'Twitter / X' },
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'linkedin', label: 'LinkedIn' },
-  { value: 'youtube', label: 'YouTube' },
+  { value: "facebook", label: "Facebook" },
+  { value: "twitter", label: "Twitter / X" },
+  { value: "instagram", label: "Instagram" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "youtube", label: "YouTube" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -76,28 +89,36 @@ function defaultConfig(): FooterConfig {
     copyright: `© ${new Date().getFullYear()} My Company. All rights reserved.`,
     columns: [],
     socialLinks: [],
-    logo: '',
+    logo: "",
   };
 }
 
 function configFromApi(raw: Record<string, unknown> | null): FooterConfig {
   if (!raw) return defaultConfig();
   return {
-    copyright: String(raw.copyright || ''),
+    copyright: String(raw.copyright || ""),
     columns: Array.isArray(raw.columns) ? (raw.columns as FooterColumn[]) : [],
-    socialLinks: Array.isArray(raw.socialLinks) ? (raw.socialLinks as SocialLink[]) : [],
-    logo: raw.logo ? String(raw.logo) : '',
+    socialLinks: Array.isArray(raw.socialLinks)
+      ? (raw.socialLinks as SocialLink[])
+      : [],
+    logo: raw.logo ? String(raw.logo) : "",
   };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initialConfig }) => {
+const FooterBuilder: React.FC<FooterBuilderProps> = ({
+  websiteId,
+  onSave,
+  initialConfig,
+}) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
 
   const [config, setConfig] = useState<FooterConfig>(() =>
-    initialConfig ? configFromApi(initialConfig as Record<string, unknown>) : defaultConfig()
+    initialConfig
+      ? configFromApi(initialConfig as Record<string, unknown>)
+      : defaultConfig(),
   );
   const [loading, setLoading] = useState(!initialConfig);
   const [saving, setSaving] = useState(false);
@@ -105,11 +126,11 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error';
+    severity: "success" | "error";
   }>({
     open: false,
-    message: '',
-    severity: 'success',
+    message: "",
+    severity: "success",
   });
 
   // ── Fetch existing config ───────────────────────────────────────────────
@@ -132,7 +153,7 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
           if (err.response?.status === 404) {
             setConfig(defaultConfig());
           } else {
-            setError('Failed to load footer configuration.');
+            setError("Failed to load footer configuration.");
           }
         }
       })
@@ -147,9 +168,12 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
 
   // ── Copyright & logo ────────────────────────────────────────────────────
 
-  const handleCopyright = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfig((prev) => ({ ...prev, copyright: e.target.value }));
-  }, []);
+  const handleCopyright = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setConfig((prev) => ({ ...prev, copyright: e.target.value }));
+    },
+    [],
+  );
 
   const handleLogo = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig((prev) => ({ ...prev, logo: e.target.value }));
@@ -160,7 +184,7 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
   const handleAddColumn = useCallback(() => {
     setConfig((prev) => {
       if (prev.columns.length >= MAX_COLUMNS) return prev;
-      return { ...prev, columns: [...prev.columns, { title: '', links: [] }] };
+      return { ...prev, columns: [...prev.columns, { title: "", links: [] }] };
     });
   }, []);
 
@@ -185,7 +209,7 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
       if (updated[colIdx].links.length >= MAX_COL_LINKS) return prev;
       updated[colIdx] = {
         ...updated[colIdx],
-        links: [...updated[colIdx].links, { label: '', url: '' }],
+        links: [...updated[colIdx].links, { label: "", url: "" }],
       };
       return { ...prev, columns: updated };
     });
@@ -212,7 +236,7 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
         return { ...prev, columns: updatedCols };
       });
     },
-    []
+    [],
   );
 
   // ── Social links ─────────────────────────────────────────────────────────
@@ -222,7 +246,7 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
       if (prev.socialLinks.length >= MAX_SOCIAL_LINKS) return prev;
       return {
         ...prev,
-        socialLinks: [...prev.socialLinks, { platform: 'twitter', url: '' }],
+        socialLinks: [...prev.socialLinks, { platform: "twitter", url: "" }],
       };
     });
   }, []);
@@ -234,13 +258,16 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
     }));
   }, []);
 
-  const handleSocialPlatform = useCallback((idx: number, value: SocialPlatform) => {
-    setConfig((prev) => {
-      const updated = [...prev.socialLinks];
-      updated[idx] = { ...updated[idx], platform: value };
-      return { ...prev, socialLinks: updated };
-    });
-  }, []);
+  const handleSocialPlatform = useCallback(
+    (idx: number, value: SocialPlatform) => {
+      setConfig((prev) => {
+        const updated = [...prev.socialLinks];
+        updated[idx] = { ...updated[idx], platform: value };
+        return { ...prev, socialLinks: updated };
+      });
+    },
+    [],
+  );
 
   const handleSocialUrl = useCallback((idx: number, value: string) => {
     setConfig((prev) => {
@@ -259,22 +286,29 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
       await apiClient.put(`/websites/${websiteId}/global-components/footer`, {
         config,
       });
-      setSnackbar({ open: true, message: 'Footer saved successfully.', severity: 'success' });
+      setSnackbar({
+        open: true,
+        message: "Footer saved successfully.",
+        severity: "success",
+      });
       onSave?.();
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Failed to save footer.';
-      setSnackbar({ open: true, message: msg, severity: 'error' });
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to save footer.";
+      setSnackbar({ open: true, message: msg, severity: "error" });
     } finally {
       setSaving(false);
     }
   }, [websiteId, config, onSave]);
 
-  const canAddColumn = useMemo(() => config.columns.length < MAX_COLUMNS, [config.columns.length]);
+  const canAddColumn = useMemo(
+    () => config.columns.length < MAX_COLUMNS,
+    [config.columns.length],
+  );
   const canAddSocial = useMemo(
     () => config.socialLinks.length < MAX_SOCIAL_LINKS,
-    [config.socialLinks.length]
+    [config.socialLinks.length],
   );
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -315,15 +349,25 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
         {/* Logo URL */}
         <DashboardInput
           label="Logo URL (optional)"
-          value={config.logo || ''}
+          value={config.logo || ""}
           onChange={handleLogo}
           placeholder="https://example.com/logo.png"
           sx={{ mb: 2 }}
         />
 
         {/* Columns */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Typography variant="body2" sx={{ color: colors.panelText, fontWeight: 500 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 1,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: colors.panelText, fontWeight: 500 }}
+          >
             Footer Columns ({config.columns.length}/{MAX_COLUMNS})
           </Typography>
           {canAddColumn && (
@@ -346,7 +390,7 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
               mb: 2,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <DashboardInput
                 label="Column Title"
                 value={col.title}
@@ -361,24 +405,29 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
                 tooltipLabel="Remove column"
                 onClick={() => handleRemoveColumn(colIdx)}
                 aria-label={`Remove column ${colIdx + 1}`}
-                sx={{ mt: '28px' }}
+                sx={{ mt: "28px" }}
               />
             </Box>
 
             <Typography
               variant="caption"
-              sx={{ color: colors.panelMuted, display: 'block', mb: 1 }}
+              sx={{ color: colors.panelMuted, display: "block", mb: 1 }}
             >
               Links ({col.links.length}/{MAX_COL_LINKS})
             </Typography>
 
             {col.links.map((link, linkIdx) => (
-              <Box key={linkIdx} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <Box key={linkIdx} sx={{ display: "flex", gap: 1, mb: 1 }}>
                 <DashboardInput
                   label="Label"
                   value={link.label}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleColLinkChange(colIdx, linkIdx, 'label', e.target.value)
+                    handleColLinkChange(
+                      colIdx,
+                      linkIdx,
+                      "label",
+                      e.target.value,
+                    )
                   }
                   sx={{ flex: 1 }}
                 />
@@ -386,7 +435,7 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
                   label="URL"
                   value={link.url}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleColLinkChange(colIdx, linkIdx, 'url', e.target.value)
+                    handleColLinkChange(colIdx, linkIdx, "url", e.target.value)
                   }
                   sx={{ flex: 2 }}
                 />
@@ -395,7 +444,7 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
                   tooltipLabel="Remove link"
                   onClick={() => handleRemoveColLink(colIdx, linkIdx)}
                   aria-label={`Remove link ${linkIdx + 1} from column ${colIdx + 1}`}
-                  sx={{ mt: '28px' }}
+                  sx={{ mt: "28px" }}
                 />
               </Box>
             ))}
@@ -414,14 +463,17 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
         {/* Social links */}
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
             mb: 1,
             mt: 2,
           }}
         >
-          <Typography variant="body2" sx={{ color: colors.panelText, fontWeight: 500 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: colors.panelText, fontWeight: 500 }}
+          >
             Social Links ({config.socialLinks.length}/{MAX_SOCIAL_LINKS})
           </Typography>
           {canAddSocial && (
@@ -435,7 +487,10 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
         </Box>
 
         {config.socialLinks.map((social, idx) => (
-          <Box key={idx} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'flex-start' }}>
+          <Box
+            key={idx}
+            sx={{ display: "flex", gap: 1, mb: 1, alignItems: "flex-start" }}
+          >
             <DashboardSelect
               label="Platform"
               value={social.platform}
@@ -464,18 +519,18 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
               tooltipLabel="Remove"
               onClick={() => handleRemoveSocial(idx)}
               aria-label={`Remove social link ${idx + 1}`}
-              sx={{ mt: '28px' }}
+              sx={{ mt: "28px" }}
             />
           </Box>
         ))}
 
         {/* Save */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
           <DashboardGradientButton
             onClick={handleSave}
             disabled={saving || !config.copyright.trim()}
           >
-            {saving ? 'Saving…' : 'Save Footer'}
+            {saving ? "Saving…" : "Save Footer"}
           </DashboardGradientButton>
         </Box>
       </DashboardCard>
@@ -484,12 +539,12 @@ const FooterBuilder: React.FC<FooterBuilderProps> = ({ websiteId, onSave, initia
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           severity={snackbar.severity}
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbar.message}
         </Alert>

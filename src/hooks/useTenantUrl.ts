@@ -9,10 +9,10 @@
  * Returns a buildUrl(path) function that prefixes the correct base.
  */
 
-import { useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useCallback, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
-type DeliveryMode = 'path' | 'subdomain' | 'custom-domain';
+type DeliveryMode = "path" | "subdomain" | "custom-domain";
 
 interface TenantUrlResult {
   /** Build a tenant-scoped internal URL */
@@ -32,69 +32,72 @@ export function useTenantUrl(): TenantUrlResult {
   const { deliveryMode, siteSlug } = useMemo(() => {
     // 1. Path-based: /s/:slug or /site/:slug
     if (slug) {
-      return { deliveryMode: 'path' as DeliveryMode, siteSlug: slug };
+      return { deliveryMode: "path" as DeliveryMode, siteSlug: slug };
     }
 
     // 2. Subdomain-based
     const hostname = window.location.hostname;
-    const parts = hostname.split('.');
+    const parts = hostname.split(".");
     const reserved = [
-      'www',
-      'api',
-      'admin',
-      'app',
-      'dashboard',
-      'staging',
-      'dev',
-      'test',
-      'localhost',
+      "www",
+      "api",
+      "admin",
+      "app",
+      "dashboard",
+      "staging",
+      "dev",
+      "test",
+      "localhost",
     ];
 
     if (parts.length > 1 && !reserved.includes(parts[0].toLowerCase())) {
-      return { deliveryMode: 'subdomain' as DeliveryMode, siteSlug: parts[0].toLowerCase() };
+      return {
+        deliveryMode: "subdomain" as DeliveryMode,
+        siteSlug: parts[0].toLowerCase(),
+      };
     }
 
     // 3. Custom domain -- no slug prefix needed
-    return { deliveryMode: 'custom-domain' as DeliveryMode, siteSlug: null };
+    return { deliveryMode: "custom-domain" as DeliveryMode, siteSlug: null };
   }, [slug]);
 
   const buildUrl = useCallback(
     (path: string): string => {
       // Normalize path to start with /
-      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
       // External URLs pass through unchanged
-      if (path.startsWith('http://') || path.startsWith('https://')) {
+      if (path.startsWith("http://") || path.startsWith("https://")) {
         return path;
       }
 
       switch (deliveryMode) {
-        case 'path':
+        case "path":
           // /s/:slug/blog/my-post
           return `/s/${siteSlug}${normalizedPath}`;
-        case 'subdomain':
+        case "subdomain":
           // Subdomain already scopes the site -- just use relative path
           return normalizedPath;
-        case 'custom-domain':
+        case "custom-domain":
           // Root-relative
           return normalizedPath;
         default:
           return normalizedPath;
       }
     },
-    [deliveryMode, siteSlug]
+    [deliveryMode, siteSlug],
   );
 
   const navigateTo = useCallback(
     (path: string) => {
       const url = buildUrl(path);
-      if (url.startsWith('http://') || url.startsWith('https://')) {
+      if (url.startsWith("http://") || url.startsWith("https://")) {
         window.location.href = url;
       } else {
         navigate(url);
       }
     },
-    [buildUrl, navigate]
+    [buildUrl, navigate],
   );
 
   return { buildUrl, navigateTo, deliveryMode, siteSlug };

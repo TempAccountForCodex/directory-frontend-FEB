@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 /**
  * Store / product / order React Query hooks.
@@ -160,11 +160,13 @@ export type DeleteProductVars = {
  * Drop undefined/null/empty-string params so the cache key and request URL
  * stay stable regardless of upstream form state.
  */
-function cleanParams<T extends Record<string, unknown>>(input: T): Record<string, unknown> {
+function cleanParams<T extends Record<string, unknown>>(
+  input: T,
+): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(input ?? {})) {
     if (value === undefined || value === null) continue;
-    if (typeof value === 'string' && value.trim() === '') continue;
+    if (typeof value === "string" && value.trim() === "") continue;
     out[key] = value;
   }
   return out;
@@ -187,7 +189,10 @@ export function useStores(params?: StoreListParams) {
   return useQuery({
     queryKey: queryKeys.stores.list(cleaned),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/stores', { params: cleaned, signal });
+      const response = await apiClient.get("/stores", {
+        params: cleaned,
+        signal,
+      });
       return response.data;
     },
     enabled: !!user,
@@ -204,7 +209,7 @@ export function useStore(storeId: string | number | null | undefined) {
   const { data: user } = useAuthMe();
 
   return useQuery<Store>({
-    queryKey: queryKeys.stores.detail(storeId ?? ''),
+    queryKey: queryKeys.stores.detail(storeId ?? ""),
     queryFn: async ({ signal }) => {
       const response = await apiClient.get(`/stores/${storeId}`, { signal });
       return response.data?.data ?? response.data;
@@ -221,18 +226,15 @@ export function useStore(storeId: string | number | null | undefined) {
  */
 export function useStoreProducts(
   storeId: string | number | null | undefined,
-  params?: StoreProductsParams
+  params?: StoreProductsParams,
 ) {
   const { data: user } = useAuthMe();
   const cleaned = cleanParams(params ?? {});
 
   return useQuery<Product[]>({
-    queryKey: [
-      ...queryKeys.stores.products(storeId ?? ''),
-      cleaned,
-    ] as const,
+    queryKey: [...queryKeys.stores.products(storeId ?? ""), cleaned] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/products', {
+      const response = await apiClient.get("/products", {
         params: { storeId, ...cleaned },
         signal,
       });
@@ -250,18 +252,15 @@ export function useStoreProducts(
  */
 export function useStoreOrders(
   storeId: string | number | null | undefined,
-  params?: StoreOrdersParams
+  params?: StoreOrdersParams,
 ) {
   const { data: user } = useAuthMe();
   const cleaned = cleanParams(params ?? {});
 
   return useQuery<Order[]>({
-    queryKey: [
-      ...queryKeys.stores.orders(storeId ?? ''),
-      cleaned,
-    ] as const,
+    queryKey: [...queryKeys.stores.orders(storeId ?? ""), cleaned] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/orders', {
+      const response = await apiClient.get("/orders", {
         params: { storeId, ...cleaned },
         signal,
       });
@@ -286,7 +285,7 @@ export function useCreateStore() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (vars: CreateStoreVars) => {
-      const response = await apiClient.post('/stores', vars);
+      const response = await apiClient.post("/stores", vars);
       return response.data?.data ?? response.data;
     },
     onSuccess: () => {
@@ -314,10 +313,13 @@ export function useUpdateStore() {
       if (data) {
         queryClient.setQueryData(queryKeys.stores.detail(vars.storeId), data);
       }
-      queryClient.invalidateQueries({ queryKey: queryKeys.stores.detail(vars.storeId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stores.detail(vars.storeId),
+      });
       queryClient.invalidateQueries({
         queryKey: queryKeys.stores.list(),
-        predicate: (q) => q.queryKey[0] === 'stores' && q.queryKey[1] === 'list',
+        predicate: (q) =>
+          q.queryKey[0] === "stores" && q.queryKey[1] === "list",
       });
     },
   });
@@ -333,11 +335,16 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ storeId, payload }: CreateProductVars) => {
-      const response = await apiClient.post('/products', { ...payload, storeId });
+      const response = await apiClient.post("/products", {
+        ...payload,
+        storeId,
+      });
       return (response.data?.data ?? response.data) as Product;
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.stores.products(vars.storeId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stores.products(vars.storeId),
+      });
     },
   });
 }
@@ -360,7 +367,9 @@ export function useUpdateProduct() {
       return (response.data?.data ?? response.data) as Product;
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.stores.products(vars.storeId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stores.products(vars.storeId),
+      });
     },
   });
 }
@@ -378,7 +387,9 @@ export function useDeleteProduct() {
       return response.data;
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.stores.products(vars.storeId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stores.products(vars.storeId),
+      });
     },
   });
 }

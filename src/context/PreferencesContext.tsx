@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 import {
   getCookiePreferences,
   saveCookiePreferences,
@@ -9,7 +9,7 @@ import {
   loadGoogleAnalytics,
   disableGoogleAnalytics,
   COOKIE_CATEGORIES,
-} from '../utils/preferences';
+} from "../utils/preferences";
 
 interface CookieConsentContextType {
   showBanner: boolean;
@@ -23,12 +23,16 @@ interface CookieConsentContextType {
   isCategoryAllowed: (category: string) => boolean;
 }
 
-const CookieConsentContext = createContext<CookieConsentContextType | null>(null);
+const CookieConsentContext = createContext<CookieConsentContextType | null>(
+  null,
+);
 
 export const useCookieConsent = () => {
   const context = useContext(CookieConsentContext);
   if (!context) {
-    throw new Error('useCookieConsent must be used within CookieConsentProvider');
+    throw new Error(
+      "useCookieConsent must be used within CookieConsentProvider",
+    );
   }
   return context;
 };
@@ -105,5 +109,9 @@ export const CookieConsentProvider = ({ children }) => {
     isCategoryAllowed,
   };
 
-  return <CookieConsentContext.Provider value={value}>{children}</CookieConsentContext.Provider>;
+  return (
+    <CookieConsentContext.Provider value={value}>
+      {children}
+    </CookieConsentContext.Provider>
+  );
 };

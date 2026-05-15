@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { apiClient } from '../../api/client';
+import { useState, useEffect } from "react";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { apiClient } from "../../api/client";
 import {
   Box,
   Card,
@@ -18,11 +18,11 @@ import {
   Button,
   Divider,
   MenuItem,
-} from '@mui/material';
-import { CircleX, Eye, Receipt, X } from 'lucide-react';
-import { getDashboardColors } from '../../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-import { DashboardSelect, DashboardTable, SearchBar } from './shared';
+} from "@mui/material";
+import { CircleX, Eye, Receipt, X } from "lucide-react";
+import { getDashboardColors } from "../../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import { DashboardSelect, DashboardTable, SearchBar } from "./shared";
 
 interface OrderItem {
   id: string;
@@ -58,17 +58,20 @@ interface StoreOrdersProps {
   storeCurrency: string;
 }
 
-const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProps) => {
+const StoreOrders = ({
+  storeId,
+  storeCurrency: _storeCurrency,
+}: StoreOrdersProps) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   // Search state
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   // Order detail drawer state
@@ -87,7 +90,7 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
       setError(null);
 
       const params: Record<string, string> = { storeId };
-      if (statusFilter !== 'ALL') params.status = statusFilter;
+      if (statusFilter !== "ALL") params.status = statusFilter;
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
 
       const response = await apiClient.get(`/orders`, {
@@ -96,8 +99,8 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
       });
       setOrders(response.data.data || []);
     } catch (err: any) {
-      console.error('Error fetching orders:', err);
-      setError(err.response?.data?.message || 'Failed to load orders');
+      console.error("Error fetching orders:", err);
+      setError(err.response?.data?.message || "Failed to load orders");
     } finally {
       setLoading(false);
     }
@@ -112,8 +115,8 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
       setSelectedOrder(response.data.data);
       setDetailDrawerOpen(true);
     } catch (err: any) {
-      console.error('Error fetching order detail:', err);
-      alert(err.response?.data?.message || 'Failed to load order details');
+      console.error("Error fetching order detail:", err);
+      alert(err.response?.data?.message || "Failed to load order details");
     } finally {
       setLoadingDetail(false);
     }
@@ -121,32 +124,40 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
 
   const handleCancelOrder = async () => {
     if (!selectedOrder) return;
-    if (!confirm('Are you sure you want to cancel this order?')) return;
+    if (!confirm("Are you sure you want to cancel this order?")) return;
 
     try {
       setCancellingOrder(true);
-      await apiClient.post(`/orders/${selectedOrder.id}/cancel`, {}, { headers: {} });
+      await apiClient.post(
+        `/orders/${selectedOrder.id}/cancel`,
+        {},
+        { headers: {} },
+      );
 
       // Update order in state
       setSelectedOrder({
         ...selectedOrder,
-        status: 'CANCELED',
+        status: "CANCELED",
         cancelledAt: new Date().toISOString(),
       });
-      setOrders(orders.map((o) => (o.id === selectedOrder.id ? { ...o, status: 'CANCELED' } : o)));
+      setOrders(
+        orders.map((o) =>
+          o.id === selectedOrder.id ? { ...o, status: "CANCELED" } : o,
+        ),
+      );
 
-      alert('Order cancelled successfully');
+      alert("Order cancelled successfully");
     } catch (err: any) {
-      console.error('Error cancelling order:', err);
-      alert(err.response?.data?.message || 'Failed to cancel order');
+      console.error("Error cancelling order:", err);
+      alert(err.response?.data?.message || "Failed to cancel order");
     } finally {
       setCancellingOrder(false);
     }
   };
 
   const formatPrice = (cents: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
       currency: currency,
     }).format(cents / 100);
   };
@@ -157,13 +168,13 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PAID':
+      case "PAID":
         return colors.success;
-      case 'PENDING':
+      case "PENDING":
         return colors.warning;
-      case 'FAILED':
+      case "FAILED":
         return colors.error;
-      case 'CANCELED':
+      case "CANCELED":
         return colors.textSecondary;
       default:
         return colors.textSecondary;
@@ -172,7 +183,12 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
         <CircularProgress sx={{ color: colors.primary }} />
       </Box>
     );
@@ -190,16 +206,23 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
       )}
 
       {/* Search */}
-      <Box sx={{ mb: 3, maxWidth: { xs: '100%', md: 350 } }}>
+      <Box sx={{ mb: 3, maxWidth: { xs: "100%", md: 350 } }}>
         <SearchBar
           value={searchQuery}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setSearchQuery(e.target.value)
+          }
           placeholder="Search by customer email or name..."
         />
       </Box>
 
       {/* Filters */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
         <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700 }}>
           Orders ({filteredOrders.length})
         </Typography>
@@ -225,18 +248,21 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
             borderRadius: 3,
             border: `1px solid ${colors.border}`,
             p: 6,
-            textAlign: 'center',
+            textAlign: "center",
           }}
         >
           <Box sx={{ color: colors.textSecondary, mb: 2 }}>
             <Receipt size={64} />
           </Box>
-          <Typography variant="h6" sx={{ color: colors.text, fontWeight: 700, mb: 1 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: colors.text, fontWeight: 700, mb: 1 }}
+          >
             No orders yet
           </Typography>
           <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-            {statusFilter === 'ALL'
-              ? 'Your customers will start seeing their orders here once they make purchases'
+            {statusFilter === "ALL"
+              ? "Your customers will start seeing their orders here once they make purchases"
               : `No orders with status "${statusFilter}"`}
           </Typography>
         </Card>
@@ -255,26 +281,42 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
         >
           <TableHead>
             <TableRow sx={{ background: colors.panelHover }}>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>Order ID</TableCell>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>Customer</TableCell>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>Total</TableCell>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>Status</TableCell>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>Date</TableCell>
-              <TableCell sx={{ color: colors.text, fontWeight: 700 }} align="right">
+              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>
+                Order ID
+              </TableCell>
+              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>
+                Customer
+              </TableCell>
+              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>
+                Total
+              </TableCell>
+              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>
+                Status
+              </TableCell>
+              <TableCell sx={{ color: colors.text, fontWeight: 700 }}>
+                Date
+              </TableCell>
+              <TableCell
+                sx={{ color: colors.text, fontWeight: 700 }}
+                align="right"
+              >
                 Actions
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredOrders.map((order) => (
-              <TableRow key={order.id} sx={{ '&:hover': { background: colors.panelHover } }}>
+              <TableRow
+                key={order.id}
+                sx={{ "&:hover": { background: colors.panelHover } }}
+              >
                 <TableCell>
                   <Typography
                     variant="body2"
                     sx={{
                       color: colors.text,
                       fontWeight: 600,
-                      fontFamily: 'monospace',
+                      fontFamily: "monospace",
                     }}
                   >
                     {order.id.substring(0, 8)}...
@@ -282,9 +324,12 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" sx={{ color: colors.text }}>
-                    {order.customerName || 'Guest'}
+                    {order.customerName || "Guest"}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: colors.textSecondary }}
+                  >
                     {order.customerEmail}
                   </Typography>
                 </TableCell>
@@ -297,7 +342,7 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
                     size="small"
                     sx={{
                       background: getStatusColor(order.status),
-                      color: '#fff',
+                      color: "#fff",
                       fontWeight: 600,
                     }}
                   />
@@ -327,47 +372,70 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
         onClose={() => setDetailDrawerOpen(false)}
         PaperProps={{
           sx: {
-            width: { xs: '100%', sm: 600 },
+            width: { xs: "100%", sm: 600 },
             background: colors.bgDefault,
             p: 3,
           },
         }}
       >
         {loadingDetail ? (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            minHeight="400px"
+          >
             <CircularProgress sx={{ color: colors.primary }} />
           </Box>
         ) : selectedOrder ? (
           <Box>
             {/* Header */}
-            <Box display="flex" justifyContent="space-between" alignItems="start" mb={3}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="start"
+              mb={3}
+            >
               <Box>
-                <Typography variant="h5" sx={{ color: colors.text, fontWeight: 700, mb: 0.5 }}>
+                <Typography
+                  variant="h5"
+                  sx={{ color: colors.text, fontWeight: 700, mb: 0.5 }}
+                >
                   Order Details
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ color: colors.textSecondary, fontFamily: 'monospace' }}
+                  sx={{ color: colors.textSecondary, fontFamily: "monospace" }}
                 >
                   {selectedOrder.id}
                 </Typography>
               </Box>
-              <IconButton onClick={() => setDetailDrawerOpen(false)} size="small">
+              <IconButton
+                onClick={() => setDetailDrawerOpen(false)}
+                size="small"
+              >
                 <X size={18} />
               </IconButton>
             </Box>
 
             {/* Status */}
             <Card sx={{ mb: 3, p: 2, border: `1px solid ${colors.border}` }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary }}
+                >
                   Status
                 </Typography>
                 <Chip
                   label={selectedOrder.status}
                   sx={{
                     background: getStatusColor(selectedOrder.status),
-                    color: '#fff',
+                    color: "#fff",
                     fontWeight: 700,
                   }}
                 />
@@ -376,11 +444,14 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
 
             {/* Customer Info */}
             <Card sx={{ mb: 3, p: 2, border: `1px solid ${colors.border}` }}>
-              <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: colors.text, fontWeight: 700, mb: 2 }}
+              >
                 Customer Information
               </Typography>
               <Typography variant="body2" sx={{ color: colors.text, mb: 0.5 }}>
-                {selectedOrder.customerName || 'Guest Customer'}
+                {selectedOrder.customerName || "Guest Customer"}
               </Typography>
               <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                 {selectedOrder.customerEmail}
@@ -389,7 +460,10 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
 
             {/* Order Items */}
             <Card sx={{ mb: 3, p: 2, border: `1px solid ${colors.border}` }}>
-              <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: colors.text, fontWeight: 700, mb: 2 }}
+              >
                 Items
               </Typography>
               {selectedOrder.items?.map((item, index) => (
@@ -400,19 +474,34 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
                     borderBottom:
                       index < selectedOrder.items!.length - 1
                         ? `1px solid ${colors.border}`
-                        : 'none',
+                        : "none",
                   }}
                 >
-                  <Box display="flex" justifyContent="space-between" alignItems="start" mb={0.5}>
-                    <Typography variant="body2" sx={{ color: colors.text, fontWeight: 600 }}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="start"
+                    mb={0.5}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: colors.text, fontWeight: 600 }}
+                    >
                       {item.productName}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: colors.text, fontWeight: 600 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: colors.text, fontWeight: 600 }}
+                    >
                       {formatPrice(item.subtotalCents, selectedOrder.currency)}
                     </Typography>
                   </Box>
-                  <Typography variant="caption" sx={{ color: colors.textSecondary }}>
-                    {formatPrice(item.unitPriceCents, selectedOrder.currency)} × {item.quantity}
+                  <Typography
+                    variant="caption"
+                    sx={{ color: colors.textSecondary }}
+                  >
+                    {formatPrice(item.unitPriceCents, selectedOrder.currency)} ×{" "}
+                    {item.quantity}
                   </Typography>
                 </Box>
               ))}
@@ -420,60 +509,95 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
 
             {/* Order Summary */}
             <Card sx={{ mb: 3, p: 2, border: `1px solid ${colors.border}` }}>
-              <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: colors.text, fontWeight: 700, mb: 2 }}
+              >
                 Order Summary
               </Typography>
               <Box display="flex" justifyContent="space-between" mb={1}>
-                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary }}
+                >
                   Subtotal
                 </Typography>
                 <Typography variant="body2" sx={{ color: colors.text }}>
-                  {formatPrice(selectedOrder.totalCents, selectedOrder.currency)}
+                  {formatPrice(
+                    selectedOrder.totalCents,
+                    selectedOrder.currency,
+                  )}
                 </Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" mb={1}>
-                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary }}
+                >
                   Platform Fee ({selectedOrder.platformFeePercent / 100}%)
                 </Typography>
-                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary }}
+                >
                   {formatPrice(
                     Math.round(
-                      (selectedOrder.totalCents * selectedOrder.platformFeePercent) / 10000
+                      (selectedOrder.totalCents *
+                        selectedOrder.platformFeePercent) /
+                        10000,
                     ),
-                    selectedOrder.currency
+                    selectedOrder.currency,
                   )}
                 </Typography>
               </Box>
               <Divider sx={{ my: 1.5 }} />
               <Box display="flex" justifyContent="space-between">
-                <Typography variant="body1" sx={{ color: colors.text, fontWeight: 700 }}>
+                <Typography
+                  variant="body1"
+                  sx={{ color: colors.text, fontWeight: 700 }}
+                >
                   Total
                 </Typography>
-                <Typography variant="body1" sx={{ color: colors.text, fontWeight: 700 }}>
-                  {formatPrice(selectedOrder.totalCents, selectedOrder.currency)}
+                <Typography
+                  variant="body1"
+                  sx={{ color: colors.text, fontWeight: 700 }}
+                >
+                  {formatPrice(
+                    selectedOrder.totalCents,
+                    selectedOrder.currency,
+                  )}
                 </Typography>
               </Box>
             </Card>
 
             {/* Payment Info */}
             <Card sx={{ mb: 3, p: 2, border: `1px solid ${colors.border}` }}>
-              <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: colors.text, fontWeight: 700, mb: 2 }}
+              >
                 Payment Information
               </Typography>
               <Box display="flex" justifyContent="space-between" mb={1}>
-                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary }}
+                >
                   Payment Processor
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ color: colors.text, textTransform: 'capitalize' }}
+                  sx={{ color: colors.text, textTransform: "capitalize" }}
                 >
                   {selectedOrder.paymentProcessor}
                 </Typography>
               </Box>
               {selectedOrder.paidAt && (
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: colors.textSecondary }}
+                  >
                     Paid At
                   </Typography>
                   <Typography variant="body2" sx={{ color: colors.text }}>
@@ -483,7 +607,10 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
               )}
               {selectedOrder.cancelledAt && (
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: colors.textSecondary }}
+                  >
                     Cancelled At
                   </Typography>
                   <Typography variant="body2" sx={{ color: colors.text }}>
@@ -495,11 +622,17 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
 
             {/* Timestamps */}
             <Card sx={{ mb: 3, p: 2, border: `1px solid ${colors.border}` }}>
-              <Typography variant="subtitle2" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: colors.text, fontWeight: 700, mb: 2 }}
+              >
                 Timeline
               </Typography>
               <Box display="flex" justifyContent="space-between">
-                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary }}
+                >
                   Created
                 </Typography>
                 <Typography variant="body2" sx={{ color: colors.text }}>
@@ -509,7 +642,7 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
             </Card>
 
             {/* Actions */}
-            {selectedOrder.status === 'PENDING' && (
+            {selectedOrder.status === "PENDING" && (
               <Button
                 fullWidth
                 variant="outlined"
@@ -520,13 +653,17 @@ const StoreOrders = ({ storeId, storeCurrency: _storeCurrency }: StoreOrdersProp
                 sx={{
                   borderColor: colors.error,
                   color: colors.error,
-                  '&:hover': {
+                  "&:hover": {
                     borderColor: colors.error,
                     background: alpha(colors.error, 0.1),
                   },
                 }}
               >
-                {cancellingOrder ? <CircularProgress size={20} /> : 'Cancel Order'}
+                {cancellingOrder ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  "Cancel Order"
+                )}
               </Button>
             )}
           </Box>

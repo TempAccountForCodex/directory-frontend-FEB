@@ -188,9 +188,6 @@
 
 // export const getTemplateById = (id: string): TemplateDefinition | undefined => templateRegistry[id];
 
-
-
-
 import { lazy } from "react";
 import type { TemplateDefinition } from "./types";
 
@@ -242,7 +239,9 @@ const StorePremiumTemplate = lazy(
 const StorePerformanceTemplate = lazy(
   () => import("../templates/store/StorePerformanceTemplate"),
 );
-const StoreFitTemplate = lazy(() => import("../templates/store/StoreFitTemplate"));
+const StoreFitTemplate = lazy(
+  () => import("../templates/store/StoreFitTemplate"),
+);
 const StorePawsTemplate = lazy(
   () => import("../templates/store/StorePawsTemplate"),
 );

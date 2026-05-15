@@ -13,7 +13,7 @@
  * - React.memo prevents parent-triggered re-renders
  */
 
-import React from 'react';
+import React from "react";
 import {
   Paper,
   Typography,
@@ -25,20 +25,20 @@ import {
   Select,
   MenuItem,
   type SelectChangeEvent,
-} from '@mui/material';
-import ColorPickerWithAlpha from '../UI/ColorPickerWithAlpha';
+} from "@mui/material";
+import ColorPickerWithAlpha from "../UI/ColorPickerWithAlpha";
 // @ts-ignore — ThemeManager is a JS component
-import ThemeManager from '../Dashboard/ThemeManager';
+import ThemeManager from "../Dashboard/ThemeManager";
 
 // ---------------------------------------------------------------------------
 // Font Presets (Step 12.1)
 // ---------------------------------------------------------------------------
 
 const FONT_PRESET_OPTIONS = [
-  { key: 'system', label: 'System (Inter)' },
-  { key: 'serif', label: 'Serif (Playfair / Lora)' },
-  { key: 'modern', label: 'Modern (Poppins)' },
-  { key: 'editorial', label: 'Editorial (Cormorant / Montserrat)' },
+  { key: "system", label: "System (Inter)" },
+  { key: "serif", label: "Serif (Playfair / Lora)" },
+  { key: "modern", label: "Modern (Poppins)" },
+  { key: "editorial", label: "Editorial (Cormorant / Montserrat)" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -46,14 +46,14 @@ const FONT_PRESET_OPTIONS = [
 // ---------------------------------------------------------------------------
 
 const LETTER_SPACING_OPTIONS = [
-  { key: 'normal', label: 'Normal', value: 'normal' },
-  { key: 'wide', label: 'Wide', value: '0.05em' },
-  { key: 'wider', label: 'Wider', value: '0.1em' },
+  { key: "normal", label: "Normal", value: "normal" },
+  { key: "wide", label: "Wide", value: "0.05em" },
+  { key: "wider", label: "Wider", value: "0.1em" },
 ];
 
 const TEXT_TRANSFORM_OPTIONS = [
-  { key: 'none', label: 'None', value: 'none' },
-  { key: 'uppercase', label: 'UPPERCASE', value: 'uppercase' },
+  { key: "none", label: "None", value: "none" },
+  { key: "uppercase", label: "UPPERCASE", value: "uppercase" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -117,11 +117,11 @@ const AppearancePanel: React.FC<AppearancePanelProps> = React.memo(
     currentThemeId,
     onThemeChange,
     colors,
-    fontPreset = 'system',
+    fontPreset = "system",
     onFontPresetChange,
-    headingLetterSpacing = 'normal',
+    headingLetterSpacing = "normal",
     onHeadingLetterSpacingChange,
-    headingTextTransform = 'none',
+    headingTextTransform = "none",
     onHeadingTextTransformChange,
   }) => {
     const hasWebsite = websiteId != null;
@@ -130,21 +130,21 @@ const AppearancePanel: React.FC<AppearancePanelProps> = React.memo(
       (event: SelectChangeEvent<string>) => {
         onFontPresetChange?.(event.target.value);
       },
-      [onFontPresetChange]
+      [onFontPresetChange],
     );
 
     const handleLetterSpacingChange = React.useCallback(
       (event: SelectChangeEvent<string>) => {
         onHeadingLetterSpacingChange?.(event.target.value);
       },
-      [onHeadingLetterSpacingChange]
+      [onHeadingLetterSpacingChange],
     );
 
     const handleTextTransformChange = React.useCallback(
       (event: SelectChangeEvent<string>) => {
         onHeadingTextTransformChange?.(event.target.value);
       },
-      [onHeadingTextTransformChange]
+      [onHeadingTextTransformChange],
     );
 
     return (
@@ -157,7 +157,10 @@ const AppearancePanel: React.FC<AppearancePanelProps> = React.memo(
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 3 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: colors.text, fontWeight: 600, mb: 3 }}
+          >
             Color Palette
           </Typography>
 
@@ -209,7 +212,10 @@ const AppearancePanel: React.FC<AppearancePanelProps> = React.memo(
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 3 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: colors.text, fontWeight: 600, mb: 3 }}
+          >
             Font Family
           </Typography>
           <FormControl fullWidth size="small">
@@ -221,10 +227,10 @@ const AppearancePanel: React.FC<AppearancePanelProps> = React.memo(
               label="Font Preset"
               value={fontPreset}
               onChange={handleFontPresetChange}
-              inputProps={{ 'data-testid': 'font-preset-select' }}
+              inputProps={{ "data-testid": "font-preset-select" }}
               sx={{
                 color: colors.text,
-                '& .MuiOutlinedInput-notchedOutline': {
+                "& .MuiOutlinedInput-notchedOutline": {
                   borderColor: alpha(colors.text, 0.3),
                 },
               }}
@@ -246,7 +252,10 @@ const AppearancePanel: React.FC<AppearancePanelProps> = React.memo(
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 3 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: colors.text, fontWeight: 600, mb: 3 }}
+          >
             Heading Style
           </Typography>
           <Stack spacing={2}>
@@ -259,10 +268,10 @@ const AppearancePanel: React.FC<AppearancePanelProps> = React.memo(
                 label="Letter Spacing"
                 value={headingLetterSpacing}
                 onChange={handleLetterSpacingChange}
-                inputProps={{ 'data-testid': 'letter-spacing-select' }}
+                inputProps={{ "data-testid": "letter-spacing-select" }}
                 sx={{
                   color: colors.text,
-                  '& .MuiOutlinedInput-notchedOutline': {
+                  "& .MuiOutlinedInput-notchedOutline": {
                     borderColor: alpha(colors.text, 0.3),
                   },
                 }}
@@ -283,10 +292,10 @@ const AppearancePanel: React.FC<AppearancePanelProps> = React.memo(
                 label="Text Transform"
                 value={headingTextTransform}
                 onChange={handleTextTransformChange}
-                inputProps={{ 'data-testid': 'text-transform-select' }}
+                inputProps={{ "data-testid": "text-transform-select" }}
                 sx={{
                   color: colors.text,
-                  '& .MuiOutlinedInput-notchedOutline': {
+                  "& .MuiOutlinedInput-notchedOutline": {
                     borderColor: alpha(colors.text, 0.3),
                   },
                 }}
@@ -310,21 +319,24 @@ const AppearancePanel: React.FC<AppearancePanelProps> = React.memo(
               borderRadius: 2,
             }}
           >
-            <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600, mb: 3 }}>
+            <Typography
+              variant="h6"
+              sx={{ color: colors.text, fontWeight: 600, mb: 3 }}
+            >
               Theme Presets
             </Typography>
             <ThemeManager
               websiteId={String(websiteId)}
-              currentThemeId={currentThemeId ?? ''}
+              currentThemeId={currentThemeId ?? ""}
               onThemeChange={onThemeChange ?? (() => undefined)}
             />
           </Paper>
         )}
       </Stack>
     );
-  }
+  },
 );
 
-AppearancePanel.displayName = 'AppearancePanel';
+AppearancePanel.displayName = "AppearancePanel";
 
 export default AppearancePanel;

@@ -5,7 +5,7 @@
  * Extracted from BlockRenderer.tsx so all block components can share it.
  */
 
-import React from 'react';
+import React from "react";
 import {
   Business as BusinessIcon,
   Build as BuildIcon,
@@ -28,13 +28,15 @@ import {
   MenuBook as CertIcon,
   Web as WebIcon,
   Star as StarIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 /**
  * Maps icon names from templates to Material-UI icon components.
  * Falls back to StarIcon for unknown names.
  */
-export const getIconComponent = (iconName: string): React.ComponentType<any> => {
+export const getIconComponent = (
+  iconName: string,
+): React.ComponentType<any> => {
   const iconMap: Record<string, React.ComponentType<any>> = {
     business: BusinessIcon,
     build: BuildIcon,

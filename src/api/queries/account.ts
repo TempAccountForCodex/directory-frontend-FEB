@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import { useAuthMe } from './auth';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import { useAuthMe } from "./auth";
 
 /**
  * Shape of `GET /api/account/delegated-accounts` — list of accounts the
@@ -57,12 +57,14 @@ export function useDelegatedAccounts() {
   return useQuery<DelegatedAccountsResponse>({
     queryKey: queryKeys.account.delegated(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/account/delegated-accounts', { signal });
+      const response = await apiClient.get("/account/delegated-accounts", {
+        signal,
+      });
       return response.data;
     },
     enabled: !!user,
     staleTime: 60_000,
-    refetchOnWindowFocus: 'always',
+    refetchOnWindowFocus: "always",
   });
 }
 
@@ -76,7 +78,9 @@ export function useAccountInvitesPending() {
   return useQuery<AccountInvitesPendingResponse>({
     queryKey: queryKeys.account.invitesPending(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/account/account-invites/pending', { signal });
+      const response = await apiClient.get("/account/account-invites/pending", {
+        signal,
+      });
       return response.data;
     },
     enabled: !!user,
@@ -100,12 +104,18 @@ export function useAcceptAccountInvite() {
 
   return useMutation({
     mutationFn: async (token: string) => {
-      const response = await apiClient.post(`/account/delegates/invite/${token}/accept`);
+      const response = await apiClient.post(
+        `/account/delegates/invite/${token}/accept`,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.account.invitesPending() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.account.delegated() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.account.invitesPending(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.account.delegated(),
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.websites.all() });
     },
   });
@@ -125,11 +135,15 @@ export function useRejectAccountInvite() {
 
   return useMutation({
     mutationFn: async (token: string) => {
-      const response = await apiClient.post(`/account/delegates/invite/${token}/decline`);
+      const response = await apiClient.post(
+        `/account/delegates/invite/${token}/decline`,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.account.invitesPending() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.account.invitesPending(),
+      });
     },
   });
 }
@@ -229,7 +243,7 @@ export function useBillingDetail() {
   return useQuery<BillingDetailResponse>({
     queryKey: queryKeys.account.billing(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/account/billing', { signal });
+      const response = await apiClient.get("/account/billing", { signal });
       return response.data;
     },
     enabled: !!user,
@@ -246,7 +260,9 @@ export function usePaymentMethods() {
   return useQuery<PaymentMethodsResponse>({
     queryKey: queryKeys.account.paymentMethods(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/account/payment-methods', { signal });
+      const response = await apiClient.get("/account/payment-methods", {
+        signal,
+      });
       return response.data;
     },
     enabled: !!user,
@@ -266,7 +282,7 @@ export function usePlanSummaryQuery() {
   return useQuery<PlanSummaryResponse>({
     queryKey: queryKeys.account.planSummary(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/billing/plan-summary', { signal });
+      const response = await apiClient.get("/billing/plan-summary", { signal });
       return response.data;
     },
     enabled: !!user,
@@ -286,9 +302,9 @@ export function usePlanPreview(planCode: string | null | undefined) {
   const { data: user } = useAuthMe();
 
   return useQuery<PlanPreviewResponse>({
-    queryKey: queryKeys.account.planPreview(planCode ?? ''),
+    queryKey: queryKeys.account.planPreview(planCode ?? ""),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/account/plan-preview', {
+      const response = await apiClient.get("/account/plan-preview", {
         params: { plan: planCode },
         signal,
       });
@@ -303,7 +319,9 @@ export function usePlanPreview(planCode: string | null | undefined) {
  * `GET /api/account/billing-history?page=&limit=` — paginated audit of plan
  * changes. `params` is part of the query key so each page caches separately.
  */
-export function useBillingHistory(params: { page?: number; limit?: number } = {}) {
+export function useBillingHistory(
+  params: { page?: number; limit?: number } = {},
+) {
   const { data: user } = useAuthMe();
   const page = params.page ?? 1;
   const limit = params.limit ?? 20;
@@ -311,7 +329,7 @@ export function useBillingHistory(params: { page?: number; limit?: number } = {}
   return useQuery<BillingHistoryResponse>({
     queryKey: queryKeys.account.billingHistory({ page, limit }),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/account/billing-history', {
+      const response = await apiClient.get("/account/billing-history", {
         params: { page, limit },
         signal,
       });
@@ -335,7 +353,7 @@ export function useLoginHistory(params: LoginHistoryParams = {}) {
   return useQuery<LoginHistoryResponse>({
     queryKey: [...queryKeys.account.loginHistory(), { page, limit }] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/account/login-history', {
+      const response = await apiClient.get("/account/login-history", {
         params: { page, limit },
         signal,
       });
@@ -368,7 +386,7 @@ export function useDelegates() {
   return useQuery<DelegatesResponse>({
     queryKey: queryKeys.account.delegates(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/account/delegates', { signal });
+      const response = await apiClient.get("/account/delegates", { signal });
       return response.data;
     },
     enabled: !!user,
@@ -397,7 +415,10 @@ export function useDelegateInvitesPending() {
   return useQuery<DelegateInvitesPendingResponse>({
     queryKey: queryKeys.account.delegateInvitesPending(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/account/delegates/invites/pending', { signal });
+      const response = await apiClient.get(
+        "/account/delegates/invites/pending",
+        { signal },
+      );
       return response.data;
     },
     enabled: !!user,
@@ -421,12 +442,19 @@ export function useInviteDelegate() {
 
   return useMutation({
     mutationFn: async (payload: InviteDelegatePayload) => {
-      const response = await apiClient.post('/account/delegates/invite', payload);
+      const response = await apiClient.post(
+        "/account/delegates/invite",
+        payload,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.account.delegates() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.account.delegateInvitesPending() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.account.delegates(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.account.delegateInvitesPending(),
+      });
     },
   });
 }
@@ -443,8 +471,12 @@ export function useDeleteDelegate() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.account.delegates() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.account.delegateInvitesPending() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.account.delegates(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.account.delegateInvitesPending(),
+      });
     },
   });
 }
@@ -467,12 +499,17 @@ export function useCancelSubscription() {
       const body: Record<string, string> = {};
       if (options.reason) body.reason = options.reason;
       if (options.feedback) body.feedback = options.feedback;
-      const response = await apiClient.post('/account/cancel-subscription', body);
+      const response = await apiClient.post(
+        "/account/cancel-subscription",
+        body,
+      );
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.account.billing() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.account.planSummary() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.account.planSummary(),
+      });
     },
   });
 }
@@ -485,12 +522,14 @@ export function useReactivateSubscription() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await apiClient.post('/account/reactivate-subscription');
+      const response = await apiClient.post("/account/reactivate-subscription");
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.account.billing() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.account.planSummary() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.account.planSummary(),
+      });
     },
   });
 }
@@ -503,7 +542,7 @@ export function useReactivateSubscription() {
 export function useCreateSetupIntent() {
   return useMutation<{ clientSecret: string }, unknown, void>({
     mutationFn: async () => {
-      const response = await apiClient.post('/account/setup-intent');
+      const response = await apiClient.post("/account/setup-intent");
       return response.data;
     },
   });

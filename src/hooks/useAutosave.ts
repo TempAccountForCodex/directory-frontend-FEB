@@ -14,14 +14,14 @@
  * Uses useRef for mutable values to avoid stale closures across renders.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from "react";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type EntityType = 'website' | 'page' | 'block';
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+export type EntityType = "website" | "page" | "block";
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 export interface ConflictData {
   serverData: Record<string, unknown>;
@@ -29,7 +29,7 @@ export interface ConflictData {
   localData: Record<string, unknown>;
 }
 
-export type ConflictResolution = 'keep-local' | 'use-server';
+export type ConflictResolution = "keep-local" | "use-server";
 
 export interface SaveResult {
   updatedAt?: string;
@@ -91,7 +91,7 @@ export function useAutosave({
   onSaveSuccess,
 }: UseAutosaveParams): UseAutosaveReturn {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [conflictData, setConflictData] = useState<ConflictData | null>(null);
 
   // Refs to hold mutable values without causing re-renders or stale closures
@@ -135,7 +135,7 @@ export function useAutosave({
     if (isIdleRef.current) return;
 
     isSavingRef.current = true;
-    if (isMountedRef.current) setSaveStatus('saving');
+    if (isMountedRef.current) setSaveStatus("saving");
 
     try {
       const currentData = dataRef.current;
@@ -150,23 +150,23 @@ export function useAutosave({
           serverUpdatedAt: result.serverUpdatedAt,
           localData: currentData,
         });
-        setSaveStatus('idle');
+        setSaveStatus("idle");
         return;
       }
 
       // Success — clear any localStorage backup (Step 5.10)
       setHasUnsavedChanges(false);
-      setSaveStatus('saved');
+      setSaveStatus("saved");
       lastDataStringRef.current = JSON.stringify(currentData);
       if (onSaveSuccessRef.current) onSaveSuccessRef.current();
 
       // Auto-reset to idle after 3s
       setTimeout(() => {
-        if (isMountedRef.current) setSaveStatus('idle');
+        if (isMountedRef.current) setSaveStatus("idle");
       }, 3000);
     } catch {
       if (isMountedRef.current) {
-        setSaveStatus('error');
+        setSaveStatus("error");
       }
     } finally {
       isSavingRef.current = false;
@@ -232,7 +232,12 @@ export function useAutosave({
 
     // Start autosave interval
     autosaveTimerRef.current = setInterval(() => {
-      if (isMountedRef.current && hasUnsavedChanges && !isSavingRef.current && !isIdleRef.current) {
+      if (
+        isMountedRef.current &&
+        hasUnsavedChanges &&
+        !isSavingRef.current &&
+        !isIdleRef.current
+      ) {
         performSave();
       }
     }, intervalMs);
@@ -263,16 +268,16 @@ export function useAutosave({
     // Start idle timer initially
     resetIdleTimer();
 
-    window.addEventListener('mousemove', resetIdleTimer, { passive: true });
-    window.addEventListener('keydown', resetIdleTimer, { passive: true });
-    window.addEventListener('click', resetIdleTimer, { passive: true });
-    window.addEventListener('touchstart', resetIdleTimer, { passive: true });
+    window.addEventListener("mousemove", resetIdleTimer, { passive: true });
+    window.addEventListener("keydown", resetIdleTimer, { passive: true });
+    window.addEventListener("click", resetIdleTimer, { passive: true });
+    window.addEventListener("touchstart", resetIdleTimer, { passive: true });
 
     return () => {
-      window.removeEventListener('mousemove', resetIdleTimer);
-      window.removeEventListener('keydown', resetIdleTimer);
-      window.removeEventListener('click', resetIdleTimer);
-      window.removeEventListener('touchstart', resetIdleTimer);
+      window.removeEventListener("mousemove", resetIdleTimer);
+      window.removeEventListener("keydown", resetIdleTimer);
+      window.removeEventListener("click", resetIdleTimer);
+      window.removeEventListener("touchstart", resetIdleTimer);
       if (idleTimerRef.current) {
         clearTimeout(idleTimerRef.current);
       }
@@ -287,14 +292,14 @@ export function useAutosave({
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges && entityId) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
         // Attempt synchronous save is not feasible but we trigger the async one
         // The browser's beforeunload prompt gives users a chance to stay
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges, entityId]);
 
   // ---------------------------------------------------------------------------
@@ -311,8 +316,8 @@ export function useAutosave({
       }
     };
 
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
   }, [autoSaveEnabled, hasUnsavedChanges, entityId, performSave]);
 
   // ---------------------------------------------------------------------------
@@ -333,22 +338,25 @@ export function useAutosave({
   // Public API
   // ---------------------------------------------------------------------------
 
-  const triggerSave = useCallback(async (overrideData?: Record<string, unknown>): Promise<void> => {
-    if (overrideData) {
-      dataRef.current = overrideData;
-    }
-    await performSave();
-  }, [performSave]);
+  const triggerSave = useCallback(
+    async (overrideData?: Record<string, unknown>): Promise<void> => {
+      if (overrideData) {
+        dataRef.current = overrideData;
+      }
+      await performSave();
+    },
+    [performSave],
+  );
 
   const clearDirty = useCallback(() => {
     setHasUnsavedChanges(false);
-    setSaveStatus('idle');
+    setSaveStatus("idle");
     lastDataStringRef.current = JSON.stringify(dataRef.current);
   }, []);
 
   const resolveConflict = useCallback((resolution: ConflictResolution) => {
     setConflictData(null);
-    if (resolution === 'keep-local') {
+    if (resolution === "keep-local") {
       // User keeps their version — mark as dirty to re-save with force flag
       setHasUnsavedChanges(true);
     } else {

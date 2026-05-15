@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   ButtonBase,
   Box,
@@ -14,8 +14,8 @@ import {
   TextField,
   Tooltip,
   Typography,
-} from '@mui/material';
-import type { SxProps, Theme } from '@mui/material/styles';
+} from "@mui/material";
+import type { SxProps, Theme } from "@mui/material/styles";
 import {
   AlignCenter,
   AlignLeft,
@@ -27,7 +27,7 @@ import {
   Pipette,
   Type,
   Underline,
-} from 'lucide-react';
+} from "lucide-react";
 
 export type EditorTextStyle = {
   fontFamily?: string;
@@ -44,17 +44,17 @@ export type EditableSelection = {
   blockId: string;
   fieldPath: string;
   label: string;
-  editType?: 'single' | 'multi';
+  editType?: "single" | "multi";
 };
 
 type ToolbarAction =
-  | 'bold'
-  | 'italic'
-  | 'underline'
-  | 'strikethrough'
-  | 'align-left'
-  | 'align-center'
-  | 'align-right';
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough"
+  | "align-left"
+  | "align-center"
+  | "align-right";
 
 type Props = {
   selection: EditableSelection | null;
@@ -65,38 +65,47 @@ type Props = {
 };
 
 const FONT_OPTIONS = [
-  { value: '"Inter", "Segoe UI", sans-serif', label: 'Inter' },
-  { value: '"Poppins", "Inter", sans-serif', label: 'Poppins' },
-  { value: '"DM Sans", "Inter", sans-serif', label: 'DM Sans' },
-  { value: '"Montserrat", "Inter", sans-serif', label: 'Montserrat' },
-  { value: '"Plus Jakarta Sans", "Inter", sans-serif', label: 'Jakarta' },
-  { value: '"Manrope", "Inter", sans-serif', label: 'Manrope' },
-  { value: '"Playfair Display", "Times New Roman", serif', label: 'Playfair' },
-  { value: '"Lora", Georgia, serif', label: 'Lora' },
-  { value: '"Merriweather", Georgia, serif', label: 'Merriweather' },
-  { value: '"Space Mono", monospace', label: 'Mono' },
+  { value: '"Inter", "Segoe UI", sans-serif', label: "Inter" },
+  { value: '"Poppins", "Inter", sans-serif', label: "Poppins" },
+  { value: '"DM Sans", "Inter", sans-serif', label: "DM Sans" },
+  { value: '"Montserrat", "Inter", sans-serif', label: "Montserrat" },
+  { value: '"Plus Jakarta Sans", "Inter", sans-serif', label: "Jakarta" },
+  { value: '"Manrope", "Inter", sans-serif', label: "Manrope" },
+  { value: '"Playfair Display", "Times New Roman", serif', label: "Playfair" },
+  { value: '"Lora", Georgia, serif', label: "Lora" },
+  { value: '"Merriweather", Georgia, serif', label: "Merriweather" },
+  { value: '"Space Mono", monospace', label: "Mono" },
 ];
 
-const SIZE_OPTIONS = ['12px', '14px', '16px', '18px', '20px', '24px', '32px', '48px'];
+const SIZE_OPTIONS = [
+  "12px",
+  "14px",
+  "16px",
+  "18px",
+  "20px",
+  "24px",
+  "32px",
+  "48px",
+];
 
 const BRAND_COLOR_SWATCHES = [
-  '#f8fafc',
-  '#e5e7eb',
-  '#9ca3af',
-  '#4b5563',
-  '#020617',
-  '#5b7cfa',
-  '#ff6b1a',
-  '#0f1f63',
-  '#f8d95b',
-  'transparent',
+  "#f8fafc",
+  "#e5e7eb",
+  "#9ca3af",
+  "#4b5563",
+  "#020617",
+  "#5b7cfa",
+  "#ff6b1a",
+  "#0f1f63",
+  "#f8d95b",
+  "transparent",
 ];
 
 const hasDecoration = (value: string | undefined, token: string) =>
-  (value || '').split(/\s+/).includes(token);
+  (value || "").split(/\s+/).includes(token);
 
 const toggleDecoration = (value: string | undefined, token: string) => {
-  const next = new Set((value || '').split(/\s+/).filter(Boolean));
+  const next = new Set((value || "").split(/\s+/).filter(Boolean));
 
   if (next.has(token)) {
     next.delete(token);
@@ -104,33 +113,45 @@ const toggleDecoration = (value: string | undefined, token: string) => {
     next.add(token);
   }
 
-  return Array.from(next).join(' ') || 'none';
+  return Array.from(next).join(" ") || "none";
 };
 
-const actionButtonSx = (active: boolean, disabled: boolean | undefined): SxProps<Theme> => ({
-  width: 34,
-  height: 34,
-  borderRadius: 2,
-  border: '1px solid rgba(15,23,42,0.08)',
-  backgroundColor: active ? 'rgba(17,24,39,0.08)' : '#fff',
-  color: active ? '#111827' : '#475569',
-  '&:hover': disabled
+const actionButtonSx = (
+  active: boolean,
+  disabled: boolean | undefined,
+): SxProps<Theme> => ({
+  width: 36,
+  height: 36,
+  borderRadius: 2.5,
+  border: "1px solid rgba(148,163,184,0.18)",
+  background: active
+    ? "linear-gradient(180deg, rgba(240,249,255,1) 0%, rgba(224,242,254,1) 100%)"
+    : "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%)",
+  color: active ? "#0f172a" : "#475569",
+  boxShadow: active
+    ? "0 10px 20px rgba(37,99,235,0.12)"
+    : "inset 0 1px 0 rgba(255,255,255,0.9)",
+  "&:hover": disabled
     ? {}
     : {
-        backgroundColor: active ? 'rgba(17,24,39,0.12)' : 'rgba(15,23,42,0.04)',
+        background: active
+          ? "linear-gradient(180deg, rgba(224,242,254,1) 0%, rgba(219,234,254,1) 100%)"
+          : "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(241,245,249,1) 100%)",
       },
 });
 
 const normalizeHex = (value: string | undefined) => {
-  if (!value) return '#111827';
-  if (value === 'transparent') return 'transparent';
-  return /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value) ? value : '#111827';
+  if (!value) return "#111827";
+  if (value === "transparent") return "transparent";
+  return /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value)
+    ? value
+    : "#111827";
 };
 
 const hexToRgb = (hex: string) => {
   const normalized = normalizeHex(hex);
 
-  if (normalized === 'transparent') {
+  if (normalized === "transparent") {
     return { r: 255, g: 255, b: 255 };
   }
 
@@ -149,13 +170,13 @@ const hexToRgb = (hex: string) => {
 const normalizeUrl = (url: string) => {
   const trimmed = url.trim();
 
-  if (!trimmed) return '';
+  if (!trimmed) return "";
 
   if (
-    trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://') ||
-    trimmed.startsWith('mailto:') ||
-    trimmed.startsWith('tel:')
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("mailto:") ||
+    trimmed.startsWith("tel:")
   ) {
     return trimmed;
   }
@@ -173,11 +194,15 @@ const EditorStyleToolbar: React.FC<Props> = ({
   const resolvedValue = value || {};
   const effectiveDisabled = disabled || !selection;
 
-  const [colorAnchorEl, setColorAnchorEl] = React.useState<HTMLElement | null>(null);
-  const [colorTab, setColorTab] = React.useState<'brand' | 'custom'>('brand');
+  const [colorAnchorEl, setColorAnchorEl] = React.useState<HTMLElement | null>(
+    null,
+  );
+  const [colorTab, setColorTab] = React.useState<"brand" | "custom">("brand");
 
-  const [linkAnchorEl, setLinkAnchorEl] = React.useState<HTMLElement | null>(null);
-  const [linkValue, setLinkValue] = React.useState('');
+  const [linkAnchorEl, setLinkAnchorEl] = React.useState<HTMLElement | null>(
+    null,
+  );
+  const [linkValue, setLinkValue] = React.useState("");
 
   const resolvedColor = normalizeHex(resolvedValue.color);
   const rgb = hexToRgb(resolvedColor);
@@ -189,40 +214,47 @@ const EditorStyleToolbar: React.FC<Props> = ({
     if (effectiveDisabled) return;
 
     switch (action) {
-      case 'bold':
+      case "bold":
         onStyleChange({
-          fontWeight: String(resolvedValue.fontWeight || '400') === '700' ? '400' : '700',
+          fontWeight:
+            String(resolvedValue.fontWeight || "400") === "700" ? "400" : "700",
         });
         return;
 
-      case 'italic':
+      case "italic":
         onStyleChange({
-          fontStyle: resolvedValue.fontStyle === 'italic' ? 'normal' : 'italic',
+          fontStyle: resolvedValue.fontStyle === "italic" ? "normal" : "italic",
         });
         return;
 
-      case 'underline':
+      case "underline":
         onStyleChange({
-          textDecoration: toggleDecoration(resolvedValue.textDecoration, 'underline'),
+          textDecoration: toggleDecoration(
+            resolvedValue.textDecoration,
+            "underline",
+          ),
         });
         return;
 
-      case 'strikethrough':
+      case "strikethrough":
         onStyleChange({
-          textDecoration: toggleDecoration(resolvedValue.textDecoration, 'line-through'),
+          textDecoration: toggleDecoration(
+            resolvedValue.textDecoration,
+            "line-through",
+          ),
         });
         return;
 
-      case 'align-left':
-        onStyleChange({ textAlign: 'left' });
+      case "align-left":
+        onStyleChange({ textAlign: "left" });
         return;
 
-      case 'align-center':
-        onStyleChange({ textAlign: 'center' });
+      case "align-center":
+        onStyleChange({ textAlign: "center" });
         return;
 
-      case 'align-right':
-        onStyleChange({ textAlign: 'right' });
+      case "align-right":
+        onStyleChange({ textAlign: "right" });
         return;
 
       default:
@@ -239,13 +271,13 @@ const EditorStyleToolbar: React.FC<Props> = ({
     setColorAnchorEl(null);
   };
 
-  const handleRgbChange = (channel: 'r' | 'g' | 'b', nextValue: string) => {
+  const handleRgbChange = (channel: "r" | "g" | "b", nextValue: string) => {
     const numeric = Math.max(0, Math.min(255, Number(nextValue) || 0));
     const nextRgb = { ...rgb, [channel]: numeric };
 
-    const nextHex = `#${nextRgb.r.toString(16).padStart(2, '0')}${nextRgb.g
+    const nextHex = `#${nextRgb.r.toString(16).padStart(2, "0")}${nextRgb.g
       .toString(16)
-      .padStart(2, '0')}${nextRgb.b.toString(16).padStart(2, '0')}`;
+      .padStart(2, "0")}${nextRgb.b.toString(16).padStart(2, "0")}`;
 
     onStyleChange({ color: nextHex });
   };
@@ -253,7 +285,7 @@ const EditorStyleToolbar: React.FC<Props> = ({
   const handleLinkButtonClick = (event: React.MouseEvent<HTMLElement>) => {
     if (effectiveDisabled) return;
 
-    setLinkValue(resolvedValue.href || '');
+    setLinkValue(resolvedValue.href || "");
     setLinkAnchorEl(event.currentTarget);
   };
 
@@ -276,41 +308,48 @@ const EditorStyleToolbar: React.FC<Props> = ({
       href: undefined,
     });
 
-    setLinkValue('');
+    setLinkValue("");
     setLinkAnchorEl(null);
   };
 
   return (
     <Box
       sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        px: { xs: 1, sm: 1.5 },
-        py: 1,
-        borderRadius: 3,
-        border: '1px solid rgba(15,23,42,0.08)',
-        backgroundColor: 'rgba(255,255,255,0.94)',
-        overflowX: 'auto',
-        overflowY: 'hidden',
-        '&::-webkit-scrollbar': { height: 6 },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: 'rgba(148,163,184,0.4)',
+        display: "flex",
+        alignItems: "center",
+        gap: 1.1,
+        px: { xs: 1.15, sm: 1.6 },
+        py: 1.1,
+        borderRadius: 4,
+        border: "1px solid rgba(148,163,184,0.16)",
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%)",
+        boxShadow:
+          "0 14px 28px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.92)",
+        overflowX: "auto",
+        overflowY: "hidden",
+        "&::-webkit-scrollbar": { height: 6 },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "rgba(148,163,184,0.4)",
           borderRadius: 999,
         },
         ...containerSx,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+      <Box
+        className="editor-toolbar-selection-label"
+        sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}
+      >
         <Typography
           sx={{
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            color: effectiveDisabled ? '#94a3b8' : '#334155',
-            whiteSpace: 'nowrap',
+            fontSize: "0.8rem",
+            fontWeight: 700,
+            color: effectiveDisabled ? "#94a3b8" : "#334155",
+            whiteSpace: "nowrap",
+            letterSpacing: "-0.01em",
           }}
         >
-          {selection ? `Editing: ${selection.label}` : 'Select text on canvas'}
+          {selection ? `Editing: ${selection.label}` : "Select text on canvas"}
         </Typography>
       </Box>
 
@@ -320,9 +359,11 @@ const EditorStyleToolbar: React.FC<Props> = ({
         <Select
           value={resolvedValue.fontFamily || FONT_OPTIONS[0].value}
           disabled={effectiveDisabled}
-          onChange={(event) => onStyleChange({ fontFamily: event.target.value })}
+          onChange={(event) =>
+            onStyleChange({ fontFamily: event.target.value })
+          }
           displayEmpty
-          sx={{ height: 36, borderRadius: 2, backgroundColor: '#fff' }}
+          sx={{ height: 36, borderRadius: 2, backgroundColor: "#fff" }}
         >
           {FONT_OPTIONS.map((font) => (
             <MenuItem key={font.value} value={font.value}>
@@ -334,14 +375,14 @@ const EditorStyleToolbar: React.FC<Props> = ({
 
       <FormControl size="small" sx={{ minWidth: 84, flexShrink: 0 }}>
         <Select
-          value={resolvedValue.fontSize || '16px'}
+          value={resolvedValue.fontSize || "16px"}
           disabled={effectiveDisabled}
           onChange={(event) => onStyleChange({ fontSize: event.target.value })}
-          sx={{ height: 36, borderRadius: 2, backgroundColor: '#fff' }}
+          sx={{ height: 36, borderRadius: 2, backgroundColor: "#fff" }}
         >
           {SIZE_OPTIONS.map((size) => (
             <MenuItem key={size} value={size}>
-              {size.replace('px', '')}
+              {size.replace("px", "")}
             </MenuItem>
           ))}
         </Select>
@@ -355,8 +396,8 @@ const EditorStyleToolbar: React.FC<Props> = ({
           px: 1,
           gap: 0.8,
           borderRadius: 2,
-          border: '1px solid rgba(15,23,42,0.08)',
-          backgroundColor: '#fff',
+          border: "1px solid rgba(15,23,42,0.08)",
+          backgroundColor: "#fff",
           flexShrink: 0,
         }}
       >
@@ -366,10 +407,10 @@ const EditorStyleToolbar: React.FC<Props> = ({
             width: 28,
             height: 14,
             borderRadius: 999,
-            border: '1px solid rgba(15,23,42,0.14)',
+            border: "1px solid rgba(15,23,42,0.14)",
             background:
-              resolvedColor === 'transparent'
-                ? 'linear-gradient(135deg, transparent 46%, #ef4444 47%, #ef4444 53%, transparent 54%), #ffffff'
+              resolvedColor === "transparent"
+                ? "linear-gradient(135deg, transparent 46%, #ef4444 47%, #ef4444 53%, transparent 54%), #ffffff"
                 : resolvedColor,
           }}
         />
@@ -379,22 +420,31 @@ const EditorStyleToolbar: React.FC<Props> = ({
         open={colorPickerOpen}
         anchorEl={colorAnchorEl}
         onClose={handleColorClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
         PaperProps={{
           sx: {
             mt: 1,
             width: 292,
-            p: 1.5,
-            borderRadius: 3,
-            border: '1px solid rgba(15,23,42,0.08)',
-            boxShadow: '0 24px 60px rgba(15,23,42,0.14)',
-            background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+            p: 1.6,
+            borderRadius: 4,
+            border: "1px solid rgba(148,163,184,0.16)",
+            boxShadow: "0 26px 60px rgba(15,23,42,0.16)",
+            background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
           },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#111827' }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 1,
+          }}
+        >
+          <Typography
+            sx={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}
+          >
             Text color
           </Typography>
 
@@ -403,13 +453,15 @@ const EditorStyleToolbar: React.FC<Props> = ({
               px: 1,
               py: 0.35,
               borderRadius: 999,
-              bgcolor: 'rgba(15,23,42,0.05)',
-              fontSize: '0.72rem',
-              color: '#475569',
-              fontFamily: 'monospace',
+              bgcolor: "rgba(15,23,42,0.05)",
+              fontSize: "0.72rem",
+              color: "#475569",
+              fontFamily: "monospace",
             }}
           >
-            {resolvedColor === 'transparent' ? 'NONE' : resolvedColor.toUpperCase()}
+            {resolvedColor === "transparent"
+              ? "NONE"
+              : resolvedColor.toUpperCase()}
           </Box>
         </Box>
 
@@ -421,19 +473,19 @@ const EditorStyleToolbar: React.FC<Props> = ({
             mb: 1.2,
             p: 0.4,
             borderRadius: 2.5,
-            bgcolor: 'rgba(15,23,42,0.05)',
-            '& .MuiTabs-indicator': { display: 'none' },
-            '& .MuiTab-root': {
+            bgcolor: "rgba(15,23,42,0.05)",
+            "& .MuiTabs-indicator": { display: "none" },
+            "& .MuiTab-root": {
               minHeight: 32,
               borderRadius: 2,
-              textTransform: 'none',
+              textTransform: "none",
               fontWeight: 600,
-              color: '#475569',
+              color: "#475569",
             },
-            '& .Mui-selected': {
-              bgcolor: '#ffffff',
-              color: '#111827 !important',
-              boxShadow: '0 2px 8px rgba(15,23,42,0.08)',
+            "& .Mui-selected": {
+              bgcolor: "#ffffff",
+              color: "#111827 !important",
+              boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
             },
           }}
         >
@@ -441,16 +493,23 @@ const EditorStyleToolbar: React.FC<Props> = ({
           <Tab value="custom" label="Custom" />
         </Tabs>
 
-        {colorTab === 'brand' ? (
+        {colorTab === "brand" ? (
           <Box>
-            <Typography sx={{ mb: 1, fontSize: '0.78rem', color: '#475569', fontWeight: 600 }}>
+            <Typography
+              sx={{
+                mb: 1,
+                fontSize: "0.78rem",
+                color: "#475569",
+                fontWeight: 600,
+              }}
+            >
               Quick palette
             </Typography>
 
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+                display: "grid",
+                gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
                 gap: 1,
               }}
             >
@@ -464,15 +523,17 @@ const EditorStyleToolbar: React.FC<Props> = ({
                     sx={{
                       width: 44,
                       height: 44,
-                      borderRadius: '50%',
+                      borderRadius: "50%",
                       border: isActive
-                        ? '2px solid rgba(15,23,42,0.9)'
-                        : '1px solid rgba(15,23,42,0.12)',
+                        ? "2px solid rgba(15,23,42,0.9)"
+                        : "1px solid rgba(15,23,42,0.12)",
                       background:
-                        swatch === 'transparent'
-                          ? 'linear-gradient(135deg, transparent 46%, #ef4444 47%, #ef4444 53%, transparent 54%), #ffffff'
+                        swatch === "transparent"
+                          ? "linear-gradient(135deg, transparent 46%, #ef4444 47%, #ef4444 53%, transparent 54%), #ffffff"
                           : swatch,
-                      boxShadow: isActive ? '0 0 0 3px rgba(59,130,246,0.16)' : 'none',
+                      boxShadow: isActive
+                        ? "0 0 0 3px rgba(59,130,246,0.16)"
+                        : "none",
                     }}
                   />
                 );
@@ -483,93 +544,113 @@ const EditorStyleToolbar: React.FC<Props> = ({
           <Box>
             <Box
               sx={{
-                position: 'relative',
+                position: "relative",
                 height: 136,
                 borderRadius: 2.5,
-                overflow: 'hidden',
-                border: '1px solid rgba(15,23,42,0.08)',
+                overflow: "hidden",
+                border: "1px solid rgba(15,23,42,0.08)",
                 background: `linear-gradient(180deg, #ffffff 0%, ${
-                  resolvedColor === 'transparent' ? '#111827' : resolvedColor
+                  resolvedColor === "transparent" ? "#111827" : resolvedColor
                 } 100%)`,
                 mb: 1.2,
               }}
             >
               <Box
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   inset: 0,
-                  background: 'linear-gradient(90deg, #000000 0%, transparent 100%)',
-                  mixBlendMode: 'multiply',
+                  background:
+                    "linear-gradient(90deg, #000000 0%, transparent 100%)",
+                  mixBlendMode: "multiply",
                 }}
               />
 
               <Box
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   left: `${(rgb.r / 255) * 100}%`,
                   top: `${100 - (rgb.b / 255) * 100}%`,
                   width: 12,
                   height: 12,
-                  borderRadius: '50%',
-                  border: '2px solid #fff',
-                  boxShadow: '0 0 0 1px rgba(15,23,42,0.35)',
-                  transform: 'translate(-50%, -50%)',
+                  borderRadius: "50%",
+                  border: "2px solid #fff",
+                  boxShadow: "0 0 0 1px rgba(15,23,42,0.35)",
+                  transform: "translate(-50%, -50%)",
                 }}
               />
 
               <input
                 type="color"
-                value={resolvedColor === 'transparent' ? '#111827' : resolvedColor.slice(0, 7)}
-                onChange={(event) => onStyleChange({ color: event.target.value })}
+                value={
+                  resolvedColor === "transparent"
+                    ? "#111827"
+                    : resolvedColor.slice(0, 7)
+                }
+                onChange={(event) =>
+                  onStyleChange({ color: event.target.value })
+                }
                 style={{
-                  position: 'absolute',
+                  position: "absolute",
                   inset: 0,
-                  width: '100%',
-                  height: '100%',
+                  width: "100%",
+                  height: "100%",
                   opacity: 0,
-                  cursor: 'pointer',
+                  cursor: "pointer",
                 }}
               />
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.2 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.2 }}
+            >
               <Pipette size={14} color="#475569" />
 
               <Slider
                 value={Math.round((rgb.r / 255) * 100)}
                 onChange={(_, nextValue) => {
-                  const value = Array.isArray(nextValue) ? nextValue[0] : nextValue;
-                  handleRgbChange('r', String(Math.round(value * 2.55)));
+                  const value = Array.isArray(nextValue)
+                    ? nextValue[0]
+                    : nextValue;
+                  handleRgbChange("r", String(Math.round(value * 2.55)));
                 }}
                 sx={{
-                  color: resolvedColor === 'transparent' ? '#111827' : resolvedColor,
-                  '& .MuiSlider-rail': {
+                  color:
+                    resolvedColor === "transparent" ? "#111827" : resolvedColor,
+                  "& .MuiSlider-rail": {
                     opacity: 1,
                     background:
-                      'linear-gradient(90deg, #ff0040 0%, #5b7cfa 30%, #00c853 65%, #ffb300 85%, #ff5a00 100%)',
+                      "linear-gradient(90deg, #ff0040 0%, #5b7cfa 30%, #00c853 65%, #ffb300 85%, #ff5a00 100%)",
                   },
                 }}
               />
             </Box>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1 }}>
-              {(['r', 'g', 'b'] as const).map((channel) => (
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 1,
+              }}
+            >
+              {(["r", "g", "b"] as const).map((channel) => (
                 <TextField
                   key={channel}
                   size="small"
                   value={rgb[channel]}
-                  onChange={(event) => handleRgbChange(channel, event.target.value)}
+                  onChange={(event) =>
+                    handleRgbChange(channel, event.target.value)
+                  }
                   inputProps={{
-                    inputMode: 'numeric',
+                    inputMode: "numeric",
                     min: 0,
                     max: 255,
-                    style: { textAlign: 'center' },
+                    style: { textAlign: "center" },
                   }}
                   label={channel.toUpperCase()}
                   sx={{
-                    '& .MuiOutlinedInput-root': {
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
-                      backgroundColor: '#fff',
+                      backgroundColor: "#fff",
                     },
                   }}
                 />
@@ -586,8 +667,11 @@ const EditorStyleToolbar: React.FC<Props> = ({
           <IconButton
             size="small"
             disabled={effectiveDisabled}
-            onClick={() => handleAction('bold')}
-            sx={actionButtonSx(String(resolvedValue.fontWeight || '400') === '700', effectiveDisabled)}
+            onClick={() => handleAction("bold")}
+            sx={actionButtonSx(
+              String(resolvedValue.fontWeight || "400") === "700",
+              effectiveDisabled,
+            )}
           >
             <Bold size={15} />
           </IconButton>
@@ -599,8 +683,11 @@ const EditorStyleToolbar: React.FC<Props> = ({
           <IconButton
             size="small"
             disabled={effectiveDisabled}
-            onClick={() => handleAction('italic')}
-            sx={actionButtonSx(resolvedValue.fontStyle === 'italic', effectiveDisabled)}
+            onClick={() => handleAction("italic")}
+            sx={actionButtonSx(
+              resolvedValue.fontStyle === "italic",
+              effectiveDisabled,
+            )}
           >
             <Italic size={15} />
           </IconButton>
@@ -612,8 +699,11 @@ const EditorStyleToolbar: React.FC<Props> = ({
           <IconButton
             size="small"
             disabled={effectiveDisabled}
-            onClick={() => handleAction('underline')}
-            sx={actionButtonSx(hasDecoration(resolvedValue.textDecoration, 'underline'), effectiveDisabled)}
+            onClick={() => handleAction("underline")}
+            sx={actionButtonSx(
+              hasDecoration(resolvedValue.textDecoration, "underline"),
+              effectiveDisabled,
+            )}
           >
             <Underline size={15} />
           </IconButton>
@@ -625,10 +715,10 @@ const EditorStyleToolbar: React.FC<Props> = ({
           <IconButton
             size="small"
             disabled={effectiveDisabled}
-            onClick={() => handleAction('strikethrough')}
+            onClick={() => handleAction("strikethrough")}
             sx={actionButtonSx(
-              hasDecoration(resolvedValue.textDecoration, 'line-through'),
-              effectiveDisabled
+              hasDecoration(resolvedValue.textDecoration, "line-through"),
+              effectiveDisabled,
             )}
           >
             <Strikethrough size={15} />
@@ -643,8 +733,11 @@ const EditorStyleToolbar: React.FC<Props> = ({
           <IconButton
             size="small"
             disabled={effectiveDisabled}
-            onClick={() => handleAction('align-left')}
-            sx={actionButtonSx((resolvedValue.textAlign || 'left') === 'left', effectiveDisabled)}
+            onClick={() => handleAction("align-left")}
+            sx={actionButtonSx(
+              (resolvedValue.textAlign || "left") === "left",
+              effectiveDisabled,
+            )}
           >
             <AlignLeft size={15} />
           </IconButton>
@@ -656,8 +749,11 @@ const EditorStyleToolbar: React.FC<Props> = ({
           <IconButton
             size="small"
             disabled={effectiveDisabled}
-            onClick={() => handleAction('align-center')}
-            sx={actionButtonSx(resolvedValue.textAlign === 'center', effectiveDisabled)}
+            onClick={() => handleAction("align-center")}
+            sx={actionButtonSx(
+              resolvedValue.textAlign === "center",
+              effectiveDisabled,
+            )}
           >
             <AlignCenter size={15} />
           </IconButton>
@@ -669,8 +765,11 @@ const EditorStyleToolbar: React.FC<Props> = ({
           <IconButton
             size="small"
             disabled={effectiveDisabled}
-            onClick={() => handleAction('align-right')}
-            sx={actionButtonSx(resolvedValue.textAlign === 'right', effectiveDisabled)}
+            onClick={() => handleAction("align-right")}
+            sx={actionButtonSx(
+              resolvedValue.textAlign === "right",
+              effectiveDisabled,
+            )}
           >
             <AlignRight size={15} />
           </IconButton>
@@ -679,7 +778,7 @@ const EditorStyleToolbar: React.FC<Props> = ({
 
       <Divider flexItem orientation="vertical" />
 
-      <Tooltip title={resolvedValue.href ? 'Edit link' : 'Add link'}>
+      <Tooltip title={resolvedValue.href ? "Edit link" : "Add link"}>
         <span>
           <IconButton
             size="small"
@@ -696,22 +795,24 @@ const EditorStyleToolbar: React.FC<Props> = ({
         open={linkPopoverOpen}
         anchorEl={linkAnchorEl}
         onClose={handleLinkClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
         PaperProps={{
           sx: {
             mt: 1,
             width: 320,
-            p: 1.5,
-            borderRadius: 3,
-            border: '1px solid rgba(15,23,42,0.08)',
-            boxShadow: '0 24px 60px rgba(15,23,42,0.14)',
-            background: '#ffffff',
+            p: 1.6,
+            borderRadius: 4,
+            border: "1px solid rgba(148,163,184,0.16)",
+            boxShadow: "0 26px 60px rgba(15,23,42,0.16)",
+            background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
           },
         }}
       >
-        <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#111827', mb: 1 }}>
-          {resolvedValue.href ? 'Edit link' : 'Add link'}
+        <Typography
+          sx={{ fontSize: "1rem", fontWeight: 700, color: "#111827", mb: 1 }}
+        >
+          {resolvedValue.href ? "Edit link" : "Add link"}
         </Typography>
 
         <TextField
@@ -722,21 +823,21 @@ const EditorStyleToolbar: React.FC<Props> = ({
           value={linkValue}
           onChange={(event) => setLinkValue(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter') {
+            if (event.key === "Enter") {
               event.preventDefault();
               handleApplyLink();
             }
           }}
           sx={{
             mb: 1.5,
-            '& .MuiOutlinedInput-root': {
+            "& .MuiOutlinedInput-root": {
               borderRadius: 2,
-              backgroundColor: '#fff',
+              backgroundColor: "#fff",
             },
           }}
         />
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
           <ButtonBase
             onClick={handleRemoveLink}
             disabled={!resolvedValue.href && !linkValue}
@@ -744,10 +845,10 @@ const EditorStyleToolbar: React.FC<Props> = ({
               px: 1.5,
               py: 0.8,
               borderRadius: 2,
-              fontSize: '0.85rem',
+              fontSize: "0.85rem",
               fontWeight: 600,
-              color: '#ef4444',
-              backgroundColor: 'rgba(239,68,68,0.08)',
+              color: "#ef4444",
+              backgroundColor: "rgba(239,68,68,0.08)",
               opacity: !resolvedValue.href && !linkValue ? 0.5 : 1,
             }}
           >
@@ -760,10 +861,10 @@ const EditorStyleToolbar: React.FC<Props> = ({
               px: 1.5,
               py: 0.8,
               borderRadius: 2,
-              fontSize: '0.85rem',
+              fontSize: "0.85rem",
               fontWeight: 700,
-              color: '#ffffff',
-              backgroundColor: '#111827',
+              color: "#ffffff",
+              backgroundColor: "#111827",
             }}
           >
             Apply link

@@ -1,15 +1,15 @@
 // @ts-nocheck
-import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import './TrueFocus.css';
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import "./TrueFocus.css";
 
 const TrueFocus = ({
-  sentence = 'True Focus',
-  separator = ' ',
+  sentence = "True Focus",
+  separator = " ",
   manualMode = false,
   blurAmount = 5,
-  borderColor = 'green',
-  glowColor = 'rgba(4, 210, 4, 0.9)',
+  borderColor = "green",
+  glowColor = "rgba(4, 210, 4, 0.9)",
   animationDuration = 0.5,
   pauseBetweenAnimations = 1,
 }) => {
@@ -31,7 +31,7 @@ const TrueFocus = ({
         () => {
           setCurrentIndex((prev) => (prev + 1) % words.length);
         },
-        (animationDuration + pauseBetweenAnimations) * 1000
+        (animationDuration + pauseBetweenAnimations) * 1000,
       );
 
       return () => clearInterval(interval);
@@ -49,7 +49,9 @@ const TrueFocus = ({
 
     setFocusRect({
       x: activeRect.left - parentRect.left,
-      y: isMobile ? activeRect.top - parentRect.top : activeRect.top - parentRect.top + 20,
+      y: isMobile
+        ? activeRect.top - parentRect.top
+        : activeRect.top - parentRect.top + 20,
       width: activeRect.width,
       height: isMobile ? activeRect.height : activeRect.height - 40,
     });
@@ -76,8 +78,8 @@ const TrueFocus = ({
           <span
             key={index}
             ref={(el) => (wordRefs.current[index] = el)}
-            className={`focus-word ${manualMode ? 'manual' : ''} ${
-              isActive && !manualMode ? 'active' : ''
+            className={`focus-word ${manualMode ? "manual" : ""} ${
+              isActive && !manualMode ? "active" : ""
             }`}
             style={{
               filter: manualMode
@@ -87,11 +89,11 @@ const TrueFocus = ({
                 : isActive
                   ? `blur(0px)`
                   : `blur(${blurAmount}px)`,
-              '--border-color': borderColor,
-              '--glow-color': glowColor,
+              "--border-color": borderColor,
+              "--glow-color": glowColor,
               transition: `filter ${animationDuration}s ease`,
-              color: 'white',
-              fontSize: '3.6rem',
+              color: "white",
+              fontSize: "3.6rem",
               paddingLeft: 0,
             }}
             onMouseEnter={() => handleMouseEnter(index)}
@@ -115,8 +117,8 @@ const TrueFocus = ({
           duration: animationDuration,
         }}
         style={{
-          '--border-color': borderColor,
-          '--glow-color': glowColor,
+          "--border-color": borderColor,
+          "--glow-color": glowColor,
         }}
       >
         <span className="corner top-left"></span>

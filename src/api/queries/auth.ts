@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
-import type { User } from '../../types/user';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
+import type { User } from "../../types/user";
 
 /**
  * Shared result shape that mirrors the `AuthResult` contract AuthContext
@@ -14,15 +14,24 @@ export interface AuthMutationResult {
   message?: string;
 }
 
-export type AuthMutationResultWithRetry = AuthMutationResult & { retryAfter?: number };
-export type AuthMutationResultWithEmail = AuthMutationResult & { newEmail?: string };
+export type AuthMutationResultWithRetry = AuthMutationResult & {
+  retryAfter?: number;
+};
+export type AuthMutationResultWithEmail = AuthMutationResult & {
+  newEmail?: string;
+};
 
 /**
  * Normalizes an axios error into the `{ success: false, message, ... }` shape
  * callers expect. Preserves `retryAfter` from rate-limited responses.
  */
-function buildErrorResult(error: unknown, fallback: string): AuthMutationResultWithRetry {
-  const ax = error as AxiosError<{ message?: string; retryAfter?: number }> | undefined;
+function buildErrorResult(
+  error: unknown,
+  fallback: string,
+): AuthMutationResultWithRetry {
+  const ax = error as
+    | AxiosError<{ message?: string; retryAfter?: number }>
+    | undefined;
   const data = ax?.response?.data;
   return {
     success: false,
@@ -55,7 +64,7 @@ export function useAuthMe() {
     queryKey: queryKeys.auth.me(),
     queryFn: async ({ signal }): Promise<User | null> => {
       try {
-        const response = await apiClient.get('/auth/me', { signal });
+        const response = await apiClient.get("/auth/me", { signal });
         return response.data?.user ?? null;
       } catch (error) {
         const status = (error as AxiosError | undefined)?.response?.status;
@@ -102,19 +111,23 @@ export function useSignup() {
   return useMutation<AuthMutationResult, never, FormData>({
     mutationFn: async (formData) => {
       try {
-        const response = await apiClient.post('/auth/signup', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+        const response = await apiClient.post("/auth/signup", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
         if (response.data?.user) {
-          queryClient.setQueryData(queryKeys.auth.me(), response.data.user as User);
+          queryClient.setQueryData(
+            queryKeys.auth.me(),
+            response.data.user as User,
+          );
         }
         return {
           success: true,
           message:
-            response.data?.message || 'Account created successfully. Please verify your email.',
+            response.data?.message ||
+            "Account created successfully. Please verify your email.",
         };
       } catch (error) {
-        return buildErrorResult(error, 'Signup failed');
+        return buildErrorResult(error, "Signup failed");
       }
     },
   });
@@ -123,17 +136,24 @@ export function useSignup() {
 /** Sign in with email + password — `POST /api/auth/signin`. */
 export function useSigninMutation() {
   const queryClient = useQueryClient();
-  return useMutation<AuthMutationResult, never, { email: string; password: string }>({
+  return useMutation<
+    AuthMutationResult,
+    never,
+    { email: string; password: string }
+  >({
     mutationFn: async ({ email, password }) => {
       try {
-        const response = await apiClient.post('/auth/signin', { email, password });
+        const response = await apiClient.post("/auth/signin", {
+          email,
+          password,
+        });
         const newUser = response.data?.user as User | undefined;
         if (newUser) {
           queryClient.setQueryData(queryKeys.auth.me(), newUser);
         }
         return { success: true };
       } catch (error) {
-        return buildErrorResult(error, 'Signin failed');
+        return buildErrorResult(error, "Signin failed");
       }
     },
   });
@@ -145,11 +165,11 @@ export function useSignoutMutation() {
   return useMutation<void, never, void>({
     mutationFn: async () => {
       try {
-        await apiClient.post('/auth/signout', {});
+        await apiClient.post("/auth/signout", {});
       } catch (error) {
         // Continue with local signout even if API call fails — matches
         // the prior AuthContext behavior (finally-block cleanup).
-        console.error('Signout API error:', error);
+        console.error("Signout API error:", error);
       } finally {
         queryClient.clear();
       }
@@ -160,16 +180,23 @@ export function useSignoutMutation() {
 /** Verify email — `POST /api/auth/verify-email`. Patches `emailVerified: true`. */
 export function useVerifyEmail() {
   const queryClient = useQueryClient();
-  return useMutation<AuthMutationResult, never, { email: string; code: string }>({
+  return useMutation<
+    AuthMutationResult,
+    never,
+    { email: string; code: string }
+  >({
     mutationFn: async ({ email, code }) => {
       try {
-        const response = await apiClient.post('/auth/verify-email', { email, code });
+        const response = await apiClient.post("/auth/verify-email", {
+          email,
+          code,
+        });
         queryClient.setQueryData<User | null>(queryKeys.auth.me(), (old) =>
-          old && old.email === email ? { ...old, emailVerified: true } : old
+          old && old.email === email ? { ...old, emailVerified: true } : old,
         );
         return { success: true, message: response.data?.message };
       } catch (error) {
-        return buildErrorResult(error, 'Email verification failed');
+        return buildErrorResult(error, "Email verification failed");
       }
     },
   });
@@ -180,10 +207,12 @@ export function useResendVerification() {
   return useMutation<AuthMutationResultWithRetry, never, { email: string }>({
     mutationFn: async ({ email }) => {
       try {
-        const response = await apiClient.post('/auth/resend-verification', { email });
+        const response = await apiClient.post("/auth/resend-verification", {
+          email,
+        });
         return { success: true, message: response.data?.message };
       } catch (error) {
-        return buildErrorResult(error, 'Failed to resend verification code');
+        return buildErrorResult(error, "Failed to resend verification code");
       }
     },
   });
@@ -194,10 +223,12 @@ export function useRequestSigninCode() {
   return useMutation<AuthMutationResultWithRetry, never, { email: string }>({
     mutationFn: async ({ email }) => {
       try {
-        const response = await apiClient.post('/auth/request-signin-code', { email });
+        const response = await apiClient.post("/auth/request-signin-code", {
+          email,
+        });
         return { success: true, message: response.data?.message };
       } catch (error) {
-        return buildErrorResult(error, 'Failed to send signin code');
+        return buildErrorResult(error, "Failed to send signin code");
       }
     },
   });
@@ -206,17 +237,24 @@ export function useRequestSigninCode() {
 /** Sign in with code — `POST /api/auth/signin-code`. */
 export function useSigninCode() {
   const queryClient = useQueryClient();
-  return useMutation<AuthMutationResult, never, { email: string; code: string }>({
+  return useMutation<
+    AuthMutationResult,
+    never,
+    { email: string; code: string }
+  >({
     mutationFn: async ({ email, code }) => {
       try {
-        const response = await apiClient.post('/auth/signin-code', { email, code });
+        const response = await apiClient.post("/auth/signin-code", {
+          email,
+          code,
+        });
         const newUser = response.data?.user as User | undefined;
         if (newUser) {
           queryClient.setQueryData(queryKeys.auth.me(), newUser);
         }
         return { success: true };
       } catch (error) {
-        return buildErrorResult(error, 'Signin with code failed');
+        return buildErrorResult(error, "Signin with code failed");
       }
     },
   });
@@ -227,10 +265,12 @@ export function useRequestPasswordReset() {
   return useMutation<AuthMutationResultWithRetry, never, { email: string }>({
     mutationFn: async ({ email }) => {
       try {
-        const response = await apiClient.post('/auth/request-password-reset', { email });
+        const response = await apiClient.post("/auth/request-password-reset", {
+          email,
+        });
         return { success: true, message: response.data?.message };
       } catch (error) {
-        return buildErrorResult(error, 'Failed to send password reset code');
+        return buildErrorResult(error, "Failed to send password reset code");
       }
     },
   });
@@ -245,14 +285,14 @@ export function useResetPassword() {
   >({
     mutationFn: async ({ email, code, newPassword }) => {
       try {
-        const response = await apiClient.post('/auth/reset-password', {
+        const response = await apiClient.post("/auth/reset-password", {
           email,
           code,
           newPassword,
         });
         return { success: true, message: response.data?.message };
       } catch (error) {
-        return buildErrorResult(error, 'Password reset failed');
+        return buildErrorResult(error, "Password reset failed");
       }
     },
   });
@@ -263,10 +303,12 @@ export function useRequestEmailChange() {
   return useMutation<AuthMutationResultWithRetry, never, { newEmail: string }>({
     mutationFn: async ({ newEmail }) => {
       try {
-        const response = await apiClient.post('/auth/request-email-change', { newEmail });
+        const response = await apiClient.post("/auth/request-email-change", {
+          newEmail,
+        });
         return { success: true, message: response.data?.message };
       } catch (error) {
-        return buildErrorResult(error, 'Failed to send email change code');
+        return buildErrorResult(error, "Failed to send email change code");
       }
     },
   });
@@ -278,16 +320,18 @@ export function useConfirmEmailChange() {
   return useMutation<AuthMutationResultWithEmail, never, { code: string }>({
     mutationFn: async ({ code }) => {
       try {
-        const response = await apiClient.post('/auth/confirm-email-change', { code });
+        const response = await apiClient.post("/auth/confirm-email-change", {
+          code,
+        });
         const newEmail = response.data?.newEmail as string | undefined;
         if (newEmail) {
           queryClient.setQueryData<User | null>(queryKeys.auth.me(), (old) =>
-            old ? { ...old, email: newEmail, emailVerified: true } : old
+            old ? { ...old, email: newEmail, emailVerified: true } : old,
           );
         }
         return { success: true, message: response.data?.message, newEmail };
       } catch (error) {
-        return buildErrorResult(error, 'Email change confirmation failed');
+        return buildErrorResult(error, "Email change confirmation failed");
       }
     },
   });
@@ -299,13 +343,13 @@ export function useUnlinkGoogle() {
   return useMutation<AuthMutationResult, never, void>({
     mutationFn: async () => {
       try {
-        const response = await apiClient.post('/auth/google/unlink');
+        const response = await apiClient.post("/auth/google/unlink");
         queryClient.setQueryData<User | null>(queryKeys.auth.me(), (old) =>
-          old ? { ...old, googleId: undefined } : old
+          old ? { ...old, googleId: undefined } : old,
         );
         return { success: true, message: response.data?.message };
       } catch (error) {
-        return buildErrorResult(error, 'Failed to unlink Google account');
+        return buildErrorResult(error, "Failed to unlink Google account");
       }
     },
   });
@@ -317,11 +361,11 @@ export function useDeleteAccount() {
   return useMutation<AuthMutationResult, never, void>({
     mutationFn: async () => {
       try {
-        await apiClient.delete('/account');
+        await apiClient.delete("/account");
         queryClient.clear();
-        return { success: true, message: 'Account permanently deleted' };
+        return { success: true, message: "Account permanently deleted" };
       } catch (error) {
-        return buildErrorResult(error, 'Failed to delete account');
+        return buildErrorResult(error, "Failed to delete account");
       }
     },
   });

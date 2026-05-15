@@ -4,13 +4,15 @@
  * Utility functions to build dependency graphs from conditional field
  * definitions and detect circular dependencies using DFS.
  */
-import type { FieldDefinition } from '../components/DynamicFields/types';
+import type { FieldDefinition } from "../components/DynamicFields/types";
 
 /**
  * Build a dependency graph from field definitions.
  * Maps each field that has a conditional rule to the field(s) it depends on.
  */
-export function buildDependencyGraph(fields: FieldDefinition[]): Record<string, string[]> {
+export function buildDependencyGraph(
+  fields: FieldDefinition[],
+): Record<string, string[]> {
   const graph: Record<string, string[]> = {};
   for (const field of fields) {
     if (field.conditional) {
@@ -24,7 +26,9 @@ export function buildDependencyGraph(fields: FieldDefinition[]): Record<string, 
  * Detect circular dependencies in a dependency graph using DFS.
  * Returns an array of cycle chains (e.g. [['a', 'b', 'a']]).
  */
-export function detectCircularDependencies(graph: Record<string, string[]>): string[][] {
+export function detectCircularDependencies(
+  graph: Record<string, string[]>,
+): string[][] {
   const visited = new Set<string>();
   const cycles: string[][] = [];
 
@@ -37,7 +41,11 @@ export function detectCircularDependencies(graph: Record<string, string[]>): str
     }
   }
 
-  function dfs(node: string, recursionStack: Set<string>, path: string[]): void {
+  function dfs(
+    node: string,
+    recursionStack: Set<string>,
+    path: string[],
+  ): void {
     visited.add(node);
     recursionStack.add(node);
     path.push(node);
@@ -72,16 +80,18 @@ export function detectCircularDependencies(graph: Record<string, string[]>): str
  * Only runs in development mode.
  */
 export function validateFieldDependencies(fields: FieldDefinition[]): void {
-  if (process.env.NODE_ENV !== 'development') return;
+  if (process.env.NODE_ENV !== "development") return;
 
   const graph = buildDependencyGraph(fields);
   const cycles = detectCircularDependencies(graph);
 
   if (cycles.length > 0) {
-    const cycleDescriptions = cycles.map((cycle) => cycle.join(' → ')).join('; ');
+    const cycleDescriptions = cycles
+      .map((cycle) => cycle.join(" → "))
+      .join("; ");
     console.warn(
       `[fieldDependencies] Circular conditional dependencies detected: ${cycleDescriptions}. ` +
-        'This may cause infinite loops in field visibility evaluation.'
+        "This may cause infinite loops in field visibility evaluation.",
     );
   }
 }

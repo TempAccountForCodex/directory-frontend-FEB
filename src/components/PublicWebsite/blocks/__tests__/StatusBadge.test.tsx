@@ -16,30 +16,32 @@
  *  12. Badge renders in full-bleed variant
  */
 
-import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
-import HeroBlock from '../HeroBlock';
+import React from "react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import HeroBlock from "../HeroBlock";
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('../../BlockWrapper', () => ({
-  BlockWrapper: ({ children }: any) => <div data-testid="block-wrapper">{children}</div>,
+vi.mock("../../BlockWrapper", () => ({
+  BlockWrapper: ({ children }: any) => (
+    <div data-testid="block-wrapper">{children}</div>
+  ),
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock('../utils/headingTypography', () => ({
+vi.mock("../utils/headingTypography", () => ({
   resolveHeadingTypographySx: () => ({}),
   resolveSubheadingTypographySx: () => ({}),
 }));
 
-vi.mock('../../hooks', () => ({
+vi.mock("../../hooks", () => ({
   useScrollParallax: () => ({ y: 0, enabled: false }),
 }));
 
@@ -48,10 +50,10 @@ vi.mock('../../hooks', () => ({
 // ---------------------------------------------------------------------------
 
 const makeContent = (overrides: Record<string, any> = {}) => ({
-  heading: 'Available for Work',
-  subheading: 'Hire me today.',
-  ctaText: 'Contact',
-  ctaLink: '/contact',
+  heading: "Available for Work",
+  subheading: "Hire me today.",
+  ctaText: "Contact",
+  ctaLink: "/contact",
   headingOpacity: 100,
   ...overrides,
 });
@@ -60,35 +62,39 @@ const makeContent = (overrides: Record<string, any> = {}) => ({
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('StatusBadge in HeroBlock', () => {
+describe("StatusBadge in HeroBlock", () => {
   // 1. Renders badge with text
-  it('renders status badge with text when statusBadge is provided', () => {
+  it("renders status badge with text when statusBadge is provided", () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Available for work', color: '#22c55e', animation: 'pulse' },
+          statusBadge: {
+            text: "Available for work",
+            color: "#22c55e",
+            animation: "pulse",
+          },
         })}
         variant="centered"
-      />
+      />,
     );
 
-    const badge = screen.getByTestId('status-badge');
+    const badge = screen.getByTestId("status-badge");
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent('Available for work');
+    expect(badge).toHaveTextContent("Available for work");
   });
 
   // 2. Colored dot with correct background
-  it('renders colored dot with the specified color', () => {
+  it("renders colored dot with the specified color", () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Open', color: '#ef4444', animation: 'none' },
+          statusBadge: { text: "Open", color: "#ef4444", animation: "none" },
         })}
         variant="centered"
-      />
+      />,
     );
 
-    const dot = screen.getByTestId('status-badge-dot');
+    const dot = screen.getByTestId("status-badge-dot");
     expect(dot).toBeInTheDocument();
   });
 
@@ -97,14 +103,14 @@ describe('StatusBadge in HeroBlock', () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Live', color: '#22c55e', animation: 'pulse' },
+          statusBadge: { text: "Live", color: "#22c55e", animation: "pulse" },
         })}
         variant="left"
-      />
+      />,
     );
 
-    const dot = screen.getByTestId('status-badge-dot');
-    expect(dot).toHaveAttribute('data-animation', 'pulse');
+    const dot = screen.getByTestId("status-badge-dot");
+    expect(dot).toHaveAttribute("data-animation", "pulse");
   });
 
   // 4. Glow animation data attribute
@@ -112,14 +118,18 @@ describe('StatusBadge in HeroBlock', () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Admissions open', color: '#3b82f6', animation: 'glow' },
+          statusBadge: {
+            text: "Admissions open",
+            color: "#3b82f6",
+            animation: "glow",
+          },
         })}
         variant="centered"
-      />
+      />,
     );
 
-    const dot = screen.getByTestId('status-badge-dot');
-    expect(dot).toHaveAttribute('data-animation', 'glow');
+    const dot = screen.getByTestId("status-badge-dot");
+    expect(dot).toHaveAttribute("data-animation", "glow");
   });
 
   // 5. None animation data attribute
@@ -127,72 +137,85 @@ describe('StatusBadge in HeroBlock', () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Now Open', color: '#22c55e', animation: 'none' },
+          statusBadge: {
+            text: "Now Open",
+            color: "#22c55e",
+            animation: "none",
+          },
         })}
         variant="centered"
-      />
+      />,
     );
 
-    const dot = screen.getByTestId('status-badge-dot');
-    expect(dot).toHaveAttribute('data-animation', 'none');
+    const dot = screen.getByTestId("status-badge-dot");
+    expect(dot).toHaveAttribute("data-animation", "none");
   });
 
   // 6. No badge when statusBadge is null/undefined
-  it('does NOT render badge when statusBadge is null', () => {
-    render(<HeroBlock content={makeContent({ statusBadge: null })} variant="centered" />);
+  it("does NOT render badge when statusBadge is null", () => {
+    render(
+      <HeroBlock
+        content={makeContent({ statusBadge: null })}
+        variant="centered"
+      />,
+    );
 
-    expect(screen.queryByTestId('status-badge')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("status-badge")).not.toBeInTheDocument();
   });
 
-  it('does NOT render badge when statusBadge is undefined', () => {
+  it("does NOT render badge when statusBadge is undefined", () => {
     render(<HeroBlock content={makeContent()} variant="centered" />);
 
-    expect(screen.queryByTestId('status-badge')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("status-badge")).not.toBeInTheDocument();
   });
 
   // 7. No badge when text is empty
-  it('does NOT render badge when statusBadge.text is empty string', () => {
+  it("does NOT render badge when statusBadge.text is empty string", () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: '', color: '#22c55e', animation: 'pulse' },
+          statusBadge: { text: "", color: "#22c55e", animation: "pulse" },
         })}
         variant="centered"
-      />
+      />,
     );
 
-    expect(screen.queryByTestId('status-badge')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("status-badge")).not.toBeInTheDocument();
   });
 
   // 8. Default color when not specified
-  it('uses default green color when color is not specified', () => {
+  it("uses default green color when color is not specified", () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Active', animation: 'none' },
+          statusBadge: { text: "Active", animation: "none" },
         })}
         variant="centered"
-      />
+      />,
     );
 
-    const dot = screen.getByTestId('status-badge-dot');
+    const dot = screen.getByTestId("status-badge-dot");
     expect(dot).toBeInTheDocument();
     // Default color is #22c55e (applied via sx, verified by rendering without crash)
   });
 
   // 9. Badge appears before heading
-  it('renders badge before the heading element', () => {
+  it("renders badge before the heading element", () => {
     const { container } = render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Available', color: '#22c55e', animation: 'pulse' },
+          statusBadge: {
+            text: "Available",
+            color: "#22c55e",
+            animation: "pulse",
+          },
         })}
         variant="centered"
-      />
+      />,
     );
 
     const badge = container.querySelector('[data-testid="status-badge"]');
-    const heading = container.querySelector('h1');
+    const heading = container.querySelector("h1");
     expect(badge).toBeTruthy();
     expect(heading).toBeTruthy();
 
@@ -203,48 +226,60 @@ describe('StatusBadge in HeroBlock', () => {
   });
 
   // 10. Center alignment in centered variant
-  it('renders badge in centered variant', () => {
+  it("renders badge in centered variant", () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Centered badge', color: '#22c55e', animation: 'none' },
+          statusBadge: {
+            text: "Centered badge",
+            color: "#22c55e",
+            animation: "none",
+          },
         })}
         variant="centered"
-      />
+      />,
     );
 
-    expect(screen.getByTestId('status-badge')).toBeInTheDocument();
-    expect(screen.getByText('Centered badge')).toBeInTheDocument();
+    expect(screen.getByTestId("status-badge")).toBeInTheDocument();
+    expect(screen.getByText("Centered badge")).toBeInTheDocument();
   });
 
   // 11. Badge in split variant
-  it('renders badge in split variant', () => {
+  it("renders badge in split variant", () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Split badge', color: '#f59e0b', animation: 'glow' },
+          statusBadge: {
+            text: "Split badge",
+            color: "#f59e0b",
+            animation: "glow",
+          },
         })}
         variant="split"
-      />
+      />,
     );
 
-    expect(screen.getByTestId('status-badge')).toBeInTheDocument();
-    expect(screen.getByText('Split badge')).toBeInTheDocument();
+    expect(screen.getByTestId("status-badge")).toBeInTheDocument();
+    expect(screen.getByText("Split badge")).toBeInTheDocument();
   });
 
   // 12. Badge in full-bleed variant
-  it('renders badge in full-bleed variant', () => {
+  it("renders badge in full-bleed variant", () => {
     render(
       <HeroBlock
         content={makeContent({
-          statusBadge: { text: 'Full bleed badge', color: '#8b5cf6', animation: 'pulse' },
-          heroImage: 'https://example.com/bg.jpg',
+          statusBadge: {
+            text: "Full bleed badge",
+            color: "#8b5cf6",
+            animation: "pulse",
+          },
+          heroImage: "https://example.com/bg.jpg",
         })}
         variant="full-bleed"
-      />
+      />,
     );
 
-    expect(screen.getByTestId('status-badge')).toBeInTheDocument();
-    expect(screen.getByText('Full bleed badge')).toBeInTheDocument();
+    expect(screen.getByTestId("status-badge")).toBeInTheDocument();
+    expect(screen.getByText("Full bleed badge")).toBeInTheDocument();
   });
 });

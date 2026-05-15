@@ -9,10 +9,18 @@
  * Responsive: full-width on mobile
  */
 
-import React, { useCallback } from 'react';
-import { Card, CardContent, CardMedia, Typography, Chip, Box, Link } from '@mui/material';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import PersonIcon from '@mui/icons-material/Person';
+import React, { useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardMedia,
+  Typography,
+  Chip,
+  Box,
+  Link,
+} from "@mui/material";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import PersonIcon from "@mui/icons-material/Person";
 
 /* ===================== Types ===================== */
 
@@ -53,29 +61,41 @@ export interface BlogCardProps {
 /* ===================== Helpers ===================== */
 
 function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return '';
+  if (!dateStr) return "";
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   } catch {
-    return '';
+    return "";
   }
 }
 
 function truncate(text: string | null | undefined, maxLength: number): string {
-  if (!text) return '';
+  if (!text) return "";
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
+  return text.slice(0, maxLength) + "...";
 }
 
 /* ===================== Component ===================== */
 
-const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) => {
-  const { showImage, showAuthor, showDate, showExcerpt, excerptLength, readMoreText } = config;
+const BlogCard: React.FC<BlogCardProps> = ({
+  post,
+  config,
+  colors,
+  onClick,
+}) => {
+  const {
+    showImage,
+    showAuthor,
+    showDate,
+    showExcerpt,
+    excerptLength,
+    readMoreText,
+  } = config;
 
   const { primaryColor, headingColor, bodyColor } = colors;
 
@@ -96,13 +116,13 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) =>
       onClick={handleClick}
       elevation={2}
       sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-        '&:hover': {
-          transform: 'translateY(-4px)',
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        cursor: onClick ? "pointer" : "default",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+        "&:hover": {
+          transform: "translateY(-4px)",
           boxShadow: 6,
         },
       }}
@@ -116,8 +136,8 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) =>
           loading="lazy"
           sx={{
             height: 200,
-            objectFit: 'cover',
-            aspectRatio: '16/9',
+            objectFit: "cover",
+            aspectRatio: "16/9",
           }}
         />
       ) : showImage ? (
@@ -126,10 +146,10 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) =>
           data-testid="blog-card-image-placeholder"
           sx={{
             height: 200,
-            bgcolor: 'grey.100',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            bgcolor: "grey.100",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           aria-label="No image available"
         >
@@ -139,7 +159,9 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) =>
         </Box>
       ) : null}
 
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <CardContent
+        sx={{ flexGrow: 1, display: "flex", flexDirection: "column", gap: 1 }}
+      >
         {/* Category Chip */}
         {post.category && (
           <Box>
@@ -150,7 +172,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) =>
                 bgcolor: `${primaryColor}1A`,
                 color: primaryColor,
                 fontWeight: 600,
-                fontSize: '0.7rem',
+                fontSize: "0.7rem",
               }}
             />
           </Box>
@@ -164,7 +186,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) =>
             color: headingColor,
             fontWeight: 700,
             lineHeight: 1.3,
-            fontSize: { xs: '1rem', sm: '1.1rem' },
+            fontSize: { xs: "1rem", sm: "1.1rem" },
           }}
         >
           {post.title}
@@ -172,18 +194,27 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) =>
 
         {/* Meta: Author + Date */}
         {(showAuthor && post.author?.name) || (showDate && formattedDate) ? (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1.5,
+              alignItems: "center",
+            }}
+          >
             {showAuthor && post.author?.name && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <PersonIcon sx={{ fontSize: '0.875rem', color: bodyColor }} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <PersonIcon sx={{ fontSize: "0.875rem", color: bodyColor }} />
                 <Typography variant="caption" sx={{ color: bodyColor }}>
                   {post.author.name}
                 </Typography>
               </Box>
             )}
             {showDate && formattedDate && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <CalendarTodayIcon sx={{ fontSize: '0.875rem', color: bodyColor }} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <CalendarTodayIcon
+                  sx={{ fontSize: "0.875rem", color: bodyColor }}
+                />
                 <Typography variant="caption" sx={{ color: bodyColor }}>
                   {formattedDate}
                 </Typography>
@@ -205,17 +236,17 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) =>
 
         {/* Read More Link */}
         {readMoreText && (
-          <Box sx={{ mt: 'auto', pt: 1 }}>
+          <Box sx={{ mt: "auto", pt: 1 }}>
             <Link
               component="span"
               sx={{
                 color: primaryColor,
                 fontWeight: 600,
-                fontSize: '0.875rem',
-                textDecoration: 'none',
-                cursor: 'pointer',
-                '&:hover': {
-                  textDecoration: 'underline',
+                fontSize: "0.875rem",
+                textDecoration: "none",
+                cursor: "pointer",
+                "&:hover": {
+                  textDecoration: "underline",
                 },
               }}
               aria-label={`Read more about ${post.title}`}
@@ -233,6 +264,6 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, config, colors, onClick }) =>
   );
 };
 
-BlogCard.displayName = 'BlogCard';
+BlogCard.displayName = "BlogCard";
 
 export default React.memo(BlogCard);

@@ -20,25 +20,33 @@
  * - useCallback on handleChange for stable handler reference
  */
 
-import React, { useEffect, useCallback } from 'react';
-import PaletteIcon from '@mui/icons-material/Palette';
-import GridViewIcon from '@mui/icons-material/GridView';
-import TuneIcon from '@mui/icons-material/Tune';
-import SettingsIcon from '@mui/icons-material/Settings';
+import React, { useEffect, useCallback } from "react";
+import PaletteIcon from "@mui/icons-material/Palette";
+import GridViewIcon from "@mui/icons-material/GridView";
+import TuneIcon from "@mui/icons-material/Tune";
+import SettingsIcon from "@mui/icons-material/Settings";
 // @ts-ignore — TabNavigation is a JS component
-import TabNavigation from '../Dashboard/shared/TabNavigation';
+import TabNavigation from "../Dashboard/shared/TabNavigation";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY = 'editor-active-tab';
+const STORAGE_KEY = "editor-active-tab";
 
 const TABS = [
-  { label: 'Appearance', value: 'appearance', icon: <PaletteIcon fontSize="small" /> },
-  { label: 'Layout', value: 'layout', icon: <GridViewIcon fontSize="small" /> },
-  { label: 'Simple', value: 'simple', icon: <TuneIcon fontSize="small" /> },
-  { label: 'Detailed', value: 'detailed', icon: <SettingsIcon fontSize="small" /> },
+  {
+    label: "Appearance",
+    value: "appearance",
+    icon: <PaletteIcon fontSize="small" />,
+  },
+  { label: "Layout", value: "layout", icon: <GridViewIcon fontSize="small" /> },
+  { label: "Simple", value: "simple", icon: <TuneIcon fontSize="small" /> },
+  {
+    label: "Detailed",
+    value: "detailed",
+    icon: <SettingsIcon fontSize="small" />,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -54,37 +62,41 @@ export interface EditorTabsProps {
 // EditorTabs
 // ---------------------------------------------------------------------------
 
-const EditorTabs: React.FC<EditorTabsProps> = React.memo(({ activeTab, onChange }) => {
-  // On mount: read localStorage and restore stored tab
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && stored !== activeTab) {
-        onChange(stored);
-      }
-    } catch {
-      // Ignore storage errors
-    }
-    // Run only on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Tab change: <50ms — just setState in parent + localStorage.setItem
-  const handleChange = useCallback(
-    (_event: React.SyntheticEvent, newValue: string) => {
+const EditorTabs: React.FC<EditorTabsProps> = React.memo(
+  ({ activeTab, onChange }) => {
+    // On mount: read localStorage and restore stored tab
+    useEffect(() => {
       try {
-        localStorage.setItem(STORAGE_KEY, newValue);
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored && stored !== activeTab) {
+          onChange(stored);
+        }
       } catch {
         // Ignore storage errors
       }
-      onChange(newValue);
-    },
-    [onChange]
-  );
+      // Run only on mount
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-  return <TabNavigation tabs={TABS} value={activeTab} onChange={handleChange} />;
-});
+    // Tab change: <50ms — just setState in parent + localStorage.setItem
+    const handleChange = useCallback(
+      (_event: React.SyntheticEvent, newValue: string) => {
+        try {
+          localStorage.setItem(STORAGE_KEY, newValue);
+        } catch {
+          // Ignore storage errors
+        }
+        onChange(newValue);
+      },
+      [onChange],
+    );
 
-EditorTabs.displayName = 'EditorTabs';
+    return (
+      <TabNavigation tabs={TABS} value={activeTab} onChange={handleChange} />
+    );
+  },
+);
+
+EditorTabs.displayName = "EditorTabs";
 
 export default EditorTabs;

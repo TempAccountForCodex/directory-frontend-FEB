@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
-import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import React, { useEffect, useMemo, useState } from "react";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import {
   Facebook,
   Gem,
@@ -12,159 +12,174 @@ import {
   ShoppingBag,
   Sparkles,
   Twitter,
-} from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import FadeIn from '../../blocks/FadeIn';
-import type { TemplateProps } from '../../templateEngine/types';
+} from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import FadeIn from "../../blocks/FadeIn";
+import type { TemplateProps } from "../../templateEngine/types";
 
 const headingFont = '"Poppins", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Manrope", "Avenir Next", "Segoe UI", sans-serif';
 
 const palette = {
-  page: '#efe6d6',
-  panel: '#f5ecdf',
-  ink: '#111111',
-  muted: '#544e46',
-  accent: '#f0bc3f',
-  border: '#17140f',
-  fieldBorder: 'rgba(68, 58, 40, 0.34)',
-  fieldText: '#2e281f',
-  fieldLabel: '#8d7f68',
+  page: "#efe6d6",
+  panel: "#f5ecdf",
+  ink: "#111111",
+  muted: "#544e46",
+  accent: "#f0bc3f",
+  border: "#17140f",
+  fieldBorder: "rgba(68, 58, 40, 0.34)",
+  fieldText: "#2e281f",
+  fieldLabel: "#8d7f68",
 };
 
-const fallbackLogo = 'https://cdn-icons-png.freepik.com/128/3081/3081559.png';
+const fallbackLogo = "https://cdn-icons-png.freepik.com/128/3081/3081559.png";
 
 const fallbackProducts = [
   {
-    id: 'premium-1',
-    name: 'Luna Leather Tote',
-    price: '$189',
-    category: 'Signature Tote',
-    badge: 'Popular',
+    id: "premium-1",
+    name: "Luna Leather Tote",
+    price: "$189",
+    category: "Signature Tote",
+    badge: "Popular",
     image:
-      'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=80',
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=80",
     description:
-      'A refined everyday tote with structured lines, premium texture, and enough room for daily essentials.',
+      "A refined everyday tote with structured lines, premium texture, and enough room for daily essentials.",
     url: undefined,
   },
   {
-    id: 'premium-2',
-    name: 'Sienna Shoulder Bag',
-    price: '$164',
-    category: 'Shoulder Bag',
-    badge: 'New',
+    id: "premium-2",
+    name: "Sienna Shoulder Bag",
+    price: "$164",
+    category: "Shoulder Bag",
+    badge: "New",
     image:
-      'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=80',
+      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=80",
     description:
-      'Softly curved silhouette designed for polished day-to-night styling across seasons.',
+      "Softly curved silhouette designed for polished day-to-night styling across seasons.",
     url: undefined,
   },
   {
-    id: 'premium-3',
-    name: 'Noir Mini Crossbody',
-    price: '$142',
-    category: 'Crossbody',
-    badge: 'Top Pick',
+    id: "premium-3",
+    name: "Noir Mini Crossbody",
+    price: "$142",
+    category: "Crossbody",
+    badge: "Top Pick",
     image:
-      'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80',
+      "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80",
     description:
-      'Compact premium bag for curated edits, statement drops, and elevated seasonal merchandising.',
+      "Compact premium bag for curated edits, statement drops, and elevated seasonal merchandising.",
     url: undefined,
   },
   {
-    id: 'premium-4',
-    name: 'Studio Bucket Bag',
-    price: '$171',
-    category: 'Bucket Bag',
-    badge: 'Edit',
+    id: "premium-4",
+    name: "Studio Bucket Bag",
+    price: "$171",
+    category: "Bucket Bag",
+    badge: "Edit",
     image:
-      'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=80',
-    description: 'Ideal for premium assortments, capsule collections, and editorial storefronts.',
+      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=80",
+    description:
+      "Ideal for premium assortments, capsule collections, and editorial storefronts.",
     url: undefined,
   },
   {
-    id: 'premium-5',
-    name: 'Atelier Evening Clutch',
-    price: '$128',
-    category: 'Clutch',
-    badge: 'Sale',
+    id: "premium-5",
+    name: "Atelier Evening Clutch",
+    price: "$128",
+    category: "Clutch",
+    badge: "Sale",
     image:
-      'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?auto=format&fit=crop&w=900&q=80',
+      "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?auto=format&fit=crop&w=900&q=80",
     description:
-      'A clean, visual-first product card with room for luxury materials and occasion-led storytelling.',
+      "A clean, visual-first product card with room for luxury materials and occasion-led storytelling.",
     url: undefined,
   },
 ];
 
 const fallbackHero =
-  'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=2000&q=80';
+  "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=2000&q=80";
 const fallbackAbout =
-  'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1400&q=80';
+  "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1400&q=80";
 const fallbackBand =
-  'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=2000&q=80';
+  "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=2000&q=80";
 const fallbackTouch =
-  'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80';
+  "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80";
 
 const benefitItems = [
   {
-    title: 'Quality Assurance',
-    subtitle: 'Premium materials',
+    title: "Quality Assurance",
+    subtitle: "Premium materials",
     description:
-      'Use this row to explain leather selection, hardware quality, craftsmanship standards, or what makes your bags feel premium.',
+      "Use this row to explain leather selection, hardware quality, craftsmanship standards, or what makes your bags feel premium.",
     icon: Gem,
   },
   {
-    title: 'Functional Design',
-    subtitle: 'Made for modern routines',
+    title: "Functional Design",
+    subtitle: "Made for modern routines",
     description:
-      'This section works for product differentiation, size guidance, carrying comfort, and how each bag fits a specific lifestyle.',
+      "This section works for product differentiation, size guidance, carrying comfort, and how each bag fits a specific lifestyle.",
     icon: ShieldCheck,
   },
   {
-    title: 'Customer Satisfaction',
-    subtitle: 'Support that converts',
+    title: "Customer Satisfaction",
+    subtitle: "Support that converts",
     description:
-      'A flexible row for delivery confidence, care instructions, returns clarity, or why customers keep coming back.',
+      "A flexible row for delivery confidence, care instructions, returns clarity, or why customers keep coming back.",
     icon: ShoppingBag,
   },
 ];
 
-type StorePage = 'home' | 'shop' | 'about' | 'contact';
+type StorePage = "home" | "shop" | "about" | "contact";
 
 const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
   const navigate = useNavigate();
-  const { templateId = 'store-premium', pageId } = useParams<{
+  const { templateId = "store-premium", pageId } = useParams<{
     templateId?: string;
     pageId?: string;
   }>();
 
   const products = useMemo(() => {
-    const source = data.products?.length ? data.products.slice(0, 5) : fallbackProducts;
+    const source = data.products?.length
+      ? data.products.slice(0, 5)
+      : fallbackProducts;
     return source.map((product, index) => ({
       ...product,
-      image: product.image || fallbackProducts[index % fallbackProducts.length].image,
-      category: product.category || fallbackProducts[index % fallbackProducts.length].category,
-      badge: product.badge || fallbackProducts[index % fallbackProducts.length].badge,
+      image:
+        product.image ||
+        fallbackProducts[index % fallbackProducts.length].image,
+      category:
+        product.category ||
+        fallbackProducts[index % fallbackProducts.length].category,
+      badge:
+        product.badge ||
+        fallbackProducts[index % fallbackProducts.length].badge,
       description:
-        product.description || fallbackProducts[index % fallbackProducts.length].description,
+        product.description ||
+        fallbackProducts[index % fallbackProducts.length].description,
       url: product.url || undefined,
     }));
   }, [data.products]);
 
-  const heroImage = data.gallery?.[0]?.url || products[0]?.image || fallbackHero;
+  const heroImage =
+    data.gallery?.[0]?.url || products[0]?.image || fallbackHero;
   const aboutImage = data.gallery?.[1]?.url || fallbackAbout;
   const featureBandImage = data.gallery?.[2]?.url || fallbackBand;
   const touchImage = data.gallery?.[3]?.url || fallbackTouch;
   const logoSrc = data.logoUrl || fallbackLogo;
 
   const socialLinks = [
-    { key: 'instagram', icon: Instagram },
-    { key: 'facebook', icon: Facebook },
-    { key: 'twitter', icon: Twitter },
-  ].filter((item) => Boolean(data.socialLinks?.[item.key as keyof typeof data.socialLinks]));
+    { key: "instagram", icon: Instagram },
+    { key: "facebook", icon: Facebook },
+    { key: "twitter", icon: Twitter },
+  ].filter((item) =>
+    Boolean(data.socialLinks?.[item.key as keyof typeof data.socialLinks]),
+  );
 
   const getInitialPage = (): StorePage =>
-    pageId === 'shop' || pageId === 'about' || pageId === 'contact' ? pageId : 'home';
+    pageId === "shop" || pageId === "about" || pageId === "contact"
+      ? pageId
+      : "home";
 
   const [activePage, setActivePage] = useState<StorePage>(getInitialPage);
 
@@ -175,43 +190,45 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
   const navigateToPage = (page: StorePage) => {
     setActivePage(page);
     const targetPath =
-      page === 'home' ? `/landing-preview/${templateId}` : `/landing-preview/${templateId}/${page}`;
+      page === "home"
+        ? `/landing-preview/${templateId}`
+        : `/landing-preview/${templateId}/${page}`;
     navigate(targetPath);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const navItems = [
-    { label: 'Home', page: 'home' as const },
-    { label: 'Shop', page: 'shop' as const },
-    { label: 'About', page: 'about' as const },
-    { label: 'Contact', page: 'contact' as const },
+    { label: "Home", page: "home" as const },
+    { label: "Shop", page: "shop" as const },
+    { label: "About", page: "about" as const },
+    { label: "Contact", page: "contact" as const },
   ];
 
   const fieldStyles = {
-    '& .MuiOutlinedInput-root': {
+    "& .MuiOutlinedInput-root": {
       color: palette.fieldText,
-      bgcolor: 'rgba(255,255,255,0.12)',
-      '& fieldset': {
+      bgcolor: "rgba(255,255,255,0.12)",
+      "& fieldset": {
         borderColor: palette.fieldBorder,
-        borderWidth: '1px',
+        borderWidth: "1px",
       },
-      '&:hover fieldset': {
-        borderColor: 'rgba(54,45,29,0.48)',
+      "&:hover fieldset": {
+        borderColor: "rgba(54,45,29,0.48)",
       },
-      '&.Mui-focused fieldset': {
-        borderColor: '#a98d3a',
-        borderWidth: '1px',
+      "&.Mui-focused fieldset": {
+        borderColor: "#a98d3a",
+        borderWidth: "1px",
       },
-      '& input::placeholder, & textarea::placeholder': {
+      "& input::placeholder, & textarea::placeholder": {
         color: palette.fieldLabel,
         opacity: 1,
       },
     },
-    '& .MuiInputLabel-root': {
+    "& .MuiInputLabel-root": {
       color: palette.fieldLabel,
     },
-    '& .MuiInputLabel-root.Mui-focused': {
-      color: '#8b6f1d',
+    "& .MuiInputLabel-root.Mui-focused": {
+      color: "#8b6f1d",
     },
   } as const;
 
@@ -221,35 +238,35 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         id="home-hero"
         data-preview-section="true"
         data-preview-label="Hero"
-        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, md: 4 } }}
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 4 } }}
       >
         <FadeIn>
           <Box
             sx={{
               py: { xs: 7, md: 8 },
-              textAlign: 'center',
+              textAlign: "center",
             }}
           >
             <Typography
               sx={{
-                fontSize: '0.7rem',
-                letterSpacing: '0.32em',
-                textTransform: 'uppercase',
+                fontSize: "0.7rem",
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
                 color: palette.muted,
               }}
             >
-              {data.tagline || 'Modern handbag collection'}
+              {data.tagline || "Modern handbag collection"}
             </Typography>
             <Typography
               sx={{
                 mt: 1.5,
                 fontFamily: headingFont,
                 fontWeight: 700,
-                fontSize: { xs: '2.2rem', md: '3.9rem' },
+                fontSize: { xs: "2.2rem", md: "3.9rem" },
                 lineHeight: 0.94,
-                letterSpacing: '-0.06em',
+                letterSpacing: "-0.06em",
                 maxWidth: 720,
-                mx: 'auto',
+                mx: "auto",
               }}
             >
               Unique Handbag
@@ -258,20 +275,20 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Typography>
             <Button
               variant="contained"
-              onClick={() => navigateToPage('shop')}
+              onClick={() => navigateToPage("shop")}
               sx={{
                 mt: 2.4,
                 bgcolor: palette.accent,
                 color: palette.ink,
                 borderRadius: 999,
                 border: `1px solid ${palette.border}`,
-                boxShadow: 'none',
+                boxShadow: "none",
                 px: 3,
                 py: 0.85,
-                fontSize: '0.72rem',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                fontSize: "0.72rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
               }}
             >
               Shop now
@@ -285,9 +302,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           sx={{
             height: { xs: 260, md: 420 },
             backgroundImage: `url(${heroImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundAttachment: "fixed",
           }}
         />
       </FadeIn>
@@ -298,17 +315,17 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Featured"
         sx={{
           maxWidth: 1280,
-          mx: 'auto',
+          mx: "auto",
           px: { xs: 2, md: 4 },
           py: { xs: 7, md: 9 },
         }}
       >
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '0.72fr 1.28fr' },
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "0.72fr 1.28fr" },
             gap: { xs: 3, md: 5 },
-            alignItems: 'end',
+            alignItems: "end",
             mb: 4,
           }}
         >
@@ -317,14 +334,14 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 p: { xs: 2.5, md: 3 },
                 border: `1px solid rgba(17,17,17,0.14)`,
-                bgcolor: 'rgba(255,255,255,0.28)',
+                bgcolor: "rgba(255,255,255,0.28)",
               }}
             >
               <Typography
                 sx={{
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.28em',
-                  textTransform: 'uppercase',
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
                   color: palette.muted,
                 }}
               >
@@ -335,9 +352,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 1.2,
                   fontFamily: headingFont,
                   fontWeight: 700,
-                  fontSize: { xs: '1.65rem', md: '2.2rem' },
+                  fontSize: { xs: "1.65rem", md: "2.2rem" },
                   lineHeight: 0.98,
-                  letterSpacing: '-0.05em',
+                  letterSpacing: "-0.05em",
                   maxWidth: 300,
                 }}
               >
@@ -350,12 +367,12 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 1.5,
                   maxWidth: 320,
                   color: palette.muted,
-                  fontSize: '0.92rem',
+                  fontSize: "0.92rem",
                   lineHeight: 1.8,
                 }}
               >
-                Discover signature handbags designed to move between work, travel, evening plans,
-                and everyday styling with ease.
+                Discover signature handbags designed to move between work,
+                travel, evening plans, and everyday styling with ease.
               </Typography>
             </Box>
           </FadeIn>
@@ -363,11 +380,11 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           <FadeIn delay={0.08}>
             <Typography
               sx={{
-                textAlign: { xs: 'left', md: 'right' },
+                textAlign: { xs: "left", md: "right" },
                 fontFamily: headingFont,
                 fontWeight: 700,
-                fontSize: { xs: '2rem', md: '4rem' },
-                letterSpacing: '-0.06em',
+                fontSize: { xs: "2rem", md: "4rem" },
+                letterSpacing: "-0.06em",
                 lineHeight: 0.94,
               }}
             >
@@ -381,11 +398,11 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Box
           sx={{
             mt: 4,
-            display: 'grid',
+            display: "grid",
             gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, minmax(0, 1fr))',
-              md: 'repeat(3, minmax(0, 1fr))',
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              md: "repeat(3, minmax(0, 1fr))",
             },
             gap: { xs: 2, md: 2.2 },
           }}
@@ -397,59 +414,59 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   minWidth: 0,
                   p: { xs: 1.4, md: 1.6 },
                   border: `1px solid rgba(17,17,17,0.12)`,
-                  bgcolor: '#f4ebdd',
-                  textAlign: 'center',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  boxShadow: '0 10px 30px rgba(48,34,8,0.04)',
+                  bgcolor: "#f4ebdd",
+                  textAlign: "center",
+                  position: "relative",
+                  overflow: "hidden",
+                  boxShadow: "0 10px 30px rgba(48,34,8,0.04)",
                   transition:
-                    'transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 24px 50px rgba(48,34,8,0.10)',
-                    borderColor: 'rgba(17,17,17,0.22)',
+                    "transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease",
+                  "&:hover": {
+                    transform: "translateY(-8px)",
+                    boxShadow: "0 24px 50px rgba(48,34,8,0.10)",
+                    borderColor: "rgba(17,17,17,0.22)",
                   },
                 }}
               >
                 {product.badge ? (
                   <Box
                     sx={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: 14,
                       left: 14,
                       zIndex: 2,
                       px: 1.1,
                       py: 0.5,
                       borderRadius: 999,
-                      bgcolor: 'rgba(17,17,17,0.88)',
-                      color: '#fff',
-                      fontSize: '0.62rem',
-                      letterSpacing: '0.18em',
-                      textTransform: 'uppercase',
+                      bgcolor: "rgba(17,17,17,0.88)",
+                      color: "#fff",
+                      fontSize: "0.62rem",
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
                     }}
                   >
                     {product.badge}
                   </Box>
                 ) : null}
-                <Box sx={{ aspectRatio: '0.8 / 1', overflow: 'hidden' }}>
+                <Box sx={{ aspectRatio: "0.8 / 1", overflow: "hidden" }}>
                   <Box
                     component="img"
                     src={product.image}
                     alt={product.name}
                     sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
                     }}
                   />
                 </Box>
                 <Typography
                   sx={{
                     mt: 1.4,
-                    fontSize: '0.68rem',
+                    fontSize: "0.68rem",
                     color: palette.muted,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.22em',
+                    textTransform: "uppercase",
+                    letterSpacing: "0.22em",
                   }}
                 >
                   {product.category}
@@ -459,14 +476,16 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mt: 0.8,
                     fontFamily: headingFont,
                     fontWeight: 700,
-                    fontSize: { xs: '1.15rem', md: '1.35rem' },
+                    fontSize: { xs: "1.15rem", md: "1.35rem" },
                     lineHeight: 1.02,
-                    letterSpacing: '-0.04em',
+                    letterSpacing: "-0.04em",
                   }}
                 >
                   {product.name}
                 </Typography>
-                <Typography sx={{ mt: 1.1, fontSize: '0.95rem', fontWeight: 700 }}>
+                <Typography
+                  sx={{ mt: 1.1, fontSize: "0.95rem", fontWeight: 700 }}
+                >
                   {product.price}
                 </Typography>
               </Box>
@@ -478,20 +497,20 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Stack direction="row" justifyContent="center">
             <Button
               variant="contained"
-              onClick={() => navigateToPage('shop')}
+              onClick={() => navigateToPage("shop")}
               sx={{
                 mt: 3.2,
                 bgcolor: palette.accent,
                 color: palette.ink,
                 borderRadius: 999,
                 border: `1px solid ${palette.border}`,
-                boxShadow: 'none',
+                boxShadow: "none",
                 px: 3,
                 py: 0.85,
-                fontSize: '0.7rem',
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                fontSize: "0.7rem",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
               }}
             >
               View all products
@@ -506,20 +525,20 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Story"
         sx={{
           maxWidth: 1280,
-          mx: 'auto',
+          mx: "auto",
           px: { xs: 2, md: 4 },
           pb: { xs: 7, md: 8.5 },
         }}
       >
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '0.86fr 1.14fr' },
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "0.86fr 1.14fr" },
             gap: { xs: 3, md: 4 },
-            alignItems: 'stretch',
+            alignItems: "stretch",
             border: `1px solid rgba(17,17,17,0.15)`,
-            bgcolor: '#f4ebdd',
-            overflow: 'hidden',
+            bgcolor: "#f4ebdd",
+            overflow: "hidden",
           }}
         >
           <FadeIn direction="right">
@@ -528,10 +547,10 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               src={aboutImage}
               alt="Store story"
               sx={{
-                width: '100%',
-                height: '100%',
+                width: "100%",
+                height: "100%",
                 minHeight: { xs: 300, md: 460 },
-                objectFit: 'cover',
+                objectFit: "cover",
               }}
             />
           </FadeIn>
@@ -539,16 +558,16 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Box
               sx={{
                 p: { xs: 3, md: 5 },
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
               }}
             >
               <Typography
                 sx={{
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.28em',
-                  textTransform: 'uppercase',
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
                   color: palette.muted,
                 }}
               >
@@ -559,9 +578,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 1.2,
                   fontFamily: headingFont,
                   fontWeight: 700,
-                  fontSize: { xs: '1.9rem', md: '3rem' },
+                  fontSize: { xs: "1.9rem", md: "3rem" },
                   lineHeight: 0.95,
-                  letterSpacing: '-0.05em',
+                  letterSpacing: "-0.05em",
                   maxWidth: 520,
                 }}
               >
@@ -572,30 +591,30 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 1.8,
                   maxWidth: 520,
                   color: palette.muted,
-                  fontSize: '0.95rem',
+                  fontSize: "0.95rem",
                   lineHeight: 1.9,
                 }}
               >
                 {data.description ||
-                  'This premium handbag store template balances editorial storytelling, structured product presentation, and clean enquiry-focused sections for luxury fashion brands.'}
+                  "This premium handbag store template balances editorial storytelling, structured product presentation, and clean enquiry-focused sections for luxury fashion brands."}
               </Typography>
               <Button
                 variant="contained"
-                onClick={() => navigateToPage('about')}
+                onClick={() => navigateToPage("about")}
                 sx={{
                   mt: 2.5,
-                  alignSelf: 'flex-start',
+                  alignSelf: "flex-start",
                   bgcolor: palette.accent,
                   color: palette.ink,
                   borderRadius: 999,
                   border: `1px solid ${palette.border}`,
-                  boxShadow: 'none',
+                  boxShadow: "none",
                   px: 3,
                   py: 0.85,
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
                 }}
               >
                 Read about us
@@ -611,7 +630,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Newsletter"
         sx={{
           maxWidth: 1280,
-          mx: 'auto',
+          mx: "auto",
           px: { xs: 2, md: 4 },
           pb: { xs: 7, md: 9 },
         }}
@@ -620,20 +639,20 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           sx={{
             p: { xs: 3, md: 4.5 },
             border: `1px solid rgba(17,17,17,0.14)`,
-            bgcolor: '#f4ebdd',
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '0.95fr 1.05fr' },
+            bgcolor: "#f4ebdd",
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "0.95fr 1.05fr" },
             gap: { xs: 3, md: 4 },
-            alignItems: 'center',
+            alignItems: "center",
           }}
         >
           <FadeIn>
             <Box>
               <Typography
                 sx={{
-                  fontSize: '0.72rem',
-                  letterSpacing: '0.3em',
-                  textTransform: 'uppercase',
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.3em",
+                  textTransform: "uppercase",
                   color: palette.muted,
                 }}
               >
@@ -644,25 +663,27 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 1.1,
                   fontFamily: headingFont,
                   fontWeight: 700,
-                  fontSize: { xs: '1.9rem', md: '3rem' },
+                  fontSize: { xs: "1.9rem", md: "3rem" },
                   lineHeight: 0.95,
-                  letterSpacing: '-0.05em',
+                  letterSpacing: "-0.05em",
                   maxWidth: 520,
                 }}
               >
-                Join for new arrivals, seasonal edits, and private collection updates.
+                Join for new arrivals, seasonal edits, and private collection
+                updates.
               </Typography>
               <Typography
                 sx={{
                   mt: 1.6,
                   maxWidth: 520,
                   color: palette.muted,
-                  fontSize: '0.95rem',
+                  fontSize: "0.95rem",
                   lineHeight: 1.9,
                 }}
               >
-                Stay close to the latest handbag drops, curated selections, and early access moments
-                designed for customers who love premium pieces.
+                Stay close to the latest handbag drops, curated selections, and
+                early access moments designed for customers who love premium
+                pieces.
               </Typography>
             </Box>
           </FadeIn>
@@ -671,27 +692,32 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Box
               sx={{
                 maxWidth: 560,
-                width: '100%',
-                justifySelf: 'end',
+                width: "100%",
+                justifySelf: "end",
               }}
             >
               <Stack spacing={1.4}>
-                <TextField label="Email address" variant="outlined" fullWidth sx={fieldStyles} />
+                <TextField
+                  label="Email address"
+                  variant="outlined"
+                  fullWidth
+                  sx={fieldStyles}
+                />
                 <Button
                   variant="contained"
                   sx={{
-                    alignSelf: { xs: 'stretch', sm: 'flex-start' },
+                    alignSelf: { xs: "stretch", sm: "flex-start" },
                     bgcolor: palette.accent,
                     color: palette.ink,
                     borderRadius: 999,
                     border: `1px solid ${palette.border}`,
-                    boxShadow: 'none',
+                    boxShadow: "none",
                     px: 3.2,
                     py: 0.95,
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
                   }}
                 >
                   Subscribe
@@ -710,13 +736,13 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         id="shop-hero"
         data-preview-section="true"
         data-preview-label="Banner"
-        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, md: 4 } }}
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 4 } }}
       >
         <Box
           sx={{
-            position: 'relative',
+            position: "relative",
             minHeight: { xs: 320, md: 500 },
-            overflow: 'hidden',
+            overflow: "hidden",
             border: `1px solid rgba(17,17,17,0.14)`,
             mt: { xs: 4, md: 5 },
             mb: { xs: 5, md: 6 },
@@ -727,29 +753,29 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             src={heroImage}
             alt="Shop banner"
             sx={{
-              position: 'absolute',
+              position: "absolute",
               inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
             }}
           />
           <Box
             sx={{
-              position: 'absolute',
+              position: "absolute",
               inset: 0,
               background:
-                'linear-gradient(90deg, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.4) 44%, rgba(0,0,0,0.14) 100%)',
+                "linear-gradient(90deg, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.4) 44%, rgba(0,0,0,0.14) 100%)",
             }}
           />
 
           <Box
             sx={{
-              position: 'relative',
+              position: "relative",
               zIndex: 1,
               minHeight: { xs: 320, md: 500 },
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               px: { xs: 3, md: 6 },
               py: { xs: 5, md: 6 },
             }}
@@ -758,10 +784,10 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Box sx={{ maxWidth: 620 }}>
                 <Typography
                   sx={{
-                    fontSize: '0.72rem',
-                    letterSpacing: '0.34em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.76)',
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.34em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.76)",
                   }}
                 >
                   Shop the full collection
@@ -771,10 +797,10 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mt: 1.4,
                     fontFamily: headingFont,
                     fontWeight: 700,
-                    fontSize: { xs: '2.4rem', md: '4.6rem' },
+                    fontSize: { xs: "2.4rem", md: "4.6rem" },
                     lineHeight: 0.92,
-                    letterSpacing: '-0.06em',
-                    color: '#fff',
+                    letterSpacing: "-0.06em",
+                    color: "#fff",
                   }}
                 >
                   Discover every
@@ -785,13 +811,13 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     mt: 1.8,
                     maxWidth: 520,
-                    color: 'rgba(255,255,255,0.82)',
-                    fontSize: { xs: '0.96rem', md: '1rem' },
+                    color: "rgba(255,255,255,0.82)",
+                    fontSize: { xs: "0.96rem", md: "1rem" },
                     lineHeight: 1.85,
                   }}
                 >
-                  Explore refined handbags designed for everyday elegance, polished styling, and
-                  premium wardrobe essentials.
+                  Explore refined handbags designed for everyday elegance,
+                  polished styling, and premium wardrobe essentials.
                 </Typography>
                 <Button
                   variant="contained"
@@ -801,13 +827,13 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     color: palette.ink,
                     borderRadius: 999,
                     border: `1px solid ${palette.border}`,
-                    boxShadow: 'none',
+                    boxShadow: "none",
                     px: 3,
                     py: 0.85,
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
                   }}
                 >
                   Shop now
@@ -824,18 +850,18 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Products"
         sx={{
           maxWidth: 1280,
-          mx: 'auto',
+          mx: "auto",
           px: { xs: 2, md: 4 },
           pb: { xs: 7, md: 9 },
         }}
       >
         <Box
           sx={{
-            display: 'grid',
+            display: "grid",
             gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, minmax(0, 1fr))',
-              md: 'repeat(3, minmax(0, 1fr))',
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              md: "repeat(3, minmax(0, 1fr))",
             },
             gap: { xs: 2, md: 2.4 },
           }}
@@ -846,26 +872,26 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   p: { xs: 1.4, md: 1.6 },
                   border: `1px solid rgba(17,17,17,0.12)`,
-                  bgcolor: '#f4ebdd',
-                  boxShadow: '0 10px 30px rgba(48,34,8,0.04)',
+                  bgcolor: "#f4ebdd",
+                  boxShadow: "0 10px 30px rgba(48,34,8,0.04)",
                 }}
               >
-                <Box sx={{ position: 'relative', overflow: 'hidden' }}>
+                <Box sx={{ position: "relative", overflow: "hidden" }}>
                   {product.badge ? (
                     <Box
                       sx={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 14,
                         left: 14,
                         zIndex: 2,
                         px: 1.1,
                         py: 0.5,
                         borderRadius: 999,
-                        bgcolor: 'rgba(17,17,17,0.88)',
-                        color: '#fff',
-                        fontSize: '0.62rem',
-                        letterSpacing: '0.18em',
-                        textTransform: 'uppercase',
+                        bgcolor: "rgba(17,17,17,0.88)",
+                        color: "#fff",
+                        fontSize: "0.62rem",
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
                       }}
                     >
                       {product.badge}
@@ -876,19 +902,19 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     src={product.image}
                     alt={product.name}
                     sx={{
-                      width: '100%',
-                      aspectRatio: '0.84 / 1',
-                      objectFit: 'cover',
+                      width: "100%",
+                      aspectRatio: "0.84 / 1",
+                      objectFit: "cover",
                     }}
                   />
                 </Box>
                 <Typography
                   sx={{
                     mt: 1.35,
-                    fontSize: '0.68rem',
+                    fontSize: "0.68rem",
                     color: palette.muted,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.22em',
+                    textTransform: "uppercase",
+                    letterSpacing: "0.22em",
                   }}
                 >
                   {product.category}
@@ -898,9 +924,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mt: 0.8,
                     fontFamily: headingFont,
                     fontWeight: 700,
-                    fontSize: { xs: '1.2rem', md: '1.45rem' },
+                    fontSize: { xs: "1.2rem", md: "1.45rem" },
                     lineHeight: 1.02,
-                    letterSpacing: '-0.04em',
+                    letterSpacing: "-0.04em",
                   }}
                 >
                   {product.name}
@@ -909,7 +935,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     mt: 1,
                     color: palette.muted,
-                    fontSize: '0.92rem',
+                    fontSize: "0.92rem",
                     lineHeight: 1.8,
                   }}
                 >
@@ -921,27 +947,27 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   justifyContent="space-between"
                   sx={{ mt: 1.8 }}
                 >
-                  <Typography sx={{ fontSize: '1rem', fontWeight: 700 }}>
+                  <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>
                     {product.price}
                   </Typography>
                   <Button
                     variant="contained"
-                    component={product.url ? 'a' : 'button'}
+                    component={product.url ? "a" : "button"}
                     href={product.url || undefined}
-                    target={product.url ? '_blank' : undefined}
-                    rel={product.url ? 'noreferrer' : undefined}
+                    target={product.url ? "_blank" : undefined}
+                    rel={product.url ? "noreferrer" : undefined}
                     sx={{
                       bgcolor: palette.accent,
                       color: palette.ink,
                       borderRadius: 999,
                       border: `1px solid ${palette.border}`,
-                      boxShadow: 'none',
+                      boxShadow: "none",
                       px: 2.2,
                       py: 0.72,
-                      fontSize: '0.66rem',
-                      letterSpacing: '0.16em',
-                      textTransform: 'uppercase',
-                      '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                      fontSize: "0.66rem",
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
                     }}
                   >
                     Visit product
@@ -966,11 +992,11 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Box
           sx={{
             maxWidth: 1280,
-            mx: 'auto',
+            mx: "auto",
             px: { xs: 2, md: 4 },
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1.05fr 1fr' },
-            alignItems: 'stretch',
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1.05fr 1fr" },
+            alignItems: "stretch",
           }}
         >
           <FadeIn direction="right">
@@ -979,10 +1005,10 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               src={aboutImage}
               alt="About"
               sx={{
-                width: '100%',
-                height: '100%',
+                width: "100%",
+                height: "100%",
                 minHeight: { xs: 320, md: 520 },
-                objectFit: 'cover',
+                objectFit: "cover",
               }}
             />
           </FadeIn>
@@ -990,17 +1016,17 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Box
               sx={{
                 p: { xs: 3, md: 6 },
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
               }}
             >
               <Typography
                 sx={{
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.28em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(17,17,17,0.72)',
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
+                  color: "rgba(17,17,17,0.72)",
                 }}
               >
                 About our store
@@ -1010,8 +1036,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 1.2,
                   fontFamily: headingFont,
                   fontWeight: 700,
-                  fontSize: { xs: '2rem', md: '3.2rem' },
-                  letterSpacing: '-0.05em',
+                  fontSize: { xs: "2rem", md: "3.2rem" },
+                  letterSpacing: "-0.05em",
                   lineHeight: 0.95,
                   maxWidth: 460,
                 }}
@@ -1021,13 +1047,13 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Typography
                 sx={{
                   mt: 2.2,
-                  fontSize: { xs: '0.95rem', md: '1rem' },
+                  fontSize: { xs: "0.95rem", md: "1rem" },
                   lineHeight: 1.9,
                   maxWidth: 460,
                 }}
               >
                 {data.description ||
-                  'This premium handbag store template balances editorial storytelling, structured product presentation, and clean enquiry-focused sections for luxury fashion brands.'}
+                  "This premium handbag store template balances editorial storytelling, structured product presentation, and clean enquiry-focused sections for luxury fashion brands."}
               </Typography>
             </Box>
           </FadeIn>
@@ -1040,7 +1066,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Why Choose Us"
         sx={{
           maxWidth: 1280,
-          mx: 'auto',
+          mx: "auto",
           px: { xs: 2, md: 4 },
           py: { xs: 7, md: 8 },
         }}
@@ -1048,15 +1074,15 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         <FadeIn>
           <Box
             sx={{
-              textAlign: 'center',
+              textAlign: "center",
               maxWidth: 1140,
-              mx: 'auto',
+              mx: "auto",
             }}
           >
             <Box
               sx={{
-                display: 'flex',
-                justifyContent: 'center',
+                display: "flex",
+                justifyContent: "center",
                 mb: 2.4,
               }}
             >
@@ -1067,17 +1093,17 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{
                   width: { xs: 42, md: 70 },
                   height: { xs: 42, md: 70 },
-                  objectFit: 'contain',
-                  filter: data.logoUrl ? 'none' : 'brightness(0)',
+                  objectFit: "contain",
+                  filter: data.logoUrl ? "none" : "brightness(0)",
                 }}
               />
             </Box>
 
             <Typography
               sx={{
-                fontSize: '0.8rem',
-                letterSpacing: '0.24em',
-                textTransform: 'uppercase',
+                fontSize: "0.8rem",
+                letterSpacing: "0.24em",
+                textTransform: "uppercase",
                 color: palette.ink,
               }}
             >
@@ -1089,17 +1115,17 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 mt: 2.2,
                 fontFamily: headingFont,
                 fontWeight: 500,
-                fontSize: { xs: '1.9rem', md: '3rem' },
+                fontSize: { xs: "1.9rem", md: "3rem" },
                 lineHeight: { xs: 1.14, md: 1.08 },
-                letterSpacing: '-0.05em',
+                letterSpacing: "-0.05em",
                 color: palette.ink,
                 maxWidth: 1120,
-                mx: 'auto',
+                mx: "auto",
               }}
             >
-              At {data.name}, we curate every handbag around quality, balance, and real-world
-              wearability, so each piece feels elegant, practical, and premium from first look to
-              everyday use.
+              At {data.name}, we curate every handbag around quality, balance,
+              and real-world wearability, so each piece feels elegant,
+              practical, and premium from first look to everyday use.
             </Typography>
           </Box>
         </FadeIn>
@@ -1111,26 +1137,26 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="How We Curate"
         sx={{
           maxWidth: 1280,
-          mx: 'auto',
+          mx: "auto",
           px: { xs: 2, md: 4 },
           py: { xs: 7, md: 8 },
         }}
       >
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1.1fr 0.9fr' },
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1.1fr 0.9fr" },
             gap: { xs: 3, md: 5 },
-            alignItems: 'center',
+            alignItems: "center",
           }}
         >
           <FadeIn>
             <Box>
               <Typography
                 sx={{
-                  fontSize: '0.72rem',
-                  letterSpacing: '0.3em',
-                  textTransform: 'uppercase',
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.3em",
+                  textTransform: "uppercase",
                   color: palette.muted,
                 }}
               >
@@ -1141,9 +1167,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 1.1,
                   fontFamily: headingFont,
                   fontWeight: 700,
-                  fontSize: { xs: '2rem', md: '3rem' },
+                  fontSize: { xs: "2rem", md: "3rem" },
                   lineHeight: 0.95,
-                  letterSpacing: '-0.05em',
+                  letterSpacing: "-0.05em",
                   maxWidth: 520,
                 }}
               >
@@ -1151,30 +1177,30 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Typography>
               <Stack spacing={2} sx={{ mt: 2.5, maxWidth: 560 }}>
                 {[
-                  'We start with shape and proportion so every piece feels elegant before styling even begins.',
-                  'Materials and hardware are reviewed for texture, weight, and how they elevate the final look in person.',
-                  'The assortment stays intentionally tight so the shopping experience feels calm, premium, and focused.',
+                  "We start with shape and proportion so every piece feels elegant before styling even begins.",
+                  "Materials and hardware are reviewed for texture, weight, and how they elevate the final look in person.",
+                  "The assortment stays intentionally tight so the shopping experience feels calm, premium, and focused.",
                 ].map((text, index) => (
                   <FadeIn key={text} delay={index * 0.08}>
                     <Box
                       sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '44px 1fr',
+                        display: "grid",
+                        gridTemplateColumns: "44px 1fr",
                         gap: 1.8,
-                        alignItems: 'start',
+                        alignItems: "start",
                       }}
                     >
                       <Box
                         sx={{
                           width: 44,
                           height: 44,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: '50%',
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: "50%",
                           border: `1px solid rgba(17,17,17,0.16)`,
-                          fontSize: '0.78rem',
-                          letterSpacing: '0.12em',
+                          fontSize: "0.78rem",
+                          letterSpacing: "0.12em",
                         }}
                       >
                         0{index + 1}
@@ -1182,7 +1208,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                       <Typography
                         sx={{
                           color: palette.muted,
-                          fontSize: '0.95rem',
+                          fontSize: "0.95rem",
                           lineHeight: 1.9,
                         }}
                       >
@@ -1200,14 +1226,14 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               sx={{
                 p: { xs: 2.5, md: 3 },
                 border: `1px solid rgba(17,17,17,0.12)`,
-                bgcolor: '#f4ebdd',
+                bgcolor: "#f4ebdd",
               }}
             >
               <Typography
                 sx={{
-                  fontSize: '0.72rem',
-                  letterSpacing: '0.3em',
-                  textTransform: 'uppercase',
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.3em",
+                  textTransform: "uppercase",
                   color: palette.muted,
                 }}
               >
@@ -1216,26 +1242,31 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Stack spacing={2.2} sx={{ mt: 2.4 }}>
                 {[
                   [
-                    'Structured forms',
-                    'Balanced silhouettes that keep a polished shape throughout the day.',
+                    "Structured forms",
+                    "Balanced silhouettes that keep a polished shape throughout the day.",
                   ],
                   [
-                    'Premium hardware',
-                    'Metal details chosen to add subtle contrast and a more elevated finish.',
+                    "Premium hardware",
+                    "Metal details chosen to add subtle contrast and a more elevated finish.",
                   ],
                   [
-                    'Wearable palettes',
-                    'Color choices designed to work across wardrobe staples and seasonal looks.',
+                    "Wearable palettes",
+                    "Color choices designed to work across wardrobe staples and seasonal looks.",
                   ],
                 ].map(([title, text], index) => (
                   <FadeIn key={title} delay={index * 0.08}>
-                    <Box sx={{ pb: 2.2, borderBottom: `1px solid rgba(17,17,17,0.1)` }}>
+                    <Box
+                      sx={{
+                        pb: 2.2,
+                        borderBottom: `1px solid rgba(17,17,17,0.1)`,
+                      }}
+                    >
                       <Typography
                         sx={{
                           fontFamily: headingFont,
                           fontWeight: 700,
-                          fontSize: '1.2rem',
-                          letterSpacing: '-0.03em',
+                          fontSize: "1.2rem",
+                          letterSpacing: "-0.03em",
                         }}
                       >
                         {title}
@@ -1244,7 +1275,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                         sx={{
                           mt: 0.8,
                           color: palette.muted,
-                          fontSize: '0.93rem',
+                          fontSize: "0.93rem",
                           lineHeight: 1.8,
                         }}
                       >
@@ -1265,7 +1296,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="CTA"
         sx={{
           maxWidth: 1280,
-          mx: 'auto',
+          mx: "auto",
           px: { xs: 2, md: 4 },
           pb: { xs: 7, md: 8.5 },
         }}
@@ -1274,20 +1305,20 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           sx={{
             p: { xs: 3, md: 4 },
             border: `1px solid rgba(17,17,17,0.14)`,
-            bgcolor: '#f4ebdd',
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1.1fr 0.9fr' },
+            bgcolor: "#f4ebdd",
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1.1fr 0.9fr" },
             gap: { xs: 3, md: 4 },
-            alignItems: 'center',
+            alignItems: "center",
           }}
         >
           <FadeIn>
             <Box>
               <Typography
                 sx={{
-                  fontSize: '0.72rem',
-                  letterSpacing: '0.3em',
-                  textTransform: 'uppercase',
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.3em",
+                  textTransform: "uppercase",
                   color: palette.muted,
                 }}
               >
@@ -1298,57 +1329,58 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mt: 1.1,
                   fontFamily: headingFont,
                   fontWeight: 700,
-                  fontSize: { xs: '1.9rem', md: '2.7rem' },
+                  fontSize: { xs: "1.9rem", md: "2.7rem" },
                   lineHeight: 0.96,
-                  letterSpacing: '-0.05em',
+                  letterSpacing: "-0.05em",
                   maxWidth: 520,
                 }}
               >
-                Explore the full range of premium handbags and curated seasonal edits.
+                Explore the full range of premium handbags and curated seasonal
+                edits.
               </Typography>
             </Box>
           </FadeIn>
 
           <FadeIn delay={0.08}>
             <Stack
-              direction={{ xs: 'column', sm: 'row' }}
+              direction={{ xs: "column", sm: "row" }}
               spacing={1.4}
-              justifyContent={{ md: 'flex-end' }}
+              justifyContent={{ md: "flex-end" }}
             >
               <Button
                 variant="contained"
-                onClick={() => navigateToPage('shop')}
+                onClick={() => navigateToPage("shop")}
                 sx={{
                   bgcolor: palette.accent,
                   color: palette.ink,
                   borderRadius: 999,
                   border: `1px solid ${palette.border}`,
-                  boxShadow: 'none',
+                  boxShadow: "none",
                   px: 3,
                   py: 0.9,
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
                 }}
               >
                 Shop collection
               </Button>
               <Button
                 variant="outlined"
-                onClick={() => navigateToPage('contact')}
+                onClick={() => navigateToPage("contact")}
                 sx={{
                   color: palette.ink,
-                  borderColor: 'rgba(17,17,17,0.26)',
+                  borderColor: "rgba(17,17,17,0.26)",
                   borderRadius: 999,
                   px: 3,
                   py: 0.9,
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  '&:hover': {
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  "&:hover": {
                     borderColor: palette.border,
-                    bgcolor: 'rgba(17,17,17,0.03)',
+                    bgcolor: "rgba(17,17,17,0.03)",
                   },
                 }}
               >
@@ -1368,17 +1400,17 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
       data-preview-label="Contact Form"
       sx={{
         maxWidth: 1280,
-        mx: 'auto',
+        mx: "auto",
         px: { xs: 2, md: 4 },
         py: { xs: 7, md: 8.5 },
       }}
     >
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '0.88fr 1.12fr' },
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "0.88fr 1.12fr" },
           gap: { xs: 3.5, md: 5 },
-          alignItems: 'start',
+          alignItems: "start",
         }}
       >
         <FadeIn>
@@ -1389,9 +1421,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <Typography
               sx={{
-                fontSize: '0.72rem',
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
+                fontSize: "0.72rem",
+                letterSpacing: "0.3em",
+                textTransform: "uppercase",
                 color: palette.muted,
               }}
             >
@@ -1402,8 +1434,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 mt: 1,
                 fontFamily: headingFont,
                 fontWeight: 700,
-                fontSize: { xs: '2.4rem', md: '4rem' },
-                letterSpacing: '-0.06em',
+                fontSize: { xs: "2.4rem", md: "4rem" },
+                letterSpacing: "-0.06em",
                 lineHeight: 0.92,
                 maxWidth: 420,
               }}
@@ -1415,12 +1447,12 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 mt: 1.8,
                 maxWidth: 360,
                 color: palette.muted,
-                fontSize: '0.95rem',
+                fontSize: "0.95rem",
                 lineHeight: 1.85,
               }}
             >
-              Request availability, custom color options, wholesale details, or personal styling
-              support for your next handbag selection.
+              Request availability, custom color options, wholesale details, or
+              personal styling support for your next handbag selection.
             </Typography>
           </Box>
           <FadeIn delay={0.08} direction="right">
@@ -1429,9 +1461,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 mt: 3.2,
                 width: { xs: 220, md: 280 },
                 p: 1.2,
-                bgcolor: 'rgba(255,255,255,0.28)',
+                bgcolor: "rgba(255,255,255,0.28)",
                 border: `1px solid rgba(17,17,17,0.12)`,
-                boxShadow: '0 16px 40px rgba(48,34,8,0.06)',
+                boxShadow: "0 16px 40px rgba(48,34,8,0.06)",
               }}
             >
               <Box
@@ -1439,9 +1471,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 src={touchImage}
                 alt="Contact"
                 sx={{
-                  width: '100%',
-                  aspectRatio: '0.92 / 1',
-                  objectFit: 'cover',
+                  width: "100%",
+                  aspectRatio: "0.92 / 1",
+                  objectFit: "cover",
                 }}
               />
             </Box>
@@ -1452,27 +1484,27 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Box
             sx={{
               maxWidth: 560,
-              justifySelf: 'end',
-              width: '100%',
+              justifySelf: "end",
+              width: "100%",
               p: { xs: 2.5, md: 3.2 },
               border: `1px solid rgba(17,17,17,0.18)`,
-              bgcolor: '#f4ebdd',
-              boxShadow: '0 22px 50px rgba(48,34,8,0.07)',
-              position: 'relative',
+              bgcolor: "#f4ebdd",
+              boxShadow: "0 22px 50px rgba(48,34,8,0.07)",
+              position: "relative",
             }}
           >
             <Box
               sx={{
-                position: 'absolute',
+                position: "absolute",
                 top: -12,
                 left: 24,
                 px: 1.2,
                 py: 0.4,
                 bgcolor: palette.page,
                 border: `1px solid rgba(17,17,17,0.14)`,
-                fontSize: '0.66rem',
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
+                fontSize: "0.66rem",
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
                 color: palette.muted,
               }}
             >
@@ -1484,8 +1516,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 mb: 2.1,
                 fontFamily: headingFont,
                 fontWeight: 700,
-                fontSize: { xs: '1.4rem', md: '1.75rem' },
-                letterSpacing: '-0.04em',
+                fontSize: { xs: "1.4rem", md: "1.75rem" },
+                letterSpacing: "-0.04em",
               }}
             >
               Start your enquiry
@@ -1493,13 +1525,23 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
                 gap: 1.6,
               }}
             >
-              <TextField label="Name" variant="outlined" fullWidth sx={fieldStyles} />
-              <TextField label="Email" variant="outlined" fullWidth sx={fieldStyles} />
+              <TextField
+                label="Name"
+                variant="outlined"
+                fullWidth
+                sx={fieldStyles}
+              />
+              <TextField
+                label="Email"
+                variant="outlined"
+                fullWidth
+                sx={fieldStyles}
+              />
             </Box>
             <TextField
               label="Phone"
@@ -1519,17 +1561,17 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               variant="contained"
               sx={{
                 mt: 2.2,
-                width: '100%',
+                width: "100%",
                 bgcolor: palette.accent,
                 color: palette.ink,
                 borderRadius: 999,
                 border: `1px solid ${palette.border}`,
-                boxShadow: 'none',
+                boxShadow: "none",
                 py: 1,
-                fontSize: '0.72rem',
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                '&:hover': { bgcolor: '#e6b12c', boxShadow: 'none' },
+                fontSize: "0.72rem",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
               }}
             >
               Ask
@@ -1541,9 +1583,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
   );
 
   const renderActivePage = () => {
-    if (activePage === 'shop') return renderShopPage();
-    if (activePage === 'about') return renderAboutPage();
-    if (activePage === 'contact') return renderContactPage();
+    if (activePage === "shop") return renderShopPage();
+    if (activePage === "about") return renderAboutPage();
+    if (activePage === "contact") return renderContactPage();
     return renderHomePage();
   };
 
@@ -1553,30 +1595,33 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
         bgcolor: palette.page,
         color: palette.ink,
         fontFamily: bodyFont,
-        scrollBehavior: 'smooth',
+        scrollBehavior: "smooth",
       }}
     >
       <Box
         component="header"
         sx={{
-          position: 'sticky',
+          position: "sticky",
           top: 0,
           zIndex: 20,
-          bgcolor: 'rgba(239,230,214,0.96)',
+          bgcolor: "rgba(239,230,214,0.96)",
           borderBottom: `1px solid ${palette.border}`,
-          backdropFilter: 'blur(12px)',
+          backdropFilter: "blur(12px)",
         }}
       >
         <FadeIn direction="down">
           <Box
             sx={{
               maxWidth: 1280,
-              mx: 'auto',
+              mx: "auto",
               px: { xs: 2, md: 4 },
               py: 1.8,
-              display: 'grid',
-              gridTemplateColumns: { xs: 'auto 1fr auto', md: '220px 1fr 120px' },
-              alignItems: 'center',
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "auto 1fr auto",
+                md: "220px 1fr 120px",
+              },
+              alignItems: "center",
               gap: 2,
             }}
           >
@@ -1584,15 +1629,15 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Box
                 component="button"
                 type="button"
-                onClick={() => navigateToPage('home')}
+                onClick={() => navigateToPage("home")}
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                   gap: 1,
                   border: 0,
                   p: 0,
-                  bgcolor: 'transparent',
-                  cursor: 'pointer',
+                  bgcolor: "transparent",
+                  cursor: "pointer",
                   color: palette.ink,
                 }}
               >
@@ -1603,17 +1648,17 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     width: 24,
                     height: 24,
-                    objectFit: 'contain',
-                    filter: data.logoUrl ? 'none' : 'brightness(0)',
+                    objectFit: "contain",
+                    filter: data.logoUrl ? "none" : "brightness(0)",
                   }}
                 />
                 <Typography
                   sx={{
-                    display: { xs: 'none', sm: 'block' },
+                    display: { xs: "none", sm: "block" },
                     fontFamily: headingFont,
                     fontWeight: 700,
-                    fontSize: '0.92rem',
-                    letterSpacing: '-0.03em',
+                    fontSize: "0.92rem",
+                    letterSpacing: "-0.03em",
                   }}
                 >
                   {data.name}
@@ -1626,8 +1671,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               spacing={{ xs: 1.5, md: 3.5 }}
               justifyContent="center"
               sx={{
-                overflowX: 'auto',
-                '&::-webkit-scrollbar': { display: 'none' },
+                overflowX: "auto",
+                "&::-webkit-scrollbar": { display: "none" },
               }}
             >
               {navItems.map((item) => (
@@ -1639,18 +1684,21 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     border: 0,
                     p: 0,
-                    bgcolor: 'transparent',
-                    cursor: 'pointer',
-                    color: activePage === item.page ? palette.ink : 'rgba(17,17,17,0.62)',
-                    fontSize: { xs: '0.72rem', md: '0.74rem' },
-                    letterSpacing: '0.22em',
-                    textTransform: 'uppercase',
-                    whiteSpace: 'nowrap',
+                    bgcolor: "transparent",
+                    cursor: "pointer",
+                    color:
+                      activePage === item.page
+                        ? palette.ink
+                        : "rgba(17,17,17,0.62)",
+                    fontSize: { xs: "0.72rem", md: "0.74rem" },
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    whiteSpace: "nowrap",
                     fontFamily: bodyFont,
                     borderBottom:
                       activePage === item.page
                         ? `1px solid ${palette.ink}`
-                        : '1px solid transparent',
+                        : "1px solid transparent",
                     pb: 0.35,
                   }}
                 >
@@ -1664,15 +1712,17 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       {renderActivePage()}
 
-      <Box sx={{ borderTop: `1px solid ${palette.border}`, py: { xs: 5, md: 6 } }}>
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, md: 4 } }}>
+      <Box
+        sx={{ borderTop: `1px solid ${palette.border}`, py: { xs: 5, md: 6 } }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 4 } }}>
           <FadeIn>
             <Typography
               sx={{
                 fontFamily: headingFont,
                 fontWeight: 700,
-                fontSize: { xs: '3rem', md: '5rem' },
-                letterSpacing: '-0.07em',
+                fontSize: { xs: "3rem", md: "5rem" },
+                letterSpacing: "-0.07em",
                 lineHeight: 0.9,
               }}
             >
@@ -1685,8 +1735,8 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               mt: 2.5,
               pt: 2.5,
               borderTop: `1px solid rgba(17,17,17,0.18)`,
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '0.8fr 0.8fr 1.4fr' },
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "0.8fr 0.8fr 1.4fr" },
               gap: 3,
             }}
           >
@@ -1694,9 +1744,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Box>
                 <Typography
                   sx={{
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.2em',
-                    textTransform: 'uppercase',
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
                   }}
                 >
                   Quick links
@@ -1711,11 +1761,11 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                       sx={{
                         border: 0,
                         p: 0,
-                        bgcolor: 'transparent',
-                        textAlign: 'left',
-                        cursor: 'pointer',
+                        bgcolor: "transparent",
+                        textAlign: "left",
+                        cursor: "pointer",
                         color: palette.muted,
-                        fontSize: '0.9rem',
+                        fontSize: "0.9rem",
                       }}
                     >
                       {item.label}
@@ -1729,9 +1779,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Box>
                 <Typography
                   sx={{
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.2em',
-                    textTransform: 'uppercase',
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
                   }}
                 >
                   Contact
@@ -1740,13 +1790,13 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     mt: 1.3,
                     color: palette.muted,
-                    fontSize: '0.9rem',
+                    fontSize: "0.9rem",
                     lineHeight: 1.9,
                   }}
                 >
-                  {data.contact?.email || 'hello@brandstore.co'}
+                  {data.contact?.email || "hello@brandstore.co"}
                   <br />
-                  {data.contact?.phone || '+1 (555) 420 1188'}
+                  {data.contact?.phone || "+1 (555) 420 1188"}
                 </Typography>
               </Box>
             </FadeIn>
@@ -1755,9 +1805,9 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Box>
                 <Typography
                   sx={{
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.2em',
-                    textTransform: 'uppercase',
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
                   }}
                 >
                   Visit
@@ -1766,18 +1816,20 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   sx={{
                     mt: 1.3,
                     color: palette.muted,
-                    fontSize: '0.9rem',
+                    fontSize: "0.9rem",
                     lineHeight: 1.9,
                   }}
                 >
-                  {data.contact?.address || '245 Mercer Street, New York, NY'}
+                  {data.contact?.address || "245 Mercer Street, New York, NY"}
                 </Typography>
 
                 <Stack direction="row" spacing={1.2} sx={{ mt: 1.8 }}>
                   {socialLinks.map((item) => {
                     const Icon = item.icon;
                     const href =
-                      data.socialLinks?.[item.key as keyof typeof data.socialLinks] || '#';
+                      data.socialLinks?.[
+                        item.key as keyof typeof data.socialLinks
+                      ] || "#";
 
                     return (
                       <Box
@@ -1786,7 +1838,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                         href={href}
                         target="_blank"
                         rel="noreferrer"
-                        sx={{ color: palette.ink, display: 'flex' }}
+                        sx={{ color: palette.ink, display: "flex" }}
                       >
                         <Icon size={16} />
                       </Box>
@@ -1796,7 +1848,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Box
                       component="a"
                       href={`mailto:${data.contact.email}`}
-                      sx={{ color: palette.ink, display: 'flex' }}
+                      sx={{ color: palette.ink, display: "flex" }}
                     >
                       <Mail size={16} />
                     </Box>

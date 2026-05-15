@@ -1,10 +1,10 @@
-import { useMemo, useState, useCallback } from 'react';
-import type { AxiosError } from 'axios';
+import { useMemo, useState, useCallback } from "react";
+import type { AxiosError } from "axios";
 import {
   useListingComments,
   useCreateComment,
   useReactComment as useReactCommentMutation,
-} from '../api/queries/content';
+} from "../api/queries/content";
 
 /* ---------- Types ---------- */
 export interface CommentAuthor {
@@ -27,7 +27,7 @@ export interface Comment {
   replies?: Comment[];
   parentCommentId?: number | null;
   createdAt: string;
-  status: 'visible' | 'hidden';
+  status: "visible" | "hidden";
 }
 
 export interface CommentPagination {
@@ -47,7 +47,10 @@ export interface CommentsResult {
 }
 
 export interface SubmitCommentResult {
-  submitComment: (data: { content: string; parentCommentId?: number }) => Promise<Comment | null>;
+  submitComment: (data: {
+    content: string;
+    parentCommentId?: number;
+  }) => Promise<Comment | null>;
   loading: boolean;
   error: string | null;
   requiresAuth?: boolean;
@@ -66,14 +69,15 @@ export interface ReactCommentResult {
  */
 export function useComments(
   websiteId: string | number | null | undefined,
-  page: number = 1
+  page: number = 1,
 ): CommentsResult {
   const query = useListingComments(websiteId, { page, limit: 20 });
   const err = query.error as AxiosError<{ message?: string }> | null;
   const requiresAuth = err?.response?.status === 401;
-  const errorMsg = err && !requiresAuth
-    ? (err.response?.data?.message ?? 'Failed to load comments')
-    : null;
+  const errorMsg =
+    err && !requiresAuth
+      ? (err.response?.data?.message ?? "Failed to load comments")
+      : null;
 
   return {
     comments: (query.data?.comments as Comment[]) ?? [],
@@ -89,14 +93,17 @@ export function useComments(
 
 /* ---------- useSubmitComment ---------- */
 export function useSubmitComment(
-  websiteId: string | number | null | undefined
+  websiteId: string | number | null | undefined,
 ): SubmitCommentResult {
   const mutation = useCreateComment();
   const [error, setError] = useState<string | null>(null);
   const [requiresAuth, setRequiresAuth] = useState(false);
 
   const submitComment = useCallback(
-    async (data: { content: string; parentCommentId?: number }): Promise<Comment | null> => {
+    async (data: {
+      content: string;
+      parentCommentId?: number;
+    }): Promise<Comment | null> => {
       if (!websiteId) return null;
       setError(null);
       setRequiresAuth(false);
@@ -111,12 +118,14 @@ export function useSubmitComment(
         if (axiosErr?.response?.status === 401) {
           setRequiresAuth(true);
         } else {
-          setError(axiosErr?.response?.data?.message || 'Failed to submit comment');
+          setError(
+            axiosErr?.response?.data?.message || "Failed to submit comment",
+          );
         }
         return null;
       }
     },
-    [websiteId, mutation]
+    [websiteId, mutation],
   );
 
   return {
@@ -140,11 +149,11 @@ export function useReactComment(): ReactCommentResult {
         return false;
       }
     },
-    [mutation]
+    [mutation],
   );
 
   return useMemo(
     () => ({ reactComment, loading: mutation.isPending }),
-    [reactComment, mutation.isPending]
+    [reactComment, mutation.isPending],
   );
 }

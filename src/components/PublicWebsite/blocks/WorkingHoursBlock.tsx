@@ -11,7 +11,7 @@
  * - Framer Motion entrance animation + useInView
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 import {
   Box,
   Card,
@@ -25,13 +25,20 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from '@mui/material';
-import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+} from "@mui/material";
+import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type DayName = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+type DayName =
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday"
+  | "Sunday";
 
 interface HourEntry {
   day: DayName;
@@ -67,11 +74,11 @@ interface WorkingHoursBlockProps {
 
 /** Convert HH:MM (24h) string to "h:mm AM/PM" display string */
 export function formatTime(time: string): string {
-  if (!time) return '';
-  const [hourStr, minuteStr] = time.split(':');
+  if (!time) return "";
+  const [hourStr, minuteStr] = time.split(":");
   let hour = parseInt(hourStr, 10);
-  const minute = minuteStr || '00';
-  const period = hour >= 12 ? 'PM' : 'AM';
+  const minute = minuteStr || "00";
+  const period = hour >= 12 ? "PM" : "AM";
   if (hour === 0) hour = 12;
   else if (hour > 12) hour -= 12;
   return `${hour}:${minute} ${period}`;
@@ -79,13 +86,13 @@ export function formatTime(time: string): string {
 
 /** Map JS getDay() (0=Sun..6=Sat) to DayName */
 const DAY_INDEX_TO_NAME: DayName[] = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
 ];
 
 /** Determine live open/closed status. Returns true if currently open. */
@@ -97,8 +104,8 @@ function computeIsOpen(hours: HourEntry[]): boolean {
   if (!entry || entry.isClosed) return false;
   if (!entry.openTime || !entry.closeTime) return false;
 
-  const [openH, openM] = entry.openTime.split(':').map(Number);
-  const [closeH, closeM] = entry.closeTime.split(':').map(Number);
+  const [openH, openM] = entry.openTime.split(":").map(Number);
+  const [closeH, closeM] = entry.closeTime.split(":").map(Number);
 
   const openDate = new Date(now);
   openDate.setHours(openH, openM, 0, 0);
@@ -113,15 +120,15 @@ function computeIsOpen(hours: HourEntry[]): boolean {
 
 const WorkingHoursBlock: React.FC<WorkingHoursBlockProps> = ({
   block,
-  primaryColor = '#2563eb',
-  headingColor = '#1e293b',
-  bodyColor = '#475569',
+  primaryColor = "#2563eb",
+  headingColor = "#1e293b",
+  bodyColor = "#475569",
 }) => {
   const { content } = block;
   const hours = content.hours || [];
   const heading = content.heading;
   const showCurrentStatus = content.showCurrentStatus !== false;
-  const isCompact = block.variant === 'compact';
+  const isCompact = block.variant === "compact";
 
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
 
@@ -133,11 +140,11 @@ const WorkingHoursBlock: React.FC<WorkingHoursBlockProps> = ({
 
   const table = (
     <TableContainer component={Paper} elevation={1}>
-      <Table size={isCompact ? 'small' : 'medium'} aria-label="working hours">
+      <Table size={isCompact ? "small" : "medium"} aria-label="working hours">
         <TableHead>
           <TableRow
             sx={{
-              '& .MuiTableCell-root': {
+              "& .MuiTableCell-root": {
                 fontWeight: 600,
                 color: headingColor,
                 bgcolor: `${primaryColor}20`,
@@ -157,15 +164,15 @@ const WorkingHoursBlock: React.FC<WorkingHoursBlockProps> = ({
               <TableRow
                 key={entry.day}
                 sx={{
-                  bgcolor: isToday ? `${primaryColor}15` : 'background.paper',
+                  bgcolor: isToday ? `${primaryColor}15` : "background.paper",
                 }}
               >
                 {/* Day cell */}
                 <TableCell
                   sx={{
                     fontWeight: 500,
-                    color: closed ? 'text.secondary' : bodyColor,
-                    fontStyle: closed ? 'italic' : 'normal',
+                    color: closed ? "text.secondary" : bodyColor,
+                    fontStyle: closed ? "italic" : "normal",
                   }}
                 >
                   {entry.day}
@@ -174,13 +181,13 @@ const WorkingHoursBlock: React.FC<WorkingHoursBlockProps> = ({
                 {/* Hours cell */}
                 <TableCell
                   sx={{
-                    color: closed ? 'text.secondary' : bodyColor,
-                    fontStyle: closed ? 'italic' : 'normal',
+                    color: closed ? "text.secondary" : bodyColor,
+                    fontStyle: closed ? "italic" : "normal",
                   }}
                 >
                   {closed
-                    ? 'Closed'
-                    : `${formatTime(entry.openTime || '')} – ${formatTime(entry.closeTime || '')}`}
+                    ? "Closed"
+                    : `${formatTime(entry.openTime || "")} – ${formatTime(entry.closeTime || "")}`}
                 </TableCell>
               </TableRow>
             );
@@ -191,10 +198,10 @@ const WorkingHoursBlock: React.FC<WorkingHoursBlockProps> = ({
   );
 
   const statusBadge = showCurrentStatus && (
-    <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+    <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
       <Chip
-        label={isOpen ? 'Open Now' : 'Closed'}
-        color={isOpen ? 'success' : 'error'}
+        label={isOpen ? "Open Now" : "Closed"}
+        color={isOpen ? "success" : "error"}
         variant="filled"
         size="small"
       />
@@ -206,12 +213,12 @@ const WorkingHoursBlock: React.FC<WorkingHoursBlockProps> = ({
       ref={ref}
       initial={{ opacity: 0, y: 30 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
     >
       {isCompact ? (
         /* Compact variant — Card, max-width 420px */
         <Box sx={{ py: 4, px: 2 }}>
-          <Card elevation={1} sx={{ maxWidth: 420, mx: 'auto', p: 2 }}>
+          <Card elevation={1} sx={{ maxWidth: 420, mx: "auto", p: 2 }}>
             {heading && (
               <Typography
                 variant="h6"

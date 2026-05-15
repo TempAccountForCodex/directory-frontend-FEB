@@ -18,10 +18,10 @@
  *
  * @dnd-kit is mocked entirely — drag behavior is a library concern.
  */
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, within } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
 
 // ---------------------------------------------------------------------------
 // Mock @dnd-kit entirely
@@ -29,7 +29,7 @@ import '@testing-library/jest-dom/vitest';
 
 let capturedOnDragEnd: ((event: unknown) => void) | null = null;
 
-vi.mock('@dnd-kit/core', () => ({
+vi.mock("@dnd-kit/core", () => ({
   DndContext: ({
     children,
     onDragEnd,
@@ -47,8 +47,10 @@ vi.mock('@dnd-kit/core', () => ({
   useSensors: vi.fn(() => []),
 }));
 
-vi.mock('@dnd-kit/sortable', () => ({
-  SortableContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+vi.mock("@dnd-kit/sortable", () => ({
+  SortableContext: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   useSortable: () => ({
     attributes: {},
     listeners: {},
@@ -66,24 +68,24 @@ vi.mock('@dnd-kit/sortable', () => ({
   verticalListSortingStrategy: vi.fn(),
 }));
 
-vi.mock('@dnd-kit/utilities', () => ({
-  CSS: { Transform: { toString: () => '' } },
+vi.mock("@dnd-kit/utilities", () => ({
+  CSS: { Transform: { toString: () => "" } },
 }));
 
 // ---------------------------------------------------------------------------
 // Mock MUI icons to avoid SVG rendering issues in jsdom
 // ---------------------------------------------------------------------------
 
-vi.mock('@mui/icons-material/DragIndicator', () => ({
+vi.mock("@mui/icons-material/DragIndicator", () => ({
   default: () => <span data-testid="icon-drag" />,
 }));
-vi.mock('@mui/icons-material/Visibility', () => ({
+vi.mock("@mui/icons-material/Visibility", () => ({
   default: () => <span data-testid="icon-visible" />,
 }));
-vi.mock('@mui/icons-material/VisibilityOff', () => ({
+vi.mock("@mui/icons-material/VisibilityOff", () => ({
   default: () => <span data-testid="icon-hidden" />,
 }));
-vi.mock('@mui/icons-material/Delete', () => ({
+vi.mock("@mui/icons-material/Delete", () => ({
   default: () => <span data-testid="icon-delete" />,
 }));
 
@@ -91,7 +93,7 @@ vi.mock('@mui/icons-material/Delete', () => ({
 // Import BlockList
 // ---------------------------------------------------------------------------
 
-import { BlockList } from '../BlockList';
+import { BlockList } from "../BlockList";
 
 // ---------------------------------------------------------------------------
 // Types and helpers
@@ -107,7 +109,7 @@ interface Block {
 
 const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   id: crypto.randomUUID(),
-  blockType: 'HERO',
+  blockType: "HERO",
   content: {},
   isVisible: true,
   sortOrder: 0,
@@ -124,7 +126,9 @@ const defaultProps = () => ({
   disabled: false,
 });
 
-function renderBlockList(overrides: Partial<ReturnType<typeof defaultProps>> = {}) {
+function renderBlockList(
+  overrides: Partial<ReturnType<typeof defaultProps>> = {},
+) {
   const props = { ...defaultProps(), ...overrides };
   return render(<BlockList {...props} />);
 }
@@ -133,13 +137,13 @@ function renderBlockList(overrides: Partial<ReturnType<typeof defaultProps>> = {
 // Tests — Empty state
 // ---------------------------------------------------------------------------
 
-describe('BlockList — empty state', () => {
-  it('renders an empty state message when blocks array is empty', () => {
+describe("BlockList — empty state", () => {
+  it("renders an empty state message when blocks array is empty", () => {
     renderBlockList({ blocks: [] });
     expect(screen.getByText(/no blocks/i)).toBeInTheDocument();
   });
 
-  it('does NOT show empty state when blocks exist', () => {
+  it("does NOT show empty state when blocks exist", () => {
     renderBlockList({ blocks: [makeBlock()] });
     expect(screen.queryByText(/no blocks/i)).not.toBeInTheDocument();
   });
@@ -149,59 +153,59 @@ describe('BlockList — empty state', () => {
 // Tests — Rendering block items
 // ---------------------------------------------------------------------------
 
-describe('BlockList — block rendering', () => {
-  it('renders the correct block type label for each block', () => {
+describe("BlockList — block rendering", () => {
+  it("renders the correct block type label for each block", () => {
     const blocks = [
-      makeBlock({ id: '1', blockType: 'HERO', sortOrder: 0 }),
-      makeBlock({ id: '2', blockType: 'FEATURES', sortOrder: 1 }),
-      makeBlock({ id: '3', blockType: 'CTA', sortOrder: 2 }),
+      makeBlock({ id: "1", blockType: "HERO", sortOrder: 0 }),
+      makeBlock({ id: "2", blockType: "FEATURES", sortOrder: 1 }),
+      makeBlock({ id: "3", blockType: "CTA", sortOrder: 2 }),
     ];
     renderBlockList({ blocks });
 
-    expect(screen.getByText('Hero')).toBeInTheDocument();
-    expect(screen.getByText('Features')).toBeInTheDocument();
-    expect(screen.getByText('Call To Action')).toBeInTheDocument();
+    expect(screen.getByText("Hero")).toBeInTheDocument();
+    expect(screen.getByText("Features")).toBeInTheDocument();
+    expect(screen.getByText("Call To Action")).toBeInTheDocument();
   });
 
-  it('renders a drag handle for each block', () => {
-    const blocks = [makeBlock({ id: '1' }), makeBlock({ id: '2' })];
+  it("renders a drag handle for each block", () => {
+    const blocks = [makeBlock({ id: "1" }), makeBlock({ id: "2" })];
     renderBlockList({ blocks });
 
     const dragHandles = screen.getAllByLabelText(/drag/i);
     expect(dragHandles.length).toBe(2);
   });
 
-  it('renders a visibility toggle for each block', () => {
-    const blocks = [makeBlock({ id: '1' }), makeBlock({ id: '2' })];
+  it("renders a visibility toggle for each block", () => {
+    const blocks = [makeBlock({ id: "1" }), makeBlock({ id: "2" })];
     renderBlockList({ blocks });
 
     const toggleBtns = screen.getAllByLabelText(/toggle visibility/i);
     expect(toggleBtns.length).toBe(2);
   });
 
-  it('renders a delete button for each block', () => {
-    const blocks = [makeBlock({ id: '1' }), makeBlock({ id: '2' })];
+  it("renders a delete button for each block", () => {
+    const blocks = [makeBlock({ id: "1" }), makeBlock({ id: "2" })];
     renderBlockList({ blocks });
 
     const deleteBtns = screen.getAllByLabelText(/remove block/i);
     expect(deleteBtns.length).toBe(2);
   });
 
-  it('shows visible icon for visible blocks and hidden icon for hidden blocks', () => {
+  it("shows visible icon for visible blocks and hidden icon for hidden blocks", () => {
     const blocks = [
-      makeBlock({ id: '1', isVisible: true }),
-      makeBlock({ id: '2', isVisible: false }),
+      makeBlock({ id: "1", isVisible: true }),
+      makeBlock({ id: "2", isVisible: false }),
     ];
     renderBlockList({ blocks });
 
-    expect(screen.getAllByTestId('icon-visible').length).toBe(1);
-    expect(screen.getAllByTestId('icon-hidden').length).toBe(1);
+    expect(screen.getAllByTestId("icon-visible").length).toBe(1);
+    expect(screen.getAllByTestId("icon-hidden").length).toBe(1);
   });
 
-  it('falls back to blockType key when block type is unknown', () => {
-    const blocks = [makeBlock({ id: '1', blockType: 'UNKNOWN_TYPE' })];
+  it("falls back to blockType key when block type is unknown", () => {
+    const blocks = [makeBlock({ id: "1", blockType: "UNKNOWN_TYPE" })];
     renderBlockList({ blocks });
-    expect(screen.getByText('UNKNOWN_TYPE')).toBeInTheDocument();
+    expect(screen.getByText("UNKNOWN_TYPE")).toBeInTheDocument();
   });
 });
 
@@ -209,28 +213,28 @@ describe('BlockList — block rendering', () => {
 // Tests — onSelect callback
 // ---------------------------------------------------------------------------
 
-describe('BlockList — onSelect', () => {
-  it('calls onSelect with blockId when a block item is clicked', () => {
+describe("BlockList — onSelect", () => {
+  it("calls onSelect with blockId when a block item is clicked", () => {
     const onSelect = vi.fn();
-    const blocks = [makeBlock({ id: 'block-1' })];
+    const blocks = [makeBlock({ id: "block-1" })];
     renderBlockList({ blocks, onSelect });
 
-    const blockItem = screen.getByText('Hero');
+    const blockItem = screen.getByText("Hero");
     fireEvent.click(blockItem);
 
-    expect(onSelect).toHaveBeenCalledWith('block-1');
+    expect(onSelect).toHaveBeenCalledWith("block-1");
   });
 
-  it('calls onSelect with correct id for second block', () => {
+  it("calls onSelect with correct id for second block", () => {
     const onSelect = vi.fn();
     const blocks = [
-      makeBlock({ id: 'a', blockType: 'HERO' }),
-      makeBlock({ id: 'b', blockType: 'FEATURES' }),
+      makeBlock({ id: "a", blockType: "HERO" }),
+      makeBlock({ id: "b", blockType: "FEATURES" }),
     ];
     renderBlockList({ blocks, onSelect });
 
-    fireEvent.click(screen.getByText('Features'));
-    expect(onSelect).toHaveBeenCalledWith('b');
+    fireEvent.click(screen.getByText("Features"));
+    expect(onSelect).toHaveBeenCalledWith("b");
   });
 });
 
@@ -238,13 +242,13 @@ describe('BlockList — onSelect', () => {
 // Tests — selectedBlockId highlighting
 // ---------------------------------------------------------------------------
 
-describe('BlockList — selectedBlockId', () => {
-  it('highlights the selected block item', () => {
+describe("BlockList — selectedBlockId", () => {
+  it("highlights the selected block item", () => {
     const blocks = [
-      makeBlock({ id: 'sel', blockType: 'HERO' }),
-      makeBlock({ id: 'other', blockType: 'FEATURES' }),
+      makeBlock({ id: "sel", blockType: "HERO" }),
+      makeBlock({ id: "other", blockType: "FEATURES" }),
     ];
-    renderBlockList({ blocks, selectedBlockId: 'sel' });
+    renderBlockList({ blocks, selectedBlockId: "sel" });
 
     const selectedItem = screen.getByLabelText(/block: hero.*selected/i);
     expect(selectedItem).toBeInTheDocument();
@@ -255,22 +259,22 @@ describe('BlockList — selectedBlockId', () => {
 // Tests — onRemove callback
 // ---------------------------------------------------------------------------
 
-describe('BlockList — onRemove', () => {
-  it('calls onRemove with correct blockId when delete button is clicked', () => {
+describe("BlockList — onRemove", () => {
+  it("calls onRemove with correct blockId when delete button is clicked", () => {
     const onRemove = vi.fn();
-    const blocks = [makeBlock({ id: 'del-1', blockType: 'CTA' })];
+    const blocks = [makeBlock({ id: "del-1", blockType: "CTA" })];
     renderBlockList({ blocks, onRemove });
 
     const deleteBtn = screen.getByLabelText(/remove block/i);
     fireEvent.click(deleteBtn);
 
-    expect(onRemove).toHaveBeenCalledWith('del-1');
+    expect(onRemove).toHaveBeenCalledWith("del-1");
   });
 
-  it('does NOT trigger onSelect when delete button is clicked', () => {
+  it("does NOT trigger onSelect when delete button is clicked", () => {
     const onSelect = vi.fn();
     const onRemove = vi.fn();
-    const blocks = [makeBlock({ id: 'x' })];
+    const blocks = [makeBlock({ id: "x" })];
     renderBlockList({ blocks, onSelect, onRemove });
 
     const deleteBtn = screen.getByLabelText(/remove block/i);
@@ -286,22 +290,22 @@ describe('BlockList — onRemove', () => {
 // Tests — onToggleVisibility callback
 // ---------------------------------------------------------------------------
 
-describe('BlockList — onToggleVisibility', () => {
-  it('calls onToggleVisibility with correct blockId', () => {
+describe("BlockList — onToggleVisibility", () => {
+  it("calls onToggleVisibility with correct blockId", () => {
     const onToggleVisibility = vi.fn();
-    const blocks = [makeBlock({ id: 'vis-1', isVisible: true })];
+    const blocks = [makeBlock({ id: "vis-1", isVisible: true })];
     renderBlockList({ blocks, onToggleVisibility });
 
     const toggleBtn = screen.getByLabelText(/toggle visibility/i);
     fireEvent.click(toggleBtn);
 
-    expect(onToggleVisibility).toHaveBeenCalledWith('vis-1');
+    expect(onToggleVisibility).toHaveBeenCalledWith("vis-1");
   });
 
-  it('does NOT trigger onSelect when visibility toggle is clicked', () => {
+  it("does NOT trigger onSelect when visibility toggle is clicked", () => {
     const onSelect = vi.fn();
     const onToggleVisibility = vi.fn();
-    const blocks = [makeBlock({ id: 'v1' })];
+    const blocks = [makeBlock({ id: "v1" })];
     renderBlockList({ blocks, onSelect, onToggleVisibility });
 
     const toggleBtn = screen.getByLabelText(/toggle visibility/i);
@@ -316,45 +320,45 @@ describe('BlockList — onToggleVisibility', () => {
 // Tests — onReorder via @dnd-kit dragEnd
 // ---------------------------------------------------------------------------
 
-describe('BlockList — onReorder (drag-end)', () => {
-  it('calls onReorder with reordered array on drag end', () => {
+describe("BlockList — onReorder (drag-end)", () => {
+  it("calls onReorder with reordered array on drag end", () => {
     const onReorder = vi.fn();
     const blocks = [
-      makeBlock({ id: 'a', blockType: 'HERO', sortOrder: 0 }),
-      makeBlock({ id: 'b', blockType: 'FEATURES', sortOrder: 1 }),
-      makeBlock({ id: 'c', blockType: 'CTA', sortOrder: 2 }),
+      makeBlock({ id: "a", blockType: "HERO", sortOrder: 0 }),
+      makeBlock({ id: "b", blockType: "FEATURES", sortOrder: 1 }),
+      makeBlock({ id: "c", blockType: "CTA", sortOrder: 2 }),
     ];
     renderBlockList({ blocks, onReorder });
 
     // Simulate drag from a -> c position
     if (capturedOnDragEnd) {
-      capturedOnDragEnd({ active: { id: 'a' }, over: { id: 'c' } });
+      capturedOnDragEnd({ active: { id: "a" }, over: { id: "c" } });
     }
 
     expect(onReorder).toHaveBeenCalledTimes(1);
     const result = onReorder.mock.calls[0][0] as Block[];
-    expect(result.map((b: Block) => b.id)).toEqual(['b', 'c', 'a']);
+    expect(result.map((b: Block) => b.id)).toEqual(["b", "c", "a"]);
   });
 
-  it('does NOT call onReorder when active and over are the same', () => {
+  it("does NOT call onReorder when active and over are the same", () => {
     const onReorder = vi.fn();
-    const blocks = [makeBlock({ id: 'x' })];
+    const blocks = [makeBlock({ id: "x" })];
     renderBlockList({ blocks, onReorder });
 
     if (capturedOnDragEnd) {
-      capturedOnDragEnd({ active: { id: 'x' }, over: { id: 'x' } });
+      capturedOnDragEnd({ active: { id: "x" }, over: { id: "x" } });
     }
 
     expect(onReorder).not.toHaveBeenCalled();
   });
 
-  it('does NOT call onReorder when over is null', () => {
+  it("does NOT call onReorder when over is null", () => {
     const onReorder = vi.fn();
-    const blocks = [makeBlock({ id: 'x' })];
+    const blocks = [makeBlock({ id: "x" })];
     renderBlockList({ blocks, onReorder });
 
     if (capturedOnDragEnd) {
-      capturedOnDragEnd({ active: { id: 'x' }, over: null });
+      capturedOnDragEnd({ active: { id: "x" }, over: null });
     }
 
     expect(onReorder).not.toHaveBeenCalled();
@@ -365,25 +369,25 @@ describe('BlockList — onReorder (drag-end)', () => {
 // Tests — Disabled state
 // ---------------------------------------------------------------------------
 
-describe('BlockList — disabled state', () => {
-  it('disables delete buttons when disabled=true', () => {
-    const blocks = [makeBlock({ id: '1' })];
+describe("BlockList — disabled state", () => {
+  it("disables delete buttons when disabled=true", () => {
+    const blocks = [makeBlock({ id: "1" })];
     renderBlockList({ blocks, disabled: true });
 
     const deleteBtn = screen.getByLabelText(/remove block/i);
     expect(deleteBtn).toBeDisabled();
   });
 
-  it('disables visibility toggle buttons when disabled=true', () => {
-    const blocks = [makeBlock({ id: '1' })];
+  it("disables visibility toggle buttons when disabled=true", () => {
+    const blocks = [makeBlock({ id: "1" })];
     renderBlockList({ blocks, disabled: true });
 
     const toggleBtn = screen.getByLabelText(/toggle visibility/i);
     expect(toggleBtn).toBeDisabled();
   });
 
-  it('disables drag handle buttons when disabled=true', () => {
-    const blocks = [makeBlock({ id: '1' })];
+  it("disables drag handle buttons when disabled=true", () => {
+    const blocks = [makeBlock({ id: "1" })];
     renderBlockList({ blocks, disabled: true });
 
     const dragBtn = screen.getByLabelText(/drag/i);
@@ -395,9 +399,9 @@ describe('BlockList — disabled state', () => {
 // Tests — React.memo + displayName
 // ---------------------------------------------------------------------------
 
-describe('BlockList — React.memo + displayName', () => {
+describe("BlockList — React.memo + displayName", () => {
   it('has displayName "BlockList"', () => {
-    expect(BlockList.displayName).toBe('BlockList');
+    expect(BlockList.displayName).toBe("BlockList");
   });
 });
 
@@ -405,14 +409,14 @@ describe('BlockList — React.memo + displayName', () => {
 // Tests — Accessibility
 // ---------------------------------------------------------------------------
 
-describe('BlockList — accessibility', () => {
-  it('all icon buttons have aria-label attributes', () => {
-    const blocks = [makeBlock({ id: '1' })];
+describe("BlockList — accessibility", () => {
+  it("all icon buttons have aria-label attributes", () => {
+    const blocks = [makeBlock({ id: "1" })];
     renderBlockList({ blocks });
 
-    const allButtons = screen.getAllByRole('button');
+    const allButtons = screen.getAllByRole("button");
     allButtons.forEach((btn) => {
-      expect(btn).toHaveAttribute('aria-label');
+      expect(btn).toHaveAttribute("aria-label");
     });
   });
 });

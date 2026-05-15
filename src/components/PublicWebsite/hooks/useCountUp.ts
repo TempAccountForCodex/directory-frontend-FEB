@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from "react";
 
 /**
  * Easing function: easeOutExpo
@@ -12,7 +12,9 @@ function easeOutExpo(t: number): number {
  * Parse a numeric value from a string that may contain non-numeric characters.
  * Returns the first numeric value found (supports decimals and negatives).
  */
-function parseNumericValue(value: string): { numericValue: number; hasDecimals: boolean } | null {
+function parseNumericValue(
+  value: string,
+): { numericValue: number; hasDecimals: boolean } | null {
   const match = value.match(/-?\d+(\.\d+)?/);
   if (!match) return null;
   return {
@@ -74,7 +76,7 @@ export function useCountUp({
       }
     };
 
-    setDisplayValue(hasDecimals ? '0.0' : '0');
+    setDisplayValue(hasDecimals ? "0.0" : "0");
     animationFrame.current = requestAnimationFrame(step);
   }, [target, duration]);
 
@@ -85,7 +87,7 @@ export function useCountUp({
     }
 
     // Respect prefers-reduced-motion
-    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (motionQuery.matches) {
       setDisplayValue(target);
       return;
@@ -103,7 +105,7 @@ export function useCountUp({
           observer.disconnect();
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.2 },
     );
 
     observer.observe(element);

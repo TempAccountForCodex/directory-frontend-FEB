@@ -14,7 +14,7 @@ import React, {
   useRef,
   useState,
   type ReactNode,
-} from 'react';
+} from "react";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -53,7 +53,7 @@ export interface PageContent {
   };
 }
 
-export type Viewport = 'desktop' | 'tablet' | 'mobile';
+export type Viewport = "desktop" | "tablet" | "mobile";
 
 /** Readonly state exposed by the context */
 export interface PreviewState {
@@ -91,9 +91,12 @@ interface PreviewProviderProps {
   children: ReactNode;
 }
 
-export const PreviewProvider: React.FC<PreviewProviderProps> = ({ children }) => {
-  const [currentPageContent, setCurrentPageContent] = useState<PageContent | null>(null);
-  const [viewport, setViewportState] = useState<Viewport>('desktop');
+export const PreviewProvider: React.FC<PreviewProviderProps> = ({
+  children,
+}) => {
+  const [currentPageContent, setCurrentPageContent] =
+    useState<PageContent | null>(null);
+  const [viewport, setViewportState] = useState<Viewport>("desktop");
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
@@ -162,10 +165,12 @@ export const PreviewProvider: React.FC<PreviewProviderProps> = ({ children }) =>
       refreshPreview,
       setPreviewErrorCb,
       setIsPreviewLoadingCb,
-    ]
+    ],
   );
 
-  return <PreviewContext.Provider value={value}>{children}</PreviewContext.Provider>;
+  return (
+    <PreviewContext.Provider value={value}>{children}</PreviewContext.Provider>
+  );
 };
 
 /* ------------------------------------------------------------------ */
@@ -176,8 +181,8 @@ export const usePreview = (): PreviewContextType => {
   const context = useContext(PreviewContext);
   if (!context) {
     throw new Error(
-      'usePreview must be used within a PreviewProvider. ' +
-        'Wrap your component tree with <PreviewProvider>.'
+      "usePreview must be used within a PreviewProvider. " +
+        "Wrap your component tree with <PreviewProvider>.",
     );
   }
   return context;

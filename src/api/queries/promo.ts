@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../client';
-import { queryKeys } from '../queryKeys';
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { queryKeys } from "../queryKeys";
 
 /**
  * Public promo React Query hooks.
@@ -43,7 +43,7 @@ export function useActivePromo() {
   return useQuery<ActivePromoResponse>({
     queryKey: queryKeys.promo.active(),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get('/promo/active', { signal });
+      const response = await apiClient.get("/promo/active", { signal });
       return response.data;
     },
     staleTime: 10 * 60_000,

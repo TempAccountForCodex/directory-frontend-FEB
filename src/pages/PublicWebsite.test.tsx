@@ -9,18 +9,18 @@
  * - Loading state renders spinner
  * - Error state renders error alert
  */
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
-import { Route, Routes, MemoryRouter } from 'react-router-dom';
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import { Route, Routes, MemoryRouter } from "react-router-dom";
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
 // Mock axios
-vi.mock('axios', () => {
+vi.mock("axios", () => {
   const axiosInstance = {
     get: vi.fn(),
     post: vi.fn(),
@@ -42,12 +42,12 @@ vi.mock('axios', () => {
 });
 
 // Mock react-helmet
-vi.mock('react-helmet', () => ({
+vi.mock("react-helmet", () => ({
   Helmet: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock BlockRenderer (should NOT be rendered after integration)
-vi.mock('../components/PublicWebsite/BlockRenderer', () => ({
+vi.mock("../components/PublicWebsite/BlockRenderer", () => ({
   default: ({ block }: { block: any }) => (
     <div data-testid="block-renderer" data-block-type={block.blockType}>
       {block.blockType}
@@ -56,7 +56,7 @@ vi.mock('../components/PublicWebsite/BlockRenderer', () => ({
 }));
 
 // Mock DynamicBlockRenderer
-vi.mock('../components/PublicWebsite/DynamicBlockRenderer', () => ({
+vi.mock("../components/PublicWebsite/DynamicBlockRenderer", () => ({
   default: ({ block }: { block: any }) => (
     <div data-testid="dynamic-block-renderer" data-block-type={block.blockType}>
       {block.blockType}
@@ -65,26 +65,26 @@ vi.mock('../components/PublicWebsite/DynamicBlockRenderer', () => ({
 }));
 
 // Mock DynamicBlockContext
-vi.mock('../context/DynamicBlockContext', () => ({
+vi.mock("../context/DynamicBlockContext", () => ({
   DynamicBlockProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dynamic-block-provider">{children}</div>
   ),
 }));
 
 // Mock BlockErrorBoundary
-vi.mock('../components/PublicWebsite/BlockErrorBoundary', () => ({
+vi.mock("../components/PublicWebsite/BlockErrorBoundary", () => ({
   default: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="block-error-boundary">{children}</div>
   ),
 }));
 
 // Mock ImageWithLoader
-vi.mock('../components/UI/ImageWithLoader', () => ({
+vi.mock("../components/UI/ImageWithLoader", () => ({
   default: ({ alt }: { alt: string }) => <img alt={alt} />,
 }));
 
 // Mock useGoogleAnalytics
-vi.mock('../hooks/useGoogleAnalytics', () => ({
+vi.mock("../hooks/useGoogleAnalytics", () => ({
   useGoogleAnalytics: () => ({
     trackClick: vi.fn(),
     trackFormSubmit: vi.fn(),
@@ -92,34 +92,39 @@ vi.mock('../hooks/useGoogleAnalytics', () => ({
 }));
 
 // Mock LanguageSelector
-vi.mock('../components/LanguageSelector', () => ({
+vi.mock("../components/LanguageSelector", () => ({
   default: () => <div data-testid="language-selector" />,
 }));
 
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------
-import axios from 'axios';
-import PublicWebsite from './PublicWebsite';
+import axios from "axios";
+import PublicWebsite from "./PublicWebsite";
 
 const mockWebsite = {
   id: 1,
-  name: 'Test Site',
-  slug: 'test-site',
-  primaryColor: '#378C92',
-  secondaryColor: '#D3EB63',
-  headingTextColor: '#252525',
-  bodyTextColor: '#6A6F78',
+  name: "Test Site",
+  slug: "test-site",
+  primaryColor: "#378C92",
+  secondaryColor: "#D3EB63",
+  headingTextColor: "#252525",
+  bodyTextColor: "#6A6F78",
   pages: [
     {
       id: 1,
-      title: 'Home',
-      path: '/',
+      title: "Home",
+      path: "/",
       isHome: true,
       sortOrder: 0,
       blocks: [
-        { id: 10, blockType: 'HERO', content: { title: 'Welcome' }, sortOrder: 0 },
-        { id: 11, blockType: 'FEATURES', content: { items: [] }, sortOrder: 1 },
+        {
+          id: 10,
+          blockType: "HERO",
+          content: { title: "Welcome" },
+          sortOrder: 0,
+        },
+        { id: 11, blockType: "FEATURES", content: { items: [] }, sortOrder: 1 },
       ],
     },
   ],
@@ -133,97 +138,105 @@ const renderWithSlug = (slug: string) =>
         <Route path="/site/:slug" element={<PublicWebsite />} />
         <Route path="/site/:slug/*" element={<PublicWebsite />} />
       </Routes>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 
-describe('PublicWebsite integration', () => {
+describe("PublicWebsite integration", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    (axios.get as ReturnType<typeof vi.fn>).mockResolvedValue({ data: mockWebsite });
-  });
-
-  it('renders loading spinner initially', () => {
-    (axios.get as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {})); // never resolves
-    renderWithSlug('test-site');
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
-  });
-
-  it('renders website name after loading', async () => {
-    renderWithSlug('test-site');
-    await waitFor(() => {
-      expect(screen.getByText('Test Site')).toBeInTheDocument();
+    (axios.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: mockWebsite,
     });
   });
 
-  it('renders DynamicBlockProvider wrapper', async () => {
-    renderWithSlug('test-site');
+  it("renders loading spinner initially", () => {
+    (axios.get as ReturnType<typeof vi.fn>).mockReturnValue(
+      new Promise(() => {}),
+    ); // never resolves
+    renderWithSlug("test-site");
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+  });
+
+  it("renders website name after loading", async () => {
+    renderWithSlug("test-site");
     await waitFor(() => {
-      expect(screen.getByTestId('dynamic-block-provider')).toBeInTheDocument();
+      expect(screen.getByText("Test Site")).toBeInTheDocument();
     });
   });
 
-  it('renders DynamicBlockRenderer for each block', async () => {
-    renderWithSlug('test-site');
+  it("renders DynamicBlockProvider wrapper", async () => {
+    renderWithSlug("test-site");
     await waitFor(() => {
-      const renderers = screen.getAllByTestId('dynamic-block-renderer');
+      expect(screen.getByTestId("dynamic-block-provider")).toBeInTheDocument();
+    });
+  });
+
+  it("renders DynamicBlockRenderer for each block", async () => {
+    renderWithSlug("test-site");
+    await waitFor(() => {
+      const renderers = screen.getAllByTestId("dynamic-block-renderer");
       expect(renderers).toHaveLength(2);
     });
   });
 
-  it('renders BlockErrorBoundary wrapping each DynamicBlockRenderer', async () => {
-    renderWithSlug('test-site');
+  it("renders BlockErrorBoundary wrapping each DynamicBlockRenderer", async () => {
+    renderWithSlug("test-site");
     await waitFor(() => {
-      const boundaries = screen.getAllByTestId('block-error-boundary');
+      const boundaries = screen.getAllByTestId("block-error-boundary");
       expect(boundaries).toHaveLength(2);
     });
   });
 
-  it('does NOT render classic BlockRenderer (replaced by DynamicBlockRenderer)', async () => {
-    renderWithSlug('test-site');
+  it("does NOT render classic BlockRenderer (replaced by DynamicBlockRenderer)", async () => {
+    renderWithSlug("test-site");
     await waitFor(() => {
       // DynamicBlockRenderer should be present
-      expect(screen.getAllByTestId('dynamic-block-renderer')).toHaveLength(2);
+      expect(screen.getAllByTestId("dynamic-block-renderer")).toHaveLength(2);
     });
     // Original BlockRenderer should not be present
-    expect(screen.queryByTestId('block-renderer')).toBeNull();
+    expect(screen.queryByTestId("block-renderer")).toBeNull();
   });
 
-  it('shows error alert when fetch fails', async () => {
+  it("shows error alert when fetch fails", async () => {
     (axios.get as ReturnType<typeof vi.fn>).mockRejectedValue(
-      Object.assign(new Error('Not found'), {
-        response: { data: { message: 'Website not found' } },
-      })
+      Object.assign(new Error("Not found"), {
+        response: { data: { message: "Website not found" } },
+      }),
     );
-    renderWithSlug('missing-site');
+    renderWithSlug("missing-site");
     await waitFor(() => {
-      expect(screen.getByText('Website not found')).toBeInTheDocument();
+      expect(screen.getByText("Website not found")).toBeInTheDocument();
     });
   });
 
-  it('renders footer with copyright', async () => {
-    renderWithSlug('test-site');
+  it("renders footer with copyright", async () => {
+    renderWithSlug("test-site");
     await waitFor(() => {
       expect(screen.getByText(/Powered by TechieTribe/)).toBeInTheDocument();
     });
   });
 
-  it('shows empty page message when page has no blocks', async () => {
+  it("shows empty page message when page has no blocks", async () => {
     const emptyWebsite = {
       ...mockWebsite,
       pages: [{ ...mockWebsite.pages[0], blocks: [] }],
     };
-    (axios.get as ReturnType<typeof vi.fn>).mockResolvedValue({ data: emptyWebsite });
+    (axios.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: emptyWebsite,
+    });
 
-    renderWithSlug('test-site');
+    renderWithSlug("test-site");
     await waitFor(() => {
-      expect(screen.getByText('This page has no content yet.')).toBeInTheDocument();
+      expect(
+        screen.getByText("This page has no content yet."),
+      ).toBeInTheDocument();
     });
   });
 
-  it('renders page navigation buttons', async () => {
-    renderWithSlug('test-site');
+  it("renders page navigation buttons", async () => {
+    renderWithSlug("test-site");
     await waitFor(() => {
-      expect(screen.getByText('Home')).toBeInTheDocument();
+      expect(screen.getByText("Home")).toBeInTheDocument();
     });
   });
 });

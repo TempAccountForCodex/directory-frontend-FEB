@@ -14,25 +14,27 @@
  *  10. NavbarBlock has displayName set
  */
 
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
-import NavbarBlock from '../NavbarBlock';
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import NavbarBlock from "../NavbarBlock";
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('../../BlockWrapper', () => ({
-  BlockWrapper: ({ children }: any) => <div data-testid="block-wrapper">{children}</div>,
+vi.mock("../../BlockWrapper", () => ({
+  BlockWrapper: ({ children }: any) => (
+    <div data-testid="block-wrapper">{children}</div>
+  ),
 }));
 
-vi.mock('@mui/icons-material/Menu', () => ({
+vi.mock("@mui/icons-material/Menu", () => ({
   default: () => <svg data-testid="menu-icon" />,
 }));
 
-vi.mock('@mui/icons-material/Close', () => ({
+vi.mock("@mui/icons-material/Close", () => ({
   default: () => <svg data-testid="close-icon" />,
 }));
 
@@ -46,9 +48,13 @@ function MockResizeObserver(this: any, _cb: ResizeObserverCallback) {
 }
 
 beforeEach(() => {
-  vi.stubGlobal('ResizeObserver', MockResizeObserver);
+  vi.stubGlobal("ResizeObserver", MockResizeObserver);
   // Default to desktop width
-  Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+  Object.defineProperty(window, "innerWidth", {
+    writable: true,
+    configurable: true,
+    value: 1024,
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -56,13 +62,13 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 const makeBlock = (contentOverrides: Record<string, any> = {}) => ({
-  id: 'nav-1',
-  type: 'NAVBAR',
+  id: "nav-1",
+  type: "NAVBAR",
   content: {
-    brandName: 'Acme Corp',
+    brandName: "Acme Corp",
     navigationItems: [
-      { label: 'Home', link: '/' },
-      { label: 'About', link: '/about' },
+      { label: "Home", link: "/" },
+      { label: "About", link: "/about" },
     ],
     ...contentOverrides,
   },
@@ -72,73 +78,85 @@ const makeBlock = (contentOverrides: Record<string, any> = {}) => ({
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('NavbarBlock (PublicWebsite)', () => {
-  it('1. renders nav element without crashing', () => {
+describe("NavbarBlock (PublicWebsite)", () => {
+  it("1. renders nav element without crashing", () => {
     render(<NavbarBlock block={makeBlock()} />);
-    expect(screen.getByRole('navigation')).toBeInTheDocument();
+    expect(screen.getByRole("navigation")).toBeInTheDocument();
   });
 
-  it('2. renders brand name from content.brandName', () => {
-    render(<NavbarBlock block={makeBlock({ brandName: 'TestBrand' })} />);
-    expect(screen.getByText('TestBrand')).toBeInTheDocument();
+  it("2. renders brand name from content.brandName", () => {
+    render(<NavbarBlock block={makeBlock({ brandName: "TestBrand" })} />);
+    expect(screen.getByText("TestBrand")).toBeInTheDocument();
   });
 
   it('3. falls back to "My Brand" when brandName absent', () => {
     render(<NavbarBlock block={makeBlock({ brandName: undefined })} />);
-    expect(screen.getByText('My Brand')).toBeInTheDocument();
+    expect(screen.getByText("My Brand")).toBeInTheDocument();
   });
 
-  it('4. renders navigation links', () => {
+  it("4. renders navigation links", () => {
     render(<NavbarBlock block={makeBlock()} />);
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('About')).toBeInTheDocument();
+    expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.getByText("About")).toBeInTheDocument();
   });
 
-  it('5. applies sticky positioning style when sticky=true', () => {
+  it("5. applies sticky positioning style when sticky=true", () => {
     render(<NavbarBlock block={makeBlock({ sticky: true })} />);
-    const nav = screen.getByRole('navigation');
-    expect(nav).toHaveStyle({ position: 'sticky' });
+    const nav = screen.getByRole("navigation");
+    expect(nav).toHaveStyle({ position: "sticky" });
   });
 
   it('6. sets data-variant="transparent" for transparent variant', () => {
-    render(<NavbarBlock block={makeBlock({ variant: 'transparent' })} />);
-    const nav = screen.getByRole('navigation');
-    expect(nav).toHaveAttribute('data-variant', 'transparent');
+    render(<NavbarBlock block={makeBlock({ variant: "transparent" })} />);
+    const nav = screen.getByRole("navigation");
+    expect(nav).toHaveAttribute("data-variant", "transparent");
   });
 
-  it('7. renders CTA button with correct text', () => {
-    render(<NavbarBlock block={makeBlock({ ctaText: 'Get Started', ctaLink: '/signup' })} />);
-    expect(screen.getByText('Get Started')).toBeInTheDocument();
+  it("7. renders CTA button with correct text", () => {
+    render(
+      <NavbarBlock
+        block={makeBlock({ ctaText: "Get Started", ctaLink: "/signup" })}
+      />,
+    );
+    expect(screen.getByText("Get Started")).toBeInTheDocument();
   });
 
-  it('8. opens mobile drawer on hamburger click', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+  it("8. opens mobile drawer on hamburger click", () => {
+    Object.defineProperty(window, "innerWidth", {
+      writable: true,
+      configurable: true,
+      value: 375,
+    });
     render(<NavbarBlock block={makeBlock()} />);
     // Trigger resize event to set isMobile
-    fireEvent(window, new Event('resize'));
-    const openBtn = screen.queryByLabelText('Open menu');
+    fireEvent(window, new Event("resize"));
+    const openBtn = screen.queryByLabelText("Open menu");
     if (openBtn) {
       fireEvent.click(openBtn);
-      expect(screen.queryByTestId('mobile-drawer')).toBeInTheDocument();
+      expect(screen.queryByTestId("mobile-drawer")).toBeInTheDocument();
     }
   });
 
-  it('9. closes mobile drawer on close button click', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+  it("9. closes mobile drawer on close button click", () => {
+    Object.defineProperty(window, "innerWidth", {
+      writable: true,
+      configurable: true,
+      value: 375,
+    });
     render(<NavbarBlock block={makeBlock()} />);
-    fireEvent(window, new Event('resize'));
-    const openBtn = screen.queryByLabelText('Open menu');
+    fireEvent(window, new Event("resize"));
+    const openBtn = screen.queryByLabelText("Open menu");
     if (openBtn) {
       fireEvent.click(openBtn);
-      const closeBtn = screen.queryByLabelText('Close menu');
+      const closeBtn = screen.queryByLabelText("Close menu");
       if (closeBtn) {
         fireEvent.click(closeBtn);
-        expect(screen.queryByTestId('mobile-drawer')).not.toBeInTheDocument();
+        expect(screen.queryByTestId("mobile-drawer")).not.toBeInTheDocument();
       }
     }
   });
 
-  it('10. NavbarBlock has displayName set', () => {
-    expect(NavbarBlock.displayName).toBe('NavbarBlock');
+  it("10. NavbarBlock has displayName set", () => {
+    expect(NavbarBlock.displayName).toBe("NavbarBlock");
   });
 });

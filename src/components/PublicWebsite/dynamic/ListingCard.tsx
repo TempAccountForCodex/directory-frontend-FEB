@@ -14,11 +14,18 @@
  *           Image URLs validated to reject javascript: protocol
  */
 
-import React, { useCallback } from 'react';
-import { Box, Card, CardContent, CardMedia, Chip, Typography } from '@mui/material';
-import StarIcon from '@mui/icons-material/Star';
-import PhoneIcon from '@mui/icons-material/Phone';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+import React, { useCallback } from "react";
+import {
+  Box,
+  Card,
+  CardContent,
+  CardMedia,
+  Chip,
+  Typography,
+} from "@mui/material";
+import StarIcon from "@mui/icons-material/Star";
+import PhoneIcon from "@mui/icons-material/Phone";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 /* ===================== Types ===================== */
 
@@ -67,9 +74,9 @@ export interface ListingCardProps {
  * Returns the URL if safe, empty string otherwise.
  */
 function safeUrl(url: string | null | undefined): string {
-  if (!url) return '';
+  if (!url) return "";
   const trimmed = url.trim().toLowerCase();
-  if (trimmed.startsWith('javascript:')) return '';
+  if (trimmed.startsWith("javascript:")) return "";
   return url.trim();
 }
 
@@ -79,19 +86,20 @@ function safeUrl(url: string | null | undefined): string {
 function buildAddress(listing: Listing): string {
   const parts: string[] = [];
   if (listing.city) parts.push(listing.city);
-  if (listing.region && listing.region !== listing.city) parts.push(listing.region);
+  if (listing.region && listing.region !== listing.city)
+    parts.push(listing.region);
   if (listing.country) parts.push(listing.country);
-  if (listing.isRemoteOnly && parts.length === 0) return 'Remote / Online';
-  return parts.join(', ');
+  if (listing.isRemoteOnly && parts.length === 0) return "Remote / Online";
+  return parts.join(", ");
 }
 
 /**
  * Truncate text to a maximum character count.
  */
 function truncate(text: string | null | undefined, maxLength: number): string {
-  if (!text) return '';
+  if (!text) return "";
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
+  return text.slice(0, maxLength) + "...";
 }
 
 /**
@@ -109,21 +117,25 @@ function StarRating({
   const fullStars = Math.round(Math.max(0, Math.min(5, rating)));
   return (
     <Box
-      sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}
-      aria-label={`Rating: ${rating.toFixed(1)} out of 5${reviewCount ? `, ${reviewCount} reviews` : ''}`}
+      sx={{ display: "flex", alignItems: "center", gap: 0.25 }}
+      aria-label={`Rating: ${rating.toFixed(1)} out of 5${reviewCount ? `, ${reviewCount} reviews` : ""}`}
       role="img"
     >
       {Array.from({ length: 5 }).map((_, i) => (
         <StarIcon
           key={i}
           sx={{
-            fontSize: '1rem',
-            color: i < fullStars ? primaryColor : 'grey.300',
+            fontSize: "1rem",
+            color: i < fullStars ? primaryColor : "grey.300",
           }}
         />
       ))}
-      {typeof reviewCount === 'number' && reviewCount > 0 && (
-        <Typography component="span" variant="caption" sx={{ ml: 0.5, color: 'text.secondary' }}>
+      {typeof reviewCount === "number" && reviewCount > 0 && (
+        <Typography
+          component="span"
+          variant="caption"
+          sx={{ ml: 0.5, color: "text.secondary" }}
+        >
           ({reviewCount})
         </Typography>
       )}
@@ -133,7 +145,12 @@ function StarRating({
 
 /* ===================== Component ===================== */
 
-const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onListingClick }) => {
+const ListingCard: React.FC<ListingCardProps> = ({
+  listing,
+  config,
+  colors,
+  onListingClick,
+}) => {
   const { showRating, showPhone, showAddress } = config;
   const { primaryColor, headingColor, bodyColor } = colors;
 
@@ -149,14 +166,14 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         if (onListingClick) {
           onListingClick(listing);
         }
       }
     },
-    [onListingClick, listing]
+    [onListingClick, listing],
   );
 
   return (
@@ -169,18 +186,18 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
       tabIndex={onListingClick ? 0 : undefined}
       elevation={2}
       sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        cursor: onListingClick ? 'pointer' : 'default',
-        transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-        '&:hover': onListingClick
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        cursor: onListingClick ? "pointer" : "default",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+        "&:hover": onListingClick
           ? {
-              transform: 'translateY(-4px)',
+              transform: "translateY(-4px)",
               boxShadow: 6,
             }
           : {},
-        '&:focus-visible': {
+        "&:focus-visible": {
           outline: `2px solid ${primaryColor}`,
           outlineOffset: 2,
         },
@@ -190,10 +207,10 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
       {imageUrl ? (
         <Box
           sx={{
-            position: 'relative',
-            overflow: 'hidden',
-            aspectRatio: '4/3',
-            bgcolor: 'grey.100',
+            position: "relative",
+            overflow: "hidden",
+            aspectRatio: "4/3",
+            bgcolor: "grey.100",
           }}
         >
           <CardMedia
@@ -202,12 +219,12 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
             alt={`${listing.businessName} logo`}
             loading="lazy"
             sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transition: 'transform 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.05)',
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              transition: "transform 0.3s ease",
+              "&:hover": {
+                transform: "scale(1.05)",
               },
             }}
           />
@@ -217,11 +234,11 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
         <Box
           data-testid="listing-card-image-placeholder"
           sx={{
-            aspectRatio: '4/3',
-            bgcolor: 'grey.100',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            aspectRatio: "4/3",
+            bgcolor: "grey.100",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           aria-label="No business image available"
         >
@@ -231,7 +248,15 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
         </Box>
       )}
 
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, p: 2 }}>
+      <CardContent
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          p: 2,
+        }}
+      >
         {/* Category chip */}
         {listing.businessCategory && (
           <Box>
@@ -242,7 +267,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
                 bgcolor: `${primaryColor}1A`,
                 color: primaryColor,
                 fontWeight: 600,
-                fontSize: '0.7rem',
+                fontSize: "0.7rem",
               }}
             />
           </Box>
@@ -256,25 +281,30 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
             color: headingColor,
             fontWeight: 700,
             lineHeight: 1.3,
-            fontSize: { xs: '0.95rem', sm: '1rem' },
+            fontSize: { xs: "0.95rem", sm: "1rem" },
           }}
         >
           {listing.businessName}
         </Typography>
 
         {/* Star rating */}
-        {showRating && typeof listing.rating === 'number' && listing.rating > 0 && (
-          <StarRating
-            rating={listing.rating}
-            reviewCount={listing.reviewCount}
-            primaryColor={primaryColor}
-          />
-        )}
+        {showRating &&
+          typeof listing.rating === "number" &&
+          listing.rating > 0 && (
+            <StarRating
+              rating={listing.rating}
+              reviewCount={listing.reviewCount}
+              primaryColor={primaryColor}
+            />
+          )}
 
         {/* Phone number */}
         {showPhone && listing.phone && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <PhoneIcon sx={{ fontSize: '0.9rem', color: bodyColor }} aria-hidden="true" />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <PhoneIcon
+              sx={{ fontSize: "0.9rem", color: bodyColor }}
+              aria-hidden="true"
+            />
             <Typography
               variant="body2"
               component="span"
@@ -288,9 +318,9 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
 
         {/* Address */}
         {showAddress && address && (
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.5 }}>
             <LocationOnIcon
-              sx={{ fontSize: '0.9rem', color: bodyColor, mt: '2px' }}
+              sx={{ fontSize: "0.9rem", color: bodyColor, mt: "2px" }}
               aria-hidden="true"
             />
             <Typography
@@ -313,10 +343,10 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
               color: bodyColor,
               lineHeight: 1.6,
               flexGrow: 1,
-              overflow: 'hidden',
-              display: '-webkit-box',
+              overflow: "hidden",
+              display: "-webkit-box",
               WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
+              WebkitBoxOrient: "vertical",
             }}
           >
             {descriptionExcerpt}
@@ -327,6 +357,6 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, config, colors, onLi
   );
 };
 
-ListingCard.displayName = 'ListingCard';
+ListingCard.displayName = "ListingCard";
 
 export default React.memo(ListingCard);

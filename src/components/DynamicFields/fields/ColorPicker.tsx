@@ -9,11 +9,11 @@
  * PERFORMANCE (vercel-react-best-practices):
  * - React.memo prevents re-renders when parent re-renders with same props
  */
-import React from 'react';
-import { ColorPickerWithAlpha } from '../../UI/ColorPickerWithAlpha';
-import type { FieldRendererProps } from '../types';
-import { FieldType } from '../types';
-import { registerFieldComponent } from '../registry';
+import React from "react";
+import { ColorPickerWithAlpha } from "../../UI/ColorPickerWithAlpha";
+import type { FieldRendererProps } from "../types";
+import { FieldType } from "../types";
+import { registerFieldComponent } from "../registry";
 
 /**
  * ColorPicker
@@ -31,8 +31,9 @@ import { registerFieldComponent } from '../registry';
  */
 const ColorPicker: React.FC<FieldRendererProps> = React.memo(
   ({ field, value, onChange, disabled = false, errors = [] }) => {
-    const colorValue = typeof value === 'string' ? value : '';
-    const showAlpha = (field.ui?.props?.['showAlpha'] as boolean | undefined) ?? true;
+    const colorValue = typeof value === "string" ? value : "";
+    const showAlpha =
+      (field.ui?.props?.["showAlpha"] as boolean | undefined) ?? true;
     const errorMessage = errors.length > 0 ? errors[0] : undefined;
 
     return (
@@ -45,10 +46,10 @@ const ColorPicker: React.FC<FieldRendererProps> = React.memo(
         disabled={disabled}
       />
     );
-  }
+  },
 );
 
-ColorPicker.displayName = 'ColorPicker';
+ColorPicker.displayName = "ColorPicker";
 
 // Self-register in the global field registry — consistent with TEXT/TEXTAREA/NUMBER pattern.
 // Runs once when this module is first imported (e.g. via fields/index.ts barrel).

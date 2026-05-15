@@ -1869,7 +1869,12 @@ const LandingPreview: React.FC = () => {
         bodyFont: selectedFontPack.bodyFont,
       },
     };
-  }, [isTemplateCustomizerCategory, resolvedData, selectedFontPack, selectedPalette]);
+  }, [
+    isTemplateCustomizerCategory,
+    resolvedData,
+    selectedFontPack,
+    selectedPalette,
+  ]);
   const [device, setDevice] = React.useState<PreviewDevice>("desktop");
   const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
   const currentPreviewPage = pageId || "home";

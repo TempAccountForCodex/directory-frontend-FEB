@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-export type SpacingToken = 'none' | 'sm' | 'md' | 'lg' | 'xl';
+export type SpacingToken = "none" | "sm" | "md" | "lg" | "xl";
 
 export interface BlockSpacingFields {
   paddingTop?: SpacingToken;
@@ -21,18 +21,25 @@ const TOKEN_MAP: Record<SpacingToken, number> = {
   xl: 8,
 };
 
-function resolveToken(token?: SpacingToken, defaultToken: SpacingToken = 'md'): number {
+function resolveToken(
+  token?: SpacingToken,
+  defaultToken: SpacingToken = "md",
+): number {
   if (token === undefined) return TOKEN_MAP[defaultToken];
   return TOKEN_MAP[token] ?? TOKEN_MAP[defaultToken];
 }
 
-export function useBlockSpacing(fields: BlockSpacingFields): BlockSpacingResult {
+export function useBlockSpacing(
+  fields: BlockSpacingFields,
+): BlockSpacingResult {
   return useMemo(() => {
     const pt = resolveToken(fields.paddingTop);
     const pb = resolveToken(fields.paddingBottom);
     // margins default to 0 (none) when not provided
-    const mt = fields.marginTop !== undefined ? resolveToken(fields.marginTop) : 0;
-    const mb = fields.marginBottom !== undefined ? resolveToken(fields.marginBottom) : 0;
+    const mt =
+      fields.marginTop !== undefined ? resolveToken(fields.marginTop) : 0;
+    const mb =
+      fields.marginBottom !== undefined ? resolveToken(fields.marginBottom) : 0;
 
     const spacingSx: Record<string, unknown> = { pt, pb };
 

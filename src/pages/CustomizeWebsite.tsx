@@ -12,8 +12,14 @@
  * - Live preview
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
   Container,
@@ -27,42 +33,44 @@ import {
   Chip,
   Snackbar,
   alpha,
-} from '@mui/material';
-import { ArrowBack as BackIcon, CheckCircle as CheckIcon } from '@mui/icons-material';
-import axios from 'axios';
-import { getTemplateById, type Template } from '../templates/templateApi';
+} from "@mui/material";
+import {
+  ArrowBack as BackIcon,
+  CheckCircle as CheckIcon,
+} from "@mui/icons-material";
+import axios from "axios";
+import { getTemplateById, type Template } from "../templates/templateApi";
 // @ts-ignore - dashboardTheme is a JS file
-import { getDashboardColors } from '../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
-import BlockRenderer from '../components/PublicWebsite/BlockRenderer';
-import type { Block } from '../components/BlockEditor/BlockList';
-import { useDebouncedValue } from '../hooks/useDebouncedValue';
-import { useAutosave } from '../hooks/useAutosave';
-import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
-import { useHistory } from '../hooks/useHistory';
-import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
-import { useShortcutManager } from '../hooks/useShortcutManager';
-import UndoRedoToolbar from '../components/Editor/UndoRedoToolbar';
-import ConflictModal from '../components/Editor/ConflictModal';
-import RecoveryModal from '../components/Editor/RecoveryModal';
+import { getDashboardColors } from "../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+import BlockRenderer from "../components/PublicWebsite/BlockRenderer";
+import type { Block } from "../components/BlockEditor/BlockList";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useAutosave } from "../hooks/useAutosave";
+import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
+import { useHistory } from "../hooks/useHistory";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useShortcutManager } from "../hooks/useShortcutManager";
+import UndoRedoToolbar from "../components/Editor/UndoRedoToolbar";
+import ConflictModal from "../components/Editor/ConflictModal";
+import RecoveryModal from "../components/Editor/RecoveryModal";
 // @ts-ignore - ConfirmationDialog is a JS component
-import { ConfirmationDialog } from '../components/Dashboard/shared';
-import { useLocalStorageBackup } from '../hooks/useLocalStorageBackup';
-import EditorTabs from '../components/Editor/EditorTabs';
-import AppearancePanel from '../components/Editor/AppearancePanel';
-import LayoutPanel from '../components/Editor/LayoutPanel';
-import SimpleCustomPanel from '../components/Editor/SimpleCustomPanel';
-import DetailedCustomPanel from '../components/Editor/DetailedCustomPanel';
-import KeyboardShortcutsHelp from '../components/Editor/KeyboardShortcutsHelp';
-import SelectionOverlay from '../components/Editor/SelectionOverlay';
-import PropertyPanel from '../components/Editor/PropertyPanel';
-import InlineTextEditor from '../components/Editor/InlineTextEditor';
-import type { SelectedBlockInfo } from '../components/Editor/SelectionOverlay';
-import type { InlineEditStartData } from '../components/WebsiteEditor/PreviewPanel';
-import HelpIcon from '../components/Docs/HelpIcon';
-import { API_URL } from '@/config/api';
-
+import { ConfirmationDialog } from "../components/Dashboard/shared";
+import { useLocalStorageBackup } from "../hooks/useLocalStorageBackup";
+import EditorTabs from "../components/Editor/EditorTabs";
+import AppearancePanel from "../components/Editor/AppearancePanel";
+import LayoutPanel from "../components/Editor/LayoutPanel";
+import SimpleCustomPanel from "../components/Editor/SimpleCustomPanel";
+import DetailedCustomPanel from "../components/Editor/DetailedCustomPanel";
+import KeyboardShortcutsHelp from "../components/Editor/KeyboardShortcutsHelp";
+import SelectionOverlay from "../components/Editor/SelectionOverlay";
+import PropertyPanel from "../components/Editor/PropertyPanel";
+import InlineTextEditor from "../components/Editor/InlineTextEditor";
+import type { SelectedBlockInfo } from "../components/Editor/SelectionOverlay";
+import type { InlineEditStartData } from "../components/WebsiteEditor/PreviewPanel";
+import HelpIcon from "../components/Docs/HelpIcon";
+import { API_URL } from "@/config/api";
 
 // Plan limits - MUST match backend/services/planService.js PLAN_LIMITS.maxPagesPerWebsite
 const MAX_PAGES_PER_WEBSITE = 5;
@@ -127,9 +135,9 @@ const generateSectionName = (block: any, index: number): string => {
 
   // For blocks without headings, try to use body text
   const body = block.content?.body;
-  if (body && typeof body === 'string') {
+  if (body && typeof body === "string") {
     // Truncate body to first 30 characters
-    const truncated = body.length > 30 ? body.substring(0, 30) + '...' : body;
+    const truncated = body.length > 30 ? body.substring(0, 30) + "..." : body;
     return `${block.type} - ${truncated}`;
   }
 
@@ -141,10 +149,12 @@ interface CustomizeWebsiteProps {
   embedded?: boolean;
 }
 
-const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false }) => {
+const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({
+  embedded = false,
+}) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const templateId = searchParams.get('template');
+  const templateId = searchParams.get("template");
   const { actualTheme } = useCustomTheme();
   const { user, loading: authLoading } = useAuth();
   const colors = getDashboardColors(actualTheme);
@@ -154,25 +164,27 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   const [templateLoading, setTemplateLoading] = useState(true);
 
   // Basic Info State
-  const [websiteName, setWebsiteName] = useState('');
-  const [slug, setSlug] = useState('');
+  const [websiteName, setWebsiteName] = useState("");
+  const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [primaryColor, setPrimaryColor] = useState(
-    template?.defaultWebsiteConfig?.primaryColor || '#378C92'
+    template?.defaultWebsiteConfig?.primaryColor || "#378C92",
   );
   const [secondaryColor, setSecondaryColor] = useState(
-    template?.defaultWebsiteConfig?.secondaryColor || '#D3EB63'
+    template?.defaultWebsiteConfig?.secondaryColor || "#D3EB63",
   );
   const [headingColor, setHeadingColor] = useState(
-    template?.defaultWebsiteConfig?.headingTextColor || '#252525'
+    template?.defaultWebsiteConfig?.headingTextColor || "#252525",
   );
   const [bodyColor, setBodyColor] = useState(
-    template?.defaultWebsiteConfig?.bodyTextColor || '#6A6F78'
+    template?.defaultWebsiteConfig?.bodyTextColor || "#6A6F78",
   );
 
   // Extended typography state (Step 12.2)
-  const [headingLetterSpacing, setHeadingLetterSpacing] = useState<string>('normal');
-  const [headingTextTransform, setHeadingTextTransform] = useState<string>('none');
+  const [headingLetterSpacing, setHeadingLetterSpacing] =
+    useState<string>("normal");
+  const [headingTextTransform, setHeadingTextTransform] =
+    useState<string>("none");
 
   // Pages State
   const [pages, setPages] = useState<PageSelection[]>([]);
@@ -187,13 +199,21 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   const [success, setSuccess] = useState(false);
 
   // Color validation errors
-  const [primaryColorError, setPrimaryColorError] = useState<string | undefined>(undefined);
-  const [secondaryColorError, setSecondaryColorError] = useState<string | undefined>(undefined);
-  const [headingColorError, setHeadingColorError] = useState<string | undefined>(undefined);
-  const [bodyColorError, setBodyColorError] = useState<string | undefined>(undefined);
+  const [primaryColorError, setPrimaryColorError] = useState<
+    string | undefined
+  >(undefined);
+  const [secondaryColorError, setSecondaryColorError] = useState<
+    string | undefined
+  >(undefined);
+  const [headingColorError, setHeadingColorError] = useState<
+    string | undefined
+  >(undefined);
+  const [bodyColorError, setBodyColorError] = useState<string | undefined>(
+    undefined,
+  );
 
   // Tab navigation state (Step 9.13.6)
-  const [activeTab, setActiveTab] = useState('appearance');
+  const [activeTab, setActiveTab] = useState("appearance");
 
   // Keyboard shortcuts UI state (Step 9.6)
   const [shortcutHelpOpen, setShortcutHelpOpen] = useState(false);
@@ -205,24 +225,33 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
 
   // Inline text editing state (Step 9.16.3)
-  const [inlineEditState, setInlineEditState] = useState<InlineEditStartData | null>(null);
-  const previewIframeRef = useRef<React.RefObject<HTMLIFrameElement> | null>(null);
+  const [inlineEditState, setInlineEditState] =
+    useState<InlineEditStartData | null>(null);
+  const previewIframeRef = useRef<React.RefObject<HTMLIFrameElement> | null>(
+    null,
+  );
 
   // Simple settings state (Step 9.13.6)
-  const [simpleSettings, setSimpleSettings] = useState<Record<string, boolean>>({
-    showNavigation: true,
-    showFooter: true,
-    showSocialLinks: true,
-    enableAnimations: true,
-  });
+  const [simpleSettings, setSimpleSettings] = useState<Record<string, boolean>>(
+    {
+      showNavigation: true,
+      showFooter: true,
+      showSocialLinks: true,
+      enableAnimations: true,
+    },
+  );
 
   // Block Editor State
   const [editorBlocks, setEditorBlocks] = useState<Block[]>([]);
-  const [blockEditorWebsiteId, setBlockEditorWebsiteId] = useState<number | null>(null);
-  const [blockEditorPageId, setBlockEditorPageId] = useState<number | null>(null);
+  const [blockEditorWebsiteId, setBlockEditorWebsiteId] = useState<
+    number | null
+  >(null);
+  const [blockEditorPageId, setBlockEditorPageId] = useState<number | null>(
+    null,
+  );
   const debouncedBlocks = useDebouncedValue(editorBlocks, 1000);
   const blocksInitializedRef = useRef(false);
-  const previousDebouncedBlocksRef = useRef<string>('');
+  const previousDebouncedBlocksRef = useRef<string>("");
 
   // ETag + updatedAt refs for conflict detection (Step 5.9)
   const etagRef = useRef<string | null>(null);
@@ -230,7 +259,9 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 
   // Undo/Redo history (Step 9.2.2)
   const history = useHistory<EditorSnapshot>();
-  const SESSION_HISTORY_KEY = templateId ? `editor-history-${templateId}` : null;
+  const SESSION_HISTORY_KEY = templateId
+    ? `editor-history-${templateId}`
+    : null;
 
   /**
    * Validates if a string is a valid hex color code
@@ -245,14 +276,14 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
    */
   const validateColor = (
     color: string,
-    setError: React.Dispatch<React.SetStateAction<string | undefined>>
+    setError: React.Dispatch<React.SetStateAction<string | undefined>>,
   ): boolean => {
     if (!color) {
-      setError('Color is required');
+      setError("Color is required");
       return false;
     }
     if (!isValidHexColor(color)) {
-      setError('Invalid hex color (e.g., #FF5733)');
+      setError("Invalid hex color (e.g., #FF5733)");
       return false;
     }
     setError(undefined);
@@ -292,15 +323,17 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   useEffect(() => {
     if (template) {
       setInitializing(true);
-      const initialPages: PageSelection[] = template.defaultPages.map((page, index) => ({
-        id: `page-${index}`,
-        title: page.title,
-        path: page.path,
-        isHome: page.isHome,
-        selected: true, // All pages selected by default
-        sortOrder: page.sortOrder,
-        blocks: assignBlockIds(page.blocks),
-      }));
+      const initialPages: PageSelection[] = template.defaultPages.map(
+        (page, index) => ({
+          id: `page-${index}`,
+          title: page.title,
+          path: page.path,
+          isHome: page.isHome,
+          selected: true, // All pages selected by default
+          sortOrder: page.sortOrder,
+          blocks: assignBlockIds(page.blocks),
+        }),
+      );
       setPages(initialPages);
 
       // Initialize sections for Home and Services pages
@@ -311,7 +344,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       if (homePage) {
         homePage.blocks.forEach((block, index) => {
           initialSections.push({
-            pageTitle: 'Home',
+            pageTitle: "Home",
             sectionIndex: index,
             sectionName: generateSectionName(block, index),
             enabled: true,
@@ -320,11 +353,13 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       }
 
       // Services page sections
-      const servicesPage = template.defaultPages.find((p) => p.title === 'Services');
+      const servicesPage = template.defaultPages.find(
+        (p) => p.title === "Services",
+      );
       if (servicesPage) {
         servicesPage.blocks.forEach((block, index) => {
           initialSections.push({
-            pageTitle: 'Services',
+            pageTitle: "Services",
             sectionIndex: index,
             sectionName: generateSectionName(block, index),
             enabled: true,
@@ -334,10 +369,14 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 
       setSections(initialSections);
 
-      setPrimaryColor(template.defaultWebsiteConfig?.primaryColor || '#378C92');
-      setSecondaryColor(template.defaultWebsiteConfig?.secondaryColor || '#D3EB63');
-      setHeadingColor(template.defaultWebsiteConfig?.headingTextColor || '#252525');
-      setBodyColor(template.defaultWebsiteConfig?.bodyTextColor || '#6A6F78');
+      setPrimaryColor(template.defaultWebsiteConfig?.primaryColor || "#378C92");
+      setSecondaryColor(
+        template.defaultWebsiteConfig?.secondaryColor || "#D3EB63",
+      );
+      setHeadingColor(
+        template.defaultWebsiteConfig?.headingTextColor || "#252525",
+      );
+      setBodyColor(template.defaultWebsiteConfig?.bodyTextColor || "#6A6F78");
 
       // Small delay to ensure smooth transition
       setTimeout(() => setInitializing(false), 100);
@@ -349,8 +388,8 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     if (!slugTouched && websiteName) {
       const generatedSlug = websiteName
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
       setSlug(generatedSlug);
     }
   }, [websiteName, slugTouched]);
@@ -359,10 +398,10 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   const slugError = useMemo(() => {
     if (!slug) return null;
     if (!/^[a-z0-9-]+$/.test(slug)) {
-      return 'Slug can only contain lowercase letters, numbers, and hyphens';
+      return "Slug can only contain lowercase letters, numbers, and hyphens";
     }
-    if (slug.startsWith('-') || slug.endsWith('-')) {
-      return 'Slug cannot start or end with a hyphen';
+    if (slug.startsWith("-") || slug.endsWith("-")) {
+      return "Slug cannot start or end with a hyphen";
     }
     return null;
   }, [slug]);
@@ -375,13 +414,13 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
           return { ...page, selected: !page.selected };
         }
         return page;
-      })
+      }),
     );
-    markAsModified('Toggled page');
+    markAsModified("Toggled page");
   };
 
   // Handle page reordering
-  const movePage = (index: number, direction: 'up' | 'down') => {
+  const movePage = (index: number, direction: "up" | "down") => {
     // Only allow reordering of selected pages
     const currentPage = pages[index];
     if (!currentPage.selected) {
@@ -390,7 +429,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 
     // Find the next selected page in the direction
     let targetIndex = index;
-    if (direction === 'up') {
+    if (direction === "up") {
       // Find previous selected page
       for (let i = index - 1; i >= 0; i--) {
         if (pages[i].selected) {
@@ -414,14 +453,17 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     }
 
     const newPages = [...pages];
-    [newPages[index], newPages[targetIndex]] = [newPages[targetIndex], newPages[index]];
+    [newPages[index], newPages[targetIndex]] = [
+      newPages[targetIndex],
+      newPages[index],
+    ];
 
     // Update sortOrder only for the swapped pages (performance optimization)
     newPages[index].sortOrder = index;
     newPages[targetIndex].sortOrder = targetIndex;
 
     setPages(newPages);
-    markAsModified('Reordered pages');
+    markAsModified("Reordered pages");
   };
 
   // Handle section toggle
@@ -430,10 +472,10 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       prevSections.map((section) =>
         section.pageTitle === pageTitle && section.sectionIndex === sectionIndex
           ? { ...section, enabled: !section.enabled }
-          : section
-      )
+          : section,
+      ),
     );
-    markAsModified('Toggled section');
+    markAsModified("Toggled section");
   };
 
   // Get selected pages with enabled sections
@@ -444,7 +486,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         // Filter blocks based on enabled sections
         const enabledBlocks = page.blocks.filter((block, blockIndex) => {
           const section = sections.find(
-            (s) => s.pageTitle === page.title && s.sectionIndex === blockIndex
+            (s) => s.pageTitle === page.title && s.sectionIndex === blockIndex,
           );
           // If no section toggle exists, include the block
           return !section || section.enabled;
@@ -468,7 +510,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         // Filter blocks based on enabled sections
         const enabledBlocks = page.blocks.filter((block, blockIndex) => {
           const section = sections.find(
-            (s) => s.pageTitle === page.title && s.sectionIndex === blockIndex
+            (s) => s.pageTitle === page.title && s.sectionIndex === blockIndex,
           );
           // If no section toggle exists, include the block
           return !section || section.enabled;
@@ -491,25 +533,33 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   const handleCreateWebsite = async () => {
     // Validate all required fields
     if (!websiteName || !slug || slugError) {
-      setError('Please fill in all required fields correctly');
+      setError("Please fill in all required fields correctly");
       return;
     }
 
     // Validate all colors
     const isPrimaryValid = validateColor(primaryColor, setPrimaryColorError);
-    const isSecondaryValid = validateColor(secondaryColor, setSecondaryColorError);
+    const isSecondaryValid = validateColor(
+      secondaryColor,
+      setSecondaryColorError,
+    );
     const isHeadingValid = validateColor(headingColor, setHeadingColorError);
     const isBodyValid = validateColor(bodyColor, setBodyColorError);
 
-    if (!isPrimaryValid || !isSecondaryValid || !isHeadingValid || !isBodyValid) {
-      setError('Please fix color validation errors');
+    if (
+      !isPrimaryValid ||
+      !isSecondaryValid ||
+      !isHeadingValid ||
+      !isBodyValid
+    ) {
+      setError("Please fix color validation errors");
       return;
     }
 
     // Check if user is authenticated (using useAuth hook)
     if (!user) {
-      setError('Please log in to create a website');
-      navigate('/auth');
+      setError("Please log in to create a website");
+      navigate("/auth");
       return;
     }
 
@@ -535,7 +585,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         },
         {
           headers: {},
-        }
+        },
       );
 
       if (response.data.success) {
@@ -554,7 +604,9 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         // If the response includes website data with pages, enable block editor
         const createdWebsite = response.data.data || response.data.website;
         if (createdWebsite?.id && createdWebsite?.pages?.length > 0) {
-          const homePage = createdWebsite.pages.find((p: { isHome: boolean }) => p.isHome);
+          const homePage = createdWebsite.pages.find(
+            (p: { isHome: boolean }) => p.isHome,
+          );
           if (homePage) {
             setBlockEditorWebsiteId(createdWebsite.id);
             setBlockEditorPageId(homePage.id);
@@ -562,22 +614,22 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         }
 
         setTimeout(() => {
-          navigate('/dashboard/websites');
+          navigate("/dashboard/websites");
         }, 1500);
       }
     } catch (err: any) {
-      console.error('Error creating website:', err);
+      console.error("Error creating website:", err);
 
       // Handle authentication errors
       if (err.response?.status === 401) {
-        setError('Your session has expired. Please log in again.');
+        setError("Your session has expired. Please log in again.");
         setTimeout(() => {
-          navigate('/auth');
+          navigate("/auth");
         }, 2000);
         return;
       }
 
-      setError(err.response?.data?.message || 'Failed to create website');
+      setError(err.response?.data?.message || "Failed to create website");
     } finally {
       setLoading(false);
     }
@@ -623,7 +675,10 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
             ],
             currentIndex: 0,
           };
-          sessionStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(stackData));
+          sessionStorage.setItem(
+            SESSION_HISTORY_KEY,
+            JSON.stringify(stackData),
+          );
         } catch {
           // QuotaExceededError — gracefully degrade (keep in-memory history working)
         }
@@ -645,7 +700,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       headingTextTransform,
       history,
       SESSION_HISTORY_KEY,
-    ]
+    ],
   );
 
   /**
@@ -653,13 +708,13 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
    * Enhanced (Step 9.2.2): also pushes snapshot to useHistory
    */
   const markAsModified = useCallback(
-    (description = 'Edited content') => {
+    (description = "Edited content") => {
       if (!initializing) {
         setHasUnsavedChanges(true);
         captureSnapshot(description);
       }
     },
-    [initializing, captureSnapshot]
+    [initializing, captureSnapshot],
   );
 
   /**
@@ -678,8 +733,10 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     if (snapshot.simpleSettings) {
       setSimpleSettings(snapshot.simpleSettings);
     }
-    if (snapshot.headingLetterSpacing) setHeadingLetterSpacing(snapshot.headingLetterSpacing);
-    if (snapshot.headingTextTransform) setHeadingTextTransform(snapshot.headingTextTransform);
+    if (snapshot.headingLetterSpacing)
+      setHeadingLetterSpacing(snapshot.headingLetterSpacing);
+    if (snapshot.headingTextTransform)
+      setHeadingTextTransform(snapshot.headingTextTransform);
   }, []);
 
   /**
@@ -711,7 +768,8 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   });
 
   // Shortcut manager (Step 9.6) — new registry-based system for all other shortcuts
-  const { registerShortcut, unregisterShortcut, shortcuts } = useShortcutManager();
+  const { registerShortcut, unregisterShortcut, shortcuts } =
+    useShortcutManager();
 
   // Stable refs for callbacks used inside shortcut registrations
   const triggerBlockSaveRef = useRef<(() => void) | null>(null);
@@ -732,77 +790,77 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 
     // Ctrl+S / Cmd+S → Save (prevents browser Save dialog)
     registerShortcut({
-      key: 'ctrl+s',
+      key: "ctrl+s",
       action: () => {
         if (triggerBlockSaveRef.current) triggerBlockSaveRef.current();
       },
-      description: 'Save changes',
-      category: 'Editing',
-      scope: 'global',
+      description: "Save changes",
+      category: "Editing",
+      scope: "global",
     });
 
     // Ctrl+Enter → Quick save
     registerShortcut({
-      key: 'ctrl+enter',
+      key: "ctrl+enter",
       action: () => {
         if (triggerBlockSaveRef.current) triggerBlockSaveRef.current();
       },
-      description: 'Quick save',
-      category: 'Editing',
-      scope: 'global',
+      description: "Quick save",
+      category: "Editing",
+      scope: "global",
     });
 
     // Ctrl+Shift+P → Open preview in new tab
     registerShortcut({
-      key: 'ctrl+shift+p',
+      key: "ctrl+shift+p",
       action: () => {
-        const url = window.location.href.replace('/customize', '/preview');
-        window.open(url, '_blank', 'noopener,noreferrer');
+        const url = window.location.href.replace("/customize", "/preview");
+        window.open(url, "_blank", "noopener,noreferrer");
       },
-      description: 'Open preview',
-      category: 'Navigation',
-      scope: 'global',
+      description: "Open preview",
+      category: "Navigation",
+      scope: "global",
     });
 
     // Ctrl+B → Toggle block library sidebar
     registerShortcut({
-      key: 'ctrl+b',
+      key: "ctrl+b",
       action: () => setBlockLibraryOpen((prev) => !prev),
-      description: 'Toggle block library',
-      category: 'Blocks',
-      scope: 'global',
+      description: "Toggle block library",
+      category: "Blocks",
+      scope: "global",
     });
 
     // Ctrl+\ → Toggle block library (alias)
     registerShortcut({
-      key: 'ctrl+\\',
+      key: "ctrl+\\",
       action: () => setBlockLibraryOpen((prev) => !prev),
-      description: 'Toggle sidebar',
-      category: 'UI',
-      scope: 'global',
+      description: "Toggle sidebar",
+      category: "UI",
+      scope: "global",
     });
 
     // Ctrl+Shift+? → Open keyboard shortcuts help (Shift required to type '?')
     registerShortcut({
-      key: 'ctrl+shift+?',
+      key: "ctrl+shift+?",
       action: () => setShortcutHelpOpen(true),
-      description: 'Show keyboard shortcuts',
-      category: 'UI',
-      scope: 'global',
+      description: "Show keyboard shortcuts",
+      category: "UI",
+      scope: "global",
     });
 
     // Ctrl+T → Navigate to theme/appearance tab
     registerShortcut({
-      key: 'ctrl+t',
-      action: () => setActiveTabRef.current('appearance'),
-      description: 'Go to theme / appearance',
-      category: 'Navigation',
-      scope: 'editor',
+      key: "ctrl+t",
+      action: () => setActiveTabRef.current("appearance"),
+      description: "Go to theme / appearance",
+      category: "Navigation",
+      scope: "editor",
     });
 
     // Ctrl+] → Next page
     registerShortcut({
-      key: 'ctrl+]',
+      key: "ctrl+]",
       action: () => {
         const selectedPages = pagesRef.current.filter((p) => p.selected);
         if (selectedPages.length < 2) return;
@@ -811,87 +869,88 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         const nextIdx = (currentIdx + 1) % selectedPages.length;
         const nextPage = selectedPages[nextIdx];
         if (nextPage) {
-          console.info('[Shortcut] Next page:', nextPage.title);
+          console.info("[Shortcut] Next page:", nextPage.title);
         }
       },
-      description: 'Next page',
-      category: 'Navigation',
-      scope: 'editor',
+      description: "Next page",
+      category: "Navigation",
+      scope: "editor",
     });
 
     // Ctrl+[ → Previous page
     registerShortcut({
-      key: 'ctrl+[',
+      key: "ctrl+[",
       action: () => {
         const selectedPages = pagesRef.current.filter((p) => p.selected);
         if (selectedPages.length < 2) return;
         const currentIdx = 0;
-        const prevIdx = (currentIdx - 1 + selectedPages.length) % selectedPages.length;
+        const prevIdx =
+          (currentIdx - 1 + selectedPages.length) % selectedPages.length;
         const prevPage = selectedPages[prevIdx];
         if (prevPage) {
-          console.info('[Shortcut] Previous page:', prevPage.title);
+          console.info("[Shortcut] Previous page:", prevPage.title);
         }
       },
-      description: 'Previous page',
-      category: 'Navigation',
-      scope: 'editor',
+      description: "Previous page",
+      category: "Navigation",
+      scope: "editor",
     });
 
     // Ctrl+H → Jump to home page
     registerShortcut({
-      key: 'ctrl+h',
+      key: "ctrl+h",
       action: () => {
         const homePage = pagesRef.current.find((p) => p.isHome && p.selected);
         if (homePage) {
-          console.info('[Shortcut] Jump to home page:', homePage.title);
+          console.info("[Shortcut] Jump to home page:", homePage.title);
         }
       },
-      description: 'Jump to home page',
-      category: 'Navigation',
-      scope: 'editor',
+      description: "Jump to home page",
+      category: "Navigation",
+      scope: "editor",
     });
 
     // Ctrl+= → Zoom in preview (Ctrl+= is standard zoom-in; avoids '+' delimiter conflict)
     registerShortcut({
-      key: 'ctrl+=',
+      key: "ctrl+=",
       action: () => setPreviewScale((prev) => Math.min(200, prev + 10)),
-      description: 'Zoom in preview',
-      category: 'UI',
-      scope: 'editor',
+      description: "Zoom in preview",
+      category: "UI",
+      scope: "editor",
     });
 
     // Ctrl+- → Zoom out preview
     registerShortcut({
-      key: 'ctrl+-',
+      key: "ctrl+-",
       action: () => setPreviewScale((prev) => Math.max(25, prev - 10)),
-      description: 'Zoom out preview',
-      category: 'UI',
-      scope: 'editor',
+      description: "Zoom out preview",
+      category: "UI",
+      scope: "editor",
     });
 
     // Ctrl+0 → Reset zoom to 100%
     registerShortcut({
-      key: 'ctrl+0',
+      key: "ctrl+0",
       action: () => setPreviewScale(100),
-      description: 'Reset preview zoom',
-      category: 'UI',
-      scope: 'editor',
+      description: "Reset preview zoom",
+      category: "UI",
+      scope: "editor",
     });
 
     return () => {
-      unregisterShortcut('ctrl+s');
-      unregisterShortcut('ctrl+enter');
-      unregisterShortcut('ctrl+shift+p');
-      unregisterShortcut('ctrl+b');
-      unregisterShortcut('ctrl+\\');
-      unregisterShortcut('ctrl+shift+?');
-      unregisterShortcut('ctrl+t');
-      unregisterShortcut('ctrl+]');
-      unregisterShortcut('ctrl+[');
-      unregisterShortcut('ctrl+h');
-      unregisterShortcut('ctrl+=');
-      unregisterShortcut('ctrl+-');
-      unregisterShortcut('ctrl+0');
+      unregisterShortcut("ctrl+s");
+      unregisterShortcut("ctrl+enter");
+      unregisterShortcut("ctrl+shift+p");
+      unregisterShortcut("ctrl+b");
+      unregisterShortcut("ctrl+\\");
+      unregisterShortcut("ctrl+shift+?");
+      unregisterShortcut("ctrl+t");
+      unregisterShortcut("ctrl+]");
+      unregisterShortcut("ctrl+[");
+      unregisterShortcut("ctrl+h");
+      unregisterShortcut("ctrl+=");
+      unregisterShortcut("ctrl+-");
+      unregisterShortcut("ctrl+0");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shortcutsEnabled, registerShortcut, unregisterShortcut]);
@@ -900,14 +959,14 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   const handleAutosaveBlocks = useCallback(
     async (data: Record<string, unknown>) => {
       if (!blockEditorWebsiteId || !blockEditorPageId) {
-        throw new Error('No website/page selected');
+        throw new Error("No website/page selected");
       }
       const blocks = data.blocks as Block[];
 
       // Build headers — include If-Match when we have a stored ETag
       const headers: Record<string, string> = {};
       if (etagRef.current) {
-        headers['If-Match'] = etagRef.current;
+        headers["If-Match"] = etagRef.current;
       }
 
       try {
@@ -925,7 +984,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
               ? { expectedUpdatedAt: expectedUpdatedAtRef.current }
               : {}),
           },
-          { headers }
+          { headers },
         );
 
         // Store ETag from response for next request
@@ -934,7 +993,8 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         }
 
         // Store updatedAt for next expectedUpdatedAt fallback
-        const updatedAt = (response.data?.data as { updatedAt?: string })?.updatedAt;
+        const updatedAt = (response.data?.data as { updatedAt?: string })
+          ?.updatedAt;
         if (updatedAt) {
           expectedUpdatedAtRef.current = updatedAt;
         }
@@ -953,11 +1013,14 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         throw error;
       }
     },
-    [blockEditorWebsiteId, blockEditorPageId]
+    [blockEditorWebsiteId, blockEditorPageId],
   );
 
   // Autosave data object (blocks wrapped in object for useAutosave)
-  const autosaveBlocks = useMemo(() => ({ blocks: editorBlocks }), [editorBlocks]);
+  const autosaveBlocks = useMemo(
+    () => ({ blocks: editorBlocks }),
+    [editorBlocks],
+  );
 
   // LocalStorage backup for unsaved changes (Step 5.10)
   const {
@@ -981,7 +1044,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     triggerSave: triggerBlockSave,
     resolveConflict: resolveBlockConflict,
   } = useAutosave({
-    entityType: 'page',
+    entityType: "page",
     entityId: blockEditorPageId,
     data: autosaveBlocks,
     onSave: handleAutosaveBlocks,
@@ -1030,7 +1093,9 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 
   // Navigate back to template selection (useBlocker will intercept if dirty)
   const handleBack = () => {
-    navigate(`/dashboard/websites/create${templateId ? `?selected=${templateId}` : ''}`);
+    navigate(
+      `/dashboard/websites/create${templateId ? `?selected=${templateId}` : ""}`,
+    );
   };
 
   // Block Editor onChange handler
@@ -1047,71 +1112,71 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     (color: string) => {
       setPrimaryColor(color);
       validateColor(color, setPrimaryColorError);
-      markAsModified('Changed primary color');
+      markAsModified("Changed primary color");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   const handleSecondaryColorChange = useCallback(
     (color: string) => {
       setSecondaryColor(color);
       validateColor(color, setSecondaryColorError);
-      markAsModified('Changed secondary color');
+      markAsModified("Changed secondary color");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   const handleHeadingColorChange = useCallback(
     (color: string) => {
       setHeadingColor(color);
       validateColor(color, setHeadingColorError);
-      markAsModified('Changed heading color');
+      markAsModified("Changed heading color");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   const handleBodyColorChange = useCallback(
     (color: string) => {
       setBodyColor(color);
       validateColor(color, setBodyColorError);
-      markAsModified('Changed body color');
+      markAsModified("Changed body color");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   // Extended typography handlers (Step 12.2)
   const handleHeadingLetterSpacingChange = useCallback(
     (value: string) => {
       setHeadingLetterSpacing(value);
-      markAsModified('Changed heading letter spacing');
+      markAsModified("Changed heading letter spacing");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   const handleHeadingTextTransformChange = useCallback(
     (value: string) => {
       setHeadingTextTransform(value);
-      markAsModified('Changed heading text transform');
+      markAsModified("Changed heading text transform");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   // DetailedCustomPanel handlers
   const handleWebsiteNameChange = useCallback(
     (name: string) => {
       setWebsiteName(name);
-      markAsModified('Changed website name');
+      markAsModified("Changed website name");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   const handleSlugChangeFromPanel = useCallback(
     (newSlug: string) => {
       setSlug(newSlug);
       setSlugTouched(true);
-      markAsModified('Changed slug');
+      markAsModified("Changed slug");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   // SimpleCustomPanel handlers
@@ -1120,7 +1185,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       setSimpleSettings((prev) => ({ ...prev, [key]: value }));
       markAsModified(`Changed setting: ${key}`);
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   const handlePresetSelect = useCallback(
@@ -1147,9 +1212,9 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         setBodyColor(presetColors.bodyColor);
         setBodyColorError(undefined);
       }
-      markAsModified('Applied color preset');
+      markAsModified("Applied color preset");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   // LayoutPanel page reorder handler — merges reordered selected pages back
@@ -1162,21 +1227,23 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         isHome: boolean;
         selected: boolean;
         sortOrder: number;
-      }>
+      }>,
     ) => {
       const selectedIds = new Set(reorderedSelected.map((p) => p.id));
       setPages((prev) => {
         // Rebuild full PageSelection objects by merging reordered data with existing blocks
         const reorderedFull = reorderedSelected.map((rp) => {
           const existing = prev.find((p) => p.id === rp.id);
-          return existing ? { ...existing, sortOrder: rp.sortOrder } : { ...rp, blocks: [] };
+          return existing
+            ? { ...existing, sortOrder: rp.sortOrder }
+            : { ...rp, blocks: [] };
         });
         const unselected = prev.filter((p) => !selectedIds.has(p.id));
         return [...reorderedFull, ...unselected];
       });
-      markAsModified('Reordered pages');
+      markAsModified("Reordered pages");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   // Tab change handler
@@ -1206,13 +1273,16 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     // Fall back to previewData blocks (template preview — blocks use _blockId)
     if (previewData) {
       const block = previewData.blocks.find(
-        (b: Record<string, unknown>) => String(b._blockId) === selectedBlockId
+        (b: Record<string, unknown>) => String(b._blockId) === selectedBlockId,
       );
       if (block) {
         return {
           id: selectedBlockId,
           blockType: (block as Record<string, unknown>).type as string,
-          content: (block as Record<string, unknown>).content as Record<string, unknown>,
+          content: (block as Record<string, unknown>).content as Record<
+            string,
+            unknown
+          >,
         };
       }
     }
@@ -1222,12 +1292,16 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 
   /** Derive block index and total blocks for PropertyPanel position controls (Step 9.15.1) */
   const { selectedBlockIndex, totalBlockCount } = useMemo(() => {
-    if (!selectedBlockId || !previewData) return { selectedBlockIndex: 0, totalBlockCount: 0 };
+    if (!selectedBlockId || !previewData)
+      return { selectedBlockIndex: 0, totalBlockCount: 0 };
     const blocks = previewData.blocks;
     const idx = blocks.findIndex(
-      (b: Record<string, unknown>) => String(b._blockId) === selectedBlockId
+      (b: Record<string, unknown>) => String(b._blockId) === selectedBlockId,
     );
-    return { selectedBlockIndex: idx >= 0 ? idx : 0, totalBlockCount: blocks.length };
+    return {
+      selectedBlockIndex: idx >= 0 ? idx : 0,
+      totalBlockCount: blocks.length,
+    };
   }, [selectedBlockId, previewData]);
 
   const handleBlockSelected = useCallback((blockId: string) => {
@@ -1247,8 +1321,10 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       // Update editorBlocks (block editor mode)
       setEditorBlocks((prev) =>
         prev.map((b) =>
-          b.id === blockId ? { ...b, content: { ...b.content, ...partialContent } } : b
-        )
+          b.id === blockId
+            ? { ...b, content: { ...b.content, ...partialContent } }
+            : b,
+        ),
       );
       // Also update pages blocks (template preview mode — blocks identified by _blockId)
       setPages((prev) =>
@@ -1256,23 +1332,31 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
           ...page,
           blocks: page.blocks.map((b: Record<string, unknown>) =>
             String(b._blockId) === blockId
-              ? { ...b, content: { ...(b.content as Record<string, unknown>), ...partialContent } }
-              : b
+              ? {
+                  ...b,
+                  content: {
+                    ...(b.content as Record<string, unknown>),
+                    ...partialContent,
+                  },
+                }
+              : b,
           ),
-        }))
+        })),
       );
-      markAsModified('Edited block property');
+      markAsModified("Edited block property");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   /** Toggle block-level isVisible (separate from content properties) */
   const handleToggleBlockVisibility = useCallback(
     (blockId: string, isVisible: boolean) => {
-      setEditorBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, isVisible } : b)));
-      markAsModified('Toggled block visibility');
+      setEditorBlocks((prev) =>
+        prev.map((b) => (b.id === blockId ? { ...b, isVisible } : b)),
+      );
+      markAsModified("Toggled block visibility");
     },
-    [markAsModified]
+    [markAsModified],
   );
 
   // ---------------------------------------------------------------------------
@@ -1288,7 +1372,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         setSelectedBlockId(data.blockId);
       }
     },
-    [selectedBlockId]
+    [selectedBlockId],
   );
 
   /** Save inline edit — updates block content and pushes to undo */
@@ -1308,8 +1392,8 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         const iframe = previewIframeRef.current?.current;
         if (iframe?.contentWindow) {
           iframe.contentWindow.postMessage(
-            { type: 'EDIT_COMPLETE', blockId, fieldPath },
-            window.location.origin
+            { type: "EDIT_COMPLETE", blockId, fieldPath },
+            window.location.origin,
           );
         }
       } catch {
@@ -1319,7 +1403,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       // Clear inline edit state
       setInlineEditState(null);
     },
-    [inlineEditState, handlePropertyChange, markAsModified]
+    [inlineEditState, handlePropertyChange, markAsModified],
   );
 
   /** Cancel inline edit — clears state without saving */
@@ -1328,9 +1412,12 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   }, []);
 
   /** Capture iframe ref from PreviewPanel for InlineTextEditor positioning */
-  const handleIframeRefCallback = useCallback((ref: React.RefObject<HTMLIFrameElement>) => {
-    previewIframeRef.current = ref;
-  }, []);
+  const handleIframeRefCallback = useCallback(
+    (ref: React.RefObject<HTMLIFrameElement>) => {
+      previewIframeRef.current = ref;
+    },
+    [],
+  );
 
   const handleQuickDuplicate = useCallback(() => {
     if (!selectedBlockId) return;
@@ -1340,16 +1427,20 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       return prev.map((page) => {
         if (!page.isHome || !page.selected) return page;
         const idx = page.blocks.findIndex(
-          (b: Record<string, unknown>) => String(b._blockId) === selectedBlockId
+          (b: Record<string, unknown>) =>
+            String(b._blockId) === selectedBlockId,
         );
         if (idx < 0) return page;
         const block = page.blocks[idx];
         const newBlocks = [...page.blocks];
-        newBlocks.splice(idx + 1, 0, { ...block, _blockId: `blk-${++blockIdCounter}` });
+        newBlocks.splice(idx + 1, 0, {
+          ...block,
+          _blockId: `blk-${++blockIdCounter}`,
+        });
         return { ...page, blocks: newBlocks };
       });
     });
-    markAsModified('Duplicated block');
+    markAsModified("Duplicated block");
   }, [selectedBlockId, markAsModified]);
 
   const handleQuickDelete = useCallback(() => {
@@ -1359,14 +1450,15 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       return prev.map((page) => {
         if (!page.isHome || !page.selected) return page;
         const newBlocks = page.blocks.filter(
-          (b: Record<string, unknown>) => String(b._blockId) !== selectedBlockId
+          (b: Record<string, unknown>) =>
+            String(b._blockId) !== selectedBlockId,
         );
         if (newBlocks.length === page.blocks.length) return page;
         return { ...page, blocks: newBlocks };
       });
     });
     setSelectedBlockId(null);
-    markAsModified('Deleted block');
+    markAsModified("Deleted block");
   }, [selectedBlockId, markAsModified]);
 
   const handleQuickMoveUp = useCallback(() => {
@@ -1376,16 +1468,20 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       return prev.map((page) => {
         if (!page.isHome || !page.selected) return page;
         const idx = page.blocks.findIndex(
-          (b: Record<string, unknown>) => String(b._blockId) === selectedBlockId
+          (b: Record<string, unknown>) =>
+            String(b._blockId) === selectedBlockId,
         );
         if (idx <= 0) return page;
         const newBlocks = [...page.blocks];
-        [newBlocks[idx - 1], newBlocks[idx]] = [newBlocks[idx], newBlocks[idx - 1]];
+        [newBlocks[idx - 1], newBlocks[idx]] = [
+          newBlocks[idx],
+          newBlocks[idx - 1],
+        ];
         return { ...page, blocks: newBlocks };
       });
     });
     // selectedBlockId stays the same — it follows the block, not the position
-    markAsModified('Moved block up');
+    markAsModified("Moved block up");
   }, [selectedBlockId, markAsModified]);
 
   const handleQuickMoveDown = useCallback(() => {
@@ -1395,16 +1491,20 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       return prev.map((page) => {
         if (!page.isHome || !page.selected) return page;
         const idx = page.blocks.findIndex(
-          (b: Record<string, unknown>) => String(b._blockId) === selectedBlockId
+          (b: Record<string, unknown>) =>
+            String(b._blockId) === selectedBlockId,
         );
         if (idx < 0 || idx >= page.blocks.length - 1) return page;
         const newBlocks = [...page.blocks];
-        [newBlocks[idx], newBlocks[idx + 1]] = [newBlocks[idx + 1], newBlocks[idx]];
+        [newBlocks[idx], newBlocks[idx + 1]] = [
+          newBlocks[idx + 1],
+          newBlocks[idx],
+        ];
         return { ...page, blocks: newBlocks };
       });
     });
     // selectedBlockId stays the same — it follows the block, not the position
-    markAsModified('Moved block down');
+    markAsModified("Moved block down");
   }, [selectedBlockId, markAsModified]);
 
   // Escape key to deselect (Step 9.14.4) — guarded for inline editor (Step 9.16.3)
@@ -1412,12 +1512,12 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     const handleEscape = (e: KeyboardEvent) => {
       // Do NOT deselect when inline editor is open — Escape cancels the inline edit instead
       if (inlineEditState) return;
-      if (e.key === 'Escape' && selectedBlockId) {
+      if (e.key === "Escape" && selectedBlockId) {
         setSelectedBlockId(null);
       }
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [selectedBlockId, inlineEditState]);
 
   // Reset selection on undo/redo restore (UI-only state)
@@ -1427,7 +1527,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       restoreSnapshotOriginal(snapshot);
       setSelectedBlockId(null);
     },
-    [restoreSnapshotOriginal]
+    [restoreSnapshotOriginal],
   );
 
   // Fetch blocks when websiteId and pageId are set
@@ -1436,7 +1536,9 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 
     let cancelled = false;
     axios
-      .get(`${API_URL}/websites/${blockEditorWebsiteId}/pages/${blockEditorPageId}/blocks`)
+      .get(
+        `${API_URL}/websites/${blockEditorWebsiteId}/pages/${blockEditorPageId}/blocks`,
+      )
       .then((res) => {
         if (!cancelled && res.data.blocks) {
           const fetchedBlocks: Block[] = res.data.blocks.map(
@@ -1454,7 +1556,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
               isVisible: b.isVisible,
               sortOrder: b.sortOrder,
               variant: b.variant,
-            })
+            }),
           );
           setEditorBlocks(fetchedBlocks);
           previousDebouncedBlocksRef.current = JSON.stringify(fetchedBlocks);
@@ -1468,7 +1570,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       })
       .catch((err) => {
         if (!cancelled) {
-          console.error('Failed to fetch blocks:', err);
+          console.error("Failed to fetch blocks:", err);
         }
       });
 
@@ -1496,7 +1598,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 
       // Redirect after 3 seconds
       const timer = setTimeout(() => {
-        navigate('/dashboard/websites/create');
+        navigate("/dashboard/websites/create");
       }, 3000);
 
       return () => {
@@ -1510,14 +1612,21 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     const loadingContent = (
       <>
         <Box sx={{ mb: 4 }}>
-          <Button startIcon={<BackIcon />} onClick={handleBack} sx={{ mb: 2, color: colors.text }}>
+          <Button
+            startIcon={<BackIcon />}
+            onClick={handleBack}
+            sx={{ mb: 2, color: colors.text }}
+          >
             Back to Templates
           </Button>
-          <Typography variant="h4" sx={{ color: colors.text, fontWeight: 700, mb: 1 }}>
+          <Typography
+            variant="h4"
+            sx={{ color: colors.text, fontWeight: 700, mb: 1 }}
+          >
             Loading Template
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress sx={{ color: colors.primary }} />
         </Box>
       </>
@@ -1528,7 +1637,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     }
 
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.bgDefault, py: 4 }}>
+      <Box sx={{ minHeight: "100vh", bgcolor: colors.bgDefault, py: 4 }}>
         <Container maxWidth="xl">{loadingContent}</Container>
       </Box>
     );
@@ -1541,7 +1650,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
           Template not found. Please select a template first.
           <Typography variant="caption" display="block" sx={{ mt: 1 }}>
             Redirecting to template selection in {redirectCountdown} second
-            {redirectCountdown !== 1 ? 's' : ''}...
+            {redirectCountdown !== 1 ? "s" : ""}...
           </Typography>
         </Alert>
         <Button onClick={handleBack} sx={{ mt: 2 }}>
@@ -1568,14 +1677,31 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     const initializingContent = (
       <>
         <Box sx={{ mb: 4 }}>
-          <Button startIcon={<BackIcon />} onClick={handleBack} sx={{ mb: 2, color: colors.text }}>
+          <Button
+            startIcon={<BackIcon />}
+            onClick={handleBack}
+            sx={{ mb: 2, color: colors.text }}
+          >
             Back to Templates
           </Button>
-          <Typography variant="h4" sx={{ color: colors.text, fontWeight: 700, mb: 1 }}>
+          <Typography
+            variant="h4"
+            sx={{ color: colors.text, fontWeight: 700, mb: 1 }}
+          >
             Customize Your Website
           </Typography>
-          <Typography variant="body1" component="div" sx={{ color: colors.textSecondary }}>
-            Template: <Chip label={template.name} size="small" color="primary" sx={{ ml: 1 }} />
+          <Typography
+            variant="body1"
+            component="div"
+            sx={{ color: colors.textSecondary }}
+          >
+            Template:{" "}
+            <Chip
+              label={template.name}
+              size="small"
+              color="primary"
+              sx={{ ml: 1 }}
+            />
           </Typography>
         </Box>
         <Grid container spacing={3}>
@@ -1590,8 +1716,11 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
                     borderRadius: 2,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <CircularProgress size={24} sx={{ color: colors.primary }} />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <CircularProgress
+                      size={24}
+                      sx={{ color: colors.primary }}
+                    />
                     <Typography sx={{ color: colors.textSecondary }}>
                       Loading template configuration...
                     </Typography>
@@ -1601,8 +1730,10 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
             </Stack>
           </Grid>
           <Grid item xs={12} lg={6}>
-            <Paper sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <Paper
+              sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
                 <CircularProgress sx={{ color: colors.primary }} />
               </Box>
             </Paper>
@@ -1616,7 +1747,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     }
 
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.bgDefault, py: 4 }}>
+      <Box sx={{ minHeight: "100vh", bgcolor: colors.bgDefault, py: 4 }}>
         <Container maxWidth="xl">{initializingContent}</Container>
       </Box>
     );
@@ -1626,15 +1757,19 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
     <>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Button startIcon={<BackIcon />} onClick={handleBack} sx={{ mb: 2, color: colors.text }}>
+        <Button
+          startIcon={<BackIcon />}
+          onClick={handleBack}
+          sx={{ mb: 2, color: colors.text }}
+        >
           Back to Templates
         </Button>
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
             gap: 1,
             mb: 1,
           }}
@@ -1653,8 +1788,18 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
             isMac={isMac}
           />
         </Box>
-        <Typography variant="body1" component="div" sx={{ color: colors.textSecondary }}>
-          Template: <Chip label={template.name} size="small" color="primary" sx={{ ml: 1 }} />
+        <Typography
+          variant="body1"
+          component="div"
+          sx={{ color: colors.textSecondary }}
+        >
+          Template:{" "}
+          <Chip
+            label={template.name}
+            size="small"
+            color="primary"
+            sx={{ ml: 1 }}
+          />
         </Typography>
       </Box>
 
@@ -1677,17 +1822,20 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         <Grid item xs={12} lg={6}>
           <Stack spacing={3}>
             {/* EditorTabs — tab navigation (Step 9.13.6) */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Box sx={{ flex: 1 }}>
                 <EditorTabs activeTab={activeTab} onChange={handleTabChange} />
               </Box>
-              {activeTab === 'appearance' && (
-                <HelpIcon slug="customize-design" tooltip="Learn about theme customization" />
+              {activeTab === "appearance" && (
+                <HelpIcon
+                  slug="customize-design"
+                  tooltip="Learn about theme customization"
+                />
               )}
             </Box>
 
             {/* Conditional panel rendering based on activeTab */}
-            {activeTab === 'appearance' && (
+            {activeTab === "appearance" && (
               <AppearancePanel
                 primaryColor={primaryColor}
                 secondaryColor={secondaryColor}
@@ -1710,7 +1858,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
               />
             )}
 
-            {activeTab === 'layout' && (
+            {activeTab === "layout" && (
               <LayoutPanel
                 pages={pages}
                 sections={sections}
@@ -1723,7 +1871,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
               />
             )}
 
-            {activeTab === 'simple' && (
+            {activeTab === "simple" && (
               <SimpleCustomPanel
                 settings={simpleSettings}
                 onSettingChange={handleSettingChange}
@@ -1732,7 +1880,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
               />
             )}
 
-            {activeTab === 'detailed' && (
+            {activeTab === "detailed" && (
               <DetailedCustomPanel
                 websiteName={websiteName}
                 slug={slug}
@@ -1751,9 +1899,16 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
             )}
 
             {/* Action Buttons — always visible below tabs */}
-            <Paper sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}>
+            <Paper
+              sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}
+            >
               <Stack direction="row" spacing={2}>
-                <Button variant="outlined" onClick={handleBack} disabled={loading} fullWidth>
+                <Button
+                  variant="outlined"
+                  onClick={handleBack}
+                  disabled={loading}
+                  fullWidth
+                >
                   Back
                 </Button>
                 <Button
@@ -1762,12 +1917,18 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
                   disabled={!canCreate || loading}
                   fullWidth
                 >
-                  {loading ? <CircularProgress size={24} /> : 'Create Without AI'}
+                  {loading ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    "Create Without AI"
+                  )}
                 </Button>
                 <Button
                   variant="contained"
                   onClick={() =>
-                    navigate(`/dashboard/websites/create/questionnaire?template=${templateId}`)
+                    navigate(
+                      `/dashboard/websites/create/questionnaire?template=${templateId}`,
+                    )
                   }
                   disabled={!canCreate || loading}
                   fullWidth
@@ -1781,21 +1942,29 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
 
         {/* Right Panel - Live Preview */}
         <Grid item xs={12} lg={6}>
-          <Box sx={{ position: 'sticky', top: 20 }}>
-            <Paper sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}>
+          <Box sx={{ position: "sticky", top: 20 }}>
+            <Paper
+              sx={{ p: 3, bgcolor: alpha(colors.dark, 0.3), borderRadius: 2 }}
+            >
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   mb: 3,
                 }}
               >
-                <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ color: colors.text, fontWeight: 600 }}
+                >
                   Live Preview
                 </Typography>
                 {previewScale !== 100 && (
-                  <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: colors.textSecondary }}
+                  >
                     {previewScale}%
                   </Typography>
                 )}
@@ -1804,7 +1973,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
               {/* Selection Overlay — between header and preview (Step 9.14.4) */}
               <SelectionOverlay
                 selectedBlock={selectedBlock}
-                onEdit={() => setActiveTab('detailed')}
+                onEdit={() => setActiveTab("detailed")}
                 onDuplicate={handleQuickDuplicate}
                 onDelete={handleQuickDelete}
                 onMoveUp={handleQuickMoveUp}
@@ -1816,15 +1985,18 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
               {/* Preview Container */}
               <Box
                 sx={{
-                  bgcolor: '#fff',
+                  bgcolor: "#fff",
                   borderRadius: 2,
-                  overflow: 'hidden',
+                  overflow: "hidden",
                   border: `1px solid ${alpha(colors.primary, 0.2)}`,
-                  maxHeight: '70vh',
-                  overflowY: 'auto',
-                  transform: previewScale !== 100 ? `scale(${previewScale / 100})` : undefined,
-                  transformOrigin: 'top left',
-                  transition: 'transform 0.2s ease',
+                  maxHeight: "70vh",
+                  overflowY: "auto",
+                  transform:
+                    previewScale !== 100
+                      ? `scale(${previewScale / 100})`
+                      : undefined,
+                  transformOrigin: "top left",
+                  transition: "transform 0.2s ease",
                 }}
               >
                 {/* Preview Navigation */}
@@ -1832,10 +2004,10 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
                   sx={{
                     py: 2,
                     px: 3,
-                    borderBottom: '1px solid #e2e8f0',
-                    bgcolor: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
+                    borderBottom: "1px solid #e2e8f0",
+                    bgcolor: "#ffffff",
+                    display: "flex",
+                    alignItems: "center",
                     gap: 2,
                   }}
                 >
@@ -1847,9 +2019,9 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
                       flexShrink: 0,
                     }}
                   >
-                    {websiteName || 'Your Website'}
+                    {websiteName || "Your Website"}
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 2, overflow: 'auto' }}>
+                  <Box sx={{ display: "flex", gap: 2, overflow: "auto" }}>
                     {pages
                       .filter((p) => p.selected)
                       .map((page) => (
@@ -1857,9 +2029,9 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
                           key={page.id}
                           variant="body2"
                           sx={{
-                            color: page.isHome ? primaryColor : '#64748b',
+                            color: page.isHome ? primaryColor : "#64748b",
                             fontWeight: page.isHome ? 600 : 400,
-                            whiteSpace: 'nowrap',
+                            whiteSpace: "nowrap",
                           }}
                         >
                           {page.title}
@@ -1872,7 +2044,8 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
                 <Box>
                   {previewData && previewData.blocks.length > 0 ? (
                     previewData.blocks.map((block, idx) => {
-                      const blockId = (block as Record<string, unknown>)._blockId
+                      const blockId = (block as Record<string, unknown>)
+                        ._blockId
                         ? String((block as Record<string, unknown>)._blockId)
                         : `blk-fallback-${idx}`;
                       const isSelected = selectedBlockId === blockId;
@@ -1885,14 +2058,14 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
                           onMouseEnter={() => handleBlockHover(blockId)}
                           onMouseLeave={() => handleBlockHover(null)}
                           sx={{
-                            cursor: 'pointer',
-                            position: 'relative',
-                            transition: 'border-color 0.15s ease',
+                            cursor: "pointer",
+                            position: "relative",
+                            transition: "border-color 0.15s ease",
                             border: isSelected
-                              ? '2px solid #1976d2'
+                              ? "2px solid #1976d2"
                               : isHovered
-                                ? '2px dashed rgba(25, 118, 210, 0.5)'
-                                : '2px solid transparent',
+                                ? "2px dashed rgba(25, 118, 210, 0.5)"
+                                : "2px solid transparent",
                           }}
                         >
                           <BlockRenderer
@@ -1911,8 +2084,10 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
                       );
                     })
                   ) : (
-                    <Box sx={{ py: 8, textAlign: 'center', color: '#64748b' }}>
-                      <Typography variant="body1">No sections enabled for preview</Typography>
+                    <Box sx={{ py: 8, textAlign: "center", color: "#64748b" }}>
+                      <Typography variant="body1">
+                        No sections enabled for preview
+                      </Typography>
                     </Box>
                   )}
                 </Box>
@@ -1922,14 +2097,14 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
                   sx={{
                     py: 4,
                     px: 2,
-                    bgcolor: '#1e293b',
-                    color: '#fff',
-                    textAlign: 'center',
+                    bgcolor: "#1e293b",
+                    color: "#fff",
+                    textAlign: "center",
                   }}
                 >
                   <Typography variant="body2">
-                    © {new Date().getFullYear()} {websiteName || 'Your Website'}. All rights
-                    reserved.
+                    © {new Date().getFullYear()} {websiteName || "Your Website"}
+                    . All rights reserved.
                   </Typography>
                 </Box>
               </Box>
@@ -1955,9 +2130,9 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
       {/* Inline Text Editor overlay (Step 9.16.3) */}
       <InlineTextEditor
         open={!!inlineEditState}
-        initialValue={inlineEditState?.value || ''}
-        fieldPath={inlineEditState?.fieldPath || ''}
-        editType={inlineEditState?.editType || 'single'}
+        initialValue={inlineEditState?.value || ""}
+        fieldPath={inlineEditState?.fieldPath || ""}
+        editType={inlineEditState?.editType || "single"}
         rect={inlineEditState?.rect || { top: 0, left: 0, width: 0, height: 0 }}
         onSave={handleInlineEditSave}
         onCancel={handleInlineEditCancel}
@@ -2001,7 +2176,7 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
         autoHideDuration={2000}
         onClose={closeToast}
         message={toastMessage}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
 
       {/* Keyboard Shortcuts Help Modal (Step 9.6.4) */}
@@ -2020,11 +2195,10 @@ const CustomizeWebsite: React.FC<CustomizeWebsiteProps> = ({ embedded = false })
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: colors.bgDefault, py: 4 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: colors.bgDefault, py: 4 }}>
       <Container maxWidth="xl">{content}</Container>
     </Box>
   );
 };
 
 export default CustomizeWebsite;
-

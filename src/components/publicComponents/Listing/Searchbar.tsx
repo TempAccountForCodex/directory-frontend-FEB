@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import Container from '@mui/material/Container';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import TuneIcon from '@mui/icons-material/Tune';
-import SearchOffIcon from '@mui/icons-material/SearchOff';
+import React, { useState, useEffect } from "react";
+import Container from "@mui/material/Container";
+import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import TuneIcon from "@mui/icons-material/Tune";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 import {
   FormControl,
   InputLabel,
@@ -15,11 +15,11 @@ import {
   CircularProgress,
   type SelectChangeEvent,
   useTheme,
-} from '@mui/material';
-import ButtonPrimary from '../../UI/ButtonPrimary';
-import SearchIcon from '@mui/icons-material/Search';
-import { apiClient } from '../../../api/client';
-import { type Place } from '../../../types/place';
+} from "@mui/material";
+import ButtonPrimary from "../../UI/ButtonPrimary";
+import SearchIcon from "@mui/icons-material/Search";
+import { apiClient } from "../../../api/client";
+import { type Place } from "../../../types/place";
 
 /* ---------------- Types ---------------- */
 interface Option {
@@ -103,37 +103,47 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
   paramCategory,
   clearFilter,
 }) => {
-  const [isAdvancedSearchVisible, setIsAdvancedSearchVisible] = useState<boolean>(false);
+  const [isAdvancedSearchVisible, setIsAdvancedSearchVisible] =
+    useState<boolean>(false);
   const [cityOptions, setCityOptions] = useState<Option[]>([]);
   const [regionOptions, setRegionOptions] = useState<Option[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
   const [priceRangeOptions, setPriceRangeOptions] = useState<Option[]>([]);
   const [areaOptions, setAreaOptions] = useState<Option[]>([]);
-  const [accountingAndTaxService, setAccountingAndTaxService] = useState<string>('');
+  const [accountingAndTaxService, setAccountingAndTaxService] =
+    useState<string>("");
   const [isFilterApplied, setIsFilterApplied] = useState<boolean>(false);
 
   /* ---------------- Populate Dropdowns ---------------- */
   useEffect(() => {
-    const categories = [...new Set(data.map((item) => item.category).filter(Boolean))] as string[];
+    const categories = [
+      ...new Set(data.map((item) => item.category).filter(Boolean)),
+    ] as string[];
     setCategoryOptions(
       categories.map((category) => ({
         value: category,
         label: category,
-      }))
+      })),
     );
 
     const priceRanges = [
       ...new Set(data.map((item) => item.priceRange).filter(Boolean)),
     ] as string[];
     setPriceRangeOptions(
-      priceRanges.filter(Boolean).map((range) => ({ value: range!, label: `${range}` }))
+      priceRanges
+        .filter(Boolean)
+        .map((range) => ({ value: range!, label: `${range}` })),
     );
 
     const areas = [...new Set(data.map((item) => item.area).filter(Boolean))];
     setAreaOptions(areas.map((area) => ({ value: area!, label: area! })));
 
-    const regions = [...new Set(data.map((item) => item.region).filter(Boolean))];
-    setRegionOptions(regions.map((region) => ({ value: region!, label: region! })));
+    const regions = [
+      ...new Set(data.map((item) => item.region).filter(Boolean)),
+    ];
+    setRegionOptions(
+      regions.map((region) => ({ value: region!, label: region! })),
+    );
   }, [data]);
 
   useEffect(() => {
@@ -143,7 +153,9 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
         .map((item) => item.city)
         .filter(Boolean) as string[];
       const uniqueCities = [...new Set(filteredCities)];
-      setCityOptions(uniqueCities.map((city) => ({ value: city, label: city })));
+      setCityOptions(
+        uniqueCities.map((city) => ({ value: city, label: city })),
+      );
     } else {
       setCityOptions([]);
     }
@@ -163,9 +175,9 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
       area,
       region,
       city,
-      accountingAndTaxService
+      accountingAndTaxService,
     );
-    if (event.target.value === '') {
+    if (event.target.value === "") {
       handleButtonClick();
     }
   };
@@ -203,7 +215,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
       area,
       region,
       city,
-      accountingAndTaxService
+      accountingAndTaxService,
     );
   };
 
@@ -216,7 +228,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
       area,
       region,
       city,
-      accountingAndTaxService
+      accountingAndTaxService,
     );
   };
 
@@ -229,7 +241,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
       area,
       event.target.value,
       city,
-      accountingAndTaxService
+      accountingAndTaxService,
     );
   };
 
@@ -242,7 +254,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
       area,
       region,
       event.target.value,
-      accountingAndTaxService
+      accountingAndTaxService,
     );
   };
 
@@ -255,7 +267,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
       event.target.value,
       region,
       city,
-      accountingAndTaxService
+      accountingAndTaxService,
     );
   };
 
@@ -268,7 +280,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
       area,
       region,
       city,
-      event.target.value
+      event.target.value,
     );
   };
 
@@ -279,12 +291,18 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
     area?: string,
     region?: string,
     city?: string,
-    accountingAndTaxService?: string
+    accountingAndTaxService?: string,
   ) => {
     setIsFilterApplied(
       Boolean(
-        searchKeyword || category || priceRange || area || region || city || accountingAndTaxService
-      )
+        searchKeyword ||
+        category ||
+        priceRange ||
+        area ||
+        region ||
+        city ||
+        accountingAndTaxService,
+      ),
     );
   };
 
@@ -310,20 +328,28 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
         maxWidth={false}
         disableGutters
         sx={{
-          padding: { sm: '0px', md: '0px 10px' },
-          width: '100%',
+          padding: { sm: "0px", md: "0px 10px" },
+          width: "100%",
         }}
       >
-        <Box my={4} width={'100%'} p={0}>
-          <Grid container spacing={2} width={'100%'}>
-            <Grid item xs={12} md={12} p={0} width={'100%'} component="div" {...({} as any)}>
+        <Box my={4} width={"100%"} p={0}>
+          <Grid container spacing={2} width={"100%"}>
+            <Grid
+              item
+              xs={12}
+              md={12}
+              p={0}
+              width={"100%"}
+              component="div"
+              {...({} as any)}
+            >
               {/* ===== Search Box Card ===== */}
               <Paper
                 elevation={3}
                 sx={{
                   boxShadow:
-                    ' rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px',
-                  width: '100%',
+                    " rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px",
+                  width: "100%",
                   p: 2,
                 }}
               >
@@ -331,9 +357,9 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                   container
                   spacing={2}
                   sx={{
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    alignItems: 'center',
+                    justifyContent: "space-between",
+                    width: "100%",
+                    alignItems: "center",
                   }}
                 >
                   {/* ===== Left Section (Advance Filter + Clear Filter) ===== */}
@@ -345,30 +371,30 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                         xs={12}
                         sm={6.6}
                         sx={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          justifyContent: 'center',
+                          display: "flex",
+                          flexDirection: "row",
+                          justifyContent: "center",
                           gap: 1,
-                          paddingLeft: { xs: '4px', lg: '20px' },
+                          paddingLeft: { xs: "4px", lg: "20px" },
                           maxWidth: 130,
-                          alignItems: 'center',
+                          alignItems: "center",
                         }}
                         style={{
-                          marginTop: 'auto',
-                          marginBottom: 'auto',
-                          cursor: 'pointer',
-                          paddingTop: '20px',
+                          marginTop: "auto",
+                          marginBottom: "auto",
+                          cursor: "pointer",
+                          paddingTop: "20px",
                         }}
                         onClick={toggleAdvancedSearch}
                         component="div"
                         {...({} as any)}
                       >
-                        <TuneIcon sx={{ pt: '5px' }} />
+                        <TuneIcon sx={{ pt: "5px" }} />
                         <Typography
                           sx={{
-                            fontSize: { xs: '13px', lg: '0.9rem' },
-                            paddingLeft: { xs: '0px', lg: '10px' },
-                            pt: '5px',
+                            fontSize: { xs: "13px", lg: "0.9rem" },
+                            paddingLeft: { xs: "0px", lg: "10px" },
+                            pt: "5px",
                           }}
                         >
                           Advance Filter
@@ -382,30 +408,30 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                           xs={12}
                           sm={5.4}
                           sx={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            justifyContent: 'center',
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "center",
                             gap: 1,
-                            paddingLeft: { xs: '4px', lg: '20px' },
+                            paddingLeft: { xs: "4px", lg: "20px" },
                             maxWidth: 130,
-                            alignItems: 'center',
+                            alignItems: "center",
                           }}
                           style={{
-                            marginTop: 'auto',
-                            marginBottom: 'auto',
-                            cursor: 'pointer',
-                            paddingTop: '20px',
+                            marginTop: "auto",
+                            marginBottom: "auto",
+                            cursor: "pointer",
+                            paddingTop: "20px",
                           }}
                           onClick={clearFilter}
                           component="div"
                           {...({} as any)}
                         >
-                          <SearchOffIcon sx={{ pt: '5px' }} />
+                          <SearchOffIcon sx={{ pt: "5px" }} />
                           <Typography
                             sx={{
-                              fontSize: { xs: '13px', lg: '0.9rem' },
-                              paddingLeft: { xs: '0px', lg: '10px' },
-                              pt: '5px',
+                              fontSize: { xs: "13px", lg: "0.9rem" },
+                              paddingLeft: { xs: "0px", lg: "10px" },
+                              pt: "5px",
                             }}
                           >
                             Clear Filter
@@ -416,15 +442,24 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                   </Grid>
 
                   {/* ===== Services Dropdown ===== */}
-                  <Grid item xs={12} sm={4} sx={{ flex: 1 }} component="div" {...({} as any)}>
-                    <Typography sx={{ fontSize: '13px', pb: '10px', pl: '2px' }}>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={4}
+                    sx={{ flex: 1 }}
+                    component="div"
+                    {...({} as any)}
+                  >
+                    <Typography
+                      sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
+                    >
                       Services
                     </Typography>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel
                         sx={{
-                          '&.Mui-focused': {
-                            color: 'primary.focus',
+                          "&.Mui-focused": {
+                            color: "primary.focus",
                           },
                         }}
                       >
@@ -446,25 +481,34 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                   </Grid>
 
                   {/* ===== Keyword Search Field ===== */}
-                  <Grid item xs={9} sm={4} component="div" sx={{ flex: 1 }} {...({} as any)}>
-                    <Typography sx={{ fontSize: '13px', pl: '2px' }}>Keyword</Typography>
+                  <Grid
+                    item
+                    xs={9}
+                    sm={4}
+                    component="div"
+                    sx={{ flex: 1 }}
+                    {...({} as any)}
+                  >
+                    <Typography sx={{ fontSize: "13px", pl: "2px" }}>
+                      Keyword
+                    </Typography>
                     <FormControl fullWidth>
                       <TextField
                         label="Search Keyword"
                         variant="outlined"
                         fullWidth
                         margin="normal"
-                        style={{ marginBottom: '0px', marginTop: '10px' }}
+                        style={{ marginBottom: "0px", marginTop: "10px" }}
                         value={searchKeyword}
                         onChange={handleInputChange}
                         onKeyDown={(event) => {
-                          if (event.key === 'Enter') {
+                          if (event.key === "Enter") {
                             handleButtonClick();
                           }
                         }}
                         sx={{
-                          '& label.Mui-focused': {
-                            color: 'primary.focus',
+                          "& label.Mui-focused": {
+                            color: "primary.focus",
                           },
                         }}
                       />
@@ -477,8 +521,8 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                     xs={2}
                     sm={1}
                     sx={{
-                      mt: '30px',
-                      display: { xs: 'flex', sm: 'flex', md: 'block' },
+                      mt: "30px",
+                      display: { xs: "flex", sm: "flex", md: "block" },
                     }}
                     component="div"
                     {...({} as any)}
@@ -488,23 +532,26 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                       sx={{
                         background: (theme.palette.primary as any).focus,
                         color: theme.palette.common.white,
-                        height: '53px',
+                        height: "53px",
                         px: 1,
-                        borderRadius: '5px',
-                        textTransform: 'capitalize',
-                        fontSize: '12px',
-                        float: 'right',
-                        width: '43px',
-                        '&:hover': {
+                        borderRadius: "5px",
+                        textTransform: "capitalize",
+                        fontSize: "12px",
+                        float: "right",
+                        width: "43px",
+                        "&:hover": {
                           background: (theme.palette.primary as any).focus,
                           color: theme.palette.common.white,
                           opacity: 0.9,
                         },
-                        ml: { md: 'auto', sm: 0, xs: 0 },
+                        ml: { md: "auto", sm: 0, xs: 0 },
                       }}
                     >
                       {loading ? (
-                        <CircularProgress size={24} sx={{ color: theme.palette.common.white }} />
+                        <CircularProgress
+                          size={24}
+                          sx={{ color: theme.palette.common.white }}
+                        />
                       ) : (
                         <SearchIcon />
                       )}
@@ -519,20 +566,29 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                       container
                       spacing={2}
                       style={{
-                        marginTop: '20px',
-                        display: 'flex',
+                        marginTop: "20px",
+                        display: "flex",
                       }}
                     >
                       {/* --- Price Range Dropdown --- */}
-                      <Grid item xs={12} sm={3} sx={{ flex: 1 }} component="div" {...({} as any)}>
-                        <Typography sx={{ fontSize: '13px', pb: '10px', pl: '2px' }}>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        sx={{ flex: 1 }}
+                        component="div"
+                        {...({} as any)}
+                      >
+                        <Typography
+                          sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
+                        >
                           Price Range
                         </Typography>
                         <FormControl fullWidth variant="outlined">
                           <InputLabel
                             sx={{
-                              '&.Mui-focused': {
-                                color: 'primary.focus',
+                              "&.Mui-focused": {
+                                color: "primary.focus",
                               },
                             }}
                           >
@@ -553,46 +609,74 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                       </Grid>
 
                       {/* --- Region Dropdown --- */}
-                      <Grid item xs={12} sm={3} sx={{ flex: 1 }} component="div" {...({} as any)}>
-                        <Typography sx={{ fontSize: '13px', pb: '10px', pl: '2px' }}>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        sx={{ flex: 1 }}
+                        component="div"
+                        {...({} as any)}
+                      >
+                        <Typography
+                          sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
+                        >
                           Region
                         </Typography>
                         <FormControl fullWidth variant="outlined">
                           <InputLabel
                             sx={{
-                              '&.Mui-focused': {
-                                color: 'primary.focus',
+                              "&.Mui-focused": {
+                                color: "primary.focus",
                               },
                             }}
                           >
                             Region
                           </InputLabel>
-                          <Select value={region} onChange={handleRegionChange} label="Region">
-                            {['Canada', 'United Kingdom', 'United States'].map((option) => (
-                              <MenuItem key={option} value={option}>
-                                {option}
-                              </MenuItem>
-                            ))}
+                          <Select
+                            value={region}
+                            onChange={handleRegionChange}
+                            label="Region"
+                          >
+                            {["Canada", "United Kingdom", "United States"].map(
+                              (option) => (
+                                <MenuItem key={option} value={option}>
+                                  {option}
+                                </MenuItem>
+                              ),
+                            )}
                           </Select>
                         </FormControl>
                       </Grid>
 
                       {/* --- Area Dropdown --- */}
-                      <Grid item xs={12} sm={3} sx={{ flex: 1 }} component="div" {...({} as any)}>
-                        <Typography sx={{ fontSize: '13px', pb: '10px', pl: '2px' }}>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        sx={{ flex: 1 }}
+                        component="div"
+                        {...({} as any)}
+                      >
+                        <Typography
+                          sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
+                        >
                           Area
                         </Typography>
                         <FormControl fullWidth variant="outlined">
                           <InputLabel
                             sx={{
-                              '&.Mui-focused': {
-                                color: 'primary.focus',
+                              "&.Mui-focused": {
+                                color: "primary.focus",
                               },
                             }}
                           >
                             Area
                           </InputLabel>
-                          <Select value={area} onChange={handleAreaChange} label="Area">
+                          <Select
+                            value={area}
+                            onChange={handleAreaChange}
+                            label="Area"
+                          >
                             {areaOptions.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}
@@ -603,15 +687,24 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                       </Grid>
 
                       {/* --- City Dropdown --- */}
-                      <Grid item xs={12} sm={3} sx={{ flex: 1 }} component="div" {...({} as any)}>
-                        <Typography sx={{ fontSize: '13px', pb: '10px', pl: '2px' }}>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        sx={{ flex: 1 }}
+                        component="div"
+                        {...({} as any)}
+                      >
+                        <Typography
+                          sx={{ fontSize: "13px", pb: "10px", pl: "2px" }}
+                        >
                           City
                         </Typography>
                         <FormControl fullWidth variant="outlined">
                           <InputLabel
                             sx={{
-                              '&.Mui-focused': {
-                                color: 'primary.focus',
+                              "&.Mui-focused": {
+                                color: "primary.focus",
                               },
                             }}
                           >
@@ -621,7 +714,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                             value={city}
                             onChange={handleCityChange}
                             label="City"
-                            disabled={region === '' ? true : false}
+                            disabled={region === "" ? true : false}
                           >
                             {cityOptions.map((option) => (
                               <MenuItem key={option.value} value={option.value}>

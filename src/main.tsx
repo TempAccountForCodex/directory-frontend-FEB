@@ -1,18 +1,18 @@
-import './index.css';
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
-import theme from './styles/theme';
-import { CssBaseline, ThemeProvider } from '@mui/material';
-import { CacheProvider } from '@emotion/react';
-import createCache from '@emotion/cache';
-import { I18nProvider } from './context/I18nContext';
-import { FeatureFlagsProvider } from './context/FeatureFlagsContext';
-import { ABTestProvider } from './context/ABTestContext';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { queryClient } from './api/queryClient';
-import { initSentry, isSentryEnabled, getSentry } from './config/sentry';
+import "./index.css";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import theme from "./styles/theme";
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import { CacheProvider } from "@emotion/react";
+import createCache from "@emotion/cache";
+import { I18nProvider } from "./context/I18nContext";
+import { FeatureFlagsProvider } from "./context/FeatureFlagsContext";
+import { ABTestProvider } from "./context/ABTestContext";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { queryClient } from "./api/queryClient";
+import { initSentry, isSentryEnabled, getSentry } from "./config/sentry";
 
 /**
  * CSP Nonce for Emotion (Step 2.12.3)
@@ -26,11 +26,17 @@ import { initSentry, isSentryEnabled, getSentry } from './config/sentry';
  * 'unsafe-inline' style-src in development mode).
  */
 const getNonce = (): string | undefined => {
-  const value = document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content');
-  return value && !value.startsWith('__') ? value : undefined;
+  const value = document
+    .querySelector('meta[name="csp-nonce"]')
+    ?.getAttribute("content");
+  return value && !value.startsWith("__") ? value : undefined;
 };
 
-const emotionCache = createCache({ key: 'mui', nonce: getNonce(), prepend: true });
+const emotionCache = createCache({
+  key: "mui",
+  nonce: getNonce(),
+  prepend: true,
+});
 
 /**
  * Sentry Initialization (Step 10.23)
@@ -50,30 +56,33 @@ function SentryFallback(): JSX.Element {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        padding: '2rem',
-        fontFamily: 'sans-serif',
-        textAlign: 'center',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        padding: "2rem",
+        fontFamily: "sans-serif",
+        textAlign: "center",
       }}
     >
-      <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Something went wrong</h1>
-      <p style={{ color: '#666', marginBottom: '1.5rem' }}>
-        An unexpected error occurred. Our team has been notified. Please try refreshing the page.
+      <h1 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>
+        Something went wrong
+      </h1>
+      <p style={{ color: "#666", marginBottom: "1.5rem" }}>
+        An unexpected error occurred. Our team has been notified. Please try
+        refreshing the page.
       </p>
       <button
         onClick={() => window.location.reload()}
         style={{
-          padding: '0.5rem 1.5rem',
-          backgroundColor: '#1976d2',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: '1rem',
+          padding: "0.5rem 1.5rem",
+          backgroundColor: "#1976d2",
+          color: "#fff",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+          fontSize: "1rem",
         }}
       >
         Refresh Page
@@ -103,7 +112,9 @@ function AppWithErrorBoundary(): JSX.Element {
                 <ABTestProvider tests={[]}>
                   <CssBaseline />
                   <App />
-                  {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+                  {import.meta.env.DEV && (
+                    <ReactQueryDevtools initialIsOpen={false} />
+                  )}
                 </ABTestProvider>
               </FeatureFlagsProvider>
             </I18nProvider>
@@ -115,10 +126,14 @@ function AppWithErrorBoundary(): JSX.Element {
 
   if (isSentryEnabled() && _sentry) {
     const SentryErrorBoundary = _sentry.ErrorBoundary;
-    return <SentryErrorBoundary fallback={<SentryFallback />}>{inner}</SentryErrorBoundary>;
+    return (
+      <SentryErrorBoundary fallback={<SentryFallback />}>
+        {inner}
+      </SentryErrorBoundary>
+    );
   }
 
   return inner;
 }
 
-createRoot(document.getElementById('root')!).render(<AppWithErrorBoundary />);
+createRoot(document.getElementById("root")!).render(<AppWithErrorBoundary />);

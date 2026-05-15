@@ -64,14 +64,11 @@ export const buildStoreTheme = ({
   const secondary = rawSecondary.startsWith("#")
     ? rawSecondary
     : defaultSecondary;
-  const headingFont =
-    data.themeSettings?.headingFont || defaultHeadingFont;
+  const headingFont = data.themeSettings?.headingFont || defaultHeadingFont;
   const bodyFont = data.themeSettings?.bodyFont || defaultBodyFont;
 
   const secondaryIsLight = isLightColor(secondary);
-  const ink = secondaryIsLight
-    ? blendHex(primary, "#111111", 0.86)
-    : "#f8f4ee";
+  const ink = secondaryIsLight ? blendHex(primary, "#111111", 0.86) : "#f8f4ee";
   const page = secondaryIsLight
     ? blendHex(secondary, "#ffffff", 0.08)
     : blendHex(primary, "#050505", 0.84);
@@ -81,9 +78,7 @@ export const buildStoreTheme = ({
   const panel = secondaryIsLight
     ? blendHex(secondary, "#ffffff", 0.16)
     : blendHex(primary, "#0a0a0a", 0.78);
-  const border = secondaryIsLight
-    ? rgba(primary, 0.12)
-    : rgba("#ffffff", 0.1);
+  const border = secondaryIsLight ? rgba(primary, 0.12) : rgba("#ffffff", 0.1);
   const muted = secondaryIsLight ? rgba(ink, 0.68) : rgba("#f8f4ee", 0.68);
   const light = secondaryIsLight ? "#fffdf9" : "#f8f4ee";
   const contrast = secondaryIsLight ? "#111111" : "#ffffff";
