@@ -120,6 +120,10 @@ interface FrontendTemplateIframeProps {
   onEditableElementSelected?: (data: EditableElementSelectionData) => void;
   onImageSelected?: (data: ImageSelectionData) => void;
   onSectionSelected?: (data: SectionSelectionData | null) => void;
+  onSectionAddRequest?: (
+    data: SectionSelectionData,
+    position: "before" | "after",
+  ) => void;
   onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
   onEditableTextSave?: (
     blockId: string,
@@ -147,6 +151,7 @@ const FrontendTemplateIframePreview = React.memo(
     onEditableElementSelected,
     onImageSelected,
     onSectionSelected,
+    onSectionAddRequest,
     onPreviewContextMenu,
     onEditableTextSave,
     onElementTransform,
@@ -163,6 +168,7 @@ const FrontendTemplateIframePreview = React.memo(
     );
     const onImageSelectedRef = React.useRef(onImageSelected);
     const onSectionSelectedRef = React.useRef(onSectionSelected);
+    const onSectionAddRequestRef = React.useRef(onSectionAddRequest);
     const onPreviewContextMenuRef = React.useRef(onPreviewContextMenu);
     const onEditableTextSaveRef = React.useRef(onEditableTextSave);
     const onElementTransformRef = React.useRef(onElementTransform);
@@ -206,6 +212,10 @@ const FrontendTemplateIframePreview = React.memo(
     React.useEffect(() => {
       onSectionSelectedRef.current = onSectionSelected;
     }, [onSectionSelected]);
+
+    React.useEffect(() => {
+      onSectionAddRequestRef.current = onSectionAddRequest;
+    }, [onSectionAddRequest]);
 
     React.useEffect(() => {
       onPreviewContextMenuRef.current = onPreviewContextMenu;
@@ -321,6 +331,8 @@ const FrontendTemplateIframePreview = React.memo(
       overlayEl.setAttribute("aria-hidden", "true");
       overlayEl.innerHTML = `
       <div class="tt-selection-label"></div>
+      <button type="button" class="tt-section-add-button tt-section-add-button--top" data-insert-position="before">Add section</button>
+      <button type="button" class="tt-section-add-button tt-section-add-button--bottom" data-insert-position="after">Add section</button>
       <div class="tt-selection-handle tt-selection-handle--top-left"></div>
       <div class="tt-selection-handle tt-selection-handle--top"></div>
       <div class="tt-selection-handle tt-selection-handle--top-right"></div>
@@ -362,8 +374,19 @@ const FrontendTemplateIframePreview = React.memo(
             "data-selected-kind",
             overlayKind || "section",
           );
-          overlayEl.style.top = `${Math.max(rect.top - 1, 0)}px`;
-          overlayEl.style.left = `${Math.max(rect.left - 1, 0)}px`;
+          const scrollTop =
+            win.scrollY ||
+            doc.documentElement.scrollTop ||
+            doc.body.scrollTop ||
+            0;
+          const scrollLeft =
+            win.scrollX ||
+            doc.documentElement.scrollLeft ||
+            doc.body.scrollLeft ||
+            0;
+
+          overlayEl.style.top = `${Math.max(rect.top + scrollTop - 1, 0)}px`;
+          overlayEl.style.left = `${Math.max(rect.left + scrollLeft - 1, 0)}px`;
           overlayEl.style.width = `${Math.max(rect.width, 10)}px`;
           overlayEl.style.height = `${Math.max(rect.height, 10)}px`;
 
@@ -371,6 +394,13 @@ const FrontendTemplateIframePreview = React.memo(
           if (labelEl) {
             labelEl.textContent = overlayLabel || "Element";
           }
+
+          overlayEl
+            .querySelectorAll(".tt-section-add-button")
+            .forEach((button) => {
+              (button as HTMLButtonElement).style.display =
+                overlayKind === "section" ? "inline-flex" : "none";
+            });
         });
       };
 
@@ -919,7 +949,7 @@ const FrontendTemplateIframePreview = React.memo(
         outline: none !important;
       }
       .tt-selection-overlay {
-        position: fixed;
+        position: absolute;
         z-index: 2147483647;
         display: none;
         box-sizing: border-box;
@@ -947,6 +977,38 @@ const FrontendTemplateIframePreview = React.memo(
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      .tt-section-add-button {
+      z-index: 9;
+        position: absolute;
+        left: 50%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        min-width: 108px;
+        height: 34px;
+        padding: 0 14px;
+        border: 1px solid rgba(15, 23, 42, 0.28);
+        border-radius: 9px;
+        background: linear-gradient(180deg, rgba(44, 44, 44, 0.96) 0%, rgba(31, 31, 31, 0.98) 100%);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.22);
+        color: #ffffff;
+        font-family: Inter, "Segoe UI", sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        pointer-events: auto;
+        cursor: pointer;
+        transform: translateX(-50%);
+      }
+      .tt-section-add-button:hover {
+        background: linear-gradient(180deg, rgba(55, 65, 81, 0.98) 0%, rgba(17, 24, 39, 1) 100%);
+      }
+      .tt-section-add-button--top {
+        top: -20px;
+      }
+      .tt-section-add-button--bottom {
+        bottom: -20px;
       }
       .tt-selection-handle {
         position: absolute;
@@ -1019,6 +1081,25 @@ const FrontendTemplateIframePreview = React.memo(
       onReadyRef.current?.();
 
       const handleClick = (event: MouseEvent) => {
+        const overlayButton = (event.target as HTMLElement | null)?.closest?.(
+          ".tt-section-add-button",
+        ) as HTMLButtonElement | null;
+        if (overlayButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (overlayTarget && overlayKind === "section") {
+            const selection = buildSectionSelection(overlayTarget);
+            const position =
+              overlayButton.getAttribute("data-insert-position") === "before"
+                ? "before"
+                : "after";
+            if (selection) {
+              onSectionAddRequestRef.current?.(selection, position);
+            }
+          }
+          return;
+        }
+
         if (
           (event.target as HTMLElement | null)?.closest?.(
             ".tt-selection-handle",
@@ -1221,6 +1302,7 @@ const FrontendTemplateIframePreview = React.memo(
           !activeSelectionTargetRef.current ||
           !overlayTarget ||
           !target ||
+          target.closest(".tt-section-add-button") ||
           target.closest(".tt-selection-overlay")
         ) {
           return;
@@ -1519,6 +1601,11 @@ interface PreviewPanelProps {
   onImageSelected?: (data: ImageSelectionData) => void;
   /** Called when a section wrapper is selected in the iframe preview */
   onSectionSelected?: (data: SectionSelectionData | null) => void;
+  /** Called when the section overlay add button is clicked */
+  onSectionAddRequest?: (
+    data: SectionSelectionData,
+    position: "before" | "after",
+  ) => void;
   /** Called when a custom preview context menu should open */
   onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
   /** Called when inline text editing inside the preview is saved */
@@ -1555,6 +1642,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
   onEditableElementSelected,
   onImageSelected,
   onSectionSelected,
+  onSectionAddRequest,
   onPreviewContextMenu,
   onEditableTextSave,
   onElementTransform,
@@ -2446,6 +2534,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 onEditableElementSelected={onEditableElementSelected}
                 onImageSelected={onImageSelected}
                 onSectionSelected={onSectionSelected}
+                onSectionAddRequest={onSectionAddRequest}
                 onPreviewContextMenu={onPreviewContextMenu}
                 onEditableTextSave={onEditableTextSave}
                 onElementTransform={onElementTransform}

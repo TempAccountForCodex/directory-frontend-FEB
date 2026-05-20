@@ -94,6 +94,9 @@ const LOCAL_TEMPLATE_EDITOR_IDS = new Set([
   "company",
   "company-premium",
   "company-executive",
+  "education",
+  "gardening",
+  "restaurant",
 ]);
 
 const TEMPLATE_THEME_CONTENT_KEY = "__templateTheme";
@@ -534,6 +537,208 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       ],
     },
   ],
+  education: [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: "A brighter learning journey starts here.",
+            subheading: data.description || data.tagline || "",
+            ctaText: "Explore Programs",
+          }),
+        },
+        {
+          key: "programs",
+          label: "Programs",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            heading: "Built for real academic momentum.",
+            description: data.description || data.tagline || "",
+            features: featuresToFeatureItems(data.features || []),
+          }),
+        },
+        {
+          key: "highlights",
+          label: "Why Choose Us",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            heading:
+              "Support that feels personal, structured, and ambitious.",
+            description: data.description || data.tagline || "",
+          }),
+        },
+        {
+          key: "gallery",
+          label: "Gallery",
+          blockType: "GALLERY",
+          buildContent: () => ({
+            heading: "Learning spaces that feel active and inspiring.",
+          }),
+        },
+        {
+          key: "reviews",
+          label: "Reviews",
+          blockType: "REVIEWS",
+          buildContent: () => ({
+            heading: "Trusted by families who want more than tutoring.",
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Let’s find the right program for your learner.",
+            description:
+              data.contact.address || data.contact.email || data.contact.phone || "",
+          }),
+        },
+        {
+          key: "campus",
+          label: "Campus",
+          blockType: "LOCATION",
+          buildContent: (data) => ({
+            heading: "Find us, visit us, and talk with our team.",
+            description: data.contact.address || data.location?.address || "",
+          }),
+        },
+      ],
+    },
+  ],
+  gardening: [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: data.tagline || data.name,
+            subheading: data.description || "",
+          }),
+        },
+        {
+          key: "about",
+          label: "About",
+          blockType: "TEXT",
+          buildContent: (data) => ({
+            title: "Rooted in care, crafted for outdoor living.",
+            body: data.description || data.tagline || "",
+          }),
+        },
+        {
+          key: "portfolio",
+          label: "Portfolio",
+          blockType: "GALLERY",
+          buildContent: () => ({
+            heading: "Selected garden transformations.",
+          }),
+        },
+        {
+          key: "services",
+          label: "Services",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            heading: "Services",
+            features: featuresToFeatureItems(data.features || []),
+          }),
+        },
+        {
+          key: "testimonials",
+          label: "Testimonials",
+          blockType: "REVIEWS",
+          buildContent: () => ({
+            heading: "Client stories",
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Let’s talk about your space.",
+            description:
+              data.contact.address || data.contact.email || data.contact.phone || "",
+          }),
+        },
+      ],
+    },
+  ],
+  restaurant: [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: data.tagline || data.name,
+            subheading: data.description || "",
+          }),
+        },
+        {
+          key: "story",
+          label: "Story",
+          blockType: "TEXT",
+          buildContent: (data) => ({
+            title: "Our Story",
+            body: data.description || data.tagline || "",
+          }),
+        },
+        {
+          key: "location",
+          label: "Location",
+          blockType: "LOCATION",
+          buildContent: (data) => ({
+            heading: "Find us tonight.",
+            description: data.contact.address || data.location?.address || "",
+          }),
+        },
+        {
+          key: "why-us",
+          label: "Why Us",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            heading: "Why guests keep coming back.",
+            description: data.description || data.tagline || "",
+          }),
+        },
+        {
+          key: "reviews",
+          label: "Reviews",
+          blockType: "REVIEWS",
+          buildContent: () => ({
+            heading: "Guest reviews",
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Book your table.",
+            description:
+              data.contact.address || data.contact.email || data.contact.phone || "",
+          }),
+        },
+      ],
+    },
+  ],
 };
 
 const normalizePersistedPages = (
@@ -577,6 +782,9 @@ const getTemplateSectionKeys = (templateId: string): string[] =>
     page.sections.map((section) => section.key),
   );
 
+const getPageStorageKey = (page: Pick<TemplateEditorPage, "isHome" | "path">) =>
+  page.isHome ? "__home__" : page.path;
+
 const getAllBlocks = (pages: TemplateEditorPage[]): TemplateEditorBlock[] =>
   pages.flatMap((page) => (Array.isArray(page.blocks) ? page.blocks : []));
 
@@ -612,6 +820,52 @@ const getOrderedSectionKeysForHomePage = (
   getOrderedBlocksForHomePage(pages)
     .map((block) => getCompatibleSectionKey(templateId, block))
     .filter(Boolean);
+
+const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
+  getOrderedBlocksForHomePage(pages)
+    .filter((block) => {
+      const sectionKey =
+        typeof block.content?.editorSection === "string"
+          ? block.content.editorSection.trim()
+          : "";
+      const blockType = getBlockTypeKey(block);
+      return (
+        blockType === "PLAN" ||
+        blockType === "SECTION" ||
+        sectionKey.startsWith("plan-")
+      );
+    })
+    .map((block, index) => {
+      const content = block.content || {};
+      const sectionKey =
+        typeof content.editorSection === "string" && content.editorSection.trim()
+          ? content.editorSection.trim()
+          : `plan-${index + 1}`;
+
+      return {
+        blockId: block.id,
+        sectionKey,
+        label: readString(content, ["editorLabel", "heading"], "Plan Section"),
+        heading: readString(content, ["heading", "title"], "Plan your section"),
+        subheading: readString(
+          content,
+          ["subheading", "description", "body"],
+          "Use the controls in the editor to shape this section.",
+        ),
+        buttonText: readString(
+          content,
+          ["buttonText", "ctaText", "buttonLabel"],
+          "",
+        ),
+        buttonUrl: readString(content, ["buttonUrl", "ctaLink"], "#contact"),
+        headingStyle: content.headingStyle,
+        subheadingStyle:
+          content.subheadingStyle || content.descriptionStyle || content.bodyStyle,
+        buttonTextStyle: content.buttonTextStyle || content.ctaTextStyle,
+        sectionStyle: getSectionStyleValue(content),
+        outerSectionStyle: getSectionStyleValue(content, "outerSectionStyle"),
+      };
+    });
 
 const getOrderedSectionContentMap = (
   templateId: string,
@@ -712,45 +966,64 @@ const hydrateSeededPages = (
   }
 
   const persistedPageMap = new Map(
-    persistedPages.map((page) => {
-      const pageKey = page.isHome ? "__home__" : page.path;
-      return [pageKey, page];
-    }),
+    persistedPages.map((page) => [getPageStorageKey(page), page]),
   );
   const persistedSections = getTemplateSectionMap(templateId, persistedPages);
+  const templateSectionKeys = new Set(getTemplateSectionKeys(templateId));
 
   return seededPages.map((page) => {
-    const pageKey = page.isHome ? "__home__" : page.path;
+    const pageKey = getPageStorageKey(page);
     const persistedPage = persistedPageMap.get(pageKey);
+    const customPersistedBlocks = (persistedPage?.blocks || []).filter((block) => {
+      const sectionKey =
+        typeof block.content?.editorSection === "string"
+          ? block.content.editorSection.trim()
+          : "";
+
+      return !!sectionKey && !templateSectionKeys.has(sectionKey);
+    });
+
+    const hydratedSeedBlocks = page.blocks.map((block) => {
+      const sectionKey =
+        typeof block.content?.editorSection === "string"
+          ? block.content.editorSection
+          : null;
+      if (!sectionKey) {
+        return block;
+      }
+
+      const persisted = persistedSections.get(sectionKey);
+      if (!persisted) {
+        return block;
+      }
+
+      return {
+        ...block,
+        sortOrder: persisted.sortOrder ?? block.sortOrder,
+        content: mergeTemplateBlockContent(block.content, persisted.content || {}),
+        isVisible: persisted.isVisible ?? block.isVisible,
+      };
+    });
+
+    const blocks = [...hydratedSeedBlocks, ...customPersistedBlocks].sort(
+      (left, right) => {
+        const leftOrder =
+          typeof left?.sortOrder === "number"
+            ? left.sortOrder
+            : Number.MAX_SAFE_INTEGER;
+        const rightOrder =
+          typeof right?.sortOrder === "number"
+            ? right.sortOrder
+            : Number.MAX_SAFE_INTEGER;
+        return leftOrder - rightOrder;
+      },
+    );
 
     return {
       ...page,
       sortOrder: persistedPage?.sortOrder ?? page.sortOrder,
       isPublished: persistedPage?.isPublished ?? page.isPublished,
-      blocks: page.blocks.map((block) => {
-        const sectionKey =
-          typeof block.content?.editorSection === "string"
-            ? block.content.editorSection
-            : null;
-        if (!sectionKey) {
-          return block;
-        }
-
-        const persisted = persistedSections.get(sectionKey);
-        if (!persisted) {
-          return block;
-        }
-
-        return {
-          ...block,
-          sortOrder: persisted.sortOrder ?? block.sortOrder,
-          content: mergeTemplateBlockContent(
-            block.content,
-            persisted.content || {},
-          ),
-          isVisible: persisted.isVisible ?? block.isVisible,
-        };
-      }),
+      blocks,
     };
   });
 };
@@ -1051,6 +1324,7 @@ export const buildTemplatePreviewBusinessData = (
     const whyUs = getSectionContent("why-us");
     const process = getSectionContent("process");
     const contact = getSectionContent("contact");
+    const customSections = getOrderedPlanSectionsForHomePage(pages);
 
     const whyUsItems = readArray<Record<string, unknown>>(whyUs, [
       "features",
@@ -1140,6 +1414,8 @@ export const buildTemplatePreviewBusinessData = (
           blockId: aboutBlock?.id,
           heading: readString(about, ["title", "heading"]),
           body: readString(about, ["body", "description", "subheading"]),
+          image: readString(about, ["image", "imageUrl"]),
+          imageStyle: about.imageStyle,
           headingStyle: about.headingStyle || about.titleStyle,
           bodyStyle: about.bodyStyle || about.descriptionStyle,
           sectionStyle: getSectionStyleValue(about),
@@ -1149,6 +1425,8 @@ export const buildTemplatePreviewBusinessData = (
           blockId: whyUsBlock?.id,
           heading: readString(whyUs, ["heading", "title"]),
           description: readString(whyUs, ["description", "body", "subheading"]),
+          image: readString(whyUs, ["image", "imageUrl"]),
+          imageStyle: whyUs.imageStyle,
           items: whyUsItems,
           headingStyle: whyUs.headingStyle,
           descriptionStyle: whyUs.descriptionStyle || whyUs.bodyStyle,
@@ -1163,6 +1441,8 @@ export const buildTemplatePreviewBusinessData = (
             "description",
             "body",
           ]),
+          image: readString(process, ["image", "imageUrl"]),
+          imageStyle: process.imageStyle,
           ctaText: readString(
             process,
             ["ctaText", "buttonLabel", "primaryCtaText"],
@@ -1196,6 +1476,7 @@ export const buildTemplatePreviewBusinessData = (
           sectionStyle: getSectionStyleValue(contact),
           outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },
+        customSections,
         sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
       },
     };
@@ -1490,6 +1771,93 @@ export const buildTemplatePreviewBusinessData = (
           buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
           sectionStyle: getSectionStyleValue(contact),
         },
+      },
+    };
+  }
+
+  if (templateId === "education") {
+    const heroBlock = findSectionBlock(templateId, pages, "hero");
+    const programsBlock = findSectionBlock(templateId, pages, "programs");
+    const highlightsBlock = findSectionBlock(templateId, pages, "highlights");
+    const galleryBlock = findSectionBlock(templateId, pages, "gallery");
+    const reviewsBlock = findSectionBlock(templateId, pages, "reviews");
+    const contactBlock = findSectionBlock(templateId, pages, "contact");
+    const campusBlock = findSectionBlock(templateId, pages, "campus");
+    const hero = getSectionContent("hero");
+    const programs = getSectionContent("programs");
+    const highlights = getSectionContent("highlights");
+    const gallery = getSectionContent("gallery");
+    const reviews = getSectionContent("reviews");
+    const contact = getSectionContent("contact");
+    const campus = getSectionContent("campus");
+
+    return {
+      ...themedBase,
+      templateContent: {
+        hero: { blockId: heroBlock?.id, sectionStyle: getSectionStyleValue(hero) },
+        programs: { blockId: programsBlock?.id, sectionStyle: getSectionStyleValue(programs) },
+        highlights: { blockId: highlightsBlock?.id, sectionStyle: getSectionStyleValue(highlights) },
+        gallery: { blockId: galleryBlock?.id, sectionStyle: getSectionStyleValue(gallery) },
+        reviews: { blockId: reviewsBlock?.id, sectionStyle: getSectionStyleValue(reviews) },
+        contact: { blockId: contactBlock?.id, sectionStyle: getSectionStyleValue(contact) },
+        campus: { blockId: campusBlock?.id, sectionStyle: getSectionStyleValue(campus) },
+        sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
+      },
+    };
+  }
+
+  if (templateId === "gardening") {
+    const heroBlock = findSectionBlock(templateId, pages, "hero");
+    const aboutBlock = findSectionBlock(templateId, pages, "about");
+    const portfolioBlock = findSectionBlock(templateId, pages, "portfolio");
+    const servicesBlock = findSectionBlock(templateId, pages, "services");
+    const testimonialsBlock = findSectionBlock(templateId, pages, "testimonials");
+    const contactBlock = findSectionBlock(templateId, pages, "contact");
+    const hero = getSectionContent("hero");
+    const about = getSectionContent("about");
+    const portfolio = getSectionContent("portfolio");
+    const services = getSectionContent("services");
+    const testimonials = getSectionContent("testimonials");
+    const contact = getSectionContent("contact");
+
+    return {
+      ...themedBase,
+      templateContent: {
+        hero: { blockId: heroBlock?.id, sectionStyle: getSectionStyleValue(hero) },
+        about: { blockId: aboutBlock?.id, sectionStyle: getSectionStyleValue(about) },
+        portfolio: { blockId: portfolioBlock?.id, sectionStyle: getSectionStyleValue(portfolio) },
+        services: { blockId: servicesBlock?.id, sectionStyle: getSectionStyleValue(services) },
+        testimonials: { blockId: testimonialsBlock?.id, sectionStyle: getSectionStyleValue(testimonials) },
+        contact: { blockId: contactBlock?.id, sectionStyle: getSectionStyleValue(contact) },
+        sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
+      },
+    };
+  }
+
+  if (templateId === "restaurant") {
+    const heroBlock = findSectionBlock(templateId, pages, "hero");
+    const storyBlock = findSectionBlock(templateId, pages, "story");
+    const locationBlock = findSectionBlock(templateId, pages, "location");
+    const whyUsBlock = findSectionBlock(templateId, pages, "why-us");
+    const reviewsBlock = findSectionBlock(templateId, pages, "reviews");
+    const contactBlock = findSectionBlock(templateId, pages, "contact");
+    const hero = getSectionContent("hero");
+    const story = getSectionContent("story");
+    const location = getSectionContent("location");
+    const whyUs = getSectionContent("why-us");
+    const reviews = getSectionContent("reviews");
+    const contact = getSectionContent("contact");
+
+    return {
+      ...themedBase,
+      templateContent: {
+        hero: { blockId: heroBlock?.id, sectionStyle: getSectionStyleValue(hero) },
+        story: { blockId: storyBlock?.id, sectionStyle: getSectionStyleValue(story) },
+        location: { blockId: locationBlock?.id, sectionStyle: getSectionStyleValue(location) },
+        whyUs: { blockId: whyUsBlock?.id, sectionStyle: getSectionStyleValue(whyUs) },
+        reviews: { blockId: reviewsBlock?.id, sectionStyle: getSectionStyleValue(reviews) },
+        contact: { blockId: contactBlock?.id, sectionStyle: getSectionStyleValue(contact) },
+        sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
       },
     };
   }

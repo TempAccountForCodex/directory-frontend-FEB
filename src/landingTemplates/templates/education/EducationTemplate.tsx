@@ -17,6 +17,10 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
 import { buildModernTheme } from "../modern/modernTheme";
 import { FadeIn } from "../../blocks";
+import {
+  getSectionStyleDomProps,
+  getSectionStyleSx,
+} from "../../utils/sectionStyle";
 
 const sectionOffset = 110;
 
@@ -48,6 +52,13 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
   const gallery = data.gallery ?? [];
   const reviews = data.reviews ?? [];
   const services = data.services ?? [];
+  const heroContent = data.templateContent?.hero || {};
+  const programsContent = data.templateContent?.programs || {};
+  const highlightsContent = data.templateContent?.highlights || {};
+  const galleryContent = data.templateContent?.gallery || {};
+  const reviewsContent = data.templateContent?.reviews || {};
+  const contactContent = data.templateContent?.contact || {};
+  const campusContent = data.templateContent?.campus || {};
 
   return (
     <Box sx={{ bgcolor: theme.bgPrimary, fontFamily: theme.fontFamily }}>
@@ -184,8 +195,12 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="hero"
-        data-preview-section="Hero"
+        data-preview-section="true"
+        data-preview-label="Hero"
+        data-preview-block-id={heroContent.blockId}
+        {...getSectionStyleDomProps(heroContent)}
         sx={{
+          ...getSectionStyleSx(heroContent),
           position: "relative",
           overflow: "hidden",
           minHeight: { xs: "auto", md: "88vh" },
@@ -332,8 +347,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="programs"
-        data-preview-section="Programs"
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#ffffff" }}
+        data-preview-section="true"
+        data-preview-label="Programs"
+        data-preview-block-id={programsContent.blockId}
+        {...getSectionStyleDomProps(programsContent)}
+        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#ffffff", ...getSectionStyleSx(programsContent) }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -443,8 +461,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="highlights"
-        data-preview-section="Why Choose Us"
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: theme.bgSecondary }}
+        data-preview-section="true"
+        data-preview-label="Why Choose Us"
+        data-preview-block-id={highlightsContent.blockId}
+        {...getSectionStyleDomProps(highlightsContent)}
+        sx={{ py: { xs: 8, md: 12 }, bgcolor: theme.bgSecondary, ...getSectionStyleSx(highlightsContent) }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
@@ -525,8 +546,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="gallery"
-        data-preview-section="Gallery"
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#ffffff" }}
+        data-preview-section="true"
+        data-preview-label="Gallery"
+        data-preview-block-id={galleryContent.blockId}
+        {...getSectionStyleDomProps(galleryContent)}
+        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#ffffff", ...getSectionStyleSx(galleryContent) }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -610,8 +634,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="reviews"
-        data-preview-section="Reviews"
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: theme.bgSecondary }}
+        data-preview-section="true"
+        data-preview-label="Reviews"
+        data-preview-block-id={reviewsContent.blockId}
+        {...getSectionStyleDomProps(reviewsContent)}
+        sx={{ py: { xs: 8, md: 12 }, bgcolor: theme.bgSecondary, ...getSectionStyleSx(reviewsContent) }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -691,8 +718,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="contact"
-        data-preview-section="Contact"
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#0f2450" }}
+        data-preview-section="true"
+        data-preview-label="Contact"
+        data-preview-block-id={contactContent.blockId}
+        {...getSectionStyleDomProps(contactContent)}
+        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#0f2450", ...getSectionStyleSx(contactContent) }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
@@ -835,8 +865,12 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="location"
-        data-preview-section="Campus"
+        data-preview-section="true"
+        data-preview-label="Campus"
+        data-preview-block-id={campusContent.blockId}
+        {...getSectionStyleDomProps(campusContent)}
         sx={{
+          ...getSectionStyleSx(campusContent),
           py: { xs: 8, md: 12 },
           bgcolor: "#f7faff",
           position: "relative",

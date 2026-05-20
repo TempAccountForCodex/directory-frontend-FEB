@@ -138,6 +138,31 @@ const DEFAULT_TEXT_STYLE = {
   fontStyle: "normal",
   textDecoration: "none",
   textAlign: "left",
+  lineHeight: "1.5",
+  letterSpacing: "0em",
+  wordSpacing: "0px",
+  textTransform: "none",
+  textShadow: "none",
+  textIndent: "0px",
+  paddingTop: "0px",
+  paddingBottom: "0px",
+  paddingLeft: "0px",
+  paddingRight: "0px",
+  marginTop: "0px",
+  marginBottom: "0px",
+  marginLeft: "0px",
+  marginRight: "0px",
+  listStyleType: "none",
+  animation: "none",
+  opacity: 1,
+  rotate: "0deg",
+  scaleX: "100%",
+  scaleY: "100%",
+  translateX: "0px",
+  translateY: "0px",
+  skewX: "0deg",
+  skewY: "0deg",
+  transform: "none",
 };
 
 const DEFAULT_SECTION_STYLE = {
@@ -170,7 +195,10 @@ const DEFAULT_SECTION_STYLE = {
   parallaxSpeed: 50,
   stickySection: false,
   stickyOffset: "",
+  semanticTag: "div",
   cssClass: "",
+  customCss: "",
+  dataAttributes: [],
   anchorId: "",
   zIndex: "",
   paddingTop: "0px",
@@ -270,6 +298,8 @@ const WebsiteEditorInner = () => {
 
   // Block Library state — Phase 9 gap fix
   const [blockLibraryOpen, setBlockLibraryOpen] = useState(false);
+  const [blockLibraryPreferredPosition, setBlockLibraryPreferredPosition] =
+    useState("end");
 
   // Theme Manager state — Step 9.21
   const [sidebarMode, setSidebarMode] = useState("blocks");
@@ -1498,6 +1528,108 @@ const WebsiteEditorInner = () => {
     });
   }, []);
 
+  const blockLibraryExtraBlocks = useMemo(() => {
+    if (resolvedFrontendTemplateId !== "company-executive") {
+      return [];
+    }
+
+    return [
+      {
+        key: "SECTION",
+        label: "Plan Section",
+        description:
+          "A blank flexible section you can place anywhere and style yourself.",
+        category: "core",
+        icon: "layout",
+        capabilities: {
+          supportsBackground: true,
+          supportsVisibility: true,
+          supportsVariants: false,
+          supportsCustomCss: true,
+          isDynamic: false,
+          dataSource: null,
+        },
+        variants: [],
+        searchKeywords: [
+          "plan",
+          "blank",
+          "custom",
+          "section",
+          "empty",
+          "layout",
+        ],
+      },
+    ];
+  }, [resolvedFrontendTemplateId]);
+
+  const resolveInsertPositionForSection = useCallback((blockId, placement) => {
+    const blockIndex = blocksRef.current.findIndex(
+      (block) => String(block.id) === String(blockId),
+    );
+
+    if (blockIndex < 0) {
+      return "end";
+    }
+
+    if (placement === "before") {
+      return blockIndex === 0 ? "beginning" : blockIndex - 1;
+    }
+
+    return blockIndex;
+  }, []);
+
+  const openBlockLibraryAtPosition = useCallback((position) => {
+    setSidebarMode("blocks");
+    setBlockLibraryPreferredPosition(position);
+    setBlockLibraryOpen(true);
+  }, []);
+
+  const buildPlanSectionContent = useCallback((blockType = "PLAN") => {
+    const existingPlanCount = blocksRef.current.filter((block) => {
+      const sectionKey =
+        typeof block.content?.editorSection === "string"
+          ? block.content.editorSection
+          : "";
+      return block.blockType === "PLAN" || sectionKey.startsWith("plan-");
+    }).length;
+
+    const nextIndex = existingPlanCount + 1;
+    const blockLabel = humanizeLabel(blockType || "Plan Section");
+
+    return {
+      editorLabel: blockLabel,
+      editorSection: `plan-${Date.now()}`,
+      sectionStyle: {
+        backgroundColor: "#ffffff",
+        layoutWidth: "full",
+        heightPreset: "medium",
+        contentAlign: "left",
+        paddingTop: "0px",
+        paddingBottom: "0px",
+        paddingLeft: "0px",
+        paddingRight: "0px",
+        marginTop: "0px",
+        marginBottom: "0px",
+        marginLeft: "0px",
+        marginRight: "0px",
+      },
+      outerSectionStyle: {
+        backgroundColor: "transparent",
+        layoutWidth: "full",
+        heightPreset: "auto",
+        contentAlign: "left",
+        paddingTop: "0px",
+        paddingBottom: "0px",
+        paddingLeft: "0px",
+        paddingRight: "0px",
+        marginTop: "0px",
+        marginBottom: "0px",
+        marginLeft: "0px",
+        marginRight: "0px",
+      },
+    };
+  }, []);
+
   const handlePreviewEditableSelection = useCallback(
     (data) => {
       if (!data) {
@@ -1549,6 +1681,25 @@ const WebsiteEditorInner = () => {
       setEditingBlock(null);
     },
     [syncPreviewSelection],
+  );
+
+  const handlePreviewSectionAddRequest = useCallback(
+    (data, position) => {
+      if (!data?.blockId) {
+        return;
+      }
+
+      setPreviewContextMenu(null);
+      setSelectedSectionElement(data);
+      setSelectedEditableElement(null);
+      setSelectedImageElement(null);
+      setActiveToolbarMode("section");
+      setIsInspectorOpen(true);
+      openBlockLibraryAtPosition(
+        resolveInsertPositionForSection(data.blockId, position),
+      );
+    },
+    [openBlockLibraryAtPosition, resolveInsertPositionForSection],
   );
 
   const handlePreviewContextMenu = useCallback((data) => {
@@ -1864,6 +2015,14 @@ const WebsiteEditorInner = () => {
       }
 
       handleImageChange({ src: url });
+      setSelectedImageElement((prev) =>
+        prev
+          ? {
+              ...prev,
+              src: url,
+            }
+          : prev,
+      );
     },
     [handleImageChange, uploadImageAsset],
   );
@@ -1939,10 +2098,15 @@ const WebsiteEditorInner = () => {
     async (blockType, position, content) => {
       if (!selectedPage?.id) return;
       try {
+        const resolvedContent =
+          content ||
+          (resolvedFrontendTemplateId === "company-executive"
+            ? buildPlanSectionContent(blockType)
+            : {});
         const newBlock = {
           id: `local-${Date.now()}`,
           blockType,
-          content: content || {},
+          content: resolvedContent,
           isVisible: true,
           sortOrder: blocks.length,
           localOnly: true,
@@ -1974,7 +2138,12 @@ const WebsiteEditorInner = () => {
         console.error("Error inserting block from library:", err);
       }
     },
-    [selectedPage?.id, blocks.length],
+    [
+      selectedPage?.id,
+      blocks.length,
+      resolvedFrontendTemplateId,
+      buildPlanSectionContent,
+    ],
   );
 
   // Mobile action handlers for MobileActionBar (Phase 9 gap fix)
@@ -2911,7 +3080,7 @@ const WebsiteEditorInner = () => {
                               size="small"
                               variant="outlined"
                               startIcon={<Layers size={15} />}
-                              onClick={() => setBlockLibraryOpen(true)}
+                              onClick={() => openBlockLibraryAtPosition("end")}
                               sx={{
                                 ...sidebarHeaderButtonSx,
                                 minWidth: 0,
@@ -3241,6 +3410,7 @@ const WebsiteEditorInner = () => {
                             }
                             onImageSelected={handlePreviewImageSelection}
                             onSectionSelected={handlePreviewSectionSelection}
+                            onSectionAddRequest={handlePreviewSectionAddRequest}
                             onPreviewContextMenu={handlePreviewContextMenu}
                             onEditableTextSave={handleInlineEditSave}
                             onElementTransform={handlePreviewElementTransform}
@@ -3432,6 +3602,7 @@ const WebsiteEditorInner = () => {
                                 value={selectedEditableStyle}
                                 disabled={!selectedEditableElement}
                                 onStyleChange={handleEditableStyleChange}
+                                layout="panel"
                                 containerSx={{
                                   flexWrap: "wrap",
                                   alignItems: "flex-start",
@@ -3499,6 +3670,8 @@ const WebsiteEditorInner = () => {
               backgroundColor: "#ffffff",
               backgroundImage: "none",
               overflow: "hidden",
+              border: `1px solid ${alpha(colors.primary, 0.1)}`,
+              boxShadow: "0 26px 70px rgba(15, 23, 42, 0.18)",
             },
           }}
         >
@@ -3517,15 +3690,43 @@ const WebsiteEditorInner = () => {
               px: 3,
               py: 2.25,
               borderBottom: `1px solid ${alpha(colors.primary, 0.12)}`,
+              background:
+                "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%)",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 2,
             }}
           >
-            <Typography sx={builderSectionLabelSx}>Image</Typography>
-            <Typography
-              variant="h6"
-              sx={{ mt: 0.4, fontWeight: 800, color: editorText }}
+            <Box>
+              <Typography sx={builderSectionLabelSx}>Image</Typography>
+              <Typography
+                variant="h6"
+                sx={{ mt: 0.4, fontWeight: 800, color: editorText }}
+              >
+                {selectedImageElement?.label || "Selected Image"}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 0.75,
+                  fontSize: "0.92rem",
+                  color: editorMutedText,
+                }}
+              >
+                Replace the image and tune fit, border, and radius for this block.
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={() => setSelectedImageElement(null)}
+              sx={{
+                mt: 0.25,
+                color: editorMutedText,
+                border: `1px solid ${alpha("#111827", 0.08)}`,
+                backgroundColor: "#fff",
+              }}
             >
-              {selectedImageElement?.label || "Selected Image"}
-            </Typography>
+              <X size={18} />
+            </IconButton>
           </DialogTitle>
           <DialogContent sx={{ px: 3, py: 2.5, backgroundColor: "#f8fafc" }}>
             <Box
@@ -3534,7 +3735,8 @@ const WebsiteEditorInner = () => {
                 borderRadius: 3,
                 border: `1px solid ${alpha(colors.primary, 0.14)}`,
                 overflow: "hidden",
-                backgroundColor: "#e5e7eb",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(241,245,249,0.95) 100%)",
                 backgroundImage: selectedImageValue.src
                   ? `url(${selectedImageValue.src})`
                   : "none",
@@ -3545,6 +3747,7 @@ const WebsiteEditorInner = () => {
                 backgroundRepeat: "no-repeat",
                 backgroundPosition: "center",
                 mb: 2,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.55)",
               }}
             />
 
@@ -3554,14 +3757,30 @@ const WebsiteEditorInner = () => {
                 startIcon={<Upload size={16} />}
                 onClick={() => imageReplaceInputRef.current?.click()}
                 sx={{
+                  minHeight: 42,
                   textTransform: "none",
                   borderRadius: 2.5,
                   background: `linear-gradient(135deg, ${colors.primary} 0%, ${alpha(colors.primary, 0.78)} 100%)`,
                   color: "#ffffff",
                   boxShadow: "none",
+                  fontWeight: 700,
                 }}
               >
                 Replace
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => setSelectedImageElement(null)}
+                sx={{
+                  minHeight: 42,
+                  textTransform: "none",
+                  borderRadius: 2.5,
+                  borderColor: alpha("#111827", 0.12),
+                  color: editorText,
+                  backgroundColor: "#fff",
+                }}
+              >
+                Done
               </Button>
             </Box>
 
@@ -3583,14 +3802,20 @@ const WebsiteEditorInner = () => {
                 sx={{
                   gridColumn: "1 / -1",
                   "& input": {
-                    color: "#000000",
+                    color: editorText,
                     fontSize: "14px",
                   },
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
-                    color: "#fff",
+                    backgroundColor: "#ffffff",
                     "& fieldset": {
-                      borderColor: "#7a7a7a7a",
+                      borderColor: alpha("#111827", 0.12),
+                    },
+                    "&:hover fieldset": {
+                      borderColor: alpha(colors.primary, 0.35),
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: colors.primary,
                     },
                   },
                 }}
@@ -3605,14 +3830,20 @@ const WebsiteEditorInner = () => {
                 }
                 sx={{
                   "& input": {
-                    color: "#000000",
+                    color: editorText,
                     fontSize: "14px",
                   },
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
-                    color: "#fff",
+                    backgroundColor: "#ffffff",
                     "& fieldset": {
-                      borderColor: "#7a7a7a7a",
+                      borderColor: alpha("#111827", 0.12),
+                    },
+                    "&:hover fieldset": {
+                      borderColor: alpha(colors.primary, 0.35),
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: colors.primary,
                     },
                   },
                 }}
@@ -3627,14 +3858,20 @@ const WebsiteEditorInner = () => {
                 }
                 sx={{
                   "& input": {
-                    color: "#000000",
+                    color: editorText,
                     fontSize: "14px",
                   },
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
-                    color: "#fff",
+                    backgroundColor: "#ffffff",
                     "& fieldset": {
-                      borderColor: "#7a7a7a7a",
+                      borderColor: alpha("#111827", 0.12),
+                    },
+                    "&:hover fieldset": {
+                      borderColor: alpha(colors.primary, 0.35),
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: colors.primary,
                     },
                   },
                 }}
@@ -3649,14 +3886,20 @@ const WebsiteEditorInner = () => {
                 }
                 sx={{
                   "& input": {
-                    color: "#000000",
+                    color: editorText,
                     fontSize: "14px",
                   },
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
-                    color: "#fff",
+                    backgroundColor: "#ffffff",
                     "& fieldset": {
-                      borderColor: "#7a7a7a7a",
+                      borderColor: alpha("#111827", 0.12),
+                    },
+                    "&:hover fieldset": {
+                      borderColor: alpha(colors.primary, 0.35),
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: colors.primary,
                     },
                   },
                 }}
@@ -3671,6 +3914,15 @@ const WebsiteEditorInner = () => {
                     height: 54,
                     borderRadius: 2.5,
                     backgroundColor: "#ffffff",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: alpha("#111827", 0.12),
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: alpha(colors.primary, 0.35),
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: colors.primary,
+                    },
                   }}
                 >
                   <MenuItem value="cover">Fit: cover</MenuItem>
@@ -3685,11 +3937,26 @@ const WebsiteEditorInner = () => {
               px: 3,
               py: 2,
               borderTop: `1px solid ${alpha(colors.primary, 0.12)}`,
+              backgroundColor: "#ffffff",
+              justifyContent: "space-between",
             }}
           >
+            <Typography sx={{ fontSize: "0.82rem", color: editorMutedText }}>
+              Changes apply instantly to the canvas. Use Save Changes to persist them.
+            </Typography>
             <Button
               onClick={() => setSelectedImageElement(null)}
-              sx={{ textTransform: "none", color: editorMutedText }}
+              variant="contained"
+              sx={{
+                minWidth: 108,
+                minHeight: 42,
+                textTransform: "none",
+                borderRadius: 2.5,
+                background: "#0f172a",
+                color: "#ffffff",
+                boxShadow: "none",
+                fontWeight: 700,
+              }}
             >
               Close
             </Button>
@@ -3703,6 +3970,8 @@ const WebsiteEditorInner = () => {
             onClose={() => setBlockLibraryOpen(false)}
             pageId={selectedPage?.id}
             blocks={blocks}
+            extraBlocks={blockLibraryExtraBlocks}
+            preferredInsertPosition={blockLibraryPreferredPosition}
             onInsertBlock={handleInsertBlockFromLibrary}
             closeAfterInsert={false}
             currentUserRole={websiteRole}
@@ -3711,7 +3980,7 @@ const WebsiteEditorInner = () => {
 
         {/* MobileFAB — opens block library on mobile (Phase 9 gap fix) */}
         {isMobile && selectedPage && (
-          <MobileFAB onOpen={() => setBlockLibraryOpen(true)} />
+          <MobileFAB onOpen={() => openBlockLibraryAtPosition("end")} />
         )}
 
         {/* MobileActionBar — save/publish/preview on mobile (Phase 9 gap fix) */}
@@ -3932,7 +4201,7 @@ const WebsiteEditorInner = () => {
                   startIcon={<Plus size={18} />}
                   onClick={() => {
                     setBlockDialogOpen(false);
-                    setBlockLibraryOpen(true);
+                    openBlockLibraryAtPosition("end");
                   }}
                   fullWidth
                   sx={{
@@ -4009,8 +4278,8 @@ const WebsiteEditorInner = () => {
                 borderRadius: 2.5,
                 textTransform: "none",
                 fontWeight: 700,
-                background: `linear-gradient(135deg, ${colors.primary} 0%, ${alpha(colors.primary, 0.78)} 100%)`,
-                color: "#061214",
+                background: "black",
+                color: "#ffffff",
                 boxShadow: "none",
               }}
             >

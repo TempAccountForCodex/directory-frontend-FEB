@@ -23,6 +23,10 @@ import {
 import type { TemplateProps } from "../../templateEngine/types";
 import { buildModernTheme } from "../modern/modernTheme";
 import FadeIn from "../../blocks/FadeIn";
+import {
+  getSectionStyleDomProps,
+  getSectionStyleSx,
+} from "../../utils/sectionStyle";
 
 const serifFont = '"Cormorant Garamond", Georgia, serif';
 const bodyFont =
@@ -109,6 +113,12 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
     "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80",
     "https://images.unsplash.com/photo-1492496913980-501348b61469?auto=format&fit=crop&w=1200&q=80",
   ];
+  const heroContent = data.templateContent?.hero || {};
+  const aboutContent = data.templateContent?.about || {};
+  const portfolioContent = data.templateContent?.portfolio || {};
+  const servicesContent = data.templateContent?.services || {};
+  const testimonialsContent = data.templateContent?.testimonials || {};
+  const contactContent = data.templateContent?.contact || {};
 
   return (
     <Box
@@ -232,7 +242,14 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         maxWidth="lg"
         sx={{ px: { xs: 2, md: 3 }, pt: { xs: 3, md: 4 } }}
       >
-        <Box id="hero" data-preview-section="Hero">
+        <Box
+          id="hero"
+          data-preview-section="true"
+          data-preview-label="Hero"
+          data-preview-block-id={heroContent.blockId}
+          {...getSectionStyleDomProps(heroContent)}
+          sx={getSectionStyleSx(heroContent)}
+        >
           <FadeIn>
             <Box
               sx={{
@@ -338,8 +355,12 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="about"
-        data-preview-section="About"
+        data-preview-section="true"
+        data-preview-label="About"
+        data-preview-block-id={aboutContent.blockId}
+        {...getSectionStyleDomProps(aboutContent)}
         sx={{
+          ...getSectionStyleSx(aboutContent),
           py: { xs: 8, md: 12 },
           background: "linear-gradient(180deg, #edf6df 0%, #f7f4ea 100%)",
         }}
@@ -410,8 +431,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="portfolio"
-        data-preview-section="Portfolio"
-        sx={{ py: { xs: 8, md: 11 }, bgcolor: theme.bgPrimary }}
+        data-preview-section="true"
+        data-preview-label="Portfolio"
+        data-preview-block-id={portfolioContent.blockId}
+        {...getSectionStyleDomProps(portfolioContent)}
+        sx={{ py: { xs: 8, md: 11 }, bgcolor: theme.bgPrimary, ...getSectionStyleSx(portfolioContent) }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -570,8 +594,12 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="services"
-        data-preview-section="Services"
+        data-preview-section="true"
+        data-preview-label="Services"
+        data-preview-block-id={servicesContent.blockId}
+        {...getSectionStyleDomProps(servicesContent)}
         sx={{
+          ...getSectionStyleSx(servicesContent),
           py: { xs: 8, md: 11 },
           background: "linear-gradient(180deg, #f7f4ea 0%, #edf6df 100%)",
         }}
@@ -655,8 +683,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="testimonials"
-        data-preview-section="Testimonials"
-        sx={{ py: { xs: 8, md: 10 }, bgcolor: theme.bgPrimary }}
+        data-preview-section="true"
+        data-preview-label="Testimonials"
+        data-preview-block-id={testimonialsContent.blockId}
+        {...getSectionStyleDomProps(testimonialsContent)}
+        sx={{ py: { xs: 8, md: 10 }, bgcolor: theme.bgPrimary, ...getSectionStyleSx(testimonialsContent) }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -706,8 +737,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="contact"
-        data-preview-section="Contact"
-        sx={{ py: { xs: 8, md: 11 }, bgcolor: theme.bgPrimary }}
+        data-preview-section="true"
+        data-preview-label="Contact"
+        data-preview-block-id={contactContent.blockId}
+        {...getSectionStyleDomProps(contactContent)}
+        sx={{ py: { xs: 8, md: 11 }, bgcolor: theme.bgPrimary, ...getSectionStyleSx(contactContent) }}
       >
         <Container maxWidth="md">
           <FadeIn>

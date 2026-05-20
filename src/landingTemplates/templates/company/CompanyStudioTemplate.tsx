@@ -42,6 +42,14 @@ const defaultSectionOrder = [
   "contact",
 ] as const;
 
+const humanizeSectionKey = (value: string) =>
+  value
+    .replace(/^plan[-_]?/i, "Plan ")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
 const visualSet = {
   heroPortrait:
     "https://themejunction.net/html/bexon/demo/assets/images/hero/h7-hero-banner.webp",
@@ -259,6 +267,20 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const themeLine = rgba(themeColor, 0.12);
   const pageBackground = `linear-gradient(180deg, ${rgba(themeSecondary, 0.22)} 0%, ${palette.bg} 20%, ${palette.bg} 100%)`;
   const headerBackground = rgba(themeSecondary, 0.72);
+  const customSections = Array.isArray(templateContent.customSections)
+    ? templateContent.customSections
+    : [];
+  const customSectionMap = new Map(
+    customSections
+      .filter(
+        (section) =>
+          section &&
+          typeof section === "object" &&
+          typeof section.sectionKey === "string" &&
+          section.sectionKey.trim(),
+      )
+      .map((section) => [section.sectionKey, section]),
+  );
   const whyChooseImageRef = React.useRef<HTMLDivElement | null>(null);
   const { scrollYProgress: whyChooseImageProgress } = useScroll({
     target: whyChooseImageRef,
@@ -283,24 +305,39 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     Array.isArray(templateContent.sectionOrder)
       ? templateContent.sectionOrder
       : defaultSectionOrder
-  ).filter(
-    (key, index, collection) =>
-      defaultSectionOrder.includes(key) && collection.indexOf(key) === index,
-  );
+  ).filter((key, index, collection) => {
+    const normalizedKey = String(key);
+    return (
+      (defaultSectionOrder.includes(normalizedKey as (typeof defaultSectionOrder)[number]) ||
+        customSectionMap.has(normalizedKey)) &&
+      collection.indexOf(key) === index
+    );
+  });
   const resolvedSectionOrder = orderedSectionKeys.length
     ? [
         ...orderedSectionKeys,
         ...defaultSectionOrder.filter(
           (key) => !orderedSectionKeys.includes(key),
         ),
+        ...customSections
+          .map((section) => section.sectionKey)
+          .filter((key) => key && !orderedSectionKeys.includes(key)),
       ]
-    : [...defaultSectionOrder];
+    : [
+        ...defaultSectionOrder,
+        ...customSections.map((section) => section.sectionKey).filter(Boolean),
+      ];
   const sectionPosition = Object.fromEntries(
     resolvedSectionOrder.map((key, index) => [key, index + 1]),
   ) as Record<string, number>;
   const navItems = resolvedSectionOrder.map((key) => ({
-    label:
-      key === "overview"
+    label: customSectionMap.has(key)
+      ? String(
+          customSectionMap.get(key)?.label ||
+            customSectionMap.get(key)?.heading ||
+            humanizeSectionKey(key),
+        )
+      : key === "overview"
         ? "Overview"
         : key === "about"
           ? "About"
@@ -309,7 +346,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             : key === "process"
               ? "Process"
               : "Contact",
-    id: key === "process" ? "work" : key,
+    id: customSectionMap.has(key)
+      ? key
+      : key === "process"
+        ? "work"
+        : key,
   }));
 
   const scrollToSection = (sectionId: string) => {
@@ -318,6 +359,93 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const overviewBlockId = homeContent.blockId;
+  const customSectionNodes = customSections.map((section, index) => {
+    const sectionKey = String(section.sectionKey || `plan-${index + 1}`);
+    const blockId = section.blockId;
+
+    return (
+      <Box
+        key={sectionKey}
+        data-preview-section="true"
+        data-preview-label={section.label || "Plan Section"}
+        data-preview-block-id={blockId}
+        data-preview-style-key="outerSectionStyle"
+        {...getSectionStyleDomProps(section, "outerSectionStyle")}
+        sx={{
+          order: sectionPosition[sectionKey] ?? defaultSectionOrder.length + index + 1,
+          ...getSectionStyleSx(section, "outerSectionStyle"),
+        }}
+      >
+        <Box
+          id={sectionKey}
+          data-preview-section="true"
+          data-preview-label={section.label || "Plan Section"}
+          data-preview-block-id={blockId}
+          data-preview-style-key="sectionStyle"
+          {...getSectionStyleDomProps(section)}
+          sx={{
+            width: "100%",
+            minHeight: { xs: 360, md: 520 },
+            backgroundColor: "#ffffff",
+            ...getSectionStyleSx(section),
+          }}
+        />
+      </Box>
+    );
+  });
+  const customSectionNodeMap = new Map(
+    customSections.map((section, index) => [
+      String(section.sectionKey || `plan-${index + 1}`),
+      customSectionNodes[index],
+    ]),
+  );
+  const renderCustomSectionsBefore = (anchorKey: string) => {
+    const anchorIndex = resolvedSectionOrder.indexOf(anchorKey);
+    if (anchorIndex <= 0) {
+      return null;
+    }
+
+    const nodes = [];
+    for (let index = anchorIndex - 1; index >= 0; index -= 1) {
+      const key = resolvedSectionOrder[index];
+      if (
+        defaultSectionOrder.includes(
+          key as (typeof defaultSectionOrder)[number],
+        )
+      ) {
+        break;
+      }
+      const node = customSectionNodeMap.get(key);
+      if (node) {
+        nodes.unshift(node);
+      }
+    }
+
+    return nodes;
+  };
+  const renderCustomSectionsAfterLastDefault = () => {
+    let lastDefaultIndex = -1;
+    resolvedSectionOrder.forEach((key, index) => {
+      if (
+        defaultSectionOrder.includes(
+          key as (typeof defaultSectionOrder)[number],
+        )
+      ) {
+        lastDefaultIndex = index;
+      }
+    });
+
+    return resolvedSectionOrder
+      .slice(lastDefaultIndex + 1)
+      .filter(
+        (key) =>
+          !defaultSectionOrder.includes(
+            key as (typeof defaultSectionOrder)[number],
+          ),
+      )
+      .map((key) => customSectionNodeMap.get(key))
+      .filter(Boolean);
+  };
 
   return (
     <Box
@@ -327,6 +455,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         fontFamily: bodyFont,
         minHeight: "100vh",
         overflowX: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <Box
@@ -397,6 +527,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       </Box>
 
       <Box sx={{ display: "flex", flexDirection: "column" }}>
+        {renderCustomSectionsBefore("overview")}
         <Box
           id="overview"
           data-preview-section="true"
@@ -677,6 +808,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Container>
         </Box>
 
+        {renderCustomSectionsBefore("about")}
         <Box
           data-preview-section="true"
           data-preview-label="About Parent"
@@ -964,6 +1096,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Container>
         </Box>
 
+        {renderCustomSectionsBefore("why-us")}
         <Box
           data-preview-section="true"
           data-preview-label="Why Choose Us Parent"
@@ -1134,6 +1267,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Container>
         </Box>
 
+        {renderCustomSectionsBefore("process")}
         <Box
           sx={{
             order: sectionPosition["process"] ?? 4,
@@ -1467,6 +1601,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Container>
         </Box>
 
+        {renderCustomSectionsBefore("contact")}
         <Container
           maxWidth="xl"
           data-preview-section="true"
@@ -1797,6 +1932,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Box>
         </Container>
       </Box>
+      {renderCustomSectionsAfterLastDefault()}
     </Box>
   );
 };

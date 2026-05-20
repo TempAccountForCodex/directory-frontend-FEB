@@ -13,6 +13,10 @@ import {
 import { ArrowRight, Facebook, Instagram } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
+import {
+  getSectionStyleDomProps,
+  getSectionStyleSx,
+} from "../../utils/sectionStyle";
 
 const serifFont = '"Cormorant Garamond", Georgia, serif';
 const bodyFont =
@@ -57,6 +61,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
     "https://img.freepik.com/free-photo/luxury-dinner-table-hotel_1150-11071.jpg";
   const heroBannerImage =
     data.heroBannerUrl || data.gallery?.[2]?.url || data.gallery?.[0]?.url;
+  const heroContent = data.templateContent?.hero || {};
+  const storyContent = data.templateContent?.story || {};
+  const locationContent = data.templateContent?.location || {};
+  const whyUsContent = data.templateContent?.whyUs || {};
+  const reviewsContent = data.templateContent?.reviews || {};
+  const contactContent = data.templateContent?.contact || {};
 
   return (
     <Box sx={{ bgcolor: black, color: "#fff", fontFamily: bodyFont }}>
@@ -151,8 +161,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="hero"
-        data-preview-section="Hero"
+        data-preview-section="true"
+        data-preview-label="Hero"
+        data-preview-block-id={heroContent.blockId}
+        {...getSectionStyleDomProps(heroContent)}
         sx={{
+          ...getSectionStyleSx(heroContent),
           bgcolor: brown,
           textAlign: "center",
           px: 2,
@@ -225,7 +239,14 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         </FadeIn>
       </Box>
 
-      <Box id="story" data-preview-section="Story" sx={{ bgcolor: black }}>
+      <Box
+        id="story"
+        data-preview-section="true"
+        data-preview-label="Story"
+        data-preview-block-id={storyContent.blockId}
+        {...getSectionStyleDomProps(storyContent)}
+        sx={{ bgcolor: black, ...getSectionStyleSx(storyContent) }}
+      >
         <Container
           maxWidth="lg"
           sx={{ px: { xs: 2, md: 3 }, py: { xs: 7, md: 9 } }}
@@ -348,8 +369,11 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="menu"
-        data-preview-section="Location"
-        sx={{ bgcolor: brown, color: "#fff", py: { xs: 6, md: 7 } }}
+        data-preview-section="true"
+        data-preview-label="Location"
+        data-preview-block-id={locationContent.blockId}
+        {...getSectionStyleDomProps(locationContent)}
+        sx={{ bgcolor: brown, color: "#fff", py: { xs: 6, md: 7 }, ...getSectionStyleSx(locationContent) }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 3, md: 5 }}>
@@ -466,8 +490,11 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="why-us"
-        data-preview-section="Why Us"
-        sx={{ bgcolor: brown, color: "#fff", py: { xs: 7, md: 8 } }}
+        data-preview-section="true"
+        data-preview-label="Why Us"
+        data-preview-block-id={whyUsContent.blockId}
+        {...getSectionStyleDomProps(whyUsContent)}
+        sx={{ bgcolor: brown, color: "#fff", py: { xs: 7, md: 8 }, ...getSectionStyleSx(whyUsContent) }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 6 }}>
@@ -564,8 +591,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="reviews"
-        data-preview-section="Reviews"
+        data-preview-section="true"
+        data-preview-label="Reviews"
+        data-preview-block-id={reviewsContent.blockId}
+        {...getSectionStyleDomProps(reviewsContent)}
         sx={{
+          ...getSectionStyleSx(reviewsContent),
           bgcolor: black,
           color: "#fff",
           py: { xs: 7, md: 10 },
@@ -613,8 +644,11 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="contact"
-        data-preview-section="Contact"
-        sx={{ bgcolor: brown, color: "#fff", py: { xs: 7, md: 8 } }}
+        data-preview-section="true"
+        data-preview-label="Contact"
+        data-preview-block-id={contactContent.blockId}
+        {...getSectionStyleDomProps(contactContent)}
+        sx={{ bgcolor: brown, color: "#fff", py: { xs: 7, md: 8 }, ...getSectionStyleSx(contactContent) }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 5 }} alignItems="stretch">

@@ -1079,8 +1079,7 @@ const STORE_PAWS_DATA: BusinessData = {
 
 const COMPANY_DATA: BusinessData = {
   name: "Atelier North",
-  tagline:
-    "Interior studio for residential, hospitality, and workplace projects",
+  tagline: "Interior studio workplace projects",
   description:
     "Atelier North creates calm interior environments with a focus on materials, proportion, and everyday usability across homes, hospitality spaces, and modern workplaces.",
   primaryColor: "#124d4e",

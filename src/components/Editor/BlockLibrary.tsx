@@ -100,6 +100,8 @@ export interface BlockLibraryProps {
   onClose: () => void;
   pageId: number;
   blocks: ExistingBlock[];
+  extraBlocks?: BlockLibraryItem[];
+  preferredInsertPosition?: "end" | "beginning" | number;
   onInsertBlock: (
     blockType: string,
     position: "end" | "beginning" | number,
@@ -145,6 +147,37 @@ const CATEGORY_COLOR: Record<
   dynamic: "info",
   conversion: "warning",
   "social-proof": "info",
+};
+
+const CATEGORY_STYLES: Record<
+  string,
+  { background: string; color: string; border: string }
+> = {
+  core: {
+    background: "rgba(15, 23, 42, 0.06)",
+    color: "#4b5563",
+    border: "rgba(148, 163, 184, 0.14)",
+  },
+  content: {
+    background: "rgba(44, 128, 59, 0.12)",
+    color: "#2f7d38",
+    border: "rgba(44, 128, 59, 0.16)",
+  },
+  dynamic: {
+    background: "rgba(2, 132, 199, 0.12)",
+    color: "#0369a1",
+    border: "rgba(2, 132, 199, 0.16)",
+  },
+  conversion: {
+    background: "rgba(249, 115, 22, 0.12)",
+    color: "#c2410c",
+    border: "rgba(249, 115, 22, 0.16)",
+  },
+  "social-proof": {
+    background: "rgba(14, 165, 233, 0.12)",
+    color: "#0369a1",
+    border: "rgba(14, 165, 233, 0.16)",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -193,52 +226,114 @@ const BlockLibraryCard = React.memo<BlockLibraryCardProps>(
         elevation={3}
         onClick={handleClick}
         sx={{
-          mb: 1,
+          mb: 1.2,
           cursor: "pointer",
-          border: "1px solid",
-          borderColor: "transparent",
-          transition: "all 150ms ease",
+          borderRadius: 3.5,
+          border: "1px solid rgba(148,163,184,0.16)",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%)",
+          boxShadow:
+            "0 12px 30px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.92)",
+          transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
           "&:hover": {
-            elevation: 6,
-            borderColor: "primary.main",
-            transform: "scale(1.02)",
+            borderColor: "rgba(36,72,74,0.24)",
+            boxShadow:
+              "0 18px 36px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.92)",
+            transform: "translateY(-2px)",
           },
           ...dragStyle,
         }}
         {...attributes}
         {...listeners}
       >
-        <CardContent sx={{ pb: 0, pt: 1.5, px: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-            <GridOnIcon sx={{ fontSize: 20, color: "text.secondary" }} />
+        <CardContent sx={{ pb: 0.5, pt: 1.8, px: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <Box
+              sx={{
+                width: 38,
+                height: 38,
+                borderRadius: 2.75,
+                display: "grid",
+                placeItems: "center",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(241,245,249,0.98) 100%)",
+                border: "1px solid rgba(226,232,240,0.95)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.92)",
+              }}
+            >
+              <GridOnIcon sx={{ fontSize: 18, color: "#64748b" }} />
+            </Box>
             <Typography
               variant="body2"
               fontWeight="bold"
-              sx={{ color: "text.primary", flex: 1 }}
+              sx={{
+                color: "#1f2937",
+                flex: 1,
+                fontSize: "0.98rem",
+                lineHeight: 1.25,
+              }}
             >
               {block.label}
             </Typography>
             <Chip
               label={block.category}
               size="small"
-              color={CATEGORY_COLOR[block.category] || "default"}
-              sx={{ fontSize: "0.65rem", height: 18 }}
+              sx={{
+                height: 24,
+                borderRadius: 999,
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                textTransform: "lowercase",
+                backgroundColor:
+                  CATEGORY_STYLES[block.category]?.background ||
+                  "rgba(15,23,42,0.06)",
+                color:
+                  CATEGORY_STYLES[block.category]?.color || "#4b5563",
+                border: `1px solid ${
+                  CATEGORY_STYLES[block.category]?.border ||
+                  "rgba(148,163,184,0.14)"
+                }`,
+                "& .MuiChip-label": {
+                  px: 1,
+                },
+              }}
             />
           </Box>
           <Typography
             variant="caption"
-            sx={{ color: "text.secondary", display: "block", lineHeight: 1.4 }}
+            sx={{
+              color: "#64748b",
+              display: "block",
+              lineHeight: 1.55,
+              fontSize: "0.76rem",
+              minHeight: 34,
+            }}
           >
             {block.description}
           </Typography>
         </CardContent>
-        <CardActions sx={{ pt: 0.5, px: 2, pb: 1 }}>
+        <CardActions sx={{ pt: 0.6, px: 2, pb: 1.6 }}>
           <Button
             size="small"
             startIcon={<AddIcon />}
             onClick={handleAdd}
-            variant="contained"
-            sx={{ fontSize: "0.7rem", px: 1, py: 0.25, minWidth: 0 }}
+            variant="outlined"
+            sx={{
+              minWidth: 0,
+              px: 1.35,
+              py: 0.45,
+              borderRadius: 2.25,
+              borderColor: "rgba(148,163,184,0.24)",
+              backgroundColor: "#fffef8",
+              color: "#1f2937",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
+              "&:hover": {
+                borderColor: "rgba(36,72,74,0.24)",
+                backgroundColor: "#ffffff",
+              },
+            }}
             aria-label={`Add ${block.label} to page`}
           >
             Add
@@ -256,8 +351,19 @@ BlockLibraryCard.displayName = "BlockLibraryCard";
 // ---------------------------------------------------------------------------
 
 const SkeletonCard: React.FC = () => (
-  <Card elevation={1} sx={{ mb: 1 }}>
-    <CardContent>
+  <Card
+    elevation={0}
+    sx={{
+      mb: 1.2,
+      borderRadius: 3.5,
+      border: "1px solid rgba(148,163,184,0.16)",
+      background:
+        "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%)",
+      boxShadow:
+        "0 12px 30px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.92)",
+    }}
+  >
+    <CardContent sx={{ pt: 1.8, px: 2 }}>
       <Skeleton variant="text" width="60%" height={20} />
       <Skeleton variant="text" width="90%" height={16} />
     </CardContent>
@@ -376,6 +482,8 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   onClose,
   pageId,
   blocks,
+  extraBlocks = [],
+  preferredInsertPosition,
   onInsertBlock,
   onInsertFromTemplate,
   closeAfterInsert = false,
@@ -409,6 +517,13 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
 
   // Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const mergedBlockTypes = useMemo(() => {
+    const extras = extraBlocks.filter(
+      (extra) => !blockTypes.some((block) => block.key === extra.key),
+    );
+    return [...extras, ...blockTypes];
+  }, [blockTypes, extraBlocks]);
 
   // Fetch block types on mount
   useEffect(() => {
@@ -471,9 +586,16 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
     };
   }, [activeCategory, open]);
 
+  useEffect(() => {
+    if (!open || preferredInsertPosition === undefined) {
+      return;
+    }
+    setInsertPosition(preferredInsertPosition);
+  }, [open, preferredInsertPosition]);
+
   // Filtered block types
   const filteredBlocks = useMemo(() => {
-    let list = blockTypes;
+    let list = mergedBlockTypes;
 
     if (activeCategory !== "all" && activeCategory !== "my-templates") {
       list = list.filter((b) => b.category === activeCategory);
@@ -490,7 +612,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
     }
 
     return list;
-  }, [blockTypes, activeCategory, searchQuery]);
+  }, [mergedBlockTypes, activeCategory, searchQuery]);
 
   const handleCategoryChange = useCallback(
     (_: React.SyntheticEvent, value: string) => {
@@ -509,7 +631,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
 
   const handleAddToPage = useCallback(
     (blockKey: string) => {
-      const blockDef = blockTypes.find((b) => b.key === blockKey);
+      const blockDef = mergedBlockTypes.find((b) => b.key === blockKey);
       onInsertBlock(blockKey, insertPosition);
       const label = blockDef?.label || blockKey;
       setToastMessage(`${label} block added`);
@@ -520,7 +642,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
       if (closeAfterInsert) onClose();
     },
     [
-      blockTypes,
+      mergedBlockTypes,
       onInsertBlock,
       insertPosition,
       historyPush,
@@ -615,28 +737,37 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   ];
 
   return (
-    <Drawer
+      <Drawer
       anchor="left"
       open={open}
       onClose={onClose}
       PaperProps={{
-        sx: { width: 320, display: "flex", flexDirection: "column" },
+        sx: {
+          width: 336,
+          display: "flex",
+          flexDirection: "column",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(247,250,252,0.98) 100%)",
+          borderRight: "1px solid rgba(148,163,184,0.16)",
+          boxShadow: "24px 0 60px rgba(15,23,42,0.12)",
+        },
       }}
     >
       {/* Header */}
       <Box
         sx={{
           px: 2,
-          pt: 2,
-          pb: 1,
+          pt: 2.2,
+          pb: 1.4,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          borderBottom: "1px solid rgba(148,163,184,0.12)",
         }}
       >
         <Typography
           variant="h6"
-          sx={{ color: "text.primary", fontWeight: 700 }}
+          sx={{ color: "#1f2937", fontWeight: 800, letterSpacing: "-0.02em" }}
         >
           Block Library
         </Typography>
@@ -644,13 +775,20 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
           onClick={onClose}
           aria-label="Close block library"
           size="small"
+          sx={{
+            width: 36,
+            height: 36,
+            border: "1px solid rgba(148,163,184,0.16)",
+            backgroundColor: "rgba(255,255,255,0.8)",
+            color: "#6b7280",
+          }}
         >
           <CloseIcon />
         </IconButton>
       </Box>
 
       {/* Search */}
-      <Box sx={{ px: 2, pb: 1 }}>
+      <Box sx={{ px: 2, pt: 1.1, pb: 1.2 }}>
         <TextField
           size="small"
           fullWidth
@@ -664,6 +802,26 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
               </InputAdornment>
             ),
           }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              height: 42,
+              borderRadius: 2.75,
+              backgroundColor: "rgba(255,255,255,0.96)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.92)",
+              "& fieldset": {
+                borderColor: "rgba(148,163,184,0.18)",
+              },
+              "&:hover fieldset": {
+                borderColor: "rgba(36,72,74,0.22)",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: "rgba(36,72,74,0.28)",
+              },
+            },
+            "& .MuiInputBase-input": {
+              fontSize: "0.92rem",
+            },
+          }}
         />
       </Box>
 
@@ -673,22 +831,44 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
         onChange={handleCategoryChange}
         variant="scrollable"
         scrollButtons="auto"
-        sx={{ borderBottom: 1, borderColor: "divider", minHeight: 40 }}
+        sx={{
+          px: 1.3,
+          minHeight: 42,
+          borderBottom: "1px solid rgba(148,163,184,0.12)",
+          "& .MuiTabs-indicator": {
+            height: 2,
+            borderRadius: 999,
+            backgroundColor: "#24484a",
+          },
+          "& .MuiTab-root": {
+            minHeight: 42,
+            px: 1.3,
+            fontSize: "0.74rem",
+            fontWeight: 700,
+            color: "#94a3b8",
+            textTransform: "none",
+          },
+          "& .Mui-selected": {
+            color: "#1f2937 !important",
+          },
+        }}
       >
         {CATEGORIES.map((cat) => (
           <Tab
             key={cat.key}
             value={cat.key}
             label={cat.label}
-            sx={{ minHeight: 40, fontSize: "0.75rem", textTransform: "none" }}
           />
         ))}
       </Tabs>
 
       {/* Position Picker */}
-      <Box sx={{ px: 2, pt: 1 }}>
+      <Box sx={{ px: 2, pt: 1.4 }}>
         <FormControl size="small" fullWidth>
-          <InputLabel id="position-label" sx={{ fontSize: "0.75rem" }}>
+          <InputLabel
+            id="position-label"
+            sx={{ fontSize: "0.78rem", fontWeight: 600 }}
+          >
             Insert Position
           </InputLabel>
           <Select
@@ -698,7 +878,14 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
             onChange={(e) =>
               setInsertPosition(e.target.value as "end" | "beginning" | number)
             }
-            sx={{ fontSize: "0.75rem" }}
+            sx={{
+              fontSize: "0.82rem",
+              borderRadius: 2.75,
+              backgroundColor: "rgba(255,255,255,0.96)",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(148,163,184,0.18)",
+              },
+            }}
           >
             {positionOptions.map((opt) => (
               <MenuItem
@@ -714,10 +901,33 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
       </Box>
 
       {/* Content */}
-      <Box sx={{ flex: 1, overflow: "auto", px: 2, pt: 1, pb: 2 }}>
+      <Box
+        sx={{
+          flex: 1,
+          overflow: "auto",
+          px: 2,
+          pt: 1.5,
+          pb: 2,
+          "&::-webkit-scrollbar": {
+            width: 8,
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "rgba(148,163,184,0.36)",
+            borderRadius: 999,
+          },
+        }}
+      >
         {/* Toast */}
         {toastMessage && (
-          <Alert severity="success" sx={{ mb: 1, fontSize: "0.75rem" }}>
+          <Alert
+            severity="success"
+            sx={{
+              mb: 1.2,
+              fontSize: "0.78rem",
+              borderRadius: 2.5,
+              border: "1px solid rgba(34,197,94,0.14)",
+            }}
+          >
             {toastMessage}
           </Alert>
         )}

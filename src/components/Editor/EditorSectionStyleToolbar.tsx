@@ -20,21 +20,28 @@ import {
 import type { SxProps, Theme } from "@mui/material/styles";
 import {
   ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
+  Code2,
+  Copy,
   Eye,
   Image as ImageIcon,
   LayoutPanelTop,
   Palette,
   PaintBucket,
+  Plus,
   Settings2,
   Sparkles,
   Square,
+  Trash2,
   Upload,
   X,
 } from "lucide-react";
 import { apiClient } from "../../api/client";
+import {
+  normalizeSpacingValue,
+  rawSpacingNumberValue,
+  SPACING_OPTIONS,
+  SharedSpacingControls,
+} from "./sharedSpacingControls";
 
 export type EditorSectionStyle = {
   backgroundType?: "none" | "solid" | "gradient" | "image";
@@ -62,7 +69,16 @@ export type EditorSectionStyle = {
   showOnDesktop?: boolean;
   showOnTablet?: boolean;
   showOnMobile?: boolean;
-  entranceAnimation?: "none" | "fadeUp" | "fadeIn" | "zoomIn";
+  entranceAnimation?:
+    | "none"
+    | "fadeUp"
+    | "fadeDown"
+    | "fadeLeft"
+    | "fadeRight"
+    | "fadeIn"
+    | "zoomIn"
+    | "zoomOut"
+    | "blurIn";
   layoutDirection?: "row" | "column" | "";
   layoutGap?: string;
   overflowMode?: "visible" | "hidden" | "auto" | "scroll" | "";
@@ -76,6 +92,9 @@ export type EditorSectionStyle = {
   cssClass?: string;
   anchorId?: string;
   zIndex?: string;
+  semanticTag?: "div" | "section" | "article" | "main" | "aside" | "header" | "footer" | "nav" | "span";
+  customCss?: string;
+  dataAttributes?: Array<{ key: string; value: string }>;
   paddingTop?: string;
   paddingBottom?: string;
   paddingLeft?: string;
@@ -100,30 +119,6 @@ type Props = {
   layout?: "inline" | "panel";
 };
 
-const SPACING_OPTIONS = ["0px", "16px", "24px", "32px", "48px", "64px", "96px"];
-const SPACING_GROUPS = [
-  {
-    key: "padding",
-    label: "Padding",
-    fields: [
-      ["paddingTop", "Top", ArrowUp],
-      ["paddingBottom", "Bottom", ArrowDown],
-      ["paddingLeft", "Left", ArrowLeft],
-      ["paddingRight", "Right", ArrowRight],
-    ],
-  },
-  {
-    key: "margin",
-    label: "Margin",
-    fields: [
-      ["marginTop", "Top", ArrowUp],
-      ["marginBottom", "Bottom", ArrowDown],
-      ["marginLeft", "Left", ArrowLeft],
-      ["marginRight", "Right", ArrowRight],
-    ],
-  },
-] as const;
-
 const BRAND_COLOR_SWATCHES = [
   "#ffffff",
   "#f8fafc",
@@ -142,19 +137,6 @@ const getSwatchBackground = (swatch: string) =>
     ? "linear-gradient(135deg, transparent 46%, #ef4444 47%, #ef4444 53%, transparent 54%), #ffffff"
     : swatch;
 
-const normalizeSpacingValue = (value: string | undefined) => {
-  if (!value) return "0px";
-  const trimmed = String(value).trim();
-  return /^\d+px$/i.test(trimmed) ? trimmed.toLowerCase() : "0px";
-};
-
-const spacingNumberValue = (value: string | undefined) =>
-  normalizeSpacingValue(value).replace("px", "");
-const rawSpacingNumberValue = (value: string | undefined) => {
-  if (!value) return "";
-  const trimmed = String(value).trim();
-  return /^\d+px$/i.test(trimmed) ? trimmed.replace(/px$/i, "") : "";
-};
 const LAYOUT_WIDTH_OPTIONS = [
   { value: "page", label: "Page" },
   { value: "full", label: "Full" },
@@ -189,8 +171,13 @@ const RADIUS_OPTIONS = ["0px", "4px", "8px", "16px"] as const;
 const ENTRANCE_ANIMATION_OPTIONS = [
   { value: "none", label: "None" },
   { value: "fadeUp", label: "Fade Up" },
+  { value: "fadeDown", label: "Fade Down" },
+  { value: "fadeLeft", label: "Fade Left" },
+  { value: "fadeRight", label: "Fade Right" },
   { value: "fadeIn", label: "Fade In" },
   { value: "zoomIn", label: "Zoom In" },
+  { value: "zoomOut", label: "Zoom Out" },
+  { value: "blurIn", label: "Blur In" },
 ] as const;
 const LAYOUT_DIRECTION_OPTIONS = [
   { value: "row", label: "Row" },
@@ -207,6 +194,17 @@ const POSITION_OPTIONS = [
   { value: "relative", label: "Relative" },
   { value: "sticky", label: "Sticky" },
   { value: "absolute", label: "Absolute" },
+] as const;
+const SEMANTIC_TAG_OPTIONS = [
+  "div",
+  "section",
+  "article",
+  "main",
+  "aside",
+  "header",
+  "footer",
+  "nav",
+  "span",
 ] as const;
 
 const EditorSectionStyleToolbar: React.FC<Props> = ({
@@ -270,154 +268,21 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
     }
   };
 
-  const renderSpacingField = (
-    styleKey: keyof EditorSectionStyle,
-    label: string,
-    Icon: React.ComponentType<{ size?: number; color?: string }>,
+  const dataAttributes = Array.isArray(resolvedValue.dataAttributes)
+    ? resolvedValue.dataAttributes
+    : [];
+
+  const handleDataAttributeChange = (
+    index: number,
+    field: "key" | "value",
+    nextValue: string,
   ) => {
-    const resolvedSpacingValue = normalizeSpacingValue(
-      resolvedValue[styleKey] as string | undefined,
+    const nextAttributes = dataAttributes.map((attribute, currentIndex) =>
+      currentIndex === index
+        ? { ...attribute, [field]: nextValue }
+        : attribute,
     );
-
-    return (
-      <Box
-        key={String(styleKey)}
-        sx={{
-          p: 1,
-          borderRadius: 2.5,
-          border: "1px solid rgba(226,232,240,0.95)",
-          backgroundColor: "#ffffff",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.92)",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, mb: 0.85 }}>
-          <Icon size={13} color="#64748b" />
-          <Typography
-            sx={{
-              fontSize: "0.76rem",
-              fontWeight: 800,
-              color: "#0f172a",
-              letterSpacing: "0.01em",
-              textTransform: "uppercase",
-            }}
-          >
-            {label}
-          </Typography>
-        </Box>
-
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            flexWrap: "nowrap",
-            gap: 0.75,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.45,
-              flexWrap: "nowrap",
-              minWidth: 0,
-              flexShrink: 0,
-            }}
-          >
-            {SPACING_OPTIONS.slice(0, 4).map((spacing) => {
-              const active = resolvedSpacingValue === spacing;
-
-              return (
-                <ButtonBase
-                  key={`${String(styleKey)}-${spacing}`}
-                  disabled={effectiveDisabled}
-                  onClick={() => onStyleChange({ [styleKey]: spacing })}
-                  sx={{
-                    minWidth: "28px !important",
-                    height: 28,
-                    px: 0.7,
-                    flexShrink: 0,
-                    borderRadius: 999,
-                    border: active
-                      ? "1px solid rgba(59,130,246,0.22)"
-                      : "1px solid rgba(203,213,225,0.95)",
-                    background: active ? "black" : "white",
-                    color: active ? "#ffffff" : "#64748b",
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                  }}
-                >
-                  {spacing.replace("px", "")}
-                </ButtonBase>
-              );
-            })}
-          </Box>
-
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.55,
-              ml: "0px",
-              flexShrink: 0,
-              width: "20%",
-            }}
-          >
-            <TextField
-              size="small"
-              disabled={effectiveDisabled}
-              value={rawSpacingNumberValue(
-                resolvedValue[styleKey] as string | undefined,
-              )}
-              onChange={(event) => {
-                const nextValue = event.target.value.replace(/[^\d]/g, "");
-                onStyleChange({
-                  [styleKey]: nextValue ? `${nextValue}px` : "",
-                });
-              }}
-              placeholder="0"
-              inputProps={{
-                inputMode: "numeric",
-                pattern: "[0-9]*",
-              }}
-              sx={{
-                width: 56,
-                flexShrink: 0,
-                "& .MuiOutlinedInput-root": {
-                  height: 34,
-                  borderRadius: 2,
-                  backgroundColor: "#ffffff",
-                },
-                "& .MuiOutlinedInput-input": {
-                  px: 1.2,
-                  fontSize: "0.86rem",
-                  fontWeight: 600,
-                },
-              }}
-            />
-            <Box
-              sx={{
-                minWidth: 34,
-                height: 34,
-                px: 0.8,
-                borderRadius: 2,
-                border: "1px solid rgba(226,232,240,0.95)",
-                backgroundColor: "#f8fafc",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Typography
-                sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748b" }}
-              >
-                px
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-    );
+    onStyleChange({ dataAttributes: nextAttributes });
   };
 
   const renderHeightControl = () => {
@@ -1080,46 +945,11 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
             }),
         )}
 
-        {SPACING_GROUPS.map((group) => (
-          <Box
-            key={group.key}
-            sx={{
-              p: 1.1,
-              borderRadius: 3,
-              border: "1px solid rgba(148,163,184,0.16)",
-              background:
-                "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.94) 100%)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.88)",
-            }}
-          >
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 0.7, mb: 1 }}
-            >
-              <LayoutPanelTop size={14} color="#475569" />
-              <Typography
-                sx={{
-                  fontSize: "0.86rem",
-                  fontWeight: 800,
-                  color: "#111827",
-                }}
-              >
-                {group.label}
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "minmax(0, 1fr)",
-                gap: 0.8,
-              }}
-            >
-              {group.fields.map(([styleKey, label, Icon]) =>
-                renderSpacingField(styleKey, label, Icon),
-              )}
-            </Box>
-          </Box>
-        ))}
+        <SharedSpacingControls
+          disabled={effectiveDisabled}
+          value={resolvedValue}
+          onChange={onStyleChange}
+        />
 
         {renderAccordionPanel(
           "border",
@@ -2036,6 +1866,38 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
           <Settings2 size={15} />,
           <>
             {renderPanelRow(
+              "Tag",
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                {SEMANTIC_TAG_OPTIONS.map((tagName) => {
+                  const active =
+                    (resolvedValue.semanticTag || "div") === tagName;
+
+                  return (
+                    <ButtonBase
+                      key={tagName}
+                      disabled={effectiveDisabled}
+                      onClick={() => onStyleChange({ semanticTag: tagName })}
+                      sx={{
+                        px: 1.05,
+                        height: 32,
+                        borderRadius: 2,
+                        border: active
+                          ? "1px solid rgba(15,23,42,0.16)"
+                          : "1px solid rgba(226,232,240,0.95)",
+                        backgroundColor: active ? "#0f172a" : "#ffffff",
+                        color: active ? "#ffffff" : "#64748b",
+                        fontSize: "0.76rem",
+                        fontWeight: 700,
+                        fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
+                      }}
+                    >
+                      {`<${tagName}>`}
+                    </ButtonBase>
+                  );
+                })}
+              </Box>,
+            )}
+            {renderPanelRow(
               "CSS Class",
               <TextField
                 size="small"
@@ -2053,6 +1915,204 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
                   },
                 }}
               />,
+            )}
+            {renderPanelRow(
+              "Custom CSS",
+              <Box sx={{ display: "grid", gap: 0.9 }}>
+                <Box
+                  sx={{
+                    border: "1px solid rgba(226,232,240,0.95)",
+                    borderRadius: 2.5,
+                    backgroundColor: "#ffffff",
+                    overflow: "hidden",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      px: 1,
+                      py: 0.8,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      borderBottom: "1px solid rgba(226,232,240,0.85)",
+                      backgroundColor: "#f8fafc",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.7 }}>
+                      <Code2 size={13} color="#94a3b8" />
+                      <Typography
+                        sx={{
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          color: "#94a3b8",
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Custom CSS
+                      </Typography>
+                    </Box>
+                    <ButtonBase
+                      disabled={effectiveDisabled}
+                      onClick={() =>
+                        navigator?.clipboard?.writeText(
+                          resolvedValue.customCss || "",
+                        )
+                      }
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        color: "#64748b",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      <Copy size={12} />
+                      Copy
+                    </ButtonBase>
+                  </Box>
+                  <TextField
+                    multiline
+                    minRows={5}
+                    disabled={effectiveDisabled}
+                    value={resolvedValue.customCss || ""}
+                    onChange={(event) =>
+                      onStyleChange({ customCss: event.target.value })
+                    }
+                    placeholder={"color: red;\nfont-size: 16px;"}
+                    sx={{
+                      width: "100%",
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 0,
+                        backgroundColor: "#ffffff",
+                        alignItems: "stretch",
+                        "& fieldset": { border: "none" },
+                      },
+                      "& .MuiInputBase-inputMultiline": {
+                        fontFamily:
+                          '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
+                        fontSize: "0.82rem",
+                        lineHeight: 1.7,
+                        color: "#475569",
+                        p: 1.2,
+                      },
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      px: 1,
+                      py: 0.75,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      borderTop: "1px solid rgba(226,232,240,0.85)",
+                      backgroundColor: "#f8fafc",
+                    }}
+                  >
+                    <Typography sx={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                      Applied inside section selector
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                      {`${(resolvedValue.customCss || "")
+                        .split(";")
+                        .map((rule) => rule.trim())
+                        .filter(Boolean).length} rules`}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>,
+            )}
+            {renderPanelRow(
+              "Data Attributes",
+              <Box sx={{ display: "grid", gap: 0.8 }}>
+                {dataAttributes.map((attribute, index) => (
+                  <Box
+                    key={`data-attribute-${index}`}
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr auto",
+                      gap: 0.75,
+                      alignItems: "center",
+                    }}
+                  >
+                    <TextField
+                      size="small"
+                      disabled={effectiveDisabled}
+                      value={attribute.key || ""}
+                      onChange={(event) =>
+                        handleDataAttributeChange(index, "key", event.target.value)
+                      }
+                      placeholder="data-key"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: 36,
+                          borderRadius: 2,
+                          backgroundColor: "#fff",
+                        },
+                      }}
+                    />
+                    <TextField
+                      size="small"
+                      disabled={effectiveDisabled}
+                      value={attribute.value || ""}
+                      onChange={(event) =>
+                        handleDataAttributeChange(index, "value", event.target.value)
+                      }
+                      placeholder="value"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: 36,
+                          borderRadius: 2,
+                          backgroundColor: "#fff",
+                        },
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      disabled={effectiveDisabled}
+                      onClick={() =>
+                        onStyleChange({
+                          dataAttributes: dataAttributes.filter(
+                            (_, currentIndex) => currentIndex !== index,
+                          ),
+                        })
+                      }
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        border: "1px solid rgba(226,232,240,0.95)",
+                        borderRadius: 2,
+                        color: "#94a3b8",
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </IconButton>
+                  </Box>
+                ))}
+                <ButtonBase
+                  disabled={effectiveDisabled}
+                  onClick={() =>
+                    onStyleChange({
+                      dataAttributes: [
+                        ...dataAttributes,
+                        { key: "", value: "" },
+                      ],
+                    })
+                  }
+                  sx={{
+                    justifyContent: "flex-start",
+                    gap: 0.55,
+                    px: 0.1,
+                    color: "#64748b",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                  }}
+                >
+                  <Plus size={13} />
+                  Add attribute
+                </ButtonBase>
+              </Box>,
             )}
             {renderPanelRow(
               "Anchor ID",

@@ -54,6 +54,9 @@ function toAbsoluteUrl(value) {
   if (trimmed.startsWith('/')) {
     return `${window.location.origin}${trimmed}`;
   }
+  if (/^uploads\//i.test(trimmed)) {
+    return `${window.location.origin}/${trimmed}`;
+  }
   return trimmed;
 }
 

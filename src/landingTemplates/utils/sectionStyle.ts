@@ -23,7 +23,16 @@ export type SectionStyleValue = {
   showOnDesktop?: boolean;
   showOnTablet?: boolean;
   showOnMobile?: boolean;
-  entranceAnimation?: "none" | "fadeUp" | "fadeIn" | "zoomIn";
+  entranceAnimation?:
+    | "none"
+    | "fadeUp"
+    | "fadeDown"
+    | "fadeLeft"
+    | "fadeRight"
+    | "fadeIn"
+    | "zoomIn"
+    | "zoomOut"
+    | "blurIn";
   layoutDirection?: "row" | "column" | "";
   layoutGap?: string | number;
   overflowMode?: "visible" | "hidden" | "auto" | "scroll" | "";
@@ -35,6 +44,18 @@ export type SectionStyleValue = {
   stickySection?: boolean;
   stickyOffset?: string | number;
   cssClass?: string;
+  customCss?: string;
+  semanticTag?:
+    | "div"
+    | "section"
+    | "article"
+    | "main"
+    | "aside"
+    | "header"
+    | "footer"
+    | "nav"
+    | "span";
+  dataAttributes?: Array<{ key?: string; value?: string }>;
   anchorId?: string;
   zIndex?: string | number;
   paddingTop?: string | number;
@@ -48,6 +69,36 @@ export type SectionStyleValue = {
   width?: string | number;
   height?: string | number;
   transform?: string;
+};
+
+const toCamelCase = (value: string) =>
+  value.replace(/-([a-z])/g, (_, char: string) => char.toUpperCase());
+
+const normalizeCssProperty = (value: string) => value.trim().toLowerCase();
+
+const parseCustomCssDeclarations = (
+  customCss: string | undefined,
+): Record<string, string> => {
+  if (!customCss || typeof customCss !== "string") {
+    return {};
+  }
+
+  const declarations: Record<string, string> = {};
+
+  customCss
+    .split(";")
+    .map((rule) => rule.trim())
+    .filter(Boolean)
+    .forEach((rule) => {
+      const separatorIndex = rule.indexOf(":");
+      if (separatorIndex === -1) return;
+      const property = normalizeCssProperty(rule.slice(0, separatorIndex));
+      const value = rule.slice(separatorIndex + 1).trim();
+      if (!property || !value) return;
+      declarations[toCamelCase(property)] = value;
+    });
+
+  return declarations;
 };
 
 type ContentLike = Record<string, unknown> | null | undefined;
@@ -82,6 +133,33 @@ export const getSectionStyleDomProps = (
     sectionStyle.cssClass.trim()
   ) {
     props.className = sectionStyle.cssClass.trim();
+  }
+  if (
+    typeof sectionStyle.semanticTag === "string" &&
+    sectionStyle.semanticTag.trim()
+  ) {
+    props.component = sectionStyle.semanticTag.trim();
+  }
+  if (Array.isArray(sectionStyle.dataAttributes)) {
+    sectionStyle.dataAttributes.forEach((attribute) => {
+      const rawKey =
+        typeof attribute?.key === "string" ? attribute.key.trim() : "";
+      if (!rawKey) return;
+      const normalizedKey = rawKey
+        .replace(/^data-/i, "")
+        .replace(/[^a-zA-Z0-9_-]/g, "")
+        .toLowerCase();
+      if (!normalizedKey) return;
+      props[`data-${normalizedKey}`] =
+        typeof attribute?.value === "string" ? attribute.value : "";
+    });
+  }
+  if (
+    typeof sectionStyle.entranceAnimation === "string" &&
+    sectionStyle.entranceAnimation !== "none"
+  ) {
+    props["data-section-animation"] = sectionStyle.entranceAnimation;
+    props["data-section-animated"] = "false";
   }
 
   return props;
@@ -177,25 +255,39 @@ export const getSectionStyleSx = (
   if (sectionStyle.boxShadowPreset === "xl") {
     sx.boxShadow = "0 32px 64px rgba(15,23,42,0.22)";
   }
-  if (sectionStyle.entranceAnimation === "fadeUp") {
-    sx.animation = "sectionFadeUp 480ms ease both";
-    sx["@keyframes sectionFadeUp"] = {
-      from: { opacity: 0, transform: "translateY(18px)" },
-      to: { opacity: 1, transform: "translateY(0)" },
-    };
-  }
-  if (sectionStyle.entranceAnimation === "fadeIn") {
-    sx.animation = "sectionFadeIn 420ms ease both";
-    sx["@keyframes sectionFadeIn"] = {
-      from: { opacity: 0 },
-      to: { opacity: 1 },
-    };
-  }
-  if (sectionStyle.entranceAnimation === "zoomIn") {
-    sx.animation = "sectionZoomIn 420ms ease both";
-    sx["@keyframes sectionZoomIn"] = {
-      from: { opacity: 0, transform: "scale(0.96)" },
-      to: { opacity: 1, transform: "scale(1)" },
+  if (
+    typeof sectionStyle.entranceAnimation === "string" &&
+    sectionStyle.entranceAnimation !== "none"
+  ) {
+    sx.transition =
+      "opacity 560ms cubic-bezier(0.22, 1, 0.36, 1), transform 560ms cubic-bezier(0.22, 1, 0.36, 1), filter 560ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+    if (sectionStyle.entranceAnimation === "fadeUp") {
+      sx.transform = "translate3d(0, 30px, 0)";
+    }
+    if (sectionStyle.entranceAnimation === "fadeDown") {
+      sx.transform = "translate3d(0, -30px, 0)";
+    }
+    if (sectionStyle.entranceAnimation === "fadeLeft") {
+      sx.transform = "translate3d(-34px, 0, 0)";
+    }
+    if (sectionStyle.entranceAnimation === "fadeRight") {
+      sx.transform = "translate3d(34px, 0, 0)";
+    }
+    if (sectionStyle.entranceAnimation === "zoomIn") {
+      sx.transform = "scale(0.94)";
+    }
+    if (sectionStyle.entranceAnimation === "zoomOut") {
+      sx.transform = "scale(1.06)";
+    }
+    if (sectionStyle.entranceAnimation === "blurIn") {
+      sx.filter = "blur(10px)";
+      sx.transform = "translate3d(0, 18px, 0) scale(0.985)";
+    }
+
+    sx['&[data-section-animated="true"]'] = {
+      transform: "translate3d(0, 0, 0) scale(1)",
+      filter: "blur(0px)",
     };
   }
   if (sectionStyle.parallaxEnabled && sectionStyle.backgroundImageUrl) {
@@ -259,6 +351,7 @@ export const getSectionStyleSx = (
   if (sectionStyle.transform) {
     sx.transform = sectionStyle.transform;
   }
+  Object.assign(sx, parseCustomCssDeclarations(sectionStyle.customCss));
 
   return sx;
 };
