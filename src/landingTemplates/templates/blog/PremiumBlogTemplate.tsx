@@ -25,6 +25,10 @@ import type { TemplateProps } from "../../templateEngine/types";
 import type { BlogPost } from "../../types/BusinessData";
 import FadeIn from "../../blocks/FadeIn";
 import {
+  getEditableSectionProps,
+  getEditableTextProps,
+} from "../../utils/editableProps";
+import {
   getSectionStyleDomProps,
   getSectionStyleSx,
 } from "../../utils/sectionStyle";
@@ -311,9 +315,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
         <FadeIn delay={0.05}>
           <Box
             id="blog-home"
-            data-preview-section="true"
-            data-preview-label="Home"
-            data-preview-block-id={homeBlockId}
+            {...getEditableSectionProps(homeBlockId, "Home")}
             {...getSectionStyleDomProps(homeContent)}
             sx={{
               display: "grid",
@@ -325,9 +327,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <Typography
-              data-editable="heading"
-              data-edit-type="single"
-              data-block-id={homeBlockId}
+              {...getEditableTextProps(homeBlockId, "heading", "single")}
               sx={{
                 fontSize: { xs: "2.5rem", md: "4.2rem" },
                 lineHeight: 1.04,
@@ -344,9 +344,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
 
             <Box sx={{ maxWidth: 460, pt: { xs: 0, md: 1.2 } }}>
               <Typography
-                data-editable="description"
-                data-edit-type="multi"
-                data-block-id={homeBlockId}
+                {...getEditableTextProps(homeBlockId, "description", "multi")}
                 sx={{
                   color: "#667085",
                   lineHeight: 1.8,
@@ -369,9 +367,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{ cursor: "pointer", width: "fit-content" }}
               >
                 <Typography
-                  data-editable="ctaText"
-                  data-edit-type="single"
-                  data-block-id={homeBlockId}
+                  {...getEditableTextProps(homeBlockId, "ctaText", "single")}
                   sx={{
                     color: primary,
                     fontWeight: 700,
@@ -511,16 +507,12 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
         <FadeIn delay={0.12}>
           <Box
             id="blog-list"
-            data-preview-section="true"
-            data-preview-label="Articles"
-            data-preview-block-id={articlesBlockId}
+            {...getEditableSectionProps(articlesBlockId, "Articles")}
             {...getSectionStyleDomProps(articlesContent)}
             sx={{ pt: { xs: 4, md: 6 }, ...getSectionStyleSx(articlesContent) }}
           >
             <Typography
-              data-editable="heading"
-              data-edit-type="single"
-              data-block-id={articlesBlockId}
+              {...getEditableTextProps(articlesBlockId, "heading", "single")}
               sx={{
                 fontSize: { xs: "2rem", md: "3rem" },
                 fontWeight: 800,
@@ -638,9 +630,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
         <FadeIn delay={0.18}>
           <Box
             id="blog-about"
-            data-preview-section="true"
-            data-preview-label="About"
-            data-preview-block-id={aboutBlockId}
+            {...getEditableSectionProps(aboutBlockId, "About")}
             {...getSectionStyleDomProps(aboutContent)}
             sx={{
               pt: { xs: 7, md: 10 },
@@ -661,9 +651,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 }}
               >
                 <Typography
-                  data-editable="heading"
-                  data-edit-type="single"
-                  data-block-id={aboutBlockId}
+                  {...getEditableTextProps(aboutBlockId, "heading", "single")}
                   sx={{
                     fontSize: { xs: "2.1rem", md: "3.2rem" },
                     lineHeight: 1.08,
@@ -674,9 +662,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {aboutHeading}
                 </Typography>
                 <Typography
-                  data-editable="description"
-                  data-edit-type="multi"
-                  data-block-id={aboutBlockId}
+                  {...getEditableTextProps(aboutBlockId, "description", "multi")}
                   sx={{
                     color: "#667085",
                     lineHeight: 1.8,

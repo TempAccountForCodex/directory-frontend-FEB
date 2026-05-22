@@ -4,6 +4,10 @@ import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
 import {
+  getEditableSectionProps,
+  getEditableTextProps,
+} from "../../utils/editableProps";
+import {
   getSectionStyleDomProps,
   getSectionStyleSx,
 } from "../../utils/sectionStyle";
@@ -68,6 +72,24 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
   const contactDescription =
     contactContent.description ||
     "Occasional updates about projects, spaces, and the studio's latest work.";
+  const navItems = [
+    {
+      label: homeContent.navLabels?.studio || "Studio",
+      href: "#studio",
+      fieldPath: "navLabels.studio",
+    },
+    {
+      label: homeContent.navLabels?.projects || "Projects",
+      href: "#projects",
+      fieldPath: "navLabels.projects",
+    },
+    {
+      label: homeContent.navLabels?.contact || "Contact",
+      href: "#contact",
+      fieldPath: "navLabels.contact",
+    },
+  ];
+  const infoLabel = homeContent.navLabels?.info || "Info";
   const homeBlockId = homeContent.blockId;
   const aboutBlockId = aboutContent.blockId || featuresContent.blockId;
   const contactBlockId = contactContent.blockId;
@@ -138,16 +160,17 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                 letterSpacing: "0.08em",
               }}
             >
-              {[
-                { label: "Studio", href: "#studio" },
-                { label: "Projects", href: "#projects" },
-                { label: "Contact", href: "#contact" },
-              ].map((item) => (
+              {navItems.map((item) => (
                 <Box
                   key={item.label}
                   component="button"
                   type="button"
                   onClick={() => scrollToSection(item.href.replace("#", ""))}
+                  {...getEditableTextProps(
+                    homeBlockId,
+                    item.fieldPath,
+                    "single",
+                  )}
                   sx={{
                     fontSize: "0.82rem",
                     color: "inherit",
@@ -169,6 +192,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               component="button"
               type="button"
               onClick={() => scrollToSection("contact")}
+              {...getEditableTextProps(homeBlockId, "navLabels.info", "single")}
               sx={{
                 fontSize: "0.9rem",
                 fontWeight: 700,
@@ -182,7 +206,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                 "&:hover": { opacity: 0.7 },
               }}
             >
-              Info
+              {infoLabel}
             </Box>
           </Box>
         </FadeIn>
@@ -190,9 +214,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
         <FadeIn>
           <Box
             id="projects"
-            data-preview-section="true"
-            data-preview-label="Projects"
-            data-preview-block-id={homeBlockId}
+            {...getEditableSectionProps(homeBlockId, "Projects")}
             {...getSectionStyleDomProps(homeContent)}
             sx={{
               position: "relative",
@@ -361,9 +383,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
 
         <Box
           id="studio"
-          data-preview-section="true"
-          data-preview-label="Studio"
-          data-preview-block-id={aboutBlockId}
+          {...getEditableSectionProps(aboutBlockId, "Studio")}
           {...getSectionStyleDomProps(aboutContent)}
           sx={{
             mt: { xs: 5, md: 8 },
@@ -411,6 +431,9 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <FadeIn key={service.title} delay={index * 0.08}>
                     <Box>
                       <Typography
+                        data-editable={`items.${index}.title`}
+                        data-edit-type="single"
+                        data-block-id={aboutBlockId}
                         sx={{
                           fontSize: "1.1rem",
                           fontWeight: 800,
@@ -420,6 +443,9 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                         {service.title}
                       </Typography>
                       <Typography
+                        data-editable={`items.${index}.description`}
+                        data-edit-type="multi"
+                        data-block-id={aboutBlockId}
                         sx={{ mt: 0.5, color: "#5f5f5f", lineHeight: 1.7 }}
                       >
                         {service.description}
@@ -446,9 +472,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="contact"
-        data-preview-section="true"
-        data-preview-label="Contact"
-        data-preview-block-id={contactBlockId}
+        {...getEditableSectionProps(contactBlockId, "Contact")}
         {...getSectionStyleDomProps(contactContent)}
         sx={{
           bgcolor: "#040404",

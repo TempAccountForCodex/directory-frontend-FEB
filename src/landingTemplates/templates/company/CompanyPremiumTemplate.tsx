@@ -14,6 +14,10 @@ import {
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
 import {
+  getEditableSectionProps,
+  getEditableTextProps,
+} from "../../utils/editableProps";
+import {
   getSectionStyleDomProps,
   getSectionStyleSx,
 } from "../../utils/sectionStyle";
@@ -104,29 +108,33 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
     Boolean(data.socialLinks?.[item.key as keyof typeof data.socialLinks]),
   );
 
-  const featuredCards = [
-    {
-      title: features[0]?.title || "Signature consulting",
-      description:
-        features[0]?.description ||
-        "Direction for spaces, launches, and client-facing brand experiences.",
-      image: data.gallery?.[0]?.url || editorialImages.collectionOne,
-    },
-    {
-      title: features[1]?.title || "Occasion styling",
-      description:
-        features[1]?.description ||
-        "Seasonal edits, event presentation, and premium styling with a soft editorial finish.",
-      image: data.gallery?.[1]?.url || editorialImages.collectionTwo,
-    },
-    {
-      title: features[2]?.title || "Custom installs",
-      description:
-        features[2]?.description ||
-        "Bespoke compositions and on-site finishing for hospitality, retail, and brand activations.",
-      image: data.gallery?.[2]?.url || editorialImages.collectionThree,
-    },
-  ];
+  const featuredCards = (
+    (aboutContent.featuredCards as
+      | Array<{ title?: string; description?: string; image?: string }>
+      | undefined) || [
+      {
+        title: features[0]?.title || "Signature consulting",
+        description:
+          features[0]?.description ||
+          "Direction for spaces, launches, and client-facing brand experiences.",
+        image: data.gallery?.[0]?.url || editorialImages.collectionOne,
+      },
+      {
+        title: features[1]?.title || "Occasion styling",
+        description:
+          features[1]?.description ||
+          "Seasonal edits, event presentation, and premium styling with a soft editorial finish.",
+        image: data.gallery?.[1]?.url || editorialImages.collectionTwo,
+      },
+      {
+        title: features[2]?.title || "Custom installs",
+        description:
+          features[2]?.description ||
+          "Bespoke compositions and on-site finishing for hospitality, retail, and brand activations.",
+        image: data.gallery?.[2]?.url || editorialImages.collectionThree,
+      },
+    ]
+  ).slice(0, 3);
 
   const serviceTiles = [
     {
@@ -160,10 +168,26 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
   };
 
   const navItems = [
-    { label: "About", id: "about" },
-    { label: "Services", id: "services" },
-    { label: "Work", id: "work" },
-    { label: "Contact", id: "contact" },
+    {
+      label: homeContent.navLabels?.about || "About",
+      id: "about",
+      fieldPath: "navLabels.about",
+    },
+    {
+      label: homeContent.navLabels?.services || "Services",
+      id: "services",
+      fieldPath: "navLabels.services",
+    },
+    {
+      label: homeContent.navLabels?.work || "Work",
+      id: "work",
+      fieldPath: "navLabels.work",
+    },
+    {
+      label: homeContent.navLabels?.contact || "Contact",
+      id: "contact",
+      fieldPath: "navLabels.contact",
+    },
   ];
 
   return (
@@ -210,6 +234,11 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   component="button"
                   type="button"
                   onClick={() => scrollToSection(item.id)}
+                  {...getEditableTextProps(
+                    homeBlockId,
+                    item.fieldPath,
+                    "single",
+                  )}
                   sx={{
                     border: 0,
                     background: "transparent",
@@ -242,6 +271,11 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               onClick={() => scrollToSection("contact")}
               variant="text"
               endIcon={<ArrowRight size={14} />}
+              {...getEditableTextProps(
+                homeBlockId,
+                "ctaSecondaryText",
+                "single",
+              )}
               sx={{
                 color: "#111",
                 fontFamily: sansFont,
@@ -252,7 +286,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 minWidth: 0,
               }}
             >
-              Book a consultation
+              {homeContent.ctaSecondaryText || "Book a consultation"}
             </Button>
           </Box>
         </FadeIn>
@@ -260,9 +294,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="about"
-        data-preview-section="true"
-        data-preview-label="Home"
-        data-preview-block-id={homeBlockId}
+        {...getEditableSectionProps(homeBlockId, "Home")}
         {...getSectionStyleDomProps(homeContent)}
         sx={{
           position: "relative",
@@ -296,6 +328,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <Box sx={{ maxWidth: 560 }}>
               <Typography
+                data-editable="eyebrowText"
+                data-edit-type="single"
+                data-block-id={homeBlockId}
                 sx={{
                   fontSize: "0.74rem",
                   letterSpacing: "0.24em",
@@ -304,7 +339,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mb: 2,
                 }}
               >
-                Premium company presentation
+                {homeContent.eyebrowText || "Premium company presentation"}
               </Typography>
               <Typography
                 data-editable="heading"
@@ -435,9 +470,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="work"
-        data-preview-section="true"
-        data-preview-label="Work"
-        data-preview-block-id={aboutBlockId}
+        {...getEditableSectionProps(aboutBlockId, "Work")}
         {...getSectionStyleDomProps(aboutContent)}
         sx={{
           maxWidth: 1280,
@@ -483,6 +516,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Button
               onClick={() => scrollToSection("contact")}
               variant="contained"
+              data-editable="ctaText"
+              data-edit-type="single"
+              data-block-id={aboutBlockId}
               sx={{
                 mt: 4,
                 borderRadius: 0,
@@ -501,7 +537,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 },
               }}
             >
-              Start a project
+              {aboutContent.ctaText || "Start a project"}
             </Button>
           </Box>
         </FadeIn>
@@ -529,11 +565,17 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 />
                 <Typography
+                  data-editable={`featuredCards.${index}.title`}
+                  data-edit-type="single"
+                  data-block-id={aboutBlockId}
                   sx={{ mt: 1.5, fontFamily: serifFont, fontSize: "1.35rem" }}
                 >
                   {card.title}
                 </Typography>
                 <Typography
+                  data-editable={`featuredCards.${index}.description`}
+                  data-edit-type="multi"
+                  data-block-id={aboutBlockId}
                   sx={{
                     mt: 0.75,
                     color: "rgba(20,20,20,0.7)",
@@ -549,9 +591,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
       </Box>
 
       <Box
-        data-preview-section="true"
-        data-preview-label="Gallery"
-        data-preview-block-id={galleryBlockId}
+        {...getEditableSectionProps(galleryBlockId, "Gallery")}
         {...getSectionStyleDomProps(galleryContent)}
         sx={{ bgcolor: secondary, ...getSectionStyleSx(galleryContent) }}
       >
@@ -584,6 +624,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           <FadeIn delay={0.08}>
             <Box>
               <Typography
+                data-editable="eyebrowText"
+                data-edit-type="single"
+                data-block-id={galleryBlockId}
                 sx={{
                   fontSize: "0.74rem",
                   letterSpacing: "0.22em",
@@ -591,7 +634,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   color: "rgba(20,20,20,0.58)",
                 }}
               >
-                Brand occasions
+                {galleryContent.eyebrowText || "Brand occasions"}
               </Typography>
               <Typography
                 data-editable="heading"
@@ -639,9 +682,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="services"
-        data-preview-section="true"
-        data-preview-label="Services"
-        data-preview-block-id={servicesBlockId}
+        {...getEditableSectionProps(servicesBlockId, "Services")}
         {...getSectionStyleDomProps(
           testimonialsContent.blockId ? testimonialsContent : featuresContent,
         )}
@@ -739,9 +780,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box
         id="contact"
-        data-preview-section="true"
-        data-preview-label="Contact"
-        data-preview-block-id={contactBlockId}
+        {...getEditableSectionProps(contactBlockId, "Contact")}
         {...getSectionStyleDomProps(contactContent)}
         sx={{
           bgcolor: "#e4ded2",

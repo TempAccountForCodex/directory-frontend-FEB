@@ -118,6 +118,7 @@ export interface BlockLibraryProps {
   closeAfterInsert?: boolean;
   currentUserRole?: string;
   historyPush?: (state: unknown, description: string) => void;
+  onBlockDragChange?: (block: BlockLibraryItem | null) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,10 +189,11 @@ interface BlockLibraryCardProps {
   block: BlockLibraryItem;
   onAddToPage: (blockKey: string) => void;
   onPreview: (block: BlockLibraryItem) => void;
+  onDragStateChange?: (block: BlockLibraryItem | null) => void;
 }
 
 const BlockLibraryCard = React.memo<BlockLibraryCardProps>(
-  ({ block, onAddToPage, onPreview }) => {
+  ({ block, onAddToPage, onPreview, onDragStateChange }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } =
       useDraggable({
         id: `library-${block.key}`,
@@ -210,6 +212,22 @@ const BlockLibraryCard = React.memo<BlockLibraryCardProps>(
       onPreview(block);
     }, [onPreview, block]);
 
+    const handleDragStart = useCallback(
+      (event: React.DragEvent) => {
+        event.dataTransfer.effectAllowed = "copy";
+        event.dataTransfer.setData(
+          "application/x-techietribe-block",
+          block.key,
+        );
+        onDragStateChange?.(block);
+      },
+      [block, onDragStateChange],
+    );
+
+    const handleDragEnd = useCallback(() => {
+      onDragStateChange?.(null);
+    }, [onDragStateChange]);
+
     const dragStyle: React.CSSProperties = transform
       ? {
           transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -223,8 +241,11 @@ const BlockLibraryCard = React.memo<BlockLibraryCardProps>(
     return (
       <Card
         ref={setNodeRef}
+        draggable
         elevation={3}
         onClick={handleClick}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
         sx={{
           mb: 1.2,
           cursor: "pointer",
@@ -489,6 +510,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   closeAfterInsert = false,
   currentUserRole,
   historyPush,
+  onBlockDragChange,
 }) {
   const [blockTypes, setBlockTypes] = useState<BlockLibraryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -592,6 +614,12 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
     }
     setInsertPosition(preferredInsertPosition);
   }, [open, preferredInsertPosition]);
+
+  useEffect(() => {
+    if (!open) {
+      onBlockDragChange?.(null);
+    }
+  }, [open, onBlockDragChange]);
 
   // Filtered block types
   const filteredBlocks = useMemo(() => {
@@ -1000,12 +1028,13 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
             {!loading &&
               !error &&
               filteredBlocks.map((block) => (
-                <BlockLibraryCard
-                  key={block.key}
-                  block={block}
-                  onAddToPage={handleAddToPage}
-                  onPreview={handlePreviewBlock}
-                />
+                  <BlockLibraryCard
+                    key={block.key}
+                    block={block}
+                    onAddToPage={handleAddToPage}
+                    onPreview={handlePreviewBlock}
+                    onDragStateChange={onBlockDragChange}
+                  />
               ))}
           </>
         )}

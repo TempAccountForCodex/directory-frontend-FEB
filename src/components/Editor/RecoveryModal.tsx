@@ -153,7 +153,7 @@ const RecoveryModal: React.FC<RecoveryModalProps> = memo(
             <LinearProgress
               variant="determinate"
               value={progress}
-              color="warning"
+              color="error"
               sx={{ height: 4, borderRadius: 2 }}
             />
           </Box>

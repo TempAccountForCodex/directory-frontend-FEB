@@ -51,6 +51,9 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
+  Clipboard,
+  ClipboardPaste,
+  Copy,
   Eye,
   House,
   Image as ImageIcon,
@@ -59,7 +62,11 @@ import {
   Pencil,
   Plus,
   Redo2,
+  Scissors,
   Save,
+  Type,
+  MousePointerClick,
+  SeparatorHorizontal,
   Trash2,
   Undo2,
   Upload,
@@ -219,6 +226,58 @@ const DEFAULT_IMAGE_VALUE = {
   borderColor: "#e5e7eb",
 };
 
+const SECTION_INNER_BLOCK_LIBRARY = [
+  {
+    key: "heading",
+    label: "Heading",
+    description: "Add a section heading block.",
+    icon: Type,
+    category: "Text",
+  },
+  {
+    key: "text",
+    label: "Paragraph",
+    description: "Add a paragraph block inside this section.",
+    icon: Type,
+    category: "Text",
+  },
+  {
+    key: "eyebrow",
+    label: "Label",
+    description: "Add a small eyebrow or badge label.",
+    icon: Type,
+    category: "Text",
+  },
+  {
+    key: "image",
+    label: "Image",
+    description: "Add an image block inside this section.",
+    icon: ImageIcon,
+    category: "Media",
+  },
+  {
+    key: "button",
+    label: "Button",
+    description: "Add a call-to-action button.",
+    icon: MousePointerClick,
+    category: "Actions",
+  },
+  {
+    key: "divider",
+    label: "Line",
+    description: "Add a simple divider line.",
+    icon: SeparatorHorizontal,
+    category: "Layout",
+  },
+  {
+    key: "spacer",
+    label: "Spacer",
+    description: "Add vertical space between elements.",
+    icon: SeparatorHorizontal,
+    category: "Layout",
+  },
+];
+
 const getSectionStyleKey = (selection) => selection?.styleKey || "sectionStyle";
 
 const getEditableStyleConfig = (fieldPath) =>
@@ -226,6 +285,23 @@ const getEditableStyleConfig = (fieldPath) =>
     styleKey: `${fieldPath}Style`,
     label: fieldPath,
   };
+
+const getInnerBlockStyleKey = (innerBlock, fieldName = "text") => {
+  const blockType = String(innerBlock?.type || "").toLowerCase();
+  if (blockType === "heading") {
+    return "headingStyle";
+  }
+  if (blockType === "button") {
+    return "buttonTextStyle";
+  }
+  if (blockType === "eyebrow") {
+    return "textStyle";
+  }
+  if (blockType === "image") {
+    return "imageStyle";
+  }
+  return getEditableStyleConfig(fieldName).styleKey || "textStyle";
+};
 
 const humanizeLabel = (value = "") =>
   String(value)
@@ -235,10 +311,109 @@ const humanizeLabel = (value = "") =>
     .replace(/[_-]+/g, " ")
     .replace(/^./, (char) => char.toUpperCase());
 
+const deepClone = (value) =>
+  value == null ? value : JSON.parse(JSON.stringify(value));
+
+const parseInnerBlockFieldPath = (fieldPath = "") => {
+  const match = /^innerBlocks\.(\d+)\.content(?:\.([^.]+(?:\..+)*)?)?$/i.exec(
+    String(fieldPath),
+  );
+  if (!match) {
+    return null;
+  }
+
+  return {
+    index: Number(match[1]),
+    contentPath: match[2] || "",
+  };
+};
+
+const setValueAtPath = (source, path, value) => {
+  if (!path) return source;
+  const keys = String(path).split(".").filter(Boolean);
+  if (!keys.length) return source;
+
+  const root = Array.isArray(source) ? [...source] : { ...(source || {}) };
+  let cursor = root;
+
+  keys.forEach((key, index) => {
+    const isLast = index === keys.length - 1;
+    const nextKey = keys[index + 1];
+    const normalizedKey = /^\d+$/.test(key) ? Number(key) : key;
+
+    if (isLast) {
+      cursor[normalizedKey] = value;
+      return;
+    }
+
+    const existing = cursor[normalizedKey];
+    const nextContainer =
+      existing != null
+        ? Array.isArray(existing)
+          ? [...existing]
+          : { ...existing }
+        : /^\d+$/.test(nextKey)
+          ? []
+          : {};
+
+    cursor[normalizedKey] = nextContainer;
+    cursor = nextContainer;
+  });
+
+  return root;
+};
+
+const getValueAtPath = (source, path) => {
+  if (!path) return source;
+  return String(path)
+    .split(".")
+    .filter(Boolean)
+    .reduce((cursor, key) => {
+      if (cursor == null) {
+        return undefined;
+      }
+      return cursor[/^\d+$/.test(key) ? Number(key) : key];
+    }, source);
+};
+
 const looksLikeImageSource = (value = "") =>
   /^(https?:\/\/|\/)/i.test(value) ||
   /^data:image\//i.test(value) ||
   /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i.test(value);
+
+const normalizeUploadedImageUrl = (value) => {
+  if (typeof value !== "string" || !value.trim()) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (/^data:image\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const parsed = new URL(trimmed);
+      if (/^\/uploads\//i.test(parsed.pathname)) {
+        return `${window.location.origin}${parsed.pathname}${parsed.search || ""}`;
+      }
+    } catch {
+      return trimmed;
+    }
+
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return `${window.location.origin}${trimmed}`;
+  }
+
+  if (/^uploads\//i.test(trimmed)) {
+    return `${window.location.origin}/${trimmed}`;
+  }
+
+  return trimmed;
+};
 
 // REMOVED: BLOCK_TYPES hardcoded allowlist. Block selection now exclusively
 // uses BlockLibrary (fetches from /api/content-types/blocks with all 34 types).
@@ -307,12 +482,19 @@ const WebsiteEditorInner = () => {
 
   const [selectedEditableElement, setSelectedEditableElement] = useState(null);
   const [selectedImageElement, setSelectedImageElement] = useState(null);
+  const [isImageLibraryPickerOpen, setIsImageLibraryPickerOpen] =
+    useState(false);
   const [selectedSectionElement, setSelectedSectionElement] = useState(null);
+  const [isSectionInnerBlockModalOpen, setIsSectionInnerBlockModalOpen] =
+    useState(false);
+  const [sectionInnerBlockSearch, setSectionInnerBlockSearch] = useState("");
   const [activeToolbarMode, setActiveToolbarMode] = useState("text");
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [uploadedLibraryImages, setUploadedLibraryImages] = useState([]);
   const [previewContextMenu, setPreviewContextMenu] = useState(null);
+  const [previewClipboard, setPreviewClipboard] = useState(null);
   const [selectedPreviewTarget, setSelectedPreviewTarget] = useState(null);
+  const [draggedLibraryBlock, setDraggedLibraryBlock] = useState(null);
   const [previewSaveSignal, setPreviewSaveSignal] = useState(0);
   const iframeRef = useRef(null);
   const previewContextMenuRef = useRef(null);
@@ -1411,9 +1593,30 @@ const WebsiteEditorInner = () => {
       return DEFAULT_TEXT_STYLE;
     }
 
-    const { styleKey } = getEditableStyleConfig(
-      selectedEditableElement.fieldPath,
-    );
+      const innerMatch = parseInnerBlockFieldPath(
+        selectedEditableElement.fieldPath,
+      );
+      const resolvedFieldName = innerMatch?.contentPath || selectedEditableElement.fieldPath;
+
+      if (innerMatch) {
+        const innerBlocks = Array.isArray(targetBlock.content?.innerBlocks)
+          ? targetBlock.content.innerBlocks
+          : [];
+        const innerBlock = innerBlocks[innerMatch.index];
+        const styleKey = getInnerBlockStyleKey(innerBlock, resolvedFieldName);
+        const innerContent =
+          innerBlock?.content && typeof innerBlock.content === "object"
+            ? innerBlock.content
+            : {};
+        const innerStyle = innerContent?.[styleKey];
+
+      return {
+        ...DEFAULT_TEXT_STYLE,
+        ...(innerStyle && typeof innerStyle === "object" ? innerStyle : {}),
+      };
+    }
+
+    const { styleKey } = getEditableStyleConfig(resolvedFieldName);
     const blockStyle = targetBlock.content?.[styleKey];
 
     return {
@@ -1473,6 +1676,19 @@ const WebsiteEditorInner = () => {
       ...blockStyle,
     };
   }, [blocks, selectedImageElement]);
+
+  const selectedImagePreviewHeight = useMemo(() => {
+    switch (selectedImageValue.heightPreset) {
+      case "small":
+        return 180;
+      case "medium":
+        return 260;
+      case "large":
+        return 340;
+      default:
+        return 260;
+    }
+  }, [selectedImageValue.heightPreset]);
 
   const imageLibraryItems = useMemo(() => {
     const items = [];
@@ -1627,6 +1843,7 @@ const WebsiteEditorInner = () => {
         marginLeft: "0px",
         marginRight: "0px",
       },
+      innerBlocks: [],
     };
   }, []);
 
@@ -1702,6 +1919,21 @@ const WebsiteEditorInner = () => {
     [openBlockLibraryAtPosition, resolveInsertPositionForSection],
   );
 
+  const handlePreviewSectionInnerAddRequest = useCallback((data) => {
+    if (!data?.blockId) {
+      return;
+    }
+
+    setPreviewContextMenu(null);
+    setSelectedSectionElement(data);
+    setSelectedEditableElement(null);
+    setSelectedImageElement(null);
+    setActiveToolbarMode("section");
+    setIsInspectorOpen(true);
+    setSectionInnerBlockSearch("");
+    setIsSectionInnerBlockModalOpen(true);
+  }, []);
+
   const handlePreviewContextMenu = useCallback((data) => {
     setPreviewContextMenu(data);
   }, []);
@@ -1714,7 +1946,13 @@ const WebsiteEditorInner = () => {
     const formData = new FormData();
     formData.append("image", file);
     const response = await apiClient.post("/upload/image", formData);
-    return response?.data?.url || null;
+    return normalizeUploadedImageUrl(
+      response?.data?.url ||
+        response?.data?.fileUrl ||
+        response?.data?.data?.url ||
+        response?.data?.data?.fileUrl ||
+        null,
+    );
   }, []);
 
   const handlePreviewImageSelection = useCallback(
@@ -1778,6 +2016,42 @@ const WebsiteEditorInner = () => {
         }
 
         if (target.kind === "image" && target.fieldPath) {
+          const innerBlockMatch = /^innerBlocks\.(\d+)\.content(?:\.[^.]+)?$/i.exec(
+            target.fieldPath,
+          );
+          if (innerBlockMatch) {
+            const innerIndex = Number(innerBlockMatch[1]);
+            const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+              ? block.content.innerBlocks
+              : [];
+            const existingInnerBlock = existingInnerBlocks[innerIndex] || {};
+            const existingInnerContent =
+              existingInnerBlock.content &&
+              typeof existingInnerBlock.content === "object"
+                ? existingInnerBlock.content
+                : {};
+            const existingStyle =
+              existingInnerContent.imageStyle &&
+              typeof existingInnerContent.imageStyle === "object"
+                ? existingInnerContent.imageStyle
+                : {};
+
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                innerBlocks: setValueAtPath(
+                  existingInnerBlocks,
+                  `${innerIndex}.content.imageStyle`,
+                  {
+                    ...existingStyle,
+                    ...patch,
+                  },
+                ),
+              },
+            };
+          }
+
           const styleKey = `${target.fieldPath}Style`;
           const existingStyle =
             block.content?.[styleKey] &&
@@ -1798,6 +2072,44 @@ const WebsiteEditorInner = () => {
         }
 
         if (target.kind === "editable" && target.fieldPath) {
+          const innerBlockMatch = /^innerBlocks\.(\d+)\.content(?:\.([^.]+))?$/i.exec(
+            target.fieldPath,
+          );
+          if (innerBlockMatch) {
+            const innerIndex = Number(innerBlockMatch[1]);
+            const fieldName = innerBlockMatch[2] || "text";
+            const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+              ? block.content.innerBlocks
+              : [];
+            const existingInnerBlock = existingInnerBlocks[innerIndex] || {};
+            const styleKey = getInnerBlockStyleKey(existingInnerBlock, fieldName);
+            const existingInnerContent =
+              existingInnerBlock.content &&
+              typeof existingInnerBlock.content === "object"
+                ? existingInnerBlock.content
+                : {};
+            const existingStyle =
+              existingInnerContent[styleKey] &&
+              typeof existingInnerContent[styleKey] === "object"
+                ? existingInnerContent[styleKey]
+                : {};
+
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                innerBlocks: setValueAtPath(
+                  existingInnerBlocks,
+                  `${innerIndex}.content.${styleKey}`,
+                  {
+                    ...existingStyle,
+                    ...patch,
+                  },
+                ),
+              },
+            };
+          }
+
           const { styleKey } = getEditableStyleConfig(target.fieldPath);
           const existingStyle =
             block.content?.[styleKey] &&
@@ -1844,6 +2156,587 @@ const WebsiteEditorInner = () => {
       handlePreviewSectionSelection,
     ],
   );
+
+  const buildPreviewClipboardItem = useCallback((layer) => {
+    if (!layer) {
+      return null;
+    }
+
+    if (layer.kind === "section" && layer.section?.blockId) {
+      const block = blocksRef.current.find(
+        (entry) => String(entry.id) === String(layer.section.blockId),
+      );
+      if (!block) {
+        return null;
+      }
+
+      return {
+        type: "section",
+        label: layer.label || block.blockType || "Section",
+        block: deepClone(block),
+      };
+    }
+
+    if (layer.kind === "editable" && layer.editable?.blockId) {
+      const block = blocksRef.current.find(
+        (entry) => String(entry.id) === String(layer.editable.blockId),
+      );
+      if (!block) {
+        return null;
+      }
+
+      const innerMatch = parseInnerBlockFieldPath(layer.editable.fieldPath);
+      if (innerMatch) {
+        const innerBlocks = Array.isArray(block.content?.innerBlocks)
+          ? block.content.innerBlocks
+          : [];
+        const innerBlock = innerBlocks[innerMatch.index];
+        if (!innerBlock) {
+          return null;
+        }
+
+        return {
+          type: "innerBlock",
+          label: layer.label || innerBlock.label || "Block",
+          innerBlock: deepClone(innerBlock),
+        };
+      }
+
+      return {
+        type: "editableValue",
+        label: layer.label || humanizeLabel(layer.editable.fieldPath),
+        value: getValueAtPath(block.content || {}, layer.editable.fieldPath),
+      };
+    }
+
+    if (layer.kind === "image" && layer.image?.blockId) {
+      const block = blocksRef.current.find(
+        (entry) => String(entry.id) === String(layer.image.blockId),
+      );
+      if (!block) {
+        return null;
+      }
+
+      const innerMatch = parseInnerBlockFieldPath(layer.image.fieldPath);
+      if (innerMatch) {
+        const innerBlocks = Array.isArray(block.content?.innerBlocks)
+          ? block.content.innerBlocks
+          : [];
+        const innerBlock = innerBlocks[innerMatch.index];
+        if (!innerBlock) {
+          return null;
+        }
+
+        return {
+          type: "innerBlock",
+          label: layer.label || innerBlock.label || "Image",
+          innerBlock: deepClone(innerBlock),
+        };
+      }
+
+      return {
+        type: "imageValue",
+        label: layer.label || humanizeLabel(layer.image.fieldPath),
+        src: getValueAtPath(block.content || {}, layer.image.fieldPath),
+      };
+    }
+
+    return null;
+  }, []);
+
+  const handleDeletePreviewLayer = useCallback((layer) => {
+    if (!layer) {
+      return;
+    }
+
+    if (layer.kind === "section" && layer.section?.blockId) {
+      pendingHistoryDescriptionRef.current = "Deleted section";
+      setBlocks((prev) =>
+        prev.filter(
+          (block) => String(block.id) !== String(layer.section.blockId),
+        ),
+      );
+      setSelectedSectionElement(null);
+      setSelectedEditableElement(null);
+      setSelectedImageElement(null);
+      setPreviewContextMenu(null);
+      return;
+    }
+
+    if (layer.kind === "editable" && layer.editable?.blockId) {
+      const innerMatch = parseInnerBlockFieldPath(layer.editable.fieldPath);
+      if (innerMatch) {
+        pendingHistoryDescriptionRef.current = "Deleted block";
+        setBlocks((prev) =>
+          prev.map((block) => {
+            if (String(block.id) !== String(layer.editable.blockId)) {
+              return block;
+            }
+
+            const innerBlocks = Array.isArray(block.content?.innerBlocks)
+              ? block.content.innerBlocks
+              : [];
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                innerBlocks: innerBlocks.filter(
+                  (_, index) => index !== innerMatch.index,
+                ),
+              },
+            };
+          }),
+        );
+      } else {
+        pendingHistoryDescriptionRef.current = "Cleared text";
+        setBlocks((prev) =>
+          prev.map((block) =>
+            String(block.id) === String(layer.editable.blockId)
+              ? {
+                  ...block,
+                  content: setValueAtPath(
+                    { ...(block.content || {}) },
+                    layer.editable.fieldPath,
+                    "",
+                  ),
+                }
+              : block,
+          ),
+        );
+      }
+
+      setSelectedEditableElement(null);
+      setPreviewContextMenu(null);
+      return;
+    }
+
+    if (layer.kind === "image" && layer.image?.blockId) {
+      const innerMatch = parseInnerBlockFieldPath(layer.image.fieldPath);
+      if (innerMatch) {
+        pendingHistoryDescriptionRef.current = "Deleted block";
+        setBlocks((prev) =>
+          prev.map((block) => {
+            if (String(block.id) !== String(layer.image.blockId)) {
+              return block;
+            }
+
+            const innerBlocks = Array.isArray(block.content?.innerBlocks)
+              ? block.content.innerBlocks
+              : [];
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                innerBlocks: innerBlocks.filter(
+                  (_, index) => index !== innerMatch.index,
+                ),
+              },
+            };
+          }),
+        );
+      } else {
+        pendingHistoryDescriptionRef.current = "Removed image";
+        setBlocks((prev) =>
+          prev.map((block) =>
+            String(block.id) === String(layer.image.blockId)
+              ? {
+                  ...block,
+                  content: setValueAtPath(
+                    { ...(block.content || {}) },
+                    layer.image.fieldPath,
+                    "",
+                  ),
+                }
+              : block,
+          ),
+        );
+      }
+
+      setSelectedImageElement(null);
+      setPreviewContextMenu(null);
+    }
+  }, []);
+
+  const handleDuplicatePreviewLayer = useCallback((layer) => {
+    if (!layer) {
+      return;
+    }
+
+    if (layer.kind === "section" && layer.section?.blockId) {
+      pendingHistoryDescriptionRef.current = "Duplicated section";
+      setBlocks((prev) => {
+        const index = prev.findIndex(
+          (block) => String(block.id) === String(layer.section.blockId),
+        );
+        if (index < 0) {
+          return prev;
+        }
+
+        const duplicate = deepClone(prev[index]);
+        duplicate.id = `section-copy-${Date.now()}`;
+        return [
+          ...prev.slice(0, index + 1),
+          duplicate,
+          ...prev.slice(index + 1),
+        ];
+      });
+      setPreviewContextMenu(null);
+      return;
+    }
+
+    const appendInnerBlockToSection = (sectionBlockId, innerBlock, afterIndex) => {
+      setBlocks((prev) =>
+        prev.map((block) => {
+          if (String(block.id) !== String(sectionBlockId)) {
+            return block;
+          }
+
+          const innerBlocks = Array.isArray(block.content?.innerBlocks)
+            ? block.content.innerBlocks
+            : [];
+          const duplicate = {
+            ...deepClone(innerBlock),
+            id: `inner-${Date.now()}`,
+          };
+
+          const nextInnerBlocks = [...innerBlocks];
+          if (typeof afterIndex === "number") {
+            nextInnerBlocks.splice(afterIndex + 1, 0, duplicate);
+          } else {
+            nextInnerBlocks.push(duplicate);
+          }
+
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              innerBlocks: nextInnerBlocks,
+            },
+          };
+        }),
+      );
+    };
+
+    if (layer.kind === "editable" && layer.editable?.blockId) {
+      const block = blocksRef.current.find(
+        (entry) => String(entry.id) === String(layer.editable.blockId),
+      );
+      const innerMatch = parseInnerBlockFieldPath(layer.editable.fieldPath);
+      if (block && innerMatch) {
+        const innerBlocks = Array.isArray(block.content?.innerBlocks)
+          ? block.content.innerBlocks
+          : [];
+        const innerBlock = innerBlocks[innerMatch.index];
+        if (innerBlock) {
+          pendingHistoryDescriptionRef.current = "Duplicated block";
+          appendInnerBlockToSection(
+            layer.editable.blockId,
+            innerBlock,
+            innerMatch.index,
+          );
+        }
+      } else if (block) {
+        const value = getValueAtPath(block.content || {}, layer.editable.fieldPath);
+        const { styleKey } = getEditableStyleConfig(layer.editable.fieldPath);
+        const existingStyle =
+          block.content?.[styleKey] && typeof block.content[styleKey] === "object"
+            ? deepClone(block.content[styleKey])
+            : {};
+        const duplicatedType =
+          styleKey === "headingStyle"
+            ? "heading"
+            : styleKey === "buttonTextStyle"
+              ? "button"
+              : styleKey === "eyebrowStyle"
+                ? "eyebrow"
+                : "text";
+        pendingHistoryDescriptionRef.current = "Duplicated text";
+        appendInnerBlockToSection(layer.editable.blockId, {
+          id: `inner-${Date.now()}`,
+          type: duplicatedType,
+          label:
+            layer.label ||
+            (duplicatedType === "heading"
+              ? "Heading"
+              : duplicatedType === "button"
+                ? "Button"
+                : duplicatedType === "eyebrow"
+                  ? "Label"
+                  : "Text"),
+          content:
+            duplicatedType === "button"
+              ? {
+                  text: typeof value === "string" ? value : "",
+                  href: "#",
+                  buttonTextStyle: existingStyle,
+                }
+              : duplicatedType === "heading"
+                ? {
+                    text: typeof value === "string" ? value : "",
+                    headingStyle: existingStyle,
+                  }
+                : duplicatedType === "eyebrow"
+                  ? {
+                      text: typeof value === "string" ? value : "",
+                      textStyle: existingStyle,
+                    }
+                  : {
+                      text: typeof value === "string" ? value : "",
+                      textStyle: existingStyle,
+                    },
+        });
+      }
+
+      setPreviewContextMenu(null);
+      return;
+    }
+
+    if (layer.kind === "image" && layer.image?.blockId) {
+      const block = blocksRef.current.find(
+        (entry) => String(entry.id) === String(layer.image.blockId),
+      );
+      const innerMatch = parseInnerBlockFieldPath(layer.image.fieldPath);
+      if (block && innerMatch) {
+        const innerBlocks = Array.isArray(block.content?.innerBlocks)
+          ? block.content.innerBlocks
+          : [];
+        const innerBlock = innerBlocks[innerMatch.index];
+        if (innerBlock) {
+          pendingHistoryDescriptionRef.current = "Duplicated block";
+          appendInnerBlockToSection(
+            layer.image.blockId,
+            innerBlock,
+            innerMatch.index,
+          );
+        }
+      } else if (block) {
+        const src = getValueAtPath(block.content || {}, layer.image.fieldPath);
+        pendingHistoryDescriptionRef.current = "Duplicated image";
+        appendInnerBlockToSection(layer.image.blockId, {
+          id: `inner-${Date.now()}`,
+          type: "image",
+          label: layer.label || "Image",
+          content: {
+            src: typeof src === "string" ? src : "",
+            alt: layer.label || "Image",
+          },
+        });
+      }
+
+      setPreviewContextMenu(null);
+    }
+  }, []);
+
+  const handlePasteIntoPreviewTarget = useCallback((layer) => {
+    if (!previewClipboard) {
+      return;
+    }
+
+    const finalizePaste = () => {
+      if (previewClipboard?.mode === "cut") {
+        setPreviewClipboard(null);
+      }
+      setPreviewContextMenu(null);
+    };
+
+    const resolveTargetSectionBlockId = () => {
+      if (layer?.kind === "section" && layer.section?.blockId) {
+        return layer.section.blockId;
+      }
+      if (layer?.kind === "editable" && layer.editable?.blockId) {
+        return layer.editable.blockId;
+      }
+      if (layer?.kind === "image" && layer.image?.blockId) {
+        return layer.image.blockId;
+      }
+      return selectedSectionElement?.blockId || null;
+    };
+
+    const targetSectionBlockId = resolveTargetSectionBlockId();
+
+    if (previewClipboard.type === "section" && previewClipboard.block) {
+      const anchorBlockId =
+        layer?.kind === "section"
+          ? layer.section?.blockId
+          : targetSectionBlockId;
+      pendingHistoryDescriptionRef.current = "Pasted section";
+      setBlocks((prev) => {
+        const duplicate = {
+          ...deepClone(previewClipboard.block),
+          id: `section-copy-${Date.now()}`,
+        };
+        const anchorIndex = prev.findIndex(
+          (block) => String(block.id) === String(anchorBlockId),
+        );
+        if (anchorIndex < 0) {
+          return [...prev, duplicate];
+        }
+        return [
+          ...prev.slice(0, anchorIndex + 1),
+          duplicate,
+          ...prev.slice(anchorIndex + 1),
+        ];
+      });
+      finalizePaste();
+      return;
+    }
+
+    if (!targetSectionBlockId) {
+      return;
+    }
+
+    if (previewClipboard.type === "innerBlock" && previewClipboard.innerBlock) {
+      pendingHistoryDescriptionRef.current = "Pasted block";
+      setBlocks((prev) =>
+        prev.map((block) => {
+          if (String(block.id) !== String(targetSectionBlockId)) {
+            return block;
+          }
+
+          const innerBlocks = Array.isArray(block.content?.innerBlocks)
+            ? block.content.innerBlocks
+            : [];
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              innerBlocks: [
+                ...innerBlocks,
+                {
+                  ...deepClone(previewClipboard.innerBlock),
+                  id: `inner-${Date.now()}`,
+                },
+              ],
+            },
+          };
+        }),
+      );
+      finalizePaste();
+      return;
+    }
+
+    if (
+      previewClipboard.type === "editableValue" &&
+      layer?.kind === "editable" &&
+      layer.editable?.fieldPath
+    ) {
+      pendingHistoryDescriptionRef.current = "Pasted text";
+      setBlocks((prev) =>
+        prev.map((block) =>
+          String(block.id) === String(layer.editable.blockId)
+            ? {
+                ...block,
+                content: setValueAtPath(
+                  { ...(block.content || {}) },
+                  layer.editable.fieldPath,
+                  previewClipboard.value ?? "",
+                ),
+              }
+            : block,
+        ),
+      );
+      finalizePaste();
+      return;
+    }
+
+    if (
+      previewClipboard.type === "imageValue" &&
+      layer?.kind === "image" &&
+      layer.image?.fieldPath
+    ) {
+      pendingHistoryDescriptionRef.current = "Pasted image";
+      setBlocks((prev) =>
+        prev.map((block) =>
+          String(block.id) === String(layer.image.blockId)
+            ? {
+                ...block,
+                content: setValueAtPath(
+                  { ...(block.content || {}) },
+                  layer.image.fieldPath,
+                  previewClipboard.src ?? "",
+                ),
+              }
+            : block,
+        ),
+      );
+      finalizePaste();
+      return;
+    }
+
+    if (previewClipboard.type === "editableValue") {
+      pendingHistoryDescriptionRef.current = "Pasted text block";
+      setBlocks((prev) =>
+        prev.map((block) => {
+          if (String(block.id) !== String(targetSectionBlockId)) {
+            return block;
+          }
+
+          const innerBlocks = Array.isArray(block.content?.innerBlocks)
+            ? block.content.innerBlocks
+            : [];
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              innerBlocks: [
+                ...innerBlocks,
+                {
+                  id: `inner-${Date.now()}`,
+                  type: "text",
+                  label: previewClipboard.label || "Text",
+                  content: {
+                    text:
+                      typeof previewClipboard.value === "string"
+                        ? previewClipboard.value
+                        : "",
+                  },
+                },
+              ],
+            },
+          };
+        }),
+      );
+      finalizePaste();
+      return;
+    }
+
+    if (previewClipboard.type === "imageValue") {
+      pendingHistoryDescriptionRef.current = "Pasted image block";
+      setBlocks((prev) =>
+        prev.map((block) => {
+          if (String(block.id) !== String(targetSectionBlockId)) {
+            return block;
+          }
+
+          const innerBlocks = Array.isArray(block.content?.innerBlocks)
+            ? block.content.innerBlocks
+            : [];
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              innerBlocks: [
+                ...innerBlocks,
+                {
+                  id: `inner-${Date.now()}`,
+                  type: "image",
+                  label: previewClipboard.label || "Image",
+                  content: {
+                    src:
+                      typeof previewClipboard.src === "string"
+                        ? previewClipboard.src
+                        : "",
+                    alt: previewClipboard.label || "Image",
+                  },
+                },
+              ],
+            },
+          };
+        }),
+      );
+      finalizePaste();
+    }
+  }, [previewClipboard, selectedSectionElement]);
 
   const handleLibraryUpload = useCallback(
     async (file) => {
@@ -1906,7 +2799,8 @@ const WebsiteEditorInner = () => {
       }
 
       const { blockId, fieldPath } = selectedEditableElement;
-      const { styleKey } = getEditableStyleConfig(fieldPath);
+      const innerMatch = parseInnerBlockFieldPath(fieldPath);
+      const resolvedFieldName = innerMatch?.contentPath || fieldPath;
 
       pendingHistoryDescriptionRef.current = `Styled ${fieldPath}`;
       setBlocks((prev) =>
@@ -1915,6 +2809,43 @@ const WebsiteEditorInner = () => {
             return block;
           }
 
+          if (innerMatch) {
+            const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+              ? block.content.innerBlocks
+              : [];
+            const existingInnerBlock = existingInnerBlocks[innerMatch.index] || {};
+            const styleKey = getInnerBlockStyleKey(
+              existingInnerBlock,
+              resolvedFieldName,
+            );
+            const existingInnerContent =
+              existingInnerBlock.content &&
+              typeof existingInnerBlock.content === "object"
+                ? existingInnerBlock.content
+                : {};
+            const existingStyle =
+              existingInnerContent[styleKey] &&
+              typeof existingInnerContent[styleKey] === "object"
+                ? existingInnerContent[styleKey]
+                : {};
+
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                innerBlocks: setValueAtPath(
+                  existingInnerBlocks,
+                  `${innerMatch.index}.content.${styleKey}`,
+                  {
+                    ...existingStyle,
+                    ...patch,
+                  },
+                ),
+              },
+            };
+          }
+
+          const { styleKey } = getEditableStyleConfig(resolvedFieldName);
           const existingStyle =
             block.content?.[styleKey] &&
             typeof block.content[styleKey] === "object"
@@ -2023,9 +2954,155 @@ const WebsiteEditorInner = () => {
             }
           : prev,
       );
+      setIsImageLibraryPickerOpen(false);
     },
     [handleImageChange, uploadImageAsset],
   );
+
+  const handleUseLibraryImage = useCallback(
+    (item) => {
+      if (!item?.src) {
+        return;
+      }
+
+      handleImageChange({ src: item.src });
+      setSelectedImageElement((prev) =>
+        prev
+          ? {
+              ...prev,
+              src: item.src,
+            }
+          : prev,
+      );
+      setIsImageLibraryPickerOpen(false);
+    },
+    [handleImageChange],
+  );
+
+  const sectionInnerBlockItems = useMemo(() => {
+    const query = sectionInnerBlockSearch.trim().toLowerCase();
+    if (!query) {
+      return SECTION_INNER_BLOCK_LIBRARY;
+    }
+
+    return SECTION_INNER_BLOCK_LIBRARY.filter((item) =>
+      `${item.label} ${item.description}`.toLowerCase().includes(query),
+    );
+  }, [sectionInnerBlockSearch]);
+
+  const sectionInnerBlockGroups = useMemo(() => {
+    return sectionInnerBlockItems.reduce((groups, item) => {
+      const category = item.category || "Essentials";
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(item);
+      return groups;
+    }, {});
+  }, [sectionInnerBlockItems]);
+
+  const handleInsertInnerBlockIntoSection = useCallback((blockKey) => {
+    if (!selectedSectionElement?.blockId) {
+      return;
+    }
+
+    const nextInnerBlock = (() => {
+      switch (blockKey) {
+        case "heading":
+          return {
+            id: `inner-${Date.now()}`,
+            type: "heading",
+            label: "Heading",
+            content: {
+              text: "New section heading",
+            },
+          };
+        case "text":
+          return {
+            id: `inner-${Date.now()}`,
+            type: "text",
+            label: "Paragraph",
+            content: {
+              text: "Add your text here.",
+            },
+          };
+        case "eyebrow":
+          return {
+            id: `inner-${Date.now()}`,
+            type: "eyebrow",
+            label: "Label",
+            content: {
+              text: "Section label",
+            },
+          };
+        case "image":
+          return {
+            id: `inner-${Date.now()}`,
+            type: "image",
+            label: "Image",
+            content: {
+              src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+              alt: "Section image",
+            },
+          };
+        case "button":
+          return {
+            id: `inner-${Date.now()}`,
+            type: "button",
+            label: "Button",
+            content: {
+              text: "Button",
+              href: "#",
+            },
+          };
+        case "divider":
+          return {
+            id: `inner-${Date.now()}`,
+            type: "divider",
+            label: "Divider",
+            content: {},
+          };
+        case "spacer":
+          return {
+            id: `inner-${Date.now()}`,
+            type: "spacer",
+            label: "Spacer",
+            content: {
+              height: "24px",
+            },
+          };
+        default:
+          return null;
+      }
+    })();
+
+    if (!nextInnerBlock) {
+      return;
+    }
+
+    pendingHistoryDescriptionRef.current = `Added ${blockKey} inside section`;
+    setBlocks((prev) =>
+      prev.map((block) => {
+        if (String(block.id) !== String(selectedSectionElement.blockId)) {
+          return block;
+        }
+
+        const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+          ? block.content.innerBlocks
+          : [];
+
+        return {
+          ...block,
+          content: {
+            ...block.content,
+            innerBlocks: [...existingInnerBlocks, nextInnerBlock],
+          },
+        };
+      }),
+    );
+    setIsSectionInnerBlockModalOpen(false);
+    setSectionInnerBlockSearch("");
+  }, [selectedSectionElement]);
 
   const handleSectionStyleChange = useCallback(
     (patch) => {
@@ -2067,30 +3144,33 @@ const WebsiteEditorInner = () => {
   // Inline edit save handler — Step 9.24: nested path update for content fields
   const handleInlineEditSave = useCallback((blockId, fieldPath, newValue) => {
     pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
-    const nextBlocks = blocksRef.current.map((block) => {
-      if (String(block.id) !== String(blockId)) return block;
-      const updated = {
-        ...block,
-        content: {
-          ...(block.content || {}),
-        },
-      };
-      const parts = fieldPath.split(".");
-      let obj = updated.content;
-      for (let i = 0; i < parts.length - 1; i++) {
-        obj[parts[i]] = {
-          ...(obj[parts[i]] && typeof obj[parts[i]] === "object"
-            ? obj[parts[i]]
-            : {}),
+    flushSync(() => {
+      const nextBlocks = blocksRef.current.map((block) => {
+        if (String(block.id) !== String(blockId)) return block;
+        const updated = {
+          ...block,
+          content: {
+            ...(block.content || {}),
+          },
         };
-        obj = obj[parts[i]];
-      }
-      obj[parts[parts.length - 1]] = newValue;
-      return updated;
-    });
+        const parts = fieldPath.split(".");
+        let obj = updated.content;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const current = obj[parts[i]];
+          obj[parts[i]] = Array.isArray(current)
+            ? [...current]
+            : {
+                ...(current && typeof current === "object" ? current : {}),
+              };
+          obj = obj[parts[i]];
+        }
+        obj[parts[parts.length - 1]] = newValue;
+        return updated;
+      });
 
-    blocksRef.current = nextBlocks;
-    setBlocks(nextBlocks);
+      blocksRef.current = nextBlocks;
+      setBlocks(nextBlocks);
+    });
   }, []);
 
   // BlockLibrary insert handler — creates a block via API (Phase 9 gap fix)
@@ -2134,6 +3214,7 @@ const WebsiteEditorInner = () => {
           }));
         });
         setBlockLibraryOpen(false);
+        setDraggedLibraryBlock(null);
       } catch (err) {
         console.error("Error inserting block from library:", err);
       }
@@ -2145,6 +3226,25 @@ const WebsiteEditorInner = () => {
       buildPlanSectionContent,
     ],
   );
+
+  const handleLibraryBlockDropIntoPreview = useCallback(() => {
+    if (!draggedLibraryBlock?.key) {
+      return;
+    }
+
+    const dropPosition = selectedSectionElement?.blockId
+      ? resolveInsertPositionForSection(selectedSectionElement.blockId, "after")
+      : blockLibraryPreferredPosition;
+
+    void handleInsertBlockFromLibrary(draggedLibraryBlock.key, dropPosition);
+    setDraggedLibraryBlock(null);
+  }, [
+    draggedLibraryBlock,
+    selectedSectionElement,
+    resolveInsertPositionForSection,
+    blockLibraryPreferredPosition,
+    handleInsertBlockFromLibrary,
+  ]);
 
   // Mobile action handlers for MobileActionBar (Phase 9 gap fix)
   const handleMobileSave = useCallback(() => {
@@ -2635,14 +3735,150 @@ const WebsiteEditorInner = () => {
               },
             }}
           >
+            {[
+              {
+                key: "cut",
+                label: "Cut",
+                shortcut: "Ctrl + X",
+                icon: Scissors,
+                disabled: !previewContextMenu?.target,
+                onClick: () => {
+                  const clipboardItem = buildPreviewClipboardItem(
+                    previewContextMenu?.target,
+                  );
+                  if (!clipboardItem || !previewContextMenu?.target) {
+                    return;
+                  }
+                  setPreviewClipboard({
+                    ...clipboardItem,
+                    mode: "cut",
+                  });
+                  handleDeletePreviewLayer(previewContextMenu.target);
+                },
+              },
+              {
+                key: "copy",
+                label: "Copy",
+                shortcut: "Ctrl + C",
+                icon: Copy,
+                disabled: !previewContextMenu?.target,
+                onClick: () => {
+                  const clipboardItem = buildPreviewClipboardItem(
+                    previewContextMenu?.target,
+                  );
+                  if (!clipboardItem) {
+                    return;
+                  }
+                  setPreviewClipboard({
+                    ...clipboardItem,
+                    mode: "copy",
+                  });
+                  setPreviewContextMenu(null);
+                },
+              },
+              {
+                key: "paste",
+                label: "Paste",
+                shortcut: "Ctrl + V",
+                icon: ClipboardPaste,
+                disabled: !previewClipboard,
+                onClick: () =>
+                  handlePasteIntoPreviewTarget(previewContextMenu?.target),
+              },
+              {
+                key: "duplicate",
+                label: "Duplicate",
+                shortcut: "Ctrl + D",
+                icon: Clipboard,
+                disabled: !previewContextMenu?.target,
+                onClick: () =>
+                  handleDuplicatePreviewLayer(previewContextMenu?.target),
+              },
+              {
+                key: "delete",
+                label: "Delete",
+                shortcut: "Del",
+                icon: Trash2,
+                disabled: !previewContextMenu?.target,
+                onClick: () =>
+                  handleDeletePreviewLayer(previewContextMenu?.target),
+              },
+            ].map((action, index) => {
+              const ActionIcon = action.icon;
+              return (
+                <MenuItem
+                  key={action.key}
+                  disabled={action.disabled}
+                  onClick={action.onClick}
+                  sx={{
+                    minHeight: 38,
+                    gap: 1.1,
+                    px: 1.4,
+                    fontSize: "0.92rem",
+                    fontWeight: 500,
+                    color:
+                      action.key === "delete" && !action.disabled
+                        ? "#b42318"
+                        : editorText,
+                    "&:hover": {
+                      backgroundColor: alpha(colors.primary, 0.06),
+                    },
+                    "&.Mui-disabled": {
+                      opacity: 0.46,
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 18,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color:
+                        action.key === "delete" && !action.disabled
+                          ? "#b42318"
+                          : editorMutedText,
+                    }}
+                  >
+                    <ActionIcon size={15} />
+                  </Box>
+                  <Typography
+                    sx={{
+                      fontSize: "0.92rem",
+                      fontWeight: 500,
+                      color: "inherit",
+                      flex: 1,
+                    }}
+                  >
+                    {action.label}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "0.78rem",
+                      color: editorMutedText,
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    {action.shortcut}
+                  </Typography>
+                </MenuItem>
+              );
+            })}
+            <Box
+              sx={{
+                mx: 1.2,
+                my: 0.6,
+                borderTop: `1px solid ${alpha(colors.text, 0.08)}`,
+              }}
+            />
             <MenuItem
               disabled
               sx={{
                 opacity: 1,
-                minHeight: 42,
+                minHeight: 38,
                 fontWeight: 700,
                 color: editorText,
-                borderBottom: `1px solid ${alpha(colors.text, 0.08)}`,
+                fontSize: "0.92rem",
               }}
             >
               Layers
@@ -2933,12 +4169,18 @@ const WebsiteEditorInner = () => {
                           height: "100%",
                           borderRadius: 5,
                           minHeight: { lg: 860 },
+                          maxHeight: { xs: "auto", lg: "calc(100vh - 120px)" },
+                          display: "flex",
+                          flexDirection: "column",
+                          overflow: "hidden",
                         }}
                       >
+                        {/* Fixed top header */}
                         <Box
                           sx={{
                             px: 1.3,
                             py: 1.1,
+                            flexShrink: 0,
                             borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
                             backgroundColor: "rgba(255,255,255,0.74)",
                           }}
@@ -3076,6 +4318,7 @@ const WebsiteEditorInner = () => {
                                 })}
                               </Select>
                             </FormControl>
+
                             <Button
                               size="small"
                               variant="outlined"
@@ -3100,6 +4343,7 @@ const WebsiteEditorInner = () => {
                             >
                               Library
                             </Button>
+
                             <IconButton
                               size="small"
                               onClick={() => setBlockDialogOpen(true)}
@@ -3132,7 +4376,27 @@ const WebsiteEditorInner = () => {
                           </Box>
                         </Box>
 
-                        <Box sx={{ p: 1.4 }}>
+                        {/* Scrollable content */}
+                        <Box
+                          sx={{
+                            p: 1.4,
+                            flex: 1,
+                            minHeight: 0,
+                            overflowY: "auto",
+                            overflowX: "hidden",
+                            pr: 1,
+                            "&::-webkit-scrollbar": {
+                              width: 6,
+                            },
+                            "&::-webkit-scrollbar-thumb": {
+                              borderRadius: 999,
+                              backgroundColor: alpha(colors.primary, 0.22),
+                            },
+                            "&::-webkit-scrollbar-track": {
+                              backgroundColor: "transparent",
+                            },
+                          }}
+                        >
                           {blockError && (
                             <Alert
                               severity="error"
@@ -3193,15 +4457,13 @@ const WebsiteEditorInner = () => {
                                   event.target.value = "";
                                 }}
                               />
+
                               <Box
                                 sx={{
                                   display: "grid",
                                   gridTemplateColumns:
                                     "repeat(2, minmax(0, 1fr))",
                                   gap: 1.3,
-                                  maxHeight: { xs: 420, lg: 700 },
-                                  overflowY: "auto",
-                                  pr: 0.6,
                                 }}
                               >
                                 {imageLibraryItems.map((item) => (
@@ -3246,6 +4508,7 @@ const WebsiteEditorInner = () => {
                                         backgroundColor: "#e5e7eb",
                                       }}
                                     />
+
                                     <Box sx={{ p: 1.1 }}>
                                       <Typography
                                         variant="body2"
@@ -3259,6 +4522,7 @@ const WebsiteEditorInner = () => {
                                       >
                                         {item.label}
                                       </Typography>
+
                                       <Typography
                                         variant="caption"
                                         sx={{ color: editorMutedText }}
@@ -3270,6 +4534,7 @@ const WebsiteEditorInner = () => {
                                     </Box>
                                   </ButtonBase>
                                 ))}
+
                                 <ButtonBase
                                   onClick={() =>
                                     imageLibraryInputRef.current?.click()
@@ -3293,6 +4558,7 @@ const WebsiteEditorInner = () => {
                                   }}
                                 >
                                   <Upload size={20} />
+
                                   <Typography
                                     sx={{
                                       fontSize: "0.92rem",
@@ -3320,14 +4586,6 @@ const WebsiteEditorInner = () => {
                                 selection={templateThemeSelection}
                                 onChange={setTemplateThemeSelection}
                               />
-                              {/* <ThemeManager
-                              websiteId={websiteId}
-                              currentThemeId={website?.themeId || null}
-                              onThemeChange={() => {
-                                refreshPreview();
-                                fetchWebsiteData();
-                              }}
-                            /> */}
                             </Box>
                           )}
                         </Box>
@@ -3411,6 +4669,9 @@ const WebsiteEditorInner = () => {
                             onImageSelected={handlePreviewImageSelection}
                             onSectionSelected={handlePreviewSectionSelection}
                             onSectionAddRequest={handlePreviewSectionAddRequest}
+                            onSectionInnerAddRequest={
+                              handlePreviewSectionInnerAddRequest
+                            }
                             onPreviewContextMenu={handlePreviewContextMenu}
                             onEditableTextSave={handleInlineEditSave}
                             onElementTransform={handlePreviewElementTransform}
@@ -3419,6 +4680,13 @@ const WebsiteEditorInner = () => {
                               iframeRef.current = ref?.current ?? null;
                             }}
                             selectedPreviewTarget={selectedPreviewTarget}
+                            draggedLibraryBlock={draggedLibraryBlock}
+                            canDropLibraryBlock={Boolean(
+                              selectedSectionElement,
+                            )}
+                            onLibraryBlockDrop={
+                              handleLibraryBlockDropIntoPreview
+                            }
                           />
                         </Box>
                       </Paper>
@@ -3660,8 +4928,177 @@ const WebsiteEditorInner = () => {
           </Grid>
         </ResponsiveEditorLayout>
         <Dialog
+          open={isSectionInnerBlockModalOpen}
+          onClose={() => setIsSectionInnerBlockModalOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 4.5,
+              backgroundColor: "#ffffff",
+              border: `1px solid ${alpha(colors.primary, 0.1)}`,
+              boxShadow: "0 26px 70px rgba(15, 23, 42, 0.18)",
+              overflow: "hidden",
+            },
+          }}
+        >
+          <DialogContent sx={{ p: 0, backgroundColor: "#f8fafc" }}>
+            <Box
+              sx={{
+                px: 2.25,
+                py: 1.5,
+                borderBottom: `1px solid ${alpha(colors.primary, 0.08)}`,
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.94) 100%)",
+              }}
+            >
+              <Typography
+                sx={{
+                  color: editorText,
+                  fontSize: "1rem",
+                  fontWeight: 800,
+                  lineHeight: 1.2,
+                }}
+              >
+                Add block inside {selectedSectionElement?.label || "section"}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 0.45,
+                  color: editorMutedText,
+                  fontSize: "0.88rem",
+                }}
+              >
+                New blocks will be inserted inside the selected section content.
+              </Typography>
+            </Box>
+            <Box sx={{ p: 2 }}>
+            <DashboardInput
+              fullWidth
+              placeholder="Search"
+              value={sectionInnerBlockSearch}
+              onChange={(event) => setSectionInnerBlockSearch(event.target.value)}
+              sx={{
+                mb: 2.25,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "14px",
+                  backgroundColor: "#ffffff",
+                  "& fieldset": {
+                    borderColor: alpha("#111827", 0.16),
+                    borderWidth: "2px",
+                  },
+                },
+              }}
+            />
+            <Box sx={{ maxHeight: 500, overflowY: "auto", pr: 0.25 }}>
+              {Object.entries(sectionInnerBlockGroups).map(([category, items]) => (
+                <Box key={category} sx={{ mb: 2 }}>
+                  <Typography
+                    sx={{
+                      mb: 1,
+                      fontSize: "0.82rem",
+                      fontWeight: 800,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: editorMutedText,
+                    }}
+                  >
+                    {category}
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: 1,
+                    }}
+                  >
+                    {items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <ButtonBase
+                          key={item.key}
+                          onClick={() =>
+                            handleInsertInnerBlockIntoSection(item.key)
+                          }
+                          sx={{
+                            minHeight: 84,
+                            borderRadius: 3,
+                            px: 1.2,
+                            py: 1.1,
+                            border: `1px solid ${alpha(colors.primary, 0.08)}`,
+                            background:
+                              "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)",
+                            display: "flex",
+                            alignItems: "flex-start",
+                            justifyContent: "flex-start",
+                            gap: 1,
+                            textAlign: "left",
+                            transition:
+                              "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+                            "&:hover": {
+                              transform: "translateY(-2px)",
+                              borderColor: alpha(colors.primary, 0.22),
+                              boxShadow:
+                                "0 12px 24px rgba(15,23,42,0.08)",
+                            },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 2.25,
+                              display: "grid",
+                              placeItems: "center",
+                              backgroundColor: "rgba(255,255,255,0.95)",
+                              border: `1px solid ${alpha(
+                                colors.primary,
+                                0.1,
+                              )}`,
+                              color: editorMutedText,
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Icon size={16} />
+                          </Box>
+                          <Box>
+                            <Typography
+                              sx={{
+                                color: editorText,
+                                fontSize: "0.92rem",
+                                fontWeight: 700,
+                                lineHeight: 1.2,
+                              }}
+                            >
+                              {item.label}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                mt: 0.45,
+                                color: editorMutedText,
+                                fontSize: "0.78rem",
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              {item.description}
+                            </Typography>
+                          </Box>
+                        </ButtonBase>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+            </Box>
+          </DialogContent>
+        </Dialog>
+        <Dialog
           open={!!selectedImageElement}
-          onClose={() => setSelectedImageElement(null)}
+          onClose={() => {
+            setSelectedImageElement(null);
+            setIsImageLibraryPickerOpen(false);
+          }}
           maxWidth="sm"
           fullWidth
           PaperProps={{
@@ -3713,11 +5150,15 @@ const WebsiteEditorInner = () => {
                   color: editorMutedText,
                 }}
               >
-                Replace the image and tune fit, border, and radius for this block.
+                Replace the image and tune fit, border, and radius for this
+                block.
               </Typography>
             </Box>
             <IconButton
-              onClick={() => setSelectedImageElement(null)}
+              onClick={() => {
+                setSelectedImageElement(null);
+                setIsImageLibraryPickerOpen(false);
+              }}
               sx={{
                 mt: 0.25,
                 color: editorMutedText,
@@ -3731,7 +5172,7 @@ const WebsiteEditorInner = () => {
           <DialogContent sx={{ px: 3, py: 2.5, backgroundColor: "#f8fafc" }}>
             <Box
               sx={{
-                height: 260,
+                height: selectedImagePreviewHeight,
                 borderRadius: 3,
                 border: `1px solid ${alpha(colors.primary, 0.14)}`,
                 overflow: "hidden",
@@ -3755,12 +5196,12 @@ const WebsiteEditorInner = () => {
               <Button
                 variant="contained"
                 startIcon={<Upload size={16} />}
-                onClick={() => imageReplaceInputRef.current?.click()}
+                onClick={() => setIsImageLibraryPickerOpen(true)}
                 sx={{
                   minHeight: 42,
                   textTransform: "none",
                   borderRadius: 2.5,
-                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${alpha(colors.primary, 0.78)} 100%)`,
+                  background: "black",
                   color: "#ffffff",
                   boxShadow: "none",
                   fontWeight: 700,
@@ -3770,7 +5211,10 @@ const WebsiteEditorInner = () => {
               </Button>
               <Button
                 variant="outlined"
-                onClick={() => setSelectedImageElement(null)}
+                onClick={() => {
+                  setSelectedImageElement(null);
+                  setIsImageLibraryPickerOpen(false);
+                }}
                 sx={{
                   minHeight: 42,
                   textTransform: "none",
@@ -3930,6 +5374,33 @@ const WebsiteEditorInner = () => {
                   <MenuItem value="fill">Fit: fill</MenuItem>
                 </Select>
               </FormControl>
+              <FormControl size="small" sx={{ minWidth: 0 }}>
+                <Select
+                  value={selectedImageValue.heightPreset || "auto"}
+                  onChange={(event) =>
+                    handleImageChange({ heightPreset: event.target.value })
+                  }
+                  sx={{
+                    height: 54,
+                    borderRadius: 2.5,
+                    backgroundColor: "#ffffff",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: alpha("#111827", 0.12),
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: alpha(colors.primary, 0.35),
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: colors.primary,
+                    },
+                  }}
+                >
+                  <MenuItem value="auto">Height: auto</MenuItem>
+                  <MenuItem value="small">Height: small</MenuItem>
+                  <MenuItem value="medium">Height: medium</MenuItem>
+                  <MenuItem value="large">Height: large</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           </DialogContent>
           <DialogActions
@@ -3942,10 +5413,14 @@ const WebsiteEditorInner = () => {
             }}
           >
             <Typography sx={{ fontSize: "0.82rem", color: editorMutedText }}>
-              Changes apply instantly to the canvas. Use Save Changes to persist them.
+              Changes apply instantly to the canvas. Use Save Changes to persist
+              them.
             </Typography>
             <Button
-              onClick={() => setSelectedImageElement(null)}
+              onClick={() => {
+                setSelectedImageElement(null);
+                setIsImageLibraryPickerOpen(false);
+              }}
               variant="contained"
               sx={{
                 minWidth: 108,
@@ -3964,6 +5439,152 @@ const WebsiteEditorInner = () => {
         </Dialog>
 
         {/* BlockLibrary drawer — Phase 9 gap fix */}
+        <Dialog
+          open={isImageLibraryPickerOpen}
+          onClose={() => setIsImageLibraryPickerOpen(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 4,
+              backgroundColor: "#ffffff",
+              border: `1px solid ${alpha(colors.primary, 0.1)}`,
+              boxShadow: "0 26px 70px rgba(15, 23, 42, 0.18)",
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              px: 3,
+              py: 2.25,
+              borderBottom: `1px solid ${alpha(colors.primary, 0.12)}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Typography sx={builderSectionLabelSx}>Media Library</Typography>
+              <Typography
+                variant="h6"
+                sx={{ mt: 0.35, fontWeight: 800, color: editorText }}
+              >
+                Choose a replacement image
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={() => setIsImageLibraryPickerOpen(false)}
+              sx={{
+                color: editorMutedText,
+                border: `1px solid ${alpha("#111827", 0.08)}`,
+                backgroundColor: "#fff",
+              }}
+            >
+              <X size={18} />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ px: 3, py: 2.5, backgroundColor: "#f8fafc" }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+                gap: 2,
+              }}
+            >
+              <Typography sx={{ fontSize: "0.92rem", color: editorMutedText }}>
+                Pick from existing website images or upload a new one.
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<Upload size={16} />}
+                onClick={() => imageReplaceInputRef.current?.click()}
+                sx={{
+                  minHeight: 40,
+                  textTransform: "none",
+                  borderRadius: 2.5,
+                  background: "black",
+                  color: "#ffffff",
+                  boxShadow: "none",
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                Upload Image
+              </Button>
+            </Box>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(3, 1fr)",
+                },
+                gap: 1.5,
+                maxHeight: 480,
+                overflowY: "auto",
+                pr: 0.5,
+              }}
+            >
+              {imageLibraryItems.map((item) => (
+                <ButtonBase
+                  key={item.id}
+                  onClick={() => handleUseLibraryImage(item)}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "stretch",
+                    textAlign: "left",
+                    borderRadius: 3,
+                    overflow: "hidden",
+                    border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                    backgroundColor: "#ffffff",
+                    transition:
+                      "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+                    "&:hover": {
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 14px 30px rgba(15,23,42,0.1)",
+                      borderColor: alpha(colors.primary, 0.26),
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      height: 150,
+                      backgroundImage: `url(${item.src})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      backgroundColor: "#e5e7eb",
+                    }}
+                  />
+                  <Box sx={{ p: 1.1 }}>
+                    <Typography
+                      sx={{
+                        color: colors.text,
+                        fontWeight: 700,
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {item.label}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: editorMutedText,
+                        fontSize: "0.76rem",
+                        mt: 0.25,
+                      }}
+                    >
+                      {item.blockId ? "Template image" : "Uploaded asset"}
+                    </Typography>
+                  </Box>
+                </ButtonBase>
+              ))}
+            </Box>
+          </DialogContent>
+        </Dialog>
+
         {selectedPage && (
           <BlockLibrary
             open={blockLibraryOpen}
@@ -3973,6 +5594,7 @@ const WebsiteEditorInner = () => {
             extraBlocks={blockLibraryExtraBlocks}
             preferredInsertPosition={blockLibraryPreferredPosition}
             onInsertBlock={handleInsertBlockFromLibrary}
+            onBlockDragChange={setDraggedLibraryBlock}
             closeAfterInsert={false}
             currentUserRole={websiteRole}
           />

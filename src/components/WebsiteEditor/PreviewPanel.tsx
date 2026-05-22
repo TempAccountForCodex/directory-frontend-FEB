@@ -124,6 +124,9 @@ interface FrontendTemplateIframeProps {
     data: SectionSelectionData,
     position: "before" | "after",
   ) => void;
+  /** Called when the selected section supports adding inner blocks */
+  onSectionInnerAddRequest?: (data: SectionSelectionData) => void;
+  onSectionInnerAddRequest?: (data: SectionSelectionData) => void;
   onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
   onEditableTextSave?: (
     blockId: string,
@@ -152,6 +155,7 @@ const FrontendTemplateIframePreview = React.memo(
     onImageSelected,
     onSectionSelected,
     onSectionAddRequest,
+    onSectionInnerAddRequest,
     onPreviewContextMenu,
     onEditableTextSave,
     onElementTransform,
@@ -169,6 +173,9 @@ const FrontendTemplateIframePreview = React.memo(
     const onImageSelectedRef = React.useRef(onImageSelected);
     const onSectionSelectedRef = React.useRef(onSectionSelected);
     const onSectionAddRequestRef = React.useRef(onSectionAddRequest);
+    const onSectionInnerAddRequestRef = React.useRef(
+      onSectionInnerAddRequest,
+    );
     const onPreviewContextMenuRef = React.useRef(onPreviewContextMenu);
     const onEditableTextSaveRef = React.useRef(onEditableTextSave);
     const onElementTransformRef = React.useRef(onElementTransform);
@@ -216,6 +223,10 @@ const FrontendTemplateIframePreview = React.memo(
     React.useEffect(() => {
       onSectionAddRequestRef.current = onSectionAddRequest;
     }, [onSectionAddRequest]);
+
+    React.useEffect(() => {
+      onSectionInnerAddRequestRef.current = onSectionInnerAddRequest;
+    }, [onSectionInnerAddRequest]);
 
     React.useEffect(() => {
       onPreviewContextMenuRef.current = onPreviewContextMenu;
@@ -322,6 +333,13 @@ const FrontendTemplateIframePreview = React.memo(
           activeEditable.textContent = activeMeta.initialValue;
         }
 
+        activeEditable.classList.add("tt-editable-selected");
+        showSelectionOverlay(
+          activeEditable,
+          inferEditableLabel(activeEditable, activeMeta.fieldPath),
+          "editable",
+        );
+
         activeEditableRef.current = null;
         activeEditableMetaRef.current = null;
       };
@@ -331,6 +349,7 @@ const FrontendTemplateIframePreview = React.memo(
       overlayEl.setAttribute("aria-hidden", "true");
       overlayEl.innerHTML = `
       <div class="tt-selection-label"></div>
+      <button type="button" class="tt-section-inner-add-button">Add block</button>
       <button type="button" class="tt-section-add-button tt-section-add-button--top" data-insert-position="before">Add section</button>
       <button type="button" class="tt-section-add-button tt-section-add-button--bottom" data-insert-position="after">Add section</button>
       <div class="tt-selection-handle tt-selection-handle--top-left"></div>
@@ -401,6 +420,17 @@ const FrontendTemplateIframePreview = React.memo(
               (button as HTMLButtonElement).style.display =
                 overlayKind === "section" ? "inline-flex" : "none";
             });
+          const innerAddButton = overlayEl.querySelector(
+            ".tt-section-inner-add-button",
+          ) as HTMLButtonElement | null;
+          if (innerAddButton) {
+            innerAddButton.style.display =
+              overlayKind === "section" &&
+              overlayTarget.getAttribute("data-preview-accepts-inner-blocks") ===
+                "true"
+                ? "inline-flex"
+                : "none";
+          }
         });
       };
 
@@ -507,6 +537,10 @@ const FrontendTemplateIframePreview = React.memo(
         finishEditing(true);
         event.preventDefault();
         event.stopPropagation();
+        overlayEl.classList.add("tt-selection-overlay--dragging");
+        if (mode === "move") {
+          target.style.cursor = "grabbing";
+        }
 
         const startRect = target.getBoundingClientRect();
         const startX = event.clientX;
@@ -563,6 +597,10 @@ const FrontendTemplateIframePreview = React.memo(
           doc.removeEventListener("mousemove", handleMove, true);
           doc.removeEventListener("mouseup", handleUp, true);
           interactionCleanup = null;
+          overlayEl.classList.remove("tt-selection-overlay--dragging");
+          if (mode === "move") {
+            target.style.cursor = "grab";
+          }
 
           const patch =
             mode === "move"
@@ -590,6 +628,10 @@ const FrontendTemplateIframePreview = React.memo(
           doc.removeEventListener("mousemove", handleMove, true);
           doc.removeEventListener("mouseup", handleUp, true);
           interactionCleanup = null;
+          overlayEl.classList.remove("tt-selection-overlay--dragging");
+          if (mode === "move") {
+            target.style.cursor = "grab";
+          }
         };
       };
 
@@ -653,6 +695,9 @@ const FrontendTemplateIframePreview = React.memo(
           blockId,
           label,
           styleKey,
+          supportsInnerBlocks:
+            sectionEl.getAttribute("data-preview-accepts-inner-blocks") ===
+            "true",
           rect: {
             top: rect.top,
             left: rect.left,
@@ -803,21 +848,9 @@ const FrontendTemplateIframePreview = React.memo(
             fieldPath: selection.fieldPath,
             initialValue: editableEl.textContent || "",
           };
-
-          const handleEditableInput = () => {
-            onEditableTextSaveRef.current?.(
-              selection.blockId,
-              selection.fieldPath,
-              editableEl.textContent || "",
-            );
-          };
-
-          editableEl.addEventListener("input", handleEditableInput);
-          activeEditableInputCleanupRef.current = () => {
-            editableEl.removeEventListener("input", handleEditableInput);
-          };
         }
 
+        hideSelectionOverlay();
         editableEl.contentEditable = "true";
         editableEl.setAttribute("data-inline-editing", "true");
         editableEl.focus();
@@ -918,6 +951,8 @@ const FrontendTemplateIframePreview = React.memo(
         outline: 1px solid rgba(37, 99, 235, 0.18);
         outline-offset: 0;
         border-radius: 4px;
+        cursor: grab !important;
+        user-select: none;
       }
       [data-edit-image] {
         cursor: pointer;
@@ -931,6 +966,8 @@ const FrontendTemplateIframePreview = React.memo(
         outline: 1px solid rgba(37, 99, 235, 0.18);
         outline-offset: 0;
         box-shadow: none;
+        cursor: grab !important;
+        user-select: none;
       }
       [data-preview-section="true"] {
         transition: outline-color 0.15s ease, box-shadow 0.15s ease;
@@ -943,6 +980,8 @@ const FrontendTemplateIframePreview = React.memo(
         outline: 1px solid rgba(37, 99, 235, 0.18);
         outline-offset: 0;
         box-shadow: none;
+        cursor: grab !important;
+        user-select: none;
       }
       [data-inline-editing="true"] {
         cursor: text;
@@ -956,10 +995,14 @@ const FrontendTemplateIframePreview = React.memo(
         border: 2px solid #2563eb;
         border-radius: 4px;
         box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.92);
-        pointer-events: none;
+        pointer-events: auto;
+        cursor: grab;
       }
       .tt-selection-overlay--visible {
         display: block;
+      }
+      .tt-selection-overlay--dragging {
+        cursor: grabbing;
       }
       .tt-selection-label {
         position: absolute;
@@ -977,6 +1020,33 @@ const FrontendTemplateIframePreview = React.memo(
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      .tt-section-inner-add-button {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 9;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        min-width: 118px;
+        height: 36px;
+        padding: 0 14px;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%);
+        box-shadow: 0 12px 30px rgba(15,23,42,0.12);
+        color: #111827;
+        font-family: Inter, "Segoe UI", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+      .tt-section-inner-add-button:hover {
+        background: #ffffff;
+        border-color: rgba(37, 99, 235, 0.24);
       }
       .tt-section-add-button {
       z-index: 9;
@@ -1081,6 +1151,21 @@ const FrontendTemplateIframePreview = React.memo(
       onReadyRef.current?.();
 
       const handleClick = (event: MouseEvent) => {
+        const overlayInnerButton = (event.target as HTMLElement | null)?.closest?.(
+          ".tt-section-inner-add-button",
+        ) as HTMLButtonElement | null;
+        if (overlayInnerButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (overlayTarget && overlayKind === "section") {
+            const selection = buildSectionSelection(overlayTarget);
+            if (selection?.supportsInnerBlocks) {
+              onSectionInnerAddRequestRef.current?.(selection);
+            }
+          }
+          return;
+        }
+
         const overlayButton = (event.target as HTMLElement | null)?.closest?.(
           ".tt-section-add-button",
         ) as HTMLButtonElement | null;
@@ -1180,13 +1265,28 @@ const FrontendTemplateIframePreview = React.memo(
         const target = event.target as HTMLElement | null;
         event.preventDefault();
         event.stopPropagation();
-        const editableEl = target?.closest?.(
+        const clickedInsideOverlay = !!target?.closest?.(".tt-selection-overlay");
+        const resolvedOverlayTarget =
+          clickedInsideOverlay && overlayTarget ? overlayTarget : null;
+        const editableEl =
+          (resolvedOverlayTarget?.matches?.("[data-editable]")
+            ? resolvedOverlayTarget
+            : null) ||
+          target?.closest?.(
           "[data-editable]",
         ) as HTMLElement | null;
-        const imageEl = target?.closest?.(
+        const imageEl =
+          (resolvedOverlayTarget?.matches?.("[data-edit-image]")
+            ? resolvedOverlayTarget
+            : null) ||
+          target?.closest?.(
           "[data-edit-image]",
         ) as HTMLElement | null;
-        const directSectionEl = target?.closest?.(
+        const directSectionEl =
+          (resolvedOverlayTarget?.matches?.('[data-preview-section="true"]')
+            ? resolvedOverlayTarget
+            : null) ||
+          target?.closest?.(
           '[data-preview-section="true"]',
         ) as HTMLElement | null;
         const resolvedSectionEl =
@@ -1276,6 +1376,7 @@ const FrontendTemplateIframePreview = React.memo(
 
       const handleMouseDown = (event: MouseEvent) => {
         const target = event.target as HTMLElement | null;
+        const clickedInsideOverlay = !!target?.closest?.(".tt-selection-overlay");
         const handleEl = target?.closest?.(
           ".tt-selection-handle",
         ) as HTMLElement | null;
@@ -1303,15 +1404,16 @@ const FrontendTemplateIframePreview = React.memo(
           !overlayTarget ||
           !target ||
           target.closest(".tt-section-add-button") ||
-          target.closest(".tt-selection-overlay")
+          target.closest(".tt-section-inner-add-button")
         ) {
           return;
         }
 
         if (
-          overlayTarget.contains(target) &&
+          ((overlayTarget.contains(target) && !clickedInsideOverlay) ||
+            clickedInsideOverlay) &&
           !target.closest(
-            'a, button, input, textarea, select, [contenteditable="true"]',
+            '.tt-selection-handle, input, textarea, select, [contenteditable="true"]',
           )
         ) {
           startInteraction(
@@ -1549,6 +1651,7 @@ export interface SectionSelectionData {
   blockId: string;
   label: string;
   styleKey?: "sectionStyle" | "outerSectionStyle";
+  supportsInnerBlocks?: boolean;
   rect?: { top: number; left: number; width: number; height: number };
 }
 
@@ -1624,6 +1727,9 @@ interface PreviewPanelProps {
   iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
   /** Syncs visual selection inside the iframe from the parent editor */
   selectedPreviewTarget?: PreviewSelectionTarget | null;
+  draggedLibraryBlock?: { key: string; label: string } | null;
+  canDropLibraryBlock?: boolean;
+  onLibraryBlockDrop?: () => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1643,12 +1749,16 @@ const PreviewPanel = React.memo(function PreviewPanel({
   onImageSelected,
   onSectionSelected,
   onSectionAddRequest,
+  onSectionInnerAddRequest,
   onPreviewContextMenu,
   onEditableTextSave,
   onElementTransform,
   saveSignal,
   iframeRefCallback,
   selectedPreviewTarget,
+  draggedLibraryBlock,
+  canDropLibraryBlock = false,
+  onLibraryBlockDrop,
 }: PreviewPanelProps) {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -1669,6 +1779,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
   const [rotated, setRotated] = React.useState(false);
   const [timedOut, setTimedOut] = React.useState(false);
   const [fallbackActive, setFallbackActive] = React.useState(false);
+  const [isLibraryDropActive, setIsLibraryDropActive] = React.useState(false);
 
   // Refs
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
@@ -1777,6 +1888,58 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
   const isFrontendTemplatePreview =
     effectiveMode === "live" && !!frontendTemplateId && !!frontendTemplateData;
+
+  const handleLibraryDragOver = React.useCallback(
+    (event: React.DragEvent) => {
+      if (!draggedLibraryBlock) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = canDropLibraryBlock ? "copy" : "none";
+      if (!isLibraryDropActive) {
+        setIsLibraryDropActive(true);
+      }
+    },
+    [draggedLibraryBlock, canDropLibraryBlock, isLibraryDropActive],
+  );
+
+  const handleLibraryDragLeave = React.useCallback(
+    (event: React.DragEvent) => {
+      if (
+        event.currentTarget instanceof Node &&
+        event.relatedTarget instanceof Node &&
+        event.currentTarget.contains(event.relatedTarget)
+      ) {
+        return;
+      }
+
+      setIsLibraryDropActive(false);
+    },
+    [],
+  );
+
+  const handleLibraryDrop = React.useCallback(
+    (event: React.DragEvent) => {
+      if (!draggedLibraryBlock) {
+        return;
+      }
+
+      event.preventDefault();
+      setIsLibraryDropActive(false);
+      if (!canDropLibraryBlock) {
+        return;
+      }
+      onLibraryBlockDrop?.();
+    },
+    [draggedLibraryBlock, canDropLibraryBlock, onLibraryBlockDrop],
+  );
+
+  React.useEffect(() => {
+    if (!draggedLibraryBlock) {
+      setIsLibraryDropActive(false);
+    }
+  }, [draggedLibraryBlock]);
 
   // PostMessage: send CONTENT_UPDATE to iframe
   const sendPostMessage = React.useCallback(
@@ -2361,6 +2524,9 @@ const PreviewPanel = React.memo(function PreviewPanel({
       {/* Preview Area */}
       <Box
         ref={containerRef}
+        onDragOver={handleLibraryDragOver}
+        onDragLeave={handleLibraryDragLeave}
+        onDrop={handleLibraryDrop}
         sx={{
           flex: 1,
           overflow: scaleToFit ? "hidden" : "auto",
@@ -2395,6 +2561,49 @@ const PreviewPanel = React.memo(function PreviewPanel({
             <Typography variant="caption" sx={{ color: colors.textSecondary }}>
               Loading preview...
             </Typography>
+          </Box>
+        )}
+
+        {draggedLibraryBlock && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 14,
+              zIndex: 4,
+              pointerEvents: "none",
+              borderRadius: "24px",
+              border: isLibraryDropActive
+                ? "2px dashed rgba(37, 99, 235, 0.7)"
+                : "2px dashed rgba(15, 23, 42, 0.18)",
+              background: isLibraryDropActive
+                ? "rgba(37, 99, 235, 0.08)"
+                : "rgba(255,255,255,0.35)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 160ms ease",
+            }}
+          >
+            <Box
+              sx={{
+                px: 2,
+                py: 1.25,
+                borderRadius: 3,
+                backgroundColor: "rgba(15, 23, 42, 0.86)",
+                color: "#fff",
+                textAlign: "center",
+                boxShadow: "0 18px 36px rgba(15, 23, 42, 0.24)",
+              }}
+            >
+              <Typography sx={{ fontSize: "0.92rem", fontWeight: 800 }}>
+                Drop {draggedLibraryBlock.label}
+              </Typography>
+              <Typography sx={{ mt: 0.35, fontSize: "0.78rem", opacity: 0.84 }}>
+                {canDropLibraryBlock
+                  ? "Drop on the canvas to insert near the selected section."
+                  : "Select a section first, then drop the block here."}
+              </Typography>
+            </Box>
           </Box>
         )}
 
@@ -2535,6 +2744,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 onImageSelected={onImageSelected}
                 onSectionSelected={onSectionSelected}
                 onSectionAddRequest={onSectionAddRequest}
+                onSectionInnerAddRequest={onSectionInnerAddRequest}
                 onPreviewContextMenu={onPreviewContextMenu}
                 onEditableTextSave={onEditableTextSave}
                 onElementTransform={onElementTransform}

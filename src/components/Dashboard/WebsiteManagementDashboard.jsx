@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { apiClient } from '../../api/client';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { apiClient } from "../../api/client";
 import {
   Box,
   Alert,
@@ -7,7 +7,7 @@ import {
   Skeleton,
   Typography,
   Container,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowLeft,
   BarChart2,
@@ -24,75 +24,76 @@ import {
   Wrench,
   LayoutGrid,
   MessageSquare,
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { getDashboardColors } from '../../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../../context/ThemeContext';
-import { usePermissionContext } from '../../context/PermissionContext';
-import {
-  MiniSideNav,
-  PageHeader,
-} from './shared';
-import DashboardActionButton from './shared/DashboardActionButton';
-import OverviewTab from './website-manage/OverviewTab';
-import AnalyticsTab from './website-manage/AnalyticsTab';
-import FormsTab from './website-manage/FormsTab';
-import IntegrationsTab from './website-manage/IntegrationsTab';
-import ListingEditTab from './ListingEditTab';
-import ReviewsTab from './website-manage/ReviewsTab';
-import PagesTab from './website-manage/PagesTab';
-import MediaTab from './website-manage/MediaTab';
-import DesignTab from './website-manage/DesignTab';
-import SeoTab from './website-manage/SeoTab';
-import DomainTab from './website-manage/DomainTab';
-import TeamTab from './website-manage/TeamTab';
-import SettingsTab from './website-manage/SettingsTab';
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { getDashboardColors } from "../../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import { usePermissionContext } from "../../context/PermissionContext";
+import { MiniSideNav, PageHeader } from "./shared";
+import DashboardActionButton from "./shared/DashboardActionButton";
+import OverviewTab from "./website-manage/OverviewTab";
+import AnalyticsTab from "./website-manage/AnalyticsTab";
+import FormsTab from "./website-manage/FormsTab";
+import IntegrationsTab from "./website-manage/IntegrationsTab";
+import ListingEditTab from "./ListingEditTab";
+import ReviewsTab from "./website-manage/ReviewsTab";
+import PagesTab from "./website-manage/PagesTab";
+import MediaTab from "./website-manage/MediaTab";
+import DesignTab from "./website-manage/DesignTab";
+import SeoTab from "./website-manage/SeoTab";
+import DomainTab from "./website-manage/DomainTab";
+import TeamTab from "./website-manage/TeamTab";
+import SettingsTab from "./website-manage/SettingsTab";
 
 // ── Nav sections defined outside component for stable reference ──────────────
 const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
   {
-    title: 'Content',
+    title: "Content",
     items: [
-      { id: 'overview', label: 'Overview', icon: Home },
-      { id: 'pages', label: 'Pages', icon: FileText },
-      { id: 'media', label: 'Media', icon: Image },
+      { id: "overview", label: "Overview", icon: Home },
+      { id: "pages", label: "Pages", icon: FileText },
+      { id: "media", label: "Media", icon: Image },
     ],
   },
   {
-    title: 'Design',
+    title: "Design",
+    items: [{ id: "design", label: "Design", icon: Palette }],
+  },
+  {
+    title: "Growth",
     items: [
-      { id: 'design', label: 'Design', icon: Palette },
+      { id: "analytics", label: "Analytics", icon: BarChart2 },
+      { id: "seo", label: "SEO", icon: Search },
+      { id: "forms", label: "Forms", icon: MessageSquare },
+      { id: "reviews", label: "Reviews", icon: Star },
     ],
   },
   {
-    title: 'Growth',
+    title: "Connections",
     items: [
-      { id: 'analytics', label: 'Analytics', icon: BarChart2 },
-      { id: 'seo', label: 'SEO', icon: Search },
-      { id: 'forms', label: 'Forms', icon: MessageSquare },
-      { id: 'reviews', label: 'Reviews', icon: Star },
+      { id: "listing", label: "Directory Listing", icon: LayoutGrid },
+      { id: "domain", label: "Domain", icon: Globe },
+      { id: "integrations", label: "Integrations", icon: Link },
     ],
   },
   {
-    title: 'Connections',
+    title: "Manage",
     items: [
-      { id: 'listing', label: 'Directory Listing', icon: LayoutGrid },
-      { id: 'domain', label: 'Domain', icon: Globe },
-      { id: 'integrations', label: 'Integrations', icon: Link },
-    ],
-  },
-  {
-    title: 'Manage',
-    items: [
-      { id: 'team', label: 'Team', icon: Users },
-      { id: 'settings', label: 'Settings', icon: Settings },
+      { id: "team", label: "Team", icon: Users },
+      { id: "settings", label: "Settings", icon: Settings },
     ],
   },
 ];
 
-const VALID_SECTIONS = WEBSITE_MANAGEMENT_NAV_SECTIONS.flatMap((s) => s.items.map((i) => i.id));
+const VALID_SECTIONS = WEBSITE_MANAGEMENT_NAV_SECTIONS.flatMap((s) =>
+  s.items.map((i) => i.id),
+);
 
-const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) => {
+const WebsiteManagementDashboard = ({
+  websiteId,
+  section,
+  userPlan = "free",
+}) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
   const navigate = useNavigate();
@@ -107,7 +108,8 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
   }, [websiteId, setCurrentWebsite]);
 
   // Normalize section param — default to 'overview', redirect unknown
-  const normalizedSection = section && VALID_SECTIONS.includes(section) ? section : 'overview';
+  const normalizedSection =
+    section && VALID_SECTIONS.includes(section) ? section : "overview";
   const [activeSection, setActiveSection] = useState(normalizedSection);
 
   const [website, setWebsite] = useState(null);
@@ -116,7 +118,8 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
 
   // Sync section prop changes (deep link support)
   useEffect(() => {
-    const next = section && VALID_SECTIONS.includes(section) ? section : 'overview';
+    const next =
+      section && VALID_SECTIONS.includes(section) ? section : "overview";
     setActiveSection(next);
   }, [section]);
 
@@ -131,12 +134,14 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
       const raw = res.data.data || res.data.website || res.data;
       const normalized = {
         ...raw,
-        status: (raw.status || 'draft').toUpperCase(),
-        role: (raw.role || 'VIEWER').toUpperCase(),
+        status: (raw.status || "draft").toUpperCase(),
+        role: (raw.role || "VIEWER").toUpperCase(),
       };
       setWebsite(normalized);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load website details.');
+      setError(
+        err?.response?.data?.message || "Failed to load website details.",
+      );
     } finally {
       setLoading(false);
     }
@@ -151,53 +156,85 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
       const match = section.items.find((item) => item.id === activeSection);
       if (match) return match.label;
     }
-    return 'Overview';
+    return "Overview";
   }, [activeSection]);
 
   const handleSectionChange = useCallback(
     (id) => {
       setActiveSection(id);
-      navigate(`/dashboard/websites/${websiteId}/manage/${id}`, { replace: false });
+      navigate(`/dashboard/websites/${websiteId}/manage/${id}`, {
+        replace: false,
+      });
     },
-    [navigate, websiteId]
+    [navigate, websiteId],
   );
 
   const handleNavigateToSection = useCallback(
     (id) => {
       handleSectionChange(id);
     },
-    [handleSectionChange]
+    [handleSectionChange],
   );
 
-  const handleWebsiteSaved = useCallback((updatedWebsite) => {
-    if (updatedWebsite) {
-      // Normalize status/role casing from any tab callback
-      const patched = { ...updatedWebsite };
-      if (patched.status) patched.status = patched.status.toUpperCase();
-      if (patched.role) patched.role = patched.role.toUpperCase();
-      setWebsite((prev) => ({ ...prev, ...patched }));
-    } else {
-      fetchWebsite();
-    }
-  }, [fetchWebsite]);
+  const handleWebsiteSaved = useCallback(
+    (updatedWebsite) => {
+      if (updatedWebsite) {
+        // Normalize status/role casing from any tab callback
+        const patched = { ...updatedWebsite };
+        if (patched.status) patched.status = patched.status.toUpperCase();
+        if (patched.role) patched.role = patched.role.toUpperCase();
+        setWebsite((prev) => ({ ...prev, ...patched }));
+      } else {
+        fetchWebsite();
+      }
+    },
+    [fetchWebsite],
+  );
 
   const handleWebsiteDeleted = useCallback(() => {
-    navigate('/dashboard/websites', { replace: true });
+    navigate("/dashboard/websites", { replace: true });
   }, [navigate]);
 
   // Loading skeleton
   if (loading) {
     return (
       <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
-        <Box sx={{ display: 'flex', gap: { xs: 0, lg: 4 }, mt: 2, flexDirection: { xs: 'column', lg: 'row' } }}>
-          <Box sx={{ width: { xs: '100%', lg: 240 }, flexShrink: 0 }}>
-            <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2, mb: 2 }} />
-            <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+        <Box
+          sx={{
+            display: "flex",
+            gap: { xs: 0, lg: 4 },
+            mt: 2,
+            flexDirection: { xs: "column", lg: "row" },
+          }}
+        >
+          <Box sx={{ width: { xs: "100%", lg: 240 }, flexShrink: 0 }}>
+            <Skeleton
+              variant="rectangular"
+              height={80}
+              sx={{ borderRadius: 2, mb: 2 }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={300}
+              sx={{ borderRadius: 2 }}
+            />
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 3 }} />
-            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 2 }} />
-            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+            <Skeleton
+              variant="rectangular"
+              height={60}
+              sx={{ borderRadius: 2, mb: 3 }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={200}
+              sx={{ borderRadius: 2, mb: 2 }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={200}
+              sx={{ borderRadius: 2 }}
+            />
           </Box>
         </Box>
       </Container>
@@ -215,17 +252,18 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
     );
   }
 
-  const subdomain = website?.subdomain || website?.slug || '';
-  const websiteName = website?.name || 'Website';
-  const websiteRole = (website?.role || 'VIEWER').toUpperCase();
+  const subdomain = website?.subdomain || website?.slug || "";
+  const websiteName = website?.name || "Website";
+  const websiteRole = (website?.role || "VIEWER").toUpperCase();
 
   // Permission check: block non-EDITOR users
-  const allowedRoles = ['EDITOR', 'ADMIN', 'OWNER'];
+  const allowedRoles = ["EDITOR", "ADMIN", "OWNER"];
   if (!allowedRoles.includes(websiteRole)) {
     return (
       <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 }, mt: 4 }}>
         <Alert severity="error" sx={{ borderRadius: 2 }}>
-          You do not have permission to access this dashboard. Editor or higher role is required.
+          You do not have permission to access this dashboard. Editor or higher
+          role is required.
         </Alert>
       </Container>
     );
@@ -235,23 +273,28 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
     const tabProps = { website, websiteId, onSaved: handleWebsiteSaved };
 
     switch (activeSection) {
-      case 'overview':
-        return <OverviewTab {...tabProps} onNavigateToSection={handleNavigateToSection} />;
-      case 'pages':
+      case "overview":
+        return (
+          <OverviewTab
+            {...tabProps}
+            onNavigateToSection={handleNavigateToSection}
+          />
+        );
+      case "pages":
         return <PagesTab {...tabProps} />;
-      case 'media':
+      case "media":
         return <MediaTab {...tabProps} />;
-      case 'design':
+      case "design":
         return <DesignTab {...tabProps} />;
-      case 'analytics':
+      case "analytics":
         return <AnalyticsTab {...tabProps} />;
-      case 'seo':
+      case "seo":
         return <SeoTab {...tabProps} />;
-      case 'forms':
+      case "forms":
         return <FormsTab {...tabProps} />;
-      case 'reviews':
+      case "reviews":
         return <ReviewsTab {...tabProps} />;
-      case 'listing':
+      case "listing":
         return (
           <ListingEditTab
             websiteId={Number(websiteId)}
@@ -260,13 +303,13 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
             onUpdate={handleWebsiteSaved}
           />
         );
-      case 'domain':
+      case "domain":
         return <DomainTab {...tabProps} userPlan={userPlan} />;
-      case 'integrations':
+      case "integrations":
         return <IntegrationsTab {...tabProps} />;
-      case 'team':
+      case "team":
         return <TeamTab {...tabProps} currentUserRole={websiteRole} />;
-      case 'settings':
+      case "settings":
         return (
           <SettingsTab
             {...tabProps}
@@ -275,19 +318,30 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
           />
         );
       default:
-        return <OverviewTab {...tabProps} onNavigateToSection={handleNavigateToSection} />;
+        return (
+          <OverviewTab
+            {...tabProps}
+            onNavigateToSection={handleNavigateToSection}
+          />
+        );
     }
   };
 
   return (
     <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
       {/* Breadcrumb */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, mt: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, mt: 1 }}>
         <DashboardActionButton
           startIcon={<ArrowLeft size={16} />}
-          onClick={() => navigate('/dashboard/websites')}
+          onClick={() => navigate("/dashboard/websites")}
           variant="text"
-          sx={{ px: 0, minWidth: 0, color: 'text.secondary', fontWeight: 500, fontSize: '0.85rem' }}
+          sx={{
+            // px: 0,
+            minWidth: 0,
+            // color: "text.secondary",
+            fontWeight: 500,
+            fontSize: "0.85rem",
+          }}
           aria-label="Back to All Websites"
         >
           Back to All Websites
@@ -296,33 +350,41 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
       <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
         <Typography
           component="a"
-          sx={{ color: 'text.secondary', cursor: 'pointer', textDecoration: 'none', fontSize: '0.875rem', '&:hover': { textDecoration: 'underline' } }}
-          onClick={() => navigate('/dashboard/websites')}
+          sx={{
+            color: "text.secondary",
+            cursor: "pointer",
+            textDecoration: "none",
+            fontSize: "0.875rem",
+            "&:hover": { textDecoration: "underline" },
+          }}
+          onClick={() => navigate("/dashboard/websites")}
         >
           All Websites
         </Typography>
-        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
           {websiteName}
         </Typography>
-        <Typography sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.875rem' }}>
+        <Typography
+          sx={{ color: "text.primary", fontWeight: 600, fontSize: "0.875rem" }}
+        >
           {activeSectionLabel}
         </Typography>
       </Breadcrumbs>
 
       <Box
         sx={{
-          display: 'flex',
+          display: "flex",
           gap: { xs: 0, lg: 4 },
-          alignItems: 'start',
+          alignItems: "start",
           mt: 1,
-          flexDirection: { xs: 'column', lg: 'row' },
+          flexDirection: { xs: "column", lg: "row" },
         }}
       >
         {/* MiniSideNav */}
         <MiniSideNav
           profile={{
             name: websiteName,
-            email: subdomain ? `${subdomain}.techietribe.app` : '',
+            email: subdomain ? `${subdomain}.techietribe.app` : "",
           }}
           sections={WEBSITE_MANAGEMENT_NAV_SECTIONS}
           activeItem={activeSection}
@@ -334,17 +396,19 @@ const WebsiteManagementDashboard = ({ websiteId, section, userPlan = 'free' }) =
           {/* Section header with breadcrumb and Open Editor button */}
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              flexWrap: 'wrap',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              flexWrap: "wrap",
               gap: 2,
               mb: 3,
             }}
           >
             <DashboardActionButton
               startIcon={<Wrench size={16} />}
-              onClick={() => navigate(`/dashboard/websites/${websiteId}/editor`)}
+              onClick={() =>
+                navigate(`/dashboard/websites/${websiteId}/editor`)
+              }
               variant="outlined"
               size="small"
               aria-label="Open website editor"

@@ -228,7 +228,7 @@ const PublicWebsite: React.FC = () => {
         const websiteData = response.data;
 
         // Sort pages by sortOrder
-        const rawPages = Array.isArray(websiteData.pages)
+        let rawPages = Array.isArray(websiteData.pages)
           ? websiteData.pages
           : Array.isArray(websiteData.blocks)
             ? [
@@ -243,20 +243,73 @@ const PublicWebsite: React.FC = () => {
                 },
               ]
             : [];
-        const sortedPages = [...rawPages].sort(
-          (a, b) => a.sortOrder - b.sortOrder,
-        );
+        let sortedPages = [...rawPages].sort((a, b) => a.sortOrder - b.sortOrder);
+        let inferredFrontendTemplateId =
+          inferFrontendTemplateIdFromPages(sortedPages);
+
+        const resolvedTemplateId =
+          websiteData.frontendTemplateId ||
+          inferredFrontendTemplateId ||
+          getStoredWebsiteFrontendTemplateId(
+            websiteData.id || websiteData.websiteId,
+          ) ||
+          null;
+
+        if (
+          websiteData.id &&
+          resolvedTemplateId &&
+          supportsFrontendTemplateEditor(resolvedTemplateId)
+        ) {
+          try {
+            const pagesRes = await apiClient.get(
+              `/websites/${websiteData.id}/pages`,
+            );
+            const persistedPages = Array.isArray(pagesRes.data?.data)
+              ? pagesRes.data.data
+              : [];
+
+            if (persistedPages.length > 0) {
+              const persistedPagesWithBlocks = await Promise.all(
+                persistedPages.map(async (page: any) => {
+                  try {
+                    const blocksRes = await apiClient.get(
+                      `/pages/${page.id}/blocks`,
+                    );
+                    return {
+                      ...page,
+                      blocks: Array.isArray(blocksRes.data?.data)
+                        ? blocksRes.data.data
+                        : [],
+                    };
+                  } catch {
+                    return {
+                      ...page,
+                      blocks: [],
+                    };
+                  }
+                }),
+              );
+
+              rawPages = persistedPagesWithBlocks;
+              sortedPages = [...rawPages].sort(
+                (a, b) => a.sortOrder - b.sortOrder,
+              );
+              inferredFrontendTemplateId =
+                inferFrontendTemplateIdFromPages(sortedPages);
+            }
+          } catch {
+            // Fall back to slug payload pages below.
+          }
+        }
 
         // Sort blocks within each page
         sortedPages.forEach((page) => {
-          page.blocks = [...page.blocks].sort(
-            (a, b) => a.sortOrder - b.sortOrder,
-          );
+          page.blocks = Array.isArray(page.blocks)
+            ? [...page.blocks].sort((a, b) => a.sortOrder - b.sortOrder)
+            : [];
         });
 
         websiteData.pages = sortedPages;
-        const inferredFrontendTemplateId =
-          inferFrontendTemplateIdFromPages(sortedPages);
         const normalizedWebsiteData = {
           ...websiteData,
           pages: sortedPages,

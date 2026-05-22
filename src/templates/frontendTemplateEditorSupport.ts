@@ -862,6 +862,9 @@ const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
         subheadingStyle:
           content.subheadingStyle || content.descriptionStyle || content.bodyStyle,
         buttonTextStyle: content.buttonTextStyle || content.ctaTextStyle,
+        innerBlocks: Array.isArray(content.innerBlocks)
+          ? content.innerBlocks
+          : [],
         sectionStyle: getSectionStyleValue(content),
         outerSectionStyle: getSectionStyleValue(content, "outerSectionStyle"),
       };
@@ -1401,9 +1404,16 @@ export const buildTemplatePreviewBusinessData = (
             ["ctaText", "heroCtaText", "buttonText", "buttonLabel"],
             contactButton,
           ),
+          heroImage: readString(overview, ["heroImage", "image", "imageUrl"]),
+          image: readString(overview, ["heroImage", "image", "imageUrl"]),
+          heroImageStyle: overview.heroImageStyle || overview.imageStyle,
+          imageStyle: overview.heroImageStyle || overview.imageStyle,
           headingStyle: overview.headingStyle,
           subheadingStyle: overview.subheadingStyle,
           ctaTextStyle: overview.ctaTextStyle || overview.buttonTextStyle,
+          innerBlocks: Array.isArray(overview.innerBlocks)
+            ? overview.innerBlocks
+            : [],
           sectionStyle: getSectionStyleValue(overview),
           outerSectionStyle: getSectionStyleValue(
             overview,
@@ -1418,6 +1428,7 @@ export const buildTemplatePreviewBusinessData = (
           imageStyle: about.imageStyle,
           headingStyle: about.headingStyle || about.titleStyle,
           bodyStyle: about.bodyStyle || about.descriptionStyle,
+          innerBlocks: Array.isArray(about.innerBlocks) ? about.innerBlocks : [],
           sectionStyle: getSectionStyleValue(about),
           outerSectionStyle: getSectionStyleValue(about, "outerSectionStyle"),
         },
@@ -1430,6 +1441,7 @@ export const buildTemplatePreviewBusinessData = (
           items: whyUsItems,
           headingStyle: whyUs.headingStyle,
           descriptionStyle: whyUs.descriptionStyle || whyUs.bodyStyle,
+          innerBlocks: Array.isArray(whyUs.innerBlocks) ? whyUs.innerBlocks : [],
           sectionStyle: getSectionStyleValue(whyUs),
           outerSectionStyle: getSectionStyleValue(whyUs, "outerSectionStyle"),
         },
@@ -1452,6 +1464,9 @@ export const buildTemplatePreviewBusinessData = (
           headingStyle: process.headingStyle,
           subheadingStyle: process.subheadingStyle || process.descriptionStyle,
           ctaTextStyle: process.ctaTextStyle || process.buttonTextStyle,
+          innerBlocks: Array.isArray(process.innerBlocks)
+            ? process.innerBlocks
+            : [],
           sectionStyle: getSectionStyleValue(process),
           outerSectionStyle: getSectionStyleValue(process, "outerSectionStyle"),
         },
@@ -1473,6 +1488,9 @@ export const buildTemplatePreviewBusinessData = (
             contact.bodyStyle ||
             contact.subheadingStyle,
           buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
+          innerBlocks: Array.isArray(contact.innerBlocks)
+            ? contact.innerBlocks
+            : [],
           sectionStyle: getSectionStyleValue(contact),
           outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },

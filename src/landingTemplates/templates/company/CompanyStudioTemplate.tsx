@@ -15,6 +15,11 @@ import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
 import {
+  getEditableImageProps,
+  getEditableSectionProps,
+  getEditableTextProps,
+} from "../../utils/editableProps";
+import {
   getSectionStyleDomProps,
   getSectionStyleSx,
 } from "../../utils/sectionStyle";
@@ -137,6 +142,19 @@ const isLightColor = (hex: string) => {
   return luminance > 0.72;
 };
 
+const getImageHeightPresetSx = (preset?: string) => {
+  switch (preset) {
+    case "small":
+      return { height: { xs: 220, md: 300 } };
+    case "medium":
+      return { height: { xs: 320, md: 420 } };
+    case "large":
+      return { height: { xs: 420, md: 560 } };
+    default:
+      return {};
+  }
+};
+
 const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const templateContent =
     (data.templateContent as Record<string, any> | undefined) || {};
@@ -190,29 +208,55 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     contactContent.ctaText ||
     "Contact Us";
   const whyBody = featuresContent.description || aboutBody;
+  const whyImageEyebrow =
+    featuresContent.imageEyebrowText || "Business presentation";
+  const whyImageHeading =
+    featuresContent.imageHeading ||
+    "Professional presentation for modern businesses.";
   const processHeading =
     processContent.heading || testimonialsContent.heading || "How it works.";
   const processDescription =
     processContent.subheading ||
     "A simple executive flow built to move from strategy to launch with clarity.";
   const processCtaText = processContent.ctaText || contactPrimary;
+  const teamMembers =
+    (processContent.teamMembers as Array<{ name?: string }> | undefined) ||
+    team ||
+    [];
+  const processReviewText =
+    processContent.reviewText ||
+    reviews[0]?.text ||
+    "Built to feel sharp, premium, and easy to scan.";
   const heroImage =
     homeContent.heroImage || homeContent.image || visualSet.heroPortrait;
   const heroImageStyle =
     homeContent.heroImageStyle || homeContent.imageStyle || {};
   const heroImageFit = heroImageStyle.objectFit || "contain";
+  const heroImageHeightSx = getImageHeightPresetSx(heroImageStyle.heightPreset);
+  const overviewInnerBlocks = Array.isArray(homeContent.innerBlocks)
+    ? homeContent.innerBlocks
+    : [];
   const aboutImage =
     aboutContent.image || aboutContent.imageUrl || visualSet.strategy;
   const aboutImageStyle = aboutContent.imageStyle || {};
   const aboutImageFit = aboutImageStyle.objectFit || "cover";
+  const aboutImageHeightSx = getImageHeightPresetSx(
+    aboutImageStyle.heightPreset,
+  );
   const whyUsImage =
     featuresContent.image || featuresContent.imageUrl || visualSet.office;
   const whyUsImageStyle = featuresContent.imageStyle || {};
   const whyUsImageFit = whyUsImageStyle.objectFit || "cover";
+  const whyUsImageHeightSx = getImageHeightPresetSx(
+    whyUsImageStyle.heightPreset,
+  );
   const processImage =
     processContent.image || processContent.imageUrl || visualSet.team;
   const processImageStyle = processContent.imageStyle || {};
   const processImageFit = processImageStyle.objectFit || "cover";
+  const processImageHeightSx = getImageHeightPresetSx(
+    processImageStyle.heightPreset,
+  );
   const aboutBlockId = aboutContent.blockId;
   const whyUsBlockId = featuresContent.blockId;
   const processBlockId = processContent.blockId;
@@ -242,6 +286,20 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       },
     ]
   ).slice(0, 3);
+  const aboutDetailGroups = (
+    (aboutContent.detailGroups as
+      | Array<{ title?: string; items?: string[] }>
+      | undefined) || [
+      {
+        title: "What we build",
+        items: ["Clear systems", "Premium visuals", "Business growth"],
+      },
+      {
+        title: "How we work",
+        items: ["Fast collaboration", "Focused delivery", "Global support"],
+      },
+    ]
+  ).slice(0, 2);
   const themeColor =
     data.themeSettings?.primaryColor || data.primaryColor || "#124d4e";
   const rawSecondaryColor =
@@ -308,7 +366,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   ).filter((key, index, collection) => {
     const normalizedKey = String(key);
     return (
-      (defaultSectionOrder.includes(normalizedKey as (typeof defaultSectionOrder)[number]) ||
+      (defaultSectionOrder.includes(
+        normalizedKey as (typeof defaultSectionOrder)[number],
+      ) ||
         customSectionMap.has(normalizedKey)) &&
       collection.indexOf(key) === index
     );
@@ -330,8 +390,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const sectionPosition = Object.fromEntries(
     resolvedSectionOrder.map((key, index) => [key, index + 1]),
   ) as Record<string, number>;
-  const navItems = resolvedSectionOrder.map((key) => ({
-    label: customSectionMap.has(key)
+  const navItems = resolvedSectionOrder.map((key) => {
+    const defaultLabel = customSectionMap.has(key)
       ? String(
           customSectionMap.get(key)?.label ||
             customSectionMap.get(key)?.heading ||
@@ -345,13 +405,17 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             ? "Why Us"
             : key === "process"
               ? "Process"
-              : "Contact",
-    id: customSectionMap.has(key)
-      ? key
-      : key === "process"
-        ? "work"
-        : key,
-  }));
+              : "Contact";
+
+    return {
+      label:
+        homeContent.navLabels?.[key] ||
+        homeContent.navigationLabels?.[key] ||
+        defaultLabel,
+      id: customSectionMap.has(key) ? key : key === "process" ? "work" : key,
+      fieldPath: `navLabels.${key}`,
+    };
+  });
 
   const scrollToSection = (sectionId: string) => {
     const target = document.getElementById(sectionId);
@@ -359,9 +423,208 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const overviewBlockId = homeContent.blockId;
+  const renderCustomInnerBlock = (
+    section: Record<string, any>,
+    block: Record<string, any>,
+    index: number,
+    options?: { tone?: "light" | "dark"; maxWidth?: number | string },
+  ) => {
+    const blockPath = `innerBlocks.${index}.content`;
+    const blockType = String(block.type || "text").toLowerCase();
+    const tone = options?.tone || "dark";
+    const textColor = tone === "light" ? palette.white : palette.ink;
+    const mutedTextColor =
+      tone === "light" ? "rgba(255,255,255,0.78)" : palette.muted;
+    const lineColor =
+      tone === "light" ? "rgba(255,255,255,0.22)" : rgba(themeColor, 0.22);
+    const blockMaxWidth = options?.maxWidth || 880;
+    const textStyle = block.content?.textStyle || {};
+    const headingStyle = block.content?.headingStyle || textStyle;
+    const buttonStyle = block.content?.buttonTextStyle || textStyle;
+    const imageStyle = block.content?.imageStyle || {};
+
+    if (blockType === "heading") {
+      return (
+        <Typography
+          key={String(block.id || `${blockType}-${index}`)}
+          {...getEditableTextProps(section.blockId, `${blockPath}.text`, "multi")}
+          sx={{
+            maxWidth: blockMaxWidth,
+            fontFamily: headingFont,
+            fontSize: { xs: "2rem", md: "3.2rem" },
+            lineHeight: 0.98,
+            letterSpacing: "-0.05em",
+            fontWeight: 800,
+            color: textColor,
+            ...headingStyle,
+          }}
+        >
+          {block.content?.text || "New section heading"}
+        </Typography>
+      );
+    }
+
+    if (blockType === "eyebrow") {
+      return (
+        <Chip
+          key={String(block.id || `${blockType}-${index}`)}
+          label={block.content?.text || "Section label"}
+          {...getEditableTextProps(section.blockId, `${blockPath}.text`, "single")}
+          sx={{
+            alignSelf: "flex-start",
+            bgcolor:
+              tone === "light" ? "rgba(255,255,255,0.14)" : palette.accentSoft,
+            color: textColor,
+            backdropFilter: "blur(10px)",
+            border:
+              tone === "light"
+                ? "1px solid rgba(255,255,255,0.22)"
+                : `1px solid ${rgba(themeColor, 0.14)}`,
+            fontWeight: 700,
+            ...textStyle,
+          }}
+        />
+      );
+    }
+
+    if (blockType === "image") {
+      return (
+        <Box
+          key={String(block.id || `${blockType}-${index}`)}
+          component="img"
+          src={block.content?.src || visualSet.office}
+          alt={block.content?.alt || "Section image"}
+          {...getEditableImageProps(
+            section.blockId,
+            `${blockPath}.src`,
+            block.label || "Section Image",
+          )}
+          sx={{
+            width: "100%",
+            maxWidth: blockMaxWidth,
+            height: imageStyle.height || { xs: 220, md: 360 },
+            objectFit: imageStyle.objectFit || "cover",
+            borderRadius: "24px",
+            display: "block",
+            cursor: "pointer",
+            borderWidth: imageStyle.borderWidth,
+            borderColor: imageStyle.borderColor,
+            borderStyle: imageStyle.borderWidth ? "solid" : undefined,
+            transform: imageStyle.transform,
+            ...imageStyle,
+          }}
+        />
+      );
+    }
+
+    if (blockType === "button") {
+      return (
+        <Button
+          key={String(block.id || `${blockType}-${index}`)}
+          variant="contained"
+          {...getEditableTextProps(section.blockId, `${blockPath}.text`, "single")}
+          sx={{
+            alignSelf: "flex-start",
+            bgcolor: themeColor,
+            color: palette.white,
+            borderRadius: "16px",
+            textTransform: "none",
+            px: 2.8,
+            py: 1.2,
+            fontWeight: 700,
+            boxShadow: "none",
+            ...buttonStyle,
+            "&:hover": {
+              bgcolor: themeColor,
+              boxShadow: "none",
+              opacity: 0.94,
+            },
+          }}
+        >
+          {block.content?.text || "Button"}
+        </Button>
+      );
+    }
+
+    if (blockType === "divider") {
+      return (
+        <Box
+          key={String(block.id || `${blockType}-${index}`)}
+          sx={{
+            width: "100%",
+            maxWidth: blockMaxWidth,
+            height: 1,
+            backgroundColor: lineColor,
+          }}
+        />
+      );
+    }
+
+    if (blockType === "spacer") {
+      return (
+        <Box
+          key={String(block.id || `${blockType}-${index}`)}
+          sx={{
+            width: "100%",
+            maxWidth: blockMaxWidth,
+            height: block.content?.height || "24px",
+            flexShrink: 0,
+          }}
+        />
+      );
+    }
+
+    return (
+      <Typography
+        key={String(block.id || `${blockType}-${index}`)}
+        {...getEditableTextProps(section.blockId, `${blockPath}.text`, "multi")}
+        sx={{
+          maxWidth: blockMaxWidth,
+          fontSize: { xs: "1rem", md: "1.1rem" },
+          lineHeight: 1.8,
+          color: mutedTextColor,
+          ...textStyle,
+        }}
+      >
+        {block.content?.text || "Add your text here."}
+      </Typography>
+    );
+  };
+  const renderSectionInnerBlocks = (
+    section: Record<string, any>,
+    options?: { tone?: "light" | "dark"; maxWidth?: number | string; mt?: any },
+  ) => {
+    const innerBlocks = Array.isArray(section.innerBlocks)
+      ? section.innerBlocks
+      : [];
+
+    if (!innerBlocks.length) {
+      return null;
+    }
+
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          mt: options?.mt ?? { xs: 2.5, md: 3 },
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 2,
+        }}
+      >
+        {innerBlocks.map((block, index) =>
+          renderCustomInnerBlock(section, block, index, options),
+        )}
+      </Box>
+    );
+  };
   const customSectionNodes = customSections.map((section, index) => {
     const sectionKey = String(section.sectionKey || `plan-${index + 1}`);
     const blockId = section.blockId;
+    const innerBlocks = Array.isArray(section.innerBlocks)
+      ? section.innerBlocks
+      : [];
 
     return (
       <Box
@@ -372,7 +635,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-style-key="outerSectionStyle"
         {...getSectionStyleDomProps(section, "outerSectionStyle")}
         sx={{
-          order: sectionPosition[sectionKey] ?? defaultSectionOrder.length + index + 1,
+          order:
+            sectionPosition[sectionKey] ??
+            defaultSectionOrder.length + index + 1,
           ...getSectionStyleSx(section, "outerSectionStyle"),
         }}
       >
@@ -382,14 +647,88 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           data-preview-label={section.label || "Plan Section"}
           data-preview-block-id={blockId}
           data-preview-style-key="sectionStyle"
+          data-preview-accepts-inner-blocks="true"
           {...getSectionStyleDomProps(section)}
           sx={{
             width: "100%",
             minHeight: { xs: 360, md: 520 },
             backgroundColor: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             ...getSectionStyleSx(section),
           }}
-        />
+        >
+          <Box
+            sx={{
+              width: "100%",
+              minHeight: "inherit",
+              px: { xs: 2, md: 4 },
+              py: { xs: 4, md: 6 },
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              justifyContent: "center",
+              gap: 2,
+            }}
+          >
+            {innerBlocks.length > 0 ? (
+              innerBlocks.map((block, blockIndex) =>
+                renderCustomInnerBlock(section, block, blockIndex),
+              )
+            ) : (
+              <>
+                <Typography
+                  {...getEditableTextProps(blockId, "heading", "single")}
+                  sx={{
+                    fontFamily: headingFont,
+                    fontSize: { xs: "2rem", md: "3.6rem" },
+                    lineHeight: 0.96,
+                    letterSpacing: "-0.06em",
+                    fontWeight: 800,
+                    color: palette.ink,
+                    maxWidth: 880,
+                    ...(section.headingStyle || {}),
+                  }}
+                >
+                  {section.heading}
+                </Typography>
+                <Typography
+                  {...getEditableTextProps(blockId, "subheading", "multi")}
+                  sx={{
+                    maxWidth: 780,
+                    color: palette.muted,
+                    fontSize: { xs: "1rem", md: "1.08rem" },
+                    lineHeight: 1.8,
+                    ...(section.subheadingStyle || {}),
+                  }}
+                >
+                  {section.subheading}
+                </Typography>
+                {section.buttonText ? (
+                  <Button
+                    variant="contained"
+                    {...getEditableTextProps(blockId, "buttonText", "single")}
+                    sx={{
+                      mt: 0.5,
+                      bgcolor: themeColor,
+                      color: palette.white,
+                      borderRadius: "16px",
+                      textTransform: "none",
+                      px: 2.8,
+                      py: 1.2,
+                      fontWeight: 700,
+                      boxShadow: "none",
+                      ...(section.buttonTextStyle || {}),
+                    }}
+                  >
+                    {section.buttonText}
+                  </Button>
+                ) : null}
+              </>
+            )}
+          </Box>
+        </Box>
       </Box>
     );
   });
@@ -497,6 +836,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Typography
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
+                  {...getEditableTextProps(
+                    overviewBlockId,
+                    item.fieldPath,
+                    "single",
+                  )}
                   sx={{
                     cursor: "pointer",
                     color: palette.ink,
@@ -513,6 +857,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Button
               onClick={() => scrollToSection("contact")}
               endIcon={<ArrowOutwardIcon />}
+              {...getEditableTextProps(
+                overviewBlockId,
+                "contactPrimaryText",
+                "single",
+              )}
               sx={{
                 color: palette.ink,
                 textTransform: "none",
@@ -520,7 +869,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 borderRadius: 999,
               }}
             >
-              {contactPrimary}
+              {homeContent.contactPrimaryText || contactPrimary}
             </Button>
           </Stack>
         </Container>
@@ -530,9 +879,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         {renderCustomSectionsBefore("overview")}
         <Box
           id="overview"
-          data-preview-section="true"
-          data-preview-label="Overview"
-          data-preview-block-id={overviewBlockId}
+          {...getEditableSectionProps(overviewBlockId, "Overview")}
+          data-preview-accepts-inner-blocks="true"
           {...getSectionStyleDomProps(homeContent)}
           sx={{
             order: sectionPosition["overview"] ?? 1,
@@ -547,9 +895,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             sx={{
               position: "absolute",
               inset: 0,
-              background: `radial-gradient(circle at 12% 78%, ${rgba(themeColor, 0.52)}, transparent 30%), radial-gradient(circle at 78% 24%, ${rgba(themeColor, 0.32)}, transparent 24%), linear-gradient(135deg, ${themeHeroBase} 0%, ${themeHeroMid} 58%, ${themeHeroEnd} 100%)`,
+              background: `radial-gradient(circle at 12% 78%, ${rgba(
+                themeColor,
+                0.52,
+              )}, transparent 30%), radial-gradient(circle at 78% 24%, ${rgba(
+                themeColor,
+                0.32,
+              )}, transparent 24%), linear-gradient(135deg, ${themeHeroBase} 0%, ${themeHeroMid} 58%, ${themeHeroEnd} 100%)`,
             }}
           />
+
           <Box
             sx={{
               position: "absolute",
@@ -561,108 +916,48 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               backgroundPosition: "0 0, 130px 130px",
             }}
           />
-          <Box
-            sx={{
-              position: "absolute",
-              top: { xs: 88, md: 36 },
-              right: { xs: -70, md: 0 },
-              width: { xs: "78%", md: "42%" },
-              height: { xs: 520, md: "100%" },
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "center",
-              pointerEvents: "none",
-            }}
-          >
-            <Box
-              component={motion.img}
-              initial={{ opacity: 0, y: 40, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{
-                duration: 0.9,
-                ease: [0.22, 1, 0.36, 1],
-                delay: 0.16,
-              }}
-              src={heroImage}
-              alt="Executive portrait"
-              data-edit-image="heroImage"
-              data-image-label="Hero Image"
-              data-block-id={homeContent.blockId}
-              sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: heroImageFit,
-                objectPosition: "bottom center",
-                filter: "drop-shadow(0 30px 80px rgba(0,0,0,0.35))",
-                pointerEvents: "auto",
-                borderRadius: heroImageStyle.borderRadius,
-                borderWidth: heroImageStyle.borderWidth,
-                borderColor: heroImageStyle.borderColor,
-                borderStyle: heroImageStyle.borderWidth ? "solid" : undefined,
-              }}
-            />
-          </Box>
-          <Box
-            sx={{
-              position: "absolute",
-              left: { xs: "50%", md: "43.5%" },
-              top: { xs: 280, md: 280 },
-              transform: "translateX(-50%)",
-              zIndex: 3,
-            }}
-          >
-            <Box
-              component={motion.div}
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.45 }}
-              sx={{
-                width: { xs: 80, md: 104 },
-                height: { xs: 80, md: 104 },
-                borderRadius: "50%",
-                display: "grid",
-                placeItems: "center",
-                bgcolor: themeMuted,
-                border: `1px solid ${themeBorder}`,
-                boxShadow: `0 0 0 14px ${themeGlow}`,
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              <VerifiedUserRoundedIcon
-                sx={{ color: palette.white, fontSize: { xs: 34, md: 44 } }}
-              />
-            </Box>
-          </Box>
 
           <Container
             maxWidth="xl"
             sx={{
-              position: "absolute",
-              inset: 0,
-              px: { xs: 2, md: 4 },
-              py: { xs: 4, md: 5 },
-              display: "flex",
-              alignItems: "center",
+              position: "relative",
               zIndex: 2,
+              minHeight: { xs: 700, md: 760 },
+              px: { xs: 2, md: 4 },
+              pt: { xs: 4, md: 5 },
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "6fr 6fr" },
+              alignItems: "center",
+              gap: { xs: 4, md: 3 },
             }}
           >
+            {/* Left content */}
             <Box
               component={motion.div}
               variants={heroStagger}
               initial="hidden"
               animate="show"
-              sx={{ width: "100%" }}
+              sx={{
+                position: "relative",
+                zIndex: 3,
+                width: "100%",
+                pt: { xs: 8, md: 4 },
+              }}
             >
               <Stack
                 spacing={1.2}
                 sx={{
                   maxWidth: { xs: "100%", md: 760 },
-                  pt: { xs: 10, md: 4 },
                 }}
               >
                 <Box component={motion.div} variants={fadeUp}>
                   <Chip
-                    label="Trusted business partner"
+                    label={
+                      homeContent.eyebrowText || "Trusted business partner"
+                    }
+                    data-editable="eyebrowText"
+                    data-edit-type="single"
+                    data-block-id={overviewBlockId}
                     sx={{
                       bgcolor: "rgba(255,255,255,0.14)",
                       color: palette.white,
@@ -725,6 +1020,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   >
                     {heroPrimaryCta}
                   </Button>
+
                   <Button
                     onClick={() => scrollToSection("contact")}
                     variant="outlined"
@@ -765,7 +1061,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       visualSet.avatarOne,
                     ].map((avatar, index) => (
                       <Box
-                        key={avatar}
+                        key={`${avatar}-${index}`}
                         component="img"
                         src={avatar}
                         alt={`Client ${index + 1}`}
@@ -792,6 +1088,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     >
                       ★★★★★
                     </Typography>
+
                     <Typography
                       sx={{
                         color: "rgba(255,255,255,0.92)",
@@ -803,7 +1100,95 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     </Typography>
                   </Box>
                 </Box>
+                {overviewInnerBlocks.length
+                  ? renderSectionInnerBlocks(homeContent, {
+                      tone: "light",
+                      maxWidth: 560,
+                      mt: { xs: 3, md: 4 },
+                    })
+                  : null}
               </Stack>
+            </Box>
+
+            {/* Right image */}
+            <Box
+              sx={{
+                position: "relative",
+                zIndex: 3,
+                width: "100%",
+                height: { xs: 420, sm: 520, md: 700 },
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "center",
+                overflow: "visible",
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: { xs: "50%", md: "4%" },
+                  top: { xs: 28, md: "38%" },
+                  transform: "translate(-50%, -50%)",
+                  zIndex: 4,
+                  pointerEvents: "none",
+                }}
+              >
+                <Box
+                  component={motion.div}
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.7, delay: 0.45 }}
+                  sx={{
+                    width: { xs: 80, md: 104 },
+                    height: { xs: 80, md: 104 },
+                    borderRadius: "50%",
+                    display: "grid",
+                    placeItems: "center",
+                    bgcolor: themeMuted,
+                    border: `1px solid ${themeBorder}`,
+                    boxShadow: `0 0 0 14px ${themeGlow}`,
+                    backdropFilter: "blur(10px)",
+                  }}
+                >
+                  <VerifiedUserRoundedIcon
+                    sx={{ color: palette.white, fontSize: { xs: 34, md: 44 } }}
+                  />
+                </Box>
+              </Box>
+
+              <Box
+                component={motion.img}
+                initial={{ opacity: 0, y: 40, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{
+                  duration: 0.9,
+                  ease: [0.22, 1, 0.36, 1],
+                  delay: 0.16,
+                }}
+                src={heroImage}
+                alt="Executive portrait"
+                {...getEditableImageProps(
+                  homeContent.blockId,
+                  "heroImage",
+                  "Hero Image",
+                )}
+                sx={{
+                  position: "relative",
+                  zIndex: 3,
+                  width: "100%",
+                  height: "100%",
+                  ...heroImageHeightSx,
+                  objectFit: heroImageFit,
+                  objectPosition: "bottom center",
+                  filter: "drop-shadow(0 30px 80px rgba(0,0,0,0.35))",
+                  cursor: "pointer",
+                  pointerEvents: "auto",
+                  borderRadius: heroImageStyle.borderRadius,
+                  borderWidth: heroImageStyle.borderWidth,
+                  borderColor: heroImageStyle.borderColor,
+                  borderStyle: heroImageStyle.borderWidth ? "solid" : undefined,
+                }}
+              />
             </Box>
           </Container>
         </Box>
@@ -827,6 +1212,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               data-preview-label="About"
               data-preview-block-id={aboutBlockId}
               data-preview-style-key="sectionStyle"
+              data-preview-accepts-inner-blocks="true"
               {...getSectionStyleDomProps(aboutContent)}
               sx={{ py: { xs: 4, md: 6 }, ...getSectionStyleSx(aboutContent) }}
             >
@@ -858,6 +1244,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     sx={{
                       width: "100%",
                       height: "100%",
+                      ...aboutImageHeightSx,
                       objectFit: aboutImageFit,
                       display: "block",
                       borderRadius: aboutImageStyle.borderRadius,
@@ -990,24 +1377,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         gap: 1.5,
                       }}
                     >
-                      {[
-                        {
-                          title: "What we build",
-                          items: [
-                            "Clear systems",
-                            "Premium visuals",
-                            "Business growth",
-                          ],
-                        },
-                        {
-                          title: "How we work",
-                          items: [
-                            "Fast collaboration",
-                            "Focused delivery",
-                            "Global support",
-                          ],
-                        },
-                      ].map((group, index) => (
+                      {aboutDetailGroups.map((group, index) => (
                         <Box
                           key={group.title}
                           component={motion.div}
@@ -1024,6 +1394,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                           }}
                         >
                           <Typography
+                            data-editable={`detailGroups.${index}.title`}
+                            data-edit-type="single"
+                            data-block-id={aboutBlockId}
                             sx={{
                               fontFamily: headingFont,
                               fontSize: { xs: "1.3rem", md: "1.6rem" },
@@ -1035,7 +1408,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                           </Typography>
 
                           <Stack spacing={0.9} sx={{ mt: 1.7 }}>
-                            {group.items.map((item) => (
+                            {(group.items || []).map((item, itemIndex) => (
                               <Stack
                                 key={item}
                                 direction="row"
@@ -1051,7 +1424,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                                     flexShrink: 0,
                                   }}
                                 />
-                                <Typography sx={{ color: palette.muted }}>
+                                <Typography
+                                  data-editable={`detailGroups.${index}.items.${itemIndex}`}
+                                  data-edit-type="single"
+                                  data-block-id={aboutBlockId}
+                                  sx={{ color: palette.muted }}
+                                >
                                   {item}
                                 </Typography>
                               </Stack>
@@ -1092,6 +1470,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   </Box>
                 </Box>
               </Box>
+              {renderSectionInnerBlocks(aboutContent)}
             </Box>
           </Container>
         </Box>
@@ -1115,6 +1494,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               data-preview-label="Why Choose Us"
               data-preview-block-id={whyUsBlockId}
               data-preview-style-key="sectionStyle"
+              data-preview-accepts-inner-blocks="true"
               {...getSectionStyleDomProps(featuresContent)}
               sx={{
                 py: { xs: 2, md: 3 },
@@ -1153,8 +1533,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: "rgba(255,255,255,0.66)", mb: 1 }}>
-                      Why choose us
+                    <Typography
+                      data-editable="eyebrowText"
+                      data-edit-type="single"
+                      data-block-id={whyUsBlockId}
+                      sx={{ color: "rgba(255,255,255,0.66)", mb: 1 }}
+                    >
+                      {featuresContent.eyebrowText || "Why choose us"}
                     </Typography>
                     <Typography
                       data-editable="heading"
@@ -1196,6 +1581,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {...sectionReveal}
                   whileHover={{ y: -8 }}
                   ref={whyChooseImageRef}
+                  {...getEditableImageProps(
+                    whyUsBlockId,
+                    "image",
+                    "Why Choose Us Image",
+                  )}
                   sx={{
                     overflow: "hidden",
                     borderRadius: "34px",
@@ -1215,6 +1605,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     sx={{
                       width: "100%",
                       height: "100%",
+                      ...whyUsImageHeightSx,
                       objectFit: whyUsImageFit,
                       display: "block",
                       transformOrigin: "center center",
@@ -1232,6 +1623,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       inset: 0,
                       background:
                         "linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.32))",
+                      pointerEvents: "none",
                     }}
                   />
                   <Box
@@ -1240,14 +1632,21 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       left: 24,
                       right: 24,
                       bottom: 24,
+                      pointerEvents: "none",
                     }}
                   >
                     <Typography
-                      sx={{ color: "rgba(255,255,255,0.72)", mb: 0.8 }}
+                      data-editable="imageEyebrowText"
+                      data-edit-type="single"
+                      data-block-id={whyUsBlockId}
+                      sx={{ color: "rgba(255,255,255,0.72)", mb: 0.8, pointerEvents: "auto" }}
                     >
-                      Business presentation
+                      {whyImageEyebrow}
                     </Typography>
                     <Typography
+                      data-editable="imageHeading"
+                      data-edit-type="multi"
+                      data-block-id={whyUsBlockId}
                       sx={{
                         fontFamily: headingFont,
                         fontSize: { xs: "1.55rem", md: "2.15rem" },
@@ -1256,13 +1655,18 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         fontWeight: 800,
                         color: palette.white,
                         maxWidth: 340,
+                        pointerEvents: "auto",
                       }}
                     >
-                      Professional presentation for modern businesses.
+                      {whyImageHeading}
                     </Typography>
                   </Box>
                 </Box>
               </Box>
+              {renderSectionInnerBlocks(featuresContent, {
+                tone: "light",
+                maxWidth: 680,
+              })}
             </Box>
           </Container>
         </Box>
@@ -1286,6 +1690,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               data-preview-label="Work"
               data-preview-block-id={processBlockId}
               data-preview-style-key="sectionStyle"
+              data-preview-accepts-inner-blocks="true"
               {...getSectionStyleDomProps(processContent)}
               sx={{
                 py: { xs: 5, md: 15 },
@@ -1439,6 +1844,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     >
                       <Typography
+                        data-editable={`items.${index}.icon`}
+                        data-edit-type="single"
+                        data-block-id={processBlockId}
                         sx={{
                           fontFamily: headingFont,
                           fontSize: { xs: "4rem", md: "5.4rem" },
@@ -1452,6 +1860,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         {String(item.icon || `0${index + 1}`)}
                       </Typography>
                       <Typography
+                        data-editable={`items.${index}.title`}
+                        data-edit-type="single"
+                        data-block-id={processBlockId}
                         sx={{
                           fontFamily: headingFont,
                           fontSize: { xs: "1.55rem", md: "1.85rem" },
@@ -1464,6 +1875,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         {String(item.title || `Step ${index + 1}`)}
                       </Typography>
                       <Typography
+                        data-editable={`items.${index}.description`}
+                        data-edit-type="multi"
+                        data-block-id={processBlockId}
                         sx={{
                           mt: 1.6,
                           color: palette.muted,
@@ -1477,6 +1891,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   ))}
                 </Box>
               </Box>
+              {renderSectionInnerBlocks(processContent, {
+                tone: "light",
+                maxWidth: 760,
+              })}
             </Box>
 
             <Box sx={{ py: { xs: 4, md: 12 } }}>
@@ -1506,6 +1924,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     sx={{
                       width: "100%",
                       height: "100%",
+                      ...processImageHeightSx,
                       objectFit: processImageFit,
                       display: "block",
                       borderRadius: processImageStyle.borderRadius,
@@ -1535,10 +1954,18 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       border: `1px solid ${themeLine}`,
                     }}
                   >
-                    <Typography sx={{ color: palette.muted, mb: 1 }}>
-                      Team
+                    <Typography
+                      data-editable="teamLabel"
+                      data-edit-type="single"
+                      data-block-id={processBlockId}
+                      sx={{ color: palette.muted, mb: 1 }}
+                    >
+                      {processContent.teamLabel || "Team"}
                     </Typography>
                     <Typography
+                      data-editable="teamHeading"
+                      data-edit-type="single"
+                      data-block-id={processBlockId}
                       sx={{
                         fontFamily: headingFont,
                         fontSize: { xs: "2rem", md: "3.4rem" },
@@ -1548,15 +1975,19 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         maxWidth: 420,
                       }}
                     >
-                      Strong visuals for trust and leadership.
+                      {processContent.teamHeading ||
+                        "Strong visuals for trust and leadership."}
                     </Typography>
                     <Stack spacing={1} sx={{ mt: 2.4 }}>
-                      {(team.length
-                        ? team
+                      {(teamMembers.length
+                        ? teamMembers
                         : [{ name: "Leadership" }, { name: "Operations" }]
-                      ).map((member) => (
+                      ).map((member, index) => (
                         <Typography
                           key={member.name}
+                          data-editable={`teamMembers.${index}.name`}
+                          data-edit-type="single"
+                          data-block-id={processBlockId}
                           sx={{ color: palette.muted }}
                         >
                           {member.name}
@@ -1579,6 +2010,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     }}
                   >
                     <Typography
+                      data-editable="reviewText"
+                      data-edit-type="multi"
+                      data-block-id={processBlockId}
                       sx={{
                         fontFamily: headingFont,
                         fontSize: { xs: "1.5rem", md: "2.25rem" },
@@ -1588,11 +2022,17 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         maxWidth: 420,
                       }}
                     >
-                      {reviews[0]?.text ||
-                        "Built to feel sharp, premium, and easy to scan."}
+                      {processReviewText}
                     </Typography>
-                    <Typography sx={{ mt: 2, color: "rgba(255,255,255,0.68)" }}>
-                      {reviews[0]?.author || "Executive team"}
+                    <Typography
+                      data-editable="reviewAuthor"
+                      data-edit-type="single"
+                      data-block-id={processBlockId}
+                      sx={{ mt: 2, color: "rgba(255,255,255,0.68)" }}
+                    >
+                      {processContent.reviewAuthor ||
+                        reviews[0]?.author ||
+                        "Executive team"}
                     </Typography>
                   </Box>
                 </Box>
@@ -1621,6 +2061,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             data-preview-label="Contact"
             data-preview-block-id={contactBlockId}
             data-preview-style-key="sectionStyle"
+            data-preview-accepts-inner-blocks="true"
             {...getSectionStyleDomProps(contactContent)}
             sx={{
               py: { xs: 5, md: 7 },
@@ -1928,6 +2369,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   </Stack>
                 ) : null}
               </Box>
+              {renderSectionInnerBlocks(contactContent, {
+                tone: "light",
+                maxWidth: 760,
+              })}
             </Box>
           </Box>
         </Container>
