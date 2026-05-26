@@ -64,6 +64,14 @@ const MAX_COMPRESSED_BYTES = 4 * 1024 * 1024;
 /** Number of oldest entries to evict when storage limit is exceeded */
 const EVICTION_COUNT = 10;
 
+function cloneHistoryState<T>(state: T): T {
+  if (typeof globalThis.structuredClone === "function") {
+    return globalThis.structuredClone(state);
+  }
+
+  return JSON.parse(JSON.stringify(state)) as T;
+}
+
 // ---------------------------------------------------------------------------
 // Storage helpers
 // ---------------------------------------------------------------------------
@@ -237,11 +245,14 @@ export function useHistory<T>(): UseHistoryReturn<T> {
     (state: T, description: string) => {
       const stack = stackRef.current;
       const idx = indexRef.current;
+      const snapshotState = cloneHistoryState(state);
 
       // Deduplication: skip if identical to the snapshot at current index
       if (idx >= 0 && stack[idx]) {
         try {
-          if (JSON.stringify(stack[idx].state) === JSON.stringify(state)) {
+          if (
+            JSON.stringify(stack[idx].state) === JSON.stringify(snapshotState)
+          ) {
             return;
           }
         } catch {
@@ -251,7 +262,11 @@ export function useHistory<T>(): UseHistoryReturn<T> {
 
       // Truncate future branch (any snapshots after current index)
       const newStack = stack.slice(0, idx + 1);
-      newStack.push({ state, description, timestamp: Date.now() });
+      newStack.push({
+        state: snapshotState,
+        description,
+        timestamp: Date.now(),
+      });
 
       // Enforce max depth — evict oldest entries (FIFO)
       let newIndex = newStack.length - 1;
@@ -295,7 +310,7 @@ export function useHistory<T>(): UseHistoryReturn<T> {
     // Persist updated index position
     persistToStorage(stack, newIndex);
 
-    return stack[newIndex].state;
+    return cloneHistoryState(stack[newIndex].state);
   }, [syncState]);
 
   /**
@@ -322,7 +337,7 @@ export function useHistory<T>(): UseHistoryReturn<T> {
     // Persist updated index position
     persistToStorage(stack, newIndex);
 
-    return stack[newIndex].state;
+    return cloneHistoryState(stack[newIndex].state);
   }, [syncState]);
 
   /**

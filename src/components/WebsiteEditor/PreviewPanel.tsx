@@ -119,6 +119,7 @@ interface FrontendTemplateIframeProps {
   onReady?: () => void;
   onEditableElementSelected?: (data: EditableElementSelectionData) => void;
   onImageSelected?: (data: ImageSelectionData) => void;
+  onImageDoubleClick?: (data: ImageSelectionData) => void;
   onSectionSelected?: (data: SectionSelectionData | null) => void;
   onSectionAddRequest?: (
     data: SectionSelectionData,
@@ -153,6 +154,7 @@ const FrontendTemplateIframePreview = React.memo(
     onReady,
     onEditableElementSelected,
     onImageSelected,
+    onImageDoubleClick,
     onSectionSelected,
     onSectionAddRequest,
     onSectionInnerAddRequest,
@@ -171,6 +173,7 @@ const FrontendTemplateIframePreview = React.memo(
       onEditableElementSelected,
     );
     const onImageSelectedRef = React.useRef(onImageSelected);
+    const onImageDoubleClickRef = React.useRef(onImageDoubleClick);
     const onSectionSelectedRef = React.useRef(onSectionSelected);
     const onSectionAddRequestRef = React.useRef(onSectionAddRequest);
     const onSectionInnerAddRequestRef = React.useRef(
@@ -215,6 +218,10 @@ const FrontendTemplateIframePreview = React.memo(
     React.useEffect(() => {
       onImageSelectedRef.current = onImageSelected;
     }, [onImageSelected]);
+
+    React.useEffect(() => {
+      onImageDoubleClickRef.current = onImageDoubleClick;
+    }, [onImageDoubleClick]);
 
     React.useEffect(() => {
       onSectionSelectedRef.current = onSectionSelected;
@@ -619,6 +626,17 @@ const FrontendTemplateIframePreview = React.memo(
                 };
 
           onElementTransformRef.current?.(selectionTarget, patch);
+
+          // Clear temporary inline drag styles so React-rendered state remains
+          // the single source of truth for placement/size and undo can revert it.
+          win.requestAnimationFrame(() => {
+            if (mode === "move") {
+              target.style.removeProperty("transform");
+            } else {
+              target.style.removeProperty("width");
+              target.style.removeProperty("height");
+            }
+          });
           queueOverlayUpdate();
         };
 
@@ -1248,15 +1266,26 @@ const FrontendTemplateIframePreview = React.memo(
 
       const handleDoubleClick = (event: MouseEvent) => {
         const target = event.target as HTMLElement | null;
+        const imageEl = target?.closest?.(
+          "[data-edit-image]",
+        ) as HTMLElement | null;
         const editableEl = target?.closest?.(
           "[data-editable]",
         ) as HTMLElement | null;
-        if (!editableEl) {
+        if (!editableEl && !imageEl) {
           return;
         }
 
         event.preventDefault();
         event.stopPropagation();
+        if (imageEl && !editableEl) {
+          const selection = applyImageSelection(imageEl);
+          if (selection) {
+            onImageDoubleClickRef.current?.(selection);
+          }
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
         applyEditableSelection(editableEl);
         onPreviewContextMenuRef.current?.(null);
       };
@@ -1702,6 +1731,8 @@ interface PreviewPanelProps {
   onEditableElementSelected?: (data: EditableElementSelectionData) => void;
   /** Called when an editable image element is selected in the iframe preview */
   onImageSelected?: (data: ImageSelectionData) => void;
+  /** Called when an editable image element is double-clicked in the iframe preview */
+  onImageDoubleClick?: (data: ImageSelectionData) => void;
   /** Called when a section wrapper is selected in the iframe preview */
   onSectionSelected?: (data: SectionSelectionData | null) => void;
   /** Called when the section overlay add button is clicked */
@@ -1747,6 +1778,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
   selectedBlockId,
   onEditableElementSelected,
   onImageSelected,
+  onImageDoubleClick,
   onSectionSelected,
   onSectionAddRequest,
   onSectionInnerAddRequest,
@@ -2742,6 +2774,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 data={frontendTemplateData}
                 onEditableElementSelected={onEditableElementSelected}
                 onImageSelected={onImageSelected}
+                onImageDoubleClick={onImageDoubleClick}
                 onSectionSelected={onSectionSelected}
                 onSectionAddRequest={onSectionAddRequest}
                 onSectionInnerAddRequest={onSectionInnerAddRequest}

@@ -1,16 +1,219 @@
-import { useId } from 'react';
-import { Box, TextField, Typography, alpha } from '@mui/material';
-import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
-import { getDashboardColors } from '../../../styles/dashboardTheme';
+// import { useId } from 'react';
+// import { Box, TextField, Typography, alpha } from '@mui/material';
+// import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
+// import { getDashboardColors } from '../../../styles/dashboardTheme';
+
+// const DashboardInput = ({
+//   inputSize = 'md',
+//   label,
+//   helperText,
+//   error = false,
+//   fullWidth = true,
+//   variant = 'panel',
+//   labelPlacement = 'top',
+//   resizable = true,
+//   containerSx,
+//   labelSx,
+//   sx,
+//   id,
+//   ...props
+// }) => {
+//   const { actualTheme } = useCustomTheme();
+//   const colors = getDashboardColors(actualTheme);
+//   const fallbackId = useId();
+//   const inputId = id || fallbackId;
+//   const isClassic = variant === 'classic';
+//   const useFloatingLabel = label && labelPlacement === 'floating';
+//   const isSm = props.size === 'small';
+//   const fs = inputSize === 'sm' ? '0.92rem' : '1rem';
+
+//   const isLight = actualTheme === 'light';
+
+//   const palette = isClassic
+//     ? {
+//         bg: colors.cardBg,
+//         fill: 'transparent',
+//         border: colors.border,
+//         text: colors.text,
+//         muted: colors.textSecondary,
+//         subtle: colors.textTertiary,
+//         accent: colors.primary,
+//         danger: colors.error,
+//         hoverBorder: alpha(colors.primary, 0.5),
+//         focusRing: 'transparent',
+//         disabledBg: 'transparent',
+//         shadow: 'none',
+//       }
+//     : {
+//         bg: colors.panelBg,
+//         fill: isLight ? 'rgba(255, 255, 255, 0.5)' : alpha(colors.panelText, 0.04),
+//         border: isLight ? 'rgba(0, 0, 0, 0.10)' : colors.panelBorder,
+//         text: colors.panelText,
+//         muted: colors.panelMuted,
+//         subtle: colors.panelSubtle,
+//         accent: colors.panelAccent,
+//         danger: colors.panelDanger,
+//         hoverBorder: alpha(colors.panelAccent, 0.3),
+//         focusRing: alpha(colors.panelAccent, 0.12),
+//         disabledBg: isLight ? 'rgba(255, 255, 255, 0.5)' : alpha(colors.panelText, 0.02),
+//         shadow: colors.panelShadow,
+//         autofillBg: isLight ? 'rgba(255, 255, 255, 0.8)' : alpha(colors.panelText, 0.04),
+//       };
+
+//   const baseContainerSx = {
+//     display: 'flex',
+//     flexDirection: 'column',
+//     gap: '8px',
+//     ...(labelPlacement === 'top'
+//       ? {
+//           '&:focus-within .dashboard-input-label': {
+//             color: palette.accent,
+//           },
+//         }
+//       : {}),
+//   };
+
+//   const baseLabelSx = {
+//     color: palette.muted,
+//     fontSize: isSm ? '0.82rem' : '0.95rem',
+//     fontWeight: 500,
+//     transition: 'color 0.2s ease',
+//   };
+
+//   const baseInputSx = {
+//     '& .MuiOutlinedInput-root': {
+//       backgroundColor: palette.fill,
+//       ...(isClassic ? {} : { borderRadius: '12px' }),
+//       fontSize: isSm ? '0.92rem' : '1rem',
+//       color: palette.text,
+//       transition: 'all 0.2s ease',
+//       '& fieldset': {
+//         borderColor: palette.border,
+//         borderWidth: '1px',
+//       },
+//       '&:hover fieldset': {
+//         borderColor: palette.hoverBorder,
+//       },
+//       '&.Mui-focused fieldset': {
+//         borderColor: palette.accent,
+//         borderWidth: '1px',
+//       },
+//       ...(isClassic
+//         ? {}
+//         : {
+//             '&.Mui-focused': {
+//               boxShadow: `0 0 0 3px ${palette.focusRing}`,
+//             },
+//           }),
+//       '&.Mui-error fieldset': {
+//         borderColor: palette.danger,
+//       },
+//       ...(isClassic
+//         ? {}
+//         : {
+//             '&.Mui-error.Mui-focused': {
+//               boxShadow: `0 0 0 3px ${alpha(palette.danger, 0.18)}`,
+//             },
+//           }),
+//       '&.Mui-disabled': {
+//         backgroundColor: palette.disabledBg,
+//         color: palette.muted,
+//         '& fieldset': {
+//           borderColor: palette.border,
+//         },
+//       },
+//     },
+//     '& .MuiInputLabel-root': {
+//       color: palette.muted,
+//       fontSize: isSm ? '0.88rem' : '0.98rem',
+//     },
+//     '& .MuiInputLabel-root.Mui-focused': {
+//       color: palette.accent,
+//     },
+//     '& .MuiInputLabel-root.Mui-disabled': {
+//       color: palette.subtle,
+//     },
+//     '& .MuiOutlinedInput-input': {
+//       ...(isClassic ? {} : { padding: isSm ? '10px 12px' : '14px 16px' }),
+//       '&::placeholder': {
+//         color: palette.subtle,
+//         opacity: 1,
+//         fontSize: fs,
+//       },
+//     },
+//     '& .MuiOutlinedInput-input.MuiInputBase-inputSizeSmall': {
+//       ...(isClassic ? {} : { padding: '10px 12px' }),
+//     },
+//     '& .MuiInputLabel-root.MuiInputLabel-shrink': {
+//       fontSize: isSm ? '0.80rem' : '0.90rem', // smaller when it floats up
+//     },
+//     '& textarea': {
+//       resize: props.multiline && resizable ? 'vertical' : 'none',
+//     },
+//     // Comprehensive autofill styling to prevent white background flash
+//     '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active':
+//       {
+//         WebkitBoxShadow: `0 0 0 1000px ${palette.autofillBg || palette.fill || palette.bg} inset !important`,
+//         WebkitTextFillColor: `${palette.text} !important`,
+//         caretColor: `${palette.text} !important`,
+//         transition: 'background-color 5000s ease-in-out 0s',
+//         borderRadius: 'inherit',
+//       },
+//     '& textarea:-webkit-autofill, & textarea:-webkit-autofill:hover, & textarea:-webkit-autofill:focus, & textarea:-webkit-autofill:active':
+//       {
+//         WebkitBoxShadow: `0 0 0 1000px ${palette.autofillBg || palette.fill || palette.bg} inset !important`,
+//         WebkitTextFillColor: `${palette.text} !important`,
+//         caretColor: `${palette.text} !important`,
+//         transition: 'background-color 5000s ease-in-out 0s',
+//       },
+//     '& .MuiFormHelperText-root': {
+//       ...(isClassic ? {} : { marginLeft: 0 }),
+//       fontSize: isSm ? '0.78rem' : '0.85rem',
+//       color: error ? palette.danger : palette.muted,
+//     },
+//   };
+
+//   return (
+//     <Box sx={[baseContainerSx, containerSx]}>
+//       {label && labelPlacement === 'top' && (
+//         <Typography
+//           className="dashboard-input-label"
+//           component="label"
+//           htmlFor={inputId}
+//           sx={[baseLabelSx, labelSx]}
+//         >
+//           {label}
+//         </Typography>
+//       )}
+//       <TextField
+//         id={inputId}
+//         fullWidth={fullWidth}
+//         variant="outlined"
+//         error={error}
+//         helperText={helperText}
+//         label={useFloatingLabel ? label : undefined}
+//         sx={[baseInputSx, sx]}
+//         {...props}
+//       />
+//     </Box>
+//   );
+// };
+
+// export default DashboardInput;
+
+import { useId } from "react";
+import { Box, TextField, Typography, alpha } from "@mui/material";
+import { useTheme as useCustomTheme } from "../../../context/ThemeContext";
+import { getDashboardColors } from "../../../styles/dashboardTheme";
 
 const DashboardInput = ({
-  inputSize = 'md',
+  inputSize = "md",
   label,
   helperText,
   error = false,
   fullWidth = true,
-  variant = 'panel',
-  labelPlacement = 'top',
+  variant = "panel",
+  labelPlacement = "top",
   resizable = true,
   containerSx,
   labelSx,
@@ -22,51 +225,54 @@ const DashboardInput = ({
   const colors = getDashboardColors(actualTheme);
   const fallbackId = useId();
   const inputId = id || fallbackId;
-  const isClassic = variant === 'classic';
-  const useFloatingLabel = label && labelPlacement === 'floating';
-  const isSm = props.size === 'small';
-  const fs = inputSize === 'sm' ? '0.92rem' : '1rem';
 
-  const isLight = actualTheme === 'light';
+  const isClassic = variant === "classic";
+  const useFloatingLabel = label && labelPlacement === "floating";
+  const isSm = props.size === "small";
+  const fs = inputSize === "sm" ? "0.92rem" : "1rem";
+  const isLight = actualTheme === "light";
 
   const palette = isClassic
     ? {
         bg: colors.cardBg,
-        fill: 'transparent',
-        border: colors.border,
-        text: colors.text,
-        muted: colors.textSecondary,
-        subtle: colors.textTertiary,
-        accent: colors.primary,
+        fill: "#ffffff",
+        border: alpha("#111827", 0.16),
+        text: "#111827",
+        muted: "#111827",
+        subtle: alpha("#111827", 0.45),
+        accent: "#111827",
         danger: colors.error,
-        hoverBorder: alpha(colors.primary, 0.5),
-        focusRing: 'transparent',
-        disabledBg: 'transparent',
-        shadow: 'none',
+        hoverBorder: "#111827",
+        focusRing: "transparent",
+        disabledBg: alpha("#111827", 0.04),
+        shadow: "none",
+        autofillBg: "#ffffff",
       }
     : {
         bg: colors.panelBg,
-        fill: isLight ? 'rgba(255, 255, 255, 0.5)' : alpha(colors.panelText, 0.04),
-        border: isLight ? 'rgba(0, 0, 0, 0.10)' : colors.panelBorder,
-        text: colors.panelText,
-        muted: colors.panelMuted,
-        subtle: colors.panelSubtle,
-        accent: colors.panelAccent,
+        fill: isLight ? "#ffffff" : alpha(colors.panelText, 0.04),
+        border: isLight ? alpha("#111827", 0.16) : colors.panelBorder,
+        text: isLight ? "#111827" : colors.panelText,
+        muted: isLight ? "#111827" : colors.panelMuted,
+        subtle: isLight ? alpha("#111827", 0.45) : colors.panelSubtle,
+        accent: isLight ? "#111827" : colors.panelAccent,
         danger: colors.panelDanger,
-        hoverBorder: alpha(colors.panelAccent, 0.3),
-        focusRing: alpha(colors.panelAccent, 0.12),
-        disabledBg: isLight ? 'rgba(255, 255, 255, 0.5)' : alpha(colors.panelText, 0.02),
+        hoverBorder: isLight ? "#111827" : alpha(colors.panelAccent, 0.3),
+        focusRing: "transparent",
+        disabledBg: isLight
+          ? alpha("#111827", 0.04)
+          : alpha(colors.panelText, 0.02),
         shadow: colors.panelShadow,
-        autofillBg: isLight ? 'rgba(255, 255, 255, 0.8)' : alpha(colors.panelText, 0.04),
+        autofillBg: isLight ? "#ffffff" : alpha(colors.panelText, 0.04),
       };
 
   const baseContainerSx = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    ...(labelPlacement === 'top'
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    ...(labelPlacement === "top"
       ? {
-          '&:focus-within .dashboard-input-label': {
+          "&:focus-within .dashboard-input-label": {
             color: palette.accent,
           },
         }
@@ -75,107 +281,137 @@ const DashboardInput = ({
 
   const baseLabelSx = {
     color: palette.muted,
-    fontSize: isSm ? '0.82rem' : '0.95rem',
+    fontSize: isSm ? "0.82rem" : "0.95rem",
     fontWeight: 500,
-    transition: 'color 0.2s ease',
+    transition: "color 0.2s ease",
   };
 
   const baseInputSx = {
-    '& .MuiOutlinedInput-root': {
+    "& .MuiOutlinedInput-root": {
       backgroundColor: palette.fill,
-      ...(isClassic ? {} : { borderRadius: '12px' }),
-      fontSize: isSm ? '0.92rem' : '1rem',
+      ...(isClassic ? {} : { borderRadius: "12px" }),
+      fontSize: isSm ? "0.92rem" : "1rem",
       color: palette.text,
-      transition: 'all 0.2s ease',
-      '& fieldset': {
+      transition: "border-color 0.2s ease, background-color 0.2s ease",
+      boxShadow: "none",
+
+      "& fieldset": {
         borderColor: palette.border,
-        borderWidth: '1px',
+        borderWidth: "1px",
       },
-      '&:hover fieldset': {
+
+      "&:hover fieldset": {
         borderColor: palette.hoverBorder,
       },
-      '&.Mui-focused fieldset': {
-        borderColor: palette.accent,
-        borderWidth: '1px',
+
+      "&.Mui-focused": {
+        boxShadow: "none",
       },
-      ...(isClassic
-        ? {}
-        : {
-            '&.Mui-focused': {
-              boxShadow: `0 0 0 3px ${palette.focusRing}`,
-            },
-          }),
-      '&.Mui-error fieldset': {
+
+      "&.Mui-focused fieldset": {
+        borderColor: palette.accent,
+        borderWidth: "1px",
+      },
+
+      "&.Mui-error fieldset": {
         borderColor: palette.danger,
       },
-      ...(isClassic
-        ? {}
-        : {
-            '&.Mui-error.Mui-focused': {
-              boxShadow: `0 0 0 3px ${alpha(palette.danger, 0.18)}`,
-            },
-          }),
-      '&.Mui-disabled': {
+
+      "&.Mui-error.Mui-focused": {
+        boxShadow: "none",
+      },
+
+      "&.Mui-disabled": {
         backgroundColor: palette.disabledBg,
-        color: palette.muted,
-        '& fieldset': {
+        color: palette.subtle,
+
+        "& fieldset": {
           borderColor: palette.border,
         },
       },
     },
-    '& .MuiInputLabel-root': {
+
+    "& .MuiInputLabel-root": {
       color: palette.muted,
-      fontSize: isSm ? '0.88rem' : '0.98rem',
+      fontSize: isSm ? "0.88rem" : "0.98rem",
     },
-    '& .MuiInputLabel-root.Mui-focused': {
+
+    "& .MuiInputLabel-root.Mui-focused": {
       color: palette.accent,
     },
-    '& .MuiInputLabel-root.Mui-disabled': {
+
+    "& .MuiInputLabel-root.Mui-disabled": {
       color: palette.subtle,
     },
-    '& .MuiOutlinedInput-input': {
-      ...(isClassic ? {} : { padding: isSm ? '10px 12px' : '14px 16px' }),
-      '&::placeholder': {
+
+    "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+      fontSize: isSm ? "0.80rem" : "0.90rem",
+    },
+
+    "& .MuiOutlinedInput-input": {
+      color: palette.text,
+      caretColor: palette.text,
+      ...(isClassic ? {} : { padding: isSm ? "10px 12px" : "14px 16px" }),
+
+      "&::placeholder": {
         color: palette.subtle,
         opacity: 1,
         fontSize: fs,
       },
     },
-    '& .MuiOutlinedInput-input.MuiInputBase-inputSizeSmall': {
-      ...(isClassic ? {} : { padding: '10px 12px' }),
+
+    "& .MuiOutlinedInput-input.MuiInputBase-inputSizeSmall": {
+      ...(isClassic ? {} : { padding: "10px 12px" }),
     },
-    '& .MuiInputLabel-root.MuiInputLabel-shrink': {
-      fontSize: isSm ? '0.80rem' : '0.90rem', // smaller when it floats up
+
+    "& .MuiInputBase-input": {
+      color: palette.text,
+      caretColor: palette.text,
     },
-    '& textarea': {
-      resize: props.multiline && resizable ? 'vertical' : 'none',
+
+    "& .MuiInputBase-input.Mui-disabled": {
+      color: palette.subtle,
+      WebkitTextFillColor: palette.subtle,
     },
-    // Comprehensive autofill styling to prevent white background flash
-    '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active':
+
+    "& textarea": {
+      color: palette.text,
+      caretColor: palette.text,
+      resize: props.multiline && resizable ? "vertical" : "none",
+
+      "&::placeholder": {
+        color: palette.subtle,
+        opacity: 1,
+      },
+    },
+
+    "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active":
       {
         WebkitBoxShadow: `0 0 0 1000px ${palette.autofillBg || palette.fill || palette.bg} inset !important`,
         WebkitTextFillColor: `${palette.text} !important`,
         caretColor: `${palette.text} !important`,
-        transition: 'background-color 5000s ease-in-out 0s',
-        borderRadius: 'inherit',
+        transition: "background-color 5000s ease-in-out 0s",
+        borderRadius: "inherit",
       },
-    '& textarea:-webkit-autofill, & textarea:-webkit-autofill:hover, & textarea:-webkit-autofill:focus, & textarea:-webkit-autofill:active':
+
+    "& textarea:-webkit-autofill, & textarea:-webkit-autofill:hover, & textarea:-webkit-autofill:focus, & textarea:-webkit-autofill:active":
       {
         WebkitBoxShadow: `0 0 0 1000px ${palette.autofillBg || palette.fill || palette.bg} inset !important`,
         WebkitTextFillColor: `${palette.text} !important`,
         caretColor: `${palette.text} !important`,
-        transition: 'background-color 5000s ease-in-out 0s',
+        transition: "background-color 5000s ease-in-out 0s",
       },
-    '& .MuiFormHelperText-root': {
+
+    "& .MuiFormHelperText-root": {
       ...(isClassic ? {} : { marginLeft: 0 }),
-      fontSize: isSm ? '0.78rem' : '0.85rem',
+      fontSize: isSm ? "0.78rem" : "0.85rem",
       color: error ? palette.danger : palette.muted,
     },
   };
 
   return (
     <Box sx={[baseContainerSx, containerSx]}>
-      {label && labelPlacement === 'top' && (
+      {label && labelPlacement === "top" && (
         <Typography
           className="dashboard-input-label"
           component="label"
@@ -185,6 +421,7 @@ const DashboardInput = ({
           {label}
         </Typography>
       )}
+
       <TextField
         id={inputId}
         fullWidth={fullWidth}

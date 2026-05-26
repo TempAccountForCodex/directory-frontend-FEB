@@ -137,6 +137,59 @@ const EDITABLE_STYLE_FIELD_MAP = {
   copyright: { styleKey: "copyrightStyle", label: "Footer text" },
 };
 
+const imageEditorInputSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "12px",
+    backgroundColor: "#ffffff",
+    color: "#111827",
+    boxShadow: "none",
+
+    "& fieldset": {
+      borderColor: alpha("#111827", 0.16),
+      borderWidth: "1px",
+    },
+
+    "&:hover fieldset": {
+      borderColor: "#111827",
+    },
+
+    "&.Mui-focused": {
+      boxShadow: "none",
+    },
+
+    "&.Mui-focused fieldset": {
+      borderColor: "#111827",
+      borderWidth: "1px",
+    },
+  },
+
+  "& .MuiInputBase-input": {
+    color: "#111827 !important",
+    WebkitTextFillColor: "#111827 !important",
+    caretColor: "#111827",
+    fontSize: "14px",
+
+    "&::placeholder": {
+      color: alpha("#111827", 0.45),
+      opacity: 1,
+    },
+  },
+
+  "& .MuiInputLabel-root": {
+    color: alpha("#111827", 0.65),
+  },
+
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#111827",
+  },
+
+  "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+    color: alpha("#111827", 0.65),
+    backgroundColor: "#ffffff",
+    px: 0.4,
+  },
+};
+
 const DEFAULT_TEXT_STYLE = {
   fontFamily: '"Inter", "Segoe UI", sans-serif',
   fontSize: "16px",
@@ -278,6 +331,41 @@ const SECTION_INNER_BLOCK_LIBRARY = [
   },
 ];
 
+const getSectionLibraryIcon = (item) => {
+  const key = String(item?.key || "").toLowerCase();
+  const category = String(item?.category || "").toLowerCase();
+
+  if (key.includes("image") || category.includes("media")) return ImageIcon;
+  if (
+    key.includes("button") ||
+    key.includes("cta") ||
+    category.includes("conversion") ||
+    category.includes("action")
+  ) {
+    return MousePointerClick;
+  }
+  if (
+    key.includes("divider") ||
+    key.includes("line") ||
+    key.includes("spacer")
+  ) {
+    return SeparatorHorizontal;
+  }
+  if (
+    key.includes("heading") ||
+    key.includes("title") ||
+    key.includes("text") ||
+    key.includes("label") ||
+    key.includes("paragraph") ||
+    category.includes("content") ||
+    category.includes("text")
+  ) {
+    return Type;
+  }
+
+  return Layers;
+};
+
 const getSectionStyleKey = (selection) => selection?.styleKey || "sectionStyle";
 
 const getEditableStyleConfig = (fieldPath) =>
@@ -287,6 +375,12 @@ const getEditableStyleConfig = (fieldPath) =>
   };
 
 const getInnerBlockStyleKey = (innerBlock, fieldName = "text") => {
+  if (
+    String(fieldName || "").toLowerCase() === "__card" ||
+    String(fieldName || "").toLowerCase() === "card"
+  ) {
+    return "cardStyle";
+  }
   const blockType = String(innerBlock?.type || "").toLowerCase();
   if (blockType === "heading") {
     return "headingStyle";
@@ -301,6 +395,403 @@ const getInnerBlockStyleKey = (innerBlock, fieldName = "text") => {
     return "imageStyle";
   }
   return getEditableStyleConfig(fieldName).styleKey || "textStyle";
+};
+
+const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
+  const row = Math.floor(index / 2);
+  const stackOffset = row * 64;
+  const normalizedKey = String(blockKey || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
+
+  switch (normalizedKey) {
+    case "eyebrow":
+    case "label":
+      return {
+        textStyle: {
+          transform: `translate(56px, ${48 + stackOffset}px)`,
+        },
+      };
+    case "heading":
+      return {
+        headingStyle: {
+          transform: `translate(56px, ${104 + stackOffset}px)`,
+          maxWidth: "540px",
+        },
+      };
+    case "text":
+      return {
+        textStyle: {
+          transform: `translate(56px, ${232 + stackOffset}px)`,
+          maxWidth: "520px",
+        },
+      };
+    case "button":
+      return {
+        buttonTextStyle: {
+          transform: `translate(${56 + row * 160}px, ${340 + stackOffset}px)`,
+        },
+      };
+    case "image":
+      return {
+        imageStyle: {
+          transform: `translate(640px, ${110 + row * 40}px)`,
+          width: "320px",
+          height: "320px",
+        },
+      };
+    case "divider":
+      return {
+        textStyle: {
+          transform: `translate(56px, ${420 + stackOffset}px)`,
+          width: "420px",
+        },
+      };
+    case "spacer":
+      return {
+        textStyle: {
+          transform: `translate(56px, ${420 + stackOffset}px)`,
+        },
+      };
+    case "cta":
+    case "call_to_action":
+    case "contact":
+    case "newsletter":
+    case "form_builder":
+    case "reservation_form":
+    case "pricing":
+    case "countdown":
+    case "announcement_bar":
+    case "testimonials":
+    case "reviews":
+    case "stats":
+    case "logo_carousel":
+    case "hero":
+    case "features":
+    case "navigation_bar":
+    case "footer":
+    case "map_location":
+    case "menu_display":
+    case "image_text_split":
+    case "split_text_image":
+    case "image_split_text":
+    case "generic_card":
+    case "section":
+    case "plan_section":
+      return {
+        cardStyle: {
+          transform: `translate(56px, ${72 + row * 56}px)`,
+          width: normalizedKey === "announcement_bar" ? "720px" : "640px",
+        },
+      };
+    default:
+      return {};
+  }
+};
+
+const normalizeInnerBlockLibraryKey = (value = "") =>
+  String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
+
+const buildInnerBlockFromLibraryItem = (item) => {
+  const normalizedKey = normalizeInnerBlockLibraryKey(item?.key || item?.label);
+  const label = item?.label || humanizeLabel(normalizedKey);
+  const description =
+    item?.description ||
+    `Add a ${label.toLowerCase()} block inside this section.`;
+
+  switch (normalizedKey) {
+    case "heading":
+      return {
+        type: "heading",
+        label: "Heading",
+        content: { text: "New section heading" },
+      };
+    case "text":
+    case "paragraph":
+      return {
+        type: "text",
+        label: "Paragraph",
+        content: { text: "Add your text here." },
+      };
+    case "eyebrow":
+    case "label":
+      return {
+        type: "eyebrow",
+        label: "Label",
+        content: { text: "Section label" },
+      };
+    case "image":
+      return {
+        type: "image",
+        label: "Image",
+        content: {
+          src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+          alt: "Section image",
+        },
+      };
+    case "button":
+      return {
+        type: "button",
+        label: "Button",
+        content: {
+          text: "Button",
+          href: "#",
+        },
+      };
+    case "divider":
+    case "line":
+      return {
+        type: "divider",
+        label: "Line",
+        content: {},
+      };
+    case "spacer":
+      return {
+        type: "spacer",
+        label: "Spacer",
+        content: {
+          height: "24px",
+        },
+      };
+    case "hero":
+      return {
+        type: "hero",
+        label,
+        content: {
+          eyebrow: "Hero section",
+          heading: "Large headline for this section",
+          body: description,
+          buttonText: "Get started",
+          image:
+            "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+        },
+      };
+    case "features":
+      return {
+        type: "features",
+        label,
+        content: {
+          heading: "Core features",
+          body: description,
+          items: [
+            {
+              title: "Fast setup",
+              description: "Launch quickly with reusable layouts.",
+            },
+            {
+              title: "Flexible content",
+              description: "Mix text, images, and calls to action.",
+            },
+            {
+              title: "Easy editing",
+              description: "Update content directly inside the editor.",
+            },
+          ],
+        },
+      };
+    case "navigation_bar":
+      return {
+        type: "navigation_bar",
+        label,
+        content: {
+          logoText: "Your Brand",
+          links: ["Overview", "Services", "Contact"],
+          buttonText: "Talk to us",
+        },
+      };
+    case "footer":
+      return {
+        type: "footer",
+        label,
+        content: {
+          heading: "Footer block",
+          body: "Add key links, copyright, and supporting details.",
+          copyright: "© 2026 Your company. All rights reserved.",
+        },
+      };
+    case "cta":
+    case "call_to_action":
+      return {
+        type: "cta",
+        label,
+        content: {
+          heading: "Ready to launch your next idea?",
+          body: "Use this CTA block to drive the visitor toward a clear action.",
+          buttonText: "Get started",
+        },
+      };
+    case "contact":
+      return {
+        type: "contact",
+        label,
+        content: {
+          heading: "Get in touch",
+          body: "Share contact details or use the built-in inquiry form.",
+          buttonText: "Contact us",
+          fields: ["Full name", "Email address", "Message"],
+        },
+      };
+    case "pricing":
+      return {
+        type: "pricing",
+        label,
+        content: {
+          heading: "Simple pricing",
+          body: "Choose a plan that fits your business stage.",
+          plans: [
+            {
+              name: "Starter",
+              price: "$29",
+              features: ["1 project", "Email support"],
+            },
+            {
+              name: "Growth",
+              price: "$79",
+              features: ["5 projects", "Priority support"],
+            },
+          ],
+        },
+      };
+    case "form_builder":
+    case "reservation_form":
+      return {
+        type: normalizedKey,
+        label,
+        content: {
+          heading:
+            normalizedKey === "reservation_form"
+              ? "Book a reservation"
+              : "Submit your details",
+          body: description,
+          buttonText:
+            normalizedKey === "reservation_form" ? "Reserve now" : "Submit",
+          fields:
+            normalizedKey === "reservation_form"
+              ? ["Name", "Email", "Date", "Guests"]
+              : ["Name", "Email", "Message"],
+        },
+      };
+    case "countdown":
+      return {
+        type: "countdown",
+        label,
+        content: {
+          heading: "Launch countdown",
+          body: "Build urgency for your upcoming launch or event.",
+          days: "12",
+          hours: "08",
+          minutes: "44",
+        },
+      };
+    case "announcement_bar":
+      return {
+        type: "announcement_bar",
+        label,
+        content: {
+          text: "Special announcement for this section.",
+          buttonText: "Learn more",
+        },
+      };
+    case "newsletter":
+      return {
+        type: "newsletter",
+        label,
+        content: {
+          heading: "Join the newsletter",
+          body: "Capture email signups directly inside this section.",
+          placeholder: "Enter your email",
+          buttonText: "Subscribe",
+        },
+      };
+    case "testimonials":
+    case "reviews":
+      return {
+        type: normalizedKey,
+        label,
+        content: {
+          heading:
+            normalizedKey === "reviews"
+              ? "Customer reviews"
+              : "What clients say",
+          quote:
+            "Working with this team made the launch feel simple and polished.",
+          author: "Ayesha Khan",
+          role: "Marketing Lead",
+        },
+      };
+    case "stats":
+      return {
+        type: "stats",
+        label,
+        content: {
+          heading: "Key numbers",
+          items: [
+            { value: "120+", label: "Projects" },
+            { value: "98%", label: "Satisfaction" },
+            { value: "24/7", label: "Support" },
+          ],
+        },
+      };
+    case "logo_carousel":
+      return {
+        type: "logo_carousel",
+        label,
+        content: {
+          heading: "Trusted by modern teams",
+          items: ["Vertex", "Northstar", "Atlas", "Nova"],
+        },
+      };
+    case "map_location":
+      return {
+        type: "map_location",
+        label,
+        content: {
+          heading: "Our locations",
+          body: "Display your offices or service regions.",
+          locations: ["Karachi", "Dubai", "London"],
+        },
+      };
+    case "menu_display":
+      return {
+        type: "menu_display",
+        label,
+        content: {
+          heading: "Services & pricing",
+          items: [
+            { name: "Consultation", price: "$120" },
+            { name: "Implementation", price: "$420" },
+            { name: "Support", price: "$90" },
+          ],
+        },
+      };
+    case "image_text_split":
+    case "split_text_image":
+    case "image_split_text":
+      return {
+        type: "image_text_split",
+        label,
+        content: {
+          heading: "Image and text split",
+          body: description,
+          buttonText: "Explore more",
+          image:
+            "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+        },
+      };
+    default:
+      return {
+        type: "generic_card",
+        label,
+        content: {
+          heading: label,
+          body: description,
+          buttonText: "Learn more",
+        },
+      };
+  }
 };
 
 const humanizeLabel = (value = "") =>
@@ -448,6 +939,7 @@ const WebsiteEditorInner = () => {
   const navigate = useNavigate();
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
+  const desktopInspectorWidth = "clamp(300px, 18vw, 360px)";
   const editorThemeMode = "light";
   const isEditorDark = editorThemeMode === "dark";
   const colors = getDashboardColors(editorThemeMode);
@@ -482,12 +974,15 @@ const WebsiteEditorInner = () => {
 
   const [selectedEditableElement, setSelectedEditableElement] = useState(null);
   const [selectedImageElement, setSelectedImageElement] = useState(null);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isImageLibraryPickerOpen, setIsImageLibraryPickerOpen] =
     useState(false);
   const [selectedSectionElement, setSelectedSectionElement] = useState(null);
   const [isSectionInnerBlockModalOpen, setIsSectionInnerBlockModalOpen] =
     useState(false);
   const [sectionInnerBlockSearch, setSectionInnerBlockSearch] = useState("");
+  const [sectionInnerAvailableBlocks, setSectionInnerAvailableBlocks] =
+    useState([]);
   const [activeToolbarMode, setActiveToolbarMode] = useState("text");
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [uploadedLibraryImages, setUploadedLibraryImages] = useState([]);
@@ -496,11 +991,29 @@ const WebsiteEditorInner = () => {
   const [selectedPreviewTarget, setSelectedPreviewTarget] = useState(null);
   const [draggedLibraryBlock, setDraggedLibraryBlock] = useState(null);
   const [previewSaveSignal, setPreviewSaveSignal] = useState(0);
+
+  const getEditableCssUnitValue = useCallback((value) => {
+    if (value === null || value === undefined) return "";
+    const normalized = String(value).trim();
+    if (!normalized) return "";
+    const match = normalized.match(/^(-?\d+(?:\.\d+)?)px$/i);
+    return match ? match[1] : normalized;
+  }, []);
+
+  const toEditableCssUnit = useCallback((value) => {
+    const normalized = String(value ?? "").trim();
+    if (!normalized) return "";
+    const sanitized = normalized.replace(/[^\d.-]/g, "");
+    return sanitized ? `${sanitized}px` : "";
+  }, []);
   const iframeRef = useRef(null);
   const previewContextMenuRef = useRef(null);
   const imageLibraryInputRef = useRef(null);
   const imageReplaceInputRef = useRef(null);
+  const handleInsertBlockFromLibraryRef = useRef(null);
   const previewSelectionNonceRef = useRef(0);
+  const previewTransformHistoryPrimedRef = useRef(false);
+  const previewTransformHistoryTimerRef = useRef(null);
   const resolvedFrontendTemplateId =
     website?.frontendTemplateId ||
     getStoredWebsiteFrontendTemplateId(website?.id || websiteId) ||
@@ -1412,6 +1925,7 @@ const WebsiteEditorInner = () => {
     setSelectedEditableElement(null);
     setSelectedSectionElement(null);
     setSelectedImageElement(null);
+    setIsImageDialogOpen(false);
     setIsInspectorOpen(false);
     if (page?.localOnly) {
       const localBlocks = Array.isArray(page.blocks) ? page.blocks : [];
@@ -1593,22 +2107,23 @@ const WebsiteEditorInner = () => {
       return DEFAULT_TEXT_STYLE;
     }
 
-      const innerMatch = parseInnerBlockFieldPath(
-        selectedEditableElement.fieldPath,
-      );
-      const resolvedFieldName = innerMatch?.contentPath || selectedEditableElement.fieldPath;
+    const innerMatch = parseInnerBlockFieldPath(
+      selectedEditableElement.fieldPath,
+    );
+    const resolvedFieldName =
+      innerMatch?.contentPath || selectedEditableElement.fieldPath;
 
-      if (innerMatch) {
-        const innerBlocks = Array.isArray(targetBlock.content?.innerBlocks)
-          ? targetBlock.content.innerBlocks
-          : [];
-        const innerBlock = innerBlocks[innerMatch.index];
-        const styleKey = getInnerBlockStyleKey(innerBlock, resolvedFieldName);
-        const innerContent =
-          innerBlock?.content && typeof innerBlock.content === "object"
-            ? innerBlock.content
-            : {};
-        const innerStyle = innerContent?.[styleKey];
+    if (innerMatch) {
+      const innerBlocks = Array.isArray(targetBlock.content?.innerBlocks)
+        ? targetBlock.content.innerBlocks
+        : [];
+      const innerBlock = innerBlocks[innerMatch.index];
+      const styleKey = getInnerBlockStyleKey(innerBlock, resolvedFieldName);
+      const innerContent =
+        innerBlock?.content && typeof innerBlock.content === "object"
+          ? innerBlock.content
+          : {};
+      const innerStyle = innerContent?.[styleKey];
 
       return {
         ...DEFAULT_TEXT_STYLE,
@@ -1657,6 +2172,31 @@ const WebsiteEditorInner = () => {
     );
     if (!targetBlock?.content) {
       return DEFAULT_IMAGE_VALUE;
+    }
+
+    const innerMatch = parseInnerBlockFieldPath(selectedImageElement.fieldPath);
+    if (innerMatch) {
+      const targetInnerBlock = Array.isArray(targetBlock.content?.innerBlocks)
+        ? targetBlock.content.innerBlocks[innerMatch.index]
+        : null;
+      const targetInnerContent =
+        targetInnerBlock?.content && typeof targetInnerBlock.content === "object"
+          ? targetInnerBlock.content
+          : {};
+      const blockStyle =
+        targetInnerContent.imageStyle &&
+        typeof targetInnerContent.imageStyle === "object"
+          ? targetInnerContent.imageStyle
+          : {};
+
+      return {
+        ...DEFAULT_IMAGE_VALUE,
+        src:
+          typeof targetInnerContent.src === "string"
+            ? targetInnerContent.src
+            : selectedImageElement.src || "",
+        ...blockStyle,
+      };
     }
 
     const imageStyleKey = `${selectedImageElement.fieldPath}Style`;
@@ -1855,6 +2395,7 @@ const WebsiteEditorInner = () => {
 
       setPreviewContextMenu(null);
       setSelectedImageElement(null);
+      setIsImageDialogOpen(false);
       setSelectedEditableElement(data);
       setSelectedSectionElement((prev) =>
         prev && String(prev.blockId) === String(data.blockId)
@@ -1883,6 +2424,7 @@ const WebsiteEditorInner = () => {
       setPreviewContextMenu(null);
       if (data) {
         setSelectedImageElement(null);
+        setIsImageDialogOpen(false);
       }
       setSelectedSectionElement(data);
       if (data) {
@@ -1910,6 +2452,7 @@ const WebsiteEditorInner = () => {
       setSelectedSectionElement(data);
       setSelectedEditableElement(null);
       setSelectedImageElement(null);
+      setIsImageDialogOpen(false);
       setActiveToolbarMode("section");
       setIsInspectorOpen(true);
       openBlockLibraryAtPosition(
@@ -1928,6 +2471,7 @@ const WebsiteEditorInner = () => {
     setSelectedSectionElement(data);
     setSelectedEditableElement(null);
     setSelectedImageElement(null);
+    setIsImageDialogOpen(false);
     setActiveToolbarMode("section");
     setIsInspectorOpen(true);
     setSectionInnerBlockSearch("");
@@ -1977,20 +2521,42 @@ const WebsiteEditorInner = () => {
     [syncPreviewSelection],
   );
 
-  const handlePreviewElementTransform = useCallback((target, patch) => {
-    if (!target?.blockId || !patch) {
+  const handlePreviewImageDoubleClick = useCallback((data) => {
+    if (!data) {
       return;
     }
 
-    pendingHistoryDescriptionRef.current =
-      target.kind === "section"
-        ? "Moved or resized section"
-        : target.kind === "image"
-          ? "Moved or resized image"
-          : "Moved or resized text";
+    setSelectedImageElement(data);
+    setIsImageDialogOpen(true);
+  }, []);
 
-    setBlocks((prev) =>
-      prev.map((block) => {
+  const handlePreviewElementTransform = useCallback(
+    (target, patch) => {
+      if (!target?.blockId || !patch) {
+        return;
+      }
+
+      if (!historyBootstrappedRef.current) {
+        pushHistory(blocksRef.current, "Initial page state");
+        historyBootstrappedRef.current = true;
+      }
+      if (!previewTransformHistoryPrimedRef.current) {
+        pushHistory(blocksRef.current, "Before transform");
+        previewTransformHistoryPrimedRef.current = true;
+      }
+      if (previewTransformHistoryTimerRef.current) {
+        clearTimeout(previewTransformHistoryTimerRef.current);
+      }
+
+      pendingHistoryDescriptionRef.current =
+        target.kind === "section"
+          ? "Moved or resized section"
+          : target.kind === "image"
+            ? "Moved or resized image"
+            : "Moved or resized text";
+
+      suppressHistoryRef.current = true;
+      const nextBlocks = blocksRef.current.map((block) => {
         if (String(block.id) !== String(target.blockId)) {
           return block;
         }
@@ -2016,12 +2582,13 @@ const WebsiteEditorInner = () => {
         }
 
         if (target.kind === "image" && target.fieldPath) {
-          const innerBlockMatch = /^innerBlocks\.(\d+)\.content(?:\.[^.]+)?$/i.exec(
-            target.fieldPath,
-          );
+          const innerBlockMatch =
+            /^innerBlocks\.(\d+)\.content(?:\.[^.]+)?$/i.exec(target.fieldPath);
           if (innerBlockMatch) {
             const innerIndex = Number(innerBlockMatch[1]);
-            const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+            const existingInnerBlocks = Array.isArray(
+              block.content?.innerBlocks,
+            )
               ? block.content.innerBlocks
               : [];
             const existingInnerBlock = existingInnerBlocks[innerIndex] || {};
@@ -2072,17 +2639,23 @@ const WebsiteEditorInner = () => {
         }
 
         if (target.kind === "editable" && target.fieldPath) {
-          const innerBlockMatch = /^innerBlocks\.(\d+)\.content(?:\.([^.]+))?$/i.exec(
-            target.fieldPath,
-          );
+          const innerBlockMatch =
+            /^innerBlocks\.(\d+)\.content(?:\.([^.]+))?$/i.exec(
+              target.fieldPath,
+            );
           if (innerBlockMatch) {
             const innerIndex = Number(innerBlockMatch[1]);
             const fieldName = innerBlockMatch[2] || "text";
-            const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+            const existingInnerBlocks = Array.isArray(
+              block.content?.innerBlocks,
+            )
               ? block.content.innerBlocks
               : [];
             const existingInnerBlock = existingInnerBlocks[innerIndex] || {};
-            const styleKey = getInnerBlockStyleKey(existingInnerBlock, fieldName);
+            const styleKey = getInnerBlockStyleKey(
+              existingInnerBlock,
+              fieldName,
+            );
             const existingInnerContent =
               existingInnerBlock.content &&
               typeof existingInnerBlock.content === "object"
@@ -2130,9 +2703,23 @@ const WebsiteEditorInner = () => {
         }
 
         return block;
-      }),
-    );
-  }, []);
+      });
+
+      blocksRef.current = nextBlocks;
+      flushSync(() => {
+        setBlocks(nextBlocks);
+      });
+
+      previewTransformHistoryTimerRef.current = setTimeout(() => {
+        previewTransformHistoryPrimedRef.current = false;
+        pushHistory(
+          blocksRef.current,
+          pendingHistoryDescriptionRef.current || "Moved element",
+        );
+      }, 180);
+    },
+    [pushHistory],
+  );
 
   const handleContextMenuLayerSelect = useCallback(
     (layer) => {
@@ -2259,6 +2846,7 @@ const WebsiteEditorInner = () => {
       setSelectedSectionElement(null);
       setSelectedEditableElement(null);
       setSelectedImageElement(null);
+      setIsImageDialogOpen(false);
       setPreviewContextMenu(null);
       return;
     }
@@ -2353,6 +2941,7 @@ const WebsiteEditorInner = () => {
       }
 
       setSelectedImageElement(null);
+      setIsImageDialogOpen(false);
       setPreviewContextMenu(null);
     }
   }, []);
@@ -2384,7 +2973,11 @@ const WebsiteEditorInner = () => {
       return;
     }
 
-    const appendInnerBlockToSection = (sectionBlockId, innerBlock, afterIndex) => {
+    const appendInnerBlockToSection = (
+      sectionBlockId,
+      innerBlock,
+      afterIndex,
+    ) => {
       setBlocks((prev) =>
         prev.map((block) => {
           if (String(block.id) !== String(sectionBlockId)) {
@@ -2436,10 +3029,14 @@ const WebsiteEditorInner = () => {
           );
         }
       } else if (block) {
-        const value = getValueAtPath(block.content || {}, layer.editable.fieldPath);
+        const value = getValueAtPath(
+          block.content || {},
+          layer.editable.fieldPath,
+        );
         const { styleKey } = getEditableStyleConfig(layer.editable.fieldPath);
         const existingStyle =
-          block.content?.[styleKey] && typeof block.content[styleKey] === "object"
+          block.content?.[styleKey] &&
+          typeof block.content[styleKey] === "object"
             ? deepClone(block.content[styleKey])
             : {};
         const duplicatedType =
@@ -2527,216 +3124,222 @@ const WebsiteEditorInner = () => {
     }
   }, []);
 
-  const handlePasteIntoPreviewTarget = useCallback((layer) => {
-    if (!previewClipboard) {
-      return;
-    }
-
-    const finalizePaste = () => {
-      if (previewClipboard?.mode === "cut") {
-        setPreviewClipboard(null);
+  const handlePasteIntoPreviewTarget = useCallback(
+    (layer) => {
+      if (!previewClipboard) {
+        return;
       }
-      setPreviewContextMenu(null);
-    };
 
-    const resolveTargetSectionBlockId = () => {
-      if (layer?.kind === "section" && layer.section?.blockId) {
-        return layer.section.blockId;
-      }
-      if (layer?.kind === "editable" && layer.editable?.blockId) {
-        return layer.editable.blockId;
-      }
-      if (layer?.kind === "image" && layer.image?.blockId) {
-        return layer.image.blockId;
-      }
-      return selectedSectionElement?.blockId || null;
-    };
-
-    const targetSectionBlockId = resolveTargetSectionBlockId();
-
-    if (previewClipboard.type === "section" && previewClipboard.block) {
-      const anchorBlockId =
-        layer?.kind === "section"
-          ? layer.section?.blockId
-          : targetSectionBlockId;
-      pendingHistoryDescriptionRef.current = "Pasted section";
-      setBlocks((prev) => {
-        const duplicate = {
-          ...deepClone(previewClipboard.block),
-          id: `section-copy-${Date.now()}`,
-        };
-        const anchorIndex = prev.findIndex(
-          (block) => String(block.id) === String(anchorBlockId),
-        );
-        if (anchorIndex < 0) {
-          return [...prev, duplicate];
+      const finalizePaste = () => {
+        if (previewClipboard?.mode === "cut") {
+          setPreviewClipboard(null);
         }
-        return [
-          ...prev.slice(0, anchorIndex + 1),
-          duplicate,
-          ...prev.slice(anchorIndex + 1),
-        ];
-      });
-      finalizePaste();
-      return;
-    }
+        setPreviewContextMenu(null);
+      };
 
-    if (!targetSectionBlockId) {
-      return;
-    }
+      const resolveTargetSectionBlockId = () => {
+        if (layer?.kind === "section" && layer.section?.blockId) {
+          return layer.section.blockId;
+        }
+        if (layer?.kind === "editable" && layer.editable?.blockId) {
+          return layer.editable.blockId;
+        }
+        if (layer?.kind === "image" && layer.image?.blockId) {
+          return layer.image.blockId;
+        }
+        return selectedSectionElement?.blockId || null;
+      };
 
-    if (previewClipboard.type === "innerBlock" && previewClipboard.innerBlock) {
-      pendingHistoryDescriptionRef.current = "Pasted block";
-      setBlocks((prev) =>
-        prev.map((block) => {
-          if (String(block.id) !== String(targetSectionBlockId)) {
-            return block;
-          }
+      const targetSectionBlockId = resolveTargetSectionBlockId();
 
-          const innerBlocks = Array.isArray(block.content?.innerBlocks)
-            ? block.content.innerBlocks
-            : [];
-          return {
-            ...block,
-            content: {
-              ...block.content,
-              innerBlocks: [
-                ...innerBlocks,
-                {
-                  ...deepClone(previewClipboard.innerBlock),
-                  id: `inner-${Date.now()}`,
-                },
-              ],
-            },
+      if (previewClipboard.type === "section" && previewClipboard.block) {
+        const anchorBlockId =
+          layer?.kind === "section"
+            ? layer.section?.blockId
+            : targetSectionBlockId;
+        pendingHistoryDescriptionRef.current = "Pasted section";
+        setBlocks((prev) => {
+          const duplicate = {
+            ...deepClone(previewClipboard.block),
+            id: `section-copy-${Date.now()}`,
           };
-        }),
-      );
-      finalizePaste();
-      return;
-    }
-
-    if (
-      previewClipboard.type === "editableValue" &&
-      layer?.kind === "editable" &&
-      layer.editable?.fieldPath
-    ) {
-      pendingHistoryDescriptionRef.current = "Pasted text";
-      setBlocks((prev) =>
-        prev.map((block) =>
-          String(block.id) === String(layer.editable.blockId)
-            ? {
-                ...block,
-                content: setValueAtPath(
-                  { ...(block.content || {}) },
-                  layer.editable.fieldPath,
-                  previewClipboard.value ?? "",
-                ),
-              }
-            : block,
-        ),
-      );
-      finalizePaste();
-      return;
-    }
-
-    if (
-      previewClipboard.type === "imageValue" &&
-      layer?.kind === "image" &&
-      layer.image?.fieldPath
-    ) {
-      pendingHistoryDescriptionRef.current = "Pasted image";
-      setBlocks((prev) =>
-        prev.map((block) =>
-          String(block.id) === String(layer.image.blockId)
-            ? {
-                ...block,
-                content: setValueAtPath(
-                  { ...(block.content || {}) },
-                  layer.image.fieldPath,
-                  previewClipboard.src ?? "",
-                ),
-              }
-            : block,
-        ),
-      );
-      finalizePaste();
-      return;
-    }
-
-    if (previewClipboard.type === "editableValue") {
-      pendingHistoryDescriptionRef.current = "Pasted text block";
-      setBlocks((prev) =>
-        prev.map((block) => {
-          if (String(block.id) !== String(targetSectionBlockId)) {
-            return block;
+          const anchorIndex = prev.findIndex(
+            (block) => String(block.id) === String(anchorBlockId),
+          );
+          if (anchorIndex < 0) {
+            return [...prev, duplicate];
           }
+          return [
+            ...prev.slice(0, anchorIndex + 1),
+            duplicate,
+            ...prev.slice(anchorIndex + 1),
+          ];
+        });
+        finalizePaste();
+        return;
+      }
 
-          const innerBlocks = Array.isArray(block.content?.innerBlocks)
-            ? block.content.innerBlocks
-            : [];
-          return {
-            ...block,
-            content: {
-              ...block.content,
-              innerBlocks: [
-                ...innerBlocks,
-                {
-                  id: `inner-${Date.now()}`,
-                  type: "text",
-                  label: previewClipboard.label || "Text",
-                  content: {
-                    text:
-                      typeof previewClipboard.value === "string"
-                        ? previewClipboard.value
-                        : "",
+      if (!targetSectionBlockId) {
+        return;
+      }
+
+      if (
+        previewClipboard.type === "innerBlock" &&
+        previewClipboard.innerBlock
+      ) {
+        pendingHistoryDescriptionRef.current = "Pasted block";
+        setBlocks((prev) =>
+          prev.map((block) => {
+            if (String(block.id) !== String(targetSectionBlockId)) {
+              return block;
+            }
+
+            const innerBlocks = Array.isArray(block.content?.innerBlocks)
+              ? block.content.innerBlocks
+              : [];
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                innerBlocks: [
+                  ...innerBlocks,
+                  {
+                    ...deepClone(previewClipboard.innerBlock),
+                    id: `inner-${Date.now()}`,
                   },
-                },
-              ],
-            },
-          };
-        }),
-      );
-      finalizePaste();
-      return;
-    }
+                ],
+              },
+            };
+          }),
+        );
+        finalizePaste();
+        return;
+      }
 
-    if (previewClipboard.type === "imageValue") {
-      pendingHistoryDescriptionRef.current = "Pasted image block";
-      setBlocks((prev) =>
-        prev.map((block) => {
-          if (String(block.id) !== String(targetSectionBlockId)) {
-            return block;
-          }
+      if (
+        previewClipboard.type === "editableValue" &&
+        layer?.kind === "editable" &&
+        layer.editable?.fieldPath
+      ) {
+        pendingHistoryDescriptionRef.current = "Pasted text";
+        setBlocks((prev) =>
+          prev.map((block) =>
+            String(block.id) === String(layer.editable.blockId)
+              ? {
+                  ...block,
+                  content: setValueAtPath(
+                    { ...(block.content || {}) },
+                    layer.editable.fieldPath,
+                    previewClipboard.value ?? "",
+                  ),
+                }
+              : block,
+          ),
+        );
+        finalizePaste();
+        return;
+      }
 
-          const innerBlocks = Array.isArray(block.content?.innerBlocks)
-            ? block.content.innerBlocks
-            : [];
-          return {
-            ...block,
-            content: {
-              ...block.content,
-              innerBlocks: [
-                ...innerBlocks,
-                {
-                  id: `inner-${Date.now()}`,
-                  type: "image",
-                  label: previewClipboard.label || "Image",
-                  content: {
-                    src:
-                      typeof previewClipboard.src === "string"
-                        ? previewClipboard.src
-                        : "",
-                    alt: previewClipboard.label || "Image",
+      if (
+        previewClipboard.type === "imageValue" &&
+        layer?.kind === "image" &&
+        layer.image?.fieldPath
+      ) {
+        pendingHistoryDescriptionRef.current = "Pasted image";
+        setBlocks((prev) =>
+          prev.map((block) =>
+            String(block.id) === String(layer.image.blockId)
+              ? {
+                  ...block,
+                  content: setValueAtPath(
+                    { ...(block.content || {}) },
+                    layer.image.fieldPath,
+                    previewClipboard.src ?? "",
+                  ),
+                }
+              : block,
+          ),
+        );
+        finalizePaste();
+        return;
+      }
+
+      if (previewClipboard.type === "editableValue") {
+        pendingHistoryDescriptionRef.current = "Pasted text block";
+        setBlocks((prev) =>
+          prev.map((block) => {
+            if (String(block.id) !== String(targetSectionBlockId)) {
+              return block;
+            }
+
+            const innerBlocks = Array.isArray(block.content?.innerBlocks)
+              ? block.content.innerBlocks
+              : [];
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                innerBlocks: [
+                  ...innerBlocks,
+                  {
+                    id: `inner-${Date.now()}`,
+                    type: "text",
+                    label: previewClipboard.label || "Text",
+                    content: {
+                      text:
+                        typeof previewClipboard.value === "string"
+                          ? previewClipboard.value
+                          : "",
+                    },
                   },
-                },
-              ],
-            },
-          };
-        }),
-      );
-      finalizePaste();
-    }
-  }, [previewClipboard, selectedSectionElement]);
+                ],
+              },
+            };
+          }),
+        );
+        finalizePaste();
+        return;
+      }
+
+      if (previewClipboard.type === "imageValue") {
+        pendingHistoryDescriptionRef.current = "Pasted image block";
+        setBlocks((prev) =>
+          prev.map((block) => {
+            if (String(block.id) !== String(targetSectionBlockId)) {
+              return block;
+            }
+
+            const innerBlocks = Array.isArray(block.content?.innerBlocks)
+              ? block.content.innerBlocks
+              : [];
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                innerBlocks: [
+                  ...innerBlocks,
+                  {
+                    id: `inner-${Date.now()}`,
+                    type: "image",
+                    label: previewClipboard.label || "Image",
+                    content: {
+                      src:
+                        typeof previewClipboard.src === "string"
+                          ? previewClipboard.src
+                          : "",
+                      alt: previewClipboard.label || "Image",
+                    },
+                  },
+                ],
+              },
+            };
+          }),
+        );
+        finalizePaste();
+      }
+    },
+    [previewClipboard, selectedSectionElement],
+  );
 
   const handleLibraryUpload = useCallback(
     async (file) => {
@@ -2810,10 +3413,13 @@ const WebsiteEditorInner = () => {
           }
 
           if (innerMatch) {
-            const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+            const existingInnerBlocks = Array.isArray(
+              block.content?.innerBlocks,
+            )
               ? block.content.innerBlocks
               : [];
-            const existingInnerBlock = existingInnerBlocks[innerMatch.index] || {};
+            const existingInnerBlock =
+              existingInnerBlocks[innerMatch.index] || {};
             const styleKey = getInnerBlockStyleKey(
               existingInnerBlock,
               resolvedFieldName,
@@ -2875,6 +3481,7 @@ const WebsiteEditorInner = () => {
       }
 
       const { blockId, fieldPath } = selectedImageElement;
+      const innerMatch = parseInnerBlockFieldPath(fieldPath);
       const imageStyleKey = `${fieldPath}Style`;
 
       pendingHistoryDescriptionRef.current = `Updated ${fieldPath} image`;
@@ -2882,6 +3489,64 @@ const WebsiteEditorInner = () => {
         prev.map((block) => {
           if (String(block.id) !== String(blockId)) {
             return block;
+          }
+
+          if (innerMatch) {
+            const existingInnerBlocks = Array.isArray(
+              block.content?.innerBlocks,
+            )
+              ? block.content.innerBlocks
+              : [];
+            const existingInnerBlock =
+              existingInnerBlocks[innerMatch.index] || {};
+            const existingInnerContent =
+              existingInnerBlock.content &&
+              typeof existingInnerBlock.content === "object"
+                ? existingInnerBlock.content
+                : {};
+            const existingStyle =
+              existingInnerContent.imageStyle &&
+              typeof existingInnerContent.imageStyle === "object"
+                ? existingInnerContent.imageStyle
+                : {};
+
+            const nextInnerBlocks =
+              typeof patch.src === "string"
+                ? setValueAtPath(
+                    existingInnerBlocks,
+                    `${innerMatch.index}.content.src`,
+                    patch.src,
+                  )
+                : existingInnerBlocks;
+
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                innerBlocks: setValueAtPath(
+                  nextInnerBlocks,
+                  `${innerMatch.index}.content.imageStyle`,
+                  {
+                    ...existingStyle,
+                    ...(typeof patch.objectFit === "string"
+                      ? { objectFit: patch.objectFit }
+                      : {}),
+                    ...(typeof patch.borderRadius === "string"
+                      ? { borderRadius: patch.borderRadius }
+                      : {}),
+                    ...(typeof patch.borderWidth === "string"
+                      ? {
+                          borderWidth: patch.borderWidth,
+                          borderStyle: "solid",
+                        }
+                      : {}),
+                    ...(typeof patch.borderColor === "string"
+                      ? { borderColor: patch.borderColor }
+                      : {}),
+                  },
+                ),
+              },
+            };
           }
 
           const existingStyle =
@@ -2980,15 +3645,27 @@ const WebsiteEditorInner = () => {
   );
 
   const sectionInnerBlockItems = useMemo(() => {
+    const mergedItems = [
+      ...SECTION_INNER_BLOCK_LIBRARY,
+      ...sectionInnerAvailableBlocks.filter(
+        (item) =>
+          !SECTION_INNER_BLOCK_LIBRARY.some(
+            (baseItem) => String(baseItem.key) === String(item.key),
+          ),
+      ),
+    ];
+
     const query = sectionInnerBlockSearch.trim().toLowerCase();
     if (!query) {
-      return SECTION_INNER_BLOCK_LIBRARY;
+      return mergedItems;
     }
 
-    return SECTION_INNER_BLOCK_LIBRARY.filter((item) =>
-      `${item.label} ${item.description}`.toLowerCase().includes(query),
+    return mergedItems.filter((item) =>
+      `${item.label} ${item.description} ${item.category || ""}`
+        .toLowerCase()
+        .includes(query),
     );
-  }, [sectionInnerBlockSearch]);
+  }, [sectionInnerAvailableBlocks, sectionInnerBlockSearch]);
 
   const sectionInnerBlockGroups = useMemo(() => {
     return sectionInnerBlockItems.reduce((groups, item) => {
@@ -3001,108 +3678,120 @@ const WebsiteEditorInner = () => {
     }, {});
   }, [sectionInnerBlockItems]);
 
-  const handleInsertInnerBlockIntoSection = useCallback((blockKey) => {
-    if (!selectedSectionElement?.blockId) {
+  useEffect(() => {
+    if (!isSectionInnerBlockModalOpen) {
       return;
     }
 
-    const nextInnerBlock = (() => {
-      switch (blockKey) {
-        case "heading":
-          return {
-            id: `inner-${Date.now()}`,
-            type: "heading",
-            label: "Heading",
-            content: {
-              text: "New section heading",
-            },
-          };
-        case "text":
-          return {
-            id: `inner-${Date.now()}`,
-            type: "text",
-            label: "Paragraph",
-            content: {
-              text: "Add your text here.",
-            },
-          };
-        case "eyebrow":
-          return {
-            id: `inner-${Date.now()}`,
-            type: "eyebrow",
-            label: "Label",
-            content: {
-              text: "Section label",
-            },
-          };
-        case "image":
-          return {
-            id: `inner-${Date.now()}`,
-            type: "image",
-            label: "Image",
-            content: {
-              src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
-              alt: "Section image",
-            },
-          };
-        case "button":
-          return {
-            id: `inner-${Date.now()}`,
-            type: "button",
-            label: "Button",
-            content: {
-              text: "Button",
-              href: "#",
-            },
-          };
-        case "divider":
-          return {
-            id: `inner-${Date.now()}`,
-            type: "divider",
-            label: "Divider",
-            content: {},
-          };
-        case "spacer":
-          return {
-            id: `inner-${Date.now()}`,
-            type: "spacer",
-            label: "Spacer",
-            content: {
-              height: "24px",
-            },
-          };
-        default:
-          return null;
-      }
-    })();
+    let cancelled = false;
 
-    if (!nextInnerBlock) {
-      return;
-    }
-
-    pendingHistoryDescriptionRef.current = `Added ${blockKey} inside section`;
-    setBlocks((prev) =>
-      prev.map((block) => {
-        if (String(block.id) !== String(selectedSectionElement.blockId)) {
-          return block;
-        }
-
-        const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
-          ? block.content.innerBlocks
+    const loadSectionInnerAvailableBlocks = async () => {
+      try {
+        const response = await apiClient.get("/content-types/blocks");
+        const rawItems = Array.isArray(response?.data?.data)
+          ? response.data.data
           : [];
 
-        return {
-          ...block,
-          content: {
-            ...block.content,
-            innerBlocks: [...existingInnerBlocks, nextInnerBlock],
-          },
-        };
-      }),
-    );
-    setIsSectionInnerBlockModalOpen(false);
-    setSectionInnerBlockSearch("");
-  }, [selectedSectionElement]);
+        const normalizedItems = [
+          ...blockLibraryExtraBlocks.map((item) => ({
+            key: item.key,
+            label: item.label,
+            description: item.description,
+            category: humanizeLabel(item.category || "Blocks"),
+            icon: getSectionLibraryIcon(item),
+          })),
+          ...rawItems.map((item) => ({
+            key: item.key,
+            label: item.label,
+            description: item.description,
+            category: humanizeLabel(item.category || "Blocks"),
+            icon: getSectionLibraryIcon(item),
+          })),
+        ];
+
+        if (!cancelled) {
+          setSectionInnerAvailableBlocks(normalizedItems);
+        }
+      } catch {
+        if (!cancelled) {
+          setSectionInnerAvailableBlocks([]);
+        }
+      }
+    };
+
+    void loadSectionInnerAvailableBlocks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [blockLibraryExtraBlocks, isSectionInnerBlockModalOpen]);
+
+  const handleInsertInnerBlockIntoSection = useCallback(
+    (blockKey) => {
+      if (!selectedSectionElement?.blockId) {
+        return;
+      }
+
+      const libraryItem = sectionInnerBlockItems.find(
+        (item) => String(item.key) === String(blockKey),
+      ) || {
+        key: blockKey,
+        label: humanizeLabel(blockKey),
+        description: `Add a ${humanizeLabel(blockKey).toLowerCase()} block inside this section.`,
+      };
+      const blockTemplate = buildInnerBlockFromLibraryItem(libraryItem);
+      const nextInnerBlock = blockTemplate
+        ? {
+            id: `inner-${Date.now()}`,
+            ...blockTemplate,
+          }
+        : null;
+
+      if (!nextInnerBlock) {
+        return;
+      }
+
+      pendingHistoryDescriptionRef.current = `Added ${blockKey} inside section`;
+      setBlocks((prev) =>
+        prev.map((block) => {
+          if (String(block.id) !== String(selectedSectionElement.blockId)) {
+            return block;
+          }
+
+          const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+            ? block.content.innerBlocks
+            : [];
+          const isCanvasSection =
+            String(block.blockType || "").toUpperCase() === "SECTION" ||
+            String(block.blockType || "").toUpperCase() === "PLAN" ||
+            String(block.content?.editorSection || "").startsWith("plan-");
+          const positionedInnerBlock = isCanvasSection
+            ? {
+                ...nextInnerBlock,
+                content: {
+                  ...(nextInnerBlock.content || {}),
+                  ...getDefaultInnerBlockPlacement(
+                    nextInnerBlock.type || blockKey,
+                    existingInnerBlocks.length,
+                  ),
+                },
+              }
+            : nextInnerBlock;
+
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              innerBlocks: [...existingInnerBlocks, positionedInnerBlock],
+            },
+          };
+        }),
+      );
+      setIsSectionInnerBlockModalOpen(false);
+      setSectionInnerBlockSearch("");
+    },
+    [sectionInnerBlockItems, selectedSectionElement],
+  );
 
   const handleSectionStyleChange = useCallback(
     (patch) => {
@@ -3272,16 +3961,28 @@ const WebsiteEditorInner = () => {
   }, [website?.slug]);
 
   const handleUndoBlocks = useCallback(() => {
+    if (previewTransformHistoryTimerRef.current) {
+      clearTimeout(previewTransformHistoryTimerRef.current);
+      previewTransformHistoryTimerRef.current = null;
+    }
+    previewTransformHistoryPrimedRef.current = false;
     const previous = undo();
     if (!previous || !selectedPage?.id) return;
     suppressHistoryRef.current = true;
+    blocksRef.current = previous;
     setBlocks(previous);
   }, [undo, selectedPage?.id]);
 
   const handleRedoBlocks = useCallback(() => {
+    if (previewTransformHistoryTimerRef.current) {
+      clearTimeout(previewTransformHistoryTimerRef.current);
+      previewTransformHistoryTimerRef.current = null;
+    }
+    previewTransformHistoryPrimedRef.current = false;
     const next = redo();
     if (!next || !selectedPage?.id) return;
     suppressHistoryRef.current = true;
+    blocksRef.current = next;
     setBlocks(next);
   }, [redo, selectedPage?.id]);
 
@@ -3324,6 +4025,7 @@ const WebsiteEditorInner = () => {
     !isMobile &&
     isInspectorOpen &&
     (Boolean(selectedEditableElement) || Boolean(selectedSectionElement));
+  const showDesktopSidebar = !showDesktopInspector;
 
   const builderPanelSx = {
     position: "relative",
@@ -3396,6 +4098,10 @@ const WebsiteEditorInner = () => {
         <CircularProgress sx={{ color: colors.primary }} />
       </Box>
     );
+
+    useEffect(() => {
+      handleInsertBlockFromLibraryRef.current = handleInsertBlockFromLibrary;
+    }, [handleInsertBlockFromLibrary]);
   }
 
   if (error) {
@@ -4159,445 +4865,480 @@ const WebsiteEditorInner = () => {
                     </Box>
                   </Box>
 
-                  <Grid container spacing={1} alignItems="stretch">
+                  <Grid
+                    container
+                    spacing={1}
+                    alignItems="stretch"
+                    sx={{ position: "relative" }}
+                  >
                     {/* Blocks List */}
-                    <Grid item xs={12} lg={2.1}>
-                      <Paper
-                        sx={{
-                          ...builderPanelSx,
-                          pl: 2,
-                          height: "100%",
-                          borderRadius: 5,
-                          minHeight: { lg: 860 },
-                          maxHeight: { xs: "auto", lg: "calc(100vh - 120px)" },
-                          display: "flex",
-                          flexDirection: "column",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {/* Fixed top header */}
-                        <Box
+                    {showDesktopSidebar && (
+                      <Grid item xs={12} lg={2.1}>
+                        <Paper
                           sx={{
-                            px: 1.3,
-                            py: 1.1,
-                            flexShrink: 0,
-                            borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
-                            backgroundColor: "rgba(255,255,255,0.74)",
+                            ...builderPanelSx,
+                            pl: 2,
+                            height: "100%",
+                            borderRadius: 5,
+                            minHeight: { lg: 860 },
+                            maxHeight: {
+                              xs: "auto",
+                              lg: "calc(100vh - 120px)",
+                            },
+                            display: "flex",
+                            flexDirection: "column",
+                            overflow: "hidden",
                           }}
                         >
+                          {/* Fixed top header */}
                           <Box
                             sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: 0.7,
-                              p: 0,
-                              backgroundColor: "transparent",
+                              px: 1.3,
+                              py: 1.1,
+                              flexShrink: 0,
+                              borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
+                              backgroundColor: "rgba(255,255,255,0.74)",
                             }}
                           >
-                            <FormControl
-                              size="small"
+                            <Box
                               sx={{
-                                flex: 1,
-                                minWidth: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: 0.7,
+                                p: 0,
+                                backgroundColor: "transparent",
                               }}
                             >
-                              <Select
-                                value={sidebarMode}
-                                onChange={(event) =>
-                                  setSidebarMode(event.target.value)
-                                }
-                                IconComponent={ArrowDown}
-                                displayEmpty
-                                renderValue={() => {
-                                  const Icon = sidebarModeMeta.icon;
-
-                                  return (
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 0.8,
-                                        minWidth: 0,
-                                      }}
-                                    >
-                                      <Icon size={15} color={editorMutedText} />
-                                      <Typography
-                                        sx={{
-                                          fontSize: "0.9rem",
-                                          fontWeight: 600,
-                                          color: colors.text,
-                                          whiteSpace: "nowrap",
-                                          overflow: "hidden",
-                                          textOverflow: "ellipsis",
-                                        }}
-                                      >
-                                        {sidebarModeMeta.label}
-                                      </Typography>
-                                    </Box>
-                                  );
-                                }}
+                              <FormControl
+                                size="small"
                                 sx={{
-                                  height: 40,
-                                  borderRadius: 3,
-                                  backgroundColor: "rgba(255,255,255,0.96)",
-                                  boxShadow:
-                                    "0 1px 2px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.9)",
-                                  "& .MuiSelect-select": {
-                                    display: "flex",
-                                    alignItems: "center",
-                                    py: 0.9,
-                                    pl: 1.05,
-                                    pr: "2rem !important",
-                                  },
-                                  "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: alpha(colors.primary, 0.16),
-                                  },
-                                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: alpha(colors.primary, 0.26),
-                                  },
-                                  "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                    {
-                                      borderColor: alpha(colors.primary, 0.3),
-                                    },
-                                  "& .MuiSelect-icon": {
-                                    right: 10,
-                                    width: 16,
-                                    height: 16,
-                                    color: editorMutedText,
-                                  },
-                                }}
-                                aria-label="Select sidebar mode"
-                              >
-                                {[
-                                  {
-                                    key: "blocks",
-                                    label: "Blocks",
-                                    icon: Layers,
-                                    disabled: false,
-                                  },
-                                  {
-                                    key: "theme",
-                                    label: "Theme",
-                                    icon: Palette,
-                                    disabled: !supportsTemplateThemeSidebar,
-                                  },
-                                  {
-                                    key: "media",
-                                    label: "Media",
-                                    icon: ImageIcon,
-                                    disabled: false,
-                                  },
-                                ].map((option) => {
-                                  const Icon = option.icon;
-
-                                  return (
-                                    <MenuItem
-                                      key={option.key}
-                                      value={option.key}
-                                      disabled={option.disabled}
-                                      sx={{
-                                        minHeight: 42,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 1,
-                                      }}
-                                    >
-                                      <Icon size={15} color={editorMutedText} />
-                                      <Typography
-                                        sx={{
-                                          fontSize: "0.9rem",
-                                          fontWeight: 500,
-                                          color: editorMutedText,
-                                        }}
-                                      >
-                                        {option.label}
-                                      </Typography>
-                                    </MenuItem>
-                                  );
-                                })}
-                              </Select>
-                            </FormControl>
-
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={<Layers size={15} />}
-                              onClick={() => openBlockLibraryAtPosition("end")}
-                              sx={{
-                                ...sidebarHeaderButtonSx,
-                                minWidth: 0,
-                                px: 1,
-                                color: editorText,
-                                borderColor: alpha(colors.primary, 0.16),
-                                backgroundColor: "rgba(255,255,255,0.86)",
-                                "& .MuiButton-startIcon": {
-                                  mr: 0.6,
-                                },
-                                "&:hover": {
-                                  backgroundColor: "#ffffff",
-                                  borderColor: alpha(colors.primary, 0.28),
-                                },
-                              }}
-                              aria-label="Open block library"
-                            >
-                              Library
-                            </Button>
-
-                            <IconButton
-                              size="small"
-                              onClick={() => setBlockDialogOpen(true)}
-                              sx={{
-                                minWidth: 38,
-                                minHeight: 38,
-                                flexShrink: 0,
-                                borderRadius: 3,
-                                border: `1px solid ${alpha(colors.primary, 0.16)}`,
-                                backgroundColor: "rgba(255,255,255,0.86)",
-                                color: colors.text,
-                                transition:
-                                  "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
-                                "&:hover": {
-                                  background:
-                                    "linear-gradient(135deg, #111827 0%, #020617 100%)",
-                                  borderColor: alpha(colors.primary, 0.3),
-                                  color: "#ffffff",
-                                },
-                                "&.Mui-disabled": {
-                                  color: alpha(colors.text, 0.34),
-                                  borderColor: alpha(colors.primary, 0.12),
-                                  backgroundColor: "rgba(255,255,255,0.52)",
-                                },
-                              }}
-                              aria-label="Add block"
-                            >
-                              <Plus size={18} />
-                            </IconButton>
-                          </Box>
-                        </Box>
-
-                        {/* Scrollable content */}
-                        <Box
-                          sx={{
-                            p: 1.4,
-                            flex: 1,
-                            minHeight: 0,
-                            overflowY: "auto",
-                            overflowX: "hidden",
-                            pr: 1,
-                            "&::-webkit-scrollbar": {
-                              width: 6,
-                            },
-                            "&::-webkit-scrollbar-thumb": {
-                              borderRadius: 999,
-                              backgroundColor: alpha(colors.primary, 0.22),
-                            },
-                            "&::-webkit-scrollbar-track": {
-                              backgroundColor: "transparent",
-                            },
-                          }}
-                        >
-                          {blockError && (
-                            <Alert
-                              severity="error"
-                              sx={{ mb: 2 }}
-                              action={
-                                <Button
-                                  color="inherit"
-                                  size="small"
-                                  onClick={() =>
-                                    selectedPage && fetchBlocks(selectedPage.id)
-                                  }
-                                >
-                                  Retry
-                                </Button>
-                              }
-                            >
-                              {blockError}
-                            </Alert>
-                          )}
-
-                          {sidebarMode === "blocks" ? (
-                            <>
-                              <DraggableBlockList
-                                blocks={blocks}
-                                pageId={selectedPage?.id}
-                                websiteId={websiteId}
-                                selectedBlockId={editingBlock?.id ?? null}
-                                disabled={false}
-                                persistReorder={!isLocalTemplateEditorPage}
-                                onBlocksChange={(reordered) => {
-                                  setBlocks(reordered);
-                                }}
-                                onBlockSelect={(blockId) => {
-                                  const block = blocks.find(
-                                    (b) => b.id === blockId,
-                                  );
-                                  if (block) {
-                                    setEditingBlock(block);
-                                    setBlockForm({
-                                      blockType: block.blockType,
-                                      content: block.content,
-                                    });
-                                  }
-                                }}
-                              />
-                            </>
-                          ) : sidebarMode === "media" ? (
-                            <Box>
-                              <input
-                                ref={imageLibraryInputRef}
-                                type="file"
-                                accept="image/*"
-                                hidden
-                                onChange={(event) => {
-                                  void handleLibraryUpload(
-                                    event.target.files?.[0] || null,
-                                  );
-                                  event.target.value = "";
-                                }}
-                              />
-
-                              <Box
-                                sx={{
-                                  display: "grid",
-                                  gridTemplateColumns:
-                                    "repeat(2, minmax(0, 1fr))",
-                                  gap: 1.3,
+                                  flex: 1,
+                                  minWidth: 0,
                                 }}
                               >
-                                {imageLibraryItems.map((item) => (
-                                  <ButtonBase
-                                    key={item.id}
-                                    onClick={() => handleOpenLibraryImage(item)}
-                                    disabled={!item.blockId}
-                                    sx={{
+                                <Select
+                                  value={sidebarMode}
+                                  onChange={(event) =>
+                                    setSidebarMode(event.target.value)
+                                  }
+                                  IconComponent={ArrowDown}
+                                  displayEmpty
+                                  renderValue={() => {
+                                    const Icon = sidebarModeMeta.icon;
+
+                                    return (
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: 0.8,
+                                          minWidth: 0,
+                                        }}
+                                      >
+                                        <Icon
+                                          size={15}
+                                          color={editorMutedText}
+                                        />
+                                        <Typography
+                                          sx={{
+                                            fontSize: "0.9rem",
+                                            fontWeight: 600,
+                                            color: colors.text,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                          }}
+                                        >
+                                          {sidebarModeMeta.label}
+                                        </Typography>
+                                      </Box>
+                                    );
+                                  }}
+                                  sx={{
+                                    height: 40,
+                                    borderRadius: 3,
+                                    backgroundColor: "rgba(255,255,255,0.96)",
+                                    boxShadow:
+                                      "0 1px 2px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.9)",
+                                    "& .MuiSelect-select": {
                                       display: "flex",
-                                      flexDirection: "column",
-                                      alignItems: "stretch",
-                                      textAlign: "left",
-                                      borderRadius: 3,
-                                      overflow: "hidden",
-                                      border: `1px solid ${alpha(colors.primary, 0.14)}`,
-                                      backgroundColor: "rgba(255,255,255,0.88)",
-                                      transition:
-                                        "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
-                                      "&:hover": {
-                                        transform: item.blockId
-                                          ? "translateY(-2px)"
-                                          : "none",
-                                        boxShadow: item.blockId
-                                          ? "0 14px 30px rgba(15,23,42,0.1)"
-                                          : "none",
+                                      alignItems: "center",
+                                      py: 0.9,
+                                      pl: 1.05,
+                                      pr: "2rem !important",
+                                    },
+                                    "& .MuiOutlinedInput-notchedOutline": {
+                                      borderColor: alpha(colors.primary, 0.16),
+                                    },
+                                    "&:hover .MuiOutlinedInput-notchedOutline":
+                                      {
                                         borderColor: alpha(
                                           colors.primary,
                                           0.26,
                                         ),
                                       },
-                                      "&.Mui-disabled": {
-                                        opacity: 0.86,
+                                    "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                      {
+                                        borderColor: alpha(colors.primary, 0.3),
+                                      },
+                                    "& .MuiSelect-icon": {
+                                      right: 10,
+                                      width: 16,
+                                      height: 16,
+                                      color: editorMutedText,
+                                    },
+                                  }}
+                                  aria-label="Select sidebar mode"
+                                >
+                                  {[
+                                    {
+                                      key: "blocks",
+                                      label: "Blocks",
+                                      icon: Layers,
+                                      disabled: false,
+                                    },
+                                    {
+                                      key: "theme",
+                                      label: "Theme",
+                                      icon: Palette,
+                                      disabled: !supportsTemplateThemeSidebar,
+                                    },
+                                    {
+                                      key: "media",
+                                      label: "Media",
+                                      icon: ImageIcon,
+                                      disabled: false,
+                                    },
+                                  ].map((option) => {
+                                    const Icon = option.icon;
+
+                                    return (
+                                      <MenuItem
+                                        key={option.key}
+                                        value={option.key}
+                                        disabled={option.disabled}
+                                        sx={{
+                                          minHeight: 42,
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: 1,
+                                        }}
+                                      >
+                                        <Icon
+                                          size={15}
+                                          color={editorMutedText}
+                                        />
+                                        <Typography
+                                          sx={{
+                                            fontSize: "0.9rem",
+                                            fontWeight: 500,
+                                            color: editorMutedText,
+                                          }}
+                                        >
+                                          {option.label}
+                                        </Typography>
+                                      </MenuItem>
+                                    );
+                                  })}
+                                </Select>
+                              </FormControl>
+
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Layers size={15} />}
+                                onClick={() =>
+                                  openBlockLibraryAtPosition("end")
+                                }
+                                sx={{
+                                  ...sidebarHeaderButtonSx,
+                                  minWidth: 0,
+                                  px: 1,
+                                  color: editorText,
+                                  borderColor: alpha(colors.primary, 0.16),
+                                  backgroundColor: "rgba(255,255,255,0.86)",
+                                  "& .MuiButton-startIcon": {
+                                    mr: 0.6,
+                                  },
+                                  "&:hover": {
+                                    backgroundColor: "#ffffff",
+                                    borderColor: alpha(colors.primary, 0.28),
+                                  },
+                                }}
+                                aria-label="Open block library"
+                              >
+                                Library
+                              </Button>
+
+                              <IconButton
+                                size="small"
+                                onClick={() => setBlockDialogOpen(true)}
+                                sx={{
+                                  minWidth: 38,
+                                  minHeight: 38,
+                                  flexShrink: 0,
+                                  borderRadius: 3,
+                                  border: `1px solid ${alpha(colors.primary, 0.16)}`,
+                                  backgroundColor: "rgba(255,255,255,0.86)",
+                                  color: colors.text,
+                                  transition:
+                                    "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
+                                  "&:hover": {
+                                    background:
+                                      "linear-gradient(135deg, #111827 0%, #020617 100%)",
+                                    borderColor: alpha(colors.primary, 0.3),
+                                    color: "#ffffff",
+                                  },
+                                  "&.Mui-disabled": {
+                                    color: alpha(colors.text, 0.34),
+                                    borderColor: alpha(colors.primary, 0.12),
+                                    backgroundColor: "rgba(255,255,255,0.52)",
+                                  },
+                                }}
+                                aria-label="Add block"
+                              >
+                                <Plus size={18} />
+                              </IconButton>
+                            </Box>
+                          </Box>
+
+                          {/* Scrollable content */}
+                          <Box
+                            sx={{
+                              p: 1.4,
+                              flex: 1,
+                              minHeight: 0,
+                              overflowY: "auto",
+                              overflowX: "hidden",
+                              pr: 1,
+                              "&::-webkit-scrollbar": {
+                                width: 6,
+                              },
+                              "&::-webkit-scrollbar-thumb": {
+                                borderRadius: 999,
+                                backgroundColor: alpha(colors.primary, 0.22),
+                              },
+                              "&::-webkit-scrollbar-track": {
+                                backgroundColor: "transparent",
+                              },
+                            }}
+                          >
+                            {blockError && (
+                              <Alert
+                                severity="error"
+                                sx={{ mb: 2 }}
+                                action={
+                                  <Button
+                                    color="inherit"
+                                    size="small"
+                                    onClick={() =>
+                                      selectedPage &&
+                                      fetchBlocks(selectedPage.id)
+                                    }
+                                  >
+                                    Retry
+                                  </Button>
+                                }
+                              >
+                                {blockError}
+                              </Alert>
+                            )}
+
+                            {sidebarMode === "blocks" ? (
+                              <>
+                                <DraggableBlockList
+                                  blocks={blocks}
+                                  pageId={selectedPage?.id}
+                                  websiteId={websiteId}
+                                  selectedBlockId={editingBlock?.id ?? null}
+                                  disabled={false}
+                                  persistReorder={!isLocalTemplateEditorPage}
+                                  onBlocksChange={(reordered) => {
+                                    setBlocks(reordered);
+                                  }}
+                                  onBlockSelect={(blockId) => {
+                                    const block = blocks.find(
+                                      (b) => b.id === blockId,
+                                    );
+                                    if (block) {
+                                      setEditingBlock(block);
+                                      setBlockForm({
+                                        blockType: block.blockType,
+                                        content: block.content,
+                                      });
+                                    }
+                                  }}
+                                />
+                              </>
+                            ) : sidebarMode === "media" ? (
+                              <Box>
+                                <input
+                                  ref={imageLibraryInputRef}
+                                  type="file"
+                                  accept="image/*"
+                                  hidden
+                                  onChange={(event) => {
+                                    void handleLibraryUpload(
+                                      event.target.files?.[0] || null,
+                                    );
+                                    event.target.value = "";
+                                  }}
+                                />
+
+                                <Box
+                                  sx={{
+                                    display: "grid",
+                                    gridTemplateColumns:
+                                      "repeat(2, minmax(0, 1fr))",
+                                    gap: 1.3,
+                                  }}
+                                >
+                                  {imageLibraryItems.map((item) => (
+                                    <ButtonBase
+                                      key={item.id}
+                                      onClick={() =>
+                                        handleOpenLibraryImage(item)
+                                      }
+                                      disabled={!item.blockId}
+                                      sx={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "stretch",
+                                        textAlign: "left",
+                                        borderRadius: 3,
+                                        overflow: "hidden",
+                                        border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                                        backgroundColor:
+                                          "rgba(255,255,255,0.88)",
+                                        transition:
+                                          "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+                                        "&:hover": {
+                                          transform: item.blockId
+                                            ? "translateY(-2px)"
+                                            : "none",
+                                          boxShadow: item.blockId
+                                            ? "0 14px 30px rgba(15,23,42,0.1)"
+                                            : "none",
+                                          borderColor: alpha(
+                                            colors.primary,
+                                            0.26,
+                                          ),
+                                        },
+                                        "&.Mui-disabled": {
+                                          opacity: 0.86,
+                                        },
+                                      }}
+                                    >
+                                      <Box
+                                        sx={{
+                                          height: 108,
+                                          backgroundImage: `url(${item.src})`,
+                                          backgroundSize: "cover",
+                                          backgroundPosition: "center",
+                                          backgroundColor: "#e5e7eb",
+                                        }}
+                                      />
+
+                                      <Box sx={{ p: 1.1 }}>
+                                        <Typography
+                                          variant="body2"
+                                          sx={{
+                                            color: colors.text,
+                                            fontWeight: 700,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                          }}
+                                        >
+                                          {item.label}
+                                        </Typography>
+
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ color: editorMutedText }}
+                                        >
+                                          {item.blockId
+                                            ? "Template image"
+                                            : "Uploaded asset"}
+                                        </Typography>
+                                      </Box>
+                                    </ButtonBase>
+                                  ))}
+
+                                  <ButtonBase
+                                    onClick={() =>
+                                      imageLibraryInputRef.current?.click()
+                                    }
+                                    sx={{
+                                      minHeight: 156,
+                                      borderRadius: 3,
+                                      border: `1px dashed ${alpha(colors.primary, 0.32)}`,
+                                      backgroundColor: "rgba(255,255,255,0.82)",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 1,
+                                      color: colors.text,
+                                      transition:
+                                        "transform 160ms ease, border-color 160ms ease, background-color 160ms ease",
+                                      "&:hover": {
+                                        transform: "translateY(-2px)",
+                                        borderColor: alpha(
+                                          colors.primary,
+                                          0.44,
+                                        ),
+                                        backgroundColor:
+                                          "rgba(255,255,255,0.94)",
                                       },
                                     }}
                                   >
-                                    <Box
+                                    <Upload size={20} />
+
+                                    <Typography
                                       sx={{
-                                        height: 108,
-                                        backgroundImage: `url(${item.src})`,
-                                        backgroundSize: "cover",
-                                        backgroundPosition: "center",
-                                        backgroundColor: "#e5e7eb",
+                                        fontSize: "0.92rem",
+                                        fontWeight: 700,
                                       }}
-                                    />
-
-                                    <Box sx={{ p: 1.1 }}>
-                                      <Typography
-                                        variant="body2"
-                                        sx={{
-                                          color: colors.text,
-                                          fontWeight: 700,
-                                          whiteSpace: "nowrap",
-                                          overflow: "hidden",
-                                          textOverflow: "ellipsis",
-                                        }}
-                                      >
-                                        {item.label}
-                                      </Typography>
-
-                                      <Typography
-                                        variant="caption"
-                                        sx={{ color: editorMutedText }}
-                                      >
-                                        {item.blockId
-                                          ? "Template image"
-                                          : "Uploaded asset"}
-                                      </Typography>
-                                    </Box>
+                                    >
+                                      Upload
+                                    </Typography>
                                   </ButtonBase>
-                                ))}
-
-                                <ButtonBase
-                                  onClick={() =>
-                                    imageLibraryInputRef.current?.click()
-                                  }
-                                  sx={{
-                                    minHeight: 156,
-                                    borderRadius: 3,
-                                    border: `1px dashed ${alpha(colors.primary, 0.32)}`,
-                                    backgroundColor: "rgba(255,255,255,0.82)",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: 1,
-                                    color: colors.text,
-                                    transition:
-                                      "transform 160ms ease, border-color 160ms ease, background-color 160ms ease",
-                                    "&:hover": {
-                                      transform: "translateY(-2px)",
-                                      borderColor: alpha(colors.primary, 0.44),
-                                      backgroundColor: "rgba(255,255,255,0.94)",
-                                    },
-                                  }}
-                                >
-                                  <Upload size={20} />
-
-                                  <Typography
-                                    sx={{
-                                      fontSize: "0.92rem",
-                                      fontWeight: 700,
-                                    }}
-                                  >
-                                    Upload
-                                  </Typography>
-                                </ButtonBase>
+                                </Box>
                               </Box>
-                            </Box>
-                          ) : (
-                            <Box
-                              sx={{
-                                fontFamily: '"Poppins", "Inter", sans-serif',
-                                "& .MuiTypography-root, & .MuiButton-root, & .MuiChip-root, & .MuiInputBase-root, & .MuiFormLabel-root, & .MuiFormHelperText-root":
-                                  {
-                                    fontFamily:
-                                      '"Poppins", "Inter", sans-serif',
-                                  },
-                              }}
-                            >
-                              <FrontendTemplateThemePanel
-                                templateId={resolvedFrontendTemplateId}
-                                selection={templateThemeSelection}
-                                onChange={setTemplateThemeSelection}
-                              />
-                            </Box>
-                          )}
-                        </Box>
-                      </Paper>
-                    </Grid>
+                            ) : (
+                              <Box
+                                sx={{
+                                  fontFamily: '"Poppins", "Inter", sans-serif',
+                                  "& .MuiTypography-root, & .MuiButton-root, & .MuiChip-root, & .MuiInputBase-root, & .MuiFormLabel-root, & .MuiFormHelperText-root":
+                                    {
+                                      fontFamily:
+                                        '"Poppins", "Inter", sans-serif',
+                                    },
+                                }}
+                              >
+                                <FrontendTemplateThemePanel
+                                  templateId={resolvedFrontendTemplateId}
+                                  selection={templateThemeSelection}
+                                  onChange={setTemplateThemeSelection}
+                                />
+                              </Box>
+                            )}
+                          </Box>
+                        </Paper>
+                      </Grid>
+                    )}
 
                     {/* Preview — Step 4.11: PreviewPanel with live srcdoc */}
-                    <Grid item xs={12} lg={showDesktopInspector ? 8 : 9.9}>
+                    <Grid item xs={12} lg={showDesktopSidebar ? 9.9 : 12}>
                       <Paper
                         sx={{
                           ...builderPanelSx,
                           p: 1.15,
+                          pr: {
+                            lg: showDesktopInspector
+                              ? `calc(${desktopInspectorWidth} + 16px)`
+                              : 1.15,
+                          },
                           overflow: "hidden",
                           position: { md: "sticky" },
                           top: { md: 16 },
@@ -4656,6 +5397,7 @@ const WebsiteEditorInner = () => {
                             onBlockSelected={(blockId) => {
                               setSelectedEditableElement(null);
                               setSelectedImageElement(null);
+                              setIsImageDialogOpen(false);
                               setSelectedSectionElement(null);
                               setActiveToolbarMode("text");
                               setIsInspectorOpen(false);
@@ -4667,6 +5409,7 @@ const WebsiteEditorInner = () => {
                               handlePreviewEditableSelection
                             }
                             onImageSelected={handlePreviewImageSelection}
+                            onImageDoubleClick={handlePreviewImageDoubleClick}
                             onSectionSelected={handlePreviewSectionSelection}
                             onSectionAddRequest={handlePreviewSectionAddRequest}
                             onSectionInnerAddRequest={
@@ -4692,7 +5435,18 @@ const WebsiteEditorInner = () => {
                       </Paper>
                     </Grid>
                     {showDesktopInspector && (
-                      <Grid item xs={12} lg={1.9}>
+                      <Box
+                        sx={{
+                          display: { xs: "none", lg: "block" },
+                          position: "absolute",
+                          top: 0,
+                          right: 0,
+                          width: desktopInspectorWidth,
+                          height: "100%",
+                          zIndex: 3,
+                          pointerEvents: "none",
+                        }}
+                      >
                         <Paper
                           sx={{
                             ...builderPanelSx,
@@ -4706,6 +5460,7 @@ const WebsiteEditorInner = () => {
                             height: { md: "calc(100vh - 32px)" },
                             maxHeight: { md: "calc(100vh - 32px)" },
                             overflow: "hidden",
+                            pointerEvents: "auto",
                           }}
                         >
                           <Box
@@ -4893,7 +5648,7 @@ const WebsiteEditorInner = () => {
                             )}
                           </Box>
                         </Paper>
-                      </Grid>
+                      </Box>
                     )}
                   </Grid>
                 </Box>
@@ -4973,130 +5728,173 @@ const WebsiteEditorInner = () => {
               </Typography>
             </Box>
             <Box sx={{ p: 2 }}>
-            <DashboardInput
-              fullWidth
-              placeholder="Search"
-              value={sectionInnerBlockSearch}
-              onChange={(event) => setSectionInnerBlockSearch(event.target.value)}
-              sx={{
-                mb: 2.25,
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "14px",
-                  backgroundColor: "#ffffff",
-                  "& fieldset": {
-                    borderColor: alpha("#111827", 0.16),
-                    borderWidth: "2px",
+              <DashboardInput
+                fullWidth
+                placeholder="Search"
+                value={sectionInnerBlockSearch}
+                onChange={(event) =>
+                  setSectionInnerBlockSearch(event.target.value)
+                }
+                sx={{
+                  mb: 2.25,
+
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "14px",
+                    backgroundColor: "#ffffff",
+                    color: "#111827",
+                    boxShadow: "none",
+
+                    "& fieldset": {
+                      borderColor: alpha("#111827", 0.16),
+                      borderWidth: "1px",
+                    },
+
+                    "&:hover fieldset": {
+                      borderColor: "#111827",
+                    },
+
+                    "&.Mui-focused": {
+                      boxShadow: "none",
+                    },
+
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#111827",
+                      borderWidth: "1px",
+                    },
                   },
-                },
-              }}
-            />
-            <Box sx={{ maxHeight: 500, overflowY: "auto", pr: 0.25 }}>
-              {Object.entries(sectionInnerBlockGroups).map(([category, items]) => (
-                <Box key={category} sx={{ mb: 2 }}>
-                  <Typography
-                    sx={{
-                      mb: 1,
-                      fontSize: "0.82rem",
-                      fontWeight: 800,
-                      letterSpacing: "0.04em",
-                      textTransform: "uppercase",
-                      color: editorMutedText,
-                    }}
-                  >
-                    {category}
-                  </Typography>
+
+                  "& .MuiInputBase-input": {
+                    color: "#111827",
+                    caretColor: "#111827",
+
+                    "&::placeholder": {
+                      color: alpha("#111827", 0.45),
+                      opacity: 1,
+                    },
+                  },
+                }}
+              />
+              <Box sx={{ maxHeight: 500, overflowY: "auto", pr: 0.25 }}>
+                {Object.keys(sectionInnerBlockGroups).length === 0 ? (
                   <Box
                     sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                      gap: 1,
+                      minHeight: 220,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      px: 2,
                     }}
                   >
-                    {items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <ButtonBase
-                          key={item.key}
-                          onClick={() =>
-                            handleInsertInnerBlockIntoSection(item.key)
-                          }
+                    <Typography
+                      sx={{
+                        color: editorMutedText,
+                        fontSize: "0.96rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      No blocks found
+                    </Typography>
+                  </Box>
+                ) : (
+                  Object.entries(sectionInnerBlockGroups).map(
+                    ([category, items]) => (
+                      <Box key={category} sx={{ mb: 2 }}>
+                        <Typography
                           sx={{
-                            minHeight: 84,
-                            borderRadius: 3,
-                            px: 1.2,
-                            py: 1.1,
-                            border: `1px solid ${alpha(colors.primary, 0.08)}`,
-                            background:
-                              "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)",
-                            display: "flex",
-                            alignItems: "flex-start",
-                            justifyContent: "flex-start",
-                            gap: 1,
-                            textAlign: "left",
-                            transition:
-                              "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
-                            "&:hover": {
-                              transform: "translateY(-2px)",
-                              borderColor: alpha(colors.primary, 0.22),
-                              boxShadow:
-                                "0 12px 24px rgba(15,23,42,0.08)",
-                            },
+                            mb: 1,
+                            fontSize: "0.82rem",
+                            fontWeight: 800,
+                            letterSpacing: "0.04em",
+                            textTransform: "uppercase",
+                            color: editorMutedText,
                           }}
                         >
-                          <Box
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 2.25,
-                              display: "grid",
-                              placeItems: "center",
-                              backgroundColor: "rgba(255,255,255,0.95)",
-                              border: `1px solid ${alpha(
-                                colors.primary,
-                                0.1,
-                              )}`,
-                              color: editorMutedText,
-                              flexShrink: 0,
-                            }}
-                          >
-                            <Icon size={16} />
-                          </Box>
-                          <Box>
-                            <Typography
-                              sx={{
-                                color: editorText,
-                                fontSize: "0.92rem",
-                                fontWeight: 700,
-                                lineHeight: 1.2,
-                              }}
-                            >
-                              {item.label}
-                            </Typography>
-                            <Typography
-                              sx={{
-                                mt: 0.45,
-                                color: editorMutedText,
-                                fontSize: "0.78rem",
-                                lineHeight: 1.35,
-                              }}
-                            >
-                              {item.description}
-                            </Typography>
-                          </Box>
-                        </ButtonBase>
-                      );
-                    })}
-                  </Box>
-                </Box>
-              ))}
-            </Box>
+                          {category}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gap: 1,
+                          }}
+                        >
+                          {items.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <ButtonBase
+                                key={item.key}
+                                onClick={() =>
+                                  handleInsertInnerBlockIntoSection(item.key)
+                                }
+                                sx={{
+                                  borderRadius: 3,
+                                  px: 1.2,
+                                  py: 1.1,
+                                  border: `1px solid ${alpha(colors.primary, 0.08)}`,
+                                  background: "#adadad08",
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  justifyContent: "flex-start",
+                                  gap: 1,
+                                  textAlign: "left",
+                                  transition:
+                                    "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+                                  "&:hover": {
+                                    transform: "translateY(-2px)",
+                                    borderColor: alpha(colors.primary, 0.22),
+                                    boxShadow:
+                                      "0 12px 24px rgba(15,23,42,0.08)",
+                                  },
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: 2.25,
+                                    display: "grid",
+                                    placeItems: "center",
+                                    backgroundColor: "rgba(255,255,255,0.95)",
+                                    border: `1px solid ${alpha(
+                                      colors.primary,
+                                      0.1,
+                                    )}`,
+                                    color: editorMutedText,
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <Icon size={16} />
+                                </Box>
+                                <Box>
+                                  <Typography
+                                    sx={{
+                                      color: editorText,
+                                      fontSize: "0.92rem",
+                                      fontWeight: 700,
+                                      lineHeight: 1.2,
+                                      paddingTop: "10px",
+                                    }}
+                                  >
+                                    {item.label}
+                                  </Typography>
+                                </Box>
+                              </ButtonBase>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    ),
+                  )
+                )}
+              </Box>
             </Box>
           </DialogContent>
         </Dialog>
         <Dialog
-          open={!!selectedImageElement}
+          open={isImageDialogOpen && !!selectedImageElement}
           onClose={() => {
-            setSelectedImageElement(null);
+            setIsImageDialogOpen(false);
             setIsImageLibraryPickerOpen(false);
           }}
           maxWidth="sm"
@@ -5156,7 +5954,7 @@ const WebsiteEditorInner = () => {
             </Box>
             <IconButton
               onClick={() => {
-                setSelectedImageElement(null);
+                setIsImageDialogOpen(false);
                 setIsImageLibraryPickerOpen(false);
               }}
               sx={{
@@ -5212,7 +6010,7 @@ const WebsiteEditorInner = () => {
               <Button
                 variant="outlined"
                 onClick={() => {
-                  setSelectedImageElement(null);
+                  setIsImageDialogOpen(false);
                   setIsImageLibraryPickerOpen(false);
                 }}
                 sx={{
@@ -5245,81 +6043,36 @@ const WebsiteEditorInner = () => {
                 }
                 sx={{
                   gridColumn: "1 / -1",
-                  "& input": {
-                    color: editorText,
-                    fontSize: "14px",
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "12px",
-                    backgroundColor: "#ffffff",
-                    "& fieldset": {
-                      borderColor: alpha("#111827", 0.12),
-                    },
-                    "&:hover fieldset": {
-                      borderColor: alpha(colors.primary, 0.35),
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: colors.primary,
-                    },
-                  },
+                  ...imageEditorInputSx,
                 }}
               />
+
               <DashboardInput
                 fullWidth
                 label="Border Radius"
                 labelPlacement="floating"
-                value={selectedImageValue.borderRadius || "0px"}
+                value={getEditableCssUnitValue(selectedImageValue.borderRadius)}
                 onChange={(event) =>
-                  handleImageChange({ borderRadius: event.target.value })
+                  handleImageChange({
+                    borderRadius: toEditableCssUnit(event.target.value),
+                  })
                 }
-                sx={{
-                  "& input": {
-                    color: editorText,
-                    fontSize: "14px",
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "12px",
-                    backgroundColor: "#ffffff",
-                    "& fieldset": {
-                      borderColor: alpha("#111827", 0.12),
-                    },
-                    "&:hover fieldset": {
-                      borderColor: alpha(colors.primary, 0.35),
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: colors.primary,
-                    },
-                  },
-                }}
+                sx={imageEditorInputSx}
               />
+
               <DashboardInput
                 fullWidth
                 label="Border Width"
                 labelPlacement="floating"
-                value={selectedImageValue.borderWidth || "0px"}
+                value={getEditableCssUnitValue(selectedImageValue.borderWidth)}
                 onChange={(event) =>
-                  handleImageChange({ borderWidth: event.target.value })
+                  handleImageChange({
+                    borderWidth: toEditableCssUnit(event.target.value),
+                  })
                 }
-                sx={{
-                  "& input": {
-                    color: editorText,
-                    fontSize: "14px",
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "12px",
-                    backgroundColor: "#ffffff",
-                    "& fieldset": {
-                      borderColor: alpha("#111827", 0.12),
-                    },
-                    "&:hover fieldset": {
-                      borderColor: alpha(colors.primary, 0.35),
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: colors.primary,
-                    },
-                  },
-                }}
+                sx={imageEditorInputSx}
               />
+
               <DashboardInput
                 fullWidth
                 label="Border Color"
@@ -5328,25 +6081,7 @@ const WebsiteEditorInner = () => {
                 onChange={(event) =>
                   handleImageChange({ borderColor: event.target.value })
                 }
-                sx={{
-                  "& input": {
-                    color: editorText,
-                    fontSize: "14px",
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "12px",
-                    backgroundColor: "#ffffff",
-                    "& fieldset": {
-                      borderColor: alpha("#111827", 0.12),
-                    },
-                    "&:hover fieldset": {
-                      borderColor: alpha(colors.primary, 0.35),
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: colors.primary,
-                    },
-                  },
-                }}
+                sx={imageEditorInputSx}
               />
               <FormControl size="small" sx={{ minWidth: 0 }}>
                 <Select
@@ -5418,7 +6153,7 @@ const WebsiteEditorInner = () => {
             </Typography>
             <Button
               onClick={() => {
-                setSelectedImageElement(null);
+                setIsImageDialogOpen(false);
                 setIsImageLibraryPickerOpen(false);
               }}
               variant="contained"

@@ -427,7 +427,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     section: Record<string, any>,
     block: Record<string, any>,
     index: number,
-    options?: { tone?: "light" | "dark"; maxWidth?: number | string },
+    options?: {
+      tone?: "light" | "dark";
+      maxWidth?: number | string;
+      canvas?: boolean;
+    },
   ) => {
     const blockPath = `innerBlocks.${index}.content`;
     const blockType = String(block.type || "text").toLowerCase();
@@ -440,8 +444,45 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const blockMaxWidth = options?.maxWidth || 880;
     const textStyle = block.content?.textStyle || {};
     const headingStyle = block.content?.headingStyle || textStyle;
+    const bodyStyle = block.content?.bodyStyle || textStyle;
+    const eyebrowStyle = block.content?.eyebrowStyle || textStyle;
     const buttonStyle = block.content?.buttonTextStyle || textStyle;
     const imageStyle = block.content?.imageStyle || {};
+    const cardStyle = block.content?.cardStyle || {};
+    const canvas = options?.canvas === true;
+    const canvasBaseSx = canvas
+      ? {
+          position: "absolute" as const,
+          top: 0,
+          left: 0,
+          margin: 0,
+        }
+      : null;
+    const compoundCardSx = {
+      width: canvas ? cardStyle.width || "640px" : "100%",
+      maxWidth: canvas ? cardStyle.width || "640px" : blockMaxWidth,
+      p: { xs: 2.25, md: 3 },
+      borderRadius: "28px",
+      border: `1px solid ${tone === "light" ? "rgba(255,255,255,0.16)" : rgba(themeColor, 0.14)}`,
+      background:
+        tone === "light"
+          ? "rgba(255,255,255,0.08)"
+          : "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)",
+      boxShadow:
+        tone === "light"
+          ? "0 24px 48px rgba(0,0,0,0.16)"
+          : "0 24px 48px rgba(15,23,42,0.08)",
+      backdropFilter: "blur(12px)",
+      ...canvasBaseSx,
+      transform: cardStyle.transform,
+      ...cardStyle,
+    };
+    const compoundBlockSelectionProps = getEditableTextProps(
+      section.blockId,
+      `${blockPath}.__card`,
+      "single",
+    );
+    const compoundBlockLabel = block.label || humanizeSectionKey(blockType);
 
     if (blockType === "heading") {
       return (
@@ -456,6 +497,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             letterSpacing: "-0.05em",
             fontWeight: 800,
             color: textColor,
+            ...(canvas
+              ? {
+                  width: "min(540px, calc(100% - 112px))",
+                  maxWidth: "540px",
+                }
+              : {}),
+            ...canvasBaseSx,
             ...headingStyle,
           }}
         >
@@ -481,6 +529,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 ? "1px solid rgba(255,255,255,0.22)"
                 : `1px solid ${rgba(themeColor, 0.14)}`,
             fontWeight: 700,
+            ...canvasBaseSx,
             ...textStyle,
           }}
         />
@@ -500,8 +549,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             block.label || "Section Image",
           )}
           sx={{
-            width: "100%",
-            maxWidth: blockMaxWidth,
+            width: canvas ? imageStyle.width || "320px" : "100%",
+            maxWidth: canvas ? imageStyle.width || "320px" : blockMaxWidth,
             height: imageStyle.height || { xs: 220, md: 360 },
             objectFit: imageStyle.objectFit || "cover",
             borderRadius: "24px",
@@ -510,6 +559,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             borderWidth: imageStyle.borderWidth,
             borderColor: imageStyle.borderColor,
             borderStyle: imageStyle.borderWidth ? "solid" : undefined,
+            ...canvasBaseSx,
             transform: imageStyle.transform,
             ...imageStyle,
           }}
@@ -533,6 +583,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             py: 1.2,
             fontWeight: 700,
             boxShadow: "none",
+            ...canvasBaseSx,
             ...buttonStyle,
             "&:hover": {
               bgcolor: themeColor,
@@ -551,10 +602,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Box
           key={String(block.id || `${blockType}-${index}`)}
           sx={{
-            width: "100%",
-            maxWidth: blockMaxWidth,
+            width: canvas ? textStyle.width || "420px" : "100%",
+            maxWidth: canvas ? textStyle.width || "420px" : blockMaxWidth,
             height: 1,
             backgroundColor: lineColor,
+            ...canvasBaseSx,
+            transform: textStyle.transform,
           }}
         />
       );
@@ -569,8 +622,582 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             maxWidth: blockMaxWidth,
             height: block.content?.height || "24px",
             flexShrink: 0,
+            ...canvasBaseSx,
+            transform: textStyle.transform,
           }}
         />
+      );
+    }
+
+    if (blockType === "announcement_bar") {
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          direction={{ xs: "column", md: "row" }}
+          spacing={1.5}
+          alignItems={{ xs: "flex-start", md: "center" }}
+          justifyContent="space-between"
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.text`, "single")}
+            sx={{ color: textColor, fontWeight: 700, ...textStyle }}
+          >
+            {block.content?.text || "Special announcement for this section."}
+          </Typography>
+          <Button
+            variant="contained"
+            {...getEditableTextProps(section.blockId, `${blockPath}.buttonText`, "single")}
+            sx={{
+              bgcolor: themeColor,
+              color: palette.white,
+              borderRadius: "999px",
+              textTransform: "none",
+              px: 2.2,
+              py: 0.95,
+              boxShadow: "none",
+              ...buttonStyle,
+            }}
+          >
+            {block.content?.buttonText || "Learn more"}
+          </Button>
+        </Stack>
+      );
+    }
+
+    if (
+      blockType === "cta" ||
+      blockType === "newsletter" ||
+      blockType === "contact" ||
+      blockType === "form_builder" ||
+      blockType === "reservation_form" ||
+      blockType === "generic_card"
+    ) {
+      const fields = Array.isArray(block.content?.fields) ? block.content.fields : [];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          alignItems="flex-start"
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Box sx={{ width: "100%" }}>
+            <Typography
+              {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "multi")}
+              sx={{
+                color: textColor,
+                fontFamily: headingFont,
+                fontSize: { xs: "1.45rem", md: "2.15rem" },
+                lineHeight: 1.05,
+                fontWeight: 800,
+                letterSpacing: "-0.04em",
+                ...headingStyle,
+              }}
+            >
+              {block.content?.heading || block.label || "Section block"}
+            </Typography>
+            <Typography
+              {...getEditableTextProps(section.blockId, `${blockPath}.body`, "multi")}
+              sx={{
+                mt: 1,
+                color: mutedTextColor,
+                fontSize: "1rem",
+                lineHeight: 1.75,
+                ...bodyStyle,
+              }}
+            >
+              {block.content?.body || "Add supporting copy for this block."}
+            </Typography>
+          </Box>
+
+          {blockType === "newsletter" ? (
+            <Stack direction={{ xs: "column", md: "row" }} spacing={1.25} sx={{ width: "100%" }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder={block.content?.placeholder || "Enter your email"}
+                sx={{
+                  "& .MuiInputBase-root": {
+                    color: textColor,
+                    bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+                    borderRadius: 999,
+                  },
+                }}
+              />
+              <Button
+                variant="contained"
+                {...getEditableTextProps(section.blockId, `${blockPath}.buttonText`, "single")}
+                sx={{
+                  bgcolor: themeColor,
+                  color: palette.white,
+                  borderRadius: "999px",
+                  textTransform: "none",
+                  px: 2.6,
+                  py: 1.05,
+                  whiteSpace: "nowrap",
+                  boxShadow: "none",
+                  ...buttonStyle,
+                }}
+              >
+                {block.content?.buttonText || "Subscribe"}
+              </Button>
+            </Stack>
+          ) : fields.length ? (
+            <Stack spacing={1.1} sx={{ width: "100%" }}>
+              {fields.map((field: string, fieldIndex: number) => (
+                <TextField
+                  key={`${field}-${fieldIndex}`}
+                  size="small"
+                  fullWidth
+                  placeholder={field}
+                  sx={{
+                    "& .MuiInputBase-root": {
+                      color: textColor,
+                      bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+                      borderRadius: 2.5,
+                    },
+                  }}
+                />
+              ))}
+              <Button
+                variant="contained"
+                {...getEditableTextProps(section.blockId, `${blockPath}.buttonText`, "single")}
+                sx={{
+                  alignSelf: "flex-start",
+                  bgcolor: themeColor,
+                  color: palette.white,
+                  borderRadius: "16px",
+                  textTransform: "none",
+                  px: 2.6,
+                  py: 1.05,
+                  boxShadow: "none",
+                  ...buttonStyle,
+                }}
+              >
+                {block.content?.buttonText || "Submit"}
+              </Button>
+            </Stack>
+          ) : (
+            <Button
+              variant="contained"
+              {...getEditableTextProps(section.blockId, `${blockPath}.buttonText`, "single")}
+              sx={{
+                bgcolor: themeColor,
+                color: palette.white,
+                borderRadius: "16px",
+                textTransform: "none",
+                px: 2.7,
+                py: 1.1,
+                boxShadow: "none",
+                ...buttonStyle,
+              }}
+            >
+              {block.content?.buttonText || "Get started"}
+            </Button>
+          )}
+        </Stack>
+      );
+    }
+
+    if (blockType === "hero" || blockType === "image_text_split") {
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          direction={{ xs: "column", md: "row" }}
+          spacing={2.5}
+          alignItems="stretch"
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Stack spacing={1.35} sx={{ flex: 1, minWidth: 0 }}>
+            <Chip
+              label={block.content?.eyebrow || "Feature block"}
+              {...getEditableTextProps(section.blockId, `${blockPath}.eyebrow`, "single")}
+              sx={{
+                alignSelf: "flex-start",
+                bgcolor: tone === "light" ? "rgba(255,255,255,0.14)" : palette.accentSoft,
+                color: textColor,
+                fontWeight: 700,
+                ...eyebrowStyle,
+              }}
+            />
+            <Typography
+              {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "multi")}
+              sx={{
+                color: textColor,
+                fontFamily: headingFont,
+                fontSize: { xs: "1.55rem", md: "2.3rem" },
+                lineHeight: 1.02,
+                fontWeight: 800,
+                letterSpacing: "-0.04em",
+                ...headingStyle,
+              }}
+            >
+              {block.content?.heading || "Image and text split"}
+            </Typography>
+            <Typography
+              {...getEditableTextProps(section.blockId, `${blockPath}.body`, "multi")}
+              sx={{
+                color: mutedTextColor,
+                fontSize: "1rem",
+                lineHeight: 1.75,
+                ...bodyStyle,
+              }}
+            >
+              {block.content?.body || "Pair an image with a supporting message and CTA."}
+            </Typography>
+            <Button
+              variant="contained"
+              {...getEditableTextProps(section.blockId, `${blockPath}.buttonText`, "single")}
+              sx={{
+                alignSelf: "flex-start",
+                bgcolor: themeColor,
+                color: palette.white,
+                borderRadius: "16px",
+                textTransform: "none",
+                px: 2.6,
+                py: 1.05,
+                boxShadow: "none",
+                ...buttonStyle,
+              }}
+            >
+              {block.content?.buttonText || "Explore more"}
+            </Button>
+          </Stack>
+          <Box
+            component="img"
+            src={block.content?.image || visualSet.office}
+            alt={block.content?.heading || "Split image"}
+            {...getEditableImageProps(section.blockId, `${blockPath}.image`, block.label || "Split Image")}
+            sx={{
+              width: { xs: "100%", md: 260 },
+              minWidth: { md: 260 },
+              height: { xs: 220, md: 280 },
+              objectFit: imageStyle.objectFit || "cover",
+              borderRadius: "22px",
+              display: "block",
+              ...imageStyle,
+            }}
+          />
+        </Stack>
+      );
+    }
+
+    if (blockType === "features") {
+      const items = Array.isArray(block.content?.items) ? block.content.items : [];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "multi")}
+            sx={{
+              color: textColor,
+              fontFamily: headingFont,
+              fontSize: { xs: "1.4rem", md: "2rem" },
+              fontWeight: 800,
+              letterSpacing: "-0.03em",
+              ...headingStyle,
+            }}
+          >
+            {block.content?.heading || "Core features"}
+          </Typography>
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.body`, "multi")}
+            sx={{ color: mutedTextColor, lineHeight: 1.75, ...bodyStyle }}
+          >
+            {block.content?.body || "Highlight the strongest benefits of this section."}
+          </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+              gap: 1.35,
+              width: "100%",
+            }}
+          >
+            {items.map((item: Record<string, any>, itemIndex: number) => (
+              <Box
+                key={`feature-${itemIndex}`}
+                sx={{
+                  p: 2,
+                  borderRadius: "18px",
+                  border: `1px solid ${rgba(themeColor, 0.12)}`,
+                  bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+                }}
+              >
+                <Typography sx={{ color: textColor, fontWeight: 700 }}>
+                  {item?.title || `Feature ${itemIndex + 1}`}
+                </Typography>
+                <Typography sx={{ mt: 0.6, color: mutedTextColor, fontSize: "0.94rem", lineHeight: 1.65 }}>
+                  {item?.description || "Describe this feature here."}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Stack>
+      );
+    }
+
+    if (blockType === "navigation_bar" || blockType === "footer") {
+      const links = Array.isArray(block.content?.links) ? block.content.links : [];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          direction={{ xs: "column", md: "row" }}
+          spacing={1.5}
+          alignItems={{ xs: "flex-start", md: "center" }}
+          justifyContent="space-between"
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.logoText`, "single")}
+            sx={{ color: textColor, fontFamily: headingFont, fontWeight: 800, fontSize: "1.15rem", ...headingStyle }}
+          >
+            {block.content?.logoText || block.content?.heading || "Your Brand"}
+          </Typography>
+          {links.length ? (
+            <Stack direction="row" spacing={2} flexWrap="wrap">
+              {links.map((link: string, linkIndex: number) => (
+                <Typography key={`${link}-${linkIndex}`} sx={{ color: mutedTextColor, fontWeight: 600 }}>
+                  {link}
+                </Typography>
+              ))}
+            </Stack>
+          ) : (
+            <Typography
+              {...getEditableTextProps(section.blockId, `${blockPath}.copyright`, "single")}
+              sx={{ color: mutedTextColor, ...bodyStyle }}
+            >
+              {block.content?.copyright || "© 2026 Your company. All rights reserved."}
+            </Typography>
+          )}
+        </Stack>
+      );
+    }
+
+    if (blockType === "pricing") {
+      const plans = Array.isArray(block.content?.plans) ? block.content.plans : [];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "multi")}
+            sx={{ color: textColor, fontFamily: headingFont, fontWeight: 800, fontSize: { xs: "1.4rem", md: "2rem" }, ...headingStyle }}
+          >
+            {block.content?.heading || "Simple pricing"}
+          </Typography>
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.body`, "multi")}
+            sx={{ color: mutedTextColor, lineHeight: 1.75, ...bodyStyle }}
+          >
+            {block.content?.body || "Choose a plan that fits your business stage."}
+          </Typography>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, gap: 1.5 }}>
+            {plans.map((plan: Record<string, any>, planIndex: number) => (
+              <Box key={`plan-${planIndex}`} sx={{ p: 2.2, borderRadius: "20px", bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff", border: `1px solid ${rgba(themeColor, 0.12)}` }}>
+                <Typography sx={{ color: textColor, fontWeight: 700 }}>{plan?.name || `Plan ${planIndex + 1}`}</Typography>
+                <Typography sx={{ mt: 0.4, color: themeColor, fontFamily: headingFont, fontSize: "1.6rem", fontWeight: 800 }}>{plan?.price || "$49"}</Typography>
+                <Stack spacing={0.5} sx={{ mt: 1.1 }}>
+                  {(Array.isArray(plan?.features) ? plan.features : []).map((feature: string, featureIndex: number) => (
+                    <Typography key={`${feature}-${featureIndex}`} sx={{ color: mutedTextColor, fontSize: "0.94rem" }}>
+                      • {feature}
+                    </Typography>
+                  ))}
+                </Stack>
+              </Box>
+            ))}
+          </Box>
+        </Stack>
+      );
+    }
+
+    if (blockType === "countdown") {
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "multi")}
+            sx={{ color: textColor, fontFamily: headingFont, fontWeight: 800, fontSize: { xs: "1.4rem", md: "2rem" }, ...headingStyle }}
+          >
+            {block.content?.heading || "Launch countdown"}
+          </Typography>
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.body`, "multi")}
+            sx={{ color: mutedTextColor, lineHeight: 1.75, ...bodyStyle }}
+          >
+            {block.content?.body || "Build urgency for your upcoming launch or event."}
+          </Typography>
+          <Stack direction="row" spacing={1.2} flexWrap="wrap">
+            {[
+              { label: "Days", value: block.content?.days || "12" },
+              { label: "Hours", value: block.content?.hours || "08" },
+              { label: "Minutes", value: block.content?.minutes || "44" },
+            ].map((part) => (
+              <Box key={part.label} sx={{ minWidth: 104, p: 1.6, borderRadius: "18px", bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff", border: `1px solid ${rgba(themeColor, 0.12)}`, textAlign: "center" }}>
+                <Typography sx={{ color: textColor, fontFamily: headingFont, fontWeight: 800, fontSize: "1.6rem" }}>{part.value}</Typography>
+                <Typography sx={{ color: mutedTextColor, fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>{part.label}</Typography>
+              </Box>
+            ))}
+          </Stack>
+        </Stack>
+      );
+    }
+
+    if (blockType === "testimonials" || blockType === "reviews") {
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={1.35}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "single")}
+            sx={{ color: textColor, fontWeight: 700, ...headingStyle }}
+          >
+            {block.content?.heading || "What clients say"}
+          </Typography>
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.quote`, "multi")}
+            sx={{ color: textColor, fontFamily: headingFont, fontSize: { xs: "1.3rem", md: "1.8rem" }, lineHeight: 1.25, fontWeight: 700, ...bodyStyle }}
+          >
+            {block.content?.quote || "Share a strong testimonial or review here."}
+          </Typography>
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.author`, "single")}
+            sx={{ color: mutedTextColor, fontWeight: 600, ...textStyle }}
+          >
+            {block.content?.author || "A satisfied client"}{block.content?.role ? `, ${block.content.role}` : ""}
+          </Typography>
+        </Stack>
+      );
+    }
+
+    if (blockType === "stats") {
+      const items = Array.isArray(block.content?.items) ? block.content.items : [];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "single")}
+            sx={{ color: textColor, fontWeight: 700, ...headingStyle }}
+          >
+            {block.content?.heading || "Key numbers"}
+          </Typography>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" }, gap: 1.25 }}>
+            {items.map((item: Record<string, any>, itemIndex: number) => (
+              <Box key={`stat-${itemIndex}`} sx={{ p: 1.8, borderRadius: "18px", bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff", border: `1px solid ${rgba(themeColor, 0.12)}` }}>
+                <Typography sx={{ color: textColor, fontFamily: headingFont, fontSize: "1.55rem", fontWeight: 800 }}>{item?.value || "100+"}</Typography>
+                <Typography sx={{ color: mutedTextColor, fontSize: "0.92rem" }}>{item?.label || "Metric"}</Typography>
+              </Box>
+            ))}
+          </Box>
+        </Stack>
+      );
+    }
+
+    if (blockType === "logo_carousel") {
+      const items = Array.isArray(block.content?.items) ? block.content.items : [];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={1.4}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "single")}
+            sx={{ color: textColor, fontWeight: 700, ...headingStyle }}
+          >
+            {block.content?.heading || "Trusted by modern teams"}
+          </Typography>
+          <Stack direction="row" spacing={1.1} flexWrap="wrap">
+            {items.map((logo: string, logoIndex: number) => (
+              <Chip
+                key={`${logo}-${logoIndex}`}
+                label={logo}
+                sx={{
+                  bgcolor: tone === "light" ? "rgba(255,255,255,0.12)" : "#ffffff",
+                  color: textColor,
+                  border: `1px solid ${rgba(themeColor, 0.12)}`,
+                  fontWeight: 700,
+                }}
+              />
+            ))}
+          </Stack>
+        </Stack>
+      );
+    }
+
+    if (blockType === "map_location" || blockType === "menu_display") {
+      const items =
+        Array.isArray(block.content?.locations) ? block.content.locations
+        : Array.isArray(block.content?.items) ? block.content.items
+        : [];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "single")}
+            sx={{ color: textColor, fontFamily: headingFont, fontWeight: 800, fontSize: { xs: "1.35rem", md: "1.9rem" }, ...headingStyle }}
+          >
+            {block.content?.heading || block.label || "Block content"}
+          </Typography>
+          {block.content?.body ? (
+            <Typography
+              {...getEditableTextProps(section.blockId, `${blockPath}.body`, "multi")}
+              sx={{ color: mutedTextColor, lineHeight: 1.75, ...bodyStyle }}
+            >
+              {block.content?.body}
+            </Typography>
+          ) : null}
+          <Stack spacing={1}>
+            {items.map((entry: any, entryIndex: number) => (
+              <Box key={`entry-${entryIndex}`} sx={{ p: 1.5, borderRadius: "16px", bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff", border: `1px solid ${rgba(themeColor, 0.12)}` }}>
+                <Typography sx={{ color: textColor, fontWeight: 700 }}>
+                  {typeof entry === "string" ? entry : entry?.name || `Item ${entryIndex + 1}`}
+                </Typography>
+                {typeof entry === "object" && entry?.price ? (
+                  <Typography sx={{ color: mutedTextColor, fontSize: "0.92rem" }}>{entry.price}</Typography>
+                ) : null}
+              </Box>
+            ))}
+          </Stack>
+        </Stack>
       );
     }
 
@@ -583,6 +1210,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           fontSize: { xs: "1rem", md: "1.1rem" },
           lineHeight: 1.8,
           color: mutedTextColor,
+          ...(canvas
+            ? {
+                width: "min(520px, calc(100% - 112px))",
+                maxWidth: "520px",
+              }
+            : {}),
+          ...canvasBaseSx,
           ...textStyle,
         }}
       >
@@ -607,10 +1241,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         sx={{
           width: "100%",
           mt: options?.mt ?? { xs: 2.5, md: 3 },
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          gap: 2,
+          display: options?.canvas ? "block" : "flex",
+          flexDirection: options?.canvas ? undefined : "column",
+          alignItems: options?.canvas ? undefined : "flex-start",
+          gap: options?.canvas ? undefined : 2,
+          position: options?.canvas ? "relative" : "static",
+          minHeight: options?.canvas ? "inherit" : undefined,
         }}
       >
         {innerBlocks.map((block, index) =>
@@ -625,6 +1261,135 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const innerBlocks = Array.isArray(section.innerBlocks)
       ? section.innerBlocks
       : [];
+    const sectionLayoutWidth = section.sectionStyle?.layoutWidth || "full";
+    const rawSectionSx = getSectionStyleSx(section);
+    const sectionContentSx = { ...rawSectionSx };
+    const sectionShellSx: Record<string, unknown> = {};
+
+    if (sectionLayoutWidth === "page") {
+      if (sectionContentSx.backgroundColor !== undefined) {
+        sectionShellSx.backgroundColor = sectionContentSx.backgroundColor;
+        delete sectionContentSx.backgroundColor;
+      }
+      if (sectionContentSx.backgroundImage !== undefined) {
+        sectionShellSx.backgroundImage = sectionContentSx.backgroundImage;
+        delete sectionContentSx.backgroundImage;
+      }
+      if (sectionContentSx.backgroundSize !== undefined) {
+        sectionShellSx.backgroundSize = sectionContentSx.backgroundSize;
+        delete sectionContentSx.backgroundSize;
+      }
+      if (sectionContentSx.backgroundPosition !== undefined) {
+        sectionShellSx.backgroundPosition = sectionContentSx.backgroundPosition;
+        delete sectionContentSx.backgroundPosition;
+      }
+      if (sectionContentSx.backgroundRepeat !== undefined) {
+        sectionShellSx.backgroundRepeat = sectionContentSx.backgroundRepeat;
+        delete sectionContentSx.backgroundRepeat;
+      }
+      if (sectionContentSx.backgroundAttachment !== undefined) {
+        sectionShellSx.backgroundAttachment = sectionContentSx.backgroundAttachment;
+        delete sectionContentSx.backgroundAttachment;
+      }
+      if (sectionContentSx.backgroundPositionY !== undefined) {
+        sectionShellSx.backgroundPositionY = sectionContentSx.backgroundPositionY;
+        delete sectionContentSx.backgroundPositionY;
+      }
+    }
+
+    const sectionContentNode = (
+      <Box
+        id={sectionKey}
+        data-preview-section="true"
+        data-preview-label={section.label || "Plan Section"}
+        data-preview-block-id={blockId}
+        data-preview-style-key="sectionStyle"
+        data-preview-accepts-inner-blocks="true"
+        {...getSectionStyleDomProps(section)}
+        sx={{
+          width: "100%",
+          minHeight: { xs: 360, md: 520 },
+          backgroundColor:
+            sectionLayoutWidth === "page" ? "transparent" : "#ffffff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          ...sectionContentSx,
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            minHeight: "inherit",
+            px: { xs: 2, md: 4 },
+            py: { xs: 4, md: 6 },
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            gap: 2,
+          }}
+        >
+          {innerBlocks.length > 0 ? (
+            innerBlocks.map((block, blockIndex) =>
+              renderCustomInnerBlock(section, block, blockIndex, {
+                canvas: true,
+              }),
+            )
+          ) : (
+            <>
+              <Typography
+                {...getEditableTextProps(blockId, "heading", "single")}
+                sx={{
+                  fontFamily: headingFont,
+                  fontSize: { xs: "2rem", md: "3.6rem" },
+                  lineHeight: 0.96,
+                  letterSpacing: "-0.06em",
+                  fontWeight: 800,
+                  color: palette.ink,
+                  maxWidth: 880,
+                  ...(section.headingStyle || {}),
+                }}
+              >
+                {section.heading}
+              </Typography>
+              <Typography
+                {...getEditableTextProps(blockId, "subheading", "multi")}
+                sx={{
+                  maxWidth: 780,
+                  color: palette.muted,
+                  fontSize: { xs: "1rem", md: "1.08rem" },
+                  lineHeight: 1.8,
+                  ...(section.subheadingStyle || {}),
+                }}
+              >
+                {section.subheading}
+              </Typography>
+              {section.buttonText ? (
+                <Button
+                  variant="contained"
+                  {...getEditableTextProps(blockId, "buttonText", "single")}
+                  sx={{
+                    mt: 0.5,
+                    bgcolor: themeColor,
+                    color: palette.white,
+                    borderRadius: "16px",
+                    textTransform: "none",
+                    px: 2.8,
+                    py: 1.2,
+                    fontWeight: 700,
+                    boxShadow: "none",
+                    ...(section.buttonTextStyle || {}),
+                  }}
+                >
+                  {section.buttonText}
+                </Button>
+              ) : null}
+            </>
+          )}
+        </Box>
+      </Box>
+    );
 
     return (
       <Box
@@ -639,96 +1404,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             sectionPosition[sectionKey] ??
             defaultSectionOrder.length + index + 1,
           ...getSectionStyleSx(section, "outerSectionStyle"),
+          ...sectionShellSx,
         }}
       >
-        <Box
-          id={sectionKey}
-          data-preview-section="true"
-          data-preview-label={section.label || "Plan Section"}
-          data-preview-block-id={blockId}
-          data-preview-style-key="sectionStyle"
-          data-preview-accepts-inner-blocks="true"
-          {...getSectionStyleDomProps(section)}
-          sx={{
-            width: "100%",
-            minHeight: { xs: 360, md: 520 },
-            backgroundColor: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            ...getSectionStyleSx(section),
-          }}
-        >
-          <Box
-            sx={{
-              width: "100%",
-              minHeight: "inherit",
-              px: { xs: 2, md: 4 },
-              py: { xs: 4, md: 6 },
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              justifyContent: "center",
-              gap: 2,
-            }}
-          >
-            {innerBlocks.length > 0 ? (
-              innerBlocks.map((block, blockIndex) =>
-                renderCustomInnerBlock(section, block, blockIndex),
-              )
-            ) : (
-              <>
-                <Typography
-                  {...getEditableTextProps(blockId, "heading", "single")}
-                  sx={{
-                    fontFamily: headingFont,
-                    fontSize: { xs: "2rem", md: "3.6rem" },
-                    lineHeight: 0.96,
-                    letterSpacing: "-0.06em",
-                    fontWeight: 800,
-                    color: palette.ink,
-                    maxWidth: 880,
-                    ...(section.headingStyle || {}),
-                  }}
-                >
-                  {section.heading}
-                </Typography>
-                <Typography
-                  {...getEditableTextProps(blockId, "subheading", "multi")}
-                  sx={{
-                    maxWidth: 780,
-                    color: palette.muted,
-                    fontSize: { xs: "1rem", md: "1.08rem" },
-                    lineHeight: 1.8,
-                    ...(section.subheadingStyle || {}),
-                  }}
-                >
-                  {section.subheading}
-                </Typography>
-                {section.buttonText ? (
-                  <Button
-                    variant="contained"
-                    {...getEditableTextProps(blockId, "buttonText", "single")}
-                    sx={{
-                      mt: 0.5,
-                      bgcolor: themeColor,
-                      color: palette.white,
-                      borderRadius: "16px",
-                      textTransform: "none",
-                      px: 2.8,
-                      py: 1.2,
-                      fontWeight: 700,
-                      boxShadow: "none",
-                      ...(section.buttonTextStyle || {}),
-                    }}
-                  >
-                    {section.buttonText}
-                  </Button>
-                ) : null}
-              </>
-            )}
-          </Box>
-        </Box>
+        {sectionLayoutWidth === "page" ? (
+          <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
+            {sectionContentNode}
+          </Container>
+        ) : (
+          sectionContentNode
+        )}
       </Box>
     );
   });
