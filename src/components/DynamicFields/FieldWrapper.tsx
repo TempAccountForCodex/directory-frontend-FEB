@@ -55,6 +55,7 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
           <Typography
             component="span"
             variant="caption"
+            className="field-wrapper-help"
             color="text.secondary"
             id={helpId}
             sx={{
@@ -72,6 +73,7 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
         <Typography
           component="span"
           variant="caption"
+          className="field-wrapper-help"
           color="text.secondary"
           id={helpId}
           sx={{ display: "block", mt: 0.25 }}
@@ -87,6 +89,7 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
         <Box sx={{ mb: 0.5 }}>
           <Typography
             component="label"
+            className="field-wrapper-label"
             sx={{
               display: "block",
               fontSize: "0.875rem",
@@ -125,7 +128,12 @@ export const FieldWrapper: React.FC<FieldWrapperProps> = React.memo(
         {hasErrors && (
           <Box id={errorId} role="alert" aria-live="polite">
             {errors.map((err, index) => (
-              <FormHelperText key={index} error sx={{ mt: 0.25, ml: 0 }}>
+              <FormHelperText
+                key={index}
+                error
+                className="field-wrapper-error"
+                sx={{ mt: 0.25, ml: 0 }}
+              >
                 {err}
               </FormHelperText>
             ))}

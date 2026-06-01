@@ -53,6 +53,36 @@ import { FieldType } from "../types";
 import { registerFieldComponent } from "../registry";
 import { FieldRenderer } from "../FieldRenderer";
 
+const createEmptyRepeaterItem = (
+  itemSchema: Record<string, FieldDefinition>,
+) => {
+  const nextItem: Record<string, unknown> = { _id: String(Date.now()) };
+
+  Object.entries(itemSchema).forEach(([fieldName, fieldDef]) => {
+    if (fieldDef.defaultValue !== undefined) {
+      nextItem[fieldName] = fieldDef.defaultValue;
+      return;
+    }
+
+    switch (fieldDef.type) {
+      case FieldType.NUMBER:
+        nextItem[fieldName] = null;
+        break;
+      case FieldType.TOGGLE:
+        nextItem[fieldName] = false;
+        break;
+      case FieldType.REPEATER:
+        nextItem[fieldName] = [];
+        break;
+      default:
+        nextItem[fieldName] = "";
+        break;
+    }
+  });
+
+  return nextItem as RepeaterItem;
+};
+
 // ---------------------------------------------------------------------------
 // Internal types
 // ---------------------------------------------------------------------------
@@ -149,9 +179,9 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
 
     const handleAdd = useCallback(() => {
       if (items.length < max) {
-        onChange([...items, { _id: String(Date.now()) }]);
+        onChange([...items, createEmptyRepeaterItem(itemSchema)]);
       }
-    }, [items, max, onChange]);
+    }, [itemSchema, items, max, onChange]);
 
     const handleRemove = useCallback(
       (idx: number) => {

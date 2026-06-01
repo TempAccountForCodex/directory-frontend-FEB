@@ -51,6 +51,7 @@ import ShareIcon from "@mui/icons-material/Share";
 import { useDraggable } from "@dnd-kit/core";
 import BlockPreviewModal from "./BlockPreviewModal";
 import SaveTemplateModal from "./SaveTemplateModal";
+import { getBlockDefaultContent } from "./blockPresets";
 import { API_URL } from "@/config/api";
 
 // ---------------------------------------------------------------------------
@@ -660,7 +661,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   const handleAddToPage = useCallback(
     (blockKey: string) => {
       const blockDef = mergedBlockTypes.find((b) => b.key === blockKey);
-      onInsertBlock(blockKey, insertPosition);
+      onInsertBlock(blockKey, insertPosition, getBlockDefaultContent(blockKey));
       const label = blockDef?.label || blockKey;
       setToastMessage(`${label} block added`);
       setTimeout(() => setToastMessage(null), 3000);

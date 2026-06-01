@@ -6,7 +6,14 @@
 //
 // Page reorder: Uses pages from API, reordered via PATCH /api/blocks/reorder
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import {
+  startTransition,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { flushSync } from "react-dom";
 import { apiClient } from "../../api/client";
 import { useParams, useNavigate } from "react-router-dom";
@@ -46,6 +53,7 @@ import {
   useMediaQuery,
   useTheme,
   ClickAwayListener,
+  Snackbar,
 } from "@mui/material";
 import {
   ArrowDown,
@@ -94,6 +102,7 @@ import ConflictModal from "../Editor/ConflictModal";
 import RecoveryModal from "../Editor/RecoveryModal";
 import ConnectionStatus from "../Editor/ConnectionStatus";
 import BlockLibrary from "../Editor/BlockLibrary";
+import { getBlockDefaultContent } from "../Editor/blockPresets";
 import EditorStyleToolbar from "../Editor/EditorStyleToolbar";
 import EditorSectionStyleToolbar from "../Editor/EditorSectionStyleToolbar";
 import ResponsiveEditorLayout from "../Editor/ResponsiveEditorLayout";
@@ -187,6 +196,131 @@ const imageEditorInputSx = {
     color: alpha("#111827", 0.65),
     backgroundColor: "#ffffff",
     px: 0.4,
+  },
+};
+
+const blockEditorFormSx = {
+  mt: 1.5,
+  "--editor-field-bg": "#ffffff",
+  "--editor-field-border": alpha("#111827", 0.22),
+  "--editor-field-border-strong": alpha("#111827", 0.34),
+  "--editor-field-surface": alpha("#f8fafc", 0.92),
+  "& form": {
+    gap: 2,
+  },
+  "& form > .MuiBox-root": {
+    gap: 1.2,
+  },
+  "& .MuiTypography-subtitle1": {
+    color: "#111827",
+    fontSize: "0.88rem",
+    fontWeight: 700,
+    letterSpacing: "0.01em",
+  },
+  "& .MuiTypography-subtitle2": {
+    color: alpha("#111827", 0.75),
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+  },
+  "& .field-wrapper-label": {
+    color: "#111827 !important",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    letterSpacing: "0.01em",
+  },
+  "& .field-wrapper-help": {
+    color: `${alpha("#111827", 0.62)} !important`,
+  },
+  "& .field-wrapper-error": {
+    color: "#dc2626 !important",
+  },
+  "& .MuiDivider-root": {
+    display: "none",
+  },
+  "& .MuiFormControl-root": {
+    mb: 0,
+  },
+  "& .MuiInputLabel-root": {
+    color: alpha("#111827", 0.65),
+    fontSize: "0.86rem",
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#111827",
+  },
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "12px",
+    backgroundColor: "var(--editor-field-bg)",
+    color: "#111827",
+    boxShadow: "none",
+    "& fieldset": {
+      borderColor: "var(--editor-field-border)",
+      borderWidth: "1px",
+    },
+    "&:hover fieldset": {
+      borderColor: "var(--editor-field-border-strong)",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#111827",
+      borderWidth: "1px",
+    },
+  },
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--editor-field-border) !important",
+  },
+  "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--editor-field-border-strong) !important",
+  },
+  "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+    borderColor: "#111827 !important",
+  },
+  "& .MuiInputBase-input, & .MuiInputBase-inputMultiline": {
+    color: "#111827 !important",
+    WebkitTextFillColor: "#111827 !important",
+    caretColor: "#111827 !important",
+    fontSize: "14px",
+  },
+  "& .MuiInputBase-root.Mui-focused input, & .MuiInputBase-root.Mui-focused textarea":
+    {
+      caretColor: "#111827 !important",
+    },
+  "& .MuiInputBase-input::placeholder, & textarea::placeholder": {
+    color: `${alpha("#111827", 0.45)} !important`,
+    opacity: "1 !important",
+  },
+  "& .MuiButton-root": {
+    minHeight: 40,
+    borderRadius: "12px",
+    textTransform: "none",
+    boxShadow: "none",
+    fontWeight: 700,
+  },
+  "& .MuiButton-outlinedPrimary, & .MuiButton-outlined": {
+    borderColor: alpha("#111827", 0.16),
+    color: "#111827",
+    backgroundColor: "#ffffff",
+  },
+  "& .MuiIconButton-root": {
+    color: "#6b7280",
+  },
+  "& .MuiPaper-root": {
+    borderRadius: "12px",
+    border: `1px solid ${alpha("#111827", 0.18)}`,
+    boxShadow: "none",
+    backgroundColor: "var(--editor-field-bg)",
+  },
+  "& .MuiPaper-root .MuiTypography-caption": {
+    color: `${alpha("#111827", 0.62)} !important`,
+  },
+  "& .MuiPaper-root .MuiOutlinedInput-root": {
+    backgroundColor: "var(--editor-field-surface)",
+  },
+  "& .MuiPaper-root .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--editor-field-border-strong) !important",
+  },
+  "& textarea": {
+    borderRadius: "12px",
   },
 };
 
@@ -403,6 +537,7 @@ const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
   const normalizedKey = String(blockKey || "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_");
+  const centeredCardOffset = 56;
 
   switch (normalizedKey) {
     case "eyebrow":
@@ -459,6 +594,7 @@ const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
     case "newsletter":
     case "form_builder":
     case "reservation_form":
+    case "faq":
     case "pricing":
     case "countdown":
     case "announcement_bar":
@@ -480,8 +616,8 @@ const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
     case "plan_section":
       return {
         cardStyle: {
-          transform: `translate(56px, ${72 + row * 56}px)`,
-          width: normalizedKey === "announcement_bar" ? "720px" : "640px",
+          transform: `translate(${centeredCardOffset}px, ${72 + row * 56}px)`,
+          width: "calc(100% - 112px)",
         },
       };
     default:
@@ -655,6 +791,30 @@ const buildInnerBlockFromLibraryItem = (item) => {
           ],
         },
       };
+    case "faq":
+      return {
+        type: "faq",
+        label,
+        content: {
+          heading: "Frequently asked questions",
+          items: [
+            {
+              question: "How quickly can we launch?",
+              answer:
+                "Most teams can publish an initial version within a few days.",
+            },
+            {
+              question: "Can we update content later?",
+              answer: "Yes, every section remains editable inside the builder.",
+            },
+            {
+              question: "Do I need technical experience?",
+              answer:
+                "No, the editor is designed for content updates without code.",
+            },
+          ],
+        },
+      };
     case "form_builder":
     case "reservation_form":
       return {
@@ -779,6 +939,115 @@ const buildInnerBlockFromLibraryItem = (item) => {
           buttonText: "Explore more",
           image:
             "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+        },
+      };
+    case "video":
+      return {
+        type: "video",
+        label,
+        content: {
+          heading: "See the walkthrough",
+          body: "Add a sample video now and replace it later from the editor.",
+          videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
+          caption: "Replace this sample video from the editor.",
+          aspectRatio: "16:9",
+          showControls: true,
+          muted: true,
+        },
+      };
+    case "tabs":
+      return {
+        type: "tabs",
+        label,
+        content: {
+          heading: "Explore the details",
+          tabs: [
+            {
+              label: "Strategy",
+              content: "Clarify the message, offer, and conversion goal.",
+              icon: "analytics",
+            },
+            {
+              label: "Design",
+              content: "Use a stronger visual layout instead of plain text.",
+              icon: "palette",
+            },
+            {
+              label: "Launch",
+              content: "Ship a section that is already presentation-ready.",
+              icon: "rocket",
+            },
+          ],
+        },
+      };
+    case "story_panel":
+      return {
+        type: "story_panel",
+        label,
+        content: {
+          heading: "Stories that explain the offer",
+          stories: [
+            {
+              title: "Discover",
+              subtitle: "Start with the problem",
+              body: "Frame the challenge and show why your approach matters.",
+              image:
+                "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+              linkText: "Read more",
+              linkUrl: "#contact",
+            },
+            {
+              title: "Deliver",
+              subtitle: "Turn intent into action",
+              body: "Show the outcome with a clear call to action.",
+              image:
+                "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
+              linkText: "Get started",
+              linkUrl: "#contact",
+            },
+          ],
+        },
+      };
+    case "working_hours":
+      return {
+        type: "working_hours",
+        label,
+        content: {
+          heading: "Working hours",
+          showCurrentStatus: true,
+          hours: [
+            { day: "Monday", openTime: "09:00", closeTime: "18:00" },
+            { day: "Tuesday", openTime: "09:00", closeTime: "18:00" },
+            { day: "Wednesday", openTime: "09:00", closeTime: "18:00" },
+            { day: "Thursday", openTime: "09:00", closeTime: "18:00" },
+            { day: "Friday", openTime: "09:00", closeTime: "18:00" },
+            { day: "Saturday", openTime: "10:00", closeTime: "15:00" },
+            { day: "Sunday", isClosed: true },
+          ],
+        },
+      };
+    case "social_embed":
+      return {
+        type: "social_embed",
+        label,
+        content: {
+          heading: "Social proof",
+          embeds: [
+            {
+              platform: "youtube",
+              url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+              caption: "Replace this sample embed from the editor.",
+            },
+          ],
+        },
+      };
+    case "embed":
+      return {
+        type: "embed",
+        label,
+        content: {
+          heading: "Embedded content",
+          url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         },
       };
     default:
@@ -916,22 +1185,69 @@ const truncateText = (value, maxLength) => {
   return value.length > maxLength ? value.slice(0, maxLength) : value;
 };
 
+const omitInnerBlocksMirror = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return value;
+  }
+
+  const { innerBlocks, ...rest } = value;
+  return rest;
+};
+
+const sanitizeNestedInnerBlocksForSave = (innerBlocks) => {
+  if (!Array.isArray(innerBlocks)) {
+    return [];
+  }
+
+  return innerBlocks.map((innerBlock) => {
+    const content = innerBlock?.content || {};
+    const nestedInnerBlocks = Array.isArray(content.innerBlocks)
+      ? sanitizeNestedInnerBlocksForSave(content.innerBlocks)
+      : undefined;
+
+    return {
+      ...innerBlock,
+      content: {
+        ...omitInnerBlocksMirror(content),
+        ...(nestedInnerBlocks ? { innerBlocks: nestedInnerBlocks } : {}),
+      },
+    };
+  });
+};
+
 const sanitizeBlockForSave = (block) => {
   if (!block?.content || typeof block.content !== "object") {
     return block;
   }
 
-  if (block.blockType !== "CTA") {
-    return block;
+  const sanitizedContent = {
+    ...omitInnerBlocksMirror(block.content),
+  };
+
+  if (Array.isArray(block.content.innerBlocks)) {
+    sanitizedContent.innerBlocks = sanitizeNestedInnerBlocksForSave(
+      block.content.innerBlocks,
+    );
+  }
+
+  if (block.blockType === "CTA") {
+    sanitizedContent.ctaText = truncateText(
+      block.content.ctaText,
+      MAX_CTA_TEXT_LENGTH,
+    );
   }
 
   return {
     ...block,
-    content: {
-      ...block.content,
-      ctaText: truncateText(block.content.ctaText, MAX_CTA_TEXT_LENGTH),
-    },
+    content: sanitizedContent,
   };
+};
+
+const getRequestErrorMessage = (error, fallbackMessage) => {
+  const message = error?.response?.data?.message;
+  return typeof message === "string" && message.trim()
+    ? message
+    : fallbackMessage;
 };
 
 const WebsiteEditorInner = () => {
@@ -1048,6 +1364,11 @@ const WebsiteEditorInner = () => {
   const [blockForm, setBlockForm] = useState({ blockType: "", content: {} });
   const [blockEditorName, setBlockEditorName] = useState("");
   const [formError, setFormError] = useState(null);
+  const [saveToast, setSaveToast] = useState({
+    open: false,
+    message: "",
+    severity: "error",
+  });
   const [submitting, setSubmitting] = useState(false);
   const [formHasErrors, setFormHasErrors] = useState(false);
 
@@ -1066,6 +1387,8 @@ const WebsiteEditorInner = () => {
   const historyBootstrappedRef = useRef(false);
   const pendingHistoryDescriptionRef = useRef("Edited blocks");
   const activeHistoryPageRef = useRef(null);
+  const livePreviewFrameRef = useRef(null);
+  const pendingLivePreviewRef = useRef(null);
 
   // Autosave payload — derived from blocks (single source of truth)
   const autosavePayload = useMemo(
@@ -1085,7 +1408,7 @@ const WebsiteEditorInner = () => {
       );
       setBlockEditorName(
         hasCustomLabel
-          ? editingBlock.content?.editorLabel ?? ""
+          ? (editingBlock.content?.editorLabel ?? "")
           : editingBlock.blockType || "",
       );
     } else {
@@ -1094,6 +1417,11 @@ const WebsiteEditorInner = () => {
   }, [editingBlock]);
 
   const closeBlockEditorSidebar = useCallback(() => {
+    if (livePreviewFrameRef.current !== null) {
+      cancelAnimationFrame(livePreviewFrameRef.current);
+      livePreviewFrameRef.current = null;
+    }
+    pendingLivePreviewRef.current = null;
     setEditingBlock(null);
     setBlockForm({ blockType: "", content: {} });
     setBlockEditorName("");
@@ -1101,41 +1429,130 @@ const WebsiteEditorInner = () => {
     setFormHasErrors(false);
   }, []);
 
-  const handleEditingBlockLabelChange = useCallback((nextLabel) => {
-    setBlockForm((prev) => ({
-      ...prev,
-      content: {
-        ...(prev.content || {}),
+  const mergeLiveBlockEditorContent = useCallback((block, nextValues) => {
+    if (!block) {
+      return block;
+    }
+
+    const normalizedNextValues = omitInnerBlocksMirror(nextValues || {});
+
+    const nextContent = {
+      ...(block.content || {}),
+      ...normalizedNextValues,
+    };
+
+    const existingInnerBlocks = Array.isArray(block.innerBlocks)
+      ? block.innerBlocks
+      : Array.isArray(nextContent.innerBlocks)
+        ? nextContent.innerBlocks
+        : [];
+
+    if (nextContent?.editorBlockType && existingInnerBlocks[0]) {
+      const firstInnerBlock = existingInnerBlocks[0];
+      const syncedInnerBlocks = [
+        {
+          ...firstInnerBlock,
+          content: {
+            ...(firstInnerBlock.content || {}),
+            ...normalizedNextValues,
+          },
+        },
+        ...existingInnerBlocks.slice(1),
+      ];
+
+      return {
+        ...block,
+        content: {
+          ...nextContent,
+          innerBlocks: syncedInnerBlocks,
+        },
+        innerBlocks: syncedInnerBlocks,
+      };
+    }
+
+    return {
+      ...block,
+      content: nextContent,
+    };
+  }, []);
+
+  const flushLivePreviewUpdate = useCallback(() => {
+    const pending = pendingLivePreviewRef.current;
+    pendingLivePreviewRef.current = null;
+    livePreviewFrameRef.current = null;
+
+    if (!pending?.blockId) {
+      return;
+    }
+
+    suppressHistoryRef.current = true;
+
+    startTransition(() => {
+      setBlocks((prevBlocks) =>
+        prevBlocks.map((block) =>
+          String(block.id) === String(pending.blockId)
+            ? mergeLiveBlockEditorContent(block, pending.nextValues || {})
+            : block,
+        ),
+      );
+    });
+  }, [mergeLiveBlockEditorContent]);
+
+  const scheduleLivePreviewUpdate = useCallback(
+    (blockId, nextValues) => {
+      pendingLivePreviewRef.current = {
+        blockId,
+        nextValues,
+      };
+
+      if (livePreviewFrameRef.current !== null) {
+        return;
+      }
+
+      livePreviewFrameRef.current = requestAnimationFrame(() => {
+        flushLivePreviewUpdate();
+      });
+    },
+    [flushLivePreviewUpdate],
+  );
+
+  useEffect(
+    () => () => {
+      if (livePreviewFrameRef.current !== null) {
+        cancelAnimationFrame(livePreviewFrameRef.current);
+      }
+    },
+    [],
+  );
+
+  const handleEditingBlockLabelChange = useCallback(
+    (nextLabel) => {
+      setBlockForm((prev) => ({
+        ...prev,
+        content: {
+          ...(prev.content || {}),
+          editorLabel: nextLabel,
+        },
+      }));
+
+      scheduleLivePreviewUpdate(editingBlock?.id, {
         editorLabel: nextLabel,
-      },
-    }));
+      });
+    },
+    [editingBlock?.id, scheduleLivePreviewUpdate],
+  );
 
-    setEditingBlock((prev) =>
-      prev
-        ? {
-            ...prev,
-            content: {
-              ...(prev.content || {}),
-              editorLabel: nextLabel,
-            },
-          }
-        : prev,
-    );
+  const handleEditingBlockContentChange = useCallback(
+    (nextValues) => {
+      setBlockForm((prev) => ({
+        ...prev,
+        content: nextValues,
+      }));
 
-    setBlocks((prevBlocks) =>
-      prevBlocks.map((block) =>
-        String(block.id) === String(editingBlock?.id)
-          ? {
-              ...block,
-              content: {
-                ...(block.content || {}),
-                editorLabel: nextLabel,
-              },
-            }
-          : block,
-      ),
-    );
-  }, [editingBlock?.id]);
+      scheduleLivePreviewUpdate(editingBlock?.id, nextValues);
+    },
+    [editingBlock?.id, scheduleLivePreviewUpdate],
+  );
   const isLoadingRef = useRef(true);
 
   // ETag + updatedAt refs for conflict detection (Step 5.9)
@@ -1363,6 +1780,7 @@ const WebsiteEditorInner = () => {
   const {
     hasUnsavedChanges,
     saveStatus,
+    saveError,
     conflictData,
     triggerSave,
     resolveConflict,
@@ -1374,6 +1792,21 @@ const WebsiteEditorInner = () => {
     isLoading: isLoadingRef.current,
     autoSaveEnabled: false,
   });
+
+  const showSaveToast = useCallback((message, severity = "error") => {
+    if (!message) return;
+    setSaveToast({
+      open: true,
+      message,
+      severity,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (saveError) {
+      showSaveToast(saveError, "error");
+    }
+  }, [saveError, showSaveToast]);
 
   const triggerManualSave = useCallback(async () => {
     localConflictRetryRef.current = false;
@@ -1950,7 +2383,9 @@ const WebsiteEditorInner = () => {
       setSelectedPage(newPage);
     } catch (err) {
       console.error("Error creating page:", err);
-      setFormError(err.response?.data?.message || "Failed to create page");
+      const message = getRequestErrorMessage(err, "Failed to create page");
+      setFormError(message);
+      showSaveToast(message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -2040,7 +2475,9 @@ const WebsiteEditorInner = () => {
       setFormHasErrors(false);
     } catch (err) {
       console.error("Error creating block:", err);
-      setFormError(err.response?.data?.message || "Failed to create block");
+      const message = getRequestErrorMessage(err, "Failed to create block");
+      setFormError(message);
+      showSaveToast(message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -2050,25 +2487,31 @@ const WebsiteEditorInner = () => {
     try {
       setSubmitting(true);
       setFormError(null);
+      if (livePreviewFrameRef.current !== null) {
+        cancelAnimationFrame(livePreviewFrameRef.current);
+      }
+      flushLivePreviewUpdate();
 
       pendingHistoryDescriptionRef.current = `Updated ${editingBlock.blockType} block`;
       setBlocks(
-        blocks.map((b) =>
-          b.id === editingBlock.id
-            ? {
-                ...b,
-                content: { ...b.content, ...blockForm.content },
-                localOnly: true,
-              }
-            : b,
-        ),
+        blocks.map((b) => {
+          if (b.id !== editingBlock.id) {
+            return b;
+          }
+          return {
+            ...mergeLiveBlockEditorContent(b, blockForm.content),
+            localOnly: true,
+          };
+        }),
       );
       setEditingBlock(null);
       setBlockForm({ blockType: "", content: {} });
       setFormHasErrors(false);
     } catch (err) {
       console.error("Error updating block:", err);
-      setFormError(err.response?.data?.message || "Failed to update block");
+      const message = getRequestErrorMessage(err, "Failed to update block");
+      setFormError(message);
+      showSaveToast(message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -2211,10 +2654,9 @@ const WebsiteEditorInner = () => {
       (block) => String(block.id) === String(selectedSectionElement.blockId),
     );
     const styleKey = getSectionStyleKey(selectedSectionElement);
-    const resolvedStyle =
-      styleKey.includes(".")
-        ? getValueAtPath(targetBlock?.content || {}, styleKey)
-        : targetBlock?.content?.[styleKey];
+    const resolvedStyle = styleKey.includes(".")
+      ? getValueAtPath(targetBlock?.content || {}, styleKey)
+      : targetBlock?.content?.[styleKey];
     if (!resolvedStyle || typeof resolvedStyle !== "object") {
       return DEFAULT_SECTION_STYLE;
     }
@@ -2243,7 +2685,8 @@ const WebsiteEditorInner = () => {
         ? targetBlock.content.innerBlocks[innerMatch.index]
         : null;
       const targetInnerContent =
-        targetInnerBlock?.content && typeof targetInnerBlock.content === "object"
+        targetInnerBlock?.content &&
+        typeof targetInnerBlock.content === "object"
           ? targetInnerBlock.content
           : {};
       const blockStyle =
@@ -2404,20 +2847,28 @@ const WebsiteEditorInner = () => {
   }, []);
 
   const buildPlanSectionContent = useCallback((blockType = "PLAN") => {
-    const existingPlanCount = blocksRef.current.filter((block) => {
-      const sectionKey =
-        typeof block.content?.editorSection === "string"
-          ? block.content.editorSection
-          : "";
-      return block.blockType === "PLAN" || sectionKey.startsWith("plan-");
-    }).length;
-
-    const nextIndex = existingPlanCount + 1;
     const blockLabel = humanizeLabel(blockType || "Plan Section");
+    const normalizedType = normalizeInnerBlockLibraryKey(blockType);
+    const shouldSeedInnerBlock =
+      normalizedType &&
+      normalizedType !== "plan" &&
+      normalizedType !== "section" &&
+      normalizedType !== "plan_section";
+    const seededInnerBlock = shouldSeedInnerBlock
+      ? buildInnerBlockFromLibraryItem({
+          key: blockType,
+          label: blockLabel,
+          description: `Customize the ${blockLabel.toLowerCase()} block from the editor.`,
+        })
+      : null;
 
     return {
       editorLabel: blockLabel,
+      editorBlockType: seededInnerBlock?.type
+        ? String(seededInnerBlock.type).toUpperCase()
+        : "SECTION",
       editorSection: `plan-${Date.now()}`,
+      ...(seededInnerBlock?.content || {}),
       sectionStyle: {
         backgroundColor: "#ffffff",
         layoutWidth: "full",
@@ -2446,7 +2897,18 @@ const WebsiteEditorInner = () => {
         marginLeft: "0px",
         marginRight: "0px",
       },
-      innerBlocks: [],
+      innerBlocks: seededInnerBlock
+        ? [
+            {
+              id: `inner-${Date.now()}`,
+              ...seededInnerBlock,
+              content: {
+                ...(seededInnerBlock.content || {}),
+                ...getDefaultInnerBlockPlacement(seededInnerBlock.type, 0),
+              },
+            },
+          ]
+        : [],
     };
   }, []);
 
@@ -3966,10 +4428,9 @@ const WebsiteEditorInner = () => {
       if (!selectedPage?.id) return;
       try {
         const resolvedContent =
-          content ||
-          (resolvedFrontendTemplateId === "company-executive"
+          resolvedFrontendTemplateId === "company-executive"
             ? buildPlanSectionContent(blockType)
-            : {});
+            : content || getBlockDefaultContent(blockType);
         const newBlock = {
           id: `local-${Date.now()}`,
           blockType,
@@ -5033,8 +5494,7 @@ const WebsiteEditorInner = () => {
                                       height: 34,
                                       flexShrink: 0,
                                       border: `1px solid ${alpha(colors.primary, 0.16)}`,
-                                      backgroundColor:
-                                        "rgba(255,255,255,0.92)",
+                                      backgroundColor: "rgba(255,255,255,0.92)",
                                       color: editorMutedText,
                                     }}
                                     aria-label="Close block editor"
@@ -5087,8 +5547,7 @@ const WebsiteEditorInner = () => {
                                     },
                                     "& .MuiInputBase-input": {
                                       color: "#111827 !important",
-                                      WebkitTextFillColor:
-                                        "#111827 !important",
+                                      WebkitTextFillColor: "#111827 !important",
                                       caretColor: "#111827",
                                       fontSize: "14px",
                                       "&::placeholder": {
@@ -5110,6 +5569,20 @@ const WebsiteEditorInner = () => {
                                       },
                                   }}
                                 />
+                                <Box sx={blockEditorFormSx}>
+                                  <FormGenerator
+                                    blockType={String(
+                                      editingBlock?.blockType || "",
+                                    ).toLowerCase()}
+                                    initialValues={blockForm.content}
+                                    onChange={handleEditingBlockContentChange}
+                                    onValidate={(errors) =>
+                                      setFormHasErrors(
+                                        Object.keys(errors).length > 0,
+                                      )
+                                    }
+                                  />
+                                </Box>
                               </Box>
                             </>
                           ) : (
@@ -5193,13 +5666,12 @@ const WebsiteEditorInner = () => {
                                           pl: 1.05,
                                           pr: "2rem !important",
                                         },
-                                        "& .MuiOutlinedInput-notchedOutline":
-                                          {
-                                            borderColor: alpha(
-                                              colors.primary,
-                                              0.16,
-                                            ),
-                                          },
+                                        "& .MuiOutlinedInput-notchedOutline": {
+                                          borderColor: alpha(
+                                            colors.primary,
+                                            0.16,
+                                          ),
+                                        },
                                         "&:hover .MuiOutlinedInput-notchedOutline":
                                           {
                                             borderColor: alpha(
@@ -5289,12 +5761,8 @@ const WebsiteEditorInner = () => {
                                       minWidth: 0,
                                       px: 1,
                                       color: editorText,
-                                      borderColor: alpha(
-                                        colors.primary,
-                                        0.16,
-                                      ),
-                                      backgroundColor:
-                                        "rgba(255,255,255,0.86)",
+                                      borderColor: alpha(colors.primary, 0.16),
+                                      backgroundColor: "rgba(255,255,255,0.86)",
                                       "& .MuiButton-startIcon": {
                                         mr: 0.6,
                                       },
@@ -5320,18 +5788,14 @@ const WebsiteEditorInner = () => {
                                       flexShrink: 0,
                                       borderRadius: 3,
                                       border: `1px solid ${alpha(colors.primary, 0.16)}`,
-                                      backgroundColor:
-                                        "rgba(255,255,255,0.86)",
+                                      backgroundColor: "rgba(255,255,255,0.86)",
                                       color: colors.text,
                                       transition:
                                         "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
                                       "&:hover": {
                                         background:
                                           "linear-gradient(135deg, #111827 0%, #020617 100%)",
-                                        borderColor: alpha(
-                                          colors.primary,
-                                          0.3,
-                                        ),
+                                        borderColor: alpha(colors.primary, 0.3),
                                         color: "#ffffff",
                                       },
                                       "&.Mui-disabled": {
@@ -5375,206 +5839,224 @@ const WebsiteEditorInner = () => {
                                   },
                                 }}
                               >
-                            {blockError && (
-                              <Alert
-                                severity="error"
-                                sx={{ mb: 2 }}
-                                action={
-                                  <Button
-                                    color="inherit"
-                                    size="small"
-                                    onClick={() =>
-                                      selectedPage &&
-                                      fetchBlocks(selectedPage.id)
+                                {blockError && (
+                                  <Alert
+                                    severity="error"
+                                    sx={{ mb: 2 }}
+                                    action={
+                                      <Button
+                                        color="inherit"
+                                        size="small"
+                                        onClick={() =>
+                                          selectedPage &&
+                                          fetchBlocks(selectedPage.id)
+                                        }
+                                      >
+                                        Retry
+                                      </Button>
                                     }
                                   >
-                                    Retry
-                                  </Button>
-                                }
-                              >
-                                {blockError}
-                              </Alert>
-                            )}
+                                    {blockError}
+                                  </Alert>
+                                )}
 
-                            {sidebarMode === "blocks" ? (
-                              <>
-                                <DraggableBlockList
-                                  blocks={blocks}
-                                  pageId={selectedPage?.id}
-                                  websiteId={websiteId}
-                                  selectedBlockId={editingBlock?.id ?? null}
-                                  disabled={false}
-                                  persistReorder={!isLocalTemplateEditorPage}
-                                  onBlocksChange={(reordered) => {
-                                    setBlocks(reordered);
-                                  }}
-                                  onBlockSelect={(blockId) => {
-                                    const block = blocks.find(
-                                      (b) => b.id === blockId,
-                                    );
-                                    if (block) {
-                                      setEditingBlock(block);
-                                      setBlockForm({
-                                        blockType: block.blockType,
-                                        content: block.content,
-                                      });
-                                    }
-                                  }}
-                                />
-                              </>
-                            ) : sidebarMode === "media" ? (
-                              <Box>
-                                <input
-                                  ref={imageLibraryInputRef}
-                                  type="file"
-                                  accept="image/*"
-                                  hidden
-                                  onChange={(event) => {
-                                    void handleLibraryUpload(
-                                      event.target.files?.[0] || null,
-                                    );
-                                    event.target.value = "";
-                                  }}
-                                />
-
-                                <Box
-                                  sx={{
-                                    display: "grid",
-                                    gridTemplateColumns:
-                                      "repeat(2, minmax(0, 1fr))",
-                                    gap: 1.3,
-                                  }}
-                                >
-                                  {imageLibraryItems.map((item) => (
-                                    <ButtonBase
-                                      key={item.id}
-                                      onClick={() =>
-                                        handleOpenLibraryImage(item)
+                                {sidebarMode === "blocks" ? (
+                                  <>
+                                    <DraggableBlockList
+                                      blocks={blocks}
+                                      pageId={selectedPage?.id}
+                                      websiteId={websiteId}
+                                      selectedBlockId={editingBlock?.id ?? null}
+                                      disabled={false}
+                                      persistReorder={
+                                        !isLocalTemplateEditorPage
                                       }
-                                      disabled={!item.blockId}
+                                      onBlocksChange={(reordered) => {
+                                        setBlocks(reordered);
+                                      }}
+                                      onBlockSelect={(blockId) => {
+                                        const block = blocks.find(
+                                          (b) => b.id === blockId,
+                                        );
+                                        if (block) {
+                                          const initialContent =
+                                            block.content?.editorBlockType &&
+                                            Array.isArray(block.innerBlocks) &&
+                                            block.innerBlocks[0]?.content
+                                              ? {
+                                                  editorLabel:
+                                                    block.content
+                                                      ?.editorLabel ?? "",
+                                                  ...(block.innerBlocks[0]
+                                                    .content || {}),
+                                                }
+                                              : omitInnerBlocksMirror(
+                                                  block.content || {},
+                                                );
+                                          setEditingBlock(block);
+                                          setBlockForm({
+                                            blockType: block.blockType,
+                                            content: initialContent || {},
+                                          });
+                                        }
+                                      }}
+                                    />
+                                  </>
+                                ) : sidebarMode === "media" ? (
+                                  <Box>
+                                    <input
+                                      ref={imageLibraryInputRef}
+                                      type="file"
+                                      accept="image/*"
+                                      hidden
+                                      onChange={(event) => {
+                                        void handleLibraryUpload(
+                                          event.target.files?.[0] || null,
+                                        );
+                                        event.target.value = "";
+                                      }}
+                                    />
+
+                                    <Box
                                       sx={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "stretch",
-                                        textAlign: "left",
-                                        borderRadius: 3,
-                                        overflow: "hidden",
-                                        border: `1px solid ${alpha(colors.primary, 0.14)}`,
-                                        backgroundColor:
-                                          "rgba(255,255,255,0.88)",
-                                        transition:
-                                          "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
-                                        "&:hover": {
-                                          transform: item.blockId
-                                            ? "translateY(-2px)"
-                                            : "none",
-                                          boxShadow: item.blockId
-                                            ? "0 14px 30px rgba(15,23,42,0.1)"
-                                            : "none",
-                                          borderColor: alpha(
-                                            colors.primary,
-                                            0.26,
-                                          ),
-                                        },
-                                        "&.Mui-disabled": {
-                                          opacity: 0.86,
-                                        },
+                                        display: "grid",
+                                        gridTemplateColumns:
+                                          "repeat(2, minmax(0, 1fr))",
+                                        gap: 1.3,
                                       }}
                                     >
-                                      <Box
-                                        sx={{
-                                          height: 108,
-                                          backgroundImage: `url(${item.src})`,
-                                          backgroundSize: "cover",
-                                          backgroundPosition: "center",
-                                          backgroundColor: "#e5e7eb",
-                                        }}
-                                      />
-
-                                      <Box sx={{ p: 1.1 }}>
-                                        <Typography
-                                          variant="body2"
+                                      {imageLibraryItems.map((item) => (
+                                        <ButtonBase
+                                          key={item.id}
+                                          onClick={() =>
+                                            handleOpenLibraryImage(item)
+                                          }
+                                          disabled={!item.blockId}
                                           sx={{
-                                            color: colors.text,
-                                            fontWeight: 700,
-                                            whiteSpace: "nowrap",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "stretch",
+                                            textAlign: "left",
+                                            borderRadius: 3,
                                             overflow: "hidden",
-                                            textOverflow: "ellipsis",
+                                            border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                                            backgroundColor:
+                                              "rgba(255,255,255,0.88)",
+                                            transition:
+                                              "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+                                            "&:hover": {
+                                              transform: item.blockId
+                                                ? "translateY(-2px)"
+                                                : "none",
+                                              boxShadow: item.blockId
+                                                ? "0 14px 30px rgba(15,23,42,0.1)"
+                                                : "none",
+                                              borderColor: alpha(
+                                                colors.primary,
+                                                0.26,
+                                              ),
+                                            },
+                                            "&.Mui-disabled": {
+                                              opacity: 0.86,
+                                            },
                                           }}
                                         >
-                                          {item.label}
-                                        </Typography>
+                                          <Box
+                                            sx={{
+                                              height: 108,
+                                              backgroundImage: `url(${item.src})`,
+                                              backgroundSize: "cover",
+                                              backgroundPosition: "center",
+                                              backgroundColor: "#e5e7eb",
+                                            }}
+                                          />
+
+                                          <Box sx={{ p: 1.1 }}>
+                                            <Typography
+                                              variant="body2"
+                                              sx={{
+                                                color: colors.text,
+                                                fontWeight: 700,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                              }}
+                                            >
+                                              {item.label}
+                                            </Typography>
+
+                                            <Typography
+                                              variant="caption"
+                                              sx={{ color: editorMutedText }}
+                                            >
+                                              {item.blockId
+                                                ? "Template image"
+                                                : "Uploaded asset"}
+                                            </Typography>
+                                          </Box>
+                                        </ButtonBase>
+                                      ))}
+
+                                      <ButtonBase
+                                        onClick={() =>
+                                          imageLibraryInputRef.current?.click()
+                                        }
+                                        sx={{
+                                          minHeight: 156,
+                                          borderRadius: 3,
+                                          border: `1px dashed ${alpha(colors.primary, 0.32)}`,
+                                          backgroundColor:
+                                            "rgba(255,255,255,0.82)",
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          gap: 1,
+                                          color: colors.text,
+                                          transition:
+                                            "transform 160ms ease, border-color 160ms ease, background-color 160ms ease",
+                                          "&:hover": {
+                                            transform: "translateY(-2px)",
+                                            borderColor: alpha(
+                                              colors.primary,
+                                              0.44,
+                                            ),
+                                            backgroundColor:
+                                              "rgba(255,255,255,0.94)",
+                                          },
+                                        }}
+                                      >
+                                        <Upload size={20} />
 
                                         <Typography
-                                          variant="caption"
-                                          sx={{ color: editorMutedText }}
+                                          sx={{
+                                            fontSize: "0.92rem",
+                                            fontWeight: 700,
+                                          }}
                                         >
-                                          {item.blockId
-                                            ? "Template image"
-                                            : "Uploaded asset"}
+                                          Upload
                                         </Typography>
-                                      </Box>
-                                    </ButtonBase>
-                                  ))}
-
-                                  <ButtonBase
-                                    onClick={() =>
-                                      imageLibraryInputRef.current?.click()
-                                    }
+                                      </ButtonBase>
+                                    </Box>
+                                  </Box>
+                                ) : (
+                                  <Box
                                     sx={{
-                                      minHeight: 156,
-                                      borderRadius: 3,
-                                      border: `1px dashed ${alpha(colors.primary, 0.32)}`,
-                                      backgroundColor: "rgba(255,255,255,0.82)",
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      gap: 1,
-                                      color: colors.text,
-                                      transition:
-                                        "transform 160ms ease, border-color 160ms ease, background-color 160ms ease",
-                                      "&:hover": {
-                                        transform: "translateY(-2px)",
-                                        borderColor: alpha(
-                                          colors.primary,
-                                          0.44,
-                                        ),
-                                        backgroundColor:
-                                          "rgba(255,255,255,0.94)",
-                                      },
-                                    }}
-                                  >
-                                    <Upload size={20} />
-
-                                    <Typography
-                                      sx={{
-                                        fontSize: "0.92rem",
-                                        fontWeight: 700,
-                                      }}
-                                    >
-                                      Upload
-                                    </Typography>
-                                  </ButtonBase>
-                                </Box>
-                              </Box>
-                            ) : (
-                              <Box
-                                sx={{
-                                  fontFamily: '"Poppins", "Inter", sans-serif',
-                                  "& .MuiTypography-root, & .MuiButton-root, & .MuiChip-root, & .MuiInputBase-root, & .MuiFormLabel-root, & .MuiFormHelperText-root":
-                                    {
                                       fontFamily:
                                         '"Poppins", "Inter", sans-serif',
-                                    },
-                                }}
-                              >
-                                <FrontendTemplateThemePanel
-                                  templateId={resolvedFrontendTemplateId}
-                                  selection={templateThemeSelection}
-                                  onChange={setTemplateThemeSelection}
-                                />
+                                      "& .MuiTypography-root, & .MuiButton-root, & .MuiChip-root, & .MuiInputBase-root, & .MuiFormLabel-root, & .MuiFormHelperText-root":
+                                        {
+                                          fontFamily:
+                                            '"Poppins", "Inter", sans-serif',
+                                        },
+                                    }}
+                                  >
+                                    <FrontendTemplateThemePanel
+                                      templateId={resolvedFrontendTemplateId}
+                                      selection={templateThemeSelection}
+                                      onChange={setTemplateThemeSelection}
+                                    />
+                                  </Box>
+                                )}
                               </Box>
-                            )}
-                          </Box>
                             </>
                           )}
                         </Paper>
@@ -7042,6 +7524,31 @@ const WebsiteEditorInner = () => {
             </List>
           </BottomSheet>
         )}
+        <Snackbar
+          open={saveToast.open}
+          autoHideDuration={6000}
+          onClose={(_, reason) => {
+            if (reason === "clickaway") return;
+            setSaveToast((prev) => ({ ...prev, open: false }));
+          }}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <Alert
+            severity={saveToast.severity}
+            variant="filled"
+            onClose={() =>
+              setSaveToast((prev) => ({ ...prev, open: false }))
+            }
+            sx={{
+              width: "100%",
+              borderRadius: 2,
+              boxShadow: "0 16px 40px rgba(15, 23, 42, 0.18)",
+              alignItems: "center",
+            }}
+          >
+            {saveToast.message}
+          </Alert>
+        </Snackbar>
       </Container>
     </Box>
   );

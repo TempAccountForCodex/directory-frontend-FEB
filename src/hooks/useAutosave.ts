@@ -60,6 +60,7 @@ export interface UseAutosaveParams {
 export interface UseAutosaveReturn {
   hasUnsavedChanges: boolean;
   saveStatus: SaveStatus;
+  saveError: string | null;
   conflictData: ConflictData | null;
   triggerSave: (overrideData?: Record<string, unknown>) => Promise<void>;
   clearDirty: () => void;
@@ -92,6 +93,7 @@ export function useAutosave({
 }: UseAutosaveParams): UseAutosaveReturn {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [conflictData, setConflictData] = useState<ConflictData | null>(null);
 
   // Refs to hold mutable values without causing re-renders or stale closures
@@ -135,7 +137,10 @@ export function useAutosave({
     if (isIdleRef.current) return;
 
     isSavingRef.current = true;
-    if (isMountedRef.current) setSaveStatus("saving");
+    if (isMountedRef.current) {
+      setSaveStatus("saving");
+      setSaveError(null);
+    }
 
     try {
       const currentData = dataRef.current;
@@ -157,6 +162,7 @@ export function useAutosave({
       // Success — clear any localStorage backup (Step 5.10)
       setHasUnsavedChanges(false);
       setSaveStatus("saved");
+      setSaveError(null);
       lastDataStringRef.current = JSON.stringify(currentData);
       if (onSaveSuccessRef.current) onSaveSuccessRef.current();
 
@@ -164,9 +170,25 @@ export function useAutosave({
       setTimeout(() => {
         if (isMountedRef.current) setSaveStatus("idle");
       }, 3000);
-    } catch {
+    } catch (error: unknown) {
       if (isMountedRef.current) {
         setSaveStatus("error");
+        const message =
+          error &&
+          typeof error === "object" &&
+          "response" in error &&
+          error.response &&
+          typeof error.response === "object" &&
+          "data" in error.response &&
+          error.response.data &&
+          typeof error.response.data === "object" &&
+          "message" in error.response.data &&
+          typeof error.response.data.message === "string"
+            ? error.response.data.message
+            : error instanceof Error
+              ? error.message
+              : "Failed to save changes";
+        setSaveError(message);
       }
     } finally {
       isSavingRef.current = false;
@@ -351,6 +373,7 @@ export function useAutosave({
   const clearDirty = useCallback(() => {
     setHasUnsavedChanges(false);
     setSaveStatus("idle");
+    setSaveError(null);
     lastDataStringRef.current = JSON.stringify(dataRef.current);
   }, []);
 
@@ -369,6 +392,7 @@ export function useAutosave({
   return {
     hasUnsavedChanges,
     saveStatus,
+    saveError,
     conflictData,
     triggerSave,
     clearDirty,

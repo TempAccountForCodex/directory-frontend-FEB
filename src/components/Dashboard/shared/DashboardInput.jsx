@@ -305,7 +305,7 @@ const DashboardInput = ({
       },
 
       "&.Mui-focused": {
-        boxShadow: "none",
+        boxShadow: `0 0 0 3px ${alpha(palette.accent, isLight ? 0.14 : 0.22)}`,
       },
 
       "&.Mui-focused fieldset": {
@@ -350,7 +350,9 @@ const DashboardInput = ({
 
     "& .MuiOutlinedInput-input": {
       color: palette.text,
-      caretColor: palette.text,
+      caretColor: `${palette.text} !important`,
+      cursor: "text",
+      lineHeight: 1.5,
       ...(isClassic ? {} : { padding: isSm ? "10px 12px" : "14px 16px" }),
 
       "&::placeholder": {
@@ -366,7 +368,8 @@ const DashboardInput = ({
 
     "& .MuiInputBase-input": {
       color: palette.text,
-      caretColor: palette.text,
+      caretColor: `${palette.text} !important`,
+      cursor: "text",
     },
 
     "& .MuiInputBase-input.Mui-disabled": {
@@ -376,13 +379,22 @@ const DashboardInput = ({
 
     "& textarea": {
       color: palette.text,
-      caretColor: palette.text,
+      caretColor: `${palette.text} !important`,
+      cursor: "text",
+      lineHeight: 1.7,
       resize: props.multiline && resizable ? "vertical" : "none",
 
       "&::placeholder": {
         color: palette.subtle,
         opacity: 1,
       },
+    },
+    "& textarea:focus, & input:focus": {
+      caretColor: `${palette.text} !important`,
+      outline: "none",
+    },
+    "& .Mui-focused textarea, & .Mui-focused input": {
+      caretColor: `${palette.text} !important`,
     },
 
     "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active":

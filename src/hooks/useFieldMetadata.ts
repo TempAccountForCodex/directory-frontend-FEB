@@ -8,6 +8,7 @@
  *   const { metadata, loading, error, refetch } = useFieldMetadata('hero');
  */
 import { useState, useEffect, useRef, useCallback } from "react";
+import { getLocalFieldMetadata } from "../components/Editor/blockPresets";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,6 +70,8 @@ function useFieldMetadata(blockType: string): UseFieldMetadataResult {
 
   const fetchMetadata = useCallback(() => {
     let cancelled = false;
+    const localMetadata = getLocalFieldMetadata(blockType);
+    const preferLocalMetadata = blockType.trim().toUpperCase() === "FAQ";
 
     // Check cache first
     if (cacheRef.current[blockType]) {
@@ -92,11 +95,25 @@ function useFieldMetadata(blockType: string): UseFieldMetadataResult {
       })
       .then((data) => {
         if (cancelled) return;
-        cacheRef.current[blockType] = data;
-        setMetadata(data);
+        const resolved =
+          preferLocalMetadata && localMetadata
+            ? localMetadata
+            : data && Array.isArray(data.groups) && data.groups.length > 0
+            ? data
+            : localMetadata;
+        if (resolved) {
+          cacheRef.current[blockType] = resolved;
+        }
+        setMetadata(resolved || null);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        if (localMetadata) {
+          cacheRef.current[blockType] = localMetadata;
+          setMetadata(localMetadata);
+          setError(null);
+          return;
+        }
         const message = err instanceof Error ? err.message : String(err);
         setError(message);
         setMetadata(null);

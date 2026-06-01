@@ -102,6 +102,140 @@ const sectionReveal = {
   transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
 } as const;
 
+const EditorFaqAccordionCard: React.FC<{
+  heading?: string;
+  items: Array<{ question?: string; answer?: string }>;
+  textColor: string;
+  mutedTextColor: string;
+  themeColor: string;
+  headingFont: string;
+  tone: "light" | "dark";
+}> = ({
+  heading,
+  items,
+  textColor,
+  mutedTextColor,
+  themeColor,
+  headingFont,
+  tone,
+}) => {
+  const [openIndex, setOpenIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    if (items.length === 0) {
+      setOpenIndex(-1);
+      return;
+    }
+
+    setOpenIndex((prev) => {
+      if (prev < 0 || prev >= items.length) {
+        return 0;
+      }
+      return prev;
+    });
+  }, [items]);
+
+  return (
+    <Stack spacing={2} sx={{ width: "100%" }}>
+      <Typography
+        sx={{
+          color: textColor,
+          fontFamily: headingFont,
+          fontSize: { xs: "1.45rem", md: "2rem" },
+          fontWeight: 800,
+          letterSpacing: "-0.03em",
+        }}
+      >
+        {heading || "Frequently asked questions"}
+      </Typography>
+      <Stack spacing={1.15} sx={{ width: "100%" }}>
+        {items.map((item, itemIndex) => {
+          const isOpen = itemIndex === openIndex;
+          return (
+            <Box
+              key={`faq-${itemIndex}`}
+              sx={{
+                borderRadius: "20px",
+                overflow: "hidden",
+                border: `1px solid ${rgba(themeColor, 0.14)}`,
+                bgcolor:
+                  tone === "light"
+                    ? "rgba(255,255,255,0.08)"
+                    : "#ffffff",
+              }}
+            >
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{
+                  px: 2,
+                  py: 1.6,
+                  borderBottom: isOpen
+                    ? `1px solid ${rgba(themeColor, 0.08)}`
+                    : "none",
+                }}
+              >
+                <Typography sx={{ color: textColor, fontWeight: 700, pr: 2 }}>
+                  {item?.question || `Question ${itemIndex + 1}`}
+                </Typography>
+                <Box
+                  component="button"
+                  type="button"
+                  aria-label={isOpen ? "Collapse answer" : "Expand answer"}
+                  data-open={isOpen ? "true" : "false"}
+                  onClick={() =>
+                    setOpenIndex((prev) => (prev === itemIndex ? -1 : itemIndex))
+                  }
+                  sx={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: "999px",
+                    border: "none",
+                    bgcolor: rgba(themeColor, 0.1),
+                    color: themeColor,
+                    display: "grid",
+                    placeItems: "center",
+                    fontWeight: 800,
+                    fontSize: 0,
+                    lineHeight: 1,
+                    flexShrink: 0,
+                    cursor: "pointer",
+                    "&::before": {
+                      content: '"+"',
+                      fontSize: "1rem",
+                      lineHeight: 1,
+                      color: themeColor,
+                    },
+                    '&[data-open="true"]::before': {
+                      content: '"-"',
+                    },
+                  }}
+                >
+                  {isOpen ? "−" : "+"}
+                </Box>
+              </Stack>
+              {isOpen ? (
+                <Typography
+                  sx={{
+                    px: 2,
+                    py: 1.7,
+                    color: mutedTextColor,
+                    lineHeight: 1.75,
+                    fontSize: "0.96rem",
+                  }}
+                >
+                  {item?.answer || "Add the answer from the editor."}
+                </Typography>
+              ) : null}
+            </Box>
+          );
+        })}
+      </Stack>
+    </Stack>
+  );
+};
+
 const hexToRgb = (hex: string) => {
   const normalized = hex.replace("#", "");
   const value =
@@ -615,8 +749,6 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             block.label || "Section Image",
           )}
           sx={{
-            width: getCanvasWidth(imageStyle.width || "320px"),
-            maxWidth: getCanvasMaxWidth(imageStyle.width || "320px"),
             height: imageStyle.height || { xs: 220, md: 360 },
             objectFit: imageStyle.objectFit || "cover",
             borderRadius: "24px",
@@ -972,6 +1104,107 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       );
     }
 
+    if (blockType === "video") {
+      const videoUrl = String(block.content?.videoUrl || "");
+      const isEmbed =
+        videoUrl.includes("youtube.com") ||
+        videoUrl.includes("youtu.be") ||
+        videoUrl.includes("vimeo.com");
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Stack spacing={0.8}>
+            <Typography
+              {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "multi")}
+              sx={{
+                color: textColor,
+                fontFamily: headingFont,
+                fontSize: { xs: "1.45rem", md: "2rem" },
+                fontWeight: 800,
+                letterSpacing: "-0.03em",
+                ...headingStyle,
+              }}
+            >
+              {block.content?.heading || "See the walkthrough"}
+            </Typography>
+            {block.content?.caption ? (
+              <Typography
+                {...getEditableTextProps(section.blockId, `${blockPath}.caption`, "multi")}
+                sx={{ color: mutedTextColor, lineHeight: 1.7, ...bodyStyle }}
+              >
+                {block.content?.caption}
+              </Typography>
+            ) : null}
+          </Stack>
+          <Box
+            sx={{
+              position: "relative",
+              width: "100%",
+              borderRadius: "24px",
+              overflow: "hidden",
+              bgcolor: tone === "light" ? "rgba(255,255,255,0.1)" : "#ffffff",
+              border: `1px solid ${rgba(themeColor, 0.12)}`,
+              aspectRatio: block.content?.aspectRatio === "4:3" ? "4 / 3" : "16 / 9",
+            }}
+          >
+            {videoUrl ? (
+              isEmbed ? (
+                <Box
+                  component="iframe"
+                  src={videoUrl}
+                  title={block.content?.heading || "Video"}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  sx={{ width: "100%", height: "100%", border: 0 }}
+                />
+              ) : (
+                <Box
+                  component="video"
+                  src={videoUrl}
+                  controls={block.content?.showControls !== false}
+                  muted={block.content?.muted !== false}
+                  autoPlay={Boolean(block.content?.autoplay)}
+                  loop={Boolean(block.content?.loop)}
+                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              )
+            ) : (
+              <Stack
+                spacing={1}
+                alignItems="center"
+                justifyContent="center"
+                sx={{ width: "100%", height: "100%" }}
+              >
+                <Box
+                  sx={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: "999px",
+                    bgcolor: rgba(themeColor, 0.12),
+                    display: "grid",
+                    placeItems: "center",
+                    color: themeColor,
+                    fontSize: "1.8rem",
+                    fontWeight: 800,
+                  }}
+                >
+                  ▶
+                </Box>
+                <Typography sx={{ color: mutedTextColor }}>
+                  Add a video URL from the editor.
+                </Typography>
+              </Stack>
+            )}
+          </Box>
+        </Stack>
+      );
+    }
+
     if (blockType === "features") {
       const items = Array.isArray(block.content?.items) ? block.content.items : [];
       return (
@@ -1027,6 +1260,72 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Typography>
               </Box>
             ))}
+          </Box>
+        </Stack>
+      );
+    }
+
+    if (blockType === "faq") {
+      const items = Array.isArray(block.content?.items) ? block.content.items : [];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <EditorFaqAccordionCard
+            heading={block.content?.heading as string}
+            items={items}
+            textColor={textColor}
+            mutedTextColor={mutedTextColor}
+            themeColor={themeColor}
+            headingFont={headingFont}
+            tone={tone}
+          />
+        </Stack>
+      );
+    }
+
+    if (blockType === "tabs") {
+      const tabs = Array.isArray(block.content?.tabs) ? block.content.tabs : [];
+      const activeTab = tabs[0];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "single")}
+            sx={{ color: textColor, fontFamily: headingFont, fontWeight: 800, fontSize: { xs: "1.4rem", md: "2rem" }, ...headingStyle }}
+          >
+            {block.content?.heading || "Explore the details"}
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap">
+            {tabs.map((tab: Record<string, any>, tabIndex: number) => (
+              <Chip
+                key={`tab-${tabIndex}`}
+                label={tab?.label || `Tab ${tabIndex + 1}`}
+                sx={{
+                  bgcolor: tabIndex === 0 ? themeColor : tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+                  color: tabIndex === 0 ? palette.white : textColor,
+                  border: `1px solid ${rgba(themeColor, 0.12)}`,
+                  fontWeight: 700,
+                }}
+              />
+            ))}
+          </Stack>
+          <Box sx={{ p: 2.2, borderRadius: "20px", bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff", border: `1px solid ${rgba(themeColor, 0.12)}` }}>
+            <Typography sx={{ color: textColor, fontWeight: 700 }}>
+              {activeTab?.label || "Tab content"}
+            </Typography>
+            <Typography sx={{ mt: 0.8, color: mutedTextColor, lineHeight: 1.75 }}>
+              {activeTab?.content || "Add tab content from the editor."}
+            </Typography>
           </Box>
         </Stack>
       );
@@ -1285,6 +1584,159 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       );
     }
 
+    if (blockType === "story_panel") {
+      const stories = Array.isArray(block.content?.stories) ? block.content.stories : [];
+      const activeStory = stories[0];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "single")}
+            sx={{ color: textColor, fontFamily: headingFont, fontWeight: 800, fontSize: { xs: "1.4rem", md: "2rem" }, ...headingStyle }}
+          >
+            {block.content?.heading || "Stories that explain the offer"}
+          </Typography>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "220px 1fr" }, gap: 1.5 }}>
+            <Stack spacing={1}>
+              {stories.map((story: Record<string, any>, storyIndex: number) => (
+                <Box
+                  key={`story-${storyIndex}`}
+                  sx={{
+                    p: 1.5,
+                    borderRadius: "16px",
+                    bgcolor: storyIndex === 0 ? rgba(themeColor, 0.12) : tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+                    border: `1px solid ${rgba(themeColor, 0.12)}`,
+                  }}
+                >
+                  <Typography sx={{ color: textColor, fontWeight: 700 }}>
+                    {story?.title || `Story ${storyIndex + 1}`}
+                  </Typography>
+                  {story?.subtitle ? (
+                    <Typography sx={{ mt: 0.35, color: mutedTextColor, fontSize: "0.88rem" }}>
+                      {story.subtitle}
+                    </Typography>
+                  ) : null}
+                </Box>
+              ))}
+            </Stack>
+            <Box sx={{ p: 2, borderRadius: "20px", bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff", border: `1px solid ${rgba(themeColor, 0.12)}` }}>
+              {activeStory?.image ? (
+                <Box
+                  component="img"
+                  src={activeStory.image}
+                  alt={activeStory?.title || "Story image"}
+                  sx={{ width: "100%", height: 220, objectFit: "cover", borderRadius: "16px", mb: 1.5 }}
+                />
+              ) : null}
+              <Typography sx={{ color: textColor, fontWeight: 700, fontSize: "1.1rem" }}>
+                {activeStory?.title || "Story highlight"}
+              </Typography>
+              {activeStory?.body ? (
+                <Typography sx={{ mt: 0.8, color: mutedTextColor, lineHeight: 1.75 }}>
+                  {activeStory.body}
+                </Typography>
+              ) : null}
+            </Box>
+          </Box>
+        </Stack>
+      );
+    }
+
+    if (blockType === "working_hours") {
+      const hours = Array.isArray(block.content?.hours) ? block.content.hours : [];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "single")}
+            sx={{ color: textColor, fontFamily: headingFont, fontWeight: 800, fontSize: { xs: "1.35rem", md: "1.9rem" }, ...headingStyle }}
+          >
+            {block.content?.heading || "Working hours"}
+          </Typography>
+          <Stack spacing={1}>
+            {hours.map((entry: Record<string, any>, entryIndex: number) => (
+              <Stack
+                key={`hours-${entryIndex}`}
+                direction="row"
+                justifyContent="space-between"
+                sx={{
+                  p: 1.4,
+                  borderRadius: "16px",
+                  bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+                  border: `1px solid ${rgba(themeColor, 0.12)}`,
+                }}
+              >
+                <Typography sx={{ color: textColor, fontWeight: 700 }}>
+                  {entry?.day || `Day ${entryIndex + 1}`}
+                </Typography>
+                <Typography sx={{ color: mutedTextColor }}>
+                  {entry?.isClosed ? "Closed" : `${entry?.openTime || "--:--"} - ${entry?.closeTime || "--:--"}`}
+                </Typography>
+              </Stack>
+            ))}
+          </Stack>
+        </Stack>
+      );
+    }
+
+    if (blockType === "social_embed" || blockType === "embed") {
+      const embeds =
+        blockType === "social_embed" && Array.isArray(block.content?.embeds)
+          ? block.content.embeds
+          : [{ platform: "embed", url: block.content?.url, caption: block.content?.heading }];
+      return (
+        <Stack
+          key={String(block.id || `${blockType}-${index}`)}
+          spacing={2}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={compoundCardSx}
+        >
+          <Typography
+            {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "single")}
+            sx={{ color: textColor, fontFamily: headingFont, fontWeight: 800, fontSize: { xs: "1.35rem", md: "1.9rem" }, ...headingStyle }}
+          >
+            {block.content?.heading || "Embedded content"}
+          </Typography>
+          <Stack spacing={1}>
+            {embeds.map((embed: Record<string, any>, embedIndex: number) => (
+              <Box
+                key={`embed-${embedIndex}`}
+                sx={{
+                  p: 2,
+                  borderRadius: "18px",
+                  bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+                  border: `1px solid ${rgba(themeColor, 0.12)}`,
+                }}
+              >
+                <Typography sx={{ color: textColor, fontWeight: 700, textTransform: "capitalize" }}>
+                  {embed?.platform || "Embed"}
+                </Typography>
+                <Typography sx={{ mt: 0.5, color: mutedTextColor, wordBreak: "break-all" }}>
+                  {embed?.url || "Add a valid URL from the editor."}
+                </Typography>
+                {embed?.caption ? (
+                  <Typography sx={{ mt: 0.8, color: mutedTextColor, fontSize: "0.92rem" }}>
+                    {embed.caption}
+                  </Typography>
+                ) : null}
+              </Box>
+            ))}
+          </Stack>
+        </Stack>
+      );
+    }
+
     return (
       <Typography
         key={String(block.id || `${blockType}-${index}`)}
@@ -1340,6 +1792,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         blockType === "hero" ||
         blockType === "image_text_split" ||
         blockType === "features" ||
+        blockType === "faq" ||
         blockType === "navigation_bar" ||
         blockType === "footer" ||
         blockType === "pricing" ||
@@ -1427,6 +1880,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         type === "reviews" ||
         type === "stats" ||
         type === "features" ||
+        type === "faq" ||
         type === "navigation_bar" ||
         type === "footer" ||
         type === "logo_carousel" ||

@@ -131,6 +131,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
 
     const [values, setValues] =
       useState<Record<string, unknown>>(initialValues);
+    const skipNextOnChangeRef = useRef(true);
 
     // Reset form values when initialValues changes (e.g. user selects a different block).
     // Uses JSON.stringify comparison to avoid resetting on every render when the parent
@@ -146,6 +147,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
         const next = JSON.parse(serializedInitial);
         // Skip update if content is unchanged (prevents redundant re-render on echo-back)
         if (JSON.stringify(prev) === serializedInitial) return prev;
+        skipNextOnChangeRef.current = true;
         return next;
       });
     }, [serializedInitial]);
@@ -204,6 +206,15 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
       onChangePropRef.current = onChange;
     });
 
+    useEffect(() => {
+      if (skipNextOnChangeRef.current) {
+        skipNextOnChangeRef.current = false;
+        return;
+      }
+
+      onChangePropRef.current?.(values);
+    }, [values]);
+
     // Map of field name → stable per-field onChange callback.
     // The map is cleared when `onChange` identity changes (see effect below)
     // so that stale closures over the old onChange are never called.
@@ -230,11 +241,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = React.memo(
       (fieldName: string): ((newValue: unknown) => void) => {
         if (!fieldHandlersRef.current.has(fieldName)) {
           const handler = (newValue: unknown) => {
-            setValues((prev) => {
-              const updated = { ...prev, [fieldName]: newValue };
-              onChangePropRef.current?.(updated);
-              return updated;
-            });
+            setValues((prev) => ({ ...prev, [fieldName]: newValue }));
           };
           fieldHandlersRef.current.set(fieldName, handler);
         }

@@ -27,6 +27,7 @@ import AddIcon from "@mui/icons-material/Add";
 
 import BlockRenderer from "../BlockRenderer/index";
 import type { BlockLibraryItem } from "./BlockLibrary";
+import { getBlockDefaultContent } from "./blockPresets";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,60 +51,6 @@ const CAPABILITY_LABELS: Record<string, string> = {
   supportsCustomCss: "Custom CSS",
   supportsVisibility: "Toggle Visibility",
   isDynamic: "Dynamic Data",
-};
-
-// ---------------------------------------------------------------------------
-// Default content per block type (mirrors BlockEditor.tsx BLOCK_TYPE_DEFAULTS)
-// ---------------------------------------------------------------------------
-
-const BLOCK_TYPE_DEFAULTS: Record<string, Record<string, unknown>> = {
-  HERO: {
-    heading: "Your Headline",
-    subheading: "A short supporting sentence.",
-    ctaText: "Get Started",
-    ctaLink: "/contact",
-    alignment: "center",
-  },
-  FEATURES: {
-    heading: "Our Services",
-    features: [
-      {
-        icon: "star",
-        title: "Feature 1",
-        description: "Describe your first feature.",
-      },
-      {
-        icon: "star",
-        title: "Feature 2",
-        description: "Describe your second feature.",
-      },
-    ],
-  },
-  TESTIMONIALS: {
-    heading: "What Clients Say",
-    testimonials: [
-      {
-        quote: "A great experience.",
-        author: "Alex Johnson",
-        position: "Founder",
-      },
-    ],
-  },
-  CTA: {
-    heading: "Ready to get started?",
-    subheading: "Let us help you launch faster.",
-    ctaText: "Contact Us",
-    ctaLink: "/contact",
-  },
-  TEXT: { content: "<p>Your text content here.</p>" },
-  IMAGE: { src: "", alt: "Image", caption: "" },
-  GALLERY: { images: [] },
-  FORM: { heading: "Contact Us", fields: [] },
-  CONTACT: {
-    heading: "Get in Touch",
-    email: "contact@example.com",
-    showForm: true,
-  },
 };
 
 // ---------------------------------------------------------------------------
@@ -154,7 +101,7 @@ const BlockPreviewModal = React.memo<BlockPreviewModalProps>(
 
     const handleSaveTemplate = useCallback(() => {
       if (block && onSaveTemplate) {
-        const defaultContent = BLOCK_TYPE_DEFAULTS[block.key] || {};
+        const defaultContent = getBlockDefaultContent(block.key);
         onSaveTemplate(block.key, defaultContent);
       }
     }, [block, onSaveTemplate]);
@@ -162,7 +109,7 @@ const BlockPreviewModal = React.memo<BlockPreviewModalProps>(
     if (!block) return null;
 
     // Build the preview block object for BlockRenderer
-    const defaultContent = BLOCK_TYPE_DEFAULTS[block.key] || {};
+    const defaultContent = getBlockDefaultContent(block.key);
     const previewBlock = {
       id: 0,
       blockType: block.key,
