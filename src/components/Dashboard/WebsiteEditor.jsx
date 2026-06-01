@@ -1036,6 +1036,7 @@ const WebsiteEditorInner = () => {
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
   const [headerMenuAnchorEl, setHeaderMenuAnchorEl] = useState(null);
+  const isBlockEditorSidebarOpen = !!editingBlock;
 
   // Forms
   const [pageForm, setPageForm] = useState({
@@ -1045,6 +1046,7 @@ const WebsiteEditorInner = () => {
     isPublished: true,
   });
   const [blockForm, setBlockForm] = useState({ blockType: "", content: {} });
+  const [blockEditorName, setBlockEditorName] = useState("");
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formHasErrors, setFormHasErrors] = useState(false);
@@ -1074,6 +1076,66 @@ const WebsiteEditorInner = () => {
   useEffect(() => {
     blocksRef.current = blocks;
   }, [blocks]);
+
+  useEffect(() => {
+    if (editingBlock) {
+      const hasCustomLabel = Object.prototype.hasOwnProperty.call(
+        editingBlock.content || {},
+        "editorLabel",
+      );
+      setBlockEditorName(
+        hasCustomLabel
+          ? editingBlock.content?.editorLabel ?? ""
+          : editingBlock.blockType || "",
+      );
+    } else {
+      setBlockEditorName("");
+    }
+  }, [editingBlock]);
+
+  const closeBlockEditorSidebar = useCallback(() => {
+    setEditingBlock(null);
+    setBlockForm({ blockType: "", content: {} });
+    setBlockEditorName("");
+    setFormError(null);
+    setFormHasErrors(false);
+  }, []);
+
+  const handleEditingBlockLabelChange = useCallback((nextLabel) => {
+    setBlockForm((prev) => ({
+      ...prev,
+      content: {
+        ...(prev.content || {}),
+        editorLabel: nextLabel,
+      },
+    }));
+
+    setEditingBlock((prev) =>
+      prev
+        ? {
+            ...prev,
+            content: {
+              ...(prev.content || {}),
+              editorLabel: nextLabel,
+            },
+          }
+        : prev,
+    );
+
+    setBlocks((prevBlocks) =>
+      prevBlocks.map((block) =>
+        String(block.id) === String(editingBlock?.id)
+          ? {
+              ...block,
+              content: {
+                ...(block.content || {}),
+                editorLabel: nextLabel,
+              },
+            }
+          : block,
+      ),
+    );
+  }, [editingBlock?.id]);
   const isLoadingRef = useRef(true);
 
   // ETag + updatedAt refs for conflict detection (Step 5.9)
@@ -4926,240 +4988,393 @@ const WebsiteEditorInner = () => {
                             overflow: "hidden",
                           }}
                         >
-                          {/* Fixed top header */}
-                          <Box
-                            sx={{
-                              px: 1.3,
-                              py: 1.1,
-                              flexShrink: 0,
-                              borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
-                              backgroundColor: "rgba(255,255,255,0.74)",
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                gap: 0.7,
-                                p: 0,
-                                backgroundColor: "transparent",
-                              }}
-                            >
-                              <FormControl
-                                size="small"
+                          {isBlockEditorSidebarOpen ? (
+                            <>
+                              <Box
                                 sx={{
-                                  flex: 1,
-                                  minWidth: 0,
+                                  px: 1.3,
+                                  py: 1.1,
+                                  flexShrink: 0,
+                                  borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
+                                  backgroundColor: "rgba(255,255,255,0.74)",
                                 }}
                               >
-                                <Select
-                                  value={sidebarMode}
-                                  onChange={(event) =>
-                                    setSidebarMode(event.target.value)
-                                  }
-                                  IconComponent={ArrowDown}
-                                  displayEmpty
-                                  renderValue={() => {
-                                    const Icon = sidebarModeMeta.icon;
-
-                                    return (
-                                      <Box
-                                        sx={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: 0.8,
-                                          minWidth: 0,
-                                        }}
-                                      >
-                                        <Icon
-                                          size={15}
-                                          color={editorMutedText}
-                                        />
-                                        <Typography
-                                          sx={{
-                                            fontSize: "0.9rem",
-                                            fontWeight: 600,
-                                            color: colors.text,
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                          }}
-                                        >
-                                          {sidebarModeMeta.label}
-                                        </Typography>
-                                      </Box>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "flex-start",
+                                    justifyContent: "space-between",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Box sx={{ minWidth: 0 }}>
+                                    <Typography sx={builderSectionLabelSx}>
+                                      Block Editor
+                                    </Typography>
+                                    <Typography
+                                      sx={{
+                                        mt: 0.35,
+                                        fontSize: "1rem",
+                                        fontWeight: 800,
+                                        color: colors.text,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                      }}
+                                    >
+                                      {editingBlock?.blockType || "Block"}
+                                    </Typography>
+                                  </Box>
+                                  <IconButton
+                                    size="small"
+                                    onClick={closeBlockEditorSidebar}
+                                    sx={{
+                                      width: 34,
+                                      height: 34,
+                                      flexShrink: 0,
+                                      border: `1px solid ${alpha(colors.primary, 0.16)}`,
+                                      backgroundColor:
+                                        "rgba(255,255,255,0.92)",
+                                      color: editorMutedText,
+                                    }}
+                                    aria-label="Close block editor"
+                                  >
+                                    <X size={16} />
+                                  </IconButton>
+                                </Box>
+                              </Box>
+                              <Box
+                                sx={{
+                                  p: 1.4,
+                                  flex: 1,
+                                  minHeight: 0,
+                                  overflowY: "auto",
+                                  overflowX: "hidden",
+                                }}
+                              >
+                                <DashboardInput
+                                  fullWidth
+                                  label="Block name"
+                                  labelPlacement="floating"
+                                  placeholder="Enter block name"
+                                  value={blockEditorName}
+                                  onChange={(event) => {
+                                    setBlockEditorName(event.target.value);
+                                    handleEditingBlockLabelChange(
+                                      event.target.value,
                                     );
                                   }}
                                   sx={{
-                                    height: 40,
-                                    borderRadius: 3,
-                                    backgroundColor: "rgba(255,255,255,0.96)",
-                                    boxShadow:
-                                      "0 1px 2px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.9)",
-                                    "& .MuiSelect-select": {
-                                      display: "flex",
-                                      alignItems: "center",
-                                      py: 0.9,
-                                      pl: 1.05,
-                                      pr: "2rem !important",
-                                    },
-                                    "& .MuiOutlinedInput-notchedOutline": {
-                                      borderColor: alpha(colors.primary, 0.16),
-                                    },
-                                    "&:hover .MuiOutlinedInput-notchedOutline":
-                                      {
-                                        borderColor: alpha(
-                                          colors.primary,
-                                          0.26,
-                                        ),
+                                    "& .MuiOutlinedInput-root": {
+                                      borderRadius: "12px",
+                                      backgroundColor: "#ffffff",
+                                      color: "#111827",
+                                      boxShadow: "none",
+                                      "& fieldset": {
+                                        borderColor: alpha("#111827", 0.16),
+                                        borderWidth: "1px",
                                       },
-                                    "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                      {
-                                        borderColor: alpha(colors.primary, 0.3),
+                                      "&:hover fieldset": {
+                                        borderColor: "#111827",
                                       },
-                                    "& .MuiSelect-icon": {
-                                      right: 10,
-                                      width: 16,
-                                      height: 16,
-                                      color: editorMutedText,
+                                      "&.Mui-focused": {
+                                        boxShadow: "none",
+                                      },
+                                      "&.Mui-focused fieldset": {
+                                        borderColor: "#111827",
+                                        borderWidth: "1px",
+                                      },
                                     },
+                                    "& .MuiInputBase-input": {
+                                      color: "#111827 !important",
+                                      WebkitTextFillColor:
+                                        "#111827 !important",
+                                      caretColor: "#111827",
+                                      fontSize: "14px",
+                                      "&::placeholder": {
+                                        color: alpha("#111827", 0.45),
+                                        opacity: 1,
+                                      },
+                                    },
+                                    "& .MuiInputLabel-root": {
+                                      color: alpha("#111827", 0.65),
+                                    },
+                                    "& .MuiInputLabel-root.Mui-focused": {
+                                      color: "#111827",
+                                    },
+                                    "& .MuiInputLabel-root.MuiInputLabel-shrink":
+                                      {
+                                        color: alpha("#111827", 0.65),
+                                        backgroundColor: "#ffffff",
+                                        px: 0.4,
+                                      },
                                   }}
-                                  aria-label="Select sidebar mode"
+                                />
+                              </Box>
+                            </>
+                          ) : (
+                            <>
+                              {/* Fixed top header */}
+                              <Box
+                                sx={{
+                                  px: 1.3,
+                                  py: 1.1,
+                                  flexShrink: 0,
+                                  borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
+                                  backgroundColor: "rgba(255,255,255,0.74)",
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: 0.7,
+                                    p: 0,
+                                    backgroundColor: "transparent",
+                                  }}
                                 >
-                                  {[
-                                    {
-                                      key: "blocks",
-                                      label: "Blocks",
-                                      icon: Layers,
-                                      disabled: false,
-                                    },
-                                    {
-                                      key: "theme",
-                                      label: "Theme",
-                                      icon: Palette,
-                                      disabled: !supportsTemplateThemeSidebar,
-                                    },
-                                    {
-                                      key: "media",
-                                      label: "Media",
-                                      icon: ImageIcon,
-                                      disabled: false,
-                                    },
-                                  ].map((option) => {
-                                    const Icon = option.icon;
+                                  <FormControl
+                                    size="small"
+                                    sx={{
+                                      flex: 1,
+                                      minWidth: 0,
+                                    }}
+                                  >
+                                    <Select
+                                      value={sidebarMode}
+                                      onChange={(event) =>
+                                        setSidebarMode(event.target.value)
+                                      }
+                                      IconComponent={ArrowDown}
+                                      displayEmpty
+                                      renderValue={() => {
+                                        const Icon = sidebarModeMeta.icon;
 
-                                    return (
-                                      <MenuItem
-                                        key={option.key}
-                                        value={option.key}
-                                        disabled={option.disabled}
-                                        sx={{
-                                          minHeight: 42,
+                                        return (
+                                          <Box
+                                            sx={{
+                                              display: "flex",
+                                              alignItems: "center",
+                                              gap: 0.8,
+                                              minWidth: 0,
+                                            }}
+                                          >
+                                            <Icon
+                                              size={15}
+                                              color={editorMutedText}
+                                            />
+                                            <Typography
+                                              sx={{
+                                                fontSize: "0.9rem",
+                                                fontWeight: 600,
+                                                color: colors.text,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                              }}
+                                            >
+                                              {sidebarModeMeta.label}
+                                            </Typography>
+                                          </Box>
+                                        );
+                                      }}
+                                      sx={{
+                                        height: 40,
+                                        borderRadius: 3,
+                                        backgroundColor:
+                                          "rgba(255,255,255,0.96)",
+                                        boxShadow:
+                                          "0 1px 2px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.9)",
+                                        "& .MuiSelect-select": {
                                           display: "flex",
                                           alignItems: "center",
-                                          gap: 1,
-                                        }}
-                                      >
-                                        <Icon
-                                          size={15}
-                                          color={editorMutedText}
-                                        />
-                                        <Typography
-                                          sx={{
-                                            fontSize: "0.9rem",
-                                            fontWeight: 500,
-                                            color: editorMutedText,
-                                          }}
-                                        >
-                                          {option.label}
-                                        </Typography>
-                                      </MenuItem>
-                                    );
-                                  })}
-                                </Select>
-                              </FormControl>
+                                          py: 0.9,
+                                          pl: 1.05,
+                                          pr: "2rem !important",
+                                        },
+                                        "& .MuiOutlinedInput-notchedOutline":
+                                          {
+                                            borderColor: alpha(
+                                              colors.primary,
+                                              0.16,
+                                            ),
+                                          },
+                                        "&:hover .MuiOutlinedInput-notchedOutline":
+                                          {
+                                            borderColor: alpha(
+                                              colors.primary,
+                                              0.26,
+                                            ),
+                                          },
+                                        "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                          {
+                                            borderColor: alpha(
+                                              colors.primary,
+                                              0.3,
+                                            ),
+                                          },
+                                        "& .MuiSelect-icon": {
+                                          right: 10,
+                                          width: 16,
+                                          height: 16,
+                                          color: editorMutedText,
+                                        },
+                                      }}
+                                      aria-label="Select sidebar mode"
+                                    >
+                                      {[
+                                        {
+                                          key: "blocks",
+                                          label: "Blocks",
+                                          icon: Layers,
+                                          disabled: false,
+                                        },
+                                        {
+                                          key: "theme",
+                                          label: "Theme",
+                                          icon: Palette,
+                                          disabled:
+                                            !supportsTemplateThemeSidebar,
+                                        },
+                                        {
+                                          key: "media",
+                                          label: "Media",
+                                          icon: ImageIcon,
+                                          disabled: false,
+                                        },
+                                      ].map((option) => {
+                                        const Icon = option.icon;
 
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                startIcon={<Layers size={15} />}
-                                onClick={() =>
-                                  openBlockLibraryAtPosition("end")
-                                }
+                                        return (
+                                          <MenuItem
+                                            key={option.key}
+                                            value={option.key}
+                                            disabled={option.disabled}
+                                            sx={{
+                                              minHeight: 42,
+                                              display: "flex",
+                                              alignItems: "center",
+                                              gap: 1,
+                                            }}
+                                          >
+                                            <Icon
+                                              size={15}
+                                              color={editorMutedText}
+                                            />
+                                            <Typography
+                                              sx={{
+                                                fontSize: "0.9rem",
+                                                fontWeight: 500,
+                                                color: editorMutedText,
+                                              }}
+                                            >
+                                              {option.label}
+                                            </Typography>
+                                          </MenuItem>
+                                        );
+                                      })}
+                                    </Select>
+                                  </FormControl>
+
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={<Layers size={15} />}
+                                    onClick={() =>
+                                      openBlockLibraryAtPosition("end")
+                                    }
+                                    sx={{
+                                      ...sidebarHeaderButtonSx,
+                                      minWidth: 0,
+                                      px: 1,
+                                      color: editorText,
+                                      borderColor: alpha(
+                                        colors.primary,
+                                        0.16,
+                                      ),
+                                      backgroundColor:
+                                        "rgba(255,255,255,0.86)",
+                                      "& .MuiButton-startIcon": {
+                                        mr: 0.6,
+                                      },
+                                      "&:hover": {
+                                        backgroundColor: "#ffffff",
+                                        borderColor: alpha(
+                                          colors.primary,
+                                          0.28,
+                                        ),
+                                      },
+                                    }}
+                                    aria-label="Open block library"
+                                  >
+                                    Library
+                                  </Button>
+
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => setBlockDialogOpen(true)}
+                                    sx={{
+                                      minWidth: 38,
+                                      minHeight: 38,
+                                      flexShrink: 0,
+                                      borderRadius: 3,
+                                      border: `1px solid ${alpha(colors.primary, 0.16)}`,
+                                      backgroundColor:
+                                        "rgba(255,255,255,0.86)",
+                                      color: colors.text,
+                                      transition:
+                                        "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
+                                      "&:hover": {
+                                        background:
+                                          "linear-gradient(135deg, #111827 0%, #020617 100%)",
+                                        borderColor: alpha(
+                                          colors.primary,
+                                          0.3,
+                                        ),
+                                        color: "#ffffff",
+                                      },
+                                      "&.Mui-disabled": {
+                                        color: alpha(colors.text, 0.34),
+                                        borderColor: alpha(
+                                          colors.primary,
+                                          0.12,
+                                        ),
+                                        backgroundColor:
+                                          "rgba(255,255,255,0.52)",
+                                      },
+                                    }}
+                                    aria-label="Add block"
+                                  >
+                                    <Plus size={18} />
+                                  </IconButton>
+                                </Box>
+                              </Box>
+
+                              {/* Scrollable content */}
+                              <Box
                                 sx={{
-                                  ...sidebarHeaderButtonSx,
-                                  minWidth: 0,
-                                  px: 1,
-                                  color: editorText,
-                                  borderColor: alpha(colors.primary, 0.16),
-                                  backgroundColor: "rgba(255,255,255,0.86)",
-                                  "& .MuiButton-startIcon": {
-                                    mr: 0.6,
+                                  p: 1.4,
+                                  flex: 1,
+                                  minHeight: 0,
+                                  overflowY: "auto",
+                                  overflowX: "hidden",
+                                  pr: 1,
+                                  "&::-webkit-scrollbar": {
+                                    width: 6,
                                   },
-                                  "&:hover": {
-                                    backgroundColor: "#ffffff",
-                                    borderColor: alpha(colors.primary, 0.28),
+                                  "&::-webkit-scrollbar-thumb": {
+                                    borderRadius: 999,
+                                    backgroundColor: alpha(
+                                      colors.primary,
+                                      0.22,
+                                    ),
+                                  },
+                                  "&::-webkit-scrollbar-track": {
+                                    backgroundColor: "transparent",
                                   },
                                 }}
-                                aria-label="Open block library"
                               >
-                                Library
-                              </Button>
-
-                              <IconButton
-                                size="small"
-                                onClick={() => setBlockDialogOpen(true)}
-                                sx={{
-                                  minWidth: 38,
-                                  minHeight: 38,
-                                  flexShrink: 0,
-                                  borderRadius: 3,
-                                  border: `1px solid ${alpha(colors.primary, 0.16)}`,
-                                  backgroundColor: "rgba(255,255,255,0.86)",
-                                  color: colors.text,
-                                  transition:
-                                    "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
-                                  "&:hover": {
-                                    background:
-                                      "linear-gradient(135deg, #111827 0%, #020617 100%)",
-                                    borderColor: alpha(colors.primary, 0.3),
-                                    color: "#ffffff",
-                                  },
-                                  "&.Mui-disabled": {
-                                    color: alpha(colors.text, 0.34),
-                                    borderColor: alpha(colors.primary, 0.12),
-                                    backgroundColor: "rgba(255,255,255,0.52)",
-                                  },
-                                }}
-                                aria-label="Add block"
-                              >
-                                <Plus size={18} />
-                              </IconButton>
-                            </Box>
-                          </Box>
-
-                          {/* Scrollable content */}
-                          <Box
-                            sx={{
-                              p: 1.4,
-                              flex: 1,
-                              minHeight: 0,
-                              overflowY: "auto",
-                              overflowX: "hidden",
-                              pr: 1,
-                              "&::-webkit-scrollbar": {
-                                width: 6,
-                              },
-                              "&::-webkit-scrollbar-thumb": {
-                                borderRadius: 999,
-                                backgroundColor: alpha(colors.primary, 0.22),
-                              },
-                              "&::-webkit-scrollbar-track": {
-                                backgroundColor: "transparent",
-                              },
-                            }}
-                          >
                             {blockError && (
                               <Alert
                                 severity="error"
@@ -5360,6 +5575,8 @@ const WebsiteEditorInner = () => {
                               </Box>
                             )}
                           </Box>
+                            </>
+                          )}
                         </Paper>
                       </Grid>
                     )}
@@ -6472,7 +6689,7 @@ const WebsiteEditorInner = () => {
 
         {/* Create/Edit Block Dialog */}
         <Dialog
-          open={blockDialogOpen || !!editingBlock}
+          open={blockDialogOpen}
           onClose={() => {
             if (!submitting) {
               setBlockDialogOpen(false);

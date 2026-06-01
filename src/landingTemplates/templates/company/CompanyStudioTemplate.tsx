@@ -1400,14 +1400,18 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       entry: (typeof innerBlockEntries)[number],
     ) => {
       const type = String(entry.block?.type || "text").toLowerCase();
+      if (type === "eyebrow") {
+        return -1;
+      }
+      if (type === "heading") {
+        return 0;
+      }
       if (
-        type === "eyebrow" ||
-        type === "heading" ||
         type === "text" ||
         type === "paragraph" ||
         type === "label"
       ) {
-        return 0;
+        return 1;
       }
       if (
         type === "button" ||
@@ -1430,12 +1434,22 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         type === "menu_display" ||
         type === "generic_card"
       ) {
-        return 1;
-      }
-      if (type === "divider" || type === "spacer") {
         return 2;
       }
-      return 3;
+      if (
+        type === "image" ||
+        type === "hero" ||
+        type === "image_text_split" ||
+        type === "split_text_image" ||
+        type === "image_split_text" ||
+        type === "video"
+      ) {
+        return 3;
+      }
+      if (type === "divider" || type === "spacer") {
+        return 4;
+      }
+      return 5;
     };
 
     const sortByResponsiveFlow = (
@@ -1456,16 +1470,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       return left.index - right.index;
     };
 
-    const orderedInnerBlocks = isLikelyMultiColumn
-      ? [
-          ...innerBlockEntries
-            .filter((entry) => entry.point.x <= splitX)
-            .sort(sortByResponsiveFlow),
-          ...innerBlockEntries
-            .filter((entry) => entry.point.x > splitX)
-            .sort(sortByResponsiveFlow),
-        ]
-      : [...innerBlockEntries].sort(sortByResponsiveFlow);
+    const orderedInnerBlocks = options?.canvas
+      ? innerBlocks
+      : isLikelyMultiColumn
+        ? [...innerBlockEntries].sort(sortByResponsiveFlow)
+        : [...innerBlockEntries].sort(sortByResponsiveFlow);
 
     if (!innerBlocks.length) {
       return null;
@@ -1484,8 +1493,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           minHeight: options?.canvas ? "inherit" : undefined,
         }}
       >
-        {orderedInnerBlocks.map((entry) =>
-          renderCustomInnerBlock(section, entry.block, entry.index, options),
+        {orderedInnerBlocks.map((entry, orderedIndex) =>
+          renderCustomInnerBlock(
+            section,
+            options?.canvas ? entry : entry.block,
+            options?.canvas ? orderedIndex : entry.index,
+            options,
+          ),
         )}
       </Box>
     );
