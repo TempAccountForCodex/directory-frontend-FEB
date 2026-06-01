@@ -2149,16 +2149,17 @@ const WebsiteEditorInner = () => {
       (block) => String(block.id) === String(selectedSectionElement.blockId),
     );
     const styleKey = getSectionStyleKey(selectedSectionElement);
-    if (
-      !targetBlock?.content?.[styleKey] ||
-      typeof targetBlock.content[styleKey] !== "object"
-    ) {
+    const resolvedStyle =
+      styleKey.includes(".")
+        ? getValueAtPath(targetBlock?.content || {}, styleKey)
+        : targetBlock?.content?.[styleKey];
+    if (!resolvedStyle || typeof resolvedStyle !== "object") {
       return DEFAULT_SECTION_STYLE;
     }
 
     return {
       ...DEFAULT_SECTION_STYLE,
-      ...targetBlock.content[styleKey],
+      ...resolvedStyle,
     };
   }, [blocks, selectedSectionElement]);
 
@@ -2390,6 +2391,29 @@ const WebsiteEditorInner = () => {
   const handlePreviewEditableSelection = useCallback(
     (data) => {
       if (!data) {
+        return;
+      }
+
+      const innerMatch = parseInnerBlockFieldPath(data.fieldPath);
+      if (innerMatch?.contentPath === "__card") {
+        setPreviewContextMenu(null);
+        setSelectedEditableElement(null);
+        setSelectedImageElement(null);
+        setIsImageDialogOpen(false);
+        setSelectedSectionElement({
+          blockId: data.blockId,
+          label: data.label || "Section",
+          styleKey: `innerBlocks.${innerMatch.index}.content.sectionStyle`,
+        });
+        setActiveToolbarMode("section");
+        setIsInspectorOpen(true);
+        setBlockDialogOpen(false);
+        setEditingBlock(null);
+        syncPreviewSelection({
+          kind: "section",
+          blockId: data.blockId,
+          styleKey: `innerBlocks.${innerMatch.index}.content.sectionStyle`,
+        });
         return;
       }
 
@@ -3808,18 +3832,30 @@ const WebsiteEditorInner = () => {
             return block;
           }
 
-          const existingStyle =
-            block.content?.[styleKey] &&
-            typeof block.content[styleKey] === "object"
-              ? block.content[styleKey]
+          const existingStyle = styleKey.includes(".")
+            ? getValueAtPath(block.content || {}, styleKey)
+            : block.content?.[styleKey];
+          const safeExistingStyle =
+            existingStyle && typeof existingStyle === "object"
+              ? existingStyle
               : {};
+
+          if (styleKey.includes(".")) {
+            return {
+              ...block,
+              content: setValueAtPath(block.content || {}, styleKey, {
+                ...safeExistingStyle,
+                ...patch,
+              }),
+            };
+          }
 
           return {
             ...block,
             content: {
               ...block.content,
               [styleKey]: {
-                ...existingStyle,
+                ...safeExistingStyle,
                 ...patch,
               },
             },

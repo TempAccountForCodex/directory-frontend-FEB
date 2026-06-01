@@ -1215,6 +1215,9 @@ const FrontendTemplateIframePreview = React.memo(
         const editableEl = target?.closest?.(
           "[data-editable]",
         ) as HTMLElement | null;
+        const cardEditableEl = target?.closest?.(
+          '[data-editable$=".__card"]',
+        ) as HTMLElement | null;
         const imageEl = target?.closest?.(
           "[data-edit-image]",
         ) as HTMLElement | null;
@@ -1254,6 +1257,27 @@ const FrontendTemplateIframePreview = React.memo(
             }
           }
           applySectionSelection(resolvedSectionEl);
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+
+        if (
+          cardEditableEl &&
+          editableEl === cardEditableEl &&
+          sectionEl &&
+          sectionEl === cardEditableEl
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          applySectionSelection(sectionEl);
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+
+        if (cardEditableEl && editableEl === cardEditableEl) {
+          event.preventDefault();
+          event.stopPropagation();
+          applyEditableSelection(cardEditableEl, { startEditing: false });
           onPreviewContextMenuRef.current?.(null);
           return;
         }
@@ -1304,6 +1328,13 @@ const FrontendTemplateIframePreview = React.memo(
           target?.closest?.(
           "[data-editable]",
         ) as HTMLElement | null;
+        const cardEditableEl =
+          (resolvedOverlayTarget?.matches?.('[data-editable$=".__card"]')
+            ? resolvedOverlayTarget
+            : null) ||
+          (target?.closest?.(
+            '[data-editable$=".__card"]',
+          ) as HTMLElement | null);
         const imageEl =
           (resolvedOverlayTarget?.matches?.("[data-edit-image]")
             ? resolvedOverlayTarget
@@ -1327,6 +1358,59 @@ const FrontendTemplateIframePreview = React.memo(
 
         if (!editableEl && !imageEl && !resolvedSectionEl) {
           onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+
+        if (
+          cardEditableEl &&
+          editableEl === cardEditableEl &&
+          directSectionEl &&
+          directSectionEl === cardEditableEl
+        ) {
+          const sectionSelection = applySectionSelection(directSectionEl);
+          const layers = buildLayerItems(null, null, directSectionEl);
+          onPreviewContextMenuRef.current?.({
+            x: event.clientX,
+            y: event.clientY,
+            layers,
+            targetLayer:
+              layers.find((layer) => layer.kind === "section") || null,
+            section: sectionSelection,
+            editable: null,
+            image: null,
+          });
+          return;
+        }
+
+        if (cardEditableEl && editableEl === cardEditableEl) {
+          const editableSelection = applyEditableSelection(cardEditableEl, {
+            startEditing: false,
+          });
+          const resolvedSectionEl =
+            (cardEditableEl.closest(
+              '[data-preview-section="true"]',
+            ) as HTMLElement | null) || directSectionEl;
+          const sectionSelection = resolvedSectionEl
+            ? buildSectionSelection(resolvedSectionEl)
+            : null;
+          const layers = buildLayerItems(null, null, directSectionEl);
+          onPreviewContextMenuRef.current?.({
+            x: event.clientX,
+            y: event.clientY,
+            layers,
+            targetLayer:
+              layers.find(
+                (layer) =>
+                  layer.kind === "editable" &&
+                  layer.editable?.fieldPath ===
+                    editableSelection?.fieldPath &&
+                  String(layer.editable?.blockId) ===
+                    String(editableSelection?.blockId),
+              ) || null,
+            section: sectionSelection,
+            editable: editableSelection,
+            image: null,
+          });
           return;
         }
 

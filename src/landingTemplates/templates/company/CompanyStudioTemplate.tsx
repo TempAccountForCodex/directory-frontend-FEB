@@ -442,25 +442,66 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const lineColor =
       tone === "light" ? "rgba(255,255,255,0.22)" : rgba(themeColor, 0.22);
     const blockMaxWidth = options?.maxWidth || 880;
-    const textStyle = block.content?.textStyle || {};
-    const headingStyle = block.content?.headingStyle || textStyle;
-    const bodyStyle = block.content?.bodyStyle || textStyle;
-    const eyebrowStyle = block.content?.eyebrowStyle || textStyle;
-    const buttonStyle = block.content?.buttonTextStyle || textStyle;
-    const imageStyle = block.content?.imageStyle || {};
-    const cardStyle = block.content?.cardStyle || {};
+    const rawTextStyle = block.content?.textStyle || {};
+    const rawHeadingStyle = block.content?.headingStyle || rawTextStyle;
+    const rawBodyStyle = block.content?.bodyStyle || rawTextStyle;
+    const rawEyebrowStyle = block.content?.eyebrowStyle || rawTextStyle;
+    const rawButtonStyle = block.content?.buttonTextStyle || rawTextStyle;
+    const rawImageStyle = block.content?.imageStyle || {};
+    const rawCardStyle = block.content?.cardStyle || {};
+    const rawSectionStyle = block.content?.sectionStyle || {};
     const canvas = options?.canvas === true;
+    const getFlowSafeStyle = (
+      style: Record<string, any>,
+      options?: { keepWidth?: boolean; keepHeight?: boolean },
+    ) => {
+      if (canvas || !style || typeof style !== "object") {
+        return style;
+      }
+      const nextStyle = { ...style };
+      delete nextStyle.transform;
+      delete nextStyle.position;
+      delete nextStyle.top;
+      delete nextStyle.left;
+      delete nextStyle.right;
+      delete nextStyle.bottom;
+      if (!options?.keepWidth) {
+        delete nextStyle.width;
+        delete nextStyle.maxWidth;
+        delete nextStyle.minWidth;
+      }
+      if (!options?.keepHeight) {
+        delete nextStyle.height;
+        delete nextStyle.maxHeight;
+        delete nextStyle.minHeight;
+      }
+      return nextStyle;
+    };
+    const textStyle = getFlowSafeStyle(rawTextStyle);
+    const headingStyle = getFlowSafeStyle(rawHeadingStyle);
+    const bodyStyle = getFlowSafeStyle(rawBodyStyle);
+    const eyebrowStyle = getFlowSafeStyle(rawEyebrowStyle);
+    const buttonStyle = getFlowSafeStyle(rawButtonStyle);
+    const imageStyle = getFlowSafeStyle(rawImageStyle);
+    const cardStyle = getFlowSafeStyle(rawCardStyle);
+    const sectionStyle = getFlowSafeStyle(rawSectionStyle);
     const canvasBaseSx = canvas
       ? {
-          position: "absolute" as const,
-          top: 0,
-          left: 0,
+          position: { xs: "relative", md: "absolute" } as const,
+          top: { md: 0 },
+          left: { md: 0 },
           margin: 0,
         }
       : null;
+    const getCanvasWidth = (desktopWidth: any, fallbackWidth = "100%") =>
+      canvas ? { xs: "100%", md: desktopWidth || fallbackWidth } : fallbackWidth;
+    const getCanvasMaxWidth = (
+      desktopWidth: any,
+      fallbackWidth: any = blockMaxWidth,
+    ) => (canvas ? { xs: "100%", md: desktopWidth || fallbackWidth } : fallbackWidth);
+    const getCanvasTransform = (desktopTransform: any) =>
+      canvas ? { xs: "none", md: desktopTransform || "none" } : undefined;
     const compoundCardSx = {
-      width: canvas ? cardStyle.width || "640px" : "100%",
-      maxWidth: canvas ? cardStyle.width || "640px" : blockMaxWidth,
       p: { xs: 2.25, md: 3 },
       borderRadius: "28px",
       border: `1px solid ${tone === "light" ? "rgba(255,255,255,0.16)" : rgba(themeColor, 0.14)}`,
@@ -474,14 +515,25 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           : "0 24px 48px rgba(15,23,42,0.08)",
       backdropFilter: "blur(12px)",
       ...canvasBaseSx,
-      transform: cardStyle.transform,
+      ...sectionStyle,
       ...cardStyle,
+      width: getCanvasWidth(cardStyle.width || "640px"),
+      maxWidth: getCanvasMaxWidth(cardStyle.width || "640px"),
+      transform: getCanvasTransform(cardStyle.transform),
+      ...(canvas
+        ? {}
+        : {
+            minHeight: "auto",
+            height: "auto",
+          }),
     };
-    const compoundBlockSelectionProps = getEditableTextProps(
-      section.blockId,
-      `${blockPath}.__card`,
-      "single",
-    );
+    const compoundBlockSelectionProps = {
+      ...getEditableTextProps(section.blockId, `${blockPath}.__card`, "single"),
+      "data-preview-section": "true",
+      "data-preview-label": block.label || humanizeSectionKey(blockType),
+      "data-preview-block-id": section.blockId,
+      "data-preview-style-key": `${blockPath}.sectionStyle`,
+    };
     const compoundBlockLabel = block.label || humanizeSectionKey(blockType);
 
     if (blockType === "heading") {
@@ -499,12 +551,25 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             color: textColor,
             ...(canvas
               ? {
-                  width: "min(540px, calc(100% - 112px))",
-                  maxWidth: "540px",
+                  width: { xs: "100%", md: "min(540px, calc(100% - 112px))" },
+                  maxWidth: { xs: "100%", md: "540px" },
                 }
               : {}),
             ...canvasBaseSx,
             ...headingStyle,
+            transform: getCanvasTransform(headingStyle.transform),
+            ...(canvas
+              ? {}
+              : {
+                  width: "100%",
+                  maxWidth: "100%",
+                  fontSize: {
+                    xs: "clamp(1.8rem, 8vw, 2.7rem)",
+                    sm: "clamp(2.1rem, 6vw, 3.1rem)",
+                  },
+                  lineHeight: 1.05,
+                  letterSpacing: "-0.04em",
+                }),
           }}
         >
           {block.content?.text || "New section heading"}
@@ -531,6 +596,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             fontWeight: 700,
             ...canvasBaseSx,
             ...textStyle,
+            transform: getCanvasTransform(textStyle.transform),
           }}
         />
       );
@@ -549,8 +615,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             block.label || "Section Image",
           )}
           sx={{
-            width: canvas ? imageStyle.width || "320px" : "100%",
-            maxWidth: canvas ? imageStyle.width || "320px" : blockMaxWidth,
+            width: getCanvasWidth(imageStyle.width || "320px"),
+            maxWidth: getCanvasMaxWidth(imageStyle.width || "320px"),
             height: imageStyle.height || { xs: 220, md: 360 },
             objectFit: imageStyle.objectFit || "cover",
             borderRadius: "24px",
@@ -560,8 +626,17 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             borderColor: imageStyle.borderColor,
             borderStyle: imageStyle.borderWidth ? "solid" : undefined,
             ...canvasBaseSx,
-            transform: imageStyle.transform,
             ...imageStyle,
+            width: getCanvasWidth(imageStyle.width || "320px"),
+            maxWidth: getCanvasMaxWidth(imageStyle.width || "320px"),
+            transform: getCanvasTransform(imageStyle.transform),
+            ...(canvas
+              ? {}
+              : {
+                  height: "auto",
+                  minHeight: 0,
+                  maxHeight: 420,
+                }),
           }}
         />
       );
@@ -585,6 +660,15 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             boxShadow: "none",
             ...canvasBaseSx,
             ...buttonStyle,
+            transform: getCanvasTransform(buttonStyle.transform),
+            ...(canvas
+              ? {}
+              : {
+                  width: "auto",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  whiteSpace: "normal",
+                }),
             "&:hover": {
               bgcolor: themeColor,
               boxShadow: "none",
@@ -602,12 +686,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Box
           key={String(block.id || `${blockType}-${index}`)}
           sx={{
-            width: canvas ? textStyle.width || "420px" : "100%",
-            maxWidth: canvas ? textStyle.width || "420px" : blockMaxWidth,
+            width: getCanvasWidth(textStyle.width || "420px"),
+            maxWidth: getCanvasMaxWidth(textStyle.width || "420px"),
             height: 1,
             backgroundColor: lineColor,
             ...canvasBaseSx,
-            transform: textStyle.transform,
+            transform: getCanvasTransform(textStyle.transform),
           }}
         />
       );
@@ -623,7 +707,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             height: block.content?.height || "24px",
             flexShrink: 0,
             ...canvasBaseSx,
-            transform: textStyle.transform,
+            transform: getCanvasTransform(textStyle.transform),
           }}
         />
       );
@@ -1218,6 +1302,15 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             : {}),
           ...canvasBaseSx,
           ...textStyle,
+          transform: getCanvasTransform(textStyle.transform),
+          ...(canvas
+            ? {}
+            : {
+                width: "100%",
+                maxWidth: "100%",
+                fontSize: { xs: "1rem", sm: "1.05rem" },
+                lineHeight: 1.8,
+              }),
         }}
       >
         {block.content?.text || "Add your text here."}
@@ -1231,6 +1324,148 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const innerBlocks = Array.isArray(section.innerBlocks)
       ? section.innerBlocks
       : [];
+
+    const getInnerBlockTransform = (block: Record<string, any>) => {
+      const blockType = String(block?.type || "text").toLowerCase();
+      if (blockType === "heading") return block?.content?.headingStyle?.transform;
+      if (blockType === "button") return block?.content?.buttonTextStyle?.transform;
+      if (blockType === "image") return block?.content?.imageStyle?.transform;
+      if (
+        blockType === "cta" ||
+        blockType === "newsletter" ||
+        blockType === "contact" ||
+        blockType === "form_builder" ||
+        blockType === "reservation_form" ||
+        blockType === "generic_card" ||
+        blockType === "hero" ||
+        blockType === "image_text_split" ||
+        blockType === "features" ||
+        blockType === "navigation_bar" ||
+        blockType === "footer" ||
+        blockType === "pricing" ||
+        blockType === "countdown" ||
+        blockType === "testimonials" ||
+        blockType === "reviews" ||
+        blockType === "stats" ||
+        blockType === "logo_carousel" ||
+        blockType === "map_location" ||
+        blockType === "menu_display" ||
+        blockType === "announcement_bar"
+      ) {
+        return block?.content?.cardStyle?.transform;
+      }
+      return block?.content?.textStyle?.transform;
+    };
+
+    const getTransformPoint = (transformValue: any) => {
+      if (typeof transformValue !== "string") {
+        return { x: 0, y: 0 };
+      }
+      const match =
+        /translate(?:3d)?\(\s*(-?\d+(?:\.\d+)?)px(?:,\s*|\s+)(-?\d+(?:\.\d+)?)px/i.exec(
+          transformValue,
+        );
+      if (!match) {
+        return { x: 0, y: 0 };
+      }
+      return {
+        x: Number(match[1]) || 0,
+        y: Number(match[2]) || 0,
+      };
+    };
+
+    const innerBlockEntries = innerBlocks.map((block, index) => ({
+      block,
+      index,
+      point: getTransformPoint(getInnerBlockTransform(block)),
+    }));
+
+    const xValues = innerBlockEntries.map((entry) => entry.point.x);
+    const minX = xValues.length ? Math.min(...xValues) : 0;
+    const maxX = xValues.length ? Math.max(...xValues) : 0;
+    const splitX = minX + (maxX - minX) * 0.46;
+    const isLikelyMultiColumn = maxX - minX > 220;
+
+    const sortByPoint = (
+      left: (typeof innerBlockEntries)[number],
+      right: (typeof innerBlockEntries)[number],
+    ) => {
+      if (Math.abs(left.point.y - right.point.y) > 20) {
+        return left.point.y - right.point.y;
+      }
+      return left.point.x - right.point.x;
+    };
+
+    const getResponsivePriority = (
+      entry: (typeof innerBlockEntries)[number],
+    ) => {
+      const type = String(entry.block?.type || "text").toLowerCase();
+      if (
+        type === "eyebrow" ||
+        type === "heading" ||
+        type === "text" ||
+        type === "paragraph" ||
+        type === "label"
+      ) {
+        return 0;
+      }
+      if (
+        type === "button" ||
+        type === "announcement_bar" ||
+        type === "cta" ||
+        type === "contact" ||
+        type === "newsletter" ||
+        type === "form_builder" ||
+        type === "reservation_form" ||
+        type === "pricing" ||
+        type === "countdown" ||
+        type === "testimonials" ||
+        type === "reviews" ||
+        type === "stats" ||
+        type === "features" ||
+        type === "navigation_bar" ||
+        type === "footer" ||
+        type === "logo_carousel" ||
+        type === "map_location" ||
+        type === "menu_display" ||
+        type === "generic_card"
+      ) {
+        return 1;
+      }
+      if (type === "divider" || type === "spacer") {
+        return 2;
+      }
+      return 3;
+    };
+
+    const sortByResponsiveFlow = (
+      left: (typeof innerBlockEntries)[number],
+      right: (typeof innerBlockEntries)[number],
+    ) => {
+      const priorityDelta =
+        getResponsivePriority(left) - getResponsivePriority(right);
+      if (priorityDelta !== 0) {
+        return priorityDelta;
+      }
+      if (Math.abs(left.point.y - right.point.y) > 20) {
+        return left.point.y - right.point.y;
+      }
+      if (Math.abs(left.point.x - right.point.x) > 20) {
+        return left.point.x - right.point.x;
+      }
+      return left.index - right.index;
+    };
+
+    const orderedInnerBlocks = isLikelyMultiColumn
+      ? [
+          ...innerBlockEntries
+            .filter((entry) => entry.point.x <= splitX)
+            .sort(sortByResponsiveFlow),
+          ...innerBlockEntries
+            .filter((entry) => entry.point.x > splitX)
+            .sort(sortByResponsiveFlow),
+        ]
+      : [...innerBlockEntries].sort(sortByResponsiveFlow);
 
     if (!innerBlocks.length) {
       return null;
@@ -1249,8 +1484,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           minHeight: options?.canvas ? "inherit" : undefined,
         }}
       >
-        {innerBlocks.map((block, index) =>
-          renderCustomInnerBlock(section, block, index, options),
+        {orderedInnerBlocks.map((entry) =>
+          renderCustomInnerBlock(section, entry.block, entry.index, options),
         )}
       </Box>
     );
@@ -1308,34 +1543,52 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         {...getSectionStyleDomProps(section)}
         sx={{
           width: "100%",
-          minHeight: { xs: 360, md: 520 },
+          minHeight: innerBlocks.length > 0 ? { xs: "auto", md: 520 } : { xs: 360, md: 520 },
           backgroundColor:
             sectionLayoutWidth === "page" ? "transparent" : "#ffffff",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: { xs: "stretch", md: "center" },
+          justifyContent: { xs: "flex-start", md: "center" },
+          overflow: "hidden",
           ...sectionContentSx,
         }}
       >
         <Box
           sx={{
             width: "100%",
-            minHeight: "inherit",
+            minHeight: { xs: "auto", md: "inherit" },
             px: { xs: 2, md: 4 },
             py: { xs: 4, md: 6 },
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-start",
-            justifyContent: "center",
+            justifyContent: { xs: "flex-start", md: "center" },
             gap: 2,
           }}
         >
           {innerBlocks.length > 0 ? (
-            innerBlocks.map((block, blockIndex) =>
-              renderCustomInnerBlock(section, block, blockIndex, {
-                canvas: true,
-              }),
-            )
+            <>
+              <Box sx={{ display: { xs: "flex", md: "none" }, width: "100%" }}>
+                {renderSectionInnerBlocks(section, {
+                  tone: "dark",
+                  maxWidth: "100%",
+                })}
+              </Box>
+              <Box
+                sx={{
+                  display: { xs: "none", md: "block" },
+                  width: "100%",
+                  minHeight: "inherit",
+                  position: "relative",
+                }}
+              >
+                {innerBlocks.map((block, blockIndex) =>
+                  renderCustomInnerBlock(section, block, blockIndex, {
+                    canvas: true,
+                  }),
+                )}
+              </Box>
+            </>
           ) : (
             <>
               <Typography
