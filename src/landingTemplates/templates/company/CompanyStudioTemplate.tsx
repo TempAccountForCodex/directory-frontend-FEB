@@ -103,6 +103,8 @@ const sectionReveal = {
 } as const;
 
 const EditorFaqAccordionCard: React.FC<{
+  blockId?: string | number;
+  blockPath: string;
   heading?: string;
   items: Array<{ question?: string; answer?: string }>;
   textColor: string;
@@ -111,6 +113,8 @@ const EditorFaqAccordionCard: React.FC<{
   headingFont: string;
   tone: "light" | "dark";
 }> = ({
+  blockId,
+  blockPath,
   heading,
   items,
   textColor,
@@ -138,6 +142,7 @@ const EditorFaqAccordionCard: React.FC<{
   return (
     <Stack spacing={2} sx={{ width: "100%" }}>
       <Typography
+        {...getEditableTextProps(blockId, `${blockPath}.heading`, "multi")}
         sx={{
           color: textColor,
           fontFamily: headingFont,
@@ -176,7 +181,14 @@ const EditorFaqAccordionCard: React.FC<{
                     : "none",
                 }}
               >
-                <Typography sx={{ color: textColor, fontWeight: 700, pr: 2 }}>
+                <Typography
+                  {...getEditableTextProps(
+                    blockId,
+                    `${blockPath}.items.${itemIndex}.question`,
+                    "single",
+                  )}
+                  sx={{ color: textColor, fontWeight: 700, pr: 2 }}
+                >
                   {item?.question || `Question ${itemIndex + 1}`}
                 </Typography>
                 <Box
@@ -217,6 +229,11 @@ const EditorFaqAccordionCard: React.FC<{
               </Stack>
               {isOpen ? (
                 <Typography
+                  {...getEditableTextProps(
+                    blockId,
+                    `${blockPath}.items.${itemIndex}.answer`,
+                    "multi",
+                  )}
                   sx={{
                     px: 2,
                     py: 1.7,
@@ -286,6 +303,23 @@ const getImageHeightPresetSx = (preset?: string) => {
       return { height: { xs: 420, md: 560 } };
     default:
       return {};
+  }
+};
+
+const getVideoHeightPresetSx = (preset?: string) => {
+  switch (preset) {
+    case "small":
+      return { height: { xs: 240, md: 320 } };
+    case "medium":
+      return { height: { xs: 320, md: 460 } };
+    case "large":
+      return { height: { xs: 420, md: 640 } };
+    case "fullscreen":
+      return { height: { xs: "72vh", md: "100vh" } };
+    case "auto":
+      return { minHeight: { xs: 240, md: 360 } };
+    default:
+      return { height: { xs: "72vh", md: "100vh" } };
   }
 };
 
@@ -635,8 +669,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     ) => (canvas ? { xs: "100%", md: desktopWidth || fallbackWidth } : fallbackWidth);
     const getCanvasTransform = (desktopTransform: any) =>
       canvas ? { xs: "none", md: desktopTransform || "none" } : undefined;
+    const defaultCompoundCardWidth =
+      blockType === "video" ? "calc(100% - 112px)" : "640px";
     const compoundCardSx = {
       p: { xs: 2.25, md: 3 },
+      boxSizing: "border-box",
       borderRadius: "28px",
       border: `1px solid ${tone === "light" ? "rgba(255,255,255,0.16)" : rgba(themeColor, 0.14)}`,
       background:
@@ -651,8 +688,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       ...canvasBaseSx,
       ...sectionStyle,
       ...cardStyle,
-      width: getCanvasWidth(cardStyle.width || "640px"),
-      maxWidth: getCanvasMaxWidth(cardStyle.width || "640px"),
+      width: getCanvasWidth(cardStyle.width || defaultCompoundCardWidth),
+      maxWidth: getCanvasMaxWidth(cardStyle.width || defaultCompoundCardWidth),
       transform: getCanvasTransform(cardStyle.transform),
       ...(canvas
         ? {}
@@ -1110,37 +1147,41 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         videoUrl.includes("youtube.com") ||
         videoUrl.includes("youtu.be") ||
         videoUrl.includes("vimeo.com");
+      const desktopVideoWidth = Math.min(
+        100,
+        Math.max(20, Number(block.content?.width) || 100),
+      );
+      const mobileVideoWidth = Math.min(
+        100,
+        Math.max(20, Number(block.content?.mobileWidth) || 100),
+      );
+      const videoHeightPreset = String(
+        block.content?.heightPreset || "fullscreen",
+      );
+      const videoHeightSx = getVideoHeightPresetSx(videoHeightPreset);
+      const videoObjectFit = String(block.content?.objectFit || "contain");
       return (
         <Stack
           key={String(block.id || `${blockType}-${index}`)}
-          spacing={2}
           {...compoundBlockSelectionProps}
           data-preview-label={compoundBlockLabel}
-          sx={compoundCardSx}
+          sx={{
+            ...compoundCardSx,
+            width: {
+              xs:
+                mobileVideoWidth >= 100
+                  ? "100%"
+                  : `${mobileVideoWidth}%`,
+              md:
+                desktopVideoWidth >= 100
+                  ? "100%"
+                  : `${desktopVideoWidth}%`,
+            },
+            maxWidth: "100%",
+            mx: "auto",
+            alignSelf: "center",
+          }}
         >
-          <Stack spacing={0.8}>
-            <Typography
-              {...getEditableTextProps(section.blockId, `${blockPath}.heading`, "multi")}
-              sx={{
-                color: textColor,
-                fontFamily: headingFont,
-                fontSize: { xs: "1.45rem", md: "2rem" },
-                fontWeight: 800,
-                letterSpacing: "-0.03em",
-                ...headingStyle,
-              }}
-            >
-              {block.content?.heading || "See the walkthrough"}
-            </Typography>
-            {block.content?.caption ? (
-              <Typography
-                {...getEditableTextProps(section.blockId, `${blockPath}.caption`, "multi")}
-                sx={{ color: mutedTextColor, lineHeight: 1.7, ...bodyStyle }}
-              >
-                {block.content?.caption}
-              </Typography>
-            ) : null}
-          </Stack>
           <Box
             sx={{
               position: "relative",
@@ -1149,31 +1190,37 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               overflow: "hidden",
               bgcolor: tone === "light" ? "rgba(255,255,255,0.1)" : "#ffffff",
               border: `1px solid ${rgba(themeColor, 0.12)}`,
-              aspectRatio: block.content?.aspectRatio === "4:3" ? "4 / 3" : "16 / 9",
+              ...videoHeightSx,
             }}
           >
             {videoUrl ? (
-              isEmbed ? (
-                <Box
-                  component="iframe"
-                  src={videoUrl}
-                  title={block.content?.heading || "Video"}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  sx={{ width: "100%", height: "100%", border: 0 }}
-                />
+                isEmbed ? (
+                  <Box
+                    component="iframe"
+                    src={videoUrl}
+                    title={block.label || "Video"}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    sx={{ width: "100%", height: "100%", border: 0 }}
+                  />
+                ) : (
+                  <Box
+                    component="video"
+                    src={videoUrl}
+                    controls={block.content?.showControls !== false}
+                    muted={block.content?.muted !== false}
+                    autoPlay={Boolean(block.content?.autoplay)}
+                    loop={Boolean(block.content?.loop)}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: videoObjectFit,
+                      display: "block",
+                      backgroundColor: "#000000",
+                    }}
+                  />
+                )
               ) : (
-                <Box
-                  component="video"
-                  src={videoUrl}
-                  controls={block.content?.showControls !== false}
-                  muted={block.content?.muted !== false}
-                  autoPlay={Boolean(block.content?.autoplay)}
-                  loop={Boolean(block.content?.loop)}
-                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              )
-            ) : (
               <Stack
                 spacing={1}
                 alignItems="center"
@@ -1252,10 +1299,29 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
                 }}
               >
-                <Typography sx={{ color: textColor, fontWeight: 700 }}>
+                <Typography
+                  {...getEditableTextProps(
+                    section.blockId,
+                    `${blockPath}.items.${itemIndex}.title`,
+                    "single",
+                  )}
+                  sx={{ color: textColor, fontWeight: 700 }}
+                >
                   {item?.title || `Feature ${itemIndex + 1}`}
                 </Typography>
-                <Typography sx={{ mt: 0.6, color: mutedTextColor, fontSize: "0.94rem", lineHeight: 1.65 }}>
+                <Typography
+                  {...getEditableTextProps(
+                    section.blockId,
+                    `${blockPath}.items.${itemIndex}.description`,
+                    "multi",
+                  )}
+                  sx={{
+                    mt: 0.6,
+                    color: mutedTextColor,
+                    fontSize: "0.94rem",
+                    lineHeight: 1.65,
+                  }}
+                >
                   {item?.description || "Describe this feature here."}
                 </Typography>
               </Box>
@@ -1276,6 +1342,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           sx={compoundCardSx}
         >
           <EditorFaqAccordionCard
+            blockId={section.blockId}
+            blockPath={blockPath}
             heading={block.content?.heading as string}
             items={items}
             textColor={textColor}
@@ -1310,6 +1378,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Chip
                 key={`tab-${tabIndex}`}
                 label={tab?.label || `Tab ${tabIndex + 1}`}
+                {...getEditableTextProps(
+                  section.blockId,
+                  `${blockPath}.tabs.${tabIndex}.label`,
+                  "single",
+                )}
                 sx={{
                   bgcolor: tabIndex === 0 ? themeColor : tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
                   color: tabIndex === 0 ? palette.white : textColor,
@@ -1320,10 +1393,24 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             ))}
           </Stack>
           <Box sx={{ p: 2.2, borderRadius: "20px", bgcolor: tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff", border: `1px solid ${rgba(themeColor, 0.12)}` }}>
-            <Typography sx={{ color: textColor, fontWeight: 700 }}>
+            <Typography
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.tabs.0.label`,
+                "single",
+              )}
+              sx={{ color: textColor, fontWeight: 700 }}
+            >
               {activeTab?.label || "Tab content"}
             </Typography>
-            <Typography sx={{ mt: 0.8, color: mutedTextColor, lineHeight: 1.75 }}>
+            <Typography
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.tabs.0.content`,
+                "multi",
+              )}
+              sx={{ mt: 0.8, color: mutedTextColor, lineHeight: 1.75 }}
+            >
               {activeTab?.content || "Add tab content from the editor."}
             </Typography>
           </Box>
@@ -1833,11 +1920,71 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       point: getTransformPoint(getInnerBlockTransform(block)),
     }));
 
+    const getInnerBlockEstimatedHeight = (
+      entry: (typeof innerBlockEntries)[number],
+    ) => {
+      const type = String(entry.block?.type || "text").toLowerCase();
+      const cardHeight = Number(entry.block?.content?.cardStyle?.height);
+      const imageHeight = Number(entry.block?.content?.imageStyle?.height);
+      const textHeight = Number(entry.block?.content?.textStyle?.height);
+
+      if (Number.isFinite(cardHeight) && cardHeight > 0) {
+        return cardHeight;
+      }
+      if (Number.isFinite(imageHeight) && imageHeight > 0) {
+        return imageHeight;
+      }
+      if (Number.isFinite(textHeight) && textHeight > 0) {
+        return textHeight;
+      }
+
+      if (type === "heading") return 120;
+      if (type === "text" || type === "paragraph" || type === "label") return 110;
+      if (type === "button") return 64;
+      if (type === "image") return 320;
+      if (type === "video") return 420;
+      if (
+        type === "cta" ||
+        type === "newsletter" ||
+        type === "contact" ||
+        type === "form_builder" ||
+        type === "reservation_form" ||
+        type === "generic_card" ||
+        type === "hero" ||
+        type === "image_text_split" ||
+        type === "features" ||
+        type === "faq" ||
+        type === "navigation_bar" ||
+        type === "footer" ||
+        type === "pricing" ||
+        type === "countdown" ||
+        type === "testimonials" ||
+        type === "reviews" ||
+        type === "stats" ||
+        type === "logo_carousel" ||
+        type === "map_location" ||
+        type === "menu_display" ||
+        type === "announcement_bar"
+      ) {
+        return 180;
+      }
+      if (type === "divider" || type === "spacer") return 32;
+      return 120;
+    };
+
     const xValues = innerBlockEntries.map((entry) => entry.point.x);
     const minX = xValues.length ? Math.min(...xValues) : 0;
     const maxX = xValues.length ? Math.max(...xValues) : 0;
     const splitX = minX + (maxX - minX) * 0.46;
     const isLikelyMultiColumn = maxX - minX > 220;
+    const canvasAutoMinHeight = innerBlockEntries.length
+      ? Math.max(
+          220,
+          ...innerBlockEntries.map(
+            (entry) => entry.point.y + getInnerBlockEstimatedHeight(entry) + 80,
+          ),
+        )
+      : 360;
 
     const sortByPoint = (
       left: (typeof innerBlockEntries)[number],
@@ -1964,6 +2111,80 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const innerBlocks = Array.isArray(section.innerBlocks)
       ? section.innerBlocks
       : [];
+    const customSectionCanvasAutoMinHeight = innerBlocks.length
+      ? Math.max(
+          220,
+          ...innerBlocks.map((block) => {
+            const transformValue =
+              block?.content?.cardStyle?.transform ||
+              block?.content?.imageStyle?.transform ||
+              block?.content?.headingStyle?.transform ||
+              block?.content?.textStyle?.transform ||
+              block?.content?.buttonTextStyle?.transform ||
+              "none";
+            const match =
+              typeof transformValue === "string"
+                ? /translate(?:3d)?\(\s*(-?\d+(?:\.\d+)?)px(?:,\s*|\s+)(-?\d+(?:\.\d+)?)px/i.exec(
+                    transformValue,
+                  )
+                : null;
+            const y = match ? Number(match[2]) || 0 : 0;
+            const type = String(block?.type || "text").toLowerCase();
+            const cardHeight = Number(block?.content?.cardStyle?.height);
+            const imageHeight = Number(block?.content?.imageStyle?.height);
+            const textHeight = Number(block?.content?.textStyle?.height);
+            let estimatedHeight = 120;
+            if (Number.isFinite(cardHeight) && cardHeight > 0) {
+              estimatedHeight = cardHeight;
+            } else if (Number.isFinite(imageHeight) && imageHeight > 0) {
+              estimatedHeight = imageHeight;
+            } else if (Number.isFinite(textHeight) && textHeight > 0) {
+              estimatedHeight = textHeight;
+            } else if (type === "button") {
+              estimatedHeight = 64;
+            } else if (type === "image") {
+              estimatedHeight = 320;
+            } else if (type === "video") {
+              estimatedHeight = 420;
+            } else if (
+              type === "cta" ||
+              type === "newsletter" ||
+              type === "contact" ||
+              type === "form_builder" ||
+              type === "reservation_form" ||
+              type === "generic_card" ||
+              type === "hero" ||
+              type === "image_text_split" ||
+              type === "features" ||
+              type === "faq" ||
+              type === "navigation_bar" ||
+              type === "footer" ||
+              type === "pricing" ||
+              type === "countdown" ||
+              type === "testimonials" ||
+              type === "reviews" ||
+              type === "stats" ||
+              type === "logo_carousel" ||
+              type === "map_location" ||
+              type === "menu_display" ||
+              type === "announcement_bar"
+            ) {
+              estimatedHeight = 180;
+            } else if (type === "divider" || type === "spacer") {
+              estimatedHeight = 32;
+            } else if (type === "heading") {
+              estimatedHeight = 120;
+            } else if (
+              type === "text" ||
+              type === "paragraph" ||
+              type === "label"
+            ) {
+              estimatedHeight = 110;
+            }
+            return y + estimatedHeight + 80;
+          }),
+        )
+      : 360;
     const sectionLayoutWidth = section.sectionStyle?.layoutWidth || "full";
     const rawSectionSx = getSectionStyleSx(section);
     const sectionContentSx = { ...rawSectionSx };
@@ -2011,7 +2232,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         {...getSectionStyleDomProps(section)}
         sx={{
           width: "100%",
-          minHeight: innerBlocks.length > 0 ? { xs: "auto", md: 520 } : { xs: 360, md: 520 },
+          minHeight:
+            section.sectionStyle?.heightPreset === "auto" ||
+            !section.sectionStyle?.heightPreset
+              ? { xs: "auto", md: `${customSectionCanvasAutoMinHeight}px` }
+              : innerBlocks.length > 0
+                ? { xs: "auto", md: 520 }
+                : { xs: 360, md: 520 },
           backgroundColor:
             sectionLayoutWidth === "page" ? "transparent" : "#ffffff",
           display: "flex",

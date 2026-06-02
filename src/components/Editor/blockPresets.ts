@@ -229,9 +229,7 @@ export const getBlockDefaultContent = (
       };
     case "VIDEO":
       return {
-        heading: "Watch how it works",
         videoUrl: DEFAULT_VIDEO,
-        caption: "Replace this sample video from the editor.",
         aspectRatio: "16:9",
         showControls: true,
         autoplay: false,
@@ -420,14 +418,12 @@ export const getLocalFieldMetadata = (
   switch (normalizeBlockTypeKey(blockType)) {
     case "VIDEO":
       return contentGroup([
-        makeTextField("heading", "Heading", 1),
-        makeTextField("videoUrl", "Video URL", 2),
-        makeTextField("caption", "Caption", 3, true),
+        makeTextField("videoUrl", "Video URL", 1),
         {
           name: "aspectRatio",
           label: "Aspect Ratio",
           type: "SELECT",
-          order: 4,
+          order: 2,
           ui: {
             props: {
               options: [
@@ -438,10 +434,10 @@ export const getLocalFieldMetadata = (
             },
           },
         },
-        { name: "showControls", label: "Show Controls", type: "TOGGLE", order: 5 },
-        { name: "autoplay", label: "Autoplay", type: "TOGGLE", order: 6 },
-        { name: "muted", label: "Muted", type: "TOGGLE", order: 7 },
-        { name: "loop", label: "Loop", type: "TOGGLE", order: 8 },
+        { name: "showControls", label: "Show Controls", type: "TOGGLE", order: 3 },
+        { name: "autoplay", label: "Autoplay", type: "TOGGLE", order: 4 },
+        { name: "muted", label: "Muted", type: "TOGGLE", order: 5 },
+        { name: "loop", label: "Loop", type: "TOGGLE", order: 6 },
       ]);
     case "FEATURES":
       return contentGroup([

@@ -236,7 +236,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
             aria-describedby={hasErrors ? errorId : undefined}
             sx={{
               width: "100%",
-              minHeight: { xs: 120, sm: 160 },
+              height: { xs: 120, sm: 170 },
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -270,16 +270,16 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
           >
             <input {...getInputProps()} />
 
-            <CloudUploadIcon sx={{ fontSize: 40, color: "text.secondary" }} />
+            <CloudUploadIcon sx={{ fontSize: 40, color: "text.primary" }} />
             <Typography
               variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center", px: 2 }}
+              sx={{ color: "text.primary", textAlign: "center", px: 2 }}
             >
               {isDragActive
                 ? "Drop the image here"
                 : "Drag & drop an image or click to upload"}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            <Typography variant="caption" sx={{ color: "text.primary" }}>
               JPEG, PNG, GIF, WebP &mdash; max {maxSizeMB}MB
             </Typography>
 

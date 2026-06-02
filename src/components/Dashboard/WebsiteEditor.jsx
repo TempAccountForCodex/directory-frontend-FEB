@@ -43,6 +43,7 @@ import {
   ListItemSecondaryAction,
   FormControl,
   Select,
+  Slider,
   Switch,
   FormControlLabel,
   Paper,
@@ -603,6 +604,7 @@ const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
     case "stats":
     case "logo_carousel":
     case "hero":
+    case "video":
     case "features":
     case "navigation_bar":
     case "footer":
@@ -946,13 +948,13 @@ const buildInnerBlockFromLibraryItem = (item) => {
         type: "video",
         label,
         content: {
-          heading: "See the walkthrough",
-          body: "Add a sample video now and replace it later from the editor.",
           videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-          caption: "Replace this sample video from the editor.",
-          aspectRatio: "16:9",
           showControls: true,
           muted: true,
+          width: 94,
+          mobileWidth: 100,
+          heightPreset: "auto",
+          objectFit: "contain",
         },
       };
     case "tabs":
@@ -1121,6 +1123,46 @@ const setValueAtPath = (source, path, value) => {
   });
 
   return root;
+};
+
+const getBlockInnerBlocks = (block) => {
+  if (Array.isArray(block?.content?.innerBlocks)) {
+    return block.content.innerBlocks;
+  }
+  if (Array.isArray(block?.innerBlocks)) {
+    return block.innerBlocks;
+  }
+  return [];
+};
+
+const withSyncedBlockContent = (block, nextContent) => ({
+  ...block,
+  content: nextContent,
+  ...(Array.isArray(nextContent?.innerBlocks)
+    ? { innerBlocks: nextContent.innerBlocks }
+    : {}),
+});
+
+const withSyncedInnerBlocks = (block, innerBlocks) =>
+  withSyncedBlockContent(block, {
+    ...(block.content || {}),
+    innerBlocks,
+  });
+
+const buildBlockEditorInitialContent = (block) => {
+  const rootContent = omitInnerBlocksMirror(block?.content || {});
+  if (!block?.content?.editorBlockType) {
+    return rootContent;
+  }
+
+  const firstInnerContent = getBlockInnerBlocks(block)[0]?.content;
+  return {
+    ...rootContent,
+    ...(firstInnerContent && typeof firstInnerContent === "object"
+      ? omitInnerBlocksMirror(firstInnerContent)
+      : {}),
+    editorLabel: block?.content?.editorLabel ?? rootContent.editorLabel ?? "",
+  };
 };
 
 const getValueAtPath = (source, path) => {
@@ -1441,11 +1483,9 @@ const WebsiteEditorInner = () => {
       ...normalizedNextValues,
     };
 
-    const existingInnerBlocks = Array.isArray(block.innerBlocks)
-      ? block.innerBlocks
-      : Array.isArray(nextContent.innerBlocks)
-        ? nextContent.innerBlocks
-        : [];
+    const existingInnerBlocks = Array.isArray(nextContent.innerBlocks)
+      ? nextContent.innerBlocks
+      : getBlockInnerBlocks(block);
 
     if (nextContent?.editorBlockType && existingInnerBlocks[0]) {
       const firstInnerBlock = existingInnerBlocks[0];
@@ -1460,20 +1500,13 @@ const WebsiteEditorInner = () => {
         ...existingInnerBlocks.slice(1),
       ];
 
-      return {
-        ...block,
-        content: {
-          ...nextContent,
-          innerBlocks: syncedInnerBlocks,
-        },
+      return withSyncedBlockContent(block, {
+        ...nextContent,
         innerBlocks: syncedInnerBlocks,
-      };
+      });
     }
 
-    return {
-      ...block,
-      content: nextContent,
-    };
+    return withSyncedBlockContent(block, nextContent);
   }, []);
 
   const flushLivePreviewUpdate = useCallback(() => {
@@ -1553,6 +1586,31 @@ const WebsiteEditorInner = () => {
     },
     [editingBlock?.id, scheduleLivePreviewUpdate],
   );
+  const isVideoEditingBlock =
+    String(editingBlock?.blockType || "").toLowerCase() === "video";
+  const selectedEditingBlockContent = useMemo(
+    () => ({
+      ...(editingBlock?.content || {}),
+      ...(blockForm.content || {}),
+    }),
+    [editingBlock?.content, blockForm.content],
+  );
+  const updateEditingBlockContentPatch = useCallback(
+    (patch) => {
+      handleEditingBlockContentChange({
+        ...selectedEditingBlockContent,
+        ...patch,
+      });
+    },
+    [handleEditingBlockContentChange, selectedEditingBlockContent],
+  );
+  const getVideoPercentValue = useCallback((value, fallback = 100) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+    return Math.min(100, Math.max(20, Math.round(parsed)));
+  }, []);
   const isLoadingRef = useRef(true);
 
   // ETag + updatedAt refs for conflict detection (Step 5.9)
@@ -2872,7 +2930,12 @@ const WebsiteEditorInner = () => {
       sectionStyle: {
         backgroundColor: "#ffffff",
         layoutWidth: "full",
-        heightPreset: "medium",
+        heightPreset:
+          String(seededInnerBlock?.type || "").toLowerCase() === "video"
+            ? "fullscreen"
+            : shouldSeedInnerBlock
+              ? "auto"
+              : "medium",
         contentAlign: "left",
         paddingTop: "0px",
         paddingBottom: "0px",
@@ -3151,20 +3214,17 @@ const WebsiteEditorInner = () => {
                 ? existingInnerContent.imageStyle
                 : {};
 
-            return {
-              ...block,
-              content: {
-                ...block.content,
-                innerBlocks: setValueAtPath(
-                  existingInnerBlocks,
-                  `${innerIndex}.content.imageStyle`,
-                  {
-                    ...existingStyle,
-                    ...patch,
-                  },
-                ),
-              },
-            };
+            return withSyncedInnerBlocks(
+              block,
+              setValueAtPath(
+                existingInnerBlocks,
+                `${innerIndex}.content.imageStyle`,
+                {
+                  ...existingStyle,
+                  ...patch,
+                },
+              ),
+            );
           }
 
           const styleKey = `${target.fieldPath}Style`;
@@ -3215,20 +3275,17 @@ const WebsiteEditorInner = () => {
                 ? existingInnerContent[styleKey]
                 : {};
 
-            return {
-              ...block,
-              content: {
-                ...block.content,
-                innerBlocks: setValueAtPath(
-                  existingInnerBlocks,
-                  `${innerIndex}.content.${styleKey}`,
-                  {
-                    ...existingStyle,
-                    ...patch,
-                  },
-                ),
-              },
-            };
+            return withSyncedInnerBlocks(
+              block,
+              setValueAtPath(
+                existingInnerBlocks,
+                `${innerIndex}.content.${styleKey}`,
+                {
+                  ...existingStyle,
+                  ...patch,
+                },
+              ),
+            );
           }
 
           const { styleKey } = getEditableStyleConfig(target.fieldPath);
@@ -3412,15 +3469,10 @@ const WebsiteEditorInner = () => {
             const innerBlocks = Array.isArray(block.content?.innerBlocks)
               ? block.content.innerBlocks
               : [];
-            return {
-              ...block,
-              content: {
-                ...block.content,
-                innerBlocks: innerBlocks.filter(
-                  (_, index) => index !== innerMatch.index,
-                ),
-              },
-            };
+            return withSyncedInnerBlocks(
+              block,
+              innerBlocks.filter((_, index) => index !== innerMatch.index),
+            );
           }),
         );
       } else {
@@ -3428,14 +3480,14 @@ const WebsiteEditorInner = () => {
         setBlocks((prev) =>
           prev.map((block) =>
             String(block.id) === String(layer.editable.blockId)
-              ? {
-                  ...block,
-                  content: setValueAtPath(
+              ? withSyncedBlockContent(
+                  block,
+                  setValueAtPath(
                     { ...(block.content || {}) },
                     layer.editable.fieldPath,
                     "",
                   ),
-                }
+                )
               : block,
           ),
         );
@@ -3459,15 +3511,10 @@ const WebsiteEditorInner = () => {
             const innerBlocks = Array.isArray(block.content?.innerBlocks)
               ? block.content.innerBlocks
               : [];
-            return {
-              ...block,
-              content: {
-                ...block.content,
-                innerBlocks: innerBlocks.filter(
-                  (_, index) => index !== innerMatch.index,
-                ),
-              },
-            };
+            return withSyncedInnerBlocks(
+              block,
+              innerBlocks.filter((_, index) => index !== innerMatch.index),
+            );
           }),
         );
       } else {
@@ -3475,14 +3522,14 @@ const WebsiteEditorInner = () => {
         setBlocks((prev) =>
           prev.map((block) =>
             String(block.id) === String(layer.image.blockId)
-              ? {
-                  ...block,
-                  content: setValueAtPath(
+              ? withSyncedBlockContent(
+                  block,
+                  setValueAtPath(
                     { ...(block.content || {}) },
                     layer.image.fieldPath,
                     "",
                   ),
-                }
+                )
               : block,
           ),
         );
@@ -3745,19 +3792,13 @@ const WebsiteEditorInner = () => {
             const innerBlocks = Array.isArray(block.content?.innerBlocks)
               ? block.content.innerBlocks
               : [];
-            return {
-              ...block,
-              content: {
-                ...block.content,
-                innerBlocks: [
-                  ...innerBlocks,
-                  {
-                    ...deepClone(previewClipboard.innerBlock),
-                    id: `inner-${Date.now()}`,
-                  },
-                ],
+            return withSyncedInnerBlocks(block, [
+              ...innerBlocks,
+              {
+                ...deepClone(previewClipboard.innerBlock),
+                id: `inner-${Date.now()}`,
               },
-            };
+            ]);
           }),
         );
         finalizePaste();
@@ -3773,14 +3814,14 @@ const WebsiteEditorInner = () => {
         setBlocks((prev) =>
           prev.map((block) =>
             String(block.id) === String(layer.editable.blockId)
-              ? {
-                  ...block,
-                  content: setValueAtPath(
+              ? withSyncedBlockContent(
+                  block,
+                  setValueAtPath(
                     { ...(block.content || {}) },
                     layer.editable.fieldPath,
                     previewClipboard.value ?? "",
                   ),
-                }
+                )
               : block,
           ),
         );
@@ -3797,14 +3838,14 @@ const WebsiteEditorInner = () => {
         setBlocks((prev) =>
           prev.map((block) =>
             String(block.id) === String(layer.image.blockId)
-              ? {
-                  ...block,
-                  content: setValueAtPath(
+              ? withSyncedBlockContent(
+                  block,
+                  setValueAtPath(
                     { ...(block.content || {}) },
                     layer.image.fieldPath,
                     previewClipboard.src ?? "",
                   ),
-                }
+                )
               : block,
           ),
         );
@@ -3823,26 +3864,20 @@ const WebsiteEditorInner = () => {
             const innerBlocks = Array.isArray(block.content?.innerBlocks)
               ? block.content.innerBlocks
               : [];
-            return {
-              ...block,
-              content: {
-                ...block.content,
-                innerBlocks: [
-                  ...innerBlocks,
-                  {
-                    id: `inner-${Date.now()}`,
-                    type: "text",
-                    label: previewClipboard.label || "Text",
-                    content: {
-                      text:
-                        typeof previewClipboard.value === "string"
-                          ? previewClipboard.value
-                          : "",
-                    },
-                  },
-                ],
+            return withSyncedInnerBlocks(block, [
+              ...innerBlocks,
+              {
+                id: `inner-${Date.now()}`,
+                type: "text",
+                label: previewClipboard.label || "Text",
+                content: {
+                  text:
+                    typeof previewClipboard.value === "string"
+                      ? previewClipboard.value
+                      : "",
+                },
               },
-            };
+            ]);
           }),
         );
         finalizePaste();
@@ -3860,27 +3895,21 @@ const WebsiteEditorInner = () => {
             const innerBlocks = Array.isArray(block.content?.innerBlocks)
               ? block.content.innerBlocks
               : [];
-            return {
-              ...block,
-              content: {
-                ...block.content,
-                innerBlocks: [
-                  ...innerBlocks,
-                  {
-                    id: `inner-${Date.now()}`,
-                    type: "image",
-                    label: previewClipboard.label || "Image",
-                    content: {
-                      src:
-                        typeof previewClipboard.src === "string"
-                          ? previewClipboard.src
-                          : "",
-                      alt: previewClipboard.label || "Image",
-                    },
-                  },
-                ],
+            return withSyncedInnerBlocks(block, [
+              ...innerBlocks,
+              {
+                id: `inner-${Date.now()}`,
+                type: "image",
+                label: previewClipboard.label || "Image",
+                content: {
+                  src:
+                    typeof previewClipboard.src === "string"
+                      ? previewClipboard.src
+                      : "",
+                  alt: previewClipboard.label || "Image",
+                },
               },
-            };
+            ]);
           }),
         );
         finalizePaste();
@@ -3983,20 +4012,17 @@ const WebsiteEditorInner = () => {
                 ? existingInnerContent[styleKey]
                 : {};
 
-            return {
-              ...block,
-              content: {
-                ...block.content,
-                innerBlocks: setValueAtPath(
-                  existingInnerBlocks,
-                  `${innerMatch.index}.content.${styleKey}`,
-                  {
-                    ...existingStyle,
-                    ...patch,
-                  },
-                ),
-              },
-            };
+            return withSyncedInnerBlocks(
+              block,
+              setValueAtPath(
+                existingInnerBlocks,
+                `${innerMatch.index}.content.${styleKey}`,
+                {
+                  ...existingStyle,
+                  ...patch,
+                },
+              ),
+            );
           }
 
           const { styleKey } = getEditableStyleConfig(resolvedFieldName);
@@ -4067,34 +4093,31 @@ const WebsiteEditorInner = () => {
                   )
                 : existingInnerBlocks;
 
-            return {
-              ...block,
-              content: {
-                ...block.content,
-                innerBlocks: setValueAtPath(
-                  nextInnerBlocks,
-                  `${innerMatch.index}.content.imageStyle`,
-                  {
-                    ...existingStyle,
-                    ...(typeof patch.objectFit === "string"
-                      ? { objectFit: patch.objectFit }
-                      : {}),
-                    ...(typeof patch.borderRadius === "string"
-                      ? { borderRadius: patch.borderRadius }
-                      : {}),
-                    ...(typeof patch.borderWidth === "string"
-                      ? {
-                          borderWidth: patch.borderWidth,
-                          borderStyle: "solid",
-                        }
-                      : {}),
-                    ...(typeof patch.borderColor === "string"
-                      ? { borderColor: patch.borderColor }
-                      : {}),
-                  },
-                ),
-              },
-            };
+            return withSyncedInnerBlocks(
+              block,
+              setValueAtPath(
+                nextInnerBlocks,
+                `${innerMatch.index}.content.imageStyle`,
+                {
+                  ...existingStyle,
+                  ...(typeof patch.objectFit === "string"
+                    ? { objectFit: patch.objectFit }
+                    : {}),
+                  ...(typeof patch.borderRadius === "string"
+                    ? { borderRadius: patch.borderRadius }
+                    : {}),
+                  ...(typeof patch.borderWidth === "string"
+                    ? {
+                        borderWidth: patch.borderWidth,
+                        borderStyle: "solid",
+                      }
+                    : {}),
+                  ...(typeof patch.borderColor === "string"
+                    ? { borderColor: patch.borderColor }
+                    : {}),
+                },
+              ),
+            );
           }
 
           const existingStyle =
@@ -4326,13 +4349,10 @@ const WebsiteEditorInner = () => {
               }
             : nextInnerBlock;
 
-          return {
-            ...block,
-            content: {
-              ...block.content,
-              innerBlocks: [...existingInnerBlocks, positionedInnerBlock],
-            },
-          };
+          return withSyncedInnerBlocks(block, [
+            ...existingInnerBlocks,
+            positionedInnerBlock,
+          ]);
         }),
       );
       setIsSectionInnerBlockModalOpen(false);
@@ -4365,13 +4385,13 @@ const WebsiteEditorInner = () => {
               : {};
 
           if (styleKey.includes(".")) {
-            return {
-              ...block,
-              content: setValueAtPath(block.content || {}, styleKey, {
+            return withSyncedBlockContent(
+              block,
+              setValueAtPath(block.content || {}, styleKey, {
                 ...safeExistingStyle,
                 ...patch,
               }),
-            };
+            );
           }
 
           return {
@@ -4414,7 +4434,7 @@ const WebsiteEditorInner = () => {
           obj = obj[parts[i]];
         }
         obj[parts[parts.length - 1]] = newValue;
-        return updated;
+        return withSyncedBlockContent(block, updated.content);
       });
 
       blocksRef.current = nextBlocks;
@@ -5570,18 +5590,233 @@ const WebsiteEditorInner = () => {
                                   }}
                                 />
                                 <Box sx={blockEditorFormSx}>
-                                  <FormGenerator
-                                    blockType={String(
-                                      editingBlock?.blockType || "",
-                                    ).toLowerCase()}
-                                    initialValues={blockForm.content}
-                                    onChange={handleEditingBlockContentChange}
-                                    onValidate={(errors) =>
-                                      setFormHasErrors(
-                                        Object.keys(errors).length > 0,
-                                      )
-                                    }
-                                  />
+                                  {isVideoEditingBlock ? (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 2.25,
+                                      }}
+                                    >
+                                      <Typography
+                                        sx={{
+                                          fontSize: "0.94rem",
+                                          fontWeight: 800,
+                                          color: colors.text,
+                                        }}
+                                      >
+                                        Content
+                                      </Typography>
+                                      <DashboardInput
+                                        fullWidth
+                                        label="Video URL"
+                                        labelPlacement="floating"
+                                        placeholder="https://..."
+                                        value={
+                                          selectedEditingBlockContent.videoUrl ||
+                                          ""
+                                        }
+                                        onChange={(event) =>
+                                          updateEditingBlockContentPatch({
+                                            videoUrl: event.target.value,
+                                          })
+                                        }
+                                        sx={{
+                                          "& .MuiOutlinedInput-root": {
+                                            borderRadius: "12px",
+                                            backgroundColor: "#ffffff",
+                                          },
+                                        }}
+                                      />
+
+                                      <Box>
+                                        <Typography
+                                          sx={{
+                                            fontSize: "0.94rem",
+                                            fontWeight: 800,
+                                            color: colors.text,
+                                            mb: 1.25,
+                                          }}
+                                        >
+                                          Size
+                                        </Typography>
+
+                                        {[
+                                          {
+                                            key: "width",
+                                            label: "Width",
+                                          },
+                                          {
+                                            key: "mobileWidth",
+                                            label: "Mobile width",
+                                          },
+                                        ].map((item) => {
+                                          const value = getVideoPercentValue(
+                                            selectedEditingBlockContent[
+                                              item.key
+                                            ],
+                                          );
+
+                                          return (
+                                            <Box
+                                              key={item.key}
+                                              sx={{
+                                                display: "grid",
+                                                gridTemplateColumns: "1fr auto",
+                                                gap: 1.2,
+                                                alignItems: "center",
+                                                mb:
+                                                  item.key === "width"
+                                                    ? 1.4
+                                                    : 0,
+                                              }}
+                                            >
+                                              <Box sx={{ minWidth: 0 }}>
+                                                <Typography
+                                                  sx={{
+                                                    fontSize: "0.88rem",
+                                                    color: editorMutedText,
+                                                    mb: 0.7,
+                                                  }}
+                                                >
+                                                  {item.label}
+                                                </Typography>
+                                                <Slider
+                                                  value={value}
+                                                  min={20}
+                                                  max={100}
+                                                  step={1}
+                                                  onChange={(_, nextValue) =>
+                                                    updateEditingBlockContentPatch(
+                                                      {
+                                                        [item.key]:
+                                                          Array.isArray(
+                                                            nextValue,
+                                                          )
+                                                            ? nextValue[0]
+                                                            : nextValue,
+                                                      },
+                                                    )
+                                                  }
+                                                  sx={{
+                                                    color: "#111827",
+                                                    px: 0.2,
+                                                    "& .MuiSlider-thumb": {
+                                                      width: 18,
+                                                      height: 18,
+                                                    },
+                                                  }}
+                                                />
+                                              </Box>
+                                              <Box
+                                                sx={{
+                                                  minWidth: 72,
+                                                  height: 42,
+                                                  px: 1.3,
+                                                  borderRadius: "12px",
+                                                  border: `1px solid ${alpha("#111827", 0.16)}`,
+                                                  backgroundColor: "#ffffff",
+                                                  display: "flex",
+                                                  alignItems: "center",
+                                                  justifyContent: "center",
+                                                  gap: 0.45,
+                                                  color: "#111827",
+                                                  fontWeight: 700,
+                                                }}
+                                              >
+                                                <Typography
+                                                  sx={{
+                                                    fontSize: "0.95rem",
+                                                    fontWeight: 700,
+                                                    color: "#111827",
+                                                  }}
+                                                >
+                                                  {value}
+                                                </Typography>
+                                                <Typography
+                                                  sx={{
+                                                    fontSize: "0.9rem",
+                                                    color: alpha(
+                                                      "#111827",
+                                                      0.65,
+                                                    ),
+                                                  }}
+                                                >
+                                                  %
+                                                </Typography>
+                                              </Box>
+                                            </Box>
+                                          );
+                                        })}
+                                      </Box>
+
+                                      <FormControl size="small" fullWidth>
+                                        <Select
+                                          value={
+                                            selectedEditingBlockContent.heightPreset ||
+                                            "fullscreen"
+                                          }
+                                          onChange={(event) =>
+                                            updateEditingBlockContentPatch({
+                                              heightPreset: event.target.value,
+                                            })
+                                          }
+                                          sx={{
+                                            height: 54,
+                                            borderRadius: 2.5,
+                                            backgroundColor: "#ffffff",
+                                            "& .MuiOutlinedInput-notchedOutline":
+                                              {
+                                                borderColor: alpha(
+                                                  "#111827",
+                                                  0.12,
+                                                ),
+                                              },
+                                            "&:hover .MuiOutlinedInput-notchedOutline":
+                                              {
+                                                borderColor: alpha(
+                                                  colors.primary,
+                                                  0.35,
+                                                ),
+                                              },
+                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                              {
+                                                borderColor: colors.primary,
+                                              },
+                                          }}
+                                        >
+                                          <MenuItem value="auto">
+                                            Height: auto
+                                          </MenuItem>
+                                          <MenuItem value="small">
+                                            Height: small
+                                          </MenuItem>
+                                          <MenuItem value="medium">
+                                            Height: medium
+                                          </MenuItem>
+                                          <MenuItem value="large">
+                                            Height: large
+                                          </MenuItem>
+                                          <MenuItem value="fullscreen">
+                                            Height: full screen
+                                          </MenuItem>
+                                        </Select>
+                                      </FormControl>
+                                    </Box>
+                                  ) : (
+                                    <FormGenerator
+                                      blockType={String(
+                                        editingBlock?.blockType || "",
+                                      ).toLowerCase()}
+                                      initialValues={blockForm.content}
+                                      onChange={handleEditingBlockContentChange}
+                                      onValidate={(errors) =>
+                                        setFormHasErrors(
+                                          Object.keys(errors).length > 0,
+                                        )
+                                      }
+                                    />
+                                  )}
                                 </Box>
                               </Box>
                             </>
@@ -5879,24 +6114,13 @@ const WebsiteEditorInner = () => {
                                           (b) => b.id === blockId,
                                         );
                                         if (block) {
-                                          const initialContent =
-                                            block.content?.editorBlockType &&
-                                            Array.isArray(block.innerBlocks) &&
-                                            block.innerBlocks[0]?.content
-                                              ? {
-                                                  editorLabel:
-                                                    block.content
-                                                      ?.editorLabel ?? "",
-                                                  ...(block.innerBlocks[0]
-                                                    .content || {}),
-                                                }
-                                              : omitInnerBlocksMirror(
-                                                  block.content || {},
-                                                );
                                           setEditingBlock(block);
                                           setBlockForm({
                                             blockType: block.blockType,
-                                            content: initialContent || {},
+                                            content:
+                                              buildBlockEditorInitialContent(
+                                                block,
+                                              ) || {},
                                           });
                                         }
                                       }}
@@ -7536,9 +7760,7 @@ const WebsiteEditorInner = () => {
           <Alert
             severity={saveToast.severity}
             variant="filled"
-            onClose={() =>
-              setSaveToast((prev) => ({ ...prev, open: false }))
-            }
+            onClose={() => setSaveToast((prev) => ({ ...prev, open: false }))}
             sx={{
               width: "100%",
               borderRadius: 2,

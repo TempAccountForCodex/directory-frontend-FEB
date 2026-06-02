@@ -71,7 +71,16 @@ function useFieldMetadata(blockType: string): UseFieldMetadataResult {
   const fetchMetadata = useCallback(() => {
     let cancelled = false;
     const localMetadata = getLocalFieldMetadata(blockType);
-    const preferLocalMetadata = blockType.trim().toUpperCase() === "FAQ";
+
+    if (localMetadata) {
+      cacheRef.current[blockType] = localMetadata;
+      setMetadata(localMetadata);
+      setLoading(false);
+      setError(null);
+      return () => {
+        cancelled = true;
+      };
+    }
 
     // Check cache first
     if (cacheRef.current[blockType]) {
@@ -96,9 +105,7 @@ function useFieldMetadata(blockType: string): UseFieldMetadataResult {
       .then((data) => {
         if (cancelled) return;
         const resolved =
-          preferLocalMetadata && localMetadata
-            ? localMetadata
-            : data && Array.isArray(data.groups) && data.groups.length > 0
+          data && Array.isArray(data.groups) && data.groups.length > 0
             ? data
             : localMetadata;
         if (resolved) {
