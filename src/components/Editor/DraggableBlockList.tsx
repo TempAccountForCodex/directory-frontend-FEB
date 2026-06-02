@@ -53,11 +53,18 @@ export interface DraggableBlock {
   variant?: string;
 }
 
+const humanizeBlockType = (value: string): string =>
+  String(value || "")
+    .replace(/[_-]+/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .trim();
+
 const getBlockLabel = (block: DraggableBlock): string => {
   const customLabel = block.content?.editorLabel;
   return typeof customLabel === "string" && customLabel.trim()
     ? customLabel.trim()
-    : block.blockType;
+    : humanizeBlockType(block.blockType);
 };
 
 export interface DraggableBlockListProps {
@@ -247,8 +254,8 @@ const SortableBlock = React.memo(function SortableBlock({
             flexGrow: 1,
             color: "inherit",
             fontWeight: isSelected ? 700 : 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
+            textTransform: "none",
+            letterSpacing: "0.01em",
             fontSize: "0.84rem",
             position: "relative",
             zIndex: 1,
@@ -325,8 +332,8 @@ const DragOverlayBlock = React.memo(function DragOverlayBlock({
         sx={{
           flexGrow: 1,
           fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
+          textTransform: "none",
+          letterSpacing: "0.01em",
           fontSize: "0.84rem",
         }}
       >

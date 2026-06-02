@@ -558,7 +558,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const sectionPosition = Object.fromEntries(
     resolvedSectionOrder.map((key, index) => [key, index + 1]),
   ) as Record<string, number>;
-  const navItems = resolvedSectionOrder.map((key) => {
+  const navItems = defaultSectionOrder.map((key) => {
     const defaultLabel = customSectionMap.has(key)
       ? String(
           customSectionMap.get(key)?.label ||
@@ -879,6 +879,79 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             transform: getCanvasTransform(textStyle.transform),
           }}
         />
+      );
+    }
+
+    if (blockType === "marquee") {
+      const marqueeText =
+        block.content?.text || "We make things that work better and last longer.";
+      const marqueeItems = Array.from({ length: 8 }, (_, itemIndex) => ({
+        id: `marquee-${itemIndex}`,
+        text: marqueeText,
+      }));
+
+      return (
+        <Box
+          key={String(block.id || `${blockType}-${index}`)}
+          {...compoundBlockSelectionProps}
+          data-preview-label={compoundBlockLabel}
+          sx={{
+            width: "100%",
+            overflow: "hidden",
+            borderTop: `1px solid ${rgba(themeColor, 0.16)}`,
+            borderBottom: `1px solid ${rgba(themeColor, 0.16)}`,
+            backgroundColor:
+              tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+            ...canvasBaseSx,
+            ...sectionStyle,
+            ...cardStyle,
+            transform: getCanvasTransform(cardStyle.transform),
+            ...(canvas
+              ? {}
+              : {
+                  minHeight: "auto",
+                  height: "auto",
+                }),
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 4, md: 6 },
+              py: { xs: 1.6, md: 2 },
+              width: "max-content",
+              minWidth: "100%",
+              animation: "companyMarqueeSlide 28s linear infinite",
+              "@keyframes companyMarqueeSlide": {
+                "0%": { transform: "translateX(0)" },
+                "100%": { transform: "translateX(-50%)" },
+              },
+            }}
+          >
+            {[...marqueeItems, ...marqueeItems].map((item, itemIndex) => (
+              <Typography
+                key={`${item.id}-${itemIndex}`}
+                {...getEditableTextProps(
+                  section.blockId,
+                  `${blockPath}.text`,
+                  "single",
+                )}
+                sx={{
+                  color: textColor,
+                  fontFamily: headingFont,
+                  fontSize: { xs: "1rem", md: "1.1rem" },
+                  fontWeight: 600,
+                  letterSpacing: "0.01em",
+                  whiteSpace: "nowrap",
+                  ...textStyle,
+                }}
+              >
+                {item.text}
+              </Typography>
+            ))}
+          </Box>
+        </Box>
       );
     }
 
@@ -2111,9 +2184,14 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const innerBlocks = Array.isArray(section.innerBlocks)
       ? section.innerBlocks
       : [];
+    const isCompactFlowSection =
+      innerBlocks.length > 0 &&
+      innerBlocks.every(
+        (block) => String(block?.type || "").toLowerCase() === "marquee",
+      );
     const customSectionCanvasAutoMinHeight = innerBlocks.length
       ? Math.max(
-          220,
+          140,
           ...innerBlocks.map((block) => {
             const transformValue =
               block?.content?.cardStyle?.transform ||
@@ -2146,6 +2224,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               estimatedHeight = 320;
             } else if (type === "video") {
               estimatedHeight = 420;
+            } else if (type === "marquee") {
+              estimatedHeight = 64;
             } else if (
               type === "cta" ||
               type === "newsletter" ||
@@ -2181,10 +2261,17 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             ) {
               estimatedHeight = 110;
             }
-            return y + estimatedHeight + 80;
+            return Math.max(estimatedHeight + 24, y + estimatedHeight + 24);
           }),
         )
       : 360;
+    const isAutoHeightSection =
+      section.sectionStyle?.heightPreset === "auto" ||
+      !section.sectionStyle?.heightPreset;
+    const useDesktopCanvas =
+      innerBlocks.length > 0 &&
+      !isCompactFlowSection &&
+      !isAutoHeightSection;
     const sectionLayoutWidth = section.sectionStyle?.layoutWidth || "full";
     const rawSectionSx = getSectionStyleSx(section);
     const sectionContentSx = { ...rawSectionSx };
@@ -2232,46 +2319,52 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         {...getSectionStyleDomProps(section)}
         sx={{
           width: "100%",
-          minHeight:
-            section.sectionStyle?.heightPreset === "auto" ||
-            !section.sectionStyle?.heightPreset
-              ? { xs: "auto", md: `${customSectionCanvasAutoMinHeight}px` }
+          minHeight: isAutoHeightSection
+            ? "auto"
+            : isCompactFlowSection
+              ? "auto"
               : innerBlocks.length > 0
                 ? { xs: "auto", md: 520 }
                 : { xs: 360, md: 520 },
           backgroundColor:
             sectionLayoutWidth === "page" ? "transparent" : "#ffffff",
           display: "flex",
-          alignItems: { xs: "stretch", md: "center" },
-          justifyContent: { xs: "flex-start", md: "center" },
-          overflow: "hidden",
+          alignItems: { xs: "stretch", md: isAutoHeightSection ? "stretch" : "center" },
+          justifyContent: { xs: "flex-start", md: isAutoHeightSection ? "flex-start" : "center" },
+          overflow: isAutoHeightSection ? "visible" : "hidden",
           ...sectionContentSx,
         }}
       >
         <Box
           sx={{
             width: "100%",
-            minHeight: { xs: "auto", md: "inherit" },
+            minHeight: { xs: "auto", md: isAutoHeightSection ? "auto" : "inherit" },
             px: { xs: 2, md: 4 },
-            py: { xs: 4, md: 6 },
+            py:
+              isCompactFlowSection
+                ? { xs: 0.5, md: 0.75 }
+                : innerBlocks.length > 0 && isAutoHeightSection
+                ? { xs: 2, md: 3 }
+                : { xs: 4, md: 6 },
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-start",
-            justifyContent: { xs: "flex-start", md: "center" },
+            justifyContent: { xs: "flex-start", md: isCompactFlowSection ? "flex-start" : "center" },
             gap: 2,
           }}
         >
           {innerBlocks.length > 0 ? (
             <>
-              <Box sx={{ display: { xs: "flex", md: "none" }, width: "100%" }}>
+              <Box sx={{ display: { xs: "flex", md: useDesktopCanvas ? "none" : "flex" }, width: "100%" }}>
                 {renderSectionInnerBlocks(section, {
                   tone: "dark",
                   maxWidth: "100%",
+                  mt: isCompactFlowSection || isAutoHeightSection ? 0 : undefined,
                 })}
               </Box>
               <Box
                 sx={{
-                  display: { xs: "none", md: "block" },
+                  display: { xs: "none", md: useDesktopCanvas ? "block" : "none" },
                   width: "100%",
                   minHeight: "inherit",
                   position: "relative",

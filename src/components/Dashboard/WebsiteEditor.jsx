@@ -534,7 +534,7 @@ const getInnerBlockStyleKey = (innerBlock, fieldName = "text") => {
 
 const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
   const row = Math.floor(index / 2);
-  const stackOffset = row * 64;
+  const stackOffset = row * 48;
   const normalizedKey = String(blockKey || "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_");
@@ -545,33 +545,33 @@ const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
     case "label":
       return {
         textStyle: {
-          transform: `translate(56px, ${48 + stackOffset}px)`,
+          transform: `translate(40px, ${28 + stackOffset}px)`,
         },
       };
     case "heading":
       return {
         headingStyle: {
-          transform: `translate(56px, ${104 + stackOffset}px)`,
+          transform: `translate(40px, ${78 + stackOffset}px)`,
           maxWidth: "540px",
         },
       };
     case "text":
       return {
         textStyle: {
-          transform: `translate(56px, ${232 + stackOffset}px)`,
+          transform: `translate(40px, ${170 + stackOffset}px)`,
           maxWidth: "520px",
         },
       };
     case "button":
       return {
         buttonTextStyle: {
-          transform: `translate(${56 + row * 160}px, ${340 + stackOffset}px)`,
+          transform: `translate(${40 + row * 152}px, ${250 + stackOffset}px)`,
         },
       };
     case "image":
       return {
         imageStyle: {
-          transform: `translate(640px, ${110 + row * 40}px)`,
+          transform: `translate(560px, ${44 + row * 32}px)`,
           width: "320px",
           height: "320px",
         },
@@ -579,14 +579,14 @@ const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
     case "divider":
       return {
         textStyle: {
-          transform: `translate(56px, ${420 + stackOffset}px)`,
+          transform: `translate(40px, ${308 + stackOffset}px)`,
           width: "420px",
         },
       };
     case "spacer":
       return {
         textStyle: {
-          transform: `translate(56px, ${420 + stackOffset}px)`,
+          transform: `translate(40px, ${308 + stackOffset}px)`,
         },
       };
     case "cta":
@@ -618,7 +618,7 @@ const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
     case "plan_section":
       return {
         cardStyle: {
-          transform: `translate(${centeredCardOffset}px, ${72 + row * 56}px)`,
+          transform: `translate(${centeredCardOffset}px, ${24 + row * 40}px)`,
           width: "calc(100% - 112px)",
         },
       };
@@ -955,6 +955,14 @@ const buildInnerBlockFromLibraryItem = (item) => {
           mobileWidth: 100,
           heightPreset: "auto",
           objectFit: "contain",
+        },
+      };
+    case "marquee":
+      return {
+        type: "marquee",
+        label,
+        content: {
+          text: "We make things that work better and last longer.",
         },
       };
     case "tabs":
