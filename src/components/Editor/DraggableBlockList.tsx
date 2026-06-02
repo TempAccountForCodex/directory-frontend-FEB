@@ -53,20 +53,49 @@ export interface DraggableBlock {
   variant?: string;
 }
 
-const humanizeBlockType = (value: string): string =>
-  String(value || "")
-    .replace(/[_-]+/g, " ")
+const toTitleCase = (value: string): string =>
+  value
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase())
     .trim();
 
-const getBlockLabel = (block: DraggableBlock): string => {
-  const customLabel = block.content?.editorLabel;
-  return typeof customLabel === "string" && customLabel.trim()
-    ? customLabel.trim()
-    : humanizeBlockType(block.blockType);
+const collapseSpacedUppercaseLabel = (value: string): string => {
+  const trimmed = String(value || "").trim();
+
+  const isSpacedLetters = /^[A-Z](\s+[A-Z])+$/.test(trimmed);
+
+  return isSpacedLetters ? trimmed.replace(/\s+/g, "") : trimmed;
 };
 
+const humanizeBlockType = (value: string): string => {
+  const cleaned = collapseSpacedUppercaseLabel(String(value || ""))
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return toTitleCase(cleaned);
+};
+
+const normalizeBlockLabel = (value: string): string => {
+  const cleaned = collapseSpacedUppercaseLabel(String(value || ""))
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleaned) return "";
+
+  return toTitleCase(cleaned);
+};
+
+const getBlockLabel = (block: DraggableBlock): string => {
+  const customLabel = block.content?.editorLabel;
+
+  return typeof customLabel === "string" && customLabel.trim()
+    ? normalizeBlockLabel(customLabel)
+    : humanizeBlockType(block.blockType);
+};
 export interface DraggableBlockListProps {
   /** Array of blocks to render */
   blocks: DraggableBlock[];
@@ -254,11 +283,11 @@ const SortableBlock = React.memo(function SortableBlock({
             flexGrow: 1,
             color: "inherit",
             fontWeight: isSelected ? 700 : 600,
-            textTransform: "none",
             letterSpacing: "0.01em",
             fontSize: "0.84rem",
             position: "relative",
             zIndex: 1,
+            textTransform: "none",
           }}
         >
           {blockLabel}

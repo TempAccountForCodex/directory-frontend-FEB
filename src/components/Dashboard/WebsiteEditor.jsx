@@ -1077,9 +1077,12 @@ const humanizeLabel = (value = "") =>
   String(value)
     .split(".")
     .slice(-1)[0]
-    .replace(/([A-Z])/g, " $1")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/[_-]+/g, " ")
-    .replace(/^./, (char) => char.toUpperCase());
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 
 const deepClone = (value) =>
   value == null ? value : JSON.parse(JSON.stringify(value));
