@@ -373,7 +373,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Location"
         data-preview-block-id={locationContent.blockId}
         {...getSectionStyleDomProps(locationContent)}
-        sx={{ bgcolor: brown, color: "#fff", py: { xs: 6, md: 7 }, ...getSectionStyleSx(locationContent) }}
+        sx={{
+          bgcolor: brown,
+          color: "#fff",
+          py: { xs: 6, md: 7 },
+          ...getSectionStyleSx(locationContent),
+        }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 3, md: 5 }}>
@@ -494,7 +499,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Why Us"
         data-preview-block-id={whyUsContent.blockId}
         {...getSectionStyleDomProps(whyUsContent)}
-        sx={{ bgcolor: brown, color: "#fff", py: { xs: 7, md: 8 }, ...getSectionStyleSx(whyUsContent) }}
+        sx={{
+          bgcolor: brown,
+          color: "#fff",
+          py: { xs: 7, md: 8 },
+          ...getSectionStyleSx(whyUsContent),
+        }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 6 }}>
@@ -648,7 +658,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Contact"
         data-preview-block-id={contactContent.blockId}
         {...getSectionStyleDomProps(contactContent)}
-        sx={{ bgcolor: brown, color: "#fff", py: { xs: 7, md: 8 }, ...getSectionStyleSx(contactContent) }}
+        sx={{
+          bgcolor: brown,
+          color: "#fff",
+          py: { xs: 7, md: 8 },
+          ...getSectionStyleSx(contactContent),
+        }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 5 }} alignItems="stretch">

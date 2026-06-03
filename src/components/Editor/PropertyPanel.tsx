@@ -90,7 +90,12 @@ const BLOCK_FIELDS: Record<string, FieldConfig[]> = {
   CONTACT: [{ key: "heading", label: "Heading" }],
   FEATURES: [{ key: "heading", label: "Heading" }],
   NAVBAR: [{ key: "brandName", label: "Brand Name" }],
-  FOOTER: [{ key: "copyright", label: "Copyright" }],
+  FOOTER: [
+    { key: "logoText", label: "Logo / Brand Text" },
+    { key: "placeholder", label: "Email Placeholder Text" },
+    { key: "buttonText", label: "Subscribe Button Text" },
+    { key: "copyright", label: "Copyright Text" },
+  ],
 };
 
 /** Height preset options (UI-only, maps to inline style) */

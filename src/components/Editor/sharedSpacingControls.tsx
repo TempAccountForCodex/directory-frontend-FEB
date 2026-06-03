@@ -1,11 +1,6 @@
 import React from "react";
 import { ButtonBase, Box, TextField, Typography } from "@mui/material";
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-} from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
 
 export const SPACING_OPTIONS = [
   "0px",
@@ -40,17 +35,13 @@ export const SPACING_GROUPS = [
   },
 ] as const;
 
-export const normalizeSpacingValue = (
-  value: string | number | undefined,
-) => {
+export const normalizeSpacingValue = (value: string | number | undefined) => {
   if (!value) return "0px";
   const trimmed = String(value).trim();
   return /^\d+px$/i.test(trimmed) ? trimmed.toLowerCase() : "0px";
 };
 
-export const rawSpacingNumberValue = (
-  value: string | number | undefined,
-) => {
+export const rawSpacingNumberValue = (value: string | number | undefined) => {
   if (!value) return "";
   const trimmed = String(value).trim();
   return /^\d+px$/i.test(trimmed) ? trimmed.replace(/px$/i, "") : "";
@@ -131,7 +122,9 @@ export function SharedSpacingControls<T extends GenericSpacingStyle>({
                 <ButtonBase
                   key={`${styleKey}-${spacing}`}
                   disabled={disabled}
-                  onClick={() => onChange({ [styleKey]: spacing } as Partial<T>)}
+                  onClick={() =>
+                    onChange({ [styleKey]: spacing } as Partial<T>)
+                  }
                   sx={{
                     minWidth: "28px !important",
                     height: 28,

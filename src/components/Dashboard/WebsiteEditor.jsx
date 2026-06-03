@@ -2587,10 +2587,6 @@ const WebsiteEditorInner = () => {
   };
 
   const handleDeleteBlock = async (blockId) => {
-    if (isLocalTemplateEditorPage) {
-      return;
-    }
-
     if (!confirm("Are you sure you want to delete this block?")) {
       return;
     }
@@ -2598,6 +2594,10 @@ const WebsiteEditorInner = () => {
     try {
       pendingHistoryDescriptionRef.current = "Deleted block";
       setBlocks(blocks.filter((b) => b.id !== blockId));
+      if (editingBlock?.id === blockId) {
+        setEditingBlock(null);
+        setBlockForm({ blockType: "", content: {} });
+      }
     } catch (err) {
       console.error("Error deleting block:", err);
       alert(err.response?.data?.message || "Failed to delete block");
@@ -2605,10 +2605,6 @@ const WebsiteEditorInner = () => {
   };
 
   const handleToggleBlockVisibility = async (block) => {
-    if (isLocalTemplateEditorPage) {
-      return;
-    }
-
     try {
       pendingHistoryDescriptionRef.current = `${block.isVisible ? "Hid" : "Showed"} block`;
       setBlocks(
@@ -6120,6 +6116,10 @@ const WebsiteEditorInner = () => {
                                       onBlocksChange={(reordered) => {
                                         setBlocks(reordered);
                                       }}
+                                      onBlockToggleVisibility={
+                                        handleToggleBlockVisibility
+                                      }
+                                      onBlockDelete={handleDeleteBlock}
                                       onBlockSelect={(blockId) => {
                                         const block = blocks.find(
                                           (b) => b.id === blockId,

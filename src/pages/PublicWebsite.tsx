@@ -243,7 +243,9 @@ const PublicWebsite: React.FC = () => {
                 },
               ]
             : [];
-        let sortedPages = [...rawPages].sort((a, b) => a.sortOrder - b.sortOrder);
+        let sortedPages = [...rawPages].sort(
+          (a, b) => a.sortOrder - b.sortOrder,
+        );
         let inferredFrontendTemplateId =
           inferFrontendTemplateIdFromPages(sortedPages);
 

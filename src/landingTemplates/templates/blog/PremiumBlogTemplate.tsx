@@ -662,7 +662,11 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {aboutHeading}
                 </Typography>
                 <Typography
-                  {...getEditableTextProps(aboutBlockId, "description", "multi")}
+                  {...getEditableTextProps(
+                    aboutBlockId,
+                    "description",
+                    "multi",
+                  )}
                   sx={{
                     color: "#667085",
                     lineHeight: 1.8,

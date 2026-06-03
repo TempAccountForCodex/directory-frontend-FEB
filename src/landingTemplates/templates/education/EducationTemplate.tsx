@@ -351,7 +351,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Programs"
         data-preview-block-id={programsContent.blockId}
         {...getSectionStyleDomProps(programsContent)}
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#ffffff", ...getSectionStyleSx(programsContent) }}
+        sx={{
+          py: { xs: 8, md: 12 },
+          bgcolor: "#ffffff",
+          ...getSectionStyleSx(programsContent),
+        }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -465,7 +469,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Why Choose Us"
         data-preview-block-id={highlightsContent.blockId}
         {...getSectionStyleDomProps(highlightsContent)}
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: theme.bgSecondary, ...getSectionStyleSx(highlightsContent) }}
+        sx={{
+          py: { xs: 8, md: 12 },
+          bgcolor: theme.bgSecondary,
+          ...getSectionStyleSx(highlightsContent),
+        }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
@@ -550,7 +558,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Gallery"
         data-preview-block-id={galleryContent.blockId}
         {...getSectionStyleDomProps(galleryContent)}
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#ffffff", ...getSectionStyleSx(galleryContent) }}
+        sx={{
+          py: { xs: 8, md: 12 },
+          bgcolor: "#ffffff",
+          ...getSectionStyleSx(galleryContent),
+        }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -638,7 +650,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Reviews"
         data-preview-block-id={reviewsContent.blockId}
         {...getSectionStyleDomProps(reviewsContent)}
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: theme.bgSecondary, ...getSectionStyleSx(reviewsContent) }}
+        sx={{
+          py: { xs: 8, md: 12 },
+          bgcolor: theme.bgSecondary,
+          ...getSectionStyleSx(reviewsContent),
+        }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -722,7 +738,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Contact"
         data-preview-block-id={contactContent.blockId}
         {...getSectionStyleDomProps(contactContent)}
-        sx={{ py: { xs: 8, md: 12 }, bgcolor: "#0f2450", ...getSectionStyleSx(contactContent) }}
+        sx={{
+          py: { xs: 8, md: 12 },
+          bgcolor: "#0f2450",
+          ...getSectionStyleSx(contactContent),
+        }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">

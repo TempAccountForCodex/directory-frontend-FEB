@@ -24,6 +24,9 @@ import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import { alpha } from "@mui/material/styles";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import {
   DndContext,
   DragOverlay,
@@ -61,10 +64,12 @@ const toTitleCase = (value: string): string =>
 
 const collapseSpacedUppercaseLabel = (value: string): string => {
   const trimmed = String(value || "").trim();
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
 
-  const isSpacedLetters = /^[A-Z](\s+[A-Z])+$/.test(trimmed);
+  const isSpacedLetters =
+    tokens.length > 1 && tokens.every((token) => /^[A-Za-z0-9]$/.test(token));
 
-  return isSpacedLetters ? trimmed.replace(/\s+/g, "") : trimmed;
+  return isSpacedLetters ? tokens.join("") : trimmed;
 };
 
 const humanizeBlockType = (value: string): string => {
@@ -113,6 +118,10 @@ export interface DraggableBlockListProps {
   disabled?: boolean;
   /** Skip backend reorder persistence for local-only template pages */
   persistReorder?: boolean;
+  /** Toggle block visibility */
+  onBlockToggleVisibility?: (block: DraggableBlock) => void;
+  /** Delete a block */
+  onBlockDelete?: (blockId: number | string) => void;
 }
 
 const normalizeBlockOrder = (items: DraggableBlock[]): DraggableBlock[] =>
@@ -131,6 +140,8 @@ interface SortableBlockProps {
   isDragging: boolean;
   disabled: boolean;
   onSelect: (blockId: number | string) => void;
+  onToggleVisibility?: (block: DraggableBlock) => void;
+  onDelete?: (blockId: number | string) => void;
 }
 
 const SortableBlock = React.memo(function SortableBlock({
@@ -139,6 +150,8 @@ const SortableBlock = React.memo(function SortableBlock({
   isDragging,
   disabled,
   onSelect,
+  onToggleVisibility,
+  onDelete,
 }: SortableBlockProps) {
   const {
     attributes,
@@ -163,6 +176,24 @@ const SortableBlock = React.memo(function SortableBlock({
   const handleDragHandleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
   }, []);
+
+  const handleToggleVisibility = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onToggleVisibility?.(block);
+    },
+    [block, onToggleVisibility],
+  );
+
+  const handleDelete = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onDelete?.(block.id);
+    },
+    [block.id, onDelete],
+  );
 
   const blockLabel = getBlockLabel(block);
 
@@ -219,6 +250,14 @@ const SortableBlock = React.memo(function SortableBlock({
           position: "relative",
           overflow: "hidden",
           touchAction: disabled ? "auto" : "none",
+          "& .block-row-actions": {
+            opacity: 0,
+            pointerEvents: "none",
+          },
+          "&:hover .block-row-actions, &:focus-within .block-row-actions": {
+            opacity: 1,
+            pointerEvents: "auto",
+          },
           "&::before": {
             content: '""',
             position: "absolute",
@@ -293,20 +332,57 @@ const SortableBlock = React.memo(function SortableBlock({
           {blockLabel}
         </Typography>
 
-        {/* Visibility indicator */}
-        {!block.isVisible && (
-          <Typography
-            variant="caption"
+        <Box
+          className="block-row-actions"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.15,
+            position: "relative",
+            zIndex: 1,
+            transition: "opacity 160ms ease",
+          }}
+        >
+          <IconButton
+            size="small"
+            aria-label={block.isVisible ? "Hide block" : "Show block"}
+            onClick={handleToggleVisibility}
             sx={{
-              color: isSelected ? alpha("#f5fbfb", 0.72) : "text.disabled",
-              fontSize: "0.65rem",
-              position: "relative",
-              zIndex: 1,
+              color: isSelected
+                ? alpha("#f5fbfb", 0.82)
+                : alpha("#10282b", 0.72),
+              "&:hover": {
+                bgcolor: isSelected
+                  ? alpha("#ffffff", 0.08)
+                  : alpha("#10282b", 0.06),
+                color: isSelected ? "#ffffff" : "#10282b",
+              },
             }}
           >
-            Hidden
-          </Typography>
-        )}
+            {block.isVisible ? (
+              <VisibilityOutlinedIcon fontSize="small" />
+            ) : (
+              <VisibilityOffOutlinedIcon fontSize="small" />
+            )}
+          </IconButton>
+
+          <IconButton
+            size="small"
+            aria-label="Delete block"
+            onClick={handleDelete}
+            sx={{
+              color: isSelected
+                ? alpha("#f5fbfb", 0.82)
+                : alpha("#10282b", 0.72),
+              "&:hover": {
+                bgcolor: alpha("#ef4444", 0.1),
+                color: "#dc2626",
+              },
+            }}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>
+        </Box>
       </Paper>
     </li>
   );
@@ -385,6 +461,8 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
   selectedBlockId = null,
   disabled = false,
   persistReorder = true,
+  onBlockToggleVisibility,
+  onBlockDelete,
 }: DraggableBlockListProps) {
   // Track active dragged block for DragOverlay
   const [activeId, setActiveId] = useState<number | string | null>(null);
@@ -551,6 +629,8 @@ const DraggableBlockList = React.memo(function DraggableBlockList({
               isDragging={block.id === activeId}
               disabled={disabled}
               onSelect={handleSelect}
+              onToggleVisibility={onBlockToggleVisibility}
+              onDelete={onBlockDelete}
             />
           ))}
         </ul>

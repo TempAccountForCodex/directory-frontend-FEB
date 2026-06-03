@@ -256,7 +256,8 @@ const BlockLibraryCard = React.memo<BlockLibraryCardProps>(
             "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%)",
           boxShadow:
             "0 12px 30px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.92)",
-          transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+          transition:
+            "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
           "&:hover": {
             borderColor: "rgba(36,72,74,0.24)",
             boxShadow:
@@ -309,8 +310,7 @@ const BlockLibraryCard = React.memo<BlockLibraryCardProps>(
                 backgroundColor:
                   CATEGORY_STYLES[block.category]?.background ||
                   "rgba(15,23,42,0.06)",
-                color:
-                  CATEGORY_STYLES[block.category]?.color || "#4b5563",
+                color: CATEGORY_STYLES[block.category]?.color || "#4b5563",
                 border: `1px solid ${
                   CATEGORY_STYLES[block.category]?.border ||
                   "rgba(148,163,184,0.14)"
@@ -766,7 +766,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   ];
 
   return (
-      <Drawer
+    <Drawer
       anchor="left"
       open={open}
       onClose={onClose}
@@ -883,11 +883,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
         }}
       >
         {CATEGORIES.map((cat) => (
-          <Tab
-            key={cat.key}
-            value={cat.key}
-            label={cat.label}
-          />
+          <Tab key={cat.key} value={cat.key} label={cat.label} />
         ))}
       </Tabs>
 
@@ -1029,13 +1025,13 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
             {!loading &&
               !error &&
               filteredBlocks.map((block) => (
-                  <BlockLibraryCard
-                    key={block.key}
-                    block={block}
-                    onAddToPage={handleAddToPage}
-                    onPreview={handlePreviewBlock}
-                    onDragStateChange={onBlockDragChange}
-                  />
+                <BlockLibraryCard
+                  key={block.key}
+                  block={block}
+                  onAddToPage={handleAddToPage}
+                  onPreview={handlePreviewBlock}
+                  onDragStateChange={onBlockDragChange}
+                />
               ))}
           </>
         )}

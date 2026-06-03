@@ -5,13 +5,13 @@ type LocalFieldDefinition = {
   label: string;
   type: string;
   order?: number;
+  validation?: Record<string, unknown>;
   ui?: Record<string, unknown>;
 };
 
 const DEFAULT_IMAGE =
   "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80";
-const DEFAULT_VIDEO =
-  "https://www.w3schools.com/html/mov_bbb.mp4";
+const DEFAULT_VIDEO = "https://www.w3schools.com/html/mov_bbb.mp4";
 
 const makeTextField = (
   name: string,
@@ -41,6 +41,33 @@ const makeRepeaterField = (
     },
   },
 });
+
+const footerLinkValidation = {
+  custom: (value: unknown) => {
+    const trimmed = String(value ?? "").trim();
+    if (!trimmed) {
+      return "Link URL is required.";
+    }
+
+    if (/^\/(?!\/)/.test(trimmed) || trimmed === "/") {
+      return undefined;
+    }
+
+    try {
+      const parsed = new URL(trimmed);
+      if (
+        (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+        parsed.hostname
+      ) {
+        return undefined;
+      }
+    } catch {
+      return "Enter a valid URL or internal path like /privacy-policy.";
+    }
+
+    return "Enter a valid URL or internal path like /privacy-policy.";
+  },
+} satisfies Record<string, unknown>;
 
 export const normalizeBlockTypeKey = (value = "") =>
   String(value)
@@ -137,15 +164,18 @@ export const getBlockDefaultContent = (
         items: [
           {
             question: "Are purchases final sale?",
-            answer: "Final sale rules depend on the product category and custom order status.",
+            answer:
+              "Final sale rules depend on the product category and custom order status.",
           },
           {
             question: "When will I get my order?",
-            answer: "Most orders are processed within 2 to 4 business days before shipping.",
+            answer:
+              "Most orders are processed within 2 to 4 business days before shipping.",
           },
           {
             question: "How much does shipping cost?",
-            answer: "Shipping cost is calculated at checkout based on location and method.",
+            answer:
+              "Shipping cost is calculated at checkout based on location and method.",
           },
         ],
       };
@@ -191,7 +221,8 @@ export const getBlockDefaultContent = (
         items: [
           {
             question: "How quickly can we launch?",
-            answer: "Most teams can publish an initial version within a few days.",
+            answer:
+              "Most teams can publish an initial version within a few days.",
           },
           {
             question: "Can we update content later?",
@@ -236,12 +267,28 @@ export const getBlockDefaultContent = (
         muted: true,
         loop: false,
       };
+    case "MARQUEE":
+      return {
+        text: "We make things that work better and last longer.",
+      };
     case "NEWSLETTER":
       return {
         heading: "Join the newsletter",
         body: "Send product updates, launches, and useful insights.",
         placeholder: "Enter your email",
         buttonText: "Subscribe",
+      };
+    case "FOOTER":
+      return {
+        logoText: "Your Company",
+        links: [
+          { label: "Privacy policy", url: "/privacy-policy" },
+          { label: "Terms & condition", url: "/terms-and-condition" },
+          { label: "Cookie Policy", url: "/cookie-policy" },
+        ],
+        placeholder: "Enter your email",
+        buttonText: "Subscribe",
+        copyright: "(c) 2026 Your company. All rights reserved.",
       };
     case "LOGO_CAROUSEL":
       return {
@@ -266,8 +313,16 @@ export const getBlockDefaultContent = (
       return {
         heading: "Popular services",
         items: [
-          { name: "Consultation", price: "$120", description: "Discovery and planning session." },
-          { name: "Implementation", price: "$420", description: "Done-for-you setup and launch." },
+          {
+            name: "Consultation",
+            price: "$120",
+            description: "Discovery and planning session.",
+          },
+          {
+            name: "Implementation",
+            price: "$420",
+            description: "Done-for-you setup and launch.",
+          },
         ],
       };
     case "IMAGE_TEXT_SPLIT":
@@ -284,18 +339,39 @@ export const getBlockDefaultContent = (
       return {
         heading: "Explore our services",
         tabs: [
-          { label: "Strategy", content: "Clarify goals, offer, and positioning.", icon: "analytics" },
-          { label: "Design", content: "Create cleaner layouts and stronger hierarchy.", icon: "palette" },
-          { label: "Launch", content: "Ship quickly with an editable system.", icon: "rocket" },
+          {
+            label: "Strategy",
+            content: "Clarify goals, offer, and positioning.",
+            icon: "analytics",
+          },
+          {
+            label: "Design",
+            content: "Create cleaner layouts and stronger hierarchy.",
+            icon: "palette",
+          },
+          {
+            label: "Launch",
+            content: "Ship quickly with an editable system.",
+            icon: "rocket",
+          },
         ],
       };
     case "STEPS_PROCESS":
       return {
         heading: "How we work",
         steps: [
-          { title: "Discover", description: "Understand the goal and user journey." },
-          { title: "Design", description: "Shape the layout and visual direction." },
-          { title: "Deliver", description: "Launch a section that is ready to edit." },
+          {
+            title: "Discover",
+            description: "Understand the goal and user journey.",
+          },
+          {
+            title: "Design",
+            description: "Shape the layout and visual direction.",
+          },
+          {
+            title: "Deliver",
+            description: "Launch a section that is ready to edit.",
+          },
         ],
       };
     case "STORY_PANEL":
@@ -377,8 +453,19 @@ export const getBlockDefaultContent = (
       return {
         heading: "Selected projects",
         items: [
-          { title: "Brand Refresh", category: "Branding", image: DEFAULT_IMAGE, description: "Identity and landing page system." },
-          { title: "Product Launch", category: "Marketing", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80", description: "Campaign assets and conversion sections." },
+          {
+            title: "Brand Refresh",
+            category: "Branding",
+            image: DEFAULT_IMAGE,
+            description: "Identity and landing page system.",
+          },
+          {
+            title: "Product Launch",
+            category: "Marketing",
+            image:
+              "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
+            description: "Campaign assets and conversion sections.",
+          },
         ],
       };
     case "COLLAGE":
@@ -416,6 +503,8 @@ export const getLocalFieldMetadata = (
   blockType: string,
 ): FieldMetadata | null => {
   switch (normalizeBlockTypeKey(blockType)) {
+    case "MARQUEE":
+      return contentGroup([makeTextField("text", "Marquee text", 1)]);
     case "VIDEO":
       return contentGroup([
         makeTextField("videoUrl", "Video URL", 1),
@@ -434,7 +523,12 @@ export const getLocalFieldMetadata = (
             },
           },
         },
-        { name: "showControls", label: "Show Controls", type: "TOGGLE", order: 3 },
+        {
+          name: "showControls",
+          label: "Show Controls",
+          type: "TOGGLE",
+          order: 3,
+        },
         { name: "autoplay", label: "Autoplay", type: "TOGGLE", order: 4 },
         { name: "muted", label: "Muted", type: "TOGGLE", order: 5 },
         { name: "loop", label: "Loop", type: "TOGGLE", order: 6 },
@@ -534,12 +628,22 @@ export const getLocalFieldMetadata = (
     case "WORKING_HOURS":
       return contentGroup([
         makeTextField("heading", "Heading", 1),
-        { name: "showCurrentStatus", label: "Show Current Status", type: "TOGGLE", order: 2 },
+        {
+          name: "showCurrentStatus",
+          label: "Show Current Status",
+          type: "TOGGLE",
+          order: 2,
+        },
         makeRepeaterField("hours", "Hours", 3, {
           day: makeTextField("day", "Day", 1),
           openTime: makeTextField("openTime", "Open Time", 2),
           closeTime: makeTextField("closeTime", "Close Time", 3),
-          isClosed: { name: "isClosed", label: "Closed", type: "TOGGLE", order: 4 },
+          isClosed: {
+            name: "isClosed",
+            label: "Closed",
+            type: "TOGGLE",
+            order: 4,
+          },
         }),
       ]);
     case "SOCIAL_EMBED":
@@ -583,6 +687,26 @@ export const getLocalFieldMetadata = (
           name: makeTextField("name", "Plan Name", 1),
           price: makeTextField("price", "Price", 2),
         }),
+      ]);
+    case "FOOTER":
+      return contentGroup([
+        makeTextField("logoText", "Logo / Brand Text", 1),
+        makeRepeaterField("links", "Footer Navigation Links", 2, {
+          label: makeTextField("label", "Link Label", 1),
+          url: {
+            name: "url",
+            label: "Link URL",
+            type: "URL",
+            order: 2,
+            validation: footerLinkValidation,
+            ui: {
+              placeholder: "https://example.com or /privacy-policy",
+            },
+          },
+        }),
+        makeTextField("placeholder", "Email Placeholder Text", 3),
+        makeTextField("buttonText", "Subscribe Button Text", 4),
+        makeTextField("copyright", "Copyright Text", 5),
       ]);
     case "TESTIMONIALS":
     case "REVIEWS":

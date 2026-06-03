@@ -92,7 +92,16 @@ export type EditorSectionStyle = {
   cssClass?: string;
   anchorId?: string;
   zIndex?: string;
-  semanticTag?: "div" | "section" | "article" | "main" | "aside" | "header" | "footer" | "nav" | "span";
+  semanticTag?:
+    | "div"
+    | "section"
+    | "article"
+    | "main"
+    | "aside"
+    | "header"
+    | "footer"
+    | "nav"
+    | "span";
   customCss?: string;
   dataAttributes?: Array<{ key: string; value: string }>;
   paddingTop?: string;
@@ -278,9 +287,7 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
     nextValue: string,
   ) => {
     const nextAttributes = dataAttributes.map((attribute, currentIndex) =>
-      currentIndex === index
-        ? { ...attribute, [field]: nextValue }
-        : attribute,
+      currentIndex === index ? { ...attribute, [field]: nextValue } : attribute,
     );
     onStyleChange({ dataAttributes: nextAttributes });
   };
@@ -1888,7 +1895,8 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
                         color: active ? "#ffffff" : "#64748b",
                         fontSize: "0.76rem",
                         fontWeight: 700,
-                        fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
+                        fontFamily:
+                          '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
                       }}
                     >
                       {`<${tagName}>`}
@@ -1938,7 +1946,9 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
                       backgroundColor: "#f8fafc",
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.7 }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.7 }}
+                    >
                       <Code2 size={13} color="#94a3b8" />
                       <Typography
                         sx={{
@@ -2014,10 +2024,12 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
                       Applied inside section selector
                     </Typography>
                     <Typography sx={{ fontSize: "0.7rem", color: "#94a3b8" }}>
-                      {`${(resolvedValue.customCss || "")
-                        .split(";")
-                        .map((rule) => rule.trim())
-                        .filter(Boolean).length} rules`}
+                      {`${
+                        (resolvedValue.customCss || "")
+                          .split(";")
+                          .map((rule) => rule.trim())
+                          .filter(Boolean).length
+                      } rules`}
                     </Typography>
                   </Box>
                 </Box>
@@ -2041,7 +2053,11 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
                       disabled={effectiveDisabled}
                       value={attribute.key || ""}
                       onChange={(event) =>
-                        handleDataAttributeChange(index, "key", event.target.value)
+                        handleDataAttributeChange(
+                          index,
+                          "key",
+                          event.target.value,
+                        )
                       }
                       placeholder="data-key"
                       sx={{
@@ -2057,7 +2073,11 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
                       disabled={effectiveDisabled}
                       value={attribute.value || ""}
                       onChange={(event) =>
-                        handleDataAttributeChange(index, "value", event.target.value)
+                        handleDataAttributeChange(
+                          index,
+                          "value",
+                          event.target.value,
+                        )
                       }
                       placeholder="value"
                       sx={{

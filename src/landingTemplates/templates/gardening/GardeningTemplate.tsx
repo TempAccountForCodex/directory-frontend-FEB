@@ -435,7 +435,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Portfolio"
         data-preview-block-id={portfolioContent.blockId}
         {...getSectionStyleDomProps(portfolioContent)}
-        sx={{ py: { xs: 8, md: 11 }, bgcolor: theme.bgPrimary, ...getSectionStyleSx(portfolioContent) }}
+        sx={{
+          py: { xs: 8, md: 11 },
+          bgcolor: theme.bgPrimary,
+          ...getSectionStyleSx(portfolioContent),
+        }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -687,7 +691,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Testimonials"
         data-preview-block-id={testimonialsContent.blockId}
         {...getSectionStyleDomProps(testimonialsContent)}
-        sx={{ py: { xs: 8, md: 10 }, bgcolor: theme.bgPrimary, ...getSectionStyleSx(testimonialsContent) }}
+        sx={{
+          py: { xs: 8, md: 10 },
+          bgcolor: theme.bgPrimary,
+          ...getSectionStyleSx(testimonialsContent),
+        }}
       >
         <Container maxWidth="lg">
           <FadeIn>
@@ -741,7 +749,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-preview-label="Contact"
         data-preview-block-id={contactContent.blockId}
         {...getSectionStyleDomProps(contactContent)}
-        sx={{ py: { xs: 8, md: 11 }, bgcolor: theme.bgPrimary, ...getSectionStyleSx(contactContent) }}
+        sx={{
+          py: { xs: 8, md: 11 },
+          bgcolor: theme.bgPrimary,
+          ...getSectionStyleSx(contactContent),
+        }}
       >
         <Container maxWidth="md">
           <FadeIn>

@@ -176,9 +176,7 @@ const FrontendTemplateIframePreview = React.memo(
     const onImageDoubleClickRef = React.useRef(onImageDoubleClick);
     const onSectionSelectedRef = React.useRef(onSectionSelected);
     const onSectionAddRequestRef = React.useRef(onSectionAddRequest);
-    const onSectionInnerAddRequestRef = React.useRef(
-      onSectionInnerAddRequest,
-    );
+    const onSectionInnerAddRequestRef = React.useRef(onSectionInnerAddRequest);
     const onPreviewContextMenuRef = React.useRef(onPreviewContextMenu);
     const onEditableTextSaveRef = React.useRef(onEditableTextSave);
     const onElementTransformRef = React.useRef(onElementTransform);
@@ -433,8 +431,9 @@ const FrontendTemplateIframePreview = React.memo(
           if (innerAddButton) {
             innerAddButton.style.display =
               overlayKind === "section" &&
-              overlayTarget.getAttribute("data-preview-accepts-inner-blocks") ===
-                "true"
+              overlayTarget.getAttribute(
+                "data-preview-accepts-inner-blocks",
+              ) === "true"
                 ? "inline-flex"
                 : "none";
           }
@@ -1169,7 +1168,9 @@ const FrontendTemplateIframePreview = React.memo(
       onReadyRef.current?.();
 
       const handleClick = (event: MouseEvent) => {
-        const overlayInnerButton = (event.target as HTMLElement | null)?.closest?.(
+        const overlayInnerButton = (
+          event.target as HTMLElement | null
+        )?.closest?.(
           ".tt-section-inner-add-button",
         ) as HTMLButtonElement | null;
         if (overlayInnerButton) {
@@ -1318,16 +1319,16 @@ const FrontendTemplateIframePreview = React.memo(
         const target = event.target as HTMLElement | null;
         event.preventDefault();
         event.stopPropagation();
-        const clickedInsideOverlay = !!target?.closest?.(".tt-selection-overlay");
+        const clickedInsideOverlay = !!target?.closest?.(
+          ".tt-selection-overlay",
+        );
         const resolvedOverlayTarget =
           clickedInsideOverlay && overlayTarget ? overlayTarget : null;
         const editableEl =
           (resolvedOverlayTarget?.matches?.("[data-editable]")
             ? resolvedOverlayTarget
             : null) ||
-          target?.closest?.(
-          "[data-editable]",
-        ) as HTMLElement | null;
+          (target?.closest?.("[data-editable]") as HTMLElement | null);
         const cardEditableEl =
           (resolvedOverlayTarget?.matches?.('[data-editable$=".__card"]')
             ? resolvedOverlayTarget
@@ -1339,16 +1340,14 @@ const FrontendTemplateIframePreview = React.memo(
           (resolvedOverlayTarget?.matches?.("[data-edit-image]")
             ? resolvedOverlayTarget
             : null) ||
-          target?.closest?.(
-          "[data-edit-image]",
-        ) as HTMLElement | null;
+          (target?.closest?.("[data-edit-image]") as HTMLElement | null);
         const directSectionEl =
           (resolvedOverlayTarget?.matches?.('[data-preview-section="true"]')
             ? resolvedOverlayTarget
             : null) ||
-          target?.closest?.(
-          '[data-preview-section="true"]',
-        ) as HTMLElement | null;
+          (target?.closest?.(
+            '[data-preview-section="true"]',
+          ) as HTMLElement | null);
         const resolvedSectionEl =
           editableEl || imageEl
             ? ((editableEl || imageEl)?.closest(
@@ -1402,8 +1401,7 @@ const FrontendTemplateIframePreview = React.memo(
               layers.find(
                 (layer) =>
                   layer.kind === "editable" &&
-                  layer.editable?.fieldPath ===
-                    editableSelection?.fieldPath &&
+                  layer.editable?.fieldPath === editableSelection?.fieldPath &&
                   String(layer.editable?.blockId) ===
                     String(editableSelection?.blockId),
               ) || null,
@@ -1489,7 +1487,9 @@ const FrontendTemplateIframePreview = React.memo(
 
       const handleMouseDown = (event: MouseEvent) => {
         const target = event.target as HTMLElement | null;
-        const clickedInsideOverlay = !!target?.closest?.(".tt-selection-overlay");
+        const clickedInsideOverlay = !!target?.closest?.(
+          ".tt-selection-overlay",
+        );
         const handleEl = target?.closest?.(
           ".tt-selection-handle",
         ) as HTMLElement | null;
@@ -2020,20 +2020,17 @@ const PreviewPanel = React.memo(function PreviewPanel({
     [draggedLibraryBlock, canDropLibraryBlock, isLibraryDropActive],
   );
 
-  const handleLibraryDragLeave = React.useCallback(
-    (event: React.DragEvent) => {
-      if (
-        event.currentTarget instanceof Node &&
-        event.relatedTarget instanceof Node &&
-        event.currentTarget.contains(event.relatedTarget)
-      ) {
-        return;
-      }
+  const handleLibraryDragLeave = React.useCallback((event: React.DragEvent) => {
+    if (
+      event.currentTarget instanceof Node &&
+      event.relatedTarget instanceof Node &&
+      event.currentTarget.contains(event.relatedTarget)
+    ) {
+      return;
+    }
 
-      setIsLibraryDropActive(false);
-    },
-    [],
-  );
+    setIsLibraryDropActive(false);
+  }, []);
 
   const handleLibraryDrop = React.useCallback(
     (event: React.DragEvent) => {

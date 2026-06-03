@@ -515,7 +515,11 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 sx={{ flex: 1, px: 1.5 }}
               />
               <Button
-                {...getEditableTextProps(contactBlockId, "buttonText", "single")}
+                {...getEditableTextProps(
+                  contactBlockId,
+                  "buttonText",
+                  "single",
+                )}
                 sx={{
                   borderRadius: "999px",
                   bgcolor: "#111111",

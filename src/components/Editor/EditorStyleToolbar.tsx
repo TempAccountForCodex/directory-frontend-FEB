@@ -1359,7 +1359,9 @@ const EditorStyleToolbar: React.FC<Props> = ({
                       ? {}
                       : {
                           transform: "translateY(-1px)",
-                          borderColor: active ? "#111827" : "rgba(148,163,184,0.95)",
+                          borderColor: active
+                            ? "#111827"
+                            : "rgba(148,163,184,0.95)",
                         },
                   }}
                 >

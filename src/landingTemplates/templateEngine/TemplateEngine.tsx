@@ -15,7 +15,8 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const definition = getTemplateById(templateId) ?? getTemplateById("modern");
   const animationSignature = `${templateId}:${JSON.stringify(
-    (data as BusinessData & { templateContent?: unknown })?.templateContent || {},
+    (data as BusinessData & { templateContent?: unknown })?.templateContent ||
+      {},
   )}`;
 
   useEffect(() => {
@@ -39,7 +40,8 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
 
         const rect = element.getBoundingClientRect();
         const isVisible =
-          rect.top <= viewportHeight * 0.88 && rect.bottom >= viewportHeight * 0.12;
+          rect.top <= viewportHeight * 0.88 &&
+          rect.bottom >= viewportHeight * 0.12;
 
         if (isVisible) {
           element.setAttribute("data-section-animated", "true");
@@ -70,7 +72,8 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
         }
       });
 
-      const revealCurrentSections = () => revealVisibleSections(animatedSections);
+      const revealCurrentSections = () =>
+        revealVisibleSections(animatedSections);
       const forceRevealCurrentSections = () =>
         forceRevealPendingSections(animatedSections);
 
@@ -98,7 +101,9 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
       }
 
       window.addEventListener("load", revealCurrentSections);
-      window.addEventListener("scroll", revealCurrentSections, { passive: true });
+      window.addEventListener("scroll", revealCurrentSections, {
+        passive: true,
+      });
       window.addEventListener("resize", revealCurrentSections);
 
       return () => {

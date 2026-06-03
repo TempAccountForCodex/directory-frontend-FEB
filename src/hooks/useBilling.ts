@@ -87,9 +87,7 @@ interface UseBillingReturn {
   cancelledAt: string | null;
   currentPeriodEnd: string | null;
   updateBillingDetails: (data: Partial<BillingDetails>) => Promise<boolean>;
-  updatePlan: (
-    planCode: string,
-  ) => Promise<{
+  updatePlan: (planCode: string) => Promise<{
     success: boolean;
     requiresPaymentMethod?: boolean;
     useCancel?: boolean;
