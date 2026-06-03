@@ -651,8 +651,22 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const eyebrowStyle = getFlowSafeStyle(rawEyebrowStyle);
     const buttonStyle = getFlowSafeStyle(rawButtonStyle);
     const imageStyle = getFlowSafeStyle(rawImageStyle);
-    const cardStyle = getFlowSafeStyle(rawCardStyle);
-    const sectionStyle = getFlowSafeStyle(rawSectionStyle);
+    const cardStyle = getFlowSafeStyle(rawCardStyle, {
+      keepWidth: true,
+      keepHeight: true,
+    });
+    const sectionStyle = getFlowSafeStyle(rawSectionStyle, {
+      keepWidth: true,
+      keepHeight: true,
+    });
+    const resolvedCardStyle = getFlowSafeStyle(
+      getSectionStyleSx({ cardStyle: rawCardStyle }, "cardStyle"),
+      { keepWidth: true, keepHeight: true },
+    );
+    const resolvedSectionStyle = getFlowSafeStyle(
+      getSectionStyleSx({ sectionStyle: rawSectionStyle }),
+      { keepWidth: true, keepHeight: true },
+    );
     const canvasBaseSx = canvas
       ? {
           position: { xs: "relative", md: "absolute" } as const,
@@ -674,41 +688,87 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         : fallbackWidth;
     const getCanvasTransform = (desktopTransform: any) =>
       canvas ? { xs: "none", md: desktopTransform || "none" } : undefined;
-    const defaultCompoundCardWidth =
-      blockType === "video" ? "calc(100% - 112px)" : "640px";
+    const defaultCompoundCardWidth = canvas
+      ? blockType === "video"
+        ? "calc(100% - 112px)"
+        : "640px"
+      : "100%";
+    const hasExplicitWidth =
+      cardStyle.width !== undefined || resolvedCardStyle.width !== undefined;
+    const resolvedCardWidth =
+      cardStyle.width ?? resolvedCardStyle.width ?? defaultCompoundCardWidth;
+    const resolvedCardMaxWidth =
+      cardStyle.maxWidth ??
+      resolvedCardStyle.maxWidth ??
+      (hasExplicitWidth ? "none" : defaultCompoundCardWidth);
+    const hasCustomBackground =
+      resolvedCardStyle.backgroundColor !== undefined ||
+      resolvedCardStyle.backgroundImage !== undefined ||
+      cardStyle.backgroundColor !== undefined ||
+      cardStyle.backgroundImage !== undefined;
+    const hasCustomBorder =
+      resolvedCardStyle.border !== undefined ||
+      resolvedCardStyle.borderStyle !== undefined ||
+      cardStyle.border !== undefined ||
+      cardStyle.borderStyle !== undefined;
+    const hasCustomShadow =
+      resolvedCardStyle.boxShadow !== undefined ||
+      cardStyle.boxShadow !== undefined;
     const compoundCardSx = {
       p: { xs: 2.25, md: 3 },
       boxSizing: "border-box",
       borderRadius: "28px",
-      border: `1px solid ${tone === "light" ? "rgba(255,255,255,0.16)" : rgba(themeColor, 0.14)}`,
-      background:
-        tone === "light"
-          ? "rgba(255,255,255,0.08)"
-          : "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)",
-      boxShadow:
-        tone === "light"
-          ? "0 24px 48px rgba(0,0,0,0.16)"
-          : "0 24px 48px rgba(15,23,42,0.08)",
+      ...(hasCustomBorder
+        ? {}
+        : {
+            border: `1px solid ${tone === "light" ? "rgba(255,255,255,0.16)" : rgba(themeColor, 0.14)}`,
+          }),
+      ...(hasCustomBackground
+        ? {}
+        : tone === "light"
+          ? {
+              backgroundColor: "rgba(255,255,255,0.08)",
+            }
+          : {
+              backgroundColor: "rgba(255,255,255,0.96)",
+              backgroundImage:
+                "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)",
+            }),
+      ...(hasCustomShadow
+        ? {}
+        : {
+            boxShadow:
+              tone === "light"
+                ? "0 24px 48px rgba(0,0,0,0.16)"
+                : "0 24px 48px rgba(15,23,42,0.08)",
+          }),
       backdropFilter: "blur(12px)",
       ...canvasBaseSx,
+      ...resolvedSectionStyle,
+      ...resolvedCardStyle,
       ...sectionStyle,
       ...cardStyle,
-      width: getCanvasWidth(cardStyle.width || defaultCompoundCardWidth),
-      maxWidth: getCanvasMaxWidth(cardStyle.width || defaultCompoundCardWidth),
+      width: getCanvasWidth(resolvedCardWidth, resolvedCardWidth),
+      maxWidth: getCanvasMaxWidth(resolvedCardMaxWidth, resolvedCardMaxWidth),
       transform: getCanvasTransform(cardStyle.transform),
       ...(canvas
         ? {}
-        : {
-            minHeight: "auto",
-            height: "auto",
-          }),
+        : resolvedCardStyle.minHeight === undefined &&
+            resolvedCardStyle.height === undefined &&
+            cardStyle.minHeight === undefined &&
+            cardStyle.height === undefined
+          ? {
+              minHeight: "auto",
+              height: "auto",
+            }
+          : {}),
     };
     const compoundBlockSelectionProps = {
       ...getEditableTextProps(section.blockId, `${blockPath}.__card`, "single"),
       "data-preview-section": "true",
       "data-preview-label": block.label || humanizeSectionKey(blockType),
       "data-preview-block-id": section.blockId,
-      "data-preview-style-key": `${blockPath}.sectionStyle`,
+      "data-preview-style-key": `${blockPath}.cardStyle`,
     };
     const compoundBlockLabel = block.label || humanizeSectionKey(blockType);
 
@@ -1674,6 +1734,37 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             )
             .filter((link: { label: string }) => link.label)
         : [];
+      const resolveFooterHref = (url: string) => {
+        const trimmed = String(url || "").trim();
+        if (!trimmed) return "#";
+        if (
+          trimmed.startsWith("#") ||
+          trimmed.startsWith("http://") ||
+          trimmed.startsWith("https://") ||
+          trimmed.startsWith("mailto:") ||
+          trimmed.startsWith("tel:")
+        ) {
+          return trimmed;
+        }
+        if (!trimmed.startsWith("/")) {
+          return trimmed;
+        }
+        if (typeof window === "undefined") {
+          return trimmed;
+        }
+
+        const pathMatch = window.location.pathname.match(/^\/site\/([^/]+)/);
+        if (!pathMatch) {
+          return trimmed;
+        }
+
+        const siteBase = `/site/${pathMatch[1]}`;
+        if (trimmed === siteBase || trimmed.startsWith(`${siteBase}/`)) {
+          return trimmed;
+        }
+
+        return `${siteBase}${trimmed}`;
+      };
 
       return (
         <Stack
@@ -1684,11 +1775,31 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           data-preview-label={compoundBlockLabel}
           sx={{
             ...compoundCardSx,
-            px: { xs: 1.5, md: 2 },
-            py: { xs: 1.75, md: 2.1 },
-            minHeight: "auto",
-            height: "auto",
-            gap: 0,
+            ...(rawCardStyle.paddingLeft === undefined &&
+            rawCardStyle.paddingRight === undefined
+              ? { px: { xs: 1.5, md: 2 } }
+              : {}),
+            ...(rawCardStyle.paddingTop === undefined &&
+            rawCardStyle.paddingBottom === undefined
+              ? { py: { xs: 1.75, md: 2.1 } }
+              : {}),
+            ...(rawCardStyle.minHeight === undefined &&
+            rawCardStyle.height === undefined &&
+            resolvedCardStyle.minHeight === undefined &&
+            resolvedCardStyle.height === undefined
+              ? {
+                  minHeight: "auto",
+                  height: "auto",
+                }
+              : {}),
+            ...(rawCardStyle.layoutGap === undefined &&
+            resolvedCardStyle.gap === undefined
+              ? { gap: 0 }
+              : {}),
+            ...(rawCardStyle.borderRadius === undefined &&
+            resolvedCardStyle.borderRadius === undefined
+              ? { borderRadius: 0 }
+              : {}),
           }}
         >
           <Stack
@@ -1716,9 +1827,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 ...headingStyle,
               }}
             >
-              {block.content?.logoText ||
-                block.content?.heading ||
-                "Your Brand"}
+              {block.content?.logoText || block.content?.heading || "LOGO"}
             </Typography>
             {footerLinks.length ? (
               <Stack
@@ -1730,8 +1839,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 {footerLinks.map(
                   (link: { label: string; url: string }, linkIndex: number) => (
-                    <Typography
+                    <Box
                       key={`${link.label}-${linkIndex}`}
+                      component="a"
+                      href={resolveFooterHref(link.url)}
                       {...getEditableTextProps(
                         section.blockId,
                         `${blockPath}.links.${linkIndex}.label`,
@@ -1743,10 +1854,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         fontSize: "0.94rem",
                         letterSpacing: "0.01em",
                         textAlign: "center",
+                        textDecoration: "none",
+                        transition: "color 160ms ease",
+                        cursor: "pointer",
+                        "&:hover": {
+                          color: textColor,
+                        },
                       }}
                     >
                       {link.label}
-                    </Typography>
+                    </Box>
                   ),
                 )}
               </Stack>

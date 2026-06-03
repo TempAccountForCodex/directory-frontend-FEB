@@ -619,7 +619,7 @@ const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
       return {
         cardStyle: {
           transform: `translate(${centeredCardOffset}px, ${24 + row * 40}px)`,
-          width: "calc(100% - 112px)",
+          width: "100%",
         },
       };
     default:
@@ -745,9 +745,15 @@ const buildInnerBlockFromLibraryItem = (item) => {
         type: "footer",
         label,
         content: {
-          heading: "Footer block",
-          body: "Add key links, copyright, and supporting details.",
-          copyright: "© 2026 Your company. All rights reserved.",
+          logoText: "LOGO",
+          links: [
+            { label: "Privacy policy", url: "/privacy-policy" },
+            { label: "Terms & condition", url: "/terms-and-condition" },
+            { label: "Cookie Policy", url: "/cookie-policy" },
+          ],
+          placeholder: "Enter your email",
+          buttonText: "Subscribe",
+          copyright: "(c) 2026 Your company. All rights reserved.",
         },
       };
     case "cta":
@@ -2997,7 +3003,7 @@ const WebsiteEditorInner = () => {
         setSelectedSectionElement({
           blockId: data.blockId,
           label: data.label || "Section",
-          styleKey: `innerBlocks.${innerMatch.index}.content.sectionStyle`,
+          styleKey: `innerBlocks.${innerMatch.index}.content.cardStyle`,
         });
         setActiveToolbarMode("section");
         setIsInspectorOpen(true);
@@ -3006,7 +3012,7 @@ const WebsiteEditorInner = () => {
         syncPreviewSelection({
           kind: "section",
           blockId: data.blockId,
-          styleKey: `innerBlocks.${innerMatch.index}.content.sectionStyle`,
+          styleKey: `innerBlocks.${innerMatch.index}.content.cardStyle`,
         });
         return;
       }
@@ -7798,3 +7804,4 @@ const WebsiteEditor = () => (
 );
 
 export default WebsiteEditor;
+

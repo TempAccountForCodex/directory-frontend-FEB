@@ -105,7 +105,7 @@ type ContentLike = Record<string, unknown> | null | undefined;
 
 const readStyleValue = (
   content: ContentLike,
-  styleKey: "sectionStyle" | "outerSectionStyle" = "sectionStyle",
+  styleKey: string = "sectionStyle",
 ): SectionStyleValue => {
   const raw = content?.[styleKey];
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -117,7 +117,7 @@ const readStyleValue = (
 
 export const getSectionStyleDomProps = (
   content: ContentLike,
-  styleKey: "sectionStyle" | "outerSectionStyle" = "sectionStyle",
+  styleKey: string = "sectionStyle",
 ): Record<string, string> => {
   const sectionStyle = readStyleValue(content, styleKey);
   const props: Record<string, string> = {};
@@ -167,7 +167,7 @@ export const getSectionStyleDomProps = (
 
 export const getSectionStyleSx = (
   content: ContentLike,
-  styleKey: "sectionStyle" | "outerSectionStyle" = "sectionStyle",
+  styleKey: string = "sectionStyle",
 ): Record<string, string | number> => {
   const sectionStyle = readStyleValue(content, styleKey);
   const sx: Record<string, string | number> = {};

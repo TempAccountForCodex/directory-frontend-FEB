@@ -133,6 +133,8 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
 
     /* ---- Displayed error: external prop takes priority over internal validation ---- */
     const displayError = error ?? validationError;
+    const darkTextColor = "#111827";
+    const mutedDarkTextColor = "rgba(17, 24, 39, 0.72)";
 
     /* ---- Preview: only show when value is non-empty, URL is valid, and protocol is safe ---- */
     const showPreview =
@@ -200,16 +202,39 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
             onChange={handleLinkTypeChange}
             disabled={disabled}
             size="small"
-            sx={{ alignSelf: "flex-start" }}
+            sx={{
+              alignSelf: "flex-start",
+              "& .MuiToggleButton-root": {
+                color: darkTextColor,
+                borderColor: "rgba(17, 24, 39, 0.16)",
+                backgroundColor: "#ffffff",
+              },
+              "& .MuiToggleButton-root.Mui-selected": {
+                color: darkTextColor,
+                backgroundColor: "rgba(17, 24, 39, 0.08)",
+              },
+              "& .MuiToggleButton-root.Mui-selected:hover": {
+                backgroundColor: "rgba(17, 24, 39, 0.12)",
+              },
+              "& .MuiSvgIcon-root": {
+                color: darkTextColor,
+              },
+            }}
           >
             <ToggleButton value="external" aria-label="External link">
               <LinkIcon sx={{ mr: 0.5, fontSize: 18 }} />
-              <Typography variant="caption" sx={{ textTransform: "none" }}>
+              <Typography
+                variant="caption"
+                sx={{ textTransform: "none", color: darkTextColor }}
+              >
                 External
               </Typography>
             </ToggleButton>
             <ToggleButton value="internal" aria-label="Internal link">
-              <Typography variant="caption" sx={{ textTransform: "none" }}>
+              <Typography
+                variant="caption"
+                sx={{ textTransform: "none", color: darkTextColor }}
+              >
                 /path
               </Typography>
             </ToggleButton>
@@ -244,11 +269,19 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
                 onChange={handleOpenInNewTabChange}
                 disabled={disabled}
                 size="small"
-                sx={{ color: "text.secondary" }}
+                sx={{
+                  color: darkTextColor,
+                  "&.Mui-checked": {
+                    color: darkTextColor,
+                  },
+                  "&.Mui-disabled": {
+                    color: mutedDarkTextColor,
+                  },
+                }}
               />
             }
             label={
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              <Typography variant="body2" sx={{ color: darkTextColor }}>
                 Open in new tab
               </Typography>
             }
@@ -266,10 +299,12 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
               py: 0.5,
               px: 1,
               borderRadius: 1,
-              bgcolor: "action.hover",
+              bgcolor: "rgba(17, 24, 39, 0.06)",
             }}
           >
-            <OpenInNewIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+            <OpenInNewIcon
+              sx={{ fontSize: 16, color: mutedDarkTextColor }}
+            />
             <MuiLink
               href={value}
               target={openInNewTab ? "_blank" : "_self"}
@@ -277,7 +312,7 @@ const LinkField: React.FC<LinkFieldProps> = React.memo(
               underline="hover"
               variant="body2"
               sx={{
-                color: "primary.main",
+                color: darkTextColor,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",

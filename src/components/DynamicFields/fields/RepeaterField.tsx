@@ -259,7 +259,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
             sx={{
               textAlign: "center",
               py: 3,
-              color: "text.secondary",
+              color: "text.primary",
               border: "1px dashed",
               borderColor: "divider",
               borderRadius: 1,

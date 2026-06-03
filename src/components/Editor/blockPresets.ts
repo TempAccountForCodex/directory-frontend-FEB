@@ -280,7 +280,7 @@ export const getBlockDefaultContent = (
       };
     case "FOOTER":
       return {
-        logoText: "Your Company",
+        logoText: "LOGO",
         links: [
           { label: "Privacy policy", url: "/privacy-policy" },
           { label: "Terms & condition", url: "/terms-and-condition" },
