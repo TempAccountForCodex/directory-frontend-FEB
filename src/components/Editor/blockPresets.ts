@@ -304,6 +304,10 @@ export const getBlockDefaultContent = (
           borderColor: "rgba(255,255,255,0.12)",
           boxShadowPreset: "none",
           layoutWidth: "page",
+          paddingTop: "24px",
+          paddingBottom: "24px",
+          paddingLeft: "24px",
+          paddingRight: "24px",
         },
       };
     case "LOGO_CAROUSEL":

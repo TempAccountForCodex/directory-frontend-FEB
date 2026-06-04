@@ -1744,13 +1744,43 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         : [];
       const footerLayoutWidth =
         rawCardStyle.layoutWidth || rawSectionStyle.layoutWidth || "page";
+      const footerBackgroundColor =
+        rawCardStyle.backgroundColor ??
+        resolvedCardStyle.backgroundColor ??
+        "#0f1115";
+      const footerBackgroundImage =
+        rawCardStyle.backgroundImage ??
+        resolvedCardStyle.backgroundImage ??
+        (rawCardStyle.backgroundImageUrl || resolvedCardStyle.backgroundImageUrl
+          ? resolvedCardStyle.backgroundImage
+          : "none");
+      const footerBorderColor =
+        rawCardStyle.borderColor ??
+        resolvedCardStyle.borderColor ??
+        "rgba(255,255,255,0.12)";
+      const footerPaddingTop =
+        rawCardStyle.paddingTop ?? resolvedCardStyle.paddingTop ?? "24px";
+      const footerPaddingBottom =
+        rawCardStyle.paddingBottom ?? resolvedCardStyle.paddingBottom ?? "24px";
+      const footerPaddingLeft =
+        rawCardStyle.paddingLeft ?? resolvedCardStyle.paddingLeft ?? "24px";
+      const footerPaddingRight =
+        rawCardStyle.paddingRight ?? resolvedCardStyle.paddingRight ?? "24px";
       const footerInnerContainerSx =
         footerLayoutWidth === "full"
           ? { width: "100%", maxWidth: "none", alignSelf: "stretch" }
           : { width: "100%", maxWidth: "1200px", mx: "auto", alignSelf: "center" };
-      const footerTextColor = "#f8fafc";
-      const footerMutedColor = "rgba(248,250,252,0.72)";
-      const footerLineColor = "rgba(248,250,252,0.14)";
+      const footerUsesLightText =
+        footerBackgroundImage !== "none" ||
+        (typeof footerBackgroundColor === "string" &&
+          !isLightColor(footerBackgroundColor));
+      const footerTextColor = footerUsesLightText ? "#f8fafc" : textColor;
+      const footerMutedColor = footerUsesLightText
+        ? "rgba(248,250,252,0.72)"
+        : mutedTextColor;
+      const footerLineColor = footerUsesLightText
+        ? "rgba(248,250,252,0.14)"
+        : lineColor;
       const resolveSocialIcon = (platform: string) => {
         const normalized = String(platform || "").trim().toLowerCase();
         if (normalized.includes("instagram")) return Instagram;
@@ -1799,21 +1829,14 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           data-preview-label={compoundBlockLabel}
           sx={{
             ...compoundCardSx,
-            backgroundColor: rawCardStyle.backgroundColor || "#0f1115",
-            backgroundImage:
-              rawCardStyle.backgroundImage || rawCardStyle.backgroundImageUrl
-                ? compoundCardSx.backgroundImage
-                : "linear-gradient(180deg, rgba(15,17,21,0.98) 0%, rgba(18,23,31,0.98) 100%)",
-            borderColor: rawCardStyle.borderColor || "rgba(255,255,255,0.12)",
-            boxShadow: rawCardStyle.boxShadow || "none",
-            ...(rawCardStyle.paddingLeft === undefined &&
-            rawCardStyle.paddingRight === undefined
-              ? { px: { xs: 2, md: 2.75 } }
-              : {}),
-            ...(rawCardStyle.paddingTop === undefined &&
-            rawCardStyle.paddingBottom === undefined
-              ? { py: { xs: 2.4, md: 3 } }
-              : {}),
+            p: 0,
+            backgroundColor: footerBackgroundColor,
+            backgroundImage: footerBackgroundImage,
+            borderColor: footerBorderColor,
+            paddingTop: footerPaddingTop,
+            paddingBottom: footerPaddingBottom,
+            paddingLeft: footerPaddingLeft,
+            paddingRight: footerPaddingRight,
             ...(rawCardStyle.minHeight === undefined &&
             rawCardStyle.height === undefined &&
             resolvedCardStyle.minHeight === undefined &&

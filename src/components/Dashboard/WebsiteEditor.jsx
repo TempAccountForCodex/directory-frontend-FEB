@@ -406,6 +406,17 @@ const DEFAULT_SECTION_STYLE = {
   marginRight: "0px",
 };
 
+const FOOTER_DEFAULT_CARD_STYLE = {
+  backgroundColor: "#0f1115",
+  borderColor: "rgba(255,255,255,0.12)",
+  boxShadowPreset: "none",
+  layoutWidth: "page",
+  paddingTop: "24px",
+  paddingBottom: "24px",
+  paddingLeft: "24px",
+  paddingRight: "24px",
+};
+
 const DEFAULT_IMAGE_VALUE = {
   src: "",
   objectFit: "cover",
@@ -769,6 +780,10 @@ const buildInnerBlockFromLibraryItem = (item) => {
             borderColor: "rgba(255,255,255,0.12)",
             boxShadowPreset: "none",
             layoutWidth: "page",
+            paddingTop: "24px",
+            paddingBottom: "24px",
+            paddingLeft: "24px",
+            paddingRight: "24px",
           },
         },
       };
@@ -2744,12 +2759,32 @@ const WebsiteEditorInner = () => {
     const resolvedStyle = styleKey.includes(".")
       ? getValueAtPath(targetBlock?.content || {}, styleKey)
       : targetBlock?.content?.[styleKey];
+    const footerInnerBlockMatch =
+      /^innerBlocks\.(\d+)\.content\.cardStyle$/i.exec(styleKey);
+    const footerDefaultStyle =
+      footerInnerBlockMatch && targetBlock
+        ? (() => {
+            const innerIndex = Number(footerInnerBlockMatch[1]);
+            const innerBlock = Array.isArray(targetBlock.content?.innerBlocks)
+              ? targetBlock.content.innerBlocks[innerIndex]
+              : null;
+            return String(innerBlock?.type || "").toLowerCase() === "footer"
+              ? FOOTER_DEFAULT_CARD_STYLE
+              : null;
+          })()
+        : null;
     if (!resolvedStyle || typeof resolvedStyle !== "object") {
-      return DEFAULT_SECTION_STYLE;
+      return footerDefaultStyle
+        ? {
+            ...DEFAULT_SECTION_STYLE,
+            ...footerDefaultStyle,
+          }
+        : DEFAULT_SECTION_STYLE;
     }
 
     return {
       ...DEFAULT_SECTION_STYLE,
+      ...(footerDefaultStyle || {}),
       ...resolvedStyle,
     };
   }, [blocks, selectedSectionElement]);
