@@ -26,7 +26,13 @@ import FadeIn from "../../blocks/FadeIn";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
+  type SectionStyleValue,
 } from "../../utils/sectionStyle";
+
+type TemplateSectionContent = Record<string, unknown> & {
+  blockId?: string | number;
+  sectionStyle?: SectionStyleValue;
+};
 
 const serifFont = '"Cormorant Garamond", Georgia, serif';
 const bodyFont =
@@ -113,12 +119,16 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
     "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80",
     "https://images.unsplash.com/photo-1492496913980-501348b61469?auto=format&fit=crop&w=1200&q=80",
   ];
-  const heroContent = data.templateContent?.hero || {};
-  const aboutContent = data.templateContent?.about || {};
-  const portfolioContent = data.templateContent?.portfolio || {};
-  const servicesContent = data.templateContent?.services || {};
-  const testimonialsContent = data.templateContent?.testimonials || {};
-  const contactContent = data.templateContent?.contact || {};
+  const content = (data.templateContent ?? {}) as Record<
+    string,
+    TemplateSectionContent | undefined
+  >;
+  const heroContent = content.hero ?? {};
+  const aboutContent = content.about ?? {};
+  const portfolioContent = content.portfolio ?? {};
+  const servicesContent = content.services ?? {};
+  const testimonialsContent = content.testimonials ?? {};
+  const contactContent = content.contact ?? {};
 
   return (
     <Box

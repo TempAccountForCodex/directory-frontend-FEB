@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import "react";
 
 // Augment the default Vite environment interfaces with our custom vars
 // (all VITE_ prefixed variables are exposed to the client).
@@ -16,4 +17,10 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+declare module "react" {
+  interface ImgHTMLAttributes<T> {
+    fetchpriority?: "high" | "low" | "auto";
+  }
 }

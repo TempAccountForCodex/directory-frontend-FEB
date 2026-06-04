@@ -15,6 +15,7 @@ import EastIcon from "@mui/icons-material/East";
 import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import type { Variants } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
 import TemplateNavbarHeader from "../../components/TemplateNavbarHeader";
 import {
@@ -90,13 +91,15 @@ const heroStagger = {
   },
 };
 
-const fadeUp = {
+const smoothEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 32, filter: "blur(10px)" },
   show: {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.85, ease: smoothEase },
   },
 };
 
@@ -104,7 +107,7 @@ const sectionReveal = {
   initial: { opacity: 0, y: 28 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, amount: 0.2 },
-  transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.75, ease: smoothEase },
 } as const;
 
 /* Moved to shared block renderer: src/landingTemplates/blocks/EditorSharedBlockRenderer.tsx
@@ -838,7 +841,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   };
   const renderSectionInnerBlocks = (
     section: Record<string, any>,
-    options?: { tone?: "light" | "dark"; maxWidth?: number | string; mt?: any },
+    options?: {
+      tone?: "light" | "dark";
+      maxWidth?: number | string;
+      mt?: any;
+      canvas?: boolean;
+    },
   ) => {
     const innerBlocks = Array.isArray(section.innerBlocks)
       ? section.innerBlocks
@@ -995,8 +1003,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const useDesktopCanvas =
       innerBlocks.length > 0 && !isCompactFlowSection && !isAutoHeightSection;
     const sectionLayoutWidth = section.sectionStyle?.layoutWidth || "full";
-    const rawSectionSx = getSectionStyleSx(section);
-    const sectionContentSx = { ...rawSectionSx };
+    const rawSectionSx = getSectionStyleSx(section) as Record<string, unknown>;
+    const sectionContentSx: Record<string, unknown> = { ...rawSectionSx };
     const sectionShellSx: Record<string, unknown> = {};
 
     if (sectionLayoutWidth === "page") {
@@ -1212,7 +1220,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       return null;
     }
 
-    const nodes = [];
+    const nodes: React.ReactNode[] = [];
     for (let index = anchorIndex - 1; index >= 0; index -= 1) {
       const key = resolvedSectionOrder[index];
       if (
@@ -1567,7 +1575,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{
                   duration: 0.9,
-                  ease: [0.22, 1, 0.36, 1],
+                  ease: smoothEase,
                   delay: 0.16,
                 }}
                 src={heroImage}
@@ -1721,7 +1729,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                             transition={{
                               duration: 1,
                               delay: item.label === "Revenue" ? 0.15 : 0.3,
-                              ease: [0.22, 1, 0.36, 1],
+                              ease: smoothEase,
                             }}
                             sx={{
                               height: "100%",

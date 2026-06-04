@@ -97,8 +97,8 @@ export default defineConfig(({ mode }) => {
 
     // Production build optimizations
     build: {
-      // Generate sourcemaps for error tracking (hidden from users)
-      sourcemap: 'hidden',
+      // Lighthouse expects referenced source maps to be served with production assets.
+      sourcemap: true,
 
       // Reasonable chunk size warning (helps catch bloat early)
       chunkSizeWarningLimit: 600,
@@ -110,6 +110,7 @@ export default defineConfig(({ mode }) => {
             // Core React libraries (changes rarely)
             'react-core': ['react', 'react-dom', 'react-router-dom'],
 
+<<<<<<< HEAD
             // MUI components (large, changes with updates)
             mui: ['@mui/material', '@mui/icons-material', '@mui/x-date-pickers'],
 
@@ -122,3 +123,13 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
+=======
+            // Heavy feature libraries (only loaded when needed)
+            maps: ['leaflet', 'react-leaflet', 'react-simple-maps'],
+          },
+        },
+      },
+    },
+  };
+});
+>>>>>>> a99c589 (homepage lighthouse done)

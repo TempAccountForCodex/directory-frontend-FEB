@@ -266,21 +266,6 @@ export const getBlockDefaultContent = (
           },
         ],
       };
-    case "FAQ":
-      return {
-        heading: "Frequently asked questions",
-        items: [
-          {
-            question: "How quickly can we launch?",
-            answer:
-              "Most teams can publish an initial version within a few days.",
-          },
-          {
-            question: "Can we update content later?",
-            answer: "Yes, every section remains editable inside the builder.",
-          },
-        ],
-      };
     case "STATS":
       return {
         heading: "Key numbers",

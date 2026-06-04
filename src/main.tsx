@@ -1,9 +1,10 @@
 import "./index.css";
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import theme from "./styles/theme";
-import { CssBaseline, ThemeProvider } from "@mui/material";
+import CssBaseline from "@mui/material/CssBaseline";
+import { ThemeProvider } from "@mui/material/styles";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
 import { I18nProvider } from "./context/I18nContext";
@@ -111,6 +112,7 @@ function AppWithErrorBoundary(): JSX.Element {
               >
                 <ABTestProvider tests={[]}>
                   <CssBaseline />
+                  <RemoveStartupShell />
                   <App />
                   {import.meta.env.DEV && (
                     <ReactQueryDevtools initialIsOpen={false} />
@@ -136,4 +138,12 @@ function AppWithErrorBoundary(): JSX.Element {
   return inner;
 }
 
-createRoot(document.getElementById("root")!).render(<AppWithErrorBoundary />);
+function RemoveStartupShell(): null {
+  useEffect(() => {
+    document.getElementById("startup-shell")?.remove();
+  }, []);
+
+  return null;
+}
+
+createRoot(document.getElementById("app-root")!).render(<AppWithErrorBoundary />);

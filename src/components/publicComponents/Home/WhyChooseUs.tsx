@@ -140,7 +140,11 @@ const WhyChooseUsSection = () => {
                   boxShadow: "0 20px 40px rgba(0,0,0,0.03)",
                 }}
               >
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
+                <Typography
+                  variant="h6"
+                  component="h2"
+                  sx={{ fontWeight: 700, mb: 3 }}
+                >
                   How we compare
                 </Typography>
 
@@ -262,6 +266,7 @@ const WhyChooseUsSection = () => {
                     />
                     <Typography
                       variant="h4"
+                      component="h3"
                       sx={{
                         fontWeight: 800,
                         mb: 1.5,

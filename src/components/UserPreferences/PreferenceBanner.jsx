@@ -84,7 +84,7 @@ const CookieBanner = () => {
                     '&:hover': { color: '#4aa4ab' },
                   }}
                 >
-                  Learn more
+                  Learn more about our Cookie Policy
                 </Typography>
               </Typography>
             </Box>

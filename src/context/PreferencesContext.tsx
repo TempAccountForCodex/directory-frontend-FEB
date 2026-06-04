@@ -11,6 +11,26 @@ import {
   COOKIE_CATEGORIES,
 } from "../utils/preferences";
 
+const runAfterInitialLoad = (callback: () => void) => {
+  const schedule = () => {
+    const requestIdle = window.requestIdleCallback;
+
+    if (requestIdle) {
+      requestIdle(callback, { timeout: 3000 });
+      return;
+    }
+
+    window.setTimeout(callback, 1500);
+  };
+
+  if (document.readyState === "complete") {
+    schedule();
+    return;
+  }
+
+  window.addEventListener("load", schedule, { once: true });
+};
+
 interface CookieConsentContextType {
   showBanner: boolean;
   showPreferences: boolean;
@@ -54,7 +74,7 @@ export const CookieConsentProvider = ({ children }) => {
       // Load analytics if user has consented
       const savedPrefs = getCookiePreferences();
       if (savedPrefs?.categories[COOKIE_CATEGORIES.ANALYTICS]) {
-        loadGoogleAnalytics();
+        runAfterInitialLoad(loadGoogleAnalytics);
       }
     }
   }, []);

@@ -45,7 +45,7 @@ const Pricing = lazy(() => import("../src/pages/publicPages/Pricing"));
 const Templates = lazy(() => import("../src/pages/publicPages/Templates"));
 
 const InsightsPage = lazy(() => import("./pages/publicPages/Blog.js"));
-import Footer from "./components/Footer";
+const Footer = lazy(() => import("./components/Footer"));
 const MoveUpBtn = lazy(() => import("./components/UI/MoveUpBtn"));
 const CookieBanner = lazy(
   () => import("./components/UserPreferences/PreferenceBanner.jsx"),
@@ -131,7 +131,7 @@ const MainLayout = () => (
     <main id="main-content">
       <Outlet />
     </main>
-    <Footer />
+    <FooterMount />
     <MoveUpBtnMount />
   </>
 );
@@ -216,6 +216,38 @@ const MoveUpBtnMount = () => {
   return (
     <Suspense fallback={null}>
       <MoveUpBtn />
+    </Suspense>
+  );
+};
+
+const FooterMount = () => {
+  const [shouldMount, setShouldMount] = useState(false);
+
+  useEffect(() => {
+    if (shouldMount) {
+      return;
+    }
+
+    const mount = () => setShouldMount(true);
+
+    window.addEventListener("scroll", mount, { passive: true, once: true });
+    window.addEventListener("touchstart", mount, { passive: true, once: true });
+    window.addEventListener("keydown", mount, { once: true });
+
+    return () => {
+      window.removeEventListener("scroll", mount);
+      window.removeEventListener("touchstart", mount);
+      window.removeEventListener("keydown", mount);
+    };
+  }, [shouldMount]);
+
+  if (!shouldMount) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <Footer />
     </Suspense>
   );
 };

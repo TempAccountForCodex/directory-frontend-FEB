@@ -120,9 +120,11 @@ function Navbar() {
             >
               <img
                 src={WhiteLogo}
-                alt="logo"
+                alt="Techietribe"
+                width={180}
+                height={35}
                 style={{ width: "clamp(145px, 15vw, 180px)", height: "auto" }}
-                fetchPriority="high"
+                loading="eager"
                 decoding="async"
               />
             </Link>
@@ -144,9 +146,11 @@ function Navbar() {
             >
               <img
                 src={WhiteLogo}
-                alt="logo"
+                alt="Techietribe"
+                width={180}
+                height={35}
                 style={{ width: "clamp(145px, 15vw, 180px)", height: "auto" }}
-                fetchPriority="high"
+                loading="eager"
                 decoding="async"
               />
             </Link>

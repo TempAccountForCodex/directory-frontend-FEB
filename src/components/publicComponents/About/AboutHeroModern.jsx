@@ -51,7 +51,7 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
         src={bg}
         alt="About page hero graphic"
         decoding="async"
-        fetchPriority="high"
+        fetchpriority="high"
         sx={{
           position: "absolute",
           top: { xs: "0%", lg: "-10%" },

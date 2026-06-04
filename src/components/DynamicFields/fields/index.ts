@@ -15,6 +15,7 @@
 
 import { registerFieldComponent, hasFieldComponent } from "../registry";
 import { FieldType } from "../types";
+import type { FieldRendererProps } from "../types";
 import TextField from "./TextField";
 import TextArea from "./TextArea";
 import LinkField from "./LinkField";
@@ -39,7 +40,10 @@ if (!hasFieldComponent(FieldType.EMAIL)) {
 
 // URL reuses LinkField — URLs are a subset of links
 if (!hasFieldComponent(FieldType.URL)) {
-  registerFieldComponent(FieldType.URL, LinkField);
+  registerFieldComponent(
+    FieldType.URL,
+    LinkField as React.ComponentType<FieldRendererProps>,
+  );
 }
 
 // RICH_TEXT / RICHTEXT degrade to TextArea (multiline plain text)

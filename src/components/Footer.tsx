@@ -111,14 +111,17 @@ const Footer = () => {
   // ✅ Social Links
   const socialLinks = [
     {
+      label: "Facebook",
       icon: FacebookIcon,
       href: "https://www.facebook.com/thetechietribe.official",
     },
     {
+      label: "Instagram",
       icon: InstagramIcon,
       href: "https://www.instagram.com/thetechietribe_/",
     },
     {
+      label: "LinkedIn",
       icon: LinkedInIcon,
       href: "https://www.linkedin.com/company/techietribe",
     },
@@ -127,6 +130,7 @@ const Footer = () => {
     //   href: "https://www.youtube.com/@thetechietribe.official",
     // },
     {
+      label: "Pinterest",
       icon: PinterestIcon,
       href: "https://www.pinterest.com/thetechietribe_/",
     },
@@ -211,7 +215,6 @@ const Footer = () => {
                 value={formemail}
                 onChange={handleChange}
                 InputProps={{
-                  disableUnderline: true,
                   style: {
                     padding: "0 18px",
                     color: "#fff",
@@ -287,7 +290,7 @@ const Footer = () => {
               pr: { md: 6 },
             }}
           >
-            <img src={header} alt="Techietribe" width={220} />
+            <img src={header} alt="Techietribe" width={220} height={43} />
             <Typography
               sx={{
                 fontSize: "16px",
@@ -315,11 +318,12 @@ const Footer = () => {
                 width: "fit-content",
               }}
             >
-              {socialLinks.map(({ icon: Icon, href }, index) => (
+              {socialLinks.map(({ label, icon: Icon, href }) => (
                 <IconButton
-                  key={index}
+                  key={label}
                   component="a"
                   href={href}
+                  aria-label={label}
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{
@@ -503,12 +507,13 @@ const Footer = () => {
         >
           <Typography
             variant="subtitle2"
-            sx={(t) => ({
-              color: (t.palette.text as any).gray,
+            component="p"
+            sx={{
+              color: "#8b929c",
               fontFamily: "system-ui",
               fontWeight: 400,
               textAlign: "center",
-            })}
+            }}
           >
             Copyright © 2024 Techietribe. All Rights Reserved.
           </Typography>
@@ -516,15 +521,23 @@ const Footer = () => {
             {forumSupport.map((data, index) => (
               <Typography
                 variant="subtitle2"
+                component={data.path.startsWith("/") ? Link : "button"}
                 key={index}
+                {...(data.path.startsWith("/")
+                  ? { to: data.path }
+                  : { type: "button" })}
                 onClick={() => handleFooterLinkClick(data)}
-                sx={(t) => ({
-                  color: (t.palette.text as any).gray,
+                sx={{
+                  color: "#8b929c",
                   fontFamily: "system-ui",
                   fontWeight: 500,
                   cursor: "pointer",
+                  background: "none",
+                  border: 0,
+                  p: 0,
+                  textDecoration: "none",
                   "&:hover": { color: "#378C92" },
-                })}
+                }}
               >
                 {data.name}
               </Typography>

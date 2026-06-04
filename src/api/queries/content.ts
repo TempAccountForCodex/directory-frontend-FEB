@@ -43,6 +43,10 @@ export type ListingsParams = Record<
   string | number | boolean | undefined
 >;
 
+type ListingsQueryOptions = {
+  enabled?: boolean;
+};
+
 /* --------------------------------------------------------------------- */
 /* Helpers                                                                */
 /* --------------------------------------------------------------------- */
@@ -69,7 +73,10 @@ function cleanParams<T extends Record<string, unknown>>(
  * envelope (`{ data: { data, pagination } }`) so consumers can destructure
  * either the places array or pagination metadata.
  */
-export function useListings(params?: ListingsParams) {
+export function useListings(
+  params?: ListingsParams,
+  options: ListingsQueryOptions = {},
+) {
   const cleaned = cleanParams(params);
   return useQuery({
     queryKey: queryKeys.content.listings(cleaned),
@@ -82,6 +89,7 @@ export function useListings(params?: ListingsParams) {
         response.data?.data ?? response.data ?? { data: [], pagination: null }
       );
     },
+    enabled: options.enabled ?? true,
     staleTime: 5 * 60_000,
   });
 }

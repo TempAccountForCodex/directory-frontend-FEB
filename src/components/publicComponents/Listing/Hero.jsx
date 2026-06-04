@@ -255,7 +255,7 @@ export default function AboutHeroModern({ accent, eyebrow, title, bg }) {
         alt="Directory network map"
         loading="eager"
         decoding="async"
-        fetchPriority="high"
+        fetchpriority="high"
         sx={{
           position: "absolute",
           top: { xs: "0%", lg: "0%" },
