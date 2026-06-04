@@ -7,11 +7,21 @@ import {
   Stack,
   TextField,
   Typography,
+  Grid,
+  Paper,
 } from "@mui/material";
 import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
 import EastIcon from "@mui/icons-material/East";
 import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import {
+  Facebook,
+  Globe,
+  Instagram,
+  Linkedin,
+  Music2,
+  Twitter,
+  Youtube,
+} from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
 import {
@@ -109,7 +119,9 @@ const getNestedStyleValue = (source: any, path = "") => {
     .filter(Boolean)
     .reduce(
       (current, key) =>
-        current == null ? undefined : current[/^\d+$/.test(key) ? Number(key) : key],
+        current == null
+          ? undefined
+          : current[/^\d+$/.test(key) ? Number(key) : key],
       source,
     );
 };
@@ -1323,112 +1335,348 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Stack>
       );
     }
-
     if (blockType === "hero" || blockType === "image_text_split") {
+      const heroContent = block.content || {};
+      const heroImage = heroContent?.image || visualSet.office;
+
+      const normalizeSxSize = (value: any, fallback: any = "0px") => {
+        if (value === undefined || value === null || value === "")
+          return fallback;
+        if (typeof value === "number") return `${value}px`;
+        return value;
+      };
+
+      const negateSxSize = (value: any): any => {
+        const normalized = normalizeSxSize(value);
+
+        if (typeof normalized === "number") return `${-normalized}px`;
+
+        if (typeof normalized === "string") {
+          if (normalized === "0" || normalized === "0px") return "0px";
+          if (normalized.startsWith("-")) return normalized;
+          return `calc(${normalized} * -1)`;
+        }
+
+        if (typeof normalized === "object" && !Array.isArray(normalized)) {
+          return Object.fromEntries(
+            Object.entries(normalized).map(([key, itemValue]) => [
+              key,
+              negateSxSize(itemValue),
+            ]),
+          );
+        }
+
+        return normalized;
+      };
+
+      const calcBleedWidth = (left: any, right: any): any => {
+        const l = normalizeSxSize(left);
+        const r = normalizeSxSize(right);
+
+        if (
+          typeof l === "object" &&
+          !Array.isArray(l) &&
+          typeof r === "object" &&
+          !Array.isArray(r)
+        ) {
+          const keys = Array.from(
+            new Set([...Object.keys(l), ...Object.keys(r)]),
+          );
+
+          return Object.fromEntries(
+            keys.map((key) => [
+              key,
+              `calc(100% + ${normalizeSxSize(l[key], "0px")} + ${normalizeSxSize(
+                r[key],
+                "0px",
+              )})`,
+            ]),
+          );
+        }
+
+        if (typeof l === "object" && !Array.isArray(l)) {
+          return Object.fromEntries(
+            Object.entries(l).map(([key, itemValue]) => [
+              key,
+              `calc(100% + ${normalizeSxSize(itemValue, "0px")} + ${normalizeSxSize(
+                r,
+                "0px",
+              )})`,
+            ]),
+          );
+        }
+
+        if (typeof r === "object" && !Array.isArray(r)) {
+          return Object.fromEntries(
+            Object.entries(r).map(([key, itemValue]) => [
+              key,
+              `calc(100% + ${normalizeSxSize(l, "0px")} + ${normalizeSxSize(
+                itemValue,
+                "0px",
+              )})`,
+            ]),
+          );
+        }
+
+        return `calc(100% + ${normalizeSxSize(l)} + ${normalizeSxSize(r)})`;
+      };
+
+      /**
+       * Editor open hone par parent section default padding apply kar raha hai.
+       * Isliye hero block parent padding ko negative margin se cancel karega.
+       */
+      const heroBleedX = {
+        xs: "16px",
+        sm: "24px",
+        md: "32px",
+      };
+
+      const heroBleedY = {
+        xs: "16px",
+        md: "24px",
+      };
+
+      const sectionPaddingLeft =
+        rawSectionStyle.paddingLeft ??
+        rawSectionStyle.pl ??
+        rawSectionStyle.px ??
+        resolvedSectionStyle?.paddingLeft ??
+        resolvedSectionStyle?.pl ??
+        resolvedSectionStyle?.px ??
+        heroBleedX;
+
+      const sectionPaddingRight =
+        rawSectionStyle.paddingRight ??
+        rawSectionStyle.pr ??
+        rawSectionStyle.px ??
+        resolvedSectionStyle?.paddingRight ??
+        resolvedSectionStyle?.pr ??
+        resolvedSectionStyle?.px ??
+        heroBleedX;
+
+      const sectionPaddingTop =
+        rawSectionStyle.paddingTop ??
+        rawSectionStyle.pt ??
+        rawSectionStyle.py ??
+        resolvedSectionStyle?.paddingTop ??
+        resolvedSectionStyle?.pt ??
+        resolvedSectionStyle?.py ??
+        heroBleedY;
+
+      const sectionPaddingBottom =
+        rawSectionStyle.paddingBottom ??
+        rawSectionStyle.pb ??
+        rawSectionStyle.py ??
+        resolvedSectionStyle?.paddingBottom ??
+        resolvedSectionStyle?.pb ??
+        resolvedSectionStyle?.py ??
+        heroBleedY;
+
+      const heroMinHeight = rawCardStyle.minHeight ??
+        resolvedCardStyle.minHeight ?? { xs: 520, md: 640 };
+
+      const heroOverlay =
+        rawCardStyle.overlay ??
+        rawCardStyle.overlayColor ??
+        resolvedCardStyle.overlay ??
+        resolvedCardStyle.overlayColor ??
+        "linear-gradient(90deg, rgba(8,12,20,0.9) 0%, rgba(8,12,20,0.76) 42%, rgba(8,12,20,0.38) 100%)";
+
+      const heroInnerContainerSx = {
+        width: "100%",
+        maxWidth: "1550px",
+        mx: "auto",
+      };
+
+      const heroBleedWidth = calcBleedWidth(
+        sectionPaddingLeft,
+        sectionPaddingRight,
+      );
+
       return (
         <Stack
           key={String(block.id || `${blockType}-${index}`)}
-          direction={{ xs: "column", md: "row" }}
-          spacing={2.5}
-          alignItems="stretch"
           {...compoundBlockSelectionProps}
           data-preview-label={compoundBlockLabel}
-          sx={compoundCardSx}
+          sx={{
+            ...compoundCardSx,
+
+            position: "relative",
+            overflow: "hidden",
+            isolation: "isolate",
+
+            p: "0 !important",
+            padding: "0 !important",
+            borderRadius: "0 !important",
+            boxShadow: "none !important",
+            border: "none !important",
+            backgroundColor: "#0f1115",
+
+            width: heroBleedWidth,
+            maxWidth: heroBleedWidth,
+            minWidth: heroBleedWidth,
+            alignSelf: "stretch !important",
+
+            ml: negateSxSize(sectionPaddingLeft),
+            mr: negateSxSize(sectionPaddingRight),
+            mt: negateSxSize(sectionPaddingTop),
+            mb: negateSxSize(sectionPaddingBottom),
+
+            minHeight: heroMinHeight,
+          }}
         >
-          <Stack spacing={1.35} sx={{ flex: 1, minWidth: 0 }}>
-            <Chip
-              label={block.content?.eyebrow || "Feature block"}
-              {...getEditableTextProps(
-                section.blockId,
-                `${blockPath}.eyebrow`,
-                "single",
-              )}
-              sx={{
-                alignSelf: "flex-start",
-                bgcolor:
-                  tone === "light"
-                    ? "rgba(255,255,255,0.14)"
-                    : palette.accentSoft,
-                color: textColor,
-                fontWeight: 700,
-                ...eyebrowStyle,
-              }}
-            />
-            <Typography
-              {...getEditableTextProps(
-                section.blockId,
-                `${blockPath}.heading`,
-                "multi",
-              )}
-              sx={{
-                color: textColor,
-                fontFamily: headingFont,
-                fontSize: { xs: "1.55rem", md: "2.3rem" },
-                lineHeight: 1.02,
-                fontWeight: 800,
-                letterSpacing: "-0.04em",
-                ...headingStyle,
-              }}
-            >
-              {block.content?.heading || "Image and text split"}
-            </Typography>
-            <Typography
-              {...getEditableTextProps(
-                section.blockId,
-                `${blockPath}.body`,
-                "multi",
-              )}
-              sx={{
-                color: mutedTextColor,
-                fontSize: "1rem",
-                lineHeight: 1.75,
-                ...bodyStyle,
-              }}
-            >
-              {block.content?.body ||
-                "Pair an image with a supporting message and CTA."}
-            </Typography>
-            <Button
-              variant="contained"
-              {...getEditableTextProps(
-                section.blockId,
-                `${blockPath}.buttonText`,
-                "single",
-              )}
-              sx={{
-                alignSelf: "flex-start",
-                bgcolor: themeColor,
-                color: palette.white,
-                borderRadius: "16px",
-                textTransform: "none",
-                px: 2.6,
-                py: 1.05,
-                boxShadow: "none",
-                ...buttonStyle,
-              }}
-            >
-              {block.content?.buttonText || "Explore more"}
-            </Button>
-          </Stack>
           <Box
             component="img"
-            src={block.content?.image || visualSet.office}
-            alt={block.content?.heading || "Split image"}
+            src={heroImage}
+            alt={heroContent?.heading || "Hero background image"}
             {...getEditableImageProps(
               section.blockId,
               `${blockPath}.image`,
-              block.label || "Split Image",
+              block.label || "Hero Background Image",
             )}
             sx={{
-              width: { xs: "100%", md: 260 },
-              minWidth: { md: 260 },
-              height: { xs: 220, md: 280 },
-              objectFit: imageStyle.objectFit || "cover",
-              borderRadius: "22px",
-              display: "block",
               ...imageStyle,
+              position: "absolute",
+              inset: 0,
+              width: "100% !important",
+              height: "100% !important",
+              objectFit: imageStyle.objectFit || "cover",
+              objectPosition: imageStyle.objectPosition || "center",
+              display: "block",
+              zIndex: -3,
+              borderRadius: "0 !important",
             }}
           />
+
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background: heroOverlay,
+              zIndex: -2,
+              pointerEvents: "none",
+            }}
+          />
+
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "radial-gradient(circle at 20% 35%, rgba(255,255,255,0.12), transparent 30%), linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.3))",
+              zIndex: -1,
+              pointerEvents: "none",
+            }}
+          />
+
+          <Box
+            sx={{
+              ...heroInnerContainerSx,
+              minHeight: heroMinHeight,
+              px: { xs: 2.4, sm: 4, md: 6 },
+              py: { xs: 6, md: 8 },
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Stack
+              spacing={{ xs: 1.7, md: 2 }}
+              sx={{
+                width: "100%",
+                maxWidth: { xs: "100%", md: 660 },
+              }}
+            >
+              <Chip
+                label={heroContent?.eyebrow || "Hero section"}
+                {...getEditableTextProps(
+                  section.blockId,
+                  `${blockPath}.eyebrow`,
+                  "single",
+                )}
+                sx={{
+                  alignSelf: "flex-start",
+                  height: 34,
+                  px: 0.8,
+                  bgcolor: "rgba(255,255,255,0.14)",
+                  color: "#ffffff",
+                  border: "1px solid rgba(255,255,255,0.24)",
+                  backdropFilter: "blur(14px)",
+                  fontWeight: 800,
+                  letterSpacing: "0.01em",
+                  ...eyebrowStyle,
+                }}
+              />
+
+              <Typography
+                {...getEditableTextProps(
+                  section.blockId,
+                  `${blockPath}.heading`,
+                  "multi",
+                )}
+                sx={{
+                  color: "#ffffff",
+                  fontFamily: headingFont,
+                  fontSize: {
+                    xs: "2.35rem",
+                    sm: "3.25rem",
+                    md: "4.8rem",
+                  },
+                  lineHeight: { xs: 1.04, md: 0.98 },
+                  fontWeight: 900,
+                  letterSpacing: "-0.065em",
+                  textWrap: "balance",
+                  textShadow: "0 20px 54px rgba(0,0,0,0.4)",
+                  ...headingStyle,
+                }}
+              >
+                {heroContent?.heading || "Large headline for this section"}
+              </Typography>
+
+              <Typography
+                {...getEditableTextProps(
+                  section.blockId,
+                  `${blockPath}.body`,
+                  "multi",
+                )}
+                sx={{
+                  color: "rgba(255,255,255,0.78)",
+                  fontSize: { xs: "1rem", md: "1.18rem" },
+                  lineHeight: 1.75,
+                  maxWidth: 560,
+                  textShadow: "0 12px 36px rgba(0,0,0,0.4)",
+                  ...bodyStyle,
+                }}
+              >
+                {heroContent?.body ||
+                  "Customize the hero block from the editor."}
+              </Typography>
+
+              <Button
+                variant="contained"
+                {...getEditableTextProps(
+                  section.blockId,
+                  `${blockPath}.buttonText`,
+                  "single",
+                )}
+                sx={{
+                  alignSelf: "flex-start",
+                  bgcolor: themeColor,
+                  color: palette.white,
+                  borderRadius: "999px",
+                  textTransform: "none",
+                  px: 3.4,
+                  py: 1.25,
+                  minHeight: 50,
+                  boxShadow: "0 18px 48px rgba(0,0,0,0.32)",
+                  fontWeight: 800,
+                  fontSize: "1rem",
+                  ...buttonStyle,
+                }}
+              >
+                {heroContent?.buttonText || "Get started"}
+              </Button>
+            </Stack>
+          </Box>
         </Stack>
       );
     }
@@ -1809,13 +2057,40 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     }
 
     if (blockType === "footer") {
+      const defaultFooterContent = {
+        logoText: "LOGO",
+        description:
+          "A modern business footer with direct contact details, useful navigation, and a simple subscribe form.",
+        links: [
+          { label: "Privacy policy", url: "/privacy-policy" },
+          { label: "Terms & condition", url: "/terms-and-condition" },
+          { label: "Cookie Policy", url: "/cookie-policy" },
+        ],
+        contactEmail: "hello@yourcompany.com",
+        contactPhone: "+1 (555) 123-4567",
+        contactAddress: "123 Business Avenue, New York, NY 10001",
+        socialLinks: [
+          { platform: "linkedin", url: "https://linkedin.com" },
+          { platform: "instagram", url: "https://instagram.com" },
+          { platform: "facebook", url: "https://facebook.com" },
+        ],
+        placeholder: "Enter your email",
+        buttonText: "Subscribe",
+        copyright: "(c) 2026 Your company. All rights reserved.",
+      };
       const footerContent =
-        String(section.content?.editorBlockType || "").toLowerCase() === "footer"
+        String(section.content?.editorBlockType || "").toLowerCase() ===
+        "footer"
           ? {
+              ...defaultFooterContent,
               ...(block.content || {}),
               ...(section.content || {}),
             }
-          : block.content || {};
+          : {
+              ...defaultFooterContent,
+              ...(block.content || {}),
+            };
+
       const footerLinks = Array.isArray(footerContent?.links)
         ? footerContent.links
             .map((link: any) =>
@@ -1828,81 +2103,145 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             )
             .filter((link: { label: string }) => link.label)
         : [];
+
       const footerSocialLinks = Array.isArray(footerContent?.socialLinks)
         ? footerContent.socialLinks
             .map((item: any) => ({
               platform: String(item?.platform || item?.label || "").trim(),
               url: String(item?.url || item?.href || "").trim(),
             }))
-            .filter((item: { platform: string; url: string }) => item.platform && item.url)
+            .filter(
+              (item: { platform: string; url: string }) =>
+                item.platform && item.url,
+            )
         : [];
-      const footerLayoutWidth =
-        rawCardStyle.layoutWidth || rawSectionStyle.layoutWidth || "page";
+
+      const footerLayoutWidth = String(
+        rawCardStyle.layoutWidth ??
+          resolvedCardStyle.layoutWidth ??
+          rawSectionStyle.layoutWidth ??
+          resolvedSectionStyle?.layoutWidth ??
+          "page",
+      ).toLowerCase();
+
+      /**
+       * Outer footer:
+       * page/full dono par background full available width rahega.
+       */
+      const footerOuterShouldStretch =
+        footerLayoutWidth === "page" || footerLayoutWidth === "full";
+
+      /**
+       * Inner content:
+       * Sirf explicit "full" par full width.
+       * Default "page" aur "container" dono par content container width mein rahega.
+       */
+      const footerInnerShouldStretch = footerLayoutWidth === "full";
+
       const footerBackgroundColor =
         rawCardStyle.backgroundColor ??
         resolvedCardStyle.backgroundColor ??
         "#0f1115";
+
       const footerBackgroundImage =
         rawCardStyle.backgroundImage ??
         resolvedCardStyle.backgroundImage ??
         (rawCardStyle.backgroundImageUrl || resolvedCardStyle.backgroundImageUrl
           ? resolvedCardStyle.backgroundImage
           : "none");
+
       const footerBorderColor =
         rawCardStyle.borderColor ??
         resolvedCardStyle.borderColor ??
         "rgba(255,255,255,0.12)";
+
       const footerPaddingTop =
         rawCardStyle.paddingTop ?? resolvedCardStyle.paddingTop ?? "24px";
+
       const footerPaddingBottom =
         rawCardStyle.paddingBottom ?? resolvedCardStyle.paddingBottom ?? "24px";
+
       const footerPaddingLeft =
         rawCardStyle.paddingLeft ?? resolvedCardStyle.paddingLeft ?? "24px";
+
       const footerPaddingRight =
         rawCardStyle.paddingRight ?? resolvedCardStyle.paddingRight ?? "24px";
+
       const footerLogoStyle = getEditableFieldStyle("logoText", headingStyle);
+
       const footerDescriptionStyle = getEditableFieldStyle(
         "description",
         bodyStyle,
       );
+
       const footerLinkStyle = getEditableFieldStyle("links.0.label", textStyle);
+
       const footerContactStyle = getEditableFieldStyle(
         "contactEmail",
         bodyStyle,
       );
+
       const footerButtonTextStyle = getEditableFieldStyle(
         "buttonText",
         buttonStyle,
       );
+
       const footerCopyrightStyle = getEditableFieldStyle(
         "copyright",
         bodyStyle,
       );
-      const footerInnerContainerSx =
-        footerLayoutWidth === "full"
-          ? { width: "100%", maxWidth: "none", alignSelf: "stretch" }
-          : { width: "100%", maxWidth: "1200px", mx: "auto", alignSelf: "center" };
+
+      const footerInnerContainerSx = footerInnerShouldStretch
+        ? {
+            width: "100%",
+            maxWidth: "none",
+            mx: 0,
+            alignSelf: "stretch",
+          }
+        : {
+            width: "100%",
+            maxWidth: "1200px",
+            mx: "auto",
+            alignSelf: "center",
+          };
+
       const footerUsesLightText =
         footerBackgroundImage !== "none" ||
         (typeof footerBackgroundColor === "string" &&
           !isLightColor(footerBackgroundColor));
+
       const footerTextColor = footerUsesLightText ? "#f8fafc" : textColor;
+
       const footerMutedColor = footerUsesLightText
         ? "rgba(248,250,252,0.72)"
         : mutedTextColor;
+
       const footerLineColor = footerUsesLightText
         ? "rgba(248,250,252,0.14)"
         : lineColor;
+
       const resolveSocialIcon = (platform: string) => {
-        const normalized = String(platform || "").trim().toLowerCase();
+        const normalized = String(platform || "")
+          .trim()
+          .toLowerCase();
+
         if (normalized.includes("instagram")) return Instagram;
         if (normalized.includes("linkedin")) return Linkedin;
         if (normalized.includes("facebook")) return Facebook;
+        if (normalized.includes("youtube")) return Youtube;
+        if (normalized.includes("tiktok")) return Music2;
+        if (normalized.includes("website") || normalized.includes("web")) {
+          return Globe;
+        }
+
         return Twitter;
       };
+
       const resolveFooterHref = (url: string) => {
         const trimmed = String(url || "").trim();
+
         if (!trimmed) return "#";
+
         if (
           trimmed.startsWith("#") ||
           trimmed.startsWith("http://") ||
@@ -1912,19 +2251,23 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         ) {
           return trimmed;
         }
+
         if (!trimmed.startsWith("/")) {
           return trimmed;
         }
+
         if (typeof window === "undefined") {
           return trimmed;
         }
 
         const pathMatch = window.location.pathname.match(/^\/site\/([^/]+)/);
+
         if (!pathMatch) {
           return trimmed;
         }
 
         const siteBase = `/site/${pathMatch[1]}`;
+
         if (trimmed === siteBase || trimmed.startsWith(`${siteBase}/`)) {
           return trimmed;
         }
@@ -1941,6 +2284,19 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           data-preview-label={compoundBlockLabel}
           sx={{
             ...compoundCardSx,
+
+            /**
+             * Background/footer wrapper full page width rahe.
+             * Lekin inner content default container mein rahega.
+             */
+            ...(footerOuterShouldStretch
+              ? {
+                  width: "100%",
+                  maxWidth: "none",
+                  alignSelf: "stretch",
+                }
+              : {}),
+
             p: 0,
             backgroundColor: footerBackgroundColor,
             backgroundImage: footerBackgroundImage,
@@ -1949,6 +2305,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             paddingBottom: footerPaddingBottom,
             paddingLeft: footerPaddingLeft,
             paddingRight: footerPaddingRight,
+
             ...(rawCardStyle.minHeight === undefined &&
             rawCardStyle.height === undefined &&
             resolvedCardStyle.minHeight === undefined &&
@@ -1958,10 +2315,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   height: "auto",
                 }
               : {}),
+
             ...(rawCardStyle.layoutGap === undefined &&
             resolvedCardStyle.gap === undefined
               ? { gap: 0 }
               : {}),
+
             ...(rawCardStyle.borderRadius === undefined &&
             resolvedCardStyle.borderRadius === undefined
               ? { borderRadius: 0 }
@@ -1972,7 +2331,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "1.2fr 0.9fr 1fr 1.1fr" },
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "1.2fr 0.9fr 1fr 1.1fr",
+                },
                 gap: { xs: 2.4, md: 3 },
                 alignItems: "start",
               }}
@@ -1993,8 +2355,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerLogoStyle,
                   }}
                 >
-                  {footerContent?.logoText || footerContent?.heading || "LOGO"}
+                  {footerContent.logoText || footerContent.heading}
                 </Typography>
+
                 <Typography
                   {...getEditableTextProps(
                     section.blockId,
@@ -2009,9 +2372,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerDescriptionStyle,
                   }}
                 >
-                  {footerContent?.description ||
-                    "A modern business footer with direct contact details, useful navigation, and a simple subscribe form."}
+                  {footerContent.description}
                 </Typography>
+
                 {footerSocialLinks.length ? (
                   <Stack direction="row" spacing={1}>
                     {footerSocialLinks.map(
@@ -2020,6 +2383,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         socialIndex: number,
                       ) => {
                         const Icon = resolveSocialIcon(item.platform);
+
                         return (
                           <Box
                             key={`${item.platform}-${socialIndex}`}
@@ -2034,7 +2398,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                               color: footerTextColor,
                               border: "1px solid rgba(248,250,252,0.16)",
                               bgcolor: "rgba(255,255,255,0.04)",
-                              transition: "background-color 160ms ease, border-color 160ms ease",
+                              transition:
+                                "background-color 160ms ease, border-color 160ms ease",
                               "&:hover": {
                                 bgcolor: "rgba(255,255,255,0.08)",
                                 borderColor: "rgba(248,250,252,0.28)",
@@ -2060,9 +2425,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   Navigation
                 </Typography>
+
                 <Stack spacing={0.9}>
                   {footerLinks.map(
-                    (link: { label: string; url: string }, linkIndex: number) => (
+                    (
+                      link: { label: string; url: string },
+                      linkIndex: number,
+                    ) => (
                       <Box
                         key={`${link.label}-${linkIndex}`}
                         component="a"
@@ -2101,6 +2470,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   Contact
                 </Typography>
+
                 <Typography
                   {...getEditableTextProps(
                     section.blockId,
@@ -2113,8 +2483,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerContactStyle,
                   }}
                 >
-                  {footerContent?.contactEmail || "hello@yourcompany.com"}
+                  {footerContent.contactEmail}
                 </Typography>
+
                 <Typography
                   {...getEditableTextProps(
                     section.blockId,
@@ -2127,8 +2498,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerContactStyle,
                   }}
                 >
-                  {footerContent?.contactPhone || "+1 (555) 123-4567"}
+                  {footerContent.contactPhone}
                 </Typography>
+
                 <Typography
                   {...getEditableTextProps(
                     section.blockId,
@@ -2141,8 +2513,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerContactStyle,
                   }}
                 >
-                  {footerContent?.contactAddress ||
-                    "123 Business Avenue, New York, NY 10001"}
+                  {footerContent.contactAddress}
                 </Typography>
               </Stack>
 
@@ -2156,11 +2527,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   Stay updated
                 </Typography>
+
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1.05}>
                   <TextField
                     size="small"
                     fullWidth
-                    placeholder={footerContent?.placeholder || "Enter your email"}
+                    placeholder={footerContent.placeholder}
                     sx={{
                       "& .MuiInputBase-root": {
                         color: footerTextColor,
@@ -2177,6 +2549,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       },
                     }}
                   />
+
                   <Button
                     variant="contained"
                     {...getEditableTextProps(
@@ -2198,7 +2571,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       ...footerButtonTextStyle,
                     }}
                   >
-                    {footerContent?.buttonText || "Subscribe"}
+                    {footerContent.buttonText}
                   </Button>
                 </Stack>
               </Stack>
@@ -2219,6 +2592,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Typography sx={{ color: footerMutedColor, fontSize: "0.92rem" }}>
                 Built for modern company websites.
               </Typography>
+
               <Typography
                 {...getEditableTextProps(
                   section.blockId,
@@ -2234,8 +2608,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   ...footerCopyrightStyle,
                 }}
               >
-                {footerContent?.copyright ||
-                  "(c) 2026 Your company. All rights reserved."}
+                {footerContent.copyright}
               </Typography>
             </Stack>
           </Box>
@@ -2573,79 +2946,52 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       );
     }
 
-    if (blockType === "map_location" || blockType === "menu_display") {
-      const items = Array.isArray(block.content?.locations)
-        ? block.content.locations
-        : Array.isArray(block.content?.items)
-          ? block.content.items
-          : [];
+    if (blockType === "map_location") {
+      const defaultIframe = `<iframe src="https://www.google.com/maps?q=Lahore%2C%20Pakistan&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+
+      const iframeHtml = block.content?.iframe || defaultIframe;
+
       return (
-        <Stack
+        <Box
           key={String(block.id || `${blockType}-${index}`)}
-          spacing={2}
           {...compoundBlockSelectionProps}
           data-preview-label={compoundBlockLabel}
-          sx={compoundCardSx}
+          sx={{
+            ...compoundCardSx,
+            width: "100%",
+            p: 0,
+            m: 0,
+            overflow: "hidden",
+            borderRadius: { xs: "18px", md: "28px" },
+            border: `1px solid ${rgba(themeColor, 0.14)}`,
+            boxShadow:
+              tone === "light"
+                ? "0 24px 70px rgba(0,0,0,0.22)"
+                : "0 24px 70px rgba(15,23,42,0.14)",
+          }}
         >
-          <Typography
-            {...getEditableTextProps(
-              section.blockId,
-              `${blockPath}.heading`,
-              "single",
-            )}
+          <Box
             sx={{
-              color: textColor,
-              fontFamily: headingFont,
-              fontWeight: 800,
-              fontSize: { xs: "1.35rem", md: "1.9rem" },
-              ...headingStyle,
+              width: "100%",
+              height: {
+                xs: "420px",
+                sm: "520px",
+                md: "680px",
+                lg: "780px",
+              },
+              overflow: "hidden",
+              "& iframe": {
+                display: "block",
+                width: "100% !important",
+                height: "100% !important",
+                border: "0 !important",
+              },
             }}
-          >
-            {block.content?.heading || block.label || "Block content"}
-          </Typography>
-          {block.content?.body ? (
-            <Typography
-              {...getEditableTextProps(
-                section.blockId,
-                `${blockPath}.body`,
-                "multi",
-              )}
-              sx={{ color: mutedTextColor, lineHeight: 1.75, ...bodyStyle }}
-            >
-              {block.content?.body}
-            </Typography>
-          ) : null}
-          <Stack spacing={1}>
-            {items.map((entry: any, entryIndex: number) => (
-              <Box
-                key={`entry-${entryIndex}`}
-                sx={{
-                  p: 1.5,
-                  borderRadius: "16px",
-                  bgcolor:
-                    tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
-                  border: `1px solid ${rgba(themeColor, 0.12)}`,
-                }}
-              >
-                <Typography sx={{ color: textColor, fontWeight: 700 }}>
-                  {typeof entry === "string"
-                    ? entry
-                    : entry?.name || `Item ${entryIndex + 1}`}
-                </Typography>
-                {typeof entry === "object" && entry?.price ? (
-                  <Typography
-                    sx={{ color: mutedTextColor, fontSize: "0.92rem" }}
-                  >
-                    {entry.price}
-                  </Typography>
-                ) : null}
-              </Box>
-            ))}
-          </Stack>
-        </Stack>
+            dangerouslySetInnerHTML={{ __html: iframeHtml }}
+          />
+        </Box>
       );
     }
-
     if (blockType === "story_panel") {
       const stories = Array.isArray(block.content?.stories)
         ? block.content.stories

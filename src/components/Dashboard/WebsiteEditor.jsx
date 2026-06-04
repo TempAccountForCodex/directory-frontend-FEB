@@ -1246,11 +1246,16 @@ const buildBlockEditorInitialContent = (block) => {
   }
 
   const firstInnerContent = getBlockInnerBlocks(block)[0]?.content;
+  const editorBlockType = String(block?.content?.editorBlockType || "").trim();
+  const defaultEditorContent = editorBlockType
+    ? omitInnerBlocksMirror(getBlockDefaultContent(editorBlockType))
+    : {};
   return {
-    ...rootContent,
+    ...defaultEditorContent,
     ...(firstInnerContent && typeof firstInnerContent === "object"
       ? omitInnerBlocksMirror(firstInnerContent)
       : {}),
+    ...rootContent,
     editorLabel: block?.content?.editorLabel ?? rootContent.editorLabel ?? "",
   };
 };

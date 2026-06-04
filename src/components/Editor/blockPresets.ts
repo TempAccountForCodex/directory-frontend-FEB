@@ -729,7 +729,26 @@ export const getLocalFieldMetadata = (
         makeTextField("contactPhone", "Phone Number", 5),
         makeTextField("contactAddress", "Address", 6, true),
         makeRepeaterField("socialLinks", "Social Links", 7, {
-          platform: makeTextField("platform", "Platform", 1),
+          platform: {
+            name: "platform",
+            label: "Platform",
+            type: "SELECT",
+            order: 1,
+            defaultValue: "linkedin",
+            ui: {
+              props: {
+                options: [
+                  { label: "LinkedIn", value: "linkedin" },
+                  { label: "Instagram", value: "instagram" },
+                  { label: "Facebook", value: "facebook" },
+                  { label: "X / Twitter", value: "twitter" },
+                  { label: "YouTube", value: "youtube" },
+                  { label: "TikTok", value: "tiktok" },
+                  { label: "Website", value: "website" },
+                ],
+              },
+            },
+          },
           url: {
             name: "url",
             label: "Profile URL",
