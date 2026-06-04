@@ -520,6 +520,48 @@ const getEditableStyleConfig = (fieldPath) =>
     label: fieldPath,
   };
 
+const getEditableTypographyStyleKey = (fieldName = "text") => {
+  const normalizedFieldName = String(fieldName || "text").trim();
+  const leafFieldName = normalizedFieldName
+    .split(".")
+    .filter(Boolean)
+    .pop()
+    ?.toLowerCase();
+
+  switch (leafFieldName) {
+    case "title":
+    case "heading":
+    case "question":
+    case "logotext":
+      return "headingStyle";
+    case "subtitle":
+    case "subheading":
+    case "description":
+    case "body":
+    case "answer":
+    case "quote":
+    case "contactemail":
+    case "contactphone":
+    case "contactaddress":
+    case "email":
+    case "phone":
+    case "address":
+    case "copyright":
+      return "bodyStyle";
+    case "label":
+    case "text":
+    case "author":
+    case "role":
+      return "textStyle";
+    case "buttontext":
+    case "ctatext":
+    case "primaryctatext":
+      return "buttonTextStyle";
+    default:
+      return getEditableStyleConfig(normalizedFieldName).styleKey || "textStyle";
+  }
+};
+
 const getInnerBlockStyleKey = (innerBlock, fieldName = "text") => {
   if (
     String(fieldName || "").toLowerCase() === "__card" ||
@@ -540,7 +582,7 @@ const getInnerBlockStyleKey = (innerBlock, fieldName = "text") => {
   if (blockType === "image") {
     return "imageStyle";
   }
-  return getEditableStyleConfig(fieldName).styleKey || "textStyle";
+  return getEditableTypographyStyleKey(fieldName);
 };
 
 const getDefaultInnerBlockPlacement = (blockKey, index = 0) => {
@@ -2730,7 +2772,9 @@ const WebsiteEditorInner = () => {
         innerBlock?.content && typeof innerBlock.content === "object"
           ? innerBlock.content
           : {};
-      const innerStyle = innerContent?.[styleKey];
+      const innerStyle = styleKey.includes(".")
+        ? getValueAtPath(innerContent, styleKey)
+        : innerContent?.[styleKey];
 
       return {
         ...DEFAULT_TEXT_STYLE,
@@ -3311,13 +3355,10 @@ const WebsiteEditorInner = () => {
         }
 
         if (target.kind === "editable" && target.fieldPath) {
-          const innerBlockMatch =
-            /^innerBlocks\.(\d+)\.content(?:\.([^.]+))?$/i.exec(
-              target.fieldPath,
-            );
+          const innerBlockMatch = parseInnerBlockFieldPath(target.fieldPath);
           if (innerBlockMatch) {
-            const innerIndex = Number(innerBlockMatch[1]);
-            const fieldName = innerBlockMatch[2] || "text";
+            const innerIndex = innerBlockMatch.index;
+            const fieldName = innerBlockMatch.contentPath || "text";
             const existingInnerBlocks = Array.isArray(
               block.content?.innerBlocks,
             )
@@ -3333,10 +3374,13 @@ const WebsiteEditorInner = () => {
               typeof existingInnerBlock.content === "object"
                 ? existingInnerBlock.content
                 : {};
+            const resolvedExistingStyle = styleKey.includes(".")
+              ? getValueAtPath(existingInnerContent, styleKey)
+              : existingInnerContent[styleKey];
             const existingStyle =
-              existingInnerContent[styleKey] &&
-              typeof existingInnerContent[styleKey] === "object"
-                ? existingInnerContent[styleKey]
+              resolvedExistingStyle &&
+              typeof resolvedExistingStyle === "object"
+                ? resolvedExistingStyle
                 : {};
 
             return withSyncedInnerBlocks(
@@ -4070,10 +4114,13 @@ const WebsiteEditorInner = () => {
               typeof existingInnerBlock.content === "object"
                 ? existingInnerBlock.content
                 : {};
+            const resolvedExistingStyle = styleKey.includes(".")
+              ? getValueAtPath(existingInnerContent, styleKey)
+              : existingInnerContent[styleKey];
             const existingStyle =
-              existingInnerContent[styleKey] &&
-              typeof existingInnerContent[styleKey] === "object"
-                ? existingInnerContent[styleKey]
+              resolvedExistingStyle &&
+              typeof resolvedExistingStyle === "object"
+                ? resolvedExistingStyle
                 : {};
 
             return withSyncedInnerBlocks(

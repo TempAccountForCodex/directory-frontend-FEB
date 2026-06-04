@@ -102,6 +102,60 @@ const sectionReveal = {
   transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
 } as const;
 
+const getNestedStyleValue = (source: any, path = "") => {
+  if (!path) return source;
+  return String(path)
+    .split(".")
+    .filter(Boolean)
+    .reduce(
+      (current, key) =>
+        current == null ? undefined : current[/^\d+$/.test(key) ? Number(key) : key],
+      source,
+    );
+};
+
+const getCompoundTypographyStyleKey = (fieldPath = "text") => {
+  const normalizedFieldPath = String(fieldPath || "text").trim();
+  const leafFieldName = normalizedFieldPath
+    .split(".")
+    .filter(Boolean)
+    .pop()
+    ?.toLowerCase();
+
+  switch (leafFieldName) {
+    case "title":
+    case "heading":
+    case "question":
+    case "logotext":
+      return "headingStyle";
+    case "subtitle":
+    case "subheading":
+    case "description":
+    case "body":
+    case "answer":
+    case "quote":
+    case "contactemail":
+    case "contactphone":
+    case "contactaddress":
+    case "email":
+    case "phone":
+    case "address":
+    case "copyright":
+      return "bodyStyle";
+    case "label":
+    case "text":
+    case "author":
+    case "role":
+      return "textStyle";
+    case "buttontext":
+    case "ctatext":
+    case "primaryctatext":
+      return "buttonTextStyle";
+    default:
+      return `${normalizedFieldPath}Style`;
+  }
+};
+
 const EditorFaqAccordionCard: React.FC<{
   blockId?: string | number;
   blockPath: string;
@@ -112,6 +166,9 @@ const EditorFaqAccordionCard: React.FC<{
   themeColor: string;
   headingFont: string;
   tone: "light" | "dark";
+  headingStyle?: Record<string, any>;
+  questionStyle?: Record<string, any>;
+  answerStyle?: Record<string, any>;
 }> = ({
   blockId,
   blockPath,
@@ -122,6 +179,9 @@ const EditorFaqAccordionCard: React.FC<{
   themeColor,
   headingFont,
   tone,
+  headingStyle,
+  questionStyle,
+  answerStyle,
 }) => {
   const [openIndex, setOpenIndex] = React.useState(0);
 
@@ -149,6 +209,7 @@ const EditorFaqAccordionCard: React.FC<{
           fontSize: { xs: "1.45rem", md: "2rem" },
           fontWeight: 800,
           letterSpacing: "-0.03em",
+          ...(headingStyle || {}),
         }}
       >
         {heading || "Frequently asked questions"}
@@ -185,7 +246,12 @@ const EditorFaqAccordionCard: React.FC<{
                     `${blockPath}.items.${itemIndex}.question`,
                     "single",
                   )}
-                  sx={{ color: textColor, fontWeight: 700, pr: 2 }}
+                  sx={{
+                    color: textColor,
+                    fontWeight: 700,
+                    pr: 2,
+                    ...(questionStyle || {}),
+                  }}
                 >
                   {item?.question || `Question ${itemIndex + 1}`}
                 </Typography>
@@ -240,6 +306,7 @@ const EditorFaqAccordionCard: React.FC<{
                     color: mutedTextColor,
                     lineHeight: 1.75,
                     fontSize: "0.96rem",
+                    ...(answerStyle || {}),
                   }}
                 >
                   {item?.answer || "Add the answer from the editor."}
@@ -688,6 +755,20 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         : fallbackWidth;
     const getCanvasTransform = (desktopTransform: any) =>
       canvas ? { xs: "none", md: desktopTransform || "none" } : undefined;
+    const getEditableFieldStyle = (
+      fieldPath: string,
+      fallbackStyle: Record<string, any> = {},
+    ) => {
+      const styleKey = getCompoundTypographyStyleKey(fieldPath);
+      const resolvedStyle = styleKey.includes(".")
+        ? getNestedStyleValue(block.content || {}, styleKey)
+        : block.content?.[styleKey];
+      const styleSource =
+        resolvedStyle && typeof resolvedStyle === "object"
+          ? resolvedStyle
+          : fallbackStyle;
+      return getFlowSafeStyle(styleSource);
+    };
     const defaultCompoundCardWidth = canvas
       ? blockType === "video"
         ? "calc(100% - 112px)"
@@ -1573,6 +1654,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             themeColor={themeColor}
             headingFont={headingFont}
             tone={tone}
+            headingStyle={getEditableFieldStyle("heading", headingStyle)}
+            questionStyle={getEditableFieldStyle(
+              "items.0.question",
+              headingStyle,
+            )}
+            answerStyle={getEditableFieldStyle("items.0.answer", bodyStyle)}
           />
         </Stack>
       );
@@ -1766,6 +1853,24 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         rawCardStyle.paddingLeft ?? resolvedCardStyle.paddingLeft ?? "24px";
       const footerPaddingRight =
         rawCardStyle.paddingRight ?? resolvedCardStyle.paddingRight ?? "24px";
+      const footerLogoStyle = getEditableFieldStyle("logoText", headingStyle);
+      const footerDescriptionStyle = getEditableFieldStyle(
+        "description",
+        bodyStyle,
+      );
+      const footerLinkStyle = getEditableFieldStyle("links.0.label", textStyle);
+      const footerContactStyle = getEditableFieldStyle(
+        "contactEmail",
+        bodyStyle,
+      );
+      const footerButtonTextStyle = getEditableFieldStyle(
+        "buttonText",
+        buttonStyle,
+      );
+      const footerCopyrightStyle = getEditableFieldStyle(
+        "copyright",
+        bodyStyle,
+      );
       const footerInnerContainerSx =
         footerLayoutWidth === "full"
           ? { width: "100%", maxWidth: "none", alignSelf: "stretch" }
@@ -1878,7 +1983,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontWeight: 800,
                     fontSize: { xs: "1.3rem", md: "1.55rem" },
                     letterSpacing: "-0.03em",
-                    ...headingStyle,
+                    ...footerLogoStyle,
                   }}
                 >
                   {block.content?.logoText || block.content?.heading || "LOGO"}
@@ -1894,7 +1999,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 320,
                     lineHeight: 1.8,
                     fontSize: "0.96rem",
-                    ...bodyStyle,
+                    ...footerDescriptionStyle,
                   }}
                 >
                   {block.content?.description ||
@@ -1966,6 +2071,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                           fontSize: "0.95rem",
                           textDecoration: "none",
                           transition: "color 160ms ease",
+                          ...footerLinkStyle,
                           "&:hover": {
                             color: footerTextColor,
                           },
@@ -1994,7 +2100,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     `${blockPath}.contactEmail`,
                     "single",
                   )}
-                  sx={{ color: footerMutedColor, lineHeight: 1.8 }}
+                  sx={{
+                    color: footerMutedColor,
+                    lineHeight: 1.8,
+                    ...footerContactStyle,
+                  }}
                 >
                   {block.content?.contactEmail || "hello@yourcompany.com"}
                 </Typography>
@@ -2004,7 +2114,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     `${blockPath}.contactPhone`,
                     "single",
                   )}
-                  sx={{ color: footerMutedColor, lineHeight: 1.8 }}
+                  sx={{
+                    color: footerMutedColor,
+                    lineHeight: 1.8,
+                    ...footerContactStyle,
+                  }}
                 >
                   {block.content?.contactPhone || "+1 (555) 123-4567"}
                 </Typography>
@@ -2014,7 +2128,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     `${blockPath}.contactAddress`,
                     "multi",
                   )}
-                  sx={{ color: footerMutedColor, lineHeight: 1.8 }}
+                  sx={{
+                    color: footerMutedColor,
+                    lineHeight: 1.8,
+                    ...footerContactStyle,
+                  }}
                 >
                   {block.content?.contactAddress ||
                     "123 Business Avenue, New York, NY 10001"}
@@ -2070,7 +2188,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       boxShadow: "none",
                       minWidth: "fit-content",
                       fontWeight: 700,
-                      ...buttonStyle,
+                      ...footerButtonTextStyle,
                     }}
                   >
                     {block.content?.buttonText || "Subscribe"}
@@ -2106,7 +2224,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   lineHeight: 1.6,
                   textAlign: { xs: "left", md: "right" },
                   whiteSpace: "normal",
-                  ...bodyStyle,
+                  ...footerCopyrightStyle,
                 }}
               >
                 {block.content?.copyright ||
