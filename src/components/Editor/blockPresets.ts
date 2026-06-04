@@ -281,14 +281,30 @@ export const getBlockDefaultContent = (
     case "FOOTER":
       return {
         logoText: "LOGO",
+        description:
+          "A modern business footer with direct contact details, useful navigation, and a simple subscribe form.",
         links: [
           { label: "Privacy policy", url: "/privacy-policy" },
           { label: "Terms & condition", url: "/terms-and-condition" },
           { label: "Cookie Policy", url: "/cookie-policy" },
         ],
+        contactEmail: "hello@yourcompany.com",
+        contactPhone: "+1 (555) 123-4567",
+        contactAddress: "123 Business Avenue, New York, NY 10001",
+        socialLinks: [
+          { platform: "linkedin", url: "https://linkedin.com" },
+          { platform: "instagram", url: "https://instagram.com" },
+          { platform: "facebook", url: "https://facebook.com" },
+        ],
         placeholder: "Enter your email",
         buttonText: "Subscribe",
         copyright: "(c) 2026 Your company. All rights reserved.",
+        cardStyle: {
+          backgroundColor: "#0f1115",
+          borderColor: "rgba(255,255,255,0.12)",
+          boxShadowPreset: "none",
+          layoutWidth: "page",
+        },
       };
     case "LOGO_CAROUSEL":
       return {
@@ -691,7 +707,8 @@ export const getLocalFieldMetadata = (
     case "FOOTER":
       return contentGroup([
         makeTextField("logoText", "Logo / Brand Text", 1),
-        makeRepeaterField("links", "Footer Navigation Links", 2, {
+        makeTextField("description", "Footer Description", 2, true),
+        makeRepeaterField("links", "Footer Navigation Links", 3, {
           label: makeTextField("label", "Link Label", 1),
           url: {
             name: "url",
@@ -704,9 +721,25 @@ export const getLocalFieldMetadata = (
             },
           },
         }),
-        makeTextField("placeholder", "Email Placeholder Text", 3),
-        makeTextField("buttonText", "Subscribe Button Text", 4),
-        makeTextField("copyright", "Copyright Text", 5),
+        makeTextField("contactEmail", "Email Address", 4),
+        makeTextField("contactPhone", "Phone Number", 5),
+        makeTextField("contactAddress", "Address", 6, true),
+        makeRepeaterField("socialLinks", "Social Links", 7, {
+          platform: makeTextField("platform", "Platform", 1),
+          url: {
+            name: "url",
+            label: "Profile URL",
+            type: "URL",
+            order: 2,
+            validation: footerLinkValidation,
+            ui: {
+              placeholder: "https://instagram.com/yourbrand",
+            },
+          },
+        }),
+        makeTextField("placeholder", "Email Placeholder Text", 8),
+        makeTextField("buttonText", "Subscribe Button Text", 9),
+        makeTextField("copyright", "Copyright Text", 10),
       ]);
     case "TESTIMONIALS":
     case "REVIEWS":

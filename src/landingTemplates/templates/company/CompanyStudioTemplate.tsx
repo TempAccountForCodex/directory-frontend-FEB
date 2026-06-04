@@ -1734,6 +1734,30 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             )
             .filter((link: { label: string }) => link.label)
         : [];
+      const footerSocialLinks = Array.isArray(block.content?.socialLinks)
+        ? block.content.socialLinks
+            .map((item: any) => ({
+              platform: String(item?.platform || item?.label || "").trim(),
+              url: String(item?.url || item?.href || "").trim(),
+            }))
+            .filter((item: { platform: string; url: string }) => item.platform && item.url)
+        : [];
+      const footerLayoutWidth =
+        rawCardStyle.layoutWidth || rawSectionStyle.layoutWidth || "page";
+      const footerInnerContainerSx =
+        footerLayoutWidth === "full"
+          ? { width: "100%", maxWidth: "none", alignSelf: "stretch" }
+          : { width: "100%", maxWidth: "1200px", mx: "auto", alignSelf: "center" };
+      const footerTextColor = "#f8fafc";
+      const footerMutedColor = "rgba(248,250,252,0.72)";
+      const footerLineColor = "rgba(248,250,252,0.14)";
+      const resolveSocialIcon = (platform: string) => {
+        const normalized = String(platform || "").trim().toLowerCase();
+        if (normalized.includes("instagram")) return Instagram;
+        if (normalized.includes("linkedin")) return Linkedin;
+        if (normalized.includes("facebook")) return Facebook;
+        return Twitter;
+      };
       const resolveFooterHref = (url: string) => {
         const trimmed = String(url || "").trim();
         if (!trimmed) return "#";
@@ -1775,13 +1799,20 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           data-preview-label={compoundBlockLabel}
           sx={{
             ...compoundCardSx,
+            backgroundColor: rawCardStyle.backgroundColor || "#0f1115",
+            backgroundImage:
+              rawCardStyle.backgroundImage || rawCardStyle.backgroundImageUrl
+                ? compoundCardSx.backgroundImage
+                : "linear-gradient(180deg, rgba(15,17,21,0.98) 0%, rgba(18,23,31,0.98) 100%)",
+            borderColor: rawCardStyle.borderColor || "rgba(255,255,255,0.12)",
+            boxShadow: rawCardStyle.boxShadow || "none",
             ...(rawCardStyle.paddingLeft === undefined &&
             rawCardStyle.paddingRight === undefined
-              ? { px: { xs: 1.5, md: 2 } }
+              ? { px: { xs: 2, md: 2.75 } }
               : {}),
             ...(rawCardStyle.paddingTop === undefined &&
             rawCardStyle.paddingBottom === undefined
-              ? { py: { xs: 1.75, md: 2.1 } }
+              ? { py: { xs: 2.4, md: 3 } }
               : {}),
             ...(rawCardStyle.minHeight === undefined &&
             rawCardStyle.height === undefined &&
@@ -1802,143 +1833,264 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               : {}),
           }}
         >
-          <Stack
-            spacing={1.2}
-            alignItems="center"
-            sx={{
-              width: "100%",
-              pb: 2.2,
-              borderBottom: `1px solid ${lineColor}`,
-            }}
-          >
-            <Typography
-              {...getEditableTextProps(
-                section.blockId,
-                `${blockPath}.logoText`,
-                "single",
-              )}
+          <Box sx={footerInnerContainerSx}>
+            <Box
               sx={{
-                color: textColor,
-                fontFamily: headingFont,
-                fontWeight: 800,
-                fontSize: { xs: "1.2rem", md: "1.35rem" },
-                letterSpacing: "-0.03em",
-                textAlign: "center",
-                ...headingStyle,
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "1.2fr 0.9fr 1fr 1.1fr" },
+                gap: { xs: 2.4, md: 3 },
+                alignItems: "start",
               }}
             >
-              {block.content?.logoText || block.content?.heading || "LOGO"}
-            </Typography>
-            {footerLinks.length ? (
-              <Stack
-                direction="row"
-                spacing={{ xs: 1.6, md: 2.4 }}
-                useFlexGap
-                flexWrap="wrap"
-                justifyContent="center"
-              >
-                {footerLinks.map(
-                  (link: { label: string; url: string }, linkIndex: number) => (
-                    <Box
-                      key={`${link.label}-${linkIndex}`}
-                      component="a"
-                      href={resolveFooterHref(link.url)}
-                      {...getEditableTextProps(
-                        section.blockId,
-                        `${blockPath}.links.${linkIndex}.label`,
-                        "single",
-                      )}
-                      sx={{
-                        color: mutedTextColor,
-                        fontWeight: 600,
-                        fontSize: "0.94rem",
-                        letterSpacing: "0.01em",
-                        textAlign: "center",
-                        textDecoration: "none",
-                        transition: "color 160ms ease",
-                        cursor: "pointer",
-                        "&:hover": {
-                          color: textColor,
-                        },
-                      }}
-                    >
-                      {link.label}
-                    </Box>
-                  ),
-                )}
+              <Stack spacing={1.2}>
+                <Typography
+                  {...getEditableTextProps(
+                    section.blockId,
+                    `${blockPath}.logoText`,
+                    "single",
+                  )}
+                  sx={{
+                    color: footerTextColor,
+                    fontFamily: headingFont,
+                    fontWeight: 800,
+                    fontSize: { xs: "1.3rem", md: "1.55rem" },
+                    letterSpacing: "-0.03em",
+                    ...headingStyle,
+                  }}
+                >
+                  {block.content?.logoText || block.content?.heading || "LOGO"}
+                </Typography>
+                <Typography
+                  {...getEditableTextProps(
+                    section.blockId,
+                    `${blockPath}.description`,
+                    "multi",
+                  )}
+                  sx={{
+                    color: footerMutedColor,
+                    maxWidth: 320,
+                    lineHeight: 1.8,
+                    fontSize: "0.96rem",
+                    ...bodyStyle,
+                  }}
+                >
+                  {block.content?.description ||
+                    "A modern business footer with direct contact details, useful navigation, and a simple subscribe form."}
+                </Typography>
+                {footerSocialLinks.length ? (
+                  <Stack direction="row" spacing={1}>
+                    {footerSocialLinks.map(
+                      (
+                        item: { platform: string; url: string },
+                        socialIndex: number,
+                      ) => {
+                        const Icon = resolveSocialIcon(item.platform);
+                        return (
+                          <Box
+                            key={`${item.platform}-${socialIndex}`}
+                            component="a"
+                            href={resolveFooterHref(item.url)}
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: "999px",
+                              display: "grid",
+                              placeItems: "center",
+                              color: footerTextColor,
+                              border: "1px solid rgba(248,250,252,0.16)",
+                              bgcolor: "rgba(255,255,255,0.04)",
+                              transition: "background-color 160ms ease, border-color 160ms ease",
+                              "&:hover": {
+                                bgcolor: "rgba(255,255,255,0.08)",
+                                borderColor: "rgba(248,250,252,0.28)",
+                              },
+                            }}
+                          >
+                            <Icon size={18} />
+                          </Box>
+                        );
+                      },
+                    )}
+                  </Stack>
+                ) : null}
               </Stack>
-            ) : null}
-          </Stack>
 
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            spacing={{ xs: 1.6, md: 2 }}
-            alignItems={{ xs: "stretch", md: "flex-end" }}
-            justifyContent="space-between"
-            sx={{ width: "100%", pt: 2.2 }}
-          >
+              <Stack spacing={1.1}>
+                <Typography
+                  sx={{
+                    color: footerTextColor,
+                    fontWeight: 700,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  Navigation
+                </Typography>
+                <Stack spacing={0.9}>
+                  {footerLinks.map(
+                    (link: { label: string; url: string }, linkIndex: number) => (
+                      <Box
+                        key={`${link.label}-${linkIndex}`}
+                        component="a"
+                        href={resolveFooterHref(link.url)}
+                        {...getEditableTextProps(
+                          section.blockId,
+                          `${blockPath}.links.${linkIndex}.label`,
+                          "single",
+                        )}
+                        sx={{
+                          color: footerMutedColor,
+                          fontWeight: 500,
+                          fontSize: "0.95rem",
+                          textDecoration: "none",
+                          transition: "color 160ms ease",
+                          "&:hover": {
+                            color: footerTextColor,
+                          },
+                        }}
+                      >
+                        {link.label}
+                      </Box>
+                    ),
+                  )}
+                </Stack>
+              </Stack>
+
+              <Stack spacing={1.1}>
+                <Typography
+                  sx={{
+                    color: footerTextColor,
+                    fontWeight: 700,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  Contact
+                </Typography>
+                <Typography
+                  {...getEditableTextProps(
+                    section.blockId,
+                    `${blockPath}.contactEmail`,
+                    "single",
+                  )}
+                  sx={{ color: footerMutedColor, lineHeight: 1.8 }}
+                >
+                  {block.content?.contactEmail || "hello@yourcompany.com"}
+                </Typography>
+                <Typography
+                  {...getEditableTextProps(
+                    section.blockId,
+                    `${blockPath}.contactPhone`,
+                    "single",
+                  )}
+                  sx={{ color: footerMutedColor, lineHeight: 1.8 }}
+                >
+                  {block.content?.contactPhone || "+1 (555) 123-4567"}
+                </Typography>
+                <Typography
+                  {...getEditableTextProps(
+                    section.blockId,
+                    `${blockPath}.contactAddress`,
+                    "multi",
+                  )}
+                  sx={{ color: footerMutedColor, lineHeight: 1.8 }}
+                >
+                  {block.content?.contactAddress ||
+                    "123 Business Avenue, New York, NY 10001"}
+                </Typography>
+              </Stack>
+
+              <Stack spacing={1.2}>
+                <Typography
+                  sx={{
+                    color: footerTextColor,
+                    fontWeight: 700,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  Stay updated
+                </Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.05}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    placeholder={block.content?.placeholder || "Enter your email"}
+                    sx={{
+                      "& .MuiInputBase-root": {
+                        color: footerTextColor,
+                        bgcolor: "rgba(255,255,255,0.04)",
+                        borderRadius: "999px",
+                        pr: 0.5,
+                      },
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(248,250,252,0.14)",
+                      },
+                      "& .MuiInputBase-input::placeholder": {
+                        color: "rgba(248,250,252,0.48)",
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    {...getEditableTextProps(
+                      section.blockId,
+                      `${blockPath}.buttonText`,
+                      "single",
+                    )}
+                    sx={{
+                      bgcolor: "#ffffff",
+                      color: "#0f1115",
+                      borderRadius: "999px",
+                      textTransform: "none",
+                      px: 2.8,
+                      py: 1.05,
+                      whiteSpace: "nowrap",
+                      boxShadow: "none",
+                      minWidth: "fit-content",
+                      fontWeight: 700,
+                      ...buttonStyle,
+                    }}
+                  >
+                    {block.content?.buttonText || "Subscribe"}
+                  </Button>
+                </Stack>
+              </Stack>
+            </Box>
+
             <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1.15}
-              sx={{ width: "100%", maxWidth: { md: 440 } }}
+              direction={{ xs: "column", md: "row" }}
+              spacing={{ xs: 1.2, md: 2 }}
+              alignItems={{ xs: "flex-start", md: "center" }}
+              justifyContent="space-between"
+              sx={{
+                width: "100%",
+                mt: { xs: 2.5, md: 3 },
+                pt: 1.8,
+                borderTop: `1px solid ${footerLineColor}`,
+              }}
             >
-              <TextField
-                size="small"
-                fullWidth
-                placeholder={block.content?.placeholder || "Enter your email"}
-                sx={{
-                  "& .MuiInputBase-root": {
-                    color: textColor,
-                    bgcolor:
-                      tone === "light" ? "rgba(255,255,255,0.1)" : "#ffffff",
-                    borderRadius: "999px",
-                    pr: 0.5,
-                  },
-                }}
-              />
-              <Button
-                variant="contained"
+              <Typography sx={{ color: footerMutedColor, fontSize: "0.92rem" }}>
+                Built for modern company websites.
+              </Typography>
+              <Typography
                 {...getEditableTextProps(
                   section.blockId,
-                  `${blockPath}.buttonText`,
+                  `${blockPath}.copyright`,
                   "single",
                 )}
                 sx={{
-                  bgcolor: themeColor,
-                  color: palette.white,
-                  borderRadius: "999px",
-                  textTransform: "none",
-                  px: 2.8,
-                  py: 1.05,
-                  whiteSpace: "nowrap",
-                  boxShadow: "none",
-                  minWidth: "fit-content",
-                  ...buttonStyle,
+                  color: footerMutedColor,
+                  fontSize: "0.92rem",
+                  lineHeight: 1.6,
+                  textAlign: { xs: "left", md: "right" },
+                  whiteSpace: "normal",
+                  ...bodyStyle,
                 }}
               >
-                {block.content?.buttonText || "Subscribe"}
-              </Button>
+                {block.content?.copyright ||
+                  "(c) 2026 Your company. All rights reserved."}
+              </Typography>
             </Stack>
-
-            <Typography
-              {...getEditableTextProps(
-                section.blockId,
-                `${blockPath}.copyright`,
-                "single",
-              )}
-              sx={{
-                color: mutedTextColor,
-                fontSize: "0.92rem",
-                lineHeight: 1.6,
-                textAlign: { xs: "left", md: "right" },
-                whiteSpace: "normal",
-                ...bodyStyle,
-              }}
-            >
-              {block.content?.copyright ||
-                "(c) 2026 Your company. All rights reserved."}
-            </Typography>
-          </Stack>
+          </Box>
         </Stack>
       );
     }
