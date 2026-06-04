@@ -226,6 +226,8 @@ export default function HeroDepthCarousel() {
             opacity: videoLoaded ? 0.85 : 0,
             transition: "opacity 0.5s ease-in",
             willChange: "opacity",
+            transform: "translateZ(0)",
+            backfaceVisibility: "hidden",
           }}
         >
           <source src={heroVideoSrc} type="video/mp4" />

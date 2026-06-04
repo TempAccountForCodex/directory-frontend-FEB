@@ -220,6 +220,7 @@ const styles = {
 // ================= Component =================
 const StyledHader: React.FC = () => {
   const [videoIndex, setVideoIndex] = React.useState(0);
+  const [shouldLoadVideo, setShouldLoadVideo] = React.useState(false);
 
   const videos = [HeroVideo1];
   const images = [HeroImage1];
@@ -229,6 +230,25 @@ const StyledHader: React.FC = () => {
   };
   const theme = useTheme();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setShouldLoadVideo(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: "50px" }
+    );
+
+    const heroSection = document.querySelector("section");
+    if (heroSection) {
+      observer.observe(heroSection);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   // ================= NEW: SLIDER STATE =================
   const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -281,25 +301,27 @@ const StyledHader: React.FC = () => {
           zIndex: 0,
         }}
       >
-        <video
-          key={videoIndex} // important to force re-render
-          src={videos[videoIndex]} // dynamic video
-          autoPlay
-          muted
-          loop={false} // stop looping manually
-          playsInline
-          preload="auto"
-          onEnded={handleVideoEnd}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            filter: "brightness(0.55)",
-            transform: "translateZ(0)",
-            backfaceVisibility: "hidden",
-            willChange: "transform",
-          }}
-        />
+        {shouldLoadVideo && (
+          <video
+            key={videoIndex} // important to force re-render
+            src={videos[videoIndex]} // dynamic video
+            autoPlay
+            muted
+            loop={false} // stop looping manually
+            playsInline
+            preload="none"
+            onEnded={handleVideoEnd}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              filter: "brightness(0.55)",
+              transform: "translateZ(0)",
+              backfaceVisibility: "hidden",
+              willChange: "transform",
+            }}
+          />
+        )}
       </Box>
 
       <Box
