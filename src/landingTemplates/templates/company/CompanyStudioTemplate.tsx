@@ -1809,8 +1809,15 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     }
 
     if (blockType === "footer") {
-      const footerLinks = Array.isArray(block.content?.links)
-        ? block.content.links
+      const footerContent =
+        String(section.content?.editorBlockType || "").toLowerCase() === "footer"
+          ? {
+              ...(block.content || {}),
+              ...(section.content || {}),
+            }
+          : block.content || {};
+      const footerLinks = Array.isArray(footerContent?.links)
+        ? footerContent.links
             .map((link: any) =>
               typeof link === "string"
                 ? { label: link, url: "#" }
@@ -1821,8 +1828,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             )
             .filter((link: { label: string }) => link.label)
         : [];
-      const footerSocialLinks = Array.isArray(block.content?.socialLinks)
-        ? block.content.socialLinks
+      const footerSocialLinks = Array.isArray(footerContent?.socialLinks)
+        ? footerContent.socialLinks
             .map((item: any) => ({
               platform: String(item?.platform || item?.label || "").trim(),
               url: String(item?.url || item?.href || "").trim(),
@@ -1986,7 +1993,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerLogoStyle,
                   }}
                 >
-                  {block.content?.logoText || block.content?.heading || "LOGO"}
+                  {footerContent?.logoText || footerContent?.heading || "LOGO"}
                 </Typography>
                 <Typography
                   {...getEditableTextProps(
@@ -2002,7 +2009,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerDescriptionStyle,
                   }}
                 >
-                  {block.content?.description ||
+                  {footerContent?.description ||
                     "A modern business footer with direct contact details, useful navigation, and a simple subscribe form."}
                 </Typography>
                 {footerSocialLinks.length ? (
@@ -2106,7 +2113,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerContactStyle,
                   }}
                 >
-                  {block.content?.contactEmail || "hello@yourcompany.com"}
+                  {footerContent?.contactEmail || "hello@yourcompany.com"}
                 </Typography>
                 <Typography
                   {...getEditableTextProps(
@@ -2120,7 +2127,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerContactStyle,
                   }}
                 >
-                  {block.content?.contactPhone || "+1 (555) 123-4567"}
+                  {footerContent?.contactPhone || "+1 (555) 123-4567"}
                 </Typography>
                 <Typography
                   {...getEditableTextProps(
@@ -2134,7 +2141,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ...footerContactStyle,
                   }}
                 >
-                  {block.content?.contactAddress ||
+                  {footerContent?.contactAddress ||
                     "123 Business Avenue, New York, NY 10001"}
                 </Typography>
               </Stack>
@@ -2153,7 +2160,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <TextField
                     size="small"
                     fullWidth
-                    placeholder={block.content?.placeholder || "Enter your email"}
+                    placeholder={footerContent?.placeholder || "Enter your email"}
                     sx={{
                       "& .MuiInputBase-root": {
                         color: footerTextColor,
@@ -2191,7 +2198,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       ...footerButtonTextStyle,
                     }}
                   >
-                    {block.content?.buttonText || "Subscribe"}
+                    {footerContent?.buttonText || "Subscribe"}
                   </Button>
                 </Stack>
               </Stack>
@@ -2227,7 +2234,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   ...footerCopyrightStyle,
                 }}
               >
-                {block.content?.copyright ||
+                {footerContent?.copyright ||
                   "(c) 2026 Your company. All rights reserved."}
               </Typography>
             </Stack>
