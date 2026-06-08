@@ -18,7 +18,6 @@ import {
 } from "@mui/material";
 import ButtonPrimary from "../../UI/ButtonPrimary";
 import SearchIcon from "@mui/icons-material/Search";
-import { apiClient } from "../../../api/client";
 import { type Place } from "../../../types/place";
 
 /* ---------------- Types ---------------- */
@@ -77,7 +76,6 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
   setSearchKeyword,
   propertyType,
   setPropertyType,
-  filteredData,
   setFilteredData,
   data,
   category,
@@ -95,9 +93,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
   setAccNTaxService,
   loading,
   setLoading,
-  error,
   setError,
-  items,
   setItems,
   setTotalPages,
   paramCategory,
@@ -113,11 +109,71 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
   const [accountingAndTaxService, setAccountingAndTaxService] =
     useState<string>("");
   const [isFilterApplied, setIsFilterApplied] = useState<boolean>(false);
+  const selectedCategory = Array.isArray(category) ? category[0] || "" : "";
+  const normalize = (value: unknown) => String(value ?? "").trim().toLowerCase();
+
+  const getCategory = (item: Place) =>
+    item.businessCategory || item.category || "";
+
+  const applyLocalFilters = () => {
+    const keyword = normalize(searchKeyword);
+    const categoryValue = normalize(selectedCategory || propertyType);
+    const activeServiceCategories = accNTaxService.map(normalize);
+
+    const filtered = data.filter((item) => {
+      const itemCategory = normalize(getCategory(item));
+      const keywordFields = [
+        item.businessName,
+        item.title,
+        item.category,
+        item.businessCategory,
+        item.shortDescription,
+        item.description,
+        item.desc,
+        item.intro,
+        item.city,
+        item.region,
+        item.country,
+        item.address,
+        item.area,
+        Array.isArray(item.tags) ? item.tags.join(" ") : item.tags,
+      ];
+
+      if (
+        keyword &&
+        !keywordFields.some((field) => normalize(field).includes(keyword))
+      ) {
+        return false;
+      }
+      if (categoryValue && itemCategory !== categoryValue) return false;
+      if (
+        activeServiceCategories.length > 0 &&
+        !activeServiceCategories.includes(itemCategory)
+      ) {
+        return false;
+      }
+      if (
+        priceRange &&
+        normalize(item.priceRange || item.priceLevel) !== normalize(priceRange)
+      ) {
+        return false;
+      }
+      if (area && normalize(item.area) !== normalize(area)) return false;
+      if (region && normalize(item.region) !== normalize(region)) return false;
+      if (city && normalize(item.city) !== normalize(city)) return false;
+
+      return true;
+    });
+
+    setFilteredData(filtered);
+    setItems(filtered);
+    setTotalPages(Math.ceil(filtered.length / 12));
+  };
 
   /* ---------------- Populate Dropdowns ---------------- */
   useEffect(() => {
     const categories = [
-      ...new Set(data.map((item) => item.category).filter(Boolean)),
+      ...new Set(data.map((item) => getCategory(item)).filter(Boolean)),
     ] as string[];
     setCategoryOptions(
       categories.map((category) => ({
@@ -168,143 +224,73 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchKeyword(event.target.value);
-    checkIfFilterApplied(
-      event.target.value,
-      category as any,
-      priceRange,
-      area,
-      region,
-      city,
-      accountingAndTaxService,
-    );
-    if (event.target.value === "") {
-      handleButtonClick();
-    }
   };
 
-  const handleButtonClick = async () => {
-    setLoading(true);
-    try {
-      const searchParams: Record<string, any> = {};
-      if (category) searchParams.category = category;
-      if (searchKeyword) searchParams.title = searchKeyword;
-      if (priceRange) searchParams.priceRange = priceRange;
-      if (city) searchParams.city = city;
-      if (area) searchParams.area = area;
-      if (region) searchParams.region = region;
-
-      const response = await apiClient.get(`/places`, {
-        params: { search: JSON.stringify(searchParams) },
-      });
-      setItems(response.data.places);
-      setTotalPages(response.data.totalPages);
-    } catch (error) {
-      console.error(error);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+  const handleButtonClick = () => {
+    setError(false);
+    setLoading(false);
+    applyLocalFilters();
   };
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
-    setCategory(event.target.value as any);
-    checkIfFilterApplied(
-      searchKeyword,
-      event.target.value,
-      priceRange,
-      area,
-      region,
-      city,
-      accountingAndTaxService,
-    );
+    const value = event.target.value;
+    setCategory(value ? [value] : []);
+    setPropertyType(value || undefined);
   };
 
   const handlePriceChange = (event: SelectChangeEvent<string>) => {
     setPriceRange(event.target.value);
-    checkIfFilterApplied(
-      searchKeyword,
-      category as any,
-      event.target.value,
-      area,
-      region,
-      city,
-      accountingAndTaxService,
-    );
   };
 
   const handleRegionChange = (event: SelectChangeEvent<string>) => {
     setRegion(event.target.value);
-    checkIfFilterApplied(
-      searchKeyword,
-      category as any,
-      priceRange,
-      area,
-      event.target.value,
-      city,
-      accountingAndTaxService,
-    );
+    setCity("");
   };
 
   const handleCityChange = (event: SelectChangeEvent<string>) => {
     setCity(event.target.value);
-    checkIfFilterApplied(
-      searchKeyword,
-      category as any,
-      priceRange,
-      area,
-      region,
-      event.target.value,
-      accountingAndTaxService,
-    );
   };
 
   const handleAreaChange = (event: SelectChangeEvent<string>) => {
     setArea(event.target.value);
-    checkIfFilterApplied(
-      searchKeyword,
-      category as any,
-      priceRange,
-      event.target.value,
-      region,
-      city,
-      accountingAndTaxService,
-    );
   };
 
   const handleServiceChange = (event: SelectChangeEvent<string>) => {
     setAccountingAndTaxService(event.target.value);
-    checkIfFilterApplied(
-      searchKeyword,
-      category as any,
-      priceRange,
-      area,
-      region,
-      city,
-      event.target.value,
-    );
   };
 
-  const checkIfFilterApplied = (
-    searchKeyword?: string,
-    category?: string,
-    priceRange?: string,
-    area?: string,
-    region?: string,
-    city?: string,
-    accountingAndTaxService?: string,
-  ) => {
+  useEffect(() => {
+    if (paramCategory) {
+      setCategory([paramCategory]);
+      setPropertyType(paramCategory);
+    }
+  }, [paramCategory, setCategory, setPropertyType]);
+
+  useEffect(() => {
     setIsFilterApplied(
       Boolean(
         searchKeyword ||
-        category ||
-        priceRange ||
-        area ||
-        region ||
-        city ||
-        accountingAndTaxService,
+          selectedCategory ||
+          propertyType ||
+          priceRange ||
+          area ||
+          region ||
+          city ||
+          accNTaxService.length ||
+          accountingAndTaxService,
       ),
     );
-  };
+  }, [
+    accNTaxService.length,
+    accountingAndTaxService,
+    area,
+    city,
+    priceRange,
+    propertyType,
+    region,
+    searchKeyword,
+    selectedCategory,
+  ]);
 
   // const clearFilter = () => {
   //   setSearchKeyword("");
@@ -467,10 +453,11 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                       </InputLabel>
                       <Select
                         label="Services"
-                        value={category}
+                        value={selectedCategory}
                         onChange={handleCategoryChange as any}
                         sx={{ flex: 1 }}
                       >
+                        <MenuItem value="">All Services</MenuItem>
                         {categoryArray.map((option) => (
                           <MenuItem key={option.value} value={option.value}>
                             {option.label}
@@ -599,6 +586,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                             onChange={handlePriceChange}
                             label="Price Range"
                           >
+                            <MenuItem value="">All Price Ranges</MenuItem>
                             {priceRangeOptions.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}
@@ -637,13 +625,19 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                             onChange={handleRegionChange}
                             label="Region"
                           >
-                            {["Canada", "United Kingdom", "United States"].map(
-                              (option) => (
+                            <MenuItem value="">All Regions</MenuItem>
+                            {(regionOptions.length > 0
+                              ? regionOptions.map((option) => option.value)
+                              : [
+                                  "Canada",
+                                  "United Kingdom",
+                                  "United States",
+                                ]
+                            ).map((option) => (
                                 <MenuItem key={option} value={option}>
                                   {option}
                                 </MenuItem>
-                              ),
-                            )}
+                              ))}
                           </Select>
                         </FormControl>
                       </Grid>
@@ -677,6 +671,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                             onChange={handleAreaChange}
                             label="Area"
                           >
+                            <MenuItem value="">All Areas</MenuItem>
                             {areaOptions.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}
@@ -716,6 +711,7 @@ const DashboardListingSearch: React.FC<DashboardListingSearchProps> = ({
                             label="City"
                             disabled={region === "" ? true : false}
                           >
+                            <MenuItem value="">All Cities</MenuItem>
                             {cityOptions.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}

@@ -2,6 +2,8 @@ import { apiClient } from "./client";
 import { DIRECT_API_URL } from "../config/api";
 import InsightData from "../utils/data/Insights";
 
+const DIRECTORY_PROJECT_KEY = "directory";
+
 export type InsightPost = {
   id: string | number;
   legacyId?: string;
@@ -60,15 +62,20 @@ export const getInsightImageUrl = (imagePath?: string) => {
 
 export async function fetchPublicInsights() {
   try {
-    const response = await apiClient.get("/insights/public", {
+    const response = await apiClient.get("/blogs/public", {
       params: {
+        projectKey: DIRECTORY_PROJECT_KEY,
         page: 1,
         limit: 100,
         sortBy: "publishedAt",
         sortOrder: "desc",
       },
     });
-    const rows = Array.isArray(response.data?.blogs) ? response.data.blogs : [];
+    const rows = Array.isArray(response.data?.blogs)
+      ? response.data.blogs
+      : Array.isArray(response.data?.insights)
+        ? response.data.insights
+        : [];
     return rows.length ? rows.map(normalizeInsight) : fallbackInsights;
   } catch {
     return fallbackInsights;
@@ -78,7 +85,12 @@ export async function fetchPublicInsights() {
 export async function fetchPublicInsight(identifier: string) {
   try {
     const response = await apiClient.get(
-      `/insights/public/${encodeURIComponent(identifier)}`,
+      `/blogs/public/${encodeURIComponent(identifier)}`,
+      {
+        params: {
+          projectKey: DIRECTORY_PROJECT_KEY,
+        },
+      },
     );
     if (response.data?.blog) return normalizeInsight(response.data.blog);
   } catch {

@@ -48,31 +48,77 @@ const homeHeroFont =
 interface LocationState {
   categoryData?: string;
   searchInput?: string;
+  regionCategory?: string;
+  scrollToResults?: boolean;
 }
+
+const normalize = (value: unknown) => String(value ?? "").trim().toLowerCase();
+const isRealFilterValue = (value?: string) =>
+  Boolean(value && !["categories", "regions"].includes(normalize(value)));
+
+const getListingCategory = (item: any) =>
+  item.businessCategory || item.category || "";
+
+const includesText = (value: unknown, keyword: string) =>
+  normalize(value).includes(keyword);
+
+const listingMatchesKeyword = (item: any, keyword: string) => {
+  if (!keyword) return true;
+
+  const fields = [
+    item.businessName,
+    item.title,
+    item.category,
+    item.businessCategory,
+    item.shortDescription,
+    item.description,
+    item.desc,
+    item.intro,
+    item.city,
+    item.region,
+    item.country,
+    item.address,
+    item.area,
+    item.website,
+  ];
+
+  const tagText = Array.isArray(item.tags) ? item.tags.join(" ") : item.tags;
+  return [...fields, tagText].some((field) => includesText(field, keyword));
+};
 
 const Listings: React.FC<{ isDashboard?: boolean }> = ({
   isDashboard = false,
 }) => {
   const location = useLocation();
   const state = location.state as LocationState | null;
-  const paramCategory = state?.categoryData;
+  const params = new URLSearchParams(location.search);
+  const routeSearch = state?.searchInput ?? params.get("search") ?? "";
+  const routeCategory = state?.categoryData ?? params.get("category") ?? "";
+  const routeRegion = state?.regionCategory ?? params.get("region") ?? "";
+  const paramCategory = isRealFilterValue(routeCategory)
+    ? routeCategory
+    : undefined;
 
   const { listings, loading, error } = useListings();
 
   /* ---------------- Local UI State ---------------- */
   const [searchKeyword, setSearchKeyword] = useState<string>(
-    state?.searchInput ?? "",
+    routeSearch,
   );
   const [propertyType, setPropertyType] = useState<string | undefined>(
-    state?.categoryData,
+    paramCategory,
   );
   const [filteredData, setFilteredData] = useState<typeof listings>([]);
-  const [category, setCategory] = useState<string[]>([]);
+  const [category, setCategory] = useState<string[]>(
+    paramCategory ? [paramCategory] : [],
+  );
   const [city, setCity] = useState<string>("");
   const [priceRange, setPriceRange] = useState<string>("");
   const [accNTaxService, setAccNTaxService] = useState<string[]>([]);
   const [area, setArea] = useState<string>("");
-  const [region, setRegion] = useState<string>("");
+  const [region, setRegion] = useState<string>(
+    isRealFilterValue(routeRegion) ? routeRegion : "",
+  );
   const [notifyOpen, setNotifyOpen] = useState<boolean>(false);
   const [notifyEmail, setNotifyEmail] = useState<string>("");
   const [notifyError, setNotifyError] = useState<string>("");
@@ -84,8 +130,8 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
 
   /* ---------------- Derived Data ---------------- */
   const categoryArray = listings.map((data) => ({
-    label: data.category,
-    value: data.category,
+    label: getListingCategory(data),
+    value: getListingCategory(data),
   }));
   const uniqueArray = Array.from(
     new Map(categoryArray.map((c) => [c.value, c])).values(),
@@ -115,14 +161,85 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
     ],
   );
 
-  const displayedListings = useMemo(
-    () => (hasActiveFilters ? filteredData : listings),
-    [filteredData, hasActiveFilters, listings],
-  );
+  const displayedListings = useMemo(() => {
+    if (!hasActiveFilters) return listings;
+
+    const keyword = normalize(searchKeyword);
+    const selectedCategories = [
+      propertyType,
+      ...(Array.isArray(category) ? category : [category]),
+      ...accNTaxService,
+    ]
+      .filter((value): value is string => isRealFilterValue(value))
+      .map(normalize);
+
+    return listings.filter((item: any) => {
+      const itemCategory = normalize(getListingCategory(item));
+
+      if (!listingMatchesKeyword(item, keyword)) return false;
+      if (
+        selectedCategories.length > 0 &&
+        !selectedCategories.includes(itemCategory)
+      ) {
+        return false;
+      }
+      if (city && normalize(item.city) !== normalize(city)) return false;
+      if (region && normalize(item.region) !== normalize(region)) return false;
+      if (area && normalize(item.area) !== normalize(area)) return false;
+      if (
+        priceRange &&
+        normalize(item.priceRange || item.priceLevel) !== normalize(priceRange)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    accNTaxService,
+    area,
+    category,
+    city,
+    hasActiveFilters,
+    listings,
+    priceRange,
+    propertyType,
+    region,
+    searchKeyword,
+  ]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [hasActiveFilters]);
+  }, [
+    searchKeyword,
+    propertyType,
+    category,
+    city,
+    priceRange,
+    area,
+    region,
+    accNTaxService,
+  ]);
+
+  useEffect(() => {
+    setSearchKeyword(routeSearch);
+    setPropertyType(paramCategory);
+    setCategory(paramCategory ? [paramCategory] : []);
+    setRegion(isRealFilterValue(routeRegion) ? routeRegion : "");
+  }, [routeSearch, paramCategory, routeRegion]);
+
+  useEffect(() => {
+    if (!state?.scrollToResults) return;
+
+    const timeout = window.setTimeout(() => {
+      gridRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 120);
+
+    return () => window.clearTimeout(timeout);
+  }, [location.key, state?.scrollToResults]);
 
   const clearFilter = () => {
     setSearchKeyword("");
@@ -133,7 +250,7 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
     setRegion("");
     setCity("");
     setAccNTaxService([]);
-    setFilteredData(listings);
+    setFilteredData([]);
     setCurrentPage(1);
   };
 
@@ -319,6 +436,7 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
                     lineHeight: { xs: "42px", sm: "42px" },
                     textAlign: "center",
                     fontWeight: 600,
+                    scrollMarginTop: { xs: "88px", md: "104px" },
                   }}
                   ref={gridRef}
                 >

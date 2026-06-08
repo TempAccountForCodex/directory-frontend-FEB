@@ -1,17 +1,15 @@
-import React, { useState, type KeyboardEvent } from "react";
+import React, { useMemo, useState, type KeyboardEvent } from "react";
 import {
   Box,
-  Container,
   Button,
   Select,
   MenuItem,
   FormControl,
-  Typography,
   type SelectChangeEvent,
   alpha,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import theme from "../../../styles/theme";
 import { useListings } from "../../../context/ListingsContext";
 
@@ -26,8 +24,32 @@ const HomeSearch: React.FC = () => {
   const { listings } = useListings();
 
   const [selectedOption, setSelectedOption] = useState<string>("Categories");
+  const [searchInput, setSearchInput] = useState<string>("");
   const [matchingTitles, setMatchingTitles] = useState<Match[]>([]);
   const [selectRegion, setSelectedRegion] = useState<string>("Regions");
+  const normalize = (value: unknown) => String(value ?? "").trim().toLowerCase();
+  const isPlaceholder = (value: string) =>
+    ["categories", "regions"].includes(normalize(value));
+
+  const options = useMemo(() => {
+    const categories = Array.from(
+      new Set(
+        listings
+          .map((item) => item.businessCategory || item.category)
+          .filter(Boolean),
+      ),
+    ) as string[];
+
+    return ["Categories", ...categories];
+  }, [listings]);
+
+  const regionOptions = useMemo(() => {
+    const regions = Array.from(
+      new Set(listings.map((item) => item.region).filter(Boolean)),
+    ) as string[];
+
+    return ["Regions", ...regions];
+  }, [listings]);
 
   const handleOptionSelect = (event: SelectChangeEvent<string>) => {
     setSelectedOption(event.target.value);
@@ -38,12 +60,22 @@ const HomeSearch: React.FC = () => {
   };
 
   const handleKeyUp = (event: KeyboardEvent<HTMLInputElement>) => {
-    const inputValue = event.currentTarget.value.toLowerCase();
+    const inputValue = event.currentTarget.value;
+    setSearchInput(inputValue);
+    const normalizedInput = normalize(inputValue);
     const matches = listings.filter(
       (item) =>
-        item.intro &&
-        item.intro.toLowerCase().includes(inputValue) &&
-        inputValue.length > 0,
+        normalizedInput.length > 0 &&
+        [
+          item.businessName,
+          item.title,
+          item.intro,
+          item.shortDescription,
+          item.category,
+          item.businessCategory,
+          item.city,
+          item.region,
+        ].some((field) => normalize(field).includes(normalizedInput)),
     );
     setMatchingTitles(
       matches.map((match) => ({
@@ -55,37 +87,23 @@ const HomeSearch: React.FC = () => {
   };
 
   const getInputData = () => {
-    const categoryData = selectedOption;
-    const regionCategory = selectRegion;
-    const queryString = `?region=${encodeURIComponent(
-      regionCategory,
-    )}&category=${encodeURIComponent(categoryData)}`;
+    const categoryData = isPlaceholder(selectedOption) ? "" : selectedOption;
+    const regionCategory = isPlaceholder(selectRegion) ? "" : selectRegion;
+    const query = new URLSearchParams();
 
-    navigate("/listings" + queryString, {
-      state: { categoryData, regionCategory },
+    if (searchInput.trim()) query.set("search", searchInput.trim());
+    if (regionCategory) query.set("region", regionCategory);
+    if (categoryData) query.set("category", categoryData);
+
+    navigate(`/listings${query.toString() ? `?${query.toString()}` : ""}`, {
+      state: {
+        searchInput: searchInput.trim(),
+        categoryData,
+        regionCategory,
+        scrollToResults: true,
+      },
     });
   };
-
-  const options = [
-    "Categories",
-    "Automotive Services",
-    "Beauty",
-    "Fitness",
-    "House",
-    "Home Decor",
-    "Locksmiths",
-    "Nightlife",
-    "Plumbers",
-    "Restaurants",
-    "Shopping",
-  ];
-
-  const regionOptions = [
-    "Regions",
-    "Canada",
-    "United Kingdom",
-    "United States",
-  ];
 
   return (
     <Box width="100%" sx={{ background: "transparent" }}>
@@ -117,7 +135,12 @@ const HomeSearch: React.FC = () => {
                 component="input"
                 placeholder="What are you looking for?"
                 aria-label="Search businesses"
+                value={searchInput}
                 onKeyUp={handleKeyUp}
+                onChange={(event) => setSearchInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") getInputData();
+                }}
                 sx={{
                   width: "100%",
                   height: "56px",
@@ -292,7 +315,12 @@ const HomeSearch: React.FC = () => {
             <Box
               component="input"
               placeholder="What are you looking for?"
+              value={searchInput}
               onKeyUp={handleKeyUp}
+              onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") getInputData();
+              }}
               sx={{
                 width: "100%",
                 height: "40px",

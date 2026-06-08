@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useMemo } from "react";
 import { Grid, Typography, Box, useTheme } from "@mui/material";
 import CheckboxFilter from "./CheckboxFilter";
 
@@ -19,7 +19,7 @@ const SideFilter: React.FC<SideFilterProps> = ({
   items = [],
 }) => {
   /* ---------------- Categories ---------------- */
-  const categories: string[] = [
+  const fallbackCategories: string[] = [
     "Accounting and Bookkeeping",
     "Marketing and Advertising",
     "IT and Technical Support",
@@ -30,19 +30,17 @@ const SideFilter: React.FC<SideFilterProps> = ({
     "Cleaning and Maintenance",
     "Others",
   ];
+  const categories = useMemo(() => {
+    const actualCategories = Array.from(
+      new Set(
+        items
+          .map((item) => item.businessCategory || item.category)
+          .filter(Boolean),
+      ),
+    ) as string[];
 
-  /* ---------------- Filtering Logic ---------------- */
-  useEffect(() => {
-    if (selectedCategories.length === 0) {
-      setItems([]);
-      return;
-    }
-
-    const filtered = items.filter((item) =>
-      selectedCategories.includes(item.category),
-    );
-    setItems(filtered);
-  }, [items, selectedCategories, setItems]);
+    return actualCategories.length > 0 ? actualCategories : fallbackCategories;
+  }, [items]);
 
   /* ---------------- Handlers ---------------- */
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,6 +49,7 @@ const SideFilter: React.FC<SideFilterProps> = ({
       ? [...selectedCategories, name]
       : selectedCategories.filter((c) => c !== name);
     setSelectedCategories(updated);
+    setItems(items);
   };
   const theme = useTheme();
 
