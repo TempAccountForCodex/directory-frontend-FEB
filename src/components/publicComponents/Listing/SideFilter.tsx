@@ -33,15 +33,14 @@ const SideFilter: React.FC<SideFilterProps> = ({
 
   /* ---------------- Filtering Logic ---------------- */
   useEffect(() => {
-    let filtered = [...items];
-
-    // filter by categories
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((item) =>
-        selectedCategories.includes(item.category),
-      );
+    if (selectedCategories.length === 0) {
+      setItems([]);
+      return;
     }
 
+    const filtered = items.filter((item) =>
+      selectedCategories.includes(item.category),
+    );
     setItems(filtered);
   }, [items, selectedCategories, setItems]);
 

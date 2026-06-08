@@ -4,7 +4,6 @@ import {
   Box,
   Pagination,
   useTheme,
-  GlobalStyles,
 } from "@mui/material";
 import PropertyItemCard from "../Listing/PropertyCardItem";
 import type { Place } from "../../../types/place";
@@ -37,12 +36,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
   return (
     <>
-      <GlobalStyles
-        styles={{
-          "@import":
-            "url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap')",
-        }}
-      />
       <Box
         sx={{
           display: "grid",
@@ -60,7 +53,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           pb: { xs: 8, md: 12 },
           pl: { xs: 0, sm: "10px" },
           pr: { xs: 0, sm: "25px" },
-          fontFamily: '"Inter", sans-serif',
+          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 
         }}
       >

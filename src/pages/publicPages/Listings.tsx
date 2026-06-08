@@ -1,4 +1,11 @@
-import React, { Suspense, lazy, useState, useRef } from "react";
+import React, {
+  Suspense,
+  lazy,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import {
   Grid,
   Box,
@@ -34,6 +41,8 @@ const SideFilter = lazy(
 );
 
 const brandTeal = "#378C92";
+const homeHeroFont =
+  "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 /* ---------------- Types ---------------- */
 interface LocationState {
@@ -82,8 +91,42 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
     new Map(categoryArray.map((c) => [c.value, c])).values(),
   );
 
+  const hasActiveFilters = useMemo(
+    () =>
+      Boolean(
+        searchKeyword ||
+          propertyType ||
+          (Array.isArray(category) ? category.length : category) ||
+          city ||
+          priceRange ||
+          area ||
+          region ||
+          accNTaxService.length,
+      ),
+    [
+      searchKeyword,
+      propertyType,
+      category,
+      city,
+      priceRange,
+      area,
+      region,
+      accNTaxService.length,
+    ],
+  );
+
+  const displayedListings = useMemo(
+    () => (hasActiveFilters ? filteredData : listings),
+    [filteredData, hasActiveFilters, listings],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [hasActiveFilters]);
+
   const clearFilter = () => {
     setSearchKeyword("");
+    setPropertyType(undefined);
     setCategory([]);
     setPriceRange("");
     setArea("");
@@ -91,6 +134,7 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
     setCity("");
     setAccNTaxService([]);
     setFilteredData(listings);
+    setCurrentPage(1);
   };
 
   // Client-side pagination
@@ -215,7 +259,14 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
   );
 
   return (
-    <>
+    <Box
+      sx={{
+        fontFamily: homeHeroFont,
+        "& .MuiTypography-root, & .MuiButton-root, & input, & label": {
+          fontFamily: homeHeroFont,
+        },
+      }}
+    >
       <Hero {...ListingsData} />
 
       {/* <StyledHeader /> */}
@@ -225,10 +276,31 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
         component="section"
         pl={{ xs: 2, sm: 4, md: 0 }}
         pt={{ xs: 6, sm: 6, md: 6.5 }}
-        bgcolor={isDashboard ? "primary.main" : "common.white"}
         sx={{
           contentVisibility: "auto",
           containIntrinsicSize: "1px 2400px",
+          position: "relative",
+          isolation: "isolate",
+          overflow: "hidden",
+          bgcolor: isDashboard ? "primary.main" : "#f7f5f3",
+          "&::before": !isDashboard
+            ? {
+                content: '""',
+                position: "absolute",
+                inset: 0,
+                backgroundImage: "url('/assets/images/insights/bg-1.webp')",
+                backgroundRepeat: "repeat",
+                backgroundPosition: "left top",
+                backgroundSize: "auto",
+                filter: "brightness(1) hue-rotate(0deg) saturate(1)",
+                zIndex: 0,
+                pointerEvents: "none",
+              }
+            : undefined,
+          "& > *": {
+            position: "relative",
+            zIndex: 1,
+          },
         }}
       >
         <Suspense
@@ -309,7 +381,7 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
                     setAccNTaxService={setAccNTaxService}
                     accNTaxService={accNTaxService}
                     setItems={setFilteredData}
-                    items={filteredData.length ? filteredData : listings}
+                    items={listings}
                     area={[]}
                     setArea={function (
                       value: React.SetStateAction<string[]>,
@@ -404,10 +476,7 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
                   emptyState
                 ) : (
                   <PropertyCard
-                    items={(filteredData.length > 0
-                      ? filteredData
-                      : listings
-                    ).slice(
+                    items={displayedListings.slice(
                       (currentPage - 1) * itemsPerPage,
                       currentPage * itemsPerPage,
                     )}
@@ -420,15 +489,9 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
                       >
                     }
                     totalPages={Math.ceil(
-                      (filteredData.length > 0
-                        ? filteredData.length
-                        : listings.length) / itemsPerPage,
+                      displayedListings.length / itemsPerPage,
                     )}
-                    totalPlaces={
-                      filteredData.length > 0
-                        ? filteredData.length
-                        : listings.length
-                    }
+                    totalPlaces={displayedListings.length}
                   />
                 )}
               </Grid>
@@ -501,7 +564,7 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
           You're on the notification list.
         </Alert>
       </Snackbar>
-    </>
+    </Box>
   );
 };
 

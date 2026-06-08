@@ -6,7 +6,6 @@ import {
   Chip,
   CircularProgress,
   Container,
-  GlobalStyles,
   Grid,
   IconButton,
   Link,
@@ -40,6 +39,38 @@ const palette = {
   rule: "#F0EBE1",
   teal: "#398C91",
   tealDark: "#2d7277",
+};
+const homeHeroFont =
+  "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+const listingCategoryPillSx = {
+  width: "fit-content",
+  height: 25,
+  borderRadius: 999,
+  background: "#398C91",
+  color: "#fff",
+  border: 0,
+  boxShadow: "0 10px 22px rgba(17, 27, 27, 0.14)",
+  "& .MuiChip-label": {
+    width: "100%",
+    px: 1.25,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 0.6,
+    fontSize: 10,
+    fontWeight: 800,
+    letterSpacing: 0,
+    textTransform: "none",
+    fontFamily: homeHeroFont,
+    "&::after": {
+      content: '"›"',
+      fontSize: 16,
+      lineHeight: 1,
+      fontWeight: 400,
+      transform: "translateY(-1px)",
+    },
+  },
 };
 
 const fallbackBanner =
@@ -87,6 +118,8 @@ export interface Listing {
   createdAt?: string;
   updatedAt?: string;
   website?: string | null;
+  websiteSlug?: string | null;
+  subdomain?: string | null;
   priceRange?: string | null;
   priceLevel?: string | null;
   accountingAndTaxService?: string | null;
@@ -116,6 +149,27 @@ export interface Listing {
     email: string;
     role: "user" | "admin";
   };
+  websiteData?: {
+    slug?: string | null;
+    subdomain?: string | null;
+  } | null;
+}
+
+function getListingWebsitePath(listing: Listing) {
+  const siteSlug =
+    listing.websiteSlug ||
+    listing.websiteData?.slug ||
+    listing.websiteData?.subdomain ||
+    listing.subdomain;
+
+  if (siteSlug) return `/site/${encodeURIComponent(siteSlug)}`;
+
+  const website =
+    listing.website && listing.website !== "https://www.example.com/"
+      ? listing.website
+      : "";
+
+  return website || (listing.slug ? `/business/${listing.slug}` : "");
 }
 
 function stripHtml(value?: string | null) {
@@ -195,7 +249,7 @@ function BusinessLogo({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: '"Playfair Display", serif',
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         fontSize: size * 0.36,
         fontWeight: 600,
         border: "4px solid #fff",
@@ -249,7 +303,8 @@ const ListingDetails: React.FC = () => {
       listing.website && listing.website !== "https://www.example.com/"
         ? listing.website
         : "";
-    const previewWebsite = website || (listing.slug ? `/business/${listing.slug}` : "");
+    const previewWebsite = getListingWebsitePath(listing);
+    const isExternalWebsite = /^https?:\/\//i.test(previewWebsite);
     const locationText = [listing.city, listing.region, listing.country]
       .filter(Boolean)
       .join(", ");
@@ -264,6 +319,7 @@ const ListingDetails: React.FC = () => {
       price,
       website,
       previewWebsite,
+      isExternalWebsite,
       locationText:
         locationText || listing.address || (listing.location?.isRemoteOnly ? "Remote / Online" : "Location available"),
       address: listing.address || locationText,
@@ -338,17 +394,13 @@ const ListingDetails: React.FC = () => {
         minHeight: "100vh",
         bgcolor: palette.paper,
         color: palette.ink,
-        fontFamily: '"Inter", sans-serif',
+        fontFamily: homeHeroFont,
+        "& .MuiTypography-root, & .MuiButton-root, & .MuiChip-root": {
+          fontFamily: homeHeroFont,
+        },
         "& ::selection": { bgcolor: palette.soft },
       }}
     >
-      <GlobalStyles
-        styles={{
-          "@import":
-            "url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap')",
-        }}
-      />
-
       <Box
         component="section"
         sx={{
@@ -392,8 +444,8 @@ const ListingDetails: React.FC = () => {
           <Button
             component={Link}
             href={viewModel.previewWebsite}
-            target={viewModel.website ? "_blank" : undefined}
-            rel={viewModel.website ? "noopener noreferrer" : undefined}
+            target={viewModel.isExternalWebsite ? "_blank" : undefined}
+            rel={viewModel.isExternalWebsite ? "noopener noreferrer" : undefined}
             startIcon={<LanguageIcon sx={{ fontSize: 13 }} />}
             endIcon={<OpenInNewIcon sx={{ fontSize: 11, opacity: 0.7 }} />}
             sx={{
@@ -436,7 +488,11 @@ const ListingDetails: React.FC = () => {
           }}
         >
           <Stack direction="row" alignItems="center" spacing={2}>
-            <BusinessLogo logo={viewModel.logo} name={viewModel.name} size={52} />
+            <BusinessLogo
+              logo={viewModel.logo}
+              name={viewModel.name}
+              size={52}
+            />
             <Chip
               label={viewModel.category}
               sx={{
@@ -456,13 +512,14 @@ const ListingDetails: React.FC = () => {
           <Typography
             variant="h1"
             sx={{
-              fontFamily: '"Playfair Display", serif',
+              fontFamily:
+                "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               color: "#fff",
               fontWeight: 500,
               letterSpacing: 0,
               lineHeight: 0.95,
               fontSize: { xs: 48, md: 92, lg: 112 },
-              maxWidth: 980,
+              maxWidth: 1200,
             }}
           >
             {viewModel.name}
@@ -513,7 +570,29 @@ const ListingDetails: React.FC = () => {
       <Container
         maxWidth="lg"
         sx={{
+          position: "relative",
+          isolation: "isolate",
           py: { xs: 8, lg: 12 },
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: "calc(50% - 50vw)",
+            right: "calc(50% - 50vw)",
+            backgroundColor: "#f7f5f3",
+            backgroundImage: "url('/assets/images/insights/bg-1.webp')",
+            backgroundRepeat: "repeat",
+            backgroundPosition: "left top",
+            backgroundSize: "auto",
+            filter: "brightness(1) hue-rotate(0deg) saturate(1)",
+            zIndex: 0,
+            pointerEvents: "none",
+          },
+          "& > *": {
+            position: "relative",
+            zIndex: 1,
+          },
         }}
       >
         <Grid container spacing={{ xs: 7, lg: 10 }}>
@@ -523,7 +602,8 @@ const ListingDetails: React.FC = () => {
                 <Typography
                   variant="h2"
                   sx={{
-                    fontFamily: '"Playfair Display", serif',
+                    fontFamily:
+                      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontSize: 34,
                     fontWeight: 400,
                     mb: 4,
@@ -549,7 +629,11 @@ const ListingDetails: React.FC = () => {
                     {viewModel.tags.map((tag) => (
                       <Chip
                         key={tag}
-                        icon={<LocalOfferIcon sx={{ color: `${palette.teal} !important` }} />}
+                        icon={
+                          <LocalOfferIcon
+                            sx={{ color: `${palette.teal} !important` }}
+                          />
+                        }
                         label={tag}
                         sx={{
                           borderRadius: 0.5,
@@ -572,7 +656,8 @@ const ListingDetails: React.FC = () => {
                 <Typography
                   variant="h2"
                   sx={{
-                    fontFamily: '"Playfair Display", serif',
+                    fontFamily:
+                      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontSize: 34,
                     fontWeight: 400,
                     mb: 4,
@@ -590,54 +675,55 @@ const ListingDetails: React.FC = () => {
                         : String(index);
 
                     return (
-                    <Stack key={reviewId} direction="row" spacing={3}>
-                      <FormatQuoteIcon
-                        sx={{
-                          color: palette.teal,
-                          fontSize: 36,
-                          mt: 0.5,
-                          strokeWidth: 1,
-                        }}
-                      />
-                      <Box>
-                        <Box sx={{ mb: 2 }}>
-                          <StarRow rating={Number(review.rating || 5)} />
-                        </Box>
-                        <Typography
+                      <Stack key={reviewId} direction="row" spacing={3}>
+                        <FormatQuoteIcon
                           sx={{
-                            color: palette.text,
-                            fontFamily: '"Playfair Display", serif',
-                            fontStyle: "italic",
-                            fontSize: { xs: 21, md: 26 },
-                            lineHeight: 1.55,
-                            mb: 2,
-                          }}
-                        >
-                          "{review.content}"
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: 14,
-                            fontWeight: 700,
-                            letterSpacing: 1.3,
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {review.author?.name || "Client"}
-                        </Typography>
-                        <Typography
-                          sx={{
+                            color: palette.teal,
+                            fontSize: 36,
                             mt: 0.5,
-                            color: palette.muted,
-                            fontSize: 12,
-                            letterSpacing: 1.7,
-                            textTransform: "uppercase",
+                            strokeWidth: 1,
                           }}
-                        >
-                          {review.title || "Verified review"}
-                        </Typography>
-                      </Box>
-                    </Stack>
+                        />
+                        <Box>
+                          <Box sx={{ mb: 2 }}>
+                            <StarRow rating={Number(review.rating || 5)} />
+                          </Box>
+                          <Typography
+                            sx={{
+                              color: palette.text,
+                              fontFamily:
+                                "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              fontStyle: "italic",
+                              fontSize: { xs: 21, md: 26 },
+                              lineHeight: 1.55,
+                              mb: 2,
+                            }}
+                          >
+                            "{review.content}"
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: 14,
+                              fontWeight: 700,
+                              letterSpacing: 1.3,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            {review.author?.name || "Client"}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              mt: 0.5,
+                              color: palette.muted,
+                              fontSize: 12,
+                              letterSpacing: 1.7,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            {review.title || "Verified review"}
+                          </Typography>
+                        </Box>
+                      </Stack>
                     );
                   })}
                 </Stack>
@@ -662,7 +748,8 @@ const ListingDetails: React.FC = () => {
                 <Typography
                   variant="h3"
                   sx={{
-                    fontFamily: '"Playfair Display", serif',
+                    fontFamily:
+                      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontSize: 28,
                     fontWeight: 400,
                   }}
@@ -684,7 +771,8 @@ const ListingDetails: React.FC = () => {
                     <Typography
                       sx={{
                         color: palette.ink,
-                        fontFamily: '"Playfair Display", serif',
+                        fontFamily:
+                          "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontSize: 34,
                         fontWeight: 700,
                       }}
@@ -697,8 +785,12 @@ const ListingDetails: React.FC = () => {
                     </Typography>
                   </Stack>
                   <Stack alignItems="center" spacing={0.5}>
-                    <FavoriteBorderIcon sx={{ color: palette.teal, fontSize: 22 }} />
-                    <Typography sx={{ color: palette.ink, fontSize: 22, fontWeight: 700 }}>
+                    <FavoriteBorderIcon
+                      sx={{ color: palette.teal, fontSize: 22 }}
+                    />
+                    <Typography
+                      sx={{ color: palette.ink, fontSize: 22, fontWeight: 700 }}
+                    >
                       {viewModel.favouriteCount}
                     </Typography>
                     <Typography sx={{ color: palette.muted, fontSize: 12 }}>
@@ -706,8 +798,12 @@ const ListingDetails: React.FC = () => {
                     </Typography>
                   </Stack>
                   <Stack alignItems="center" spacing={0.5}>
-                    <TrendingUpIcon sx={{ color: palette.teal, fontSize: 22 }} />
-                    <Typography sx={{ color: palette.ink, fontSize: 22, fontWeight: 700 }}>
+                    <TrendingUpIcon
+                      sx={{ color: palette.teal, fontSize: 22 }}
+                    />
+                    <Typography
+                      sx={{ color: palette.ink, fontSize: 22, fontWeight: 700 }}
+                    >
                       {viewModel.score ? viewModel.score.toFixed(1) : "—"}
                     </Typography>
                     <Typography sx={{ color: palette.muted, fontSize: 12 }}>
@@ -717,16 +813,40 @@ const ListingDetails: React.FC = () => {
                 </Stack>
 
                 <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                  <PlaceIcon sx={{ color: palette.teal, fontSize: 19, mt: 0.25 }} />
+                  <PlaceIcon
+                    sx={{ color: palette.teal, fontSize: 19, mt: 0.25 }}
+                  />
                   <Box>
-                    <Typography sx={{ color: palette.ink, fontSize: 14, fontWeight: 600, mb: 0.5 }}>
+                    <Typography
+                      sx={{
+                        color: palette.ink,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        mb: 0.5,
+                      }}
+                    >
                       Location
                     </Typography>
-                    <Typography sx={{ color: palette.muted, fontSize: 14, lineHeight: 1.55 }}>
+                    <Typography
+                      sx={{
+                        color: palette.muted,
+                        fontSize: 14,
+                        lineHeight: 1.55,
+                      }}
+                    >
                       {viewModel.address || viewModel.locationText}
                     </Typography>
-                    <Typography sx={{ mt: 1, color: palette.teal, fontSize: 12, fontWeight: 600 }}>
-                      {viewModel.isRemoteOnly ? "Remote / online" : "In-person available"}
+                    <Typography
+                      sx={{
+                        mt: 1,
+                        color: palette.teal,
+                        fontSize: 12,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {viewModel.isRemoteOnly
+                        ? "Remote / online"
+                        : "In-person available"}
                     </Typography>
                   </Box>
                 </Stack>
@@ -741,7 +861,11 @@ const ListingDetails: React.FC = () => {
                     <PhoneIcon sx={{ color: palette.teal, fontSize: 19 }} />
                     <Link
                       href={`tel:${viewModel.phone}`}
-                      sx={{ color: palette.muted, fontSize: 14, textDecoration: "none" }}
+                      sx={{
+                        color: palette.muted,
+                        fontSize: 14,
+                        textDecoration: "none",
+                      }}
                     >
                       {viewModel.phone}
                     </Link>
@@ -754,7 +878,9 @@ const ListingDetails: React.FC = () => {
                   alignItems="center"
                   sx={{ borderTop: `1px solid ${palette.rule}`, pt: 2.5 }}
                 >
-                  <Typography sx={{ color: palette.teal, fontSize: 17, fontWeight: 700 }}>
+                  <Typography
+                    sx={{ color: palette.teal, fontSize: 17, fontWeight: 700 }}
+                  >
                     {viewModel.price}
                   </Typography>
                   <Typography sx={{ color: palette.muted, fontSize: 14 }}>
@@ -776,9 +902,9 @@ const ListingDetails: React.FC = () => {
                         sx={{
                           height: 28,
                           borderRadius: 0.5,
-                          bgcolor: palette.softLight,
+                          bgcolor: "#398C91",
                           border: `1px solid ${palette.soft}`,
-                          color: palette.muted,
+                          color: palette.paper,
                           fontSize: 12,
                           fontWeight: 600,
                         }}
@@ -814,7 +940,8 @@ const ListingDetails: React.FC = () => {
                       <PlaceIcon sx={{ color: palette.teal, fontSize: 28 }} />
                       <Typography
                         sx={{
-                          fontFamily: '"Playfair Display", serif',
+                          fontFamily:
+                            "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           fontStyle: "italic",
                           fontSize: 15,
                         }}
@@ -841,10 +968,14 @@ const ListingDetails: React.FC = () => {
                     <Button
                       component={Link}
                       href={viewModel.previewWebsite}
-                      target={viewModel.website ? "_blank" : undefined}
-                      rel={viewModel.website ? "noopener noreferrer" : undefined}
+                      target={viewModel.isExternalWebsite ? "_blank" : undefined}
+                      rel={
+                        viewModel.isExternalWebsite ? "noopener noreferrer" : undefined
+                      }
                       startIcon={<LanguageIcon sx={{ fontSize: 16 }} />}
-                      endIcon={<OpenInNewIcon sx={{ fontSize: 14, opacity: 0.75 }} />}
+                      endIcon={
+                        <OpenInNewIcon sx={{ fontSize: 14, opacity: 0.75 }} />
+                      }
                       sx={{
                         width: "100%",
                         mt: 1,
@@ -906,7 +1037,8 @@ const ListingDetails: React.FC = () => {
                 variant="h2"
                 sx={{
                   color: palette.ink,
-                  fontFamily: '"Playfair Display", serif',
+                  fontFamily:
+                    "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontSize: { xs: 34, md: 44 },
                   fontWeight: 400,
                 }}
@@ -933,105 +1065,104 @@ const ListingDetails: React.FC = () => {
           </Stack>
 
           <Grid container spacing={4}>
-            {relatedListings.map(
-              (biz, index) => {
-                const name = biz.businessName || biz.title || "Business";
-                const category = biz.businessCategory || biz.category || "Business";
-                const description =
-                  biz.shortDescription ||
-                  stripHtml(biz.desc) ||
-                  "Strategic services for growing businesses.";
-                const image =
-                  biz.businessBanner ||
-                  biz.image ||
-                  fallbackRelatedImages[index % fallbackRelatedImages.length];
-                const rating = Number(biz.averageRating || 0);
-                const to = biz.slug
-                  ? `/listings/${biz.slug}${type ? `?type=${type}` : ""}`
-                  : `/listings/${biz.id}`;
+            {relatedListings.map((biz, index) => {
+              const name = biz.businessName || biz.title || "Business";
+              const category =
+                biz.businessCategory || biz.category || "Business";
+              const description =
+                biz.shortDescription ||
+                stripHtml(biz.desc) ||
+                "Strategic services for growing businesses.";
+              const image =
+                biz.businessBanner ||
+                biz.image ||
+                fallbackRelatedImages[index % fallbackRelatedImages.length];
+              const rating = Number(biz.averageRating || 0);
+              const to = biz.slug
+                ? `/listings/${biz.slug}${type ? `?type=${type}` : ""}`
+                : `/listings/${biz.id}`;
 
-                return (
-                  <Grid item xs={12} md={4} key={`${biz.id}-${index}`}>
+              return (
+                <Grid item xs={12} md={4} key={`${biz.id}-${index}`}>
+                  <Box
+                    component={RouterLink}
+                    to={to}
+                    sx={{
+                      display: "block",
+                      color: "inherit",
+                      textDecoration: "none",
+                      "&:hover .related-image": {
+                        transform: "scale(1.05)",
+                      },
+                      "&:hover .related-title": {
+                        color: palette.teal,
+                      },
+                    }}
+                  >
                     <Box
-                      component={RouterLink}
-                      to={to}
                       sx={{
-                        display: "block",
-                        color: "inherit",
-                        textDecoration: "none",
-                        "&:hover .related-image": {
-                          transform: "scale(1.05)",
-                        },
-                        "&:hover .related-title": {
-                          color: palette.teal,
-                        },
+                        aspectRatio: "4 / 3",
+                        mb: 2.5,
+                        overflow: "hidden",
+                        bgcolor: palette.soft,
                       }}
                     >
                       <Box
+                        className="related-image"
+                        component="img"
+                        src={image}
+                        alt={name}
                         sx={{
-                          aspectRatio: "4 / 3",
-                          mb: 2.5,
-                          overflow: "hidden",
-                          bgcolor: palette.soft,
-                        }}
-                      >
-                        <Box
-                          className="related-image"
-                          component="img"
-                          src={image}
-                          alt={name}
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            transition: "transform 700ms ease",
-                          }}
-                        />
-                      </Box>
-                      <Chip
-                        label={category}
-                        sx={{
-                          mb: 1,
-                          height: 25,
-                          borderRadius: 0.5,
-                          bgcolor: palette.softLight,
-                          color: palette.muted,
-                          border: `1px solid ${palette.soft}`,
-                          fontSize: 10,
-                          fontWeight: 600,
-                          letterSpacing: 1.1,
-                          textTransform: "uppercase",
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          transition: "transform 700ms ease",
                         }}
                       />
+                    </Box>
+                    <Chip
+                      label={category}
+                      sx={{ ...listingCategoryPillSx, mb: 1.4 }}
+                    />
+                    <Typography
+                      className="related-title"
+                      sx={{
+                        fontFamily:
+                          "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontSize: 27,
+                        lineHeight: 1.2,
+                        mb: 0.75,
+                        transition: "color 200ms ease",
+                      }}
+                    >
+                      {name}
+                    </Typography>
+                    <Typography
+                      sx={{ color: palette.muted, fontSize: 14, mb: 1 }}
+                    >
+                      {description}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                      <StarIcon sx={{ color: palette.teal, fontSize: 14 }} />
                       <Typography
-                        className="related-title"
                         sx={{
-                          fontFamily: '"Playfair Display", serif',
-                          fontSize: 27,
-                          lineHeight: 1.2,
-                          mb: 0.75,
-                          transition: "color 200ms ease",
+                          color: palette.ink,
+                          fontSize: 12,
+                          fontWeight: 700,
                         }}
                       >
-                        {name}
+                        {rating ? rating.toFixed(1) : "New"}
                       </Typography>
-                      <Typography sx={{ color: palette.muted, fontSize: 14, mb: 1 }}>
-                        {description}
-                      </Typography>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <StarIcon sx={{ color: palette.teal, fontSize: 14 }} />
-                        <Typography sx={{ color: palette.ink, fontSize: 12, fontWeight: 700 }}>
-                          {rating ? rating.toFixed(1) : "New"}
-                        </Typography>
-                        {biz.hasStore && (
-                          <StorefrontIcon sx={{ color: palette.muted, fontSize: 14, ml: 1 }} />
-                        )}
-                      </Stack>
-                    </Box>
-                  </Grid>
-                );
-              },
-            )}
+                      {biz.hasStore && (
+                        <StorefrontIcon
+                          sx={{ color: palette.muted, fontSize: 14, ml: 1 }}
+                        />
+                      )}
+                    </Stack>
+                  </Box>
+                </Grid>
+              );
+            })}
           </Grid>
         </Container>
       </Box>

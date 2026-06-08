@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -9,12 +9,19 @@ import {
   Grid,
   Skeleton,
 } from "@mui/material";
-import InsightsHeaderBackground from "../../components/publicComponents/insights/InsightsHeaderBackground";
 import ScrollToTopButton from "../../utils/commons/ScrollToTopBtn";
-import { InsightData } from "../../utils/data/Insights";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import {
+  fallbackBlogPosts,
+  fetchBlogPosts,
+  getBlogAssetUrl,
+  type BlogPost,
+} from "../../api/blogs";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5001";
+const star = "/assets/publicAssets/images/common/star.svg";
+const homeHeroFont =
+  "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 const getImageUrl = (imagePath) => {
   if (!imagePath) return "";
@@ -26,7 +33,7 @@ const getImageUrl = (imagePath) => {
     return `/assets/images/insights/blog${optimizedInsightMatch[1]}.svg`;
   }
   if (imagePath.startsWith("/assets")) return imagePath;
-  return `${BASE_URL}${imagePath}`;
+  return getBlogAssetUrl(imagePath) || `${BASE_URL}${imagePath}`;
 };
 
 const formatDate = (dateString) => {
@@ -59,18 +66,29 @@ const InsightsPage = () => {
   const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
 
   const [activeCategory, setActiveCategory] = useState("All");
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(fallbackBlogPosts);
+
+  useEffect(() => {
+    let ignore = false;
+    fetchBlogPosts().then((posts) => {
+      if (!ignore) setBlogPosts(posts);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const categories = useMemo<string[]>(() => {
     const dataCategories = Array.from(
-      new Set(InsightData.map((article) => article.category).filter(Boolean))
+      new Set(blogPosts.map((article) => article.category).filter(Boolean))
     ).sort() as string[];
     return ["All", ...dataCategories];
-  }, []);
+  }, [blogPosts]);
 
   const filtered = useMemo(() => {
-    if (activeCategory === "All") return InsightData;
-    return InsightData.filter((article) => article.category === activeCategory);
-  }, [activeCategory]);
+    if (activeCategory === "All") return blogPosts;
+    return blogPosts.filter((article) => article.category === activeCategory);
+  }, [activeCategory, blogPosts]);
 
   const featured = useMemo(() => {
     if (!filtered.length) return undefined;
@@ -379,7 +397,17 @@ const InsightsPage = () => {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", background: "#020c15", overflowX: "hidden" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "#020c15",
+        overflowX: "hidden",
+        fontFamily: homeHeroFont,
+        "& .MuiTypography-root, & .MuiButton-root": {
+          fontFamily: homeHeroFont,
+        },
+      }}
+    >
       <ScrollToTopButton />
 
       <Box
@@ -387,20 +415,42 @@ const InsightsPage = () => {
           position: "relative",
           minHeight: "480px",
           overflow: "hidden",
+          bgcolor: "#020303",
+          backgroundImage: `
+            radial-gradient(circle at 20% 30%, rgba(55,140,146,0.35) 0%, rgba(2,3,3,0) 45%),
+            radial-gradient(circle at 80% 70%, rgba(45,212,191,0.24) 0%, rgba(2,3,3,0) 42%),
+            url(${star})
+          `,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            width: "100%",
+            height: "2px",
+            background:
+              "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)",
+            zIndex: 3,
+          },
         }}
       >
-        <InsightsHeaderBackground idPrefix="insights-page-header" />
         <Box
           sx={{
             position: "relative",
             zIndex: 10,
             width: "100%",
-            padding: { xs: "102px 20px 42px", md: "118px 96px 48px", lg: "136px 200px 56px" },
+            padding: {
+              xs: "102px 20px 42px",
+              md: "118px 96px 48px",
+              lg: "136px 200px 56px",
+            },
           }}
         >
           <Typography
             sx={{
-              color: "#00c5b8",
+              color: "#dff7fb",
               fontSize: "12px",
               fontWeight: 600,
               letterSpacing: "3.5px",
@@ -413,7 +463,10 @@ const InsightsPage = () => {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: "clamp(36px, 12vw, 48px)", md: "clamp(48px, 6vw, 82px)" },
+              fontSize: {
+                xs: "clamp(36px, 12vw, 48px)",
+                md: "clamp(48px, 6vw, 82px)",
+              },
               fontWeight: 800,
               lineHeight: { xs: 1.08, md: 1.03 },
               color: "#ffffff",
@@ -423,20 +476,28 @@ const InsightsPage = () => {
             }}
           >
             Blogs, Insights &amp; <br />
-            <Box component="span" sx={{ color: "#00c5b8" }}>Articles</Box>
+            <Box
+              component="span"
+              sx={{
+                color: "#398c91",
+                WebkitTextStroke: "1px #ffffff74",
+              }}
+            >
+              Articles
+            </Box>
           </Typography>
           <Typography
             variant="body1"
             sx={{
-              color: "#7a9ab0",
+              color: "rgba(232,242,247,0.82)",
               fontSize: { xs: "14px", md: "17px" },
               lineHeight: 1.75,
               maxWidth: { xs: "100%", md: "620px" },
               mb: "56px",
             }}
           >
-            Exploring the frontiers of artificial intelligence, cloud computing, cybersecurity,
-            and the future of digital transformation.
+            Exploring the frontiers of artificial intelligence, cloud computing,
+            cybersecurity, and the future of digital transformation.
           </Typography>
 
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -449,8 +510,14 @@ const InsightsPage = () => {
                   borderRadius: "100px",
                   fontSize: "13px",
                   fontWeight: 500,
-                  border: activeCategory === category ? "1.5px solid #00c5b8" : "1.5px solid rgba(255,255,255,0.12)",
-                  background: activeCategory === category ? "rgba(0,197,184,0.12)" : "rgba(255,255,255,0.04)",
+                  border:
+                    activeCategory === category
+                      ? "1.5px solid #00c5b8"
+                      : "1.5px solid rgba(255,255,255,0.12)",
+                  background:
+                    activeCategory === category
+                      ? "rgba(0,197,184,0.12)"
+                      : "rgba(255,255,255,0.04)",
                   color: activeCategory === category ? "#00c5b8" : "#7a9ab0",
                   transition: "all 0.2s",
                   "&:hover": {
@@ -471,34 +538,66 @@ const InsightsPage = () => {
       <Box
         sx={{
           width: "100%",
-          padding: { xs: "42px 20px 64px", md: "52px 96px 76px", lg: "64px 200px 90px" },
+          padding: {
+            xs: "42px 20px 64px",
+            md: "52px 96px 76px",
+            lg: "64px 200px 90px",
+          },
           position: "relative",
           isolation: "isolate",
           overflow: "hidden",
           backgroundColor: "#f7f5f3",
           borderRadius: { xs: "20px 20px 0 0", md: 0 },
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "url('/assets/images/insights/bg-1.webp')",
+            backgroundRepeat: "repeat",
+            backgroundPosition: "left top",
+            backgroundSize: "auto",
+            filter: "brightness(1) hue-rotate(0deg) saturate(1)",
+            zIndex: 0,
+            pointerEvents: "none",
+          },
+          "&::after": {
+            content: "none",
+          },
         }}
       >
-        {filtered.length === 0 ? (
-          <Box sx={{ textAlign: "center", padding: "80px 0", color: "#64748b" }}>
-            <Typography variant="h6">No articles found in this category yet.</Typography>
-          </Box>
-        ) : (
-          <>
-            <Grid container spacing={{ xs: 2, md: 3, lg: 4 }}>
-              {showFeatured && (
-                <Grid item xs={12}>
-                  <ArticleCard article={featured} featured />
-                </Grid>
-              )}
-              {smallCards.map((article) => (
-                <Grid item xs={12} sm={6} lg={4} key={article.id}>
-                  <ArticleCard article={article} />
-                </Grid>
-              ))}
-            </Grid>
-          </>
-        )}
+        <Box
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            contentVisibility: "auto",
+            containIntrinsicSize: "1200px",
+          }}
+        >
+          {filtered.length === 0 ? (
+            <Box
+              sx={{ textAlign: "center", padding: "80px 0", color: "#64748b" }}
+            >
+              <Typography variant="h6">
+                No articles found in this category yet.
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              <Grid container spacing={{ xs: 2, md: 3, lg: 4 }}>
+                {showFeatured && (
+                  <Grid item xs={12}>
+                    <ArticleCard article={featured} featured />
+                  </Grid>
+                )}
+                {smallCards.map((article) => (
+                  <Grid item xs={12} sm={6} lg={4} key={article.id}>
+                    <ArticleCard article={article} />
+                  </Grid>
+                ))}
+              </Grid>
+            </>
+          )}
+        </Box>
       </Box>
     </Box>
   );

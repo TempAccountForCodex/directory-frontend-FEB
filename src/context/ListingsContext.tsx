@@ -106,11 +106,7 @@ const ListingsContext = createContext<ListingsContextType | undefined>(
  */
 export const ListingsProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
-  const shouldPrefetchListings =
-    typeof window === "undefined" || window.location.pathname !== "/";
-  const listQuery = useListingsQuery(undefined, {
-    enabled: shouldPrefetchListings,
-  });
+  const listQuery = useListingsQuery();
 
   const createMutation = useCreateListing();
   const updateMutation = useUpdateListing();

@@ -14,24 +14,20 @@ import XIcon from "@mui/icons-material/X";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { alpha, useTheme as useMuiTheme } from "@mui/material/styles";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import InsightsHeaderBackground from "../../components/publicComponents/insights/InsightsHeaderBackground";
 import { SITE_URL } from "../../utils/seo/seoConfig";
-import InsightData from "../../utils/data/Insights";
+import {
+  fallbackBlogPosts,
+  fetchBlogPost,
+  fetchBlogPosts,
+  getBlogAssetUrl,
+  type BlogPost,
+} from "../../api/blogs";
 
 const FADE_IN_CLASS = "fade-in-on-view";
 const INSIGHT_HELPFUL_STORAGE_KEY = "insight-helpful-votes";
-
-const LOCAL_INSIGHTS = InsightData.map((item) => ({
-  id: item.id,
-  slug: item.id,
-  title: item.heading,
-  category: item.category,
-  image: item.image,
-  description: item.description,
-  content: item.content,
-  publishedAt: item.publishDate,
-  headings: item.headings || [],
-}));
+const star = "/assets/publicAssets/images/common/star.svg";
+const homeHeroFont =
+  "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 const slugify = (text = "") =>
   text
@@ -82,7 +78,7 @@ const styles = {
     overflow: "visible",
   },
   subtleText: {
-    fontFamily: "Questrial",
+    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   },
   panel: {
     borderRadius: "14px",
@@ -93,7 +89,7 @@ const styles = {
     py: 0.45,
     borderRadius: "8px",
     fontSize: "0.78rem",
-    fontFamily: "Barlow",
+    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     backgroundColor: "#378C92",
     color: "#ffffffea",
     fontWeight: 600,
@@ -103,7 +99,7 @@ const styles = {
     borderRadius: "999px",
     px: 1.05,
     py: 0.45,
-    fontFamily: "Questrial",
+    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     fontSize: "0.82rem",
   },
   iconBtn: {
@@ -122,6 +118,29 @@ const InsightsDetailsNew = () => {
   const navigate = useNavigate();
   const muiTheme = useMuiTheme();
   const stateInsight = location.state?.insight;
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(fallbackBlogPosts);
+  const [apiInsight, setApiInsight] = useState<BlogPost | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    fetchBlogPosts().then((posts) => {
+      if (!ignore) setBlogPosts(posts);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!id) return undefined;
+    let ignore = false;
+    fetchBlogPost(id).then((post) => {
+      if (!ignore) setApiInsight(post);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
 
   const ui = useMemo(() => {
     const accent = "#208188ff";
@@ -177,7 +196,11 @@ const InsightsDetailsNew = () => {
 
   const selectedInsight = useMemo(() => {
     const localMatch =
-      LOCAL_INSIGHTS.find((item) => (item.slug || item.id) === id) || LOCAL_INSIGHTS[0];
+      apiInsight ||
+      blogPosts.find(
+        (item) => item.slug === id || item.legacyId === id || item.id === id,
+      ) ||
+      fallbackBlogPosts[0];
 
     if (stateInsight) {
       const mergedFromState = {
@@ -197,7 +220,7 @@ const InsightsDetailsNew = () => {
       };
     }
     return localMatch;
-  }, [id, stateInsight]);
+  }, [apiInsight, blogPosts, id, stateInsight]);
 
   const sections = useMemo(
     () =>
@@ -286,8 +309,8 @@ const InsightsDetailsNew = () => {
   }, [sections, selectedInsight.id]);
 
   const relatedArticles = useMemo(
-    () => LOCAL_INSIGHTS.filter((item) => item.id !== selectedInsight.id).slice(0, 6),
-    [selectedInsight.id]
+    () => blogPosts.filter((item) => item.id !== selectedInsight.id).slice(0, 6),
+    [blogPosts, selectedInsight.id]
   );
 
   const sidebarArticles = relatedArticles.slice(0, 3);
@@ -443,7 +466,18 @@ const InsightsDetailsNew = () => {
   };
 
   return (
-    <Box className="insights-details-page" sx={{ ...styles.page, backgroundColor: "transparent", color: ui.pageText }}>
+    <Box
+      className="insights-details-page"
+      sx={{
+        ...styles.page,
+        backgroundColor: "transparent",
+        color: ui.pageText,
+        fontFamily: homeHeroFont,
+        "& .MuiTypography-root, & .MuiButton-root": {
+          fontFamily: homeHeroFont,
+        },
+      }}
+    >
       <Container maxWidth="xl" sx={{ position: "relative", zIndex: 3 }}>
         <Box
           sx={{
@@ -477,10 +511,27 @@ const InsightsDetailsNew = () => {
               position: "relative",
               overflow: "hidden",
               boxShadow: "0 18px 34px rgba(2,12,21,0.24)",
+              bgcolor: "#020303",
+              backgroundImage: `
+                radial-gradient(circle at 20% 30%, rgba(55,140,146,0.35) 0%, rgba(2,3,3,0) 45%),
+                radial-gradient(circle at 80% 70%, rgba(45,212,191,0.24) 0%, rgba(2,3,3,0) 42%),
+                url(${star})
+              `,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                width: "100%",
+                height: "2px",
+                background:
+                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)",
+                zIndex: 1,
+              },
             }}
           >
-            <InsightsHeaderBackground idPrefix="insights-details-header" />
-            
             {/* Breadcrumb Navigation */}
             <Box
               sx={{
@@ -488,8 +539,8 @@ const InsightsDetailsNew = () => {
                 flexWrap: "wrap",
                 alignItems: "center",
                 gap: 1,
-                color: "rgba(168, 197, 218, 0.82)",
-                fontFamily: "Questrial",
+                color: "rgba(232,242,247,0.82)",
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontSize: { xs: "0.9rem", sm: "0.95rem", md: "0.98rem" },
                 position: "relative",
                 zIndex: 1,
@@ -499,13 +550,13 @@ const InsightsDetailsNew = () => {
               <ChevronRightOutlinedIcon sx={{ fontSize: "1rem" }} />
               <span>{selectedInsight.category}</span>
               <ChevronRightOutlinedIcon sx={{ fontSize: "1rem" }} />
-              <span style={{ color: "#f2fbff" }}>{selectedInsight.title}</span>
+              <span style={{ color: "#ffffff" }}>{selectedInsight.title}</span>
             </Box>
 
             {/* Header Meta */}
             <Box sx={{ mt: 2.6, display: "flex", alignItems: "center", gap: 1.2, position: "relative", zIndex: 1 }}>
               <Typography sx={badgeSx}>{selectedInsight.category}</Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(183, 209, 227, 0.85)", fontFamily: "Questrial" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(232,242,247,0.82)", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 <AccessTimeOutlinedIcon sx={{ fontSize: "1rem" }} />
                 <span>{readTime} min read</span>
               </Box>
@@ -516,7 +567,7 @@ const InsightsDetailsNew = () => {
               sx={{
                 mt: 2,
                 maxWidth: "1280px",
-                fontFamily: "Barlow",
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 800,
                 color: "#ffffff",
                 fontSize: { xs: "1.95rem", sm: "2.45rem", md: "3.2rem", lg: "4rem" },
@@ -534,8 +585,8 @@ const InsightsDetailsNew = () => {
               sx={{
                 mt: 2.2,
                 maxWidth: "920px",
-                fontFamily: "Questrial",
-                color: "#89a9c0",
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                color: "rgba(232,242,247,0.82)",
                 fontSize: { xs: "0.98rem", sm: "1.02rem", md: "1.05rem", lg: "1.08rem" },
                 lineHeight: { xs: 1.75, md: 1.85, lg: 1.92 },
                 position: "relative",
@@ -564,10 +615,10 @@ const InsightsDetailsNew = () => {
                 <PersonOutlineOutlinedIcon sx={{ color: "#9fe8e2", fontSize: "1.2rem" }} />
               </Box>
               <Box>
-                <Typography sx={{ fontFamily: "Barlow", fontWeight: 700, fontSize: "1.05rem", color: "#e9f7ff" }}>
+                <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, fontSize: "1.05rem", color: "#ffffff" }}>
                   {authorName}
                 </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(183, 209, 227, 0.85)", fontFamily: "Questrial" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(232,242,247,0.82)", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   <CalendarTodayOutlinedIcon sx={{ fontSize: "0.9rem" }} />
                   <span>{formatDate(selectedInsight.publishedAt)}</span>
                 </Box>
@@ -594,7 +645,7 @@ const InsightsDetailsNew = () => {
                 ))}
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                <Typography sx={{ color: "rgba(183, 209, 227, 0.85)", fontFamily: "Questrial" }}>
+                <Typography sx={{ color: "rgba(232,242,247,0.82)", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   Share:
                 </Typography>
                 <Box
@@ -664,7 +715,7 @@ const InsightsDetailsNew = () => {
                         borderRadius: "999px",
                         backgroundColor: "rgba(8, 22, 34, 0.92)",
                         color: "#e9f7ff",
-                        fontFamily: "Questrial",
+                        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontSize: "0.72rem",
                         lineHeight: 1,
                         whiteSpace: "nowrap",
@@ -701,6 +752,7 @@ const InsightsDetailsNew = () => {
               position: "relative",
               isolation: "isolate",
               overflow: "visible",
+              backgroundColor: "#f7f5f3",
               "&::before": {
                 content: '""',
                 position: "absolute",
@@ -714,7 +766,12 @@ const InsightsDetailsNew = () => {
                 backgroundRepeat: "repeat",
                 backgroundSize: "auto",
                 filter: "brightness(1) hue-rotate(0deg) saturate(1)",
-                zIndex: -1,
+                zIndex: 0,
+                pointerEvents: "none",
+              },
+              "& > *": {
+                position: "relative",
+                zIndex: 1,
               },
             }}
           >
@@ -722,7 +779,7 @@ const InsightsDetailsNew = () => {
             <Box
               className={FADE_IN_CLASS}
               component="img"
-              src={selectedInsight.image}
+              src={getBlogAssetUrl(selectedInsight.image)}
               alt={selectedInsight.title}
               width="1400"
               height="760"
@@ -745,7 +802,7 @@ const InsightsDetailsNew = () => {
               sx={{
                 mt: 1.5,
                 textAlign: "center",
-                fontFamily: "Questrial",
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 color: ui.caption,
                 fontStyle: "italic",
               }}
@@ -775,7 +832,7 @@ const InsightsDetailsNew = () => {
                   >
                     <Typography
                       sx={{
-                        fontFamily: "Barlow",
+                        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 700,
                         fontSize: { xs: "1.55rem", sm: "1.9rem", md: "2.2rem", lg: "2.6rem" },
                         lineHeight: 1.2,
@@ -794,7 +851,7 @@ const InsightsDetailsNew = () => {
                         sx={{
                           mb: 2.15,
                           color: ui.bodyText,
-                          fontFamily: "Questrial",
+                          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           fontSize: { xs: "0.96rem", md: "0.95rem", lg: "0.96rem" },
                           lineHeight: { xs: 1.82, md: 1.88, lg: 1.9 },
                         }}
@@ -811,7 +868,7 @@ const InsightsDetailsNew = () => {
                           borderLeft: `3px solid ${ui.accent}`,
                           px: 2.5,
                           py: 2.25,
-                          fontFamily: "Questrial",
+                          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           fontSize: { xs: "1.02rem", md: "1.05rem" },
                           color: ui.quoteText,
                           fontStyle: "italic",
@@ -850,10 +907,10 @@ const InsightsDetailsNew = () => {
                           py: 2.1,
                         }}
                       >
-                        <Typography sx={{ color: ui.accent, fontFamily: "Barlow", fontWeight: 700 }}>
+                        <Typography sx={{ color: ui.accent, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700 }}>
                           Key Takeaway
                         </Typography>
-                        <Typography sx={{ mt: 0.6, color: ui.bodyText, fontFamily: "Questrial", lineHeight: 1.7, fontSize: { xs: "0.98rem", md: "1rem" } }}>
+                        <Typography sx={{ mt: 0.6, color: ui.bodyText, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", lineHeight: 1.7, fontSize: { xs: "0.98rem", md: "1rem" } }}>
                           {keyTakeawayText}
                         </Typography>
                       </Box>
@@ -944,7 +1001,7 @@ const InsightsDetailsNew = () => {
                             borderRadius: "999px",
                             backgroundColor: "rgba(8, 22, 34, 0.92)",
                             color: "#e9f7ff",
-                            fontFamily: "Questrial",
+                            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             fontSize: "0.72rem",
                             lineHeight: 1,
                             whiteSpace: "nowrap",
@@ -1059,7 +1116,7 @@ const InsightsDetailsNew = () => {
               <Box sx={{ position: { lg: "sticky" }, top: { lg: 105 }, alignSelf: "start", display: "grid", gap: 2.2 }}>
                 {/* Table of Contents */}
                 <Box className={FADE_IN_CLASS} sx={{ ...panelSx, p: { xs: 2, sm: 2.4, md: 3 } }}>
-                  <Typography sx={{ fontFamily: "Barlow", fontWeight: 700, mb: 1.1, fontSize: "1.45rem" }}>
+                  <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, mb: 1.1, fontSize: "1.45rem" }}>
                     Table of Contents
                   </Typography>
                   {sections.slice(0, 5).map((section, index) => (
@@ -1072,7 +1129,7 @@ const InsightsDetailsNew = () => {
                         py: 0.8,
                         cursor: "pointer",
                         color: activeSection === section.id ? ui.accent : ui.stickyInactive,
-                        fontFamily: "Questrial",
+                        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: activeSection === section.id ? 700 : 400,
                         fontSize: { xs: "0.92rem", md: "0.98rem" },
                       }}
@@ -1085,7 +1142,7 @@ const InsightsDetailsNew = () => {
 
                 {/* Author Bio Panel */}
                 <Box className={FADE_IN_CLASS} sx={{ ...panelSx, p: { xs: 2, sm: 2.4, md: 3 } }}>
-                  <Typography sx={{ fontFamily: "Barlow", fontWeight: 700, mb: 1.4, fontSize: "1.45rem" }}>
+                  <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, mb: 1.4, fontSize: "1.45rem" }}>
                     About the Author
                   </Typography>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
@@ -1104,8 +1161,8 @@ const InsightsDetailsNew = () => {
                       <PersonOutlineOutlinedIcon sx={{ color: ui.avatarIcon, fontSize: "1.1rem" }} />
                     </Box>
                     <Box>
-                      <Typography sx={{ fontFamily: "Barlow", fontWeight: 700 }}>{authorName}</Typography>
-                      <Typography sx={{ color: ui.accent, fontFamily: "Questrial", fontSize: "0.9rem" }}>
+                      <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700 }}>{authorName}</Typography>
+                      <Typography sx={{ color: ui.accent, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: "0.9rem" }}>
                         {authorRole}
                       </Typography>
                     </Box>
@@ -1131,7 +1188,7 @@ const InsightsDetailsNew = () => {
 
                 {/* Related Articles Panel */}
                 <Box className={FADE_IN_CLASS} sx={{ ...panelSx, p: { xs: 2, sm: 2.4, md: 3 } }}>
-                  <Typography sx={{ fontFamily: "Barlow", fontWeight: 700, mb: 1.2, fontSize: "1.45rem" }}>
+                  <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, mb: 1.2, fontSize: "1.45rem" }}>
                     Related Articles
                   </Typography>
                   {sidebarArticles.map((article) => (
@@ -1149,7 +1206,7 @@ const InsightsDetailsNew = () => {
                     >
                       <Box
                         component="img"
-                        src={article.image}
+                        src={getBlogAssetUrl(article.image)}
                         alt={article.title}
                         loading="lazy"
                         decoding="async"
@@ -1171,7 +1228,7 @@ const InsightsDetailsNew = () => {
                         <Typography
                           sx={{
                             mt: 0.5,
-                            fontFamily: "Barlow",
+                            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             fontWeight: 600,
                             lineHeight: 1.2,
                             fontSize: "1rem",
@@ -1198,12 +1255,12 @@ const InsightsDetailsNew = () => {
 
             {/* You Might Also Like Section */}
             <Box className={FADE_IN_CLASS} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1.4, mb: 2.2 }}>
-              <Typography sx={{ fontFamily: "Barlow", fontWeight: 700, fontSize: { xs: "1.8rem", sm: "2.1rem", md: "2.6rem" } }}>
+              <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, fontSize: { xs: "1.8rem", sm: "2.1rem", md: "2.6rem" } }}>
                 You might also <span style={{ color: ui.accent }}>like</span>
               </Typography>
               <Box
                 onClick={() => navigate("/blog")}
-                sx={{ display: "inline-flex", alignItems: "center", gap: 0.7, color: ui.accent, cursor: "pointer", fontFamily: "Questrial" }}
+                sx={{ display: "inline-flex", alignItems: "center", gap: 0.7, color: ui.accent, cursor: "pointer", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
               >
                 <span>View All</span>
                 <ArrowForwardIcon sx={{ fontSize: "1rem" }} />
@@ -1233,7 +1290,7 @@ const InsightsDetailsNew = () => {
                 >
                   <Box
                     component="img"
-                    src={article.image}
+                    src={getBlogAssetUrl(article.image)}
                     alt={article.title}
                     loading="lazy"
                     decoding="async"
@@ -1241,7 +1298,7 @@ const InsightsDetailsNew = () => {
                   />
                   <Box sx={{ mt: 1.2, px: 0.2, pb: 0.4 }}>
                     <Typography sx={badgeSx}>{article.category}</Typography>
-                    <Typography sx={{ mt: 0.8, fontFamily: "Barlow", fontWeight: 700, fontSize: { xs: "1.12rem", sm: "1.2rem", md: "1.6rem" }, lineHeight: 1.22 }}>
+                    <Typography sx={{ mt: 0.8, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, fontSize: { xs: "1.12rem", sm: "1.2rem", md: "1.6rem" }, lineHeight: 1.22 }}>
                       {article.title}
                     </Typography>
                     <Box sx={{ mt: 1.1, display: "flex", alignItems: "center", gap: 1 }}>

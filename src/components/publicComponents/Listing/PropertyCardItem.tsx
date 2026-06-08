@@ -50,6 +50,39 @@ const colors = {
   teal: "#398C91",
 };
 
+const categoryPillSx = {
+  alignSelf: "flex-start",
+  maxWidth: "100%",
+  width: "fit-content",
+  height: 25,
+  borderRadius: 999,
+  background: "#398C91",
+  color: "#fff",
+  border: 0,
+  boxShadow: "0 10px 22px rgba(17, 27, 27, 0.14)",
+  "& .MuiChip-label": {
+    width: "100%",
+    px: 1.25,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 0.6,
+    fontSize: 8,
+    fontWeight: 800,
+    letterSpacing: 0,
+    textTransform: "none",
+    fontFamily:
+      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    "&::after": {
+      content: '"›"',
+      fontSize: 16,
+      lineHeight: 1,
+      fontWeight: 400,
+      transform: "translateY(-1px)",
+    },
+  },
+};
+
 const fallbackImage =
   "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80";
 
@@ -176,7 +209,7 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily: '"Playfair Display", serif',
+              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontSize: 20,
               fontWeight: 600,
               lineHeight: 1,
@@ -234,28 +267,14 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
 
         <Chip
           label={category}
-          sx={{
-            alignSelf: "flex-start",
-            mb: 1,
-            height: 25,
-            borderRadius: 0.5,
-            bgcolor: colors.softLight,
-            color: colors.muted,
-            border: `1px solid ${colors.soft}`,
-            fontSize: 8,
-            fontWeight: 700,
-            letterSpacing: 1.1,
-            textTransform: "uppercase",
-            maxWidth: "100%",
-            width: "fit-content",
-          }}
+          sx={{ ...categoryPillSx, mb: 1.4 }}
         />
 
         <Typography
           className="listing-card-title"
           sx={{
             color: colors.ink,
-            fontFamily: '"Playfair Display", serif',
+            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontSize: 23,
             lineHeight: 1.2,
             letterSpacing: 0,
