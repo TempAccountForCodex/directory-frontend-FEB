@@ -755,8 +755,6 @@ export const renderEditorSharedBlock = ({
   }
 
   if (
-    blockType === "cta" ||
-    blockType === "newsletter" ||
     blockType === "form_builder" ||
     blockType === "reservation_form" ||
     blockType === "generic_card"
@@ -913,6 +911,445 @@ export const renderEditorSharedBlock = ({
             {block.content?.buttonText || "Get started"}
           </Button>
         )}
+      </Stack>
+    );
+  }
+
+  if (
+    blockType === "form_builder" ||
+    blockType === "reservation_form" ||
+    blockType === "generic_card"
+  ) {
+    const fields = Array.isArray(block.content?.fields)
+      ? block.content.fields
+      : [];
+    return (
+      <Stack
+        key={String(block.id || `${blockType}-${index}`)}
+        spacing={2}
+        alignItems="flex-start"
+        {...compoundBlockSelectionProps}
+        data-preview-label={compoundBlockLabel}
+        sx={compoundCardSx}
+      >
+        <Box sx={{ width: "100%" }}>
+          <Typography
+            {...getEditableTextProps(
+              section.blockId,
+              `${blockPath}.heading`,
+              "multi",
+            )}
+            sx={{
+              color: textColor,
+              fontFamily: headingFont,
+              fontSize: { xs: "1.45rem", md: "2.15rem" },
+              lineHeight: 1.05,
+              fontWeight: 800,
+              letterSpacing: "-0.04em",
+              ...headingStyle,
+            }}
+          >
+            {block.content?.heading || block.label || "Section block"}
+          </Typography>
+          <Typography
+            {...getEditableTextProps(
+              section.blockId,
+              `${blockPath}.body`,
+              "multi",
+            )}
+            sx={{
+              mt: 1,
+              color: mutedTextColor,
+              fontSize: "1rem",
+              lineHeight: 1.75,
+              ...bodyStyle,
+            }}
+          >
+            {block.content?.body || "Add supporting copy for this block."}
+          </Typography>
+        </Box>
+
+        {blockType === "newsletter" ? (
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1.25}
+            sx={{ width: "100%" }}
+          >
+            <TextField
+              size="small"
+              fullWidth
+              placeholder={block.content?.placeholder || "Enter your email"}
+              sx={{
+                "& .MuiInputBase-root": {
+                  color: textColor,
+                  bgcolor:
+                    tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+                  borderRadius: 999,
+                },
+              }}
+            />
+            <Button
+              variant="contained"
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.buttonText`,
+                "single",
+              )}
+              sx={{
+                bgcolor: themeColor,
+                color: whiteColor,
+                borderRadius: "999px",
+                textTransform: "none",
+                px: 2.6,
+                py: 1.05,
+                whiteSpace: "nowrap",
+                boxShadow: "none",
+                ...buttonStyle,
+              }}
+            >
+              {block.content?.buttonText || "Subscribe"}
+            </Button>
+          </Stack>
+        ) : fields.length ? (
+          <Stack spacing={1.1} sx={{ width: "100%" }}>
+            {fields.map((field: string, fieldIndex: number) => (
+              <TextField
+                key={`${field}-${fieldIndex}`}
+                size="small"
+                fullWidth
+                placeholder={field}
+                sx={{
+                  "& .MuiInputBase-root": {
+                    color: textColor,
+                    bgcolor:
+                      tone === "light" ? "rgba(255,255,255,0.08)" : "#ffffff",
+                    borderRadius: 2.5,
+                  },
+                }}
+              />
+            ))}
+            <Button
+              variant="contained"
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.buttonText`,
+                "single",
+              )}
+              sx={{
+                alignSelf: "flex-start",
+                bgcolor: themeColor,
+                color: whiteColor,
+                borderRadius: "16px",
+                textTransform: "none",
+                px: 2.6,
+                py: 1.05,
+                boxShadow: "none",
+                ...buttonStyle,
+              }}
+            >
+              {block.content?.buttonText || "Submit"}
+            </Button>
+          </Stack>
+        ) : (
+          <Button
+            variant="contained"
+            {...getEditableTextProps(
+              section.blockId,
+              `${blockPath}.buttonText`,
+              "single",
+            )}
+            sx={{
+              bgcolor: themeColor,
+              color: whiteColor,
+              borderRadius: "16px",
+              textTransform: "none",
+              px: 2.7,
+              py: 1.1,
+              boxShadow: "none",
+              ...buttonStyle,
+            }}
+          >
+            {block.content?.buttonText || "Get started"}
+          </Button>
+        )}
+      </Stack>
+    );
+  }
+
+  if (blockType === "newsletter") {
+    return (
+      <Stack
+        key={String(block.id || `${blockType}-${index}`)}
+        spacing={2.2}
+        alignItems="stretch"
+        {...compoundBlockSelectionProps}
+        data-preview-label={compoundBlockLabel}
+        sx={{
+          width: "100%",
+          overflow: "hidden",
+          px: { xs: 2.5, md: 5 },
+          py: { xs: 4, md: 5.5 },
+          boxShadow: "none",
+          ...compoundCardSx,
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "0.95fr 1.05fr" },
+            gap:
+              rawCardStyle.layoutGap === undefined &&
+              resolvedCardStyle.gap === undefined
+                ? { xs: 2.5, md: 4 }
+                : resolvedCardStyle.gap,
+            alignItems: "center",
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.heading`,
+                "multi",
+              )}
+              sx={{
+                color: textColor,
+                fontFamily: headingFont,
+                fontSize: { xs: "1.8rem", md: "2.65rem" },
+                lineHeight: 1.05,
+                fontWeight: 850,
+                letterSpacing: "-0.05em",
+                ...headingStyle,
+              }}
+            >
+              {block.content?.heading || block.label || "Stay in the loop"}
+            </Typography>
+
+            <Typography
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.body`,
+                "multi",
+              )}
+              sx={{
+                mt: 1.1,
+                color: mutedTextColor,
+                fontSize: "1rem",
+                lineHeight: 1.7,
+                maxWidth: 620,
+                ...bodyStyle,
+              }}
+            >
+              {block.content?.body ||
+                "Subscribe for updates, offers, and helpful business insights."}
+            </Typography>
+          </Box>
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.15}
+            sx={{
+              width: "100%",
+              justifySelf: "end",
+            }}
+          >
+            <TextField
+              size="small"
+              fullWidth
+              placeholder={block.content?.placeholder || "Enter your email"}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  color: textColor,
+                  borderRadius: "999px",
+                  backgroundColor:
+                    tone === "light" ? "rgba(255,255,255,0.82)" : "#ffffff",
+
+                  "& fieldset": {
+                    borderColor: lineColor,
+                  },
+
+                  "&:hover fieldset": {
+                    borderColor: textColor,
+                  },
+
+                  "&.Mui-focused fieldset": {
+                    borderColor: themeColor,
+                    borderWidth: "1px",
+                  },
+                },
+
+                "& .MuiInputBase-input": {
+                  color: textColor,
+                  WebkitTextFillColor: textColor,
+                  fontSize: "0.95rem",
+
+                  "&::placeholder": {
+                    color: mutedTextColor,
+                    opacity: 1,
+                  },
+                },
+              }}
+            />
+
+            <Button
+              variant="contained"
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.buttonText`,
+                "single",
+              )}
+              sx={{
+                bgcolor: themeColor,
+                color: whiteColor,
+                borderRadius: "999px",
+                textTransform: "none",
+                px: 3,
+                py: 1.05,
+                whiteSpace: "nowrap",
+                fontWeight: 800,
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: themeColor,
+                  boxShadow: "none",
+                  opacity: 0.92,
+                },
+                ...buttonStyle,
+              }}
+            >
+              {block.content?.buttonText || "Subscribe"}
+            </Button>
+          </Stack>
+        </Box>
+      </Stack>
+    );
+  }
+
+  if (blockType === "cta") {
+    return (
+      <Stack
+        key={String(block.id || `${blockType}-${index}`)}
+        spacing={2.2}
+        alignItems="center"
+        {...compoundBlockSelectionProps}
+        data-preview-label={compoundBlockLabel}
+        sx={{
+          width: "100%",
+          textAlign: "center",
+          overflow: "hidden",
+          px: { xs: 2.5, md: 5 },
+          py: { xs: 4, md: 6 },
+          boxShadow: "none",
+          ...compoundCardSx,
+        }}
+      >
+        <Box sx={{ width: "100%", maxWidth: 760, mx: "auto" }}>
+          <Typography
+            {...getEditableTextProps(
+              section.blockId,
+              `${blockPath}.heading`,
+              "multi",
+            )}
+            sx={{
+              color: textColor,
+              fontFamily: headingFont,
+              fontSize: { xs: "2rem", md: "3.2rem" },
+              lineHeight: 1,
+              fontWeight: 850,
+              letterSpacing: "-0.055em",
+              textAlign: "center",
+              ...headingStyle,
+            }}
+          >
+            {block.content?.heading || block.label || "Ready to get started?"}
+          </Typography>
+
+          <Typography
+            {...getEditableTextProps(
+              section.blockId,
+              `${blockPath}.body`,
+              "multi",
+            )}
+            sx={{
+              mt: 1.4,
+              color: mutedTextColor,
+              fontSize: { xs: "1rem", md: "1.08rem" },
+              lineHeight: 1.75,
+              textAlign: "center",
+              maxWidth: 620,
+              mx: "auto",
+              ...bodyStyle,
+            }}
+          >
+            {block.content?.body ||
+              "Create a clear next step for visitors and guide them toward your main action."}
+          </Typography>
+        </Box>
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.2}
+          alignItems="center"
+          justifyContent="center"
+          sx={{ width: "100%" }}
+        >
+          <Button
+            variant="contained"
+            {...getEditableTextProps(
+              section.blockId,
+              `${blockPath}.buttonText`,
+              "single",
+            )}
+            sx={{
+              bgcolor: themeColor,
+              color: whiteColor,
+              borderRadius: "999px",
+              textTransform: "none",
+              px: 3.2,
+              py: 1.15,
+              fontWeight: 800,
+              minWidth: 150,
+              boxShadow: "none",
+              "&:hover": {
+                bgcolor: themeColor,
+                boxShadow: "none",
+                opacity: 0.92,
+              },
+              ...buttonStyle,
+            }}
+          >
+            {block.content?.buttonText || "Get started"}
+          </Button>
+
+          {block.content?.secondaryButtonText && (
+            <Button
+              variant="outlined"
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.secondaryButtonText`,
+                "single",
+              )}
+              sx={{
+                color: textColor,
+                borderColor: lineColor,
+                borderRadius: "999px",
+                textTransform: "none",
+                px: 3.2,
+                py: 1.15,
+                fontWeight: 800,
+                minWidth: 150,
+                boxShadow: "none",
+                "&:hover": {
+                  borderColor: textColor,
+                  bgcolor: "transparent",
+                  boxShadow: "none",
+                },
+              }}
+            >
+              {block.content.secondaryButtonText}
+            </Button>
+          )}
+        </Stack>
       </Stack>
     );
   }
@@ -1304,7 +1741,7 @@ export const renderEditorSharedBlock = ({
     };
 
     const heroBleedX = { xs: "16px", sm: "24px", md: "32px" };
-    const heroBleedY = { xs: "16px", md: "24px" };
+    const heroBleedY = { xs: "0px", md: "0px" };
 
     const sectionPaddingLeft =
       rawSectionStyle.paddingLeft ??
@@ -1648,11 +2085,9 @@ export const renderEditorSharedBlock = ({
       .map((item: any, imageIndex: number) => ({
         src: String(
           item?.image ||
-          item?.src ||
-          item?.url ||
-          fallbackGalleryImages[
-            imageIndex % fallbackGalleryImages.length
-            ] ||
+            item?.src ||
+            item?.url ||
+            fallbackGalleryImages[imageIndex % fallbackGalleryImages.length] ||
             fallbackImageSrc,
         ),
         alt: String(

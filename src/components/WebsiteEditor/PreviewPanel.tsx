@@ -1075,11 +1075,11 @@ const FrontendTemplateIframePreview = React.memo(
         min-width: 108px;
         height: 34px;
         padding: 0 14px;
-        border: 1px solid rgba(15, 23, 42, 0.28);
+        border: 1px solid rgba(15, 23, 42, 0.16);
         border-radius: 9px;
-        background: linear-gradient(180deg, rgba(44, 44, 44, 0.96) 0%, rgba(31, 31, 31, 0.98) 100%);
+        background: #ffffff;
         box-shadow: 0 8px 22px rgba(15, 23, 42, 0.22);
-        color: #ffffff;
+        color: #111111;
         font-family: Inter, "Segoe UI", sans-serif;
         font-size: 12px;
         font-weight: 700;
@@ -1089,7 +1089,7 @@ const FrontendTemplateIframePreview = React.memo(
         transform: translateX(-50%);
       }
       .tt-section-add-button:hover {
-        background: linear-gradient(180deg, rgba(55, 65, 81, 0.98) 0%, rgba(17, 24, 39, 1) 100%);
+        background: #f8fafc;
       }
       .tt-section-add-button--top {
         top: -20px;

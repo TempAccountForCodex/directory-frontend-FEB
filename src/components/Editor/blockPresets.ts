@@ -81,12 +81,10 @@ export const getBlockDefaultContent = (
   switch (normalizeBlockTypeKey(blockType)) {
     case "HERO":
       return {
-        heading: "Build a stronger digital presence",
-        subheading:
-          "Launch a polished website section with clear messaging and a strong call to action.",
-        ctaText: "Start now",
-        ctaLink: "#contact",
-        alignment: "left",
+        eyebrow: "Hero section",
+        heading: "Large headline for this section",
+        body: "Customize the hero block from the editor.",
+        buttonText: "Get started",
         image: DEFAULT_IMAGE,
       };
     case "TEXT":
@@ -556,6 +554,19 @@ export const getLocalFieldMetadata = (
         { name: "autoplay", label: "Autoplay", type: "TOGGLE", order: 4 },
         { name: "muted", label: "Muted", type: "TOGGLE", order: 5 },
         { name: "loop", label: "Loop", type: "TOGGLE", order: 6 },
+      ]);
+    case "HERO":
+      return contentGroup([
+        makeTextField("eyebrow", "Eyebrow", 1),
+        makeTextField("heading", "Heading", 2, true),
+        makeTextField("body", "Body", 3, true),
+        makeTextField("buttonText", "Button Text", 4),
+        {
+          name: "image",
+          label: "Background Image",
+          type: "IMAGE",
+          order: 5,
+        },
       ]);
     case "FEATURES":
       return contentGroup([
