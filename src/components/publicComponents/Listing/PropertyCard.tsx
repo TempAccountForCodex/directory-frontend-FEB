@@ -1,5 +1,11 @@
 import React from "react";
-import { Grid, Typography, Box, Pagination, useTheme } from "@mui/material";
+import {
+  Typography,
+  Box,
+  Pagination,
+  useTheme,
+  GlobalStyles,
+} from "@mui/material";
 import PropertyItemCard from "../Listing/PropertyCardItem";
 import type { Place } from "../../../types/place";
 
@@ -31,26 +37,32 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
   return (
     <>
-      <Grid
-        container
-        spacing={2.1}
-        xs={12}
-        sm={6}
-        md={4}
+      <GlobalStyles
+        styles={{
+          "@import":
+            "url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap')",
+        }}
+      />
+      <Box
         sx={{
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, minmax(0, 1fr))",
+            lg: "repeat(3, minmax(0, 1fr))",
+          },
+          gap: { xs: 4, md: 5 },
           justifyContent: items.length === 0 ? "center" : "flex-start",
           alignItems: "stretch",
-          flexWrap: "wrap",
-          flexDirection: "row",
           width: "100%",
+          minWidth: 0,
+          pt: { xs: 4, md: 0 },
+          pb: { xs: 8, md: 12 },
+          pl: { xs: 0, sm: "10px" },
+          pr: { xs: 0, sm: "25px" },
+          fontFamily: '"Inter", sans-serif',
+
         }}
-        pt={{ xs: 4, md: 0 }}
-        pb={{ xs: 8, md: 12 }}
-        // pr={{ xs: 2, sm: "23px" }}
-        px={{ xs: 0, sm: "10px" }}
-        component="div"
-        {...({} as any)}
       >
         {items.length === 0 ? (
           <Typography
@@ -61,21 +73,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           </Typography>
         ) : (
           items.map((item, index) => (
-            <Grid
+            <Box
               key={index}
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
               sx={{
                 display: "flex",
-                maxWidth: "32.1%",
+                minWidth: 0,
+                width: "100%",
               }}
-              component="div"
-              {...({} as any)}
             >
-              {" "}
               <PropertyItemCard
                 item={item}
                 totalPages={totalPages}
@@ -85,10 +90,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                   handleDeleteItem(id as string)
                 }
               />
-            </Grid>
+            </Box>
           ))
         )}
-      </Grid>
+      </Box>
 
       {totalPages >= 1 && (
         <Box

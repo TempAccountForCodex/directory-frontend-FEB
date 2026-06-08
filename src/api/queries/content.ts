@@ -2,6 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryKey } from "@tanstack/react-query";
 import { apiClient } from "../client";
 import { queryKeys } from "../queryKeys";
+import {
+  devDirectoryListingsResponse,
+  devDirectoryPlaces,
+  mapDirectoryListingToPlace,
+  type DirectoryListingsResponse,
+} from "../../data/devDirectoryListings";
 
 /**
  * Content React Query hooks (Phase H.content).
@@ -63,15 +69,69 @@ function cleanParams<T extends Record<string, unknown>>(
   return out;
 }
 
+const useDummyDirectory =
+  import.meta.env.VITE_USE_DUMMY_DIRECTORY === "true";
+
+function normalizeDirectoryListings(responseData: unknown) {
+  const payload = responseData as
+    | DirectoryListingsResponse
+    | { data?: DirectoryListingsResponse | unknown[] }
+    | unknown[];
+
+  if (Array.isArray(payload)) {
+    return {
+      data: payload,
+      pagination: {
+        page: 1,
+        limit: payload.length,
+        total: payload.length,
+        totalPages: 1,
+      },
+    };
+  }
+
+  const directoryData =
+    payload &&
+    "results" in payload &&
+    Array.isArray((payload as DirectoryListingsResponse).results)
+      ? (payload as DirectoryListingsResponse)
+      : payload &&
+          "data" in payload &&
+          (payload as { data?: unknown }).data &&
+          !Array.isArray((payload as { data?: unknown }).data)
+        ? ((payload as { data?: DirectoryListingsResponse }).data ??
+          devDirectoryListingsResponse)
+        : null;
+
+  if (directoryData?.results) {
+    const data = directoryData.results.map(mapDirectoryListingToPlace);
+    return {
+      data,
+      pagination: {
+        page: directoryData.page,
+        limit: directoryData.pageSize,
+        total: directoryData.total,
+        totalPages: Math.ceil(directoryData.total / directoryData.pageSize),
+      },
+    };
+  }
+
+  const legacyData = payload as { data?: unknown[]; pagination?: unknown };
+  return {
+    data: legacyData?.data ?? [],
+    pagination: legacyData?.pagination ?? null,
+  };
+}
+
 /* --------------------------------------------------------------------- */
 /* Listings (directory)                                                   */
 /* --------------------------------------------------------------------- */
 
 /**
- * `GET /api/places` — public list of directory places. No auth gate; this
- * is the endpoint the ListingsContext used to fetch. Returns the full
- * envelope (`{ data: { data, pagination } }`) so consumers can destructure
- * either the places array or pagination metadata.
+ * `GET /api/directory/listings` — public directory list. No auth gate.
+ * Returns the legacy context envelope (`{ data, pagination }`) after mapping
+ * the backend directory response (`{ page, pageSize, total, results }`) into
+ * the current frontend `Place` shape.
  */
 export function useListings(
   params?: ListingsParams,
@@ -81,13 +141,38 @@ export function useListings(
   return useQuery({
     queryKey: queryKeys.content.listings(cleaned),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get("/places", {
-        params: cleaned,
-        signal,
-      });
-      return (
-        response.data?.data ?? response.data ?? { data: [], pagination: null }
-      );
+      if (useDummyDirectory) {
+        return {
+          data: devDirectoryPlaces,
+          pagination: {
+            page: devDirectoryListingsResponse.page,
+            limit: devDirectoryListingsResponse.pageSize,
+            total: devDirectoryListingsResponse.total,
+            totalPages: 1,
+          },
+        };
+      }
+
+      try {
+        const response = await apiClient.get("/directory/listings", {
+          params: cleaned,
+          signal,
+        });
+        return normalizeDirectoryListings(response.data);
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          return {
+            data: devDirectoryPlaces,
+            pagination: {
+              page: devDirectoryListingsResponse.page,
+              limit: devDirectoryListingsResponse.pageSize,
+              total: devDirectoryListingsResponse.total,
+              totalPages: 1,
+            },
+          };
+        }
+        throw error;
+      }
     },
     enabled: options.enabled ?? true,
     staleTime: 5 * 60_000,

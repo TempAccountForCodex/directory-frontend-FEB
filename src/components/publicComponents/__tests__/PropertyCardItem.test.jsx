@@ -8,7 +8,7 @@
  *
  * Covers:
  * 1. Card renders with title and description
- * 2. Card renders address, phone, and website
+ * 2. Card renders category and initials badge
  * 3. Admin users see edit/delete buttons
  * 4. Non-admin users do not see edit/delete buttons
  * 5. Delete modal opens on delete click
@@ -91,11 +91,13 @@ describe('PropertyCardItem', () => {
     expect(screen.getByText(/A sample business description/)).toBeInTheDocument();
   });
 
-  it('2: renders address, phone, and website', () => {
+  it('2: renders category and initials badge without extra contact metadata', () => {
     renderCard();
-    expect(screen.getByText('100 Test Street')).toBeInTheDocument();
-    expect(screen.getByText('+44 20 1234 5678')).toBeInTheDocument();
-    expect(screen.getByText(/sample\.example\.com/)).toBeInTheDocument();
+    expect(screen.getByText('Business')).toBeInTheDocument();
+    expect(screen.getByText('SB')).toBeInTheDocument();
+    expect(screen.queryByText('100 Test Street')).not.toBeInTheDocument();
+    expect(screen.queryByText('+44 20 1234 5678')).not.toBeInTheDocument();
+    expect(screen.queryByText(/sample\.example\.com/)).not.toBeInTheDocument();
   });
 
   it('3: admin users see edit and delete buttons', () => {
@@ -128,9 +130,8 @@ describe('PropertyCardItem', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/listings/101?type=listing');
   });
 
-  it('7: website link hidden when URL is example.com placeholder', () => {
+  it('7: does not render website metadata for placeholder URL', () => {
     renderCard({ website: 'https://www.example.com/' });
-    // Should show dash instead of the URL
-    expect(screen.getByText('-')).toBeInTheDocument();
+    expect(screen.queryByText('-')).not.toBeInTheDocument();
   });
 });

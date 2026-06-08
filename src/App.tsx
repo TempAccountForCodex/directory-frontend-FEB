@@ -12,6 +12,8 @@ const Directory = lazy(() => import("./pages/Directory"));
 const Contact = lazy(() => import("../src/pages/publicPages/Contact"));
 // import ListingDetails from "../src/pages/publicPages/ListingDetail";
 const BlogDetail = lazy(() => import("../src/pages/publicPages/BlogDetail"));
+const ListingDetails = lazy(() => import("../src/pages/publicPages/ListingDetails"));
+const ListingCompanyDetails = lazy(() => import("../src/pages/publicPages/ListingCompanyDetails"));
 const NotFound = lazy(() => import("../src/pages/publicPages/NotFound"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -385,14 +387,14 @@ const AppRoutes = () => {
             </Suspense>
           ),
         },
-        // {
-        //   path: "/business/:slug",
-        //   element: <ListingComapanyDetails />,
-        // },
-        // {
-        //   path: "/listings/:pid",
-        //   element: <ListingDetails />,
-        // },
+        {
+          path: "/listings/:pid",
+          element: suspense(<ListingDetails />),
+        },
+        {
+          path: "/business/:slug",
+          element: suspense(<ListingCompanyDetails />),
+        },
 
         //  {
         //   path: "/insight-details/:id",
