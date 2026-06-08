@@ -30,6 +30,7 @@ import {
   Italic,
   Link2,
   PaintBucket,
+  Palette,
   Pilcrow,
   Settings2,
   Sparkles,
@@ -44,6 +45,7 @@ export type EditorTextStyle = {
   fontFamily?: string;
   fontSize?: string;
   color?: string;
+  backgroundColor?: string;
   fontWeight?: string | number;
   fontStyle?: string;
   textDecoration?: string;
@@ -310,6 +312,7 @@ const EditorStyleToolbar: React.FC<Props> = ({
   const [expandedPanel, setExpandedPanel] = React.useState<
     | "font"
     | "color"
+    | "background"
     | "alignment"
     | "spacing"
     | "decoration"
@@ -702,6 +705,7 @@ const EditorStyleToolbar: React.FC<Props> = ({
     panelKey:
       | "font"
       | "color"
+      | "background"
       | "alignment"
       | "spacing"
       | "decoration"
@@ -1013,6 +1017,67 @@ const EditorStyleToolbar: React.FC<Props> = ({
               value={resolvedValue.color || ""}
               onChange={(event) => onStyleChange({ color: event.target.value })}
               placeholder="#111827"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  backgroundColor: "#fff",
+                },
+              }}
+            />
+          </Box>,
+        )}
+
+        {renderAccordionPanel(
+          "background",
+          <Palette size={15} />,
+          "Background",
+          <Box sx={{ display: "grid", gap: 1 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+                gap: 0.75,
+              }}
+            >
+              {BRAND_COLOR_SWATCHES.map((swatch) => {
+                const active =
+                  (resolvedValue.backgroundColor || "transparent") === swatch;
+                return (
+                  <ButtonBase
+                    key={`background-${swatch}`}
+                    disabled={effectiveDisabled}
+                    onClick={() =>
+                      onStyleChange({
+                        backgroundColor: swatch,
+                      })
+                    }
+                    sx={{
+                      width: "100%",
+                      aspectRatio: "1 / 1",
+                      borderRadius: "50%",
+                      border: active
+                        ? "2px solid rgba(15,23,42,0.9)"
+                        : "1px solid rgba(15,23,42,0.12)",
+                      background:
+                        swatch === "transparent"
+                          ? "linear-gradient(135deg, transparent 46%, #ef4444 47%, #ef4444 53%, transparent 54%), #ffffff"
+                          : swatch,
+                    }}
+                  />
+                );
+              })}
+            </Box>
+            <TextField
+              size="small"
+              disabled={effectiveDisabled}
+              label="Background hex"
+              value={resolvedValue.backgroundColor || ""}
+              onChange={(event) =>
+                onStyleChange({
+                  backgroundColor: event.target.value || "transparent",
+                })
+              }
+              placeholder="#ffffff"
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,

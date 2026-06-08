@@ -26,9 +26,13 @@ import {
   getSectionStyleSx,
 } from "../../utils/sectionStyle";
 import {
+  buildEditorSharedSurfaceStyles,
   getEditorBlockEstimatedHeight,
   getEditorBlockResponsivePriority,
   getEditorBlockTransform,
+  getEditorSharedNestedValue,
+  getEditorSharedTypographyStyleKey,
+  humanizeEditorBlockKey,
   renderEditorSharedBlock,
 } from "../../blocks";
 
@@ -54,14 +58,6 @@ const defaultSectionOrder = [
   "process",
   "contact",
 ] as const;
-
-const humanizeSectionKey = (value: string) =>
-  value
-    .replace(/^plan[-_]?/i, "Plan ")
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
 
 const visualSet = {
   heroPortrait:
@@ -109,62 +105,6 @@ const sectionReveal = {
   viewport: { once: true, amount: 0.2 },
   transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
 } as const;
-
-const getNestedStyleValue = (source: any, path = "") => {
-  if (!path) return source;
-  return String(path)
-    .split(".")
-    .filter(Boolean)
-    .reduce(
-      (current, key) =>
-        current == null
-          ? undefined
-          : current[/^\d+$/.test(key) ? Number(key) : key],
-      source,
-    );
-};
-
-const getCompoundTypographyStyleKey = (fieldPath = "text") => {
-  const normalizedFieldPath = String(fieldPath || "text").trim();
-  const leafFieldName = normalizedFieldPath
-    .split(".")
-    .filter(Boolean)
-    .pop()
-    ?.toLowerCase();
-
-  switch (leafFieldName) {
-    case "title":
-    case "heading":
-    case "question":
-    case "logotext":
-      return "headingStyle";
-    case "subtitle":
-    case "subheading":
-    case "description":
-    case "body":
-    case "answer":
-    case "quote":
-    case "contactemail":
-    case "contactphone":
-    case "contactaddress":
-    case "email":
-    case "phone":
-    case "address":
-    case "copyright":
-      return "bodyStyle";
-    case "label":
-    case "text":
-    case "author":
-    case "role":
-      return "textStyle";
-    case "buttontext":
-    case "ctatext":
-    case "primaryctatext":
-      return "buttonTextStyle";
-    default:
-      return `${normalizedFieldPath}Style`;
-  }
-};
 
 /* Moved to shared block renderer: src/landingTemplates/blocks/EditorSharedBlockRenderer.tsx
 const EditorFaqAccordionCard: React.FC<{
@@ -644,7 +584,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       ? String(
           customSectionMap.get(key)?.label ||
             customSectionMap.get(key)?.heading ||
-            humanizeSectionKey(key),
+            humanizeEditorBlockKey(key),
         )
       : key === "overview"
         ? "Overview"
@@ -773,9 +713,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       fieldPath: string,
       fallbackStyle: Record<string, any> = {},
     ) => {
-      const styleKey = getCompoundTypographyStyleKey(fieldPath);
+      const styleKey = getEditorSharedTypographyStyleKey(fieldPath);
       const resolvedStyle = styleKey.includes(".")
-        ? getNestedStyleValue(block.content || {}, styleKey)
+        ? getEditorSharedNestedValue(block.content || {}, styleKey)
         : block.content?.[styleKey];
       const styleSource =
         resolvedStyle && typeof resolvedStyle === "object"
@@ -783,183 +723,31 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           : fallbackStyle;
       return getFlowSafeStyle(styleSource);
     };
-    const shellVisualBlockTypes = new Set([
-      "generic_card",
-      "cta",
-      "newsletter",
-      "contact",
-      "form_builder",
-      "reservation_form",
-      "gallery",
-      "features",
-      "faq",
-      "tabs",
-      "navigation_bar",
-      "menu_display",
-      "pricing",
-      "countdown",
-      "testimonials",
-      "reviews",
-      "stats",
-      "logo_carousel",
-      "map_location",
-      "social_embed",
-      "embed",
-    ]);
-    const compoundLayoutWidth = String(
-      cardStyle.layoutWidth ??
-        resolvedCardStyle.layoutWidth ??
-        sectionStyle.layoutWidth ??
-        resolvedSectionStyle.layoutWidth ??
-        "page",
-    ).toLowerCase();
-    const compoundShouldUseFullWidth = compoundLayoutWidth === "full";
-    const compoundUsesManagedPageWidth =
-      !canvas && blockType !== "footer";
-    const compoundLiftsVisualsToShell =
-      compoundUsesManagedPageWidth && shellVisualBlockTypes.has(blockType);
-    const defaultCompoundCardWidth = canvas
-      ? blockType === "video"
-        ? "calc(100% - 112px)"
-        : "640px"
-      : "100%";
-    const hasExplicitWidth =
-      cardStyle.width !== undefined || resolvedCardStyle.width !== undefined;
-    const resolvedCardWidth =
-      cardStyle.width ?? resolvedCardStyle.width ?? defaultCompoundCardWidth;
-    const resolvedCardMaxWidth =
-      cardStyle.maxWidth ??
-      resolvedCardStyle.maxWidth ??
-      (hasExplicitWidth ? "none" : defaultCompoundCardWidth);
-    const hasCustomBackground =
-      resolvedSectionStyle.backgroundColor !== undefined ||
-      resolvedSectionStyle.backgroundImage !== undefined ||
-      sectionStyle.backgroundColor !== undefined ||
-      sectionStyle.backgroundImage !== undefined ||
-      resolvedCardStyle.backgroundColor !== undefined ||
-      resolvedCardStyle.backgroundImage !== undefined ||
-      cardStyle.backgroundColor !== undefined ||
-      cardStyle.backgroundImage !== undefined;
-    const hasCustomBorder =
-      resolvedSectionStyle.border !== undefined ||
-      resolvedSectionStyle.borderStyle !== undefined ||
-      sectionStyle.border !== undefined ||
-      sectionStyle.borderStyle !== undefined ||
-      resolvedCardStyle.border !== undefined ||
-      resolvedCardStyle.borderStyle !== undefined ||
-      cardStyle.border !== undefined ||
-      cardStyle.borderStyle !== undefined;
-    const hasCustomShadow =
-      resolvedSectionStyle.boxShadow !== undefined ||
-      sectionStyle.boxShadow !== undefined ||
-      resolvedCardStyle.boxShadow !== undefined ||
-      cardStyle.boxShadow !== undefined;
-    const compoundVisualLayerSx = {
-      ...(hasCustomBorder
-        ? {}
-        : {
-            border: `1px solid ${tone === "light" ? "rgba(255,255,255,0.16)" : rgba(themeColor, 0.14)}`,
-          }),
-      ...(hasCustomBackground
-        ? {}
-        : tone === "light"
-          ? {
-              backgroundColor: "rgba(255,255,255,0.08)",
-            }
-          : {
-              backgroundColor: "rgba(255,255,255,0.96)",
-              backgroundImage:
-                "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)",
-            }),
-      ...(hasCustomShadow
-        ? {}
-        : {
-            boxShadow:
-              tone === "light"
-                ? "0 24px 48px rgba(0,0,0,0.16)"
-                : "0 24px 48px rgba(15,23,42,0.08)",
-          }),
-      backdropFilter: "blur(12px)",
-      ...resolvedSectionStyle,
-      ...resolvedCardStyle,
-      ...sectionStyle,
-      ...cardStyle,
-    };
-    const compoundCardSx = {
-      boxSizing: "border-box",
-      borderRadius: "28px",
-      ...compoundVisualLayerSx,
-      ...canvasBaseSx,
-      ...(compoundUsesManagedPageWidth
-        ? compoundShouldUseFullWidth
-          ? {
-              width: "100%",
-              maxWidth: "none",
-              mx: 0,
-              alignSelf: "stretch",
-            }
-          : {
-              width: "100%",
-              maxWidth: "1200px",
-              mx: "auto",
-              alignSelf: "center",
-            }
-        : {
-            width: getCanvasWidth(resolvedCardWidth, resolvedCardWidth),
-            maxWidth: getCanvasMaxWidth(
-              resolvedCardMaxWidth,
-              resolvedCardMaxWidth,
-            ),
-          }),
-      transform: getCanvasTransform(cardStyle.transform),
-      ...(canvas
-        ? {}
-        : resolvedCardStyle.minHeight === undefined &&
-            resolvedCardStyle.height === undefined &&
-            cardStyle.minHeight === undefined &&
-            cardStyle.height === undefined
-          ? {
-              minHeight: "auto",
-              height: "auto",
-            }
-          : {}),
-      ...(compoundLiftsVisualsToShell
-        ? {
-            boxShadow: "none",
-            border: "none",
-            borderRadius: 0,
-          }
-        : {}),
-    };
-    const compoundVisualShellSx = compoundLiftsVisualsToShell
-      ? {
-          width: "100%",
-          alignSelf: "stretch",
-          backgroundColor: compoundVisualLayerSx.backgroundColor,
-          backgroundImage: compoundVisualLayerSx.backgroundImage,
-          backgroundSize: compoundVisualLayerSx.backgroundSize,
-          backgroundPosition: compoundVisualLayerSx.backgroundPosition,
-          backgroundRepeat: compoundVisualLayerSx.backgroundRepeat,
-          backgroundAttachment: compoundVisualLayerSx.backgroundAttachment,
-          backgroundPositionY: compoundVisualLayerSx.backgroundPositionY,
-          boxShadow: compoundVisualLayerSx.boxShadow,
-          border: compoundVisualLayerSx.border,
-          borderTop: compoundVisualLayerSx.borderTop,
-          borderBottom: compoundVisualLayerSx.borderBottom,
-          borderLeft: compoundVisualLayerSx.borderLeft,
-          borderRight: compoundVisualLayerSx.borderRight,
-          borderRadius: compoundVisualLayerSx.borderRadius,
-          backdropFilter: compoundVisualLayerSx.backdropFilter,
-        }
-      : null;
+    const { compoundCardSx, compoundVisualShellSx } =
+      buildEditorSharedSurfaceStyles({
+        blockType,
+        tone,
+        themeColor,
+        canvas,
+        canvasBaseSx,
+        cardStyle,
+        sectionStyle,
+        resolvedCardStyle,
+        resolvedSectionStyle,
+        getCanvasWidth,
+        getCanvasMaxWidth,
+        getCanvasTransform,
+        rgba,
+      });
     const compoundBlockSelectionProps = {
       ...getEditableTextProps(section.blockId, `${blockPath}.__card`, "single"),
       "data-preview-section": "true",
-      "data-preview-label": block.label || humanizeSectionKey(blockType),
+      "data-preview-label": block.label || humanizeEditorBlockKey(blockType),
       "data-preview-block-id": section.blockId,
       "data-preview-style-key": `${blockPath}.cardStyle`,
     };
-    const compoundBlockLabel = block.label || humanizeSectionKey(blockType);
+    const compoundBlockLabel =
+      block.label || humanizeEditorBlockKey(blockType);
 
     const sharedEditorBlock = renderEditorSharedBlock({
       section,

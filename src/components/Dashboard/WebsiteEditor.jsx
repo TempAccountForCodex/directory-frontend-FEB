@@ -329,6 +329,7 @@ const DEFAULT_TEXT_STYLE = {
   fontFamily: '"Inter", "Segoe UI", sans-serif',
   fontSize: "16px",
   color: "#111827",
+  backgroundColor: "transparent",
   fontWeight: "400",
   fontStyle: "normal",
   textDecoration: "none",
@@ -849,8 +850,19 @@ const buildInnerBlockFromLibraryItem = (item) => {
         content: {
           heading: "Get in touch",
           body: "Share contact details or use the built-in inquiry form.",
+          email: "hello@yourcompany.com",
+          phone: "+1 (555) 123-4567",
+          address: "123 Business Avenue, New York, NY 10001",
+          formTitle: "Send a message",
           buttonText: "Contact us",
-          fields: ["Full name", "Email address", "Message"],
+          fullNamePlaceholder: "Full name",
+          emailPlaceholder: "Email address",
+          messagePlaceholder: "Message",
+          fields: [
+            { label: "Full name" },
+            { label: "Email address" },
+            { label: "Message" },
+          ],
         },
       };
     case "pricing":
@@ -1300,10 +1312,38 @@ const omitEditorWrapperKeys = (value) => {
   return rest;
 };
 
+const normalizeContactEditorContent = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return value;
+  }
+
+  const normalized = { ...value };
+  const email = normalized.email ?? normalized.contactEmail;
+  const phone = normalized.phone ?? normalized.contactPhone;
+  const address = normalized.address ?? normalized.contactAddress;
+
+  if (email !== undefined) {
+    normalized.email = email;
+  }
+  if (phone !== undefined) {
+    normalized.phone = phone;
+  }
+  if (address !== undefined) {
+    normalized.address = address;
+  }
+
+  return normalized;
+};
+
 const buildBlockEditorInitialContent = (block) => {
   const rootContent = omitInnerBlocksMirror(block?.content || {});
+  const rootBlockType = String(block?.blockType || "").trim().toUpperCase();
   if (!block?.content?.editorBlockType) {
-    return rootContent;
+    return rootBlockType === "CONTACT"
+      ? normalizeContactEditorContent(
+          mergeEditorContentObjects(getBlockDefaultContent("CONTACT"), rootContent),
+        )
+      : rootContent;
   }
 
   const firstInnerContent = getBlockInnerBlocks(block)[0]?.content;
@@ -1311,16 +1351,20 @@ const buildBlockEditorInitialContent = (block) => {
   const defaultEditorContent = editorBlockType
     ? omitInnerBlocksMirror(getBlockDefaultContent(editorBlockType))
     : {};
-  return mergeEditorContentObjects(
+  const mergedContent = mergeEditorContentObjects(
     defaultEditorContent,
     firstInnerContent && typeof firstInnerContent === "object"
       ? omitInnerBlocksMirror(firstInnerContent)
       : {},
     rootContent,
     {
-      editorLabel: block?.content?.editorLabel ?? rootContent.editorLabel ?? "",
+        editorLabel: block?.content?.editorLabel ?? rootContent.editorLabel ?? "",
     },
   );
+
+  return editorBlockType.toUpperCase() === "CONTACT"
+    ? normalizeContactEditorContent(mergedContent)
+    : mergedContent;
 };
 
 const getValueAtPath = (source, path) => {
@@ -1423,6 +1467,10 @@ const sanitizeBlockForSave = (block) => {
   const sanitizedContent = {
     ...omitInnerBlocksMirror(block.content),
   };
+
+  if (String(block.blockType || "").toUpperCase() === "CONTACT") {
+    Object.assign(sanitizedContent, normalizeContactEditorContent(sanitizedContent));
+  }
 
   if (Array.isArray(block.content.innerBlocks)) {
     sanitizedContent.innerBlocks = sanitizeNestedInnerBlocksForSave(
@@ -1647,7 +1695,15 @@ const WebsiteEditorInner = () => {
       return block;
     }
 
-    const normalizedNextValues = omitInnerBlocksMirror(nextValues || {});
+    const editorBlockType = String(
+      block?.content?.editorBlockType || block?.blockType || "",
+    )
+      .trim()
+      .toUpperCase();
+    const normalizedNextValues =
+      editorBlockType === "CONTACT"
+        ? normalizeContactEditorContent(omitInnerBlocksMirror(nextValues || {}))
+        : omitInnerBlocksMirror(nextValues || {});
 
     const nextContent = {
       ...(block.content || {}),

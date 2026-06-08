@@ -78,7 +78,29 @@ export const normalizeBlockTypeKey = (value = "") =>
 export const getBlockDefaultContent = (
   blockType: string,
 ): Record<string, unknown> => {
-  switch (normalizeBlockTypeKey(blockType)) {
+  const normalizedBlockType = normalizeBlockTypeKey(blockType);
+
+  if (normalizedBlockType === "CONTACT") {
+    return {
+      heading: "Get in touch",
+      body: "Share contact details or use the built-in inquiry form.",
+      email: "hello@yourcompany.com",
+      phone: "+1 (555) 123-4567",
+      address: "123 Business Avenue, New York, NY 10001",
+      formTitle: "Send a message",
+      buttonText: "Contact us",
+      fullNamePlaceholder: "Full name",
+      emailPlaceholder: "Email address",
+      messagePlaceholder: "Message",
+      fields: [
+        { label: "Full name" },
+        { label: "Email address" },
+        { label: "Message" },
+      ],
+    };
+  }
+
+  switch (normalizedBlockType) {
     case "HERO":
       return {
         eyebrow: "Hero section",
@@ -568,6 +590,15 @@ export const getLocalFieldMetadata = (
           order: 5,
         },
       ]);
+    case "IMAGE":
+      return contentGroup([
+        {
+          name: "src",
+          label: "Image",
+          type: "IMAGE",
+          order: 1,
+        },
+      ]);
     case "FEATURES":
       return contentGroup([
         makeTextField("heading", "Heading", 1),
@@ -651,6 +682,19 @@ export const getLocalFieldMetadata = (
             },
           },
         },
+      ]);
+    case "CONTACT":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        makeTextField("body", "Body", 2, true),
+        makeTextField("email", "Email Address", 3),
+        makeTextField("phone", "Phone Number", 4),
+        makeTextField("address", "Address", 5, true),
+        makeTextField("formTitle", "Form Title", 6),
+        makeTextField("fullNamePlaceholder", "Name Field Placeholder", 7),
+        makeTextField("emailPlaceholder", "Email Field Placeholder", 8),
+        makeTextField("messagePlaceholder", "Message Field Placeholder", 9),
+        makeTextField("buttonText", "Button Text", 10),
       ]);
     case "TABS":
       return contentGroup([

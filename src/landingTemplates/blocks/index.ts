@@ -15,6 +15,13 @@ export {
   isEditorSharedBlockType,
   renderEditorSharedBlock,
 } from "./EditorSharedBlockRenderer";
+export {
+  EDITOR_SHARED_SHELL_VISUAL_BLOCK_TYPES,
+  buildEditorSharedSurfaceStyles,
+  getEditorSharedNestedValue,
+  getEditorSharedTypographyStyleKey,
+  humanizeEditorBlockKey,
+} from "./editorSharedBlockHelpers";
 
 export type { HeroBlockProps } from "./HeroBlock";
 export type { ServicesBlockProps } from "./ServicesBlock";

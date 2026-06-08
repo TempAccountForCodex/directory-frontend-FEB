@@ -522,7 +522,7 @@ export const renderEditorSharedBlock = ({
         sx={{
           height: imageStyle.height || { xs: 220, md: 360 },
           objectFit: imageStyle.objectFit || "cover",
-          borderRadius: "24px",
+          borderRadius: imageStyle.borderRadius ?? 0,
           display: "block",
           cursor: "pointer",
           borderWidth: imageStyle.borderWidth,
@@ -1355,9 +1355,43 @@ export const renderEditorSharedBlock = ({
   }
 
   if (blockType === "contact") {
+    const placeholderFields = [
+      block.content?.fullNamePlaceholder || "Full name",
+      block.content?.emailPlaceholder || "Email address",
+      block.content?.messagePlaceholder || "Message",
+    ];
     const fields = Array.isArray(block.content?.fields)
       ? block.content.fields
-      : ["Full name", "Email address", "Message"];
+      : placeholderFields;
+    const formFields = (fields.length ? fields : placeholderFields)
+      .map((field, fieldIndex) => {
+        if (typeof field === "string") {
+          return {
+            key: `${field}-${fieldIndex}`,
+            label: field.trim() || `Field ${fieldIndex + 1}`,
+          };
+        }
+
+        if (field && typeof field === "object") {
+          const label =
+            String(
+              (field as Record<string, unknown>).label ??
+                (field as Record<string, unknown>).placeholder ??
+                "",
+            ).trim() || `Field ${fieldIndex + 1}`;
+
+          return {
+            key: `${label}-${fieldIndex}`,
+            label,
+          };
+        }
+
+        return {
+          key: `field-${fieldIndex}`,
+          label: `Field ${fieldIndex + 1}`,
+        };
+      })
+      .filter((field) => field.label);
 
     const contactDetails = [
       {
@@ -1621,15 +1655,15 @@ export const renderEditorSharedBlock = ({
               {block.content?.formTitle || "Send a message"}
             </Typography>
 
-            {fields.map((field: string, fieldIndex: number) => {
-              const fieldLabel = String(field || "").trim();
+            {formFields.map((field, fieldIndex: number) => {
+              const fieldLabel = field.label;
               const isMessage =
                 fieldLabel.toLowerCase().includes("message") ||
                 fieldLabel.toLowerCase().includes("detail");
 
               return (
                 <TextField
-                  key={`${fieldLabel}-${fieldIndex}`}
+                  key={field.key}
                   size="small"
                   fullWidth
                   multiline={isMessage}
@@ -1672,7 +1706,7 @@ export const renderEditorSharedBlock = ({
       </Stack>
     );
   }
-  if (blockType === "hero" || blockType === "image_text_split") {
+  if (blockType === "hero") {
     const heroContent = block.content || {};
     const heroImage = heroContent?.image || fallbackImageSrc;
 
@@ -1960,6 +1994,245 @@ export const renderEditorSharedBlock = ({
       </Stack>
     );
   }
+
+  if (blockType === "image_text_split") {
+    const splitContent = block.content || {};
+    const hasCustomPadding =
+      rawCardStyle.padding !== undefined ||
+      rawCardStyle.paddingTop !== undefined ||
+      rawCardStyle.paddingBottom !== undefined ||
+      rawCardStyle.paddingLeft !== undefined ||
+      rawCardStyle.paddingRight !== undefined ||
+      resolvedCardStyle.padding !== undefined ||
+      resolvedCardStyle.paddingTop !== undefined ||
+      resolvedCardStyle.paddingBottom !== undefined ||
+      resolvedCardStyle.paddingLeft !== undefined ||
+      resolvedCardStyle.paddingRight !== undefined;
+
+    const splitImage =
+      splitContent?.image || splitContent?.imageUrl || fallbackImageSrc;
+
+    const splitVideo =
+      splitContent?.video ||
+      splitContent?.videoUrl ||
+      splitContent?.mediaUrl ||
+      "";
+
+    const mediaType =
+      splitContent?.mediaType === "video" || splitVideo ? "video" : "image";
+
+    const mediaAlt =
+      splitContent?.mediaAlt ||
+      splitContent?.imageAlt ||
+      splitContent?.heading ||
+      "Split section media";
+    const mediaAspectRatio = rawCardStyle.mediaAspectRatio ||
+      resolvedCardStyle.mediaAspectRatio || { xs: "4 / 3", md: "5 / 4" };
+    const mediaMinHeight = rawCardStyle.mediaMinHeight ||
+      resolvedCardStyle.mediaMinHeight || { xs: 300, sm: 380, md: 460 };
+    const mediaObjectFit =
+      imageStyle.objectFit || splitContent?.imageFit || "contain";
+
+    return (
+      <Stack
+        key={String(block.id || `${blockType}-${index}`)}
+        spacing={0}
+        alignItems="stretch"
+        {...compoundBlockSelectionProps}
+        data-preview-label={compoundBlockLabel}
+        sx={{
+          ...compoundCardSx,
+          width: "100%",
+          overflow: "hidden",
+          boxShadow: "none",
+          border: "none",
+          ...(!hasCustomPadding
+            ? {
+                p: { xs: 3, sm: 5 },
+              }
+            : {}),
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "minmax(0, 1fr) minmax(0, 1fr)",
+            },
+            gap:
+              rawCardStyle.layoutGap === undefined &&
+              resolvedCardStyle.gap === undefined
+                ? { xs: 3, md: 5 }
+                : resolvedCardStyle.gap,
+            alignItems: "center",
+          }}
+        >
+          {/* Left content */}
+          <Stack
+            spacing={{ xs: 1.5, md: 1.8 }}
+            sx={{
+              minWidth: 0,
+              width: "100%",
+            }}
+          >
+            {splitContent?.eyebrow ? (
+              <Typography
+                {...getEditableTextProps(
+                  section.blockId,
+                  `${blockPath}.eyebrow`,
+                  "single",
+                )}
+                sx={{
+                  color: themeColor,
+                  fontSize: "0.82rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  ...eyebrowStyle,
+                }}
+              >
+                {splitContent.eyebrow}
+              </Typography>
+            ) : null}
+
+            <Typography
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.heading`,
+                "multi",
+              )}
+              sx={{
+                color: textColor,
+                fontFamily: headingFont,
+                fontSize: { xs: "2rem", sm: "2.55rem", md: "3.45rem" },
+                lineHeight: { xs: 1.05, md: 1 },
+                fontWeight: 850,
+                letterSpacing: "-0.055em",
+                textWrap: "balance",
+                ...headingStyle,
+              }}
+            >
+              {splitContent?.heading || "Tell your story with a strong visual"}
+            </Typography>
+
+            <Typography
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.body`,
+                "multi",
+              )}
+              sx={{
+                color: mutedTextColor,
+                fontSize: { xs: "1rem", md: "1.08rem" },
+                lineHeight: 1.75,
+                maxWidth: 620,
+                ...bodyStyle,
+              }}
+            >
+              {splitContent?.body ||
+                "Use this split section to explain your service, product, process, or brand story with supporting image or video content."}
+            </Typography>
+
+            <Button
+              variant="contained"
+              {...getEditableTextProps(
+                section.blockId,
+                `${blockPath}.buttonText`,
+                "single",
+              )}
+              sx={{
+                alignSelf: "flex-start",
+                bgcolor: themeColor,
+                color: whiteColor,
+                borderRadius: "999px",
+                textTransform: "none",
+                px: 3.2,
+                py: 1.15,
+                minHeight: 48,
+                fontWeight: 800,
+                fontSize: "0.98rem",
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: themeColor,
+                  boxShadow: "none",
+                  opacity: 0.92,
+                },
+                ...buttonStyle,
+              }}
+            >
+              {splitContent?.buttonText || "Learn more"}
+            </Button>
+          </Stack>
+
+          {/* Right media */}
+          <Box
+            sx={{
+              position: "relative",
+              width: "100%",
+              minHeight: mediaMinHeight,
+              aspectRatio: mediaAspectRatio,
+              borderRadius: imageStyle.borderRadius ||
+                rawCardStyle.mediaBorderRadius ||
+                resolvedCardStyle.mediaBorderRadius || { xs: 3, md: 4 },
+              overflow: "hidden",
+              backgroundColor:
+                rawCardStyle.mediaBackgroundColor ||
+                resolvedCardStyle.mediaBackgroundColor ||
+                "rgba(15,23,42,0.06)",
+            }}
+          >
+            {mediaType === "video" && splitVideo ? (
+              <Box
+                component="video"
+                src={splitVideo}
+                controls
+                playsInline
+                muted={splitContent?.muted !== false}
+                loop={Boolean(splitContent?.loop)}
+                poster={splitImage}
+                data-edit-video="video"
+                data-video-label="Split Video"
+                data-block-id={section.blockId}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  minHeight: mediaMinHeight,
+                  objectFit: imageStyle.objectFit || "cover",
+                  objectPosition: imageStyle.objectPosition || "center",
+                  display: "block",
+                  borderRadius: "inherit",
+                }}
+              />
+            ) : (
+              <Box
+                component="img"
+                src={splitImage}
+                alt={mediaAlt}
+                {...getEditableImageProps(
+                  section.blockId,
+                  `${blockPath}.image`,
+                  block.label || "Split Image",
+                )}
+                sx={{
+                  ...imageStyle,
+                  width: "100%",
+                  height: "100%",
+                  minHeight: mediaMinHeight,
+                  objectFit: mediaObjectFit,
+                  objectPosition: imageStyle.objectPosition || "center",
+                  display: "block",
+                  borderRadius: "inherit",
+                }}
+              />
+            )}
+          </Box>
+        </Box>
+      </Stack>
+    );
+  }
+
   if (blockType === "video") {
     const videoUrl = String(block.content?.videoUrl || "");
     const isEmbed =
