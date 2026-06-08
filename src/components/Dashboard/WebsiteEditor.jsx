@@ -103,7 +103,7 @@ import ConflictModal from "../Editor/ConflictModal";
 import RecoveryModal from "../Editor/RecoveryModal";
 import ConnectionStatus from "../Editor/ConnectionStatus";
 import BlockLibrary from "../Editor/BlockLibrary";
-import { getBlockDefaultContent } from "../Editor/blockPresets";
+import { getBlockDefaultContent, getLocalFieldMetadata } from "../Editor/blockPresets";
 import EditorStyleToolbar from "../Editor/EditorStyleToolbar";
 import EditorSectionStyleToolbar from "../Editor/EditorSectionStyleToolbar";
 import ResponsiveEditorLayout from "../Editor/ResponsiveEditorLayout";
@@ -558,7 +558,9 @@ const getEditableTypographyStyleKey = (fieldName = "text") => {
     case "primaryctatext":
       return "buttonTextStyle";
     default:
-      return getEditableStyleConfig(normalizedFieldName).styleKey || "textStyle";
+      return (
+        getEditableStyleConfig(normalizedFieldName).styleKey || "textStyle"
+      );
   }
 };
 
@@ -934,6 +936,16 @@ const buildInnerBlockFromLibraryItem = (item) => {
         content: {
           text: "Special announcement for this section.",
           buttonText: "Learn more",
+          cardStyle: {
+            backgroundColor: "#050505",
+            backgroundImageUrl: "",
+            borderStyle: "none",
+            boxShadowPreset: "none",
+            paddingTop: "0px",
+            paddingBottom: "0px",
+            paddingLeft: "0px",
+            paddingRight: "0px",
+          },
         },
       };
     case "newsletter":
@@ -973,6 +985,41 @@ const buildInnerBlockFromLibraryItem = (item) => {
             { value: "120+", label: "Projects" },
             { value: "98%", label: "Satisfaction" },
             { value: "24/7", label: "Support" },
+          ],
+        },
+      };
+    case "gallery":
+      return {
+        type: "gallery",
+        label,
+        content: {
+          heading: "Gallery",
+          images: [
+            {
+              image:
+                "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+              alt: "Gallery image 1",
+            },
+            {
+              image:
+                "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+              alt: "Gallery image 2",
+            },
+            {
+              image:
+                "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
+              alt: "Gallery image 3",
+            },
+            {
+              image:
+                "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+              alt: "Gallery image 4",
+            },
+            {
+              image:
+                "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+              alt: "Gallery image 5",
+            },
           ],
         },
       };
@@ -1069,52 +1116,7 @@ const buildInnerBlockFromLibraryItem = (item) => {
           ],
         },
       };
-    case "story_panel":
-      return {
-        type: "story_panel",
-        label,
-        content: {
-          heading: "Stories that explain the offer",
-          stories: [
-            {
-              title: "Discover",
-              subtitle: "Start with the problem",
-              body: "Frame the challenge and show why your approach matters.",
-              image:
-                "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
-              linkText: "Read more",
-              linkUrl: "#contact",
-            },
-            {
-              title: "Deliver",
-              subtitle: "Turn intent into action",
-              body: "Show the outcome with a clear call to action.",
-              image:
-                "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
-              linkText: "Get started",
-              linkUrl: "#contact",
-            },
-          ],
-        },
-      };
-    case "working_hours":
-      return {
-        type: "working_hours",
-        label,
-        content: {
-          heading: "Working hours",
-          showCurrentStatus: true,
-          hours: [
-            { day: "Monday", openTime: "09:00", closeTime: "18:00" },
-            { day: "Tuesday", openTime: "09:00", closeTime: "18:00" },
-            { day: "Wednesday", openTime: "09:00", closeTime: "18:00" },
-            { day: "Thursday", openTime: "09:00", closeTime: "18:00" },
-            { day: "Friday", openTime: "09:00", closeTime: "18:00" },
-            { day: "Saturday", openTime: "10:00", closeTime: "15:00" },
-            { day: "Sunday", isClosed: true },
-          ],
-        },
-      };
+
     case "social_embed":
       return {
         type: "social_embed",
@@ -1239,6 +1241,65 @@ const withSyncedInnerBlocks = (block, innerBlocks) =>
     innerBlocks,
   });
 
+const isMergeableEditorContentObject = (value) =>
+  !!value && typeof value === "object" && !Array.isArray(value);
+
+const mergeEditorContentObjects = (...sources) =>
+  sources.reduce((accumulator, source) => {
+    if (!isMergeableEditorContentObject(source)) {
+      return accumulator;
+    }
+
+    Object.entries(source).forEach(([key, value]) => {
+      const existingValue = accumulator[key];
+      accumulator[key] =
+        isMergeableEditorContentObject(existingValue) &&
+        isMergeableEditorContentObject(value)
+          ? {
+              ...existingValue,
+              ...value,
+            }
+          : value;
+    });
+
+    return accumulator;
+  }, {});
+
+const getEditorBlockContentFieldNames = (editorBlockType) => {
+  const metadata = getLocalFieldMetadata(editorBlockType || "");
+  if (!metadata?.groups?.length) {
+    return new Set();
+  }
+
+  return new Set(
+    metadata.groups.flatMap((group) =>
+      Array.isArray(group.fields)
+        ? group.fields
+            .map((field) => String(field?.name || "").trim())
+            .filter(Boolean)
+        : [],
+    ),
+  );
+};
+
+const omitEditorWrapperKeys = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  const {
+    editorBlockType,
+    editorLabel,
+    sectionStyle,
+    outerSectionStyle,
+    cardStyle,
+    innerBlocks,
+    ...rest
+  } = value;
+
+  return rest;
+};
+
 const buildBlockEditorInitialContent = (block) => {
   const rootContent = omitInnerBlocksMirror(block?.content || {});
   if (!block?.content?.editorBlockType) {
@@ -1250,14 +1311,16 @@ const buildBlockEditorInitialContent = (block) => {
   const defaultEditorContent = editorBlockType
     ? omitInnerBlocksMirror(getBlockDefaultContent(editorBlockType))
     : {};
-  return {
-    ...defaultEditorContent,
-    ...(firstInnerContent && typeof firstInnerContent === "object"
+  return mergeEditorContentObjects(
+    defaultEditorContent,
+    firstInnerContent && typeof firstInnerContent === "object"
       ? omitInnerBlocksMirror(firstInnerContent)
-      : {}),
-    ...rootContent,
-    editorLabel: block?.content?.editorLabel ?? rootContent.editorLabel ?? "",
-  };
+      : {},
+    rootContent,
+    {
+      editorLabel: block?.content?.editorLabel ?? rootContent.editorLabel ?? "",
+    },
+  );
 };
 
 const getValueAtPath = (source, path) => {
@@ -1374,6 +1437,15 @@ const sanitizeBlockForSave = (block) => {
     );
   }
 
+  if (String(block.blockType || "").toUpperCase() === "GALLERY") {
+    sanitizedContent.images = Array.isArray(block.content.images)
+      ? block.content.images.map((item) => ({
+          ...item,
+          image: item?.image || item?.src || "",
+        }))
+      : [];
+  }
+
   return {
     ...block,
     content: sanitizedContent,
@@ -1386,6 +1458,8 @@ const getRequestErrorMessage = (error, fallbackMessage) => {
     ? message
     : fallbackMessage;
 };
+
+const OPEN_MEDIA_LIBRARY_EVENT = "editor:open-media-library";
 
 const WebsiteEditorInner = () => {
   const { websiteId } = useParams();
@@ -1430,6 +1504,8 @@ const WebsiteEditorInner = () => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isImageLibraryPickerOpen, setIsImageLibraryPickerOpen] =
     useState(false);
+  const [imageLibraryFieldRequest, setImageLibraryFieldRequest] =
+    useState(null);
   const [selectedSectionElement, setSelectedSectionElement] = useState(null);
   const [isSectionInnerBlockModalOpen, setIsSectionInnerBlockModalOpen] =
     useState(false);
@@ -1584,12 +1660,23 @@ const WebsiteEditorInner = () => {
 
     if (nextContent?.editorBlockType && existingInnerBlocks[0]) {
       const firstInnerBlock = existingInnerBlocks[0];
+      const contentFieldNames = getEditorBlockContentFieldNames(
+        nextContent.editorBlockType,
+      );
+      const firstInnerContentPatch = Object.fromEntries(
+        Object.entries(normalizedNextValues).filter(([key]) =>
+          contentFieldNames.has(key),
+        ),
+      );
+      const sanitizedExistingFirstInnerContent = omitEditorWrapperKeys(
+        firstInnerBlock.content || {},
+      );
       const syncedInnerBlocks = [
         {
           ...firstInnerBlock,
           content: {
-            ...(firstInnerBlock.content || {}),
-            ...normalizedNextValues,
+            ...sanitizedExistingFirstInnerContent,
+            ...firstInnerContentPatch,
           },
         },
         ...existingInnerBlocks.slice(1),
@@ -1674,12 +1761,15 @@ const WebsiteEditorInner = () => {
     (nextValues) => {
       setBlockForm((prev) => ({
         ...prev,
-        content: nextValues,
+        content: mergeEditorContentObjects(prev.content || {}, nextValues || {}),
       }));
 
-      scheduleLivePreviewUpdate(editingBlock?.id, nextValues);
+      scheduleLivePreviewUpdate(
+        editingBlock?.id,
+        mergeEditorContentObjects(blockForm.content || {}, nextValues || {}),
+      );
     },
-    [editingBlock?.id, scheduleLivePreviewUpdate],
+    [blockForm.content, editingBlock?.id, scheduleLivePreviewUpdate],
   );
   const isVideoEditingBlock =
     String(editingBlock?.blockType || "").toLowerCase() === "video";
@@ -3383,8 +3473,7 @@ const WebsiteEditorInner = () => {
               ? getValueAtPath(existingInnerContent, styleKey)
               : existingInnerContent[styleKey];
             const existingStyle =
-              resolvedExistingStyle &&
-              typeof resolvedExistingStyle === "object"
+              resolvedExistingStyle && typeof resolvedExistingStyle === "object"
                 ? resolvedExistingStyle
                 : {};
 
@@ -4123,8 +4212,7 @@ const WebsiteEditorInner = () => {
               ? getValueAtPath(existingInnerContent, styleKey)
               : existingInnerContent[styleKey];
             const existingStyle =
-              resolvedExistingStyle &&
-              typeof resolvedExistingStyle === "object"
+              resolvedExistingStyle && typeof resolvedExistingStyle === "object"
                 ? resolvedExistingStyle
                 : {};
 
@@ -4204,7 +4292,7 @@ const WebsiteEditorInner = () => {
               typeof patch.src === "string"
                 ? setValueAtPath(
                     existingInnerBlocks,
-                    `${innerMatch.index}.content.src`,
+                    `${innerMatch.index}.content.${innerMatch.contentPath || "src"}`,
                     patch.src,
                   )
                 : existingInnerBlocks;
@@ -4243,10 +4331,9 @@ const WebsiteEditorInner = () => {
               : {};
 
           const nextContent = {
-            ...block.content,
             ...(typeof patch.src === "string"
-              ? { [fieldPath]: patch.src }
-              : {}),
+              ? setValueAtPath(block.content || {}, fieldPath, patch.src)
+              : { ...(block.content || {}) }),
             [imageStyleKey]: {
               ...existingStyle,
               ...(typeof patch.objectFit === "string"
@@ -4290,6 +4377,29 @@ const WebsiteEditorInner = () => {
     [handlePreviewImageSelection],
   );
 
+  useEffect(() => {
+    const handleOpenMediaLibrary = (event) => {
+      const detail = event?.detail || {};
+      if (typeof detail?.onSelect !== "function") {
+        return;
+      }
+
+      setImageLibraryFieldRequest({
+        label: typeof detail.label === "string" ? detail.label : "Image",
+        onSelect: detail.onSelect,
+      });
+      setIsImageLibraryPickerOpen(true);
+    };
+
+    window.addEventListener(OPEN_MEDIA_LIBRARY_EVENT, handleOpenMediaLibrary);
+    return () => {
+      window.removeEventListener(
+        OPEN_MEDIA_LIBRARY_EVENT,
+        handleOpenMediaLibrary,
+      );
+    };
+  }, []);
+
   const handleReplaceSelectedImage = useCallback(
     async (file) => {
       const url = await uploadImageAsset(file);
@@ -4297,18 +4407,23 @@ const WebsiteEditorInner = () => {
         return;
       }
 
-      handleImageChange({ src: url });
-      setSelectedImageElement((prev) =>
-        prev
-          ? {
-              ...prev,
-              src: url,
-            }
-          : prev,
-      );
+      if (imageLibraryFieldRequest?.onSelect) {
+        imageLibraryFieldRequest.onSelect(url);
+      } else {
+        handleImageChange({ src: url });
+        setSelectedImageElement((prev) =>
+          prev
+            ? {
+                ...prev,
+                src: url,
+              }
+            : prev,
+        );
+      }
+      setImageLibraryFieldRequest(null);
       setIsImageLibraryPickerOpen(false);
     },
-    [handleImageChange, uploadImageAsset],
+    [handleImageChange, imageLibraryFieldRequest, uploadImageAsset],
   );
 
   const handleUseLibraryImage = useCallback(
@@ -4317,18 +4432,23 @@ const WebsiteEditorInner = () => {
         return;
       }
 
-      handleImageChange({ src: item.src });
-      setSelectedImageElement((prev) =>
-        prev
-          ? {
-              ...prev,
-              src: item.src,
-            }
-          : prev,
-      );
+      if (imageLibraryFieldRequest?.onSelect) {
+        imageLibraryFieldRequest.onSelect(item.src);
+      } else {
+        handleImageChange({ src: item.src });
+        setSelectedImageElement((prev) =>
+          prev
+            ? {
+                ...prev,
+                src: item.src,
+              }
+            : prev,
+        );
+      }
+      setImageLibraryFieldRequest(null);
       setIsImageLibraryPickerOpen(false);
     },
-    [handleImageChange],
+    [handleImageChange, imageLibraryFieldRequest],
   );
 
   const sectionInnerBlockItems = useMemo(() => {
@@ -7255,7 +7375,10 @@ const WebsiteEditorInner = () => {
         {/* BlockLibrary drawer — Phase 9 gap fix */}
         <Dialog
           open={isImageLibraryPickerOpen}
-          onClose={() => setIsImageLibraryPickerOpen(false)}
+          onClose={() => {
+            setIsImageLibraryPickerOpen(false);
+            setImageLibraryFieldRequest(null);
+          }}
           maxWidth="md"
           fullWidth
           PaperProps={{
@@ -7287,7 +7410,10 @@ const WebsiteEditorInner = () => {
               </Typography>
             </Box>
             <IconButton
-              onClick={() => setIsImageLibraryPickerOpen(false)}
+              onClick={() => {
+                setIsImageLibraryPickerOpen(false);
+                setImageLibraryFieldRequest(null);
+              }}
               sx={{
                 color: editorMutedText,
                 border: `1px solid ${alpha("#111827", 0.08)}`,

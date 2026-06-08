@@ -6,6 +6,15 @@ export { default as ReviewsBlock } from "./ReviewsBlock";
 export { default as ContactBlock } from "./ContactBlock";
 export { default as LocationBlock } from "./LocationBlock";
 export { default as CTASection } from "./CTASection";
+export {
+  EDITOR_SHARED_BLOCK_TYPES,
+  EDITOR_CARD_STYLE_BLOCK_TYPES,
+  getEditorBlockEstimatedHeight,
+  getEditorBlockResponsivePriority,
+  getEditorBlockTransform,
+  isEditorSharedBlockType,
+  renderEditorSharedBlock,
+} from "./EditorSharedBlockRenderer";
 
 export type { HeroBlockProps } from "./HeroBlock";
 export type { ServicesBlockProps } from "./ServicesBlock";
@@ -14,3 +23,4 @@ export type { ReviewsBlockProps } from "./ReviewsBlock";
 export type { ContactBlockProps } from "./ContactBlock";
 export type { LocationBlockProps } from "./LocationBlock";
 export type { CTASectionProps } from "./CTASection";
+export type { EditorSharedBlockRenderContext } from "./EditorSharedBlockRenderer";

@@ -104,13 +104,15 @@ export const getBlockDefaultContent = (
       return {
         heading: "Recent work",
         images: [
-          { src: DEFAULT_IMAGE, alt: "Gallery image 1" },
+          { image: DEFAULT_IMAGE, alt: "Gallery image 1" },
           {
-            src: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+            image:
+              "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
             alt: "Gallery image 2",
           },
           {
-            src: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
+            image:
+              "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
             alt: "Gallery image 3",
           },
         ],
@@ -233,6 +235,8 @@ export const getBlockDefaultContent = (
     case "STATS":
       return {
         heading: "Key numbers",
+        body: "Whether it's an engaging explainer video, a vibrant social media campaign, or captivating motion graphics, we bring creativity and expertise to every project.",
+        buttonText: "Know More About us",
         items: [
           { value: "120+", label: "Projects shipped" },
           { value: "98%", label: "Client satisfaction" },
@@ -394,7 +398,7 @@ export const getBlockDefaultContent = (
           },
         ],
       };
-    case "STORY_PANEL":
+ 
       return {
         heading: "Customer stories",
         stories: [
@@ -417,7 +421,7 @@ export const getBlockDefaultContent = (
           },
         ],
       };
-    case "WORKING_HOURS":
+
       return {
         heading: "Business hours",
         showCurrentStatus: true,
@@ -586,6 +590,34 @@ export const getLocalFieldMetadata = (
           answer: makeTextField("answer", "Answer", 2, true),
         }),
       ]);
+    case "GALLERY":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        makeRepeaterField("images", "Gallery Images", 2, {
+          image: {
+            name: "image",
+            label: "Image",
+            type: "IMAGE",
+            order: 1,
+          },
+          alt: makeTextField("alt", "Alt Text", 2),
+          caption: makeTextField("caption", "Caption", 3),
+        }),
+      ]);
+    case "ANNOUNCEMENT_BAR":
+      return contentGroup([
+        makeTextField("text", "Title", 1),
+      ]);
+    case "STATS":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        makeTextField("body", "Body", 2, true),
+        makeTextField("buttonText", "Button Text", 3),
+        makeRepeaterField("items", "Stats Items", 4, {
+          value: makeTextField("value", "Value", 1),
+          label: makeTextField("label", "Label", 2),
+        }),
+      ]);
     case "IMAGE_TEXT_SPLIT":
       return contentGroup([
         makeTextField("heading", "Heading", 1),
@@ -633,7 +665,7 @@ export const getLocalFieldMetadata = (
           icon: makeTextField("icon", "Icon", 3),
         }),
       ]);
-    case "STORY_PANEL":
+
       return contentGroup([
         makeTextField("heading", "Heading", 1),
         makeRepeaterField("stories", "Stories", 2, {
@@ -645,7 +677,7 @@ export const getLocalFieldMetadata = (
           linkUrl: makeTextField("linkUrl", "Link URL", 6),
         }),
       ]);
-    case "WORKING_HOURS":
+
       return contentGroup([
         makeTextField("heading", "Heading", 1),
         {

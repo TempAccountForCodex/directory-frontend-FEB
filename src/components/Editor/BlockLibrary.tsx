@@ -182,6 +182,54 @@ const CATEGORY_STYLES: Record<
   },
 };
 
+const normalizeBlockLibraryToken = (value: string | undefined | null) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
+
+const HIDDEN_BLOCK_LIBRARY_KEYS = new Set([
+  "collage",
+  "portfolio_grid",
+  "story_panel",
+  "decorative",
+  "features",
+  "working_hour",
+  "working_hours",
+  "reservation_form",
+  "table_content",
+  "data_table",
+  "table",
+  "pricing",
+  "blog_feed",
+  "form_builder",
+  "blog_article",
+  "product_showcase",
+  "directory_listing",
+  "steps_process",
+  "steps",
+  "process",
+  "events_list",
+  "social_media_embaded",
+  "social_media_embedded",
+  "social_embed",
+  "menu_service_list",
+  "menu_display",
+  "reviews",
+]);
+
+const shouldHideBlockLibraryItem = (block?: Partial<BlockLibraryItem>) => {
+  const candidates = [
+    block?.key,
+    block?.label,
+    ...(Array.isArray(block?.searchKeywords) ? block.searchKeywords : []),
+  ];
+
+  return candidates.some((candidate) =>
+    HIDDEN_BLOCK_LIBRARY_KEYS.has(normalizeBlockLibraryToken(candidate)),
+  );
+};
+
 // ---------------------------------------------------------------------------
 // BlockLibraryCard
 // ---------------------------------------------------------------------------
@@ -543,9 +591,13 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
 
   const mergedBlockTypes = useMemo(() => {
     const extras = extraBlocks.filter(
-      (extra) => !blockTypes.some((block) => block.key === extra.key),
+      (extra) =>
+        !shouldHideBlockLibraryItem(extra) &&
+        !blockTypes.some((block) => block.key === extra.key),
     );
-    return [...extras, ...blockTypes];
+    return [...extras, ...blockTypes].filter(
+      (block) => !shouldHideBlockLibraryItem(block),
+    );
   }, [blockTypes, extraBlocks]);
 
   // Fetch block types on mount

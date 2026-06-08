@@ -62,6 +62,7 @@ export interface ImageUploadProps {
 /* ------------------------------------------------------------------ */
 
 const DEFAULT_MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+const OPEN_MEDIA_LIBRARY_EVENT = "editor:open-media-library";
 
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
@@ -89,6 +90,22 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
 
     const maxSizeBytes = maxSize ?? DEFAULT_MAX_SIZE;
     const maxSizeMB = Math.round(maxSizeBytes / (1024 * 1024));
+
+    const openMediaLibrary = useCallback(() => {
+      if (disabled || isUploading || isLoading || typeof window === "undefined") {
+        return;
+      }
+
+      window.dispatchEvent(
+        new CustomEvent(OPEN_MEDIA_LIBRARY_EVENT, {
+          detail: {
+            label: label ?? "Image",
+            value,
+            onSelect: (nextUrl: string | null) => onChange(nextUrl),
+          },
+        }),
+      );
+    }, [disabled, isLoading, isUploading, label, onChange, value]);
 
     const onDrop = useCallback(
       async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
@@ -158,6 +175,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
       maxSize: maxSizeBytes,
       disabled: disabled || isUploading || isLoading,
       multiple: false,
+      noClick: true,
     });
 
     const isUploadingState =
@@ -183,6 +201,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
         {/* ----- Success state: image preview ----- */}
         {hasImage ? (
           <Box
+            onClick={openMediaLibrary}
             sx={{
               position: "relative",
               width: "100%",
@@ -191,6 +210,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
               border: 1,
               borderColor: "divider",
               bgcolor: "background.paper",
+              cursor: disabled ? "default" : "pointer",
             }}
           >
             <Box
@@ -229,6 +249,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
           /* ----- Empty / Loading state: dropzone ----- */
           <Box
             {...getRootProps()}
+            onClick={openMediaLibrary}
             role="button"
             tabIndex={disabled ? -1 : 0}
             aria-label={label ? `Upload ${label}` : "Upload image"}
@@ -277,7 +298,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
             >
               {isDragActive
                 ? "Drop the image here"
-                : "Drag & drop an image or click to upload"}
+                : "Drag & drop an image or click to choose"}
             </Typography>
             <Typography variant="caption" sx={{ color: "text.primary" }}>
               JPEG, PNG, GIF, WebP &mdash; max {maxSizeMB}MB

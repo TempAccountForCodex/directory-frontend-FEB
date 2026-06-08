@@ -1676,7 +1676,6 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
-    case "WORKING_HOURS":
       return (
         <BlockWrapper fields={content}>
           <WorkingHoursBlock
@@ -1731,18 +1730,6 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                 ? (link: string) => onCtaClick("IMAGE_TEXT_SPLIT", link)
                 : undefined
             }
-          />
-        </BlockWrapper>
-      );
-
-    case "STORY_PANEL":
-      return (
-        <BlockWrapper fields={content}>
-          <StoryPanelBlock
-            content={content}
-            primaryColor={primaryColor}
-            headingColor={headingColor}
-            bodyColor={bodyColor}
           />
         </BlockWrapper>
       );

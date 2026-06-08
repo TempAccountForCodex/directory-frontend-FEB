@@ -41,6 +41,42 @@ interface BlockTypeEntry {
   searchKeywords?: string[];
 }
 
+const normalizeBlockSelectorToken = (value: string | undefined | null) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
+
+const HIDDEN_BLOCK_SELECTOR_KEYS = new Set([
+  "collage",
+  "portfolio_grid",
+  "story_panel",
+  "decorative",
+  "features",
+  "working_hour",
+  "working_hours",
+  "reservation_form",
+  "table_content",
+  "data_table",
+  "table",
+  "pricing",
+  "blog_feed",
+  "form_builder",
+  "blog_article",
+  "product_showcase",
+  "directory_listing",
+  "steps_process",
+  "steps",
+  "process",
+  "events_list",
+  "social_media_embaded",
+  "social_media_embedded",
+  "social_embed",
+  "menu_service_list",
+  "menu_display",
+  "reviews",
+]);
+
 const BLOCK_TYPES_LIST: BlockTypeEntry[] = [
   // ── Core ──
   {
@@ -385,6 +421,18 @@ const BLOCK_TYPES_LIST: BlockTypeEntry[] = [
   },
 ];
 
+const VISIBLE_BLOCK_TYPES_LIST = BLOCK_TYPES_LIST.filter((block) => {
+  const candidates = [
+    block.key,
+    block.label,
+    ...(Array.isArray(block.searchKeywords) ? block.searchKeywords : []),
+  ];
+
+  return !candidates.some((candidate) =>
+    HIDDEN_BLOCK_SELECTOR_KEYS.has(normalizeBlockSelectorToken(candidate)),
+  );
+});
+
 interface CategoryDef {
   key: string;
   label: string;
@@ -463,10 +511,10 @@ const BlockSelector: React.FC<BlockSelectorProps> = React.memo(
 
     // --- Filter block types by search query ---
     const filteredBlocks = useMemo(() => {
-      if (!searchQuery.trim()) return BLOCK_TYPES_LIST;
+      if (!searchQuery.trim()) return VISIBLE_BLOCK_TYPES_LIST;
 
       const query = searchQuery.toLowerCase().trim();
-      return BLOCK_TYPES_LIST.filter((bt) => {
+      return VISIBLE_BLOCK_TYPES_LIST.filter((bt) => {
         const labelMatch = bt.label.toLowerCase().includes(query);
         const descMatch = bt.description.toLowerCase().includes(query);
         const keyMatch = bt.key.toLowerCase().includes(query);
