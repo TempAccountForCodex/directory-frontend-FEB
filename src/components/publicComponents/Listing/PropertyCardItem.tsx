@@ -51,35 +51,28 @@ const colors = {
 };
 
 const categoryPillSx = {
-  alignSelf: "flex-start",
-  maxWidth: "100%",
-  width: "fit-content",
-  height: 25,
+  position: "absolute",
+  bottom: 12,
+  left: 16,
+  height: 24,
   borderRadius: 999,
-  background: "#398C91",
+  background: "#1a7a74",
   color: "#fff",
   border: 0,
-  boxShadow: "0 10px 22px rgba(17, 27, 27, 0.14)",
+  boxShadow: "none",
+  transition: "background-color 0.15s ease, color 0.15s ease",
+  "&:hover": {
+    background: "#35C5C2",
+    color: "#fff",
+  },
   "& .MuiChip-label": {
-    width: "100%",
-    px: 1.25,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 0.6,
-    fontSize: 8,
-    fontWeight: 800,
+    px: 1.5,
+    fontSize: 11,
+    fontWeight: 700,
     letterSpacing: 0,
     textTransform: "none",
     fontFamily:
       "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    "&::after": {
-      content: '"›"',
-      fontSize: 16,
-      lineHeight: 1,
-      fontWeight: 400,
-      transform: "translateY(-1px)",
-    },
   },
 };
 
@@ -97,6 +90,11 @@ const getInitials = (name: string) =>
     .map((word) => word[0])
     .join("")
     .toUpperCase();
+
+const normalizeTags = (tags: unknown) =>
+  Array.isArray(tags)
+    ? tags.map((tag) => String(tag)).filter(Boolean).slice(0, 2)
+    : [];
 
 const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
   item,
@@ -117,6 +115,9 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
     item.intro ||
     "Directory listing";
   const rating = Number(item.averageRating ?? item.rating ?? 0);
+  const reviewCount = Number(item.reviewCount ?? item.totalReviews ?? 0);
+  const tags = normalizeTags(item.tags);
+  const locationText = [item.city, item.region].filter(Boolean).join(", ");
   const initials = useMemo(() => getInitials(businessName), [businessName]);
   const image =
     item.businessBanner ||
@@ -151,29 +152,29 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
         elevation={0}
         sx={{
           width: "100%",
-          minHeight: 350,
-          borderRadius: 0,
-          bgcolor: "transparent",
-          boxShadow: "none",
+          minHeight: 0,
+          borderRadius: "24px",
+          bgcolor: "#fff",
+          border: "2px solid #1a7a74",
+          boxShadow: "6px 6px 0px #1a7a74",
           cursor: "pointer",
-          overflow: "visible",
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          "&:hover .listing-card-image": {
-            transform: "scale(1.05)",
+          transition: "transform 0.2s ease, box-shadow 0.2s ease",
+          "&:hover": {
+            transform: "translate(-4px, -4px)",
+            boxShadow: "10px 10px 0px #1a7a74",
           },
-          "&:hover .listing-card-title": {
-            color: colors.teal,
+          "&:hover .listing-card-image": {
+            transform: "scale(1.04)",
           },
         }}
       >
         <Box
           sx={{
             position: "relative",
-            borderTopLeftRadius: "5px",
-            borderTopRightRadius: "5px",
-            aspectRatio: "4 / 3",
-            mb: 2.5,
+            height: 160,
             overflow: "hidden",
             bgcolor: colors.soft,
           }}
@@ -187,37 +188,18 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
               width: "100%",
               height: "100%",
               objectFit: "cover",
-              transition: "transform 700ms ease",
-              borderTopLeftRadius: "5px",
-              borderTopRightRadius: "5px"
+              transition: "transform 0.35s ease",
             }}
           />
-
           <Box
-            aria-label={`${businessName} initials`}
             sx={{
               position: "absolute",
-              bottom: 12,
-              left: 12,
-              width: 54,
-              height: 54,
-              borderRadius: "50%",
-              bgcolor: colors.teal,
-              color: "#fff",
-              border: "4px solid #fff",
-              boxShadow: "0 10px 22px rgba(0,0,0,0.22)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              fontSize: 20,
-              fontWeight: 600,
-              lineHeight: 1,
-              userSelect: "none",
+              inset: 0,
+              background:
+                "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.4) 100%)",
             }}
-          >
-            {initials}
-          </Box>
+          />
+          <Chip label={category} sx={categoryPillSx} />
 
           {auth.user &&
             (auth.user.role === "admin" ||
@@ -265,62 +247,122 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
             )}
         </Box>
 
-        <Chip
-          label={category}
-          sx={{ ...categoryPillSx, mb: 1.4 }}
-        />
+        <Box sx={{ p: "20px" }}>
+          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: "14px",
+                overflow: "hidden",
+                flexShrink: 0,
+                border: "2px solid #1a7a74",
+                bgcolor: "#e6f0ef",
+              }}
+            >
+              {item.businessLogo ? (
+                <Box
+                  component="img"
+                  src={item.businessLogo}
+                  alt={businessName}
+                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#1a7a74",
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                >
+                  {initials}
+                </Box>
+              )}
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: 14,
+                  color: "#111827",
+                  lineHeight: 1.3,
+                }}
+              >
+                {businessName}
+              </Typography>
+              <Typography sx={{ fontSize: 11, color: "#9ca3af", mt: "2px" }}>
+                {locationText || category}
+              </Typography>
+            </Box>
+          </Stack>
 
-        <Typography
-          className="listing-card-title"
-          sx={{
-            color: colors.ink,
-            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontSize: 23,
-            lineHeight: 1.2,
-            letterSpacing: 0,
-            mt: 0.75,
-            mb: 0.75,
-            minHeight: 30,
-            display: "-webkit-box",
-            overflow: "hidden",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            transition: "color 200ms ease",
-          }}
-        >
-          {businessName}
-        </Typography>
-
-        <Typography
-          sx={{
-            color: colors.muted,
-            fontSize: 13,
-            lineHeight: 1.55,
-            mb: 1,
-            minHeight: 38,
-            display: "-webkit-box",
-            overflow: "hidden",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
-          {description}
-        </Typography>
-
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={0.6}
-          sx={{ mt: "auto", mb: 1, minHeight: 20 }}
-        >
-          <StarIcon sx={{ color: colors.teal, fontSize: 14 }} />
-          <Typography sx={{ color: colors.ink, fontSize: 12, fontWeight: 700 }}>
-            {rating ? rating.toFixed(1) : "New"}
+          <Typography
+            sx={{
+              fontSize: 13,
+              color: "#6b7280",
+              lineHeight: 1.6,
+              mb: 2,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {description}
           </Typography>
-          {item.hasStore && (
-            <StorefrontIcon sx={{ color: colors.muted, fontSize: 14 }} />
+
+          {tags.length > 0 && (
+            <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 2 }}>
+              {tags.map((tag) => (
+                <Box
+                  key={tag}
+                  sx={{
+                    fontSize: 11,
+                    px: "10px",
+                    py: "4px",
+                    borderRadius: 999,
+                    border: "1.5px solid #1a7a74",
+                    color: "#1a7a74",
+                    fontWeight: 500,
+                    transition: "background 0.15s ease, color 0.15s ease",
+                    "&:hover": {
+                      background: "#1a7a74",
+                      color: "#fff",
+                    },
+                  }}
+                >
+                  {tag}
+                </Box>
+              ))}
+            </Stack>
           )}
-        </Stack>
+
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={0.75}
+            sx={{
+              pt: 2,
+              borderTop: "1.5px dashed rgba(26,122,116,0.25)",
+            }}
+          >
+            <StarIcon sx={{ color: "#1a7a74", fontSize: 16 }} />
+            <Typography sx={{ color: "#111827", fontSize: 14, fontWeight: 700 }}>
+              {rating ? rating.toFixed(1) : "New"}
+            </Typography>
+            <Typography sx={{ color: "#9ca3af", fontSize: 12 }}>
+              {reviewCount ? `· ${reviewCount} reviews` : "· No reviews yet"}
+            </Typography>
+            {item.hasStore && (
+              <StorefrontIcon sx={{ color: "#9ca3af", fontSize: 14, ml: 0.5 }} />
+            )}
+          </Stack>
+        </Box>
       </Card>
 
       <Modal

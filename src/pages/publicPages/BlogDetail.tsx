@@ -16,12 +16,12 @@ import { alpha, useTheme as useMuiTheme } from "@mui/material/styles";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { SITE_URL } from "../../utils/seo/seoConfig";
 import {
-  fallbackBlogPosts,
-  fetchBlogPost,
-  fetchBlogPosts,
-  getBlogAssetUrl,
-  type BlogPost,
-} from "../../api/blogs";
+  fallbackInsights,
+  fetchPublicInsight,
+  fetchPublicInsights,
+  getInsightImageUrl,
+  type InsightPost,
+} from "../../api/insights";
 
 const FADE_IN_CLASS = "fade-in-on-view";
 const INSIGHT_HELPFUL_STORAGE_KEY = "insight-helpful-votes";
@@ -118,13 +118,13 @@ const InsightsDetailsNew = () => {
   const navigate = useNavigate();
   const muiTheme = useMuiTheme();
   const stateInsight = location.state?.insight;
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(fallbackBlogPosts);
-  const [apiInsight, setApiInsight] = useState<BlogPost | null>(null);
+  const [insights, setInsights] = useState<InsightPost[]>(fallbackInsights);
+  const [apiInsight, setApiInsight] = useState<InsightPost | null>(null);
 
   useEffect(() => {
     let ignore = false;
-    fetchBlogPosts().then((posts) => {
-      if (!ignore) setBlogPosts(posts);
+    fetchPublicInsights().then((items) => {
+      if (!ignore) setInsights(items);
     });
     return () => {
       ignore = true;
@@ -134,8 +134,8 @@ const InsightsDetailsNew = () => {
   useEffect(() => {
     if (!id) return undefined;
     let ignore = false;
-    fetchBlogPost(id).then((post) => {
-      if (!ignore) setApiInsight(post);
+    fetchPublicInsight(id).then((item) => {
+      if (!ignore) setApiInsight(item);
     });
     return () => {
       ignore = true;
@@ -197,10 +197,10 @@ const InsightsDetailsNew = () => {
   const selectedInsight = useMemo(() => {
     const localMatch =
       apiInsight ||
-      blogPosts.find(
+      insights.find(
         (item) => item.slug === id || item.legacyId === id || item.id === id,
       ) ||
-      fallbackBlogPosts[0];
+      fallbackInsights[0];
 
     if (stateInsight) {
       const mergedFromState = {
@@ -220,7 +220,7 @@ const InsightsDetailsNew = () => {
       };
     }
     return localMatch;
-  }, [apiInsight, blogPosts, id, stateInsight]);
+  }, [apiInsight, id, insights, stateInsight]);
 
   const sections = useMemo(
     () =>
@@ -309,8 +309,8 @@ const InsightsDetailsNew = () => {
   }, [sections, selectedInsight.id]);
 
   const relatedArticles = useMemo(
-    () => blogPosts.filter((item) => item.id !== selectedInsight.id).slice(0, 6),
-    [blogPosts, selectedInsight.id]
+    () => insights.filter((item) => item.id !== selectedInsight.id).slice(0, 6),
+    [insights, selectedInsight.id]
   );
 
   const sidebarArticles = relatedArticles.slice(0, 3);
@@ -779,7 +779,7 @@ const InsightsDetailsNew = () => {
             <Box
               className={FADE_IN_CLASS}
               component="img"
-              src={getBlogAssetUrl(selectedInsight.image)}
+              src={getInsightImageUrl(selectedInsight.image)}
               alt={selectedInsight.title}
               width="1400"
               height="760"
@@ -1206,7 +1206,7 @@ const InsightsDetailsNew = () => {
                     >
                       <Box
                         component="img"
-                        src={getBlogAssetUrl(article.image)}
+                        src={getInsightImageUrl(article.image)}
                         alt={article.title}
                         loading="lazy"
                         decoding="async"
@@ -1290,7 +1290,7 @@ const InsightsDetailsNew = () => {
                 >
                   <Box
                     component="img"
-                    src={getBlogAssetUrl(article.image)}
+                    src={getInsightImageUrl(article.image)}
                     alt={article.title}
                     loading="lazy"
                     decoding="async"

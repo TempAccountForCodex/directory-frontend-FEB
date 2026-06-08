@@ -44,32 +44,27 @@ const homeHeroFont =
   "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 const listingCategoryPillSx = {
-  width: "fit-content",
-  height: 25,
+  position: "absolute",
+  bottom: 12,
+  left: 16,
+  height: 24,
   borderRadius: 999,
-  background: "#398C91",
+  background: "#1a7a74",
   color: "#fff",
   border: 0,
-  boxShadow: "0 10px 22px rgba(17, 27, 27, 0.14)",
+  boxShadow: "none",
+  transition: "background-color 0.15s ease, color 0.15s ease",
+  "&:hover": {
+    background: "#35C5C2",
+    color: "#fff",
+  },
   "& .MuiChip-label": {
-    width: "100%",
-    px: 1.25,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 0.6,
-    fontSize: 10,
-    fontWeight: 800,
+    px: 1.5,
+    fontSize: 11,
+    fontWeight: 700,
     letterSpacing: 0,
     textTransform: "none",
     fontFamily: homeHeroFont,
-    "&::after": {
-      content: '"›"',
-      fontSize: 16,
-      lineHeight: 1,
-      fontWeight: 400,
-      transform: "translateY(-1px)",
-    },
   },
 };
 
@@ -1073,6 +1068,10 @@ const ListingDetails: React.FC = () => {
                 biz.shortDescription ||
                 stripHtml(biz.desc) ||
                 "Strategic services for growing businesses.";
+              const locationText = [biz.city, biz.region]
+                .filter(Boolean)
+                .join(", ");
+              const tags = normalizeTags(biz.tags).slice(0, 2);
               const image =
                 biz.businessBanner ||
                 biz.image ||
@@ -1088,21 +1087,29 @@ const ListingDetails: React.FC = () => {
                     component={RouterLink}
                     to={to}
                     sx={{
-                      display: "block",
+                      display: "flex",
+                      flexDirection: "column",
                       color: "inherit",
                       textDecoration: "none",
-                      "&:hover .related-image": {
-                        transform: "scale(1.05)",
+                      bgcolor: "#fff",
+                      borderRadius: "24px",
+                      overflow: "hidden",
+                      border: "2px solid #1a7a74",
+                      boxShadow: "6px 6px 0px #1a7a74",
+                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                      "&:hover": {
+                        transform: "translate(-4px, -4px)",
+                        boxShadow: "10px 10px 0px #1a7a74",
                       },
-                      "&:hover .related-title": {
-                        color: palette.teal,
+                      "&:hover .related-image": {
+                        transform: "scale(1.04)",
                       },
                     }}
                   >
                     <Box
                       sx={{
-                        aspectRatio: "4 / 3",
-                        mb: 2.5,
+                        position: "relative",
+                        height: 160,
                         overflow: "hidden",
                         bgcolor: palette.soft,
                       }}
@@ -1116,49 +1123,130 @@ const ListingDetails: React.FC = () => {
                           width: "100%",
                           height: "100%",
                           objectFit: "cover",
-                          transition: "transform 700ms ease",
+                          transition: "transform 0.35s ease",
                         }}
                       />
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          background:
+                            "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.4) 100%)",
+                        }}
+                      />
+                      <Chip label={category} sx={listingCategoryPillSx} />
                     </Box>
-                    <Chip
-                      label={category}
-                      sx={{ ...listingCategoryPillSx, mb: 1.4 }}
-                    />
-                    <Typography
-                      className="related-title"
-                      sx={{
-                        fontFamily:
-                          "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontSize: 27,
-                        lineHeight: 1.2,
-                        mb: 0.75,
-                        transition: "color 200ms ease",
-                      }}
-                    >
-                      {name}
-                    </Typography>
-                    <Typography
-                      sx={{ color: palette.muted, fontSize: 14, mb: 1 }}
-                    >
-                      {description}
-                    </Typography>
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <StarIcon sx={{ color: palette.teal, fontSize: 14 }} />
+                    <Box sx={{ p: "20px" }}>
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={1.5}
+                        sx={{ mb: 2 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: "14px",
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            border: "2px solid #1a7a74",
+                            bgcolor: "#e6f0ef",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#1a7a74",
+                            fontWeight: 700,
+                            fontSize: 14,
+                          }}
+                        >
+                          {biz.businessLogo ? (
+                            <Box
+                              component="img"
+                              src={biz.businessLogo}
+                              alt={name}
+                              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          ) : (
+                            getInitials(name)
+                          )}
+                        </Box>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: 14,
+                              color: "#111827",
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {name}
+                          </Typography>
+                          <Typography sx={{ fontSize: 11, color: "#9ca3af", mt: "2px" }}>
+                            {locationText || category}
+                          </Typography>
+                        </Box>
+                      </Stack>
                       <Typography
                         sx={{
-                          color: palette.ink,
-                          fontSize: 12,
-                          fontWeight: 700,
+                          fontSize: 13,
+                          color: "#6b7280",
+                          lineHeight: 1.6,
+                          mb: 2,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
                         }}
                       >
-                        {rating ? rating.toFixed(1) : "New"}
+                        {description}
                       </Typography>
-                      {biz.hasStore && (
-                        <StorefrontIcon
-                          sx={{ color: palette.muted, fontSize: 14, ml: 1 }}
-                        />
+                      {tags.length > 0 && (
+                        <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 2 }}>
+                          {tags.map((tag) => (
+                            <Box
+                              key={tag}
+                              sx={{
+                                fontSize: 11,
+                                px: "10px",
+                                py: "4px",
+                                borderRadius: 999,
+                                border: "1.5px solid #1a7a74",
+                                color: "#1a7a74",
+                                fontWeight: 500,
+                                transition: "background 0.15s ease, color 0.15s ease",
+                                "&:hover": {
+                                  background: "#1a7a74",
+                                  color: "#fff",
+                                },
+                              }}
+                            >
+                              {tag}
+                            </Box>
+                          ))}
+                        </Stack>
                       )}
-                    </Stack>
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={0.75}
+                        sx={{
+                          pt: 2,
+                          borderTop: "1.5px dashed rgba(26,122,116,0.25)",
+                        }}
+                      >
+                        <StarIcon sx={{ color: "#1a7a74", fontSize: 16 }} />
+                        <Typography sx={{ color: "#111827", fontSize: 14, fontWeight: 700 }}>
+                          {rating ? rating.toFixed(1) : "New"}
+                        </Typography>
+                        <Typography sx={{ color: "#9ca3af", fontSize: 12 }}>
+                          {biz.reviewCount ? `· ${biz.reviewCount} reviews` : "· No reviews yet"}
+                        </Typography>
+                        {biz.hasStore && (
+                          <StorefrontIcon sx={{ color: "#9ca3af", fontSize: 14, ml: 0.5 }} />
+                        )}
+                      </Stack>
+                    </Box>
                   </Box>
                 </Grid>
               );

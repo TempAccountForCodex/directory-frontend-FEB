@@ -12,13 +12,12 @@ import {
 import ScrollToTopButton from "../../utils/commons/ScrollToTopBtn";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import {
-  fallbackBlogPosts,
-  fetchBlogPosts,
-  getBlogAssetUrl,
-  type BlogPost,
-} from "../../api/blogs";
+  fallbackInsights,
+  fetchPublicInsights,
+  getInsightImageUrl,
+  type InsightPost,
+} from "../../api/insights";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5001";
 const star = "/assets/publicAssets/images/common/star.svg";
 const homeHeroFont =
   "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
@@ -33,7 +32,7 @@ const getImageUrl = (imagePath) => {
     return `/assets/images/insights/blog${optimizedInsightMatch[1]}.svg`;
   }
   if (imagePath.startsWith("/assets")) return imagePath;
-  return getBlogAssetUrl(imagePath) || `${BASE_URL}${imagePath}`;
+  return getInsightImageUrl(imagePath);
 };
 
 const formatDate = (dateString) => {
@@ -66,12 +65,12 @@ const InsightsPage = () => {
   const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
 
   const [activeCategory, setActiveCategory] = useState("All");
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(fallbackBlogPosts);
+  const [insights, setInsights] = useState<InsightPost[]>(fallbackInsights);
 
   useEffect(() => {
     let ignore = false;
-    fetchBlogPosts().then((posts) => {
-      if (!ignore) setBlogPosts(posts);
+    fetchPublicInsights().then((items) => {
+      if (!ignore) setInsights(items);
     });
     return () => {
       ignore = true;
@@ -80,15 +79,15 @@ const InsightsPage = () => {
 
   const categories = useMemo<string[]>(() => {
     const dataCategories = Array.from(
-      new Set(blogPosts.map((article) => article.category).filter(Boolean))
+      new Set(insights.map((article) => article.category).filter(Boolean))
     ).sort() as string[];
     return ["All", ...dataCategories];
-  }, [blogPosts]);
+  }, [insights]);
 
   const filtered = useMemo(() => {
-    if (activeCategory === "All") return blogPosts;
-    return blogPosts.filter((article) => article.category === activeCategory);
-  }, [activeCategory, blogPosts]);
+    if (activeCategory === "All") return insights;
+    return insights.filter((article) => article.category === activeCategory);
+  }, [activeCategory, insights]);
 
   const featured = useMemo(() => {
     if (!filtered.length) return undefined;
