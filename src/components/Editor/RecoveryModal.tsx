@@ -17,6 +17,7 @@ import {
   Typography,
   Box,
   LinearProgress,
+  alpha,
 } from "@mui/material";
 import {
   InfoOutlined as InfoIcon,
@@ -61,6 +62,58 @@ function formatTimeAgo(timestamp: number): string {
   if (diffHr < 24) return `${diffHr} hour${diffHr === 1 ? "" : "s"} ago`;
   return `${Math.floor(diffHr / 24)} day${Math.floor(diffHr / 24) === 1 ? "" : "s"} ago`;
 }
+
+const primaryButtonSx = {
+  minHeight: 40,
+  px: 2.1,
+  borderRadius: "999px",
+  textTransform: "none",
+  fontSize: "0.92rem",
+  fontWeight: 800,
+  color: "#ffffff",
+  background: "linear-gradient(135deg, #111827 0%, #020617 100%)",
+  boxShadow: "none",
+  border: "1px solid rgba(255,255,255,0.08)",
+
+  "&:hover": {
+    background: "linear-gradient(135deg, #0f172a 0%, #000000 100%)",
+    boxShadow: "none",
+  },
+
+  "& .MuiButton-startIcon": {
+    mr: 0.75,
+  },
+
+  "& svg": {
+    fontSize: 18,
+  },
+};
+
+const secondaryButtonSx = {
+  minHeight: 40,
+  px: 2,
+  borderRadius: "999px",
+  textTransform: "none",
+  fontSize: "0.92rem",
+  fontWeight: 800,
+  color: "#111827",
+  backgroundColor: "#f3f4f6",
+  boxShadow: "none",
+  border: "1px solid rgba(17,24,39,0.08)",
+
+  "&:hover": {
+    backgroundColor: "#e5e7eb",
+    boxShadow: "none",
+  },
+
+  "& .MuiButton-startIcon": {
+    mr: 0.75,
+  },
+
+  "& svg": {
+    fontSize: 18,
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Component
@@ -153,27 +206,43 @@ const RecoveryModal: React.FC<RecoveryModalProps> = memo(
             <LinearProgress
               variant="determinate"
               value={progress}
-              color="error"
-              sx={{ height: 4, borderRadius: 2 }}
+              sx={{
+                height: 4,
+                borderRadius: 999,
+                backgroundColor: alpha("#111827", 0.14),
+
+                "& .MuiLinearProgress-bar": {
+                  borderRadius: 999,
+                  backgroundColor: "#111827",
+                },
+              }}
             />
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions
+          sx={{
+            px: 3,
+            pb: 2.5,
+            pt: 0.75,
+            gap: 1,
+          }}
+        >
           <Button
             onClick={handleDiscard}
-            color="inherit"
             startIcon={<DiscardIcon />}
             data-testid="recovery-discard"
+            sx={secondaryButtonSx}
           >
             Discard
           </Button>
+
           <Button
             onClick={handleRestore}
             variant="contained"
-            color="primary"
             startIcon={<RestoreIcon />}
             data-testid="recovery-restore"
+            sx={primaryButtonSx}
           >
             Restore Changes
           </Button>

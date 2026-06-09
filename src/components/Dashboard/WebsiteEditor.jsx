@@ -1066,7 +1066,28 @@ const buildInnerBlockFromLibraryItem = (item) => {
         label,
         content: {
           heading: "Trusted by modern teams",
-          items: ["Vertex", "Northstar", "Atlas", "Nova"],
+          items: [
+            {
+              name: "Ebay",
+              image:
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='48' viewBox='0 0 150 48'%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' fill='white' font-size='28' font-family='Arial' font-weight='800'%3Eebay%3C/text%3E%3C/svg%3E",
+            },
+            {
+              name: "OpenAI",
+              image:
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/3840px-OpenAI_Logo.svg.png",
+            },
+            {
+              name: "Shopify",
+              image:
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='48' viewBox='0 0 180 48'%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' fill='white' font-size='27' font-family='Arial' font-weight='800'%3EShopify%3C/text%3E%3C/svg%3E",
+            },
+            {
+              name: "Meta",
+              image:
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='48' viewBox='0 0 150 48'%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' fill='white' font-size='28' font-family='Arial' font-weight='800'%3EMeta%3C/text%3E%3C/svg%3E",
+            },
+          ],
         },
       };
     case "map_location":
@@ -1612,6 +1633,7 @@ const WebsiteEditorInner = () => {
   const previewContextMenuRef = useRef(null);
   const imageLibraryInputRef = useRef(null);
   const imageReplaceInputRef = useRef(null);
+  const imageLibraryPickerInputRef = useRef(null);
   const handleInsertBlockFromLibraryRef = useRef(null);
   const previewSelectionNonceRef = useRef(0);
   const previewTransformHistoryPrimedRef = useRef(false);
@@ -7471,6 +7493,16 @@ const WebsiteEditorInner = () => {
             },
           }}
         >
+          <input
+            ref={imageLibraryPickerInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(event) => {
+              void handleReplaceSelectedImage(event.target.files?.[0] || null);
+              event.target.value = "";
+            }}
+          />
           <DialogTitle
             sx={{
               px: 3,
@@ -7520,7 +7552,7 @@ const WebsiteEditorInner = () => {
               <Button
                 variant="contained"
                 startIcon={<Upload size={16} />}
-                onClick={() => imageReplaceInputRef.current?.click()}
+                onClick={() => imageLibraryPickerInputRef.current?.click()}
                 sx={{
                   minHeight: 40,
                   textTransform: "none",

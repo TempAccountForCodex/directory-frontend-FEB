@@ -17,6 +17,28 @@ const DEFAULT_TEAM_IMAGES = [
   "/assets/publicAssets/images/home/avatar2.webp",
   "/assets/publicAssets/images/home/avatar3.webp",
 ];
+const DEFAULT_LOGO_CAROUSEL_ITEMS = [
+  {
+    name: "Ebay",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='48' viewBox='0 0 150 48'%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' fill='white' font-size='28' font-family='Arial' font-weight='800'%3Eebay%3C/text%3E%3C/svg%3E",
+  },
+  {
+    name: "OpenAI",
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/3840px-OpenAI_Logo.svg.png",
+  },
+  {
+    name: "Shopify",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='48' viewBox='0 0 180 48'%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' fill='white' font-size='27' font-family='Arial' font-weight='800'%3EShopify%3C/text%3E%3C/svg%3E",
+  },
+  {
+    name: "Meta",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='48' viewBox='0 0 150 48'%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' fill='white' font-size='28' font-family='Arial' font-weight='800'%3EMeta%3C/text%3E%3C/svg%3E",
+  },
+];
 
 const makeTextField = (
   name: string,
@@ -345,15 +367,8 @@ export const getBlockDefaultContent = (
       };
     case "LOGO_CAROUSEL":
       return {
-        heading: "Trusted by leading brands",
-        logos: [
-          { src: DEFAULT_IMAGE, alt: "Brand 1", name: "Vertex" },
-          {
-            src: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&w=600&q=80",
-            alt: "Brand 2",
-            name: "Northstar",
-          },
-        ],
+        heading: "Trusted by modern teams",
+        items: DEFAULT_LOGO_CAROUSEL_ITEMS,
       };
     case "MAP_LOCATION":
       return {
@@ -497,7 +512,11 @@ export const getBlockDefaultContent = (
       };
     case "COUNTDOWN":
       return {
-        heading: "Offer ends soon",
+        heading: "Launch countdown",
+        body: "Build urgency for your upcoming launch or event.",
+        days: 12,
+        hours: 8,
+        minutes: 44,
         endDate: "2026-12-31T23:59:59Z",
         ctaText: "Claim now",
         ctaLink: "#contact",
@@ -669,6 +688,32 @@ export const getLocalFieldMetadata = (
           label: makeTextField("label", "Label", 2),
         }),
       ]);
+    case "COUNTDOWN":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        makeTextField("body", "Body", 2, true),
+        {
+          name: "days",
+          label: "Days",
+          type: "NUMBER",
+          order: 3,
+          validation: { min: 0, max: 3650 },
+        },
+        {
+          name: "hours",
+          label: "Hours",
+          type: "NUMBER",
+          order: 4,
+          validation: { min: 0, max: 23 },
+        },
+        {
+          name: "minutes",
+          label: "Minutes",
+          type: "NUMBER",
+          order: 5,
+          validation: { min: 0, max: 59 },
+        },
+      ]);
     case "IMAGE_TEXT_SPLIT":
       return contentGroup([
         makeTextField("heading", "Heading", 1),
@@ -725,6 +770,61 @@ export const getLocalFieldMetadata = (
           {
             max: 3,
             hideAddButton: true,
+          },
+        ),
+      ]);
+    case "LOGO_CAROUSEL":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        makeRepeaterField(
+          "items",
+          "Logo Images",
+          2,
+          {
+            image: {
+              name: "image",
+              label: "Logo Image",
+              type: "IMAGE",
+              order: 1,
+            },
+            name: makeTextField("name", "Logo Name", 2),
+          },
+          {
+            min: 3,
+            max: 6,
+            hideAddWhenMax: true,
+            normalizeItem: (item: unknown, index: number) => {
+              const fallback =
+                DEFAULT_LOGO_CAROUSEL_ITEMS[
+                  index % DEFAULT_LOGO_CAROUSEL_ITEMS.length
+                ];
+
+              if (typeof item === "string") {
+                return {
+                  name: item || fallback.name,
+                  image: fallback.image,
+                };
+              }
+
+              if (typeof item === "object" && item !== null) {
+                const record = item as Record<string, unknown>;
+                return {
+                  ...record,
+                  name:
+                    typeof record.name === "string" && record.name.trim()
+                      ? record.name
+                      : fallback.name,
+                  image:
+                    typeof record.image === "string" && record.image.trim()
+                      ? record.image
+                      : typeof record.src === "string" && record.src.trim()
+                        ? record.src
+                        : fallback.image,
+                };
+              }
+
+              return fallback;
+            },
           },
         ),
       ]);

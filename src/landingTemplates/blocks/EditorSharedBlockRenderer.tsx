@@ -3587,15 +3587,15 @@ export const renderEditorSharedBlock = ({
     const countdownParts = [
       {
         label: "Days",
-        value: String(block.content?.days || "12").padStart(2, "0"),
+        value: String(block.content?.days ?? "12").padStart(2, "0"),
       },
       {
         label: "Hours",
-        value: String(block.content?.hours || "08").padStart(2, "0"),
+        value: String(block.content?.hours ?? "08").padStart(2, "0"),
       },
       {
         label: "Minutes",
-        value: String(block.content?.minutes || "44").padStart(2, "0"),
+        value: String(block.content?.minutes ?? "44").padStart(2, "0"),
       },
     ];
 
@@ -4043,6 +4043,10 @@ export const renderEditorSharedBlock = ({
             logo?.image ||
             logo?.src ||
             defaultItems[logoIndex % defaultItems.length].image,
+          useOriginalColors:
+            typeof logo?.useOriginalColors === "boolean"
+              ? logo.useOriginalColors
+              : false,
         };
       })
       .filter((logo: any) => logo.image);
@@ -4141,31 +4145,41 @@ export const renderEditorSharedBlock = ({
               alignItems: "center",
             }}
           >
-            {items.map((logo: any, logoIndex: number) => (
-              <Box
-                key={`${logo.name}-${logoIndex}`}
-                sx={{
-                  height: { xs: 42, md: 56 },
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: 0.9,
-                }}
-              >
-                <Box
-                  component="img"
-                  src={logo.image}
-                  alt={logo.name}
-                  sx={{
-                    maxWidth: { xs: 120, md: 170 },
-                    width: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain",
-                    filter: "brightness(0) invert(1)",
-                  }}
-                />
-              </Box>
-            ))}
+            {items.map((logo: any, logoIndex: number) => {
+                const logoSrc = String(logo?.image || "");
+                const shouldInvertLogo =
+                  logo?.useOriginalColors !== true &&
+                  (logoSrc.startsWith("data:image/svg+xml") ||
+                    /\.svg(?:\?|$)/i.test(logoSrc));
+
+                return (
+                  <Box
+                    key={`${logo.name}-${logoIndex}`}
+                    sx={{
+                      height: { xs: 42, md: 56 },
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: 0.9,
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={logo.image}
+                      alt={logo.name}
+                      sx={{
+                        maxWidth: { xs: 120, md: 170 },
+                        width: "100%",
+                        maxHeight: "100%",
+                        objectFit: "contain",
+                        filter: shouldInvertLogo
+                          ? "brightness(0) invert(1)"
+                          : "none",
+                      }}
+                    />
+                  </Box>
+                );
+              })}
           </Box>
         </Stack>
       </Box>

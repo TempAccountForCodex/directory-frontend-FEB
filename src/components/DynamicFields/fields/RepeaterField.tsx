@@ -83,6 +83,9 @@ const createEmptyRepeaterItem = (
   return nextItem as RepeaterItem;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 // ---------------------------------------------------------------------------
 // Internal types
 // ---------------------------------------------------------------------------
@@ -157,16 +160,31 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
     const max: number =
       typeof uiProps["max"] === "number" ? uiProps["max"] : Infinity;
     const hideAddButton = Boolean(uiProps["hideAddButton"]);
+    const hideAddWhenMax = Boolean(uiProps["hideAddWhenMax"]);
+    const normalizeItem =
+      typeof uiProps["normalizeItem"] === "function"
+        ? (uiProps["normalizeItem"] as (
+            item: unknown,
+            index: number,
+          ) => Record<string, unknown> | null | undefined)
+        : null;
 
     // --- Normalise value to RepeaterItem[] with stable _id ---
     const items: RepeaterItem[] = (Array.isArray(value) ? value : []).map(
-      (item, i) => ({
-        ...(item as Record<string, unknown>),
-        _id:
-          typeof (item as Record<string, unknown>)["_id"] === "string"
-            ? ((item as Record<string, unknown>)["_id"] as string)
-            : String(i),
-      }),
+      (item, i) => {
+        const normalizedItem = normalizeItem?.(item, i);
+        const source = isRecord(normalizedItem)
+          ? normalizedItem
+          : isRecord(item)
+            ? item
+            : {};
+
+        return {
+          ...source,
+          _id:
+            typeof source["_id"] === "string" ? source["_id"] : String(i),
+        };
+      },
     );
 
     // --- Per-item collapse state keyed by _id (survives reorders) ---
@@ -396,7 +414,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
         </DndContext>
 
         {/* Add button */}
-        {!hideAddButton && (
+        {!hideAddButton && (!hideAddWhenMax || canAdd) && (
           <Button
             startIcon={<AddIcon />}
             onClick={handleAdd}
