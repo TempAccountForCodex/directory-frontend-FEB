@@ -1199,6 +1199,19 @@ const buildInnerBlockFromLibraryItem = (item) => {
           url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         },
       };
+    case "before_after":
+      return {
+        type: "before_after",
+        label,
+        content: {
+          beforeImage:
+            "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=1200&q=80",
+          afterImage:
+            "https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=1200&q=80",
+          beforeLabel: "Before",
+          afterLabel: "After",
+        },
+      };
     default:
       return {
         type: "generic_card",

@@ -874,6 +874,10 @@ const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
           content.descriptionStyle ||
           content.bodyStyle,
         buttonTextStyle: content.buttonTextStyle || content.ctaTextStyle,
+        beforeImage: typeof content.beforeImage === "string" ? content.beforeImage : undefined,
+        afterImage: typeof content.afterImage === "string" ? content.afterImage : undefined,
+        beforeLabel: typeof content.beforeLabel === "string" ? content.beforeLabel : undefined,
+        afterLabel: typeof content.afterLabel === "string" ? content.afterLabel : undefined,
         innerBlocks: Array.isArray(content.innerBlocks)
           ? content.innerBlocks
           : [],

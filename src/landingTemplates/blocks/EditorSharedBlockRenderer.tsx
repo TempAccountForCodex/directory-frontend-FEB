@@ -258,6 +258,7 @@ export const EDITOR_SHARED_BLOCK_TYPES = new Set([
   "map_location",
   "social_embed",
   "embed",
+  "before_after",
 ]);
 
 export const isEditorSharedBlockType = (value = "") =>
@@ -291,6 +292,7 @@ export const EDITOR_CARD_STYLE_BLOCK_TYPES = new Set([
   "map_location",
   "social_embed",
   "embed",
+  "before_after",
 ]);
 
 export const getEditorBlockTransform = (block: Record<string, any>) => {
@@ -395,6 +397,260 @@ export type EditorSharedBlockRenderContext = {
     fieldPath: string,
     fallbackStyle?: Record<string, any>,
   ) => Record<string, any>;
+};
+
+const BeforeAfterEditorPreview: React.FC<{
+  block: Record<string, any>;
+  section?: Record<string, any>;
+  compoundBlockSelectionProps: Record<string, any>;
+  compoundBlockLabel: string;
+  compoundCardSx: Record<string, any>;
+  rawCardStyle: Record<string, any>;
+  resolvedCardStyle: Record<string, any>;
+}> = ({
+  block,
+  section,
+  compoundBlockSelectionProps,
+  compoundBlockLabel,
+  compoundCardSx,
+  rawCardStyle,
+  resolvedCardStyle,
+}) => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [position, setPosition] = React.useState(50);
+  const isDragging = React.useRef(false);
+
+  const computePosition = React.useCallback((clientX: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const relX = clientX - rect.left;
+    setPosition(Math.min(100, Math.max(0, (relX / rect.width) * 100)));
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    isDragging.current = true;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    computePosition(e.clientX);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    computePosition(e.clientX);
+  };
+
+  const handlePointerUp = () => {
+    isDragging.current = false;
+  };
+
+  const fallback =
+    "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=1200&q=80";
+
+  const beforeImage =
+    section?.beforeImage || block.content?.beforeImage || fallback;
+  const afterImage =
+    section?.afterImage ||
+    block.content?.afterImage ||
+    "https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=1200&q=80";
+  const beforeLabel =
+    section?.beforeLabel || block.content?.beforeLabel || "Before";
+  const afterLabel =
+    section?.afterLabel || block.content?.afterLabel || "After";
+  const clipPath = `inset(0 ${100 - position}% 0 0)`;
+
+  const hasCustomPadding =
+    rawCardStyle.padding !== undefined ||
+    rawCardStyle.paddingTop !== undefined ||
+    resolvedCardStyle.padding !== undefined ||
+    resolvedCardStyle.paddingTop !== undefined;
+
+  return (
+    <Box
+      {...compoundBlockSelectionProps}
+      data-preview-label={compoundBlockLabel}
+      sx={{
+        ...compoundCardSx,
+        overflow: "hidden",
+        ...(!hasCustomPadding ? { p: 0 } : {}),
+        boxShadow: "none",
+        border: "none",
+        backgroundColor: "transparent",
+        backgroundImage: "none",
+        borderRadius: 0,
+        pt: rawCardStyle.paddingTop ?? resolvedCardStyle.paddingTop ?? "40px",
+        pb:
+          rawCardStyle.paddingBottom ??
+          resolvedCardStyle.paddingBottom ??
+          "60px",
+      }}
+    >
+      {/* Draggable comparison frame */}
+      <Box
+        ref={containerRef}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        sx={{
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: "12px",
+          cursor: "col-resize",
+          userSelect: "none",
+          aspectRatio: "16/9",
+          touchAction: "none",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.1)",
+          bgcolor: "#e2e8f0",
+        }}
+      >
+        {/* Before image */}
+        <Box
+          component="img"
+          src={beforeImage}
+          alt={beforeLabel}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            pointerEvents: "none",
+            userSelect: "none",
+            display: "block",
+          }}
+        />
+
+        {/* After image — revealed by clip-path */}
+        <Box
+          component="img"
+          src={afterImage}
+          alt={afterLabel}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            clipPath,
+            pointerEvents: "none",
+            userSelect: "none",
+            display: "block",
+          }}
+        />
+
+        {/* Before label */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 14,
+            left: 14,
+            px: 1.5,
+            py: 0.5,
+            bgcolor: "rgba(255,255,255,0.9)",
+            borderRadius: "6px",
+            pointerEvents: "none",
+            zIndex: 5,
+            backdropFilter: "blur(6px)",
+            boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: "#1e293b",
+              fontWeight: 700,
+              fontSize: "0.78rem",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {beforeLabel}
+          </Typography>
+        </Box>
+
+        {/* After label */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 14,
+            right: 14,
+            px: 1.5,
+            py: 0.5,
+            bgcolor: "rgba(255,255,255,0.9)",
+            borderRadius: "6px",
+            pointerEvents: "none",
+            zIndex: 5,
+            backdropFilter: "blur(6px)",
+            boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: "#1e293b",
+              fontWeight: 700,
+              fontSize: "0.78rem",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {afterLabel}
+          </Typography>
+        </Box>
+
+        {/* Divider line + circular handle */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: `${position}%`,
+            transform: "translateX(-50%)",
+            width: "2px",
+            background: "#ffffff",
+            cursor: "col-resize",
+            zIndex: 10,
+            boxShadow: "0 0 10px rgba(0,0,0,0.25)",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 44,
+              height: 44,
+              borderRadius: "50%",
+              background: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 14px rgba(0,0,0,0.22)",
+              cursor: "grab",
+              userSelect: "none",
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M6 4L2 9L6 14"
+                stroke="#475569"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 4L16 9L12 14"
+                stroke="#475569"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
 };
 
 export const renderEditorSharedBlock = ({
@@ -4146,40 +4402,40 @@ export const renderEditorSharedBlock = ({
             }}
           >
             {items.map((logo: any, logoIndex: number) => {
-                const logoSrc = String(logo?.image || "");
-                const shouldInvertLogo =
-                  logo?.useOriginalColors !== true &&
-                  (logoSrc.startsWith("data:image/svg+xml") ||
-                    /\.svg(?:\?|$)/i.test(logoSrc));
+              const logoSrc = String(logo?.image || "");
+              const shouldInvertLogo =
+                logo?.useOriginalColors !== true &&
+                (logoSrc.startsWith("data:image/svg+xml") ||
+                  /\.svg(?:\?|$)/i.test(logoSrc));
 
-                return (
+              return (
+                <Box
+                  key={`${logo.name}-${logoIndex}`}
+                  sx={{
+                    height: { xs: 42, md: 56 },
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: 0.9,
+                  }}
+                >
                   <Box
-                    key={`${logo.name}-${logoIndex}`}
+                    component="img"
+                    src={logo.image}
+                    alt={logo.name}
                     sx={{
-                      height: { xs: 42, md: 56 },
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      opacity: 0.9,
+                      maxWidth: { xs: 120, md: 170 },
+                      width: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      filter: shouldInvertLogo
+                        ? "brightness(0) invert(1)"
+                        : "none",
                     }}
-                  >
-                    <Box
-                      component="img"
-                      src={logo.image}
-                      alt={logo.name}
-                      sx={{
-                        maxWidth: { xs: 120, md: 170 },
-                        width: "100%",
-                        maxHeight: "100%",
-                        objectFit: "contain",
-                        filter: shouldInvertLogo
-                          ? "brightness(0) invert(1)"
-                          : "none",
-                      }}
-                    />
-                  </Box>
-                );
-              })}
+                  />
+                </Box>
+              );
+            })}
           </Box>
         </Stack>
       </Box>
@@ -4198,42 +4454,50 @@ export const renderEditorSharedBlock = ({
         data-preview-label={compoundBlockLabel}
         sx={{
           ...compoundCardSx,
-          width: "100%",
-          p: 0,
-          m: 0,
-          overflow: "hidden",
-          borderRadius: { xs: "18px", md: "28px" },
-          border: `1px solid ${rgba(themeColor, 0.14)}`,
-          boxShadow:
-            tone === "light"
-              ? "0 24px 70px rgba(0,0,0,0.22)"
-              : "0 24px 70px rgba(15,23,42,0.14)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          pt: rawCardStyle.paddingTop ?? resolvedCardStyle.paddingTop ?? "40px",
+          pb:
+            rawCardStyle.paddingBottom ??
+            resolvedCardStyle.paddingBottom ??
+            "60px",
         }}
       >
         <Box
           sx={{
             width: "100%",
-            height: {
-              xs: "420px",
-              sm: "520px",
-              md: "680px",
-              lg: "780px",
-            },
+            maxWidth: 1100,
+            mx: "auto",
             overflow: "hidden",
-            "& iframe": {
-              display: "block",
-              width: "100% !important",
-              height: "100% !important",
-              border: "0 !important",
-            },
+            borderRadius: { xs: "18px", md: "28px" },
+            border: `1px solid ${rgba(themeColor, 0.14)}`,
+            boxShadow:
+              tone === "light"
+                ? "0 24px 70px rgba(0,0,0,0.22)"
+                : "0 24px 70px rgba(15,23,42,0.14)",
           }}
-          dangerouslySetInnerHTML={{ __html: iframeHtml }}
-        />
+        >
+          <Box
+            sx={{
+              width: "100%",
+              height: { xs: "420px", sm: "520px", md: "620px" },
+              overflow: "hidden",
+              "& iframe": {
+                display: "block",
+                width: "100% !important",
+                height: "100% !important",
+                border: "0 !important",
+              },
+            }}
+            dangerouslySetInnerHTML={{ __html: iframeHtml }}
+          />
+        </Box>
       </Box>
     );
   }
 
-  if (blockType === "social_embed" || blockType === "embed") {
+  if (blockType === "social_embed") {
     const embeds =
       blockType === "social_embed" && Array.isArray(block.content?.embeds)
         ? block.content.embeds
@@ -4309,6 +4573,220 @@ export const renderEditorSharedBlock = ({
           ))}
         </Stack>
       </Stack>
+    );
+  }
+
+  if (blockType === "embed") {
+    const rawEmbedUrl = String(block.content?.url || "").trim();
+    const embedTitle = block.content?.heading || "";
+
+    const allowlistedDomains = [
+      "calendly.com",
+      "docs.google.com",
+      "drive.google.com",
+      "figma.com",
+      "airtable.com",
+      "youtube.com",
+      "youtu.be",
+      "vimeo.com",
+    ];
+
+    const getEmbedHost = (url: string) => {
+      try {
+        return new URL(url).hostname.replace(/^www\./, "");
+      } catch {
+        return "";
+      }
+    };
+
+    // Convert watch/share URLs to embeddable iframe URLs
+    const toEmbedUrl = (url: string): string => {
+      if (!url) return url;
+      try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.replace(/^www\./, "");
+
+        // YouTube: watch?v=ID or youtu.be/ID → youtube.com/embed/ID
+        if (host === "youtube.com" || host === "youtu.be") {
+          const videoId =
+            host === "youtu.be"
+              ? parsed.pathname.slice(1)
+              : parsed.searchParams.get("v") ||
+                parsed.pathname.replace("/shorts/", "").slice(1);
+          if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+        }
+
+        // Vimeo: vimeo.com/ID → player.vimeo.com/video/ID
+        if (host === "vimeo.com") {
+          const id = parsed.pathname.replace(/^\//, "").split("/")[0];
+          if (id && /^\d+$/.test(id))
+            return `https://player.vimeo.com/video/${id}`;
+        }
+      } catch {
+        // not a valid URL
+      }
+      return url;
+    };
+
+    const embedUrl = toEmbedUrl(rawEmbedUrl);
+    const embedHost = getEmbedHost(rawEmbedUrl);
+    const isAllowedEmbed =
+      Boolean(rawEmbedUrl) &&
+      allowlistedDomains.some(
+        (domain) => embedHost === domain || embedHost.endsWith(`.${domain}`),
+      );
+
+    const embedHeight = rawCardStyle.mediaHeight ||
+      resolvedCardStyle.mediaHeight || { xs: 320, md: 480 };
+
+    return (
+      <Stack
+        key={String(block.id || `${blockType}-${index}`)}
+        spacing={2}
+        alignItems="stretch"
+        {...compoundBlockSelectionProps}
+        data-preview-label={compoundBlockLabel}
+        sx={{
+          ...compoundCardSx,
+          overflow: "hidden",
+          boxShadow: "none",
+          pt: rawCardStyle.paddingTop ?? resolvedCardStyle.paddingTop ?? "40px",
+          pb:
+            rawCardStyle.paddingBottom ??
+            resolvedCardStyle.paddingBottom ??
+            "60px",
+        }}
+      >
+        {/* Optional heading */}
+        {embedTitle ? (
+          <Typography
+            {...getEditableTextProps(
+              section.blockId,
+              `${blockPath}.heading`,
+              "single",
+            )}
+            sx={{
+              color: textColor,
+              fontFamily: headingFont,
+              fontWeight: 800,
+              fontSize: { xs: "1.45rem", md: "2rem" },
+              lineHeight: 1.15,
+              ...headingStyle,
+            }}
+          >
+            {embedTitle}
+          </Typography>
+        ) : null}
+
+        {/* Embed area — full width */}
+        <Box
+          sx={{
+            width: "100%",
+            borderRadius:
+              rawCardStyle.mediaBorderRadius ||
+              resolvedCardStyle.mediaBorderRadius ||
+              3,
+            border: `1px solid ${lineColor}`,
+            overflow: "hidden",
+            bgcolor:
+              rawCardStyle.mediaBackgroundColor ||
+              resolvedCardStyle.mediaBackgroundColor ||
+              (tone === "light"
+                ? "rgba(0,0,0,0.04)"
+                : "rgba(255,255,255,0.06)"),
+          }}
+        >
+          {isAllowedEmbed ? (
+            <Box
+              component="iframe"
+              src={embedUrl}
+              title={String(embedTitle || embedHost)}
+              loading="lazy"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+              referrerPolicy="no-referrer-when-downgrade"
+              sx={{
+                width: "100%",
+                height: embedHeight,
+                display: "block",
+                border: 0,
+              }}
+            />
+          ) : (
+            <Stack
+              spacing={1.5}
+              alignItems="center"
+              justifyContent="center"
+              sx={{
+                minHeight: embedHeight,
+                px: 3,
+                py: 4,
+                textAlign: "center",
+              }}
+            >
+              {/* Embed icon */}
+              <Box
+                sx={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 3,
+                  border: `1.5px dashed ${lineColor}`,
+                  display: "grid",
+                  placeItems: "center",
+                  color: mutedTextColor,
+                }}
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M9 9l6 6M15 9l-6 6" />
+                </svg>
+              </Box>
+
+              <Typography
+                sx={{ color: textColor, fontWeight: 700, fontSize: "1rem" }}
+              >
+                {embedUrl ? "Domain not supported" : "No URL added yet"}
+              </Typography>
+
+              <Typography
+                sx={{
+                  color: mutedTextColor,
+                  fontSize: "0.88rem",
+                  lineHeight: 1.6,
+                  maxWidth: 380,
+                }}
+              >
+                {embedUrl
+                  ? `"${embedHost}" is not on the allowlist. Use YouTube, Vimeo, Calendly, Google Docs, Figma, or Airtable.`
+                  : "Paste a URL in the Embed URL field on the left to display content here."}
+              </Typography>
+            </Stack>
+          )}
+        </Box>
+      </Stack>
+    );
+  }
+
+  if (blockType === "before_after") {
+    return (
+      <BeforeAfterEditorPreview
+        key={String(block.id || `${blockType}-${index}`)}
+        block={block}
+        section={section}
+        compoundBlockSelectionProps={compoundBlockSelectionProps}
+        compoundBlockLabel={compoundBlockLabel}
+        compoundCardSx={compoundCardSx}
+        rawCardStyle={rawCardStyle}
+        resolvedCardStyle={resolvedCardStyle}
+      />
     );
   }
 

@@ -492,7 +492,7 @@ export const getBlockDefaultContent = (
       };
     case "EMBED":
       return {
-        heading: "Embedded content",
+        heading: "",
         url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
       };
     case "BEFORE_AFTER":
@@ -992,6 +992,42 @@ export const getLocalFieldMetadata = (
           author: makeTextField("author", "Author", 2),
           position: makeTextField("position", "Position", 3),
         }),
+      ]);
+    case "MAP_LOCATION":
+      return contentGroup([
+        {
+          name: "iframe",
+          label: "Map Embed Code",
+          type: "TEXT",
+          order: 1,
+          ui: {
+            multiline: true,
+            rows: 5,
+            placeholder:
+              '<iframe src="https://www.google.com/maps?q=...&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen loading="lazy"></iframe>',
+          },
+        },
+      ]);
+    case "EMBED":
+      return contentGroup([
+        makeTextField("heading", "Heading (optional)", 1),
+        {
+          name: "url",
+          label: "Embed URL",
+          type: "TEXT",
+          order: 2,
+          ui: {
+            placeholder: "https://youtube.com/watch?v=...",
+          },
+        },
+      ]);
+    case "BEFORE_AFTER":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        { name: "beforeImage", label: "Before Image", type: "IMAGE", order: 2 },
+        { name: "afterImage", label: "After Image", type: "IMAGE", order: 3 },
+        makeTextField("beforeLabel", "Before Label", 4),
+        makeTextField("afterLabel", "After Label", 5),
       ]);
     default:
       return contentGroup([
