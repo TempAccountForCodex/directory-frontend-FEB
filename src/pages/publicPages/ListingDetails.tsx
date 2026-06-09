@@ -28,6 +28,7 @@ import StorefrontIcon from "@mui/icons-material/Storefront";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { useListings } from "../../context/ListingsContext";
 import { useReviews } from "../../hooks/useReviews";
+import PropertyItemCard from "../../components/publicComponents/Listing/PropertyCardItem";
 
 const palette = {
   paper: "#FDFBF7",
@@ -1059,199 +1060,29 @@ const ListingDetails: React.FC = () => {
             </Button>
           </Stack>
 
-          <Grid container spacing={4}>
-            {relatedListings.map((biz, index) => {
-              const name = biz.businessName || biz.title || "Business";
-              const category =
-                biz.businessCategory || biz.category || "Business";
-              const description =
-                biz.shortDescription ||
-                stripHtml(biz.desc) ||
-                "Strategic services for growing businesses.";
-              const locationText = [biz.city, biz.region]
-                .filter(Boolean)
-                .join(", ");
-              const tags = normalizeTags(biz.tags).slice(0, 2);
-              const image =
-                biz.businessBanner ||
-                biz.image ||
-                fallbackRelatedImages[index % fallbackRelatedImages.length];
-              const rating = Number(biz.averageRating || 0);
-              const to = biz.slug
-                ? `/listings/${biz.slug}${type ? `?type=${type}` : ""}`
-                : `/listings/${biz.id}`;
-
-              return (
-                <Grid item xs={12} md={4} key={`${biz.id}-${index}`}>
-                  <Box
-                    component={RouterLink}
-                    to={to}
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      color: "inherit",
-                      textDecoration: "none",
-                      bgcolor: "#fff",
-                      borderRadius: "24px",
-                      overflow: "hidden",
-                      border: "2px solid #1a7a74",
-                      boxShadow: "6px 6px 0px #1a7a74",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                      "&:hover": {
-                        transform: "translate(-4px, -4px)",
-                        boxShadow: "10px 10px 0px #1a7a74",
-                      },
-                      "&:hover .related-image": {
-                        transform: "scale(1.04)",
-                      },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: "relative",
-                        height: 160,
-                        overflow: "hidden",
-                        bgcolor: palette.soft,
-                      }}
-                    >
-                      <Box
-                        className="related-image"
-                        component="img"
-                        src={image}
-                        alt={name}
-                        sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          transition: "transform 0.35s ease",
-                        }}
-                      />
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          inset: 0,
-                          background:
-                            "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.4) 100%)",
-                        }}
-                      />
-                      <Chip label={category} sx={listingCategoryPillSx} />
-                    </Box>
-                    <Box sx={{ p: "20px" }}>
-                      <Stack
-                        direction="row"
-                        alignItems="center"
-                        spacing={1.5}
-                        sx={{ mb: 2 }}
-                      >
-                        <Box
-                          sx={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: "14px",
-                            overflow: "hidden",
-                            flexShrink: 0,
-                            border: "2px solid #1a7a74",
-                            bgcolor: "#e6f0ef",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#1a7a74",
-                            fontWeight: 700,
-                            fontSize: 14,
-                          }}
-                        >
-                          {biz.businessLogo ? (
-                            <Box
-                              component="img"
-                              src={biz.businessLogo}
-                              alt={name}
-                              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            />
-                          ) : (
-                            getInitials(name)
-                          )}
-                        </Box>
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography
-                            sx={{
-                              fontWeight: 700,
-                              fontSize: 14,
-                              color: "#111827",
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {name}
-                          </Typography>
-                          <Typography sx={{ fontSize: 11, color: "#9ca3af", mt: "2px" }}>
-                            {locationText || category}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Typography
-                        sx={{
-                          fontSize: 13,
-                          color: "#6b7280",
-                          lineHeight: 1.6,
-                          mb: 2,
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {description}
-                      </Typography>
-                      {tags.length > 0 && (
-                        <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 2 }}>
-                          {tags.map((tag) => (
-                            <Box
-                              key={tag}
-                              sx={{
-                                fontSize: 11,
-                                px: "10px",
-                                py: "4px",
-                                borderRadius: 999,
-                                border: "1.5px solid #1a7a74",
-                                color: "#1a7a74",
-                                fontWeight: 500,
-                                transition: "background 0.15s ease, color 0.15s ease",
-                                "&:hover": {
-                                  background: "#1a7a74",
-                                  color: "#fff",
-                                },
-                              }}
-                            >
-                              {tag}
-                            </Box>
-                          ))}
-                        </Stack>
-                      )}
-                      <Stack
-                        direction="row"
-                        alignItems="center"
-                        spacing={0.75}
-                        sx={{
-                          pt: 2,
-                          borderTop: "1.5px dashed rgba(26,122,116,0.25)",
-                        }}
-                      >
-                        <StarIcon sx={{ color: "#1a7a74", fontSize: 16 }} />
-                        <Typography sx={{ color: "#111827", fontSize: 14, fontWeight: 700 }}>
-                          {rating ? rating.toFixed(1) : "New"}
-                        </Typography>
-                        <Typography sx={{ color: "#9ca3af", fontSize: 12 }}>
-                          {biz.reviewCount ? `· ${biz.reviewCount} reviews` : "· No reviews yet"}
-                        </Typography>
-                        {biz.hasStore && (
-                          <StorefrontIcon sx={{ color: "#9ca3af", fontSize: 14, ml: 0.5 }} />
-                        )}
-                      </Stack>
-                    </Box>
-                  </Box>
-                </Grid>
-              );
-            })}
-          </Grid>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "minmax(0, 360px)",
+                sm: "repeat(2, minmax(0, 1fr))",
+                lg: "repeat(3, minmax(0, 1fr))",
+              },
+              gap: { xs: 2, md: 3 },
+              justifyContent: { xs: "center", sm: "flex-start" },
+            }}
+          >
+            {relatedListings.map((biz, index) => (
+              <PropertyItemCard
+                key={`${biz.id}-${index}`}
+                item={biz}
+                handleDeleteItem={() => {}}
+                totalPages={0}
+                currentPage={0}
+                setCurrentPage={() => {}}
+              />
+            ))}
+          </Box>
         </Container>
       </Box>
     </Box>

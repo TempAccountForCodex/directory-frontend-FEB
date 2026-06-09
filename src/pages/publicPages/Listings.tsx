@@ -29,12 +29,10 @@ import { useLocation } from "react-router-dom";
 import Hero from "../../components/publicComponents/Listing/Hero";
 
 import { ListingsData } from "./../../utils/data/Listings";
+import theme from "@/styles/theme";
 
 const PropertyCard = lazy(
   () => import("../../components/publicComponents/Listing/PropertyCard"),
-);
-const Searchbar = lazy(
-  () => import("../../components/publicComponents/Listing/Searchbar"),
 );
 const SideFilter = lazy(
   () => import("../../components/publicComponents/Listing/SideFilter"),
@@ -391,25 +389,24 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
       <Box id="connections"></Box>
       <Box
         component="section"
-        pl={{ xs: 2, sm: 4, md: 0 }}
         pt={{ xs: 6, sm: 6, md: 6.5 }}
         sx={{
           contentVisibility: "auto",
           containIntrinsicSize: "1px 2400px",
           position: "relative",
           isolation: "isolate",
-          overflow: "hidden",
+          overflow: "clip",
           bgcolor: isDashboard ? "primary.main" : "#f7f5f3",
           "&::before": !isDashboard
             ? {
                 content: '""',
                 position: "absolute",
                 inset: 0,
-                backgroundImage: "url('/assets/images/insights/bg-1.webp')",
-                backgroundRepeat: "repeat",
-                backgroundPosition: "left top",
-                backgroundSize: "auto",
-                filter: "brightness(1) hue-rotate(0deg) saturate(1)",
+                backgroundImage:
+                  "url('/assets/publicAssets/images/common/uniqueLinesbg.webp')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                opacity: 0.6,
                 zIndex: 0,
                 pointerEvents: "none",
               }
@@ -425,47 +422,80 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
             <Box sx={{ minHeight: "60vh", backgroundColor: "common.white" }} />
           }
         >
-          <Container style={{ paddingLeft: "0px" }}>
+          <Container>
             {!isDashboard && (
-              <>
+              <Box
+                ref={gridRef}
+                sx={{
+                  textAlign: "center",
+                  py: { xs: 1.5, md: 3 },
+                  scrollMarginTop: { xs: "88px", md: "104px" },
+                }}
+              >
+                {/* headline */}
                 <Typography
-                  variant="h5"
-                  color="primary.hero"
+                  component="h2"
                   sx={{
-                    fontSize: { xs: "32px", sm: "32px" },
-                    lineHeight: { xs: "42px", sm: "42px" },
-                    textAlign: "center",
-                    fontWeight: 600,
-                    scrollMarginTop: { xs: "88px", md: "104px" },
+                    fontSize: { xs: "38px", sm: "48px", md: "56px" },
+                    lineHeight: 1.05,
+                    fontWeight: 900,
+                    letterSpacing: "-0.02em",
+                    color: "#0f1f1a",
+                    fontFamily: homeHeroFont,
+                    mb: 3,
                   }}
-                  ref={gridRef}
                 >
-                  Explore Our Directory
+                  Explore Our{" "}
+                  <Box
+                    component="span"
+                    sx={{ position: "relative", display: "inline-block" }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        color: "#276569",
+                      }}
+                    >
+                      Directory
+                    </Box>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        bottom: "6px",
+                        height: "16px",
+                        bgcolor: "#378c9239",
+                        zIndex: 0,
+                        opacity: 0.45,
+                      }}
+                    />
+                  </Box>
                 </Typography>
+
+                {/* subtext */}
                 <Typography
-                  variant="h6"
-                  color="primary.hero"
                   sx={{
-                    fontSize: "16px",
-                    lineHeight: "22px",
-                    textAlign: "center",
-                    fontWeight: 400,
-                    mt: 1.2,
-                    px: { xs: 1, sm: 0 },
+                    fontSize: { xs: "15px", sm: "17px" },
+                    color: theme.palette.text.gray,
+                    lineHeight: 1.7,
+                    maxWidth: 520,
+                    mx: "auto",
+                    fontFamily: homeHeroFont,
                   }}
                 >
                   Check out our comprehensive directory to find a wide range of
                   valuable resources and information.
                 </Typography>
-              </>
+              </Box>
             )}
             <Grid
               container
               spacing={3}
-              mt={2}
-              m={0}
               pb={6}
-              pt={isDashboard ? "-20px" : 3}
+              pt={isDashboard ? 0 : 3}
             >
               {/* Sidebar */}
               <Grid
@@ -473,41 +503,49 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
                 xs={12}
                 md={3}
                 sx={{
-                  position: { xs: "relative", md: "sticky" },
-                  top: { xs: 0, md: "150px" },
+                  position: "sticky",
+                  // { xs: "relative", md: "sticky" },
+                  top: { xs: 0, md: "100px" },
                   alignSelf: "flex-start",
                   order: { xs: 2, md: 1 },
-                }}
-                style={{
-                  paddingLeft: "0px",
                 }}
                 component="div"
                 {...({} as any)}
               >
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: { sm: "30px", md: "10px", lg: "22px" },
-                    mt: 1,
-                    ml:4,
-                    borderRadius: "6px",
-                    boxShadow:
-                      "rgba(0, 0, 0, 0.05) 0px 6px 24px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px",
-                  }}
-                >
-                  <SideFilter
-                    setAccNTaxService={setAccNTaxService}
-                    accNTaxService={accNTaxService}
-                    setItems={setFilteredData}
-                    items={listings}
-                    area={[]}
-                    setArea={function (
-                      value: React.SetStateAction<string[]>,
-                    ): void {
-                      throw new Error("Function not implemented.");
-                    }}
-                  />
-                </Paper>
+                <SideFilter
+                  searchKeyword={searchKeyword}
+                  setSearchKeyword={setSearchKeyword}
+                  propertyType={propertyType}
+                  setPropertyType={setPropertyType}
+                  category={category}
+                  setCategory={setCategory}
+                  categoryArray={uniqueArray}
+                  accNTaxService={accNTaxService}
+                  setAccNTaxService={setAccNTaxService}
+                  region={region}
+                  setRegion={setRegion}
+                  city={city}
+                  setCity={setCity}
+                  priceRange={priceRange}
+                  setPriceRange={setPriceRange}
+                  area={area}
+                  setArea={setArea}
+                  data={listings as any}
+                  setItems={
+                    setFilteredData as React.Dispatch<
+                      React.SetStateAction<any[]>
+                    >
+                  }
+                  setFilteredData={
+                    setFilteredData as React.Dispatch<
+                      React.SetStateAction<any[]>
+                    >
+                  }
+                  setTotalPages={() => {}}
+                  loading={loading}
+                  paramCategory={paramCategory}
+                  clearFilter={clearFilter}
+                />
               </Grid>
 
               <Grid
@@ -524,46 +562,6 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
                 component="div"
                 {...({} as any)}
               >
-                <Searchbar
-                  searchKeyword={searchKeyword}
-                  setSearchKeyword={setSearchKeyword}
-                  propertyType={propertyType}
-                  setPropertyType={setPropertyType}
-                  filteredData={filteredData as any}
-                  setFilteredData={
-                    setFilteredData as React.Dispatch<
-                      React.SetStateAction<any[]>
-                    >
-                  }
-                  data={listings as any}
-                  category={category}
-                  setCategory={setCategory}
-                  setCity={setCity}
-                  city={city}
-                  items={listings as any}
-                  setItems={
-                    setFilteredData as React.Dispatch<
-                      React.SetStateAction<any[]>
-                    >
-                  }
-                  priceRange={priceRange}
-                  categoryArray={uniqueArray}
-                  setPriceRange={setPriceRange}
-                  accNTaxService={accNTaxService}
-                  setAccNTaxService={setAccNTaxService}
-                  area={area}
-                  setArea={setArea}
-                  loading={loading}
-                  setLoading={() => {}}
-                  error={!!error}
-                  setError={() => {}}
-                  setRegion={setRegion}
-                  region={region}
-                  paramCategory={paramCategory}
-                  clearFilter={clearFilter}
-                  setTotalPages={() => {}}
-                />
-
                 {loading ? (
                   <Box
                     sx={{

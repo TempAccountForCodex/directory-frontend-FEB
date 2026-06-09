@@ -39,7 +39,7 @@ interface PropertyItemCardProps {
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const cardAccent = "#3c3163";
+const cardAccent = "#378b91";
 const cardHoverText = "#1f2937";
 const cardEase = "cubic-bezier(0.19, 1, 0.22, 1)";
 const cardTransition = `color 700ms ${cardEase}, box-shadow 700ms ${cardEase}, transform 700ms ${cardEase}`;
@@ -113,11 +113,11 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
           elevation={0}
           sx={{
             width: "100%",
-            minHeight: { xs: 390, sm: 430 },
+            minHeight: { xs: 280, sm: 360 },
             borderRadius: "1em",
             color: "#fff",
-            border: "10px solid #ccc",
-            boxShadow: "0 0 5em -1em #000",
+            border: "none",
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.08), 0 4px 24px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.2)",
             cursor: "pointer",
             overflow: "hidden",
             display: "flex",
@@ -159,7 +159,7 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
             "&:hover": {
               color: cardHoverText,
               transform: "translate3d(0, -4px, 0)",
-              boxShadow: "0 1.5rem 4.5rem -1.8rem rgba(0,0,0,0.9)",
+              boxShadow: "0 0 0 1px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.12)",
             },
             "&:hover::before, &:hover::after": {
               transform: "scaleY(1)",
@@ -168,8 +168,28 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
               opacity: 1,
               transform: "translateY(0)",
             },
+            "&:hover .card-border-ring": {
+              background: "linear-gradient(135deg, rgba(20,184,166,0.5), rgba(99,102,241,0.3), rgba(255,255,255,0.15))",
+            },
           }}
         >
+          {/* Gradient border ring */}
+          <Box
+            className="card-border-ring"
+            sx={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "1em",
+              pointerEvents: "none",
+              zIndex: 10,
+              padding: "1px",
+              background: "linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04), rgba(255,255,255,0.1))",
+              WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              WebkitMaskComposite: "xor",
+              maskComposite: "exclude",
+              transition: "background 0.3s ease",
+            }}
+          />
           <Box
             sx={{
               position: "absolute",
@@ -289,13 +309,6 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
                 transition: `opacity 500ms ${cardEase}, transform 500ms ${cardEase}`,
               }}
             >
-              <Rating
-                value={rating}
-                readOnly
-                size="small"
-                precision={0.5}
-                sx={{ color: cardAccent }}
-              />
               <Typography
                 sx={{
                   fontFamily:
@@ -308,6 +321,14 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
               >
                 {rating > 0 ? Number(rating).toFixed(1) : "No rating"}
               </Typography>
+              <Rating
+                value={rating}
+                readOnly
+                size="small"
+                precision={0.5}
+                sx={{ color: cardAccent }}
+              />
+              
             </Stack>
           </Box>
         </Card>
