@@ -12,6 +12,11 @@ type LocalFieldDefinition = {
 const DEFAULT_IMAGE =
   "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80";
 const DEFAULT_VIDEO = "https://www.w3schools.com/html/mov_bbb.mp4";
+const DEFAULT_TEAM_IMAGES = [
+  "/assets/publicAssets/images/home/avatar1.webp",
+  "/assets/publicAssets/images/home/avatar2.webp",
+  "/assets/publicAssets/images/home/avatar3.webp",
+];
 
 const makeTextField = (
   name: string,
@@ -30,6 +35,7 @@ const makeRepeaterField = (
   label: string,
   order: number,
   itemSchema: Record<string, LocalFieldDefinition>,
+  props: Record<string, unknown> = {},
 ): LocalFieldDefinition => ({
   name,
   label,
@@ -38,6 +44,7 @@ const makeRepeaterField = (
   ui: {
     props: {
       itemSchema,
+      ...props,
     },
   },
 });
@@ -265,20 +272,22 @@ export const getBlockDefaultContent = (
       };
     case "TEAM":
       return {
-        heading: "Meet the team",
+        heading: "Meet our expert team",
         members: [
           {
             name: "Ayesha Khan",
             role: "Creative Director",
-            bio: "Leads strategy, storytelling, and brand direction.",
-            avatar: DEFAULT_IMAGE,
+            avatar: DEFAULT_TEAM_IMAGES[0],
           },
           {
             name: "Bilal Ahmed",
             role: "Technical Lead",
-            bio: "Builds reliable product experiences and systems.",
-            avatar:
-              "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80",
+            avatar: DEFAULT_TEAM_IMAGES[1],
+          },
+          {
+            name: "Hina Malik",
+            role: "Brand Strategist",
+            avatar: DEFAULT_TEAM_IMAGES[2],
           },
         ],
       };
@@ -695,6 +704,29 @@ export const getLocalFieldMetadata = (
         makeTextField("emailPlaceholder", "Email Field Placeholder", 8),
         makeTextField("messagePlaceholder", "Message Field Placeholder", 9),
         makeTextField("buttonText", "Button Text", 10),
+      ]);
+    case "TEAM":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        makeRepeaterField(
+          "members",
+          "Team Members",
+          2,
+          {
+            avatar: {
+              name: "avatar",
+              label: "Image",
+              type: "IMAGE",
+              order: 1,
+            },
+            name: makeTextField("name", "Name", 2),
+            role: makeTextField("role", "Role", 3),
+          },
+          {
+            max: 3,
+            hideAddButton: true,
+          },
+        ),
       ]);
     case "TABS":
       return contentGroup([

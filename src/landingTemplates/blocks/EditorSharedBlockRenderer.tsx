@@ -13,6 +13,7 @@ import {
   getEditableImageProps,
   getEditableTextProps,
 } from "../utils/editableProps";
+import { galleryFallbackImages } from "./assets/gallery/fallbackImages";
 
 const hexToRgb = (hex: string) => {
   const normalized = hex.replace("#", "");
@@ -241,6 +242,7 @@ export const EDITOR_SHARED_BLOCK_TYPES = new Set([
   "hero",
   "image_text_split",
   "gallery",
+  "team",
   "video",
   "features",
   "faq",
@@ -272,6 +274,7 @@ export const EDITOR_CARD_STYLE_BLOCK_TYPES = new Set([
   "hero",
   "image_text_split",
   "gallery",
+  "team",
   "menu_display",
   "video",
   "features",
@@ -2341,11 +2344,8 @@ export const renderEditorSharedBlock = ({
   if (blockType === "gallery") {
     const fallbackGalleryImages = [
       fallbackImageSrc,
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
-    ];
+      ...galleryFallbackImages,
+    ].filter(Boolean);
 
     const galleryImages = (
       Array.isArray(block.content?.images) && block.content.images.length > 0
@@ -2395,11 +2395,11 @@ export const renderEditorSharedBlock = ({
           border: "none",
           borderRadius: 0,
           px: rawCardStyle.paddingLeft ?? resolvedCardStyle.paddingLeft ?? 0,
-          pt: rawCardStyle.paddingTop ?? resolvedCardStyle.paddingTop ?? "24px",
+          pt: rawCardStyle.paddingTop ?? resolvedCardStyle.paddingTop ?? "60px",
           pb:
             rawCardStyle.paddingBottom ??
             resolvedCardStyle.paddingBottom ??
-            "24px",
+            "60px",
         }}
       >
         <Typography
@@ -2419,7 +2419,7 @@ export const renderEditorSharedBlock = ({
             ...headingStyle,
           }}
         >
-          {block.content?.heading || "Gallery"}
+          {block.content?.heading || "Image Gallery"}
         </Typography>
 
         <Box
@@ -2488,6 +2488,175 @@ export const renderEditorSharedBlock = ({
               </Box>
             );
           })}
+        </Box>
+      </Stack>
+    );
+  }
+
+  if (blockType === "team") {
+    const fallbackTeamImages = [
+      "/assets/publicAssets/images/home/avatar1.webp",
+      "/assets/publicAssets/images/home/avatar2.webp",
+      "/assets/publicAssets/images/home/avatar3.webp",
+    ];
+
+    const members = (
+      Array.isArray(block.content?.members) && block.content.members.length > 0
+        ? block.content.members
+        : fallbackTeamImages.map((avatar, memberIndex) => ({
+            avatar,
+            name: `Team member ${memberIndex + 1}`,
+            role: "Team role",
+          }))
+    )
+      .map((member: any, memberIndex: number) => ({
+        avatar: String(
+          member?.avatar ||
+            member?.image ||
+            fallbackTeamImages[memberIndex % fallbackTeamImages.length],
+        ),
+        name: String(member?.name || `Team member ${memberIndex + 1}`),
+        role: String(member?.role || "Team role"),
+      }))
+      .slice(0, 3);
+
+    const teamHeadingStyle = getEditableFieldStyle("heading", headingStyle);
+    const teamNameStyle = getEditableFieldStyle("members.0.name", headingStyle);
+    const teamRoleStyle = getEditableFieldStyle("members.0.role", textStyle);
+
+    return (
+      <Stack
+        key={String(block.id || `${blockType}-${index}`)}
+        spacing={{ xs: 2.5, md: 3.2 }}
+        {...compoundBlockSelectionProps}
+        data-preview-label={compoundBlockLabel}
+        sx={{
+          ...compoundCardSx,
+          px: rawCardStyle.paddingLeft ?? resolvedCardStyle.paddingLeft ?? 0,
+          pt: rawCardStyle.paddingTop ?? resolvedCardStyle.paddingTop ?? "48px",
+          pb:
+            rawCardStyle.paddingBottom ??
+            resolvedCardStyle.paddingBottom ??
+            "48px",
+          boxShadow: "none",
+          border: "none",
+          borderRadius: 0,
+        }}
+      >
+        <Typography
+          {...getEditableTextProps(
+            section.blockId,
+            `${blockPath}.heading`,
+            "single",
+          )}
+          sx={{
+            color: textColor,
+            fontFamily: headingFont,
+            fontSize: { xs: "2rem", md: "3rem" },
+            lineHeight: 1.05,
+            letterSpacing: "-0.04em",
+            fontWeight: 800,
+            textAlign: "center",
+            ...teamHeadingStyle,
+          }}
+        >
+          {block.content?.heading || "Meet our expert team"}
+        </Typography>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              md: "repeat(3, minmax(0, 1fr))",
+            },
+            gap: { xs: 1.5, md: 2 },
+          }}
+        >
+          {members.map((member, memberIndex) => (
+            <Box
+              key={`${member.name}-${memberIndex}`}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                borderRadius: "24px",
+                backgroundColor:
+                  tone === "light" ? "#ffffff" : "rgba(255,255,255,0.96)",
+                border: `1px solid ${rgba(themeColor, 0.12)}`,
+                boxShadow:
+                  tone === "light"
+                    ? "0 20px 44px rgba(15,23,42,0.08)"
+                    : "0 20px 44px rgba(0,0,0,0.24)",
+              }}
+            >
+              <Box
+                sx={{
+                  position: "relative",
+                  aspectRatio: "4 / 4.7",
+                  overflow: "hidden",
+                  backgroundColor: "#eadfce",
+                }}
+              >
+                <Box
+                  component="img"
+                  src={member.avatar}
+                  alt={member.name}
+                  {...getEditableImageProps(
+                    section.blockId,
+                    `${blockPath}.members.${memberIndex}.avatar`,
+                    `Team member ${memberIndex + 1}`,
+                  )}
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    display: "block",
+                  }}
+                />
+              </Box>
+
+              <Stack spacing={0.45} sx={{ p: { xs: 2, md: 2.2 } }}>
+                <Typography
+                  {...getEditableTextProps(
+                    section.blockId,
+                    `${blockPath}.members.${memberIndex}.name`,
+                    "single",
+                  )}
+                  sx={{
+                    color: textColor,
+                    fontFamily: headingFont,
+                    fontSize: "1.15rem",
+                    fontWeight: 800,
+                    lineHeight: 1.2,
+                    ...teamNameStyle,
+                  }}
+                >
+                  {member.name}
+                </Typography>
+
+                <Typography
+                  {...getEditableTextProps(
+                    section.blockId,
+                    `${blockPath}.members.${memberIndex}.role`,
+                    "single",
+                  )}
+                  sx={{
+                    color: mutedTextColor,
+                    fontSize: "0.95rem",
+                    lineHeight: 1.5,
+                    ...teamRoleStyle,
+                  }}
+                >
+                  {member.role}
+                </Typography>
+              </Stack>
+            </Box>
+          ))}
         </Box>
       </Stack>
     );
@@ -2597,7 +2766,15 @@ export const renderEditorSharedBlock = ({
         spacing={2}
         {...compoundBlockSelectionProps}
         data-preview-label={compoundBlockLabel}
-        sx={compoundCardSx}
+        sx={{
+          ...compoundCardSx,
+          px: rawCardStyle.paddingLeft ?? resolvedCardStyle.paddingLeft ?? 0,
+          pt: rawCardStyle.paddingTop ?? resolvedCardStyle.paddingTop ?? "40px",
+          pb:
+            rawCardStyle.paddingBottom ??
+            resolvedCardStyle.paddingBottom ??
+            "60px",
+        }}
       >
         <EditorFaqAccordionCard
           blockId={section.blockId}
@@ -3676,10 +3853,6 @@ export const renderEditorSharedBlock = ({
         data-preview-label={compoundBlockLabel}
         sx={{
           ...compoundCardSx,
-          backgroundColor:
-            rawCardStyle.backgroundColor ??
-            resolvedCardStyle.backgroundColor ??
-            "#ffffff",
           borderRadius:
             rawCardStyle.borderRadius ?? resolvedCardStyle.borderRadius ?? 0,
           boxShadow: "none",

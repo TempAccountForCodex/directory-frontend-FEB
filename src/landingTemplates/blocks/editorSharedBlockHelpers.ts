@@ -6,6 +6,7 @@ export const EDITOR_SHARED_SHELL_VISUAL_BLOCK_TYPES = new Set([
   "form_builder",
   "reservation_form",
   "gallery",
+  "team",
   "features",
   "faq",
   "tabs",

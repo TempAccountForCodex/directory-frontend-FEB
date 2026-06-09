@@ -1035,6 +1035,31 @@ const buildInnerBlockFromLibraryItem = (item) => {
           ],
         },
       };
+    case "team":
+      return {
+        type: "team",
+        label,
+        content: {
+          heading: "Meet our expert team",
+          members: [
+            {
+              avatar: "/assets/publicAssets/images/home/avatar1.webp",
+              name: "Ayesha Khan",
+              role: "Creative Director",
+            },
+            {
+              avatar: "/assets/publicAssets/images/home/avatar2.webp",
+              name: "Bilal Ahmed",
+              role: "Technical Lead",
+            },
+            {
+              avatar: "/assets/publicAssets/images/home/avatar3.webp",
+              name: "Hina Malik",
+              role: "Brand Strategist",
+            },
+          ],
+        },
+      };
     case "logo_carousel":
       return {
         type: "logo_carousel",

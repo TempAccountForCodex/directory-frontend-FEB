@@ -156,6 +156,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
     const min: number = typeof uiProps["min"] === "number" ? uiProps["min"] : 0;
     const max: number =
       typeof uiProps["max"] === "number" ? uiProps["max"] : Infinity;
+    const hideAddButton = Boolean(uiProps["hideAddButton"]);
 
     // --- Normalise value to RepeaterItem[] with stable _id ---
     const items: RepeaterItem[] = (Array.isArray(value) ? value : []).map(
@@ -194,12 +195,15 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
 
     const handleDuplicate = useCallback(
       (idx: number) => {
+        if (items.length >= max) {
+          return;
+        }
         const dup = { ...items[idx], _id: String(Date.now()) };
         const newItems = [...items];
         newItems.splice(idx + 1, 0, dup);
         onChange(newItems);
       },
-      [items, onChange],
+      [items, max, onChange],
     );
 
     // --- Nested field change handler ---
@@ -345,7 +349,7 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
                         <IconButton
                           size="small"
                           onClick={() => handleDuplicate(idx)}
-                          disabled={disabled}
+                          disabled={disabled || items.length >= max}
                           aria-label={`Duplicate item ${idx + 1}`}
                         >
                           <ContentCopyIcon fontSize="small" />
@@ -392,16 +396,18 @@ const RepeaterField: React.FC<FieldRendererProps> = React.memo(
         </DndContext>
 
         {/* Add button */}
-        <Button
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-          disabled={!canAdd}
-          size="small"
-          variant="outlined"
-          sx={{ mt: 1 }}
-        >
-          Add
-        </Button>
+        {!hideAddButton && (
+          <Button
+            startIcon={<AddIcon />}
+            onClick={handleAdd}
+            disabled={!canAdd}
+            size="small"
+            variant="outlined"
+            sx={{ mt: 1 }}
+          >
+            Add
+          </Button>
+        )}
       </Box>
     );
   },
