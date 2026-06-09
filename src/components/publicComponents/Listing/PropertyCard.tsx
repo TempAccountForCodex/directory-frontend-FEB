@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  Typography,
-  Box,
-  Pagination,
-  useTheme,
-} from "@mui/material";
+import { Typography, Box, Pagination, useTheme } from "@mui/material";
 import PropertyItemCard from "../Listing/PropertyCardItem";
 import type { Place } from "../../../types/place";
 
@@ -44,7 +39,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             sm: "repeat(2, minmax(0, 1fr))",
             lg: "repeat(3, minmax(0, 1fr))",
           },
-          gap: { xs: 4, md: 5 },
+          gap: { xs: 2, md: 3 },
           justifyContent: items.length === 0 ? "center" : "flex-start",
           alignItems: "stretch",
           width: "100%",
@@ -53,8 +48,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           pb: { xs: 8, md: 12 },
           pl: { xs: 0, sm: "10px" },
           pr: { xs: 0, sm: "25px" },
-          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-
+          fontFamily:
+            "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
         {items.length === 0 ? (
