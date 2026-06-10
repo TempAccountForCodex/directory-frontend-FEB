@@ -169,6 +169,7 @@ export const getDashboardColors = (mode = 'dark') => {
       primary: mainTheme.palette.text.main, // #378C92 - Brand teal
       primaryLight: '#4fb3ba',
       primaryDark: '#2d7377',
+      PrimaryWhite:"#ffffff",
 
       // Sidebar specific colors (light mode - merged with background)
       sidebarBg: 'rgba(255, 255, 255, 0.35)', // Subtle glass
@@ -177,6 +178,7 @@ export const getDashboardColors = (mode = 'dark') => {
       sidebarActiveText: '#111827', // Very dark for selected
       sidebarIcon: '#000000', // Darker gray icons for visibility
       sidebarIconActive: '#111827', // Very dark active icons
+      sidebarActiveBgWhite:"#ffffff",
 
       // Card backgrounds
       dark: 'rgba(255, 255, 255, 0.9)', // Card background

@@ -1199,6 +1199,21 @@ const buildInnerBlockFromLibraryItem = (item) => {
           url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         },
       };
+    case "website_header":
+      return {
+        type: "website_header",
+        label,
+        content: {
+          logoType: "text",
+          logoText: "Brand",
+          logoImage: "",
+          menuId: "",
+          ctaText: "Get Started",
+          ctaUrl: "#contact",
+          sticky: true,
+          transparent: false,
+        },
+      };
     case "before_after":
       return {
         type: "before_after",
@@ -1544,6 +1559,15 @@ const sanitizeBlockForSave = (block) => {
     );
   }
 
+  // Map WEBSITE_HEADER → NAVBAR for backend (backend doesn't accept WEBSITE_HEADER yet)
+  if (String(block.blockType || "").toUpperCase() === "WEBSITE_HEADER") {
+    return {
+      ...block,
+      blockType: "NAVBAR",
+      content: { ...sanitizedContent, _subType: "website_header" },
+    };
+  }
+
   if (String(block.blockType || "").toUpperCase() === "GALLERY") {
     sanitizedContent.images = Array.isArray(block.content.images)
       ? block.content.images.map((item) => ({
@@ -1557,6 +1581,17 @@ const sanitizeBlockForSave = (block) => {
     ...block,
     content: sanitizedContent,
   };
+};
+
+// Remap NAVBAR → WEBSITE_HEADER when content._subType identifies it as such
+const normalizeLoadedBlock = (block) => {
+  if (
+    String(block?.blockType || "").toUpperCase() === "NAVBAR" &&
+    block?.content?._subType === "website_header"
+  ) {
+    return { ...block, blockType: "WEBSITE_HEADER" };
+  }
+  return block;
 };
 
 const getRequestErrorMessage = (error, fallbackMessage) => {
@@ -1952,8 +1987,9 @@ const WebsiteEditorInner = () => {
               resolvedThemeSettings,
             )
           : normalizedBlocks;
-        if (JSON.stringify(blocksToSave) !== JSON.stringify(blocks)) {
-          setBlocks(blocksToSave);
+        const blocksToDisplay = blocksToSave.map(normalizeLoadedBlock);
+        if (JSON.stringify(blocksToDisplay) !== JSON.stringify(blocks)) {
+          setBlocks(blocksToDisplay);
         }
 
         let effectivePageId = selectedPage?.localOnly
@@ -2586,7 +2622,7 @@ const WebsiteEditorInner = () => {
               }
               return {
                 ...page,
-                blocks: blocksRes.data.data || [],
+                blocks: (blocksRes.data.data || []).map(normalizeLoadedBlock),
               };
             } catch {
               return {
@@ -2623,7 +2659,7 @@ const WebsiteEditorInner = () => {
       if (homePage) {
         if (homePage.localOnly) {
           const initialBlocks = Array.isArray(homePage.blocks)
-            ? homePage.blocks
+            ? homePage.blocks.map(normalizeLoadedBlock)
             : [];
           localTemplateHydratedPageRef.current = homePage.id;
           setBlocks(initialBlocks);
@@ -2675,7 +2711,7 @@ const WebsiteEditorInner = () => {
           ? selectedPage
           : pages.find((page) => page.id === pageId);
       const localBlocks = Array.isArray(localPage?.blocks)
-        ? localPage.blocks
+        ? localPage.blocks.map(normalizeLoadedBlock)
         : [];
       localTemplateHydratedPageRef.current =
         typeof pageId === "string" ? pageId : String(pageId);
@@ -2691,7 +2727,7 @@ const WebsiteEditorInner = () => {
       const response = await apiClient.get(`/pages/${pageId}/blocks`, {
         headers: {},
       });
-      const fetchedBlocks = response.data.data || [];
+      const fetchedBlocks = (response.data.data || []).map(normalizeLoadedBlock);
       setBlocks(fetchedBlocks);
       setPages((prevPages) =>
         prevPages.map((page) =>
@@ -2784,7 +2820,7 @@ const WebsiteEditorInner = () => {
     setIsImageDialogOpen(false);
     setIsInspectorOpen(false);
     if (page?.localOnly) {
-      const localBlocks = Array.isArray(page.blocks) ? page.blocks : [];
+      const localBlocks = Array.isArray(page.blocks) ? page.blocks.map(normalizeLoadedBlock) : [];
       localTemplateHydratedPageRef.current = page.id;
       suppressHistoryRef.current = true;
       setBlocks(localBlocks);
@@ -3168,12 +3204,37 @@ const WebsiteEditorInner = () => {
   }, []);
 
   const blockLibraryExtraBlocks = useMemo(() => {
-    if (resolvedFrontendTemplateId !== "company-executive") {
-      return [];
-    }
-
-    return [
+    const extras = [
       {
+        key: "WEBSITE_HEADER",
+        label: "Website Header",
+        description:
+          "Responsive header with logo, navigation menu, and CTA button. Supports sticky and transparent modes.",
+        category: "core",
+        icon: "navbar",
+        capabilities: {
+          supportsBackground: false,
+          supportsVisibility: true,
+          supportsVariants: false,
+          supportsCustomCss: false,
+          isDynamic: false,
+          dataSource: null,
+        },
+        variants: [],
+        searchKeywords: [
+          "header",
+          "navigation",
+          "navbar",
+          "menu",
+          "logo",
+          "cta",
+          "sticky",
+        ],
+      },
+    ];
+
+    if (resolvedFrontendTemplateId === "company-executive") {
+      extras.push({
         key: "SECTION",
         label: "Plan Section",
         description:
@@ -3197,8 +3258,10 @@ const WebsiteEditorInner = () => {
           "empty",
           "layout",
         ],
-      },
-    ];
+      });
+    }
+
+    return extras;
   }, [resolvedFrontendTemplateId]);
 
   const resolveInsertPositionForSection = useCallback((blockId, placement) => {
@@ -6160,8 +6223,11 @@ const WebsiteEditorInner = () => {
                                       blockType={String(
                                         editingBlock?.blockType || "",
                                       ).toLowerCase()}
-                                      initialValues={blockForm.content}
-                                      onChange={handleEditingBlockContentChange}
+                                      initialValues={{ ...blockForm.content, _websiteId: websiteId }}
+                                      onChange={(values) => {
+                                        const { _websiteId: _ignored, ...clean } = values;
+                                        handleEditingBlockContentChange(clean);
+                                      }}
                                       onValidate={(errors) =>
                                         setFormHasErrors(
                                           Object.keys(errors).length > 0,
@@ -7913,10 +7979,11 @@ const WebsiteEditorInner = () => {
                   editingBlock?.blockType ||
                   ""
                 ).toLowerCase()}
-                initialValues={blockForm.content}
-                onChange={(values) =>
-                  setBlockForm((prev) => ({ ...prev, content: values }))
-                }
+                initialValues={{ ...blockForm.content, _websiteId: websiteId }}
+                onChange={(values) => {
+                  const { _websiteId: _ignored, ...clean } = values;
+                  setBlockForm((prev) => ({ ...prev, content: clean }));
+                }}
                 onValidate={(errors) =>
                   setFormHasErrors(Object.keys(errors).length > 0)
                 }

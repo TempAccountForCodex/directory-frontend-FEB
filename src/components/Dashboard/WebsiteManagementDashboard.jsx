@@ -24,6 +24,7 @@ import {
   Wrench,
   LayoutGrid,
   MessageSquare,
+  ListTree,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getDashboardColors } from "../../styles/dashboardTheme";
@@ -44,6 +45,7 @@ import SeoTab from "./website-manage/SeoTab";
 import DomainTab from "./website-manage/DomainTab";
 import TeamTab from "./website-manage/TeamTab";
 import SettingsTab from "./website-manage/SettingsTab";
+import MenusTab from "./website-manage/MenusTab";
 
 // ── Nav sections defined outside component for stable reference ──────────────
 const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
@@ -53,6 +55,7 @@ const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
       { id: "overview", label: "Overview", icon: Home },
       { id: "pages", label: "Pages", icon: FileText },
       { id: "media", label: "Media", icon: Image },
+      { id: "menus", label: "Menus", icon: ListTree },
     ],
   },
   {
@@ -284,6 +287,8 @@ const WebsiteManagementDashboard = ({
         return <PagesTab {...tabProps} />;
       case "media":
         return <MediaTab {...tabProps} />;
+      case "menus":
+        return <MenusTab {...tabProps} />;
       case "design":
         return <DesignTab {...tabProps} />;
       case "analytics":

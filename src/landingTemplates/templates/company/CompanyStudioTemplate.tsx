@@ -785,6 +785,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       getCanvasMaxWidth,
       getCanvasTransform,
       getEditableFieldStyle,
+      websiteId: data.websiteId,
     });
     if (sharedEditorBlock) {
       return compoundVisualShellSx ? (

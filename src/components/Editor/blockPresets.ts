@@ -490,6 +490,17 @@ export const getBlockDefaultContent = (
           },
         ],
       };
+    case "WEBSITE_HEADER":
+      return {
+        logoType: "text",
+        logoText: "Brand",
+        logoImage: "",
+        menuId: "",
+        ctaText: "Get Started",
+        ctaUrl: "#contact",
+        sticky: true,
+        transparent: false,
+      };
     case "EMBED":
       return {
         heading: "",
@@ -992,6 +1003,35 @@ export const getLocalFieldMetadata = (
           author: makeTextField("author", "Author", 2),
           position: makeTextField("position", "Position", 3),
         }),
+      ]);
+    case "WEBSITE_HEADER":
+      return contentGroup([
+        {
+          name: "logoType",
+          label: "Logo Type",
+          type: "SELECT",
+          order: 1,
+          ui: {
+            props: {
+              options: [
+                { label: "Text", value: "text" },
+                { label: "Image", value: "image" },
+              ],
+            },
+          },
+        },
+        makeTextField("logoText", "Logo Text", 2),
+        { name: "logoImage", label: "Logo Image", type: "IMAGE", order: 3 },
+        {
+          name: "menuId",
+          label: "Navigation Menu",
+          type: "MENU_SELECT",
+          order: 4,
+        },
+        makeTextField("ctaText", "CTA Button Text", 5),
+        makeTextField("ctaUrl", "CTA Button URL", 6),
+        { name: "sticky", label: "Sticky Header", type: "TOGGLE", order: 7 },
+        { name: "transparent", label: "Transparent Background", type: "TOGGLE", order: 8 },
       ]);
     case "MAP_LOCATION":
       return contentGroup([

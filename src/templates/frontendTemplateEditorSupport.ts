@@ -16,6 +16,7 @@ export type TemplateThemeSettings = {
 };
 
 type WebsiteLike = {
+  id?: string | number;
   name?: string | null;
   businessName?: string | null;
   primaryColor?: string | null;
@@ -1295,6 +1296,7 @@ export const buildTemplatePreviewBusinessData = (
   pages: TemplateEditorPage[],
 ): BusinessData | null => {
   const base = buildFrontendTemplateBusinessData(templateId, {
+    websiteId: website.id,
     name: website.name || "",
     businessName: website.businessName || undefined,
     primaryColor: website.primaryColor || undefined,

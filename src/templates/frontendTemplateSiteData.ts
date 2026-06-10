@@ -7,6 +7,7 @@ import {
 } from "../components/publicComponents/Home/industryPreview/industryDummyData";
 
 type FrontendTemplateWebsite = {
+  websiteId?: string | number;
   name: string;
   primaryColor?: string | null;
   secondaryColor?: string | null;
@@ -178,6 +179,7 @@ export const buildFrontendTemplateBusinessData = (
 
   return {
     ...base,
+    websiteId: website.websiteId,
     name: website.businessName || website.name || base.name,
     tagline: website.shortDescription || base.tagline,
     description:

@@ -122,6 +122,7 @@ export interface Stat {
 }
 
 export interface BusinessData {
+  websiteId?: string | number;
   name: string;
   tagline?: string;
   description: string;

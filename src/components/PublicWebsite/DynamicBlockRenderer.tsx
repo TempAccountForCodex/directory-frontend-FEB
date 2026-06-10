@@ -49,6 +49,7 @@ interface DynamicBlockRendererProps {
   secondaryColor?: string;
   headingColor?: string;
   bodyColor?: string;
+  websiteId?: string | number;
   onCtaClick?: (blockType: string, ctaText: string) => void;
   onFormSubmit?: (formName: string, success: boolean) => void;
 }
@@ -60,6 +61,7 @@ const DynamicBlockInner: React.FC<DynamicBlockRendererProps> = ({
   secondaryColor,
   headingColor,
   bodyColor,
+  websiteId,
   onCtaClick,
   onFormSubmit,
 }) => {
@@ -117,6 +119,7 @@ const DynamicBlockInner: React.FC<DynamicBlockRendererProps> = ({
       secondaryColor={secondaryColor}
       headingColor={headingColor}
       bodyColor={bodyColor}
+      websiteId={websiteId}
       onCtaClick={onCtaClick}
       onFormSubmit={onFormSubmit}
     />
@@ -144,6 +147,7 @@ const DynamicBlockRendererBase: React.FC<DynamicBlockRendererProps> = (
         secondaryColor={props.secondaryColor}
         headingColor={props.headingColor}
         bodyColor={props.bodyColor}
+        websiteId={props.websiteId}
         onCtaClick={props.onCtaClick}
         onFormSubmit={props.onFormSubmit}
       />

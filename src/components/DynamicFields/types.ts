@@ -38,6 +38,7 @@ export const FieldType = {
   DATE: "DATE",
   REPEATER: "REPEATER",
   TOKEN: "TOKEN",
+  MENU_SELECT: "MENU_SELECT",
 } as const;
 export type FieldType = (typeof FieldType)[keyof typeof FieldType];
 

@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { apiClient } from "../../api/client";
 import { Box, Button, Chip, Stack, TextField, Typography } from "@mui/material";
 import {
   Facebook,
@@ -259,6 +261,7 @@ export const EDITOR_SHARED_BLOCK_TYPES = new Set([
   "social_embed",
   "embed",
   "before_after",
+  "website_header",
 ]);
 
 export const isEditorSharedBlockType = (value = "") =>
@@ -363,6 +366,7 @@ export type EditorSharedBlockRenderContext = {
   block: Record<string, any>;
   index: number;
   blockPath: string;
+  websiteId?: string | number;
   tone: "light" | "dark";
   textColor: string;
   mutedTextColor: string;
@@ -397,6 +401,285 @@ export type EditorSharedBlockRenderContext = {
     fieldPath: string,
     fallbackStyle?: Record<string, any>,
   ) => Record<string, any>;
+};
+
+// ── Website Header Editor Preview ────────────────────────────────────────────
+const HeaderEditorPreview: React.FC<{
+  block: Record<string, any>;
+  section: Record<string, any>;
+  compoundBlockSelectionProps: Record<string, any>;
+  compoundBlockLabel: string;
+  themeColor: string;
+  textColor: string;
+  mutedTextColor: string;
+  tone: "light" | "dark";
+  websiteId?: string | number;
+}> = ({
+  block,
+  section,
+  compoundBlockSelectionProps,
+  compoundBlockLabel,
+  themeColor,
+  textColor,
+  mutedTextColor,
+  tone,
+  websiteId: websiteIdProp,
+}) => {
+  const { websiteId: paramWebsiteId, slug: paramSlug } = useParams<{
+    websiteId: string;
+    slug: string;
+  }>();
+  const websiteId = websiteIdProp ?? paramWebsiteId;
+
+  // Resolve relative menu targets against the site base path.
+  // On /site/:slug pages, targets like "/contact-us" must become "/site/:slug/contact-us".
+  const siteBase = (() => {
+    const p = typeof window !== "undefined" ? window.location.pathname : "";
+    const m = p.match(/^(\/site\/[^/]+)/);
+    return m ? m[1] : "";
+  })();
+  const resolveTarget = (target: string) => {
+    if (!target || target.startsWith("#") || target.startsWith("http"))
+      return target;
+    return siteBase
+      ? `${siteBase}${target.startsWith("/") ? target : `/${target}`}`
+      : target;
+  };
+
+  const c = block.content ?? {};
+  const logoType: string = c.logoType ?? section?.logoType ?? "text";
+  const logoText: string = c.logoText ?? section?.logoText ?? "Brand";
+  const logoImage: string = c.logoImage ?? section?.logoImage ?? "";
+  const ctaText: string = c.ctaText ?? section?.ctaText ?? "Get Started";
+  const menuId: string = c.menuId ?? section?.menuId ?? "";
+
+  const [fetchedMenuItems, setFetchedMenuItems] = useState<
+    Array<{ label: string; target: string }>
+  >([]);
+
+  useEffect(() => {
+    if (!menuId || !websiteId) {
+      setFetchedMenuItems([]);
+      return;
+    }
+    let cancelled = false;
+    apiClient
+      .get(`/websites/${websiteId}/menus`)
+      .then((res) => {
+        if (cancelled) return;
+        const raw = res.data?.data ?? res.data ?? [];
+        const menus = Array.isArray(raw) ? raw : [];
+        const found = menus.find(
+          (m: any) => String(m.id) === String(menuId) || m.handle === menuId,
+        );
+        setFetchedMenuItems(Array.isArray(found?.items) ? found.items : []);
+      })
+      .catch(() => {
+        if (!cancelled) setFetchedMenuItems([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [menuId, websiteId]);
+
+  const menuItems =
+    fetchedMenuItems.length > 0
+      ? fetchedMenuItems
+      : Array.isArray(c.menuItems)
+        ? c.menuItems
+        : [];
+
+  const bg = "#ffffff";
+  const borderCol = "rgba(0,0,0,0.08)";
+  const navLinkColor = "#4b5563";
+  const logoColor = textColor;
+  const placeholderLinks = ["About", "Services", "Blog", "Contact"];
+
+  return (
+    <Box
+      {...compoundBlockSelectionProps}
+      data-preview-label={compoundBlockLabel}
+      sx={{
+        width: "100%",
+        bgcolor: bg,
+        borderBottom: `1px solid ${borderCol}`,
+        boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
+        borderRadius: 0,
+        p: 0,
+        overflow: "hidden",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 3,
+          height: 64,
+          gap: 3,
+          maxWidth: 1100,
+          mx: "auto",
+        }}
+      >
+        {/* Logo */}
+        <Box
+          component="a"
+          href="/"
+          sx={{
+            flexShrink: 0,
+            minWidth: 80,
+            textDecoration: "none",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {logoType === "image" && logoImage ? (
+            <Box
+              component="img"
+              src={logoImage}
+              alt={logoText || "Logo"}
+              sx={{
+                height: 30,
+                width: "auto",
+                maxWidth: 120,
+                objectFit: "contain",
+              }}
+            />
+          ) : (
+            <Box
+              sx={{
+                fontWeight: 800,
+                fontSize: "1.1rem",
+                color: logoColor,
+                letterSpacing: "-0.01em",
+                lineHeight: 1,
+                fontFamily: "inherit",
+                textTransform: "uppercase",
+              }}
+            >
+              {logoText || "Brand"}
+            </Box>
+          )}
+        </Box>
+
+        {/* Center nav links */}
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0,
+          }}
+        >
+          {(menuItems.length > 0
+            ? menuItems.slice(0, 6)
+            : placeholderLinks.map((l) => ({ label: l, target: "" }))
+          ).map((item, i) => {
+            const resolved = resolveTarget(item.target ?? "");
+            return (
+              <Box
+                key={i}
+                component={resolved ? "a" : "span"}
+                href={resolved || undefined}
+                onClick={
+                  resolved?.startsWith("#")
+                    ? (e: React.MouseEvent) => {
+                        e.preventDefault();
+                        const id = resolved.replace(/^#/, "");
+                        const el =
+                          document.getElementById(id) ||
+                          document.querySelector(`[data-section="${id}"]`);
+                        el?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }
+                    : undefined
+                }
+                sx={{
+                  px: 1.8,
+                  py: 0.5,
+                  fontSize: "0.78rem",
+                  fontWeight: 500,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  color:
+                    menuItems.length === 0 ? `${navLinkColor}80` : navLinkColor,
+                  whiteSpace: "nowrap",
+                  textDecoration: "none",
+                  cursor: item.target ? "pointer" : "default",
+                  "&:hover": item.target ? { color: themeColor } : {},
+                  transition: "color 0.15s",
+                }}
+              >
+                {item.label}
+              </Box>
+            );
+          })}
+        </Box>
+
+        {/* CTA button */}
+        <Box
+          sx={{
+            flexShrink: 0,
+            minWidth: 80,
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          {ctaText && (
+            <Box
+              component="a"
+              href={c.ctaUrl || "#contact"}
+              sx={{
+                px: 2.2,
+                py: 0.65,
+                border: `1.5px solid ${themeColor}`,
+                color: themeColor,
+                borderRadius: "100px",
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                letterSpacing: "0.03em",
+                whiteSpace: "nowrap",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                display: "inline-block",
+                cursor: "pointer",
+                transition: "background 0.15s, color 0.15s",
+                "&:hover": { bgcolor: themeColor, color: "#fff" },
+              }}
+            >
+              {ctaText}
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      {/* No menu hint strip */}
+      {menuItems.length === 0 && (
+        <Box
+          sx={{
+            textAlign: "center",
+            py: 0.5,
+            bgcolor: "rgba(0,0,0,0.02)",
+            borderTop: `1px solid ${borderCol}`,
+          }}
+        >
+          <Box
+            sx={{
+              fontSize: "0.68rem",
+              color: mutedTextColor,
+              opacity: 0.6,
+              letterSpacing: "0.02em",
+            }}
+          >
+            Placeholder links shown · Select a menu from the left panel
+          </Box>
+        </Box>
+      )}
+    </Box>
+  );
 };
 
 const BeforeAfterEditorPreview: React.FC<{
@@ -689,6 +972,7 @@ export const renderEditorSharedBlock = ({
   getCanvasMaxWidth,
   getCanvasTransform,
   getEditableFieldStyle,
+  websiteId,
 }: EditorSharedBlockRenderContext) => {
   const blockType = String(block.type || "").toLowerCase();
 
@@ -4786,6 +5070,23 @@ export const renderEditorSharedBlock = ({
         compoundCardSx={compoundCardSx}
         rawCardStyle={rawCardStyle}
         resolvedCardStyle={resolvedCardStyle}
+      />
+    );
+  }
+
+  if (blockType === "website_header") {
+    return (
+      <HeaderEditorPreview
+        key={String(block.id || `${blockType}-${index}`)}
+        block={block}
+        section={section}
+        compoundBlockSelectionProps={compoundBlockSelectionProps}
+        compoundBlockLabel={compoundBlockLabel}
+        themeColor={themeColor}
+        textColor={textColor}
+        mutedTextColor={mutedTextColor}
+        tone={tone}
+        websiteId={websiteId}
       />
     );
   }

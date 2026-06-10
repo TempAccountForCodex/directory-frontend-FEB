@@ -576,6 +576,7 @@ h1, h2, h3, h4, h5, h6 {
       return buildTemplatePreviewBusinessData(
         resolvedFrontendTemplateId,
         {
+          id: website.id,
           name: website.name,
           businessName: website.businessName,
           primaryColor: website.primaryColor,
@@ -592,6 +593,7 @@ h1, h2, h3, h4, h5, h6 {
     }
 
     return buildFrontendTemplateBusinessData(resolvedFrontendTemplateId, {
+      websiteId: website.id,
       name: website.name,
       businessName: website.businessName,
       primaryColor: website.primaryColor,
@@ -823,6 +825,7 @@ h1, h2, h3, h4, h5, h6 {
                     secondaryColor={website.secondaryColor || "#D3EB63"} // Techietribe lime accent
                     headingColor={website.headingTextColor || "#252525"} // Techietribe dark text
                     bodyColor={website.bodyTextColor || "#6A6F78"} // Techietribe gray text
+                    websiteId={website.id}
                     onCtaClick={(blockType, ctaText) =>
                       trackClick(`${blockType}_CTA`, { cta_text: ctaText })
                     }

@@ -43,6 +43,7 @@ const DirectoryListingBlock = lazy(
 const SocialEmbedBlock = lazy(() => import("./blocks/SocialEmbedBlock"));
 const EmbedBlock = lazy(() => import("./blocks/EmbedBlock"));
 const MenuDisplayBlock = lazy(() => import("./blocks/MenuDisplayBlock"));
+const WebsiteHeaderBlock = lazy(() => import("./blocks/WebsiteHeaderBlock"));
 
 // Lazy-load newsletter and reviews blocks for code splitting (Step 2.28)
 const NewsletterBlock = lazy(() => import("./blocks/NewsletterBlock"));
@@ -130,6 +131,7 @@ interface BlockRendererProps {
   secondaryColor?: string;
   headingColor?: string;
   bodyColor?: string;
+  websiteId?: string | number;
   onCtaClick?: (blockType: string, ctaText: string) => void;
   onFormSubmit?: (formName: string, success: boolean) => void;
 }
@@ -409,6 +411,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
   secondaryColor = "#64748b",
   headingColor = "#1e293b",
   bodyColor = "#475569",
+  websiteId,
   onCtaClick,
   onFormSubmit,
 }) => {
@@ -771,6 +774,19 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
             <FormBuilderBlock block={block} primaryColor={primaryColor} />
           </Suspense>
         </BlockWrapper>
+      );
+
+    case "WEBSITE_HEADER":
+      return (
+        <Suspense fallback={<Box sx={{ height: 68 }} />}>
+          <WebsiteHeaderBlock
+            block={block}
+            primaryColor={primaryColor}
+            headingColor={headingColor}
+            websiteId={websiteId}
+            onCtaClick={onCtaClick}
+          />
+        </Suspense>
       );
 
     case "BEFORE_AFTER":
