@@ -2,81 +2,118 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
 import {
   Box,
-  Button,
-  Chip,
+  ButtonBase,
   CircularProgress,
-  Container,
-  Grid,
   IconButton,
-  Link,
-  Paper,
+  InputBase,
   Stack,
   Typography,
 } from "@mui/material";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
-import LanguageIcon from "@mui/icons-material/Language";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import PhoneIcon from "@mui/icons-material/Phone";
-import PlaceIcon from "@mui/icons-material/Place";
 import ReplayIcon from "@mui/icons-material/Replay";
-import StarIcon from "@mui/icons-material/Star";
-import StarBorderIcon from "@mui/icons-material/StarBorder";
-import StorefrontIcon from "@mui/icons-material/Storefront";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import {
+  MapPin,
+  Globe,
+  Heart,
+  Star,
+  ExternalLink,
+  ArrowRight,
+  TrendingUp,
+  Send,
+} from "lucide-react";
 import { useListings } from "../../context/ListingsContext";
-import { useReviews } from "../../hooks/useReviews";
+import { useReviews, useSubmitReview } from "../../hooks/useReviews";
 import PropertyItemCard from "../../components/publicComponents/Listing/PropertyCardItem";
 
-const palette = {
-  paper: "#FDFBF7",
-  ink: "#2C2A28",
-  text: "#4A4744",
-  muted: "#827D77",
-  soft: "#E5DFD3",
-  softLight: "#F5F1EA",
-  rule: "#F0EBE1",
-  teal: "#398C91",
-  tealDark: "#2d7277",
-};
-const homeHeroFont =
+const teal = "#1a9d96";
+const tealDark = "#0f6e69";
+
+/* Same font as the Listings page (homeHeroFont) */
+const pageFont =
   "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
-const listingCategoryPillSx = {
-  position: "absolute",
-  bottom: 12,
-  left: 16,
-  height: 24,
-  borderRadius: 999,
-  background: "#1a7a74",
-  color: "#fff",
-  border: 0,
-  boxShadow: "none",
-  transition: "background-color 0.15s ease, color 0.15s ease",
-  "&:hover": {
-    background: "#35C5C2",
-    color: "#fff",
-  },
-  "& .MuiChip-label": {
-    px: 1.5,
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: 0,
-    textTransform: "none",
-    fontFamily: homeHeroFont,
+/* Shared horizontal container so every section aligns to the same edges */
+const sectionContainerSx = {
+  maxWidth: 1300,
+  mx: "auto",
+  px: 4,
+};
+
+const gray = {
+  900: "#111827",
+  800: "#1f2937",
+  700: "#374151",
+  600: "#4b5563",
+  500: "#6b7280",
+  400: "#9ca3af",
+  300: "#d1d5db",
+  200: "#e5e7eb",
+  100: "#f3f4f6",
+};
+
+const tagPillSx = {
+  display: "inline-block",
+  bgcolor: "#e6f7f6",
+  color: teal,
+  border: "1px solid #b3e4e2",
+  borderRadius: "999px",
+  fontFamily: pageFont,
+  fontSize: 12,
+  fontWeight: 500,
+  lineHeight: 1.5,
+  px: "12px",
+  py: "4px",
+};
+
+const eyebrowSx = {
+  color: teal,
+  fontFamily: pageFont,
+  fontSize: 12,
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.1em",
+  mb: "6px",
+};
+
+const sidebarLabelSx = {
+  color: gray[400],
+  fontFamily: pageFont,
+  fontSize: 12,
+  fontWeight: 600,
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+};
+
+const formLabelSx = {
+  display: "block",
+  color: gray[700],
+  fontFamily: pageFont,
+  fontSize: 12,
+  fontWeight: 600,
+  textTransform: "uppercase",
+  letterSpacing: "0.025em",
+  mb: "6px",
+};
+
+const formInputSx = {
+  width: "100%",
+  bgcolor: "#fafafa",
+  border: `1px solid ${gray[200]}`,
+  borderRadius: "12px",
+  px: "16px",
+  py: "10px",
+  fontFamily: pageFont,
+  fontSize: 14,
+  color: gray[800],
+  transition: "border-color 0.2s ease",
+  "&.Mui-focused": { borderColor: teal },
+  "& input::placeholder, & textarea::placeholder": {
+    color: gray[400],
+    opacity: 1,
   },
 };
 
 const fallbackBanner =
   "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80";
-
-const fallbackRelatedImages = [
-  "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80",
-  "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&q=80",
-  "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=600&q=80",
-];
 
 const fallbackReviews = [
   {
@@ -201,59 +238,333 @@ function normalizeTags(tags?: string[] | string | null) {
   return [];
 }
 
-function StarRow({
-  rating,
-  size = 16,
-  color = palette.teal,
-}: {
-  rating: number;
-  size?: number;
-  color?: string;
-}) {
+function GoldStars({ rating, size = 11 }: { rating: number; size?: number }) {
   const rounded = Math.round(rating);
   return (
-    <Stack direction="row" spacing={0.25} color={color} lineHeight={0}>
-      {[1, 2, 3, 4, 5].map((star) =>
-        star <= rounded ? (
-          <StarIcon key={star} sx={{ fontSize: size }} />
-        ) : (
-          <StarBorderIcon key={star} sx={{ fontSize: size }} />
-        ),
-      )}
-    </Stack>
+    <>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          size={size}
+          fill={star <= rounded ? "gold" : "none"}
+          color={star <= rounded ? "gold" : "rgba(209,213,219,0.8)"}
+        />
+      ))}
+    </>
   );
 }
 
-function BusinessLogo({
-  logo: _logo,
-  name,
-  size = 72,
+const ratingLabels = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
+
+function ReviewFormSection({
+  listingId,
+  businessName,
+  onSubmitted,
 }: {
-  logo?: string | null;
-  name: string;
-  size?: number;
+  listingId: string | number;
+  businessName: string;
+  onSubmitted: () => void;
 }) {
+  const { submitReview, loading, error, fieldErrors, requiresAuth } =
+    useSubmitReview(listingId);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const canSubmit = selectedRating > 0 && content.trim().length > 0 && !loading;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    const result = await submitReview({
+      rating: selectedRating,
+      title,
+      content,
+    });
+    if (result) {
+      setSubmitted(true);
+      setSelectedRating(0);
+      setTitle("");
+      setContent("");
+      onSubmitted();
+    }
+  };
+
   return (
     <Box
-      aria-label={`${name} initials`}
-      sx={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        bgcolor: palette.teal,
-        color: "#fff",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        fontSize: size * 0.36,
-        fontWeight: 600,
-        border: "4px solid #fff",
-        boxShadow: "0 10px 24px rgba(0,0,0,0.22)",
-        userSelect: "none",
-      }}
+      component="section"
+      sx={{ borderTop: `1px solid ${gray[100]}`, pt: 4 }}
     >
-      {getInitials(name)}
+      <Box>
+        <Box sx={{ maxWidth: 672 }}>
+          <Typography sx={eyebrowSx}>Share Your Experience</Typography>
+          <Typography
+            variant="h2"
+            sx={{
+              color: gray[900],
+              fontFamily: pageFont,
+              fontWeight: 700,
+              fontSize: 30,
+              mb: "28px",
+            }}
+          >
+            Leave a Review
+          </Typography>
+
+          {submitted ? (
+            <Box
+              sx={{
+                borderRadius: "16px",
+                p: 4,
+                textAlign: "center",
+                bgcolor: "#e6f7f6",
+                border: "1px solid #b3e4e2",
+              }}
+            >
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mx: "auto",
+                  mb: 1.5,
+                  bgcolor: teal,
+                }}
+              >
+                <Send size={20} color="white" />
+              </Box>
+              <Typography
+                sx={{
+                  color: gray[900],
+                  fontFamily: pageFont,
+                  fontWeight: 700,
+                  fontSize: 18,
+                  mb: "4px",
+                }}
+              >
+                Thank you!
+              </Typography>
+              <Typography
+                sx={{ color: gray[500], fontFamily: pageFont, fontSize: 14 }}
+              >
+                Your review has been submitted and is pending approval.
+              </Typography>
+            </Box>
+          ) : (
+            <Stack spacing={2.5}>
+              {/* Star rating */}
+              <Box>
+                <Typography
+                  sx={{
+                    color: gray[700],
+                    fontFamily: pageFont,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    mb: 1,
+                  }}
+                >
+                  Your Rating
+                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <ButtonBase
+                      key={n}
+                      aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+                      disableRipple
+                      onMouseEnter={() => setHoverRating(n)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      onClick={() => setSelectedRating(n)}
+                      sx={{
+                        p: 0,
+                        lineHeight: 0,
+                        transition: "transform 0.15s ease",
+                        "&:hover": { transform: "scale(1.1)" },
+                      }}
+                    >
+                      <Star
+                        size={28}
+                        fill={
+                          (hoverRating || selectedRating) >= n ? "gold" : "none"
+                        }
+                        color={
+                          (hoverRating || selectedRating) >= n
+                            ? "gold"
+                            : gray[300]
+                        }
+                        strokeWidth={1.5}
+                      />
+                    </ButtonBase>
+                  ))}
+                  {selectedRating > 0 && (
+                    <Typography
+                      sx={{
+                        ml: 1,
+                        color: teal,
+                        fontFamily: pageFont,
+                        fontSize: 14,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {ratingLabels[selectedRating]}
+                    </Typography>
+                  )}
+                </Stack>
+                {fieldErrors.rating && (
+                  <Typography
+                    sx={{
+                      color: "#ef4444",
+                      fontFamily: pageFont,
+                      fontSize: 12,
+                      mt: 0.5,
+                    }}
+                  >
+                    {fieldErrors.rating}
+                  </Typography>
+                )}
+              </Box>
+
+              {/* Title */}
+              <Box>
+                <Typography component="label" sx={formLabelSx}>
+                  Review Title
+                </Typography>
+                <InputBase
+                  placeholder="e.g. Outstanding service from start to finish"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  sx={formInputSx}
+                />
+                {fieldErrors.title && (
+                  <Typography
+                    sx={{
+                      color: "#ef4444",
+                      fontFamily: pageFont,
+                      fontSize: 12,
+                      mt: 0.5,
+                    }}
+                  >
+                    {fieldErrors.title}
+                  </Typography>
+                )}
+              </Box>
+
+              {/* Review textarea */}
+              <Box>
+                <Typography component="label" sx={formLabelSx}>
+                  Your Review
+                </Typography>
+                <InputBase
+                  multiline
+                  rows={4}
+                  placeholder={`Tell others about your experience working with ${businessName}…`}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  sx={{ ...formInputSx, py: "12px" }}
+                />
+                <Typography
+                  sx={{
+                    color: gray[400],
+                    fontFamily: pageFont,
+                    fontSize: 12,
+                    mt: 0.5,
+                  }}
+                >
+                  {content.length} / 500 characters
+                </Typography>
+                {fieldErrors.content && (
+                  <Typography
+                    sx={{
+                      color: "#ef4444",
+                      fontFamily: pageFont,
+                      fontSize: 12,
+                      mt: 0.5,
+                    }}
+                  >
+                    {fieldErrors.content}
+                  </Typography>
+                )}
+              </Box>
+
+              {requiresAuth && (
+                <Box
+                  sx={{
+                    borderRadius: "12px",
+                    px: 2,
+                    py: 1.5,
+                    bgcolor: "#e6f7f6",
+                    border: "1px solid #b3e4e2",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: gray[700],
+                      fontFamily: pageFont,
+                      fontSize: 14,
+                    }}
+                  >
+                    Please{" "}
+                    <Box
+                      component={RouterLink}
+                      to="/auth"
+                      sx={{
+                        color: teal,
+                        fontWeight: 600,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      sign in
+                    </Box>{" "}
+                    to share your review.
+                  </Typography>
+                </Box>
+              )}
+
+              {error && (
+                <Typography
+                  sx={{ color: "#ef4444", fontFamily: pageFont, fontSize: 14 }}
+                >
+                  {error}
+                </Typography>
+              )}
+
+              {/* Submit */}
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <ButtonBase
+                  onClick={handleSubmit}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    px: 3,
+                    py: "10px",
+                    borderRadius: "12px",
+                    color: "#fff",
+                    fontFamily: pageFont,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    background: `linear-gradient(90deg, ${teal} 0%, ${tealDark} 100%)`,
+                    opacity: canSubmit ? 1 : 0.5,
+                    cursor: canSubmit ? "pointer" : "not-allowed",
+                    transition: "opacity 0.2s ease",
+                  }}
+                >
+                  <Send size={14} />{" "}
+                  {loading ? "Submitting…" : "Submit Review"}
+                </ButtonBase>
+                <Typography
+                  sx={{ color: gray[400], fontFamily: pageFont, fontSize: 12 }}
+                >
+                  All reviews are moderated before publishing.
+                </Typography>
+              </Stack>
+            </Stack>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }
@@ -276,7 +587,7 @@ const ListingDetails: React.FC = () => {
     setListing((found as Listing | undefined) ?? null);
   }, [routeKey, listings]);
 
-  const { reviews, stats } = useReviews(listing?.id ?? null);
+  const { reviews, stats, refetch } = useReviews(listing?.id ?? null);
 
   const viewModel = useMemo(() => {
     if (!listing) return null;
@@ -353,10 +664,10 @@ const ListingDetails: React.FC = () => {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          bgcolor: palette.paper,
+          bgcolor: "#fff",
         }}
       >
-        <CircularProgress sx={{ color: palette.teal }} />
+        <CircularProgress sx={{ color: teal }} />
       </Box>
     );
   }
@@ -370,7 +681,7 @@ const ListingDetails: React.FC = () => {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          bgcolor: palette.paper,
+          bgcolor: "#fff",
         }}
       >
         <Typography fontSize="16px" color="error" gutterBottom>
@@ -383,543 +694,628 @@ const ListingDetails: React.FC = () => {
     );
   }
 
+  const statStrip = [
+    {
+      label: "Reviews",
+      value: String(viewModel.reviewCount),
+      icon: <Star size={16} fill={teal} color={teal} />,
+    },
+    {
+      label: "Favourites",
+      value: String(viewModel.favouriteCount),
+      icon: <Heart size={16} color={teal} />,
+    },
+    {
+      label: "Match Score",
+      value: viewModel.score ? viewModel.score.toFixed(1) : "—",
+      icon: <TrendingUp size={16} color={teal} />,
+    },
+  ];
+
   return (
     <Box
-      component="main"
       sx={{
         minHeight: "100vh",
-        bgcolor: palette.paper,
-        color: palette.ink,
-        fontFamily: homeHeroFont,
-        "& .MuiTypography-root, & .MuiButton-root, & .MuiChip-root": {
-          fontFamily: homeHeroFont,
+        bgcolor: "#fff",
+        fontFamily: pageFont,
+        "& .MuiTypography-root, & .MuiButton-root, & input, & label": {
+          fontFamily: pageFont,
         },
-        "& ::selection": { bgcolor: palette.soft },
       }}
     >
-      <Box
-        component="section"
-        sx={{
-          position: "relative",
-          height: "70vh",
-          minHeight: { xs: 520, md: 500 },
-          width: "100%",
-          overflow: "hidden",
-        }}
-      >
+      {/* Hero - full-bleed editorial */}
+      <Box sx={{ position: "relative", height: 500, overflow: "hidden" }}>
         <Box
           component="img"
           src={viewModel.banner}
           alt={viewModel.name}
-          sx={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            bgcolor: "rgba(0,0,0,0.4)",
-            mixBlendMode: "multiply",
-          }}
+          sx={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
         <Box
           sx={{
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)",
+              "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(10,80,76,0.6) 100%)",
           }}
         />
-
         {viewModel.previewWebsite && (
-          <Button
-            component={Link}
-            href={viewModel.previewWebsite}
-            target={viewModel.isExternalWebsite ? "_blank" : undefined}
-            rel={viewModel.isExternalWebsite ? "noopener noreferrer" : undefined}
-            startIcon={<LanguageIcon sx={{ fontSize: 13 }} />}
-            endIcon={<OpenInNewIcon sx={{ fontSize: 11, opacity: 0.7 }} />}
+          <Box
             sx={{
               position: "absolute",
-              top: { xs: 88, md: 120 },
-              right: { xs: 24, md: 72, lg: 150 },
-              px: 2,
-              py: 1.2,
-              borderRadius: 0.5,
-              color: "#fff",
-              border: "1px solid rgba(255,255,255,0.3)",
-              bgcolor: "rgba(255,255,255,0.1)",
-              backdropFilter: "blur(12px)",
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: 1.7,
-              textTransform: "uppercase",
-              textDecoration: "none",
+              bottom: 56,
+              left: 0,
+              right: 10,
+              ...sectionContainerSx,
+              display: "flex",
+              justifyContent: "flex-end",
+              /* the hero text block overlaps this area and was swallowing
+                 clicks — keep the button layered above it */
               zIndex: 2,
-              "&:hover": {
-                bgcolor: "rgba(255,255,255,0.2)",
-                textDecoration: "none",
-              },
             }}
           >
-            Preview Website
-          </Button>
+            <ButtonBase
+              component="a"
+              href={viewModel.previewWebsite}
+              target={viewModel.isExternalWebsite ? "_blank" : undefined}
+              rel={
+                viewModel.isExternalWebsite ? "noopener noreferrer" : undefined
+              }
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "#fff",
+                fontFamily: pageFont,
+                fontSize: 12,
+                fontWeight: 500,
+                px: 1.5,
+                py: "6px",
+                borderRadius: "999px",
+                background: "rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                backdropFilter: "blur(4px)",
+                transition:
+                  "background 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease",
+                "& svg": { transition: "transform 0.25s ease" },
+                "&:hover": {
+                  background: "rgba(255,255,255,0.3)",
+                  borderColor: "rgba(255,255,255,0.6)",
+                  transform: "translateY(-2px) scale(1.04)",
+                  boxShadow: "0 6px 18px rgba(0,0,0,0.25)",
+                  "& svg": { transform: "rotate(20deg)" },
+                },
+                "&:active": {
+                  transform: "translateY(0) scale(0.98)",
+                },
+              }}
+            >
+              <Globe size={11} /> Preview Website
+            </ButtonBase>
+          </Box>
         )}
-
-        <Container
-          maxWidth="lg"
+        <Box
           sx={{
             position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-            pb: { xs: 8, md: 10 },
-            gap: 2,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            ...sectionContainerSx,
+            pb: 3.5,
           }}
         >
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <BusinessLogo
-              logo={viewModel.logo}
-              name={viewModel.name}
-              size={52}
-            />
-            <Chip
-              label={viewModel.category}
+          <Stack direction="row" alignItems="center" spacing={1} mb="10px">
+            <Box
               sx={{
-                height: 28,
-                borderRadius: 0.5,
-                bgcolor: "rgba(229,223,211,0.9)",
-                color: palette.ink,
-                backdropFilter: "blur(8px)",
+                width: 32,
+                height: 32,
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+                fontFamily: pageFont,
                 fontSize: 12,
                 fontWeight: 700,
-                letterSpacing: 1.6,
-                textTransform: "uppercase",
+                bgcolor: teal,
               }}
-            />
+            >
+              {getInitials(viewModel.name)}
+            </Box>
+            <Typography
+              sx={{
+                color: "rgba(255,255,255,0.7)",
+                fontFamily: pageFont,
+                fontSize: 12,
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+              }}
+            >
+              {viewModel.category}
+            </Typography>
           </Stack>
-
           <Typography
             variant="h1"
             sx={{
-              fontFamily:
-                "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               color: "#fff",
-              fontWeight: 500,
-              letterSpacing: 0,
-              lineHeight: 0.95,
-              fontSize: { xs: 48, md: 92, lg: 112 },
-              maxWidth: 1200,
+              fontFamily: pageFont,
+              fontWeight: 700,
+              fontSize: 48,
+              lineHeight: 1.25,
+              mb: 1.5,
             }}
           >
             {viewModel.name}
           </Typography>
-
           <Stack
             direction="row"
             flexWrap="wrap"
             alignItems="center"
             gap={2.5}
-            sx={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}
+            sx={{
+              color: "rgba(255,255,255,0.8)",
+              fontFamily: pageFont,
+              fontSize: 12,
+            }}
           >
-            <Stack direction="row" alignItems="center" spacing={0.75}>
-              <StarRow rating={viewModel.rating} size={15} color="#fff" />
-              <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>
+            <Stack direction="row" alignItems="center" gap={0.5}>
+              <GoldStars rating={viewModel.rating} />
+              <Box
+                component="span"
+                sx={{ ml: "4px", fontWeight: 600, color: "#fff" }}
+              >
                 {viewModel.rating ? viewModel.rating.toFixed(1) : "New"}
-              </Typography>
-              <Typography sx={{ fontSize: 14 }}>
-                ({viewModel.reviewCount} reviews)
-              </Typography>
+              </Box>
+              <Box
+                component="span"
+                sx={{ color: "rgba(255,255,255,0.6)", ml: "2px" }}
+              >
+                · {viewModel.reviewCount} reviews
+              </Box>
             </Stack>
-            <Stack direction="row" alignItems="center" spacing={0.75}>
-              <FavoriteBorderIcon sx={{ fontSize: 15 }} />
-              <span>{viewModel.favouriteCount} saved</span>
+            <Stack direction="row" alignItems="center" gap={0.5}>
+              <Heart size={11} />
+              <Box component="span">{viewModel.favouriteCount} saved</Box>
             </Stack>
-            <Stack direction="row" alignItems="center" spacing={0.75}>
-              <PlaceIcon sx={{ fontSize: 15 }} />
-              <span>{viewModel.locationText}</span>
+            <Stack direction="row" alignItems="center" gap={0.5}>
+              <MapPin size={11} />
+              <Box component="span">{viewModel.locationText}</Box>
             </Stack>
-            <Typography
-              sx={{
-                color: "#fff",
-                bgcolor: "rgba(255,255,255,0.2)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: 0.5,
-                px: 1,
-                py: 0.25,
-                fontWeight: 700,
-                fontSize: 14,
-              }}
-            >
+            <Box component="span" sx={{ fontWeight: 500 }}>
               {viewModel.price}
-            </Typography>
+            </Box>
           </Stack>
-        </Container>
+        </Box>
       </Box>
 
-      <Container
-        maxWidth="lg"
+      {/* Accent bar */}
+      <Box
         sx={{
-          position: "relative",
-          isolation: "isolate",
-          py: { xs: 8, lg: 12 },
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: "calc(50% - 50vw)",
-            right: "calc(50% - 50vw)",
-            backgroundColor: "#f7f5f3",
-            backgroundImage: "url('/assets/images/insights/bg-1.webp')",
-            backgroundRepeat: "repeat",
-            backgroundPosition: "left top",
-            backgroundSize: "auto",
-            filter: "brightness(1) hue-rotate(0deg) saturate(1)",
-            zIndex: 0,
-            pointerEvents: "none",
-          },
-          "& > *": {
-            position: "relative",
-            zIndex: 1,
-          },
+          height: 4,
+          background: "linear-gradient(90deg, #1a9d96, #22c5bc)",
+        }}
+      />
+
+      {/* Main layout */}
+      <Box
+        sx={{
+          ...sectionContainerSx,
+          py: 4,
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" },
+          gap: 4,
         }}
       >
-        <Grid container spacing={{ xs: 7, lg: 10 }}>
-          <Grid item xs={12} lg={8}>
-            <Stack spacing={{ xs: 7, md: 9 }}>
-              <Box component="section">
-                <Typography
-                  variant="h2"
-                  sx={{
-                    fontFamily:
-                      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: 34,
-                    fontWeight: 400,
-                    mb: 4,
-                    pb: 3,
-                    borderBottom: `1px solid ${palette.soft}`,
-                  }}
-                >
-                  About
-                </Typography>
-                <Typography
-                  sx={{
-                    color: palette.text,
-                    fontSize: { xs: 19, md: 21 },
-                    lineHeight: 1.75,
-                    maxWidth: 820,
-                  }}
-                >
-                  {viewModel.description}
-                </Typography>
-
-                {viewModel.tags.length > 0 && (
-                  <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 4 }}>
-                    {viewModel.tags.map((tag) => (
-                      <Chip
-                        key={tag}
-                        icon={
-                          <LocalOfferIcon
-                            sx={{ color: `${palette.teal} !important` }}
-                          />
-                        }
-                        label={tag}
-                        sx={{
-                          borderRadius: 0.5,
-                          border: `1px solid ${palette.soft}`,
-                          bgcolor: "#fff",
-                          color: palette.muted,
-                          fontSize: 12,
-                          fontWeight: 600,
-                          letterSpacing: 1,
-                          textTransform: "uppercase",
-                          height: 30,
-                        }}
-                      />
-                    ))}
-                  </Stack>
-                )}
-              </Box>
-
-              <Box component="section">
-                <Typography
-                  variant="h2"
-                  sx={{
-                    fontFamily:
-                      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: 34,
-                    fontWeight: 400,
-                    mb: 4,
-                    pb: 3,
-                    borderBottom: `1px solid ${palette.soft}`,
-                  }}
-                >
-                  What Clients Say
-                </Typography>
-                <Stack spacing={6}>
-                  {visibleReviews.map((review, index) => {
-                    const reviewId =
-                      "id" in review && review.id != null
-                        ? String(review.id)
-                        : String(index);
-
-                    return (
-                      <Stack key={reviewId} direction="row" spacing={3}>
-                        <FormatQuoteIcon
-                          sx={{
-                            color: palette.teal,
-                            fontSize: 36,
-                            mt: 0.5,
-                            strokeWidth: 1,
-                          }}
-                        />
-                        <Box>
-                          <Box sx={{ mb: 2 }}>
-                            <StarRow rating={Number(review.rating || 5)} />
-                          </Box>
-                          <Typography
-                            sx={{
-                              color: palette.text,
-                              fontFamily:
-                                "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                              fontStyle: "italic",
-                              fontSize: { xs: 21, md: 26 },
-                              lineHeight: 1.55,
-                              mb: 2,
-                            }}
-                          >
-                            "{review.content}"
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: 14,
-                              fontWeight: 700,
-                              letterSpacing: 1.3,
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            {review.author?.name || "Client"}
-                          </Typography>
-                          <Typography
-                            sx={{
-                              mt: 0.5,
-                              color: palette.muted,
-                              fontSize: 12,
-                              letterSpacing: 1.7,
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            {review.title || "Verified review"}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    );
-                  })}
-                </Stack>
-              </Box>
-            </Stack>
-          </Grid>
-
-          <Grid item xs={12} lg={4}>
-            <Paper
-              elevation={0}
+        {/* Left */}
+        <Stack spacing={4}>
+          {/* About */}
+          <Box component="section">
+            <Typography
+              variant="h2"
               sx={{
-                position: { lg: "sticky" },
-                top: { lg: 48 },
-                bgcolor: "#fff",
-                border: `1px solid ${palette.soft}`,
-                borderRadius: 0,
-                p: { xs: 4, md: 5 },
-                boxShadow: "0 20px 40px -15px rgba(0,0,0,0.05)",
+                color: gray[900],
+                fontFamily: pageFont,
+                fontWeight: 700,
+                fontSize: 24,
+                mb: 1.5,
               }}
             >
-              <Stack spacing={3}>
-                <Typography
-                  variant="h3"
-                  sx={{
-                    fontFamily:
-                      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: 28,
-                    fontWeight: 400,
-                  }}
-                >
-                  Details
-                </Typography>
-
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  sx={{
-                    py: 2.5,
-                    borderTop: `1px solid ${palette.rule}`,
-                    borderBottom: `1px solid ${palette.rule}`,
-                  }}
-                >
-                  <Stack spacing={0.5}>
-                    <Typography
-                      sx={{
-                        color: palette.ink,
-                        fontFamily:
-                          "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontSize: 34,
-                        fontWeight: 700,
-                      }}
-                    >
-                      {viewModel.rating ? viewModel.rating.toFixed(1) : "New"}
-                    </Typography>
-                    <StarRow rating={viewModel.rating} size={15} />
-                    <Typography sx={{ color: palette.muted, fontSize: 12 }}>
-                      {viewModel.reviewCount} reviews
-                    </Typography>
-                  </Stack>
-                  <Stack alignItems="center" spacing={0.5}>
-                    <FavoriteBorderIcon
-                      sx={{ color: palette.teal, fontSize: 22 }}
-                    />
-                    <Typography
-                      sx={{ color: palette.ink, fontSize: 22, fontWeight: 700 }}
-                    >
-                      {viewModel.favouriteCount}
-                    </Typography>
-                    <Typography sx={{ color: palette.muted, fontSize: 12 }}>
-                      favourites
-                    </Typography>
-                  </Stack>
-                  <Stack alignItems="center" spacing={0.5}>
-                    <TrendingUpIcon
-                      sx={{ color: palette.teal, fontSize: 22 }}
-                    />
-                    <Typography
-                      sx={{ color: palette.ink, fontSize: 22, fontWeight: 700 }}
-                    >
-                      {viewModel.score ? viewModel.score.toFixed(1) : "—"}
-                    </Typography>
-                    <Typography sx={{ color: palette.muted, fontSize: 12 }}>
-                      score
-                    </Typography>
-                  </Stack>
-                </Stack>
-
-                <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                  <PlaceIcon
-                    sx={{ color: palette.teal, fontSize: 19, mt: 0.25 }}
-                  />
-                  <Box>
-                    <Typography
-                      sx={{
-                        color: palette.ink,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        mb: 0.5,
-                      }}
-                    >
-                      Location
-                    </Typography>
-                    <Typography
-                      sx={{
-                        color: palette.muted,
-                        fontSize: 14,
-                        lineHeight: 1.55,
-                      }}
-                    >
-                      {viewModel.address || viewModel.locationText}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        mt: 1,
-                        color: palette.teal,
-                        fontSize: 12,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {viewModel.isRemoteOnly
-                        ? "Remote / online"
-                        : "In-person available"}
-                    </Typography>
+              About
+            </Typography>
+            <Typography
+              sx={{
+                color: gray[600],
+                fontFamily: pageFont,
+                fontSize: 14,
+                lineHeight: "28px",
+              }}
+            >
+              {viewModel.description}
+            </Typography>
+            {viewModel.tags.length > 0 && (
+              <Stack direction="row" flexWrap="wrap" gap={1} mt={2}>
+                {viewModel.tags.map((tag) => (
+                  <Box key={tag} component="span" sx={tagPillSx}>
+                    {tag}
                   </Box>
-                </Stack>
+                ))}
+              </Stack>
+            )}
+          </Box>
 
-                {viewModel.phone && (
-                  <Stack
-                    direction="row"
-                    spacing={1.5}
-                    alignItems="center"
-                    sx={{ borderTop: `1px solid ${palette.rule}`, pt: 2.5 }}
-                  >
-                    <PhoneIcon sx={{ color: palette.teal, fontSize: 19 }} />
-                    <Link
-                      href={`tel:${viewModel.phone}`}
-                      sx={{
-                        color: palette.muted,
-                        fontSize: 14,
-                        textDecoration: "none",
-                      }}
-                    >
-                      {viewModel.phone}
-                    </Link>
-                  </Stack>
-                )}
-
-                <Stack
-                  direction="row"
-                  spacing={1.5}
-                  alignItems="center"
-                  sx={{ borderTop: `1px solid ${palette.rule}`, pt: 2.5 }}
-                >
-                  <Typography
-                    sx={{ color: palette.teal, fontSize: 17, fontWeight: 700 }}
-                  >
-                    {viewModel.price}
-                  </Typography>
-                  <Typography sx={{ color: palette.muted, fontSize: 14 }}>
-                    Price range
-                  </Typography>
-                </Stack>
-
-                {viewModel.tags.length > 0 && (
-                  <Stack
-                    direction="row"
-                    flexWrap="wrap"
-                    gap={1}
-                    sx={{ borderTop: `1px solid ${palette.rule}`, pt: 2.5 }}
-                  >
-                    {viewModel.tags.map((tag) => (
-                      <Chip
-                        key={tag}
-                        label={tag}
-                        sx={{
-                          height: 28,
-                          borderRadius: 0.5,
-                          bgcolor: "#398C91",
-                          border: `1px solid ${palette.soft}`,
-                          color: palette.paper,
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
-                      />
-                    ))}
-                  </Stack>
-                )}
-
+          {/* Score strip */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              border: `1px solid ${gray[100]}`,
+              borderRadius: "16px",
+              overflow: "hidden",
+            }}
+          >
+            {statStrip.map((s, i) => (
+              <Stack
+                key={s.label}
+                direction="row"
+                alignItems="center"
+                spacing={1.5}
+                sx={{
+                  px: 2.5,
+                  py: 2,
+                  borderRight: i < 2 ? `1px solid ${gray[100]}` : "none",
+                }}
+              >
                 <Box
                   sx={{
-                    aspectRatio: "16 / 9",
-                    width: "100%",
-                    bgcolor: palette.soft,
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: palette.muted,
-                    borderTop: `1px solid ${palette.rule}`,
+                    flexShrink: 0,
+                    bgcolor: "#e6f7f6",
+                  }}
+                >
+                  {s.icon}
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      color: gray[900],
+                      fontFamily: pageFont,
+                      fontWeight: 700,
+                      fontSize: 20,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {s.value}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: gray[400],
+                      fontFamily: pageFont,
+                      fontSize: 12,
+                      mt: "2px",
+                    }}
+                  >
+                    {s.label}
+                  </Typography>
+                </Box>
+              </Stack>
+            ))}
+          </Box>
+
+          {/* Reviews */}
+          <Box component="section">
+            <Typography
+              variant="h2"
+              sx={{
+                color: gray[900],
+                fontFamily: pageFont,
+                fontWeight: 700,
+                fontSize: 24,
+                mb: 2.5,
+              }}
+            >
+              What Clients Say
+            </Typography>
+            <Stack spacing={2.5}>
+              {visibleReviews.map((review, index) => {
+                const reviewId =
+                  "id" in review && review.id != null
+                    ? String(review.id)
+                    : String(index);
+
+                return (
+                  <Box
+                    key={reviewId}
+                    sx={{
+                      borderLeft: `3px solid ${teal}`,
+                      pl: 2.5,
+                      py: 0.5,
+                    }}
+                  >
+                    <Stack direction="row" gap="2px" mb={1}>
+                      {Array.from({
+                        length: Math.max(
+                          1,
+                          Math.round(Number(review.rating || 5)),
+                        ),
+                      }).map((_, j) => (
+                        <Star key={j} size={12} fill="gold" color="gold" />
+                      ))}
+                    </Stack>
+                    <Typography
+                      sx={{
+                        color: gray[700],
+                        fontFamily: pageFont,
+                        fontSize: 14,
+                        lineHeight: 1.625,
+                        fontStyle: "italic",
+                        mb: 1.5,
+                      }}
+                    >
+                      "{review.content}"
+                    </Typography>
+                    <Box>
+                      <Typography
+                        sx={{
+                          color: gray[900],
+                          fontFamily: pageFont,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.025em",
+                        }}
+                      >
+                        {review.author?.name || "Client"}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: gray[400],
+                          fontFamily: pageFont,
+                          fontSize: 12,
+                        }}
+                      >
+                        {review.title || "Verified review"}
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </Box>
+
+          {/* Review Form — lives in the left column so the sidebar can stay
+              sticky all the way down to Similar Businesses */}
+          <ReviewFormSection
+            listingId={listing.id}
+            businessName={viewModel.name}
+            onSubmitted={refetch}
+          />
+        </Stack>
+
+        {/* Sidebar — outer Box stretches to the full row height so the inner
+            panel can stay sticky for as long as the section is in view */}
+        <Box>
+          <Box
+            sx={{
+              position: { lg: "sticky" },
+              /* clear the fixed 70px navbar */
+              top: { lg: 86 },
+              border: `1px solid ${gray[200]}`,
+              borderRadius: "16px",
+              overflow: "hidden",
+            }}
+          >
+            {/* Header */}
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ px: 2.5, py: 2, borderBottom: `1px solid ${gray[100]}` }}
+            >
+              <Typography
+                variant="h3"
+                sx={{
+                  color: gray[900],
+                  fontFamily: pageFont,
+                  fontWeight: 700,
+                  fontSize: 14,
+                }}
+              >
+                Details
+              </Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                gap={0.5}
+                sx={{
+                  color: teal,
+                  fontFamily: pageFont,
+                  fontSize: 12,
+                  fontWeight: 500,
+                }}
+              >
+                <Star size={12} fill={teal} color={teal} />
+                <Box component="span">
+                  {viewModel.rating ? viewModel.rating.toFixed(1) : "New"}
+                </Box>
+                <Box
+                  component="span"
+                  sx={{ color: gray[400], fontWeight: 400 }}
+                >
+                  · {viewModel.reviewCount} reviews
+                </Box>
+              </Stack>
+            </Stack>
+
+            <Stack spacing={2.5} sx={{ p: 2.5 }}>
+              {/* Stats */}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    borderRadius: "12px",
+                    p: 1.5,
+                    textAlign: "center",
+                    bgcolor: "#f8fffe",
+                    border: "1px solid #c8eeec",
+                  }}
+                >
+                  <Box sx={{ lineHeight: 0, mb: "4px" }}>
+                    <Heart size={14} color={teal} />
+                  </Box>
+                  <Typography
+                    sx={{
+                      color: gray[900],
+                      fontFamily: pageFont,
+                      fontWeight: 700,
+                      fontSize: 18,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {viewModel.favouriteCount}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: gray[400],
+                      fontFamily: pageFont,
+                      fontSize: 12,
+                      mt: "2px",
+                    }}
+                  >
+                    Favourites
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    borderRadius: "12px",
+                    p: 1.5,
+                    textAlign: "center",
+                    bgcolor: "#f8fffe",
+                    border: "1px solid #c8eeec",
+                  }}
+                >
+                  <Box sx={{ lineHeight: 0, mb: "4px" }}>
+                    <TrendingUp size={14} color={teal} />
+                  </Box>
+                  <Typography
+                    sx={{
+                      color: gray[900],
+                      fontFamily: pageFont,
+                      fontWeight: 700,
+                      fontSize: 18,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {viewModel.score ? viewModel.score.toFixed(1) : "—"}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: gray[400],
+                      fontFamily: pageFont,
+                      fontSize: 12,
+                      mt: "2px",
+                    }}
+                  >
+                    Score
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Location */}
+              <Box>
+                <Typography sx={{ ...sidebarLabelSx, mb: 1 }}>
+                  Location
+                </Typography>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  gap="6px"
+                  sx={{
+                    color: gray[800],
+                    fontFamily: pageFont,
+                    fontSize: 14,
+                    fontWeight: 500,
+                  }}
+                >
+                  <MapPin size={13} color={teal} />{" "}
+                  {viewModel.address || viewModel.locationText}
+                </Stack>
+                <Box
+                  component="span"
+                  sx={{
+                    display: "inline-block",
+                    mt: 1,
+                    fontFamily: pageFont,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    px: "10px",
+                    py: "4px",
+                    borderRadius: "999px",
+                    color: teal,
+                    bgcolor: "#e6f7f6",
+                  }}
+                >
+                  {viewModel.isRemoteOnly
+                    ? "Remote / online"
+                    : "In-person available"}
+                </Box>
+              </Box>
+
+              {/* Price */}
+              <Box sx={{ borderTop: `1px solid ${gray[100]}`, pt: 2 }}>
+                <Typography sx={{ ...sidebarLabelSx, mb: "6px" }}>
+                  Price Range
+                </Typography>
+                <Typography
+                  sx={{
+                    color: gray[800],
+                    fontFamily: pageFont,
+                    fontWeight: 700,
+                  }}
+                >
+                  {viewModel.price}
+                </Typography>
+              </Box>
+
+              {/* Tags */}
+              {viewModel.tags.length > 0 && (
+                <Box sx={{ borderTop: `1px solid ${gray[100]}`, pt: 2 }}>
+                  <Typography sx={{ ...sidebarLabelSx, mb: 1 }}>
+                    Services
+                  </Typography>
+                  <Stack direction="row" flexWrap="wrap" gap="6px">
+                    {viewModel.tags.map((tag) => (
+                      <Box
+                        key={tag}
+                        component="span"
+                        sx={{ ...tagPillSx, px: "10px" }}
+                      >
+                        {tag}
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              {/* Map */}
+              <Box sx={{ borderTop: `1px solid ${gray[100]}`, pt: 2 }}>
+                <Box
+                  sx={{
+                    borderRadius: "12px",
                     overflow: "hidden",
+                    height: 90,
+                    background:
+                      "linear-gradient(135deg, #d4f0ef 0%, #b3e4e2 100%)",
                   }}
                 >
                   {listing.mapUrl ? (
@@ -932,150 +1328,124 @@ const ListingDetails: React.FC = () => {
                       sx={{ width: "100%", height: "100%", border: 0 }}
                     />
                   ) : (
-                    <Stack alignItems="center" spacing={1}>
-                      <PlaceIcon sx={{ color: palette.teal, fontSize: 28 }} />
-                      <Typography
-                        sx={{
-                          fontFamily:
-                            "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          fontStyle: "italic",
-                          fontSize: 15,
-                        }}
-                      >
-                        Map Embed
-                      </Typography>
-                    </Stack>
-                  )}
-                </Box>
-
-                {viewModel.previewWebsite && (
-                  <>
-                    {viewModel.website && (
-                      <Typography
-                        sx={{
-                          color: palette.muted,
-                          fontSize: 13,
-                          overflowWrap: "anywhere",
-                        }}
-                      >
-                        {viewModel.website.replace(/^https?:\/\//, "")}
-                      </Typography>
-                    )}
-                    <Button
-                      component={Link}
-                      href={viewModel.previewWebsite}
-                      target={viewModel.isExternalWebsite ? "_blank" : undefined}
-                      rel={
-                        viewModel.isExternalWebsite ? "noopener noreferrer" : undefined
-                      }
-                      startIcon={<LanguageIcon sx={{ fontSize: 16 }} />}
-                      endIcon={
-                        <OpenInNewIcon sx={{ fontSize: 14, opacity: 0.75 }} />
-                      }
+                    <Box
                       sx={{
                         width: "100%",
-                        mt: 1,
-                        py: 1.8,
-                        borderRadius: 0,
-                        bgcolor: palette.teal,
-                        color: "#fff",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        letterSpacing: 1.8,
-                        textTransform: "uppercase",
-                        textDecoration: "none",
-                        "&:hover": {
-                          bgcolor: palette.tealDark,
-                          textDecoration: "none",
-                        },
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      Open Website
-                    </Button>
-                  </>
-                )}
-              </Stack>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Container>
+                      <Box sx={{ textAlign: "center" }}>
+                        <MapPin size={18} color={teal} />
+                        <Typography
+                          sx={{
+                            color: gray[500],
+                            fontFamily: pageFont,
+                            fontSize: 12,
+                            mt: 0.5,
+                          }}
+                        >
+                          {viewModel.locationText}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
 
-      <Box
-        component="section"
-        sx={{
-          bgcolor: "#fff",
-          borderTop: `1px solid ${palette.soft}`,
-          py: { xs: 9, lg: 12 },
-        }}
-      >
-        <Container maxWidth="lg">
+              {/* CTA */}
+              {viewModel.previewWebsite && (
+                <ButtonBase
+                  component="a"
+                  href={viewModel.previewWebsite}
+                  target={viewModel.isExternalWebsite ? "_blank" : undefined}
+                  rel={
+                    viewModel.isExternalWebsite
+                      ? "noopener noreferrer"
+                      : undefined
+                  }
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 1,
+                    width: "100%",
+                    py: "10px",
+                    borderRadius: "12px",
+                    color: "#fff",
+                    fontFamily: pageFont,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    background: `linear-gradient(90deg, ${teal} 0%, ${tealDark} 100%)`,
+                  }}
+                >
+                  <Globe size={14} /> Open Website <ExternalLink size={12} />
+                </ButtonBase>
+              )}
+            </Stack>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Similar Businesses */}
+      <Box sx={{ borderTop: `1px solid ${gray[100]}`, mt: 2, mb: 6 }}>
+        <Box sx={{ ...sectionContainerSx, py: 4 }}>
           <Stack
-            direction={{ xs: "column", md: "row" }}
+            direction="row"
+            alignItems="flex-end"
             justifyContent="space-between"
-            alignItems={{ xs: "flex-start", md: "flex-end" }}
-            spacing={3}
-            sx={{ mb: 6 }}
+            mb={3}
           >
-            <Box>
-              <Typography
-                sx={{
-                  color: palette.muted,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  letterSpacing: 1.8,
-                  textTransform: "uppercase",
-                  mb: 1,
-                }}
-              >
-                Explore More
-              </Typography>
+            <Box sx={{ml: {sm: 0, md: 1}}}>
+              <Typography sx={eyebrowSx}>Explore More</Typography>
               <Typography
                 variant="h2"
                 sx={{
-                  color: palette.ink,
-                  fontFamily:
-                    "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: { xs: 34, md: 44 },
-                  fontWeight: 400,
+                  color: gray[900],
+                  fontFamily: pageFont,
+                  fontWeight: 700,
+                  fontSize: 30,
                 }}
               >
                 Similar Businesses
               </Typography>
             </Box>
-            <Button
+            <ButtonBase
               component={RouterLink}
               to="/listings"
-              endIcon={<ChevronRightIcon />}
+              disableRipple
               sx={{
-                display: { xs: "none", md: "inline-flex" },
-                color: palette.ink,
-                fontSize: 13,
-                fontWeight: 700,
-                letterSpacing: 1.2,
-                textTransform: "uppercase",
-                "&:hover": { color: palette.teal, bgcolor: "transparent" },
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                color: teal,
+                fontFamily: pageFont,
+                fontSize: 14,
+                fontWeight: 600,
+                pb: 0.5,
+                borderBottom: `2px solid ${teal}`,
               }}
             >
-              View All
-            </Button>
+              View All <ArrowRight size={14} />
+            </ButtonBase>
           </Stack>
-
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "minmax(0, 360px)",
-                sm: "repeat(2, minmax(0, 1fr))",
-                lg: "repeat(3, minmax(0, 1fr))",
-              },
-              gap: { xs: 2, md: 3 },
-              justifyContent: { xs: "center", sm: "flex-start" },
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: { xs: "center", sm: "space-between" },
+              gap: 2,
+              /* PropertyItemCard's own wrapper uses mx:"auto", which absorbs
+                 the free space before justify-content applies — cancel it */
+              "& > *": { mx: 0 },
             }}
           >
             {relatedListings.map((biz, index) => (
               <PropertyItemCard
                 key={`${biz.id}-${index}`}
-                item={biz}
+                item={biz as React.ComponentProps<typeof PropertyItemCard>["item"]}
                 handleDeleteItem={() => {}}
                 totalPages={0}
                 currentPage={0}
@@ -1083,7 +1453,7 @@ const ListingDetails: React.FC = () => {
               />
             ))}
           </Box>
-        </Container>
+        </Box>
       </Box>
     </Box>
   );

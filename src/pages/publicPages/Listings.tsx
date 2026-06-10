@@ -422,7 +422,7 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
             <Box sx={{ minHeight: "60vh", backgroundColor: "common.white" }} />
           }
         >
-          <Container>
+          <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 } }}>
             {!isDashboard && (
               <Box
                 ref={gridRef}

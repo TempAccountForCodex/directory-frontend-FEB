@@ -109,7 +109,7 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
       <Box
         sx={{
           width: "100%",
-          maxWidth: { xs: "100%", sm: 360 },
+          maxWidth: { xs: "100%", sm: 400 },
           mx: "auto",
         }}
       >

@@ -235,7 +235,7 @@ const SideFilter: React.FC<SideFilterProps> = ({
     <Box sx={{
       width: "100%",
       p: "8px",
-      borderRadius: "40px",
+      borderRadius: "20px",
       background: "rgba(255,255,255,0.4)",
       backdropFilter: "blur(20px)",
       border: "1px solid rgba(255,255,255,0.8)",
@@ -244,7 +244,7 @@ const SideFilter: React.FC<SideFilterProps> = ({
     }}>
     {/* Inner solid white card — matches WhyWeBuiltThis inner Box */}
     <Box sx={{
-      borderRadius: "32px",
+      borderRadius: "18px",
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
