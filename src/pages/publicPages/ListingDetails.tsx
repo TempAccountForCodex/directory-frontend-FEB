@@ -2,11 +2,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
 import {
   Box,
+  Button,
   ButtonBase,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   InputBase,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import ReplayIcon from "@mui/icons-material/Replay";
@@ -576,7 +582,33 @@ const ListingDetails: React.FC = () => {
   const { pid, id, slug } = useParams();
   const routeKey = pid || id || slug;
 
-  const { listings, loading, error } = useListings();
+  const { listings, loading, error, deleteListing, updateListing } = useListings();
+
+  const [editItem, setEditItem] = useState<any | null>(null);
+  const [editFields, setEditFields] = useState({ businessName: "", shortDescription: "", address: "", phone: "", website: "", category: "" });
+  const [editLoading, setEditLoading] = useState(false);
+
+  const handleOpenEdit = (item: any) => {
+    setEditItem(item);
+    setEditFields({
+      businessName: item.businessName || item.title || "",
+      shortDescription: item.shortDescription || item.desc || "",
+      address: item.address || "",
+      phone: item.phone || "",
+      website: item.website || "",
+      category: item.category || "",
+    });
+  };
+
+  const handleCloseEdit = () => { setEditItem(null); };
+
+  const handleSaveEdit = async () => {
+    if (!editItem) return;
+    setEditLoading(true);
+    await updateListing(String(editItem.id), editFields);
+    setEditLoading(false);
+    setEditItem(null);
+  };
   const [listing, setListing] = useState<Listing | null>(null);
 
   useEffect(() => {
@@ -1446,7 +1478,8 @@ const ListingDetails: React.FC = () => {
               <PropertyItemCard
                 key={`${biz.id}-${index}`}
                 item={biz as React.ComponentProps<typeof PropertyItemCard>["item"]}
-                handleDeleteItem={() => {}}
+                handleDeleteItem={(id) => deleteListing(String(id))}
+                onEditItem={handleOpenEdit}
                 totalPages={0}
                 currentPage={0}
                 setCurrentPage={() => {}}
@@ -1455,6 +1488,24 @@ const ListingDetails: React.FC = () => {
           </Box>
         </Box>
       </Box>
+      {/* Edit listing modal */}
+      <Dialog open={!!editItem} onClose={handleCloseEdit} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 600 }}>Edit Listing</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
+          <TextField label="Business Name" value={editFields.businessName} onChange={(e) => setEditFields((f) => ({ ...f, businessName: e.target.value }))} fullWidth size="small" />
+          <TextField label="Short Description" value={editFields.shortDescription} onChange={(e) => setEditFields((f) => ({ ...f, shortDescription: e.target.value }))} fullWidth size="small" multiline minRows={2} />
+          <TextField label="Address" value={editFields.address} onChange={(e) => setEditFields((f) => ({ ...f, address: e.target.value }))} fullWidth size="small" />
+          <TextField label="Phone" value={editFields.phone} onChange={(e) => setEditFields((f) => ({ ...f, phone: e.target.value }))} fullWidth size="small" />
+          <TextField label="Website" value={editFields.website} onChange={(e) => setEditFields((f) => ({ ...f, website: e.target.value }))} fullWidth size="small" />
+          <TextField label="Category" value={editFields.category} onChange={(e) => setEditFields((f) => ({ ...f, category: e.target.value }))} fullWidth size="small" />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleCloseEdit} disabled={editLoading}>Cancel</Button>
+          <Button variant="contained" onClick={handleSaveEdit} disabled={editLoading}>
+            {editLoading ? "Saving…" : "Save Changes"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -6,6 +6,7 @@ import type { Place } from "../../../types/place";
 /* ---------------- Types ---------------- */
 interface PropertyCardProps {
   handleDeleteItem: (id: string) => void;
+  onEditItem?: (item: any) => void;
   items: any[];
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   currentPage: number;
@@ -16,6 +17,7 @@ interface PropertyCardProps {
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
   handleDeleteItem,
+  onEditItem,
   items,
   setCurrentPage,
   currentPage,
@@ -77,6 +79,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 handleDeleteItem={(id: string | number) =>
                   handleDeleteItem(id as string)
                 }
+                onEditItem={onEditItem}
               />
             </Box>
           ))

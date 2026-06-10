@@ -37,6 +37,7 @@ export interface PropertyItem {
 interface PropertyItemCardProps {
   item: PropertyItem;
   handleDeleteItem: (id: string | number) => void;
+  onEditItem?: (item: PropertyItem) => void;
   totalPages: number;
   currentPage: number;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
@@ -60,6 +61,7 @@ const stripHtml = (value?: string | null) =>
 const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
   item,
   handleDeleteItem,
+  onEditItem,
 }) => {
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [_deleteId, setDeleteId] = useState<string | number | null>(null);
@@ -100,8 +102,12 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
   };
 
   const handleEditClick = (id: string | number) => {
-    navigate(`/dashboard/createlisting/update?id=${id}`);
-    setSelectedSection(`/dashboard/createlisting/update?id=${id}`);
+    if (onEditItem) {
+      onEditItem(item);
+    } else {
+      navigate(`/dashboard/createlisting/update?id=${id}`);
+      setSelectedSection(`/dashboard/createlisting/update?id=${id}`);
+    }
   };
 
   return (
