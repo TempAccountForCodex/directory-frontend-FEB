@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect, useCallback } from "react";
+import React, { memo, useState, useEffect, useCallback, useRef } from "react";
 import { apiClient } from "../../../api/client";
 import {
   Box,
@@ -9,8 +9,6 @@ import {
   Drawer,
   IconButton,
   Divider,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import { Menu as MenuIcon, X as CloseIcon } from "lucide-react";
 
@@ -28,12 +26,15 @@ interface HeaderContent {
   logoText?: string;
   logoImage?: string;
   menuItems?: MenuItem[];
+  menuId?: string;
   ctaText?: string;
   ctaUrl?: string;
   sticky?: boolean;
   transparent?: boolean;
   primaryColor?: string;
   headingColor?: string;
+  navLinkColor?: string;
+  ctaColor?: string;
 }
 
 interface WebsiteHeaderBlockProps {
@@ -51,15 +52,13 @@ interface WebsiteHeaderBlockProps {
 }
 
 // ── Smooth-scroll helper ──────────────────────────────────────────────────────
-const handleNavClick = (
-  e: React.MouseEvent,
-  target: string,
-  type?: string,
-) => {
+const handleNavClick = (e: React.MouseEvent, target: string, type?: string) => {
   if (type === "section" || target.startsWith("#")) {
     e.preventDefault();
     const id = target.replace(/^#/, "");
-    const el = document.getElementById(id) || document.querySelector(`[data-section="${id}"]`);
+    const el =
+      document.getElementById(id) ||
+      document.querySelector(`[data-section="${id}"]`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -76,25 +75,38 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
   onCtaClick,
 }: WebsiteHeaderBlockProps) {
   const { content } = block;
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const headerRef = useRef<HTMLElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setIsMobile(entry.contentRect.width < 768);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [fetchedMenuItems, setFetchedMenuItems] = useState<MenuItem[]>([]);
 
   const logoType = content.logoType ?? "text";
   const logoText = content.logoText || "Brand";
   const logoImage = content.logoImage || "";
   const menuId = content.menuId || "";
+  const ctaText = content.ctaText || "";
   const ctaUrl = content.ctaUrl || "#contact";
   const sticky = content.sticky !== false;
-  const transparent = content.transparent === true;
 
   useEffect(() => {
-    if (!menuId || !websiteId) { setFetchedMenuItems([]); return; }
+    if (!menuId || !websiteId) {
+      setFetchedMenuItems([]);
+      return;
+    }
     let cancelled = false;
-    apiClient.get(`/websites/${websiteId}/menus`)
+    apiClient
+      .get(`/websites/${websiteId}/menus`)
       .then((res) => {
         if (cancelled) return;
         const raw = res.data?.data ?? res.data ?? [];
@@ -104,27 +116,28 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
         );
         setFetchedMenuItems(Array.isArray(found?.items) ? found.items : []);
       })
-      .catch(() => { if (!cancelled) setFetchedMenuItems([]); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setFetchedMenuItems([]);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [menuId, websiteId]);
 
-  const menuItems: MenuItem[] = fetchedMenuItems.length > 0
-    ? fetchedMenuItems
-    : Array.isArray(content.menuItems) ? content.menuItems : [];
+  const menuItems: MenuItem[] =
+    fetchedMenuItems.length > 0
+      ? fetchedMenuItems
+      : Array.isArray(content.menuItems)
+        ? content.menuItems
+        : [];
 
   const accent = content.primaryColor || primaryColor;
   const textCol = content.headingColor || headingColor;
+  const navLinkColor: string = content.navLinkColor || "#4b5563";
+  const ctaColor: string = content.ctaColor || accent;
 
-  useEffect(() => {
-    if (!transparent) return;
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [transparent]);
-
-  const bgColor = transparent && !scrolled ? "transparent" : "#ffffff";
-  const shadow =
-    transparent && !scrolled ? "none" : "0 1px 12px rgba(0,0,0,0.08)";
+  const bgColor = "#ffffff";
+  const shadow = "0 1px 12px rgba(0,0,0,0.08)";
 
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
@@ -145,14 +158,19 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
           component="img"
           src={logoImage}
           alt={logoText || "Logo"}
-          sx={{ height: 36, width: "auto", maxWidth: 140, objectFit: "contain" }}
+          sx={{
+            height: 36,
+            width: "auto",
+            maxWidth: 140,
+            objectFit: "contain",
+          }}
         />
       ) : (
         <Typography
           sx={{
             fontWeight: 800,
             fontSize: "1.1rem",
-            color: transparent && !scrolled ? "#fff" : textCol,
+            color: textCol,
             letterSpacing: "0.02em",
             textTransform: "uppercase",
             lineHeight: 1,
@@ -178,11 +196,7 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
           onClick={(e) => handleNavClick(e, item.target, item.type)}
           sx={{
             textDecoration: "none",
-            color: vertical
-              ? textCol
-              : transparent && !scrolled
-              ? "rgba(255,255,255,0.8)"
-              : "#4b5563",
+            color: vertical ? textCol : navLinkColor,
             fontSize: vertical ? "0.95rem" : "0.78rem",
             fontWeight: 500,
             letterSpacing: "0.04em",
@@ -216,8 +230,8 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
         variant="outlined"
         fullWidth={fullWidth}
         sx={{
-          borderColor: accent,
-          color: accent,
+          borderColor: ctaColor,
+          color: ctaColor,
           fontWeight: 600,
           textTransform: "uppercase",
           fontSize: "0.78rem",
@@ -228,9 +242,9 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
           boxShadow: "none",
           flexShrink: 0,
           "&:hover": {
-            bgcolor: accent,
+            bgcolor: ctaColor,
             color: "#fff",
-            borderColor: accent,
+            borderColor: ctaColor,
             boxShadow: "none",
           },
         }}
@@ -241,6 +255,7 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
 
   return (
     <Box
+      ref={headerRef}
       component="header"
       sx={{
         position: sticky ? "sticky" : "relative",
@@ -250,7 +265,7 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
         bgcolor: bgColor,
         boxShadow: shadow,
         transition: "background-color 0.3s, box-shadow 0.3s",
-        backdropFilter: transparent && !scrolled ? "none" : "blur(12px)",
+        backdropFilter: "blur(12px)",
       }}
     >
       <Container maxWidth="xl">
@@ -280,7 +295,12 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
           )}
 
           {/* Right actions */}
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            sx={{ flexShrink: 0 }}
+          >
             {!isMobile && <CtaButton />}
 
             {/* Hamburger — mobile only */}
@@ -289,9 +309,8 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
                 onClick={() => setDrawerOpen(true)}
                 aria-label="Open menu"
                 sx={{
-                  color:
-                    transparent && !scrolled ? "#fff" : textCol,
-                  border: `1.5px solid ${transparent && !scrolled ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.1)"}`,
+                  color: textCol,
+                  border: "1.5px solid rgba(0,0,0,0.1)",
                   borderRadius: "10px",
                   p: "7px",
                 }}
@@ -317,9 +336,18 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
         }}
       >
         {/* Drawer header */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
           {Logo}
-          <IconButton onClick={closeDrawer} size="small" sx={{ color: textCol }}>
+          <IconButton
+            onClick={closeDrawer}
+            size="small"
+            sx={{ color: textCol }}
+          >
             <CloseIcon size={18} />
           </IconButton>
         </Stack>

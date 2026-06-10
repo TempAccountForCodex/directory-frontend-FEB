@@ -677,6 +677,12 @@ h1, h2, h3, h4, h5, h6 {
     );
   }
 
+  const hasWebsiteHeader = currentPage?.blocks?.some(
+    (b: any) =>
+      b.blockType === "WEBSITE_HEADER" ||
+      (b.blockType === "NAVBAR" && b.content?._subType === "website_header"),
+  );
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <DynamicBlockProvider>
@@ -735,74 +741,76 @@ h1, h2, h3, h4, h5, h6 {
             )}
           </Helmet>
 
-          {/* Navigation Bar */}
-          <AppBar
-            position="sticky"
-            elevation={1}
-            sx={{
-              bgcolor: "white",
-              color: "text.primary",
-              borderBottom: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <Toolbar>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  flexGrow: 1,
-                  gap: 2,
-                }}
-              >
-                {website.logoUrl && (
-                  <ImageWithLoader
-                    src={website.logoUrl}
-                    alt={`${website.name} logo`}
-                    width={40}
-                    height={40}
-                    objectFit="contain"
-                    borderRadius={4}
-                    placeholder="pulse"
+          {/* Navigation Bar — hidden when page has a WEBSITE_HEADER block */}
+          {!hasWebsiteHeader && (
+            <AppBar
+              position="sticky"
+              elevation={1}
+              sx={{
+                bgcolor: "white",
+                color: "text.primary",
+                borderBottom: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Toolbar>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    flexGrow: 1,
+                    gap: 2,
+                  }}
+                >
+                  {website.logoUrl && (
+                    <ImageWithLoader
+                      src={website.logoUrl}
+                      alt={`${website.name} logo`}
+                      width={40}
+                      height={40}
+                      objectFit="contain"
+                      borderRadius={4}
+                      placeholder="pulse"
+                    />
+                  )}
+                  <Typography
+                    variant="h6"
+                    component="div"
+                    sx={{
+                      fontWeight: 700,
+                      color: website.primaryColor || "#2563eb",
+                    }}
+                  >
+                    {website.name}
+                  </Typography>
+                </Box>
+                {website.pages.map((page) => (
+                  <Button
+                    key={page.id}
+                    component={Link}
+                    to={`/site/${website.slug}${page.path}`}
+                    sx={{
+                      color:
+                        currentPage?.id === page.id
+                          ? website.primaryColor
+                          : "text.secondary",
+                      fontWeight: currentPage?.id === page.id ? 600 : 400,
+                      textDecoration: "none",
+                    }}
+                  >
+                    {page.title}
+                  </Button>
+                ))}
+                <Box sx={{ ml: 2 }}>
+                  <LanguageSelector
+                    variant="standard"
+                    size="small"
+                    showIcon={false}
                   />
-                )}
-                <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{
-                    fontWeight: 700,
-                    color: website.primaryColor || "#2563eb",
-                  }}
-                >
-                  {website.name}
-                </Typography>
-              </Box>
-              {website.pages.map((page) => (
-                <Button
-                  key={page.id}
-                  component={Link}
-                  to={`/site/${website.slug}${page.path}`}
-                  sx={{
-                    color:
-                      currentPage?.id === page.id
-                        ? website.primaryColor
-                        : "text.secondary",
-                    fontWeight: currentPage?.id === page.id ? 600 : 400,
-                    textDecoration: "none",
-                  }}
-                >
-                  {page.title}
-                </Button>
-              ))}
-              <Box sx={{ ml: 2 }}>
-                <LanguageSelector
-                  variant="standard"
-                  size="small"
-                  showIcon={false}
-                />
-              </Box>
-            </Toolbar>
-          </AppBar>
+                </Box>
+              </Toolbar>
+            </AppBar>
+          )}
 
           {/* Page Content - Render all blocks */}
           <Box>

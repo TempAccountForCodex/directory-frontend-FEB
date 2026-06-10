@@ -1119,6 +1119,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
+    case "LOCATION":
     case "MAP_LOCATION":
       return (
         <BlockWrapper fields={content}>
@@ -1251,6 +1252,19 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       );
 
     case "NAVBAR":
+      if (content?._subType === "website_header") {
+        return (
+          <Suspense fallback={<Box sx={{ height: 68 }} />}>
+            <WebsiteHeaderBlock
+              block={{ ...block, blockType: "WEBSITE_HEADER" }}
+              primaryColor={primaryColor}
+              headingColor={headingColor}
+              websiteId={websiteId}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        );
+      }
       return (
         <BlockWrapper fields={content}>
           <NavbarBlock
@@ -1692,6 +1706,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
 
+    case "WORKING_HOURS":
       return (
         <BlockWrapper fields={content}>
           <WorkingHoursBlock
@@ -1701,6 +1716,19 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
             headingColor={headingColor}
             bodyColor={bodyColor}
             onCtaClick={onCtaClick}
+          />
+        </BlockWrapper>
+      );
+
+    case "STORY_PANEL":
+      return (
+        <BlockWrapper fields={content}>
+          <StoryPanelBlock
+            block={block}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
           />
         </BlockWrapper>
       );

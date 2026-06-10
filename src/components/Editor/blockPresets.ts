@@ -1031,7 +1031,8 @@ export const getLocalFieldMetadata = (
         makeTextField("ctaText", "CTA Button Text", 5),
         makeTextField("ctaUrl", "CTA Button URL", 6),
         { name: "sticky", label: "Sticky Header", type: "TOGGLE", order: 7 },
-        { name: "transparent", label: "Transparent Background", type: "TOGGLE", order: 8 },
+        { name: "navLinkColor", label: "Menu Item Color", type: "COLOR", order: 8 },
+        { name: "ctaColor", label: "Button Color", type: "COLOR", order: 9 },
       ]);
     case "MAP_LOCATION":
       return contentGroup([

@@ -606,7 +606,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
         {
           key: "campus",
           label: "Campus",
-          blockType: "LOCATION",
+          blockType: "MAP_LOCATION",
           buildContent: (data) => ({
             heading: "Find us, visit us, and talk with our team.",
             description: data.contact.address || data.location?.address || "",
@@ -709,7 +709,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
         {
           key: "location",
           label: "Location",
-          blockType: "LOCATION",
+          blockType: "MAP_LOCATION",
           buildContent: (data) => ({
             heading: "Find us tonight.",
             description: data.contact.address || data.location?.address || "",
@@ -1835,37 +1835,114 @@ export const buildTemplatePreviewBusinessData = (
     const reviews = getSectionContent("reviews");
     const contact = getSectionContent("contact");
     const campus = getSectionContent("campus");
+    const programItems = readArray<Record<string, unknown>>(programs, [
+      "features",
+      "items",
+    ]);
+    const contactHeading = readString(
+      contact,
+      ["heading", "title"],
+      "Let's find the right program for your learner.",
+    );
+    const contactDescription = readString(
+      contact,
+      ["description", "subheading", "body"],
+      "",
+    );
+    const contactButton = readString(
+      contact,
+      ["buttonLabel", "primaryCtaText", "ctaText"],
+      "Contact Us",
+    );
 
     return {
       ...themedBase,
+      tagline: readString(
+        hero,
+        ["heading", "title"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        hero,
+        ["subheading", "description", "body"],
+        String(themedBase.description),
+      ),
+      features: programItems.length
+        ? mapFeatureItems(programItems)
+        : themedBase.features,
       templateContent: {
         hero: {
           blockId: heroBlock?.id,
+          heading: readString(hero, ["heading", "title"]),
+          subheading: readString(hero, ["subheading", "description", "body"]),
+          ctaText: readString(hero, ["ctaText", "buttonText", "buttonLabel"]),
+          heroImage: readString(hero, ["heroImage", "image", "imageUrl"]),
+          image: readString(hero, ["heroImage", "image", "imageUrl"]),
+          headingStyle: hero.headingStyle,
+          subheadingStyle: hero.subheadingStyle || hero.descriptionStyle,
+          ctaTextStyle: hero.ctaTextStyle || hero.buttonTextStyle,
+          innerBlocks: Array.isArray(hero.innerBlocks) ? hero.innerBlocks : [],
           sectionStyle: getSectionStyleValue(hero),
+          outerSectionStyle: getSectionStyleValue(hero, "outerSectionStyle"),
         },
         programs: {
           blockId: programsBlock?.id,
+          heading: readString(programs, ["heading", "title"]),
+          description: readString(programs, ["description", "subheading", "body"]),
+          items: programItems,
+          headingStyle: programs.headingStyle,
+          descriptionStyle: programs.descriptionStyle || programs.subheadingStyle,
+          innerBlocks: Array.isArray(programs.innerBlocks) ? programs.innerBlocks : [],
           sectionStyle: getSectionStyleValue(programs),
+          outerSectionStyle: getSectionStyleValue(programs, "outerSectionStyle"),
         },
         highlights: {
           blockId: highlightsBlock?.id,
+          heading: readString(highlights, ["heading", "title"]),
+          description: readString(highlights, ["description", "subheading", "body"]),
+          headingStyle: highlights.headingStyle,
+          descriptionStyle: highlights.descriptionStyle || highlights.subheadingStyle,
+          innerBlocks: Array.isArray(highlights.innerBlocks) ? highlights.innerBlocks : [],
           sectionStyle: getSectionStyleValue(highlights),
+          outerSectionStyle: getSectionStyleValue(highlights, "outerSectionStyle"),
         },
         gallery: {
           blockId: galleryBlock?.id,
+          heading: readString(gallery, ["heading", "title"]),
+          headingStyle: gallery.headingStyle,
           sectionStyle: getSectionStyleValue(gallery),
+          outerSectionStyle: getSectionStyleValue(gallery, "outerSectionStyle"),
         },
         reviews: {
           blockId: reviewsBlock?.id,
+          heading: readString(reviews, ["heading", "title"]),
+          headingStyle: reviews.headingStyle,
           sectionStyle: getSectionStyleValue(reviews),
+          outerSectionStyle: getSectionStyleValue(reviews, "outerSectionStyle"),
         },
         contact: {
           blockId: contactBlock?.id,
+          heading: contactHeading,
+          description: contactDescription,
+          subheading: contactDescription,
+          buttonLabel: contactButton,
+          primaryCtaText: contactButton,
+          ctaText: contactButton,
+          headingStyle: contact.headingStyle,
+          descriptionStyle: contact.descriptionStyle || contact.subheadingStyle || contact.bodyStyle,
+          buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
+          innerBlocks: Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
           sectionStyle: getSectionStyleValue(contact),
+          outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },
         campus: {
           blockId: campusBlock?.id,
+          heading: readString(campus, ["heading", "title"]),
+          description: readString(campus, ["description", "subheading", "body"]),
+          headingStyle: campus.headingStyle,
+          descriptionStyle: campus.descriptionStyle || campus.subheadingStyle,
           sectionStyle: getSectionStyleValue(campus),
+          outerSectionStyle: getSectionStyleValue(campus, "outerSectionStyle"),
         },
         sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
       },
@@ -1889,33 +1966,103 @@ export const buildTemplatePreviewBusinessData = (
     const services = getSectionContent("services");
     const testimonials = getSectionContent("testimonials");
     const contact = getSectionContent("contact");
+    const serviceItems = readArray<Record<string, unknown>>(services, [
+      "features",
+      "items",
+    ]);
+    const contactHeading = readString(
+      contact,
+      ["heading", "title"],
+      "Let's talk about your space.",
+    );
+    const contactDescription = readString(
+      contact,
+      ["description", "subheading", "body"],
+      "",
+    );
+    const contactButton = readString(
+      contact,
+      ["buttonLabel", "primaryCtaText", "ctaText"],
+      "Contact Us",
+    );
 
     return {
       ...themedBase,
+      tagline: readString(
+        hero,
+        ["heading", "title"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        about,
+        ["body", "description", "subheading"],
+        String(themedBase.description),
+      ),
+      features: serviceItems.length
+        ? mapFeatureItems(serviceItems)
+        : themedBase.features,
       templateContent: {
         hero: {
           blockId: heroBlock?.id,
+          heading: readString(hero, ["heading", "title"]),
+          subheading: readString(hero, ["subheading", "description", "body"]),
+          heroImage: readString(hero, ["heroImage", "image", "imageUrl"]),
+          image: readString(hero, ["heroImage", "image", "imageUrl"]),
+          headingStyle: hero.headingStyle,
+          subheadingStyle: hero.subheadingStyle || hero.descriptionStyle,
+          innerBlocks: Array.isArray(hero.innerBlocks) ? hero.innerBlocks : [],
           sectionStyle: getSectionStyleValue(hero),
+          outerSectionStyle: getSectionStyleValue(hero, "outerSectionStyle"),
         },
         about: {
           blockId: aboutBlock?.id,
+          heading: readString(about, ["title", "heading"]),
+          body: readString(about, ["body", "description", "subheading"]),
+          image: readString(about, ["image", "imageUrl"]),
+          headingStyle: about.headingStyle || about.titleStyle,
+          bodyStyle: about.bodyStyle || about.descriptionStyle,
+          innerBlocks: Array.isArray(about.innerBlocks) ? about.innerBlocks : [],
           sectionStyle: getSectionStyleValue(about),
+          outerSectionStyle: getSectionStyleValue(about, "outerSectionStyle"),
         },
         portfolio: {
           blockId: portfolioBlock?.id,
+          heading: readString(portfolio, ["heading", "title"]),
+          headingStyle: portfolio.headingStyle,
           sectionStyle: getSectionStyleValue(portfolio),
+          outerSectionStyle: getSectionStyleValue(portfolio, "outerSectionStyle"),
         },
         services: {
           blockId: servicesBlock?.id,
+          heading: readString(services, ["heading", "title"]),
+          items: serviceItems,
+          headingStyle: services.headingStyle,
+          descriptionStyle: services.descriptionStyle || services.subheadingStyle,
+          innerBlocks: Array.isArray(services.innerBlocks) ? services.innerBlocks : [],
           sectionStyle: getSectionStyleValue(services),
+          outerSectionStyle: getSectionStyleValue(services, "outerSectionStyle"),
         },
         testimonials: {
           blockId: testimonialsBlock?.id,
+          heading: readString(testimonials, ["heading", "title"]),
+          headingStyle: testimonials.headingStyle,
           sectionStyle: getSectionStyleValue(testimonials),
+          outerSectionStyle: getSectionStyleValue(testimonials, "outerSectionStyle"),
         },
         contact: {
           blockId: contactBlock?.id,
+          heading: contactHeading,
+          description: contactDescription,
+          subheading: contactDescription,
+          buttonLabel: contactButton,
+          primaryCtaText: contactButton,
+          ctaText: contactButton,
+          headingStyle: contact.headingStyle,
+          descriptionStyle: contact.descriptionStyle || contact.subheadingStyle || contact.bodyStyle,
+          buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
+          innerBlocks: Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
           sectionStyle: getSectionStyleValue(contact),
+          outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },
         sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
       },
@@ -1935,33 +2082,106 @@ export const buildTemplatePreviewBusinessData = (
     const whyUs = getSectionContent("why-us");
     const reviews = getSectionContent("reviews");
     const contact = getSectionContent("contact");
+    const whyUsItems = readArray<Record<string, unknown>>(whyUs, [
+      "features",
+      "items",
+    ]);
+    const contactHeading = readString(
+      contact,
+      ["heading", "title"],
+      "Book your table.",
+    );
+    const contactDescription = readString(
+      contact,
+      ["description", "subheading", "body"],
+      "",
+    );
+    const contactButton = readString(
+      contact,
+      ["buttonLabel", "primaryCtaText", "ctaText"],
+      "Reserve Now",
+    );
 
     return {
       ...themedBase,
+      tagline: readString(
+        hero,
+        ["heading", "title"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        story,
+        ["body", "description", "subheading"],
+        String(themedBase.description),
+      ),
+      features: whyUsItems.length
+        ? mapFeatureItems(whyUsItems)
+        : themedBase.features,
       templateContent: {
         hero: {
           blockId: heroBlock?.id,
+          heading: readString(hero, ["heading", "title"]),
+          subheading: readString(hero, ["subheading", "description", "body"]),
+          heroImage: readString(hero, ["heroImage", "image", "imageUrl"]),
+          image: readString(hero, ["heroImage", "image", "imageUrl"]),
+          headingStyle: hero.headingStyle,
+          subheadingStyle: hero.subheadingStyle || hero.descriptionStyle,
+          innerBlocks: Array.isArray(hero.innerBlocks) ? hero.innerBlocks : [],
           sectionStyle: getSectionStyleValue(hero),
+          outerSectionStyle: getSectionStyleValue(hero, "outerSectionStyle"),
         },
         story: {
           blockId: storyBlock?.id,
+          heading: readString(story, ["title", "heading"]),
+          body: readString(story, ["body", "description", "subheading"]),
+          image: readString(story, ["image", "imageUrl"]),
+          headingStyle: story.headingStyle || story.titleStyle,
+          bodyStyle: story.bodyStyle || story.descriptionStyle,
+          innerBlocks: Array.isArray(story.innerBlocks) ? story.innerBlocks : [],
           sectionStyle: getSectionStyleValue(story),
+          outerSectionStyle: getSectionStyleValue(story, "outerSectionStyle"),
         },
         location: {
           blockId: locationBlock?.id,
+          heading: readString(location, ["heading", "title"]),
+          description: readString(location, ["description", "subheading", "body"]),
+          headingStyle: location.headingStyle,
+          descriptionStyle: location.descriptionStyle || location.subheadingStyle,
           sectionStyle: getSectionStyleValue(location),
+          outerSectionStyle: getSectionStyleValue(location, "outerSectionStyle"),
         },
         whyUs: {
           blockId: whyUsBlock?.id,
+          heading: readString(whyUs, ["heading", "title"]),
+          description: readString(whyUs, ["description", "subheading", "body"]),
+          items: whyUsItems,
+          headingStyle: whyUs.headingStyle,
+          descriptionStyle: whyUs.descriptionStyle || whyUs.subheadingStyle,
+          innerBlocks: Array.isArray(whyUs.innerBlocks) ? whyUs.innerBlocks : [],
           sectionStyle: getSectionStyleValue(whyUs),
+          outerSectionStyle: getSectionStyleValue(whyUs, "outerSectionStyle"),
         },
         reviews: {
           blockId: reviewsBlock?.id,
+          heading: readString(reviews, ["heading", "title"]),
+          headingStyle: reviews.headingStyle,
           sectionStyle: getSectionStyleValue(reviews),
+          outerSectionStyle: getSectionStyleValue(reviews, "outerSectionStyle"),
         },
         contact: {
           blockId: contactBlock?.id,
+          heading: contactHeading,
+          description: contactDescription,
+          subheading: contactDescription,
+          buttonLabel: contactButton,
+          primaryCtaText: contactButton,
+          ctaText: contactButton,
+          headingStyle: contact.headingStyle,
+          descriptionStyle: contact.descriptionStyle || contact.subheadingStyle || contact.bodyStyle,
+          buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
+          innerBlocks: Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
           sectionStyle: getSectionStyleValue(contact),
+          outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },
         sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
       },

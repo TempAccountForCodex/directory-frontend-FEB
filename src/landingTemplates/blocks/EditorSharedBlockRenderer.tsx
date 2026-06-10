@@ -1,14 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
-import { Box, Button, Chip, Stack, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  Divider,
+  Drawer,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import {
   Facebook,
   Globe,
   Instagram,
   Linkedin,
+  Menu as MenuIcon,
   Music2,
   Twitter,
+  X as CloseIcon,
   Youtube,
 } from "lucide-react";
 import {
@@ -409,6 +421,7 @@ const HeaderEditorPreview: React.FC<{
   section: Record<string, any>;
   compoundBlockSelectionProps: Record<string, any>;
   compoundBlockLabel: string;
+  compoundCardSx?: Record<string, any>;
   themeColor: string;
   textColor: string;
   mutedTextColor: string;
@@ -419,6 +432,7 @@ const HeaderEditorPreview: React.FC<{
   section,
   compoundBlockSelectionProps,
   compoundBlockLabel,
+  compoundCardSx = {},
   themeColor,
   textColor,
   mutedTextColor,
@@ -489,21 +503,79 @@ const HeaderEditorPreview: React.FC<{
         ? c.menuItems
         : [];
 
-  const bg = "#ffffff";
+  // Container-width-based responsive — works inside editor canvas AND live site
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setIsMobile(entry.contentRect.width < 768);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const borderCol = "rgba(0,0,0,0.08)";
-  const navLinkColor = "#4b5563";
+  const navLinkColor: string = c.navLinkColor || "#4b5563";
+  const ctaColor: string = c.ctaColor || themeColor;
   const logoColor = textColor;
   const placeholderLinks = ["About", "Services", "Blog", "Contact"];
 
+  const LogoEl = (
+    <Box
+      component="a"
+      href="/"
+      sx={{
+        flexShrink: 0,
+        textDecoration: "none",
+        display: "flex",
+        alignItems: "center",
+      }}
+    >
+      {logoType === "image" && logoImage ? (
+        <Box
+          component="img"
+          src={logoImage}
+          alt={logoText || "Logo"}
+          sx={{
+            height: 30,
+            width: "auto",
+            maxWidth: 120,
+            objectFit: "contain",
+          }}
+        />
+      ) : (
+        <Box
+          sx={{
+            fontWeight: 800,
+            fontSize: "1.1rem",
+            color: logoColor,
+            letterSpacing: "-0.01em",
+            lineHeight: 1,
+            fontFamily: "inherit",
+            textTransform: "uppercase",
+          }}
+        >
+          {logoText || "Brand"}
+        </Box>
+      )}
+    </Box>
+  );
+
   return (
     <Box
+      ref={headerRef}
       {...compoundBlockSelectionProps}
       data-preview-label={compoundBlockLabel}
       sx={{
+        ...compoundCardSx,
         width: "100%",
-        bgcolor: bg,
-        borderBottom: `1px solid ${borderCol}`,
-        boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
+        border: "none",
+        backgroundImage: "none",
+        backgroundColor: "transparent",
+        boxShadow: "none",
         borderRadius: 0,
         p: 0,
         overflow: "hidden",
@@ -516,168 +588,176 @@ const HeaderEditorPreview: React.FC<{
           justifyContent: "space-between",
           px: 3,
           height: 64,
-          gap: 3,
-          maxWidth: 1100,
-          mx: "auto",
+          gap: 2,
         }}
       >
-        {/* Logo */}
-        <Box
-          component="a"
-          href="/"
-          sx={{
-            flexShrink: 0,
-            minWidth: 80,
-            textDecoration: "none",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {logoType === "image" && logoImage ? (
-            <Box
-              component="img"
-              src={logoImage}
-              alt={logoText || "Logo"}
-              sx={{
-                height: 30,
-                width: "auto",
-                maxWidth: 120,
-                objectFit: "contain",
-              }}
-            />
-          ) : (
+        {/* Logo — always visible */}
+        {LogoEl}
+
+        {/* Desktop: center nav + right CTA */}
+        {!isMobile && (
+          <>
             <Box
               sx={{
-                fontWeight: 800,
-                fontSize: "1.1rem",
-                color: logoColor,
-                letterSpacing: "-0.01em",
-                lineHeight: 1,
-                fontFamily: "inherit",
-                textTransform: "uppercase",
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 0,
               }}
             >
-              {logoText || "Brand"}
+              {(menuItems.length > 0
+                ? menuItems.slice(0, 6)
+                : placeholderLinks.map((l) => ({ label: l, target: "" }))
+              ).map((item, i) => {
+                const resolved = resolveTarget(item.target ?? "");
+                return (
+                  <Box
+                    key={i}
+                    component={resolved ? "a" : "span"}
+                    href={resolved || undefined}
+                    onClick={
+                      resolved?.startsWith("#")
+                        ? (e: React.MouseEvent) => {
+                            e.preventDefault();
+                            const id = resolved.replace(/^#/, "");
+                            const el =
+                              document.getElementById(id) ||
+                              document.querySelector(`[data-section="${id}"]`);
+                            el?.scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
+                          }
+                        : undefined
+                    }
+                    sx={{
+                      px: 1.8,
+                      py: 0.5,
+                      fontSize: "0.78rem",
+                      fontWeight: 500,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color:
+                        menuItems.length === 0
+                          ? `${navLinkColor}80`
+                          : navLinkColor,
+                      whiteSpace: "nowrap",
+                      textDecoration: "none",
+                      cursor: item.target ? "pointer" : "default",
+                      "&:hover": item.target ? { color: themeColor } : {},
+                      transition: "color 0.15s",
+                    }}
+                  >
+                    {item.label}
+                  </Box>
+                );
+              })}
             </Box>
-          )}
-        </Box>
-
-        {/* Center nav links */}
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 0,
-          }}
-        >
-          {(menuItems.length > 0
-            ? menuItems.slice(0, 6)
-            : placeholderLinks.map((l) => ({ label: l, target: "" }))
-          ).map((item, i) => {
-            const resolved = resolveTarget(item.target ?? "");
-            return (
-              <Box
-                key={i}
-                component={resolved ? "a" : "span"}
-                href={resolved || undefined}
-                onClick={
-                  resolved?.startsWith("#")
-                    ? (e: React.MouseEvent) => {
-                        e.preventDefault();
-                        const id = resolved.replace(/^#/, "");
-                        const el =
-                          document.getElementById(id) ||
-                          document.querySelector(`[data-section="${id}"]`);
-                        el?.scrollIntoView({
-                          behavior: "smooth",
-                          block: "start",
-                        });
-                      }
-                    : undefined
-                }
-                sx={{
-                  px: 1.8,
-                  py: 0.5,
-                  fontSize: "0.78rem",
-                  fontWeight: 500,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  color:
-                    menuItems.length === 0 ? `${navLinkColor}80` : navLinkColor,
-                  whiteSpace: "nowrap",
-                  textDecoration: "none",
-                  cursor: item.target ? "pointer" : "default",
-                  "&:hover": item.target ? { color: themeColor } : {},
-                  transition: "color 0.15s",
-                }}
-              >
-                {item.label}
+            {ctaText && (
+              <Box sx={{ flexShrink: 0 }}>
+                <Box
+                  component="a"
+                  href={c.ctaUrl || "#contact"}
+                  sx={{
+                    px: 2.2,
+                    py: 0.65,
+                    border: `1.5px solid ${ctaColor}`,
+                    color: ctaColor,
+                    borderRadius: "100px",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.03em",
+                    whiteSpace: "nowrap",
+                    textTransform: "uppercase",
+                    textDecoration: "none",
+                    display: "inline-block",
+                    cursor: "pointer",
+                    transition: "background 0.15s, color 0.15s",
+                    "&:hover": { bgcolor: ctaColor, color: "#fff" },
+                  }}
+                >
+                  {ctaText}
+                </Box>
               </Box>
-            );
-          })}
-        </Box>
+            )}
+          </>
+        )}
 
-        {/* CTA button */}
-        <Box
-          sx={{
-            flexShrink: 0,
-            minWidth: 80,
-            display: "flex",
-            justifyContent: "flex-end",
-          }}
-        >
-          {ctaText && (
-            <Box
-              component="a"
-              href={c.ctaUrl || "#contact"}
-              sx={{
-                px: 2.2,
-                py: 0.65,
-                border: `1.5px solid ${themeColor}`,
-                color: themeColor,
-                borderRadius: "100px",
-                fontSize: "0.78rem",
-                fontWeight: 600,
-                letterSpacing: "0.03em",
-                whiteSpace: "nowrap",
-                textTransform: "uppercase",
-                textDecoration: "none",
-                display: "inline-block",
-                cursor: "pointer",
-                transition: "background 0.15s, color 0.15s",
-                "&:hover": { bgcolor: themeColor, color: "#fff" },
-              }}
-            >
-              {ctaText}
-            </Box>
-          )}
-        </Box>
-      </Box>
-
-      {/* No menu hint strip */}
-      {menuItems.length === 0 && (
-        <Box
-          sx={{
-            textAlign: "center",
-            py: 0.5,
-            bgcolor: "rgba(0,0,0,0.02)",
-            borderTop: `1px solid ${borderCol}`,
-          }}
-        >
-          <Box
+        {/* Mobile: hamburger only */}
+        {isMobile && (
+          <IconButton
+            onClick={() => setDrawerOpen(true)}
+            size="small"
             sx={{
-              fontSize: "0.68rem",
-              color: mutedTextColor,
-              opacity: 0.6,
-              letterSpacing: "0.02em",
+              color: textColor,
+              border: "1.5px solid rgba(0,0,0,0.1)",
+              borderRadius: "10px",
+              p: "6px",
             }}
           >
-            Placeholder links shown · Select a menu from the left panel
-          </Box>
-        </Box>
-      )}
+            <MenuIcon size={18} />
+          </IconButton>
+        )}
+      </Box>
+
+      {/* Mobile drawer */}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{ sx: { width: 260, p: 2.5, bgcolor: "#fff" } }}
+      >
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
+          {LogoEl}
+          <IconButton
+            onClick={() => setDrawerOpen(false)}
+            size="small"
+            sx={{ color: textColor }}
+          >
+            <CloseIcon size={18} />
+          </IconButton>
+        </Stack>
+        <Divider sx={{ mb: 2 }} />
+        {(menuItems.length > 0
+          ? menuItems
+          : placeholderLinks.map((l) => ({ label: l, target: "" }))
+        ).map((item, i) => {
+          const resolved = resolveTarget((item as any).target ?? "");
+          return (
+            <Box
+              key={i}
+              component={resolved ? "a" : "span"}
+              href={resolved || undefined}
+              onClick={() => setDrawerOpen(false)}
+              sx={{
+                display: "block",
+                px: 1.5,
+                py: 1.1,
+                fontSize: "0.95rem",
+                fontWeight: 500,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                color:
+                  menuItems.length === 0 ? `${navLinkColor}80` : navLinkColor,
+                borderRadius: "10px",
+                cursor: resolved ? "pointer" : "default",
+                "&:hover": resolved
+                  ? { color: themeColor, bgcolor: "rgba(0,0,0,0.04)" }
+                  : {},
+              }}
+            >
+              {(item as any).label}
+            </Box>
+          );
+        })}
+      </Drawer>
     </Box>
   );
 };
@@ -5082,6 +5162,7 @@ export const renderEditorSharedBlock = ({
         section={section}
         compoundBlockSelectionProps={compoundBlockSelectionProps}
         compoundBlockLabel={compoundBlockLabel}
+        compoundCardSx={compoundCardSx}
         themeColor={themeColor}
         textColor={textColor}
         mutedTextColor={mutedTextColor}

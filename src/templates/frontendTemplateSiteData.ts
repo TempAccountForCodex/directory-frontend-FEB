@@ -149,6 +149,114 @@ const basePortfolioPhotoStudioData: BusinessData = {
   secondaryColor: "#ff7a1a",
 };
 
+const baseModernData: BusinessData = {
+  name: "Modern Co.",
+  tagline: "Clean, professional, and built to perform.",
+  description:
+    "A full-service agency delivering strategy, design, and execution for ambitious brands.",
+  primaryColor: "#2563eb",
+  secondaryColor: "#64748b",
+  contact: { email: "hello@modernco.com", phone: "(555) 100-2000" },
+  features: [
+    { title: "Fast Delivery", description: "Quick turnaround without compromising quality." },
+    { title: "Expert Team", description: "Specialists with years of industry experience." },
+    { title: "Full Support", description: "Dedicated support from start to finish." },
+  ],
+  services: [
+    { name: "Strategy", description: "Research-led planning for sustainable growth." },
+    { name: "Design", description: "Visual systems that communicate with clarity." },
+    { name: "Execution", description: "End-to-end delivery from concept to launch." },
+  ],
+};
+
+const baseMinimalData: BusinessData = {
+  ...baseModernData,
+  name: "Minimal Studio",
+  tagline: "Elegant, refined, and purposefully understated.",
+  description:
+    "A minimal studio focused on the essentials — clean work, clear communication, and lasting results.",
+  primaryColor: "#1a1a1a",
+  secondaryColor: "#e5e5e5",
+};
+
+const basePremiumData: BusinessData = {
+  ...baseModernData,
+  name: "Premium Group",
+  tagline: "Luxury service and craftsmanship at every level.",
+  description:
+    "A premium firm offering high-touch services for discerning clients who expect the best.",
+  primaryColor: "#0f0f0f",
+  secondaryColor: "#c8a968",
+};
+
+const baseStoreData: BusinessData = {
+  name: "The Shop",
+  tagline: "Quality products for everyday life.",
+  description:
+    "A curated store with products built to last — designed for quality and value.",
+  primaryColor: "#111111",
+  secondaryColor: "#f59e0b",
+  contact: { email: "hello@theshop.com", phone: "(555) 200-1000" },
+  products: [
+    {
+      id: "p-1",
+      name: "Signature Collection",
+      description: "Our bestselling line, crafted with premium materials.",
+      price: "$49.00",
+      originalPrice: "$69.00",
+      category: "Featured",
+      badge: "Best Seller",
+    },
+    {
+      id: "p-2",
+      name: "Essential Pack",
+      description: "Everything you need in one curated bundle.",
+      price: "$89.00",
+      category: "Bundles",
+    },
+  ],
+};
+
+const baseStorePremiumData: BusinessData = {
+  ...baseStoreData,
+  name: "Maison Edit",
+  tagline: "Soft luxury, premium curation, and editorial presence.",
+  description:
+    "A premium collection store with elegant merchandising and bespoke customer service.",
+  primaryColor: "#2c2420",
+  secondaryColor: "#c8a968",
+};
+
+const baseStorePerformanceData: BusinessData = {
+  ...baseStoreData,
+  name: "Apex Gear",
+  tagline: "Built for performance. Worn by champions.",
+  description:
+    "High-performance athletic gear engineered for those who push limits.",
+  primaryColor: "#0a0a0a",
+  secondaryColor: "#00ff88",
+};
+
+const baseStoreFitData: BusinessData = {
+  ...baseStoreData,
+  name: "Stride Co.",
+  tagline: "Sport footwear and apparel for every pursuit.",
+  description:
+    "Bold sports-fashion brand delivering footwear and apparel built for movement and style.",
+  primaryColor: "#1e3a8a",
+  secondaryColor: "#f97316",
+};
+
+const baseStorePawsData: BusinessData = {
+  ...baseStoreData,
+  name: "Paws & Co.",
+  tagline: "Premium products for the dogs you love.",
+  description:
+    "A soft editorial pet store curating the very best for your four-legged companions.",
+  primaryColor: "#7c3aed",
+  secondaryColor: "#fbbf24",
+};
+
 const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
   blog: baseBlogData,
   "blog-premium": baseBlogPremiumData,
@@ -157,11 +265,19 @@ const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
   "company-executive": baseCompanyExecutiveData,
   education: educationData,
   gardening: gardeningData,
+  minimal: baseMinimalData,
+  modern: baseModernData,
   plumbing: plumbingData,
+  premium: basePremiumData,
   "portfolio-creative": basePortfolioData,
   "portfolio-agency": basePortfolioAgencyData,
   "portfolio-photo-studio": basePortfolioPhotoStudioData,
   restaurant: restaurantData,
+  "store-basic": baseStoreData,
+  "store-fit": baseStoreFitData,
+  "store-paws": baseStorePawsData,
+  "store-performance": baseStorePerformanceData,
+  "store-premium": baseStorePremiumData,
 };
 
 export const hasFrontendTemplateBaseData = (
