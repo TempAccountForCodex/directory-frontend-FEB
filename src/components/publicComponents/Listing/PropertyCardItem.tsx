@@ -12,9 +12,12 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { DashboardContext } from "../../../context/DashboardContext";
+import { useFavorites } from "../../../hooks/useFavorites";
 
 export interface PropertyItem {
   id: string | number;
@@ -64,6 +67,8 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
   const navigate = useNavigate();
   const auth = useAuth();
   const theme = useTheme();
+  const { isFavorited, toggleFavorite } = useFavorites();
+  const favorited = isFavorited(item.id);
 
   const businessName = item.businessName || item.title || "Business Listing";
   const description =
@@ -168,6 +173,9 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
               opacity: 1,
               transform: "translateY(0)",
             },
+            "&:hover .listing-card-fav": {
+              opacity: 1,
+            },
             "&:hover .card-border-ring": {
               background: "linear-gradient(135deg, rgba(20,184,166,0.5), rgba(99,102,241,0.3), rgba(255,255,255,0.15))",
             },
@@ -190,6 +198,7 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
               transition: "background 0.3s ease",
             }}
           />
+          {/* Location — top right */}
           <Box
             sx={{
               position: "absolute",
@@ -198,13 +207,12 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
               zIndex: 3,
               px: 2,
               py: 2,
-              fontFamily:
-                "Open Sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily: "Open Sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontSize: { xs: 10, md: 11 },
               lineHeight: 1,
               opacity: 0.85,
               color: "#fff",
-              maxWidth: "68%",
+              maxWidth: "60%",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -213,9 +221,9 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
             {locationText || "Directory"}
           </Box>
 
+          {/* Admin buttons — top left */}
           {auth.user &&
-            (auth.user.role === "admin" ||
-              auth.user.role === "super_admin") && (
+            (auth.user.role === "admin" || auth.user.role === "super_admin") && (
               <Stack
                 direction="row"
                 spacing={1}
@@ -224,10 +232,7 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
                 <IconButton
                   aria-label="Edit listing"
                   size="small"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleEditClick(item.id);
-                  }}
+                  onClick={(event) => { event.stopPropagation(); handleEditClick(item.id); }}
                   sx={{
                     color: "#fff",
                     bgcolor: "rgba(0,0,0,0.35)",
@@ -242,10 +247,7 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
                   role="button"
                   aria-label="Delete listing"
                   size="small"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleDeleteClick(item.id);
-                  }}
+                  onClick={(event) => { event.stopPropagation(); handleDeleteClick(item.id); }}
                   sx={{
                     color: "#fff",
                     bgcolor: "rgba(0,0,0,0.35)",
@@ -257,6 +259,38 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
                 </IconButton>
               </Stack>
             )}
+
+          {/* Heart — bottom right, hidden until hover (always visible when favourited) */}
+          <IconButton
+            className="listing-card-fav"
+            size="small"
+            aria-label={favorited ? "Remove from favourites" : "Add to favourites"}
+            onClick={(e) => toggleFavorite(item.id, e)}
+            sx={{
+              position: "absolute",
+              bottom: 16,
+              right: 16,
+              zIndex: 6,
+              width: 34,
+              height: 34,
+              opacity: favorited ? 1 : 0,
+              bgcolor: favorited ? "rgba(239,68,68,0.15)" : "rgba(0,0,0,0.35)",
+              backdropFilter: "blur(8px)",
+              border: favorited
+                ? "1px solid rgba(239,68,68,0.35)"
+                : "1px solid rgba(255,255,255,0.2)",
+              color: favorited ? "#ef4444" : "#fff",
+              transition: "opacity 0.25s ease, transform 0.2s ease, background 0.2s ease",
+              "&:hover": {
+                bgcolor: favorited ? "rgba(239,68,68,0.28)" : "rgba(0,0,0,0.5)",
+                transform: "scale(1.12)",
+              },
+            }}
+          >
+            {favorited
+              ? <FavoriteIcon sx={{ fontSize: 16 }} />
+              : <FavoriteBorderIcon sx={{ fontSize: 16 }} />}
+          </IconButton>
 
           <Box
             sx={{
