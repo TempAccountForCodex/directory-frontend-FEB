@@ -1309,7 +1309,16 @@ const findSectionBlock = (
     (block) => getCompatibleSectionKey(templateId, block) === sectionKey,
   );
 
-export const buildTemplatePreviewBusinessData = (
+const buildNavbarContent = (
+  navbarBlock: TemplateEditorBlock | undefined,
+  rawContent: Record<string, unknown>,
+): Record<string, unknown> => ({
+  ...rawContent,
+  blockId: navbarBlock?.id,
+  ctaText: readString(rawContent, ["ctaText", "contactPrimaryText"], ""),
+});
+
+const buildTemplatePreviewBusinessDataImpl = (
   templateId: string,
   website: WebsiteLike,
   pages: TemplateEditorPage[],
@@ -1413,20 +1422,7 @@ export const buildTemplatePreviewBusinessData = (
         ? mapFeatureItems(whyUsItems)
         : themedBase.features,
       templateContent: {
-        navbar: {
-          blockId: navbarBlock?.id,
-          contactPrimaryText: readString(
-            navbar,
-            ["contactPrimaryText"],
-            contactButton,
-          ),
-          navLabels:
-            typeof navbar.navLabels === "object" &&
-            navbar.navLabels !== null &&
-            !Array.isArray(navbar.navLabels)
-              ? (navbar.navLabels as Record<string, string>)
-              : {},
-        },
+        navbar: buildNavbarContent(navbarBlock, navbar),
         home: {
           blockId: overviewBlock?.id,
           heading: readString(overview, ["heading", "heroHeading", "title"]),
@@ -2413,6 +2409,30 @@ export const buildTemplatePreviewBusinessData = (
         buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
         sectionStyle: getSectionStyleValue(contact),
       },
+    },
+  };
+};
+
+export const buildTemplatePreviewBusinessData = (
+  templateId: string,
+  website: WebsiteLike,
+  pages: TemplateEditorPage[],
+): BusinessData | null => {
+  const result = buildTemplatePreviewBusinessDataImpl(templateId, website, pages);
+  if (!result) return null;
+
+  const navbarBlock = findSectionBlock(templateId, pages, "navbar");
+  if (!navbarBlock) return result;
+
+  const existing = (result.templateContent as Record<string, unknown> | undefined)?.navbar;
+  if (existing) return result;
+
+  const navbarRaw = findSectionContent(templateId, pages, "navbar");
+  return {
+    ...result,
+    templateContent: {
+      ...(result.templateContent as Record<string, unknown> || {}),
+      navbar: buildNavbarContent(navbarBlock, navbarRaw),
     },
   };
 };

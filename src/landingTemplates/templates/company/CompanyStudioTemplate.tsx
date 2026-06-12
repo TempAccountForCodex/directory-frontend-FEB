@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Box,
   Button,
@@ -16,7 +16,7 @@ import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
-import { apiClient } from "../../../api/client";
+import TemplateNavbarHeader from "../../components/TemplateNavbarHeader";
 import {
   getEditableImageProps,
   getEditableSectionProps,
@@ -349,35 +349,6 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const templateContent =
     (data.templateContent as Record<string, any> | undefined) || {};
   const navbarContent = templateContent.navbar || {};
-  const navMenuId: string = navbarContent.menuId || "";
-  const [fetchedMenuItems, setFetchedMenuItems] = useState<
-    Array<{ label: string; target: string; type?: string }>
-  >([]);
-  useEffect(() => {
-    if (!navMenuId || !data.websiteId) {
-      setFetchedMenuItems([]);
-      return;
-    }
-    let cancelled = false;
-    apiClient
-      .get(`/websites/${data.websiteId}/menus`)
-      .then((res) => {
-        if (cancelled) return;
-        const raw = res.data?.data ?? res.data ?? [];
-        const menus = Array.isArray(raw) ? raw : [];
-        const found = menus.find(
-          (m: any) =>
-            String(m.id) === String(navMenuId) || m.handle === navMenuId,
-        );
-        setFetchedMenuItems(Array.isArray(found?.items) ? found.items : []);
-      })
-      .catch(() => {
-        if (!cancelled) setFetchedMenuItems([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [navMenuId, data.websiteId]);
   const homeContent = templateContent.home || {};
   const featuresContent = templateContent.features || {};
   const aboutContent = templateContent.about || {};
@@ -1295,107 +1266,18 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         flexDirection: "column",
       }}
     >
-      <Box
-        component="header"
-        {...getEditableSectionProps(navbarBlockId, "Header")}
-        sx={{
-          position: navbarContent.sticky !== false ? "sticky" : "relative",
-          top: 0,
-          zIndex: 50,
-          backdropFilter: "blur(18px)",
-          bgcolor: headerBackground,
-          borderBottom: `1px solid ${rgba(themeColor, 0.14)}`,
-        }}
-      >
-        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
-          <Stack
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ minHeight: 82 }}
-          >
-            {/* Logo */}
-            {navbarContent.logoType === "image" && navbarContent.logoImage ? (
-              <Box
-                component="img"
-                src={navbarContent.logoImage as string}
-                alt={navbarContent.logoText as string || data.name}
-                sx={{ height: 36, width: "auto", maxWidth: 140, objectFit: "contain" }}
-              />
-            ) : (
-              <Typography
-                sx={{
-                  fontFamily: headingFont,
-                  fontSize: { xs: "1.45rem", md: "1.8rem" },
-                  fontWeight: 800,
-                  letterSpacing: "-0.05em",
-                }}
-              >
-                {(navbarContent.logoText as string) || data.name}
-              </Typography>
-            )}
-
-            {/* Nav links */}
-            <Stack
-              direction="row"
-              spacing={3.5}
-              sx={{ display: { xs: "none", md: "flex" } }}
-            >
-              {(fetchedMenuItems.length > 0 ? fetchedMenuItems : navItems).map(
-                (item, idx) => {
-                  const isCustom = fetchedMenuItems.length > 0;
-                  return (
-                    <Typography
-                      key={isCustom ? idx : (item as typeof navItems[0]).id}
-                      component={isCustom ? "a" : "span"}
-                      href={isCustom ? (item as any).target : undefined}
-                      onClick={
-                        !isCustom
-                          ? () => scrollToSection((item as typeof navItems[0]).id)
-                          : undefined
-                      }
-                      sx={{
-                        cursor: "pointer",
-                        color: (navbarContent.navLinkColor as string) || palette.ink,
-                        fontWeight: 500,
-                        textDecoration: "none",
-                        transition: "color 180ms ease",
-                        "&:hover": { color: themeColor },
-                      }}
-                    >
-                      {item.label}
-                    </Typography>
-                  );
-                },
-              )}
-            </Stack>
-
-            {/* CTA button */}
-            {(navbarContent.ctaText || contactPrimary) && (
-              <Button
-                component="a"
-                href={(navbarContent.ctaUrl as string) || "#contact"}
-                onClick={(e: React.MouseEvent) => {
-                  const href = (navbarContent.ctaUrl as string) || "#contact";
-                  if (!navbarContent.ctaUrl || href.startsWith("#")) {
-                    e.preventDefault();
-                    scrollToSection(href.replace(/^#/, "") || "contact");
-                  }
-                }}
-                endIcon={<ArrowOutwardIcon />}
-                sx={{
-                  color: (navbarContent.ctaColor as string) || palette.ink,
-                  borderColor: (navbarContent.ctaColor as string) || "transparent",
-                  textTransform: "none",
-                  fontWeight: 700,
-                  borderRadius: 999,
-                }}
-              >
-                {(navbarContent.ctaText as string) || contactPrimary}
-              </Button>
-            )}
-          </Stack>
-        </Container>
+      <Box {...getEditableSectionProps(navbarBlockId, "Header")}>
+        <TemplateNavbarHeader
+          navbarContent={navbarContent}
+          fallbackName={data.name}
+          sectionNavItems={navItems}
+          onScrollToSection={scrollToSection}
+          themeColor={themeColor}
+          headingFont={headingFont}
+          bgColor={headerBackground}
+          borderColor={rgba(themeColor, 0.14)}
+          websiteId={data.websiteId}
+        />
       </Box>
 
       <Box sx={{ display: "flex", flexDirection: "column" }}>

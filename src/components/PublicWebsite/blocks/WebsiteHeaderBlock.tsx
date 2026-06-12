@@ -51,6 +51,20 @@ interface WebsiteHeaderBlockProps {
   onCtaClick?: (blockType: string, ctaText: string) => void;
 }
 
+// ── Site-scoped link resolver ─────────────────────────────────────────────────
+const siteBase = (() => {
+  if (typeof window === "undefined") return "";
+  const m = window.location.pathname.match(/^(\/site\/[^/]+)/);
+  return m ? m[1] : "";
+})();
+const resolveTarget = (target: string): string => {
+  if (!target || target.startsWith("#") || target.startsWith("http") || target.startsWith("//"))
+    return target;
+  return siteBase
+    ? `${siteBase}${target.startsWith("/") ? target : `/${target}`}`
+    : target;
+};
+
 // ── Smooth-scroll helper ──────────────────────────────────────────────────────
 const handleNavClick = (e: React.MouseEvent, target: string, type?: string) => {
   if (type === "section" || target.startsWith("#")) {
@@ -192,7 +206,7 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
         <Box
           key={item.id ?? idx}
           component="a"
-          href={item.target}
+          href={resolveTarget(item.target)}
           onClick={(e) => handleNavClick(e, item.target, item.type)}
           sx={{
             textDecoration: "none",
@@ -222,7 +236,7 @@ const WebsiteHeaderBlock = memo(function WebsiteHeaderBlock({
     ctaText ? (
       <Button
         component="a"
-        href={ctaUrl}
+        href={resolveTarget(ctaUrl)}
         onClick={(e: React.MouseEvent) => {
           handleNavClick(e, ctaUrl);
           onCtaClick?.("WEBSITE_HEADER", ctaText);
