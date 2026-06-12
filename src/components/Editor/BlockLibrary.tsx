@@ -230,6 +230,28 @@ const shouldHideBlockLibraryItem = (block?: Partial<BlockLibraryItem>) => {
   );
 };
 
+// Blocks defined on the frontend that show in the library even before the
+// backend registers them. Deduped against API results by key.
+const FRONTEND_BLOCKS: BlockLibraryItem[] = [
+  {
+    key: "custom_code",
+    label: "Custom Code",
+    description: "Embed your own HTML, CSS, and JavaScript code",
+    category: "content",
+    icon: "code",
+    capabilities: {
+      supportsBackground: false,
+      supportsVisibility: true,
+      supportsVariants: false,
+      supportsCustomCss: false,
+      isDynamic: false,
+      dataSource: null,
+    },
+    variants: [],
+    searchKeywords: ["html", "code", "embed", "script", "custom", "javascript", "css"],
+  },
+];
+
 // ---------------------------------------------------------------------------
 // BlockLibraryCard
 // ---------------------------------------------------------------------------
@@ -590,7 +612,8 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const mergedBlockTypes = useMemo(() => {
-    const extras = extraBlocks.filter(
+    const allExtras = [...FRONTEND_BLOCKS, ...extraBlocks];
+    const extras = allExtras.filter(
       (extra) =>
         !shouldHideBlockLibraryItem(extra) &&
         !blockTypes.some((block) => block.key === extra.key),

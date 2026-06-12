@@ -15,7 +15,6 @@ import {
   Tabs,
   TextField,
   Typography,
-  CircularProgress,
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
 import {
@@ -33,9 +32,13 @@ import {
   Square,
   Trash2,
   Upload,
+  Video as VideoIcon,
   X,
+  Zap,
+  LayoutGrid,
 } from "lucide-react";
-import { apiClient } from "../../api/client";
+
+const OPEN_MEDIA_LIBRARY_EVENT = "editor:open-media-library";
 import {
   normalizeSpacingValue,
   rawSpacingNumberValue,
@@ -44,9 +47,12 @@ import {
 } from "./sharedSpacingControls";
 
 export type EditorSectionStyle = {
-  backgroundType?: "none" | "solid" | "gradient" | "image";
+  backgroundType?: "none" | "solid" | "gradient" | "image" | "video" | "animated" | "pattern";
   backgroundColor?: string;
   backgroundImageUrl?: string;
+  backgroundVideoUrl?: string;
+  backgroundAnimatedPreset?: string;
+  backgroundPatternPreset?: string;
   backgroundSize?: string;
   backgroundPosition?: string;
   backgroundRepeat?: string;
@@ -216,6 +222,186 @@ const SEMANTIC_TAG_OPTIONS = [
   "span",
 ] as const;
 
+type AnimatedBgPreset = {
+  id: string;
+  label: string;
+  sx: Record<string, unknown>;
+};
+
+const ANIMATED_BG_PRESETS: AnimatedBgPreset[] = [
+  {
+    id: "moving-gradient",
+    label: "Moving Gradient",
+    sx: {
+      "@keyframes mgKf": {
+        "0%": { backgroundPosition: "0% 50%" },
+        "50%": { backgroundPosition: "100% 50%" },
+        "100%": { backgroundPosition: "0% 50%" },
+      },
+      background:
+        "linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)",
+      backgroundSize: "400% 400%",
+      animation: "mgKf 4s ease infinite",
+    },
+  },
+  {
+    id: "floating-bubbles",
+    label: "Floating Bubbles",
+    sx: {
+      "@keyframes fbKf": {
+        "0%": { backgroundPosition: "25% 75%, 75% 25%, 55% 60%" },
+        "33%": { backgroundPosition: "35% 65%, 65% 35%, 45% 55%" },
+        "66%": { backgroundPosition: "20% 80%, 80% 22%, 60% 65%" },
+        "100%": { backgroundPosition: "25% 75%, 75% 25%, 55% 60%" },
+      },
+      backgroundImage:
+        "radial-gradient(circle closest-side, rgba(120,80,200,0.8) 0%, transparent 100%), radial-gradient(circle closest-side, rgba(200,80,120,0.8) 0%, transparent 100%), radial-gradient(circle closest-side, rgba(50,180,130,0.7) 0%, transparent 100%)",
+      backgroundSize: "50% 50%, 40% 40%, 60% 60%",
+      backgroundRepeat: "no-repeat",
+      backgroundColor: "#0f172a",
+      backgroundPosition: "25% 75%, 75% 25%, 55% 60%",
+      animation: "fbKf 5s ease-in-out infinite",
+    },
+  },
+  {
+    id: "particle-dots",
+    label: "Particle Dots",
+    sx: {
+      "@keyframes pdKf": {
+        "0%": { backgroundPosition: "0 0" },
+        "100%": { backgroundPosition: "16px 16px" },
+      },
+      background:
+        "radial-gradient(circle, rgba(99,102,241,0.85) 1.5px, transparent 1.5px), #0f172a",
+      backgroundSize: "16px 16px",
+      animation: "pdKf 1.5s linear infinite",
+    },
+  },
+  {
+    id: "wave-motion",
+    label: "Wave Motion",
+    sx: {
+      "@keyframes wmKf": {
+        "0%": { backgroundPosition: "0% 50%" },
+        "50%": { backgroundPosition: "100% 50%" },
+        "100%": { backgroundPosition: "0% 50%" },
+      },
+      background:
+        "linear-gradient(60deg, #0f3460, #533483, #e94560, #0f3460, #16213e)",
+      backgroundSize: "400% 400%",
+      animation: "wmKf 5s ease-in-out infinite",
+    },
+  },
+  {
+    id: "neon-glow",
+    label: "Neon Glow",
+    sx: {
+      "@keyframes ngKf": {
+        "0%": {
+          boxShadow:
+            "inset 0 0 20px rgba(0,255,200,0.15), inset 0 0 40px rgba(120,80,255,0.1)",
+        },
+        "50%": {
+          boxShadow:
+            "inset 0 0 40px rgba(0,255,200,0.5), inset 0 0 80px rgba(120,80,255,0.35)",
+        },
+        "100%": {
+          boxShadow:
+            "inset 0 0 20px rgba(0,255,200,0.15), inset 0 0 40px rgba(120,80,255,0.1)",
+        },
+      },
+      background:
+        "radial-gradient(ellipse at 50% 50%, #1a0533 0%, #000814 100%)",
+      animation: "ngKf 2.5s ease-in-out infinite",
+    },
+  },
+  {
+    id: "soft-blobs",
+    label: "Soft Blobs",
+    sx: {
+      "@keyframes sbKf": {
+        "0%": { backgroundPosition: "0% 50%" },
+        "33%": { backgroundPosition: "100% 0%" },
+        "66%": { backgroundPosition: "50% 100%" },
+        "100%": { backgroundPosition: "0% 50%" },
+      },
+      background:
+        "radial-gradient(ellipse at 30% 60%, rgba(255,105,180,0.55) 0%, transparent 55%), radial-gradient(ellipse at 70% 40%, rgba(100,210,255,0.55) 0%, transparent 55%), radial-gradient(ellipse at 50% 80%, rgba(255,180,100,0.4) 0%, transparent 55%), #fef3f8",
+      backgroundSize: "200% 200%",
+      animation: "sbKf 7s ease-in-out infinite",
+    },
+  },
+];
+
+type StaticBgPreset = { id: string; label: string; sx: Record<string, unknown> };
+
+const STATIC_BG_PRESETS: StaticBgPreset[] = [
+  {
+    id: "dot-grid-dark",
+    label: "Dot Grid",
+    sx: {
+      backgroundImage:
+        "radial-gradient(circle, rgba(0,200,150,0.5) 1.5px, transparent 1.5px)",
+      backgroundSize: "20px 20px",
+      backgroundColor: "#001a12",
+    },
+  },
+  {
+    id: "starfield-dark",
+    label: "Starfield",
+    sx: {
+      backgroundImage:
+        "radial-gradient(ellipse at 25% 35%, rgba(0,100,80,0.45) 0%, transparent 60%), " +
+        "radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px), " +
+        "radial-gradient(circle, rgba(255,255,255,0.4) 0.6px, transparent 0.6px)",
+      backgroundSize: "100% 100%, 70px 70px, 35px 35px",
+      backgroundPosition: "0 0, 8px 8px, 20px 18px",
+      backgroundColor: "#001210",
+    },
+  },
+  {
+    id: "plexus-light",
+    label: "Plexus",
+    sx: {
+      backgroundImage:
+        "radial-gradient(circle, rgba(140,140,190,0.7) 1.5px, transparent 1.5px), " +
+        "linear-gradient(rgba(180,180,210,0.22) 1px, transparent 1px), " +
+        "linear-gradient(90deg, rgba(180,180,210,0.22) 1px, transparent 1px)",
+      backgroundSize: "40px 40px",
+      backgroundColor: "#f8f8fc",
+    },
+  },
+  {
+    id: "diagonal-light",
+    label: "Diagonal",
+    sx: {
+      backgroundImage:
+        "repeating-linear-gradient(135deg, transparent 0px, transparent 40px, rgba(210,210,220,0.4) 40px, rgba(210,210,220,0.4) 42px)",
+      backgroundColor: "#f5f5f8",
+    },
+  },
+  {
+    id: "mesh-dark",
+    label: "Dark Mesh",
+    sx: {
+      backgroundImage:
+        "linear-gradient(rgba(0,180,130,0.18) 1px, transparent 1px), " +
+        "linear-gradient(90deg, rgba(0,180,130,0.18) 1px, transparent 1px)",
+      backgroundSize: "28px 28px",
+      backgroundColor: "#001510",
+    },
+  },
+  {
+    id: "waves-light",
+    label: "Waves",
+    sx: {
+      backgroundImage:
+        "repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(120,160,150,0.2) 29px)",
+      backgroundColor: "#ffffff",
+    },
+  },
+];
+
 const EditorSectionStyleToolbar: React.FC<Props> = ({
   selection,
   value,
@@ -229,14 +415,12 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
   const isPanel = layout === "panel";
   const [backgroundAnchorEl, setBackgroundAnchorEl] =
     React.useState<HTMLElement | null>(null);
-  const [backgroundTab, setBackgroundTab] = React.useState<"color" | "image">(
-    "color",
-  );
-  const [isUploading, setIsUploading] = React.useState(false);
+  const [backgroundTab, setBackgroundTab] = React.useState<
+    "color" | "image" | "video" | "animated" | "pattern"
+  >("color");
   const [expandedPanel, setExpandedPanel] = React.useState<string | false>(
     "border",
   );
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const isBackgroundPopoverOpen = Boolean(backgroundAnchorEl);
 
@@ -251,30 +435,40 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
     setBackgroundAnchorEl(null);
   };
 
-  const handleImageUpload = async (file: File | null) => {
-    if (!file) return;
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      const response = await apiClient.post("/upload/image", formData);
-      onStyleChange({
-        backgroundType: "image",
-        backgroundImageUrl: response.data.url,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      });
-      setBackgroundTab("image");
-    } catch {
-      // Keep the current style unchanged on upload failure.
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
+  const openMediaLibrary = (mediaType: "image" | "video") => {
+    if (effectiveDisabled || typeof window === "undefined") return;
+    const currentUrl =
+      mediaType === "video"
+        ? resolvedValue.backgroundVideoUrl || null
+        : resolvedValue.backgroundImageUrl || null;
+    window.dispatchEvent(
+      new CustomEvent(OPEN_MEDIA_LIBRARY_EVENT, {
+        detail: {
+          label: mediaType === "video" ? "Background Video" : "Background Image",
+          value: currentUrl,
+          mediaType,
+          onSelect: (url: string | null) => {
+            if (!url) return;
+            if (mediaType === "video") {
+              onStyleChange({
+                backgroundType: "video",
+                backgroundVideoUrl: url,
+                backgroundImageUrl: "",
+              });
+            } else {
+              onStyleChange({
+                backgroundType: "image",
+                backgroundImageUrl: url,
+                backgroundVideoUrl: "",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              });
+            }
+          },
+        },
+      }),
+    );
   };
 
   const dataAttributes = Array.isArray(resolvedValue.dataAttributes)
@@ -662,7 +856,7 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
         PaperProps={{
           sx: {
             mt: 1,
-            width: 272,
+            width: 300,
             p: 1.6,
             borderRadius: 4,
             border: "1px solid rgba(148,163,184,0.16)",
@@ -704,6 +898,54 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
           >
             <ImageIcon size={15} />
           </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => setBackgroundTab("video")}
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: 2,
+              border:
+                backgroundTab === "video"
+                  ? "2px solid #9db4ff"
+                  : "1px solid rgba(15,23,42,0.08)",
+              backgroundColor: "#fff",
+            }}
+          >
+            <VideoIcon size={15} />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => setBackgroundTab("animated")}
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: 2,
+              border:
+                backgroundTab === "animated"
+                  ? "2px solid #9db4ff"
+                  : "1px solid rgba(15,23,42,0.08)",
+              backgroundColor: "#fff",
+            }}
+          >
+            <Zap size={15} />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => setBackgroundTab("pattern")}
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: 2,
+              border:
+                backgroundTab === "pattern"
+                  ? "2px solid #9db4ff"
+                  : "1px solid rgba(15,23,42,0.08)",
+              backgroundColor: "#fff",
+            }}
+          >
+            <LayoutGrid size={15} />
+          </IconButton>
         </Box>
 
         <Tabs
@@ -721,6 +963,7 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
               borderRadius: 2,
               textTransform: "none",
               fontWeight: 600,
+              fontSize: "0.8rem",
               color: "#475569",
             },
             "& .Mui-selected": {
@@ -732,6 +975,9 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
         >
           <Tab value="color" label="Brand" />
           <Tab value="image" label="Image" />
+          <Tab value="video" label="Video" />
+          <Tab value="animated" label="Animated" />
+          <Tab value="pattern" label="Patterns" />
         </Tabs>
 
         {backgroundTab === "color" ? (
@@ -785,18 +1031,8 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
               })}
             </Box>
           </Box>
-        ) : (
+        ) : backgroundTab === "image" ? (
           <Box>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(event) => {
-                void handleImageUpload(event.target.files?.[0] || null);
-              }}
-            />
-
             {resolvedValue.backgroundImageUrl ? (
               <Box
                 sx={{
@@ -835,8 +1071,8 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
               </Box>
             ) : (
               <ButtonBase
-                disabled={effectiveDisabled || isUploading}
-                onClick={() => fileInputRef.current?.click()}
+                disabled={effectiveDisabled}
+                onClick={() => openMediaLibrary("image")}
                 sx={{
                   width: "100%",
                   height: 120,
@@ -849,11 +1085,7 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
                   mb: 1.2,
                 }}
               >
-                {isUploading ? (
-                  <CircularProgress size={24} />
-                ) : (
-                  <Upload size={22} />
-                )}
+                <Upload size={22} />
                 <Typography sx={{ fontSize: "0.85rem", fontWeight: 600 }}>
                   Upload image
                 </Typography>
@@ -862,8 +1094,8 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
 
             {resolvedValue.backgroundImageUrl && (
               <ButtonBase
-                disabled={effectiveDisabled || isUploading}
-                onClick={() => fileInputRef.current?.click()}
+                disabled={effectiveDisabled}
+                onClick={() => openMediaLibrary("image")}
                 sx={{
                   width: "100%",
                   height: 42,
@@ -876,16 +1108,311 @@ const EditorSectionStyleToolbar: React.FC<Props> = ({
                   gap: 0.75,
                 }}
               >
-                {isUploading ? (
-                  <CircularProgress size={18} />
-                ) : (
-                  <Upload size={16} />
-                )}
+                <Upload size={16} />
                 <Typography sx={{ fontSize: "0.85rem", fontWeight: 600 }}>
                   Replace image
                 </Typography>
               </ButtonBase>
             )}
+          </Box>
+        ) : backgroundTab === "video" ? (
+          /* Video tab */
+          <Box>
+            {resolvedValue.backgroundVideoUrl ? (
+              <Box
+                sx={{
+                  position: "relative",
+                  borderRadius: 2.5,
+                  overflow: "hidden",
+                  border: "1px solid rgba(15,23,42,0.08)",
+                  height: 120,
+                  bgcolor: "#000",
+                  mb: 1.2,
+                }}
+              >
+                <Box
+                  component="video"
+                  src={resolvedValue.backgroundVideoUrl}
+                  muted
+                  autoPlay={false}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+                <IconButton
+                  size="small"
+                  onClick={() =>
+                    onStyleChange({
+                      backgroundType:
+                        resolvedValue.backgroundColor &&
+                        resolvedValue.backgroundColor !== "transparent"
+                          ? "solid"
+                          : "none",
+                      backgroundVideoUrl: "",
+                    })
+                  }
+                  sx={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    bgcolor: "rgba(255,255,255,0.9)",
+                  }}
+                >
+                  <X size={14} />
+                </IconButton>
+              </Box>
+            ) : (
+              <ButtonBase
+                disabled={effectiveDisabled}
+                onClick={() => openMediaLibrary("video")}
+                sx={{
+                  width: "100%",
+                  height: 120,
+                  borderRadius: 2.5,
+                  border: "1px dashed rgba(15,23,42,0.35)",
+                  bgcolor: "#fff",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                  mb: 1.2,
+                }}
+              >
+                <VideoIcon size={22} />
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                  Upload video
+                </Typography>
+              </ButtonBase>
+            )}
+
+            {resolvedValue.backgroundVideoUrl && (
+              <ButtonBase
+                disabled={effectiveDisabled}
+                onClick={() => openMediaLibrary("video")}
+                sx={{
+                  width: "100%",
+                  height: 42,
+                  borderRadius: 2,
+                  border: "1px solid rgba(15,23,42,0.08)",
+                  backgroundColor: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 0.75,
+                }}
+              >
+                <Upload size={16} />
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                  Replace video
+                </Typography>
+              </ButtonBase>
+            )}
+          </Box>
+        ) : backgroundTab === "animated" ? (
+          <Box>
+            <Typography
+              sx={{
+                mb: 1,
+                fontSize: "0.78rem",
+                color: "#475569",
+                fontWeight: 600,
+              }}
+            >
+              Animated backgrounds
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 0.75,
+              }}
+            >
+              {ANIMATED_BG_PRESETS.map((preset) => {
+                const isActive =
+                  resolvedValue.backgroundType === "animated" &&
+                  resolvedValue.backgroundAnimatedPreset === preset.id;
+                return (
+                  <ButtonBase
+                    key={preset.id}
+                    disabled={effectiveDisabled}
+                    onClick={() =>
+                      onStyleChange({
+                        backgroundType: "animated",
+                        backgroundAnimatedPreset: preset.id,
+                        backgroundImageUrl: "",
+                        backgroundVideoUrl: "",
+                        backgroundColor: "",
+                      })
+                    }
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: isActive
+                        ? "2px solid #3b82f6"
+                        : "1px solid rgba(15,23,42,0.1)",
+                      boxShadow: isActive
+                        ? "0 0 0 3px rgba(59,130,246,0.16)"
+                        : "none",
+                      transition:
+                        "border-color 160ms ease, box-shadow 160ms ease",
+                    }}
+                  >
+                    <Box sx={{ width: "100%", height: 52, ...preset.sx }} />
+                    <Typography
+                      sx={{
+                        fontSize: "0.63rem",
+                        fontWeight: 600,
+                        color: "#475569",
+                        py: 0.6,
+                        px: 0.4,
+                        lineHeight: 1.2,
+                        textAlign: "center",
+                        width: "100%",
+                        bgcolor: "#ffffff",
+                      }}
+                    >
+                      {preset.label}
+                    </Typography>
+                  </ButtonBase>
+                );
+              })}
+            </Box>
+            {resolvedValue.backgroundType === "animated" &&
+              resolvedValue.backgroundAnimatedPreset && (
+                <ButtonBase
+                  disabled={effectiveDisabled}
+                  onClick={() =>
+                    onStyleChange({
+                      backgroundType: "none",
+                      backgroundAnimatedPreset: "",
+                    })
+                  }
+                  sx={{
+                    mt: 1,
+                    width: "100%",
+                    height: 36,
+                    borderRadius: 2,
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    backgroundColor: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 0.75,
+                  }}
+                >
+                  <X size={14} />
+                  <Typography sx={{ fontSize: "0.82rem", fontWeight: 600 }}>
+                    Remove animation
+                  </Typography>
+                </ButtonBase>
+              )}
+          </Box>
+        ) : (
+          /* Patterns tab */
+          <Box>
+            <Typography
+              sx={{
+                mb: 1,
+                fontSize: "0.78rem",
+                color: "#475569",
+                fontWeight: 600,
+              }}
+            >
+              Static patterns
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 0.75,
+              }}
+            >
+              {STATIC_BG_PRESETS.map((preset) => {
+                const isActive =
+                  resolvedValue.backgroundType === "pattern" &&
+                  resolvedValue.backgroundPatternPreset === preset.id;
+                return (
+                  <ButtonBase
+                    key={preset.id}
+                    disabled={effectiveDisabled}
+                    onClick={() =>
+                      onStyleChange({
+                        backgroundType: "pattern",
+                        backgroundPatternPreset: preset.id,
+                        backgroundImageUrl: "",
+                        backgroundVideoUrl: "",
+                        backgroundColor: "",
+                        backgroundAnimatedPreset: "",
+                      })
+                    }
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: isActive
+                        ? "2px solid #3b82f6"
+                        : "1px solid rgba(15,23,42,0.1)",
+                      boxShadow: isActive
+                        ? "0 0 0 3px rgba(59,130,246,0.16)"
+                        : "none",
+                      transition:
+                        "border-color 160ms ease, box-shadow 160ms ease",
+                    }}
+                  >
+                    <Box sx={{ width: "100%", height: 52, ...preset.sx }} />
+                    <Typography
+                      sx={{
+                        fontSize: "0.63rem",
+                        fontWeight: 600,
+                        color: "#475569",
+                        py: 0.6,
+                        px: 0.4,
+                        lineHeight: 1.2,
+                        textAlign: "center",
+                        width: "100%",
+                        bgcolor: "#ffffff",
+                      }}
+                    >
+                      {preset.label}
+                    </Typography>
+                  </ButtonBase>
+                );
+              })}
+            </Box>
+            {resolvedValue.backgroundType === "pattern" &&
+              resolvedValue.backgroundPatternPreset && (
+                <ButtonBase
+                  disabled={effectiveDisabled}
+                  onClick={() =>
+                    onStyleChange({
+                      backgroundType: "none",
+                      backgroundPatternPreset: "",
+                    })
+                  }
+                  sx={{
+                    mt: 1,
+                    width: "100%",
+                    height: 36,
+                    borderRadius: 2,
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    backgroundColor: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 0.75,
+                  }}
+                >
+                  <X size={14} />
+                  <Typography sx={{ fontSize: "0.82rem", fontWeight: 600 }}>
+                    Remove pattern
+                  </Typography>
+                </ButtonBase>
+              )}
           </Box>
         )}
       </Popover>

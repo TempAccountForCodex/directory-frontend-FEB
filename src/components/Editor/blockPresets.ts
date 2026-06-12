@@ -442,7 +442,7 @@ export const getBlockDefaultContent = (
           },
         ],
       };
- 
+    case "STORY_PANEL":
       return {
         heading: "Customer stories",
         stories: [
@@ -465,7 +465,7 @@ export const getBlockDefaultContent = (
           },
         ],
       };
-
+    case "WORKING_HOURS":
       return {
         heading: "Business hours",
         showCurrentStatus: true,
@@ -500,6 +500,10 @@ export const getBlockDefaultContent = (
         ctaUrl: "#contact",
         sticky: true,
         transparent: false,
+      };
+    case "CUSTOM_CODE":
+      return {
+        code: "",
       };
     case "EMBED":
       return {
@@ -863,7 +867,7 @@ export const getLocalFieldMetadata = (
           icon: makeTextField("icon", "Icon", 3),
         }),
       ]);
-
+    case "STORY_PANEL":
       return contentGroup([
         makeTextField("heading", "Heading", 1),
         makeRepeaterField("stories", "Stories", 2, {
@@ -875,7 +879,7 @@ export const getLocalFieldMetadata = (
           linkUrl: makeTextField("linkUrl", "Link URL", 6),
         }),
       ]);
-
+    case "WORKING_HOURS":
       return contentGroup([
         makeTextField("heading", "Heading", 1),
         {
@@ -1075,6 +1079,19 @@ export const getLocalFieldMetadata = (
             rows: 5,
             placeholder:
               '<iframe src="https://www.google.com/maps?q=...&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen loading="lazy"></iframe>',
+          },
+        },
+      ]);
+    case "CUSTOM_CODE":
+      return contentGroup([
+        {
+          name: "code",
+          label: "Code",
+          type: "TEXTAREA",
+          order: 1,
+          ui: {
+            rows: 18,
+            placeholder: `<div class="my-element">Hello World</div>\n\n<style>\n  .my-element { color: red; font-size: 24px; }\n</style>\n\n<script>\n  console.log('Hello!');\n<\/script>`,
           },
         },
       ]);

@@ -533,6 +533,11 @@ function blockToHtml(block: PreviewBlock): string {
     case "FOOTER":
       inner = renderFooterBlock(content);
       break;
+    case "CUSTOM_CODE":
+      // Render raw user code directly — <style> and <script> tags are preserved
+      // and execute within the sandboxed srcdoc iframe context.
+      inner = String(content.code || "");
+      break;
     default:
       inner = `<section style="padding:20px;color:#999;text-align:center;"><em>${escapeHtml(blockType)} block</em></section>`;
   }

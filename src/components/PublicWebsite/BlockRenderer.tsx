@@ -44,6 +44,7 @@ const SocialEmbedBlock = lazy(() => import("./blocks/SocialEmbedBlock"));
 const EmbedBlock = lazy(() => import("./blocks/EmbedBlock"));
 const MenuDisplayBlock = lazy(() => import("./blocks/MenuDisplayBlock"));
 const WebsiteHeaderBlock = lazy(() => import("./blocks/WebsiteHeaderBlock"));
+const CustomCodeBlock = lazy(() => import("./blocks/CustomCodeBlock"));
 
 // Lazy-load newsletter and reviews blocks for code splitting (Step 2.28)
 const NewsletterBlock = lazy(() => import("./blocks/NewsletterBlock"));
@@ -1039,6 +1040,13 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
             />
           </Suspense>
         </BlockWrapper>
+      );
+
+    case "CUSTOM_CODE":
+      return (
+        <Suspense fallback={null}>
+          <CustomCodeBlock block={block} />
+        </Suspense>
       );
 
     case "EMBED":

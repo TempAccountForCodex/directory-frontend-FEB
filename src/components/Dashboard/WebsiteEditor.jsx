@@ -1459,6 +1459,10 @@ const looksLikeImageSource = (value = "") =>
   /^data:image\//i.test(value) ||
   /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i.test(value);
 
+const looksLikeVideoSource = (value = "") =>
+  /^(https?:\/\/|\/)/i.test(value) &&
+  /\.(mp4|webm|mov|ogg|m4v)(\?.*)?$/i.test(value);
+
 const normalizeUploadedImageUrl = (value) => {
   if (typeof value !== "string" || !value.trim()) {
     return null;
@@ -1657,6 +1661,7 @@ const WebsiteEditorInner = () => {
   const [activeToolbarMode, setActiveToolbarMode] = useState("text");
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [uploadedLibraryImages, setUploadedLibraryImages] = useState([]);
+  const [uploadedLibraryVideos, setUploadedLibraryVideos] = useState([]);
   const [previewContextMenu, setPreviewContextMenu] = useState(null);
   const [previewClipboard, setPreviewClipboard] = useState(null);
   const [selectedPreviewTarget, setSelectedPreviewTarget] = useState(null);
@@ -1682,6 +1687,7 @@ const WebsiteEditorInner = () => {
   const imageLibraryInputRef = useRef(null);
   const imageReplaceInputRef = useRef(null);
   const imageLibraryPickerInputRef = useRef(null);
+  const videoLibraryPickerInputRef = useRef(null);
   const handleInsertBlockFromLibraryRef = useRef(null);
   const previewSelectionNonceRef = useRef(0);
   const previewTransformHistoryPrimedRef = useRef(false);
@@ -3195,6 +3201,42 @@ const WebsiteEditorInner = () => {
     return [...items, ...uploadedLibraryImages];
   }, [blocks, uploadedLibraryImages]);
 
+  const videoLibraryItems = useMemo(() => {
+    const items = [];
+    const walk = (blockId, value, path = []) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry, index) =>
+          walk(blockId, entry, [...path, String(index)]),
+        );
+        return;
+      }
+      if (!value || typeof value !== "object") return;
+      Object.entries(value).forEach(([key, entryValue]) => {
+        const nextPath = [...path, key];
+        if (
+          typeof entryValue === "string" &&
+          entryValue.trim() &&
+          /(video|mp4|webm)/i.test(key) &&
+          looksLikeVideoSource(entryValue.trim())
+        ) {
+          items.push({
+            id: `${blockId}:${nextPath.join(".")}`,
+            blockId,
+            fieldPath: nextPath.join("."),
+            label: humanizeLabel(nextPath.join(".")),
+            src: entryValue,
+          });
+          return;
+        }
+        if (entryValue && typeof entryValue === "object") {
+          walk(blockId, entryValue, nextPath);
+        }
+      });
+    };
+    blocks.forEach((block) => walk(block.id, block.content || {}, []));
+    return [...items, ...uploadedLibraryVideos];
+  }, [blocks, uploadedLibraryVideos]);
+
   const syncPreviewSelection = useCallback((target) => {
     previewSelectionNonceRef.current += 1;
     setSelectedPreviewTarget({
@@ -3490,6 +3532,19 @@ const WebsiteEditorInner = () => {
         response?.data?.data?.fileUrl ||
         null,
     );
+  }, []);
+
+  const uploadVideoAsset = useCallback(async (file) => {
+    if (!file) return null;
+    const formData = new FormData();
+    formData.append("video", file);
+    const response = await apiClient.post("/upload/video", formData);
+    const url =
+      response?.data?.url ||
+      response?.data?.fileUrl ||
+      response?.data?.data?.url ||
+      null;
+    return typeof url === "string" && url.trim() ? url.trim() : null;
   }, []);
 
   const handlePreviewImageSelection = useCallback(
@@ -4566,6 +4621,7 @@ const WebsiteEditorInner = () => {
       setImageLibraryFieldRequest({
         label: typeof detail.label === "string" ? detail.label : "Image",
         onSelect: detail.onSelect,
+        mediaType: detail.mediaType === "video" ? "video" : "image",
       });
       setIsImageLibraryPickerOpen(true);
     };
@@ -4603,6 +4659,30 @@ const WebsiteEditorInner = () => {
       setIsImageLibraryPickerOpen(false);
     },
     [handleImageChange, imageLibraryFieldRequest, uploadImageAsset],
+  );
+
+  const handleReplaceSelectedVideo = useCallback(
+    async (file) => {
+      const url = await uploadVideoAsset(file);
+      if (!url) return;
+      if (imageLibraryFieldRequest?.onSelect) {
+        imageLibraryFieldRequest.onSelect(url);
+      }
+      setUploadedLibraryVideos((prev) => [
+        ...prev,
+        {
+          id: `upload:video:${Date.now()}`,
+          blockId: "",
+          fieldPath: "",
+          label: file?.name || "Uploaded Video",
+          src: url,
+          uploaded: true,
+        },
+      ]);
+      setImageLibraryFieldRequest(null);
+      setIsImageLibraryPickerOpen(false);
+    },
+    [imageLibraryFieldRequest, uploadVideoAsset],
   );
 
   const handleUseLibraryImage = useCallback(
@@ -7554,7 +7634,7 @@ const WebsiteEditorInner = () => {
           </DialogActions>
         </Dialog>
 
-        {/* BlockLibrary drawer — Phase 9 gap fix */}
+        {/* Media Library picker — supports image and video */}
         <Dialog
           open={isImageLibraryPickerOpen}
           onClose={() => {
@@ -7572,6 +7652,7 @@ const WebsiteEditorInner = () => {
             },
           }}
         >
+          {/* Hidden file inputs — one per media type */}
           <input
             ref={imageLibraryPickerInputRef}
             type="file"
@@ -7579,6 +7660,16 @@ const WebsiteEditorInner = () => {
             hidden
             onChange={(event) => {
               void handleReplaceSelectedImage(event.target.files?.[0] || null);
+              event.target.value = "";
+            }}
+          />
+          <input
+            ref={videoLibraryPickerInputRef}
+            type="file"
+            accept="video/*"
+            hidden
+            onChange={(event) => {
+              void handleReplaceSelectedVideo(event.target.files?.[0] || null);
               event.target.value = "";
             }}
           />
@@ -7598,7 +7689,9 @@ const WebsiteEditorInner = () => {
                 variant="h6"
                 sx={{ mt: 0.35, fontWeight: 800, color: editorText }}
               >
-                Choose a replacement image
+                {imageLibraryFieldRequest?.mediaType === "video"
+                  ? "Choose a replacement video"
+                  : "Choose a replacement image"}
               </Typography>
             </Box>
             <IconButton
@@ -7626,12 +7719,20 @@ const WebsiteEditorInner = () => {
               }}
             >
               <Typography sx={{ fontSize: "0.92rem", color: editorMutedText }}>
-                Pick from existing website images or upload a new one.
+                {imageLibraryFieldRequest?.mediaType === "video"
+                  ? "Pick from existing website videos or upload a new one."
+                  : "Pick from existing website images or upload a new one."}
               </Typography>
               <Button
                 variant="contained"
                 startIcon={<Upload size={16} />}
-                onClick={() => imageLibraryPickerInputRef.current?.click()}
+                onClick={() => {
+                  if (imageLibraryFieldRequest?.mediaType === "video") {
+                    videoLibraryPickerInputRef.current?.click();
+                  } else {
+                    imageLibraryPickerInputRef.current?.click();
+                  }
+                }}
                 sx={{
                   minHeight: 40,
                   textTransform: "none",
@@ -7643,7 +7744,9 @@ const WebsiteEditorInner = () => {
                   flexShrink: 0,
                 }}
               >
-                Upload Image
+                {imageLibraryFieldRequest?.mediaType === "video"
+                  ? "Upload Video"
+                  : "Upload Image"}
               </Button>
             </Box>
             <Box
@@ -7660,7 +7763,10 @@ const WebsiteEditorInner = () => {
                 pr: 0.5,
               }}
             >
-              {imageLibraryItems.map((item) => (
+              {(imageLibraryFieldRequest?.mediaType === "video"
+                ? videoLibraryItems
+                : imageLibraryItems
+              ).map((item) => (
                 <ButtonBase
                   key={item.id}
                   onClick={() => handleUseLibraryImage(item)}
@@ -7682,15 +7788,31 @@ const WebsiteEditorInner = () => {
                     },
                   }}
                 >
-                  <Box
-                    sx={{
-                      height: 150,
-                      backgroundImage: `url(${item.src})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      backgroundColor: "#e5e7eb",
-                    }}
-                  />
+                  {imageLibraryFieldRequest?.mediaType === "video" ? (
+                    <Box
+                      component="video"
+                      src={item.src}
+                      muted
+                      preload="metadata"
+                      sx={{
+                        height: 150,
+                        width: "100%",
+                        objectFit: "cover",
+                        backgroundColor: "#0f172a",
+                        display: "block",
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        height: 150,
+                        backgroundImage: `url(${item.src})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundColor: "#e5e7eb",
+                      }}
+                    />
+                  )}
                   <Box sx={{ p: 1.1 }}>
                     <Typography
                       sx={{
@@ -7708,11 +7830,46 @@ const WebsiteEditorInner = () => {
                         mt: 0.25,
                       }}
                     >
-                      {item.blockId ? "Template image" : "Uploaded asset"}
+                      {item.blockId
+                        ? imageLibraryFieldRequest?.mediaType === "video"
+                          ? "Template video"
+                          : "Template image"
+                        : "Uploaded asset"}
                     </Typography>
                   </Box>
                 </ButtonBase>
               ))}
+              {(imageLibraryFieldRequest?.mediaType === "video"
+                ? videoLibraryItems
+                : imageLibraryItems
+              ).length === 0 && (
+                <Box
+                  sx={{
+                    gridColumn: "1 / -1",
+                    py: 6,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 1.5,
+                    color: editorMutedText,
+                  }}
+                >
+                  <Typography sx={{ fontSize: "0.92rem", fontWeight: 600 }}>
+                    No{" "}
+                    {imageLibraryFieldRequest?.mediaType === "video"
+                      ? "videos"
+                      : "images"}{" "}
+                    found
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.82rem" }}>
+                    Upload a{" "}
+                    {imageLibraryFieldRequest?.mediaType === "video"
+                      ? "video"
+                      : "new image"}{" "}
+                    using the button above.
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </DialogContent>
         </Dialog>

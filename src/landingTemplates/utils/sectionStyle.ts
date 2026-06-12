@@ -69,6 +69,9 @@ export type SectionStyleValue = {
   width?: string | number;
   height?: string | number;
   transform?: string;
+  backgroundType?: string;
+  backgroundAnimatedPreset?: string;
+  backgroundPatternPreset?: string;
 };
 
 const toCamelCase = (value: string) =>
@@ -165,12 +168,134 @@ export const getSectionStyleDomProps = (
   return props;
 };
 
+const ANIMATED_BG_SX: Record<string, Record<string, unknown>> = {
+  "moving-gradient": {
+    "@keyframes mgKf": {
+      "0%": { backgroundPosition: "0% 50%" },
+      "50%": { backgroundPosition: "100% 50%" },
+      "100%": { backgroundPosition: "0% 50%" },
+    },
+    background: "linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)",
+    backgroundSize: "400% 400%",
+    animation: "mgKf 4s ease infinite",
+  },
+  "floating-bubbles": {
+    "@keyframes fbKf": {
+      "0%": { backgroundPosition: "25% 75%, 75% 25%, 55% 60%" },
+      "33%": { backgroundPosition: "35% 65%, 65% 35%, 45% 55%" },
+      "66%": { backgroundPosition: "20% 80%, 80% 22%, 60% 65%" },
+      "100%": { backgroundPosition: "25% 75%, 75% 25%, 55% 60%" },
+    },
+    backgroundImage:
+      "radial-gradient(circle closest-side, rgba(120,80,200,0.8) 0%, transparent 100%), radial-gradient(circle closest-side, rgba(200,80,120,0.8) 0%, transparent 100%), radial-gradient(circle closest-side, rgba(50,180,130,0.7) 0%, transparent 100%)",
+    backgroundSize: "50% 50%, 40% 40%, 60% 60%",
+    backgroundRepeat: "no-repeat",
+    backgroundColor: "#0f172a",
+    backgroundPosition: "25% 75%, 75% 25%, 55% 60%",
+    animation: "fbKf 5s ease-in-out infinite",
+  },
+  "particle-dots": {
+    "@keyframes pdKf": {
+      "0%": { backgroundPosition: "0 0" },
+      "100%": { backgroundPosition: "16px 16px" },
+    },
+    background:
+      "radial-gradient(circle, rgba(99,102,241,0.85) 1.5px, transparent 1.5px), #0f172a",
+    backgroundSize: "16px 16px",
+    animation: "pdKf 1.5s linear infinite",
+  },
+  "wave-motion": {
+    "@keyframes wmKf": {
+      "0%": { backgroundPosition: "0% 50%" },
+      "50%": { backgroundPosition: "100% 50%" },
+      "100%": { backgroundPosition: "0% 50%" },
+    },
+    background:
+      "linear-gradient(60deg, #0f3460, #533483, #e94560, #0f3460, #16213e)",
+    backgroundSize: "400% 400%",
+    animation: "wmKf 5s ease-in-out infinite",
+  },
+  "neon-glow": {
+    "@keyframes ngKf": {
+      "0%": {
+        boxShadow:
+          "inset 0 0 20px rgba(0,255,200,0.15), inset 0 0 40px rgba(120,80,255,0.1)",
+      },
+      "50%": {
+        boxShadow:
+          "inset 0 0 40px rgba(0,255,200,0.5), inset 0 0 80px rgba(120,80,255,0.35)",
+      },
+      "100%": {
+        boxShadow:
+          "inset 0 0 20px rgba(0,255,200,0.15), inset 0 0 40px rgba(120,80,255,0.1)",
+      },
+    },
+    background: "radial-gradient(ellipse at 50% 50%, #1a0533 0%, #000814 100%)",
+    animation: "ngKf 2.5s ease-in-out infinite",
+  },
+  "soft-blobs": {
+    "@keyframes sbKf": {
+      "0%": { backgroundPosition: "0% 50%" },
+      "33%": { backgroundPosition: "100% 0%" },
+      "66%": { backgroundPosition: "50% 100%" },
+      "100%": { backgroundPosition: "0% 50%" },
+    },
+    background:
+      "radial-gradient(ellipse at 30% 60%, rgba(255,105,180,0.55) 0%, transparent 55%), radial-gradient(ellipse at 70% 40%, rgba(100,210,255,0.55) 0%, transparent 55%), radial-gradient(ellipse at 50% 80%, rgba(255,180,100,0.4) 0%, transparent 55%), #fef3f8",
+    backgroundSize: "200% 200%",
+    animation: "sbKf 7s ease-in-out infinite",
+  },
+};
+
+const STATIC_PATTERN_SX: Record<string, Record<string, unknown>> = {
+  "dot-grid-dark": {
+    backgroundImage:
+      "radial-gradient(circle, rgba(0,200,150,0.5) 1.5px, transparent 1.5px)",
+    backgroundSize: "20px 20px",
+    backgroundColor: "#001a12",
+  },
+  "starfield-dark": {
+    backgroundImage:
+      "radial-gradient(ellipse at 25% 35%, rgba(0,100,80,0.45) 0%, transparent 60%), " +
+      "radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px), " +
+      "radial-gradient(circle, rgba(255,255,255,0.4) 0.6px, transparent 0.6px)",
+    backgroundSize: "100% 100%, 70px 70px, 35px 35px",
+    backgroundPosition: "0 0, 8px 8px, 20px 18px",
+    backgroundColor: "#001210",
+  },
+  "plexus-light": {
+    backgroundImage:
+      "radial-gradient(circle, rgba(140,140,190,0.7) 1.5px, transparent 1.5px), " +
+      "linear-gradient(rgba(180,180,210,0.22) 1px, transparent 1px), " +
+      "linear-gradient(90deg, rgba(180,180,210,0.22) 1px, transparent 1px)",
+    backgroundSize: "40px 40px",
+    backgroundColor: "#f8f8fc",
+  },
+  "diagonal-light": {
+    backgroundImage:
+      "repeating-linear-gradient(135deg, transparent 0px, transparent 40px, rgba(210,210,220,0.4) 40px, rgba(210,210,220,0.4) 42px)",
+    backgroundColor: "#f5f5f8",
+  },
+  "mesh-dark": {
+    backgroundImage:
+      "linear-gradient(rgba(0,180,130,0.18) 1px, transparent 1px), " +
+      "linear-gradient(90deg, rgba(0,180,130,0.18) 1px, transparent 1px)",
+    backgroundSize: "28px 28px",
+    backgroundColor: "#001510",
+  },
+  "waves-light": {
+    backgroundImage:
+      "repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(120,160,150,0.2) 29px)",
+    backgroundColor: "#ffffff",
+  },
+};
+
 export const getSectionStyleSx = (
   content: ContentLike,
   styleKey: string = "sectionStyle",
-): Record<string, string | number> => {
+): Record<string, unknown> => {
   const sectionStyle = readStyleValue(content, styleKey);
-  const sx: Record<string, string | number> = {};
+  const sx: Record<string, unknown> = {};
 
   if (sectionStyle.backgroundColor) {
     sx.backgroundColor = sectionStyle.backgroundColor;
@@ -184,6 +309,24 @@ export const getSectionStyleSx = (
     sx.backgroundSize = sectionStyle.backgroundSize || "cover";
     sx.backgroundPosition = sectionStyle.backgroundPosition || "center";
     sx.backgroundRepeat = sectionStyle.backgroundRepeat || "no-repeat";
+  }
+  if (
+    sectionStyle.backgroundType === "animated" &&
+    sectionStyle.backgroundAnimatedPreset
+  ) {
+    const animSx = ANIMATED_BG_SX[sectionStyle.backgroundAnimatedPreset];
+    if (animSx) {
+      Object.assign(sx, animSx);
+    }
+  }
+  if (
+    sectionStyle.backgroundType === "pattern" &&
+    sectionStyle.backgroundPatternPreset
+  ) {
+    const patternSx = STATIC_PATTERN_SX[sectionStyle.backgroundPatternPreset];
+    if (patternSx) {
+      Object.assign(sx, patternSx);
+    }
   }
   if (sectionStyle.layoutWidth === "full") {
     sx.width = "100%";

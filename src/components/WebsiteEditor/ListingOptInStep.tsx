@@ -1,11 +1,3 @@
-/**
- * ListingOptInStep (Step 10.7.7)
- *
- * Wizard opt-in step shown after website creation for paid plan users.
- * Free plan users see a locked upgrade CTA.
- * On completion with opt-in checked, calls POST /api/websites/:id/listing/extract.
- */
-
 import React, { useState, useCallback, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -16,15 +8,12 @@ import Alert from "@mui/material/Alert";
 import Skeleton from "@mui/material/Skeleton";
 import CircularProgress from "@mui/material/CircularProgress";
 import MenuItem from "@mui/material/MenuItem";
-import { Lock, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { apiClient } from "../../api/client";
 import DashboardInput from "../Dashboard/shared/DashboardInput";
 import DashboardSelect from "../Dashboard/shared/DashboardSelect";
-import DashboardCard from "../Dashboard/shared/DashboardCard";
 import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
 import DashboardActionButton from "../Dashboard/shared/DashboardActionButton";
-
-const PAID_PLANS = ["website_core", "website_growth", "website_agency"];
 
 const BUSINESS_CATEGORIES = [
   "Restaurant",
@@ -43,7 +32,7 @@ const BUSINESS_CATEGORIES = [
 export interface ListingOptInStepProps {
   websiteId: number;
   websiteName: string;
-  planCode: string;
+  planCode?: string;
   onComplete: () => void;
   onSkip: () => void;
 }
@@ -51,13 +40,10 @@ export interface ListingOptInStepProps {
 const ListingOptInStep = React.memo(function ListingOptInStep({
   websiteId,
   websiteName,
-  planCode,
   onComplete,
   onSkip,
 }: ListingOptInStepProps) {
-  const isPaidPlan = PAID_PLANS.includes(planCode);
-
-  const [optedIn, setOptedIn] = useState(isPaidPlan);
+  const [optedIn, setOptedIn] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [shortDescription, setShortDescription] = useState("");
   const [businessCategory, setBusinessCategory] = useState("");
@@ -139,25 +125,6 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
           </Typography>
         </Box>
       </Box>
-    );
-  }
-
-  // Free plan users see locked upgrade CTA
-  if (!isPaidPlan) {
-    return (
-      <DashboardCard
-        icon={Lock}
-        title="Directory Listing"
-        subtitle="Available on Core plan and above"
-      >
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          List your business in the Techietribe Directory to reach more
-          customers. Upgrade to a paid plan to unlock directory listings.
-        </Typography>
-        <DashboardGradientButton href="/pricing" data-testid="upgrade-cta">
-          Upgrade to Unlock
-        </DashboardGradientButton>
-      </DashboardCard>
     );
   }
 

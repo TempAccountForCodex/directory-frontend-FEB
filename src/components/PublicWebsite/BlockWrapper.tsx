@@ -99,6 +99,17 @@ export const BlockWrapper: React.FC<BlockWrapperProps> = React.memo(
     const fields: BlockWrapperFields = useMemo(() => {
       const raw = rawFields ?? {};
       const normalized: Record<string, unknown> = { ...raw };
+      // Merge sectionStyle (written by EditorSectionStyleToolbar) into the
+      // top level so background/visibility hooks can read the style fields.
+      // sectionStyle values override same-named content defaults.
+      const sectionStyle = raw.sectionStyle;
+      if (
+        sectionStyle &&
+        typeof sectionStyle === "object" &&
+        !Array.isArray(sectionStyle)
+      ) {
+        Object.assign(normalized, sectionStyle);
+      }
       for (const [registryKey, hookKey] of Object.entries(
         REGISTRY_TO_HOOK_MAP,
       )) {
@@ -135,6 +146,7 @@ export const BlockWrapper: React.FC<BlockWrapperProps> = React.memo(
       overlayElement,
       overlayElements,
       contentSx,
+      videoElement,
     } = useBlockBackground(backgroundFields);
     const { effectsSx } = useBlockEffects(fields);
     const { spacingSx } = useBlockSpacing(fields);
@@ -151,7 +163,8 @@ export const BlockWrapper: React.FC<BlockWrapperProps> = React.memo(
     if (isHidden) return null;
 
     const hasAnyOverlay =
-      hasBackground && (!!overlayElement || overlayElements.length > 0);
+      hasBackground &&
+      (!!overlayElement || overlayElements.length > 0 || !!videoElement);
 
     // Merge all sx objects: spacing → background → effects → sectionColor → visibility.
     // Section color is applied after background so custom overrides take precedence.
@@ -171,6 +184,7 @@ export const BlockWrapper: React.FC<BlockWrapperProps> = React.memo(
     // so they appear above the overlay (zIndex:1).
     const innerContent = hasAnyOverlay ? (
       <>
+        {videoElement}
         {overlayElement}
         {overlayElements}
         <Box sx={contentSx}>{children}</Box>

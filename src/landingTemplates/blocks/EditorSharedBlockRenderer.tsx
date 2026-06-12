@@ -274,6 +274,7 @@ export const EDITOR_SHARED_BLOCK_TYPES = new Set([
   "embed",
   "before_after",
   "website_header",
+  "custom_code",
 ]);
 
 export const isEditorSharedBlockType = (value = "") =>
@@ -5168,6 +5169,60 @@ export const renderEditorSharedBlock = ({
         tone={tone}
         websiteId={websiteId}
       />
+    );
+  }
+
+  if (blockType === "custom_code") {
+    const rawCode = String(block.content?.code || "").trim();
+    return (
+      <Box
+        key={String(block.id || `${blockType}-${index}`)}
+        sx={{ ...compoundCardSx, position: "relative" }}
+        {...compoundBlockSelectionProps}
+      >
+        {rawCode ? (
+          <Box
+            component="iframe"
+            srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;padding:8px;}</style></head><body>${rawCode}</body></html>`}
+            title="Custom code preview"
+            scrolling="no"
+            sx={{
+              width: "100%",
+              minHeight: 80,
+              border: "none",
+              display: "block",
+              pointerEvents: "none",
+            }}
+            onLoad={(e: React.SyntheticEvent<HTMLIFrameElement>) => {
+              const iframe = e.currentTarget;
+              const h = iframe.contentDocument?.body?.scrollHeight;
+              if (h) iframe.style.height = `${h + 16}px`;
+            }}
+          />
+        ) : (
+          <Stack
+            direction="row"
+            spacing={1.5}
+            alignItems="center"
+            sx={{
+              p: 3,
+              border: `1.5px dashed ${lineColor}`,
+              borderRadius: 3,
+              bgcolor: tone === "light" ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.04)",
+            }}
+          >
+            <Box sx={{ color: mutedTextColor, flexShrink: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg>
+            </Box>
+            <Typography sx={{ fontSize: "0.85rem", color: mutedTextColor }}>
+              Paste your HTML / CSS / JS in the editor panel →
+            </Typography>
+          </Stack>
+        )}
+      </Box>
     );
   }
 
