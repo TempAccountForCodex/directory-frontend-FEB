@@ -674,7 +674,6 @@ const HeaderEditorPreview: React.FC<{
                     display: "inline-block",
                     cursor: "pointer",
                     transition: "background 0.15s, color 0.15s",
-                    "&:hover": { bgcolor: ctaColor, color: "#fff" },
                   }}
                 >
                   {ctaText}

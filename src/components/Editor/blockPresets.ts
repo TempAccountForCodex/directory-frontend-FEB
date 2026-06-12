@@ -964,7 +964,6 @@ export const getLocalFieldMetadata = (
             label: "Platform",
             type: "SELECT",
             order: 1,
-            defaultValue: "linkedin",
             ui: {
               props: {
                 options: [
@@ -1003,6 +1002,36 @@ export const getLocalFieldMetadata = (
           author: makeTextField("author", "Author", 2),
           position: makeTextField("position", "Position", 3),
         }),
+      ]);
+    case "NAVBAR":
+      return contentGroup([
+        {
+          name: "logoType",
+          label: "Logo Type",
+          type: "SELECT",
+          order: 1,
+          ui: {
+            props: {
+              options: [
+                { label: "Text", value: "text" },
+                { label: "Image", value: "image" },
+              ],
+            },
+          },
+        },
+        makeTextField("logoText", "Logo Text", 2),
+        { name: "logoImage", label: "Logo Image", type: "IMAGE", order: 3 },
+        {
+          name: "menuId",
+          label: "Navigation Menu",
+          type: "MENU_SELECT",
+          order: 4,
+        },
+        makeTextField("ctaText", "CTA Button Text", 5),
+        makeTextField("ctaUrl", "CTA Button URL", 6),
+        { name: "sticky", label: "Sticky Header", type: "TOGGLE", order: 7 },
+        { name: "navLinkColor", label: "Menu Item Color", type: "COLOR", order: 8 },
+        { name: "ctaColor", label: "Button Color", type: "COLOR", order: 9 },
       ]);
     case "WEBSITE_HEADER":
       return contentGroup([

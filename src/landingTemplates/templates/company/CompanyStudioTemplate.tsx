@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -16,6 +16,7 @@ import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
+import { apiClient } from "../../../api/client";
 import {
   getEditableImageProps,
   getEditableSectionProps,
@@ -347,6 +348,36 @@ const getVideoHeightPresetSx = (preset?: string) => {
 const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const templateContent =
     (data.templateContent as Record<string, any> | undefined) || {};
+  const navbarContent = templateContent.navbar || {};
+  const navMenuId: string = navbarContent.menuId || "";
+  const [fetchedMenuItems, setFetchedMenuItems] = useState<
+    Array<{ label: string; target: string; type?: string }>
+  >([]);
+  useEffect(() => {
+    if (!navMenuId || !data.websiteId) {
+      setFetchedMenuItems([]);
+      return;
+    }
+    let cancelled = false;
+    apiClient
+      .get(`/websites/${data.websiteId}/menus`)
+      .then((res) => {
+        if (cancelled) return;
+        const raw = res.data?.data ?? res.data ?? [];
+        const menus = Array.isArray(raw) ? raw : [];
+        const found = menus.find(
+          (m: any) =>
+            String(m.id) === String(navMenuId) || m.handle === navMenuId,
+        );
+        setFetchedMenuItems(Array.isArray(found?.items) ? found.items : []);
+      })
+      .catch(() => {
+        if (!cancelled) setFetchedMenuItems([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [navMenuId, data.websiteId]);
   const homeContent = templateContent.home || {};
   const featuresContent = templateContent.features || {};
   const aboutContent = templateContent.about || {};
@@ -598,6 +629,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
     return {
       label:
+        (navbarContent.navLabels as Record<string, string> | undefined)?.[key] ||
         homeContent.navLabels?.[key] ||
         homeContent.navigationLabels?.[key] ||
         defaultLabel,
@@ -612,6 +644,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const overviewBlockId = homeContent.blockId;
+  const navbarBlockId = navbarContent.blockId ?? overviewBlockId;
   const renderCustomInnerBlock = (
     section: Record<string, any>,
     block: Record<string, any>,
@@ -1264,8 +1297,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     >
       <Box
         component="header"
+        {...getEditableSectionProps(navbarBlockId, "Header")}
         sx={{
-          position: "sticky",
+          position: navbarContent.sticky !== false ? "sticky" : "relative",
           top: 0,
           zIndex: 50,
           backdropFilter: "blur(18px)",
@@ -1280,61 +1314,86 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             justifyContent="space-between"
             sx={{ minHeight: 82 }}
           >
-            <Typography
-              sx={{
-                fontFamily: headingFont,
-                fontSize: { xs: "1.45rem", md: "1.8rem" },
-                fontWeight: 800,
-                letterSpacing: "-0.05em",
-              }}
-            >
-              {data.name}
-            </Typography>
+            {/* Logo */}
+            {navbarContent.logoType === "image" && navbarContent.logoImage ? (
+              <Box
+                component="img"
+                src={navbarContent.logoImage as string}
+                alt={navbarContent.logoText as string || data.name}
+                sx={{ height: 36, width: "auto", maxWidth: 140, objectFit: "contain" }}
+              />
+            ) : (
+              <Typography
+                sx={{
+                  fontFamily: headingFont,
+                  fontSize: { xs: "1.45rem", md: "1.8rem" },
+                  fontWeight: 800,
+                  letterSpacing: "-0.05em",
+                }}
+              >
+                {(navbarContent.logoText as string) || data.name}
+              </Typography>
+            )}
 
+            {/* Nav links */}
             <Stack
               direction="row"
               spacing={3.5}
               sx={{ display: { xs: "none", md: "flex" } }}
             >
-              {navItems.map((item) => (
-                <Typography
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  {...getEditableTextProps(
-                    overviewBlockId,
-                    item.fieldPath,
-                    "single",
-                  )}
-                  sx={{
-                    cursor: "pointer",
-                    color: palette.ink,
-                    fontWeight: 500,
-                    transition: "color 180ms ease",
-                    "&:hover": { color: themeColor },
-                  }}
-                >
-                  {item.label}
-                </Typography>
-              ))}
+              {(fetchedMenuItems.length > 0 ? fetchedMenuItems : navItems).map(
+                (item, idx) => {
+                  const isCustom = fetchedMenuItems.length > 0;
+                  return (
+                    <Typography
+                      key={isCustom ? idx : (item as typeof navItems[0]).id}
+                      component={isCustom ? "a" : "span"}
+                      href={isCustom ? (item as any).target : undefined}
+                      onClick={
+                        !isCustom
+                          ? () => scrollToSection((item as typeof navItems[0]).id)
+                          : undefined
+                      }
+                      sx={{
+                        cursor: "pointer",
+                        color: (navbarContent.navLinkColor as string) || palette.ink,
+                        fontWeight: 500,
+                        textDecoration: "none",
+                        transition: "color 180ms ease",
+                        "&:hover": { color: themeColor },
+                      }}
+                    >
+                      {item.label}
+                    </Typography>
+                  );
+                },
+              )}
             </Stack>
 
-            <Button
-              onClick={() => scrollToSection("contact")}
-              endIcon={<ArrowOutwardIcon />}
-              {...getEditableTextProps(
-                overviewBlockId,
-                "contactPrimaryText",
-                "single",
-              )}
-              sx={{
-                color: palette.ink,
-                textTransform: "none",
-                fontWeight: 700,
-                borderRadius: 999,
-              }}
-            >
-              {homeContent.contactPrimaryText || contactPrimary}
-            </Button>
+            {/* CTA button */}
+            {(navbarContent.ctaText || contactPrimary) && (
+              <Button
+                component="a"
+                href={(navbarContent.ctaUrl as string) || "#contact"}
+                onClick={(e: React.MouseEvent) => {
+                  const href = (navbarContent.ctaUrl as string) || "#contact";
+                  if (!navbarContent.ctaUrl || href.startsWith("#")) {
+                    e.preventDefault();
+                    scrollToSection(href.replace(/^#/, "") || "contact");
+                  }
+                }}
+                endIcon={<ArrowOutwardIcon />}
+                sx={{
+                  color: (navbarContent.ctaColor as string) || palette.ink,
+                  borderColor: (navbarContent.ctaColor as string) || "transparent",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  borderRadius: 999,
+                }}
+              >
+                {(navbarContent.ctaText as string) || contactPrimary}
+              </Button>
+            )}
           </Stack>
         </Container>
       </Box>

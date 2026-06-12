@@ -79,6 +79,7 @@ type TemplateSectionSeed = {
   label: string;
   blockType: string;
   buildContent: (data: BusinessData) => Record<string, unknown>;
+  optional?: boolean;
 };
 
 type TemplatePageSeed = {
@@ -456,6 +457,22 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       isHome: true,
       sections: [
         {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: () => ({
+            contactPrimaryText: "Drop us a line.",
+            navLabels: {
+              overview: "Overview",
+              about: "About",
+              "why-us": "Why Us",
+              process: "Process",
+              contact: "Contact",
+            },
+          }),
+        },
+        {
           key: "overview",
           label: "Overview",
           blockType: "HERO",
@@ -786,9 +803,11 @@ const normalizePersistedPages = (
   });
 };
 
-const getTemplateSectionKeys = (templateId: string): string[] =>
+const getTemplateSectionKeys = (templateId: string, requiredOnly = false): string[] =>
   (TEMPLATE_PAGE_SCHEMAS[templateId] || []).flatMap((page) =>
-    page.sections.map((section) => section.key),
+    page.sections
+      .filter((s) => !requiredOnly || !s.optional)
+      .map((section) => section.key),
   );
 
 const getPageStorageKey = (
@@ -939,7 +958,7 @@ const hasCompatiblePersistedTemplateData = (
   templateId: string,
   pages: TemplateEditorPage[],
 ): boolean => {
-  const expectedKeys = getTemplateSectionKeys(templateId);
+  const expectedKeys = getTemplateSectionKeys(templateId, true);
   if (!expectedKeys.length) {
     return false;
   }
@@ -1340,11 +1359,13 @@ export const buildTemplatePreviewBusinessData = (
     findSectionContent(templateId, pages, sectionKey);
 
   if (templateId === "company-executive") {
+    const navbarBlock = findSectionBlock(templateId, pages, "navbar");
     const overviewBlock = findSectionBlock(templateId, pages, "overview");
     const aboutBlock = findSectionBlock(templateId, pages, "about");
     const whyUsBlock = findSectionBlock(templateId, pages, "why-us");
     const processBlock = findSectionBlock(templateId, pages, "process");
     const contactBlock = findSectionBlock(templateId, pages, "contact");
+    const navbar = getSectionContent("navbar");
     const overview = getSectionContent("overview");
     const about = getSectionContent("about");
     const whyUs = getSectionContent("why-us");
@@ -1392,6 +1413,20 @@ export const buildTemplatePreviewBusinessData = (
         ? mapFeatureItems(whyUsItems)
         : themedBase.features,
       templateContent: {
+        navbar: {
+          blockId: navbarBlock?.id,
+          contactPrimaryText: readString(
+            navbar,
+            ["contactPrimaryText"],
+            contactButton,
+          ),
+          navLabels:
+            typeof navbar.navLabels === "object" &&
+            navbar.navLabels !== null &&
+            !Array.isArray(navbar.navLabels)
+              ? (navbar.navLabels as Record<string, string>)
+              : {},
+        },
         home: {
           blockId: overviewBlock?.id,
           heading: readString(overview, ["heading", "heroHeading", "title"]),
