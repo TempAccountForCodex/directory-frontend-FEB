@@ -66,18 +66,23 @@ const fallbackCategories = [
   "Others",
 ];
 
+const emptyOptions: Option[] = [];
+const emptyPlaces: Place[] = [];
+const emptyStrings: string[] = [];
+const noop = () => undefined;
+
 const SideFilter: React.FC<SideFilterProps> = ({
-  searchKeyword, setSearchKeyword,
-  propertyType, setPropertyType,
-  category, setCategory, categoryArray,
-  accNTaxService, setAccNTaxService,
-  region, setRegion, city, setCity,
-  priceRange, setPriceRange, area, setArea,
-  data, setItems, setFilteredData, setTotalPages,
+  searchKeyword = "", setSearchKeyword = noop,
+  propertyType, setPropertyType = noop,
+  category = emptyStrings, setCategory = noop, categoryArray = emptyOptions,
+  accNTaxService = emptyStrings, setAccNTaxService = noop,
+  region = "", setRegion = noop, city = "", setCity = noop,
+  priceRange = "", setPriceRange = noop, area = "", setArea = noop,
+  data = emptyPlaces, setItems = noop, setFilteredData = noop, setTotalPages = noop,
   loading, paramCategory, clearFilter,
 }) => {
   const theme = useTheme();
-  const teal    = (theme.palette.primary as any).focus as string;   // #378C92
+  const teal    = ((theme.palette.primary as any).focus || theme.palette.primary.main || "#378C92") as string;
   const font    = theme.typography.fontFamily;
   const pageBg  = (theme.palette.bg as any)?.muted ?? "#F0F1EA";   // cream off-white
   const textMain = theme.palette.text.primary;                      // #252525 charcoal

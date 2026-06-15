@@ -38,6 +38,7 @@ interface PropertyItemCardProps {
   item: PropertyItem;
   handleDeleteItem: (id: string | number) => void;
   onEditItem?: (item: PropertyItem) => void;
+  previewMode?: boolean;
   totalPages: number;
   currentPage: number;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
@@ -62,14 +63,15 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
   item,
   handleDeleteItem,
   onEditItem,
+  previewMode = false,
 }) => {
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [_deleteId, setDeleteId] = useState<string | number | null>(null);
-  const { setSelectedSection } = useContext(DashboardContext)!;
+  const dashboardContext = useContext(DashboardContext);
   const navigate = useNavigate();
   const auth = useAuth();
   const theme = useTheme();
-  const { isFavorited, toggleFavorite } = useFavorites();
+  const { isFavorited, toggleFavorite } = useFavorites(item.id);
   const favorited = isFavorited(item.id);
 
   const businessName = item.businessName || item.title || "Business Listing";
@@ -88,6 +90,7 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
     item.image1 ||
     fallbackImage;
   const handleCardClick = () => {
+    if (previewMode) return;
     navigate(`/listings/${item.id}?type=listing`);
   };
 
@@ -102,12 +105,9 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
   };
 
   const handleEditClick = (id: string | number) => {
-    if (onEditItem) {
-      onEditItem(item);
-    } else {
-      navigate(`/dashboard/createlisting/update?id=${id}`);
-      setSelectedSection(`/dashboard/createlisting/update?id=${id}`);
-    }
+    const target = `/dashboard/websites/${id}/manage/listing`;
+    navigate(target);
+    dashboardContext?.setSelectedSection(target);
   };
 
   return (
@@ -228,8 +228,9 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
           </Box>
 
           {/* Admin buttons — top left */}
-          {auth.user &&
-            (auth.user.role === "admin" || auth.user.role === "super_admin") && (
+          {!previewMode && auth.user &&
+            (auth.user.role === "admin" || auth.user.role === "super_admin" ||
+              String(auth.user.id) === String(item.ownerId)) && (
               <Stack
                 direction="row"
                 spacing={1}
@@ -271,7 +272,14 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
             className="listing-card-fav"
             size="small"
             aria-label={favorited ? "Remove from favourites" : "Add to favourites"}
-            onClick={(e) => toggleFavorite(item.id, e)}
+            onClick={(e) => {
+              if (previewMode) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              toggleFavorite(item.id, e);
+            }}
             sx={{
               position: "absolute",
               bottom: 16,

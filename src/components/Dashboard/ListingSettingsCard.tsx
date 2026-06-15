@@ -83,17 +83,7 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
     setToggling(true);
     setError("");
     try {
-      // Patch directoryOptedIn
-      await apiClient.patch(`/websites/${websiteId}/listing`, {
-        directoryOptedIn: true,
-      });
-
-      // Extract listing data
-      try {
-        await apiClient.post(`/websites/${websiteId}/listing/extract`);
-      } catch {
-        // Non-blocking
-      }
+      await apiClient.post(`/websites/${websiteId}/listing/extract`);
 
       // Fetch completeness
       await fetchCompleteness();
@@ -113,8 +103,8 @@ const ListingSettingsCard = React.memo(function ListingSettingsCard({
     setToggling(true);
     setError("");
     try {
-      await apiClient.patch(`/websites/${websiteId}/listing`, {
-        directoryOptedIn: false,
+      await apiClient.post(`/websites/${websiteId}/listing/archive`, {
+        reason: "Disabled from listing settings",
       });
       setOptedIn(false);
       setCompleteness(null);

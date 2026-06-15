@@ -54,6 +54,9 @@ export interface Place {
   mapUrl?: string | null;
   featured?: boolean;
 
+  // Owner ID (returned by GET /api/directory/listings as ownerId)
+  ownerId?: string | number | null;
+
   // Related user
   user?: {
     id: string;

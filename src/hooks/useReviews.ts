@@ -64,6 +64,7 @@ export interface SubmitReviewResult {
     rating: number;
     title: string;
     content: string;
+    isAnonymous?: boolean;
   }) => Promise<Review | null>;
   loading: boolean;
   error: string | null;
@@ -132,6 +133,7 @@ export function useSubmitReview(
       rating: number;
       title: string;
       content: string;
+      isAnonymous?: boolean;
     }): Promise<Review | null> => {
       if (!websiteId) return null;
       setError(null);

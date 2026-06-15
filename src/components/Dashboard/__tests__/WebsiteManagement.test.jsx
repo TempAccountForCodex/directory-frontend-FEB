@@ -123,6 +123,18 @@ const mockWebsite = {
   role: 'OWNER',
 };
 
+const renderWithQueryClient = (ui) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>
+  );
+};
+
 // ---------------------------------------------------------------------------
 // Substep 10.3.1 — WebsiteManagementDashboard Shell
 // ---------------------------------------------------------------------------
@@ -321,7 +333,7 @@ describe('10.3.4 — Placeholder Tabs', () => {
   });
 
   it('ListingEditTab renders with listing message', () => {
-    render(<ListingEditTab websiteId={123} websiteData={mockWebsite} planCode="free" />);
+    renderWithQueryClient(<ListingEditTab websiteId={123} websiteData={mockWebsite} planCode="free" />);
     expect(screen.getAllByText(/listing/i).length).toBeGreaterThanOrEqual(1);
   });
 

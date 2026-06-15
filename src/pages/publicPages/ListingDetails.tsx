@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
+import {
+  Link as RouterLink,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import {
   Box,
   Button,
@@ -9,15 +14,21 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   IconButton,
   InputBase,
+  Checkbox,
   Stack,
   TextField,
   Typography,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import ReplayIcon from "@mui/icons-material/Replay";
 import {
   MapPin,
+  Archive,
+  Edit3,
   Globe,
   Heart,
   Star,
@@ -27,7 +38,15 @@ import {
   Send,
 } from "lucide-react";
 import { useListings } from "../../context/ListingsContext";
-import { useReviews, useSubmitReview } from "../../hooks/useReviews";
+import { useAuth } from "../../context/AuthContext";
+import { apiClient } from "../../api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../api/queryKeys";
+import {
+  useReplyReview,
+  useReviews,
+  useSubmitReview,
+} from "../../hooks/useReviews";
 import PropertyItemCard from "../../components/publicComponents/Listing/PropertyCardItem";
 
 const teal = "#1a9d96";
@@ -121,22 +140,7 @@ const formInputSx = {
 const fallbackBanner =
   "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80";
 
-const fallbackReviews = [
-  {
-    content:
-      "Working with this team transformed the way we present ourselves to the world. Their attention to detail and genuine investment in our success made all the difference.",
-    author: { name: "Sarah Okonkwo" },
-    title: "CEO, Northgate Holdings",
-    rating: 5,
-  },
-  {
-    content:
-      "Professional, responsive, and consistently excellent. They understood our goals from day one and delivered results that exceeded every expectation.",
-    author: { name: "Daniel Park" },
-    title: "Operations Director",
-    rating: 5,
-  },
-];
+const pendingReviewStorageKey = "tt_pending_listing_review";
 
 export interface Listing {
   id: string | number;
@@ -148,6 +152,8 @@ export interface Listing {
   address?: string | null;
   slug?: string | null;
   phone?: string | null;
+  email?: string | null;
+  contactEmail?: string | null;
   category?: string | null;
   businessCategory?: string | null;
   city?: string | null;
@@ -177,6 +183,7 @@ export interface Listing {
   averageRating?: number;
   reviewCount?: number;
   favouriteCount?: number;
+  ownerId?: string | number | null;
   location?: {
     latitude?: number | null;
     longitude?: number | null;
@@ -271,31 +278,98 @@ function ReviewFormSection({
   businessName: string;
   onSubmitted: () => void;
 }) {
+  const auth = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { submitReview, loading, error, fieldErrors, requiresAuth } =
     useSubmitReview(listingId);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedRating, setSelectedRating] = useState(0);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [anonymousName, setAnonymousName] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const canSubmit = selectedRating > 0 && content.trim().length > 0 && !loading;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
+    const payload = {
+      listingId,
+      rating: selectedRating,
+      title,
+      content,
+      isAnonymous: anonymousName,
+      returnTo: `${location.pathname}${location.search}`,
+    };
+
+    if (!auth.user) {
+      localStorage.setItem(pendingReviewStorageKey, JSON.stringify(payload));
+      navigate(
+        `/auth?mode=login&redirect=${encodeURIComponent(payload.returnTo)}`,
+      );
+      return;
+    }
+
     const result = await submitReview({
       rating: selectedRating,
       title,
       content,
+      isAnonymous: anonymousName,
     });
     if (result) {
       setSubmitted(true);
       setSelectedRating(0);
       setTitle("");
       setContent("");
+      setAnonymousName(false);
       onSubmitted();
     }
   };
+
+  useEffect(() => {
+    if (!auth.user || !listingId) return;
+
+    const raw = localStorage.getItem(pendingReviewStorageKey);
+    if (!raw) return;
+
+    try {
+      const pending = JSON.parse(raw) as {
+        listingId?: string | number;
+        rating?: number;
+        title?: string;
+        content?: string;
+        isAnonymous?: boolean;
+      };
+
+      if (String(pending.listingId) !== String(listingId)) return;
+
+      localStorage.removeItem(pendingReviewStorageKey);
+      setSelectedRating(Number(pending.rating || 0));
+      setTitle(pending.title || "");
+      setContent(pending.content || "");
+      setAnonymousName(Boolean(pending.isAnonymous));
+
+      if (pending.rating && pending.content) {
+        void submitReview({
+          rating: Number(pending.rating),
+          title: pending.title || "",
+          content: pending.content,
+          isAnonymous: Boolean(pending.isAnonymous),
+        }).then((result) => {
+          if (!result) return;
+          setSubmitted(true);
+          setSelectedRating(0);
+          setTitle("");
+          setContent("");
+          setAnonymousName(false);
+          onSubmitted();
+        });
+      }
+    } catch {
+      localStorage.removeItem(pendingReviewStorageKey);
+    }
+  }, [auth.user, listingId, onSubmitted, submitReview]);
 
   return (
     <Box
@@ -495,6 +569,28 @@ function ReviewFormSection({
                 )}
               </Box>
 
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={anonymousName}
+                    onChange={(event) =>
+                      setAnonymousName(event.target.checked)
+                    }
+                    size="small"
+                    sx={{ color: teal }}
+                  />
+                }
+                label="Post my name anonymously"
+                sx={{
+                  m: 0,
+                  "& .MuiFormControlLabel-label": {
+                    color: gray[600],
+                    fontFamily: pageFont,
+                    fontSize: 13,
+                  },
+                }}
+              />
+
               {requiresAuth && (
                 <Box
                   sx={{
@@ -515,7 +611,9 @@ function ReviewFormSection({
                     Please{" "}
                     <Box
                       component={RouterLink}
-                      to="/auth"
+                      to={`/auth?mode=login&redirect=${encodeURIComponent(
+                        `${location.pathname}${location.search}`,
+                      )}`}
                       sx={{
                         color: teal,
                         fontWeight: 600,
@@ -575,40 +673,182 @@ function ReviewFormSection({
   );
 }
 
+function ReviewReplyBox({
+  reviewId,
+  existingReply,
+  onSubmitted,
+}: {
+  reviewId: number;
+  existingReply?: { content?: string | null } | null;
+  onSubmitted: () => void;
+}) {
+  const { replyReview, loading, error } = useReplyReview();
+  const [reply, setReply] = useState("");
+  const canSubmit = reply.trim().length > 0 && !loading;
+
+  if (existingReply?.content) {
+    return (
+      <Box
+        sx={{
+          mt: 1.5,
+          p: 1.5,
+          borderRadius: "12px",
+          bgcolor: "#f8fffe",
+          border: "1px solid #c8eeec",
+        }}
+      >
+        <Typography sx={{ ...sidebarLabelSx, mb: 0.5 }}>
+          Owner Reply
+        </Typography>
+        <Typography sx={{ color: gray[700], fontFamily: pageFont, fontSize: 13 }}>
+          {existingReply.content}
+        </Typography>
+      </Box>
+    );
+  }
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    const ok = await replyReview(reviewId, reply.trim());
+    if (!ok) return;
+    setReply("");
+    onSubmitted();
+  };
+
+  return (
+    <Box sx={{ mt: 1.5 }}>
+      <TextField
+        value={reply}
+        onChange={(event) => setReply(event.target.value)}
+        placeholder="Reply as owner"
+        fullWidth
+        size="small"
+        multiline
+        minRows={2}
+      />
+      {error && (
+        <Typography sx={{ color: "#ef4444", fontFamily: pageFont, fontSize: 12, mt: 0.75 }}>
+          {error}
+        </Typography>
+      )}
+      <Button
+        onClick={handleSubmit}
+        disabled={!canSubmit}
+        size="small"
+        sx={{ mt: 1, color: teal, textTransform: "none", fontWeight: 700 }}
+      >
+        {loading ? "Replying..." : "Reply"}
+      </Button>
+    </Box>
+  );
+}
+
 const ListingDetails: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const auth = useAuth();
   const queryParams = new URLSearchParams(location.search);
   const type = queryParams.get("type");
   const { pid, id, slug } = useParams();
   const routeKey = pid || id || slug;
 
-  const { listings, loading, error, deleteListing, updateListing } = useListings();
-
-  const [editItem, setEditItem] = useState<any | null>(null);
-  const [editFields, setEditFields] = useState({ businessName: "", shortDescription: "", address: "", phone: "", website: "", category: "" });
-  const [editLoading, setEditLoading] = useState(false);
+  const { listings, loading, error } = useListings();
+  const queryClient = useQueryClient();
 
   const handleOpenEdit = (item: any) => {
-    setEditItem(item);
-    setEditFields({
-      businessName: item.businessName || item.title || "",
-      shortDescription: item.shortDescription || item.desc || "",
-      address: item.address || "",
-      phone: item.phone || "",
-      website: item.website || "",
-      category: item.category || "",
-    });
+    if (!item?.id) return;
+    navigate(`/dashboard/websites/${item.id}/manage/listing`);
   };
 
-  const handleCloseEdit = () => { setEditItem(null); };
+  /* ---------------- Archive / undo state ---------------- */
+  const [archivedId, setArchivedId] = useState<string | number | null>(null);
+  const [archiveSnack, setArchiveSnack] = useState<{ message: string; severity: "success" | "error" } | null>(null);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactFields, setContactFields] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
+  const [contactError, setContactError] = useState("");
+  const [contactSent, setContactSent] = useState(false);
 
-  const handleSaveEdit = async () => {
-    if (!editItem) return;
-    setEditLoading(true);
-    await updateListing(String(editItem.id), editFields);
-    setEditLoading(false);
-    setEditItem(null);
+  const handleArchive = async (itemId: string | number) => {
+    try {
+      await apiClient.post(`/websites/${itemId}/listing/archive`);
+      await queryClient.invalidateQueries({ queryKey: ["content", "listings"] });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.websites.all() });
+      setArchivedId(itemId);
+      setArchiveSnack({ message: "Listing removed from directory", severity: "success" });
+    } catch (err: any) {
+      setArchiveSnack({
+        message: err.response?.data?.error || err.response?.data?.message || "Failed to remove listing",
+        severity: "error",
+      });
+    }
   };
+
+  const handleUndoArchive = async () => {
+    if (archivedId == null) return;
+    try {
+      await apiClient.post(`/websites/${archivedId}/listing/republish`);
+      await queryClient.invalidateQueries({ queryKey: ["content", "listings"] });
+      setArchiveSnack(null);
+      setArchivedId(null);
+    } catch (err: any) {
+      setArchiveSnack({
+        message: err.response?.data?.error || err.response?.data?.message || "Failed to restore listing",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleContactSubmit = () => {
+    const name = contactFields.name.trim();
+    const email = contactFields.email.trim();
+    const message = contactFields.message.trim();
+
+    if (!name || !email || !message) {
+      setContactError("Complete all fields before sending.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setContactError("Enter a valid email address.");
+      return;
+    }
+
+    const storageKey = "tt_listing_contact_requests";
+    const existing = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    const recipientEmail = listing?.contactEmail || listing?.email || "";
+    const nextEntry = {
+      listingId: listing?.id,
+      listingName: listing?.businessName || listing?.title || "",
+      recipient: recipientEmail || listing?.phone || "",
+      name,
+      email,
+      message,
+      createdAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify(Array.isArray(existing) ? [...existing, nextEntry] : [nextEntry]),
+    );
+
+    if (recipientEmail) {
+      const subject = encodeURIComponent(`Directory inquiry for ${viewModel?.name || "your business"}`);
+      const body = encodeURIComponent(
+        `Name: ${name}\nEmail: ${email}\n\n${message}`,
+      );
+      window.location.href = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
+    }
+
+    setContactFields({ name: "", email: "", message: "" });
+    setContactError("");
+    setContactOpen(false);
+    setContactSent(true);
+  };
+
   const [listing, setListing] = useState<Listing | null>(null);
 
   useEffect(() => {
@@ -663,6 +903,7 @@ const ListingDetails: React.FC = () => {
         locationText || listing.address || (listing.location?.isRemoteOnly ? "Remote / Online" : "Location available"),
       address: listing.address || locationText,
       phone: listing.phone || "",
+      contactEmail: listing.contactEmail || listing.email || "",
       banner: listing.businessBanner || listing.image || fallbackBanner,
       logo: listing.businessLogo,
       score: Number(listing.score || 0),
@@ -680,13 +921,15 @@ const ListingDetails: React.FC = () => {
         return currentCategory ? itemCategory === currentCategory : true;
       });
 
-    return (categoryMatches.length > 0 ? categoryMatches : otherListings).slice(
+    const fallbackListings = [...otherListings].sort(() => Math.random() - 0.5);
+
+    return (categoryMatches.length > 0 ? categoryMatches : fallbackListings).slice(
       0,
       3,
     ) as Listing[];
   }, [listing, listings]);
 
-  const visibleReviews = reviews.length > 0 ? reviews.slice(0, 2) : fallbackReviews;
+  const visibleReviews = reviews.slice(0, 5);
 
   if (loading) {
     return (
@@ -743,6 +986,17 @@ const ListingDetails: React.FC = () => {
       icon: <TrendingUp size={16} color={teal} />,
     },
   ];
+
+  const canManageListing =
+    Boolean(auth.user) &&
+    (auth.user?.role === "admin" ||
+      auth.user?.role === "super_admin" ||
+      String(auth.user?.id) ===
+        String(listing.ownerId || listing.user?.id || ""));
+
+  const handleManageListing = () => {
+    navigate(`/dashboard/websites/${listing.id}/manage/listing`);
+  };
 
   return (
     <Box
@@ -1053,8 +1307,24 @@ const ListingDetails: React.FC = () => {
             >
               What Clients Say
             </Typography>
-            <Stack spacing={2.5}>
-              {visibleReviews.map((review, index) => {
+            {visibleReviews.length === 0 ? (
+              <Box
+                sx={{
+                  border: `1px dashed ${gray[200]}`,
+                  borderRadius: "16px",
+                  p: 3,
+                  bgcolor: "#fafafa",
+                }}
+              >
+                <Typography
+                  sx={{ color: gray[500], fontFamily: pageFont, fontSize: 14 }}
+                >
+                  No reviews yet.
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={2.5}>
+                {visibleReviews.map((review, index) => {
                 const reviewId =
                   "id" in review && review.id != null
                     ? String(review.id)
@@ -1114,10 +1384,24 @@ const ListingDetails: React.FC = () => {
                         {review.title || "Verified review"}
                       </Typography>
                     </Box>
+                    {canManageListing && "id" in review && review.id != null && (
+                      <ReviewReplyBox
+                        reviewId={Number(review.id)}
+                        existingReply={
+                          "ownerReply" in review
+                            ? (review.ownerReply as
+                                | { content?: string | null }
+                                | null)
+                            : null
+                        }
+                        onSubmitted={refetch}
+                      />
+                    )}
                   </Box>
                 );
               })}
-            </Stack>
+              </Stack>
+            )}
           </Box>
 
           {/* Review Form — lives in the left column so the sidebar can stay
@@ -1185,6 +1469,55 @@ const ListingDetails: React.FC = () => {
             </Stack>
 
             <Stack spacing={2.5} sx={{ p: 2.5 }}>
+              {canManageListing && (
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 1,
+                  }}
+                >
+                  <ButtonBase
+                    onClick={handleManageListing}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 0.75,
+                      py: "9px",
+                      borderRadius: "10px",
+                      color: teal,
+                      fontFamily: pageFont,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      border: `1px solid ${teal}`,
+                      bgcolor: "#fff",
+                    }}
+                  >
+                    <Edit3 size={13} /> Edit
+                  </ButtonBase>
+                  <ButtonBase
+                    onClick={() => handleArchive(listing.id)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 0.75,
+                      py: "9px",
+                      borderRadius: "10px",
+                      color: "#b42318",
+                      fontFamily: pageFont,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      border: "1px solid #fecdca",
+                      bgcolor: "#fffbfa",
+                    }}
+                  >
+                    <Archive size={13} /> Archive
+                  </ButtonBase>
+                </Box>
+              )}
+
               {/* Stats */}
               <Box
                 sx={{
@@ -1388,6 +1721,25 @@ const ListingDetails: React.FC = () => {
               </Box>
 
               {/* CTA */}
+              <ButtonBase
+                onClick={() => setContactOpen(true)}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 1,
+                  width: "100%",
+                  py: "10px",
+                  borderRadius: "12px",
+                  color: "#fff",
+                  fontFamily: pageFont,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  background: `linear-gradient(90deg, ${teal} 0%, ${tealDark} 100%)`,
+                }}
+              >
+                <Send size={14} /> Contact Business
+              </ButtonBase>
               {viewModel.previewWebsite && (
                 <ButtonBase
                   component="a"
@@ -1406,11 +1758,12 @@ const ListingDetails: React.FC = () => {
                     width: "100%",
                     py: "10px",
                     borderRadius: "12px",
-                    color: "#fff",
+                    color: teal,
                     fontFamily: pageFont,
                     fontSize: 14,
                     fontWeight: 600,
-                    background: `linear-gradient(90deg, ${teal} 0%, ${tealDark} 100%)`,
+                    border: `1px solid ${teal}`,
+                    bgcolor: "#fff",
                   }}
                 >
                   <Globe size={14} /> Open Website <ExternalLink size={12} />
@@ -1478,7 +1831,7 @@ const ListingDetails: React.FC = () => {
               <PropertyItemCard
                 key={`${biz.id}-${index}`}
                 item={biz as React.ComponentProps<typeof PropertyItemCard>["item"]}
-                handleDeleteItem={(id) => deleteListing(String(id))}
+                handleDeleteItem={handleArchive}
                 onEditItem={handleOpenEdit}
                 totalPages={0}
                 currentPage={0}
@@ -1488,24 +1841,120 @@ const ListingDetails: React.FC = () => {
           </Box>
         </Box>
       </Box>
-      {/* Edit listing modal */}
-      <Dialog open={!!editItem} onClose={handleCloseEdit} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 600 }}>Edit Listing</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
-          <TextField label="Business Name" value={editFields.businessName} onChange={(e) => setEditFields((f) => ({ ...f, businessName: e.target.value }))} fullWidth size="small" />
-          <TextField label="Short Description" value={editFields.shortDescription} onChange={(e) => setEditFields((f) => ({ ...f, shortDescription: e.target.value }))} fullWidth size="small" multiline minRows={2} />
-          <TextField label="Address" value={editFields.address} onChange={(e) => setEditFields((f) => ({ ...f, address: e.target.value }))} fullWidth size="small" />
-          <TextField label="Phone" value={editFields.phone} onChange={(e) => setEditFields((f) => ({ ...f, phone: e.target.value }))} fullWidth size="small" />
-          <TextField label="Website" value={editFields.website} onChange={(e) => setEditFields((f) => ({ ...f, website: e.target.value }))} fullWidth size="small" />
-          <TextField label="Category" value={editFields.category} onChange={(e) => setEditFields((f) => ({ ...f, category: e.target.value }))} fullWidth size="small" />
+      <Dialog
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Contact {viewModel.name}
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            pt: "16px !important",
+          }}
+        >
+          <TextField
+            label="Your name"
+            value={contactFields.name}
+            onChange={(event) => {
+              setContactFields((fields) => ({
+                ...fields,
+                name: event.target.value,
+              }));
+              setContactError("");
+            }}
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="Email address"
+            type="email"
+            value={contactFields.email}
+            onChange={(event) => {
+              setContactFields((fields) => ({
+                ...fields,
+                email: event.target.value,
+              }));
+              setContactError("");
+            }}
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="Message"
+            value={contactFields.message}
+            onChange={(event) => {
+              setContactFields((fields) => ({
+                ...fields,
+                message: event.target.value,
+              }));
+              setContactError("");
+            }}
+            fullWidth
+            multiline
+            minRows={4}
+          />
+          {contactError && (
+            <Alert severity="error" sx={{ py: 0.5 }}>
+              {contactError}
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseEdit} disabled={editLoading}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveEdit} disabled={editLoading}>
-            {editLoading ? "Saving…" : "Save Changes"}
+          <Button onClick={() => setContactOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleContactSubmit}
+            sx={{
+              bgcolor: teal,
+              "&:hover": { bgcolor: tealDark },
+            }}
+          >
+            Send
           </Button>
         </DialogActions>
       </Dialog>
+      {/* Archive result / undo snackbar */}
+      <Snackbar
+        open={!!archiveSnack}
+        autoHideDuration={6000}
+        onClose={() => setArchiveSnack(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={archiveSnack?.severity || "success"}
+          onClose={() => setArchiveSnack(null)}
+          action={
+            archiveSnack?.severity === "success" && archivedId != null ? (
+              <Button color="inherit" size="small" onClick={handleUndoArchive}>
+                Undo
+              </Button>
+            ) : undefined
+          }
+          sx={{ width: "100%" }}
+        >
+          {archiveSnack?.message}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={contactSent}
+        autoHideDuration={3500}
+        onClose={() => setContactSent(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity="success"
+          onClose={() => setContactSent(false)}
+          sx={{ width: "100%" }}
+        >
+          Your message has been prepared for the business owner.
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

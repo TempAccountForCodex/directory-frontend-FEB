@@ -98,6 +98,13 @@ vi.mock('../../../hooks/useFavourites', () => ({
   useBatchFavourites: () => ({ statusMap: {}, loading: false, refetch: vi.fn() }),
 }));
 
+vi.mock('../../../api/queries/content', () => ({
+  useListings: () => ({
+    data: { data: [{ id: 1 }, { id: 2 }, { id: 3 }] },
+    isFetching: false,
+  }),
+}));
+
 import { useUserFavourites } from '../../../hooks/useFavourites';
 import Favourites from '../listings/Favourites';
 

@@ -24,8 +24,15 @@ import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
-import { Globe, Sparkles, X } from "lucide-react";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import { Globe, Image as ImageIcon, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { apiClient } from "../../api/client";
+import { API_URL } from "@/config/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../api/queryKeys";
+import PropertyItemCard from "../publicComponents/Listing/PropertyCardItem";
 import DashboardInput from "./shared/DashboardInput";
 import DashboardSelect from "./shared/DashboardSelect";
 import DashboardActionButton from "./shared/DashboardActionButton";
@@ -57,7 +64,12 @@ const PRICE_LEVELS = [
   { value: "$$$$", label: "$$$$ - Luxury" },
 ];
 
-type ListingStatus = "NOT_LISTED" | "DRAFT" | "PUBLISHED" | "ARCHIVED";
+type ListingStatus =
+  | "NOT_LISTED"
+  | "DRAFT"
+  | "NEEDS_COMPLETION"
+  | "PUBLISHED"
+  | "ARCHIVED";
 
 const STATUS_CONFIG: Record<
   ListingStatus,
@@ -69,6 +81,11 @@ const STATUS_CONFIG: Record<
     bgColor: "action.hover",
   },
   DRAFT: { label: "Draft", color: "warning.dark", bgColor: "warning.light" },
+  NEEDS_COMPLETION: {
+    label: "Needs completion",
+    color: "error.dark",
+    bgColor: "error.light",
+  },
   PUBLISHED: {
     label: "Published",
     color: "success.dark",
@@ -85,13 +102,16 @@ interface FormData {
   phone: string;
   email: string;
   fullAddress: string;
+  city: string;
+  region: string;
+  country: string;
   tags: string[];
 }
 
 interface CompletenessData {
   score: number;
   missing: string[];
-  suggestions?: string[];
+  suggestions?: Record<string, string> | string[];
 }
 
 export interface ListingEditTabProps {
@@ -105,7 +125,14 @@ export interface ListingEditTabProps {
     phone?: string;
     contactEmail?: string;
     fullAddress?: string;
+    city?: string | null;
+    region?: string | null;
+    country?: string | null;
     tags?: string[];
+    businessLogo?: string | null;
+    logoUrl?: string | null;
+    logo?: string | null;
+    image?: string | null;
     directoryOptedIn?: boolean;
     isPublic?: boolean;
     isDirectoryArchived?: boolean;
@@ -113,18 +140,36 @@ export interface ListingEditTabProps {
   planCode: string;
   aiGenerationsUsed?: number;
   aiGenerationsLimit?: number;
-  onUpdate?: () => void;
+  onUpdate?: (updatedWebsite?: any) => void;
 }
 
-function deriveStatus(data: ListingEditTabProps["websiteData"]): ListingStatus {
+function deriveStatus(
+  data: ListingEditTabProps["websiteData"],
+  completeness?: CompletenessData | null,
+): ListingStatus {
   if (!data?.directoryOptedIn) return "NOT_LISTED";
   if (data.isDirectoryArchived) return "ARCHIVED";
+  if (
+    completeness &&
+    completeness.score < MIN_PUBLISH_COMPLETENESS &&
+    completeness.missing.length > 0
+  ) {
+    return "NEEDS_COMPLETION";
+  }
   if (data.isPublic) return "PUBLISHED";
   return "DRAFT";
 }
 
 const MAX_TAGS = 10;
 const MAX_DESC = 500;
+const MIN_PUBLISH_COMPLETENESS = 60;
+
+const formatMissingFieldLabel = (field: string) =>
+  field
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .replace(/^./, (char) => char.toUpperCase());
 
 const ListingEditTab = React.memo(function ListingEditTab({
   websiteId,
@@ -135,6 +180,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
   onUpdate,
 }: ListingEditTabProps) {
   const isPaidPlan = PAID_PLANS.includes(planCode);
+  const queryClient = useQueryClient();
 
   const [form, setForm] = useState<FormData>({
     businessName: "",
@@ -144,6 +190,9 @@ const ListingEditTab = React.memo(function ListingEditTab({
     phone: "",
     email: "",
     fullAddress: "",
+    city: "",
+    region: "",
+    country: "",
     tags: [],
   });
   const [tagInput, setTagInput] = useState("");
@@ -155,6 +204,10 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const [unpublishing, setUnpublishing] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
+  const [optingIn, setOptingIn] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [listingImageUrl, setListingImageUrl] = useState("");
+  const [extracted, setExtracted] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -162,8 +215,17 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const status = useMemo(() => deriveStatus(websiteData), [websiteData]);
+  const status = useMemo(
+    () => deriveStatus(websiteData, completeness),
+    [websiteData, completeness],
+  );
   const statusConfig = STATUS_CONFIG[status];
+  const currentWebsiteImage =
+    websiteData?.businessLogo ||
+    websiteData?.logoUrl ||
+    websiteData?.logo ||
+    websiteData?.image ||
+    "";
 
   // Load form data from websiteData
   useEffect(() => {
@@ -176,11 +238,15 @@ const ListingEditTab = React.memo(function ListingEditTab({
         phone: websiteData.phone || "",
         email: websiteData.contactEmail || "",
         fullAddress: websiteData.fullAddress || "",
+        city: websiteData.city || "",
+        region: websiteData.region || "",
+        country: websiteData.country || "",
         tags: websiteData.tags || [],
       });
+      setListingImageUrl(currentWebsiteImage);
       setPageLoading(false);
     }
-  }, [websiteData]);
+  }, [websiteData, currentWebsiteImage]);
 
   // Fetch completeness
   const fetchCompleteness = useCallback(async () => {
@@ -196,6 +262,14 @@ const ListingEditTab = React.memo(function ListingEditTab({
     }
   }, [websiteId]);
 
+  const refreshListingCaches = useCallback(async (updatedWebsite?: any) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.websites.all() }),
+      queryClient.invalidateQueries({ queryKey: ["content", "listings"] }),
+    ]);
+    onUpdate?.(updatedWebsite);
+  }, [onUpdate, queryClient]);
+
   useEffect(() => {
     if (websiteData?.directoryOptedIn) {
       fetchCompleteness();
@@ -208,18 +282,56 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const previewData = useMemo(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     return {
+      id: websiteId,
       businessName: form.businessName || "Your Business",
+      title: form.businessName || "Your Business",
       category: form.businessCategory || "Category",
+      businessCategory: form.businessCategory || "Category",
       shortDescription:
         form.shortDescription || "A brief description of your business...",
+      desc: form.shortDescription || "A brief description of your business...",
       tags: form.tags,
+      businessLogo: listingImageUrl,
+      businessBanner: listingImageUrl,
+      image: listingImageUrl,
+      image1: listingImageUrl,
+      city: form.city,
+      region: form.region,
+      country: form.country,
+      averageRating: 0,
+      reviewCount: 0,
     };
   }, [
+    websiteId,
     form.businessName,
     form.businessCategory,
     form.shortDescription,
     form.tags,
+    form.city,
+    form.region,
+    form.country,
+    listingImageUrl,
   ]);
+
+  const displayCompleteness = useMemo(() => {
+    if (!completeness) return null;
+
+    const hasContact = Boolean(form.phone.trim() || form.email.trim());
+    const hasLocation = Boolean(
+      form.city.trim() && form.country.trim(),
+    );
+    const missing = completeness.missing.filter((field) => {
+      const normalized = field.toLowerCase();
+      if (normalized === "contact" && hasContact) return false;
+      if (normalized === "location" && hasLocation) return false;
+      return true;
+    });
+
+    return {
+      ...completeness,
+      missing,
+    };
+  }, [completeness, form.phone, form.email, form.city, form.country]);
 
   // Field change handler
   const handleFieldChange = useCallback(
@@ -238,6 +350,54 @@ const ListingEditTab = React.memo(function ListingEditTab({
       setFormErrors((prev) => ({ ...prev, [field]: "" }));
     },
     [],
+  );
+
+  const resolveAssetUrl = useCallback((value?: string | null) => {
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
+    const apiRoot = API_URL.replace(/\/api\/?$/, "");
+    return `${apiRoot}${value.startsWith("/") ? value : `/${value}`}`;
+  }, []);
+
+  const handleUseWebsiteImage = useCallback(() => {
+    setListingImageUrl(currentWebsiteImage);
+  }, [currentWebsiteImage]);
+
+  const handleRemoveListingImage = useCallback(() => {
+    setListingImageUrl("");
+  }, []);
+
+  const handleListingImageUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+
+      setUploadingImage(true);
+      setError("");
+      setSuccess("");
+      try {
+        const payload = new FormData();
+        payload.append("logo", file);
+        const response = await apiClient.post(`/websites/${websiteId}/logo`, payload, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const logoUrl =
+          response.data?.data?.logoUrl ||
+          response.data?.logoUrl ||
+          response.data?.data?.url ||
+          response.data?.url ||
+          "";
+        setListingImageUrl(logoUrl);
+        setSuccess("Listing image updated");
+        await refreshListingCaches();
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to upload listing image");
+      } finally {
+        setUploadingImage(false);
+      }
+    },
+    [refreshListingCaches, websiteId],
   );
 
   // Tag handling
@@ -284,37 +444,86 @@ const ListingEditTab = React.memo(function ListingEditTab({
   }, [form.businessName]);
 
   // Save
+  const handleOptIn = useCallback(async () => {
+    if (!isPaidPlan) return;
+    setOptingIn(true);
+    setError("");
+    try {
+      const extractResponse = await apiClient.post(`/websites/${websiteId}/listing/extract`);
+      const updatedWebsite =
+        extractResponse.data?.data ||
+        extractResponse.data?.website ||
+        extractResponse.data ||
+        {};
+      setExtracted(true);
+      setPageLoading(false);
+      await fetchCompleteness();
+      await refreshListingCaches({
+        ...websiteData,
+        ...updatedWebsite,
+        directoryOptedIn: true,
+      });
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to initialise directory listing");
+    } finally {
+      setOptingIn(false);
+    }
+  }, [websiteId, isPaidPlan, fetchCompleteness, refreshListingCaches, websiteData]);
+
   const handleSave = useCallback(async () => {
     if (!validateForm()) return;
     setSaving(true);
     setError("");
     setSuccess("");
     try {
-      await apiClient.patch(`/websites/${websiteId}/listing`, {
-        businessName: form.businessName,
-        shortDescription: form.shortDescription,
-        businessCategory: form.businessCategory,
-        priceLevel: form.priceLevel,
-        phone: form.phone,
-        contactEmail: form.email,
-        fullAddress: form.fullAddress,
-        tags: form.tags,
-      });
+      const preserveString = (
+        value: string,
+        fallback?: string | null,
+      ) => {
+        const trimmed = value.trim();
+        return trimmed || fallback || "";
+      };
+      const preserveTags = (value: string[], fallback?: string[] | null) =>
+        value.length > 0 ? value : fallback || [];
+
+      const payload = {
+        businessName: preserveString(form.businessName, websiteData?.businessName || websiteData?.name),
+        shortDescription: preserveString(form.shortDescription, websiteData?.shortDescription),
+        businessCategory: preserveString(form.businessCategory, websiteData?.businessCategory),
+        priceLevel: preserveString(form.priceLevel, websiteData?.priceLevel),
+        phone: preserveString(form.phone, websiteData?.phone),
+        contactEmail: preserveString(form.email, websiteData?.contactEmail),
+        fullAddress: preserveString(form.fullAddress, websiteData?.fullAddress),
+        city: preserveString(form.city, websiteData?.city),
+        region: preserveString(form.region, websiteData?.region),
+        country: preserveString(form.country, websiteData?.country),
+        tags: preserveTags(form.tags, websiteData?.tags),
+      };
+      const response = await apiClient.patch(`/websites/${websiteId}/listing`, payload);
+      const updatedWebsite =
+        response.data?.data ||
+        response.data?.website ||
+        response.data ||
+        {};
       setSuccess("Listing saved successfully");
       await fetchCompleteness();
-      onUpdate?.();
+      await refreshListingCaches({
+        ...websiteData,
+        ...payload,
+        ...updatedWebsite,
+      });
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to save listing");
     } finally {
       setSaving(false);
     }
-  }, [form, websiteId, validateForm, fetchCompleteness, onUpdate]);
+  }, [form, websiteData, websiteId, validateForm, fetchCompleteness, refreshListingCaches]);
 
   // Publish
   const handlePublish = useCallback(async () => {
-    if (completeness && completeness.score < 60) {
+    if (completeness && completeness.score < MIN_PUBLISH_COMPLETENESS) {
       setError(
-        "Listing completeness must be at least 60% to publish. Please fill in the missing fields.",
+        `Listing readiness must be at least ${MIN_PUBLISH_COMPLETENESS}% to publish. Please fill in the missing fields.`,
       );
       return;
     }
@@ -327,7 +536,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
       );
       if (res.data?.success) {
         setSuccess("Listing published to directory");
-        onUpdate?.();
+        await refreshListingCaches();
       }
     } catch (err: any) {
       const data = err.response?.data;
@@ -339,7 +548,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     } finally {
       setPublishing(false);
     }
-  }, [completeness, websiteId, onUpdate]);
+  }, [completeness, websiteId, refreshListingCaches]);
 
   // Unpublish (uses archive endpoint)
   const handleUnpublish = useCallback(async () => {
@@ -351,13 +560,13 @@ const ListingEditTab = React.memo(function ListingEditTab({
         reason: "Unpublished by owner",
       });
       setSuccess("Listing unpublished");
-      onUpdate?.();
+      await refreshListingCaches();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to unpublish listing");
     } finally {
       setUnpublishing(false);
     }
-  }, [websiteId, onUpdate]);
+  }, [websiteId, refreshListingCaches]);
 
   // Republish (from ARCHIVED state)
   const handleRepublish = useCallback(async () => {
@@ -367,13 +576,13 @@ const ListingEditTab = React.memo(function ListingEditTab({
     try {
       await apiClient.post(`/websites/${websiteId}/listing/republish`);
       setSuccess("Listing republished to directory");
-      onUpdate?.();
+      await refreshListingCaches();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to republish listing");
     } finally {
       setPublishing(false);
     }
-  }, [websiteId, onUpdate]);
+  }, [websiteId, refreshListingCaches]);
 
   // Archive
   const handleArchive = useCallback(async () => {
@@ -384,13 +593,13 @@ const ListingEditTab = React.memo(function ListingEditTab({
       await apiClient.post(`/websites/${websiteId}/listing/archive`);
       setSuccess("Listing archived");
       setShowArchiveConfirm(false);
-      onUpdate?.();
+      await refreshListingCaches();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to archive listing");
     } finally {
       setArchiving(false);
     }
-  }, [websiteId, onUpdate]);
+  }, [websiteId, refreshListingCaches]);
 
   // AI Enhance
   const handleEnhance = useCallback(async () => {
@@ -446,14 +655,31 @@ const ListingEditTab = React.memo(function ListingEditTab({
     );
   }
 
-  // Empty state for not opted-in
-  if (!websiteData?.directoryOptedIn && status === "NOT_LISTED") {
+  // Opt-in prompt for not-yet-listed websites (bypass if extract already ran this session)
+  if (!websiteData?.directoryOptedIn && status === "NOT_LISTED" && !extracted) {
     return (
-      <EmptyState
-        icon={<Globe size={40} />}
-        title="No Directory Listing"
-        subtitle="Enable directory listing in your website settings to manage your listing here."
-      />
+      <Box sx={{ py: 2 }}>
+        {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
+        <DashboardCard icon={Globe} title="Directory Listing">
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            List your business in the Techietribe Directory so customers can discover you.
+            {!isPaidPlan && " Upgrade to a paid plan to unlock this feature."}
+          </Typography>
+          {isPaidPlan ? (
+            <DashboardGradientButton
+              onClick={handleOptIn}
+              disabled={optingIn}
+              startIcon={optingIn ? <CircularProgress size={16} color="inherit" /> : undefined}
+            >
+              {optingIn ? "Setting up…" : "Set Up Directory Listing"}
+            </DashboardGradientButton>
+          ) : (
+            <DashboardGradientButton href="/pricing">
+              Upgrade to Unlock
+            </DashboardGradientButton>
+          )}
+        </DashboardCard>
+      </Box>
     );
   }
 
@@ -501,7 +727,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
       )}
 
       {/* Completeness bar */}
-      {completeness && (
+      {displayCompleteness && (
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -512,12 +738,28 @@ const ListingEditTab = React.memo(function ListingEditTab({
               sx={{ color: "text.primary", fontWeight: 600 }}
               data-testid="completeness-score"
             >
-              {completeness.score}%
+              {displayCompleteness.score}%
             </Typography>
+            <Chip
+              size="small"
+              label={
+                status === "PUBLISHED" && displayCompleteness.score < MIN_PUBLISH_COMPLETENESS
+                  ? "Improve readiness"
+                  : displayCompleteness.score >= MIN_PUBLISH_COMPLETENESS
+                  ? "Ready to publish"
+                  : `${MIN_PUBLISH_COMPLETENESS}% required`
+              }
+              color={
+                displayCompleteness.score >= MIN_PUBLISH_COMPLETENESS
+                  ? "success"
+                  : "warning"
+              }
+              variant="outlined"
+            />
           </Box>
           <LinearProgress
             variant="determinate"
-            value={completeness.score}
+            value={displayCompleteness.score}
             sx={{
               height: 8,
               borderRadius: 4,
@@ -526,21 +768,21 @@ const ListingEditTab = React.memo(function ListingEditTab({
               "& .MuiLinearProgress-bar": {
                 borderRadius: 4,
                 bgcolor:
-                  completeness.score >= 80
+                  displayCompleteness.score >= 80
                     ? "success.main"
-                    : completeness.score >= 60
+                    : displayCompleteness.score >= MIN_PUBLISH_COMPLETENESS
                       ? "warning.main"
                       : "error.main",
               },
             }}
             data-testid="completeness-bar"
           />
-          {completeness.missing.length > 0 && (
+          {displayCompleteness.missing.length > 0 && (
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-              {completeness.missing.map((field) => (
+              {displayCompleteness.missing.map((field) => (
                 <Chip
                   key={field}
-                  label={field}
+                  label={formatMissingFieldLabel(field)}
                   size="small"
                   sx={{
                     bgcolor: "warning.light",
@@ -550,6 +792,77 @@ const ListingEditTab = React.memo(function ListingEditTab({
                   data-testid="missing-field-chip"
                 />
               ))}
+            </Box>
+          )}
+          {displayCompleteness.missing.length > 0 && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Complete these fields to improve readiness:
+              </Typography>
+              <List
+                dense
+                disablePadding
+                sx={{
+                  mt: 0.75,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 0.5,
+                }}
+              >
+                {displayCompleteness.missing.slice(0, 4).map((field) => {
+                  const suggestions = displayCompleteness.suggestions;
+                  const suggestion =
+                    suggestions && !Array.isArray(suggestions)
+                      ? suggestions[field]
+                      : undefined;
+                  return (
+                    <ListItem
+                      key={field}
+                      disableGutters
+                      sx={{
+                        alignItems: "flex-start",
+                        py: 0,
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: "50%",
+                          bgcolor: "warning.main",
+                          flexShrink: 0,
+                          mt: "0.55em",
+                          mr: 1,
+                        }}
+                      />
+                      <ListItemText
+                        primary={formatMissingFieldLabel(field)}
+                        secondary={suggestion || "Add this information before publishing."}
+                        primaryTypographyProps={{
+                          variant: "caption",
+                          sx: {
+                            color: "text.primary",
+                            fontWeight: 600,
+                            textTransform: "capitalize",
+                            lineHeight: 1.4,
+                          },
+                        }}
+                        secondaryTypographyProps={{
+                          variant: "caption",
+                          sx: {
+                            color: "text.secondary",
+                            display: "block",
+                            lineHeight: 1.4,
+                          },
+                        }}
+                        sx={{ my: 0 }}
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
             </Box>
           )}
         </Box>
@@ -668,6 +981,95 @@ const ListingEditTab = React.memo(function ListingEditTab({
               placeholder="123 Business St, City, State 12345"
             />
 
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(3, minmax(0, 1fr))",
+                },
+                gap: 2,
+              }}
+            >
+              <DashboardInput
+                label="City"
+                value={form.city}
+                onChange={handleFieldChange("city")}
+                placeholder="City"
+              />
+              <DashboardInput
+                label="Region"
+                value={form.region}
+                onChange={handleFieldChange("region")}
+                placeholder="State or region"
+              />
+              <DashboardInput
+                label="Country"
+                value={form.country}
+                onChange={handleFieldChange("country")}
+                placeholder="Country"
+              />
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", fontWeight: 500, mb: 1 }}
+              >
+                Listing Image
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 1,
+                  alignItems: { xs: "stretch", sm: "center" },
+                }}
+              >
+                <DashboardActionButton
+                  component="label"
+                  disabled={uploadingImage}
+                  startIcon={
+                    uploadingImage ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : (
+                      <Upload size={16} />
+                    )
+                  }
+                >
+                  {uploadingImage ? "Uploading..." : "Upload Image"}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleListingImageUpload}
+                  />
+                </DashboardActionButton>
+                <DashboardActionButton
+                  variant="outlined"
+                  disabled={!currentWebsiteImage || uploadingImage}
+                  onClick={handleUseWebsiteImage}
+                  startIcon={<ImageIcon size={16} />}
+                >
+                  Use Website Image
+                </DashboardActionButton>
+                <DashboardActionButton
+                  variant="outlined"
+                  disabled={!listingImageUrl || uploadingImage}
+                  onClick={handleRemoveListingImage}
+                  startIcon={<Trash2 size={16} />}
+                >
+                  Remove Image
+                </DashboardActionButton>
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", display: "block", mt: 0.75 }}
+              >
+                Upload a new image, reuse the website image, or remove the selected image from this listing preview.
+              </Typography>
+            </Box>
+
             {/* Tags */}
             <Box>
               <Typography
@@ -731,57 +1133,33 @@ const ListingEditTab = React.memo(function ListingEditTab({
         {/* Live preview */}
         <Box
           sx={{
-            width: { xs: "100%", md: 320 },
+            width: { xs: "100%", md: 430 },
             flexShrink: 0,
           }}
         >
           <DashboardCard icon={Globe} title="Preview">
             <Box
               sx={{
-                p: 2,
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "divider",
-                bgcolor: "background.paper",
+                width: "100%",
+                maxWidth: 400,
+                mx: "auto",
               }}
               data-testid="listing-preview"
             >
-              <Typography
-                variant="subtitle1"
-                sx={{ color: "text.primary", fontWeight: 600 }}
-              >
-                {previewData.businessName}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "primary.main" }}>
-                {previewData.category}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", mt: 0.5, mb: 1 }}
-              >
-                {previewData.shortDescription}
-              </Typography>
-              {previewData.tags.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {previewData.tags.slice(0, 5).map((tag) => (
-                    <Chip
-                      key={tag}
-                      label={tag}
-                      size="small"
-                      variant="outlined"
-                      sx={{ fontSize: "0.7rem" }}
-                    />
-                  ))}
-                  {previewData.tags.length > 5 && (
-                    <Chip
-                      label={`+${previewData.tags.length - 5}`}
-                      size="small"
-                      variant="outlined"
-                      sx={{ fontSize: "0.7rem" }}
-                    />
-                  )}
-                </Box>
-              )}
+              <PropertyItemCard
+                item={{
+                  ...previewData,
+                  businessLogo: resolveAssetUrl(previewData.businessLogo),
+                  businessBanner: resolveAssetUrl(previewData.businessBanner),
+                  image: resolveAssetUrl(previewData.image),
+                  image1: resolveAssetUrl(previewData.image1),
+                }}
+                handleDeleteItem={() => undefined}
+                previewMode
+                totalPages={1}
+                currentPage={1}
+                setCurrentPage={() => undefined}
+              />
             </Box>
           </DashboardCard>
         </Box>

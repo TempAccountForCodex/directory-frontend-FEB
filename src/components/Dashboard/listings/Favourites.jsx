@@ -26,6 +26,7 @@ import {
   DashboardTablePagination,
 } from '../shared';
 import { useUserFavourites } from '../../../hooks/useFavourites';
+import { useListings as usePublicListings } from '../../../api/queries/content';
 import { apiClient } from '../../../api/client';
 
 /* ---------- EmptyState ---------- */
@@ -138,9 +139,10 @@ const SkeletonGrid = memo(function SkeletonGrid({ colors }) {
 });
 
 /* ---------- FavouriteCard ---------- */
-const FavouriteCard = memo(function FavouriteCard({ item, colors, onUnfavourite }) {
+const FavouriteCard = memo(function FavouriteCard({ item, colors, onOpen, onUnfavourite }) {
   return (
     <Card
+      onClick={() => onOpen(item)}
       sx={{
         borderRadius: 2,
         border: `1px solid ${alpha(colors.border, 0.4)}`,
@@ -175,7 +177,7 @@ const FavouriteCard = memo(function FavouriteCard({ item, colors, onUnfavourite 
       {/* Heart button (unfavourite) */}
       <Box
         component="button"
-        onClick={(e) => { e.stopPropagation(); onUnfavourite(item.id || item.websiteId); }}
+        onClick={(e) => { e.stopPropagation(); onUnfavourite(item.websiteId || item.id); }}
         aria-label="Remove from favourites"
         sx={{
           position: 'absolute',
@@ -262,18 +264,42 @@ const Favourites = ({ pageTitle, pageSubtitle }) => {
   const [removedIds, setRemovedIds] = useState(new Set());
 
   const { favourites, pagination, loading, error, refetch } = useUserFavourites(sort, page);
+  const publicListingsQuery = usePublicListings(
+    { pageSize: 100 },
+    { enabled: favourites.length > 0 },
+  );
+
+  const publicListingIds = useMemo(() => {
+    const items = publicListingsQuery.data?.data;
+    if (!Array.isArray(items)) return null;
+    return new Set(items.map((item) => String(item.id)));
+  }, [publicListingsQuery.data]);
 
   // Client-side name filter
   const filteredFavourites = useMemo(() => {
-    const base = favourites.filter((f) => !removedIds.has(f.id || f.websiteId));
+    const base = favourites
+      .filter((f) => !removedIds.has(f.websiteId || f.id))
+      .filter((f) => {
+        if (!publicListingIds) return true;
+        return publicListingIds.has(String(f.websiteId || f.id));
+      });
     if (!searchQuery.trim()) return base;
     const q = searchQuery.toLowerCase();
     return base.filter((f) => f.title?.toLowerCase().includes(q));
-  }, [favourites, searchQuery, removedIds]);
+  }, [favourites, searchQuery, removedIds, publicListingIds]);
 
   const handleBrowseListings = useCallback(() => {
-    navigate('/dashboard/listings');
+    navigate('/listings');
   }, [navigate]);
+
+  const handleOpenFavourite = useCallback(
+    (item) => {
+      const id = item.websiteId || item.id;
+      if (!id) return;
+      navigate(`/listings/${id}?type=listing`);
+    },
+    [navigate],
+  );
 
   const handleUnfavourite = useCallback(
     async (id) => {
@@ -322,7 +348,7 @@ const Favourites = ({ pageTitle, pageSubtitle }) => {
     setPage(value);
   }, []);
 
-  const totalCount = pagination?.total ?? filteredFavourites.length;
+  const totalCount = publicListingIds ? filteredFavourites.length : (pagination?.total ?? filteredFavourites.length);
   const totalPages = pagination?.totalPages ?? 1;
 
   return (
@@ -371,7 +397,7 @@ const Favourites = ({ pageTitle, pageSubtitle }) => {
           <Grid container spacing={2}>
             <AnimatePresence>
               {filteredFavourites.map((item) => {
-                const itemId = item.id || item.websiteId;
+                const itemId = item.websiteId || item.id;
                 const isRemoving = removingIds.has(itemId);
                 return (
                   <Grid item xs={12} sm={6} md={4} key={itemId}>
@@ -384,6 +410,7 @@ const Favourites = ({ pageTitle, pageSubtitle }) => {
                       <FavouriteCard
                         item={item}
                         colors={colors}
+                        onOpen={handleOpenFavourite}
                         onUnfavourite={handleUnfavourite}
                       />
                     </motion.div>

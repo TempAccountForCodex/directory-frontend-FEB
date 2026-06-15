@@ -25,6 +25,7 @@ type DirectoryApiListing = {
   favouriteCount: number;
   businessLogo: string | null;
   createdAt: string | null;
+  ownerId?: string | number | null;
 };
 
 export type DirectoryListingsResponse = {
@@ -237,6 +238,7 @@ export const mapDirectoryListingToPlace = (
     averageRating: listing.averageRating,
     reviewCount: listing.reviewCount,
     favouriteCount: listing.favouriteCount,
+    ownerId: listing.ownerId ?? null,
   };
 };
 

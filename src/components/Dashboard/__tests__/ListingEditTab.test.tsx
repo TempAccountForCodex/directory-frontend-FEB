@@ -14,8 +14,27 @@
 
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import "@testing-library/jest-dom/vitest";
+
+vi.mock("../../../context/AuthContext", () => ({
+  useAuth: () => ({
+    user: { id: 1, name: "Test User", role: "user" },
+  }),
+}));
+
+vi.mock("../../../context/DashboardContext", () => ({
+  DashboardContext: React.createContext({ setSelectedSection: vi.fn() }),
+}));
+
+vi.mock("../../../hooks/useFavorites", () => ({
+  useFavorites: () => ({
+    isFavorited: () => false,
+    toggleFavorite: vi.fn(),
+  }),
+}));
 
 // Mock ThemeContext
 vi.mock("../../../context/ThemeContext", () => ({
@@ -190,6 +209,21 @@ vi.mock("../shared/DashboardCard", () => ({
 
 import ListingEditTab from "../ListingEditTab";
 
+function render(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return rtlRender(
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+    </MemoryRouter>,
+  );
+}
+
 describe("ListingEditTab", () => {
   const baseWebsiteData = {
     name: "Test Business",
@@ -200,6 +234,9 @@ describe("ListingEditTab", () => {
     phone: "+1 555 1234",
     contactEmail: "test@example.com",
     fullAddress: "123 Test St",
+    city: "Test City",
+    region: "Test Region",
+    country: "Test Country",
     tags: ["tech", "startup"],
     directoryOptedIn: true,
     isPublic: false,
@@ -246,8 +283,41 @@ describe("ListingEditTab", () => {
     });
   });
 
+  it("shows Needs completion instead of Published when readiness is below 60%", async () => {
+    mockedAxios.get.mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: {
+          score: 50,
+          missing: ["businessCategory", "contact", "location"],
+          suggestions: {},
+        },
+      },
+    });
+
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{
+          ...baseWebsiteData,
+          businessCategory: "",
+          phone: "",
+          contactEmail: "",
+          city: "",
+          country: "",
+          isPublic: true,
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      const badge = screen.getByTestId("status-badge");
+      expect(badge).toHaveTextContent("Needs completion");
+    });
+  });
+
   it("renders status badge as Not Listed when directoryOptedIn is false", async () => {
-    // When not opted in, shows empty state instead
+    // When not opted in, shows the setup card instead of the management form.
     render(
       <ListingEditTab
         {...defaultProps}
@@ -255,7 +325,34 @@ describe("ListingEditTab", () => {
       />,
     );
     await waitFor(() => {
-      expect(screen.getByTestId("empty-state")).toBeInTheDocument();
+      expect(screen.getByText("Set Up Directory Listing")).toBeInTheDocument();
+    });
+  });
+
+  it("keeps setup form open after opting into directory listing", async () => {
+    const onUpdate = vi.fn();
+    mockedAxios.post.mockResolvedValueOnce({
+      data: { success: true, data: { directoryOptedIn: true } },
+    });
+
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{ ...baseWebsiteData, directoryOptedIn: false }}
+        onUpdate={onUpdate}
+      />,
+    );
+
+    fireEvent.click(await screen.findByText("Set Up Directory Listing"));
+
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining("/websites/1/listing/extract"),
+      );
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+      expect(onUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ directoryOptedIn: true }),
+      );
     });
   });
 
@@ -299,6 +396,83 @@ describe("ListingEditTab", () => {
         expect.stringContaining("/websites/1/listing"),
         expect.objectContaining({ businessName: "Test Business" }),
       );
+    });
+  });
+
+  it("preserves existing contact fields when saving a partial listing edit", async () => {
+    const onUpdate = vi.fn();
+    mockedAxios.patch.mockResolvedValueOnce({ data: { success: true } });
+
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{
+          ...baseWebsiteData,
+          shortDescription: "",
+        }}
+        onUpdate={onUpdate}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    const phoneInput = screen
+      .getByTestId("input-phone")
+      .querySelector("input")!;
+    fireEvent.change(phoneInput, { target: { value: "" } });
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    await waitFor(() => {
+      expect(mockedAxios.patch).toHaveBeenCalledWith(
+        expect.stringContaining("/websites/1/listing"),
+        expect.objectContaining({
+          phone: "+1 555 1234",
+          contactEmail: "test@example.com",
+          fullAddress: "123 Test St",
+          city: "Test City",
+          region: "Test Region",
+          country: "Test Country",
+          tags: ["tech", "startup"],
+        }),
+      );
+      expect(onUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phone: "+1 555 1234",
+          contactEmail: "test@example.com",
+          fullAddress: "123 Test St",
+          city: "Test City",
+          region: "Test Region",
+          country: "Test Country",
+          tags: ["tech", "startup"],
+        }),
+      );
+    });
+  });
+
+  it("shows location inputs and hides contact/location missing guidance when values are filled", async () => {
+    mockedAxios.get.mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: {
+          score: 70,
+          missing: ["contact", "location"],
+          suggestions: {
+            contact: "Add an email or phone number so customers can reach you.",
+            location: "Add your city and country to appear in location-based searches.",
+          },
+        },
+      },
+    });
+
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("input-city")).toBeInTheDocument();
+      expect(screen.getByTestId("input-country")).toBeInTheDocument();
+      expect(screen.queryByText("Contact")).not.toBeInTheDocument();
+      expect(screen.queryByText("Location")).not.toBeInTheDocument();
     });
   });
 
@@ -387,7 +561,7 @@ describe("ListingEditTab", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/completeness must be at least 60%/i),
+        screen.getByText(/readiness must be at least 60%/i),
       ).toBeInTheDocument();
     });
   });
@@ -459,8 +633,8 @@ describe("ListingEditTab", () => {
       />,
     );
 
-    expect(screen.getByTestId("empty-state")).toBeInTheDocument();
-    expect(screen.getByText("No Directory Listing")).toBeInTheDocument();
+    expect(screen.getByText("Directory Listing")).toBeInTheDocument();
+    expect(screen.getByText("Set Up Directory Listing")).toBeInTheDocument();
   });
 
   it("calls AI enhance endpoint", async () => {

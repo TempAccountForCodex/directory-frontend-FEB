@@ -21,10 +21,20 @@ import {
   TextField,
   Snackbar,
   Alert,
+  Stack,
+  FormControlLabel,
+  Checkbox,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlined";
 import { useListings } from "../../context/ListingsContext";
-import { useLocation } from "react-router-dom";
+import { apiClient } from "../../api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useFavorites } from "../../hooks/useFavorites";
+import { useUserFavourites } from "../../hooks/useFavourites";
 
 import Hero from "../../components/publicComponents/Listing/Hero";
 
@@ -87,7 +97,9 @@ const listingMatchesKeyword = (item: any, keyword: string) => {
 const Listings: React.FC<{ isDashboard?: boolean }> = ({
   isDashboard = false,
 }) => {
+  const auth = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const state = location.state as LocationState | null;
   const params = new URLSearchParams(location.search);
   const routeSearch = state?.searchInput ?? params.get("search") ?? "";
@@ -97,33 +109,49 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
     ? routeCategory
     : undefined;
 
-  const { listings, loading, error, deleteListing, updateListing } = useListings();
-
-  /* ---------------- Edit modal state ---------------- */
-  const [editItem, setEditItem] = useState<any | null>(null);
-  const [editFields, setEditFields] = useState({ businessName: "", shortDescription: "", address: "", phone: "", website: "", category: "" });
-  const [editLoading, setEditLoading] = useState(false);
+  const { listings, loading, error } = useListings();
+  const queryClient = useQueryClient();
+  const localFavorites = useFavorites();
+  const backendFavorites = useUserFavourites("recent", 1, {
+    enabled: Boolean(auth.user),
+  });
 
   const handleOpenEdit = (item: any) => {
-    setEditItem(item);
-    setEditFields({
-      businessName: item.businessName || item.title || "",
-      shortDescription: item.shortDescription || item.desc || "",
-      address: item.address || "",
-      phone: item.phone || "",
-      website: item.website || "",
-      category: item.category || "",
-    });
+    if (!item?.id) return;
+    navigate(`/dashboard/websites/${item.id}/manage/listing`);
   };
 
-  const handleCloseEdit = () => { setEditItem(null); };
+  /* ---------------- Archive / undo state ---------------- */
+  const [archivedId, setArchivedId] = useState<string | number | null>(null);
+  const [archiveSnack, setArchiveSnack] = useState<{ message: string; severity: "success" | "error" } | null>(null);
 
-  const handleSaveEdit = async () => {
-    if (!editItem) return;
-    setEditLoading(true);
-    await updateListing(String(editItem.id), editFields);
-    setEditLoading(false);
-    setEditItem(null);
+  const handleArchive = async (id: string | number) => {
+    try {
+      await apiClient.post(`/websites/${id}/listing/archive`);
+      await queryClient.invalidateQueries({ queryKey: ["content", "listings"] });
+      setArchivedId(id);
+      setArchiveSnack({ message: "Listing removed from directory", severity: "success" });
+    } catch (err: any) {
+      setArchiveSnack({
+        message: err.response?.data?.error || err.response?.data?.message || "Failed to remove listing",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleUndoArchive = async () => {
+    if (archivedId == null) return;
+    try {
+      await apiClient.post(`/websites/${archivedId}/listing/republish`);
+      await queryClient.invalidateQueries({ queryKey: ["content", "listings"] });
+      setArchiveSnack(null);
+      setArchivedId(null);
+    } catch (err: any) {
+      setArchiveSnack({
+        message: err.response?.data?.error || err.response?.data?.message || "Failed to restore listing",
+        severity: "error",
+      });
+    }
   };
 
   /* ---------------- Local UI State ---------------- */
@@ -148,6 +176,9 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
   const [notifyEmail, setNotifyEmail] = useState<string>("");
   const [notifyError, setNotifyError] = useState<string>("");
   const [notifySuccessOpen, setNotifySuccessOpen] = useState<boolean>(false);
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [sortMode, setSortMode] = useState<"default" | "az" | "za">("default");
 
   // Pagination (client-side, if you want it)
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -186,20 +217,29 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
     ],
   );
 
+  const favoriteIds = useMemo(() => {
+    if (auth.user) {
+      return new Set(
+        backendFavorites.favourites.map((item) =>
+          String(item.websiteId || item.id),
+        ),
+      );
+    }
+    return new Set(localFavorites.favorites.map(String));
+  }, [auth.user, backendFavorites.favourites, localFavorites.favorites]);
+
   const displayedListings = useMemo(() => {
-    if (!hasActiveFilters) return listings;
-
-    const keyword = normalize(searchKeyword);
-    const selectedCategories = [
-      propertyType,
-      ...(Array.isArray(category) ? category : [category]),
-      ...accNTaxService,
-    ]
-      .filter((value): value is string => isRealFilterValue(value))
-      .map(normalize);
-
-    return listings.filter((item: any) => {
+    let result = hasActiveFilters ? listings.filter((item: any) => {
       const itemCategory = normalize(getListingCategory(item));
+
+      const keyword = normalize(searchKeyword);
+      const selectedCategories = [
+        propertyType,
+        ...(Array.isArray(category) ? category : [category]),
+        ...accNTaxService,
+      ]
+        .filter((value): value is string => isRealFilterValue(value))
+        .map(normalize);
 
       if (!listingMatchesKeyword(item, keyword)) return false;
       if (
@@ -219,18 +259,42 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
       }
 
       return true;
-    });
+    }) : [...listings];
+
+    if (showOnlyMine && auth.user) {
+      result = result.filter((item: any) => String(item.ownerId) === String(auth.user?.id));
+    }
+
+    if (showOnlyFavorites) {
+      result = result.filter((item: any) => favoriteIds.has(String(item.id)));
+    }
+
+    if (sortMode !== "default") {
+      result = [...result].sort((a: any, b: any) => {
+        const left = String(a.businessName || a.title || "").localeCompare(
+          String(b.businessName || b.title || ""),
+        );
+        return sortMode === "az" ? left : -left;
+      });
+    }
+
+    return result;
   }, [
     accNTaxService,
     area,
+    auth.user,
     category,
     city,
+    favoriteIds,
     hasActiveFilters,
     listings,
     priceRange,
     propertyType,
     region,
     searchKeyword,
+    showOnlyFavorites,
+    showOnlyMine,
+    sortMode,
   ]);
 
   useEffect(() => {
@@ -244,6 +308,9 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
     area,
     region,
     accNTaxService,
+    showOnlyMine,
+    showOnlyFavorites,
+    sortMode,
   ]);
 
   useEffect(() => {
@@ -618,50 +685,103 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
                 ) : listings.length === 0 ? (
                   emptyState
                 ) : (
-                  <PropertyCard
-                    items={displayedListings.slice(
-                      (currentPage - 1) * itemsPerPage,
-                      currentPage * itemsPerPage,
-                    )}
-                    handleDeleteItem={(id) => deleteListing(id)}
-                    onEditItem={handleOpenEdit}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    setItems={
-                      setFilteredData as React.Dispatch<
-                        React.SetStateAction<any[]>
+                  <>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        mb: 2.5,
+                        p: { xs: 1.5, sm: 2 },
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        bgcolor: "rgba(255, 255, 255, 0.86)",
+                      }}
+                    >
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={1.5}
+                        alignItems={{ xs: "stretch", sm: "center" }}
+                        justifyContent="space-between"
                       >
-                    }
-                    totalPages={Math.ceil(
-                      displayedListings.length / itemsPerPage,
-                    )}
-                    totalPlaces={displayedListings.length}
-                  />
+                        <Stack
+                          direction={{ xs: "column", sm: "row" }}
+                          spacing={{ xs: 0.5, sm: 2 }}
+                        >
+                          {auth.user && (
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={showOnlyMine}
+                                  onChange={(event) =>
+                                    setShowOnlyMine(event.target.checked)
+                                  }
+                                  size="small"
+                                  sx={{ color: brandTeal }}
+                                />
+                              }
+                              label="My listings"
+                              sx={{ m: 0 }}
+                            />
+                          )}
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={showOnlyFavorites}
+                                onChange={(event) =>
+                                  setShowOnlyFavorites(event.target.checked)
+                                }
+                                size="small"
+                                sx={{ color: brandTeal }}
+                              />
+                            }
+                            label="My favourites"
+                            sx={{ m: 0 }}
+                          />
+                        </Stack>
+                        <Select
+                          value={sortMode}
+                          onChange={(event) =>
+                            setSortMode(
+                              event.target.value as "default" | "az" | "za",
+                            )
+                          }
+                          size="small"
+                          sx={{
+                            minWidth: { xs: "100%", sm: 180 },
+                            bgcolor: "common.white",
+                          }}
+                        >
+                          <MenuItem value="default">Default order</MenuItem>
+                          <MenuItem value="az">A-Z</MenuItem>
+                          <MenuItem value="za">Z-A</MenuItem>
+                        </Select>
+                      </Stack>
+                    </Paper>
+                    <PropertyCard
+                      items={displayedListings.slice(
+                        (currentPage - 1) * itemsPerPage,
+                        currentPage * itemsPerPage,
+                      )}
+                      handleDeleteItem={handleArchive}
+                      onEditItem={handleOpenEdit}
+                      currentPage={currentPage}
+                      setCurrentPage={setCurrentPage}
+                      setItems={
+                        setFilteredData as React.Dispatch<
+                          React.SetStateAction<any[]>
+                        >
+                      }
+                      totalPages={Math.ceil(
+                        displayedListings.length / itemsPerPage,
+                      )}
+                      totalPlaces={displayedListings.length}
+                    />
+                  </>
                 )}
               </Grid>
             </Grid>
           </Container>
         </Suspense>
       </Box>
-      {/* Edit listing modal */}
-      <Dialog open={!!editItem} onClose={handleCloseEdit} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 600 }}>Edit Listing</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
-          <TextField label="Business Name" value={editFields.businessName} onChange={(e) => setEditFields((f) => ({ ...f, businessName: e.target.value }))} fullWidth size="small" />
-          <TextField label="Short Description" value={editFields.shortDescription} onChange={(e) => setEditFields((f) => ({ ...f, shortDescription: e.target.value }))} fullWidth size="small" multiline minRows={2} />
-          <TextField label="Address" value={editFields.address} onChange={(e) => setEditFields((f) => ({ ...f, address: e.target.value }))} fullWidth size="small" />
-          <TextField label="Phone" value={editFields.phone} onChange={(e) => setEditFields((f) => ({ ...f, phone: e.target.value }))} fullWidth size="small" />
-          <TextField label="Website" value={editFields.website} onChange={(e) => setEditFields((f) => ({ ...f, website: e.target.value }))} fullWidth size="small" />
-          <TextField label="Category" value={editFields.category} onChange={(e) => setEditFields((f) => ({ ...f, category: e.target.value }))} fullWidth size="small" />
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseEdit} disabled={editLoading}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveEdit} disabled={editLoading}>
-            {editLoading ? "Saving…" : "Save Changes"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       <Dialog
         open={notifyOpen}
         onClose={() => setNotifyOpen(false)}
@@ -713,6 +833,28 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
           </Button>
         </DialogActions>
       </Dialog>
+      {/* Archive result / undo snackbar */}
+      <Snackbar
+        open={!!archiveSnack}
+        autoHideDuration={6000}
+        onClose={() => setArchiveSnack(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={archiveSnack?.severity || "success"}
+          onClose={() => setArchiveSnack(null)}
+          action={
+            archiveSnack?.severity === "success" && archivedId != null ? (
+              <Button color="inherit" size="small" onClick={handleUndoArchive}>
+                Undo
+              </Button>
+            ) : undefined
+          }
+          sx={{ width: "100%" }}
+        >
+          {archiveSnack?.message}
+        </Alert>
+      </Snackbar>
       <Snackbar
         open={notifySuccessOpen}
         autoHideDuration={3500}

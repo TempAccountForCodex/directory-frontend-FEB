@@ -11,6 +11,7 @@ import {
 export interface FavouriteListing {
   id: number;
   websiteId: number;
+  favouriteId?: number;
   title: string;
   description?: string;
   category?: string;
@@ -48,6 +49,50 @@ export interface BatchFavouritesResult {
   statusMap: Record<number | string, boolean>;
   loading: boolean;
   refetch: () => void;
+}
+
+type RawFavourite = FavouriteListing & {
+  createdAt?: string;
+  website?: {
+    id?: number;
+    name?: string;
+    slug?: string;
+    businessName?: string;
+    businessCategory?: string;
+    shortDescription?: string;
+    logoUrl?: string;
+    businessLogo?: string;
+    averageRating?: number;
+    reviewCount?: number;
+    favouriteCount?: number;
+    status?: string;
+  };
+};
+
+function normalizeFavourite(item: RawFavourite): FavouriteListing {
+  if (item.website) {
+    const websiteId = Number(item.website.id);
+    return {
+      id: websiteId,
+      websiteId,
+      favouriteId: item.id,
+      title: item.website.businessName || item.website.name || "Untitled listing",
+      description: item.website.shortDescription,
+      category: item.website.businessCategory,
+      image: item.website.logoUrl || item.website.businessLogo,
+      averageRating: item.website.averageRating,
+      reviewCount: item.website.reviewCount,
+      savedAt: item.createdAt || item.savedAt || "",
+    };
+  }
+
+  const websiteId = Number(item.websiteId || item.id);
+  return {
+    ...item,
+    id: websiteId,
+    websiteId,
+    savedAt: item.savedAt || item.createdAt || "",
+  };
 }
 
 /* ---------- useFavourite (single listing) ---------- */
@@ -89,8 +134,12 @@ export function useFavourite(
 export function useUserFavourites(
   sort: string = "recent",
   page: number = 1,
+  options: { enabled?: boolean } = {},
 ): UserFavouritesResult {
-  const query = useUserFavouritesQuery({ sort, page, limit: 12 });
+  const query = useUserFavouritesQuery(
+    { sort, page, limit: 12 },
+    { enabled: options.enabled ?? true },
+  );
   const err = query.error as AxiosError<{ message?: string }> | null;
   const requiresAuth = err?.response?.status === 401;
   const errorMsg =
@@ -100,14 +149,15 @@ export function useUserFavourites(
 
   const data = query.data as
     | {
-        favourites?: FavouriteListing[];
-        data?: FavouriteListing[];
+        favourites?: RawFavourite[];
+        data?: RawFavourite[];
         pagination?: FavouritePagination;
       }
     | undefined;
+  const rawFavourites = data?.favourites ?? data?.data ?? [];
 
   return {
-    favourites: data?.favourites ?? data?.data ?? [],
+    favourites: rawFavourites.map(normalizeFavourite),
     pagination: data?.pagination ?? null,
     loading: query.isFetching,
     error: errorMsg,

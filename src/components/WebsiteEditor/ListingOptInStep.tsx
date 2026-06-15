@@ -14,6 +14,7 @@ import DashboardInput from "../Dashboard/shared/DashboardInput";
 import DashboardSelect from "../Dashboard/shared/DashboardSelect";
 import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
 import DashboardActionButton from "../Dashboard/shared/DashboardActionButton";
+import PropertyItemCard from "../publicComponents/Listing/PropertyCardItem";
 
 const BUSINESS_CATEGORIES = [
   "Restaurant",
@@ -82,26 +83,45 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
     setError("");
 
     try {
-      await apiClient.post(`/websites/${websiteId}/listing/extract`);
-    } catch {
-      // Non-blocking: extraction failure should not prevent wizard completion
+      try {
+        await apiClient.post(`/websites/${websiteId}/listing/extract`);
+      } catch {
+        setError(
+          "Directory listing extraction encountered an issue. Your saved details are still available in settings.",
+        );
+      }
+      await apiClient.patch(`/websites/${websiteId}/listing`, {
+        directoryOptedIn: true,
+        ...(shortDescription.trim()
+          ? { shortDescription: shortDescription.trim() }
+          : {}),
+        ...(businessCategory ? { businessCategory } : {}),
+      });
+    } catch (err: any) {
       setError(
-        "Directory listing extraction encountered an issue. You can configure it later in settings.",
+        err.response?.data?.message ||
+          "Directory listing setup encountered an issue. You can configure it later in settings.",
       );
     } finally {
       setExtracting(false);
       onComplete();
     }
-  }, [optedIn, websiteId, onComplete]);
+  }, [businessCategory, optedIn, shortDescription, websiteId, onComplete]);
 
   const previewData = useMemo(
     () => ({
+      id: websiteId,
       businessName: websiteName,
+      title: websiteName,
       category: businessCategory || "Business",
+      businessCategory: businessCategory || "Business",
       shortDescription:
         shortDescription || "Your business description will appear here...",
+      desc: shortDescription || "Your business description will appear here...",
+      averageRating: 0,
+      reviewCount: 0,
     }),
-    [websiteName, businessCategory, shortDescription],
+    [websiteId, websiteName, businessCategory, shortDescription],
   );
 
   if (extracting) {
@@ -162,32 +182,15 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
       {optedIn && (
         <>
           {/* Preview card */}
-          <Box
-            sx={{
-              p: 2,
-              borderRadius: 2,
-              border: "1px solid",
-              borderColor: "divider",
-              mb: 2,
-              bgcolor: "background.paper",
-            }}
-            data-testid="listing-preview"
-          >
-            <Typography
-              variant="subtitle1"
-              sx={{ color: "text.primary", fontWeight: 600 }}
-            >
-              {previewData.businessName}
-            </Typography>
-            <Typography variant="caption" sx={{ color: "primary.main" }}>
-              {previewData.category}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", mt: 0.5 }}
-            >
-              {previewData.shortDescription}
-            </Typography>
+          <Box data-testid="listing-preview" sx={{ mb: 2, maxWidth: 400 }}>
+            <PropertyItemCard
+              item={previewData}
+              handleDeleteItem={() => undefined}
+              previewMode
+              totalPages={1}
+              currentPage={1}
+              setCurrentPage={() => undefined}
+            />
           </Box>
 
           {/* Expandable customize section */}

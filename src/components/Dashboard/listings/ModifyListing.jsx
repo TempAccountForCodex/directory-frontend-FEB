@@ -1,14 +1,11 @@
-import { Box, Alert } from '@mui/material';
+import DirectoryListingsDashboard from './DirectoryListingsDashboard';
 
-const ModifyListing = () => {
-  return (
-    <Box sx={{ p: 3 }}>
-      <Alert severity="info">
-        Listing management has moved to the website management dashboard.
-        Navigate to your website and select the "Listing" tab.
-      </Alert>
-    </Box>
-  );
-};
+const ModifyListing = ({ pageTitle, pageSubtitle }) => (
+  <DirectoryListingsDashboard
+    pageTitle={pageTitle}
+    pageSubtitle={pageSubtitle}
+    mode="modify"
+  />
+);
 
 export default ModifyListing;

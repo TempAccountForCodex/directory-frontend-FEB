@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useFavourite } from "./useFavourites";
 
 const STORAGE_KEY = "tt_favorite_listings";
 
@@ -11,37 +13,55 @@ function readStorage(): string[] {
 }
 
 /**
- * Manages favorite listing IDs.
- * Currently persisted in localStorage; swap the internals for API calls
- * once the backend favorites endpoints are live (see BACKEND_FAVORITES.md).
+ * Manages listing favourite state.
+ * - Anonymous users use localStorage.
+ * - Signed-in users use the backend favourites endpoint for the active card.
  */
-export function useFavorites() {
+export function useFavorites(activeId?: string | number | null) {
+  const { user } = useAuth();
   const [favorites, setFavorites] = useState<string[]>(readStorage);
+  const backendFavourite = useFavourite(user && activeId ? activeId : null);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
-  }, [favorites]);
+    if (!user) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+    }
+  }, [favorites, user]);
 
   const isFavorited = useCallback(
-    (id: string | number) => favorites.includes(String(id)),
-    [favorites],
+    (id: string | number) => {
+      if (user && activeId !== undefined && activeId !== null && String(id) === String(activeId)) {
+        return backendFavourite.isFavourited;
+      }
+      return favorites.includes(String(id));
+    },
+    [activeId, backendFavourite.isFavourited, favorites, user],
   );
 
   const toggleFavorite = useCallback(
-    (id: string | number, e?: React.MouseEvent) => {
+    async (id: string | number, e?: React.MouseEvent) => {
       e?.stopPropagation();
+      if (user && activeId !== undefined && activeId !== null && String(id) === String(activeId)) {
+        await backendFavourite.toggleFavourite();
+        return;
+      }
+
       const key = String(id);
       setFavorites((prev) =>
         prev.includes(key) ? prev.filter((f) => f !== key) : [...prev, key],
       );
-      // TODO: replace with API call when backend is ready
-      // if (isFavorited) DELETE /api/favorites/:id
-      // else             POST /api/favorites  { listingId: id }
     },
-    [],
+    [activeId, backendFavourite, user],
   );
 
   const clearFavorites = useCallback(() => setFavorites([]), []);
 
-  return { favorites, isFavorited, toggleFavorite, clearFavorites };
+  return {
+    favorites,
+    isFavorited,
+    toggleFavorite,
+    clearFavorites,
+    loading: backendFavourite.loading,
+    favouriteCount: backendFavourite.favouriteCount,
+  };
 }

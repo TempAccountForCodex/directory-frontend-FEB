@@ -1,14 +1,11 @@
-import { Box, Alert } from '@mui/material';
+import DirectoryListingsDashboard from './DirectoryListingsDashboard';
 
-const AllListings = () => {
-  return (
-    <Box sx={{ p: 3 }}>
-      <Alert severity="info">
-        Listing management has moved to the website management dashboard.
-        Navigate to your website and select the "Listing" tab.
-      </Alert>
-    </Box>
-  );
-};
+const AllListings = ({ pageTitle, pageSubtitle }) => (
+  <DirectoryListingsDashboard
+    pageTitle={pageTitle}
+    pageSubtitle={pageSubtitle}
+    mode="all"
+  />
+);
 
 export default AllListings;

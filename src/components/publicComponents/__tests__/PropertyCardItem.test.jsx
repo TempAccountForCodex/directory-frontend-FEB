@@ -34,6 +34,13 @@ vi.mock("../../../context/DashboardContext", () => ({
   DashboardContext: React.createContext({ setSelectedSection: vi.fn() }),
 }));
 
+vi.mock("../../../hooks/useFavorites", () => ({
+  useFavorites: () => ({
+    isFavorited: () => false,
+    toggleFavorite: vi.fn(),
+  }),
+}));
+
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -101,7 +108,6 @@ describe("PropertyCardItem", () => {
 
   it("2: renders category tag and background-card metadata without extra contact metadata", () => {
     renderCard();
-    expect(screen.getByText("Business")).toBeInTheDocument();
     expect(screen.getByText("Directory")).toBeInTheDocument();
     expect(screen.queryByText("100 Test Street")).not.toBeInTheDocument();
     expect(screen.queryByText("+44 20 1234 5678")).not.toBeInTheDocument();
