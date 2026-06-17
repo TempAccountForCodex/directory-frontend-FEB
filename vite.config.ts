@@ -110,20 +110,6 @@ export default defineConfig(({ mode }) => {
             // Core React libraries (changes rarely)
             'react-core': ['react', 'react-dom', 'react-router-dom'],
 
-<<<<<<< HEAD
-            // MUI components (large, changes with updates)
-            mui: ['@mui/material', '@mui/icons-material', '@mui/x-date-pickers'],
-
-            // Heavy feature libraries (only loaded when needed)
-            maps: ['leaflet', 'react-leaflet', 'react-simple-maps'],
-            animations: ['framer-motion', '@tsparticles/react', '@tsparticles/engine'],
-          },
-        },
-      },
-    },
-  };
-});
-=======
             // Heavy feature libraries (only loaded when needed)
             maps: ['leaflet', 'react-leaflet', 'react-simple-maps'],
           },
@@ -132,4 +118,3 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
->>>>>>> a99c589 (homepage lighthouse done)
