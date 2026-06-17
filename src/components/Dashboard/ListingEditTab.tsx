@@ -13,6 +13,8 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
@@ -97,6 +99,7 @@ const STATUS_CONFIG: Record<
 interface FormData {
   businessName: string;
   shortDescription: string;
+  descriptionContent: string;
   businessCategory: string;
   priceLevel: string;
   phone: string;
@@ -120,6 +123,7 @@ export interface ListingEditTabProps {
     name?: string;
     businessName?: string;
     shortDescription?: string;
+    descriptionContent?: string | null;
     businessCategory?: string;
     priceLevel?: string;
     phone?: string;
@@ -161,8 +165,59 @@ function deriveStatus(
 }
 
 const MAX_TAGS = 10;
-const MAX_DESC = 500;
+const MIN_DESCRIPTION_WORDS = 250;
+const MAX_DESCRIPTION_WORDS = 2000;
 const MIN_PUBLISH_COMPLETENESS = 60;
+
+const countWords = (value: string) =>
+  value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+const stripHtml = (value = "") =>
+  value
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const createDescriptionContent = (text = "") =>
+  text
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => `<p>${paragraph}</p>`)
+    .join("") || "<p><br></p>";
+
+const DESCRIPTION_EDITOR_MODULES = {
+  toolbar: [
+    [{ header: [2, 3, false] }],
+    ["bold", "italic", "underline"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["blockquote", "link", "image"],
+    ["clean"],
+  ],
+};
+
+const DESCRIPTION_EDITOR_FORMATS = [
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "list",
+  "bullet",
+  "blockquote",
+  "link",
+  "image",
+];
 
 const formatMissingFieldLabel = (field: string) =>
   field
@@ -170,6 +225,54 @@ const formatMissingFieldLabel = (field: string) =>
     .replace(/[_-]+/g, " ")
     .trim()
     .replace(/^./, (char) => char.toUpperCase());
+
+const FIELD_ERROR_ALIASES: Record<string, keyof FormData> = {
+  contactEmail: "email",
+  email: "email",
+};
+
+const normalizeFieldErrors = (fields?: unknown) => {
+  const normalized: Record<string, string> = {};
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) {
+    return normalized;
+  }
+
+  Object.entries(fields as Record<string, unknown>).forEach(([field, value]) => {
+    const key = FIELD_ERROR_ALIASES[field] || field;
+    const message = Array.isArray(value)
+      ? value.map((item) => stringifyApiMessage(item, "")).filter(Boolean).join(" ")
+      : stringifyApiMessage(value, "");
+    if (message) normalized[key] = message;
+  });
+
+  return normalized;
+};
+
+const stringifyApiMessage = (value: unknown, fallback = "Request failed"): string => {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    const joined = value.map((item) => stringifyApiMessage(item, "")).filter(Boolean).join(" ");
+    return joined || fallback;
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    if (typeof record.message === "string") return record.message;
+    if (typeof record.error === "string") return record.error;
+    if (typeof record.code === "string") return record.code;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+};
+
+const getApiValidationErrors = (data?: any) =>
+  normalizeFieldErrors(data?.fields || data?.errors || data?.fieldErrors);
+
+const getApiErrorMessage = (data?: any, fallback = "Request failed") =>
+  stringifyApiMessage(data?.error || data?.message, fallback);
 
 const ListingEditTab = React.memo(function ListingEditTab({
   websiteId,
@@ -185,6 +288,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const [form, setForm] = useState<FormData>({
     businessName: "",
     shortDescription: "",
+    descriptionContent: "<p><br></p>",
     businessCategory: "",
     priceLevel: "",
     phone: "",
@@ -233,6 +337,9 @@ const ListingEditTab = React.memo(function ListingEditTab({
       setForm({
         businessName: websiteData.businessName || websiteData.name || "",
         shortDescription: websiteData.shortDescription || "",
+        descriptionContent:
+          websiteData.descriptionContent ||
+          createDescriptionContent(websiteData.shortDescription || ""),
         businessCategory: websiteData.businessCategory || "",
         priceLevel: websiteData.priceLevel || "",
         phone: websiteData.phone || "",
@@ -333,6 +440,11 @@ const ListingEditTab = React.memo(function ListingEditTab({
     };
   }, [completeness, form.phone, form.email, form.city, form.country]);
 
+  const descriptionWordCount = useMemo(
+    () => countWords(form.shortDescription),
+    [form.shortDescription],
+  );
+
   // Field change handler
   const handleFieldChange = useCallback(
     (field: keyof FormData) =>
@@ -351,6 +463,15 @@ const ListingEditTab = React.memo(function ListingEditTab({
     },
     [],
   );
+
+  const handleDescriptionContentChange = useCallback((value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      descriptionContent: value,
+      shortDescription: stripHtml(value),
+    }));
+    setFormErrors((prev) => ({ ...prev, shortDescription: "" }));
+  }, []);
 
   const resolveAssetUrl = useCallback((value?: string | null) => {
     if (!value) return "";
@@ -391,9 +512,9 @@ const ListingEditTab = React.memo(function ListingEditTab({
         setListingImageUrl(logoUrl);
         setSuccess("Listing image updated");
         await refreshListingCaches();
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to upload listing image");
-      } finally {
+    } catch (err: any) {
+      setError(getApiErrorMessage(err.response?.data, "Failed to upload listing image"));
+    } finally {
         setUploadingImage(false);
       }
     },
@@ -439,9 +560,15 @@ const ListingEditTab = React.memo(function ListingEditTab({
     if (!form.businessName.trim()) {
       errors.businessName = "Business name is required";
     }
+    const descriptionWordCount = countWords(form.shortDescription);
+    if (descriptionWordCount < MIN_DESCRIPTION_WORDS) {
+      errors.shortDescription = `Description must be at least ${MIN_DESCRIPTION_WORDS} words. Current count: ${descriptionWordCount}.`;
+    } else if (descriptionWordCount > MAX_DESCRIPTION_WORDS) {
+      errors.shortDescription = `Description must be ${MAX_DESCRIPTION_WORDS} words or fewer. Current count: ${descriptionWordCount}.`;
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [form.businessName]);
+  }, [form.businessName, form.shortDescription]);
 
   // Save
   const handleOptIn = useCallback(async () => {
@@ -464,7 +591,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
         directoryOptedIn: true,
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to initialise directory listing");
+      setError(getApiErrorMessage(err.response?.data, "Failed to initialise directory listing"));
     } finally {
       setOptingIn(false);
     }
@@ -475,6 +602,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     setSaving(true);
     setError("");
     setSuccess("");
+    setFormErrors({});
     try {
       const preserveString = (
         value: string,
@@ -489,6 +617,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
       const payload = {
         businessName: preserveString(form.businessName, websiteData?.businessName || websiteData?.name),
         shortDescription: preserveString(form.shortDescription, websiteData?.shortDescription),
+        descriptionContent: form.descriptionContent || createDescriptionContent(form.shortDescription),
         businessCategory: preserveString(form.businessCategory, websiteData?.businessCategory),
         priceLevel: preserveString(form.priceLevel, websiteData?.priceLevel),
         phone: preserveString(form.phone, websiteData?.phone),
@@ -513,7 +642,12 @@ const ListingEditTab = React.memo(function ListingEditTab({
         ...updatedWebsite,
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save listing");
+      const data = err.response?.data;
+      const validationErrors = getApiValidationErrors(data);
+      if (Object.keys(validationErrors).length > 0) {
+        setFormErrors(validationErrors);
+      }
+      setError(getApiErrorMessage(data, "Failed to save listing"));
     } finally {
       setSaving(false);
     }
@@ -521,6 +655,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
 
   // Publish
   const handlePublish = useCallback(async () => {
+    if (!validateForm()) return;
     if (completeness && completeness.score < MIN_PUBLISH_COMPLETENESS) {
       setError(
         `Listing readiness must be at least ${MIN_PUBLISH_COMPLETENESS}% to publish. Please fill in the missing fields.`,
@@ -530,6 +665,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     setPublishing(true);
     setError("");
     setSuccess("");
+    setFormErrors({});
     try {
       const res = await apiClient.post(
         `/websites/${websiteId}/listing/publish`,
@@ -540,15 +676,19 @@ const ListingEditTab = React.memo(function ListingEditTab({
       }
     } catch (err: any) {
       const data = err.response?.data;
+      const validationErrors = getApiValidationErrors(data);
+      if (Object.keys(validationErrors).length > 0) {
+        setFormErrors(validationErrors);
+      }
       if (data?.missing) {
         setError(`Cannot publish. Missing fields: ${data.missing.join(", ")}`);
       } else {
-        setError(data?.error || data?.message || "Failed to publish listing");
+        setError(getApiErrorMessage(data, "Failed to publish listing"));
       }
     } finally {
       setPublishing(false);
     }
-  }, [completeness, websiteId, refreshListingCaches]);
+  }, [completeness, validateForm, websiteId, refreshListingCaches]);
 
   // Unpublish (uses archive endpoint)
   const handleUnpublish = useCallback(async () => {
@@ -562,7 +702,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
       setSuccess("Listing unpublished");
       await refreshListingCaches();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to unpublish listing");
+      setError(getApiErrorMessage(err.response?.data, "Failed to unpublish listing"));
     } finally {
       setUnpublishing(false);
     }
@@ -570,6 +710,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
 
   // Republish (from ARCHIVED state)
   const handleRepublish = useCallback(async () => {
+    if (!validateForm()) return;
     setPublishing(true);
     setError("");
     setSuccess("");
@@ -578,11 +719,11 @@ const ListingEditTab = React.memo(function ListingEditTab({
       setSuccess("Listing republished to directory");
       await refreshListingCaches();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to republish listing");
+      setError(getApiErrorMessage(err.response?.data, "Failed to republish listing"));
     } finally {
       setPublishing(false);
     }
-  }, [websiteId, refreshListingCaches]);
+  }, [validateForm, websiteId, refreshListingCaches]);
 
   // Archive
   const handleArchive = useCallback(async () => {
@@ -595,7 +736,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
       setShowArchiveConfirm(false);
       await refreshListingCaches();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to archive listing");
+      setError(getApiErrorMessage(err.response?.data, "Failed to archive listing"));
     } finally {
       setArchiving(false);
     }
@@ -615,13 +756,16 @@ const ListingEditTab = React.memo(function ListingEditTab({
         setForm((prev) => ({
           ...prev,
           shortDescription: data.shortDescription || prev.shortDescription,
+          descriptionContent:
+            data.descriptionContent ||
+            createDescriptionContent(data.shortDescription || prev.shortDescription),
           tags: data.tags || prev.tags,
         }));
         setSuccess("AI enhancement applied");
         await fetchCompleteness();
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "AI enhancement failed");
+      setError(getApiErrorMessage(err.response?.data, "AI enhancement failed"));
     } finally {
       setEnhancing(false);
     }
@@ -889,29 +1033,82 @@ const ListingEditTab = React.memo(function ListingEditTab({
             />
 
             <Box>
-              <DashboardInput
-                label="Short Description"
-                value={form.shortDescription}
-                onChange={handleFieldChange("shortDescription")}
-                multiline
-                rows={3}
-                placeholder="Describe your business in a few sentences"
-                inputProps={{ maxLength: MAX_DESC }}
-              />
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", fontWeight: 500, mb: 1 }}
+              >
+                Description
+              </Typography>
+              <Box
+                data-testid="description-rich-editor"
+                sx={{
+                  border: "1px solid",
+                  borderColor: formErrors.shortDescription ? "error.main" : "divider",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  bgcolor: "background.paper",
+                  "& .ql-toolbar": {
+                    border: 0,
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                    bgcolor: "action.hover",
+                  },
+                  "& .ql-container": {
+                    border: 0,
+                    minHeight: 260,
+                    fontFamily: "inherit",
+                    fontSize: 16,
+                  },
+                  "& .ql-editor": {
+                    minHeight: 260,
+                    color: "text.primary",
+                    lineHeight: 1.6,
+                  },
+                  "& .ql-editor.ql-blank::before": {
+                    color: "text.disabled",
+                    fontStyle: "normal",
+                  },
+                  "& .ql-editor img": {
+                    display: "block",
+                    maxWidth: "100%",
+                    maxHeight: 360,
+                    my: 2,
+                    borderRadius: "8px",
+                  },
+                }}
+              >
+                <ReactQuill
+                  theme="snow"
+                  value={form.descriptionContent}
+                  onChange={handleDescriptionContentChange}
+                  modules={DESCRIPTION_EDITOR_MODULES}
+                  formats={DESCRIPTION_EDITOR_FORMATS}
+                  placeholder="Describe your business, services, audience, location, and value in detail. Use the image tool to place an image inside the description."
+                />
+              </Box>
+              {formErrors.shortDescription && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "error.main", mt: 0.5, display: "block" }}
+                >
+                  {formErrors.shortDescription}
+                </Typography>
+              )}
               <Typography
                 variant="caption"
                 sx={{
                   color:
-                    form.shortDescription.length >= MAX_DESC
+                    descriptionWordCount < MIN_DESCRIPTION_WORDS ||
+                    descriptionWordCount > MAX_DESCRIPTION_WORDS
                       ? "error.main"
                       : "text.secondary",
                   mt: 0.5,
                   display: "block",
                   textAlign: "right",
                 }}
-                data-testid="char-counter"
+                data-testid="word-counter"
               >
-                {form.shortDescription.length}/{MAX_DESC}
+                {descriptionWordCount} words. Required: {MIN_DESCRIPTION_WORDS}-{MAX_DESCRIPTION_WORDS}.
               </Typography>
             </Box>
 
@@ -928,6 +1125,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
                   value={form.businessCategory}
                   onChange={handleSelectChange("businessCategory")}
                   name="businessCategory"
+                  error={Boolean(formErrors.businessCategory)}
+                  helperText={formErrors.businessCategory}
                 >
                   <MenuItem value="">
                     <em>Select a category</em>
@@ -964,6 +1163,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
               onChange={handleFieldChange("phone")}
               placeholder="+1 (555) 000-0000"
               type="tel"
+              error={Boolean(formErrors.phone)}
+              helperText={formErrors.phone}
             />
 
             <DashboardInput
@@ -972,6 +1173,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
               onChange={handleFieldChange("email")}
               placeholder="contact@business.com"
               type="email"
+              error={Boolean(formErrors.email)}
+              helperText={formErrors.email}
             />
 
             <DashboardInput
@@ -979,6 +1182,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
               value={form.fullAddress}
               onChange={handleFieldChange("fullAddress")}
               placeholder="123 Business St, City, State 12345"
+              error={Boolean(formErrors.fullAddress)}
+              helperText={formErrors.fullAddress}
             />
 
             <Box
@@ -996,18 +1201,24 @@ const ListingEditTab = React.memo(function ListingEditTab({
                 value={form.city}
                 onChange={handleFieldChange("city")}
                 placeholder="City"
+                error={Boolean(formErrors.city)}
+                helperText={formErrors.city}
               />
               <DashboardInput
                 label="Region"
                 value={form.region}
                 onChange={handleFieldChange("region")}
                 placeholder="State or region"
+                error={Boolean(formErrors.region)}
+                helperText={formErrors.region}
               />
               <DashboardInput
                 label="Country"
                 value={form.country}
                 onChange={handleFieldChange("country")}
                 placeholder="Country"
+                error={Boolean(formErrors.country)}
+                helperText={formErrors.country}
               />
             </Box>
 
@@ -1112,6 +1323,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
                 disabled={form.tags.length >= MAX_TAGS}
                 fullWidth
                 data-testid="tag-input"
+                error={Boolean(formErrors.tags)}
+                helperText={formErrors.tags}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",

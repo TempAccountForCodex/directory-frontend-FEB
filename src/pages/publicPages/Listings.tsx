@@ -10,7 +10,6 @@ import {
   Grid,
   Box,
   Typography,
-  Paper,
   Container,
   CircularProgress,
   Button,
@@ -21,11 +20,6 @@ import {
   TextField,
   Snackbar,
   Alert,
-  Stack,
-  FormControlLabel,
-  Checkbox,
-  Select,
-  MenuItem,
 } from "@mui/material";
 import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlined";
 import { useListings } from "../../context/ListingsContext";
@@ -265,7 +259,7 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
       result = result.filter((item: any) => String(item.ownerId) === String(auth.user?.id));
     }
 
-    if (showOnlyFavorites) {
+    if (showOnlyFavorites && auth.user) {
       result = result.filter((item: any) => favoriteIds.has(String(item.id)));
     }
 
@@ -296,6 +290,13 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
     showOnlyMine,
     sortMode,
   ]);
+
+  useEffect(() => {
+    if (!auth.user) {
+      setShowOnlyMine(false);
+      setShowOnlyFavorites(false);
+    }
+  }, [auth.user]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -343,6 +344,9 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
     setCity("");
     setAccNTaxService([]);
     setFilteredData([]);
+    setShowOnlyMine(false);
+    setShowOnlyFavorites(false);
+    setSortMode("default");
     setCurrentPage(1);
   };
 
@@ -639,6 +643,13 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
                   loading={loading}
                   paramCategory={paramCategory}
                   clearFilter={clearFilter}
+                  showUserFilters={Boolean(auth.user)}
+                  showOnlyMine={showOnlyMine}
+                  setShowOnlyMine={setShowOnlyMine}
+                  showOnlyFavorites={showOnlyFavorites}
+                  setShowOnlyFavorites={setShowOnlyFavorites}
+                  sortMode={sortMode}
+                  setSortMode={setSortMode}
                 />
               </Grid>
 
@@ -686,76 +697,6 @@ const Listings: React.FC<{ isDashboard?: boolean }> = ({
                   emptyState
                 ) : (
                   <>
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        mb: 2.5,
-                        p: { xs: 1.5, sm: 2 },
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "8px",
-                        bgcolor: "rgba(255, 255, 255, 0.86)",
-                      }}
-                    >
-                      <Stack
-                        direction={{ xs: "column", sm: "row" }}
-                        spacing={1.5}
-                        alignItems={{ xs: "stretch", sm: "center" }}
-                        justifyContent="space-between"
-                      >
-                        <Stack
-                          direction={{ xs: "column", sm: "row" }}
-                          spacing={{ xs: 0.5, sm: 2 }}
-                        >
-                          {auth.user && (
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={showOnlyMine}
-                                  onChange={(event) =>
-                                    setShowOnlyMine(event.target.checked)
-                                  }
-                                  size="small"
-                                  sx={{ color: brandTeal }}
-                                />
-                              }
-                              label="My listings"
-                              sx={{ m: 0 }}
-                            />
-                          )}
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={showOnlyFavorites}
-                                onChange={(event) =>
-                                  setShowOnlyFavorites(event.target.checked)
-                                }
-                                size="small"
-                                sx={{ color: brandTeal }}
-                              />
-                            }
-                            label="My favourites"
-                            sx={{ m: 0 }}
-                          />
-                        </Stack>
-                        <Select
-                          value={sortMode}
-                          onChange={(event) =>
-                            setSortMode(
-                              event.target.value as "default" | "az" | "za",
-                            )
-                          }
-                          size="small"
-                          sx={{
-                            minWidth: { xs: "100%", sm: 180 },
-                            bgcolor: "common.white",
-                          }}
-                        >
-                          <MenuItem value="default">Default order</MenuItem>
-                          <MenuItem value="az">A-Z</MenuItem>
-                          <MenuItem value="za">Z-A</MenuItem>
-                        </Select>
-                      </Stack>
-                    </Paper>
                     <PropertyCard
                       items={displayedListings.slice(
                         (currentPage - 1) * itemsPerPage,

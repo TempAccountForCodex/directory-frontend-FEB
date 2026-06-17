@@ -7,10 +7,10 @@ import {
   Modal,
   Rating,
   Stack,
+  Tooltip,
   Typography,
-  useTheme,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import EditIcon from "@mui/icons-material/Edit";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
@@ -70,7 +70,6 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
   const dashboardContext = useContext(DashboardContext);
   const navigate = useNavigate();
   const auth = useAuth();
-  const theme = useTheme();
   const { isFavorited, toggleFavorite } = useFavorites(item.id);
   const favorited = isFavorited(item.id);
 
@@ -236,34 +235,38 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
                 spacing={1}
                 sx={{ position: "absolute", top: 12, left: 12, zIndex: 4 }}
               >
-                <IconButton
-                  aria-label="Edit listing"
-                  size="small"
-                  onClick={(event) => { event.stopPropagation(); handleEditClick(item.id); }}
-                  sx={{
-                    color: "#fff",
-                    bgcolor: "rgba(0,0,0,0.35)",
-                    backdropFilter: "blur(8px)",
-                    "&:hover": { bgcolor: cardAccent },
-                  }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  component="div"
-                  role="button"
-                  aria-label="Delete listing"
-                  size="small"
-                  onClick={(event) => { event.stopPropagation(); handleDeleteClick(item.id); }}
-                  sx={{
-                    color: "#fff",
-                    bgcolor: "rgba(0,0,0,0.35)",
-                    backdropFilter: "blur(8px)",
-                    "&:hover": { bgcolor: cardAccent },
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
+                <Tooltip title="Edit listing" arrow>
+                  <IconButton
+                    aria-label="Edit listing"
+                    size="small"
+                    onClick={(event) => { event.stopPropagation(); handleEditClick(item.id); }}
+                    sx={{
+                      color: "#fff",
+                      bgcolor: "rgba(0,0,0,0.35)",
+                      backdropFilter: "blur(8px)",
+                      "&:hover": { bgcolor: cardAccent },
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Unpublish listing" arrow>
+                  <IconButton
+                    component="div"
+                    role="button"
+                    aria-label="Unpublish listing"
+                    size="small"
+                    onClick={(event) => { event.stopPropagation(); handleDeleteClick(item.id); }}
+                    sx={{
+                      color: "#fff",
+                      bgcolor: "rgba(0,0,0,0.35)",
+                      backdropFilter: "blur(8px)",
+                      "&:hover": { bgcolor: cardAccent },
+                    }}
+                  >
+                    <ArchiveOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               </Stack>
             )}
 
@@ -387,44 +390,123 @@ const PropertyItemCard: React.FC<PropertyItemCardProps> = ({
         onClose={() => setShowDeleteModal(false)}
         aria-labelledby="delete-modal-title"
         aria-describedby="delete-modal-desc"
+        slotProps={{
+          backdrop: {
+            sx: {
+              backgroundColor: "rgba(8, 12, 18, 0.68)",
+              backdropFilter: "blur(8px)",
+            },
+          },
+        }}
       >
         <Box
           sx={{
-            bgcolor: theme.palette.common.white,
-            width: 300,
-            p: 4,
-            borderRadius: "10px",
+            width: { xs: "calc(100vw - 32px)", sm: 430 },
+            maxWidth: 430,
+            p: { xs: 3, sm: 3.5 },
+            borderRadius: "18px",
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            boxShadow:
-              "rgba(0, 0, 0, 0.05) 0px 6px 24px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px",
+            color: "#f8fafc",
+            bgcolor: "rgba(15, 23, 32, 0.96)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 24px 70px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.08)",
+            outline: "none",
           }}
         >
-          <Typography
-            variant="h6"
-            id="delete-modal-title"
-            sx={{ color: (theme.palette.primary as any).hover }}
-          >
-            Are you sure you want to delete this item?
-          </Typography>
-          <Box mt={2} sx={{ display: "flex", justifyContent: "right" }}>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => handleDeleteConfirm(item.id)}
-              sx={{ mr: 1.5 }}
+          <Stack direction="row" spacing={2} alignItems="flex-start">
+            <Box
+              sx={{
+                width: 46,
+                height: 46,
+                borderRadius: "14px",
+                display: "grid",
+                placeItems: "center",
+                color: "#fff",
+                flex: "0 0 auto",
+                bgcolor: "rgba(55,139,145,0.18)",
+                border: "1px solid rgba(55,139,145,0.45)",
+                boxShadow: "0 12px 28px rgba(55,139,145,0.22)",
+              }}
             >
-              Delete
-            </Button>
+              <ArchiveOutlinedIcon fontSize="small" />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant="h6"
+                id="delete-modal-title"
+                sx={{
+                  color: "#fff",
+                  fontWeight: 800,
+                  fontSize: { xs: 22, sm: 24 },
+                  lineHeight: 1.2,
+                  letterSpacing: 0,
+                }}
+              >
+                Unpublish this listing?
+              </Typography>
+              <Typography
+                id="delete-modal-desc"
+                variant="body2"
+                sx={{
+                  color: "rgba(248,250,252,0.72)",
+                  mt: 1,
+                  lineHeight: 1.65,
+                  fontSize: 14,
+                }}
+              >
+                It will move to archived listings and disappear from the public directory. You can publish it again from your dashboard.
+              </Typography>
+            </Box>
+          </Stack>
+          <Stack
+            direction={{ xs: "column-reverse", sm: "row" }}
+            spacing={1.5}
+            justifyContent="flex-end"
+            sx={{ mt: 3 }}
+          >
             <Button
               variant="outlined"
               onClick={() => setShowDeleteModal(false)}
+              sx={{
+                minHeight: 44,
+                px: 2.5,
+                borderRadius: "12px",
+                color: "rgba(248,250,252,0.86)",
+                borderColor: "rgba(248,250,252,0.18)",
+                textTransform: "none",
+                fontWeight: 700,
+                "&:hover": {
+                  borderColor: "rgba(248,250,252,0.36)",
+                  bgcolor: "rgba(255,255,255,0.06)",
+                },
+              }}
             >
-              Cancel
+              Keep published
             </Button>
-          </Box>
+            <Button
+              variant="contained"
+              onClick={() => handleDeleteConfirm(item.id)}
+              sx={{
+                minHeight: 44,
+                px: 2.5,
+                borderRadius: "12px",
+                bgcolor: cardAccent,
+                color: "#fff",
+                textTransform: "none",
+                fontWeight: 800,
+                boxShadow: "0 14px 30px rgba(55,139,145,0.28)",
+                "&:hover": {
+                  bgcolor: "#2f7a80",
+                  boxShadow: "0 16px 34px rgba(55,139,145,0.34)",
+                },
+              }}
+            >
+              Unpublish
+            </Button>
+          </Stack>
         </Box>
       </Modal>
     </>

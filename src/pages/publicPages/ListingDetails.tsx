@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import DOMPurify from "dompurify";
 import {
   Link as RouterLink,
   useLocation,
@@ -149,6 +150,7 @@ export interface Listing {
   businessName?: string | null;
   desc?: string | null;
   shortDescription?: string | null;
+  descriptionContent?: string | null;
   address?: string | null;
   slug?: string | null;
   phone?: string | null;
@@ -682,7 +684,7 @@ function ReviewReplyBox({
   existingReply?: { content?: string | null } | null;
   onSubmitted: () => void;
 }) {
-  const { replyReview, loading, error } = useReplyReview();
+  const { replyReview, loading, error, fieldErrors } = useReplyReview();
   const [reply, setReply] = useState("");
   const canSubmit = reply.trim().length > 0 && !loading;
 
@@ -729,6 +731,11 @@ function ReviewReplyBox({
       {error && (
         <Typography sx={{ color: "#ef4444", fontFamily: pageFont, fontSize: 12, mt: 0.75 }}>
           {error}
+        </Typography>
+      )}
+      {(fieldErrors.replyText || fieldErrors.content) && (
+        <Typography sx={{ color: "#ef4444", fontFamily: pageFont, fontSize: 12, mt: 0.75 }}>
+          {fieldErrors.replyText || fieldErrors.content}
         </Typography>
       )}
       <Button
@@ -872,6 +879,28 @@ const ListingDetails: React.FC = () => {
       stripHtml(listing.desc) ||
       stripHtml(listing.aboutUs) ||
       "A trusted business listed in the directory.";
+    const richDescription = listing.descriptionContent
+      ? DOMPurify.sanitize(listing.descriptionContent, {
+          ALLOWED_TAGS: [
+            "p",
+            "br",
+            "strong",
+            "b",
+            "em",
+            "i",
+            "u",
+            "ol",
+            "ul",
+            "li",
+            "blockquote",
+            "a",
+            "img",
+            "h2",
+            "h3",
+          ],
+          ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "title"],
+        })
+      : "";
     const rating = Number(
       stats?.averageRating || listing.averageRating || 0,
     );
@@ -892,6 +921,7 @@ const ListingDetails: React.FC = () => {
       name,
       category,
       description,
+      richDescription,
       rating,
       reviewCount,
       tags,
@@ -1209,16 +1239,53 @@ const ListingDetails: React.FC = () => {
             >
               About
             </Typography>
-            <Typography
-              sx={{
-                color: gray[600],
-                fontFamily: pageFont,
-                fontSize: 14,
-                lineHeight: "28px",
-              }}
-            >
-              {viewModel.description}
-            </Typography>
+            {viewModel.richDescription ? (
+              <Box
+                sx={{
+                  color: gray[600],
+                  fontFamily: pageFont,
+                  fontSize: 14,
+                  lineHeight: "28px",
+                  "& p": { my: 1.25 },
+                  "& h2, & h3": {
+                    color: gray[900],
+                    fontFamily: pageFont,
+                    mt: 2.5,
+                    mb: 1,
+                  },
+                  "& ul, & ol": { pl: 3, my: 1.25 },
+                  "& blockquote": {
+                    borderLeft: "3px solid #378b91",
+                    pl: 2,
+                    my: 2,
+                    color: gray[700],
+                  },
+                  "& a": { color: "#378b91", textDecoration: "none" },
+                  "& img": {
+                    display: "block",
+                    width: "100%",
+                    maxHeight: 460,
+                    objectFit: "cover",
+                    borderRadius: "8px",
+                    my: 2.5,
+                  },
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: viewModel.richDescription,
+                }}
+              />
+            ) : (
+              <Typography
+                sx={{
+                  color: gray[600],
+                  fontFamily: pageFont,
+                  fontSize: 14,
+                  lineHeight: "28px",
+                }}
+              >
+                {viewModel.description}
+              </Typography>
+            )}
             {viewModel.tags.length > 0 && (
               <Stack direction="row" flexWrap="wrap" gap={1} mt={2}>
                 {viewModel.tags.map((tag) => (

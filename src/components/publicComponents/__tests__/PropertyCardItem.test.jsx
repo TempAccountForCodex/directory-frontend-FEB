@@ -4,14 +4,14 @@
  * NOTE: Heart/favourite, rating display, and share button tests were removed
  * because the component no longer renders those features. The current component
  * renders a simple card with banner, logo, title, description, address, phone,
- * website, and admin edit/delete buttons.
+ * website, and owner/admin edit/unpublish buttons.
  *
  * Covers:
  * 1. Card renders with title and description
  * 2. Card renders category tag and background-card metadata
- * 3. Admin users see edit/delete buttons
- * 4. Non-admin users do not see edit/delete buttons
- * 5. Delete modal opens on delete click
+ * 3. Admin users see edit/unpublish buttons
+ * 4. Non-admin users do not see edit/unpublish buttons
+ * 5. Unpublish modal opens on archive icon click
  * 6. Card click navigates to listing detail
  */
 
@@ -114,22 +114,20 @@ describe("PropertyCardItem", () => {
     expect(screen.queryByText(/sample\.example\.com/)).not.toBeInTheDocument();
   });
 
-  it("3: admin users see edit and delete buttons", () => {
+  it("3: admin users see edit and unpublish buttons", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: 1, name: "Admin", role: "admin" },
       token: null,
     });
     renderCard();
-    // Edit and Delete icons are rendered for admin users
-    expect(
-      document.querySelector('[data-testid="EditIcon"]'),
-    ).toBeInTheDocument();
-    expect(
-      document.querySelector('[data-testid="DeleteIcon"]'),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /edit listing/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /unpublish listing/i })).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="EditIcon"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="ArchiveOutlinedIcon"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="DeleteIcon"]')).not.toBeInTheDocument();
   });
 
-  it("4: non-admin users do not see edit/delete buttons", () => {
+  it("4: non-admin users do not see edit/unpublish buttons", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: 1, name: "User", role: "user" },
       token: null,
@@ -143,16 +141,16 @@ describe("PropertyCardItem", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("5: delete modal opens on delete icon click", () => {
+  it("5: unpublish modal opens on archive icon click", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: 1, name: "Admin", role: "admin" },
       token: null,
     });
     renderCard();
-    const deleteIcon = document.querySelector('[data-testid="DeleteIcon"]');
-    fireEvent.click(deleteIcon.closest("div[role], div"));
+    fireEvent.click(screen.getByRole("button", { name: /unpublish listing/i }));
+    expect(screen.getByText(/Unpublish this listing/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Are you sure you want to delete/),
+      screen.getByText(/disappear from the public directory/i),
     ).toBeInTheDocument();
   });
 

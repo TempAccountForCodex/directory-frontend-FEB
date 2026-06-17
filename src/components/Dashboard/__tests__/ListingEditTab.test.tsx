@@ -7,7 +7,7 @@
  * 3. Tag add/remove works, max 10 enforced
  * 4. Publish blocked when completeness < 60%
  * 5. Archive shows confirmation dialog
- * 6. Character counter for shortDescription
+ * 6. Word counter for shortDescription
  * 7. Empty state when not opted in
  * 8. AI enhance calls correct API
  */
@@ -34,6 +34,17 @@ vi.mock("../../../hooks/useFavorites", () => ({
     isFavorited: () => false,
     toggleFavorite: vi.fn(),
   }),
+}));
+
+vi.mock("react-quill-new", () => ({
+  default: ({ value, onChange, placeholder }: any) => (
+    <textarea
+      data-testid="mock-rich-description-editor"
+      value={value || ""}
+      placeholder={placeholder}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  ),
 }));
 
 // Mock ThemeContext
@@ -152,12 +163,13 @@ vi.mock("../shared/DashboardInput", () => ({
 }));
 
 vi.mock("../shared/DashboardSelect", () => ({
-  default: ({ label, value, onChange, children }: any) => (
+  default: ({ label, value, onChange, children, error, helperText }: any) => (
     <div data-testid={`select-${label?.replace(/\s+/g, "-").toLowerCase()}`}>
       <label>{label}</label>
-      <select value={value || ""} onChange={onChange}>
+      <select value={value || ""} onChange={onChange} aria-invalid={error}>
         {children}
       </select>
+      {helperText && <span>{helperText}</span>}
     </div>
   ),
 }));
@@ -225,10 +237,15 @@ function render(ui: React.ReactElement) {
 }
 
 describe("ListingEditTab", () => {
+  const validLongDescription = Array.from(
+    { length: 800 },
+    (_, index) => `service${index + 1}`,
+  ).join(" ");
+
   const baseWebsiteData = {
     name: "Test Business",
     businessName: "Test Business",
-    shortDescription: "A test business description",
+    shortDescription: validLongDescription,
     businessCategory: "Technology",
     priceLevel: "$$",
     phone: "+1 555 1234",
@@ -377,6 +394,7 @@ describe("ListingEditTab", () => {
         .getByTestId("input-business-name")
         .querySelector("input")!;
       expect(nameInput.value).toBe("Test Business");
+      expect(screen.getByTestId("description-rich-editor")).toBeInTheDocument();
     });
   });
 
@@ -394,9 +412,112 @@ describe("ListingEditTab", () => {
     await waitFor(() => {
       expect(mockedAxios.patch).toHaveBeenCalledWith(
         expect.stringContaining("/websites/1/listing"),
-        expect.objectContaining({ businessName: "Test Business" }),
+        expect.objectContaining({
+          businessName: "Test Business",
+          descriptionContent: expect.stringContaining("<p>"),
+        }),
       );
     });
+  });
+
+  it("saves rich description content with inline image markup", async () => {
+    mockedAxios.patch.mockResolvedValueOnce({ data: { success: true } });
+
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-rich-description-editor")).toBeInTheDocument();
+    });
+
+    const richEditor = screen.getByTestId("mock-rich-description-editor");
+    fireEvent.change(richEditor, {
+      target: {
+        value: `<p>${validLongDescription}</p><p><img src="https://example.com/listing.jpg" alt="Office" /></p>`,
+      },
+    });
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    await waitFor(() => {
+      expect(mockedAxios.patch).toHaveBeenCalledWith(
+        expect.stringContaining("/websites/1/listing"),
+        expect.objectContaining({
+          shortDescription: validLongDescription,
+          descriptionContent: expect.stringContaining("<img"),
+        }),
+      );
+    });
+  });
+
+  it("shows backend listing validation errors on matching fields", async () => {
+    mockedAxios.patch.mockRejectedValueOnce({
+      response: {
+        status: 400,
+        data: {
+          error: "Listing content failed validation",
+          code: "LISTING_CONTENT_INVALID",
+          fields: {
+            shortDescription: ["Description contains spam-like content."],
+            contactEmail: ["Email looks suspicious."],
+            tags: ["Tags contain unrelated or repetitive keywords."],
+          },
+        },
+      },
+    });
+
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    expect(
+      await screen.findByText("Listing content failed validation"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Description contains spam-like content."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Email looks suspicious.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Tags contain unrelated or repetitive keywords."),
+    ).toBeInTheDocument();
+  });
+
+  it("renders object-shaped backend errors as text", async () => {
+    mockedAxios.patch.mockRejectedValueOnce({
+      response: {
+        status: 400,
+        data: {
+          message: {
+            message: "Description must be at least 250 words.",
+            code: "LISTING_CONTENT_INVALID",
+            statusCode: 400,
+            requestId: "test-request",
+          },
+          fields: {
+            shortDescription: [
+              {
+                message: "Description must be at least 250 words.",
+                code: "LISTING_CONTENT_INVALID",
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    expect(
+      await screen.findAllByText("Description must be at least 250 words."),
+    ).toHaveLength(2);
   });
 
   it("preserves existing contact fields when saving a partial listing edit", async () => {
@@ -408,7 +529,6 @@ describe("ListingEditTab", () => {
         {...defaultProps}
         websiteData={{
           ...baseWebsiteData,
-          shortDescription: "",
         }}
         onUpdate={onUpdate}
       />,
@@ -605,15 +725,64 @@ describe("ListingEditTab", () => {
     });
   });
 
-  it("renders character counter for shortDescription", async () => {
+  it("renders word counter for shortDescription", async () => {
     render(<ListingEditTab {...defaultProps} />);
 
     await waitFor(() => {
-      const counter = screen.getByTestId("char-counter");
-      expect(counter).toHaveTextContent(
-        `${baseWebsiteData.shortDescription.length}/500`,
-      );
+      const counter = screen.getByTestId("word-counter");
+      expect(counter).toHaveTextContent("800 words. Required: 250-2000.");
     });
+  });
+
+  it("blocks save when description is below the minimum word count", async () => {
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{
+          ...baseWebsiteData,
+          shortDescription: "Too short",
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    expect(
+      await screen.findByText(/Description must be at least 250 words/i),
+    ).toBeInTheDocument();
+    expect(mockedAxios.patch).not.toHaveBeenCalled();
+  });
+
+  it("blocks save when description is above the maximum word count", async () => {
+    const tooLongDescription = Array.from(
+      { length: 2001 },
+      (_, index) => `service${index + 1}`,
+    ).join(" ");
+
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{
+          ...baseWebsiteData,
+          shortDescription: tooLongDescription,
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    expect(
+      await screen.findByText(/Description must be 2000 words or fewer/i),
+    ).toBeInTheDocument();
+    expect(mockedAxios.patch).not.toHaveBeenCalled();
   });
 
   it("renders live preview card", async () => {

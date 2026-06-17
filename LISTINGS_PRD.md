@@ -88,6 +88,9 @@ Existing fields are acceptable and should remain. Add image management:
 
 - Upload a new listing image.
 - Or use the current image/logo from the website.
+- Listing description must be long-form and contain `250` to `2000` words before it can be saved, published, or republished.
+- Listing description should support rich content on the detail page, including inline images placed between paragraphs.
+- Listing cards should continue to use a plain-text excerpt only, not inline rich content.
 
 Completeness threshold:
 
@@ -190,7 +193,50 @@ It should show:
 
 Clicking a listing should navigate to the same setup/edit listing area.
 
-## 11. Backend/API Expectations
+## 11. Content Safety And Listing Quality
+
+Listings, reviews, and owner replies must not allow abusive, sexual, spammy, scammy, or category-mismatched content to be published publicly.
+
+### Prohibited Content
+
+Block or reject content that contains:
+
+- Abusive, hateful, threatening, harassing, or discriminatory language.
+- Sexual, adult, explicit, or escort-style content.
+- Spam, scams, deceptive claims, keyword stuffing, fake promotions, or suspicious links.
+- Content that is clearly unrelated to the selected business category.
+- Content that impersonates another business or misrepresents the listed website.
+
+### Fields To Validate
+
+Content safety checks should apply to:
+
+- Business name.
+- Short description.
+- Tags.
+- Business category.
+- Contact fields where relevant.
+- Reviews.
+- Owner replies.
+
+### Listing Quality Rules
+
+- Listing content should reasonably match the selected business category.
+- Tags should describe the business, not unrelated keywords.
+- Descriptions should be understandable business descriptions, not repeated keywords or link spam.
+- Descriptions must contain `250` to `2000` words and should describe the business, services, audience, location, and value in detail.
+- Rich descriptions may include inline images, but text validation and moderation should be based on the extracted plain text.
+- Public listings should not contain generic placeholder copy once published.
+
+### Required Behavior
+
+- Severe prohibited content should be blocked from saving or publishing.
+- The user should see clear field-level messages explaining what must be fixed.
+- Questionable content may remain draft/unpublished until corrected.
+- Existing published listings that later become unsafe should be hidden from the public directory until corrected.
+- Admins should be able to review and manage unsafe listings.
+
+## 12. Backend/API Expectations
 
 - Listing ID in public directory responses should be the website ID.
 - Public directory endpoints require no auth.
@@ -199,8 +245,10 @@ Clicking a listing should navigate to the same setup/edit listing area.
 - Frontend must also hide unauthorized controls.
 - Public listing responses must include `ownerId` so frontend can show owner controls.
 - Swagger/OpenAPI should document all listing, favorite, and review endpoints.
+- Backend must enforce content safety and listing quality rules before public visibility.
+- Frontend should show backend validation errors clearly, but backend remains the source of truth.
 
-## 12. Acceptance Test Flow
+## 13. Acceptance Test Flow
 
 Test account:
 
@@ -226,8 +274,12 @@ Required end-to-end test:
 15. Republish listing.
 16. Verify it reappears publicly and in favorites.
 17. Verify dashboard active/archive counters update correctly.
+18. Try saving/publishing abusive, sexual, spammy, and category-mismatched listing content.
+19. Verify unsafe content is blocked or kept unpublished with clear messages.
+20. Try submitting unsafe review/reply content.
+21. Verify unsafe review/reply content is blocked with clear messages.
 
-## 13. Known Current Planning Gap
+## 14. Known Current Planning Gap
 
 Backend currently appears to have only a technical API contract document:
 

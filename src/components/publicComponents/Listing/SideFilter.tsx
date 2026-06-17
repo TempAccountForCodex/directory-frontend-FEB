@@ -50,21 +50,16 @@ export interface SideFilterProps {
   loading: boolean;
   paramCategory?: string;
   clearFilter: () => void;
+  showUserFilters?: boolean;
+  showOnlyMine?: boolean;
+  setShowOnlyMine?: React.Dispatch<React.SetStateAction<boolean>>;
+  showOnlyFavorites?: boolean;
+  setShowOnlyFavorites?: React.Dispatch<React.SetStateAction<boolean>>;
+  sortMode?: "default" | "az" | "za";
+  setSortMode?: React.Dispatch<React.SetStateAction<"default" | "az" | "za">>;
 }
 
 const normalize = (value: unknown) => String(value ?? "").trim().toLowerCase();
-
-const fallbackCategories = [
-  "Accounting and Bookkeeping",
-  "Marketing and Advertising",
-  "IT and Technical Support",
-  "Consulting Services",
-  "Legal Services",
-  "Human Resources and Recruitment",
-  "Financial Planning and Advisory",
-  "Cleaning and Maintenance",
-  "Others",
-];
 
 const emptyOptions: Option[] = [];
 const emptyPlaces: Place[] = [];
@@ -80,6 +75,13 @@ const SideFilter: React.FC<SideFilterProps> = ({
   priceRange = "", setPriceRange = noop, area = "", setArea = noop,
   data = emptyPlaces, setItems = noop, setFilteredData = noop, setTotalPages = noop,
   loading, paramCategory, clearFilter,
+  showUserFilters = false,
+  showOnlyMine = false,
+  setShowOnlyMine = noop,
+  showOnlyFavorites = false,
+  setShowOnlyFavorites = noop,
+  sortMode = "default",
+  setSortMode = noop,
 }) => {
   const theme = useTheme();
   const teal    = ((theme.palette.primary as any).focus || theme.palette.primary.main || "#378C92") as string;
@@ -135,15 +137,14 @@ const SideFilter: React.FC<SideFilterProps> = ({
   const [regionOptions,     setRegionOptions]     = useState<Option[]>([]);
   const [priceRangeOptions, setPriceRangeOptions] = useState<Option[]>([]);
   const [areaOptions,       setAreaOptions]       = useState<Option[]>([]);
-  const [expanded, setExpanded] = useState({ search: true, categories: false, filters: true });
+  const [expanded, setExpanded] = useState({
+    search: true,
+    view: true,
+    filters: true,
+  });
 
   const selectedCategory = Array.isArray(category) ? category[0] || "" : "";
   const getCategory = (item: Place) => item.businessCategory || item.category || "";
-
-  const dynamicCategories = useMemo(() => {
-    const actual = Array.from(new Set(data.map(getCategory).filter(Boolean))) as string[];
-    return actual.length > 0 ? actual : fallbackCategories;
-  }, [data]);
 
   const priceSliderOptions = useMemo(
     () => [{ value: "", label: "Any" }, ...priceRangeOptions],
@@ -209,7 +210,6 @@ const SideFilter: React.FC<SideFilterProps> = ({
   };
 
   const handleServiceChange  = (e: SelectChangeEvent<string>) => { const v = e.target.value; setCategory(v ? [v] : []); setPropertyType(v || undefined); };
-  const handleCategoryToggle = (cat: string) => setAccNTaxService(accNTaxService.includes(cat) ? accNTaxService.filter(c => c !== cat) : [...accNTaxService, cat]);
   const handleRegionChange   = (e: SelectChangeEvent<string>) => { setRegion(e.target.value); setCity(""); };
   const toggle = (s: keyof typeof expanded) => setExpanded(p => ({ ...p, [s]: !p[s] }));
 
@@ -230,6 +230,41 @@ const SideFilter: React.FC<SideFilterProps> = ({
         ? <ExpandLessIcon className="sh-icon" sx={{ fontSize: 18 }} />
         : <ExpandMoreIcon className="sh-icon" sx={{ fontSize: 18 }} />}
     </Box>
+  );
+
+  const FilterToggle = ({
+    active,
+    label,
+    onClick,
+  }: {
+    active: boolean;
+    label: string;
+    onClick: () => void;
+  }) => (
+    <ButtonBase
+      onClick={onClick}
+      sx={{
+        width: "100%",
+        justifyContent: "flex-start",
+        px: 1.75,
+        py: 1,
+        borderRadius: "8px",
+        background: active ? alpha(teal, 0.1) : "transparent",
+        color: active ? teal : textSub,
+        border: `1px solid ${active ? alpha(teal, 0.3) : "transparent"}`,
+        fontWeight: active ? 600 : 400,
+        fontSize: "13px",
+        fontFamily: font,
+        textAlign: "left",
+        transition: "all 0.18s ease",
+        "&:hover": {
+          background: active ? alpha(teal, 0.14) : alpha(teal, 0.06),
+          color: teal,
+        },
+      }}
+    >
+      {label}
+    </ButtonBase>
   );
 
   const divider = <Box sx={{ height: "1px", background: border }} />;
@@ -310,7 +345,7 @@ const SideFilter: React.FC<SideFilterProps> = ({
                 />
               </Box>
               <Select value={selectedCategory} onChange={handleServiceChange} displayEmpty variant="outlined" sx={selectSx} MenuProps={menuProps}>
-                <MenuItem value=""><span style={{ color: textSub, fontFamily: font }}>All Services</span></MenuItem>
+                <MenuItem value=""><span style={{ color: textSub, fontFamily: font }}>All Categories</span></MenuItem>
                 {categoryArray.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
               </Select>
             </Box>
@@ -319,32 +354,46 @@ const SideFilter: React.FC<SideFilterProps> = ({
 
         {divider}
 
-        {/* Categories */}
+        {/* View controls */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-          <SectionHeader label="Categories" open={expanded.categories} onToggle={() => toggle("categories")} />
-          <Collapse in={expanded.categories}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, pt: 0.5 }}>
-              {dynamicCategories.map(cat => {
-                const isActive = accNTaxService.includes(cat);
-                return (
-                  <ButtonBase key={cat} onClick={() => handleCategoryToggle(cat)} sx={{
-                    width: "100%", justifyContent: "flex-start",
-                    px: 1.75, py: 1, borderRadius: "8px",
-                    background: isActive ? alpha(teal, 0.1) : "transparent",
-                    color: isActive ? teal : textSub,
-                    border: `1px solid ${isActive ? alpha(teal, 0.3) : "transparent"}`,
-                    fontWeight: isActive ? 600 : 400,
-                    fontSize: "13px", fontFamily: font, textAlign: "left",
-                    transition: "all 0.18s ease",
-                    "&:hover": {
-                      background: isActive ? alpha(teal, 0.14) : alpha(teal, 0.06),
-                      color: teal,
-                    },
-                  }}>
-                    {cat}
-                  </ButtonBase>
-                );
-              })}
+          <SectionHeader label="View" open={expanded.view} onToggle={() => toggle("view")} />
+          <Collapse in={expanded.view}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, pt: 0.5 }}>
+              <Select
+                value={sortMode}
+                onChange={(event) =>
+                  setSortMode(event.target.value as "default" | "az" | "za")
+                }
+                displayEmpty
+                variant="outlined"
+                sx={selectSx}
+                MenuProps={menuProps}
+              >
+                <MenuItem value="default">Default order</MenuItem>
+                <MenuItem value="az">A-Z</MenuItem>
+                <MenuItem value="za">Z-A</MenuItem>
+              </Select>
+
+              {showUserFilters && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 0.5,
+                  }}
+                >
+                  <FilterToggle
+                    active={showOnlyMine}
+                    label="My listings"
+                    onClick={() => setShowOnlyMine((value) => !value)}
+                  />
+                  <FilterToggle
+                    active={showOnlyFavorites}
+                    label="My favourites"
+                    onClick={() => setShowOnlyFavorites((value) => !value)}
+                  />
+                </Box>
+              )}
             </Box>
           </Collapse>
         </Box>
