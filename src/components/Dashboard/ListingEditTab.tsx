@@ -13,7 +13,7 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import ReactQuill from "react-quill-new";
+import ReactQuill, { Quill } from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -170,7 +170,30 @@ function deriveStatus(
 const MAX_TAGS = 10;
 const MIN_DESCRIPTION_WORDS = 250;
 const MAX_DESCRIPTION_WORDS = 2000;
+const MAX_DESCRIPTION_MEDIA = 2;
+const MAX_DESCRIPTION_IMAGES = 2;
+const MAX_DESCRIPTION_VIDEOS = 1;
 const MIN_PUBLISH_COMPLETENESS = 60;
+
+const BlockEmbed = Quill.import("blots/block/embed") as any;
+
+class ListingVideoBlot extends BlockEmbed {
+  static blotName = "listingVideo";
+  static tagName = "video";
+
+  static create(value: string) {
+    const node = super.create(value);
+    node.setAttribute("src", value);
+    node.setAttribute("controls", "controls");
+    return node;
+  }
+
+  static value(node: HTMLElement) {
+    return node.getAttribute("src");
+  }
+}
+
+Quill.register(ListingVideoBlot, true);
 
 const countWords = (value: string) =>
   value
@@ -200,14 +223,30 @@ const createDescriptionContent = (text = "") =>
     .map((paragraph) => `<p>${paragraph}</p>`)
     .join("") || "<p><br></p>";
 
-const DESCRIPTION_EDITOR_MODULES = {
-  toolbar: [
-    [{ header: [2, 3, false] }],
-    ["bold", "italic", "underline"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["blockquote", "link", "image"],
-    ["clean"],
-  ],
+const countDescriptionMedia = (html = "") => {
+  const imageCount = (html.match(/<img\b/gi) || []).length;
+  const videoCount = (html.match(/<video\b|<iframe\b/gi) || []).length;
+  return {
+    imageCount,
+    videoCount,
+    total: imageCount + videoCount,
+  };
+};
+
+const getDescriptionMediaLimitError = ({
+  imageCount,
+  videoCount,
+  total,
+}: ReturnType<typeof countDescriptionMedia>) => {
+  if (
+    total > MAX_DESCRIPTION_MEDIA ||
+    imageCount > MAX_DESCRIPTION_IMAGES ||
+    videoCount > MAX_DESCRIPTION_VIDEOS ||
+    (videoCount === 1 && imageCount > 1)
+  ) {
+    return "Description can include up to 2 images, or 1 image and 1 video.";
+  }
+  return "";
 };
 
 const DESCRIPTION_EDITOR_FORMATS = [
@@ -220,6 +259,8 @@ const DESCRIPTION_EDITOR_FORMATS = [
   "blockquote",
   "link",
   "image",
+  "video",
+  "listingVideo",
 ];
 
 const formatMissingFieldLabel = (field: string) =>
@@ -330,6 +371,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const [enhancing, setEnhancing] = useState(false);
   const [optingIn, setOptingIn] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingDescriptionMedia, setUploadingDescriptionMedia] =
+    useState(false);
   const [listingImageUrl, setListingImageUrl] = useState("");
   const [extracted, setExtracted] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -338,6 +381,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const richEditorRef = useRef<ReactQuill | null>(null);
 
   const status = useMemo(
     () => deriveStatus(websiteData, completeness),
@@ -485,13 +529,118 @@ const ListingEditTab = React.memo(function ListingEditTab({
   );
 
   const handleDescriptionContentChange = useCallback((value: string) => {
+    const mediaError = getDescriptionMediaLimitError(countDescriptionMedia(value));
     setForm((prev) => ({
       ...prev,
       descriptionContent: value,
       shortDescription: stripHtml(value),
     }));
-    setFormErrors((prev) => ({ ...prev, shortDescription: "" }));
+    setFormErrors((prev) => ({
+      ...prev,
+      shortDescription: "",
+      descriptionContent: mediaError,
+    }));
   }, []);
+
+  const uploadDescriptionMedia = useCallback(
+    async (kind: "image" | "video") => {
+      const currentCounts = countDescriptionMedia(form.descriptionContent);
+      const nextCounts = {
+        imageCount: currentCounts.imageCount + (kind === "image" ? 1 : 0),
+        videoCount: currentCounts.videoCount + (kind === "video" ? 1 : 0),
+        total: currentCounts.total + 1,
+      };
+      const limitError = getDescriptionMediaLimitError(nextCounts);
+      if (limitError) {
+        setFormErrors((prev) => ({
+          ...prev,
+          descriptionContent: limitError,
+        }));
+        return;
+      }
+
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept =
+        kind === "image"
+          ? "image/jpeg,image/png,image/webp"
+          : "video/mp4,video/webm,video/quicktime";
+
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+
+        setUploadingDescriptionMedia(true);
+        setError("");
+        setSuccess("");
+        setFormErrors((prev) => ({ ...prev, descriptionContent: "" }));
+
+        try {
+          const payload = new FormData();
+          payload.append("file", file);
+
+          const response = await apiClient.post(
+            `/websites/${websiteId}/listing/description-media`,
+            payload,
+            { headers: { "Content-Type": "multipart/form-data" } },
+          );
+          const uploaded =
+            response.data?.data ||
+            response.data ||
+            {};
+          const url = uploaded.url || uploaded.fileUrl || "";
+          const mediaType = uploaded.type || kind;
+          if (!url) {
+            throw new Error("Upload did not return a media URL");
+          }
+
+          const editor = richEditorRef.current?.getEditor();
+          if (!editor) return;
+
+          const range = editor.getSelection(true);
+          const index = range?.index ?? editor.getLength();
+          editor.insertEmbed(
+            index,
+            mediaType === "video" ? "listingVideo" : "image",
+            url,
+            "user",
+          );
+          editor.setSelection(index + 1, 0, "user");
+        } catch (err: any) {
+          setError(
+            getApiErrorMessage(
+              err.response?.data || err,
+              `Failed to upload description ${kind}`,
+            ),
+          );
+        } finally {
+          setUploadingDescriptionMedia(false);
+        }
+      };
+
+      input.click();
+    },
+    [form.descriptionContent, websiteId],
+  );
+
+  const descriptionEditorModules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+          [{ header: [2, 3, false] }],
+          ["bold", "italic", "underline"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["blockquote", "link", "image", "video"],
+          ["clean"],
+        ],
+        handlers: {
+          image: () => uploadDescriptionMedia("image"),
+          video: () => uploadDescriptionMedia("video"),
+        },
+      },
+    }),
+    [uploadDescriptionMedia],
+  );
 
   const resolveAssetUrl = useCallback((value?: string | null) => {
     if (!value) return "";
@@ -586,9 +735,15 @@ const ListingEditTab = React.memo(function ListingEditTab({
     } else if (descriptionWordCount > MAX_DESCRIPTION_WORDS) {
       errors.shortDescription = `Description must be ${MAX_DESCRIPTION_WORDS} words or fewer. Current count: ${descriptionWordCount}.`;
     }
+    const mediaError = getDescriptionMediaLimitError(
+      countDescriptionMedia(form.descriptionContent),
+    );
+    if (mediaError) {
+      errors.descriptionContent = mediaError;
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [form.businessName, form.shortDescription]);
+  }, [form.businessName, form.descriptionContent, form.shortDescription]);
 
   // Save
   const handleOptIn = useCallback(async () => {
@@ -793,7 +948,12 @@ const ListingEditTab = React.memo(function ListingEditTab({
 
   const aiRemaining = aiGenerationsLimit - aiGenerationsUsed;
   const isAnyActionRunning =
-    saving || publishing || unpublishing || archiving || enhancing;
+    saving ||
+    publishing ||
+    unpublishing ||
+    archiving ||
+    enhancing ||
+    uploadingDescriptionMedia;
 
   // Loading skeleton
   if (pageLoading) {
@@ -1064,6 +1224,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
                 variant="body2"
                 sx={{
                   color: formErrors.shortDescription
+                    || formErrors.descriptionContent
                     ? inputPalette.danger
                     : inputPalette.muted,
                   fontSize: "0.95rem",
@@ -1078,7 +1239,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
                 data-testid="description-rich-editor"
                 sx={{
                   border: "1px solid",
-                  borderColor: formErrors.shortDescription
+                  borderColor: formErrors.shortDescription || formErrors.descriptionContent
                     ? inputPalette.danger
                     : inputPalette.border,
                   borderRadius: "12px",
@@ -1095,14 +1256,15 @@ const ListingEditTab = React.memo(function ListingEditTab({
                   },
                   "&:hover": {
                     borderColor: formErrors.shortDescription
+                      || formErrors.descriptionContent
                       ? inputPalette.danger
                       : inputPalette.hoverBorder,
                   },
                   "&:focus-within": {
-                    borderColor: formErrors.shortDescription
+                    borderColor: formErrors.shortDescription || formErrors.descriptionContent
                       ? inputPalette.danger
                       : inputPalette.accent,
-                    boxShadow: formErrors.shortDescription
+                    boxShadow: formErrors.shortDescription || formErrors.descriptionContent
                       ? "none"
                       : `0 0 0 3px ${alpha(inputPalette.accent, isLight ? 0.14 : 0.22)}`,
                   },
@@ -1198,28 +1360,41 @@ const ListingEditTab = React.memo(function ListingEditTab({
                     my: 2,
                     borderRadius: "8px",
                   },
+                  "& .ql-editor video": {
+                    display: "block",
+                    width: "100%",
+                    maxHeight: 420,
+                    my: 2,
+                    borderRadius: "8px",
+                    backgroundColor: "#000",
+                  },
                 }}
               >
                 <ReactQuill
+                  ref={richEditorRef}
                   theme="snow"
                   value={form.descriptionContent}
                   onChange={handleDescriptionContentChange}
-                  modules={DESCRIPTION_EDITOR_MODULES}
+                  modules={descriptionEditorModules}
                   formats={DESCRIPTION_EDITOR_FORMATS}
-                  placeholder="Describe your business, services, audience, location, and value in detail. Use the image tool to place an image inside the description."
+                  placeholder="Describe your business, services, audience, location, and value in detail. Add up to 2 images, or 1 image and 1 video."
                 />
               </Box>
-              {formErrors.shortDescription && (
+              {(formErrors.shortDescription || formErrors.descriptionContent || uploadingDescriptionMedia) && (
                 <Typography
                   variant="caption"
                   sx={{
-                    color: inputPalette.danger,
+                    color: uploadingDescriptionMedia
+                      ? inputPalette.muted
+                      : inputPalette.danger,
                     mt: 0.75,
                     display: "block",
                     fontSize: "0.85rem",
                   }}
                 >
-                  {formErrors.shortDescription}
+                  {uploadingDescriptionMedia
+                    ? "Uploading description media..."
+                    : formErrors.shortDescription || formErrors.descriptionContent}
                 </Typography>
               )}
               <Typography

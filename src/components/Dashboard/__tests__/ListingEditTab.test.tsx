@@ -36,16 +36,40 @@ vi.mock("../../../hooks/useFavorites", () => ({
   }),
 }));
 
-vi.mock("react-quill-new", () => ({
-  default: ({ value, onChange, placeholder }: any) => (
-    <textarea
-      data-testid="mock-rich-description-editor"
-      value={value || ""}
-      placeholder={placeholder}
-      onChange={(event) => onChange(event.target.value)}
-    />
-  ),
-}));
+vi.mock("react-quill-new", () => {
+  class FakeBlockEmbed {
+    static create() {
+      return document.createElement("video");
+    }
+  }
+
+  return {
+    Quill: {
+      import: vi.fn(() => FakeBlockEmbed),
+      register: vi.fn(),
+    },
+    default: React.forwardRef(
+      ({ value, onChange, placeholder }: any, ref: any) => {
+        React.useImperativeHandle(ref, () => ({
+          getEditor: () => ({
+            getSelection: () => ({ index: 0 }),
+            getLength: () => 1,
+            insertEmbed: vi.fn(),
+            setSelection: vi.fn(),
+          }),
+        }));
+        return (
+          <textarea
+            data-testid="mock-rich-description-editor"
+            value={value || ""}
+            placeholder={placeholder}
+            onChange={(event) => onChange(event.target.value)}
+          />
+        );
+      },
+    ),
+  };
+});
 
 // Mock ThemeContext
 vi.mock("../../../context/ThemeContext", () => ({
@@ -446,6 +470,57 @@ describe("ListingEditTab", () => {
         }),
       );
     });
+  });
+
+  it("saves allowed rich description content with one image and one video", async () => {
+    mockedAxios.patch.mockResolvedValueOnce({ data: { success: true } });
+
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-rich-description-editor")).toBeInTheDocument();
+    });
+
+    const richEditor = screen.getByTestId("mock-rich-description-editor");
+    fireEvent.change(richEditor, {
+      target: {
+        value: `<p>${validLongDescription}</p><p><img src="https://example.com/listing.jpg" alt="Office" /></p><p><video src="https://example.com/tour.mp4" controls="controls"></video></p>`,
+      },
+    });
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    await waitFor(() => {
+      expect(mockedAxios.patch).toHaveBeenCalledWith(
+        expect.stringContaining("/websites/1/listing"),
+        expect.objectContaining({
+          shortDescription: validLongDescription,
+          descriptionContent: expect.stringContaining("<video"),
+        }),
+      );
+    });
+  });
+
+  it("blocks save when rich description exceeds media limits", async () => {
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-rich-description-editor")).toBeInTheDocument();
+    });
+
+    const richEditor = screen.getByTestId("mock-rich-description-editor");
+    fireEvent.change(richEditor, {
+      target: {
+        value: `<p>${validLongDescription}</p><p><img src="https://example.com/one.jpg" /></p><p><img src="https://example.com/two.jpg" /></p><p><video src="https://example.com/tour.mp4" controls="controls"></video></p>`,
+      },
+    });
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    expect(
+      await screen.findByText(
+        "Description can include up to 2 images, or 1 image and 1 video.",
+      ),
+    ).toBeInTheDocument();
+    expect(mockedAxios.patch).not.toHaveBeenCalled();
   });
 
   it("shows backend listing validation errors on matching fields", async () => {

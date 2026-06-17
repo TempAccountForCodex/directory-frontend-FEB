@@ -895,10 +895,22 @@ const ListingDetails: React.FC = () => {
             "blockquote",
             "a",
             "img",
+            "video",
+            "source",
             "h2",
             "h3",
           ],
-          ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "title"],
+          ALLOWED_ATTR: [
+            "href",
+            "target",
+            "rel",
+            "src",
+            "alt",
+            "title",
+            "controls",
+            "poster",
+            "type",
+          ],
         })
       : "";
     const rating = Number(
@@ -1268,6 +1280,14 @@ const ListingDetails: React.FC = () => {
                     objectFit: "cover",
                     borderRadius: "8px",
                     my: 2.5,
+                  },
+                  "& video": {
+                    display: "block",
+                    width: "100%",
+                    maxHeight: 520,
+                    borderRadius: "8px",
+                    my: 2.5,
+                    backgroundColor: "#000",
                   },
                 }}
                 dangerouslySetInnerHTML={{
