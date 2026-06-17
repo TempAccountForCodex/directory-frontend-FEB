@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Box, Button, Slide, useTheme } from "@mui/material";
 import NorthIcon from "@mui/icons-material/North";
-import type { SxProps, Theme } from "@mui/system";
+import type { SxProps, Theme } from "@mui/material/styles";
 
-const styles: Record<string, SxProps<Theme>> = {
+const styles = {
   scrollToTopBtnContainer: {
     display: "flex",
     justifyContent: "center",
@@ -31,7 +31,7 @@ const styles: Record<string, SxProps<Theme>> = {
     transform: "rotate(-90deg)",
     transformOrigin: "center",
   },
-};
+} satisfies Record<string, SxProps<Theme>>;
 
 const MoveUpButton: React.FC = () => {
   const theme = useTheme();
@@ -90,7 +90,7 @@ const MoveUpButton: React.FC = () => {
                   strokeWidth="2"
                   strokeDasharray={circumference}
                   strokeDashoffset={offset}
-                  style={styles.progressCircle as React.CSSProperties}
+                  style={styles.progressCircle}
                 />
               </svg>
               <NorthIcon sx={styles.icon} />

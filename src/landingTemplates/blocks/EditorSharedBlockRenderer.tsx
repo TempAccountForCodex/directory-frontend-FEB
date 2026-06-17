@@ -1378,9 +1378,7 @@ export const renderEditorSharedBlock = ({
   }
 
   if (
-    blockType === "form_builder" ||
-    blockType === "reservation_form" ||
-    blockType === "generic_card"
+    ["form_builder", "reservation_form", "generic_card"].includes(blockType)
   ) {
     const fields = Array.isArray(block.content?.fields)
       ? block.content.fields
@@ -1539,9 +1537,7 @@ export const renderEditorSharedBlock = ({
   }
 
   if (
-    blockType === "form_builder" ||
-    blockType === "reservation_form" ||
-    blockType === "generic_card"
+    ["form_builder", "reservation_form", "generic_card"].includes(blockType)
   ) {
     const fields = Array.isArray(block.content?.fields)
       ? block.content.fields
@@ -5208,11 +5204,23 @@ export const renderEditorSharedBlock = ({
               p: 3,
               border: `1.5px dashed ${lineColor}`,
               borderRadius: 3,
-              bgcolor: tone === "light" ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.04)",
+              bgcolor:
+                tone === "light"
+                  ? "rgba(0,0,0,0.03)"
+                  : "rgba(255,255,255,0.04)",
             }}
           >
             <Box sx={{ color: mutedTextColor, flexShrink: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="16 18 22 12 16 6" />
                 <polyline points="8 6 2 12 8 18" />
               </svg>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { apiClient } from "../../api/client";
 import {
   Box,
@@ -24,7 +24,6 @@ import {
   Wrench,
   LayoutGrid,
   MessageSquare,
-  ListTree,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getDashboardColors } from "../../styles/dashboardTheme";
@@ -45,7 +44,6 @@ import SeoTab from "./website-manage/SeoTab";
 import DomainTab from "./website-manage/DomainTab";
 import TeamTab from "./website-manage/TeamTab";
 import SettingsTab from "./website-manage/SettingsTab";
-import MenusTab from "./website-manage/MenusTab";
 
 // ── Nav sections defined outside component for stable reference ──────────────
 const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
@@ -55,7 +53,6 @@ const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
       { id: "overview", label: "Overview", icon: Home },
       { id: "pages", label: "Pages", icon: FileText },
       { id: "media", label: "Media", icon: Image },
-      { id: "menus", label: "Menus", icon: ListTree },
     ],
   },
   {
@@ -118,6 +115,13 @@ const WebsiteManagementDashboard = ({
   const [website, setWebsite] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const hasLoadedWebsiteRef = useRef(false);
+
+  useEffect(() => {
+    hasLoadedWebsiteRef.current = false;
+    setWebsite(null);
+    setLoading(true);
+  }, [websiteId]);
 
   // Sync section prop changes (deep link support)
   useEffect(() => {
@@ -129,7 +133,9 @@ const WebsiteManagementDashboard = ({
   const fetchWebsite = useCallback(async () => {
     if (!websiteId) return;
     try {
-      setLoading(true);
+      if (!hasLoadedWebsiteRef.current) {
+        setLoading(true);
+      }
       setError(null);
       const res = await apiClient.get(`/websites/${websiteId}`);
       // Backend returns { success, data: { id, name, status, role, ... } }
@@ -141,6 +147,7 @@ const WebsiteManagementDashboard = ({
         role: (raw.role || "VIEWER").toUpperCase(),
       };
       setWebsite(normalized);
+      hasLoadedWebsiteRef.current = true;
     } catch (err) {
       setError(
         err?.response?.data?.message || "Failed to load website details.",
@@ -287,8 +294,6 @@ const WebsiteManagementDashboard = ({
         return <PagesTab {...tabProps} />;
       case "media":
         return <MediaTab {...tabProps} />;
-      case "menus":
-        return <MenusTab {...tabProps} />;
       case "design":
         return <DesignTab {...tabProps} />;
       case "analytics":

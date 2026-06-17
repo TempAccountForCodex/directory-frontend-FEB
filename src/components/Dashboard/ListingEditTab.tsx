@@ -13,6 +13,8 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
@@ -24,8 +26,18 @@ import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
-import { Globe, Sparkles, X } from "lucide-react";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import { alpha } from "@mui/material/styles";
+import { Globe, Image as ImageIcon, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { apiClient } from "../../api/client";
+import { API_URL } from "@/config/api";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import { getDashboardColors } from "../../styles/dashboardTheme";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../api/queryKeys";
+import PropertyItemCard from "../publicComponents/Listing/PropertyCardItem";
 import DashboardInput from "./shared/DashboardInput";
 import DashboardSelect from "./shared/DashboardSelect";
 import DashboardActionButton from "./shared/DashboardActionButton";
@@ -57,7 +69,12 @@ const PRICE_LEVELS = [
   { value: "$$$$", label: "$$$$ - Luxury" },
 ];
 
-type ListingStatus = "NOT_LISTED" | "DRAFT" | "PUBLISHED" | "ARCHIVED";
+type ListingStatus =
+  | "NOT_LISTED"
+  | "DRAFT"
+  | "NEEDS_COMPLETION"
+  | "PUBLISHED"
+  | "ARCHIVED";
 
 const STATUS_CONFIG: Record<
   ListingStatus,
@@ -69,6 +86,11 @@ const STATUS_CONFIG: Record<
     bgColor: "action.hover",
   },
   DRAFT: { label: "Draft", color: "warning.dark", bgColor: "warning.light" },
+  NEEDS_COMPLETION: {
+    label: "Needs completion",
+    color: "error.dark",
+    bgColor: "error.light",
+  },
   PUBLISHED: {
     label: "Published",
     color: "success.dark",
@@ -80,18 +102,22 @@ const STATUS_CONFIG: Record<
 interface FormData {
   businessName: string;
   shortDescription: string;
+  descriptionContent: string;
   businessCategory: string;
   priceLevel: string;
   phone: string;
   email: string;
   fullAddress: string;
+  city: string;
+  region: string;
+  country: string;
   tags: string[];
 }
 
 interface CompletenessData {
   score: number;
   missing: string[];
-  suggestions?: string[];
+  suggestions?: Record<string, string> | string[];
 }
 
 export interface ListingEditTabProps {
@@ -100,12 +126,20 @@ export interface ListingEditTabProps {
     name?: string;
     businessName?: string;
     shortDescription?: string;
+    descriptionContent?: string | null;
     businessCategory?: string;
     priceLevel?: string;
     phone?: string;
     contactEmail?: string;
     fullAddress?: string;
+    city?: string | null;
+    region?: string | null;
+    country?: string | null;
     tags?: string[];
+    businessLogo?: string | null;
+    logoUrl?: string | null;
+    logo?: string | null;
+    image?: string | null;
     directoryOptedIn?: boolean;
     isPublic?: boolean;
     isDirectoryArchived?: boolean;
@@ -113,18 +147,135 @@ export interface ListingEditTabProps {
   planCode: string;
   aiGenerationsUsed?: number;
   aiGenerationsLimit?: number;
-  onUpdate?: () => void;
+  onUpdate?: (updatedWebsite?: any) => void;
 }
 
-function deriveStatus(data: ListingEditTabProps["websiteData"]): ListingStatus {
+function deriveStatus(
+  data: ListingEditTabProps["websiteData"],
+  completeness?: CompletenessData | null,
+): ListingStatus {
   if (!data?.directoryOptedIn) return "NOT_LISTED";
   if (data.isDirectoryArchived) return "ARCHIVED";
+  if (
+    completeness &&
+    completeness.score < MIN_PUBLISH_COMPLETENESS &&
+    completeness.missing.length > 0
+  ) {
+    return "NEEDS_COMPLETION";
+  }
   if (data.isPublic) return "PUBLISHED";
   return "DRAFT";
 }
 
 const MAX_TAGS = 10;
-const MAX_DESC = 500;
+const MIN_DESCRIPTION_WORDS = 250;
+const MAX_DESCRIPTION_WORDS = 2000;
+const MIN_PUBLISH_COMPLETENESS = 60;
+
+const countWords = (value: string) =>
+  value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+const stripHtml = (value = "") =>
+  value
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const createDescriptionContent = (text = "") =>
+  text
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => `<p>${paragraph}</p>`)
+    .join("") || "<p><br></p>";
+
+const DESCRIPTION_EDITOR_MODULES = {
+  toolbar: [
+    [{ header: [2, 3, false] }],
+    ["bold", "italic", "underline"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["blockquote", "link", "image"],
+    ["clean"],
+  ],
+};
+
+const DESCRIPTION_EDITOR_FORMATS = [
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "list",
+  "bullet",
+  "blockquote",
+  "link",
+  "image",
+];
+
+const formatMissingFieldLabel = (field: string) =>
+  field
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .replace(/^./, (char) => char.toUpperCase());
+
+const FIELD_ERROR_ALIASES: Record<string, keyof FormData> = {
+  contactEmail: "email",
+  email: "email",
+};
+
+const normalizeFieldErrors = (fields?: unknown) => {
+  const normalized: Record<string, string> = {};
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) {
+    return normalized;
+  }
+
+  Object.entries(fields as Record<string, unknown>).forEach(([field, value]) => {
+    const key = FIELD_ERROR_ALIASES[field] || field;
+    const message = Array.isArray(value)
+      ? value.map((item) => stringifyApiMessage(item, "")).filter(Boolean).join(" ")
+      : stringifyApiMessage(value, "");
+    if (message) normalized[key] = message;
+  });
+
+  return normalized;
+};
+
+const stringifyApiMessage = (value: unknown, fallback = "Request failed"): string => {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    const joined = value.map((item) => stringifyApiMessage(item, "")).filter(Boolean).join(" ");
+    return joined || fallback;
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    if (typeof record.message === "string") return record.message;
+    if (typeof record.error === "string") return record.error;
+    if (typeof record.code === "string") return record.code;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+};
+
+const getApiValidationErrors = (data?: any) =>
+  normalizeFieldErrors(data?.fields || data?.errors || data?.fieldErrors);
+
+const getApiErrorMessage = (data?: any, fallback = "Request failed") =>
+  stringifyApiMessage(data?.error || data?.message, fallback);
 
 const ListingEditTab = React.memo(function ListingEditTab({
   websiteId,
@@ -135,15 +286,37 @@ const ListingEditTab = React.memo(function ListingEditTab({
   onUpdate,
 }: ListingEditTabProps) {
   const isPaidPlan = PAID_PLANS.includes(planCode);
+  const queryClient = useQueryClient();
+  const { actualTheme } = useCustomTheme();
+  const colors = getDashboardColors(actualTheme);
+  const isLight = actualTheme === "light";
+  const inputPalette = useMemo(
+    () => ({
+      fill: isLight ? "#ffffff" : colors.panelBg,
+      border: isLight ? alpha("#111827", 0.16) : colors.panelBorder,
+      text: isLight ? "#111827" : colors.panelText,
+      muted: isLight ? "#111827" : colors.panelMuted,
+      subtle: isLight ? alpha("#111827", 0.45) : colors.panelSubtle,
+      accent: isLight ? "#111827" : colors.panelAccent,
+      danger: colors.panelDanger,
+      hoverBorder: isLight ? "#111827" : alpha(colors.panelAccent, 0.3),
+      toolbarFill: isLight ? "#ffffff" : colors.panelBg,
+    }),
+    [colors, isLight],
+  );
 
   const [form, setForm] = useState<FormData>({
     businessName: "",
     shortDescription: "",
+    descriptionContent: "<p><br></p>",
     businessCategory: "",
     priceLevel: "",
     phone: "",
     email: "",
     fullAddress: "",
+    city: "",
+    region: "",
+    country: "",
     tags: [],
   });
   const [tagInput, setTagInput] = useState("");
@@ -155,6 +328,10 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const [unpublishing, setUnpublishing] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
+  const [optingIn, setOptingIn] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [listingImageUrl, setListingImageUrl] = useState("");
+  const [extracted, setExtracted] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -162,8 +339,17 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const status = useMemo(() => deriveStatus(websiteData), [websiteData]);
+  const status = useMemo(
+    () => deriveStatus(websiteData, completeness),
+    [websiteData, completeness],
+  );
   const statusConfig = STATUS_CONFIG[status];
+  const currentWebsiteImage =
+    websiteData?.businessLogo ||
+    websiteData?.logoUrl ||
+    websiteData?.logo ||
+    websiteData?.image ||
+    "";
 
   // Load form data from websiteData
   useEffect(() => {
@@ -171,16 +357,23 @@ const ListingEditTab = React.memo(function ListingEditTab({
       setForm({
         businessName: websiteData.businessName || websiteData.name || "",
         shortDescription: websiteData.shortDescription || "",
+        descriptionContent:
+          websiteData.descriptionContent ||
+          createDescriptionContent(websiteData.shortDescription || ""),
         businessCategory: websiteData.businessCategory || "",
         priceLevel: websiteData.priceLevel || "",
         phone: websiteData.phone || "",
         email: websiteData.contactEmail || "",
         fullAddress: websiteData.fullAddress || "",
+        city: websiteData.city || "",
+        region: websiteData.region || "",
+        country: websiteData.country || "",
         tags: websiteData.tags || [],
       });
+      setListingImageUrl(currentWebsiteImage);
       setPageLoading(false);
     }
-  }, [websiteData]);
+  }, [websiteData, currentWebsiteImage]);
 
   // Fetch completeness
   const fetchCompleteness = useCallback(async () => {
@@ -196,6 +389,14 @@ const ListingEditTab = React.memo(function ListingEditTab({
     }
   }, [websiteId]);
 
+  const refreshListingCaches = useCallback(async (updatedWebsite?: any) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.websites.all() }),
+      queryClient.invalidateQueries({ queryKey: ["content", "listings"] }),
+    ]);
+    onUpdate?.(updatedWebsite);
+  }, [onUpdate, queryClient]);
+
   useEffect(() => {
     if (websiteData?.directoryOptedIn) {
       fetchCompleteness();
@@ -208,18 +409,61 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const previewData = useMemo(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     return {
+      id: websiteId,
       businessName: form.businessName || "Your Business",
+      title: form.businessName || "Your Business",
       category: form.businessCategory || "Category",
+      businessCategory: form.businessCategory || "Category",
       shortDescription:
         form.shortDescription || "A brief description of your business...",
+      desc: form.shortDescription || "A brief description of your business...",
       tags: form.tags,
+      businessLogo: listingImageUrl,
+      businessBanner: listingImageUrl,
+      image: listingImageUrl,
+      image1: listingImageUrl,
+      city: form.city,
+      region: form.region,
+      country: form.country,
+      averageRating: 0,
+      reviewCount: 0,
     };
   }, [
+    websiteId,
     form.businessName,
     form.businessCategory,
     form.shortDescription,
     form.tags,
+    form.city,
+    form.region,
+    form.country,
+    listingImageUrl,
   ]);
+
+  const displayCompleteness = useMemo(() => {
+    if (!completeness) return null;
+
+    const hasContact = Boolean(form.phone.trim() || form.email.trim());
+    const hasLocation = Boolean(
+      form.city.trim() && form.country.trim(),
+    );
+    const missing = completeness.missing.filter((field) => {
+      const normalized = field.toLowerCase();
+      if (normalized === "contact" && hasContact) return false;
+      if (normalized === "location" && hasLocation) return false;
+      return true;
+    });
+
+    return {
+      ...completeness,
+      missing,
+    };
+  }, [completeness, form.phone, form.email, form.city, form.country]);
+
+  const descriptionWordCount = useMemo(
+    () => countWords(form.shortDescription),
+    [form.shortDescription],
+  );
 
   // Field change handler
   const handleFieldChange = useCallback(
@@ -238,6 +482,63 @@ const ListingEditTab = React.memo(function ListingEditTab({
       setFormErrors((prev) => ({ ...prev, [field]: "" }));
     },
     [],
+  );
+
+  const handleDescriptionContentChange = useCallback((value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      descriptionContent: value,
+      shortDescription: stripHtml(value),
+    }));
+    setFormErrors((prev) => ({ ...prev, shortDescription: "" }));
+  }, []);
+
+  const resolveAssetUrl = useCallback((value?: string | null) => {
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
+    const apiRoot = API_URL.replace(/\/api\/?$/, "");
+    return `${apiRoot}${value.startsWith("/") ? value : `/${value}`}`;
+  }, []);
+
+  const handleUseWebsiteImage = useCallback(() => {
+    setListingImageUrl(currentWebsiteImage);
+  }, [currentWebsiteImage]);
+
+  const handleRemoveListingImage = useCallback(() => {
+    setListingImageUrl("");
+  }, []);
+
+  const handleListingImageUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+
+      setUploadingImage(true);
+      setError("");
+      setSuccess("");
+      try {
+        const payload = new FormData();
+        payload.append("logo", file);
+        const response = await apiClient.post(`/websites/${websiteId}/logo`, payload, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const logoUrl =
+          response.data?.data?.logoUrl ||
+          response.data?.logoUrl ||
+          response.data?.data?.url ||
+          response.data?.url ||
+          "";
+        setListingImageUrl(logoUrl);
+        setSuccess("Listing image updated");
+        await refreshListingCaches();
+    } catch (err: any) {
+      setError(getApiErrorMessage(err.response?.data, "Failed to upload listing image"));
+    } finally {
+        setUploadingImage(false);
+      }
+    },
+    [refreshListingCaches, websiteId],
   );
 
   // Tag handling
@@ -279,67 +580,135 @@ const ListingEditTab = React.memo(function ListingEditTab({
     if (!form.businessName.trim()) {
       errors.businessName = "Business name is required";
     }
+    const descriptionWordCount = countWords(form.shortDescription);
+    if (descriptionWordCount < MIN_DESCRIPTION_WORDS) {
+      errors.shortDescription = `Description must be at least ${MIN_DESCRIPTION_WORDS} words. Current count: ${descriptionWordCount}.`;
+    } else if (descriptionWordCount > MAX_DESCRIPTION_WORDS) {
+      errors.shortDescription = `Description must be ${MAX_DESCRIPTION_WORDS} words or fewer. Current count: ${descriptionWordCount}.`;
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [form.businessName]);
+  }, [form.businessName, form.shortDescription]);
 
   // Save
+  const handleOptIn = useCallback(async () => {
+    if (!isPaidPlan) return;
+    setOptingIn(true);
+    setError("");
+    try {
+      const extractResponse = await apiClient.post(`/websites/${websiteId}/listing/extract`);
+      const updatedWebsite =
+        extractResponse.data?.data ||
+        extractResponse.data?.website ||
+        extractResponse.data ||
+        {};
+      setExtracted(true);
+      setPageLoading(false);
+      await fetchCompleteness();
+      await refreshListingCaches({
+        ...websiteData,
+        ...updatedWebsite,
+        directoryOptedIn: true,
+      });
+    } catch (err: any) {
+      setError(getApiErrorMessage(err.response?.data, "Failed to initialise directory listing"));
+    } finally {
+      setOptingIn(false);
+    }
+  }, [websiteId, isPaidPlan, fetchCompleteness, refreshListingCaches, websiteData]);
+
   const handleSave = useCallback(async () => {
     if (!validateForm()) return;
     setSaving(true);
     setError("");
     setSuccess("");
+    setFormErrors({});
     try {
-      await apiClient.patch(`/websites/${websiteId}/listing`, {
-        businessName: form.businessName,
-        shortDescription: form.shortDescription,
-        businessCategory: form.businessCategory,
-        priceLevel: form.priceLevel,
-        phone: form.phone,
-        contactEmail: form.email,
-        fullAddress: form.fullAddress,
-        tags: form.tags,
-      });
+      const preserveString = (
+        value: string,
+        fallback?: string | null,
+      ) => {
+        const trimmed = value.trim();
+        return trimmed || fallback || "";
+      };
+      const preserveTags = (value: string[], fallback?: string[] | null) =>
+        value.length > 0 ? value : fallback || [];
+
+      const payload = {
+        businessName: preserveString(form.businessName, websiteData?.businessName || websiteData?.name),
+        shortDescription: preserveString(form.shortDescription, websiteData?.shortDescription),
+        descriptionContent: form.descriptionContent || createDescriptionContent(form.shortDescription),
+        businessCategory: preserveString(form.businessCategory, websiteData?.businessCategory),
+        priceLevel: preserveString(form.priceLevel, websiteData?.priceLevel),
+        phone: preserveString(form.phone, websiteData?.phone),
+        contactEmail: preserveString(form.email, websiteData?.contactEmail),
+        fullAddress: preserveString(form.fullAddress, websiteData?.fullAddress),
+        city: preserveString(form.city, websiteData?.city),
+        region: preserveString(form.region, websiteData?.region),
+        country: preserveString(form.country, websiteData?.country),
+        tags: preserveTags(form.tags, websiteData?.tags),
+      };
+      const response = await apiClient.patch(`/websites/${websiteId}/listing`, payload);
+      const updatedWebsite =
+        response.data?.data ||
+        response.data?.website ||
+        response.data ||
+        {};
       setSuccess("Listing saved successfully");
       await fetchCompleteness();
-      onUpdate?.();
+      await refreshListingCaches({
+        ...websiteData,
+        ...payload,
+        ...updatedWebsite,
+      });
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save listing");
+      const data = err.response?.data;
+      const validationErrors = getApiValidationErrors(data);
+      if (Object.keys(validationErrors).length > 0) {
+        setFormErrors(validationErrors);
+      }
+      setError(getApiErrorMessage(data, "Failed to save listing"));
     } finally {
       setSaving(false);
     }
-  }, [form, websiteId, validateForm, fetchCompleteness, onUpdate]);
+  }, [form, websiteData, websiteId, validateForm, fetchCompleteness, refreshListingCaches]);
 
   // Publish
   const handlePublish = useCallback(async () => {
-    if (completeness && completeness.score < 60) {
+    if (!validateForm()) return;
+    if (completeness && completeness.score < MIN_PUBLISH_COMPLETENESS) {
       setError(
-        "Listing completeness must be at least 60% to publish. Please fill in the missing fields.",
+        `Listing readiness must be at least ${MIN_PUBLISH_COMPLETENESS}% to publish. Please fill in the missing fields.`,
       );
       return;
     }
     setPublishing(true);
     setError("");
     setSuccess("");
+    setFormErrors({});
     try {
       const res = await apiClient.post(
         `/websites/${websiteId}/listing/publish`,
       );
       if (res.data?.success) {
         setSuccess("Listing published to directory");
-        onUpdate?.();
+        await refreshListingCaches();
       }
     } catch (err: any) {
       const data = err.response?.data;
+      const validationErrors = getApiValidationErrors(data);
+      if (Object.keys(validationErrors).length > 0) {
+        setFormErrors(validationErrors);
+      }
       if (data?.missing) {
         setError(`Cannot publish. Missing fields: ${data.missing.join(", ")}`);
       } else {
-        setError(data?.error || data?.message || "Failed to publish listing");
+        setError(getApiErrorMessage(data, "Failed to publish listing"));
       }
     } finally {
       setPublishing(false);
     }
-  }, [completeness, websiteId, onUpdate]);
+  }, [completeness, validateForm, websiteId, refreshListingCaches]);
 
   // Unpublish (uses archive endpoint)
   const handleUnpublish = useCallback(async () => {
@@ -351,29 +720,30 @@ const ListingEditTab = React.memo(function ListingEditTab({
         reason: "Unpublished by owner",
       });
       setSuccess("Listing unpublished");
-      onUpdate?.();
+      await refreshListingCaches();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to unpublish listing");
+      setError(getApiErrorMessage(err.response?.data, "Failed to unpublish listing"));
     } finally {
       setUnpublishing(false);
     }
-  }, [websiteId, onUpdate]);
+  }, [websiteId, refreshListingCaches]);
 
   // Republish (from ARCHIVED state)
   const handleRepublish = useCallback(async () => {
+    if (!validateForm()) return;
     setPublishing(true);
     setError("");
     setSuccess("");
     try {
       await apiClient.post(`/websites/${websiteId}/listing/republish`);
       setSuccess("Listing republished to directory");
-      onUpdate?.();
+      await refreshListingCaches();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to republish listing");
+      setError(getApiErrorMessage(err.response?.data, "Failed to republish listing"));
     } finally {
       setPublishing(false);
     }
-  }, [websiteId, onUpdate]);
+  }, [validateForm, websiteId, refreshListingCaches]);
 
   // Archive
   const handleArchive = useCallback(async () => {
@@ -384,13 +754,13 @@ const ListingEditTab = React.memo(function ListingEditTab({
       await apiClient.post(`/websites/${websiteId}/listing/archive`);
       setSuccess("Listing archived");
       setShowArchiveConfirm(false);
-      onUpdate?.();
+      await refreshListingCaches();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to archive listing");
+      setError(getApiErrorMessage(err.response?.data, "Failed to archive listing"));
     } finally {
       setArchiving(false);
     }
-  }, [websiteId, onUpdate]);
+  }, [websiteId, refreshListingCaches]);
 
   // AI Enhance
   const handleEnhance = useCallback(async () => {
@@ -406,13 +776,16 @@ const ListingEditTab = React.memo(function ListingEditTab({
         setForm((prev) => ({
           ...prev,
           shortDescription: data.shortDescription || prev.shortDescription,
+          descriptionContent:
+            data.descriptionContent ||
+            createDescriptionContent(data.shortDescription || prev.shortDescription),
           tags: data.tags || prev.tags,
         }));
         setSuccess("AI enhancement applied");
         await fetchCompleteness();
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "AI enhancement failed");
+      setError(getApiErrorMessage(err.response?.data, "AI enhancement failed"));
     } finally {
       setEnhancing(false);
     }
@@ -446,14 +819,31 @@ const ListingEditTab = React.memo(function ListingEditTab({
     );
   }
 
-  // Empty state for not opted-in
-  if (!websiteData?.directoryOptedIn && status === "NOT_LISTED") {
+  // Opt-in prompt for not-yet-listed websites (bypass if extract already ran this session)
+  if (!websiteData?.directoryOptedIn && status === "NOT_LISTED" && !extracted) {
     return (
-      <EmptyState
-        icon={<Globe size={40} />}
-        title="No Directory Listing"
-        subtitle="Enable directory listing in your website settings to manage your listing here."
-      />
+      <Box sx={{ py: 2 }}>
+        {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
+        <DashboardCard icon={Globe} title="Directory Listing">
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            List your business in the Techietribe Directory so customers can discover you.
+            {!isPaidPlan && " Upgrade to a paid plan to unlock this feature."}
+          </Typography>
+          {isPaidPlan ? (
+            <DashboardGradientButton
+              onClick={handleOptIn}
+              disabled={optingIn}
+              startIcon={optingIn ? <CircularProgress size={16} color="inherit" /> : undefined}
+            >
+              {optingIn ? "Setting up…" : "Set Up Directory Listing"}
+            </DashboardGradientButton>
+          ) : (
+            <DashboardGradientButton href="/pricing">
+              Upgrade to Unlock
+            </DashboardGradientButton>
+          )}
+        </DashboardCard>
+      </Box>
     );
   }
 
@@ -501,7 +891,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
       )}
 
       {/* Completeness bar */}
-      {completeness && (
+      {displayCompleteness && (
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -512,12 +902,28 @@ const ListingEditTab = React.memo(function ListingEditTab({
               sx={{ color: "text.primary", fontWeight: 600 }}
               data-testid="completeness-score"
             >
-              {completeness.score}%
+              {displayCompleteness.score}%
             </Typography>
+            <Chip
+              size="small"
+              label={
+                status === "PUBLISHED" && displayCompleteness.score < MIN_PUBLISH_COMPLETENESS
+                  ? "Improve readiness"
+                  : displayCompleteness.score >= MIN_PUBLISH_COMPLETENESS
+                  ? "Ready to publish"
+                  : `${MIN_PUBLISH_COMPLETENESS}% required`
+              }
+              color={
+                displayCompleteness.score >= MIN_PUBLISH_COMPLETENESS
+                  ? "success"
+                  : "warning"
+              }
+              variant="outlined"
+            />
           </Box>
           <LinearProgress
             variant="determinate"
-            value={completeness.score}
+            value={displayCompleteness.score}
             sx={{
               height: 8,
               borderRadius: 4,
@@ -526,21 +932,21 @@ const ListingEditTab = React.memo(function ListingEditTab({
               "& .MuiLinearProgress-bar": {
                 borderRadius: 4,
                 bgcolor:
-                  completeness.score >= 80
+                  displayCompleteness.score >= 80
                     ? "success.main"
-                    : completeness.score >= 60
+                    : displayCompleteness.score >= MIN_PUBLISH_COMPLETENESS
                       ? "warning.main"
                       : "error.main",
               },
             }}
             data-testid="completeness-bar"
           />
-          {completeness.missing.length > 0 && (
+          {displayCompleteness.missing.length > 0 && (
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-              {completeness.missing.map((field) => (
+              {displayCompleteness.missing.map((field) => (
                 <Chip
                   key={field}
-                  label={field}
+                  label={formatMissingFieldLabel(field)}
                   size="small"
                   sx={{
                     bgcolor: "warning.light",
@@ -550,6 +956,77 @@ const ListingEditTab = React.memo(function ListingEditTab({
                   data-testid="missing-field-chip"
                 />
               ))}
+            </Box>
+          )}
+          {displayCompleteness.missing.length > 0 && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Complete these fields to improve readiness:
+              </Typography>
+              <List
+                dense
+                disablePadding
+                sx={{
+                  mt: 0.75,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 0.5,
+                }}
+              >
+                {displayCompleteness.missing.slice(0, 4).map((field) => {
+                  const suggestions = displayCompleteness.suggestions;
+                  const suggestion =
+                    suggestions && !Array.isArray(suggestions)
+                      ? suggestions[field]
+                      : undefined;
+                  return (
+                    <ListItem
+                      key={field}
+                      disableGutters
+                      sx={{
+                        alignItems: "flex-start",
+                        py: 0,
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: "50%",
+                          bgcolor: "warning.main",
+                          flexShrink: 0,
+                          mt: "0.55em",
+                          mr: 1,
+                        }}
+                      />
+                      <ListItemText
+                        primary={formatMissingFieldLabel(field)}
+                        secondary={suggestion || "Add this information before publishing."}
+                        primaryTypographyProps={{
+                          variant: "caption",
+                          sx: {
+                            color: "text.primary",
+                            fontWeight: 600,
+                            textTransform: "capitalize",
+                            lineHeight: 1.4,
+                          },
+                        }}
+                        secondaryTypographyProps={{
+                          variant: "caption",
+                          sx: {
+                            color: "text.secondary",
+                            display: "block",
+                            lineHeight: 1.4,
+                          },
+                        }}
+                        sx={{ my: 0 }}
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
             </Box>
           )}
         </Box>
@@ -575,30 +1052,192 @@ const ListingEditTab = React.memo(function ListingEditTab({
               placeholder="Enter your business name"
             />
 
-            <Box>
-              <DashboardInput
-                label="Short Description"
-                value={form.shortDescription}
-                onChange={handleFieldChange("shortDescription")}
-                multiline
-                rows={3}
-                placeholder="Describe your business in a few sentences"
-                inputProps={{ maxLength: MAX_DESC }}
-              />
+            <Box
+              sx={{
+                "&:focus-within .dashboard-input-label": {
+                  color: inputPalette.accent,
+                },
+              }}
+            >
+              <Typography
+                className="dashboard-input-label"
+                variant="body2"
+                sx={{
+                  color: formErrors.shortDescription
+                    ? inputPalette.danger
+                    : inputPalette.muted,
+                  fontSize: "0.95rem",
+                  fontWeight: 500,
+                  mb: 1,
+                  transition: "color 0.2s ease",
+                }}
+              >
+                Description
+              </Typography>
+              <Box
+                data-testid="description-rich-editor"
+                sx={{
+                  border: "1px solid",
+                  borderColor: formErrors.shortDescription
+                    ? inputPalette.danger
+                    : inputPalette.border,
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  backgroundColor: `${inputPalette.fill} !important`,
+                  boxShadow: "none",
+                  transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+                  "& .quill": {
+                    height: "100%",
+                    backgroundColor: `${inputPalette.fill} !important`,
+                  },
+                  "& .ql-snow": {
+                    backgroundColor: `${inputPalette.fill} !important`,
+                  },
+                  "&:hover": {
+                    borderColor: formErrors.shortDescription
+                      ? inputPalette.danger
+                      : inputPalette.hoverBorder,
+                  },
+                  "&:focus-within": {
+                    borderColor: formErrors.shortDescription
+                      ? inputPalette.danger
+                      : inputPalette.accent,
+                    boxShadow: formErrors.shortDescription
+                      ? "none"
+                      : `0 0 0 3px ${alpha(inputPalette.accent, isLight ? 0.14 : 0.22)}`,
+                  },
+                  "& .ql-toolbar": {
+                    border: "0 !important",
+                    borderBottom: "1px solid",
+                    borderColor: `${inputPalette.border} !important`,
+                    backgroundColor: `${inputPalette.toolbarFill} !important`,
+                    px: 1.25,
+                    py: 1,
+                    fontFamily: "inherit",
+                    "& .ql-picker": {
+                      color: inputPalette.text,
+                    },
+                    "& .ql-picker.ql-expanded .ql-picker-label": {
+                      color: `${inputPalette.accent} !important`,
+                    },
+                    "& .ql-picker-label": {
+                      borderRadius: "8px",
+                      color: `${inputPalette.text} !important`,
+                      borderColor: "transparent",
+                    },
+                    "& .ql-picker-label:hover, & .ql-picker-label.ql-active": {
+                      color: `${inputPalette.accent} !important`,
+                    },
+                    "& .ql-picker-item:hover, & .ql-picker-item.ql-selected": {
+                      color: `${inputPalette.accent} !important`,
+                    },
+                    "& .ql-picker-options": {
+                      backgroundColor: isLight ? "#ffffff" : colors.panelBg,
+                      borderColor: inputPalette.border,
+                      borderRadius: "10px",
+                      boxShadow: colors.panelShadow,
+                      color: inputPalette.text,
+                    },
+                    "& button": {
+                      borderRadius: "8px",
+                      color: `${inputPalette.muted} !important`,
+                      mx: 0.15,
+                    },
+                    "& button:hover, & button.ql-active, & button:focus": {
+                      backgroundColor: alpha(inputPalette.accent, isLight ? 0.08 : 0.14),
+                      color: `${inputPalette.accent} !important`,
+                    },
+                    "& button:hover .ql-stroke, & button.ql-active .ql-stroke, & button:focus .ql-stroke, & .ql-picker-label:hover .ql-stroke, & .ql-picker.ql-expanded .ql-picker-label .ql-stroke": {
+                      stroke: `${inputPalette.accent} !important`,
+                    },
+                    "& button:hover .ql-fill, & button.ql-active .ql-fill, & button:focus .ql-fill, & .ql-picker-label:hover .ql-fill, & .ql-picker.ql-expanded .ql-picker-label .ql-fill": {
+                      fill: `${inputPalette.accent} !important`,
+                    },
+                    "& button .ql-stroke, & .ql-picker-label .ql-stroke": {
+                      stroke: "currentColor !important",
+                    },
+                    "& button .ql-fill, & .ql-picker-label .ql-fill": {
+                      fill: "currentColor !important",
+                    },
+                  },
+                  "& .ql-toolbar.ql-snow": {
+                    border: "0 !important",
+                    borderBottom: `1px solid ${inputPalette.border} !important`,
+                  },
+                  "& .ql-container": {
+                    border: "0 !important",
+                    borderTop: "0 !important",
+                    minHeight: 260,
+                    fontFamily: "inherit",
+                    fontSize: "1rem",
+                    backgroundColor: `${inputPalette.fill} !important`,
+                  },
+                  "& .ql-container.ql-snow": {
+                    border: "0 !important",
+                    backgroundColor: `${inputPalette.fill} !important`,
+                  },
+                  "& .ql-editor": {
+                    minHeight: 260,
+                    backgroundColor: `${inputPalette.fill} !important`,
+                    color: inputPalette.text,
+                    caretColor: `${inputPalette.text} !important`,
+                    lineHeight: 1.7,
+                    px: 2,
+                    py: 1.75,
+                  },
+                  "& .ql-editor.ql-blank::before": {
+                    color: inputPalette.subtle,
+                    fontStyle: "normal",
+                    left: 16,
+                    right: 16,
+                  },
+                  "& .ql-editor img": {
+                    display: "block",
+                    maxWidth: "100%",
+                    maxHeight: 360,
+                    my: 2,
+                    borderRadius: "8px",
+                  },
+                }}
+              >
+                <ReactQuill
+                  theme="snow"
+                  value={form.descriptionContent}
+                  onChange={handleDescriptionContentChange}
+                  modules={DESCRIPTION_EDITOR_MODULES}
+                  formats={DESCRIPTION_EDITOR_FORMATS}
+                  placeholder="Describe your business, services, audience, location, and value in detail. Use the image tool to place an image inside the description."
+                />
+              </Box>
+              {formErrors.shortDescription && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: inputPalette.danger,
+                    mt: 0.75,
+                    display: "block",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {formErrors.shortDescription}
+                </Typography>
+              )}
               <Typography
                 variant="caption"
                 sx={{
                   color:
-                    form.shortDescription.length >= MAX_DESC
-                      ? "error.main"
-                      : "text.secondary",
-                  mt: 0.5,
+                    descriptionWordCount < MIN_DESCRIPTION_WORDS ||
+                    descriptionWordCount > MAX_DESCRIPTION_WORDS
+                      ? inputPalette.danger
+                      : inputPalette.muted,
+                  mt: 0.75,
                   display: "block",
                   textAlign: "right",
+                  fontSize: "0.85rem",
                 }}
-                data-testid="char-counter"
+                data-testid="word-counter"
               >
-                {form.shortDescription.length}/{MAX_DESC}
+                {descriptionWordCount} words. Required: {MIN_DESCRIPTION_WORDS}-{MAX_DESCRIPTION_WORDS}.
               </Typography>
             </Box>
 
@@ -615,6 +1254,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
                   value={form.businessCategory}
                   onChange={handleSelectChange("businessCategory")}
                   name="businessCategory"
+                  error={Boolean(formErrors.businessCategory)}
+                  helperText={formErrors.businessCategory}
                 >
                   <MenuItem value="">
                     <em>Select a category</em>
@@ -651,6 +1292,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
               onChange={handleFieldChange("phone")}
               placeholder="+1 (555) 000-0000"
               type="tel"
+              error={Boolean(formErrors.phone)}
+              helperText={formErrors.phone}
             />
 
             <DashboardInput
@@ -659,6 +1302,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
               onChange={handleFieldChange("email")}
               placeholder="contact@business.com"
               type="email"
+              error={Boolean(formErrors.email)}
+              helperText={formErrors.email}
             />
 
             <DashboardInput
@@ -666,7 +1311,104 @@ const ListingEditTab = React.memo(function ListingEditTab({
               value={form.fullAddress}
               onChange={handleFieldChange("fullAddress")}
               placeholder="123 Business St, City, State 12345"
+              error={Boolean(formErrors.fullAddress)}
+              helperText={formErrors.fullAddress}
             />
+
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(3, minmax(0, 1fr))",
+                },
+                gap: 2,
+              }}
+            >
+              <DashboardInput
+                label="City"
+                value={form.city}
+                onChange={handleFieldChange("city")}
+                placeholder="City"
+                error={Boolean(formErrors.city)}
+                helperText={formErrors.city}
+              />
+              <DashboardInput
+                label="Region"
+                value={form.region}
+                onChange={handleFieldChange("region")}
+                placeholder="State or region"
+                error={Boolean(formErrors.region)}
+                helperText={formErrors.region}
+              />
+              <DashboardInput
+                label="Country"
+                value={form.country}
+                onChange={handleFieldChange("country")}
+                placeholder="Country"
+                error={Boolean(formErrors.country)}
+                helperText={formErrors.country}
+              />
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", fontWeight: 500, mb: 1 }}
+              >
+                Listing Image
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 1,
+                  alignItems: { xs: "stretch", sm: "center" },
+                }}
+              >
+                <DashboardActionButton
+                  component="label"
+                  disabled={uploadingImage}
+                  startIcon={
+                    uploadingImage ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : (
+                      <Upload size={16} />
+                    )
+                  }
+                >
+                  {uploadingImage ? "Uploading..." : "Upload Image"}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleListingImageUpload}
+                  />
+                </DashboardActionButton>
+                <DashboardActionButton
+                  variant="outlined"
+                  disabled={!currentWebsiteImage || uploadingImage}
+                  onClick={handleUseWebsiteImage}
+                  startIcon={<ImageIcon size={16} />}
+                >
+                  Use Website Image
+                </DashboardActionButton>
+                <DashboardActionButton
+                  variant="outlined"
+                  disabled={!listingImageUrl || uploadingImage}
+                  onClick={handleRemoveListingImage}
+                  startIcon={<Trash2 size={16} />}
+                >
+                  Remove Image
+                </DashboardActionButton>
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", display: "block", mt: 0.75 }}
+              >
+                Upload a new image, reuse the website image, or remove the selected image from this listing preview.
+              </Typography>
+            </Box>
 
             {/* Tags */}
             <Box>
@@ -710,6 +1452,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
                 disabled={form.tags.length >= MAX_TAGS}
                 fullWidth
                 data-testid="tag-input"
+                error={Boolean(formErrors.tags)}
+                helperText={formErrors.tags}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
@@ -731,57 +1475,33 @@ const ListingEditTab = React.memo(function ListingEditTab({
         {/* Live preview */}
         <Box
           sx={{
-            width: { xs: "100%", md: 320 },
+            width: { xs: "100%", md: 430 },
             flexShrink: 0,
           }}
         >
           <DashboardCard icon={Globe} title="Preview">
             <Box
               sx={{
-                p: 2,
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "divider",
-                bgcolor: "background.paper",
+                width: "100%",
+                maxWidth: 400,
+                mx: "auto",
               }}
               data-testid="listing-preview"
             >
-              <Typography
-                variant="subtitle1"
-                sx={{ color: "text.primary", fontWeight: 600 }}
-              >
-                {previewData.businessName}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "primary.main" }}>
-                {previewData.category}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", mt: 0.5, mb: 1 }}
-              >
-                {previewData.shortDescription}
-              </Typography>
-              {previewData.tags.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {previewData.tags.slice(0, 5).map((tag) => (
-                    <Chip
-                      key={tag}
-                      label={tag}
-                      size="small"
-                      variant="outlined"
-                      sx={{ fontSize: "0.7rem" }}
-                    />
-                  ))}
-                  {previewData.tags.length > 5 && (
-                    <Chip
-                      label={`+${previewData.tags.length - 5}`}
-                      size="small"
-                      variant="outlined"
-                      sx={{ fontSize: "0.7rem" }}
-                    />
-                  )}
-                </Box>
-              )}
+              <PropertyItemCard
+                item={{
+                  ...previewData,
+                  businessLogo: resolveAssetUrl(previewData.businessLogo),
+                  businessBanner: resolveAssetUrl(previewData.businessBanner),
+                  image: resolveAssetUrl(previewData.image),
+                  image1: resolveAssetUrl(previewData.image1),
+                }}
+                handleDeleteItem={() => undefined}
+                previewMode
+                totalPages={1}
+                currentPage={1}
+                setCurrentPage={() => undefined}
+              />
             </Box>
           </DashboardCard>
         </Box>

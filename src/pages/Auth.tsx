@@ -393,6 +393,14 @@ const Auth = () => {
     name: "",
   });
 
+  const getPostAuthRedirect = () => {
+    const redirect = searchParams.get("redirect");
+    if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
+      return "/dashboard";
+    }
+    return redirect.startsWith("/auth") ? "/dashboard" : redirect;
+  };
+
   // Handle mode from URL query string
   useEffect(() => {
     const mode = searchParams.get("mode");
@@ -448,7 +456,7 @@ const Auth = () => {
   useEffect(() => {
     // Only redirect after auth loading is complete and user is authenticated
     if (!authLoading && user) {
-      navigate("/dashboard");
+      navigate(getPostAuthRedirect());
       return;
     }
 
@@ -560,7 +568,7 @@ const Auth = () => {
       } else {
         const result = await signin(formData.email, formData.password);
         if (result.success) {
-          navigate("/dashboard");
+          navigate(getPostAuthRedirect());
         } else {
           setError(result.message || "Sign in failed");
         }
@@ -619,7 +627,7 @@ const Auth = () => {
     try {
       const result = await signinCode(codeSigninEmail, signinCodeValue);
       if (result.success) {
-        navigate("/dashboard");
+        navigate(getPostAuthRedirect());
       } else {
         setError(result.message || "Sign in failed");
       }
@@ -788,7 +796,7 @@ const Auth = () => {
       const result = await verifyEmail(verificationEmail, verificationCode);
       if (result.success) {
         // Redirect immediately to dashboard (no delay)
-        navigate("/dashboard");
+        navigate(getPostAuthRedirect());
       } else {
         setError(result.message || "Verification failed");
       }

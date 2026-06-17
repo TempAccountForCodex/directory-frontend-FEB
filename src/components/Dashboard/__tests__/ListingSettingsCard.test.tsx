@@ -171,7 +171,6 @@ describe("ListingSettingsCard", () => {
   });
 
   it("toggle ON triggers extract and displays completeness", async () => {
-    mockedAxios.patch.mockResolvedValueOnce({ data: { success: true } });
     mockedAxios.post.mockResolvedValueOnce({ data: { success: true } });
     mockedAxios.get.mockResolvedValueOnce({
       data: {
@@ -186,9 +185,8 @@ describe("ListingSettingsCard", () => {
     fireEvent.click(toggle);
 
     await waitFor(() => {
-      expect(mockedAxios.patch).toHaveBeenCalledWith(
-        expect.stringContaining("/websites/1/listing"),
-        expect.objectContaining({ directoryOptedIn: true }),
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining("/websites/1/listing/extract"),
       );
     });
 
@@ -246,7 +244,7 @@ describe("ListingSettingsCard", () => {
   });
 
   it("shows error alert when toggle ON fails", async () => {
-    mockedAxios.patch.mockRejectedValueOnce({
+    mockedAxios.post.mockRejectedValueOnce({
       response: { data: { message: "Server error" } },
     });
 

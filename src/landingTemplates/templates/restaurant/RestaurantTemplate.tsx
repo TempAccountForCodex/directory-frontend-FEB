@@ -16,7 +16,13 @@ import FadeIn from "../../blocks/FadeIn";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
+  type SectionStyleValue,
 } from "../../utils/sectionStyle";
+
+type TemplateSectionContent = Record<string, unknown> & {
+  blockId?: string | number;
+  sectionStyle?: SectionStyleValue;
+};
 
 const serifFont = '"Cormorant Garamond", Georgia, serif';
 const bodyFont =
@@ -61,12 +67,16 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
     "https://img.freepik.com/free-photo/luxury-dinner-table-hotel_1150-11071.jpg";
   const heroBannerImage =
     data.heroBannerUrl || data.gallery?.[2]?.url || data.gallery?.[0]?.url;
-  const heroContent = data.templateContent?.hero || {};
-  const storyContent = data.templateContent?.story || {};
-  const locationContent = data.templateContent?.location || {};
-  const whyUsContent = data.templateContent?.whyUs || {};
-  const reviewsContent = data.templateContent?.reviews || {};
-  const contactContent = data.templateContent?.contact || {};
+  const content = (data.templateContent ?? {}) as Record<
+    string,
+    TemplateSectionContent | undefined
+  >;
+  const heroContent = content.hero ?? {};
+  const storyContent = content.story ?? {};
+  const locationContent = content.location ?? {};
+  const whyUsContent = content.whyUs ?? {};
+  const reviewsContent = content.reviews ?? {};
+  const contactContent = content.contact ?? {};
 
   return (
     <Box sx={{ bgcolor: black, color: "#fff", fontFamily: bodyFont }}>

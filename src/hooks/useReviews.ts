@@ -64,6 +64,7 @@ export interface SubmitReviewResult {
     rating: number;
     title: string;
     content: string;
+    isAnonymous?: boolean;
   }) => Promise<Review | null>;
   loading: boolean;
   error: string | null;
@@ -83,7 +84,37 @@ export interface ReplyReviewResult {
   replyReview: (reviewId: number, content: string) => Promise<boolean>;
   loading: boolean;
   error: string | null;
+  fieldErrors: Record<string, string>;
 }
+
+const normalizeFieldErrors = (fields?: unknown) => {
+  const normalized: Record<string, string> = {};
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) {
+    return normalized;
+  }
+
+  Object.entries(fields as Record<string, unknown>).forEach(([field, value]) => {
+    const message = Array.isArray(value)
+      ? value.filter(Boolean).join(" ")
+      : typeof value === "string"
+        ? value
+        : "";
+    if (message) normalized[field] = message;
+  });
+
+  return normalized;
+};
+
+const extractFieldErrors = (data?: {
+  fields?: unknown;
+  errors?: unknown;
+  fieldErrors?: unknown;
+}) => normalizeFieldErrors(data?.fields || data?.errors || data?.fieldErrors);
+
+const getApiErrorMessage = (
+  data?: { error?: string; message?: string },
+  fallback = "Request failed",
+) => data?.error || data?.message || fallback;
 
 /* ---------- useReviews ---------- */
 /**
@@ -132,6 +163,7 @@ export function useSubmitReview(
       rating: number;
       title: string;
       content: string;
+      isAnonymous?: boolean;
     }): Promise<Review | null> => {
       if (!websiteId) return null;
       setError(null);
@@ -146,21 +178,25 @@ export function useSubmitReview(
       } catch (err) {
         const axiosErr = err as AxiosError<{
           message?: string;
-          errors?: Record<string, string>;
+          error?: string;
+          fields?: unknown;
+          errors?: unknown;
+          fieldErrors?: unknown;
         }>;
         const status = axiosErr?.response?.status;
         if (status === 401) {
           setRequiresAuth(true);
-        } else if (status === 400) {
+        } else if (status === 400 || status === 422) {
           const errData = axiosErr.response?.data;
-          if (errData?.errors && typeof errData.errors === "object") {
-            setFieldErrors(errData.errors);
+          const validationErrors = extractFieldErrors(errData);
+          if (Object.keys(validationErrors).length > 0) {
+            setFieldErrors(validationErrors);
           } else {
-            setError(errData?.message || "Validation error");
+            setError(getApiErrorMessage(errData, "Validation error"));
           }
         } else {
           setError(
-            axiosErr?.response?.data?.message || "Failed to submit review",
+            getApiErrorMessage(axiosErr?.response?.data, "Failed to submit review"),
           );
         }
         return null;
@@ -204,21 +240,34 @@ export function useVoteReview(): VoteReviewResult {
 export function useReplyReview(): ReplyReviewResult {
   const mutation = useReplyReviewMutation();
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const replyReview = useCallback(
     async (reviewId: number, content: string): Promise<boolean> => {
       setError(null);
+      setFieldErrors({});
       try {
         await mutation.mutateAsync({ reviewId, content });
         return true;
       } catch (err) {
-        const axiosErr = err as AxiosError<{ message?: string }>;
-        setError(axiosErr?.response?.data?.message || "Failed to submit reply");
+        const axiosErr = err as AxiosError<{
+          message?: string;
+          error?: string;
+          fields?: unknown;
+          errors?: unknown;
+          fieldErrors?: unknown;
+        }>;
+        const errData = axiosErr?.response?.data;
+        const validationErrors = extractFieldErrors(errData);
+        if (Object.keys(validationErrors).length > 0) {
+          setFieldErrors(validationErrors);
+        }
+        setError(getApiErrorMessage(errData, "Failed to submit reply"));
         return false;
       }
     },
     [mutation],
   );
 
-  return { replyReview, loading: mutation.isPending, error };
+  return { replyReview, loading: mutation.isPending, error, fieldErrors };
 }

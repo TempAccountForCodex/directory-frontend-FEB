@@ -801,7 +801,7 @@ const InsightCards = () => {
                       style={styles.blogImage}
                       loading={index === 0 ? "eager" : "lazy"}
                       decoding="async"
-                      fetchPriority={index === 0 ? "high" : "low"}
+                      fetchpriority={index === 0 ? "high" : "low"}
                       width={720}
                       height={250}
                     />

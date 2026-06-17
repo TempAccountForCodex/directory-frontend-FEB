@@ -12,8 +12,26 @@
 
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import "@testing-library/jest-dom/vitest";
+
+vi.mock("../../../context/AuthContext", () => ({
+  useAuth: () => ({
+    user: { id: 1, name: "Test User", role: "user" },
+  }),
+}));
+
+vi.mock("../../../context/DashboardContext", () => ({
+  DashboardContext: React.createContext({ setSelectedSection: vi.fn() }),
+}));
+
+vi.mock("../../../hooks/useFavorites", () => ({
+  useFavorites: () => ({
+    isFavorited: () => false,
+    toggleFavorite: vi.fn(),
+  }),
+}));
 
 // Mock ThemeContext
 vi.mock("../../../context/ThemeContext", () => ({
@@ -128,6 +146,10 @@ vi.mock("../../Dashboard/shared/DashboardActionButton", () => ({
 }));
 
 import ListingOptInStep from "../ListingOptInStep";
+
+function render(ui: React.ReactElement) {
+  return rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 describe("ListingOptInStep", () => {
   const defaultProps = {

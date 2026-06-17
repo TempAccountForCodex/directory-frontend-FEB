@@ -103,6 +103,8 @@ type BuildEditorSharedSurfaceStylesArgs = {
   rgba: (hex: string, alpha: number) => string;
 };
 
+type LooseStyleObject = Record<string, any>;
+
 export const buildEditorSharedSurfaceStyles = ({
   blockType,
   tone,
@@ -171,7 +173,7 @@ export const buildEditorSharedSurfaceStyles = ({
     resolvedCardStyle.boxShadow !== undefined ||
     cardStyle.boxShadow !== undefined;
 
-  const compoundVisualLayerSx = {
+  const compoundVisualLayerSx: LooseStyleObject = {
     ...(hasCustomBorder
       ? {}
       : {
@@ -262,7 +264,7 @@ export const buildEditorSharedSurfaceStyles = ({
       : {}),
   };
 
-  const compoundShellVisualSource = hasSectionCustomBackground
+  const compoundShellVisualSource: LooseStyleObject = hasSectionCustomBackground
     ? {
         ...resolvedSectionStyle,
         ...sectionStyle,

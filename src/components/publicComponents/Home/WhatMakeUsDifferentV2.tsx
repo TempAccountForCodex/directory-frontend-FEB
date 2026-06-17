@@ -45,6 +45,7 @@ const UniqueSellingSection = () => {
             <Stack spacing={6}>
               <Typography
                 variant="h3"
+                component="h2"
                 sx={{
                   fontWeight: 500,
                   fontSize: { xs: "1.5rem", md: "2.3rem" },
@@ -213,16 +214,15 @@ const UniqueSellingSection = () => {
                 animation: "float 6s ease-in-out infinite",
               }}
             >
-              <Box
-                component="img"
+              <img
                 // src={COMPOSITE_HERO_IMAGE}
                 src={platform}
-                srcSet={`${platform} 1200w, ${platform} 1920w`}
-                sizes="(max-width: 900px) 95vw, 800px"
                 alt="Business Landing Page Interface"
+                width={1302}
+                height={1201}
                 loading="lazy"
                 decoding="async"
-                sx={{
+                style={{
                   width: "100%",
                   height: "auto",
                   maxWidth: "800px",

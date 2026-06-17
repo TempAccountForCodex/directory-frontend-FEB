@@ -1,3 +1,5 @@
+import type { SxProps, Theme } from "@mui/material/styles";
+
 export type SectionStyleValue = {
   backgroundColor?: string;
   backgroundImageUrl?: string;
@@ -292,8 +294,8 @@ const STATIC_PATTERN_SX: Record<string, Record<string, unknown>> = {
 
 export const getSectionStyleSx = (
   content: ContentLike,
-  styleKey: string = "sectionStyle",
-): Record<string, unknown> => {
+  styleKey: "sectionStyle" | "outerSectionStyle" | "cardStyle" = "sectionStyle",
+): SxProps<Theme> => {
   const sectionStyle = readStyleValue(content, styleKey);
   const sx: Record<string, unknown> = {};
 

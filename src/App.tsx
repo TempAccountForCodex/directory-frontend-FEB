@@ -12,6 +12,8 @@ const Directory = lazy(() => import("./pages/Directory"));
 const Contact = lazy(() => import("../src/pages/publicPages/Contact"));
 // import ListingDetails from "../src/pages/publicPages/ListingDetail";
 const BlogDetail = lazy(() => import("../src/pages/publicPages/BlogDetail"));
+const ListingDetails = lazy(() => import("../src/pages/publicPages/ListingDetails"));
+const ListingCompanyDetails = lazy(() => import("../src/pages/publicPages/ListingCompanyDetails"));
 const NotFound = lazy(() => import("../src/pages/publicPages/NotFound"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -45,7 +47,7 @@ const Pricing = lazy(() => import("../src/pages/publicPages/Pricing"));
 const Templates = lazy(() => import("../src/pages/publicPages/Templates"));
 
 const InsightsPage = lazy(() => import("./pages/publicPages/Blog.js"));
-import Footer from "./components/Footer";
+const Footer = lazy(() => import("./components/Footer"));
 const MoveUpBtn = lazy(() => import("./components/UI/MoveUpBtn"));
 const CookieBanner = lazy(
   () => import("./components/UserPreferences/PreferenceBanner.jsx"),
@@ -131,7 +133,7 @@ const MainLayout = () => (
     <main id="main-content">
       <Outlet />
     </main>
-    <Footer />
+    <FooterMount />
     <MoveUpBtnMount />
   </>
 );
@@ -216,6 +218,38 @@ const MoveUpBtnMount = () => {
   return (
     <Suspense fallback={null}>
       <MoveUpBtn />
+    </Suspense>
+  );
+};
+
+const FooterMount = () => {
+  const [shouldMount, setShouldMount] = useState(false);
+
+  useEffect(() => {
+    if (shouldMount) {
+      return;
+    }
+
+    const mount = () => setShouldMount(true);
+
+    window.addEventListener("scroll", mount, { passive: true, once: true });
+    window.addEventListener("touchstart", mount, { passive: true, once: true });
+    window.addEventListener("keydown", mount, { once: true });
+
+    return () => {
+      window.removeEventListener("scroll", mount);
+      window.removeEventListener("touchstart", mount);
+      window.removeEventListener("keydown", mount);
+    };
+  }, [shouldMount]);
+
+  if (!shouldMount) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <Footer />
     </Suspense>
   );
 };
@@ -353,14 +387,14 @@ const AppRoutes = () => {
             </Suspense>
           ),
         },
-        // {
-        //   path: "/business/:slug",
-        //   element: <ListingComapanyDetails />,
-        // },
-        // {
-        //   path: "/listings/:pid",
-        //   element: <ListingDetails />,
-        // },
+        {
+          path: "/listings/:pid",
+          element: suspense(<ListingDetails />),
+        },
+        {
+          path: "/business/:slug",
+          element: suspense(<ListingCompanyDetails />),
+        },
 
         //  {
         //   path: "/insight-details/:id",

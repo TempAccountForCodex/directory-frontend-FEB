@@ -1,5 +1,5 @@
-import realStateLogo from "../../assets/images/agreement.png";
-import shoppingLogo from "../../assets/images/online-shopping.png";
+// import realStateLogo from "../../assets/images/agreement.png";
+// import shoppingLogo from "../../assets/images/online-shopping.png";
 import { type PropertyItem } from "../Listing/PropertyCardItem";
 
 /* ---------------- Types ---------------- */
@@ -72,7 +72,7 @@ export const data: PropertyItem[] = [
     businessLogo:
       "https://cdn.dribbble.com/users/6621596/screenshots/16381347/media/6b58ee2bf64293913882b86c41d19b92.jpg?resize=400x300&vertical=center",
 
-    businesslogoAvatar: realStateLogo,
+    businesslogoAvatar: "",
   },
   {
     id: 2,
@@ -110,7 +110,7 @@ export const data: PropertyItem[] = [
 
     businessLogo:
       "https://bcassetcdn.com/public/blog/wp-content/uploads/2023/01/16210417/handshake-real-estate-by-ernestjdx-brandcrowd.png",
-    businesslogoAvatar: shoppingLogo,
+    businesslogoAvatar: "",
   },
   {
     id: 3,
@@ -134,7 +134,7 @@ export const data: PropertyItem[] = [
     areas: ["Austin", "Baltimore"],
     slug: "newyork-apr-2024-good-roi",
     businessLogo: "https://www.logodee.com/wp-content/uploads/2021/10/28.jpg",
-    businesslogoAvatar: realStateLogo,
+    businesslogoAvatar: "",
   },
   {
     id: 4,
@@ -157,7 +157,7 @@ export const data: PropertyItem[] = [
     areas: ["Baltimore"],
     slug: "karachi-apr-2024-good-roi",
     businessLogo: "https://www.logodee.com/wp-content/uploads/2021/10/28.jpg",
-    businesslogoAvatar: shoppingLogo,
+    businesslogoAvatar: "",
   },
   {
     id: 5,

@@ -1,46 +1,41 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 
-const Gardening = "/assets/publicAssets/videos/Home/Gardening.mp4";
-const Consulting = "/assets/publicAssets/videos/Home/Consulting.mp4";
-const Education = "/assets/publicAssets/videos/Home/Education.mp4";
-const HeroMobile = "/assets/publicAssets/videos/Home/hero7.mp4";
-const Restaurant = "/assets/publicAssets/videos/Home/Restaurant.mp4";
-const Plumbing = "/assets/publicAssets/videos/Home/Plumbing.mp4";
 const TRANSPARENT_PIXEL =
   "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
+
+const HeroMobile = "/assets/publicAssets/videos/Home/hero7.mp4";
 
 const SLIDES = [
   {
     id: 1,
     title: "Education",
     image: "/assets/publicAssets/images/home/Education.webp",
-    video: Education,
+    video: "/assets/publicAssets/videos/Home/Education.mp4",
   },
   {
     id: 2,
     title: "Gardening",
     image: "/assets/publicAssets/images/home/Gardening.webp",
-    video: Gardening,
+    video: "/assets/publicAssets/videos/Home/Gardening.mp4",
   },
   {
     id: 3,
     title: "Consulting",
     image: "/assets/publicAssets/images/home/Consulting.webp",
-    video: Consulting,
+    video: "/assets/publicAssets/videos/Home/Consulting.mp4",
   },
   {
     id: 4,
     title: "Restaurant",
     image: "/assets/publicAssets/images/home/Restaurant.webp",
-    video: Restaurant,
+    video: "/assets/publicAssets/videos/Home/Restaurant.mp4",
   },
   {
     id: 5,
     title: "Plumbing",
     image: "/assets/publicAssets/images/home/Plumbing.webp",
-    video: Plumbing,
+    video: "/assets/publicAssets/videos/Home/Plumbing.mp4",
   },
 ];
 
@@ -75,9 +70,13 @@ function styleFor(offset: number, isMobile: boolean): React.CSSProperties {
 
 export default function HeroDepthCarousel() {
   const [index, setIndex] = React.useState(0);
-  const [isMobile, setIsMobile] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(() => window.innerWidth < 900);
   const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
+  const [shouldLoadVideo, setShouldLoadVideo] = React.useState(false);
+  const [videoLoaded, setVideoLoaded] = React.useState(false);
   const navigate = useNavigate();
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const observerRef = React.useRef<IntersectionObserver | null>(null);
 
   React.useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 900);
@@ -94,6 +93,82 @@ export default function HeroDepthCarousel() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
+  // Intersection Observer for lazy video loading
+  React.useEffect(() => {
+    if (prefersReducedMotion) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Defer video loading until after initial paint
+            const scheduleIdle: typeof window.requestIdleCallback =
+              window.requestIdleCallback ||
+              ((callback: IdleRequestCallback) =>
+                window.setTimeout(
+                  () =>
+                    callback({
+                      didTimeout: false,
+                      timeRemaining: () => 0,
+                    }),
+                  1,
+                ) as unknown as number);
+
+            scheduleIdle(() => {
+              setShouldLoadVideo(true);
+            }, { timeout: 2000 });
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "50px" }
+    );
+
+    observerRef.current = observer;
+
+    const heroSection = document.querySelector("section");
+    if (heroSection) {
+      observer.observe(heroSection);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [prefersReducedMotion]);
+
+  // Load video when shouldLoadVideo becomes true
+  React.useEffect(() => {
+    if (shouldLoadVideo && videoRef.current && !videoLoaded) {
+      const video = videoRef.current;
+      
+      const handleCanPlay = () => {
+        setVideoLoaded(true);
+      };
+      
+      const handleError = () => {
+        // Silently fail if video fails to load
+      };
+      
+      video.addEventListener('canplay', handleCanPlay);
+      video.addEventListener('error', handleError);
+      video.load();
+      
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('error', handleError);
+      };
+    }
+  }, [shouldLoadVideo, videoLoaded]);
+
+  // Reload video when carousel index changes
+  React.useEffect(() => {
+    if (shouldLoadVideo && videoRef.current && videoLoaded) {
+      const video = videoRef.current;
+      video.load();
+    }
+  }, [index, shouldLoadVideo, videoLoaded]);
+
+  // Auto-scroll carousel every 6 seconds
   React.useEffect(() => {
     const id = setInterval(
       () => setIndex((i) => (i + 1) % SLIDES.length),
@@ -117,8 +192,8 @@ export default function HeroDepthCarousel() {
     }
   };
 
-  const shouldRenderVideo = !prefersReducedMotion;
-  const heroVideoSrc = isMobile ? HeroMobile : SLIDES[0].video;
+  const heroVideoSrc = isMobile ? HeroMobile : SLIDES[index].video;
+  const shouldRenderVideo = !prefersReducedMotion && shouldLoadVideo;
 
   return (
     <section
@@ -132,12 +207,15 @@ export default function HeroDepthCarousel() {
     >
       {shouldRenderVideo && (
         <video
+          ref={videoRef}
           autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="none"
           poster={SLIDES[0].image}
+          disablePictureInPicture
+          disableRemotePlayback
           style={{
             position: "absolute",
             inset: 0,
@@ -145,13 +223,16 @@ export default function HeroDepthCarousel() {
             height: "100%",
             objectFit: "cover",
             zIndex: 0,
-            opacity: 0.85,
+            opacity: videoLoaded ? 0.85 : 0,
+            transition: "opacity 0.5s ease-in",
+            willChange: "opacity",
+            transform: "translateZ(0)",
+            backfaceVisibility: "hidden",
           }}
         >
-          <source src={heroVideoSrc} />
+          <source src={heroVideoSrc} type="video/mp4" />
         </video>
       )}
-
       <div
         style={{
           position: "absolute",
@@ -284,7 +365,7 @@ export default function HeroDepthCarousel() {
             let off = i - index;
             if (off > SLIDES.length / 2) off -= SLIDES.length;
             if (off < -SLIDES.length / 2) off += SLIDES.length;
-            const shouldLoadImage = Math.abs(off) <= 1;
+            const shouldLoadImage = isMobile ? off === 0 : Math.abs(off) <= 1;
             const isCenter = off === 0;
 
             return (
@@ -313,8 +394,8 @@ export default function HeroDepthCarousel() {
                   src={shouldLoadImage ? it.image : TRANSPARENT_PIXEL}
                   alt={it.title}
                   loading={off === 0 ? "eager" : "lazy"}
+                  fetchpriority={off === 0 ? "high" : "auto"}
                   decoding="async"
-                  fetchPriority={off === 0 ? "high" : "low"}
                   width={isMobile ? 320 : 740}
                   height={isMobile ? 300 : 520}
                   style={{
@@ -368,7 +449,16 @@ export default function HeroDepthCarousel() {
                         border: "1px solid rgba(255,255,255,0.3)",
                       }}
                     >
-                      <OpenInFullIcon style={{ fontSize: 14 }} />
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 12,
+                          height: 12,
+                          border: "1.5px solid currentColor",
+                          borderRadius: 2,
+                          boxShadow: "4px -4px 0 -2px currentColor",
+                        }}
+                      />
                       Preview Template
                     </span>
                   </div>

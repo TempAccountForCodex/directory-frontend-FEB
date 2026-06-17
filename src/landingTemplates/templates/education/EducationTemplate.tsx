@@ -20,7 +20,13 @@ import { FadeIn } from "../../blocks";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
+  type SectionStyleValue,
 } from "../../utils/sectionStyle";
+
+type TemplateSectionContent = Record<string, unknown> & {
+  blockId?: string | number;
+  sectionStyle?: SectionStyleValue;
+};
 
 const sectionOffset = 110;
 
@@ -52,13 +58,17 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
   const gallery = data.gallery ?? [];
   const reviews = data.reviews ?? [];
   const services = data.services ?? [];
-  const heroContent = data.templateContent?.hero || {};
-  const programsContent = data.templateContent?.programs || {};
-  const highlightsContent = data.templateContent?.highlights || {};
-  const galleryContent = data.templateContent?.gallery || {};
-  const reviewsContent = data.templateContent?.reviews || {};
-  const contactContent = data.templateContent?.contact || {};
-  const campusContent = data.templateContent?.campus || {};
+  const content = (data.templateContent ?? {}) as Record<
+    string,
+    TemplateSectionContent | undefined
+  >;
+  const heroContent = content.hero ?? {};
+  const programsContent = content.programs ?? {};
+  const highlightsContent = content.highlights ?? {};
+  const galleryContent = content.gallery ?? {};
+  const reviewsContent = content.reviews ?? {};
+  const contactContent = content.contact ?? {};
+  const campusContent = content.campus ?? {};
 
   return (
     <Box sx={{ bgcolor: theme.bgPrimary, fontFamily: theme.fontFamily }}>

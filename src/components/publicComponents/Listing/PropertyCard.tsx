@@ -1,11 +1,12 @@
 import React from "react";
-import { Grid, Typography, Box, Pagination, useTheme } from "@mui/material";
+import { Typography, Box, Pagination, useTheme } from "@mui/material";
 import PropertyItemCard from "../Listing/PropertyCardItem";
 import type { Place } from "../../../types/place";
 
 /* ---------------- Types ---------------- */
 interface PropertyCardProps {
   handleDeleteItem: (id: string) => void;
+  onEditItem?: (item: any) => void;
   items: any[];
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   currentPage: number;
@@ -16,6 +17,7 @@ interface PropertyCardProps {
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
   handleDeleteItem,
+  onEditItem,
   items,
   setCurrentPage,
   currentPage,
@@ -31,26 +33,26 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
   return (
     <>
-      <Grid
-        container
-        spacing={2.1}
-        xs={12}
-        sm={6}
-        md={4}
+      <Box
         sx={{
-          display: "flex",
-          justifyContent: items.length === 0 ? "center" : "flex-start",
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "minmax(0, 360px)",
+            sm: "repeat(2, minmax(0, 1fr))",
+            lg: "repeat(3, minmax(0, 1fr))",
+          },
+          gap: { xs: 2, md: 3 },
+          justifyContent: { xs: "center", sm: "flex-start" },
           alignItems: "stretch",
-          flexWrap: "wrap",
-          flexDirection: "row",
           width: "100%",
+          minWidth: 0,
+          pt: { xs: 4, md: 3 },
+          pb: { xs: 8, md: 12 },
+          pl: { xs: 0, sm: "10px" },
+          pr: { xs: 0, sm: "25px" },
+          fontFamily:
+            "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
-        pt={{ xs: 4, md: 0 }}
-        pb={{ xs: 8, md: 12 }}
-        // pr={{ xs: 2, sm: "23px" }}
-        px={{ xs: 0, sm: "10px" }}
-        component="div"
-        {...({} as any)}
       >
         {items.length === 0 ? (
           <Typography
@@ -61,21 +63,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           </Typography>
         ) : (
           items.map((item, index) => (
-            <Grid
+            <Box
               key={index}
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
               sx={{
                 display: "flex",
-                maxWidth: "32.1%",
+                minWidth: 0,
+                width: "100%",
               }}
-              component="div"
-              {...({} as any)}
             >
-              {" "}
               <PropertyItemCard
                 item={item}
                 totalPages={totalPages}
@@ -84,11 +79,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 handleDeleteItem={(id: string | number) =>
                   handleDeleteItem(id as string)
                 }
+                onEditItem={onEditItem}
               />
-            </Grid>
+            </Box>
           ))
         )}
-      </Grid>
+      </Box>
 
       {totalPages >= 1 && (
         <Box

@@ -2,6 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryKey } from "@tanstack/react-query";
 import { apiClient } from "../client";
 import { queryKeys } from "../queryKeys";
+import {
+  devDirectoryListingsResponse,
+  devDirectoryPlaces,
+  mapDirectoryListingToPlace,
+  type DirectoryListingsResponse,
+} from "../../data/devDirectoryListings";
 
 /**
  * Content React Query hooks (Phase H.content).
@@ -43,6 +49,14 @@ export type ListingsParams = Record<
   string | number | boolean | undefined
 >;
 
+type ListingsQueryOptions = {
+  enabled?: boolean;
+};
+
+type QueryEnabledOptions = {
+  enabled?: boolean;
+};
+
 /* --------------------------------------------------------------------- */
 /* Helpers                                                                */
 /* --------------------------------------------------------------------- */
@@ -59,29 +73,97 @@ function cleanParams<T extends Record<string, unknown>>(
   return out;
 }
 
+const useDummyDirectory =
+  import.meta.env.VITE_USE_DUMMY_DIRECTORY === "true";
+
+function normalizeDirectoryListings(responseData: unknown) {
+  const payload = responseData as
+    | DirectoryListingsResponse
+    | { data?: DirectoryListingsResponse | unknown[] }
+    | unknown[];
+
+  if (Array.isArray(payload)) {
+    return {
+      data: payload,
+      pagination: {
+        page: 1,
+        limit: payload.length,
+        total: payload.length,
+        totalPages: 1,
+      },
+    };
+  }
+
+  const directoryData =
+    payload &&
+    "results" in payload &&
+    Array.isArray((payload as DirectoryListingsResponse).results)
+      ? (payload as DirectoryListingsResponse)
+      : payload &&
+          "data" in payload &&
+          (payload as { data?: unknown }).data &&
+          !Array.isArray((payload as { data?: unknown }).data)
+        ? ((payload as { data?: DirectoryListingsResponse }).data ??
+          devDirectoryListingsResponse)
+        : null;
+
+  if (directoryData?.results) {
+    const data = directoryData.results.map(mapDirectoryListingToPlace);
+    return {
+      data,
+      pagination: {
+        page: directoryData.page,
+        limit: directoryData.pageSize,
+        total: directoryData.total,
+        totalPages: Math.ceil(directoryData.total / directoryData.pageSize),
+      },
+    };
+  }
+
+  const legacyData = payload as { data?: unknown[]; pagination?: unknown };
+  return {
+    data: legacyData?.data ?? [],
+    pagination: legacyData?.pagination ?? null,
+  };
+}
+
 /* --------------------------------------------------------------------- */
 /* Listings (directory)                                                   */
 /* --------------------------------------------------------------------- */
 
 /**
- * `GET /api/places` — public list of directory places. No auth gate; this
- * is the endpoint the ListingsContext used to fetch. Returns the full
- * envelope (`{ data: { data, pagination } }`) so consumers can destructure
- * either the places array or pagination metadata.
+ * `GET /api/directory/listings` — public directory list. No auth gate.
+ * Returns the legacy context envelope (`{ data, pagination }`) after mapping
+ * the backend directory response (`{ page, pageSize, total, results }`) into
+ * the current frontend `Place` shape.
  */
-export function useListings(params?: ListingsParams) {
+export function useListings(
+  params?: ListingsParams,
+  options: ListingsQueryOptions = {},
+) {
   const cleaned = cleanParams(params);
   return useQuery({
     queryKey: queryKeys.content.listings(cleaned),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get("/places", {
+      if (useDummyDirectory) {
+        return {
+          data: devDirectoryPlaces,
+          pagination: {
+            page: devDirectoryListingsResponse.page,
+            limit: devDirectoryListingsResponse.pageSize,
+            total: devDirectoryListingsResponse.total,
+            totalPages: 1,
+          },
+        };
+      }
+
+      const response = await apiClient.get("/directory/listings", {
         params: cleaned,
         signal,
       });
-      return (
-        response.data?.data ?? response.data ?? { data: [], pagination: null }
-      );
+      return normalizeDirectoryListings(response.data);
     },
+    enabled: options.enabled ?? true,
     staleTime: 5 * 60_000,
   });
 }
@@ -234,7 +316,12 @@ export function useCreateReview() {
       payload,
     }: {
       listingId: string | number;
-      payload: { rating: number; title: string; content: string };
+      payload: {
+        rating: number;
+        title: string;
+        content: string;
+        isAnonymous?: boolean;
+      };
     }) => {
       const response = await apiClient.post(
         `/reviews/listings/${listingId}`,
@@ -471,11 +558,44 @@ export type FavouriteStatus = {
   favouriteCount: number;
 };
 
+function normalizeFavouriteStatus(payload: unknown, websiteId?: string | number) {
+  const data = payload as {
+    data?: Record<string, boolean> | { isFavourited?: boolean; isFavourite?: boolean; favouriteCount?: number };
+    statusMap?: Record<string, boolean>;
+    isFavourited?: boolean;
+    isFavourite?: boolean;
+    favouriteCount?: number;
+  };
+
+  const key = websiteId == null ? "" : String(websiteId);
+  const map =
+    data?.statusMap ??
+    (data?.data && !("isFavourited" in data.data) && !("isFavourite" in data.data)
+      ? (data.data as Record<string, boolean>)
+      : undefined);
+
+  if (map && key) {
+    return {
+      isFavourited: Boolean(map[key]),
+      favouriteCount: data?.favouriteCount ?? 0,
+    };
+  }
+
+  const detail =
+    data?.data && ("isFavourited" in data.data || "isFavourite" in data.data)
+      ? data.data
+      : data;
+
+  return {
+    isFavourited: Boolean(detail?.isFavourited ?? detail?.isFavourite),
+    favouriteCount: Number(detail?.favouriteCount ?? 0),
+  };
+}
+
 /**
- * `GET /api/favourites/listings/:websiteId/status` — favourite status +
- * count for the current session. Returns `{ isFavourited, favouriteCount }`.
- * Auth-gated on the backend; when anonymous, the query still fires and the
- * consumer hook surfaces `requiresAuth` on 401.
+ * Favourite status for the current session. The documented single-status route
+ * is not present on every backend build, so the live-compatible path uses the
+ * batch endpoint for one website id and normalizes both response shapes.
  */
 export function useFavouriteStatus(
   websiteId: string | number | null | undefined,
@@ -487,14 +607,13 @@ export function useFavouriteStatus(
       websiteId ?? "",
     ] as const,
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get(
-        `/favourites/listings/${websiteId}/status`,
+      const id = websiteId as string | number;
+      const response = await apiClient.post(
+        "/favourites/user/favourites/check",
+        { websiteIds: [id] },
         { signal },
       );
-      return {
-        isFavourited: response.data?.isFavourited ?? false,
-        favouriteCount: response.data?.favouriteCount ?? 0,
-      };
+      return normalizeFavouriteStatus(response.data, id);
     },
     enabled: !!websiteId,
     staleTime: 60_000,
@@ -512,7 +631,10 @@ export type UserFavouritesParams = {
  * `GET /api/favourites/user/favourites` — the full list of listings the
  * current user has favourited (paginated, sortable). Auth-required.
  */
-export function useUserFavourites(params?: UserFavouritesParams) {
+export function useUserFavourites(
+  params?: UserFavouritesParams,
+  options: QueryEnabledOptions = {},
+) {
   const cleaned = cleanParams(params);
   return useQuery({
     queryKey: [...queryKeys.content.favourites(), "userList", cleaned] as const,
@@ -523,7 +645,9 @@ export function useUserFavourites(params?: UserFavouritesParams) {
       });
       return response.data;
     },
+    enabled: options.enabled ?? true,
     staleTime: 30_000,
+    retry: false,
   });
 }
 
@@ -544,7 +668,7 @@ export function useBatchFavouriteCheck(websiteIds: (string | number)[]) {
         { websiteIds },
         { signal },
       );
-      return response.data?.statusMap ?? {};
+      return response.data?.statusMap ?? response.data?.data ?? {};
     },
     enabled: websiteIds.length > 0,
     staleTime: 30_000,

@@ -155,6 +155,9 @@ export default function VideoHeroOverlay() {
               width: "100%",
               height: "100%",
               objectFit: "cover",
+              transform: "translateZ(0)",
+              backfaceVisibility: "hidden",
+              willChange: "transform",
             }}
           >
             {isVisible ? <source src={CTAVideo} type="video/mp4" /> : null}

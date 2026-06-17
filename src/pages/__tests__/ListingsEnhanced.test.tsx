@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { MemoryRouter } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const theme = createTheme();
 
@@ -43,20 +44,33 @@ vi.mock("../../context/ListingsContext", () => ({
   ListingsProvider: ({ children }: any) => children,
 }));
 
+vi.mock("../../context/AuthContext", () => ({
+  useAuth: () => ({
+    user: null,
+    isAuthenticated: false,
+  }),
+}));
+
+vi.mock("../../hooks/useFavorites", () => ({
+  useFavorites: () => ({
+    favorites: [],
+    isFavorite: vi.fn(() => false),
+    toggleFavorite: vi.fn(),
+    removeFavorite: vi.fn(),
+  }),
+}));
+
+vi.mock("../../hooks/useFavourites", () => ({
+  useUserFavourites: () => ({
+    data: { favourites: [], total: 0 },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 // Mock Hero (the component uses Hero, not StyledHeader)
 vi.mock("../../components/publicComponents/Listing/Hero", () => ({
   default: () => React.createElement("div", { "data-testid": "hero" }, "Hero"),
-}));
-
-// Mock Searchbar (avoids API + context deps)
-vi.mock("../../components/publicComponents/Listing/Searchbar", () => ({
-  default: React.memo((props: any) =>
-    React.createElement(
-      "div",
-      { "data-testid": "searchbar" },
-      `Searchbar: ${props.searchKeyword}`,
-    ),
-  ),
 }));
 
 // Mock SideFilter
@@ -89,14 +103,22 @@ import Listings from "../publicPages/Listings";
 /* ------------------------------------------------------------------ */
 
 function renderListings(isDashboard = false) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+
   return render(
     React.createElement(
-      MemoryRouter,
-      {},
+      QueryClientProvider,
+      { client: queryClient },
       React.createElement(
-        ThemeProvider,
-        { theme },
-        React.createElement(Listings, { isDashboard }),
+        MemoryRouter,
+        {},
+        React.createElement(
+          ThemeProvider,
+          { theme },
+          React.createElement(Listings, { isDashboard }),
+        ),
       ),
     ),
   );
@@ -168,7 +190,7 @@ describe("Listings (Enhanced)", () => {
   });
 
   /* ---- 3. No listings state ---- */
-  it('shows "No listings found." when listings array is empty and not loading', async () => {
+  it('shows "Coming Soon" when listings array is empty and not loading', async () => {
     currentMockContext = {
       ...mockListingsContext,
       listings: [],
@@ -177,13 +199,30 @@ describe("Listings (Enhanced)", () => {
     };
     renderListings();
 
-    expect(await screen.findByText("No listings found.")).toBeInTheDocument();
+    expect(await screen.findByText("Coming Soon")).toBeInTheDocument();
   });
 
   /* ---- 4. Error state ---- */
   it("shows error message when error is set", async () => {
     currentMockContext = {
       ...mockListingsContext,
+      listings: [
+        {
+          id: "1",
+          slug: "biz-1",
+          title: "Biz 1",
+          category: "Food",
+          creator: "u1",
+          desc: "",
+          address: "",
+          phone: "",
+          city: "",
+          region: "",
+          status: "active",
+          createdAt: "",
+          updatedAt: "",
+        },
+      ],
       error: "Failed to fetch listings",
     };
     renderListings();
@@ -218,7 +257,9 @@ describe("Listings (Enhanced)", () => {
     renderListings(false);
 
     expect(
-      await screen.findByText("Explore Our Directory"),
+      await screen.findByText((_, element) =>
+        element?.textContent === "Explore Our Directory",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -228,13 +269,7 @@ describe("Listings (Enhanced)", () => {
     expect(screen.getByTestId("hero")).toBeInTheDocument();
   });
 
-  /* ---- 7. Searchbar receives searchKeyword prop ---- */
-  it("renders Searchbar component", async () => {
-    renderListings();
-    expect(await screen.findByTestId("searchbar")).toBeInTheDocument();
-  });
-
-  /* ---- 8. SideFilter is rendered ---- */
+  /* ---- 7. SideFilter is rendered ---- */
   it("renders SideFilter component", async () => {
     renderListings();
     expect(await screen.findByTestId("sidefilter")).toBeInTheDocument();

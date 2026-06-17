@@ -2,7 +2,8 @@
 
 import { Box, Typography, Stack, Container } from "@mui/material";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useMemo, useEffect, useState } from "react";
+import { memo } from "react";
 const star = "/assets/publicAssets/images/common/star.svg";
 const darkhole = "assets/publicAssets/images/common/darkhole.svg";
 import { useMediaQuery } from "@mui/material";
@@ -62,14 +63,9 @@ const columns = [
   },
 ];
 
-export default function AboutUsHeroScroll() {
+const AboutUsHeroScroll = memo(function AboutUsHeroScroll() {
   const containerRef = useRef<HTMLDivElement>(null);
   const centerIndex = 3;
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
-  });
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -79,6 +75,53 @@ export default function AboutUsHeroScroll() {
     : columns;
 
   const effectiveCenter = isMobile ? 1 : centerIndex;
+
+  const columnTransforms = useMemo(() => {
+    return columns.map((col, index) => {
+      const distanceFromCenter = Math.abs(index - centerIndex);
+      const initialY = distanceFromCenter * 140;
+      const baseScroll = 540 * col.speed;
+      const extraBoost = distanceFromCenter * 200;
+      const targetY = initialY - (baseScroll + extraBoost);
+      const shouldHide = isMobile && (index < centerIndex - 1 || index > centerIndex + 1);
+      return { initialY, targetY, distanceFromCenter, shouldHide };
+    });
+  }, [isMobile]);
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    let rafId: number;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        rafId = requestAnimationFrame(() => {
+          if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const progress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (windowHeight + rect.height)));
+            setScrollProgress(progress);
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  const yTransforms = columnTransforms.map(({ initialY, targetY }) => {
+    const y = initialY + (targetY - initialY) * scrollProgress;
+    return y;
+  });
 
   return (
     <Box
@@ -95,6 +138,9 @@ export default function AboutUsHeroScroll() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        willChange: "transform",
+        backfaceVisibility: "hidden",
+        perspective: 1000,
       }}
     >
       <Box
@@ -180,32 +226,19 @@ export default function AboutUsHeroScroll() {
             }}
           >
             {columns.map((col, index) => {
-              const effectiveCenter = centerIndex; // always 3
-              const distanceFromCenter = Math.abs(index - effectiveCenter);
-              const initialY = distanceFromCenter * 140;
-
-              const baseScroll = 540 * col.speed;
-              const extraBoost = distanceFromCenter * 200;
-              const targetY = initialY - (baseScroll + extraBoost);
-
-              const y = useTransform(
-                scrollYProgress,
-                [0, 1],
-                [initialY, targetY],
-              );
-
-              // 👇 hide columns on mobile (only show 3 center ones)
-              const shouldHide =
-                isMobile &&
-                (index < centerIndex - 1 || index > centerIndex + 1);
+              const { distanceFromCenter, shouldHide } = columnTransforms[index];
+              const y = yTransforms[index];
 
               return (
-                <motion.div
+                <Box
                   key={index}
-                  style={{
-                    y,
+                  sx={{
                     flex: 1,
                     display: shouldHide ? "none" : "block",
+                    willChange: "transform",
+                    backfaceVisibility: "hidden",
+                    transformStyle: "preserve-3d",
+                    transform: `translateY(${y}px)`,
                   }}
                 >
                   <Box
@@ -213,6 +246,7 @@ export default function AboutUsHeroScroll() {
                       display: "flex",
                       flexDirection: "column",
                       gap: "26px",
+                      contain: "layout style paint",
                     }}
                   >
                     {col.images.map((src, i) => (
@@ -230,6 +264,9 @@ export default function AboutUsHeroScroll() {
                             distanceFromCenter === 0
                               ? "0 50px 140px rgba(0,0,0,0.55)"
                               : "0 25px 70px rgba(0,0,0,0.4)",
+                          willChange: "transform",
+                          transform: "translateZ(0)",
+                          backfaceVisibility: "hidden",
                         }}
                       >
                         <Box
@@ -243,12 +280,13 @@ export default function AboutUsHeroScroll() {
                             height: "100%",
                             objectFit: "cover",
                             display: "block",
+                            willChange: "transform",
                           }}
                         />
                       </Box>
                     ))}
                   </Box>
-                </motion.div>
+                </Box>
               );
             })}
           </Box>
@@ -273,4 +311,6 @@ export default function AboutUsHeroScroll() {
       </Container>
     </Box>
   );
-}
+});
+
+export default AboutUsHeroScroll;

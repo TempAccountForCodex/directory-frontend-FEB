@@ -277,6 +277,9 @@ export default function WhyChooseUs(): JSX.Element {
             objectFit: "cover",
             zIndex: 0,
             opacity: 0.25,
+            transform: "translateZ(0)",
+            backfaceVisibility: "hidden",
+            willChange: "transform",
           }}
         />
       )}
@@ -291,7 +294,7 @@ export default function WhyChooseUs(): JSX.Element {
           playsInline
           preload="none"
           crossOrigin="anonymous"
-          style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
+          style={{ position: "absolute", width: 0, height: 0, opacity: 0, transform: "translateZ(0)" }}
         />
       )}
 

@@ -113,6 +113,27 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
 };
 
 const HeroSection = () => {
+  const [shouldLoadVideo, setShouldLoadVideo] = React.useState(false);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setShouldLoadVideo(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: "50px" }
+    );
+
+    const heroSection = document.querySelector("section");
+    if (heroSection) {
+      observer.observe(heroSection);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   const handleScrollToSection = (
     e: React.MouseEvent<HTMLElement>,
     targetId: string,
@@ -125,25 +146,30 @@ const HeroSection = () => {
   };
   return (
     <HeroBackground>
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          zIndex: 0,
-          transform: "ScaleX(-1)",
-        }}
-      >
-        <source src={`${videobg}`} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      {shouldLoadVideo && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex: 0,
+            transform: "ScaleX(-1) translateZ(0)",
+            backfaceVisibility: "hidden",
+            willChange: "transform",
+          }}
+        >
+          <source src={`${videobg}`} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      )}
 
       <Box
         sx={{

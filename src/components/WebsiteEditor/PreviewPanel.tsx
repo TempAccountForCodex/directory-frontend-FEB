@@ -127,7 +127,6 @@ interface FrontendTemplateIframeProps {
   ) => void;
   /** Called when the selected section supports adding inner blocks */
   onSectionInnerAddRequest?: (data: SectionSelectionData) => void;
-  onSectionInnerAddRequest?: (data: SectionSelectionData) => void;
   onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
   onEditableTextSave?: (
     blockId: string,
@@ -136,7 +135,7 @@ interface FrontendTemplateIframeProps {
   ) => void;
   onElementTransform?: (
     target: PreviewSelectionTarget,
-    patch: Record<string, string>,
+    patch: PreviewElementTransformPatch,
   ) => void;
   saveSignal?: number;
   iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
@@ -624,7 +623,10 @@ const FrontendTemplateIframePreview = React.memo(
                   height: target.style.height || inlineHeight,
                 };
 
-          onElementTransformRef.current?.(selectionTarget, patch);
+          onElementTransformRef.current?.(
+            selectionTarget,
+            patch as PreviewElementTransformPatch,
+          );
 
           // Clear temporary inline drag styles so React-rendered state remains
           // the single source of truth for placement/size and undo can revert it.
@@ -1372,6 +1374,7 @@ const FrontendTemplateIframePreview = React.memo(
             x: event.clientX,
             y: event.clientY,
             layers,
+            target: layers.find((layer) => layer.kind === "section") || null,
             targetLayer:
               layers.find((layer) => layer.kind === "section") || null,
             section: sectionSelection,
@@ -1397,6 +1400,14 @@ const FrontendTemplateIframePreview = React.memo(
             x: event.clientX,
             y: event.clientY,
             layers,
+            target:
+              layers.find(
+                (layer) =>
+                  layer.kind === "editable" &&
+                  layer.editable?.fieldPath === editableSelection?.fieldPath &&
+                  String(layer.editable?.blockId) ===
+                    String(editableSelection?.blockId),
+              ) || null,
             targetLayer:
               layers.find(
                 (layer) =>
@@ -1782,6 +1793,10 @@ export interface PreviewContextMenuData {
   x: number;
   y: number;
   target: PreviewLayerNodeData | null;
+  targetLayer?: PreviewLayerNodeData | null;
+  section?: SectionSelectionData | null;
+  editable?: EditableElementSelectionData | null;
+  image?: ImageSelectionData | null;
   layers: PreviewLayerNodeData[];
 }
 
@@ -1824,8 +1839,12 @@ interface PreviewPanelProps {
     data: SectionSelectionData,
     position: "before" | "after",
   ) => void;
+  /** Called when the selected section supports adding inner blocks */
+  onSectionInnerAddRequest?: (data: SectionSelectionData) => void;
   /** Called when a custom preview context menu should open */
   onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
+  /** Called when inline editing starts inside the preview iframe */
+  onInlineEditStart?: (data: InlineEditStartData) => void;
   /** Called when inline text editing inside the preview is saved */
   onEditableTextSave?: (
     blockId: string,
@@ -1867,6 +1886,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
   onSectionAddRequest,
   onSectionInnerAddRequest,
   onPreviewContextMenu,
+  onInlineEditStart,
   onEditableTextSave,
   onElementTransform,
   saveSignal,
@@ -2123,7 +2143,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [onBlockSelected, onBlockHover, onEditableElementSelected]);
+  }, [onBlockSelected, onBlockHover, onEditableElementSelected, onInlineEditStart]);
 
   // Send VIEWPORT_CHANGE when viewport or zoom changes
   React.useEffect(() => {

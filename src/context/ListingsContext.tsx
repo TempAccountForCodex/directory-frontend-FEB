@@ -43,6 +43,7 @@ export interface Place {
   businessLogo?: string | null;
   businessBanner?: string | null;
   image?: string | null;
+  image1?: string | null;
   images?: string[] | null;
   intro?: string | null;
   aboutUs?: string | null;
@@ -53,6 +54,9 @@ export interface Place {
   mapUrl?: string | null;
   featured?: boolean;
 
+  // Owner ID (returned by GET /api/directory/listings as ownerId)
+  ownerId?: string | number | null;
+
   // Related user
   user?: {
     id: string;
@@ -60,6 +64,8 @@ export interface Place {
     email: string;
     role: "user" | "admin";
   };
+
+  [key: string]: any;
 }
 
 interface Pagination {

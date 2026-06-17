@@ -7,15 +7,45 @@
  * 3. Tag add/remove works, max 10 enforced
  * 4. Publish blocked when completeness < 60%
  * 5. Archive shows confirmation dialog
- * 6. Character counter for shortDescription
+ * 6. Word counter for shortDescription
  * 7. Empty state when not opted in
  * 8. AI enhance calls correct API
  */
 
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import "@testing-library/jest-dom/vitest";
+
+vi.mock("../../../context/AuthContext", () => ({
+  useAuth: () => ({
+    user: { id: 1, name: "Test User", role: "user" },
+  }),
+}));
+
+vi.mock("../../../context/DashboardContext", () => ({
+  DashboardContext: React.createContext({ setSelectedSection: vi.fn() }),
+}));
+
+vi.mock("../../../hooks/useFavorites", () => ({
+  useFavorites: () => ({
+    isFavorited: () => false,
+    toggleFavorite: vi.fn(),
+  }),
+}));
+
+vi.mock("react-quill-new", () => ({
+  default: ({ value, onChange, placeholder }: any) => (
+    <textarea
+      data-testid="mock-rich-description-editor"
+      value={value || ""}
+      placeholder={placeholder}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  ),
+}));
 
 // Mock ThemeContext
 vi.mock("../../../context/ThemeContext", () => ({
@@ -133,12 +163,13 @@ vi.mock("../shared/DashboardInput", () => ({
 }));
 
 vi.mock("../shared/DashboardSelect", () => ({
-  default: ({ label, value, onChange, children }: any) => (
+  default: ({ label, value, onChange, children, error, helperText }: any) => (
     <div data-testid={`select-${label?.replace(/\s+/g, "-").toLowerCase()}`}>
       <label>{label}</label>
-      <select value={value || ""} onChange={onChange}>
+      <select value={value || ""} onChange={onChange} aria-invalid={error}>
         {children}
       </select>
+      {helperText && <span>{helperText}</span>}
     </div>
   ),
 }));
@@ -190,16 +221,39 @@ vi.mock("../shared/DashboardCard", () => ({
 
 import ListingEditTab from "../ListingEditTab";
 
+function render(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return rtlRender(
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+    </MemoryRouter>,
+  );
+}
+
 describe("ListingEditTab", () => {
+  const validLongDescription = Array.from(
+    { length: 800 },
+    (_, index) => `service${index + 1}`,
+  ).join(" ");
+
   const baseWebsiteData = {
     name: "Test Business",
     businessName: "Test Business",
-    shortDescription: "A test business description",
+    shortDescription: validLongDescription,
     businessCategory: "Technology",
     priceLevel: "$$",
     phone: "+1 555 1234",
     contactEmail: "test@example.com",
     fullAddress: "123 Test St",
+    city: "Test City",
+    region: "Test Region",
+    country: "Test Country",
     tags: ["tech", "startup"],
     directoryOptedIn: true,
     isPublic: false,
@@ -246,8 +300,41 @@ describe("ListingEditTab", () => {
     });
   });
 
+  it("shows Needs completion instead of Published when readiness is below 60%", async () => {
+    mockedAxios.get.mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: {
+          score: 50,
+          missing: ["businessCategory", "contact", "location"],
+          suggestions: {},
+        },
+      },
+    });
+
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{
+          ...baseWebsiteData,
+          businessCategory: "",
+          phone: "",
+          contactEmail: "",
+          city: "",
+          country: "",
+          isPublic: true,
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      const badge = screen.getByTestId("status-badge");
+      expect(badge).toHaveTextContent("Needs completion");
+    });
+  });
+
   it("renders status badge as Not Listed when directoryOptedIn is false", async () => {
-    // When not opted in, shows empty state instead
+    // When not opted in, shows the setup card instead of the management form.
     render(
       <ListingEditTab
         {...defaultProps}
@@ -255,7 +342,34 @@ describe("ListingEditTab", () => {
       />,
     );
     await waitFor(() => {
-      expect(screen.getByTestId("empty-state")).toBeInTheDocument();
+      expect(screen.getByText("Set Up Directory Listing")).toBeInTheDocument();
+    });
+  });
+
+  it("keeps setup form open after opting into directory listing", async () => {
+    const onUpdate = vi.fn();
+    mockedAxios.post.mockResolvedValueOnce({
+      data: { success: true, data: { directoryOptedIn: true } },
+    });
+
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{ ...baseWebsiteData, directoryOptedIn: false }}
+        onUpdate={onUpdate}
+      />,
+    );
+
+    fireEvent.click(await screen.findByText("Set Up Directory Listing"));
+
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining("/websites/1/listing/extract"),
+      );
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+      expect(onUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ directoryOptedIn: true }),
+      );
     });
   });
 
@@ -280,6 +394,7 @@ describe("ListingEditTab", () => {
         .getByTestId("input-business-name")
         .querySelector("input")!;
       expect(nameInput.value).toBe("Test Business");
+      expect(screen.getByTestId("description-rich-editor")).toBeInTheDocument();
     });
   });
 
@@ -297,8 +412,187 @@ describe("ListingEditTab", () => {
     await waitFor(() => {
       expect(mockedAxios.patch).toHaveBeenCalledWith(
         expect.stringContaining("/websites/1/listing"),
-        expect.objectContaining({ businessName: "Test Business" }),
+        expect.objectContaining({
+          businessName: "Test Business",
+          descriptionContent: expect.stringContaining("<p>"),
+        }),
       );
+    });
+  });
+
+  it("saves rich description content with inline image markup", async () => {
+    mockedAxios.patch.mockResolvedValueOnce({ data: { success: true } });
+
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-rich-description-editor")).toBeInTheDocument();
+    });
+
+    const richEditor = screen.getByTestId("mock-rich-description-editor");
+    fireEvent.change(richEditor, {
+      target: {
+        value: `<p>${validLongDescription}</p><p><img src="https://example.com/listing.jpg" alt="Office" /></p>`,
+      },
+    });
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    await waitFor(() => {
+      expect(mockedAxios.patch).toHaveBeenCalledWith(
+        expect.stringContaining("/websites/1/listing"),
+        expect.objectContaining({
+          shortDescription: validLongDescription,
+          descriptionContent: expect.stringContaining("<img"),
+        }),
+      );
+    });
+  });
+
+  it("shows backend listing validation errors on matching fields", async () => {
+    mockedAxios.patch.mockRejectedValueOnce({
+      response: {
+        status: 400,
+        data: {
+          error: "Listing content failed validation",
+          code: "LISTING_CONTENT_INVALID",
+          fields: {
+            shortDescription: ["Description contains spam-like content."],
+            contactEmail: ["Email looks suspicious."],
+            tags: ["Tags contain unrelated or repetitive keywords."],
+          },
+        },
+      },
+    });
+
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    expect(
+      await screen.findByText("Listing content failed validation"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Description contains spam-like content."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Email looks suspicious.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Tags contain unrelated or repetitive keywords."),
+    ).toBeInTheDocument();
+  });
+
+  it("renders object-shaped backend errors as text", async () => {
+    mockedAxios.patch.mockRejectedValueOnce({
+      response: {
+        status: 400,
+        data: {
+          message: {
+            message: "Description must be at least 250 words.",
+            code: "LISTING_CONTENT_INVALID",
+            statusCode: 400,
+            requestId: "test-request",
+          },
+          fields: {
+            shortDescription: [
+              {
+                message: "Description must be at least 250 words.",
+                code: "LISTING_CONTENT_INVALID",
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    expect(
+      await screen.findAllByText("Description must be at least 250 words."),
+    ).toHaveLength(2);
+  });
+
+  it("preserves existing contact fields when saving a partial listing edit", async () => {
+    const onUpdate = vi.fn();
+    mockedAxios.patch.mockResolvedValueOnce({ data: { success: true } });
+
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{
+          ...baseWebsiteData,
+        }}
+        onUpdate={onUpdate}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    const phoneInput = screen
+      .getByTestId("input-phone")
+      .querySelector("input")!;
+    fireEvent.change(phoneInput, { target: { value: "" } });
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    await waitFor(() => {
+      expect(mockedAxios.patch).toHaveBeenCalledWith(
+        expect.stringContaining("/websites/1/listing"),
+        expect.objectContaining({
+          phone: "+1 555 1234",
+          contactEmail: "test@example.com",
+          fullAddress: "123 Test St",
+          city: "Test City",
+          region: "Test Region",
+          country: "Test Country",
+          tags: ["tech", "startup"],
+        }),
+      );
+      expect(onUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phone: "+1 555 1234",
+          contactEmail: "test@example.com",
+          fullAddress: "123 Test St",
+          city: "Test City",
+          region: "Test Region",
+          country: "Test Country",
+          tags: ["tech", "startup"],
+        }),
+      );
+    });
+  });
+
+  it("shows location inputs and hides contact/location missing guidance when values are filled", async () => {
+    mockedAxios.get.mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: {
+          score: 70,
+          missing: ["contact", "location"],
+          suggestions: {
+            contact: "Add an email or phone number so customers can reach you.",
+            location: "Add your city and country to appear in location-based searches.",
+          },
+        },
+      },
+    });
+
+    render(<ListingEditTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("input-city")).toBeInTheDocument();
+      expect(screen.getByTestId("input-country")).toBeInTheDocument();
+      expect(screen.queryByText("Contact")).not.toBeInTheDocument();
+      expect(screen.queryByText("Location")).not.toBeInTheDocument();
     });
   });
 
@@ -387,7 +681,7 @@ describe("ListingEditTab", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/completeness must be at least 60%/i),
+        screen.getByText(/readiness must be at least 60%/i),
       ).toBeInTheDocument();
     });
   });
@@ -431,15 +725,64 @@ describe("ListingEditTab", () => {
     });
   });
 
-  it("renders character counter for shortDescription", async () => {
+  it("renders word counter for shortDescription", async () => {
     render(<ListingEditTab {...defaultProps} />);
 
     await waitFor(() => {
-      const counter = screen.getByTestId("char-counter");
-      expect(counter).toHaveTextContent(
-        `${baseWebsiteData.shortDescription.length}/500`,
-      );
+      const counter = screen.getByTestId("word-counter");
+      expect(counter).toHaveTextContent("800 words. Required: 250-2000.");
     });
+  });
+
+  it("blocks save when description is below the minimum word count", async () => {
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{
+          ...baseWebsiteData,
+          shortDescription: "Too short",
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    expect(
+      await screen.findByText(/Description must be at least 250 words/i),
+    ).toBeInTheDocument();
+    expect(mockedAxios.patch).not.toHaveBeenCalled();
+  });
+
+  it("blocks save when description is above the maximum word count", async () => {
+    const tooLongDescription = Array.from(
+      { length: 2001 },
+      (_, index) => `service${index + 1}`,
+    ).join(" ");
+
+    render(
+      <ListingEditTab
+        {...defaultProps}
+        websiteData={{
+          ...baseWebsiteData,
+          shortDescription: tooLongDescription,
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-btn")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("save-btn"));
+
+    expect(
+      await screen.findByText(/Description must be 2000 words or fewer/i),
+    ).toBeInTheDocument();
+    expect(mockedAxios.patch).not.toHaveBeenCalled();
   });
 
   it("renders live preview card", async () => {
@@ -459,8 +802,8 @@ describe("ListingEditTab", () => {
       />,
     );
 
-    expect(screen.getByTestId("empty-state")).toBeInTheDocument();
-    expect(screen.getByText("No Directory Listing")).toBeInTheDocument();
+    expect(screen.getByText("Directory Listing")).toBeInTheDocument();
+    expect(screen.getByText("Set Up Directory Listing")).toBeInTheDocument();
   });
 
   it("calls AI enhance endpoint", async () => {

@@ -1,11 +1,11 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Hero from "../../components/publicComponents/Home/Hero";
+const FAQSection = lazy(() => import("./../../components/UI/FAQSection"));
+
 const WhatMakesUsDifferentV2 = lazy(
   () => import("../../components/publicComponents/Home/WhatMakeUsDifferentV2"),
 );
-const FAQSection = lazy(() => import("./../../components/UI/FAQSection"));
-
 const WhyChooseUs = lazy(
   () => import("../../components/publicComponents/Home/WhyChooseUs"),
 );
@@ -60,6 +60,22 @@ const DeferredSection = ({
   return visible ? <>{children}</> : null;
 };
 
+const SectionFallback = ({
+  minHeight,
+  background = "#000",
+}: {
+  minHeight: string;
+  background?: string;
+}) => (
+  <div
+    aria-hidden="true"
+    style={{
+      minHeight,
+      background,
+    }}
+  />
+);
+
 const Home: React.FC = () => {
   const location = useLocation();
   const [enableBelowFoldSections, setEnableBelowFoldSections] = useState(false);
@@ -110,14 +126,14 @@ const Home: React.FC = () => {
     <>
       <Hero />
 
-      <DeferredSection enabled={true}>
-        <Suspense fallback={null}>
+      <DeferredSection enabled={enableBelowFoldSections}>
+        <Suspense fallback={<SectionFallback minHeight="100vh" />}>
           <WhatMakesUsDifferentV2 />
         </Suspense>
       </DeferredSection>
 
-      <DeferredSection enabled={true}>
-        <Suspense fallback={null}>
+      <DeferredSection enabled={enableBelowFoldSections}>
+        <Suspense fallback={<SectionFallback minHeight="980px" background="#fff" />}>
           <WhyChooseUs />
         </Suspense>
       </DeferredSection>

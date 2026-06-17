@@ -1,6 +1,6 @@
 import { Box, Typography, Stack } from "@mui/material";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useMemo, useEffect, useState } from "react";
+import { memo } from "react";
 
 const columns = [
   {
@@ -64,13 +64,54 @@ const columns = [
     ],
   },
 ];
-export default function TemplateScrollShowcase() {
+const TemplateScrollShowcase = memo(function TemplateScrollShowcase() {
   const containerRef = useRef<HTMLDivElement>(null);
   const centerIndex = 2;
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
+  const columnTransforms = useMemo(() => {
+    return columns.map((col, index) => {
+      const distanceFromCenter = Math.abs(index - centerIndex);
+      const initialY = distanceFromCenter * 120;
+      const baseScroll = 520 * col.speed;
+      const extraBoost = distanceFromCenter * 180;
+      const targetY = initialY - (baseScroll + extraBoost);
+      return { initialY, targetY, distanceFromCenter };
+    });
+  }, []);
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    let rafId: number;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        rafId = requestAnimationFrame(() => {
+          if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const progress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (windowHeight + rect.height)));
+            setScrollProgress(progress);
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  const yTransforms = columnTransforms.map(({ initialY, targetY }) => {
+    const y = initialY + (targetY - initialY) * scrollProgress;
+    return y;
   });
 
   return (
@@ -86,6 +127,9 @@ export default function TemplateScrollShowcase() {
           "radial-gradient(rgba(214, 214, 214, 0.18) 10.6%, transparent 23.6%)",
         backgroundPosition: "10px 10px",
         backgroundSize: "8px 8px",
+        willChange: "transform",
+        backfaceVisibility: "hidden",
+        perspective: 1000,
       }}
     >
       <Stack alignItems="center" textAlign="center" color="white" mb={10}>
@@ -153,30 +197,25 @@ export default function TemplateScrollShowcase() {
           }}
         >
           {columns.map((col, index) => {
-            const distanceFromCenter = Math.abs(index - centerIndex);
-
-            // 🔹 Initial vertical offset (center highest)
-            const initialY = distanceFromCenter * 120;
-
-            // 🔥 SCROLL DISTANCE LOGIC (THIS IS THE KEY)
-            const baseScroll = 520 * col.speed;
-            const extraBoost = distanceFromCenter * 180;
-
-            const targetY = initialY - (baseScroll + extraBoost);
-
-            const y = useTransform(
-              scrollYProgress,
-              [0, 1],
-              [initialY, targetY],
-            );
+            const { distanceFromCenter } = columnTransforms[index];
+            const y = yTransforms[index];
 
             return (
-              <motion.div key={index} style={{ y }}>
+              <Box
+                key={index}
+                sx={{
+                  willChange: "transform",
+                  backfaceVisibility: "hidden",
+                  transformStyle: "preserve-3d",
+                  transform: `translateY(${y}px)`,
+                }}
+              >
                 <Box
                   sx={{
                     display: "flex",
                     flexDirection: "column",
                     gap: "24px",
+                    contain: "layout style paint",
                   }}
                 >
                   {col.images.map((src, i) => (
@@ -192,6 +231,9 @@ export default function TemplateScrollShowcase() {
                           distanceFromCenter === 0
                             ? "0 40px 120px rgba(0,0,0,0.45)"
                             : "0 20px 60px rgba(0,0,0,0.35)",
+                        willChange: "transform",
+                        transform: "translateZ(0)",
+                        backfaceVisibility: "hidden",
                       }}
                     >
                       <Box
@@ -205,12 +247,13 @@ export default function TemplateScrollShowcase() {
                           height: "100%",
                           objectFit: "cover",
                           objectPosition: "top",
+                          willChange: "transform",
                         }}
                       />
                     </Box>
                   ))}
                 </Box>
-              </motion.div>
+              </Box>
             );
           })}
         </Box>
@@ -231,4 +274,6 @@ export default function TemplateScrollShowcase() {
       </Box>
     </Box>
   );
-}
+});
+
+export default TemplateScrollShowcase;

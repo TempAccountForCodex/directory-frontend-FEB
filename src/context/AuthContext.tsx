@@ -190,12 +190,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Check if user is authenticated on mount
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.pathname === "/") {
+      applyAuthenticatedUser(null);
+      setLoading(false);
+      return;
+    }
+
     const checkAuth = async () => {
       try {
         const currentUser = await fetchCurrentUser();
         applyAuthenticatedUser(currentUser);
       } catch (error) {
-        console.error("Auth check failed:", error);
         // Clear user state on auth failure
         applyAuthenticatedUser(null);
       } finally {

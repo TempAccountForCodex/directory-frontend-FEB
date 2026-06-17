@@ -1732,9 +1732,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       return (
         <BlockWrapper fields={content}>
           <StoryPanelBlock
-            block={block}
+            content={content}
             primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
             headingColor={headingColor}
             bodyColor={bodyColor}
           />
