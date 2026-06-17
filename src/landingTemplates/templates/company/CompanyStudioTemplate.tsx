@@ -603,7 +603,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
     return {
       label:
-        (navbarContent.navLabels as Record<string, string> | undefined)?.[key] ||
+        (navbarContent.navLabels as Record<string, string> | undefined)?.[
+          key
+        ] ||
         homeContent.navLabels?.[key] ||
         homeContent.navigationLabels?.[key] ||
         defaultLabel,
@@ -688,11 +690,17 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       keepHeight: true,
     });
     const resolvedCardStyle = getFlowSafeStyle(
-      getSectionStyleSx({ cardStyle: rawCardStyle }, "cardStyle"),
+      getSectionStyleSx({ cardStyle: rawCardStyle }, "cardStyle") as Record<
+        string,
+        any
+      >,
       { keepWidth: true, keepHeight: true },
     );
     const resolvedSectionStyle = getFlowSafeStyle(
-      getSectionStyleSx({ sectionStyle: rawSectionStyle }),
+      getSectionStyleSx({ sectionStyle: rawSectionStyle }) as Record<
+        string,
+        any
+      >,
       { keepWidth: true, keepHeight: true },
     );
     const canvasBaseSx = canvas
@@ -753,8 +761,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       "data-preview-block-id": section.blockId,
       "data-preview-style-key": `${blockPath}.cardStyle`,
     };
-    const compoundBlockLabel =
-      block.label || humanizeEditorBlockKey(blockType);
+    const compoundBlockLabel = block.label || humanizeEditorBlockKey(blockType);
 
     const sharedEditorBlock = renderEditorSharedBlock({
       section,
@@ -910,9 +917,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       return left.point.x - right.point.x;
     };
 
-    const getResponsivePriority = (
-      entry: (typeof innerBlockEntries)[number],
-    ) => getEditorBlockResponsivePriority(entry.block);
+    const getResponsivePriority = (entry: (typeof innerBlockEntries)[number]) =>
+      getEditorBlockResponsivePriority(entry.block);
 
     const sortByResponsiveFlow = (
       left: (typeof innerBlockEntries)[number],

@@ -294,7 +294,7 @@ const STATIC_PATTERN_SX: Record<string, Record<string, unknown>> = {
 
 export const getSectionStyleSx = (
   content: ContentLike,
-  styleKey: "sectionStyle" | "outerSectionStyle" = "sectionStyle",
+  styleKey: "sectionStyle" | "outerSectionStyle" | "cardStyle" = "sectionStyle",
 ): SxProps<Theme> => {
   const sectionStyle = readStyleValue(content, styleKey);
   const sx: Record<string, unknown> = {};

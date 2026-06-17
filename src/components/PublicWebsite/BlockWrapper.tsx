@@ -77,7 +77,9 @@ export type BlockWrapperFields = BlockAnimationFields &
   BlockEffectsFields &
   BlockSpacingFields &
   ResponsiveVisibilityFields &
-  SectionColorFields;
+  SectionColorFields & {
+    sectionStyle?: Record<string, unknown>;
+  };
 
 export interface BlockWrapperProps {
   /** The union of all 5 hook field interfaces — pass block.content directly */
