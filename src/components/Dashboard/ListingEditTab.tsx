@@ -29,9 +29,12 @@ import TextField from "@mui/material/TextField";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
+import { alpha } from "@mui/material/styles";
 import { Globe, Image as ImageIcon, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { apiClient } from "../../api/client";
 import { API_URL } from "@/config/api";
+import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import { getDashboardColors } from "../../styles/dashboardTheme";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../api/queryKeys";
 import PropertyItemCard from "../publicComponents/Listing/PropertyCardItem";
@@ -284,6 +287,23 @@ const ListingEditTab = React.memo(function ListingEditTab({
 }: ListingEditTabProps) {
   const isPaidPlan = PAID_PLANS.includes(planCode);
   const queryClient = useQueryClient();
+  const { actualTheme } = useCustomTheme();
+  const colors = getDashboardColors(actualTheme);
+  const isLight = actualTheme === "light";
+  const inputPalette = useMemo(
+    () => ({
+      fill: isLight ? "#ffffff" : colors.panelBg,
+      border: isLight ? alpha("#111827", 0.16) : colors.panelBorder,
+      text: isLight ? "#111827" : colors.panelText,
+      muted: isLight ? "#111827" : colors.panelMuted,
+      subtle: isLight ? alpha("#111827", 0.45) : colors.panelSubtle,
+      accent: isLight ? "#111827" : colors.panelAccent,
+      danger: colors.panelDanger,
+      hoverBorder: isLight ? "#111827" : alpha(colors.panelAccent, 0.3),
+      toolbarFill: isLight ? "#ffffff" : colors.panelBg,
+    }),
+    [colors, isLight],
+  );
 
   const [form, setForm] = useState<FormData>({
     businessName: "",
@@ -1032,10 +1052,25 @@ const ListingEditTab = React.memo(function ListingEditTab({
               placeholder="Enter your business name"
             />
 
-            <Box>
+            <Box
+              sx={{
+                "&:focus-within .dashboard-input-label": {
+                  color: inputPalette.accent,
+                },
+              }}
+            >
               <Typography
+                className="dashboard-input-label"
                 variant="body2"
-                sx={{ color: "text.secondary", fontWeight: 500, mb: 1 }}
+                sx={{
+                  color: formErrors.shortDescription
+                    ? inputPalette.danger
+                    : inputPalette.muted,
+                  fontSize: "0.95rem",
+                  fontWeight: 500,
+                  mb: 1,
+                  transition: "color 0.2s ease",
+                }}
               >
                 Description
               </Typography>
@@ -1043,30 +1078,118 @@ const ListingEditTab = React.memo(function ListingEditTab({
                 data-testid="description-rich-editor"
                 sx={{
                   border: "1px solid",
-                  borderColor: formErrors.shortDescription ? "error.main" : "divider",
-                  borderRadius: 2,
+                  borderColor: formErrors.shortDescription
+                    ? inputPalette.danger
+                    : inputPalette.border,
+                  borderRadius: "12px",
                   overflow: "hidden",
-                  bgcolor: "background.paper",
+                  backgroundColor: `${inputPalette.fill} !important`,
+                  boxShadow: "none",
+                  transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+                  "& .quill": {
+                    height: "100%",
+                    backgroundColor: `${inputPalette.fill} !important`,
+                  },
+                  "& .ql-snow": {
+                    backgroundColor: `${inputPalette.fill} !important`,
+                  },
+                  "&:hover": {
+                    borderColor: formErrors.shortDescription
+                      ? inputPalette.danger
+                      : inputPalette.hoverBorder,
+                  },
+                  "&:focus-within": {
+                    borderColor: formErrors.shortDescription
+                      ? inputPalette.danger
+                      : inputPalette.accent,
+                    boxShadow: formErrors.shortDescription
+                      ? "none"
+                      : `0 0 0 3px ${alpha(inputPalette.accent, isLight ? 0.14 : 0.22)}`,
+                  },
                   "& .ql-toolbar": {
-                    border: 0,
+                    border: "0 !important",
                     borderBottom: "1px solid",
-                    borderColor: "divider",
-                    bgcolor: "action.hover",
+                    borderColor: `${inputPalette.border} !important`,
+                    backgroundColor: `${inputPalette.toolbarFill} !important`,
+                    px: 1.25,
+                    py: 1,
+                    fontFamily: "inherit",
+                    "& .ql-picker": {
+                      color: inputPalette.text,
+                    },
+                    "& .ql-picker.ql-expanded .ql-picker-label": {
+                      color: `${inputPalette.accent} !important`,
+                    },
+                    "& .ql-picker-label": {
+                      borderRadius: "8px",
+                      color: `${inputPalette.text} !important`,
+                      borderColor: "transparent",
+                    },
+                    "& .ql-picker-label:hover, & .ql-picker-label.ql-active": {
+                      color: `${inputPalette.accent} !important`,
+                    },
+                    "& .ql-picker-item:hover, & .ql-picker-item.ql-selected": {
+                      color: `${inputPalette.accent} !important`,
+                    },
+                    "& .ql-picker-options": {
+                      backgroundColor: isLight ? "#ffffff" : colors.panelBg,
+                      borderColor: inputPalette.border,
+                      borderRadius: "10px",
+                      boxShadow: colors.panelShadow,
+                      color: inputPalette.text,
+                    },
+                    "& button": {
+                      borderRadius: "8px",
+                      color: `${inputPalette.muted} !important`,
+                      mx: 0.15,
+                    },
+                    "& button:hover, & button.ql-active, & button:focus": {
+                      backgroundColor: alpha(inputPalette.accent, isLight ? 0.08 : 0.14),
+                      color: `${inputPalette.accent} !important`,
+                    },
+                    "& button:hover .ql-stroke, & button.ql-active .ql-stroke, & button:focus .ql-stroke, & .ql-picker-label:hover .ql-stroke, & .ql-picker.ql-expanded .ql-picker-label .ql-stroke": {
+                      stroke: `${inputPalette.accent} !important`,
+                    },
+                    "& button:hover .ql-fill, & button.ql-active .ql-fill, & button:focus .ql-fill, & .ql-picker-label:hover .ql-fill, & .ql-picker.ql-expanded .ql-picker-label .ql-fill": {
+                      fill: `${inputPalette.accent} !important`,
+                    },
+                    "& button .ql-stroke, & .ql-picker-label .ql-stroke": {
+                      stroke: "currentColor !important",
+                    },
+                    "& button .ql-fill, & .ql-picker-label .ql-fill": {
+                      fill: "currentColor !important",
+                    },
+                  },
+                  "& .ql-toolbar.ql-snow": {
+                    border: "0 !important",
+                    borderBottom: `1px solid ${inputPalette.border} !important`,
                   },
                   "& .ql-container": {
-                    border: 0,
+                    border: "0 !important",
+                    borderTop: "0 !important",
                     minHeight: 260,
                     fontFamily: "inherit",
-                    fontSize: 16,
+                    fontSize: "1rem",
+                    backgroundColor: `${inputPalette.fill} !important`,
+                  },
+                  "& .ql-container.ql-snow": {
+                    border: "0 !important",
+                    backgroundColor: `${inputPalette.fill} !important`,
                   },
                   "& .ql-editor": {
                     minHeight: 260,
-                    color: "text.primary",
-                    lineHeight: 1.6,
+                    backgroundColor: `${inputPalette.fill} !important`,
+                    color: inputPalette.text,
+                    caretColor: `${inputPalette.text} !important`,
+                    lineHeight: 1.7,
+                    px: 2,
+                    py: 1.75,
                   },
                   "& .ql-editor.ql-blank::before": {
-                    color: "text.disabled",
+                    color: inputPalette.subtle,
                     fontStyle: "normal",
+                    left: 16,
+                    right: 16,
                   },
                   "& .ql-editor img": {
                     display: "block",
@@ -1089,7 +1212,12 @@ const ListingEditTab = React.memo(function ListingEditTab({
               {formErrors.shortDescription && (
                 <Typography
                   variant="caption"
-                  sx={{ color: "error.main", mt: 0.5, display: "block" }}
+                  sx={{
+                    color: inputPalette.danger,
+                    mt: 0.75,
+                    display: "block",
+                    fontSize: "0.85rem",
+                  }}
                 >
                   {formErrors.shortDescription}
                 </Typography>
@@ -1100,11 +1228,12 @@ const ListingEditTab = React.memo(function ListingEditTab({
                   color:
                     descriptionWordCount < MIN_DESCRIPTION_WORDS ||
                     descriptionWordCount > MAX_DESCRIPTION_WORDS
-                      ? "error.main"
-                      : "text.secondary",
-                  mt: 0.5,
+                      ? inputPalette.danger
+                      : inputPalette.muted,
+                  mt: 0.75,
                   display: "block",
                   textAlign: "right",
+                  fontSize: "0.85rem",
                 }}
                 data-testid="word-counter"
               >
