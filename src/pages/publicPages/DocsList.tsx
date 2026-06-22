@@ -1,34 +1,26 @@
 /**
- * DocsList — Article list page at /docs/category/:category (Step 10.9.7)
+ * DocsList — Clerk-style category index (dark, self-contained) at
+ * /docs/category/:category.
  *
- * Shows breadcrumbs, search, article cards, and pagination.
- * Fetches from GET /api/docs?category=X&page=N.
+ * Breadcrumbs, category heading, an in-page filter, and a clean list of article
+ * rows. Fetches from GET /api/docs?category=&page= with a static-seed fallback.
+ * Colors come from the explicit docs palette, not the app theme.
  */
 
 import React, { memo, useState, useEffect, useCallback, useMemo } from "react";
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardActionArea from "@mui/material/CardActionArea";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
-import Chip from "@mui/material/Chip";
 import Skeleton from "@mui/material/Skeleton";
 import Alert from "@mui/material/Alert";
 import Pagination from "@mui/material/Pagination";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
-import {
-  Search as SearchIcon,
-  ChevronRight,
-  Eye as ViewIcon,
-  Calendar,
-} from "lucide-react";
+import { Search as SearchIcon, ChevronRight, ArrowRight } from "lucide-react";
 import { apiClient } from "../../api/client";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import DocsLayout from "../../components/Docs/DocsLayout";
+import { getSeedArticlesByCategory, getCategoryLabel } from "../../data/docs";
+import { DOCS } from "../../components/Docs/docsTheme";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -44,114 +36,71 @@ interface Article {
   updatedAt: string;
   tags: string[];
   isPublished: boolean;
+  description?: string;
 }
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const CATEGORY_LABELS: Record<string, string> = {
-  "getting-started": "Getting Started",
-  features: "Features",
-  troubleshooting: "Troubleshooting",
-  api: "API Reference",
-};
 
 const PAGE_SIZE = 10;
 
 // ---------------------------------------------------------------------------
-// Helper
+// Helpers
 // ---------------------------------------------------------------------------
 
-const formatDate = (iso: string): string => {
-  if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
-
-const getExcerpt = (content: string, maxLen = 150): string => {
-  // Strip markdown syntax for excerpt
-  const plain = content
+const getExcerpt = (article: Article, maxLen = 160): string => {
+  if (article.description) return article.description;
+  const plain = (article.content || "")
     .replace(/#+\s/g, "")
-    .replace(/[*_`]/g, "")
-    .replace(/\n/g, " ");
+    .replace(/[*_`>]/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\n+/g, " ")
+    .trim();
   return plain.length > maxLen ? plain.slice(0, maxLen) + "…" : plain;
 };
 
 // ---------------------------------------------------------------------------
-// ArticleCard
+// ArticleRow
 // ---------------------------------------------------------------------------
 
-interface ArticleCardProps {
-  article: Article;
-}
-
-const ArticleCard = memo<ArticleCardProps>(({ article }) => {
-  return (
-    <Card
-      elevation={0}
+const ArticleRow = memo<{ article: Article }>(({ article }) => (
+  <Box
+    component={Link}
+    to={`/docs/${article.slug}`}
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 2,
+      px: 2,
+      py: 2,
+      textDecoration: "none",
+      transition: "background-color 0.12s",
+      "&:hover": { bgcolor: DOCS.surfaceHover },
+      "&:hover .docs-row-arrow": { opacity: 1, transform: "translateX(2px)" },
+    }}
+  >
+    <Box sx={{ minWidth: 0 }}>
+      <Box sx={{ fontWeight: 650, color: DOCS.text, mb: 0.25 }}>
+        {article.title}
+      </Box>
+      <Box sx={{ color: DOCS.textMuted, fontSize: "0.875rem", lineHeight: 1.5 }}>
+        {getExcerpt(article)}
+      </Box>
+    </Box>
+    <Box
+      className="docs-row-arrow"
       sx={{
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 2,
-        transition: "box-shadow 0.2s",
-        "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.08)" },
+        color: DOCS.textFaint,
+        opacity: 0,
+        transition: "opacity 0.12s, transform 0.12s",
+        flexShrink: 0,
+        display: "flex",
       }}
     >
-      <CardActionArea component={Link} to={`/docs/${article.slug}`}>
-        <CardContent sx={{ p: 2.5 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              mb: 1,
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 700, color: "text.primary", flex: 1, mr: 1 }}
-            >
-              {article.title}
-            </Typography>
-            <Chip
-              label={CATEGORY_LABELS[article.category] || article.category}
-              size="small"
-              sx={{ fontSize: "0.65rem", height: 20, flexShrink: 0 }}
-            />
-          </Box>
+      <ArrowRight size={16} />
+    </Box>
+  </Box>
+));
 
-          <Typography
-            variant="body2"
-            sx={{ color: "text.secondary", mb: 1.5, lineHeight: 1.6 }}
-          >
-            {getExcerpt(article.content)}
-          </Typography>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <ViewIcon size={12} />
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {(article.views || 0).toLocaleString()} views
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Calendar size={12} />
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {formatDate(article.updatedAt)}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </CardActionArea>
-    </Card>
-  );
-});
-
-ArticleCard.displayName = "ArticleCard";
+ArticleRow.displayName = "ArticleRow";
 
 // ---------------------------------------------------------------------------
 // DocsList
@@ -165,27 +114,32 @@ const DocsList = memo(() => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const categoryLabel = CATEGORY_LABELS[category] || category;
+  const categoryLabel = getCategoryLabel(category);
 
   const fetchArticles = useCallback(async () => {
-    setLoading(true);
     setError(null);
+    // Show the compiled-in seed immediately (instant paint, no spinner), then
+    // refresh from the API in the background and override only on success.
+    const seed = getSeedArticlesByCategory(category, pageParam, PAGE_SIZE);
+    setArticles(seed.articles as unknown as Article[]);
+    setTotal(seed.total);
+    setTotalPages(seed.totalPages);
     try {
       const resp = await apiClient.get(`/docs`, {
         params: { category, page: pageParam, limit: PAGE_SIZE },
       });
       const data = resp.data;
-      setArticles(Array.isArray(data?.articles) ? data.articles : []);
-      setTotal(data?.total ?? 0);
-      setTotalPages(data?.totalPages ?? 1);
+      if (Array.isArray(data?.articles)) {
+        setArticles(data.articles);
+        setTotal(data?.total ?? data.articles.length);
+        setTotalPages(data?.totalPages ?? 1);
+      }
     } catch (err) {
-      setError("Failed to load articles.");
-    } finally {
-      setLoading(false);
+      // No backend reachable — keep the seed already on screen.
     }
   }, [category, pageParam]);
 
@@ -208,71 +162,83 @@ const DocsList = memo(() => {
   );
 
   const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
-    },
+    (e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
     [],
   );
 
   return (
     <DocsLayout>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ maxWidth: 820, mx: "auto", px: { xs: 2.5, md: 6 }, py: { xs: 4, md: 6 } }}>
         {/* Breadcrumbs */}
-        <Breadcrumbs
-          separator={<ChevronRight size={14} />}
-          sx={{ mb: 3, color: "text.secondary" }}
-        >
-          <Typography
+        <Breadcrumbs separator={<ChevronRight size={13} color={DOCS.textFaint} />} sx={{ mb: 2 }}>
+          <Box
             component={Link}
             to="/docs"
-            variant="body2"
             sx={{
-              color: "text.secondary",
+              color: DOCS.textMuted,
               textDecoration: "none",
-              "&:hover": { color: "text.primary" },
+              fontSize: "0.8rem",
+              "&:hover": { color: DOCS.text },
             }}
           >
             Docs
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: "text.primary", fontWeight: 600 }}
-          >
+          </Box>
+          <Box component="span" sx={{ color: DOCS.text, fontWeight: 600, fontSize: "0.8rem" }}>
             {categoryLabel}
-          </Typography>
+          </Box>
         </Breadcrumbs>
 
         {/* Header */}
-        <Typography
-          variant="h4"
+        <Box
           component="h1"
-          sx={{ fontWeight: 800, color: "text.primary", mb: 1 }}
+          sx={{
+            fontWeight: 800,
+            color: DOCS.text,
+            m: 0,
+            mb: 0.5,
+            fontSize: { xs: "1.7rem", md: "2.1rem" },
+            letterSpacing: "-0.02em",
+          }}
         >
           {categoryLabel}
-        </Typography>
-        <Typography variant="body1" sx={{ color: "text.secondary", mb: 3 }}>
+        </Box>
+        <Box sx={{ color: DOCS.textMuted, mb: 3, fontSize: "0.9rem" }}>
           {total > 0 ? `${total} articles` : "No articles yet"}
-        </Typography>
+        </Box>
 
-        {/* Search within category */}
-        <Box sx={{ mb: 3, maxWidth: 400 }}>
+        {/* Filter */}
+        <Box sx={{ mb: 2, maxWidth: 360 }}>
           <TextField
             value={searchQuery}
             onChange={handleSearchChange}
-            placeholder="Search in this category..."
+            placeholder="Filter in this category…"
             size="small"
             fullWidth
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon size={16} />
+                  <SearchIcon size={16} color={DOCS.textFaint} />
                 </InputAdornment>
               ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "10px",
+                bgcolor: DOCS.surface,
+                color: DOCS.text,
+                fontSize: "0.875rem",
+                "& fieldset": { borderColor: DOCS.border },
+                "&:hover fieldset": { borderColor: DOCS.borderStrong },
+                "&.Mui-focused fieldset": { borderColor: DOCS.accent },
+              },
+              "& .MuiOutlinedInput-input::placeholder": {
+                color: DOCS.textFaint,
+                opacity: 1,
+              },
             }}
           />
         </Box>
 
-        {/* Error */}
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
@@ -281,52 +247,69 @@ const DocsList = memo(() => {
 
         {/* Loading */}
         {loading && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {Array.from({ length: 4 }).map((_, i) => (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton
                 key={i}
                 variant="rectangular"
-                height={120}
-                sx={{ borderRadius: 2 }}
+                height={68}
+                sx={{ borderRadius: "10px", bgcolor: DOCS.surface }}
               />
             ))}
           </Box>
         )}
 
-        {/* Empty state */}
+        {/* Empty */}
         {!loading && !error && filteredArticles.length === 0 && (
-          <Box sx={{ textAlign: "center", py: 8 }}>
-            <Typography variant="h6" sx={{ color: "text.secondary" }}>
-              {searchQuery
-                ? `No articles match "${searchQuery}"`
-                : "No articles in this category yet."}
-            </Typography>
+          <Box sx={{ textAlign: "center", py: 8, color: DOCS.textMuted }}>
+            {searchQuery
+              ? `No articles match "${searchQuery}"`
+              : "No articles in this category yet."}
           </Box>
         )}
 
-        {/* Article list */}
+        {/* List */}
         {!loading && !error && filteredArticles.length > 0 && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box
+            sx={{
+              border: `1px solid ${DOCS.border}`,
+              borderRadius: "12px",
+              overflow: "hidden",
+              bgcolor: DOCS.surface,
+              "& > a:not(:last-of-type)": {
+                borderBottom: `1px solid ${DOCS.border}`,
+              },
+            }}
+          >
             {filteredArticles.map((article) => (
-              <ArticleCard key={article.id} article={article} />
+              <ArticleRow key={article.id} article={article} />
             ))}
           </Box>
         )}
 
         {/* Pagination */}
         {!loading && !error && totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              mt: 4,
+              "& .MuiPaginationItem-root": { color: DOCS.textMuted },
+              "& .Mui-selected": {
+                bgcolor: `${DOCS.accentSoftBg} !important`,
+                color: DOCS.accent,
+              },
+            }}
+          >
             <Pagination
               count={totalPages}
               page={pageParam}
               onChange={handlePageChange}
-              color="primary"
-              showFirstButton
-              showLastButton
+              shape="rounded"
             />
           </Box>
         )}
-      </Container>
+      </Box>
     </DocsLayout>
   );
 });

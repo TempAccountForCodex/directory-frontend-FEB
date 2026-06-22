@@ -23,6 +23,8 @@ import Chip from "@mui/material/Chip";
 import { Search as SearchIcon, FileText as ArticleIcon } from "lucide-react";
 import { apiClient } from "../../api/client";
 import { useNavigate } from "react-router-dom";
+import { searchSeedArticles } from "../../data/docs";
+import { DOCS } from "./docsTheme";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -93,9 +95,12 @@ const DocSearch = memo<DocSearchProps>(
           setOpen(true);
           setNoResults(limited.length === 0);
         } catch {
-          setResults([]);
-          setNoResults(true);
+          // No backend reachable — search the compiled-in static seed so the
+          // search box still works offline when the backend is unavailable.
+          const seed = searchSeedArticles(query, MAX_RESULTS);
+          setResults(seed);
           setOpen(true);
+          setNoResults(seed.length === 0);
         } finally {
           setLoading(false);
         }
@@ -165,9 +170,9 @@ const DocSearch = memo<DocSearchProps>(
             startAdornment: (
               <InputAdornment position="start">
                 {loading ? (
-                  <CircularProgress size={16} />
+                  <CircularProgress size={16} sx={{ color: DOCS.textFaint }} />
                 ) : (
-                  <SearchIcon size={18} />
+                  <SearchIcon size={18} color={DOCS.textFaint} />
                 )}
               </InputAdornment>
             ),
@@ -175,13 +180,23 @@ const DocSearch = memo<DocSearchProps>(
           sx={{
             "& .MuiOutlinedInput-root": {
               borderRadius: "10px",
+              bgcolor: DOCS.surface,
+              color: DOCS.text,
+              fontSize: "0.875rem",
+              "& fieldset": { borderColor: DOCS.border },
+              "&:hover fieldset": { borderColor: DOCS.borderStrong },
+              "&.Mui-focused fieldset": { borderColor: DOCS.accent },
+            },
+            "& .MuiOutlinedInput-input::placeholder": {
+              color: DOCS.textFaint,
+              opacity: 1,
             },
           }}
         />
 
         {open && (
           <Paper
-            elevation={4}
+            elevation={0}
             sx={{
               position: "absolute",
               top: "100%",
@@ -189,15 +204,18 @@ const DocSearch = memo<DocSearchProps>(
               right: 0,
               mt: 0.5,
               zIndex: 1400,
-              borderRadius: "10px",
+              borderRadius: "12px",
               overflow: "hidden",
-              maxHeight: 320,
+              maxHeight: 360,
               overflowY: "auto",
+              bgcolor: DOCS.surface,
+              border: `1px solid ${DOCS.border}`,
+              boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
             }}
           >
             {noResults && (
               <Box sx={{ p: 2, textAlign: "center" }}>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                <Typography variant="body2" sx={{ color: DOCS.textMuted }}>
                   No articles match your search.
                 </Typography>
               </Box>
@@ -214,19 +232,19 @@ const DocSearch = memo<DocSearchProps>(
                   px: 2,
                   py: 1.5,
                   cursor: "pointer",
-                  "&:hover": { bgcolor: "action.hover" },
-                  borderBottom: "1px solid",
-                  borderColor: "divider",
+                  color: DOCS.textMuted,
+                  "&:hover": { bgcolor: DOCS.surfaceHover },
+                  borderBottom: `1px solid ${DOCS.border}`,
                   "&:last-of-type": { borderBottom: "none" },
                 }}
               >
-                <ArticleIcon size={16} />
+                <ArticleIcon size={16} color={DOCS.accent} />
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography
                     variant="body2"
                     sx={{
                       fontWeight: 600,
-                      color: "text.primary",
+                      color: DOCS.text,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -238,7 +256,7 @@ const DocSearch = memo<DocSearchProps>(
                     <Typography
                       variant="caption"
                       sx={{
-                        color: "text.secondary",
+                        color: DOCS.textMuted,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -252,7 +270,13 @@ const DocSearch = memo<DocSearchProps>(
                 <Chip
                   label={result.category}
                   size="small"
-                  sx={{ fontSize: "0.65rem", height: 20 }}
+                  sx={{
+                    fontSize: "0.65rem",
+                    height: 20,
+                    color: DOCS.textMuted,
+                    bgcolor: DOCS.accentSoftBg,
+                    border: `1px solid ${DOCS.border}`,
+                  }}
                 />
               </Box>
             ))}

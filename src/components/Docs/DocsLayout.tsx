@@ -1,31 +1,33 @@
 /**
- * DocsLayout — Sidebar navigation wrapper for documentation pages (Step 10.9.7)
+ * DocsLayout — Clerk-style, self-contained dark documentation shell.
  *
- * Layout with:
- * - Sidebar: sections + articles navigation tree
- * - Main content area
- * - Mobile: sidebar collapses to a drawer
+ * - Sticky top bar with brand, search, and a link back to the site.
+ * - Left sidebar with the full nested navigation tree (section groups +
+ *   their articles), persistent on desktop and a drawer on mobile.
+ * - Main content area rendered as children.
+ *
+ * Uses an explicit dark palette (see docsTheme) rather than the app's MUI theme
+ * tokens, which render invisible on these surfaces.
  */
 
-import React, { memo, useState, useCallback, useMemo } from "react";
+import React, { memo, useState, useCallback, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
-import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
-import Divider from "@mui/material/Divider";
-import Container from "@mui/material/Container";
-import List from "@mui/material/List";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
+import Tooltip from "@mui/material/Tooltip";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
-import {
-  Menu as MenuIcon,
-  BookOpen as BookOpenIcon,
-  ChevronRight,
-} from "lucide-react";
+import { Menu as MenuIcon, ArrowUpRight, Sun, Moon } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import DocSearch from "./DocSearch";
+import { getSeedSections, SEED_ARTICLES } from "../../data/docs";
+import {
+  DOCS,
+  DOCS_THEME_CSS,
+  DOCS_THEME_STORAGE_KEY,
+  readDocsMode,
+  type DocsMode,
+} from "./docsTheme";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,21 +44,36 @@ interface DocsLayoutProps {
   sections?: DocSection[];
 }
 
+interface NavArticle {
+  slug: string;
+  title: string;
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const SIDEBAR_WIDTH = 260;
+const SIDEBAR_WIDTH = 280;
+const TOPBAR_HEIGHT = 56;
 
-const DEFAULT_SECTIONS: DocSection[] = [
-  { slug: "getting-started", title: "Getting Started" },
-  { slug: "features", title: "Features" },
-  { slug: "troubleshooting", title: "Troubleshooting" },
-  { slug: "api", title: "API Reference" },
-];
+const DEFAULT_SECTIONS: DocSection[] = getSeedSections().map(
+  ({ slug, title, articleCount }) => ({ slug, title, articleCount }),
+);
+
+/** section slug -> ordered articles, from the static seed */
+const ARTICLES_BY_CATEGORY: Record<string, NavArticle[]> = SEED_ARTICLES.reduce(
+  (acc, article) => {
+    (acc[article.category] ??= []).push({
+      slug: article.slug,
+      title: article.title,
+    });
+    return acc;
+  },
+  {} as Record<string, NavArticle[]>,
+);
 
 // ---------------------------------------------------------------------------
-// SidebarContent
+// Sidebar navigation tree
 // ---------------------------------------------------------------------------
 
 interface SidebarContentProps {
@@ -66,148 +83,217 @@ interface SidebarContentProps {
 }
 
 const SidebarContent = memo<SidebarContentProps>(
-  ({ sections, currentPath, onClose }) => {
-    return (
+  ({ sections, currentPath, onClose }) => (
+    <Box
+      data-testid="docs-sidebar"
+      sx={{
+        width: SIDEBAR_WIDTH,
+        height: "100%",
+        overflowY: "auto",
+        bgcolor: DOCS.bg,
+        borderRight: `1px solid ${DOCS.border}`,
+        px: 2,
+        py: 3,
+        "&::-webkit-scrollbar": { width: 8 },
+        "&::-webkit-scrollbar-thumb": {
+          bgcolor: DOCS.border,
+          borderRadius: 4,
+        },
+      }}
+    >
       <Box
-        data-testid="docs-sidebar"
-        sx={{
-          width: SIDEBAR_WIDTH,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          bgcolor: "background.paper",
-          borderRight: "1px solid",
-          borderColor: "divider",
-        }}
+        component="nav"
+        data-testid="docs-nav"
+        aria-label="Documentation navigation"
       >
-        {/* Brand */}
-        <Box
-          sx={{
-            px: 2.5,
-            py: 2,
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <BookOpenIcon size={20} />
-          <Typography
-            variant="subtitle1"
-            sx={{ fontWeight: 700, color: "text.primary" }}
-          >
-            Help Center
-          </Typography>
-        </Box>
+        {sections.map((section) => {
+          const articles = ARTICLES_BY_CATEGORY[section.slug] ?? [];
+          const sectionActive =
+            currentPath === `/docs/category/${section.slug}`;
+          return (
+            <Box key={section.slug} sx={{ mb: 2.5 }}>
+              {/* Group header */}
+              <Box
+                component={Link}
+                to={`/docs/category/${section.slug}`}
+                onClick={onClose}
+                sx={{
+                  display: "block",
+                  px: 1.25,
+                  mb: 0.75,
+                  textDecoration: "none",
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  letterSpacing: 0.2,
+                  color: sectionActive ? DOCS.accent : DOCS.text,
+                  "&:hover": { color: DOCS.accent },
+                }}
+              >
+                {section.title}
+              </Box>
 
-        {/* Search */}
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <DocSearch placeholder="Search docs..." />
-        </Box>
-
-        <Divider />
-
-        {/* Navigation */}
-        <Box sx={{ overflowY: "auto", flex: 1 }}>
-          <nav data-testid="docs-nav" aria-label="Documentation navigation">
-            <Typography
-              variant="overline"
-              sx={{
-                px: 2.5,
-                pt: 2,
-                pb: 0.5,
-                display: "block",
-                color: "text.secondary",
-                fontWeight: 700,
-                letterSpacing: 1,
-                fontSize: "0.7rem",
-              }}
-            >
-              Categories
-            </Typography>
-
-            <List dense disablePadding>
-              {sections.map((section) => {
-                const isActive = currentPath.includes(
-                  `/docs/category/${section.slug}`,
-                );
-                return (
-                  <ListItemButton
-                    key={section.slug}
-                    component={Link}
-                    to={`/docs/category/${section.slug}`}
-                    selected={isActive}
-                    onClick={onClose}
-                    sx={{
-                      px: 2.5,
-                      py: 0.75,
-                      borderRadius: 1,
-                      mx: 1,
-                      mb: 0.25,
-                      "&.Mui-selected": {
-                        bgcolor: "primary.main",
-                        color: "primary.contrastText",
-                        "&:hover": { bgcolor: "primary.dark" },
-                      },
-                    }}
-                  >
-                    <ListItemText
-                      primary={section.title}
-                      secondary={
-                        section.articleCount !== undefined
-                          ? `${section.articleCount} articles`
-                          : undefined
-                      }
-                      primaryTypographyProps={{
-                        variant: "body2",
-                        fontWeight: isActive ? 700 : 500,
+              {/* Article links */}
+              <Box sx={{ borderLeft: `1px solid ${DOCS.border}`, ml: 1.25 }}>
+                {articles.map((article) => {
+                  const isActive = currentPath === `/docs/${article.slug}`;
+                  return (
+                    <Box
+                      key={article.slug}
+                      component={Link}
+                      to={`/docs/${article.slug}`}
+                      onClick={onClose}
+                      aria-current={isActive ? "page" : undefined}
+                      sx={{
+                        display: "block",
+                        pl: 1.75,
+                        pr: 1,
+                        py: 0.55,
+                        ml: "-1px",
+                        borderLeft: "2px solid",
+                        borderColor: isActive ? DOCS.accent : "transparent",
+                        textDecoration: "none",
+                        fontSize: "0.84rem",
+                        lineHeight: 1.4,
+                        fontWeight: isActive ? 600 : 400,
+                        color: isActive ? DOCS.accent : DOCS.textMuted,
+                        transition: "color 0.12s",
+                        "&:hover": { color: DOCS.text },
                       }}
-                      secondaryTypographyProps={{
-                        variant: "caption",
-                        sx: {
-                          color: isActive
-                            ? "primary.contrastText"
-                            : "text.secondary",
-                          opacity: 0.8,
-                        },
-                      }}
-                    />
-                    <ChevronRight size={14} />
-                  </ListItemButton>
-                );
-              })}
-            </List>
-          </nav>
-        </Box>
-
-        {/* Footer link */}
-        <Box
-          sx={{
-            p: 2,
-            borderTop: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Typography
-            component={Link}
-            to="/docs"
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              textDecoration: "none",
-              "&:hover": { color: "text.primary" },
-            }}
-          >
-            ← Back to all docs
-          </Typography>
-        </Box>
+                    >
+                      {article.title}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          );
+        })}
       </Box>
-    );
-  },
+    </Box>
+  ),
 );
 
 SidebarContent.displayName = "SidebarContent";
+
+// ---------------------------------------------------------------------------
+// Top bar
+// ---------------------------------------------------------------------------
+
+interface TopBarProps {
+  onOpenNav: () => void;
+  isMobile: boolean;
+  mode: DocsMode;
+  onToggleMode: () => void;
+}
+
+const TopBar = memo<TopBarProps>(
+  ({ onOpenNav, isMobile, mode, onToggleMode }) => (
+    <Box
+      sx={{
+        position: "sticky",
+        top: 0,
+        zIndex: 1100,
+        height: TOPBAR_HEIGHT,
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        px: { xs: 1.5, md: 2.5 },
+        bgcolor: DOCS.topbarBg,
+        backdropFilter: "blur(10px)",
+        borderBottom: `1px solid ${DOCS.border}`,
+      }}
+    >
+      {isMobile && (
+        <IconButton
+          aria-label="Open documentation navigation"
+          onClick={onOpenNav}
+          sx={{ color: DOCS.text }}
+        >
+          <MenuIcon size={20} />
+        </IconButton>
+      )}
+
+      <Box
+        component={Link}
+        to="/docs"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          textDecoration: "none",
+          color: DOCS.text,
+          flexShrink: 0,
+        }}
+      >
+        <Box
+          component="img"
+          src="/WhiteLogo.png"
+          alt="Techietribe"
+          sx={{ height: 26, width: "auto", display: "block" }}
+        />
+        <Box
+          component="span"
+          sx={{
+            fontWeight: 600,
+            fontSize: "0.95rem",
+            color: DOCS.textMuted,
+            borderLeft: `1px solid ${DOCS.border}`,
+            pl: 1,
+            display: { xs: "none", sm: "block" },
+          }}
+        >
+          Docs
+        </Box>
+      </Box>
+
+      <Box sx={{ flex: 1, display: "flex", justifyContent: "center", px: 2 }}>
+        <Box sx={{ width: "100%", maxWidth: 420 }}>
+          <DocSearch placeholder="Search documentation…" />
+        </Box>
+      </Box>
+
+      <Tooltip title={mode === "dark" ? "Light mode" : "Dark mode"}>
+        <IconButton
+          onClick={onToggleMode}
+          aria-label="Toggle docs theme"
+          sx={{
+            color: DOCS.textMuted,
+            border: `1px solid ${DOCS.border}`,
+            borderRadius: "8px",
+            p: 0.75,
+            flexShrink: 0,
+            "&:hover": { color: DOCS.text, borderColor: DOCS.borderStrong },
+          }}
+        >
+          {mode === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+        </IconButton>
+      </Tooltip>
+
+      {!isMobile && (
+        <Box
+          component={Link}
+          to="/"
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 0.5,
+            textDecoration: "none",
+            color: DOCS.textMuted,
+            fontSize: "0.85rem",
+            fontWeight: 500,
+            flexShrink: 0,
+            "&:hover": { color: DOCS.text },
+          }}
+        >
+          Visit site
+          <ArrowUpRight size={14} />
+        </Box>
+      )}
+    </Box>
+  ),
+);
+
+TopBar.displayName = "TopBar";
 
 // ---------------------------------------------------------------------------
 // Main Layout
@@ -219,52 +305,54 @@ const DocsLayout = memo<DocsLayoutProps>(
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const location = useLocation();
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [mode, setMode] = useState<DocsMode>(readDocsMode);
 
     const handleOpenDrawer = useCallback(() => setDrawerOpen(true), []);
     const handleCloseDrawer = useCallback(() => setDrawerOpen(false), []);
+    const handleToggleMode = useCallback(
+      () => setMode((m) => (m === "dark" ? "light" : "dark")),
+      [],
+    );
+
+    // Apply the theme to the document root so portalled content (mobile drawer,
+    // search dropdown) is themed too, and persist the choice. The attribute is
+    // left in place across navigation (the --docs-* vars are unused elsewhere),
+    // which avoids a flash when moving between docs pages.
+    useEffect(() => {
+      document.documentElement.setAttribute("data-docs-theme", mode);
+      try {
+        window.localStorage.setItem(DOCS_THEME_STORAGE_KEY, mode);
+      } catch {
+        /* storage unavailable — non-fatal */
+      }
+    }, [mode]);
 
     return (
       <Box
         sx={{
-          display: "flex",
           minHeight: "100vh",
-          bgcolor: "background.default",
+          bgcolor: DOCS.bg,
+          color: DOCS.text,
         }}
       >
-        {/* Mobile hamburger */}
-        {isMobile && (
-          <Box
-            sx={{
-              position: "fixed",
-              top: 70,
-              left: 8,
-              zIndex: 1200,
-            }}
-          >
-            <IconButton
-              aria-label="Open documentation navigation"
-              onClick={handleOpenDrawer}
-              sx={{
-                bgcolor: "background.paper",
-                border: "1px solid",
-                borderColor: "divider",
-                boxShadow: 1,
-              }}
-            >
-              <MenuIcon size={20} />
-            </IconButton>
-          </Box>
-        )}
+        <style>{DOCS_THEME_CSS}</style>
+        <TopBar
+          onOpenNav={handleOpenDrawer}
+          isMobile={isMobile}
+          mode={mode}
+          onToggleMode={handleToggleMode}
+        />
 
-        {/* Desktop sidebar */}
-        {!isMobile && (
-          <Box sx={{ flexShrink: 0, width: SIDEBAR_WIDTH }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start" }}>
+          {/* Desktop sidebar */}
+          {!isMobile && (
             <Box
               sx={{
-                position: "fixed",
-                top: 64,
-                height: "calc(100vh - 64px)",
-                overflowY: "auto",
+                flexShrink: 0,
+                width: SIDEBAR_WIDTH,
+                position: "sticky",
+                top: TOPBAR_HEIGHT,
+                height: `calc(100vh - ${TOPBAR_HEIGHT}px)`,
               }}
             >
               <SidebarContent
@@ -272,41 +360,29 @@ const DocsLayout = memo<DocsLayoutProps>(
                 currentPath={location.pathname}
               />
             </Box>
-          </Box>
-        )}
+          )}
 
-        {/* Mobile drawer */}
-        {isMobile && (
-          <Drawer
-            open={drawerOpen}
-            onClose={handleCloseDrawer}
-            variant="temporary"
-            ModalProps={{ keepMounted: true }}
-            PaperProps={{ sx: { width: SIDEBAR_WIDTH } }}
-          >
-            <SidebarContent
-              sections={sections}
-              currentPath={location.pathname}
+          {/* Mobile drawer */}
+          {isMobile && (
+            <Drawer
+              open={drawerOpen}
               onClose={handleCloseDrawer}
-            />
-          </Drawer>
-        )}
+              variant="temporary"
+              ModalProps={{ keepMounted: true }}
+              PaperProps={{ sx: { width: SIDEBAR_WIDTH, bgcolor: DOCS.bg } }}
+            >
+              <SidebarContent
+                sections={sections}
+                currentPath={location.pathname}
+                onClose={handleCloseDrawer}
+              />
+            </Drawer>
+          )}
 
-        {/* Main content */}
-        <Box
-          component="main"
-          sx={{
-            flex: 1,
-            ml: { md: 0 },
-            pl: { xs: 2, sm: 3, md: 4 },
-            pr: { xs: 2, sm: 3, md: 4 },
-            pt: { xs: 7, md: 4 },
-            pb: 8,
-            maxWidth: "100%",
-            overflowX: "hidden",
-          }}
-        >
-          {children}
+          {/* Main content */}
+          <Box component="main" sx={{ flex: 1, minWidth: 0 }}>
+            {children}
+          </Box>
         </Box>
       </Box>
     );

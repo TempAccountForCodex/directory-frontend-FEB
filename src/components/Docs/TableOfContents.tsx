@@ -15,6 +15,7 @@ import React, {
 } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { DOCS } from "./docsTheme";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -125,14 +126,14 @@ const TableOfContents = memo<TableOfContentsProps>(({ content }) => {
       <Typography
         variant="overline"
         sx={{
-          color: "text.secondary",
+          color: DOCS.textFaint,
           fontWeight: 700,
           letterSpacing: 1.2,
           mb: 1.5,
           display: "block",
         }}
       >
-        On This Page
+        On this page
       </Typography>
 
       <Box component="nav" aria-label="Table of contents">
@@ -151,13 +152,13 @@ const TableOfContents = memo<TableOfContentsProps>(({ content }) => {
                 textDecoration: "none",
                 fontSize: heading.level === 3 ? "0.8rem" : "0.875rem",
                 fontWeight: isActive ? 600 : 400,
-                color: isActive ? "primary.main" : "text.secondary",
-                borderLeft: isActive ? "2px solid" : "2px solid transparent",
-                borderColor: isActive ? "primary.main" : "transparent",
+                color: isActive ? DOCS.accent : DOCS.textMuted,
+                borderLeft: "2px solid",
+                borderColor: isActive ? DOCS.accent : "transparent",
                 pl: heading.level === 3 ? 2.5 : 1,
                 transition: "all 0.15s ease",
                 "&:hover": {
-                  color: "text.primary",
+                  color: DOCS.text,
                 },
               }}
             >

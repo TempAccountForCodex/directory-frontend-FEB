@@ -42,6 +42,9 @@ const PublicWebsite = lazy(() => import("./pages/PublicWebsite"));
 const TemplatePreview = lazy(() => import("./pages/TemplatePreview"));
 const LandingPreview = lazy(() => import("./pages/LandingPreview"));
 const CreateStoreWizard = lazy(() => import("./pages/CreateStoreWizard"));
+const DocsHome = lazy(() => import("../src/pages/publicPages/DocsHome"));
+const DocsList = lazy(() => import("../src/pages/publicPages/DocsList"));
+const DocsArticle = lazy(() => import("../src/pages/publicPages/DocsArticle"));
 const About = lazy(() => import("../src/pages/publicPages/About"));
 const Pricing = lazy(() => import("../src/pages/publicPages/Pricing"));
 const Templates = lazy(() => import("../src/pages/publicPages/Templates"));
@@ -491,6 +494,18 @@ const AppRoutes = () => {
         {
           path: "/site/:slug/*",
           element: suspense(<PublicWebsite />),
+        },
+        {
+          path: "/docs",
+          element: suspense(<DocsHome />),
+        },
+        {
+          path: "/docs/category/:category",
+          element: suspense(<DocsList />),
+        },
+        {
+          path: "/docs/:slug",
+          element: suspense(<DocsArticle />),
         },
       ],
     },
