@@ -13,14 +13,23 @@
 import React, { memo, useState, useCallback, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
+import Dialog from "@mui/material/Dialog";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
-import { Menu as MenuIcon, ArrowUpRight, Sun, Moon } from "lucide-react";
+import {
+  Menu as MenuIcon,
+  ArrowUpRight,
+  Sun,
+  Moon,
+  Search as SearchIcon,
+} from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import DocSearch from "./DocSearch";
 import { getSeedSections, SEED_ARTICLES } from "../../data/docs";
+import LightDocsLogo from "../../assets/images/BlackLogo.webp";
+import CompactDocsLogo from "../../assets/images/navbar/collapsedLogo.png";
 import {
   DOCS,
   DOCS_THEME_CSS,
@@ -187,110 +196,188 @@ interface TopBarProps {
 }
 
 const TopBar = memo<TopBarProps>(
-  ({ onOpenNav, isMobile, mode, onToggleMode }) => (
-    <Box
-      sx={{
-        position: "sticky",
-        top: 0,
-        zIndex: 1100,
-        height: TOPBAR_HEIGHT,
-        display: "flex",
-        alignItems: "center",
-        gap: 1.5,
-        px: { xs: 1.5, md: 2.5 },
-        bgcolor: DOCS.topbarBg,
-        backdropFilter: "blur(10px)",
-        borderBottom: `1px solid ${DOCS.border}`,
-      }}
-    >
-      {isMobile && (
-        <IconButton
-          aria-label="Open documentation navigation"
-          onClick={onOpenNav}
-          sx={{ color: DOCS.text }}
-        >
-          <MenuIcon size={20} />
-        </IconButton>
-      )}
+  ({ onOpenNav, isMobile, mode, onToggleMode }) => {
+    const [searchOpen, setSearchOpen] = useState(false);
+    const handleOpenSearch = useCallback(() => setSearchOpen(true), []);
+    const handleCloseSearch = useCallback(() => setSearchOpen(false), []);
 
+    return (
       <Box
-        component={Link}
-        to="/docs"
         sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 1100,
+          minHeight: TOPBAR_HEIGHT,
           display: "flex",
           alignItems: "center",
-          gap: 1,
-          textDecoration: "none",
-          color: DOCS.text,
-          flexShrink: 0,
+          gap: { xs: 1, sm: 1.5 },
+          px: { xs: 1.5, md: 2.5 },
+          py: 0,
+          bgcolor: DOCS.topbarBg,
+          backdropFilter: "blur(10px)",
+          borderBottom: `1px solid ${DOCS.border}`,
         }}
       >
-        <Box
-          component="img"
-          src="/WhiteLogo.png"
-          alt="Techietribe"
-          sx={{ height: 26, width: "auto", display: "block" }}
-        />
-        <Box
-          component="span"
-          sx={{
-            fontWeight: 600,
-            fontSize: "0.95rem",
-            color: DOCS.textMuted,
-            borderLeft: `1px solid ${DOCS.border}`,
-            pl: 1,
-            display: { xs: "none", sm: "block" },
-          }}
-        >
-          Docs
-        </Box>
-      </Box>
+        {isMobile && (
+          <IconButton
+            aria-label="Open documentation navigation"
+            onClick={onOpenNav}
+            sx={{ color: DOCS.text }}
+          >
+            <MenuIcon size={20} />
+          </IconButton>
+        )}
 
-      <Box sx={{ flex: 1, display: "flex", justifyContent: "center", px: 2 }}>
-        <Box sx={{ width: "100%", maxWidth: 420 }}>
-          <DocSearch placeholder="Search documentation…" />
-        </Box>
-      </Box>
-
-      <Tooltip title={mode === "dark" ? "Light mode" : "Dark mode"}>
-        <IconButton
-          onClick={onToggleMode}
-          aria-label="Toggle docs theme"
-          sx={{
-            color: DOCS.textMuted,
-            border: `1px solid ${DOCS.border}`,
-            borderRadius: "8px",
-            p: 0.75,
-            flexShrink: 0,
-            "&:hover": { color: DOCS.text, borderColor: DOCS.borderStrong },
-          }}
-        >
-          {mode === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-        </IconButton>
-      </Tooltip>
-
-      {!isMobile && (
         <Box
           component={Link}
-          to="/"
+          to="/docs"
           sx={{
-            display: "inline-flex",
+            display: "flex",
             alignItems: "center",
-            gap: 0.5,
+            gap: 1,
             textDecoration: "none",
-            color: DOCS.textMuted,
-            fontSize: "0.85rem",
-            fontWeight: 500,
+            color: DOCS.text,
             flexShrink: 0,
-            "&:hover": { color: DOCS.text },
+            minWidth: 0,
+            mr: { xs: "auto", md: 0 },
           }}
         >
-          Visit site
-          <ArrowUpRight size={14} />
+          <Box
+            component="img"
+            src={mode === "light" ? LightDocsLogo : "/WhiteLogo.png"}
+            alt="Techietribe"
+            sx={{
+              height: 26,
+              width: "auto",
+              maxWidth: { xs: 190, md: 240 },
+              display: { xs: "none", sm: "block" },
+            }}
+          />
+          <Box
+            component="img"
+            src={CompactDocsLogo}
+            alt="Techietribe"
+            sx={{
+              height: 32,
+              width: 32,
+              objectFit: "contain",
+              display: { xs: "block", sm: "none" },
+            }}
+          />
+          <Box
+            component="span"
+            sx={{
+              fontWeight: 600,
+              fontSize: "0.95rem",
+              color: DOCS.textMuted,
+              borderLeft: `1px solid ${DOCS.border}`,
+              pl: 1,
+              display: { xs: "none", sm: "block" },
+            }}
+          >
+            Docs
+          </Box>
         </Box>
-      )}
-    </Box>
-  ),
+
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            display: { xs: "none", md: "flex" },
+            justifyContent: "center",
+            px: { md: 2 },
+          }}
+        >
+          <Box sx={{ width: "100%", maxWidth: 420 }}>
+            <DocSearch placeholder="Search documentation…" />
+          </Box>
+        </Box>
+
+        <Tooltip title="Search docs">
+          <IconButton
+            onClick={handleOpenSearch}
+            aria-label="Search documentation"
+            sx={{
+              display: { xs: "inline-flex", md: "none" },
+              color: DOCS.textMuted,
+              border: `1px solid ${DOCS.border}`,
+              borderRadius: "8px",
+              p: 0.75,
+              flexShrink: 0,
+              "&:hover": { color: DOCS.text, borderColor: DOCS.borderStrong },
+            }}
+          >
+            <SearchIcon size={17} />
+          </IconButton>
+        </Tooltip>
+
+        <Dialog
+          open={searchOpen}
+          onClose={handleCloseSearch}
+          fullWidth
+          maxWidth="sm"
+          PaperProps={{
+            sx: {
+              m: { xs: 1.5, sm: 3 },
+              width: { xs: "calc(100% - 24px)", sm: "100%" },
+              maxWidth: 560,
+              overflow: "visible",
+              borderRadius: "14px",
+              bgcolor: DOCS.bg,
+              border: `1px solid ${DOCS.border}`,
+              boxShadow: "0 24px 70px rgba(0,0,0,0.35)",
+            },
+          }}
+        >
+          <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
+            <DocSearch
+              placeholder="Search documentation…"
+              autoFocus
+              onResultClick={handleCloseSearch}
+            />
+          </Box>
+        </Dialog>
+
+        <Tooltip title={mode === "dark" ? "Light mode" : "Dark mode"}>
+          <IconButton
+            onClick={onToggleMode}
+            aria-label="Toggle docs theme"
+            sx={{
+              color: DOCS.textMuted,
+              border: `1px solid ${DOCS.border}`,
+              borderRadius: "8px",
+              p: 0.75,
+              flexShrink: 0,
+              "&:hover": { color: DOCS.text, borderColor: DOCS.borderStrong },
+            }}
+          >
+            {mode === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+          </IconButton>
+        </Tooltip>
+
+        {!isMobile && (
+          <Box
+            component={Link}
+            to="/"
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.5,
+              textDecoration: "none",
+              color: DOCS.textMuted,
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              flexShrink: 0,
+              "&:hover": { color: DOCS.text },
+            }}
+          >
+            Visit site
+            <ArrowUpRight size={14} />
+          </Box>
+        )}
+      </Box>
+    );
+  },
 );
 
 TopBar.displayName = "TopBar";

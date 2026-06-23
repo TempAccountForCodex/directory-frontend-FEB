@@ -41,6 +41,8 @@ interface SearchResult {
 interface DocSearchProps {
   placeholder?: string;
   fullWidth?: boolean;
+  autoFocus?: boolean;
+  onResultClick?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,7 +58,12 @@ const MAX_RESULTS = 5;
 // ---------------------------------------------------------------------------
 
 const DocSearch = memo<DocSearchProps>(
-  ({ placeholder = "Search documentation...", fullWidth = true }) => {
+  ({
+    placeholder = "Search documentation...",
+    fullWidth = true,
+    autoFocus = false,
+    onResultClick,
+  }) => {
     const navigate = useNavigate();
 
     const [query, setQuery] = useState("");
@@ -141,8 +148,9 @@ const DocSearch = memo<DocSearchProps>(
         navigate(`/docs/${result.slug}`);
         setOpen(false);
         setQuery("");
+        onResultClick?.();
       },
-      [navigate],
+      [navigate, onResultClick],
     );
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -157,7 +165,11 @@ const DocSearch = memo<DocSearchProps>(
     return (
       <Box
         ref={containerRef}
-        sx={{ position: "relative", width: fullWidth ? "100%" : "auto" }}
+        sx={{
+          position: "relative",
+          width: fullWidth ? "100%" : "auto",
+          minWidth: 0,
+        }}
       >
         <TextField
           value={query}
@@ -165,6 +177,7 @@ const DocSearch = memo<DocSearchProps>(
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           fullWidth={fullWidth}
+          autoFocus={autoFocus}
           size="small"
           InputProps={{
             startAdornment: (
@@ -183,9 +196,13 @@ const DocSearch = memo<DocSearchProps>(
               bgcolor: DOCS.surface,
               color: DOCS.text,
               fontSize: "0.875rem",
+              minWidth: 0,
               "& fieldset": { borderColor: DOCS.border },
               "&:hover fieldset": { borderColor: DOCS.borderStrong },
               "&.Mui-focused fieldset": { borderColor: DOCS.accent },
+            },
+            "& .MuiOutlinedInput-input": {
+              minWidth: 0,
             },
             "& .MuiOutlinedInput-input::placeholder": {
               color: DOCS.textFaint,
@@ -200,10 +217,16 @@ const DocSearch = memo<DocSearchProps>(
             sx={{
               position: "absolute",
               top: "100%",
-              left: 0,
-              right: 0,
+              left: { xs: "50%", sm: 0 },
+              right: { xs: "auto", sm: 0 },
+              transform: { xs: "translateX(-50%)", sm: "none" },
               mt: 0.5,
               zIndex: 1400,
+              width: {
+                xs: "min(calc(100vw - 24px), 360px)",
+                sm: "100%",
+              },
+              minWidth: { sm: 320 },
               borderRadius: "12px",
               overflow: "hidden",
               maxHeight: 360,
@@ -229,7 +252,7 @@ const DocSearch = memo<DocSearchProps>(
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
-                  px: 2,
+                  px: { xs: 1.5, sm: 2 },
                   py: 1.5,
                   cursor: "pointer",
                   color: DOCS.textMuted,
@@ -238,7 +261,9 @@ const DocSearch = memo<DocSearchProps>(
                   "&:last-of-type": { borderBottom: "none" },
                 }}
               >
-                <ArticleIcon size={16} color={DOCS.accent} />
+                <Box sx={{ flexShrink: 0, display: "flex" }}>
+                  <ArticleIcon size={16} color={DOCS.accent} />
+                </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography
                     variant="body2"
@@ -273,9 +298,16 @@ const DocSearch = memo<DocSearchProps>(
                   sx={{
                     fontSize: "0.65rem",
                     height: 20,
+                    maxWidth: { xs: 112, sm: 140 },
+                    flexShrink: 0,
                     color: DOCS.textMuted,
                     bgcolor: DOCS.accentSoftBg,
                     border: `1px solid ${DOCS.border}`,
+                    "& .MuiChip-label": {
+                      display: "block",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    },
                   }}
                 />
               </Box>
