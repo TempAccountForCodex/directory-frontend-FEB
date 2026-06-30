@@ -43,6 +43,7 @@ interface QuestionnaireNavigationProps {
   submitting: boolean;
   errorMessage?: string;
   onClearError?: () => void;
+  aiGenerationDisabled?: boolean;
 }
 
 export default function QuestionnaireNavigation({
@@ -53,6 +54,7 @@ export default function QuestionnaireNavigation({
   submitting,
   errorMessage: externalError,
   onClearError,
+  aiGenerationDisabled = false,
 }: QuestionnaireNavigationProps) {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -63,8 +65,13 @@ export default function QuestionnaireNavigation({
   const [usageLoading, setUsageLoading] = useState(true);
   const displayError = externalError || "";
 
-  // Fetch usage data on mount
+  // Fetch usage data on mount when creation-time AI generation is enabled.
   useEffect(() => {
+    if (aiGenerationDisabled) {
+      setUsage(null);
+      setUsageLoading(false);
+      return;
+    }
     let cancelled = false;
     const fetchUsage = async () => {
       try {
@@ -85,7 +92,7 @@ export default function QuestionnaireNavigation({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [aiGenerationDisabled]);
 
   const isFree = usage?.plan === "website_free";
   const hasRemaining = usage
@@ -94,6 +101,7 @@ export default function QuestionnaireNavigation({
 
   const generateButtonText = useMemo(() => {
     if (submitting) return "Preparing...";
+    if (aiGenerationDisabled) return "Create Website";
     if (usageLoading) return "Loading...";
     if (!usage) return "Generate with AI";
 
@@ -109,28 +117,34 @@ export default function QuestionnaireNavigation({
       default:
         return "Generate with AI";
     }
-  }, [usage, usageLoading, submitting]);
+  }, [aiGenerationDisabled, usage, usageLoading, submitting]);
 
   const generateDisabled =
     !isComplete ||
-    usageLoading ||
+    (!aiGenerationDisabled && usageLoading) ||
     submitting ||
-    (usage && !hasRemaining && !isFree);
+    (!aiGenerationDisabled && usage && !hasRemaining && !isFree);
   const tooltipText = !isComplete
     ? "Fill in required fields"
-    : isFree
+    : aiGenerationDisabled
+      ? ""
+      : isFree
       ? "Upgrade your plan to use AI generation"
       : !hasRemaining
         ? "No AI generations remaining this month"
         : "";
 
   const handleGenerate = useCallback(() => {
+    if (aiGenerationDisabled) {
+      onGenerate();
+      return;
+    }
     if (isFree) {
       window.location.href = "/dashboard/settings/billing";
       return;
     }
     onGenerate();
-  }, [isFree, onGenerate]);
+  }, [aiGenerationDisabled, isFree, onGenerate]);
 
   return (
     <>
@@ -184,7 +198,7 @@ export default function QuestionnaireNavigation({
             disabled={submitting}
             sx={{ minHeight: 44 }}
           >
-            Skip AI, Use Defaults
+            {aiGenerationDisabled ? "Use Template Defaults" : "Skip AI, Use Defaults"}
           </DashboardActionButton>
 
           <Tooltip
@@ -199,7 +213,7 @@ export default function QuestionnaireNavigation({
                 startIcon={
                   submitting ? (
                     <CircularProgress size={18} color="inherit" />
-                  ) : (
+                  ) : aiGenerationDisabled ? undefined : (
                     <AutoAwesomeIcon />
                   )
                 }
