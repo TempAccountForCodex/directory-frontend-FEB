@@ -42,18 +42,30 @@ export interface AITargetRef {
   label?: string;
   kind: "editable" | "section" | "page";
   aiEditKey?: string;
+  computedStyle?: {
+    color?: string;
+    backgroundColor?: string;
+    fontSize?: string;
+    fontWeight?: string;
+    textAlign?: string;
+    textShadow?: string;
+  };
   styleTarget?: {
+    blockId?: number | string;
     fieldPath: string;
     persistedFieldPath?: string;
     aiEditKey?: string;
     label?: string;
+    computedStyle?: AITargetRef["computedStyle"];
   };
   styleTargets?: Array<{
+    blockId?: number | string;
     fieldPath: string;
     persistedFieldPath?: string;
     aiEditKey?: string;
     label?: string;
     category?: string;
+    computedStyle?: AITargetRef["computedStyle"];
   }>;
 }
 
@@ -133,6 +145,7 @@ export interface UseEditorAIDeps {
     fieldPath: string,
     value: unknown,
   ) => void;
+  onLocalPatchesApplied?: (patches: AIProposalPatch[]) => void | Promise<void>;
   onRefresh?: () => void | Promise<void>;
 }
 
@@ -144,7 +157,7 @@ function buildEditSessionId(
 }
 
 function isStyleInstruction(instruction: string): boolean {
-  return /\b(color|colour|background|bg|gradient|font|size|weight|bold|italic|underline|shadow|border|radius|rounded|spacing|padding|margin|align|alignment|opacity|width|height|teal|yellow|red|green|blue|purple|black|white|grey|gray)\b/i.test(
+  return /\b(color|colour|background|bg|gradient|font|size|bigger|larger|smaller|increase|decrease|weight|bold|italic|underline|shadow|border|radius|rounded|spacing|padding|margin|align|alignment|opacity|width|height|teal|yellow|red|green|blue|purple|black|white|grey|gray)\b/i.test(
     instruction,
   );
 }
@@ -169,6 +182,14 @@ function scoreStyleTargetForInstruction(
   if (/\b(colou?r|teal|yellow|red|green|blue|purple|black|white|gr[ae]y)\b/.test(prompt)) {
     if (path.includes("color") || path.includes("colour")) score += 100;
     if (path.includes("style")) score += 20;
+    if (/\b(button|cta)\b/.test(prompt) && /\b(text|label|copy)\b/.test(prompt)) {
+      if (path.includes("buttontextstyle") || path.includes("ctatextstyle")) {
+        score += 80;
+      }
+      if (path.includes("buttonstyle") && !path.includes("buttontextstyle")) {
+        score -= 40;
+      }
+    }
   }
   if (/\bshadow\b/.test(prompt)) {
     if (path.includes("shadow")) score += 100;
@@ -192,7 +213,14 @@ function scoreStyleTargetForInstruction(
     }
     if (path.includes("style")) score += 20;
   }
-  if (/\b(font|size|weight|bold|italic|underline|align|alignment|opacity|width|height)\b/.test(prompt)) {
+  if (/\b(font|size|bigger|larger|smaller|increase|decrease|weight|bold|italic|underline|align|alignment|opacity|width|height)\b/.test(prompt)) {
+    if (/\b(size|bigger|larger|smaller|increase|decrease)\b/.test(prompt)) {
+      if (path.includes("fontsize") || path.includes("font-size")) {
+        score += 130;
+      } else if (path.includes("font") || path.includes("size")) {
+        score += 95;
+      }
+    }
     if (
       path.includes("font") ||
       path.includes("size") ||
@@ -233,10 +261,12 @@ function resolveInstructionTarget(
 
   return {
     ...target,
+    blockId: bestStyleTarget.blockId ?? target.blockId,
     fieldPath: bestStyleTarget.fieldPath,
     persistedFieldPath: bestStyleTarget.persistedFieldPath,
     aiEditKey: bestStyleTarget.aiEditKey,
     label: bestStyleTarget.label || target.label,
+    computedStyle: bestStyleTarget.computedStyle || target.computedStyle,
   };
 }
 
@@ -267,6 +297,158 @@ function normalizePreviewPatches(
   });
 }
 
+function formatPatchValue(value: unknown): string {
+  if (value == null || value === "") return "empty";
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function describeProposalPatches(patches: AIProposalPatch[]): string {
+  if (!patches.length) return "AI change ready to apply";
+  if (patches.length > 1) return `${patches.length} changes ready to apply`;
+
+  const patch = patches[0];
+  const label = patch.fieldPath
+    .split(".")
+    .filter(Boolean)
+    .slice(-2)
+    .join(" ");
+  return `${label || "Field"} → ${formatPatchValue(patch.value)}`;
+}
+
+const NAMED_COLOR_VALUES: Record<string, string> = {
+  red: "#ff0000",
+  brightred: "#ff0000",
+  yellow: "#ffff00",
+  brightyellow: "#ffff00",
+  green: "#16a34a",
+  blue: "#2563eb",
+  teal: "#14b8a6",
+  purple: "#9333ea",
+  pink: "#ec4899",
+  orange: "#f97316",
+  black: "#000000",
+  white: "#ffffff",
+  gray: "#6b7280",
+  grey: "#6b7280",
+};
+
+function extractColorValue(instruction: string): string | null {
+  const hex = instruction.match(/#[0-9a-f]{3,8}\b/i)?.[0];
+  if (hex) return hex;
+
+  const compact = instruction.toLowerCase().replace(/[^a-z]/g, "");
+  for (const [name, value] of Object.entries(NAMED_COLOR_VALUES)) {
+    if (compact.includes(name)) return value;
+  }
+
+  return null;
+}
+
+function extractFontSizeValue(instruction: string): string | null {
+  const explicit = instruction.match(/\b(\d{1,3})(px|rem|em|%)\b/i);
+  if (explicit) return `${explicit[1]}${explicit[2].toLowerCase()}`;
+
+  const prompt = instruction.toLowerCase();
+  const multiplier = prompt.match(
+    /\b(\d+(?:\.\d+)?)\s*(?:x|times?)\s*(bigger|larger|increase|smaller|reduce|decrease)\b/,
+  );
+  if (multiplier) {
+    const amount = Number(multiplier[1]);
+    if (Number.isFinite(amount) && amount > 0) {
+      const direction = /smaller|reduce|decrease/.test(multiplier[2])
+        ? "smaller"
+        : "larger";
+      return `scale:${direction}:${amount}`;
+    }
+  }
+
+  if (/\b(smaller|small|reduce|decrease)\b/.test(prompt)) return "smaller";
+  if (/\b(larger|bigger|large|increase)\b/.test(prompt)) return "larger";
+  return null;
+}
+
+function resolveRelativeFontSize(currentValue: unknown, requested: string): string {
+  const scaleMatch = requested.match(/^scale:(smaller|larger):(\d+(?:\.\d+)?)$/);
+  if (requested !== "smaller" && requested !== "larger" && !scaleMatch) {
+    return requested;
+  }
+
+  const current = String(currentValue ?? "");
+  const match = current.match(/^(\d+(?:\.\d+)?)(px|rem|em|%)$/i);
+  if (!match) return requested === "smaller" ? "14px" : "20px";
+
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  if (!Number.isFinite(amount)) return requested === "smaller" ? "14px" : "20px";
+
+  if (scaleMatch) {
+    const direction = scaleMatch[1];
+    const multiplier = Number(scaleMatch[2]);
+    const next =
+      direction === "smaller" ? amount / multiplier : amount * multiplier;
+    return `${Math.max(unit === "px" ? 10 : 0.5, Number(next.toFixed(3)))}${unit}`;
+  }
+
+  const delta = unit === "px" ? 2 : 0.125;
+  const next = requested === "smaller" ? amount - delta : amount + delta;
+  return `${Math.max(unit === "px" ? 10 : 0.5, Number(next.toFixed(3)))}${unit}`;
+}
+
+function buildDeterministicStylePatch(
+  target: AITargetRef,
+  instruction: string,
+  baselineValue: unknown,
+): AIProposalPatch | null {
+  const persistedFieldPath = target.persistedFieldPath || target.fieldPath;
+  const fieldPath = toFieldPath(persistedFieldPath);
+  const leaf = fieldPath.split(".").filter(Boolean).pop()?.toLowerCase() || "";
+
+  if (/color|colour/.test(leaf) || /color|colour/.test(instruction)) {
+    const color = extractColorValue(instruction);
+    if (
+      color &&
+      (leaf.includes("color") ||
+        /background|bg|border|text|font|heading|button|cta/i.test(instruction))
+    ) {
+      return {
+        aiEditKey: target.aiEditKey,
+        blockId: target.blockId,
+        fieldPath,
+        persistedFieldPath,
+        value: color,
+        baselineValue,
+      };
+    }
+  }
+
+  if (
+    leaf.includes("fontsize") ||
+    /\b(font|text).*\bsize\b|\bsize\b|\b(bigger|larger|smaller|increase|decrease)\b/i.test(
+      instruction,
+    )
+  ) {
+    const fontSize = extractFontSizeValue(instruction);
+    if (fontSize) {
+      const baselineFontSize = target.computedStyle?.fontSize || baselineValue;
+      return {
+        aiEditKey: target.aiEditKey,
+        blockId: target.blockId,
+        fieldPath,
+        persistedFieldPath,
+        value: resolveRelativeFontSize(baselineFontSize, fontSize),
+        baselineValue,
+      };
+    }
+  }
+
+  return null;
+}
+
 function legacyPatchMapToPatches(
   patchMap: unknown,
   target: AITargetRef,
@@ -291,6 +473,7 @@ export function useEditorAI({
   revertibleTurns = [],
   getCurrentValue,
   applyPatch,
+  onLocalPatchesApplied,
   onRefresh,
 }: UseEditorAIDeps) {
   const [activeRequest, setActiveRequest] = useState(false);
@@ -340,14 +523,18 @@ export function useEditorAI({
         }
       });
 
-      await onRefresh?.();
+      // Do not immediately refetch the whole website after a successful patch.
+      // The backend patch endpoint has already persisted the change and the
+      // editor state is updated below. A full refresh can race with editor
+      // approval/lock polling and briefly rehydrate stale template data, which
+      // makes the selected element appear to flip between old and new values.
     },
-    [applyPatch, onRefresh, websiteId],
+    [applyPatch, websiteId],
   );
 
   const askAI = useCallback(
-    async (target: AITargetRef, instruction: string): Promise<void> => {
-      if (activeRequest || chatLoading) return;
+    async (target: AITargetRef, instruction: string): Promise<boolean> => {
+      if (activeRequest || chatLoading) return false;
 
       const requestTarget = resolveInstructionTarget(target, instruction);
       const key = attemptKey(requestTarget, instruction);
@@ -358,10 +545,12 @@ export function useEditorAI({
           message:
             "You've tried this edit a few times. Apply it, cancel it, or try a different change.",
         });
-        return;
+        return false;
       }
 
       setError(null);
+      setProposal(null);
+      setConflict(null);
       setActiveRequest(true);
       const baselineValue = getCurrentValue(
         requestTarget.blockId,
@@ -371,6 +560,12 @@ export function useEditorAI({
         editSessionRef.current.get(key) ||
         buildEditSessionId(websiteId, requestTarget);
       editSessionRef.current.set(key, editSessionId);
+
+      const deterministicPatch = buildDeterministicStylePatch(
+        requestTarget,
+        instruction,
+        baselineValue,
+      );
 
       const apiTarget: EditElementTarget = {
         kind: requestTarget.kind,
@@ -433,35 +628,53 @@ export function useEditorAI({
                 baselineValue,
               },
             ];
-        const value = patches[0]?.value;
+        if (!patches.length || patches.every((patch) => patch.value == null)) {
+          setError({
+            code: "INVALID_EDIT_RESULT",
+            message: "The AI service did not return a result. Please try again.",
+          });
+          return false;
+        }
 
-        setProposal({
-          turnId: result.turnId || editSessionId,
-          blockId: requestTarget.blockId,
-          fieldPath: requestTarget.fieldPath,
-          value,
-          patches,
-          previewText: result.previewText ?? String(value ?? ""),
-          summary:
-            result.summary ||
-            (patches.length > 1
-              ? `${patches.length} changes ready to apply`
-              : "AI change ready to apply"),
-          instruction,
-          attempt,
-          baselineValue,
-        });
+        await applyBackendPatches(patches);
+        return true;
       } catch (err) {
         const aiErr =
           err instanceof WebsiteAIRequestError
             ? err.aiError
             : normalizeWebsiteAIError(err);
+        const fallbackPatch =
+          aiErr.code === "AI_PROVIDER_UNAVAILABLE" ||
+          aiErr.code === "AI_UNAVAILABLE" ||
+          aiErr.code === "AI_FAILED"
+            ? buildDeterministicStylePatch(
+                requestTarget,
+                instruction,
+                baselineValue,
+              )
+            : null;
+
+        if (fallbackPatch) {
+          const attempt = priorAttempts + 1;
+          attemptsRef.current.set(key, attempt);
+          await applyBackendPatches([fallbackPatch]);
+          return true;
+        }
+
         setError(aiErr);
+        return false;
       } finally {
         setActiveRequest(false);
       }
     },
-    [activeRequest, chatLoading, getCurrentValue, pageId, websiteId],
+    [
+      activeRequest,
+      applyBackendPatches,
+      chatLoading,
+      getCurrentValue,
+      pageId,
+      websiteId,
+    ],
   );
 
   const cancelProposal = useCallback(() => {

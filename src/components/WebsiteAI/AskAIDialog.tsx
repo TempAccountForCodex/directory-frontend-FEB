@@ -25,7 +25,6 @@ import { X, Sparkles, RotateCcw } from "lucide-react";
 import { getDashboardColors } from "../../styles/dashboardTheme";
 import { useTheme as useCustomTheme } from "../../context/ThemeContext";
 import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
-import DashboardActionButton from "../Dashboard/shared/DashboardActionButton";
 import DashboardCancelButton from "../Dashboard/shared/DashboardCancelButton";
 import { useRotatingPhrase } from "../../hooks/useRotatingPhrase";
 import { formatResetTime } from "../../hooks/useWebsiteAIAccess";
@@ -79,10 +78,8 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
   const [instruction, setInstruction] = useState("");
   const {
     activeRequest,
-    proposal,
     error,
     askAI,
-    applyProposal,
     cancelProposal,
     getAttempts,
     clearError,
@@ -97,7 +94,13 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
       clearError();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, target?.blockId, target?.fieldPath]);
+  }, [
+    open,
+    target?.blockId,
+    target?.fieldPath,
+    target?.persistedFieldPath,
+    target?.aiEditKey,
+  ]);
 
   if (!target) return null;
 
@@ -110,20 +113,12 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
     error?.code === "PLAN_UPGRADE_REQUIRED";
   const moderationDetails = getModerationDetails(error);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!instruction.trim()) return;
-    askAI(target, instruction.trim());
-  };
-
-  const handleApply = async () => {
-    const applied = await applyProposal();
+    const applied = await askAI(target, instruction.trim());
     if (applied) {
       onClose();
     }
-  };
-
-  const handleCancelProposal = () => {
-    cancelProposal();
   };
 
   const handleClose = () => {
@@ -218,36 +213,7 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
           </Alert>
         )}
 
-        {/* Proposal preview */}
-        {proposal ? (
-          <Box>
-            <Typography
-              variant="subtitle2"
-              sx={{ color: colors.text, mb: 1, fontWeight: 600 }}
-            >
-              Proposed change
-            </Typography>
-            <Box
-              sx={{
-                p: 1.5,
-                borderRadius: 2,
-                border: `1px solid ${alpha("#378C92", 0.3)}`,
-                backgroundColor: alpha("#378C92", 0.06),
-                mb: 1.5,
-              }}
-            >
-              <Typography variant="body2" sx={{ color: colors.text }}>
-                {proposal.previewText}
-              </Typography>
-            </Box>
-            <Typography
-              variant="caption"
-              sx={{ color: colors.textSecondary, display: "block" }}
-            >
-              {proposal.summary}
-            </Typography>
-          </Box>
-        ) : activeRequest ? (
+        {activeRequest ? (
           <Box sx={{ textAlign: "center", py: 3 }}>
             <CircularProgress size={26} sx={{ color: "#378C92", mb: 1.5 }} />
             <Typography variant="body2" sx={{ color: colors.textSecondary }}>
@@ -313,49 +279,22 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-        {proposal ? (
-          <>
-            <DashboardCancelButton onClick={handleCancelProposal}>
-              Cancel
-            </DashboardCancelButton>
-            <Box sx={{ flex: 1 }} />
-            <DashboardActionButton
-              onClick={() => askAI(target, proposal.instruction)}
-              disabled={activeRequest || retryLimitHit}
-            >
-              Try again
-            </DashboardActionButton>
-            <DashboardGradientButton
-              onClick={handleApply}
-              disabled={activeRequest}
-            >
-              {activeRequest ? (
-                <CircularProgress size={18} sx={{ color: "#fff" }} />
-              ) : (
-                "Apply"
-              )}
-            </DashboardGradientButton>
-          </>
-        ) : (
-          <>
-            <DashboardCancelButton onClick={handleClose} disabled={activeRequest}>
-              Cancel
-            </DashboardCancelButton>
-            <Box sx={{ flex: 1 }} />
-            <DashboardGradientButton
-              onClick={handleSubmit}
-              disabled={
-                activeRequest || !instruction.trim() || retryLimitHit || isQuota
-              }
-            >
-              {activeRequest ? (
-                <CircularProgress size={18} sx={{ color: "#fff" }} />
-              ) : (
-                "Ask AI"
-              )}
-            </DashboardGradientButton>
-          </>
-        )}
+        <DashboardCancelButton onClick={handleClose} disabled={activeRequest}>
+          Cancel
+        </DashboardCancelButton>
+        <Box sx={{ flex: 1 }} />
+        <DashboardGradientButton
+          onClick={handleSubmit}
+          disabled={
+            activeRequest || !instruction.trim() || retryLimitHit || isQuota
+          }
+        >
+          {activeRequest ? (
+            <CircularProgress size={18} sx={{ color: "#fff" }} />
+          ) : (
+            "Ask AI"
+          )}
+        </DashboardGradientButton>
       </DialogActions>
     </Dialog>
   );

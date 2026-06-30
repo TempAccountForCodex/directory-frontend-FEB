@@ -37,18 +37,23 @@ export interface EditorAISelection {
     persistedFieldPath?: string;
     label?: string;
     aiEditKey?: string;
+    computedStyle?: AITargetRef["computedStyle"];
     styleTarget?: {
+      blockId?: string | number;
       fieldPath: string;
       persistedFieldPath?: string;
       aiEditKey?: string;
       label?: string;
+      computedStyle?: AITargetRef["computedStyle"];
     };
     styleTargets?: Array<{
+      blockId?: string | number;
       fieldPath: string;
       persistedFieldPath?: string;
       aiEditKey?: string;
       label?: string;
       category?: string;
+      computedStyle?: AITargetRef["computedStyle"];
     }>;
   } | null;
   section?: {
@@ -83,6 +88,7 @@ export interface EditorAILayerProps {
     fieldPath: string,
     value: unknown,
   ) => void;
+  onLocalPatchesApplied?: () => void | Promise<void>;
   onRefresh?: () => void | Promise<void>;
 }
 
@@ -98,6 +104,7 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
   openAskSignal,
   getCurrentValue,
   applyPatch,
+  onLocalPatchesApplied,
   onRefresh,
 }) => {
   const { actualTheme } = useCustomTheme();
@@ -114,6 +121,7 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
     revertibleTurns,
     getCurrentValue,
     applyPatch,
+    onLocalPatchesApplied,
     onRefresh,
   });
 
@@ -127,6 +135,7 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
         label: selection.editable.label,
         kind: "editable",
         aiEditKey: selection.editable.aiEditKey,
+        computedStyle: selection.editable.computedStyle,
         styleTarget: selection.editable.styleTarget,
         styleTargets: selection.editable.styleTargets,
       };

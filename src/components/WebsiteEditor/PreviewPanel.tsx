@@ -763,6 +763,7 @@ const FrontendTemplateIframePreview = React.memo(
             | "multi"
             | null) || "single";
         const rect = editableEl.getBoundingClientRect();
+        const computedStyle = doc.defaultView?.getComputedStyle(editableEl);
 
         return {
           blockId,
@@ -770,6 +771,16 @@ const FrontendTemplateIframePreview = React.memo(
           value: editableEl.textContent || "",
           editType,
           label: inferEditableLabel(editableEl, fieldPath),
+          computedStyle: computedStyle
+            ? {
+                color: computedStyle.color,
+                backgroundColor: computedStyle.backgroundColor,
+                fontSize: computedStyle.fontSize,
+                fontWeight: computedStyle.fontWeight,
+                textAlign: computedStyle.textAlign,
+                textShadow: computedStyle.textShadow,
+              }
+            : undefined,
           rect: {
             top: rect.top,
             left: rect.left,
@@ -1808,6 +1819,14 @@ export interface EditableElementSelectionData {
   value: string;
   editType: "single" | "multi";
   label?: string;
+  computedStyle?: {
+    color?: string;
+    backgroundColor?: string;
+    fontSize?: string;
+    fontWeight?: string;
+    textAlign?: string;
+    textShadow?: string;
+  };
   rect?: { top: number; left: number; width: number; height: number };
 }
 

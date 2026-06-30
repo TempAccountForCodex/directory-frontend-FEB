@@ -131,7 +131,18 @@ export function findEditableSchemaTarget(
         targetBlockId !== selectedBlockId &&
         !fieldPathContainsBlock;
 
-      return { target, score: blockMismatch ? -1 : score };
+      if (blockMismatch) {
+        // Backend page-block saves can recreate block ids. When the selected
+        // iframe element still points at the pre-save id, keep a lower-scored
+        // same-page/same-field fallback instead of treating the target as
+        // unsupported.
+        if (selectedPageId && targetPageId === selectedPageId) {
+          return { target, score: score - 70 };
+        }
+        return { target, score: -1 };
+      }
+
+      return { target, score };
     })
     .filter((item) => item.score >= 0)
     .sort((a, b) => b.score - a.score);

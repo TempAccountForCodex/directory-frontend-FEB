@@ -567,9 +567,15 @@ export async function startWebsiteAIGeneration(params: {
 export async function applyWebsiteAIPatches(params: {
   websiteId: number;
   patches: ApplyPatchInput[];
+  editSessionId?: string;
 }): Promise<ApplyPatchesResult> {
   try {
-    const res = await apiClient.post("/ai/generate-content", params);
+    const res = await apiClient.post("/ai/generate-content", {
+      websiteId: params.websiteId,
+      mode: "patch",
+      patches: params.patches,
+      editSessionId: params.editSessionId,
+    });
     return unwrap<ApplyPatchesResult>(res.data);
   } catch (err) {
     if (err instanceof WebsiteAIRequestError) throw err;
