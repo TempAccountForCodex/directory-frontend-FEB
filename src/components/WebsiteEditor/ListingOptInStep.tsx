@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Checkbox from "@mui/material/Checkbox";
@@ -33,6 +33,7 @@ const BUSINESS_CATEGORIES = [
 export interface ListingOptInStepProps {
   websiteId: number;
   websiteName: string;
+  defaultBusinessCategory?: string;
   planCode?: string;
   onComplete: () => void;
   onSkip: () => void;
@@ -41,13 +42,16 @@ export interface ListingOptInStepProps {
 const ListingOptInStep = React.memo(function ListingOptInStep({
   websiteId,
   websiteName,
+  defaultBusinessCategory,
   onComplete,
   onSkip,
 }: ListingOptInStepProps) {
   const [optedIn, setOptedIn] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [shortDescription, setShortDescription] = useState("");
-  const [businessCategory, setBusinessCategory] = useState("");
+  const [businessCategory, setBusinessCategory] = useState(
+    defaultBusinessCategory || "",
+  );
   const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,6 +61,12 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
     },
     [],
   );
+
+  useEffect(() => {
+    if (!businessCategory && defaultBusinessCategory) {
+      setBusinessCategory(defaultBusinessCategory);
+    }
+  }, [businessCategory, defaultBusinessCategory]);
 
   const handleToggleExpand = useCallback(() => {
     setExpanded((prev) => !prev);
@@ -245,6 +255,12 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
                 <MenuItem value="">
                   <em>Select a category</em>
                 </MenuItem>
+                {businessCategory &&
+                  !BUSINESS_CATEGORIES.includes(businessCategory) && (
+                    <MenuItem value={businessCategory}>
+                      {businessCategory}
+                    </MenuItem>
+                  )}
                 {BUSINESS_CATEGORIES.map((cat) => (
                   <MenuItem key={cat} value={cat}>
                     {cat}

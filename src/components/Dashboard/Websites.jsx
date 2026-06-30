@@ -2,8 +2,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
-import axios from 'axios';
-
 import {
 
   Box,
@@ -136,6 +134,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import PeopleIcon from '@mui/icons-material/People';
 
 import { API_URL } from '@/config/api';
+import { apiClient } from '@/api/client';
 
 
 
@@ -745,13 +744,7 @@ useEffect(() => {
 
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
 
-      const response = await axios.get(`${API_URL}/websites`, {
-
-        params,
-
-        withCredentials: true,
-
-      });
+      const response = await apiClient.get('/websites', { params });
 
 
 
@@ -815,7 +808,7 @@ useEffect(() => {
 
     try {
 
-      const response = await axios.get(`${API_URL}/websites/stats`);
+      const response = await apiClient.get('/websites/stats');
 
       if (response.data.success) {
 
@@ -871,18 +864,8 @@ useEffect(() => {
 
       setError(null);
 
-      const response = await axios.get(`${API_URL}/websites?status=archived`, {
-
-        params: {
-
-          page,
-
-          limit: PAGE_SIZE,
-
-        },
-
-        withCredentials: true,
-
+      const response = await apiClient.get('/websites', {
+        params: { status: 'archived', page, limit: PAGE_SIZE },
       });
 
 
@@ -927,7 +910,9 @@ useEffect(() => {
 
     try {
 
-      const response = await axios.get(`${API_URL}/stores?deleted=true`);
+      const response = await apiClient.get('/stores', {
+        params: { deleted: true },
+      });
 
       setDeletedStores(response.data.data || []);
 
@@ -1027,7 +1012,7 @@ useEffect(() => {
 
       setRestoring(true);
 
-      await axios.post(`${API_URL}/websites/${websiteId}/restore`, {});
+      await apiClient.post(`/websites/${websiteId}/restore`, {});
 
 
 
@@ -1063,7 +1048,7 @@ useEffect(() => {
 
       setRestoring(true);
 
-      await axios.post(`${API_URL}/stores/${storeId}/restore`, {});
+      await apiClient.post(`/stores/${storeId}/restore`, {});
 
 
 
@@ -1143,7 +1128,7 @@ useEffect(() => {
 
       if (websiteToPermanentlyDelete.itemType === 'store') {
 
-        await axios.delete(`${API_URL}/stores/${websiteToPermanentlyDelete.id}/permanent`);
+        await apiClient.delete(`/stores/${websiteToPermanentlyDelete.id}/permanent`);
 
         setDeletedStores(deletedStores.filter((s) => s.id !== websiteToPermanentlyDelete.id));
 
@@ -1151,11 +1136,7 @@ useEffect(() => {
 
         const websiteId = await resolveWebsiteIdForAction(websiteToPermanentlyDelete);
 
-        await axios.delete(`${API_URL}/websites/${websiteId}/permanent`, {
-
-          withCredentials: true,
-
-        });
+        await apiClient.delete(`/websites/${websiteId}/permanent`);
 
         setDeletedWebsites(
 
@@ -1225,7 +1206,7 @@ useEffect(() => {
 
 
 
-      const response = await axios.post(`${API_URL}/websites`, formData);
+      const response = await apiClient.post('/websites', formData);
 
 
 
@@ -1361,7 +1342,7 @@ useEffect(() => {
 
       const websiteId = await resolveWebsiteIdForAction(website);
 
-      await axios.post(`${API_URL}/websites/${websiteId}/publish`, {}, { withCredentials: true });
+      await apiClient.post(`/websites/${websiteId}/publish`, {});
 
 
 
@@ -1403,7 +1384,7 @@ useEffect(() => {
 
       const websiteId = await resolveWebsiteIdForAction(website);
 
-      await axios.post(`${API_URL}/websites/${websiteId}/unpublish`, {}, { withCredentials: true });
+      await apiClient.post(`/websites/${websiteId}/unpublish`, {});
 
 
 
@@ -1479,11 +1460,7 @@ useEffect(() => {
 
       const websiteId = await resolveWebsiteIdForAction(editingWebsite);
 
-      await axios.put(`${API_URL}/websites/${websiteId}`, settingsFormData, {
-
-        withCredentials: true,
-
-      });
+      await apiClient.put(`/websites/${websiteId}`, settingsFormData);
 
 
 
@@ -1573,15 +1550,13 @@ useEffect(() => {
 
       const websiteId = await resolveWebsiteIdForAction(editingWebsite);
 
-      const response = await axios.post(
+      const response = await apiClient.post(
 
-        `${API_URL}/websites/${websiteId}/logo`,
+        `/websites/${websiteId}/logo`,
 
         formData,
 
         {
-
-          withCredentials: true,
 
           headers: {
 
@@ -1665,15 +1640,13 @@ useEffect(() => {
 
       const websiteId = await resolveWebsiteIdForAction(editingWebsite);
 
-      const response = await axios.post(
+      const response = await apiClient.post(
 
-        `${API_URL}/websites/${websiteId}/favicon`,
+        `/websites/${websiteId}/favicon`,
 
         formData,
 
         {
-
-          withCredentials: true,
 
           headers: {
 
@@ -1749,7 +1722,7 @@ useEffect(() => {
 
       const websiteId = await resolveWebsiteIdForAction(websiteToDelete);
 
-      await axios.delete(`${API_URL}/websites/${websiteId}`, { withCredentials: true });
+      await apiClient.delete(`/websites/${websiteId}`);
 
 
 
@@ -5736,6 +5709,3 @@ const canViewAnalytics = canPerformAction(websiteRole, WEBSITE_ACTIONS.VIEW_ANAL
 
 
 export default Websites;
-
-
-

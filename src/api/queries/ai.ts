@@ -23,10 +23,12 @@ import { useAuthMe } from "./auth";
  */
 
 export type AIUsageResponse = {
+  scope?: "website-ai";
   plan: string;
   used: number;
-  limit: number;
-  remaining: number;
+  limit: number | "unlimited";
+  remaining: number | "unlimited";
+  resetAt?: string;
 };
 
 /**

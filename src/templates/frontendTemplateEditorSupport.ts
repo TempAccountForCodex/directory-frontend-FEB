@@ -785,7 +785,7 @@ const normalizePersistedPages = (
       isHome: !!typedPage.isHome,
       sortOrder: typedPage.sortOrder ?? pageIndex,
       isPublished: typedPage.isPublished ?? true,
-      localOnly: true,
+      localOnly: false,
       blocks: rawBlocks.map((block, blockIndex) => {
         const typedBlock = (block || {}) as RawTemplateBlock;
         return {
@@ -793,14 +793,138 @@ const normalizePersistedPages = (
             typedBlock.id ?? `${typedPage.id ?? pageIndex}-block-${blockIndex}`,
           ),
           blockType: typedBlock.blockType || typedBlock.type || "",
-          content: typedBlock.content || {},
+          content: normalizeAIFlatStyleFields(
+            (typedBlock.content || {}) as Record<string, unknown>,
+          ),
           sortOrder: typedBlock.sortOrder ?? blockIndex,
           isVisible: typedBlock.isVisible ?? true,
-          localOnly: true,
+          localOnly: false,
         };
       }),
     };
   });
+};
+
+const STYLE_FIELD_MAP: Array<{
+  styleKey: string;
+  fields: Record<string, string>;
+}> = [
+  {
+    styleKey: "headingStyle",
+    fields: {
+      headingColor: "color",
+      headingTextColor: "color",
+      headingFontSize: "fontSize",
+      headingFontWeight: "fontWeight",
+      headingTextShadow: "textShadow",
+      headingShadow: "textShadow",
+      headingBackgroundColor: "backgroundColor",
+      headingBackground: "backgroundColor",
+      headingTextAlign: "textAlign",
+      headingAlign: "textAlign",
+      headingAlignment: "textAlign",
+    },
+  },
+  {
+    styleKey: "titleStyle",
+    fields: {
+      titleColor: "color",
+      titleTextColor: "color",
+      titleFontSize: "fontSize",
+      titleFontWeight: "fontWeight",
+      titleTextShadow: "textShadow",
+      titleShadow: "textShadow",
+      titleBackgroundColor: "backgroundColor",
+      titleTextAlign: "textAlign",
+      titleAlign: "textAlign",
+      titleAlignment: "textAlign",
+    },
+  },
+  {
+    styleKey: "descriptionStyle",
+    fields: {
+      descriptionColor: "color",
+      descriptionTextColor: "color",
+      descriptionFontSize: "fontSize",
+      descriptionFontWeight: "fontWeight",
+      descriptionTextShadow: "textShadow",
+      descriptionShadow: "textShadow",
+      descriptionBackgroundColor: "backgroundColor",
+      descriptionTextAlign: "textAlign",
+      descriptionAlign: "textAlign",
+      descriptionAlignment: "textAlign",
+    },
+  },
+  {
+    styleKey: "textStyle",
+    fields: {
+      textColor: "color",
+      textTextColor: "color",
+      textFontSize: "fontSize",
+      textFontWeight: "fontWeight",
+      textShadow: "textShadow",
+      textBackgroundColor: "backgroundColor",
+      textTextAlign: "textAlign",
+      textAlign: "textAlign",
+      textAlignment: "textAlign",
+    },
+  },
+  {
+    styleKey: "buttonTextStyle",
+    fields: {
+      buttonTextColor: "color",
+      buttonTextFontSize: "fontSize",
+      buttonTextFontWeight: "fontWeight",
+      buttonTextShadow: "textShadow",
+      buttonTextBackgroundColor: "backgroundColor",
+      buttonTextAlign: "textAlign",
+    },
+  },
+  {
+    styleKey: "ctaTextStyle",
+    fields: {
+      ctaTextColor: "color",
+      ctaTextFontSize: "fontSize",
+      ctaTextFontWeight: "fontWeight",
+      ctaTextShadow: "textShadow",
+      ctaTextBackgroundColor: "backgroundColor",
+      ctaTextAlign: "textAlign",
+    },
+  },
+];
+
+const normalizeAIFlatStyleFields = (
+  content: Record<string, unknown>,
+): Record<string, unknown> => {
+  const normalized = { ...content };
+
+  STYLE_FIELD_MAP.forEach(({ styleKey, fields }) => {
+    const stylePatch = Object.entries(fields).reduce<Record<string, unknown>>(
+      (patch, [flatField, styleField]) => {
+        if (normalized[flatField] !== undefined && normalized[flatField] !== null) {
+          patch[styleField] = normalized[flatField];
+        }
+        return patch;
+      },
+      {},
+    );
+
+    if (!Object.keys(stylePatch).length) return;
+
+    const existingStyle =
+      normalized[styleKey] &&
+      typeof normalized[styleKey] === "object" &&
+      !Array.isArray(normalized[styleKey])
+        ? (normalized[styleKey] as Record<string, unknown>)
+        : {};
+
+    normalized[styleKey] = {
+      ...existingStyle,
+      ...stylePatch,
+    };
+  });
+
+  return normalized;
 };
 
 const getTemplateSectionKeys = (templateId: string, requiredOnly = false): string[] =>
@@ -971,7 +1095,9 @@ const mergeTemplateBlockContent = (
   seededContent: Record<string, unknown>,
   persistedContent: Record<string, unknown>,
 ): Record<string, unknown> => {
-  const persistedTheme = persistedContent?.[TEMPLATE_THEME_CONTENT_KEY];
+  const normalizedPersistedContent = normalizeAIFlatStyleFields(persistedContent);
+  const persistedTheme =
+    normalizedPersistedContent?.[TEMPLATE_THEME_CONTENT_KEY];
   if (
     persistedTheme &&
     typeof persistedTheme === "object" &&
@@ -979,7 +1105,7 @@ const mergeTemplateBlockContent = (
   ) {
     return {
       ...seededContent,
-      ...persistedContent,
+      ...normalizedPersistedContent,
       [TEMPLATE_THEME_CONTENT_KEY]: {
         ...(seededContent[TEMPLATE_THEME_CONTENT_KEY] as
           | Record<string, unknown>
@@ -991,7 +1117,7 @@ const mergeTemplateBlockContent = (
 
   return {
     ...seededContent,
-    ...persistedContent,
+    ...normalizedPersistedContent,
   };
 };
 
@@ -1040,12 +1166,15 @@ const hydrateSeededPages = (
 
       return {
         ...block,
+        id: persisted.id,
+        blockType: block.blockType,
         sortOrder: persisted.sortOrder ?? block.sortOrder,
         content: mergeTemplateBlockContent(
           block.content,
           persisted.content || {},
         ),
         isVisible: persisted.isVisible ?? block.isVisible,
+        localOnly: persisted.localOnly ?? false,
       };
     });
 
@@ -1065,8 +1194,10 @@ const hydrateSeededPages = (
 
     return {
       ...page,
+      id: persistedPage?.id ?? page.id,
       sortOrder: persistedPage?.sortOrder ?? page.sortOrder,
       isPublished: persistedPage?.isPublished ?? page.isPublished,
+      localOnly: persistedPage?.localOnly ?? false,
       blocks,
     };
   });

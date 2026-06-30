@@ -353,6 +353,7 @@ const FrontendTemplateIframePreview = React.memo(
       overlayEl.setAttribute("aria-hidden", "true");
       overlayEl.innerHTML = `
       <div class="tt-selection-label"></div>
+      <button type="button" class="tt-selection-ai-button" aria-label="Ask AI">Ask AI</button>
       <button type="button" class="tt-section-inner-add-button">Add block</button>
       <button type="button" class="tt-section-add-button tt-section-add-button--top" data-insert-position="before">Add section</button>
       <button type="button" class="tt-section-add-button tt-section-add-button--bottom" data-insert-position="after">Add section</button>
@@ -433,6 +434,15 @@ const FrontendTemplateIframePreview = React.memo(
               overlayTarget.getAttribute(
                 "data-preview-accepts-inner-blocks",
               ) === "true"
+                ? "inline-flex"
+                : "none";
+          }
+          const aiButton = overlayEl.querySelector(
+            ".tt-selection-ai-button",
+          ) as HTMLButtonElement | null;
+          if (aiButton) {
+            aiButton.style.display =
+              overlayKind === "editable" || overlayKind === "section"
                 ? "inline-flex"
                 : "none";
           }
@@ -1040,6 +1050,31 @@ const FrontendTemplateIframePreview = React.memo(
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .tt-selection-ai-button {
+        position: absolute;
+        top: -34px;
+        right: -2px;
+        z-index: 10;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        background: linear-gradient(135deg, #378c92, #2d7479);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+        color: #ffffff;
+        font-family: Inter, "Segoe UI", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+      .tt-selection-ai-button:hover {
+        background: linear-gradient(135deg, #3fa0a7, #378c92);
+      }
       .tt-section-inner-add-button {
         position: absolute;
         top: 12px;
@@ -1170,6 +1205,19 @@ const FrontendTemplateIframePreview = React.memo(
       onReadyRef.current?.();
 
       const handleClick = (event: MouseEvent) => {
+        const overlayAIButton = (
+          event.target as HTMLElement | null
+        )?.closest?.(".tt-selection-ai-button") as HTMLButtonElement | null;
+        if (overlayAIButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          win.parent.postMessage(
+            { type: "ASK_AI_REQUEST" },
+            window.location.origin,
+          );
+          return;
+        }
+
         const overlayInnerButton = (
           event.target as HTMLElement | null
         )?.closest?.(
@@ -1843,6 +1891,8 @@ interface PreviewPanelProps {
   onSectionInnerAddRequest?: (data: SectionSelectionData) => void;
   /** Called when a custom preview context menu should open */
   onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
+  /** Called when the selected element overlay Ask AI button is clicked */
+  onAskAIRequest?: () => void;
   /** Called when inline editing starts inside the preview iframe */
   onInlineEditStart?: (data: InlineEditStartData) => void;
   /** Called when inline text editing inside the preview is saved */
@@ -1864,6 +1914,8 @@ interface PreviewPanelProps {
   draggedLibraryBlock?: { key: string; label: string } | null;
   canDropLibraryBlock?: boolean;
   onLibraryBlockDrop?: () => void;
+  frontendTemplateIdOverride?: string | null;
+  frontendTemplateDataOverride?: BusinessData | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1886,6 +1938,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
   onSectionAddRequest,
   onSectionInnerAddRequest,
   onPreviewContextMenu,
+  onAskAIRequest,
   onInlineEditStart,
   onEditableTextSave,
   onElementTransform,
@@ -1895,6 +1948,8 @@ const PreviewPanel = React.memo(function PreviewPanel({
   draggedLibraryBlock,
   canDropLibraryBlock = false,
   onLibraryBlockDrop,
+  frontendTemplateIdOverride,
+  frontendTemplateDataOverride,
 }: PreviewPanelProps) {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -1989,8 +2044,14 @@ const PreviewPanel = React.memo(function PreviewPanel({
   }, [effectiveMode, previewCtx.currentPageContent, previewCtx.revision]);
 
   const frontendTemplateId =
-    previewCtx.currentPageContent?.websiteMeta?.frontendTemplateId || null;
+    frontendTemplateIdOverride ||
+    previewCtx.currentPageContent?.websiteMeta?.frontendTemplateId ||
+    null;
   const frontendTemplateData = React.useMemo(() => {
+    if (frontendTemplateDataOverride && frontendTemplateId) {
+      return frontendTemplateDataOverride;
+    }
+
     const override =
       previewCtx.currentPageContent?.websiteMeta?.templateDataOverride;
     if (override && frontendTemplateId) {
@@ -2020,7 +2081,11 @@ const PreviewPanel = React.memo(function PreviewPanel({
       fullAddress: websiteMeta.fullAddress,
       tags: websiteMeta.tags,
     });
-  }, [frontendTemplateId, previewCtx.currentPageContent]);
+  }, [
+    frontendTemplateDataOverride,
+    frontendTemplateId,
+    previewCtx.currentPageContent,
+  ]);
 
   const isFrontendTemplatePreview =
     effectiveMode === "live" && !!frontendTemplateId && !!frontendTemplateData;
@@ -2112,6 +2177,10 @@ const PreviewPanel = React.memo(function PreviewPanel({
         onBlockHover?.(data.blockId as string | null);
       }
 
+      if (data.type === "ASK_AI_REQUEST") {
+        onAskAIRequest?.();
+      }
+
       // Step 9.16.3: Relay inline edit start from iframe
       if (data.type === "EDIT_START" && data.blockId && data.fieldPath) {
         onInlineEditStart?.({
@@ -2143,7 +2212,13 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [onBlockSelected, onBlockHover, onEditableElementSelected, onInlineEditStart]);
+  }, [
+    onAskAIRequest,
+    onBlockSelected,
+    onBlockHover,
+    onEditableElementSelected,
+    onInlineEditStart,
+  ]);
 
   // Send VIEWPORT_CHANGE when viewport or zoom changes
   React.useEffect(() => {

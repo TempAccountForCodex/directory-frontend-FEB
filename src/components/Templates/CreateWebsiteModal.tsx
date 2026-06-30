@@ -21,9 +21,17 @@ import CircularProgress from "@mui/material/CircularProgress";
 import InputAdornment from "@mui/material/InputAdornment";
 import Alert from "@mui/material/Alert";
 import Fade from "@mui/material/Fade";
+import Switch from "@mui/material/Switch";
+import { alpha } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
-import { X, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import {
+  X,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Sparkles,
+} from "lucide-react";
 import { apiClient } from "../../api/client";
 import { type TemplateSummary } from "../../templates/templateApi";
 import { getDashboardColors } from "../../styles/dashboardTheme";
@@ -33,7 +41,15 @@ import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton
 import DashboardActionButton from "../Dashboard/shared/DashboardActionButton";
 import DashboardCancelButton from "../Dashboard/shared/DashboardCancelButton";
 import ListingOptInStep from "../WebsiteEditor/ListingOptInStep";
+import CategorySelect from "./CategorySelect";
+import AIGenerationProgress from "../WebsiteCreation/AIGenerationProgress";
 import { storeWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
+import {
+  startWebsiteAIGeneration,
+  WebsiteAIRequestError,
+} from "../../api/websiteAI";
+import { useAiUsage } from "../../api/queries/ai";
+import { formatResetTime } from "../../hooks/useWebsiteAIAccess";
 
 const STEPS = [
   "Name Your Website",
@@ -84,17 +100,26 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
   const colors = getDashboardColors(actualTheme);
   const isFullScreen = useMediaQuery(muiTheme.breakpoints.down("sm"));
 
+  const { data: aiUsage } = useAiUsage();
+  const quotaExhausted =
+    typeof aiUsage?.remaining === "number" && aiUsage.remaining <= 0;
+
   // Wizard state
   const [activeStep, setActiveStep] = useState(0);
   const [websiteName, setWebsiteName] = useState("");
+  const [businessCategory, setBusinessCategory] = useState("");
   const [subdomain, setSubdomain] = useState("");
   const [subdomainStatus, setSubdomainStatus] =
     useState<SubdomainStatus>("idle");
   const [subdomainError, setSubdomainError] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#378C92");
+  const [generateWithAI, setGenerateWithAI] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
   const [createdWebsiteId, setCreatedWebsiteId] = useState<number | null>(null);
+  // AI generation phase (post listing opt-in)
+  const [aiSessionId, setAiSessionId] = useState<string | null>(null);
+  const [aiStarting, setAiStarting] = useState(false);
 
   // Debounce timer ref
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,13 +129,17 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
     if (open) {
       setActiveStep(0);
       setWebsiteName("");
+      setBusinessCategory("");
       setSubdomain("");
       setSubdomainStatus("idle");
       setSubdomainError("");
       setPrimaryColor("#378C92");
+      setGenerateWithAI(true);
       setCreating(false);
       setError("");
       setCreatedWebsiteId(null);
+      setAiSessionId(null);
+      setAiStarting(false);
     }
   }, [open]);
 
@@ -220,6 +249,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
           : { frontendTemplateId: template.id }),
         name: websiteName.trim(),
         subdomain: subdomain.trim(),
+        businessCategory: businessCategory.trim() || undefined,
         customization: {
           primaryColor,
         },
@@ -249,16 +279,84 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
   }, [
     template,
     websiteName,
+    businessCategory,
     subdomain,
     primaryColor,
     subdomainStatus,
+  ]);
+
+  // Start AI generation as a separate call after the website exists.
+  const startGeneration = useCallback(
+    async (websiteId: number): Promise<boolean> => {
+      setAiStarting(true);
+      setError("");
+      try {
+        const result = await startWebsiteAIGeneration({
+          websiteId,
+          questionnaireData: {
+            businessName: websiteName.trim(),
+            businessCategory: businessCategory.trim() || undefined,
+          },
+        });
+        if (result?.sessionId) {
+          setAiSessionId(result.sessionId);
+          return true;
+        }
+        return false;
+      } catch (err) {
+        // Generation failure must not block website access (PRD acceptance).
+        if (err instanceof WebsiteAIRequestError) {
+          setError(err.aiError.message);
+        }
+        return false;
+      } finally {
+        setAiStarting(false);
+      }
+    },
+    [businessCategory],
+  );
+
+  // Called after the directory listing opt-in step finishes (complete or skip).
+  const finishCreation = useCallback(async () => {
+    if (createdWebsiteId == null) return;
+    if (generateWithAI && !quotaExhausted) {
+      const started = await startGeneration(createdWebsiteId);
+      if (started) return; // AIGenerationProgress now drives navigation
+    }
+    onSuccess(createdWebsiteId);
+  }, [
+    createdWebsiteId,
+    generateWithAI,
+    quotaExhausted,
+    startGeneration,
     onSuccess,
   ]);
 
+  // Retry handler passed to AIGenerationProgress.
+  const handleRetrySession = useCallback(
+    async (_resumeMode: boolean): Promise<string | null> => {
+      if (createdWebsiteId == null) return null;
+      try {
+        const result = await startWebsiteAIGeneration({
+          websiteId: createdWebsiteId,
+          questionnaireData: {
+            businessName: websiteName.trim(),
+            businessCategory: businessCategory.trim() || undefined,
+          },
+        });
+        return result?.sessionId ?? null;
+      } catch {
+        return null;
+      }
+    },
+    [createdWebsiteId, businessCategory],
+  );
+
   // Validation
   const nameValid = websiteName.trim().length >= 3;
+  const categoryValid = businessCategory.trim().length > 0;
   const subdomainReady = subdomainStatus === "available";
-  const canProceedStep0 = nameValid;
+  const canProceedStep0 = nameValid && categoryValid;
   const canProceedStep1 = subdomainReady;
 
   // Subdomain adornment icon
@@ -288,7 +386,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
   return (
     <Dialog
       open={open}
-      onClose={creating ? undefined : onClose}
+      onClose={creating || aiStarting || !!aiSessionId ? undefined : onClose}
       maxWidth="sm"
       fullWidth
       fullScreen={isFullScreen}
@@ -316,7 +414,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
         <IconButton
           aria-label="close"
           onClick={onClose}
-          disabled={creating}
+          disabled={creating || aiStarting || !!aiSessionId}
           size="small"
           sx={{ color: colors.textSecondary }}
         >
@@ -325,6 +423,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
       </DialogTitle>
 
       <DialogContent sx={{ pt: 1 }}>
+        {!aiSessionId && (
         <Stepper
           activeStep={activeStep}
           alternativeLabel
@@ -346,8 +445,9 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
             </Step>
           ))}
         </Stepper>
+        )}
 
-        {template && (
+        {!aiSessionId && template && (
           <Typography
             variant="caption"
             sx={{ color: colors.textSecondary, mb: 2, display: "block" }}
@@ -378,6 +478,19 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
               }
               autoFocus
             />
+            <Box sx={{ mt: 2 }}>
+              <CategorySelect
+                value={businessCategory}
+                onChange={(val) => setBusinessCategory(val)}
+              />
+              <Typography
+                variant="caption"
+                sx={{ color: colors.textSecondary, mt: 0.5, display: "block" }}
+              >
+                Used for AI content and your directory listing.
+              </Typography>
+            </Box>
+
             {websiteName && subdomain && (
               <Typography
                 variant="body2"
@@ -507,17 +620,99 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                 {primaryColor}
               </Typography>
             </Box>
+
+            {/* AI generation choice */}
+            <Box
+              sx={{
+                mt: 1,
+                p: 2,
+                borderRadius: 2,
+                border: `1px solid ${alpha("#378C92", 0.3)}`,
+                backgroundColor: alpha("#378C92", 0.06),
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1.5,
+              }}
+            >
+              <Sparkles size={20} color="#378C92" style={{ marginTop: 2 }} />
+              <Box sx={{ flex: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ color: colors.text, fontWeight: 600 }}
+                  >
+                    Generate my content with AI
+                  </Typography>
+                  <Switch
+                    checked={generateWithAI && !quotaExhausted}
+                    disabled={quotaExhausted}
+                    onChange={(e) => setGenerateWithAI(e.target.checked)}
+                    sx={{
+                      "& .MuiSwitch-switchBase.Mui-checked": {
+                        color: "#378C92",
+                      },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                        backgroundColor: "#378C92",
+                      },
+                    }}
+                  />
+                </Box>
+                <Typography
+                  variant="caption"
+                  sx={{ color: colors.textSecondary, display: "block" }}
+                >
+                  {quotaExhausted
+                    ? `You've used all your website AI for now${
+                        aiUsage && "resetAt" in aiUsage
+                          ? ` — resets ${formatResetTime(
+                              (aiUsage as { resetAt?: string }).resetAt,
+                            )}`
+                          : ""
+                      }. We'll create your site with template defaults.`
+                    : "We'll fill in your pages with tailored copy after creation. You can edit everything afterwards."}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
         )}
 
         {/* Step 4: Directory Opt-In (post-creation) */}
-        {activeStep === 3 && createdWebsiteId && (
-          <ListingOptInStep
+        {activeStep === 3 && createdWebsiteId && !aiSessionId && (
+          <>
+            {aiStarting ? (
+              <Box sx={{ textAlign: "center", py: 5 }}>
+                <CircularProgress size={28} sx={{ color: "#378C92", mb: 2 }} />
+                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                  Starting AI content generation…
+                </Typography>
+              </Box>
+            ) : (
+              <ListingOptInStep
+                websiteId={createdWebsiteId}
+                websiteName={websiteName}
+                defaultBusinessCategory={businessCategory}
+                planCode={planCode}
+                onComplete={finishCreation}
+                onSkip={finishCreation}
+              />
+            )}
+          </>
+        )}
+
+        {/* AI generation phase — reuse AIGenerationProgress */}
+        {aiSessionId && createdWebsiteId && (
+          <AIGenerationProgress
+            sessionId={aiSessionId}
             websiteId={createdWebsiteId}
             websiteName={websiteName}
-            planCode={planCode}
-            onComplete={() => onSuccess(createdWebsiteId)}
-            onSkip={() => onSuccess(createdWebsiteId)}
+            questionnaireData={{ businessCategory }}
+            onRetrySession={handleRetrySession}
           />
         )}
       </DialogContent>

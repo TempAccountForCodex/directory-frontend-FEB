@@ -26,6 +26,7 @@ import { Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getDashboardColors } from "../../styles/dashboardTheme";
 import { useTheme as useCustomTheme } from "../../context/ThemeContext";
+import { useRotatingPhrase } from "../../hooks/useRotatingPhrase";
 import {
   DashboardCard,
   DashboardGradientButton,
@@ -63,6 +64,8 @@ interface AIGenerationProgressProps {
   websiteName: string;
   questionnaireData: Record<string, unknown>;
   onRetrySession?: (resumeMode: boolean) => Promise<string | null>;
+  autoNavigate?: boolean;
+  onComplete?: () => void | Promise<void>;
 }
 
 const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
@@ -72,6 +75,8 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
     websiteName,
     questionnaireData,
     onRetrySession,
+    autoNavigate = true,
+    onComplete,
   }) => {
     const { actualTheme } = useCustomTheme();
     const colors = getDashboardColors(actualTheme);
@@ -104,6 +109,12 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
     const abortRef = useRef<AbortController | null>(null);
     const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const activeSessionIdRef = useRef(sessionId);
+    const completeNotifiedRef = useRef(false);
+
+    // Friendly rotating processing copy (PRD: no exact model output streamed).
+    const rotatingPhrase = useRotatingPhrase(
+      phase === "connecting" || phase === "generating",
+    );
 
     // Cleanup on unmount
     useEffect(() => {
@@ -292,6 +303,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
     // Start SSE connection on mount
     useEffect(() => {
       if (sessionId) {
+        completeNotifiedRef.current = false;
         connectSSE(sessionId);
       }
     }, [sessionId, connectSSE]);
@@ -299,6 +311,11 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
     // Auto-redirect countdown on completion
     useEffect(() => {
       if (phase === "complete") {
+        if (!completeNotifiedRef.current) {
+          completeNotifiedRef.current = true;
+          void onComplete?.();
+        }
+        if (!autoNavigate) return;
         countdownRef.current = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
@@ -316,7 +333,7 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
           clearInterval(countdownRef.current);
         }
       };
-    }, [phase, websiteId, navigate]);
+    }, [autoNavigate, onComplete, phase, websiteId, navigate]);
 
     // Handle resume after disconnect
     const handleResume = useCallback(async () => {
@@ -425,8 +442,12 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
         : 0;
 
     const handleGoToEditor = useCallback(() => {
+      if (!autoNavigate) {
+        void onComplete?.();
+        return;
+      }
       navigate(`/dashboard/websites/${websiteId}/manage/overview`);
-    }, [navigate, websiteId]);
+    }, [autoNavigate, navigate, onComplete, websiteId]);
 
     return (
       <Box
@@ -519,12 +540,22 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
                   size={32}
                   sx={{ color: colors.primary, mb: 2 }}
                 />
-                <Typography
-                  variant="body2"
-                  sx={{ color: alpha(colors.text, 0.6) }}
-                >
-                  Connecting to AI service...
-                </Typography>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={rotatingPhrase}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: alpha(colors.text, 0.6) }}
+                    >
+                      {rotatingPhrase}…
+                    </Typography>
+                  </motion.div>
+                </AnimatePresence>
               </Box>
             )}
 
@@ -580,6 +611,28 @@ const AIGenerationProgress: React.FC<AIGenerationProgressProps> = React.memo(
                     {stats.blocksFailed > 0 &&
                       ` · ${stats.blocksFailed} failed`}
                   </Typography>
+                  {/* Friendly rotating processing phrase */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={rotatingPhrase}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: alpha(colors.primary, 0.85),
+                          mt: 0.5,
+                          display: "block",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        {rotatingPhrase}…
+                      </Typography>
+                    </motion.div>
+                  </AnimatePresence>
                 </Box>
 
                 {/* Page list */}

@@ -138,9 +138,7 @@ function Navbar() {
   const [mobileDocsOpen, setMobileDocsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const docsMenuRef = useRef<HTMLDivElement | null>(null);
-  const docsCloseTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(
-    null,
-  );
+  const docsCloseTimerRef = useRef<number | null>(null);
 
   const activePath = useMemo(() => {
     if (location.pathname.startsWith("/listings/")) return "/listings";

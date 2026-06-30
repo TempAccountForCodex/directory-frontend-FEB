@@ -109,6 +109,25 @@ vi.mock("../../WebsiteEditor/ListingOptInStep", () => ({
   default: () => <div data-testid="listing-opt-in">Listing Opt-In</div>,
 }));
 
+// AI generation deps (avoid React Query / network in shell-render tests)
+vi.mock("../../../api/queries/ai", () => ({
+  useAiUsage: () => ({ data: { remaining: 100, limit: 100 } }),
+}));
+
+vi.mock("../CategorySelect", () => ({
+  default: ({ value, onChange }: any) => (
+    <input
+      aria-label="Business / Website Category"
+      value={value}
+      onChange={(e) => onChange(e.target.value, null)}
+    />
+  ),
+}));
+
+vi.mock("../../WebsiteCreation/AIGenerationProgress", () => ({
+  default: () => <div data-testid="ai-generation-progress" />,
+}));
+
 // ---------------------------------------------------------------------------
 // Import component under test
 // ---------------------------------------------------------------------------
@@ -181,5 +200,31 @@ describe("CreateWebsiteModal", () => {
     expect(screen.getByText("Name Your Website")).toBeInTheDocument();
     expect(screen.getByText("Choose Your Address")).toBeInTheDocument();
     expect(screen.getByText("Customize")).toBeInTheDocument();
+  });
+
+  it("renders the required Business / Website Category field on step 1", () => {
+    render(<CreateWebsiteModal {...defaultProps} />);
+    expect(
+      screen.getByLabelText("Business / Website Category"),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps Next disabled until both name and category are provided", () => {
+    render(<CreateWebsiteModal {...defaultProps} />);
+    const nextBtn = screen.getByText("Next") as HTMLButtonElement;
+    // Nothing entered → disabled
+    expect(nextBtn).toBeDisabled();
+
+    // Name only → still disabled (category is required)
+    fireEvent.change(screen.getByLabelText("Website Name"), {
+      target: { value: "My Cool Site" },
+    });
+    expect(nextBtn).toBeDisabled();
+
+    // Name + category → enabled
+    fireEvent.change(screen.getByLabelText("Business / Website Category"), {
+      target: { value: "Agency" },
+    });
+    expect(nextBtn).not.toBeDisabled();
   });
 });

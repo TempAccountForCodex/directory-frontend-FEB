@@ -132,6 +132,12 @@ import {
 } from "../../templates/frontendTemplateEditorSupport";
 import { getStoredWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
 import { color } from "framer-motion";
+import { EditorAILayer } from "../WebsiteAI";
+import {
+  extractEditableSchemaTargets,
+  findEditableSchemaTarget,
+} from "../WebsiteAI/aiPatchUtils";
+import { useWebsiteAIAccess } from "../../hooks/useWebsiteAIAccess";
 
 const EDITABLE_STYLE_FIELD_MAP = {
   title: { styleKey: "titleStyle", label: "Heading" },
@@ -563,6 +569,119 @@ const getEditableTypographyStyleKey = (fieldName = "text") => {
         getEditableStyleConfig(normalizedFieldName).styleKey || "textStyle"
       );
   }
+};
+
+const getEditableAIStyleTargetCandidates = (fieldName = "text") => {
+  const normalizedFieldName = String(fieldName || "text").trim();
+  const leafFieldName =
+    normalizedFieldName
+      .split(".")
+      .filter(Boolean)
+      .pop() || normalizedFieldName;
+  const styleConfigKey = getEditableStyleConfig(leafFieldName).styleKey;
+  const typographyStyleKey = getEditableTypographyStyleKey(leafFieldName);
+  const capitalizedLeaf =
+    leafFieldName.charAt(0).toUpperCase() + leafFieldName.slice(1);
+  const styleKeys = [
+    typographyStyleKey,
+    styleConfigKey,
+    "headingStyle",
+    "titleStyle",
+    "subtitleStyle",
+    "subheadingStyle",
+    "descriptionStyle",
+    "bodyStyle",
+    "textStyle",
+    "buttonTextStyle",
+    "ctaTextStyle",
+    "primaryCtaTextStyle",
+    "buttonStyle",
+    "ctaStyle",
+    "cardStyle",
+    "sectionStyle",
+    "backgroundStyle",
+  ].filter(Boolean);
+  const styleLeaves = [
+    "color",
+    "fontSize",
+    "fontWeight",
+    "fontStyle",
+    "textShadow",
+    "backgroundColor",
+    "textAlign",
+    "alignment",
+    "borderColor",
+    "borderWidth",
+    "borderStyle",
+    "borderRadius",
+    "boxShadow",
+    "paddingTop",
+    "paddingBottom",
+    "paddingLeft",
+    "paddingRight",
+    "marginTop",
+    "marginBottom",
+    "spacingTop",
+    "spacingBottom",
+    "opacity",
+    "visibility",
+  ];
+  const nestedStyleCandidates = styleKeys.flatMap((styleKey) => [
+    styleKey,
+    ...styleLeaves.map((leaf) => `${styleKey}.${leaf}`),
+  ]);
+
+  return [
+    ...nestedStyleCandidates,
+    `${leafFieldName}Color`,
+    `${leafFieldName}TextColor`,
+    `${leafFieldName}Background`,
+    `${leafFieldName}BackgroundColor`,
+    `${leafFieldName}Shadow`,
+    `${leafFieldName}TextShadow`,
+    `${leafFieldName}Border`,
+    `${leafFieldName}BorderColor`,
+    `${leafFieldName}Radius`,
+    `${leafFieldName}Spacing`,
+    `${leafFieldName}Padding`,
+    `${leafFieldName}Margin`,
+    `${leafFieldName}Align`,
+    `${leafFieldName}Alignment`,
+    `${leafFieldName}FontSize`,
+    `${leafFieldName}FontWeight`,
+    `${leafFieldName}Style`,
+    `${capitalizedLeaf}Color`,
+    `${capitalizedLeaf}Style`,
+    styleConfigKey,
+    typographyStyleKey,
+    "headingColor",
+    "titleColor",
+    "subtitleColor",
+    "descriptionColor",
+    "textColor",
+    "bodyColor",
+    "buttonTextColor",
+    "ctaTextColor",
+    "primaryCtaTextColor",
+    "textShadow",
+    "boxShadow",
+    "buttonStyle",
+    "ctaStyle",
+    "cardStyle",
+    "textStyle",
+    "headingStyle",
+    "titleStyle",
+    "bodyStyle",
+    "sectionStyle",
+    "backgroundStyle",
+    "backgroundColor",
+    "textAlign",
+    "alignment",
+    "spacingTop",
+    "spacingBottom",
+    "paddingTop",
+    "paddingBottom",
+  ].filter((value, index, values) => value && values.indexOf(value) === index);
 };
 
 const getInnerBlockStyleKey = (innerBlock, fieldName = "text") => {
@@ -1542,11 +1661,28 @@ const sanitizeBlockForSave = (block) => {
     return block;
   }
 
+  const rawBlockType = String(block.blockType || "").toUpperCase();
   const sanitizedContent = {
     ...omitInnerBlocksMirror(block.content),
   };
 
-  if (String(block.blockType || "").toUpperCase() === "CONTACT") {
+  const templateSectionByBlockType = {
+    ABOUT: "about",
+    PROCESS: "process",
+    PLAN: "plan",
+    HEADER: "navbar",
+    FOOTER_SECTION: "footer",
+    WHY_US: "why-us",
+  };
+
+  if (templateSectionByBlockType[rawBlockType]) {
+    sanitizedContent.editorSection =
+      sanitizedContent.editorSection || templateSectionByBlockType[rawBlockType];
+    sanitizedContent.editorBlockType =
+      sanitizedContent.editorBlockType || rawBlockType;
+  }
+
+  if (rawBlockType === "CONTACT") {
     Object.assign(sanitizedContent, normalizeContactEditorContent(sanitizedContent));
   }
 
@@ -1556,7 +1692,7 @@ const sanitizeBlockForSave = (block) => {
     );
   }
 
-  if (block.blockType === "CTA") {
+  if (rawBlockType === "CTA") {
     sanitizedContent.ctaText = truncateText(
       block.content.ctaText,
       MAX_CTA_TEXT_LENGTH,
@@ -1564,7 +1700,7 @@ const sanitizeBlockForSave = (block) => {
   }
 
   // Map WEBSITE_HEADER → NAVBAR for backend (backend doesn't accept WEBSITE_HEADER yet)
-  if (String(block.blockType || "").toUpperCase() === "WEBSITE_HEADER") {
+  if (rawBlockType === "WEBSITE_HEADER") {
     return {
       ...block,
       blockType: "NAVBAR",
@@ -1572,13 +1708,21 @@ const sanitizeBlockForSave = (block) => {
     };
   }
 
-  if (String(block.blockType || "").toUpperCase() === "GALLERY") {
+  if (rawBlockType === "GALLERY") {
     sanitizedContent.images = Array.isArray(block.content.images)
       ? block.content.images.map((item) => ({
           ...item,
           image: item?.image || item?.src || "",
         }))
       : [];
+  }
+
+  if (templateSectionByBlockType[rawBlockType]) {
+    return {
+      ...block,
+      blockType: "SECTION",
+      content: sanitizedContent,
+    };
   }
 
   return {
@@ -1646,6 +1790,7 @@ const WebsiteEditorInner = () => {
   const [templateThemeSelection, setTemplateThemeSelection] = useState(null);
 
   const [selectedEditableElement, setSelectedEditableElement] = useState(null);
+  const [askAIOpenSignal, setAskAIOpenSignal] = useState(0);
   const [selectedImageElement, setSelectedImageElement] = useState(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isImageLibraryPickerOpen, setIsImageLibraryPickerOpen] =
@@ -2417,37 +2562,55 @@ const WebsiteEditorInner = () => {
   // Sync editor state into PreviewContext — Step 4.11
   // Bridges blocks, selected page, and website metadata so PreviewPanel
   // can render a live srcdoc preview without network requests.
+  const previewTemplateDataOverride = useMemo(() => {
+    if (!selectedPage?.id || !websiteId || !supportsLocalTemplateEditor) {
+      return null;
+    }
+
+    const previewPages = pages.map((page) =>
+      page.id === selectedPage.id ? { ...page, blocks } : page,
+    );
+    const baseTemplateDataOverride = buildTemplatePreviewBusinessData(
+      resolvedFrontendTemplateId,
+      website || {},
+      previewPages,
+    );
+    if (!baseTemplateDataOverride) return null;
+
+    const resolvedThemeSelection = templateThemeSelection
+      ? resolveTemplateThemeSelection(templateThemeSelection)
+      : null;
+
+    return {
+      ...baseTemplateDataOverride,
+      ...(resolvedThemeSelection && {
+        primaryColor: resolvedThemeSelection.palette.primary,
+        secondaryColor: resolvedThemeSelection.palette.secondary,
+        themeSettings: {
+          ...(baseTemplateDataOverride.themeSettings || {}),
+          primaryColor: resolvedThemeSelection.palette.primary,
+          secondaryColor: resolvedThemeSelection.palette.secondary,
+          headingFont: resolvedThemeSelection.fontPack.headingFont,
+          bodyFont: resolvedThemeSelection.fontPack.bodyFont,
+        },
+      }),
+    };
+  }, [
+    blocks,
+    selectedPage?.id,
+    website,
+    websiteId,
+    pages,
+    supportsLocalTemplateEditor,
+    templateThemeSelection,
+    resolvedFrontendTemplateId,
+  ]);
+
   useEffect(() => {
     if (!selectedPage?.id || !websiteId) return;
     const previewPages = pages.map((page) =>
       page.id === selectedPage.id ? { ...page, blocks } : page,
     );
-    const baseTemplateDataOverride = supportsLocalTemplateEditor
-      ? buildTemplatePreviewBusinessData(
-          resolvedFrontendTemplateId,
-          website || {},
-          previewPages,
-        )
-      : null;
-    const resolvedThemeSelection = templateThemeSelection
-      ? resolveTemplateThemeSelection(templateThemeSelection)
-      : null;
-    const templateDataOverride = baseTemplateDataOverride
-      ? {
-          ...baseTemplateDataOverride,
-          ...(resolvedThemeSelection && {
-            primaryColor: resolvedThemeSelection.palette.primary,
-            secondaryColor: resolvedThemeSelection.palette.secondary,
-            themeSettings: {
-              ...(baseTemplateDataOverride.themeSettings || {}),
-              primaryColor: resolvedThemeSelection.palette.primary,
-              secondaryColor: resolvedThemeSelection.palette.secondary,
-              headingFont: resolvedThemeSelection.fontPack.headingFont,
-              bodyFont: resolvedThemeSelection.fontPack.bodyFont,
-            },
-          }),
-        }
-      : null;
 
     updatePreviewContent({
       websiteId: String(websiteId),
@@ -2471,7 +2634,7 @@ const WebsiteEditorInner = () => {
         logoUrl: website?.logoUrl,
         fullAddress: website?.fullAddress,
         tags: Array.isArray(website?.tags) ? website.tags : null,
-        templateDataOverride,
+        templateDataOverride: previewTemplateDataOverride,
         colors: website?.colors,
         fonts: website?.fonts,
         theme: website?.theme,
@@ -2484,8 +2647,7 @@ const WebsiteEditorInner = () => {
     websiteId,
     updatePreviewContent,
     pages,
-    supportsLocalTemplateEditor,
-    templateThemeSelection,
+    previewTemplateDataOverride,
     resolvedFrontendTemplateId,
   ]);
 
@@ -2560,13 +2722,26 @@ const WebsiteEditorInner = () => {
 
   useEffect(() => {
     if (selectedPage?.id) {
+      if (supportsLocalTemplateEditor) {
+        const templateBlocks = Array.isArray(selectedPage.blocks)
+          ? selectedPage.blocks.map(normalizeLoadedBlock)
+          : [];
+        localTemplateHydratedPageRef.current =
+          typeof selectedPage.id === "string"
+            ? selectedPage.id
+            : String(selectedPage.id);
+        setBlocks(templateBlocks);
+        setBlockError(null);
+        isLoadingRef.current = false;
+        return;
+      }
       setBlockError(null);
       fetchBlocks(selectedPage.id);
     } else {
       setBlockError(null);
       setBlocks([]);
     }
-  }, [selectedPage?.id]);
+  }, [selectedPage?.id, selectedPage?.blocks, supportsLocalTemplateEditor]);
 
   const fetchWebsiteData = async () => {
     try {
@@ -2663,7 +2838,14 @@ const WebsiteEditorInner = () => {
       // Auto-select home page or first page
       const homePage = pagesList.find((p) => p.isHome) || pagesList[0];
       if (homePage) {
-        if (homePage.localOnly) {
+        if (supportsFrontendTemplateEditor(normalizedWebsiteData.frontendTemplateId)) {
+          const initialBlocks = Array.isArray(homePage.blocks)
+            ? homePage.blocks.map(normalizeLoadedBlock)
+            : [];
+          localTemplateHydratedPageRef.current = homePage.id;
+          setBlocks(initialBlocks);
+          setBlockError(null);
+        } else if (homePage.localOnly) {
           const initialBlocks = Array.isArray(homePage.blocks)
             ? homePage.blocks.map(normalizeLoadedBlock)
             : [];
@@ -2825,7 +3007,16 @@ const WebsiteEditorInner = () => {
     setSelectedImageElement(null);
     setIsImageDialogOpen(false);
     setIsInspectorOpen(false);
-    if (page?.localOnly) {
+    if (page && supportsLocalTemplateEditor) {
+      const localBlocks = Array.isArray(page.blocks)
+        ? page.blocks.map(normalizeLoadedBlock)
+        : [];
+      localTemplateHydratedPageRef.current =
+        typeof page.id === "string" ? page.id : String(page.id);
+      suppressHistoryRef.current = true;
+      setBlocks(localBlocks);
+      setBlockError(null);
+    } else if (page?.localOnly) {
       const localBlocks = Array.isArray(page.blocks) ? page.blocks.map(normalizeLoadedBlock) : [];
       localTemplateHydratedPageRef.current = page.id;
       suppressHistoryRef.current = true;
@@ -2833,7 +3024,7 @@ const WebsiteEditorInner = () => {
       setBlockError(null);
     }
     setSelectedPage(page);
-  }, []);
+  }, [supportsLocalTemplateEditor]);
 
   const handleSetHomePage = async (pageId) => {
     try {
@@ -4937,6 +5128,149 @@ const WebsiteEditorInner = () => {
     });
   }, []);
 
+  // ---- Website AI (Ask AI / chat) integration helpers ----
+  const websiteAIContext = useMemo(() => {
+    const raw = website?.aiContext ?? website?.ai_context ?? null;
+    if (typeof raw === "string") {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+    return raw && typeof raw === "object" ? raw : null;
+  }, [website?.aiContext, website?.ai_context]);
+  const websiteAIAccess = useWebsiteAIAccess(
+    websiteId ? Number(websiteId) : undefined,
+    {
+      activeRequest: Boolean(websiteAIContext?.activeRequest),
+      role: website?.role || websiteRole,
+      isOwner:
+        Boolean(user?.id) &&
+        Boolean(website?.ownerUserId) &&
+        Number(user.id) === Number(website.ownerUserId),
+    },
+  );
+  const websiteAIEditableTargets = useMemo(
+    () => extractEditableSchemaTargets(websiteAIContext),
+    [websiteAIContext],
+  );
+  const websiteAIRevertibleTurns = useMemo(() => {
+    const history = Array.isArray(websiteAIContext?.aiHistory)
+      ? websiteAIContext.aiHistory
+      : [];
+    return history
+      .filter((turn) => turn?.revertible && turn?.applied && turn?.turnId)
+      .slice(-2)
+      .reverse();
+  }, [websiteAIContext]);
+  const websiteAIVersions = useMemo(() => {
+    const versions = Array.isArray(websiteAIContext?.fullSiteVersions)
+      ? websiteAIContext.fullSiteVersions
+      : [];
+    return versions;
+  }, [websiteAIContext]);
+  const selectedEditableAITarget = useMemo(
+    () =>
+      findEditableSchemaTarget(websiteAIEditableTargets, {
+        pageId: selectedPage?.id,
+        blockId: selectedEditableElement?.blockId,
+        fieldPath: selectedEditableElement?.fieldPath,
+      }),
+    [
+      websiteAIEditableTargets,
+      selectedPage?.id,
+      selectedEditableElement?.blockId,
+      selectedEditableElement?.fieldPath,
+    ],
+  );
+  const selectedEditableStyleAITarget = useMemo(() => {
+    if (!selectedEditableElement?.blockId || !selectedEditableElement?.fieldPath) {
+      return undefined;
+    }
+
+    const styleFieldPath = getEditableTypographyStyleKey(
+      selectedEditableElement.fieldPath,
+    );
+
+    return findEditableSchemaTarget(websiteAIEditableTargets, {
+      pageId: selectedPage?.id,
+      blockId: selectedEditableElement.blockId,
+      fieldPath: styleFieldPath,
+    });
+  }, [
+    websiteAIEditableTargets,
+    selectedPage?.id,
+    selectedEditableElement?.blockId,
+    selectedEditableElement?.fieldPath,
+  ]);
+  const selectedEditableStyleAITargets = useMemo(() => {
+    if (!selectedEditableElement?.blockId || !selectedEditableElement?.fieldPath) {
+      return [];
+    }
+
+    const candidates = getEditableAIStyleTargetCandidates(
+      selectedEditableElement.fieldPath,
+    );
+    const matches = candidates
+      .map((fieldPath) =>
+        findEditableSchemaTarget(websiteAIEditableTargets, {
+          pageId: selectedPage?.id,
+          blockId: selectedEditableElement.blockId,
+          fieldPath,
+        }),
+      )
+      .filter(Boolean);
+
+    return matches.filter(
+      (target, index, list) =>
+        list.findIndex(
+          (item) =>
+            item.aiEditKey === target.aiEditKey ||
+            item.fieldPath === target.fieldPath,
+        ) === index,
+    );
+  }, [
+    websiteAIEditableTargets,
+    selectedPage?.id,
+    selectedEditableElement?.blockId,
+    selectedEditableElement?.fieldPath,
+  ]);
+  const selectedSectionAITarget = useMemo(
+    () =>
+      findEditableSchemaTarget(websiteAIEditableTargets, {
+        pageId: selectedPage?.id,
+        blockId: selectedSectionElement?.blockId,
+        fieldPath: selectedSectionElement?.styleKey || "sectionStyle",
+      }),
+    [
+      websiteAIEditableTargets,
+      selectedPage?.id,
+      selectedSectionElement?.blockId,
+      selectedSectionElement?.styleKey,
+    ],
+  );
+
+  // Read the current value of a block content field (for AI conflict/revert).
+  const getAIFieldValue = useCallback((blockId, fieldPath) => {
+    const persistedPath = String(fieldPath || "");
+    if (persistedPath.startsWith("pages.") && persistedPath.includes(".content.")) {
+      const match = persistedPath.match(/blocks\.([^.]+)\.content\.(.+)$/);
+      if (match) {
+        const [, resolvedBlockId, contentPath] = match;
+        const block = blocksRef.current.find(
+          (b) => String(b.id) === String(resolvedBlockId),
+        );
+        return block ? getValueAtPath(block.content || {}, contentPath) : undefined;
+      }
+    }
+    const block = blockId
+      ? blocksRef.current.find((b) => String(b.id) === String(blockId))
+      : null;
+    if (!block) return undefined;
+    return getValueAtPath(block.content || {}, persistedPath);
+  }, []);
+
   // BlockLibrary insert handler — creates a block via API (Phase 9 gap fix)
   const handleInsertBlockFromLibrary = useCallback(
     async (blockType, position, content) => {
@@ -6840,6 +7174,12 @@ const WebsiteEditorInner = () => {
                             websiteId={websiteId}
                             pageId={selectedPage?.id}
                             pageTitle={selectedPage?.title}
+                            frontendTemplateIdOverride={
+                              resolvedFrontendTemplateId
+                            }
+                            frontendTemplateDataOverride={
+                              previewTemplateDataOverride
+                            }
                             pages={pages.map((page) => ({
                               id: page.id,
                               title: page.title,
@@ -6877,6 +7217,7 @@ const WebsiteEditorInner = () => {
                               handlePreviewSectionInnerAddRequest
                             }
                             onPreviewContextMenu={handlePreviewContextMenu}
+                            onAskAIRequest={() => setAskAIOpenSignal((v) => v + 1)}
                             onEditableTextSave={handleInlineEditSave}
                             onElementTransform={handlePreviewElementTransform}
                             saveSignal={previewSaveSignal}
@@ -8368,6 +8709,67 @@ const WebsiteEditorInner = () => {
           </Alert>
         </Snackbar>
       </Container>
+
+      {websiteId && (
+        <EditorAILayer
+          websiteId={Number(websiteId)}
+          websiteName={website?.name || website?.businessName || "Website"}
+          pageId={
+            selectedPage?.id && !selectedPage?.localOnly
+              ? Number(selectedPage.id)
+              : null
+          }
+          canUseAI={websiteAIAccess.canUseAI}
+          disabledReason={websiteAIAccess.disabledReason}
+          selection={{
+            editable: selectedEditableElement?.blockId
+              ? {
+                  blockId: selectedEditableElement.blockId,
+                  fieldPath: selectedEditableElement.fieldPath,
+                  persistedFieldPath: selectedEditableAITarget?.fieldPath,
+                  label: selectedEditableElement.label,
+                  aiEditKey: selectedEditableAITarget?.aiEditKey,
+                  styleTarget: {
+                    fieldPath: getEditableTypographyStyleKey(
+                      selectedEditableElement.fieldPath,
+                    ),
+                    persistedFieldPath: selectedEditableStyleAITarget?.fieldPath,
+                    aiEditKey: selectedEditableStyleAITarget?.aiEditKey,
+                    label: `${selectedEditableElement.label || "Selection"} style`,
+                  },
+                  styleTargets: selectedEditableStyleAITargets.map((target) => ({
+                    fieldPath:
+                      String(target.fieldPath || "").split(".content.").pop() ||
+                      target.fieldPath,
+                    persistedFieldPath: target.fieldPath,
+                    aiEditKey: target.aiEditKey,
+                    label: target.label,
+                    category: target.category,
+                  })),
+                }
+              : null,
+            section: selectedSectionElement?.blockId
+              ? {
+                  blockId: selectedSectionElement.blockId,
+                  label: selectedSectionElement.label,
+                  fieldPath:
+                    selectedSectionElement.styleKey || "sectionStyle",
+                  persistedFieldPath: selectedSectionAITarget?.fieldPath,
+                  aiEditKey: selectedSectionAITarget?.aiEditKey,
+                }
+              : null,
+            page: selectedPage?.id
+              ? { id: selectedPage.id, title: selectedPage.title }
+              : null,
+          }}
+          revertibleTurns={websiteAIRevertibleTurns}
+          versions={websiteAIVersions}
+          openAskSignal={askAIOpenSignal}
+          getCurrentValue={getAIFieldValue}
+          applyPatch={handleInlineEditSave}
+          onRefresh={fetchWebsiteData}
+        />
+      )}
     </Box>
   );
 };
