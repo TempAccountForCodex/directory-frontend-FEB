@@ -9,6 +9,7 @@ vi.mock("../../../api/websiteAI", async () => {
     editElement: vi.fn(),
     editorChat: vi.fn(),
     revertAITurn: vi.fn(),
+    recordAppliedEdit: vi.fn(),
     applyWebsiteAIPatches: vi.fn(),
     recreateWebsiteWithAI: vi.fn(),
     restoreWebsiteAIVersion: vi.fn(),
@@ -19,6 +20,7 @@ import {
   applyWebsiteAIPatches,
   editElement,
   editorChat,
+  recordAppliedEdit,
   revertAITurn,
   WebsiteAIRequestError,
 } from "../../../api/websiteAI";
@@ -27,6 +29,8 @@ import { useEditorAI, MAX_ATTEMPTS, MAX_REVERT_DEPTH } from "../useEditorAI";
 const mockEdit = editElement as unknown as ReturnType<typeof vi.fn>;
 const mockChat = editorChat as unknown as ReturnType<typeof vi.fn>;
 const mockRevert = revertAITurn as unknown as ReturnType<typeof vi.fn>;
+const mockRecord = recordAppliedEdit as unknown as ReturnType<typeof vi.fn>;
+// Selected-element edits must NOT persist through generate-content patch mode.
 const mockApplyPatches = applyWebsiteAIPatches as unknown as ReturnType<
   typeof vi.fn
 >;
@@ -62,6 +66,8 @@ beforeEach(() => {
   mockEdit.mockReset();
   mockChat.mockReset();
   mockRevert.mockReset();
+  mockRecord.mockReset();
+  mockRecord.mockResolvedValue({ success: true, turnId: "rec_1", recorded: 1 });
   mockApplyPatches.mockReset();
   mockApplyPatches.mockResolvedValue({
     success: true,
@@ -75,19 +81,22 @@ beforeEach(() => {
 });
 
 describe("useEditorAI · Ask AI", () => {
-  it("produces a proposal from edit-element", async () => {
+  it("applies the edit-element result to local editor state (immediate apply)", async () => {
     mockEdit.mockResolvedValue({
       turnId: "turn_1",
       patch: { "content.heading": "Premium homes" },
       previewText: "Premium homes",
       summary: "Shortened",
     });
-    const { hook } = setup();
+    const { hook, applyPatch } = setup();
     await act(async () => {
       await hook.result.current.askAI(target, "make it premium");
     });
-    expect(hook.result.current.proposal?.previewText).toBe("Premium homes");
-    expect(hook.result.current.proposal?.value).toBe("Premium homes");
+    // Immediate apply: the change lands in local editor state, no proposal step,
+    // and it is NOT persisted via generate-content patch mode.
+    expect(applyPatch).toHaveBeenCalledWith(9, "heading", "Premium homes");
+    expect(hook.result.current.proposal).toBeNull();
+    expect(mockApplyPatches).not.toHaveBeenCalled();
     expect(hook.result.current.activeRequest).toBe(false);
   });
 
@@ -130,7 +139,7 @@ describe("useEditorAI · Ask AI", () => {
 });
 
 describe("useEditorAI · Apply / conflict / revert", () => {
-  const goodProposal = () =>
+  const goodResult = () =>
     mockEdit.mockResolvedValue({
       turnId: "turn_1",
       patch: { "content.heading": "New value" },
@@ -138,36 +147,50 @@ describe("useEditorAI · Apply / conflict / revert", () => {
       summary: "Updated",
     });
 
-  it("applies a proposal through backend patch mode", async () => {
-    goodProposal();
+  it("applies a selected-element edit locally without generate-content patch mode", async () => {
+    goodResult();
     const { hook, applyPatch } = setup();
     await act(async () => {
       await hook.result.current.askAI(target, "do it");
     });
-    await act(async () => {
-      await hook.result.current.applyProposal();
-    });
-    expect(mockApplyPatches).toHaveBeenCalledWith({
+    // Single writer: local editor apply only. The website is persisted later by
+    // the editor Save Changes flow, never by generate-content patch mode here.
+    expect(applyPatch).toHaveBeenCalledWith(9, "heading", "New value");
+    expect(mockApplyPatches).not.toHaveBeenCalled();
+    // Revert bookkeeping is recorded via the lightweight endpoint.
+    expect(mockRecord).toHaveBeenCalledTimes(1);
+    expect(mockRecord.mock.calls[0][0]).toMatchObject({
       websiteId: 1,
       patches: [
         {
-          aiEditKey: undefined,
           fieldPath: "content.heading",
+          editorPath: "heading",
           value: "New value",
         },
       ],
     });
-    expect(applyPatch).toHaveBeenCalledWith(9, "heading", "New value");
     expect(hook.result.current.proposal).toBeNull();
   });
 
-  it("applies and reverts every field returned in a multi-property patch", async () => {
+  it("applies every field returned in a multi-property patch using editorPath", async () => {
     mockEdit.mockResolvedValue({
       turnId: "turn_multi",
-      patch: {
-        "content.headingStyle.color": "#008080",
-        "content.headingStyle.textShadow": "0 2px 8px rgba(0,0,0,.2)",
-      },
+      patches: [
+        {
+          aiEditKey: "k1",
+          path: "pages.10.blocks.9.content.headingStyle.color",
+          editorPath: "headingStyle.color",
+          blockId: 9,
+          value: "#008080",
+        },
+        {
+          aiEditKey: "k2",
+          path: "pages.10.blocks.9.content.headingStyle.textShadow",
+          editorPath: "headingStyle.textShadow",
+          blockId: 9,
+          value: "0 2px 8px rgba(0,0,0,.2)",
+        },
+      ],
       previewText: "Updated heading styles",
       summary: "Changed the color and shadow.",
     });
@@ -178,45 +201,71 @@ describe("useEditorAI · Apply / conflict / revert", () => {
         "make the text teal and add a shadow",
       );
     });
-    await act(async () => {
-      await hook.result.current.applyProposal();
-    });
+    // Both properties are applied at their backend-provided editor paths.
     expect(applyPatch).toHaveBeenCalledWith(9, "headingStyle.color", "#008080");
     expect(applyPatch).toHaveBeenCalledWith(
       9,
       "headingStyle.textShadow",
       "0 2px 8px rgba(0,0,0,.2)",
     );
-
-    expect(mockApplyPatches).toHaveBeenCalled();
+    expect(mockApplyPatches).not.toHaveBeenCalled();
+    expect(mockRecord.mock.calls[0][0].patches).toHaveLength(2);
   });
 
   it("detects a conflict when the field changed mid-request", async () => {
-    goodProposal();
+    let resolveEdit: (v: unknown) => void = () => {};
+    mockEdit.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEdit = resolve;
+        }),
+    );
     const { hook, applyPatch, store } = setup();
-    await act(async () => {
-      await hook.result.current.askAI(target, "do it");
+    let askPromise: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      askPromise = hook.result.current.askAI(target, "do it");
     });
-    // User edits the same field after the proposal arrives.
+    // User edits the same field while the AI request is still in flight.
     store["9:heading"] = "User typed this";
     await act(async () => {
-      await hook.result.current.applyProposal();
+      resolveEdit({
+        turnId: "turn_1",
+        patch: { "content.heading": "New value" },
+        previewText: "New value",
+        summary: "Updated",
+      });
+      await askPromise;
     });
+    // The in-flight result must not silently overwrite the user's edit.
     expect(applyPatch).not.toHaveBeenCalled();
+    expect(mockRecord).not.toHaveBeenCalled();
     expect(hook.result.current.conflict).not.toBeNull();
     expect(hook.result.current.conflict?.userValue).toBe("User typed this");
     expect(hook.result.current.conflict?.aiValue).toBe("New value");
   });
 
   it("resolves a conflict by keeping the user edit (no apply)", async () => {
-    goodProposal();
+    let resolveEdit: (v: unknown) => void = () => {};
+    mockEdit.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEdit = resolve;
+        }),
+    );
     const { hook, applyPatch, store } = setup();
-    await act(async () => {
-      await hook.result.current.askAI(target, "do it");
+    let askPromise: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      askPromise = hook.result.current.askAI(target, "do it");
     });
     store["9:heading"] = "User typed this";
     await act(async () => {
-      await hook.result.current.applyProposal();
+      resolveEdit({
+        turnId: "turn_1",
+        patch: { "content.heading": "New value" },
+        previewText: "New value",
+        summary: "Updated",
+      });
+      await askPromise;
     });
     await act(async () => {
       await hook.result.current.resolveConflict("user");
@@ -226,14 +275,27 @@ describe("useEditorAI · Apply / conflict / revert", () => {
   });
 
   it("resolves a conflict by applying the AI version", async () => {
-    goodProposal();
+    let resolveEdit: (v: unknown) => void = () => {};
+    mockEdit.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEdit = resolve;
+        }),
+    );
     const { hook, applyPatch, store } = setup();
-    await act(async () => {
-      await hook.result.current.askAI(target, "do it");
+    let askPromise: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      askPromise = hook.result.current.askAI(target, "do it");
     });
     store["9:heading"] = "User typed this";
     await act(async () => {
-      await hook.result.current.applyProposal();
+      resolveEdit({
+        turnId: "turn_1",
+        patch: { "content.heading": "New value" },
+        previewText: "New value",
+        summary: "Updated",
+      });
+      await askPromise;
     });
     await act(async () => {
       await hook.result.current.resolveConflict("ai");

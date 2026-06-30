@@ -28,6 +28,21 @@ export interface WebsiteCategory {
   source: "template" | "user";
 }
 
+/** Renderer/editor mapping hints carried on every editable target. */
+export interface EditableTargetMetadata {
+  /** content | style | column | website | page */
+  group?: string;
+  /** CSS sub-property for a style leaf (e.g. "color", "fontSize"). */
+  cssProp?: string;
+  /**
+   * For a content text/button target, the nested style object name(s) that
+   * style it (e.g. "heading" -> ["headingStyle"]). Used to resolve style-edit
+   * targets from the schema instead of guessing locally.
+   */
+  styleObjects?: string[];
+  [key: string]: unknown;
+}
+
 export interface EditableSchemaTarget {
   aiEditKey: string;
   kind: string;
@@ -40,9 +55,20 @@ export interface EditableSchemaTarget {
   blockType?: string;
   elementType?: string;
   fieldPath: string;
+  /**
+   * Path INSIDE block.content the editor applies a patch to (fieldPath with the
+   * `pages.<p>.blocks.<b>.content.` prefix removed). The frontend uses this
+   * directly and never derives it.
+   */
+  editorPath?: string | null;
+  /** editorPath when the target is content copy/data; null for style targets. */
+  contentPath?: string | null;
+  /** Nested style object name (e.g. "headingStyle") for style targets. */
+  stylePath?: string | null;
   valueType?: string;
   allowedOperations?: string[];
   currentValue?: unknown;
+  metadata?: EditableTargetMetadata | null;
 }
 
 /** Structured AI error codes returned by the backend. */
@@ -95,8 +121,18 @@ export interface WebsiteAIError {
 export interface AIPatch {
   aiEditKey?: string;
   fieldPath?: string;
-  /** Backend path alias. */
-  path: string;
+  /** Backend path alias. Legacy responses may include this instead of fieldPath. */
+  path?: string;
+  /**
+   * Path INSIDE block.content the editor applies this patch to (e.g.
+   * "headingStyle.fontSize"). Authoritative — returned by the backend so the
+   * frontend never derives it from fieldPath.
+   */
+  editorPath?: string | null;
+  contentPath?: string | null;
+  stylePath?: string | null;
+  elementId?: string | null;
+  elementType?: string | null;
   kind?: string | null;
   blockId?: number | string;
   pageId?: number | string;
@@ -579,6 +615,46 @@ export async function applyWebsiteAIPatches(params: {
       editSessionId: params.editSessionId,
     });
     return unwrap<ApplyPatchesResult>(res.data);
+  } catch (err) {
+    if (err instanceof WebsiteAIRequestError) throw err;
+    throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));
+  }
+}
+
+/** One applied patch reported to the backend for revert bookkeeping. */
+export interface RecordAppliedPatch {
+  aiEditKey?: string;
+  fieldPath: string;
+  editorPath?: string | null;
+  before?: unknown;
+  value: unknown;
+}
+
+export interface RecordAppliedEditResult {
+  success?: true;
+  turnId: string | null;
+  recorded: number;
+}
+
+/**
+ * Record an applied selected-element AI edit AFTER it has been applied to local
+ * editor state and persisted through the normal editor Save Changes flow. This
+ * does NOT mutate blocks — it only resyncs the editable schema's current values
+ * and records a revertible AI turn. Best-effort: callers should not block the UI
+ * on it. (Replaces persisting selected-element edits through generate-content
+ * patch mode, which fought the editor save flow.)
+ */
+export async function recordAppliedEdit(params: {
+  websiteId: number;
+  turnId?: string;
+  aiEditKey?: string;
+  instruction?: string;
+  summary?: string;
+  patches: RecordAppliedPatch[];
+}): Promise<RecordAppliedEditResult> {
+  try {
+    const res = await apiClient.post("/ai/record-applied-edit", params);
+    return unwrap<RecordAppliedEditResult>(res.data);
   } catch (err) {
     if (err instanceof WebsiteAIRequestError) throw err;
     throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));

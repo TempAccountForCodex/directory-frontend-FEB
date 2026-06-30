@@ -1,17 +1,21 @@
 /**
  * useEditorAI — orchestrates editor-side website AI interactions.
  *
- * Backend contract note:
- * - edit-element and editor-chat are preview-only.
- * - Apply must call POST /ai/generate-content in patch mode so the backend
- *   persists the edit and records a revertible AI turn.
+ * Backend contract note (unified editable-target contract):
+ * - edit-element and editor-chat are preview/generation only.
+ * - Selected-element edits are applied to LOCAL editor state using the backend's
+ *   authoritative `editorPath`, then persisted through the normal editor "Save
+ *   Changes" flow. We do NOT call generate-content patch mode for them (no
+ *   duplicate writer) and do NOT refetch the whole website after applying.
+ * - After a local apply we call POST /ai/record-applied-edit (best-effort) so the
+ *   backend records a revertible AI turn without fighting the editor save flow.
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
-  applyWebsiteAIPatches,
   editElement,
   editorChat,
+  recordAppliedEdit,
   recreateWebsiteWithAI,
   revertAITurn,
   restoreWebsiteAIVersion,
@@ -24,6 +28,7 @@ import {
   type WebsiteAIError,
 } from "../../api/websiteAI";
 import {
+  getPatchEditorPath,
   getPatchFieldPath,
   isBlockContentPath,
   normalizeChatPatches,
@@ -283,7 +288,9 @@ function normalizePreviewPatches(
 ): AIProposalPatch[] {
   return patches.map((patch) => {
     const persistedFieldPath = getPatchFieldPath(patch);
-    const fieldPath = toFieldPath(persistedFieldPath);
+    // Authoritative editor path from the backend (unified contract). The editor's
+    // inline-save handler writes at this path inside block.content.
+    const fieldPath = getPatchEditorPath(patch);
     const blockId = patch.blockId ?? target.blockId;
     return {
       aiEditKey: patch.aiEditKey,
@@ -504,32 +511,84 @@ export function useEditorAI({
   );
 
   const applyBackendPatches = useCallback(
-    async (patches: AIProposalPatch[]) => {
-      await applyWebsiteAIPatches({
-        websiteId,
-        patches: patches.map((patch) => ({
-          aiEditKey: patch.aiEditKey,
-          fieldPath: patch.persistedFieldPath,
-          value: patch.value,
-        })),
-      });
-
-      patches.forEach((patch) => {
-        if (
-          patch.blockId != null &&
-          isBlockContentPath(patch.persistedFieldPath)
-        ) {
-          applyPatch(patch.blockId, patch.fieldPath, patch.value);
+    async (
+      patches: AIProposalPatch[],
+      meta?: {
+        instruction?: string;
+        summary?: string;
+        turnId?: string;
+        aiEditKey?: string;
+        /** Skip the conflict guard (used when resolving a conflict). */
+        force?: boolean;
+      },
+    ): Promise<boolean> => {
+      // Conflict guard: a patch whose CURRENT editor value drifted from the
+      // baseline captured when the AI request was made means the user edited the
+      // same field while the request was in flight. Surface a conflict instead of
+      // silently overwriting their edit.
+      if (!meta?.force) {
+        const conflicting = patches.find(
+          (patch) =>
+            !valuesEqual(
+              getCurrentValue(patch.blockId, patch.fieldPath),
+              patch.baselineValue,
+            ),
+        );
+        if (conflicting) {
+          setConflict({
+            blockId: conflicting.blockId,
+            fieldPath: conflicting.fieldPath,
+            userValue: getCurrentValue(conflicting.blockId, conflicting.fieldPath),
+            aiValue: conflicting.value,
+            turnId: meta?.turnId ?? "",
+            summary: meta?.summary ?? "",
+            patches,
+          });
+          return false;
         }
+      }
+
+      // Apply to LOCAL editor block state using the backend's authoritative
+      // editor path. The user persists with the normal "Save Changes" button —
+      // we never call generate-content patch mode here (that would be a second
+      // writer fighting the editor save) and we never refetch the whole website
+      // (a full refresh races with lock/approval polling and briefly rehydrates
+      // stale template data, making the selection flip old<->new).
+      const applied = patches.filter(
+        (patch) =>
+          patch.blockId != null && isBlockContentPath(patch.persistedFieldPath),
+      );
+      applied.forEach((patch) => {
+        applyPatch(patch.blockId, patch.fieldPath, patch.value);
       });
 
-      // Do not immediately refetch the whole website after a successful patch.
-      // The backend patch endpoint has already persisted the change and the
-      // editor state is updated below. A full refresh can race with editor
-      // approval/lock polling and briefly rehydrate stale template data, which
-      // makes the selected element appear to flip between old and new values.
+      // Let the editor flush the local change into all of its state mirrors
+      // (blocks/blocksRef/pages/selectedPage/persistedPages) and mark dirty.
+      await onLocalPatchesApplied?.(applied.length ? applied : patches);
+
+      // Best-effort revert bookkeeping. Sends explicit before/after so the turn
+      // is accurate regardless of when the editor save lands. Never blocks the UI.
+      if (applied.length) {
+        recordAppliedEdit({
+          websiteId,
+          turnId: meta?.turnId,
+          aiEditKey: meta?.aiEditKey ?? applied[0]?.aiEditKey,
+          instruction: meta?.instruction,
+          summary: meta?.summary,
+          patches: applied.map((patch) => ({
+            aiEditKey: patch.aiEditKey,
+            fieldPath: patch.persistedFieldPath,
+            editorPath: patch.fieldPath,
+            before: patch.baselineValue,
+            value: patch.value,
+          })),
+        }).catch(() => {
+          /* bookkeeping only — ignore failures */
+        });
+      }
+      return true;
     },
-    [applyPatch, websiteId],
+    [applyPatch, getCurrentValue, onLocalPatchesApplied, websiteId],
   );
 
   const askAI = useCallback(
@@ -582,14 +641,38 @@ export function useEditorAI({
       };
 
       try {
-        const result = await editElement({
+        const requestPayload = {
           websiteId,
           pageId: pageId ?? undefined,
           blockId: requestTarget.blockId,
           target: apiTarget,
           instruction,
           editSessionId,
-        });
+        };
+        let result: Awaited<ReturnType<typeof editElement>>;
+        try {
+          result = await editElement(requestPayload);
+        } catch (err) {
+          const aiErr =
+            err instanceof WebsiteAIRequestError
+              ? err.aiError
+              : normalizeWebsiteAIError(err);
+
+          // A stale aiEditKey can happen after block saves/schema resyncs. If
+          // the persisted fieldPath is still valid, retry once by fieldPath only
+          // before treating it as unsupported.
+          if (aiErr.code === "UNSUPPORTED_EDIT_FIELD" && apiTarget.aiEditKey) {
+            result = await editElement({
+              ...requestPayload,
+              target: {
+                ...apiTarget,
+                aiEditKey: undefined,
+              },
+            });
+          } else {
+            throw err;
+          }
+        }
 
         const attempt = result.attempt ?? priorAttempts + 1;
         attemptsRef.current.set(key, attempt);
@@ -601,7 +684,7 @@ export function useEditorAI({
           (Array.isArray(rawPatch)
             ? rawPatch
             : legacyPatchMapToPatches(rawPatch, requestTarget));
-        const patches = backendPatches.length
+        const previewPatches = backendPatches.length
           ? normalizePreviewPatches(
               backendPatches,
               requestTarget,
@@ -628,6 +711,15 @@ export function useEditorAI({
                 baselineValue,
               },
             ];
+        // Use the value captured BEFORE the (async) AI call as the conflict
+        // baseline for the requested field, so a mid-flight user edit to the same
+        // field is detected even when the backend did not echo a `before`.
+        const patches = previewPatches.map((patch) =>
+          patch.fieldPath === requestTarget.fieldPath &&
+          String(patch.blockId ?? "") === String(requestTarget.blockId ?? "")
+            ? { ...patch, baselineValue }
+            : patch,
+        );
         if (!patches.length || patches.every((patch) => patch.value == null)) {
           setError({
             code: "INVALID_EDIT_RESULT",
@@ -636,8 +728,12 @@ export function useEditorAI({
           return false;
         }
 
-        await applyBackendPatches(patches);
-        return true;
+        return await applyBackendPatches(patches, {
+          instruction,
+          summary: result.summary,
+          turnId: result.turnId,
+          aiEditKey: result.target?.aiEditKey ?? requestTarget.aiEditKey,
+        });
       } catch (err) {
         const aiErr =
           err instanceof WebsiteAIRequestError
@@ -658,8 +754,10 @@ export function useEditorAI({
         if (fallbackPatch) {
           const attempt = priorAttempts + 1;
           attemptsRef.current.set(key, attempt);
-          await applyBackendPatches([fallbackPatch]);
-          return true;
+          return await applyBackendPatches([fallbackPatch], {
+            instruction,
+            aiEditKey: requestTarget.aiEditKey,
+          });
         }
 
         setError(aiErr);
@@ -685,35 +783,18 @@ export function useEditorAI({
   const applyProposal = useCallback(async (): Promise<boolean> => {
     if (!proposal) return false;
 
-    const conflictingPatch = proposal.patches.find(
-      (patch) =>
-        !valuesEqual(
-          getCurrentValue(patch.blockId, patch.fieldPath),
-          patch.baselineValue,
-        ),
-    );
-    if (conflictingPatch) {
-      setConflict({
-        blockId: conflictingPatch.blockId,
-        fieldPath: conflictingPatch.fieldPath,
-        userValue: getCurrentValue(
-          conflictingPatch.blockId,
-          conflictingPatch.fieldPath,
-        ),
-        aiValue: conflictingPatch.value,
-        turnId: proposal.turnId,
-        summary: proposal.summary,
-        patches: proposal.patches,
-      });
-      return false;
-    }
-
     setActiveRequest(true);
     setError(null);
     try {
-      await applyBackendPatches(proposal.patches);
-      setProposal(null);
-      return true;
+      // applyBackendPatches performs the conflict guard (and sets `conflict`
+      // when the user edited the same field mid-flight), then applies locally.
+      const ok = await applyBackendPatches(proposal.patches, {
+        instruction: proposal.instruction,
+        summary: proposal.summary,
+        turnId: proposal.turnId,
+      });
+      if (ok) setProposal(null);
+      return ok;
     } catch (err) {
       const aiErr =
         err instanceof WebsiteAIRequestError
@@ -724,7 +805,7 @@ export function useEditorAI({
     } finally {
       setActiveRequest(false);
     }
-  }, [applyBackendPatches, getCurrentValue, proposal]);
+  }, [applyBackendPatches, proposal]);
 
   const resolveConflict = useCallback(
     async (choice: "user" | "ai") => {
@@ -749,7 +830,13 @@ export function useEditorAI({
       setActiveRequest(true);
       setError(null);
       try {
-        await applyBackendPatches(patchesToApply);
+        // The conflict was already surfaced and the user chose — force past the
+        // guard so applying the AI version is not re-flagged as a conflict.
+        await applyBackendPatches(patchesToApply, {
+          summary: conflict.summary,
+          turnId: conflict.turnId,
+          force: true,
+        });
         setConflict(null);
         setProposal(null);
       } catch (err) {
@@ -975,28 +1062,48 @@ export function useEditorAI({
       setChatLoading(true);
       setError(null);
       try {
-        await applyWebsiteAIPatches({
-          websiteId,
-          patches: applicablePatches.map((patch) => ({
-            aiEditKey: patch.aiEditKey,
-            fieldPath: patch.persistedFieldPath,
-            value: patch.value,
-          })),
-        });
-        applicablePatches.forEach((patch) => {
-          if (
+        // Same contract as selected-element edits: apply locally using the
+        // backend editor path, persist via the editor Save Changes flow, record
+        // for revert — no generate-content patch mode and no full refresh.
+        const appliedChat = applicablePatches.filter(
+          (patch) =>
             patch.blockId != null &&
-            isBlockContentPath(patch.persistedFieldPath)
-          ) {
-            applyPatch(patch.blockId, patch.fieldPath, patch.value);
-          }
+            isBlockContentPath(patch.persistedFieldPath),
+        );
+        appliedChat.forEach((patch) => {
+          applyPatch(patch.blockId, patch.fieldPath, patch.value);
         });
+        if (appliedChat.length) {
+          recordAppliedEdit({
+            websiteId,
+            aiEditKey: appliedChat[0]?.aiEditKey,
+            patches: appliedChat.map((patch) => ({
+              aiEditKey: patch.aiEditKey,
+              fieldPath: patch.persistedFieldPath,
+              editorPath: patch.fieldPath,
+              before: patch.before,
+              value: patch.value,
+            })),
+          }).catch(() => {
+            /* bookkeeping only */
+          });
+        }
+        await onLocalPatchesApplied?.(
+          appliedChat.map((patch) => ({
+            aiEditKey: patch.aiEditKey,
+            blockId: patch.blockId,
+            pageId: patch.pageId,
+            fieldPath: patch.fieldPath,
+            persistedFieldPath: patch.persistedFieldPath,
+            value: patch.value,
+            baselineValue: patch.before,
+          })),
+        );
         setChatMessages((prev) =>
           prev.map((item) =>
             item.id === messageId ? { ...item, pendingPatches: undefined } : item,
           ),
         );
-        await onRefresh?.();
       } catch (err) {
         const aiErr =
           err instanceof WebsiteAIRequestError
@@ -1007,7 +1114,7 @@ export function useEditorAI({
         setChatLoading(false);
       }
     },
-    [applyPatch, chatMessages, onRefresh, websiteId],
+    [applyPatch, chatMessages, onLocalPatchesApplied, websiteId],
   );
 
   const dismissChatPatches = useCallback((messageId: string) => {

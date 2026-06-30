@@ -136,6 +136,7 @@ import { EditorAILayer } from "../WebsiteAI";
 import {
   extractEditableSchemaTargets,
   findEditableSchemaTarget,
+  resolveStyleTargetsForSelection,
   toFieldPath,
 } from "../WebsiteAI/aiPatchUtils";
 import { useWebsiteAIAccess } from "../../hooks/useWebsiteAIAccess";
@@ -5409,12 +5410,24 @@ const WebsiteEditorInner = () => {
       return [];
     }
 
-    const candidates = getEditableAIStyleTargetCandidates(
-      selectedEditableElement.fieldPath,
-    );
     const resolvedBlockId =
       selectedEditableAITarget?.blockId ?? selectedEditableElement.blockId;
-    const matches = candidates
+
+    // Primary: schema-driven resolution. The selected content target declares,
+    // in metadata.styleObjects, the nested style object(s) the renderer uses to
+    // style it — resolve those targets directly from the schema (no guessing).
+    const schemaDriven = resolveStyleTargetsForSelection(
+      websiteAIEditableTargets,
+      selectedEditableAITarget,
+      resolvedBlockId,
+    );
+
+    // Fallback: name-based candidates for schemas generated before the unified
+    // contract (no metadata.styleObjects yet). Still only ever selects targets
+    // that actually exist in the schema.
+    const candidateMatches = getEditableAIStyleTargetCandidates(
+      selectedEditableElement.fieldPath,
+    )
       .map((fieldPath) =>
         findEditableSchemaTarget(websiteAIEditableTargets, {
           pageId: selectedPage?.id,
@@ -5423,6 +5436,8 @@ const WebsiteEditorInner = () => {
         }),
       )
       .filter(Boolean);
+
+    const matches = schemaDriven.length ? schemaDriven : candidateMatches;
 
     return matches.filter(
       (target, index, list) =>
@@ -5435,7 +5450,7 @@ const WebsiteEditorInner = () => {
   }, [
     websiteAIEditableTargets,
     selectedPage?.id,
-    selectedEditableAITarget?.blockId,
+    selectedEditableAITarget,
     selectedEditableElement?.blockId,
     selectedEditableElement?.fieldPath,
   ]);
@@ -8940,11 +8955,12 @@ const WebsiteEditorInner = () => {
                   styleTarget: {
                     blockId: selectedEditableStyleAITarget?.blockId,
                     fieldPath:
-                      selectedEditableStyleAITarget?.fieldPath
+                      selectedEditableStyleAITarget?.editorPath ||
+                      (selectedEditableStyleAITarget?.fieldPath
                         ? toFieldPath(selectedEditableStyleAITarget.fieldPath)
                         : getEditableStyleConfig(
                             selectedEditableElement.fieldPath,
-                          ).styleKey,
+                          ).styleKey),
                     persistedFieldPath: selectedEditableStyleAITarget?.fieldPath,
                     aiEditKey: selectedEditableStyleAITarget?.aiEditKey,
                     label: `${selectedEditableElement.label || "Selection"} style`,
@@ -8953,6 +8969,7 @@ const WebsiteEditorInner = () => {
                   styleTargets: selectedEditableStyleAITargets.map((target) => ({
                     blockId: target.blockId,
                     fieldPath:
+                      target.editorPath ||
                       String(target.fieldPath || "").split(".content.").pop() ||
                       target.fieldPath,
                     persistedFieldPath: target.fieldPath,

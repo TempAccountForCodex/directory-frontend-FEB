@@ -44,16 +44,22 @@ vi.mock("../../../api/websiteAI", async () => {
     editElement: vi.fn(),
     editorChat: vi.fn(),
     revertAITurn: vi.fn(),
+    recordAppliedEdit: vi.fn(),
     applyWebsiteAIPatches: vi.fn(),
     recreateWebsiteWithAI: vi.fn(),
     restoreWebsiteAIVersion: vi.fn(),
   };
 });
 
-import { applyWebsiteAIPatches, editElement } from "../../../api/websiteAI";
+import {
+  applyWebsiteAIPatches,
+  editElement,
+  recordAppliedEdit,
+} from "../../../api/websiteAI";
 import EditorAILayer from "../EditorAILayer";
 
 const mockEdit = editElement as unknown as ReturnType<typeof vi.fn>;
+const mockRecord = recordAppliedEdit as unknown as ReturnType<typeof vi.fn>;
 const mockApplyPatches = applyWebsiteAIPatches as unknown as ReturnType<
   typeof vi.fn
 >;
@@ -79,6 +85,8 @@ const selection = {
 
 beforeEach(() => {
   mockEdit.mockReset();
+  mockRecord.mockReset();
+  mockRecord.mockResolvedValue({ success: true, turnId: "rec_1", recorded: 1 });
   mockApplyPatches.mockReset();
   mockApplyPatches.mockResolvedValue({
     success: true,
@@ -103,10 +111,20 @@ describe("EditorAILayer", () => {
     expect(screen.queryByText("Proposed change")).not.toBeInTheDocument();
   });
 
-  it("runs the Ask AI → preview → Apply flow", async () => {
+  it("runs the Ask AI → immediate apply flow (no Proposed/Apply step)", async () => {
     mockEdit.mockResolvedValue({
       turnId: "turn_1",
-      patch: { "content.heading": "Premium homes" },
+      patches: [
+        {
+          aiEditKey: "home.hero.heading",
+          blockId: 9,
+          pageId: 10,
+          path: "pages.10.blocks.9.content.heading",
+          editorPath: "heading",
+          value: "Premium homes",
+          after: "Premium homes",
+        },
+      ],
       previewText: "Premium homes",
       summary: "Shortened the hero headline.",
     });
@@ -129,8 +147,6 @@ describe("EditorAILayer", () => {
     const askButtons = screen.getAllByText("Ask AI");
     fireEvent.click(askButtons[askButtons.length - 1]);
 
-    // Preview appears
-    await screen.findByText("Proposed change");
     expect(mockEdit).toHaveBeenCalledWith(
       expect.objectContaining({
         target: expect.objectContaining({
@@ -139,13 +155,10 @@ describe("EditorAILayer", () => {
         }),
       }),
     );
-    expect(screen.getByText("Premium homes")).toBeInTheDocument();
-    expect(
-      screen.getByText("Shortened the hero headline."),
-    ).toBeInTheDocument();
 
-    // Apply
-    fireEvent.click(screen.getByText("Apply"));
+    // Immediate apply: the change lands in local editor state at the backend
+    // editorPath. There is NO "Proposed change"/"Apply" confirmation step and it
+    // is NOT persisted via generate-content patch mode.
     await waitFor(() =>
       expect(baseProps.applyPatch).toHaveBeenCalledWith(
         9,
@@ -153,6 +166,9 @@ describe("EditorAILayer", () => {
         "Premium homes",
       ),
     );
+    expect(screen.queryByText("Proposed change")).not.toBeInTheDocument();
+    expect(mockApplyPatches).not.toHaveBeenCalled();
+    expect(mockRecord).toHaveBeenCalledTimes(1);
   });
 
   it("discloses the two-turn revert limit in the dialog", async () => {

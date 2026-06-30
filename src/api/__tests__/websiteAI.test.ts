@@ -189,19 +189,38 @@ describe("websiteAI · service calls", () => {
     expect(res.sessionId).toBe("ai_1");
   });
 
-  it("editElement returns a typed result", async () => {
+  it("editElement returns a typed result with backend editorPath", async () => {
+    // Real edit-element responses expose patches at the top level (and mirror
+    // them under data.patch). Each patch carries the authoritative editorPath.
     mockPost.mockResolvedValue({
       data: {
         success: true,
+        mode: "edit-element",
+        turnId: "turn_2",
+        patches: [
+          {
+            aiEditKey: "k1",
+            blockId: 9,
+            pageId: 10,
+            path: "pages.10.blocks.9.content.heading",
+            fieldPath: "pages.10.blocks.9.content.heading",
+            editorPath: "heading",
+            contentPath: "heading",
+            stylePath: null,
+            elementType: "text",
+            value: "Short",
+            after: "Short",
+            before: "Original headline",
+          },
+        ],
+        attempt: 1,
         data: {
-          turnId: "turn_2",
-          patches: [
+          patch: [
             {
-              blockId: 9,
-              path: "content.heading",
-              fieldPath: "content.heading",
+              aiEditKey: "k1",
+              path: "pages.10.blocks.9.content.heading",
+              editorPath: "heading",
               value: "Short",
-              after: "Short",
             },
           ],
           attempt: 1,
@@ -211,11 +230,12 @@ describe("websiteAI · service calls", () => {
     const res = await editElement({
       websiteId: 1,
       blockId: 9,
-      target: { kind: "editable", fieldPath: "heading" },
+      target: { kind: "editable", fieldPath: "pages.10.blocks.9.content.heading" },
       instruction: "shorten",
     });
     expect(res.turnId).toBe("turn_2");
     expect(res.patches[0].value).toBe("Short");
+    expect(res.patches[0].editorPath).toBe("heading");
   });
 
   it("throws WebsiteAIRequestError on { success:false } body", async () => {

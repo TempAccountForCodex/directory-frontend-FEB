@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   extractEditableSchemaTargets,
   findEditableSchemaTarget,
+  getPatchEditorPath,
+  resolveStyleTargetsForSelection,
   toFieldPath,
   valuesEqual,
   normalizeChatPatches,
@@ -119,5 +121,110 @@ describe("aiPatchUtils", () => {
     expect(out).toEqual([
       { blockId: 789, path: "content.heading", value: "Hi" },
     ]);
+  });
+
+  describe("unified contract — editorPath + schema-driven style resolution", () => {
+    it("prefers the backend editorPath over deriving it from the fieldPath", () => {
+      expect(
+        getPatchEditorPath({
+          path: "pages.10.blocks.9.content.headingStyle.fontSize",
+          editorPath: "headingStyle.fontSize",
+          value: "4rem",
+        }),
+      ).toBe("headingStyle.fontSize");
+    });
+
+    it("falls back to stripping the persisted prefix when editorPath is absent", () => {
+      expect(
+        getPatchEditorPath({
+          path: "pages.10.blocks.9.content.heading",
+          value: "Hi",
+        }),
+      ).toBe("heading");
+    });
+
+    it("normalizeChatPatches uses the authoritative editorPath when present", () => {
+      const out = normalizeChatPatches([
+        {
+          blockId: 9,
+          path: "pages.10.blocks.9.content.headingStyle.color",
+          editorPath: "headingStyle.color",
+          value: "#008080",
+        },
+      ]);
+      expect(out[0].fieldPath).toBe("headingStyle.color");
+      expect(out[0].persistedFieldPath).toBe(
+        "pages.10.blocks.9.content.headingStyle.color",
+      );
+    });
+
+    it("resolves style targets from metadata.styleObjects (no local guessing)", () => {
+      const targets = extractEditableSchemaTargets({
+        editableSchema: {
+          targets: [
+            {
+              aiEditKey: "k.heading",
+              fieldPath: "pages.10.blocks.9.content.heading",
+              kind: "block_content",
+              blockId: 9,
+              elementType: "text",
+              contentPath: "heading",
+              metadata: { group: "content", styleObjects: ["headingStyle"] },
+            },
+            {
+              aiEditKey: "k.headingStyle.color",
+              fieldPath: "pages.10.blocks.9.content.headingStyle.color",
+              kind: "block_style",
+              blockId: 9,
+              stylePath: "headingStyle",
+            },
+            {
+              aiEditKey: "k.headingStyle.fontSize",
+              fieldPath: "pages.10.blocks.9.content.headingStyle.fontSize",
+              kind: "block_style",
+              blockId: 9,
+              stylePath: "headingStyle",
+            },
+            {
+              // A different style object on the same block must NOT be selected.
+              aiEditKey: "k.buttonStyle.borderColor",
+              fieldPath: "pages.10.blocks.9.content.buttonStyle.borderColor",
+              kind: "block_style",
+              blockId: 9,
+              stylePath: "buttonStyle",
+            },
+          ],
+        },
+      });
+
+      const contentTarget = targets.find((t) => t.aiEditKey === "k.heading");
+      const resolved = resolveStyleTargetsForSelection(targets, contentTarget, 9);
+      const paths = resolved.map((t) => t.fieldPath);
+      expect(paths).toContain("pages.10.blocks.9.content.headingStyle.color");
+      expect(paths).toContain("pages.10.blocks.9.content.headingStyle.fontSize");
+      expect(paths).not.toContain(
+        "pages.10.blocks.9.content.buttonStyle.borderColor",
+      );
+    });
+
+    it("returns no style targets when the content target declares none", () => {
+      const targets = extractEditableSchemaTargets({
+        editableSchema: {
+          targets: [
+            {
+              aiEditKey: "k.heading",
+              fieldPath: "pages.10.blocks.9.content.heading",
+              kind: "block_content",
+              blockId: 9,
+              metadata: { group: "content" },
+            },
+          ],
+        },
+      });
+      const contentTarget = targets[0];
+      expect(resolveStyleTargetsForSelection(targets, contentTarget, 9)).toEqual(
+        [],
+      );
+    });
   });
 });

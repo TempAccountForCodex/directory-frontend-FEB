@@ -55,7 +55,46 @@ export function toPersistedBlockContentPath(
 }
 
 export function getPatchFieldPath(patch: AIPatch): string {
-  return patch.fieldPath || patch.path;
+  return patch.fieldPath || patch.path || patch.editorPath || "";
+}
+
+/**
+ * The path INSIDE block.content the editor's inline-save handler writes. Prefer
+ * the backend-provided `editorPath` (authoritative — the unified contract) and
+ * only fall back to stripping the persisted prefix for older payloads that don't
+ * carry it. The frontend must NOT guess this.
+ */
+export function getPatchEditorPath(patch: AIPatch): string {
+  if (typeof patch.editorPath === "string" && patch.editorPath) {
+    return patch.editorPath;
+  }
+  return toFieldPath(getPatchFieldPath(patch));
+}
+
+/**
+ * Resolve the schema-backed style targets for a selected element WITHOUT
+ * guessing: a content text/button target declares, in `metadata.styleObjects`,
+ * the nested style object(s) the renderer uses to style it (e.g. heading ->
+ * ["headingStyle"]). Return every same-block target whose `stylePath` is one of
+ * those style objects. The backend decides which exact CSS property to change.
+ */
+export function resolveStyleTargetsForSelection(
+  targets: EditableSchemaTarget[],
+  contentTarget: EditableSchemaTarget | undefined,
+  blockId?: number | string | null,
+): EditableSchemaTarget[] {
+  if (!contentTarget) return [];
+  const styleObjects = contentTarget.metadata?.styleObjects;
+  if (!Array.isArray(styleObjects) || !styleObjects.length) return [];
+  const wanted = new Set(styleObjects);
+  const blockKey = blockId != null ? String(blockId) : contentTarget.blockId != null ? String(contentTarget.blockId) : null;
+
+  return targets.filter(
+    (t) =>
+      t.stylePath &&
+      wanted.has(t.stylePath) &&
+      (blockKey == null || String(t.blockId) === blockKey),
+  );
 }
 
 export function isBlockContentPath(path: string): boolean {
@@ -189,7 +228,8 @@ export function normalizeChatPatches(patches: AIPatch[]): NormalizedPatch[] {
       aiEditKey: p.aiEditKey,
       blockId: p.blockId,
       pageId: p.pageId,
-      fieldPath: toFieldPath(persistedFieldPath),
+      // Authoritative editor path from the backend; strip-prefix only as fallback.
+      fieldPath: getPatchEditorPath(p),
       persistedFieldPath,
       value: p.value ?? p.after,
       before: p.before,
