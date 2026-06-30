@@ -113,8 +113,16 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
     error?.code === "PLAN_UPGRADE_REQUIRED";
   const moderationDetails = getModerationDetails(error);
 
+  const updateInstruction = (nextInstruction: string) => {
+    setInstruction(nextInstruction);
+    if (error) {
+      clearError();
+    }
+  };
+
   const handleSubmit = async () => {
     if (!instruction.trim()) return;
+    clearError();
     const applied = await askAI(target, instruction.trim());
     if (applied) {
       onClose();
@@ -229,7 +237,7 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
               minRows={2}
               placeholder="e.g. Make this headline shorter and more premium"
               value={instruction}
-              onChange={(e) => setInstruction(e.target.value)}
+              onChange={(e) => updateInstruction(e.target.value)}
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                   handleSubmit();
@@ -250,7 +258,7 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
                   label={s}
                   size="small"
                   variant="outlined"
-                  onClick={() => setInstruction(s)}
+                  onClick={() => updateInstruction(s)}
                   sx={{
                     cursor: "pointer",
                     borderColor: alpha("#378C92", 0.4),

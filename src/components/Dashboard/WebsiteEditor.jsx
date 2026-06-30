@@ -5375,17 +5375,28 @@ const WebsiteEditorInner = () => {
       return undefined;
     }
 
-    const styleFieldPath = getEditableTypographyStyleKey(
+    const editorStyleFieldPath = getEditableStyleConfig(
       selectedEditableElement.fieldPath,
+    ).styleKey;
+    const styleFieldPaths = [
+      editorStyleFieldPath,
+      getEditableTypographyStyleKey(selectedEditableElement.fieldPath),
+    ].filter(
+      (fieldPath, index, paths) =>
+        Boolean(fieldPath) && paths.indexOf(fieldPath) === index,
     );
     const resolvedBlockId =
       selectedEditableAITarget?.blockId ?? selectedEditableElement.blockId;
 
-    return findEditableSchemaTarget(websiteAIEditableTargets, {
-      pageId: selectedPage?.id,
-      blockId: resolvedBlockId,
-      fieldPath: styleFieldPath,
-    });
+    return styleFieldPaths
+      .map((fieldPath) =>
+        findEditableSchemaTarget(websiteAIEditableTargets, {
+          pageId: selectedPage?.id,
+          blockId: resolvedBlockId,
+          fieldPath,
+        }),
+      )
+      .find(Boolean);
   }, [
     websiteAIEditableTargets,
     selectedPage?.id,
@@ -8928,9 +8939,12 @@ const WebsiteEditorInner = () => {
                   computedStyle: selectedEditableElement.computedStyle,
                   styleTarget: {
                     blockId: selectedEditableStyleAITarget?.blockId,
-                    fieldPath: getEditableTypographyStyleKey(
-                      selectedEditableElement.fieldPath,
-                    ),
+                    fieldPath:
+                      selectedEditableStyleAITarget?.fieldPath
+                        ? toFieldPath(selectedEditableStyleAITarget.fieldPath)
+                        : getEditableStyleConfig(
+                            selectedEditableElement.fieldPath,
+                          ).styleKey,
                     persistedFieldPath: selectedEditableStyleAITarget?.fieldPath,
                     aiEditKey: selectedEditableStyleAITarget?.aiEditKey,
                     label: `${selectedEditableElement.label || "Selection"} style`,

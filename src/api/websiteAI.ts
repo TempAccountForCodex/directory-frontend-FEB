@@ -134,6 +134,8 @@ export interface EditElementResult {
   turnId?: string;
   target?: { aiEditKey: string; fieldPath: string; kind: string };
   data?: { target?: unknown; patch?: AIPatch[]; attempt?: number };
+  /** Some backend responses expose the preview patches inside data.patch. */
+  patch?: AIPatch[];
   patches: AIPatch[];
   previewText?: string;
   summary?: string;
@@ -592,7 +594,22 @@ export async function editElement(
 ): Promise<EditElementResult> {
   try {
     const res = await apiClient.post("/ai/edit-element", payload);
-    return unwrap<EditElementResult>(res.data);
+    const body = res.data;
+    if (
+      body &&
+      typeof body === "object" &&
+      "success" in body &&
+      (body as { success?: boolean }).success === false
+    ) {
+      throw new WebsiteAIRequestError(
+        errorFromBody(body as Record<string, unknown>),
+      );
+    }
+
+    // edit-element returns useful fields both at the top level (`patches`) and
+    // inside `data.patch`. The generic unwrap helper would discard the top-level
+    // fields because the response also has a `data` key.
+    return body as EditElementResult;
   } catch (err) {
     if (err instanceof WebsiteAIRequestError) throw err;
     throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));

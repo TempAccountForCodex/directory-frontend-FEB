@@ -594,13 +594,13 @@ export function useEditorAI({
         const attempt = result.attempt ?? priorAttempts + 1;
         attemptsRef.current.set(key, attempt);
 
+        const rawPatch = (result as unknown as { patch?: unknown }).patch;
         const backendPatches =
           result.patches ||
           result.data?.patch ||
-          legacyPatchMapToPatches(
-            (result as unknown as { patch?: unknown }).patch,
-            requestTarget,
-          );
+          (Array.isArray(rawPatch)
+            ? rawPatch
+            : legacyPatchMapToPatches(rawPatch, requestTarget));
         const patches = backendPatches.length
           ? normalizePreviewPatches(
               backendPatches,
@@ -646,7 +646,8 @@ export function useEditorAI({
         const fallbackPatch =
           aiErr.code === "AI_PROVIDER_UNAVAILABLE" ||
           aiErr.code === "AI_UNAVAILABLE" ||
-          aiErr.code === "AI_FAILED"
+          aiErr.code === "AI_FAILED" ||
+          (aiErr.code === "UNSUPPORTED_EDIT_FIELD" && deterministicPatch)
             ? buildDeterministicStylePatch(
                 requestTarget,
                 instruction,
