@@ -133,6 +133,7 @@ import {
 import { getStoredWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
 import { color } from "framer-motion";
 import { EditorAILayer } from "../WebsiteAI";
+import { getWebsiteEditableSchema } from "../../api/websiteAI";
 import {
   extractEditableSchemaTargets,
   findEditableSchemaTarget,
@@ -1818,6 +1819,7 @@ const syncEditorBlocksState = ({
   blocks,
   blocksRef,
   effectivePageId,
+  updatedAt,
   setBlocks,
   setPages,
   setSelectedPage,
@@ -1831,22 +1833,61 @@ const syncEditorBlocksState = ({
   setPages((prevPages) =>
     prevPages.map((page) =>
       String(page.id) === String(effectivePageId)
-        ? { ...page, blocks: normalizedBlocks }
+        ? {
+            ...page,
+            ...(updatedAt ? { updatedAt } : {}),
+            blocks: normalizedBlocks,
+          }
         : page,
     ),
   );
   setSelectedPage((prevSelectedPage) =>
     String(prevSelectedPage?.id) === String(effectivePageId)
-      ? { ...prevSelectedPage, blocks: normalizedBlocks }
+      ? {
+          ...prevSelectedPage,
+          ...(updatedAt ? { updatedAt } : {}),
+          blocks: normalizedBlocks,
+        }
       : prevSelectedPage,
   );
   setPersistedPages((prevPages) =>
     prevPages.map((page) =>
       String(page.id) === String(effectivePageId)
-        ? { ...page, blocks: normalizedBlocks }
+        ? {
+            ...page,
+            ...(updatedAt ? { updatedAt } : {}),
+            blocks: normalizedBlocks,
+          }
         : page,
     ),
   );
+};
+
+const getBlocksMutationPayload = (response) => {
+  const body = response?.data || {};
+  return body?.data && typeof body.data === "object" && !Array.isArray(body.data)
+    ? body.data
+    : body;
+};
+
+const getBlocksMutationUpdatedAt = (response) =>
+  getBlocksMutationPayload(response)?.updatedAt ||
+  response?.data?.updatedAt ||
+  response?.data?.data?.updatedAt ||
+  null;
+
+const getBlocksMutationBlocks = (response) => {
+  const payload = getBlocksMutationPayload(response);
+  if (Array.isArray(payload?.blocks)) {
+    return payload.blocks;
+  }
+  if (Array.isArray(response?.data?.blocks)) {
+    return response.data.blocks;
+  }
+  if (Array.isArray(response?.data?.data?.blocks)) {
+    return response.data.data.blocks;
+  }
+  return null;
 };
 
 const getRequestErrorMessage = (error, fallbackMessage) => {
@@ -1872,6 +1913,8 @@ const WebsiteEditorInner = () => {
   const editorLabelText = "#4b5563";
 
   const [website, setWebsite] = useState(null);
+  const [websiteAIExternalTargets, setWebsiteAIExternalTargets] = useState([]);
+  const [websiteAISchemaRefreshKey, setWebsiteAISchemaRefreshKey] = useState(0);
   const [pages, setPages] = useState([]);
   const [persistedPages, setPersistedPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState(null);
@@ -2277,16 +2320,13 @@ const WebsiteEditorInner = () => {
           throw new Error("No persisted template page is available for saving");
         }
 
-        // Build headers — include If-Match when we have a stored ETag
-        const headers = {};
-        if (etagRef.current) {
-          headers["If-Match"] = etagRef.current;
-        }
-
         const response = await apiClient.put(
           `/websites/${websiteId}/pages/${effectivePageId}/blocks`,
           {
             blocks: blocksToSave.map((b, idx) => ({
+              ...(b.id && !String(b.id).startsWith("local-")
+                ? { id: b.id }
+                : {}),
               blockType: b.blockType,
               content: b.content,
               variant: b.variant,
@@ -2297,7 +2337,6 @@ const WebsiteEditorInner = () => {
               ? { expectedUpdatedAt: expectedUpdatedAtRef.current }
               : {}),
           },
-          { headers },
         );
 
         // Store ETag from response for next request
@@ -2306,9 +2345,23 @@ const WebsiteEditorInner = () => {
         }
 
         // Store updatedAt for next expectedUpdatedAt fallback
-        const updatedAt = response.data?.data?.updatedAt;
+        const updatedAt = getBlocksMutationUpdatedAt(response);
         if (updatedAt) {
           expectedUpdatedAtRef.current = updatedAt;
+        }
+        const savedBlocks = getBlocksMutationBlocks(response);
+        if (savedBlocks?.length) {
+          syncEditorBlocksState({
+            blocks: savedBlocks,
+            blocksRef,
+            effectivePageId,
+            updatedAt,
+            setBlocks,
+            setPages,
+            setSelectedPage,
+            setPersistedPages,
+          });
+          setWebsiteAISchemaRefreshKey((key) => key + 1);
         }
 
         if (selectedPage?.localOnly && resolvedThemeSettings?.primaryColor) {
@@ -2388,6 +2441,9 @@ const WebsiteEditorInner = () => {
               `/websites/${websiteId}/pages/${retryPageId}/blocks`,
               {
                 blocks: retryBlocks.map((b, idx) => ({
+                  ...(b.id && !String(b.id).startsWith("local-")
+                    ? { id: b.id }
+                    : {}),
                   blockType: b.blockType,
                   content: b.content,
                   variant: b.variant,
@@ -2404,23 +2460,23 @@ const WebsiteEditorInner = () => {
               etagRef.current = retryResponse.headers.etag;
             }
 
-            const retryUpdatedAt = retryResponse.data?.data?.updatedAt;
+            const retryUpdatedAt = getBlocksMutationUpdatedAt(retryResponse);
             if (retryUpdatedAt) {
               expectedUpdatedAtRef.current = retryUpdatedAt;
             }
 
-            const savedBlocks = Array.isArray(retryResponse.data?.data?.blocks)
-              ? retryResponse.data.data.blocks
-              : retryBlocks;
+            const savedBlocks = getBlocksMutationBlocks(retryResponse) || retryBlocks;
             syncEditorBlocksState({
               blocks: savedBlocks,
               blocksRef,
               effectivePageId: retryPageId,
+              updatedAt: retryUpdatedAt,
               setBlocks,
               setPages,
               setSelectedPage,
               setPersistedPages,
             });
+            setWebsiteAISchemaRefreshKey((key) => key + 1);
 
             localConflictRetryRef.current = false;
             refreshPreview();
@@ -2932,7 +2988,10 @@ const WebsiteEditorInner = () => {
                 if (blocksRes.headers?.etag) {
                   etagRef.current = blocksRes.headers.etag;
                 }
-                const pageUpdatedAt = blocksRes.data?.data?.updatedAt;
+                const pageUpdatedAt =
+                  blocksRes.data?.data?.updatedAt ||
+                  blocksRes.data?.updatedAt ||
+                  page.updatedAt;
                 if (pageUpdatedAt) {
                   expectedUpdatedAtRef.current = pageUpdatedAt;
                 }
@@ -3067,6 +3126,13 @@ const WebsiteEditorInner = () => {
       // Populate initial ETag from GET response (Step 5.9)
       if (response.headers?.etag) {
         etagRef.current = response.headers.etag;
+      }
+      const pageUpdatedAt =
+        response.data?.data?.updatedAt ||
+        response.data?.updatedAt ||
+        selectedPage?.updatedAt;
+      if (pageUpdatedAt) {
+        expectedUpdatedAtRef.current = pageUpdatedAt;
       }
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -5295,6 +5361,60 @@ const WebsiteEditorInner = () => {
     }
     return raw && typeof raw === "object" ? raw : null;
   }, [website?.aiContext, website?.ai_context]);
+  const embeddedWebsiteAIEditableTargets = useMemo(
+    () => extractEditableSchemaTargets(websiteAIContext),
+    [websiteAIContext],
+  );
+  const websiteAIEditableSchemaMeta = websiteAIContext?.editableSchema || {};
+
+  useEffect(() => {
+    if (!websiteId) {
+      setWebsiteAIExternalTargets([]);
+      return undefined;
+    }
+
+    const totalTargets =
+      typeof websiteAIEditableSchemaMeta?.totalTargets === "number"
+        ? websiteAIEditableSchemaMeta.totalTargets
+        : null;
+    const shouldFetchSchema =
+      websiteAISchemaRefreshKey > 0 ||
+      Boolean(websiteAIEditableSchemaMeta?.truncated) ||
+      Boolean(websiteAIEditableSchemaMeta?.fetchVia) ||
+      (totalTargets != null &&
+        totalTargets > embeddedWebsiteAIEditableTargets.length);
+
+    if (!shouldFetchSchema) {
+      setWebsiteAIExternalTargets([]);
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    getWebsiteEditableSchema(Number(websiteId), {
+      signal: controller.signal,
+    })
+      .then((schema) => {
+        if (!controller.signal.aborted) {
+          setWebsiteAIExternalTargets(schema.targets || []);
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.error("Failed to load website AI editable schema:", err);
+          setWebsiteAIExternalTargets([]);
+        }
+      });
+
+    return () => controller.abort();
+  }, [
+    websiteId,
+    websiteAIEditableSchemaMeta?.truncated,
+    websiteAIEditableSchemaMeta?.fetchVia,
+    websiteAIEditableSchemaMeta?.totalTargets,
+    embeddedWebsiteAIEditableTargets.length,
+    websiteAISchemaRefreshKey,
+  ]);
+
   const websiteAIAccess = useWebsiteAIAccess(
     websiteId ? Number(websiteId) : undefined,
     {
@@ -5307,8 +5427,11 @@ const WebsiteEditorInner = () => {
     },
   );
   const websiteAIEditableTargets = useMemo(
-    () => extractEditableSchemaTargets(websiteAIContext),
-    [websiteAIContext],
+    () =>
+      websiteAIExternalTargets.length
+        ? websiteAIExternalTargets
+        : embeddedWebsiteAIEditableTargets,
+    [embeddedWebsiteAIEditableTargets, websiteAIExternalTargets],
   );
   const websiteAIRevertibleTurns = useMemo(() => {
     const history = Array.isArray(websiteAIContext?.aiHistory)

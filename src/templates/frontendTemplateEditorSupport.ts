@@ -919,8 +919,8 @@ const normalizeAIFlatStyleFields = (
         : {};
 
     normalized[styleKey] = {
-      ...existingStyle,
       ...stylePatch,
+      ...existingStyle,
     };
   });
 

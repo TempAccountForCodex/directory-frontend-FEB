@@ -287,6 +287,9 @@ export interface WebsiteAIContext {
   editableSchema?: {
     version?: string;
     generatedAt?: string;
+    truncated?: boolean;
+    totalTargets?: number;
+    fetchVia?: string;
     targets?: EditableSchemaTarget[];
   };
   aiHistory?: AIHistoryEntry[];
@@ -655,6 +658,101 @@ export async function recordAppliedEdit(params: {
   try {
     const res = await apiClient.post("/ai/record-applied-edit", params);
     return unwrap<RecordAppliedEditResult>(res.data);
+  } catch (err) {
+    if (err instanceof WebsiteAIRequestError) throw err;
+    throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Editable schema                                                    */
+/* ------------------------------------------------------------------ */
+
+export interface EditableSchemaResponse {
+  version?: string;
+  generatedAt?: string;
+  totalTargets?: number;
+  filteredTotal?: number;
+  offset?: number;
+  limit?: number;
+  hasMore?: boolean;
+  targets: EditableSchemaTarget[];
+}
+
+function normalizeEditableSchemaResponse(data: unknown): EditableSchemaResponse {
+  const body =
+    data && typeof data === "object" && "data" in data
+      ? (data as { data?: unknown }).data
+      : data;
+  const schema =
+    body && typeof body === "object" && "editableSchema" in body
+      ? (body as { editableSchema?: unknown }).editableSchema
+      : body;
+
+  if (!schema || typeof schema !== "object") {
+    return { targets: [] };
+  }
+
+  const raw = schema as Record<string, unknown>;
+  const targets = Array.isArray(raw.targets)
+    ? raw.targets.filter(
+        (target): target is EditableSchemaTarget =>
+          !!target &&
+          typeof target === "object" &&
+          typeof (target as EditableSchemaTarget).aiEditKey === "string" &&
+          typeof (target as EditableSchemaTarget).fieldPath === "string",
+      )
+    : [];
+
+  return {
+    version: raw.version as string | undefined,
+    generatedAt: raw.generatedAt as string | undefined,
+    totalTargets:
+      typeof raw.totalTargets === "number" ? raw.totalTargets : undefined,
+    filteredTotal:
+      typeof raw.filteredTotal === "number" ? raw.filteredTotal : undefined,
+    offset: typeof raw.offset === "number" ? raw.offset : undefined,
+    limit: typeof raw.limit === "number" ? raw.limit : undefined,
+    hasMore: Boolean(raw.hasMore),
+    targets,
+  };
+}
+
+export async function getWebsiteEditableSchema(
+  websiteId: number,
+  options: { signal?: AbortSignal; limit?: number } = {},
+): Promise<EditableSchemaResponse> {
+  const limit = options.limit || 2000;
+  const allTargets: EditableSchemaTarget[] = [];
+  let offset = 0;
+  let latest: EditableSchemaResponse = { targets: [] };
+
+  try {
+    do {
+      const res = await apiClient.get(`/websites/${websiteId}/editable-schema`, {
+        params: { offset, limit },
+        signal: options.signal,
+      });
+      latest = normalizeEditableSchemaResponse(res.data);
+      allTargets.push(...latest.targets);
+      offset += latest.targets.length || limit;
+    } while (latest.hasMore && !options.signal?.aborted);
+
+    const seen = new Set<string>();
+    const targets = allTargets.filter((target) => {
+      const key = target.aiEditKey || target.fieldPath;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return {
+      ...latest,
+      offset: 0,
+      limit: targets.length,
+      hasMore: false,
+      targets,
+    };
   } catch (err) {
     if (err instanceof WebsiteAIRequestError) throw err;
     throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));
