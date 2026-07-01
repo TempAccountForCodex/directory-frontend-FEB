@@ -36,6 +36,9 @@ interface AskAIDialogProps {
   target: AITargetRef | null;
   controller: EditorAIController;
   onClose: () => void;
+  onRequestStarted?: () => void;
+  onApplied?: () => void;
+  onFailed?: () => void;
 }
 
 const SUGGESTIONS = [
@@ -72,6 +75,9 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
   target,
   controller,
   onClose,
+  onRequestStarted,
+  onApplied,
+  onFailed,
 }) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -121,11 +127,20 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!instruction.trim()) return;
+    const trimmedInstruction = instruction.trim();
+    if (!trimmedInstruction) return;
     clearError();
-    const applied = await askAI(target, instruction.trim());
-    if (applied) {
-      onClose();
+    onRequestStarted?.();
+    onClose();
+    try {
+      const applied = await askAI(target, trimmedInstruction);
+      if (applied) {
+        onApplied?.();
+      } else {
+        onFailed?.();
+      }
+    } catch {
+      onFailed?.();
     }
   };
 
