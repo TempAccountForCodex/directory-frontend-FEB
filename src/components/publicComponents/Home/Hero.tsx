@@ -307,7 +307,7 @@ export default function HeroDepthCarousel() {
           }}
         >
           Create a <strong>Free</strong> Landing Page for Your Business
-          Instantly.
+           with AI.
         </h1>
 
         <button
@@ -325,7 +325,7 @@ export default function HeroDepthCarousel() {
             boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
           }}
         >
-          Sign Up to Build <span aria-hidden>→</span>
+          Start Building with AI <span aria-hidden>→</span>
         </button>
       </div>
 

@@ -3,9 +3,9 @@ import { useLocation } from "react-router-dom";
 import Hero from "../../components/publicComponents/Home/Hero";
 const FAQSection = lazy(() => import("./../../components/UI/FAQSection"));
 
-const WhatMakesUsDifferentV2 = lazy(
-  () => import("../../components/publicComponents/Home/WhatMakeUsDifferentV2"),
-);
+const loadWhatMakesUsDifferentV2 = () =>
+  import("../../components/publicComponents/Home/WhatMakeUsDifferentV2");
+const WhatMakesUsDifferentV2 = lazy(loadWhatMakesUsDifferentV2);
 const WhyChooseUs = lazy(
   () => import("../../components/publicComponents/Home/WhyChooseUs"),
 );
@@ -39,27 +39,6 @@ const HighPerformanceSection = lazy(
 
 import { homeFAQs } from "../../utils/data/Home";
 
-const DeferredSection = ({
-  children,
-  enabled = true,
-}: {
-  children: React.ReactNode;
-  enabled?: boolean;
-}) => {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!enabled) {
-      setVisible(false);
-      return;
-    }
-
-    setVisible(true);
-  }, [enabled]);
-
-  return visible ? <>{children}</> : null;
-};
-
 const SectionFallback = ({
   minHeight,
   background = "#000",
@@ -75,6 +54,34 @@ const SectionFallback = ({
     }}
   />
 );
+
+/**
+ * Renders a cheap placeholder div (matching the section's height/background)
+ * from first paint until the section is enabled AND its lazy chunk has loaded.
+ * This keeps the page at its full height so a fast scroll never lands on a
+ * blank gap or the footer, while still deferring all JS below the fold.
+ */
+const DeferredSection = ({
+  children,
+  enabled = true,
+  fallback,
+}: {
+  children: React.ReactNode;
+  enabled?: boolean;
+  fallback: React.ReactNode;
+}) => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (enabled) setVisible(true);
+  }, [enabled]);
+
+  return visible ? (
+    <Suspense fallback={fallback}>{children}</Suspense>
+  ) : (
+    <>{fallback}</>
+  );
+};
 
 const Home: React.FC = () => {
   const location = useLocation();
@@ -105,6 +112,29 @@ const Home: React.FC = () => {
     };
   }, [location.hash]);
 
+  // Warm the first below-fold section (JS chunk + its images) during idle
+  // time so it renders instantly on the first scroll. It stays render-gated
+  // on interaction, so initial-load metrics are unaffected.
+  useEffect(() => {
+    const warm = () => {
+      loadWhatMakesUsDifferentV2();
+      [
+        "/assets/publicAssets/images/common/star.svg",
+        "/assets/publicAssets/images/home/platform.webp",
+      ].forEach((src) => {
+        const img = new Image();
+        img.src = src;
+      });
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      const idleId = window.requestIdleCallback(warm, { timeout: 3000 });
+      return () => window.cancelIdleCallback(idleId);
+    }
+    const timeoutId = window.setTimeout(warm, 1500);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
   useEffect(() => {
     if (location.hash) {
       const id = location.hash.replace("#", "");
@@ -126,88 +156,97 @@ const Home: React.FC = () => {
     <>
       <Hero />
 
-      <DeferredSection enabled={enableBelowFoldSections}>
-        <Suspense fallback={<SectionFallback minHeight="100vh" />}>
-          <WhatMakesUsDifferentV2 />
-        </Suspense>
+      <DeferredSection
+        enabled={enableBelowFoldSections}
+        fallback={<SectionFallback minHeight="100vh" />}
+      >
+        <WhatMakesUsDifferentV2 />
       </DeferredSection>
 
-      <DeferredSection enabled={enableBelowFoldSections}>
-        <Suspense fallback={<SectionFallback minHeight="980px" background="#fff" />}>
-          <WhyChooseUs />
-        </Suspense>
+      <DeferredSection
+        enabled={enableBelowFoldSections}
+        fallback={<SectionFallback minHeight="980px" background="#fff" />}
+      >
+        <WhyChooseUs />
       </DeferredSection>
 
       <section id="how-it-works">
-        <DeferredSection enabled={enableBelowFoldSections}>
-          <Suspense fallback={null}>
-            <HowItWorks />
-          </Suspense>
+        <DeferredSection
+          enabled={enableBelowFoldSections}
+          fallback={<SectionFallback minHeight="90vh" background="#041e18" />}
+        >
+          <HowItWorks />
         </DeferredSection>
       </section>
 
-      <DeferredSection enabled={enableBelowFoldSections}>
-        <Suspense fallback={null}>
-          <DirectoryFeatures />
-        </Suspense>
+      <DeferredSection
+        enabled={enableBelowFoldSections}
+        fallback={<SectionFallback minHeight="90vh" background="#f7f5f3" />}
+      >
+        <DirectoryFeatures />
       </DeferredSection>
 
-      <DeferredSection enabled={enableBelowFoldSections}>
-        <Suspense fallback={null}>
-          <SearchDiscoverSection />
-        </Suspense>
+      <DeferredSection
+        enabled={enableBelowFoldSections}
+        fallback={<SectionFallback minHeight="90vh" background="#041e18" />}
+      >
+        <SearchDiscoverSection />
       </DeferredSection>
 
-      <DeferredSection enabled={enableBelowFoldSections}>
-        <Suspense fallback={null}>
-          <TemplatesStackSlider />
-        </Suspense>
+      <DeferredSection
+        enabled={enableBelowFoldSections}
+        fallback={<SectionFallback minHeight="90vh" background="#fff" />}
+      >
+        <TemplatesStackSlider />
       </DeferredSection>
       <section id="pricing">
-        <DeferredSection enabled={enableBelowFoldSections}>
-          <Suspense fallback={null}>
-            <PricingSection />
-          </Suspense>
+        <DeferredSection
+          enabled={enableBelowFoldSections}
+          fallback={<SectionFallback minHeight="90vh" background="#030303" />}
+        >
+          <PricingSection />
         </DeferredSection>
       </section>
 
       <section id="explore-listings">
-        <DeferredSection enabled={enableBelowFoldSections}>
-          <Suspense fallback={null}>
-            <FeatureListing />
-          </Suspense>
+        <DeferredSection
+          enabled={enableBelowFoldSections}
+          fallback={<SectionFallback minHeight="90vh" background="#fff" />}
+        >
+          <FeatureListing />
         </DeferredSection>
       </section>
 
       <section id="ai-tools">
-        <DeferredSection enabled={enableBelowFoldSections}>
-          <Suspense fallback={null}>
-            <WebsiteWorksSection />
-          </Suspense>
+        <DeferredSection
+          enabled={enableBelowFoldSections}
+          fallback={<SectionFallback minHeight="90vh" background="#101010" />}
+        >
+          <WebsiteWorksSection />
         </DeferredSection>
       </section>
 
-      <DeferredSection enabled={enableBelowFoldSections}>
-        <Suspense fallback={null}>
-          <TestimonialSlider />
-        </Suspense>
+      <DeferredSection
+        enabled={enableBelowFoldSections}
+        fallback={<SectionFallback minHeight="80vh" background="#041e18" />}
+      >
+        <TestimonialSlider />
       </DeferredSection>
 
       <section id="faq">
-        <DeferredSection enabled={enableBelowFoldSections}>
-          <Suspense fallback={null}>
-            <FAQSection
-              title="Frequently Asked Questions"
-              items={homeFAQs}
-            />{" "}
-          </Suspense>
+        <DeferredSection
+          enabled={enableBelowFoldSections}
+          fallback={<SectionFallback minHeight="80vh" background="#fff" />}
+        >
+          <FAQSection title="Frequently Asked Questions" items={homeFAQs} />
         </DeferredSection>
       </section>
 
-      <DeferredSection enabled={enableBelowFoldSections}>
-        <Suspense fallback={null}>
-          <HighPerformanceSection />
-        </Suspense>
+      <DeferredSection
+        enabled={enableBelowFoldSections}
+        fallback={<SectionFallback minHeight="80vh" background="#080808" />}
+      >
+        <HighPerformanceSection />
       </DeferredSection>
     </>
   );
