@@ -5,37 +5,44 @@ const TRANSPARENT_PIXEL =
   "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
 
 const HeroMobile = "/assets/publicAssets/videos/Home/hero7.mp4";
+const HeroMobileFrame = "/assets/publicAssets/images/home/heroFrames/hero7.webp";
 
+// `frame` is the video's first frame, shown as placeholder while it loads
 const SLIDES = [
   {
     id: 1,
     title: "Education",
     image: "/assets/publicAssets/images/home/Education.webp",
     video: "/assets/publicAssets/videos/Home/Education.mp4",
+    frame: "/assets/publicAssets/images/home/heroFrames/Education.webp",
   },
   {
     id: 2,
     title: "Gardening",
     image: "/assets/publicAssets/images/home/Gardening.webp",
     video: "/assets/publicAssets/videos/Home/Gardening.mp4",
+    frame: "/assets/publicAssets/images/home/heroFrames/Gardening.webp",
   },
   {
     id: 3,
     title: "Consulting",
     image: "/assets/publicAssets/images/home/Consulting.webp",
     video: "/assets/publicAssets/videos/Home/Consulting.mp4",
+    frame: "/assets/publicAssets/images/home/heroFrames/Consulting.webp",
   },
   {
     id: 4,
     title: "Restaurant",
     image: "/assets/publicAssets/images/home/Restaurant.webp",
     video: "/assets/publicAssets/videos/Home/Restaurant.mp4",
+    frame: "/assets/publicAssets/images/home/heroFrames/Restaurant.webp",
   },
   {
     id: 5,
     title: "Plumbing",
     image: "/assets/publicAssets/images/home/Plumbing.webp",
     video: "/assets/publicAssets/videos/Home/Plumbing.mp4",
+    frame: "/assets/publicAssets/images/home/heroFrames/Plumbing.webp",
   },
 ];
 
@@ -136,37 +143,43 @@ export default function HeroDepthCarousel() {
     };
   }, [prefersReducedMotion]);
 
-  // Load video when shouldLoadVideo becomes true
-  React.useEffect(() => {
-    if (shouldLoadVideo && videoRef.current && !videoLoaded) {
-      const video = videoRef.current;
-      
-      const handleCanPlay = () => {
-        setVideoLoaded(true);
-      };
-      
-      const handleError = () => {
-        // Silently fail if video fails to load
-      };
-      
-      video.addEventListener('canplay', handleCanPlay);
-      video.addEventListener('error', handleError);
-      video.load();
-      
-      return () => {
-        video.removeEventListener('canplay', handleCanPlay);
-        video.removeEventListener('error', handleError);
-      };
-    }
-  }, [shouldLoadVideo, videoLoaded]);
+  const heroVideoSrc = isMobile ? HeroMobile : SLIDES[index].video;
+  const heroPlaceholderSrc = isMobile ? HeroMobileFrame : SLIDES[index].frame;
 
-  // Reload video when carousel index changes
+  // (Re)load the video whenever its source changes; fade it back in once
+  // the new source is playable so the per-slide placeholder shows meanwhile
   React.useEffect(() => {
-    if (shouldLoadVideo && videoRef.current && videoLoaded) {
-      const video = videoRef.current;
-      video.load();
-    }
-  }, [index, shouldLoadVideo, videoLoaded]);
+    if (!shouldLoadVideo || !videoRef.current) return;
+    const video = videoRef.current;
+
+    setVideoLoaded(false);
+
+    const handleCanPlay = () => {
+      setVideoLoaded(true);
+    };
+
+    const handleError = () => {
+      // Silently fail if video fails to load
+    };
+
+    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('error', handleError);
+    video.load();
+
+    return () => {
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('error', handleError);
+    };
+  }, [shouldLoadVideo, heroVideoSrc]);
+
+  // Prefetch first-frame placeholders so they show instantly on slide switch
+  React.useEffect(() => {
+    if (!shouldLoadVideo || isMobile) return;
+    SLIDES.forEach((s) => {
+      const img = new Image();
+      img.src = s.frame;
+    });
+  }, [shouldLoadVideo, isMobile]);
 
   // Auto-scroll carousel every 6 seconds
   React.useEffect(() => {
@@ -192,7 +205,6 @@ export default function HeroDepthCarousel() {
     }
   };
 
-  const heroVideoSrc = isMobile ? HeroMobile : SLIDES[index].video;
   const shouldRenderVideo = !prefersReducedMotion && shouldLoadVideo;
 
   return (
@@ -206,32 +218,49 @@ export default function HeroDepthCarousel() {
       }}
     >
       {shouldRenderVideo && (
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="none"
-          poster={SLIDES[0].image}
-          disablePictureInPicture
-          disableRemotePlayback
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            zIndex: 0,
-            opacity: videoLoaded ? 0.85 : 0,
-            transition: "opacity 0.5s ease-in",
-            willChange: "opacity",
-            transform: "translateZ(0)",
-            backfaceVisibility: "hidden",
-          }}
-        >
-          <source src={heroVideoSrc} type="video/mp4" />
-        </video>
+        <>
+          <img
+            src={heroPlaceholderSrc}
+            alt=""
+            aria-hidden
+            decoding="async"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              zIndex: 0,
+              opacity: videoLoaded ? 0 : 0.85,
+              transition: "opacity 0.5s ease-in",
+              willChange: "opacity",
+            }}
+          />
+          <video
+            ref={videoRef}
+            src={heroVideoSrc}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="none"
+            disablePictureInPicture
+            disableRemotePlayback
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              zIndex: 0,
+              opacity: videoLoaded ? 0.85 : 0,
+              transition: "opacity 0.5s ease-in",
+              willChange: "opacity",
+              transform: "translateZ(0)",
+              backfaceVisibility: "hidden",
+            }}
+          />
+        </>
       )}
       <div
         style={{

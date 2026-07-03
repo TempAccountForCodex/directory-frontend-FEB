@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
+  Collapse,
   Container,
   Typography,
   Button,
@@ -10,6 +11,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { SnackbarProvider, useSnackbar } from "notistack";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MailIcon from "@mui/icons-material/Mail";
 import CallIcon from "@mui/icons-material/Call";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -44,8 +46,28 @@ const Footer = () => {
   const { openPreferences } = useCookieConsent();
   const [formemail, setFormEmail] = useState("");
   const [error, setError] = useState("");
+  const [showRotating, setShowRotating] = useState(false);
+  const [activeFooterColumn, setActiveFooterColumn] = useState("");
+  const [mobileFooterOpen, setMobileFooterOpen] = useState<
+    Record<string, boolean>
+  >({
+    quickLinks: false,
+    explore: false,
+  });
   const location = useLocation();
   const isDashboardRoute = location.pathname.startsWith("/dashboard");
+
+  // Reveal the rotating CTA once the browser is idle (matches header/footer perf pattern)
+  useEffect(() => {
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(() => setShowRotating(true), {
+        timeout: 1200,
+      });
+      return () => window.cancelIdleCallback(idleId);
+    }
+    const timeoutId = window.setTimeout(() => setShowRotating(true), 600);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   if (
     location?.pathname === "/dashboard" ||
@@ -136,6 +158,168 @@ const Footer = () => {
     },
   ];
 
+  const quickFooterLinks = [
+    { label: "Home", to: "/" },
+    { label: "About us", to: "/about-us" },
+    { label: "Listing", to: "/listings" },
+    { label: "Blog", to: "/blog" },
+    { label: "Contact us", to: "/contact" },
+  ];
+
+  const exploreSections = [
+    { label: "Best in Your City", id: "StyledHeader" },
+    { label: "listing", id: "listing" },
+    { label: "How it Works", id: "process-info" },
+    { label: "Featured Listings", id: "featured-listing" },
+    { label: "Category", id: "category-slider" },
+    { label: "Worldwide Clients", id: "coverflow-showcase" },
+  ];
+
+  // Column heading with animated underline (revealed while its links are hovered)
+  const columnHeadingSx = (key: string) => ({
+    my: "0.5rem",
+    fontFamily: "sans-serif",
+    fontSize: "22px",
+    fontWeight: 700,
+    color: "#fff",
+    position: "relative",
+    display: "inline-block",
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      left: 0,
+      bottom: -4,
+      width: "100%",
+      height: "3px",
+      backgroundColor: "#378C92",
+      transform: activeFooterColumn === key ? "scaleX(1)" : "scaleX(0)",
+      transformOrigin: "left center",
+      transition: "transform 240ms ease",
+    },
+  });
+
+  const footerLinkSx = {
+    display: "block",
+    lineHeight: "2rem",
+    color: "rgba(255,255,255,0.9)",
+    fontFamily: "system-ui",
+    fontWeight: 400,
+    fontSize: "16px",
+    textDecoration: "none",
+    cursor: "pointer",
+    background: "none",
+    border: 0,
+    p: 0,
+    textAlign: "left" as const,
+    "&:hover": { color: "#378C92" },
+  };
+
+  const toggleMobileFooterSection = (section: string) => {
+    setMobileFooterOpen((current) => ({
+      ...current,
+      [section]: !current[section],
+    }));
+  };
+
+  const mobileFooterSections = [
+    {
+      key: "quickLinks",
+      title: "Quick Links",
+      links: quickFooterLinks.map((item) => ({
+        label: item.label,
+        onClick: () => navigate(item.to),
+      })),
+    },
+    {
+      key: "explore",
+      title: "Explore Sections",
+      links: exploreSections.map((section) => ({
+        label: section.label,
+        onClick: () => handleSmoothScroll(section.id),
+      })),
+    },
+  ];
+
+  const renderMobileFooterLinkSection = ({
+    key,
+    title,
+    links,
+  }: (typeof mobileFooterSections)[number]) => {
+    const isOpen = mobileFooterOpen[key];
+
+    return (
+      <Box
+        key={key}
+        sx={{
+          borderBottom: "1px solid rgba(128,128,128,0.28)",
+          width: "100%",
+        }}
+      >
+        <Box
+          component="button"
+          type="button"
+          onClick={() => toggleMobileFooterSection(key)}
+          aria-expanded={isOpen}
+          sx={{
+            width: "100%",
+            border: 0,
+            background: "transparent",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            py: 2.1,
+            px: 0,
+            cursor: "pointer",
+            textAlign: "left",
+            fontFamily: "sans-serif",
+          }}
+        >
+          <Typography
+            component="span"
+            sx={{
+              fontFamily: "sans-serif",
+              fontSize: "22px",
+              fontWeight: 700,
+              lineHeight: 1.2,
+            }}
+          >
+            {title}
+          </Typography>
+          <IconButton
+            component="span"
+            aria-hidden="true"
+            tabIndex={-1}
+            sx={{
+              color: "#378C92",
+              transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 220ms ease",
+              p: 0.5,
+            }}
+          >
+            <KeyboardArrowDownIcon />
+          </IconButton>
+        </Box>
+
+        <Collapse in={isOpen} timeout={220}>
+          <Box sx={{ pb: 2 }}>
+            {links.map((item, index) => (
+              <Typography
+                variant="subtitle2"
+                component="p"
+                key={`${key}-${index}`}
+                onClick={item.onClick}
+                sx={footerLinkSx}
+              >
+                {item.label}
+              </Typography>
+            ))}
+          </Box>
+        </Collapse>
+      </Box>
+    );
+  };
+
   return (
     <Box
       component="footer"
@@ -173,18 +357,25 @@ const Footer = () => {
         {/* === TOP SECTION (Newsletter) === */}
         <Box
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            alignItems: { xs: "flex-start", md: "center" },
-            justifyContent: "space-between",
-            pb: 5,
-            borderBottom: "1px solid rgba(255,255,255,0.15)",
-            gap: 3,
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr 320px" },
+            alignItems: "center",
+            gap: { xs: 3, md: 4 },
+            pb: { xs: 4, md: 0 },
+            borderBottom: "1px solid #80808078",
+            minHeight: { xs: 0, md: 190 },
           }}
         >
-          <Box sx={{ flex: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
             <Typography
               variant="h4"
+              component="h2"
               sx={{
                 fontWeight: 700,
                 fontFamily: "Plus Jakarta Sans, system-ui",
@@ -200,48 +391,56 @@ const Footer = () => {
               onSubmit={handleSubmit}
               sx={{
                 display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
                 alignItems: "center",
+                gap: { xs: 1.5, sm: 0 },
+                p: "5px",
                 borderRadius: "30px",
-                overflow: "hidden",
-                border: "1px solid rgba(255,255,255,0.25)",
+                border: "1px solid #3c3c3c",
                 backgroundColor: "transparent",
-                width: { xs: "100%", md: "71%" },
-                height: "52px",
+                width: "100%",
+                maxWidth: { sm: "80%", md: "510px" },
+                minHeight: 54,
+                "&:hover": { borderColor: "#666" },
               }}
             >
               <TextField
                 variant="outlined"
                 placeholder="name@example.com"
+                size="small"
                 value={formemail}
                 onChange={handleChange}
                 InputProps={{
                   style: {
-                    padding: "0 18px",
+                    padding: "0 15px",
                     color: "#fff",
-                    fontSize: "16px",
-                    height: "52px",
+                    fontFamily: "inherit",
+                    fontSize: "15px",
+                    height: "44px",
+                    backgroundColor: "transparent",
                   },
                 }}
                 sx={{
                   flex: 1,
+                  minWidth: 0,
+                  width: { xs: "100%", sm: "auto" },
                   "& .MuiOutlinedInput-notchedOutline": { border: "none" },
                 }}
               />
               <Button
                 type="submit"
                 sx={{
-                  backgroundColor: "#ffffff",
+                  backgroundColor: "#fff",
                   color: "#000",
-                  fontWeight: 600,
-                  fontSize: "16px",
+                  fontWeight: 500,
+                  fontSize: "15px",
                   textTransform: "none",
-                  height: "52px",
+                  fontFamily: "inherit",
+                  height: "44px",
                   borderRadius: "30px",
-                  px: "28px",
-                  "&:hover": {
-                    backgroundColor: "#ffffff",
-                    opacity: 0.9,
-                  },
+                  px: { xs: 3, sm: "20px" },
+                  width: { xs: "100%", sm: "auto" },
+                  "&:hover": { backgroundColor: "#fff" },
                 }}
               >
                 Subscribe
@@ -259,229 +458,258 @@ const Footer = () => {
             )}
           </Box>
 
-          <Box sx={{ width: { xs: "100%", md: "30%" }, mt: { xs: 4, md: 0 } }}>
-            <RotatingButton
-              linkTo="/contact"
-              size="md"
-              textColor="white"
-              sx={{ ml: { xs: "0", md: "auto" } }}
-            />
+          {/* Reserved space so the rotating CTA doesn't shift layout when it reveals */}
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              alignItems: "center",
+              justifyContent: "flex-end",
+              position: "relative",
+              width: "100%",
+              height: 170,
+            }}
+          >
+            <Box
+              sx={{
+                width: 120,
+                height: 120,
+                position: "absolute",
+                right: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+              }}
+            >
+              <RotatingButton
+                linkTo="/contact"
+                size="md"
+                textColor="white"
+                sx={{ opacity: showRotating ? 1 : 0 }}
+              />
+            </Box>
           </Box>
         </Box>
 
-        {/* === MIDDLE SECTION (Left + Right) === */}
+        {/* === MIDDLE SECTION (Links and Contact Info) === */}
         <Box
           sx={{
             display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: { xs: 6, md: 0 },
-            pt: 6,
-            pb: 4,
-            borderBottom: "1px solid rgba(255,255,255,0.15)",
+            flexWrap: "wrap",
+            justifyContent: { xs: "center", sm: "space-between" },
+            mt: 3,
+            gap: { xs: 4, sm: 2, md: 0 },
+            borderBottom: "1px solid #80808078",
+            pb: 3,
           }}
         >
-          {/* LEFT SIDE */}
+          {/* Company Info - Logo */}
           <Box
             sx={{
-              flex: 1.1,
-              minWidth: "320px",
-              pr: { md: 6 },
+              width: { xs: "100%", sm: "48%", md: "36%" },
+              pr: { xs: 0, md: 6 },
             }}
           >
-            <img src={header} alt="Techietribe" width={220} height={43} />
-            <Typography
-              sx={{
-                fontSize: "16px",
-                lineHeight: "28px",
-                fontFamily: "system-ui",
-                color: "rgba(255,255,255,0.85)",
-                mt: 2,
-                maxWidth: "380px",
-              }}
+            <Box
+              sx={{ display: "flex", flexDirection: "column", width: "100%" }}
             >
-              Connecting businesses to endless opportunities. We list, link, and
-              elevate trusted brands.
-            </Typography>
+              <img
+                src={header}
+                alt="Techietribe"
+                width={220}
+                height={43}
+                style={{ display: "block" }}
+              />
+              <Typography
+                sx={{
+                  mt: "1.7rem",
+                  fontFamily: "system-ui",
+                  fontSize: { xs: "16px", md: "17px" },
+                  fontWeight: 500,
+                  color: "rgba(255,255,255,0.85)",
+                }}
+              >
+                Connecting businesses to endless opportunities. We list, link,
+                and elevate trusted brands.
+              </Typography>
+            </Box>
 
-            {/* ✅ Social Icons with links */}
+            {/* ✅ Social Icons pill bar */}
             <Box
               sx={{
+                mt: 4,
                 display: "flex",
-                gap: 2,
-                mt: 3,
-                px: 2,
-                py: 1,
+                justifyContent: "space-between",
+                width: "100%",
+                border: "1px solid rgba(255,255,255,0.12)",
+                backgroundColor: "rgba(255,255,255,0.02)",
+                padding: "10px 30px",
                 borderRadius: "50px",
-                backgroundColor: "rgba(255,255,255,0.05)",
-                width: "fit-content",
+                mb: { xs: "30px", lg: 0 },
               }}
             >
               {socialLinks.map(({ label, icon: Icon, href }) => (
-                <IconButton
+                <Box
                   key={label}
                   component="a"
                   href={href}
-                  aria-label={label}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`Techietribe on ${label}`}
+                  title={`Techietribe on ${label}`}
                   sx={{
                     color: "#378C92",
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      color: "#56b0b3",
-                      transform: "translateY(-3px)",
-                    },
-                    width: 36,
-                    height: 36,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    textDecoration: "none",
+                    "&:hover": { color: "#56b0b3" },
                   }}
                 >
-                  <Icon sx={{ fontSize: 20 }} />
-                </IconButton>
+                  <Icon aria-hidden="true" sx={{ fontSize: 25 }} />
+                </Box>
               ))}
             </Box>
           </Box>
 
-          {/* RIGHT SIDE — Quick Links + Explore Sections + Get in Touch */}
+          {/* Mobile accordion sections */}
           <Box
             sx={{
-              flex: 1.5,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-              gap: { xs: 4, md: 6 },
+              display: { xs: "block", md: "none" },
               width: "100%",
             }}
           >
-            {/* Quick Links */}
-            <Box sx={{ minWidth: "100px" }}>
-              <Typography
-                sx={{
-                  fontFamily: "sans-serif",
-                  fontSize: "22px",
-                  fontWeight: 700,
-                  mb: 2.5,
-                  color: "#fff",
-                }}
-              >
-                Quick Links
-              </Typography>
-              {[
-                { label: "Home", to: "/" },
-                { label: "About us", to: "/about-us" },
-                { label: "Listing", to: "/listings" },
-                { label: "Blog", to: "/blog" },
-                { label: "Contact us", to: "/contact" },
-              ].map((item) => (
-                <Typography
-                  key={item.to}
-                  component={Link}
-                  to={item.to}
-                  sx={{
-                    display: "block",
-                    lineHeight: "2rem",
-                    fontFamily: "system-ui",
-                    color: "rgba(255,255,255,0.9)",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                    textDecoration: "none",
-                    "&:hover": { color: "#378C92" },
-                  }}
-                >
-                  {item.label}
-                </Typography>
-              ))}
-            </Box>
+            {mobileFooterSections.map(renderMobileFooterLinkSection)}
+          </Box>
 
-            {/* ✅ Explore Sections */}
-            <Box sx={{ minWidth: "100px" }}>
+          {/* Quick Links (desktop) */}
+          <Box
+            sx={{
+              display: { xs: "none", md: "block" },
+              width: { md: "14%" },
+            }}
+            onMouseLeave={() => setActiveFooterColumn("")}
+          >
+            <Typography sx={columnHeadingSx("quickLinks")}>
+              Quick Links
+            </Typography>
+            {quickFooterLinks.map((item) => (
               <Typography
-                sx={{
-                  fontFamily: "sans-serif",
-                  fontSize: "22px",
-                  fontWeight: 700,
-                  mb: 2.5,
-                  color: "#fff",
-                }}
+                key={item.to}
+                component={Link}
+                to={item.to}
+                onMouseEnter={() => setActiveFooterColumn("quickLinks")}
+                sx={footerLinkSx}
               >
-                Explore Sections
+                {item.label}
               </Typography>
-              {[
-                { label: "Best in Your City", id: "StyledHeader" },
-                { label: "listing", id: "listing" },
-                { label: "How it Works", id: "process-info" },
-                { label: "Featured Listings", id: "featured-listing" },
-                { label: "Category", id: "category-slider" },
-                { label: "Worldwide Clients", id: "coverflow-showcase" },
-              ].map((section, i) => (
-                <Typography
-                  key={i}
-                  sx={{
-                    lineHeight: "2rem",
-                    color: "rgba(255,255,255,0.9)",
-                    fontFamily: "system-ui",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                    cursor: "pointer",
-                    "&:hover": { color: "#378C92" },
-                  }}
-                  onClick={() => handleSmoothScroll(section.id)}
-                >
-                  {section.label}
-                </Typography>
-              ))}
-            </Box>
+            ))}
+          </Box>
 
-            {/* Get in Touch */}
-            <Box sx={{ minWidth: "100px" }}>
+          {/* ✅ Explore Sections (desktop) */}
+          <Box
+            sx={{
+              display: { xs: "none", md: "block" },
+              width: { md: "16%" },
+            }}
+            onMouseLeave={() => setActiveFooterColumn("")}
+          >
+            <Typography sx={columnHeadingSx("explore")}>
+              Explore Sections
+            </Typography>
+            {exploreSections.map((section, i) => (
               <Typography
+                key={i}
+                component="p"
+                onClick={() => handleSmoothScroll(section.id)}
+                onMouseEnter={() => setActiveFooterColumn("explore")}
+                sx={footerLinkSx}
+              >
+                {section.label}
+              </Typography>
+            ))}
+          </Box>
+
+          {/* Get in Touch */}
+          <Box
+            sx={{ width: { xs: "100%", sm: "48%", md: "24%" } }}
+            onMouseLeave={() => setActiveFooterColumn("")}
+          >
+            <Typography sx={columnHeadingSx("contact")}>
+              Get in touch with us
+            </Typography>
+
+            <Box sx={{ mt: 2 }}>
+              <Box
+                component="a"
+                href={`mailto:${email}`}
+                onMouseEnter={() => setActiveFooterColumn("contact")}
                 sx={{
-                  fontFamily: "sans-serif",
-                  fontSize: "22px",
-                  fontWeight: 700,
-                  mb: 2.5,
-                  color: "#fff",
+                  color: "rgba(255,255,255,0.9)",
+                  fontFamily: "system-ui",
+                  fontSize: "16px",
+                  fontWeight: 400,
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  mb: "10px",
+                  "&:hover": {
+                    color: "#378C92",
+                    svg: { color: "#378C92" },
+                  },
                 }}
               >
-                Get in touch with us
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                <MailIcon sx={{ color: "#378C92", mr: 1 }} />
-                <Typography
-                  component="a"
-                  href={`mailto:${email}`}
-                  sx={{
-                    color: "#fff",
-                    fontSize: "16px",
-                    textDecoration: "none",
-                    "&:hover": { color: "#378C92" },
-                  }}
-                >
-                  {email}
-                </Typography>
+                <MailIcon
+                  sx={{ fontSize: "18px", mr: "6px", color: "#378C92" }}
+                />
+                {email}
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                <CallIcon sx={{ color: "#378C92", mr: 1 }} />
-                <Typography
-                  component="a"
-                  href={`tel:${phone}`}
-                  sx={{
-                    color: "#fff",
-                    fontSize: "16px",
-                    textDecoration: "none",
-                    "&:hover": { color: "#378C92" },
-                  }}
-                >
-                  {phone}
-                </Typography>
+
+              <Box
+                component="a"
+                href={`tel:${phone}`}
+                onMouseEnter={() => setActiveFooterColumn("contact")}
+                sx={{
+                  color: "rgba(255,255,255,0.9)",
+                  fontFamily: "system-ui",
+                  fontSize: "16px",
+                  fontWeight: 400,
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  mb: "10px",
+                  "&:hover": {
+                    color: "#378C92",
+                    svg: { color: "#378C92" },
+                  },
+                }}
+              >
+                <CallIcon
+                  sx={{ fontSize: "18px", mr: "6px", color: "#378C92" }}
+                />
+                {phone}
               </Box>
-              <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-                <LocationOnIcon sx={{ color: "#378C92", mr: 1, mt: "2px" }} />
+
+              <Box
+                onMouseEnter={() => setActiveFooterColumn("contact")}
+                sx={{
+                  color: "rgba(255,255,255,0.9)",
+                  fontFamily: "system-ui",
+                  fontSize: "16px",
+                  fontWeight: 400,
+                  display: "flex",
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  mb: "10px",
+                }}
+              >
+                <LocationOnIcon
+                  sx={{
+                    fontSize: "18px",
+                    mr: "6px",
+                    mt: "2px",
+                    color: "#378C92",
+                  }}
+                />
                 <Typography
                   sx={{
-                    color: "#fff",
+                    color: "inherit",
                     fontSize: "16px",
                     maxWidth: "230px",
                     lineHeight: "24px",
@@ -502,6 +730,7 @@ const Footer = () => {
             justifyContent: "space-between",
             alignItems: "center",
             mt: 3,
+            mb: "1rem",
             gap: "1rem",
           }}
         >
@@ -509,13 +738,14 @@ const Footer = () => {
             variant="subtitle2"
             component="p"
             sx={{
-              color: "#8b929c",
+              color: "#8B9099",
               fontFamily: "system-ui",
               fontWeight: 400,
               textAlign: "center",
             }}
           >
-            Copyright © 2024 Techietribe. All Rights Reserved.
+            Copyright © {new Date().getFullYear()} Techietribe. All Rights
+            Reserved.
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
             {forumSupport.map((data, index) => (
@@ -528,7 +758,7 @@ const Footer = () => {
                   : { type: "button" })}
                 onClick={() => handleFooterLinkClick(data)}
                 sx={{
-                  color: "#8b929c",
+                  color: "#8B9099",
                   fontFamily: "system-ui",
                   fontWeight: 500,
                   cursor: "pointer",
