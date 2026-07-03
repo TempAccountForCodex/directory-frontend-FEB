@@ -21,8 +21,3 @@ const CompanyContactData: CompanyContact[] = [
 ];
 
 export default CompanyContactData;
-
-
-
-// +1 713-487-8746
-// 5900 Balcones Drive, Ste 100, Austin, TX 78731
