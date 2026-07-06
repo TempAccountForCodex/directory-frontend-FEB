@@ -8,25 +8,8 @@
  *  - Discloses that only the last two AI turns can be reverted.
  */
 
-import React, { useEffect, useState } from "react";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import TextField from "@mui/material/TextField";
-import IconButton from "@mui/material/IconButton";
-import CircularProgress from "@mui/material/CircularProgress";
-import Alert from "@mui/material/Alert";
-import Chip from "@mui/material/Chip";
-import { alpha } from "@mui/material/styles";
-import { X, Sparkles, RotateCcw } from "lucide-react";
-import { getDashboardColors } from "../../styles/dashboardTheme";
-import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
-import DashboardCancelButton from "../Dashboard/shared/DashboardCancelButton";
-import { useRotatingPhrase } from "../../hooks/useRotatingPhrase";
+import React, { useEffect, useRef, useState } from "react";
+import { X, Sparkles, AlertTriangle, Info } from "lucide-react";
 import { formatResetTime } from "../../hooks/useWebsiteAIAccess";
 import type { EditorAIController, AITargetRef } from "./useEditorAI";
 import { MAX_ATTEMPTS } from "./useEditorAI";
@@ -35,6 +18,12 @@ interface AskAIDialogProps {
   open: boolean;
   target: AITargetRef | null;
   controller: EditorAIController;
+  anchorRect?: {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null;
   onClose: () => void;
   onRequestStarted?: () => void;
   onApplied?: () => void;
@@ -74,14 +63,23 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
   open,
   target,
   controller,
+  anchorRect,
   onClose,
   onRequestStarted,
   onApplied,
   onFailed,
 }) => {
-  const { actualTheme } = useCustomTheme();
-  const colors = getDashboardColors(actualTheme);
   const [instruction, setInstruction] = useState("");
+  const [rendered, setRendered] = useState(open);
+  const [entered, setEntered] = useState(false);
+  const [liveAnchorRect, setLiveAnchorRect] = useState(anchorRect ?? null);
+  const scrollPositionsRef = useRef<
+    WeakMap<Element, { scrollTop: number; scrollLeft: number }>
+  >(new WeakMap());
+  const windowScrollRef = useRef({
+    scrollX: typeof window === "undefined" ? 0 : window.scrollX,
+    scrollY: typeof window === "undefined" ? 0 : window.scrollY,
+  });
   const {
     activeRequest,
     error,
@@ -89,10 +87,75 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
     cancelProposal,
     getAttempts,
     clearError,
-    revertDepth,
   } = controller;
 
-  const phrase = useRotatingPhrase(activeRequest);
+  useEffect(() => {
+    if (open) {
+      setLiveAnchorRect(anchorRect ?? null);
+      setRendered(true);
+      setEntered(false);
+      let innerFrame = 0;
+      const frame = window.requestAnimationFrame(() => {
+        innerFrame = window.requestAnimationFrame(() => setEntered(true));
+      });
+      return () => {
+        window.cancelAnimationFrame(frame);
+        window.cancelAnimationFrame(innerFrame);
+      };
+    }
+
+    setEntered(false);
+    const timer = window.setTimeout(() => setRendered(false), 260);
+    return () => window.clearTimeout(timer);
+  }, [open, anchorRect]);
+
+  useEffect(() => {
+    if (!open || !liveAnchorRect) return;
+
+    const shiftAnchor = (deltaX: number, deltaY: number) => {
+      if (!deltaX && !deltaY) return;
+      setLiveAnchorRect((current) =>
+        current
+          ? {
+              ...current,
+              left: current.left - deltaX,
+              top: current.top - deltaY,
+            }
+          : current,
+      );
+    };
+
+    const handleScroll = (event: Event) => {
+      const target =
+        event.target === document ? document.scrollingElement : event.target;
+
+      if (target && target instanceof Element) {
+        const previous = scrollPositionsRef.current.get(target) ?? {
+          scrollTop: target.scrollTop,
+          scrollLeft: target.scrollLeft,
+        };
+        const deltaY = target.scrollTop - previous.scrollTop;
+        const deltaX = target.scrollLeft - previous.scrollLeft;
+        scrollPositionsRef.current.set(target, {
+          scrollTop: target.scrollTop,
+          scrollLeft: target.scrollLeft,
+        });
+        shiftAnchor(deltaX, deltaY);
+        return;
+      }
+
+      const deltaX = window.scrollX - windowScrollRef.current.scrollX;
+      const deltaY = window.scrollY - windowScrollRef.current.scrollY;
+      windowScrollRef.current = {
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
+      };
+      shiftAnchor(deltaX, deltaY);
+    };
+
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [open, liveAnchorRect]);
 
   useEffect(() => {
     if (open) {
@@ -108,7 +171,7 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
     target?.aiEditKey,
   ]);
 
-  if (!target) return null;
+  if (!target || !rendered) return null;
 
   const attempts = getAttempts(target, instruction);
   const retryLimitHit = attempts >= MAX_ATTEMPTS;
@@ -145,181 +208,340 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
   };
 
   const handleClose = () => {
+    if (activeRequest) return;
     cancelProposal();
     onClose();
   };
 
+  const canSubmit =
+    !activeRequest && Boolean(instruction.trim()) && !retryLimitHit && !isQuota;
+  const errorIcon = isUnsupported ? (
+    <Info size={18} strokeWidth={2.5} />
+  ) : (
+    <AlertTriangle size={18} strokeWidth={2.5} />
+  );
+  const viewportWidth =
+    typeof window === "undefined" ? 1024 : window.innerWidth;
+  const viewportHeight =
+    typeof window === "undefined" ? 768 : window.innerHeight;
+  const modalWidth = Math.min(340, Math.max(280, viewportWidth - 32));
+  const estimatedModalHeight = Math.min(142, viewportHeight - 32);
+  const minModalTop = 24;
+  const maxModalTop = Math.max(24, viewportHeight - estimatedModalHeight - 24);
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(Math.max(value, min), max);
+  const anchoredLeft = (() => {
+    if (!liveAnchorRect) {
+      return clamp(
+        (viewportWidth - modalWidth) / 2,
+        24,
+        viewportWidth - modalWidth - 24,
+      );
+    }
+    const gap = 0;
+    const anchorRight = liveAnchorRect.left + liveAnchorRect.width;
+    const rightSide = anchorRight + gap;
+    const leftSide = liveAnchorRect.left - modalWidth - gap;
+    if (rightSide + modalWidth <= viewportWidth - 24) {
+      return rightSide;
+    }
+    if (leftSide >= 24) {
+      return leftSide;
+    }
+    return clamp(liveAnchorRect.left - 26, 24, viewportWidth - modalWidth - 24);
+  })();
+  const anchoredTop = liveAnchorRect
+    ? clamp(liveAnchorRect.top + 0, minModalTop, maxModalTop)
+    : clamp(
+        (viewportHeight - estimatedModalHeight) / 2,
+        minModalTop,
+        maxModalTop,
+      );
+  const collapsedTranslateX = liveAnchorRect
+    ? liveAnchorRect.left - anchoredLeft
+    : 0;
+  const collapsedTranslateY = liveAnchorRect
+    ? liveAnchorRect.top - anchoredTop
+    : 18;
+  const collapsedScaleX = liveAnchorRect
+    ? Math.max(0.08, liveAnchorRect.width / modalWidth)
+    : 0.9;
+  const collapsedScaleY = liveAnchorRect
+    ? Math.max(0.04, liveAnchorRect.height / estimatedModalHeight)
+    : 0.9;
+  const shellTransform = entered
+    ? "translate3d(0, 0, 0) scale(1, 1)"
+    : `translate3d(${collapsedTranslateX}px, ${collapsedTranslateY}px, 0) scale(${collapsedScaleX}, ${collapsedScaleY})`;
+
   return (
-    <Dialog
-      open={open}
-      onClose={activeRequest ? undefined : handleClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          backgroundColor: colors.panelBg || colors.bgCard,
-          border: `1px solid ${colors.border}`,
-          backdropFilter: "blur(12px)",
-        },
+    <div
+      key="ask-ai-overlay"
+      onMouseDown={handleClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 2147483000,
+        pointerEvents: "auto",
+        backgroundColor: "transparent",
+        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
       }}
     >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          color: colors.text,
-          pr: 1,
+      <div
+        key="ask-ai-shell"
+        onMouseDown={(event) => event.stopPropagation()}
+        style={{
+          position: "fixed",
+          top: anchoredTop,
+          left: anchoredLeft,
+          width: modalWidth,
+          maxHeight: "calc(100dvh - 48px)",
+          zIndex: 10,
+          overflow: "hidden",
+          pointerEvents: "auto",
+          borderRadius: 16,
+          border: "1px solid rgba(224, 232, 242, 0.9)",
+          backgroundColor: "#ffffff",
+          boxShadow:
+            "0 18px 44px rgba(37, 57, 77, 0.14), 0 6px 18px rgba(37, 57, 77, 0.08)",
+          transform: shellTransform,
+          transformOrigin: "0 0",
+          transition:
+            "transform 340ms cubic-bezier(0.18, 0.9, 0.2, 1), opacity 160ms ease",
+          willChange: "transform",
         }}
       >
-        <Sparkles size={18} color="#378C92" />
-        Ask AI
-        <Box sx={{ flex: 1 }} />
-        <IconButton
+        <button
+          type="button"
           onClick={handleClose}
           disabled={activeRequest}
-          size="small"
-          sx={{ color: colors.textSecondary }}
-        >
-          <X size={18} />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent>
-        <Chip
-          label={`Editing: ${target.label || target.fieldPath}`}
-          size="small"
-          sx={{
-            mb: 2,
-            bgcolor: alpha("#378C92", 0.12),
-            color: "#378C92",
-            fontWeight: 500,
+          aria-label="Close Ask AI"
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            background: "none",
+            border: "none",
+            cursor: activeRequest ? "not-allowed" : "pointer",
+            color: "#8ca0b8",
+            lineHeight: 1,
+            padding: 2,
+            zIndex: 25,
           }}
-        />
+        >
+          <X size={15} strokeWidth={2.2} />
+        </button>
 
-        {/* Error / unsupported / quota */}
-        {error && (
-          <Alert
-            severity={isUnsupported ? "info" : "warning"}
-            sx={{ mb: 2 }}
-            onClose={clearError}
+        <div
+          style={{
+            opacity: entered ? 1 : 0,
+            transition: "opacity 160ms ease 90ms",
+          }}
+        >
+          <div
+            style={{
+              padding: "14px 18px 10px 18px",
+            }}
           >
-            {error.message}
-            {isUnsupported && error.details?.requestedChange && (
-              <Typography
-                variant="caption"
-                sx={{ display: "block", mt: 0.5 }}
+            <h2
+              style={{
+                margin: 0,
+                paddingRight: 30,
+                fontSize: 12.5,
+                fontWeight: 800,
+                lineHeight: 1.2,
+                color: "#637891",
+                fontFamily: "inherit",
+                letterSpacing: 0,
+              }}
+            >
+              Describe what to change in this element.
+            </h2>
+          </div>
+
+          <div
+            style={{
+              padding: "0 18px 16px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 9,
+            }}
+          >
+            {error && (
+              <div
+                role="alert"
+                style={{
+                  display: "flex",
+                  gap: 9,
+                  padding: "9px 11px",
+                  borderRadius: 13,
+                  color: isUnsupported ? "#075985" : "#92400e",
+                  backgroundColor: isUnsupported
+                    ? "rgba(224, 242, 254, 0.85)"
+                    : "rgba(255, 247, 237, 0.9)",
+                  border: isUnsupported
+                    ? "1px solid rgba(186, 230, 253, 0.9)"
+                    : "1px solid rgba(253, 186, 116, 0.75)",
+                }}
               >
-                “{error.details.requestedChange}” isn’t an editable field on this
-                element yet.
-              </Typography>
-            )}
-            {isQuota && (
-              <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>
-                Resets {formatResetTime(error.resetAt)}.
-              </Typography>
-            )}
-            {moderationDetails.length > 0 && (
-              <Box component="ul" sx={{ mt: 0.75, mb: 0, pl: 2.5 }}>
-                {moderationDetails.map((detail, index) => (
-                  <Typography
-                    key={`${detail}-${index}`}
-                    component="li"
-                    variant="caption"
-                    sx={{ display: "list-item" }}
-                  >
-                    {detail}
-                  </Typography>
-                ))}
-              </Box>
-            )}
-          </Alert>
-        )}
-
-        {activeRequest ? (
-          <Box sx={{ textAlign: "center", py: 3 }}>
-            <CircularProgress size={26} sx={{ color: "#378C92", mb: 1.5 }} />
-            <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-              {phrase}…
-            </Typography>
-          </Box>
-        ) : (
-          <Box>
-            <TextField
-              autoFocus
-              fullWidth
-              multiline
-              minRows={2}
-              placeholder="e.g. Make this headline shorter and more premium"
-              value={instruction}
-              onChange={(e) => updateInstruction(e.target.value)}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  handleSubmit();
-                }
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                  color: colors.text,
-                  "& fieldset": { borderColor: colors.border },
-                },
-              }}
-            />
-            <Box sx={{ mt: 1.5, display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-              {SUGGESTIONS.map((s) => (
-                <Chip
-                  key={s}
-                  label={s}
-                  size="small"
-                  variant="outlined"
-                  onClick={() => updateInstruction(s)}
-                  sx={{
+                <span style={{ flexShrink: 0, marginTop: 1 }}>{errorIcon}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 650 }}>
+                    {error.message}
+                  </div>
+                  {isUnsupported && error.details?.requestedChange && (
+                    <div
+                      style={{
+                        marginTop: 5,
+                        fontSize: 11,
+                        color: "#0369a1",
+                      }}
+                    >
+                      “{error.details.requestedChange}” isn’t an editable field
+                      on this element yet.
+                    </div>
+                  )}
+                  {isQuota && (
+                    <div
+                      style={{
+                        marginTop: 5,
+                        fontSize: 11,
+                        color: "#b45309",
+                      }}
+                    >
+                      Resets {formatResetTime(error.resetAt)}.
+                    </div>
+                  )}
+                  {moderationDetails.length > 0 && (
+                    <ul style={{ margin: "7px 0 0 0", paddingLeft: 18 }}>
+                      {moderationDetails.map((detail, index) => (
+                        <li
+                          key={`${detail}-${index}`}
+                          style={{ fontSize: 11, marginTop: 3 }}
+                        >
+                          {detail}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={clearError}
+                  aria-label="Dismiss error"
+                  style={{
+                    marginLeft: "auto",
+                    alignSelf: "flex-start",
+                    border: "none",
+                    background: "transparent",
+                    color: "currentColor",
                     cursor: "pointer",
-                    borderColor: alpha("#378C92", 0.4),
-                    color: "#378C92",
+                    padding: 0,
+                    opacity: 0.76,
                   }}
-                />
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            )}
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                borderRadius: 999,
+                backgroundColor: "#f8fbff",
+                border: "1px solid #dbe5f1",
+                overflow: "hidden",
+                height: 36,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
+              }}
+            >
+              <input
+                type="text"
+                value={instruction}
+                onChange={(event) => updateInstruction(event.target.value)}
+                onKeyDown={(event) => {
+                  if (
+                    (event.metaKey || event.ctrlKey) &&
+                    event.key === "Enter"
+                  ) {
+                    handleSubmit();
+                  }
+                }}
+                placeholder="e.g. Make this headline shorter and more premium"
+                autoFocus
+                disabled={activeRequest}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  background: "none",
+                  border: "none",
+                  outline: "none",
+                  padding: "0 8px 0 12px",
+                  fontSize: 12,
+                  color: "#52667f",
+                  fontFamily: "inherit",
+                }}
+              />
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                style={{
+                  flexShrink: 0,
+                  margin: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: canSubmit
+                    ? "linear-gradient(135deg, #3a9ea4 0%, #2f8d91 100%)"
+                    : "#d7e2ee",
+                  border: "none",
+                  borderRadius: 999,
+                  height: 28,
+                  padding: "0 10px",
+                  color: "#fff",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  whiteSpace: "nowrap",
+                  cursor: canSubmit ? "pointer" : "not-allowed",
+                  fontFamily: "inherit",
+                }}
+              >
+                <Sparkles size={13} strokeWidth={2.2} />
+                <span>Ask AI</span>
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {SUGGESTIONS.map((suggestion) => (
+                <button
+                  type="button"
+                  key={suggestion}
+                  onClick={() => updateInstruction(suggestion)}
+                  disabled={activeRequest}
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #dbe5f1",
+                    borderRadius: 999,
+                    padding: "4px 9px",
+                    fontSize: 9.5,
+                    fontWeight: 500,
+                    color: "#637891",
+                    cursor: activeRequest ? "not-allowed" : "pointer",
+                    fontFamily: "inherit",
+                    boxShadow: "0 1px 0 rgba(255,255,255,0.9)",
+                  }}
+                >
+                  {suggestion}
+                </button>
               ))}
-            </Box>
-          </Box>
-        )}
-
-        <Typography
-          variant="caption"
-          sx={{
-            color: colors.textSecondary,
-            mt: 2,
-            display: "flex",
-            alignItems: "center",
-            gap: 0.5,
-          }}
-        >
-          <RotateCcw size={12} />
-          Only the last two AI changes can be reverted
-          {revertDepth > 0 ? ` (${revertDepth} available).` : "."}
-        </Typography>
-      </DialogContent>
-
-      <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-        <DashboardCancelButton onClick={handleClose} disabled={activeRequest}>
-          Cancel
-        </DashboardCancelButton>
-        <Box sx={{ flex: 1 }} />
-        <DashboardGradientButton
-          onClick={handleSubmit}
-          disabled={
-            activeRequest || !instruction.trim() || retryLimitHit || isQuota
-          }
-        >
-          {activeRequest ? (
-            <CircularProgress size={18} sx={{ color: "#fff" }} />
-          ) : (
-            "Ask AI"
-          )}
-        </DashboardGradientButton>
-      </DialogActions>
-    </Dialog>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

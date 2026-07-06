@@ -103,7 +103,10 @@ import ConflictModal from "../Editor/ConflictModal";
 import RecoveryModal from "../Editor/RecoveryModal";
 import ConnectionStatus from "../Editor/ConnectionStatus";
 import BlockLibrary from "../Editor/BlockLibrary";
-import { getBlockDefaultContent, getLocalFieldMetadata } from "../Editor/blockPresets";
+import {
+  getBlockDefaultContent,
+  getLocalFieldMetadata,
+} from "../Editor/blockPresets";
 import EditorStyleToolbar from "../Editor/EditorStyleToolbar";
 import EditorSectionStyleToolbar from "../Editor/EditorSectionStyleToolbar";
 import ResponsiveEditorLayout from "../Editor/ResponsiveEditorLayout";
@@ -577,10 +580,7 @@ const getEditableTypographyStyleKey = (fieldName = "text") => {
 const getEditableAIStyleTargetCandidates = (fieldName = "text") => {
   const normalizedFieldName = String(fieldName || "text").trim();
   const leafFieldName =
-    normalizedFieldName
-      .split(".")
-      .filter(Boolean)
-      .pop() || normalizedFieldName;
+    normalizedFieldName.split(".").filter(Boolean).pop() || normalizedFieldName;
   const styleConfigKey = getEditableStyleConfig(leafFieldName).styleKey;
   const typographyStyleKey = getEditableTypographyStyleKey(leafFieldName);
   const capitalizedLeaf =
@@ -1533,11 +1533,16 @@ const normalizeContactEditorContent = (value) => {
 
 const buildBlockEditorInitialContent = (block) => {
   const rootContent = omitInnerBlocksMirror(block?.content || {});
-  const rootBlockType = String(block?.blockType || "").trim().toUpperCase();
+  const rootBlockType = String(block?.blockType || "")
+    .trim()
+    .toUpperCase();
   if (!block?.content?.editorBlockType) {
     return rootBlockType === "CONTACT"
       ? normalizeContactEditorContent(
-          mergeEditorContentObjects(getBlockDefaultContent("CONTACT"), rootContent),
+          mergeEditorContentObjects(
+            getBlockDefaultContent("CONTACT"),
+            rootContent,
+          ),
         )
       : rootContent;
   }
@@ -1554,7 +1559,7 @@ const buildBlockEditorInitialContent = (block) => {
       : {},
     rootContent,
     {
-        editorLabel: block?.content?.editorLabel ?? rootContent.editorLabel ?? "",
+      editorLabel: block?.content?.editorLabel ?? rootContent.editorLabel ?? "",
     },
   );
 
@@ -1680,21 +1685,27 @@ const sanitizeBlockForSave = (block) => {
 
   if (templateSectionByBlockType[rawBlockType]) {
     sanitizedContent.editorSection =
-      sanitizedContent.editorSection || templateSectionByBlockType[rawBlockType];
+      sanitizedContent.editorSection ||
+      templateSectionByBlockType[rawBlockType];
     sanitizedContent.editorBlockType =
       sanitizedContent.editorBlockType || rawBlockType;
   }
 
   if (rawBlockType === "CONTACT") {
-    Object.assign(sanitizedContent, normalizeContactEditorContent(sanitizedContent));
+    Object.assign(
+      sanitizedContent,
+      normalizeContactEditorContent(sanitizedContent),
+    );
   }
 
   if (rawBlockType === "TEAM" && Array.isArray(sanitizedContent.members)) {
-    sanitizedContent.members = sanitizedContent.members.map((member, index) => ({
-      ...member,
-      name: member?.name || `Team member ${index + 1}`,
-      role: member?.role || "Team member",
-    }));
+    sanitizedContent.members = sanitizedContent.members.map(
+      (member, index) => ({
+        ...member,
+        name: member?.name || `Team member ${index + 1}`,
+        role: member?.role || "Team member",
+      }),
+    );
   }
 
   if (Array.isArray(block.content.innerBlocks)) {
@@ -1801,7 +1812,10 @@ const mergeLocalBlocksOntoServerBlocks = (serverBlocks, localBlocks) => {
   });
 
   localBlocks.forEach((localBlock, index) => {
-    if (localBlock?.id == null || !serverBlocks.some((block) => String(block.id) === String(localBlock.id))) {
+    if (
+      localBlock?.id == null ||
+      !serverBlocks.some((block) => String(block.id) === String(localBlock.id))
+    ) {
       merged.push({
         ...localBlock,
         sortOrder: localBlock.sortOrder ?? merged.length + index,
@@ -1865,7 +1879,9 @@ const syncEditorBlocksState = ({
 
 const getBlocksMutationPayload = (response) => {
   const body = response?.data || {};
-  return body?.data && typeof body.data === "object" && !Array.isArray(body.data)
+  return body?.data &&
+    typeof body.data === "object" &&
+    !Array.isArray(body.data)
     ? body.data
     : body;
 };
@@ -1941,6 +1957,8 @@ const WebsiteEditorInner = () => {
 
   const [selectedEditableElement, setSelectedEditableElement] = useState(null);
   const [askAIOpenSignal, setAskAIOpenSignal] = useState(0);
+  const [askAIAnchorRect, setAskAIAnchorRect] = useState(null);
+  const [askAIButtonStatus, setAskAIButtonStatus] = useState("idle");
   const [selectedImageElement, setSelectedImageElement] = useState(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isImageLibraryPickerOpen, setIsImageLibraryPickerOpen] =
@@ -2213,7 +2231,10 @@ const WebsiteEditorInner = () => {
     (nextValues) => {
       setBlockForm((prev) => ({
         ...prev,
-        content: mergeEditorContentObjects(prev.content || {}, nextValues || {}),
+        content: mergeEditorContentObjects(
+          prev.content || {},
+          nextValues || {},
+        ),
       }));
 
       scheduleLivePreviewUpdate(
@@ -2465,7 +2486,8 @@ const WebsiteEditorInner = () => {
               expectedUpdatedAtRef.current = retryUpdatedAt;
             }
 
-            const savedBlocks = getBlocksMutationBlocks(retryResponse) || retryBlocks;
+            const savedBlocks =
+              getBlocksMutationBlocks(retryResponse) || retryBlocks;
             syncEditorBlocksState({
               blocks: savedBlocks,
               blocksRef,
@@ -2642,6 +2664,10 @@ const WebsiteEditorInner = () => {
     onSaveBeforeLeave: triggerManualSave,
     skipBeforeUnload: true,
     saveStatus,
+    allowNavigation: (nextLocation) =>
+      nextLocation?.pathname === "/dashboard/websites" ||
+      (nextLocation?.pathname === "/dashboard" &&
+        new URLSearchParams(nextLocation?.search || "").get("tab") === "websites"),
   });
 
   // LocalStorage backup — saves unsaved data on beforeunload, detects on mount (Step 5.10)
@@ -2877,6 +2903,18 @@ const WebsiteEditorInner = () => {
   }, [selectedEditableElement, blocks]);
 
   useEffect(() => {
+    if (!iframeRef.current?.contentWindow) return;
+
+    iframeRef.current.contentWindow.postMessage(
+      {
+        type: "ASK_AI_BUTTON_STATUS",
+        status: askAIButtonStatus,
+      },
+      window.location.origin,
+    );
+  }, [askAIButtonStatus]);
+
+  useEffect(() => {
     if (!selectedPage?.id) return;
     if (activeHistoryPageRef.current !== selectedPage.id) {
       activeHistoryPageRef.current = selectedPage.id;
@@ -3033,7 +3071,11 @@ const WebsiteEditorInner = () => {
       // Auto-select home page or first page
       const homePage = pagesList.find((p) => p.isHome) || pagesList[0];
       if (homePage) {
-        if (supportsFrontendTemplateEditor(normalizedWebsiteData.frontendTemplateId)) {
+        if (
+          supportsFrontendTemplateEditor(
+            normalizedWebsiteData.frontendTemplateId,
+          )
+        ) {
           const initialBlocks = Array.isArray(homePage.blocks)
             ? homePage.blocks.map(normalizeLoadedBlock)
             : [];
@@ -3110,7 +3152,9 @@ const WebsiteEditorInner = () => {
       const response = await apiClient.get(`/pages/${pageId}/blocks`, {
         headers: {},
       });
-      const fetchedBlocks = (response.data.data || []).map(normalizeLoadedBlock);
+      const fetchedBlocks = (response.data.data || []).map(
+        normalizeLoadedBlock,
+      );
       setBlocks(fetchedBlocks);
       setPages((prevPages) =>
         prevPages.map((page) =>
@@ -3203,30 +3247,35 @@ const WebsiteEditorInner = () => {
     }
   };
 
-  const handleSelectPage = useCallback((page) => {
-    setSelectedEditableElement(null);
-    setSelectedSectionElement(null);
-    setSelectedImageElement(null);
-    setIsImageDialogOpen(false);
-    setIsInspectorOpen(false);
-    if (page && supportsLocalTemplateEditor) {
-      const localBlocks = Array.isArray(page.blocks)
-        ? page.blocks.map(normalizeLoadedBlock)
-        : [];
-      localTemplateHydratedPageRef.current =
-        typeof page.id === "string" ? page.id : String(page.id);
-      suppressHistoryRef.current = true;
-      setBlocks(localBlocks);
-      setBlockError(null);
-    } else if (page?.localOnly) {
-      const localBlocks = Array.isArray(page.blocks) ? page.blocks.map(normalizeLoadedBlock) : [];
-      localTemplateHydratedPageRef.current = page.id;
-      suppressHistoryRef.current = true;
-      setBlocks(localBlocks);
-      setBlockError(null);
-    }
-    setSelectedPage(page);
-  }, [supportsLocalTemplateEditor]);
+  const handleSelectPage = useCallback(
+    (page) => {
+      setSelectedEditableElement(null);
+      setSelectedSectionElement(null);
+      setSelectedImageElement(null);
+      setIsImageDialogOpen(false);
+      setIsInspectorOpen(false);
+      if (page && supportsLocalTemplateEditor) {
+        const localBlocks = Array.isArray(page.blocks)
+          ? page.blocks.map(normalizeLoadedBlock)
+          : [];
+        localTemplateHydratedPageRef.current =
+          typeof page.id === "string" ? page.id : String(page.id);
+        suppressHistoryRef.current = true;
+        setBlocks(localBlocks);
+        setBlockError(null);
+      } else if (page?.localOnly) {
+        const localBlocks = Array.isArray(page.blocks)
+          ? page.blocks.map(normalizeLoadedBlock)
+          : [];
+        localTemplateHydratedPageRef.current = page.id;
+        suppressHistoryRef.current = true;
+        setBlocks(localBlocks);
+        setBlockError(null);
+      }
+      setSelectedPage(page);
+    },
+    [supportsLocalTemplateEditor],
+  );
 
   const handleSetHomePage = async (pageId) => {
     try {
@@ -5299,55 +5348,58 @@ const WebsiteEditorInner = () => {
   );
 
   // Inline edit save handler — Step 9.24: nested path update for content fields
-  const handleInlineEditSave = useCallback((blockId, fieldPath, newValue) => {
-    pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
-    flushSync(() => {
-      const nextBlocks = blocksRef.current.map((block) => {
-        if (String(block.id) !== String(blockId)) return block;
-        const updated = {
-          ...block,
-          content: {
-            ...(block.content || {}),
-          },
-        };
-        const parts = fieldPath.split(".");
-        let obj = updated.content;
-        for (let i = 0; i < parts.length - 1; i++) {
-          const current = obj[parts[i]];
-          obj[parts[i]] = Array.isArray(current)
-            ? [...current]
-            : {
-                ...(current && typeof current === "object" ? current : {}),
-              };
-          obj = obj[parts[i]];
-        }
-        obj[parts[parts.length - 1]] = newValue;
-        return withSyncedBlockContent(block, updated.content);
-      });
+  const handleInlineEditSave = useCallback(
+    (blockId, fieldPath, newValue) => {
+      pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
+      flushSync(() => {
+        const nextBlocks = blocksRef.current.map((block) => {
+          if (String(block.id) !== String(blockId)) return block;
+          const updated = {
+            ...block,
+            content: {
+              ...(block.content || {}),
+            },
+          };
+          const parts = fieldPath.split(".");
+          let obj = updated.content;
+          for (let i = 0; i < parts.length - 1; i++) {
+            const current = obj[parts[i]];
+            obj[parts[i]] = Array.isArray(current)
+              ? [...current]
+              : {
+                  ...(current && typeof current === "object" ? current : {}),
+                };
+            obj = obj[parts[i]];
+          }
+          obj[parts[parts.length - 1]] = newValue;
+          return withSyncedBlockContent(block, updated.content);
+        });
 
-      blocksRef.current = nextBlocks;
-      setBlocks(nextBlocks);
-      setSelectedPage((prevSelectedPage) =>
-        prevSelectedPage
-          ? { ...prevSelectedPage, blocks: nextBlocks }
-          : prevSelectedPage,
-      );
-      setPages((prevPages) =>
-        prevPages.map((page) =>
-          String(page.id) === String(selectedPage?.id)
-            ? { ...page, blocks: nextBlocks }
-            : page,
-        ),
-      );
-      setPersistedPages((prevPages) =>
-        prevPages.map((page) =>
-          String(page.id) === String(selectedPage?.id)
-            ? { ...page, blocks: nextBlocks }
-            : page,
-        ),
-      );
-    });
-  }, [selectedPage?.id]);
+        blocksRef.current = nextBlocks;
+        setBlocks(nextBlocks);
+        setSelectedPage((prevSelectedPage) =>
+          prevSelectedPage
+            ? { ...prevSelectedPage, blocks: nextBlocks }
+            : prevSelectedPage,
+        );
+        setPages((prevPages) =>
+          prevPages.map((page) =>
+            String(page.id) === String(selectedPage?.id)
+              ? { ...page, blocks: nextBlocks }
+              : page,
+          ),
+        );
+        setPersistedPages((prevPages) =>
+          prevPages.map((page) =>
+            String(page.id) === String(selectedPage?.id)
+              ? { ...page, blocks: nextBlocks }
+              : page,
+          ),
+        );
+      });
+    },
+    [selectedPage?.id],
+  );
 
   // ---- Website AI (Ask AI / chat) integration helpers ----
   const websiteAIContext = useMemo(() => {
@@ -5461,7 +5513,8 @@ const WebsiteEditorInner = () => {
     if (
       directTarget &&
       (!selectedEditableElement?.blockId ||
-        String(directTarget.blockId) === String(selectedEditableElement.blockId) ||
+        String(directTarget.blockId) ===
+          String(selectedEditableElement.blockId) ||
         String(directTarget.currentValue ?? "") ===
           String(selectedEditableElement.value ?? ""))
     ) {
@@ -5495,7 +5548,10 @@ const WebsiteEditorInner = () => {
     selectedEditableElement?.value,
   ]);
   const selectedEditableStyleAITarget = useMemo(() => {
-    if (!selectedEditableElement?.blockId || !selectedEditableElement?.fieldPath) {
+    if (
+      !selectedEditableElement?.blockId ||
+      !selectedEditableElement?.fieldPath
+    ) {
       return undefined;
     }
 
@@ -5529,7 +5585,10 @@ const WebsiteEditorInner = () => {
     selectedEditableElement?.fieldPath,
   ]);
   const selectedEditableStyleAITargets = useMemo(() => {
-    if (!selectedEditableElement?.blockId || !selectedEditableElement?.fieldPath) {
+    if (
+      !selectedEditableElement?.blockId ||
+      !selectedEditableElement?.fieldPath
+    ) {
       return [];
     }
 
@@ -5595,14 +5654,19 @@ const WebsiteEditorInner = () => {
   // Read the current value of a block content field (for AI conflict/revert).
   const getAIFieldValue = useCallback((blockId, fieldPath) => {
     const persistedPath = String(fieldPath || "");
-    if (persistedPath.startsWith("pages.") && persistedPath.includes(".content.")) {
+    if (
+      persistedPath.startsWith("pages.") &&
+      persistedPath.includes(".content.")
+    ) {
       const match = persistedPath.match(/blocks\.([^.]+)\.content\.(.+)$/);
       if (match) {
         const [, resolvedBlockId, contentPath] = match;
         const block = blocksRef.current.find(
           (b) => String(b.id) === String(resolvedBlockId),
         );
-        return block ? getValueAtPath(block.content || {}, contentPath) : undefined;
+        return block
+          ? getValueAtPath(block.content || {}, contentPath)
+          : undefined;
       }
     }
     const block = blockId
@@ -5900,7 +5964,7 @@ const WebsiteEditorInner = () => {
         >
           <Box display="flex" alignItems="center" gap={0.9} minWidth={0}>
             <IconButton
-              onClick={() => navigate("/dashboard?tab=websites")}
+              onClick={() => navigate("/dashboard/websites")}
               sx={{
                 width: 32,
                 height: 32,
@@ -6978,9 +7042,15 @@ const WebsiteEditorInner = () => {
                                       blockType={String(
                                         editingBlock?.blockType || "",
                                       ).toLowerCase()}
-                                      initialValues={{ ...blockForm.content, _websiteId: websiteId }}
+                                      initialValues={{
+                                        ...blockForm.content,
+                                        _websiteId: websiteId,
+                                      }}
                                       onChange={(values) => {
-                                        const { _websiteId: _ignored, ...clean } = values;
+                                        const {
+                                          _websiteId: _ignored,
+                                          ...clean
+                                        } = values;
                                         handleEditingBlockContentChange(clean);
                                       }}
                                       onValidate={(errors) =>
@@ -7558,7 +7628,10 @@ const WebsiteEditorInner = () => {
                               handlePreviewSectionInnerAddRequest
                             }
                             onPreviewContextMenu={handlePreviewContextMenu}
-                            onAskAIRequest={() => setAskAIOpenSignal((v) => v + 1)}
+                            onAskAIRequest={(data) => {
+                              setAskAIAnchorRect(data?.anchorRect || null);
+                              setAskAIOpenSignal((v) => v + 1);
+                            }}
                             onEditableTextSave={handleInlineEditSave}
                             onElementTransform={handlePreviewElementTransform}
                             saveSignal={previewSaveSignal}
@@ -7566,6 +7639,7 @@ const WebsiteEditorInner = () => {
                               iframeRef.current = ref?.current ?? null;
                             }}
                             selectedPreviewTarget={selectedPreviewTarget}
+                            askAIButtonStatus={askAIButtonStatus}
                             draggedLibraryBlock={draggedLibraryBlock}
                             canDropLibraryBlock={Boolean(
                               selectedSectionElement,
@@ -9084,31 +9158,35 @@ const WebsiteEditorInner = () => {
                         : getEditableStyleConfig(
                             selectedEditableElement.fieldPath,
                           ).styleKey),
-                    persistedFieldPath: selectedEditableStyleAITarget?.fieldPath,
+                    persistedFieldPath:
+                      selectedEditableStyleAITarget?.fieldPath,
                     aiEditKey: selectedEditableStyleAITarget?.aiEditKey,
                     label: `${selectedEditableElement.label || "Selection"} style`,
                     computedStyle: selectedEditableElement.computedStyle,
                   },
-                  styleTargets: selectedEditableStyleAITargets.map((target) => ({
-                    blockId: target.blockId,
-                    fieldPath:
-                      target.editorPath ||
-                      String(target.fieldPath || "").split(".content.").pop() ||
-                      target.fieldPath,
-                    persistedFieldPath: target.fieldPath,
-                    aiEditKey: target.aiEditKey,
-                    label: target.label,
-                    category: target.category,
-                    computedStyle: selectedEditableElement.computedStyle,
-                  })),
+                  styleTargets: selectedEditableStyleAITargets.map(
+                    (target) => ({
+                      blockId: target.blockId,
+                      fieldPath:
+                        target.editorPath ||
+                        String(target.fieldPath || "")
+                          .split(".content.")
+                          .pop() ||
+                        target.fieldPath,
+                      persistedFieldPath: target.fieldPath,
+                      aiEditKey: target.aiEditKey,
+                      label: target.label,
+                      category: target.category,
+                      computedStyle: selectedEditableElement.computedStyle,
+                    }),
+                  ),
                 }
               : null,
             section: selectedSectionElement?.blockId
               ? {
                   blockId: selectedSectionElement.blockId,
                   label: selectedSectionElement.label,
-                  fieldPath:
-                    selectedSectionElement.styleKey || "sectionStyle",
+                  fieldPath: selectedSectionElement.styleKey || "sectionStyle",
                   persistedFieldPath: selectedSectionAITarget?.fieldPath,
                   aiEditKey: selectedSectionAITarget?.aiEditKey,
                 }
@@ -9120,10 +9198,12 @@ const WebsiteEditorInner = () => {
           revertibleTurns={websiteAIRevertibleTurns}
           versions={websiteAIVersions}
           openAskSignal={askAIOpenSignal}
+          openAskAnchorRect={askAIAnchorRect}
           getCurrentValue={getAIFieldValue}
           applyPatch={handleInlineEditSave}
           onLocalPatchesApplied={handleAIBlocksPatched}
           onRefresh={fetchWebsiteData}
+          onAskAIButtonStatusChange={setAskAIButtonStatus}
         />
       )}
     </Box>

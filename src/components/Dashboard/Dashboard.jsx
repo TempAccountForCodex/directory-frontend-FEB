@@ -398,10 +398,11 @@ const Dashboard = ({ user }) => {
 
   // Redirect to last visited tab if on bare /dashboard
   useEffect(() => {
-    if (!tab && location.pathname === "/dashboard") {
+    const legacyTab = new URLSearchParams(location.search).get("tab");
+    if (!tab && location.pathname === "/dashboard" && !legacyTab) {
       navigate(`/dashboard/${lastVisitedTab}`, { replace: true });
     }
-  }, [location.pathname, tab, lastVisitedTab, navigate]);
+  }, [location.pathname, location.search, tab, lastVisitedTab, navigate]);
 
   // Redirect users if they try to access tabs they don't have permission for
   useEffect(() => {

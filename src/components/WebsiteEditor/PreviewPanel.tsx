@@ -61,6 +61,7 @@ import type { BusinessData } from "../../landingTemplates/types/BusinessData";
 type Viewport = "desktop" | "tablet" | "mobile";
 type PreviewMode = "live" | "static";
 type ZoomLevel = 0.5 | 0.75 | 1;
+type AskAIButtonStatus = "idle" | "open" | "loading" | "success" | "error";
 
 const VIEWPORT_WIDTHS: Record<Viewport, number> = {
   desktop: 1920,
@@ -140,6 +141,7 @@ interface FrontendTemplateIframeProps {
   saveSignal?: number;
   iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
   selectedPreviewTarget?: PreviewSelectionTarget | null;
+  askAIButtonStatus?: AskAIButtonStatus;
 }
 
 const FrontendTemplateIframePreview = React.memo(
@@ -163,6 +165,7 @@ const FrontendTemplateIframePreview = React.memo(
     saveSignal,
     iframeRefCallback,
     selectedPreviewTarget,
+    askAIButtonStatus = "idle",
   }: FrontendTemplateIframeProps) {
     const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
     const [mountNode, setMountNode] = React.useState<HTMLElement | null>(null);
@@ -200,6 +203,9 @@ const FrontendTemplateIframePreview = React.memo(
       ) => {},
     );
     const hideSelectionOverlayRef = React.useRef(() => {});
+    const applyAskAIButtonStatusRef = React.useRef(
+      (_status: AskAIButtonStatus) => {},
+    );
     const inferEditableLabelRef = React.useRef<
       (editableEl: HTMLElement, fieldPath: string) => string
     >(() => "Text");
@@ -353,7 +359,18 @@ const FrontendTemplateIframePreview = React.memo(
       overlayEl.setAttribute("aria-hidden", "true");
       overlayEl.innerHTML = `
       <div class="tt-selection-label"></div>
-      <button type="button" class="tt-selection-ai-button" aria-label="Ask AI">Ask AI</button>
+      <button type="button" class="tt-selection-ai-button" aria-label="Ask AI">
+        <span class="tt-selection-ai-liquid" aria-hidden="true">
+          <span class="tt-selection-ai-bubble tt-selection-ai-bubble--one"></span>
+          <span class="tt-selection-ai-bubble tt-selection-ai-bubble--two"></span>
+          <span class="tt-selection-ai-bubble tt-selection-ai-bubble--three"></span>
+        </span>
+        <span class="tt-selection-ai-result-bg" aria-hidden="true"></span>
+        <span class="tt-selection-ai-content">
+          <span class="tt-selection-ai-mark" aria-hidden="true">✦</span>
+          <span class="tt-selection-ai-text">Ask AI</span>
+        </span>
+      </button>
       <button type="button" class="tt-section-inner-add-button">Add block</button>
       <button type="button" class="tt-section-add-button tt-section-add-button--top" data-insert-position="before">Add section</button>
       <button type="button" class="tt-section-add-button tt-section-add-button--bottom" data-insert-position="after">Add section</button>
@@ -372,7 +389,43 @@ const FrontendTemplateIframePreview = React.memo(
       let overlayLabel = "";
       let overlayKind: "editable" | "image" | "section" | null = null;
       let overlayFrame: number | null = null;
+      let currentAskAIButtonStatus: AskAIButtonStatus = askAIButtonStatus;
       let interactionCleanup: (() => void) | null = null;
+
+      const applyAskAIButtonStatus = (status: AskAIButtonStatus) => {
+        currentAskAIButtonStatus = status;
+        overlayEl.setAttribute("data-ai-button-status", status);
+        const aiButton = overlayEl.querySelector(
+          ".tt-selection-ai-button",
+        ) as HTMLButtonElement | null;
+        const aiText = overlayEl.querySelector(
+          ".tt-selection-ai-text",
+        ) as HTMLElement | null;
+        const aiMark = overlayEl.querySelector(
+          ".tt-selection-ai-mark",
+        ) as HTMLElement | null;
+        if (aiText) {
+          aiText.textContent =
+            status === "loading"
+              ? "AI request in progress"
+              : status === "success"
+                ? "AI changes applied"
+                : status === "error"
+                  ? "AI request failed"
+                  : "Ask AI";
+        }
+        if (aiMark) {
+          aiMark.textContent =
+            status === "success" ? "✓" : status === "error" ? "×" : "✦";
+        }
+        if (aiButton) {
+          aiButton.disabled = status === "open" || status === "loading";
+          aiButton.setAttribute("aria-label", aiText?.textContent || "Ask AI");
+        }
+      };
+
+      applyAskAIButtonStatusRef.current = applyAskAIButtonStatus;
+      applyAskAIButtonStatus(askAIButtonStatus);
 
       const queueOverlayUpdate = () => {
         if (overlayFrame !== null) {
@@ -445,6 +498,7 @@ const FrontendTemplateIframePreview = React.memo(
               overlayKind === "editable" || overlayKind === "section"
                 ? "inline-flex"
                 : "none";
+            applyAskAIButtonStatus(currentAskAIButtonStatus);
           }
         });
       };
@@ -1070,6 +1124,8 @@ const FrontendTemplateIframePreview = React.memo(
         align-items: center;
         justify-content: center;
         height: 28px;
+        min-width: 58px;
+        max-width: 190px;
         padding: 0 10px;
         border: 1px solid rgba(255, 255, 255, 0.28);
         border-radius: 999px;
@@ -1082,9 +1138,153 @@ const FrontendTemplateIframePreview = React.memo(
         line-height: 1;
         pointer-events: auto;
         cursor: pointer;
+        overflow: hidden;
+        transform: translate3d(0, 0, 0);
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease,
+          min-width 240ms ease,
+          background 220ms ease,
+          box-shadow 220ms ease;
       }
       .tt-selection-ai-button:hover {
         background: linear-gradient(135deg, #3fa0a7, #378c92);
+      }
+      .tt-selection-ai-button:disabled {
+        cursor: default;
+      }
+      .tt-selection-ai-content {
+        position: relative;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        white-space: nowrap;
+      }
+      .tt-selection-ai-mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 13px;
+        height: 13px;
+        font-size: 14px;
+        line-height: 1;
+      }
+      .tt-selection-ai-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tt-selection-ai-liquid,
+      .tt-selection-ai-result-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        border-radius: inherit;
+        pointer-events: none;
+      }
+      .tt-selection-ai-liquid {
+        background: #3d9b8f;
+        transform: translateX(calc(-100% - 14px));
+        overflow: hidden;
+      }
+      .tt-selection-ai-liquid::after {
+        content: "";
+        position: absolute;
+        top: -3px;
+        right: -9px;
+        width: 18px;
+        height: calc(100% + 6px);
+        background: #3d9b8f;
+        border-radius: 50%;
+        animation: tt-ai-button-wave 0.9s linear infinite;
+      }
+      .tt-selection-ai-bubble {
+        position: absolute;
+        bottom: -8px;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        animation: tt-ai-button-bubble 1.8s linear infinite;
+      }
+      .tt-selection-ai-bubble--one {
+        left: 18%;
+        animation-delay: 0s;
+      }
+      .tt-selection-ai-bubble--two {
+        left: 48%;
+        width: 6px;
+        height: 6px;
+        animation-delay: 0.45s;
+      }
+      .tt-selection-ai-bubble--three {
+        left: 76%;
+        animation-delay: 0.85s;
+      }
+      .tt-selection-ai-result-bg {
+        opacity: 0;
+        z-index: 2;
+      }
+      .tt-selection-overlay[data-ai-button-status="open"] .tt-selection-ai-button {
+        opacity: 0;
+        transform: translateY(-2px) scale(0.92);
+        pointer-events: none;
+      }
+      .tt-selection-overlay[data-ai-button-status="loading"] .tt-selection-ai-button {
+        min-width: 176px;
+        background: rgba(15, 23, 42, 0.92);
+      }
+      .tt-selection-overlay[data-ai-button-status="loading"] .tt-selection-ai-liquid {
+        animation: tt-ai-button-fill 5s linear forwards;
+      }
+      .tt-selection-overlay[data-ai-button-status="success"] .tt-selection-ai-button,
+      .tt-selection-overlay[data-ai-button-status="error"] .tt-selection-ai-button {
+        min-width: 154px;
+        color: #111827;
+        background: #ffffff;
+      }
+      .tt-selection-overlay[data-ai-button-status="success"] .tt-selection-ai-result-bg {
+        opacity: 1;
+        background:
+          radial-gradient(circle at 8% 20%, rgba(48, 173, 104, 0.2) 0 18px, transparent 19px),
+          radial-gradient(circle at 32% 110%, rgba(48, 173, 104, 0.12) 0 22px, transparent 23px),
+          linear-gradient(135deg, #a9efbf 0%, #cdf7dc 58%, #baf1cd 100%);
+      }
+      .tt-selection-overlay[data-ai-button-status="error"] .tt-selection-ai-result-bg {
+        opacity: 1;
+        background:
+          radial-gradient(circle at 8% 20%, rgba(216, 88, 108, 0.2) 0 18px, transparent 19px),
+          radial-gradient(circle at 32% 110%, rgba(216, 88, 108, 0.12) 0 22px, transparent 23px),
+          linear-gradient(135deg, #f2a6b4 0%, #f9ccd5 58%, #f4bdc8 100%);
+      }
+      .tt-selection-overlay[data-ai-button-status="success"] .tt-selection-ai-mark,
+      .tt-selection-overlay[data-ai-button-status="error"] .tt-selection-ai-mark {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: #ffffff;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.14);
+      }
+      .tt-selection-overlay[data-ai-button-status="success"] .tt-selection-ai-mark {
+        color: #4eaf75;
+      }
+      .tt-selection-overlay[data-ai-button-status="error"] .tt-selection-ai-mark {
+        color: #d66073;
+      }
+      @keyframes tt-ai-button-fill {
+        0% { transform: translateX(calc(-100% - 14px)); }
+        100% { transform: translateX(0%); }
+      }
+      @keyframes tt-ai-button-bubble {
+        0% { transform: translateY(0) scale(0.8); opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { transform: translateY(-36px) scale(1.15); opacity: 0; }
+      }
+      @keyframes tt-ai-button-wave {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(-12px); }
       }
       .tt-section-inner-add-button {
         position: absolute;
@@ -1216,14 +1416,43 @@ const FrontendTemplateIframePreview = React.memo(
       onReadyRef.current?.();
 
       const handleClick = (event: MouseEvent) => {
-        const overlayAIButton = (
-          event.target as HTMLElement | null
-        )?.closest?.(".tt-selection-ai-button") as HTMLButtonElement | null;
+        const overlayAIButton = (event.target as HTMLElement | null)?.closest?.(
+          ".tt-selection-ai-button",
+        ) as HTMLButtonElement | null;
         if (overlayAIButton) {
           event.preventDefault();
           event.stopPropagation();
+          const buttonRect = overlayAIButton.getBoundingClientRect();
+          const frameRect = (
+            win.frameElement as HTMLIFrameElement | null
+          )?.getBoundingClientRect();
+          const scaleX =
+            frameRect && win.innerWidth
+              ? frameRect.width / Math.max(1, win.innerWidth)
+              : 1;
+          const scaleY =
+            frameRect && win.innerHeight
+              ? frameRect.height / Math.max(1, win.innerHeight)
+              : 1;
+          const viewportAnchorRect = frameRect
+            ? {
+                top: frameRect.top + buttonRect.top * scaleY,
+                left: frameRect.left + buttonRect.left * scaleX,
+                width: buttonRect.width * scaleX,
+                height: buttonRect.height * scaleY,
+              }
+            : null;
           win.parent.postMessage(
-            { type: "ASK_AI_REQUEST" },
+            {
+              type: "ASK_AI_REQUEST",
+              anchorRect: {
+                top: buttonRect.top,
+                left: buttonRect.left,
+                width: buttonRect.width,
+                height: buttonRect.height,
+              },
+              viewportAnchorRect,
+            },
             window.location.origin,
           );
           return;
@@ -1555,6 +1784,32 @@ const FrontendTemplateIframePreview = React.memo(
         }
       };
 
+      const handleFrameMessage = (event: MessageEvent) => {
+        if (
+          event.origin !== window.location.origin &&
+          event.origin !== "null"
+        ) {
+          return;
+        }
+        const data = event.data;
+        if (!data || typeof data !== "object") {
+          return;
+        }
+        if (data.type !== "ASK_AI_BUTTON_STATUS") {
+          return;
+        }
+        const nextStatus = data.status;
+        if (
+          nextStatus === "idle" ||
+          nextStatus === "open" ||
+          nextStatus === "loading" ||
+          nextStatus === "success" ||
+          nextStatus === "error"
+        ) {
+          applyAskAIButtonStatus(nextStatus);
+        }
+      };
+
       const handleMouseDown = (event: MouseEvent) => {
         const target = event.target as HTMLElement | null;
         const clickedInsideOverlay = !!target?.closest?.(
@@ -1620,6 +1875,7 @@ const FrontendTemplateIframePreview = React.memo(
       doc.body.addEventListener("contextmenu", handleContextMenu, true);
       doc.addEventListener("focusout", handleFocusOut, true);
       doc.addEventListener("keydown", handleKeyDown, true);
+      win.addEventListener("message", handleFrameMessage);
 
       return () => {
         finishEditing(true);
@@ -1636,6 +1892,7 @@ const FrontendTemplateIframePreview = React.memo(
         doc.body.removeEventListener("contextmenu", handleContextMenu, true);
         doc.removeEventListener("focusout", handleFocusOut, true);
         doc.removeEventListener("keydown", handleKeyDown, true);
+        win.removeEventListener("message", handleFrameMessage);
         win.removeEventListener("scroll", queueOverlayUpdate);
         win.removeEventListener("resize", queueOverlayUpdate);
         hideSelectionOverlay();
@@ -1643,12 +1900,17 @@ const FrontendTemplateIframePreview = React.memo(
         styleEl.remove();
         showSelectionOverlayRef.current = () => {};
         hideSelectionOverlayRef.current = () => {};
+        applyAskAIButtonStatusRef.current = () => {};
         inferEditableLabelRef.current = () => "Text";
         setMountNode(null);
         cacheRef.current = null;
         iframeDocumentRef.current = null;
       };
     }, [width]);
+
+    React.useEffect(() => {
+      applyAskAIButtonStatusRef.current(askAIButtonStatus);
+    }, [askAIButtonStatus]);
 
     React.useEffect(() => {
       const doc = iframeDocumentRef.current;
@@ -1911,7 +2173,9 @@ interface PreviewPanelProps {
   /** Called when a custom preview context menu should open */
   onPreviewContextMenu?: (data: PreviewContextMenuData | null) => void;
   /** Called when the selected element overlay Ask AI button is clicked */
-  onAskAIRequest?: () => void;
+  onAskAIRequest?: (data?: {
+    anchorRect?: { top: number; left: number; width: number; height: number };
+  }) => void;
   /** Called when inline editing starts inside the preview iframe */
   onInlineEditStart?: (data: InlineEditStartData) => void;
   /** Called when inline text editing inside the preview is saved */
@@ -1930,6 +2194,8 @@ interface PreviewPanelProps {
   iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
   /** Syncs visual selection inside the iframe from the parent editor */
   selectedPreviewTarget?: PreviewSelectionTarget | null;
+  /** Mirrors the parent Ask AI request state inside the iframe overlay button */
+  askAIButtonStatus?: AskAIButtonStatus;
   draggedLibraryBlock?: { key: string; label: string } | null;
   canDropLibraryBlock?: boolean;
   onLibraryBlockDrop?: () => void;
@@ -1964,6 +2230,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
   saveSignal,
   iframeRefCallback,
   selectedPreviewTarget,
+  askAIButtonStatus = "idle",
   draggedLibraryBlock,
   canDropLibraryBlock = false,
   onLibraryBlockDrop,
@@ -2197,7 +2464,50 @@ const PreviewPanel = React.memo(function PreviewPanel({
       }
 
       if (data.type === "ASK_AI_REQUEST") {
-        onAskAIRequest?.();
+        const iframe = iframeRef.current;
+        const iframeRect = iframe?.getBoundingClientRect();
+        const iframeWindow = iframe?.contentWindow;
+        const rawAnchor = data.anchorRect as
+          | { top: number; left: number; width: number; height: number }
+          | undefined;
+        const viewportAnchor = data.viewportAnchorRect as
+          | { top: number; left: number; width: number; height: number }
+          | null
+          | undefined;
+        const anchorRect =
+          viewportAnchor ||
+          (rawAnchor && iframeRect
+            ? {
+                top:
+                  iframeRect.top +
+                  rawAnchor.top *
+                    (iframeRect.height /
+                      Math.max(
+                        1,
+                        iframeWindow?.innerHeight ?? iframeRect.height,
+                      )),
+                left:
+                  iframeRect.left +
+                  rawAnchor.left *
+                    (iframeRect.width /
+                      Math.max(
+                        1,
+                        iframeWindow?.innerWidth ?? iframeRect.width,
+                      )),
+                width:
+                  rawAnchor.width *
+                  (iframeRect.width /
+                    Math.max(1, iframeWindow?.innerWidth ?? iframeRect.width)),
+                height:
+                  rawAnchor.height *
+                  (iframeRect.height /
+                    Math.max(
+                      1,
+                      iframeWindow?.innerHeight ?? iframeRect.height,
+                    )),
+              }
+            : rawAnchor);
+        onAskAIRequest?.({ anchorRect });
       }
 
       // Step 9.16.3: Relay inline edit start from iframe
@@ -2979,6 +3289,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 saveSignal={saveSignal}
                 iframeRefCallback={iframeRefCallback}
                 selectedPreviewTarget={selectedPreviewTarget}
+                askAIButtonStatus={askAIButtonStatus}
               />
             </Box>
           </Box>

@@ -306,8 +306,8 @@ export default function HeroDepthCarousel() {
               "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          Create a <strong>Free</strong> Landing Page for Your Business
-           with AI.
+          Create Your <strong>Business</strong> Landing Page in Minutes
+           with <strong>AI</strong>.
         </h1>
 
         <button

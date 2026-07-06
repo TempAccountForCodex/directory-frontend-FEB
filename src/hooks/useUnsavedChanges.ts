@@ -46,6 +46,8 @@ export interface UseUnsavedChangesParams {
    * navigation within 5s of a successful save.
    */
   saveStatus?: SaveStatus;
+  /** Optional route-level escape hatch for navigation that should never block. */
+  allowNavigation?: (nextLocation: any) => boolean;
 }
 
 export interface UseUnsavedChangesReturn {
@@ -79,6 +81,7 @@ export function useUnsavedChanges({
   onSaveBeforeLeave,
   skipBeforeUnload = false,
   saveStatus,
+  allowNavigation,
 }: UseUnsavedChangesParams): UseUnsavedChangesReturn {
   // Manual override state
   const [manualDirty, setManualDirty] = useState<boolean | null>(null);
@@ -138,6 +141,10 @@ export function useUnsavedChanges({
         return false;
       }
 
+      if (allowNavigation?.(nextLocation)) {
+        return false;
+      }
+
       // Don't block if recently saved (within 5s)
       if (lastSavedAtRef.current > 0) {
         const elapsed = Date.now() - lastSavedAtRef.current;
@@ -148,7 +155,7 @@ export function useUnsavedChanges({
 
       return effectiveDirty;
     },
-    [effectiveDirty],
+    [allowNavigation, effectiveDirty],
   );
 
   const blocker = useBlocker(shouldBlock);

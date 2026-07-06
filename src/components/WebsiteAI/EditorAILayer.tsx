@@ -11,7 +11,13 @@
  * selection, an apply callback, a value reader, and access state.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Box from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -75,6 +81,12 @@ export interface EditorAILayerProps {
   revertibleTurns?: AIHistoryEntry[];
   versions?: VersionMeta[];
   openAskSignal?: number;
+  openAskAnchorRect?: {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null;
   getCurrentValue: (
     blockId: string | number | undefined,
     fieldPath: string,
@@ -86,6 +98,9 @@ export interface EditorAILayerProps {
   ) => void;
   onLocalPatchesApplied?: () => void | Promise<void>;
   onRefresh?: () => void | Promise<void>;
+  onAskAIButtonStatusChange?: (
+    status: "idle" | "open" | "loading" | "success" | "error",
+  ) => void;
 }
 
 type AIPillStatus = "idle" | "loading" | "success" | "error" | "draining";
@@ -109,19 +124,22 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
   revertibleTurns,
   versions,
   openAskSignal,
+  openAskAnchorRect,
   getCurrentValue,
   applyPatch,
   onLocalPatchesApplied,
   onRefresh,
+  onAskAIButtonStatusChange,
 }) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
   const [askOpen, setAskOpen] = useState(false);
+  const [dialogAnchorRect, setDialogAnchorRect] =
+    useState<EditorAILayerProps["openAskAnchorRect"]>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const lastOpenAskSignalRef = useRef(openAskSignal ?? 0);
   const [pillStatus, setPillStatus] = useState<AIPillStatus>("idle");
-  const [lastPillResult, setLastPillResult] =
-    useState<AIPillResult>("success");
+  const [lastPillResult, setLastPillResult] = useState<AIPillResult>("success");
   const pillTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
 
   const controller = useEditorAI({
@@ -245,8 +263,22 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
       return;
     }
     lastOpenAskSignalRef.current = openAskSignal;
+    setDialogAnchorRect(openAskAnchorRect ?? null);
     setAskOpen(true);
-  }, [openAskSignal, askDisabled]);
+    onAskAIButtonStatusChange?.("open");
+  }, [
+    openAskSignal,
+    openAskAnchorRect,
+    askDisabled,
+    onAskAIButtonStatusChange,
+  ]);
+
+  const openAskFromPill = useCallback(() => {
+    if (askDisabled) return;
+    setDialogAnchorRect(null);
+    setAskOpen(true);
+    onAskAIButtonStatusChange?.("open");
+  }, [askDisabled, onAskAIButtonStatusChange]);
 
   const clearPillTimers = useCallback(() => {
     pillTimersRef.current.forEach((timer) => clearTimeout(timer));
@@ -258,25 +290,28 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
   const showPillLoading = useCallback(() => {
     clearPillTimers();
     setPillStatus("loading");
-  }, [clearPillTimers]);
+    onAskAIButtonStatusChange?.("loading");
+  }, [clearPillTimers, onAskAIButtonStatusChange]);
 
   const showPillResult = useCallback(
     (result: AIPillResult) => {
       clearPillTimers();
       setLastPillResult(result);
       setPillStatus(result);
+      onAskAIButtonStatusChange?.(result);
       pillTimersRef.current.push(
         setTimeout(() => {
           setPillStatus("draining");
           pillTimersRef.current.push(
             setTimeout(() => {
               setPillStatus("idle");
+              onAskAIButtonStatusChange?.("idle");
             }, 1500),
           );
         }, 2500),
       );
     },
-    [clearPillTimers],
+    [clearPillTimers, onAskAIButtonStatusChange],
   );
 
   useEffect(() => {
@@ -320,7 +355,9 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
 
   const normalPillVisible = pillStatus === "idle" || pillStatus === "draining";
   const statusPillVisible =
-    pillStatus === "loading" || pillStatus === "success" || pillStatus === "error";
+    pillStatus === "loading" ||
+    pillStatus === "success" ||
+    pillStatus === "error";
 
   const pillBtn = (active: boolean) => ({
     display: "flex",
@@ -385,13 +422,9 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
                 aria-disabled={askDisabled}
                 aria-label="Ask AI"
                 tabIndex={askDisabled ? -1 : 0}
-                onClick={() => !askDisabled && setAskOpen(true)}
+                onClick={openAskFromPill}
                 onKeyDown={(event) =>
-                  handleKeyboardAction(
-                    event,
-                    () => setAskOpen(true),
-                    askDisabled,
-                  )
+                  handleKeyboardAction(event, openAskFromPill, askDisabled)
                 }
                 sx={{
                   ...pillBtn(!askDisabled),
@@ -493,7 +526,14 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
             </Box>
           </Box>
 
-          <Box sx={{ position: "absolute", inset: 0, zIndex: 20, pointerEvents: "none" }}>
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 20,
+              pointerEvents: "none",
+            }}
+          >
             <Box
               sx={{
                 position: "absolute",
@@ -725,7 +765,13 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
         open={askOpen}
         target={askTarget}
         controller={controller}
-        onClose={() => setAskOpen(false)}
+        anchorRect={dialogAnchorRect}
+        onClose={() => {
+          setAskOpen(false);
+          if (!requestInProgress && pillStatus === "idle") {
+            onAskAIButtonStatusChange?.("idle");
+          }
+        }}
         onRequestStarted={showPillLoading}
         onApplied={() => {
           showPillResult("success");
