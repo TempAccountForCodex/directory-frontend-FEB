@@ -58,6 +58,15 @@ export function getPatchFieldPath(patch: AIPatch): string {
   return patch.fieldPath || patch.path || patch.editorPath || "";
 }
 
+export function getPatchBlockId(patch: AIPatch): string | number | undefined {
+  if (patch.blockId != null) return patch.blockId;
+  const persistedFieldPath = getPatchFieldPath(patch);
+  const match = persistedFieldPath.match(/(?:pages\.[^.]+\.)?blocks\.([^\.]+)\./);
+  if (!match) return undefined;
+  const blockId = match[1];
+  return /^[0-9]+$/.test(blockId) ? Number(blockId) : blockId;
+}
+
 /**
  * The path INSIDE block.content the editor's inline-save handler writes. Prefer
  * the backend-provided `editorPath` (authoritative — the unified contract) and
@@ -226,7 +235,7 @@ export function normalizeChatPatches(patches: AIPatch[]): NormalizedPatch[] {
     const persistedFieldPath = getPatchFieldPath(p);
     return {
       aiEditKey: p.aiEditKey,
-      blockId: p.blockId,
+      blockId: p.blockId ?? getPatchBlockId(p),
       pageId: p.pageId,
       // Authoritative editor path from the backend; strip-prefix only as fallback.
       fieldPath: getPatchEditorPath(p),

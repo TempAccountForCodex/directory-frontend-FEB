@@ -141,6 +141,7 @@ const SideFilter: React.FC<SideFilterProps> = ({
     search: true,
     view: true,
     filters: true,
+    categories: false,
   });
 
   const selectedCategory = Array.isArray(category) ? category[0] || "" : "";
@@ -348,6 +349,24 @@ const SideFilter: React.FC<SideFilterProps> = ({
                 <MenuItem value=""><span style={{ color: textSub, fontFamily: font }}>All Categories</span></MenuItem>
                 {categoryArray.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
               </Select>
+
+              <SectionHeader label="Categories" open={expanded.categories} onToggle={() => toggle("categories")} />
+              <Collapse in={expanded.categories}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, pt: 0.5 }}>
+                  {categoryArray.map(opt => (
+                    <FilterToggle
+                      key={opt.value}
+                      active={selectedCategory === opt.value}
+                      label={opt.label}
+                      onClick={() => {
+                        setCategory([opt.value]);
+                        setPropertyType(opt.value);
+                        setAccNTaxService((v) => [opt.value]);
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Collapse>
             </Box>
           </Collapse>
         </Box>

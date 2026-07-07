@@ -58,6 +58,17 @@ const BeforeAfterBlock = memo(function BeforeAfterBlock({
   const beforeLabel = content.beforeLabel ?? "Before";
   const afterLabel = content.afterLabel ?? "After";
   const startPosition = content.startPosition ?? 50;
+  const pairs = Array.isArray((content as any).pairs)
+    ? (content as any).pairs
+    : [
+        {
+          beforeImage,
+          afterImage,
+          beforeLabel,
+          afterLabel,
+          caption: (content as any).caption,
+        },
+      ];
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<number>(startPosition);
@@ -135,180 +146,67 @@ const BeforeAfterBlock = memo(function BeforeAfterBlock({
           </Typography>
         )}
 
-        {/* Comparison frame */}
-        <Box
-          ref={containerRef}
-          data-testid="slider-container"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
-          sx={{
-            position: "relative",
-            overflow: "hidden",
-            borderRadius: "12px",
-            cursor: "col-resize",
-            userSelect: "none",
-            aspectRatio: "16/9",
-            touchAction: "none",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-            bgcolor: "#e2e8f0",
-          }}
-        >
-          {/* Before image — base layer */}
-          <Box
-            component="img"
-            src={beforeImage}
-            alt={beforeLabel}
-            loading="lazy"
-            sx={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              pointerEvents: "none",
-              userSelect: "none",
-              display: "block",
-            }}
-          />
-
-          {/* After image — revealed by clip-path */}
-          <Box
-            component="img"
-            src={afterImage}
-            alt={afterLabel}
-            loading="lazy"
-            sx={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              clipPath,
-              pointerEvents: "none",
-              userSelect: "none",
-              display: "block",
-            }}
-          />
-
-          {/* Before label */}
-          {beforeLabel && (
-            <Box
-              sx={{
-                position: "absolute",
-                top: 14,
-                left: 14,
-                px: 1.5,
-                py: 0.5,
-                bgcolor: "rgba(255,255,255,0.9)",
-                borderRadius: "6px",
-                pointerEvents: "none",
-                zIndex: 5,
-                backdropFilter: "blur(6px)",
-                boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
-              }}
-            >
-              <Typography
-                variant="caption"
+        {/* Comparison frames for each pair */}
+        <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: pairs.length > 1 ? "repeat(2, 1fr)" : "1fr" }}>
+          {pairs.map((p: any, idx: number) => {
+            const bImage = p.beforeImage || DEFAULT_BEFORE;
+            const aImage = p.afterImage || DEFAULT_AFTER;
+            const bLabel = p.beforeLabel ?? "Before";
+            const aLabel = p.afterLabel ?? "After";
+            const caption = p.caption;
+            return (
+              <Box
+                key={idx}
+                ref={containerRef}
+                data-testid="slider-container"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
                 sx={{
-                  color: "#1e293b",
-                  fontWeight: 700,
-                  fontSize: "0.78rem",
-                  letterSpacing: "0.02em",
+                  position: "relative",
+                  overflow: "hidden",
+                  borderRadius: "12px",
+                  cursor: "col-resize",
+                  userSelect: "none",
+                  aspectRatio: "16/9",
+                  touchAction: "none",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
+                  bgcolor: "#e2e8f0",
                 }}
               >
-                {beforeLabel}
-              </Typography>
-            </Box>
-          )}
+                <Box component="img" src={bImage} alt={bLabel} loading="lazy" sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none", userSelect: "none", display: "block" }} />
+                <Box component="img" src={aImage} alt={aLabel} loading="lazy" sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", clipPath, pointerEvents: "none", userSelect: "none", display: "block" }} />
 
-          {/* After label */}
-          {afterLabel && (
-            <Box
-              sx={{
-                position: "absolute",
-                top: 14,
-                right: 14,
-                px: 1.5,
-                py: 0.5,
-                bgcolor: "rgba(255,255,255,0.9)",
-                borderRadius: "6px",
-                pointerEvents: "none",
-                zIndex: 5,
-                backdropFilter: "blur(6px)",
-                boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
-              }}
-            >
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "#1e293b",
-                  fontWeight: 700,
-                  fontSize: "0.78rem",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {afterLabel}
-              </Typography>
-            </Box>
-          )}
+                {bLabel && (
+                  <Box sx={{ position: "absolute", top: 14, left: 14, px: 1.5, py: 0.5, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "6px", pointerEvents: "none", zIndex: 5, backdropFilter: "blur(6px)", boxShadow: "0 1px 6px rgba(0,0,0,0.1)" }}>
+                    <Typography variant="caption" sx={{ color: "#1e293b", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.02em" }}>{bLabel}</Typography>
+                  </Box>
+                )}
 
-          {/* Divider line + handle */}
-          <Box
-            data-testid="slider-line"
-            sx={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              left: `${position}%`,
-              transform: "translateX(-50%)",
-              width: "2px",
-              background: "#ffffff",
-              cursor: "col-resize",
-              zIndex: 10,
-              boxShadow: "0 0 10px rgba(0,0,0,0.25)",
-            }}
-          >
-            {/* Circular handle */}
-            <Box
-              data-testid="slider-handle"
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                background: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 2px 14px rgba(0,0,0,0.22)",
-                cursor: "grab",
-                userSelect: "none" as const,
-                "&:active": { cursor: "grabbing" },
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path
-                  d="M6 4L2 9L6 14"
-                  stroke="#475569"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 4L16 9L12 14"
-                  stroke="#475569"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Box>
-          </Box>
+                {aLabel && (
+                  <Box sx={{ position: "absolute", top: 14, right: 14, px: 1.5, py: 0.5, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "6px", pointerEvents: "none", zIndex: 5, backdropFilter: "blur(6px)", boxShadow: "0 1px 6px rgba(0,0,0,0.1)" }}>
+                    <Typography variant="caption" sx={{ color: "#1e293b", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.02em" }}>{aLabel}</Typography>
+                  </Box>
+                )}
+
+                <Box data-testid="slider-line" sx={{ position: "absolute", top: 0, bottom: 0, left: `${position}%`, transform: "translateX(-50%)", width: "2px", background: "#ffffff", cursor: "col-resize", zIndex: 10, boxShadow: "0 0 10px rgba(0,0,0,0.25)" }}>
+                  <Box data-testid="slider-handle" sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 44, height: 44, borderRadius: "50%", background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 14px rgba(0,0,0,0.22)", cursor: "grab", userSelect: "none" as const, "&:active": { cursor: "grabbing" } }}>
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <path d="M6 4L2 9L6 14" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M12 4L16 9L12 14" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </Box>
+                </Box>
+
+                {caption && (
+                  <Box sx={{ position: "relative", mt: 1 }}>
+                    <Typography variant="caption" sx={{ color: "#475569" }}>{caption}</Typography>
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
         </Box>
       </Container>
     </Box>

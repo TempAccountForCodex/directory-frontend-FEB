@@ -22,7 +22,7 @@ import Box from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
-import { Check, Sparkles, Undo2, MessageSquare, X } from "lucide-react";
+import { Check, Sparkles, Undo2, Redo2, MessageSquare, X } from "lucide-react";
 import { getDashboardColors } from "../../styles/dashboardTheme";
 import { useTheme as useCustomTheme } from "../../context/ThemeContext";
 import { useEditorAI, type AITargetRef } from "./useEditorAI";
@@ -31,6 +31,8 @@ import AskAIDialog from "./AskAIDialog";
 import AIConflictDialog from "./AIConflictDialog";
 import AIChatPanel from "./AIChatPanel";
 import type { AIHistoryEntry, VersionMeta } from "../../api/websiteAI";
+import { useRotatingPhrase } from "@/hooks/useRotatingPhrase";
+import { Fade } from "@mui/material";
 
 export interface EditorAISelection {
   editable?: {
@@ -79,6 +81,7 @@ export interface EditorAILayerProps {
   disabledReason: string | null;
   selection: EditorAISelection;
   revertibleTurns?: AIHistoryEntry[];
+  aiHistory?: AIHistoryEntry[];
   versions?: VersionMeta[];
   openAskSignal?: number;
   openAskAnchorRect?: {
@@ -117,11 +120,13 @@ const LIQUID_BUBBLES = [
 
 const EditorAILayer: React.FC<EditorAILayerProps> = ({
   websiteId,
+  websiteName,
   pageId,
   canUseAI,
   disabledReason,
   selection,
   revertibleTurns,
+  aiHistory,
   versions,
   openAskSignal,
   openAskAnchorRect,
@@ -146,6 +151,7 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
     websiteId,
     pageId,
     revertibleTurns,
+    aiHistory,
     getCurrentValue,
     applyPatch,
     onLocalPatchesApplied,
@@ -177,21 +183,24 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
         aiEditKey: selection.section.aiEditKey,
       };
     }
-    if (selection.page) {
+    if (selection.page || pageId) {
       return {
-        fieldPath: `pages.${selection.page.id}.title`,
-        label: selection.page.title || "Page",
+        fieldPath: `pages.${selection.page?.id ?? pageId}.title`,
+        label: selection.page?.title || "Page",
         kind: "page",
       };
     }
     return null;
-  }, [selection]);
+  }, [selection, pageId]);
+
+    const phrase = useRotatingPhrase(pillStatus === "loading", 1000);
+  
 
   const scopeOptions = useMemo(
     () => [
       {
         scope: "target" as const,
-        label: "Selection",
+        label: selection.editable?.label || "Selected element",
         available: !!selection.editable,
         blockId: selection.editable?.blockId,
         fieldPath:
@@ -207,7 +216,7 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
       },
       {
         scope: "section" as const,
-        label: "Section",
+        label: selection.section?.label || "Selected section",
         available: !!selection.section,
         blockId: selection.section?.blockId,
         fieldPath:
@@ -223,16 +232,16 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
       },
       {
         scope: "page" as const,
-        label: "Page",
+        label: selection.page?.title || "Current page",
         available: !!pageId,
       },
       {
         scope: "website" as const,
-        label: "Whole site",
+        label: websiteName || "Whole site",
         available: true,
       },
     ],
-    [selection, pageId],
+    [selection, pageId, websiteName],
   );
 
   const requestInProgress = controller.activeRequest || controller.chatLoading;
@@ -499,6 +508,43 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
 
               <Tooltip
                 title={
+                  controller.redoDepth > 0
+                    ? "Redo last AI undo (last two only)"
+                    : "No AI changes to redo"
+                }
+              >
+                <Box
+                  component="span"
+                  role="button"
+                  aria-disabled={controller.redoDepth <= 0}
+                  aria-label="Redo AI"
+                  tabIndex={controller.redoDepth > 0 ? 0 : -1}
+                  onClick={() =>
+                    controller.redoDepth > 0 && controller.redoLast()
+                  }
+                  onKeyDown={(event) =>
+                    handleKeyboardAction(
+                      event,
+                      () => controller.redoLast(),
+                      controller.redoDepth <= 0,
+                    )
+                  }
+                  sx={{
+                    ...pillBtn(controller.redoDepth > 0),
+                    color:
+                      controller.redoDepth > 0
+                        ? colors.text
+                        : colors.textSecondary,
+                    opacity: controller.redoDepth > 0 ? 1 : 0.5,
+                  }}
+                >
+                  <Redo2 size={15} />
+                  Redo AI
+                </Box>
+              </Tooltip>
+
+              <Tooltip
+                title={
                   canUseAI ? "Open AI chat" : disabledReason || "AI unavailable"
                 }
               >
@@ -666,7 +712,17 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
                 }}
               >
                 <Sparkles size={15} />
-                AI request in progress
+                <Fade key={phrase} in timeout={250}>
+                {/* AI request in progress */}
+                  <Typography
+                    sx={{
+                      fontSize: 12.5,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {phrase}…
+                  </Typography>
+                </Fade>
               </Box>
             )}
             {pillStatus === "success" && (

@@ -136,6 +136,121 @@ describe("useEditorAI · Ask AI", () => {
     expect(hook.result.current.error?.code).toBe("UNSUPPORTED_EDIT_FIELD");
     expect(hook.result.current.proposal).toBeNull();
   });
+
+  it("falls back to editor-chat for a text rewrite when edit-element provider fails", async () => {
+    mockEdit.mockRejectedValue(
+      new WebsiteAIRequestError({
+        code: "AI_PROVIDER_UNAVAILABLE",
+        message: "The AI service did not return a result. Please try again.",
+      }),
+    );
+    mockChat.mockResolvedValue({
+      reply: "Rewrote the heading.",
+      sessionId: "chat-session-1",
+      patches: [
+        {
+          blockId: 9,
+          path: "pages.10.blocks.9.content.heading",
+          editorPath: "heading",
+          value: "Crafted for Modern Kitchens",
+        },
+      ],
+    });
+    const { hook, applyPatch } = setup();
+    let applied = false;
+    await act(async () => {
+      applied = await hook.result.current.askAI(target, "make it more premium");
+    });
+
+    expect(mockChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        websiteId: 1,
+        scope: "target",
+        pageId: 10,
+        blockId: 9,
+        target: expect.objectContaining({
+          kind: "target",
+          fieldPath: "pages.10.blocks.9.content.heading",
+        }),
+        // The fallback steers content rewrites to stay on-brand so backend
+        // moderation accepts them.
+        message: expect.stringContaining("make it more premium"),
+      }),
+    );
+    expect(applied).toBe(true);
+    expect(applyPatch).toHaveBeenCalledWith(
+      9,
+      "heading",
+      "Crafted for Modern Kitchens",
+    );
+    expect(hook.result.current.error).toBeNull();
+  });
+
+  it("keeps the deterministic style fallback (no chat call) for style edits", async () => {
+    mockEdit.mockRejectedValue(
+      new WebsiteAIRequestError({
+        code: "AI_PROVIDER_UNAVAILABLE",
+        message: "unavailable",
+      }),
+    );
+    const { hook, applyPatch } = setup();
+    await act(async () => {
+      await hook.result.current.askAI(
+        {
+          kind: "editable",
+          blockId: 9,
+          fieldPath: "headingStyle.color",
+          persistedFieldPath: "content.headingStyle.color",
+        },
+        "make it red",
+      );
+    });
+    expect(mockChat).not.toHaveBeenCalled();
+    expect(applyPatch).toHaveBeenCalledWith(9, "headingStyle.color", "#ff0000");
+  });
+
+  it("surfaces the chat error when the editor-chat fallback also fails", async () => {
+    mockEdit.mockRejectedValue(
+      new WebsiteAIRequestError({
+        code: "AI_PROVIDER_UNAVAILABLE",
+        message: "unavailable",
+      }),
+    );
+    mockChat.mockRejectedValue(
+      new WebsiteAIRequestError({
+        code: "PATCH_MODERATION_BLOCKED",
+        message: "The suggested content was flagged by moderation.",
+      }),
+    );
+    const { hook, applyPatch } = setup();
+    let applied = true;
+    await act(async () => {
+      applied = await hook.result.current.askAI(target, "rewrite this text");
+    });
+    expect(applied).toBe(false);
+    expect(applyPatch).not.toHaveBeenCalled();
+    expect(hook.result.current.error?.code).toBe("PATCH_MODERATION_BLOCKED");
+  });
+
+  it("reports failure when the chat fallback returns no applicable patches", async () => {
+    mockEdit.mockRejectedValue(
+      new WebsiteAIRequestError({
+        code: "AI_FAILED",
+        message: "failed",
+      }),
+    );
+    mockChat.mockResolvedValue({ reply: "I could not find that element.", patches: [] });
+    const { hook } = setup();
+    let applied = true;
+    await act(async () => {
+      applied = await hook.result.current.askAI(target, "rewrite this text");
+    });
+    expect(applied).toBe(false);
+    expect(hook.result.current.error?.code).toBe("INVALID_EDIT_RESULT");
+    expect(hook.result.current.error?.message).toBe(
+      "I could not find that element.",
+    );
+  });
 });
 
 describe("useEditorAI · Apply / conflict / revert", () => {
@@ -328,10 +443,91 @@ describe("useEditorAI · Apply / conflict / revert", () => {
     });
     expect(hook.result.current.revertDepth).toBe(MAX_REVERT_DEPTH);
   });
+
+  it("can undo a locally applied AI edit before backend history refreshes", async () => {
+    mockEdit.mockResolvedValue({
+      success: true,
+      patches: [
+        {
+          blockId: 9,
+          path: "content.heading",
+          value: "New local value",
+        },
+      ],
+    });
+    const { hook, applyPatch } = setup();
+    await act(async () => {
+      await hook.result.current.askAI(
+        {
+          kind: "editable",
+          blockId: 9,
+          fieldPath: "heading",
+          persistedFieldPath: "content.heading",
+        },
+        "rewrite heading",
+      );
+    });
+    expect(hook.result.current.revertDepth).toBe(1);
+    applyPatch.mockClear();
+
+    await act(async () => {
+      await hook.result.current.revertLast();
+    });
+
+    await waitFor(() =>
+      expect(mockRevert).toHaveBeenCalledWith({
+        websiteId: 1,
+        turnId: "rec_1",
+      }),
+    );
+    expect(applyPatch).toHaveBeenCalledWith(9, "heading", "Original");
+  });
+
+  it("can redo a locally undone AI edit and keeps both stacks capped to two turns", async () => {
+    mockEdit
+      .mockResolvedValueOnce({
+        success: true,
+        patches: [{ blockId: 9, path: "content.heading", value: "First AI" }],
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        patches: [{ blockId: 9, path: "content.heading", value: "Second AI" }],
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        patches: [{ blockId: 9, path: "content.heading", value: "Third AI" }],
+      });
+
+    const { hook, applyPatch } = setup();
+
+    await act(async () => {
+      await hook.result.current.askAI(target, "first rewrite");
+      await hook.result.current.askAI(target, "second rewrite");
+      await hook.result.current.askAI(target, "third rewrite");
+    });
+
+    expect(hook.result.current.revertDepth).toBe(2);
+    applyPatch.mockClear();
+
+    await act(async () => {
+      await hook.result.current.revertLast();
+    });
+
+    expect(applyPatch).toHaveBeenLastCalledWith(9, "heading", "Second AI");
+    expect(hook.result.current.redoDepth).toBe(1);
+
+    await act(async () => {
+      await hook.result.current.redoLast();
+    });
+
+    expect(applyPatch).toHaveBeenLastCalledWith(9, "heading", "Third AI");
+    expect(hook.result.current.revertDepth).toBe(2);
+    expect(hook.result.current.redoDepth).toBe(0);
+  });
 });
 
 describe("useEditorAI · chat", () => {
-  it("adds assistant reply with pending patches and applies them", async () => {
+  it("applies assistant patch replies through the shared local patch flow", async () => {
     mockChat.mockResolvedValue({
       reply: "Updated the heading.",
       patches: [{ blockId: 9, path: "content.heading", value: "Chat value" }],
@@ -343,11 +539,121 @@ describe("useEditorAI · chat", () => {
     const assistant = hook.result.current.chatMessages.find(
       (m) => m.role === "assistant",
     );
-    expect(assistant?.pendingPatches).toHaveLength(1);
+    expect(assistant?.pendingPatches).toBeUndefined();
+    expect(applyPatch).toHaveBeenCalledWith(9, "heading", "Chat value");
+  });
+
+  it("applies page-scoped chat patches when blockId is inferred from persisted path", async () => {
+    mockChat.mockResolvedValue({
+      reply: "Updated the heading.",
+      patches: [
+        {
+          path: "pages.10.blocks.9.content.heading",
+          value: "Chat value",
+        },
+      ],
+    });
+    const { hook, applyPatch } = setup();
     await act(async () => {
-      await hook.result.current.applyChatMessage(assistant!.id);
+      await hook.result.current.sendChat("page", "rewrite heading");
     });
     expect(applyPatch).toHaveBeenCalledWith(9, "heading", "Chat value");
+  });
+
+  it("sends selection-scoped chat with the selected schema target", async () => {
+    mockChat.mockResolvedValue({
+      reply: "Updated the selected text.",
+      patches: [
+        {
+          blockId: 9,
+          path: "pages.10.blocks.9.content.headingStyle.color",
+          editorPath: "headingStyle.color",
+          value: "#ff0000",
+        },
+      ],
+    });
+    const { hook, applyPatch } = setup();
+    await act(async () => {
+      await hook.result.current.sendChat("target", "make selected text red", {
+        blockId: 9,
+        fieldPath: "pages.10.blocks.9.content.heading",
+        aiEditKey: "heading-key",
+      });
+    });
+
+    expect(mockChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: "target",
+        blockId: 9,
+        target: {
+          kind: "target",
+          fieldPath: "pages.10.blocks.9.content.heading",
+          aiEditKey: "heading-key",
+        },
+      }),
+    );
+    expect(applyPatch).toHaveBeenCalledWith(
+      9,
+      "headingStyle.color",
+      "#ff0000",
+    );
+  });
+
+  it("sends section-scoped chat with the section schema target", async () => {
+    mockChat.mockResolvedValue({
+      reply: "Updated the section.",
+      patches: [
+        {
+          path: "pages.10.blocks.9.content.sectionStyle.backgroundColor",
+          editorPath: "sectionStyle.backgroundColor",
+          value: "#111827",
+        },
+      ],
+    });
+    const { hook, applyPatch } = setup();
+    await act(async () => {
+      await hook.result.current.sendChat("section", "darken this section", {
+        blockId: 9,
+        fieldPath: "pages.10.blocks.9.content.sectionStyle",
+        aiEditKey: "section-style-key",
+      });
+    });
+
+    expect(mockChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: "section",
+        blockId: 9,
+        target: {
+          kind: "section",
+          fieldPath: "pages.10.blocks.9.content.sectionStyle",
+          aiEditKey: "section-style-key",
+        },
+      }),
+    );
+    expect(applyPatch).toHaveBeenCalledWith(
+      9,
+      "sectionStyle.backgroundColor",
+      "#111827",
+    );
+  });
+
+  it("does not send an empty target object for page-scoped chat", async () => {
+    mockChat.mockResolvedValue({
+      reply: "Updated the page.",
+      patches: [],
+    });
+    const { hook } = setup();
+    await act(async () => {
+      await hook.result.current.sendChat("page", "refresh this page");
+    });
+
+    expect(mockChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: "page",
+        pageId: 10,
+        target: undefined,
+      }),
+    );
   });
 
   it("stores failures as error messages for follow-up", async () => {
@@ -365,10 +671,10 @@ describe("useEditorAI · chat", () => {
     expect(err?.text).toBe("not available yet");
   });
 
-  it("dismisses pending chat patches", async () => {
+  it("keeps plain assistant replies when chat returns no patches", async () => {
     mockChat.mockResolvedValue({
       reply: "ok",
-      patches: [{ blockId: 9, path: "content.heading", value: "v" }],
+      patches: [],
     });
     const { hook } = setup();
     await act(async () => {
@@ -377,10 +683,7 @@ describe("useEditorAI · chat", () => {
     const assistant = hook.result.current.chatMessages.find(
       (m) => m.role === "assistant",
     )!;
-    act(() => hook.result.current.dismissChatPatches(assistant.id));
-    const after = hook.result.current.chatMessages.find(
-      (m) => m.id === assistant.id,
-    );
-    expect(after?.pendingPatches).toBeUndefined();
+    expect(assistant.text).toBe("ok");
+    expect(assistant.pendingPatches).toBeUndefined();
   });
 });

@@ -2873,6 +2873,44 @@ const PreviewPanel = React.memo(function PreviewPanel({
             ))}
           </Select>
 
+          {/* Preview mode toggle (Live / Static) */}
+          <ToggleButtonGroup
+            value={mode}
+            exclusive
+            onChange={(_, value) => {
+              if (typeof value === "string") setMode(value as PreviewMode);
+            }}
+            size="small"
+            aria-label="Preview mode"
+            sx={{
+              p: 0.35,
+              borderRadius: "14px",
+              backgroundColor: "rgba(255,255,255,0.74)",
+              border: "1px solid rgba(148,163,184,0.16)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.85)",
+              "& .MuiToggleButton-root": {
+                border: "1px solid transparent",
+                color: "#6b7280",
+                minWidth: 88,
+                minHeight: 36,
+                borderRadius: "10px !important",
+                backgroundColor: "transparent",
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                "&.Mui-selected": {
+                  background:
+                    "linear-gradient(135deg, #142c2f 0%, #24484a 100%)",
+                  color: "#ffffff",
+                  borderColor: "rgba(59,130,246,0.18)",
+                  boxShadow: "0 10px 24px rgba(37,99,235,0.14)",
+                },
+              },
+            }}
+          >
+            <ToggleButton value="live" aria-label="Live mode">Live mode</ToggleButton>
+            <ToggleButton value="static" aria-label="Static mode">Static mode</ToggleButton>
+          </ToggleButtonGroup>
+
           {/* Viewport toggle */}
           <ToggleButtonGroup
             value={viewport}
@@ -2924,6 +2962,11 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
         {/* Right: Zoom + Rotation + Scale-to-fit + Refresh */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* Viewport dimensions */}
+          <Typography variant="caption" sx={{ color: colors.textSecondary, mr: 0.5 }}>
+            {`${displayWidth} × ${displayHeight}`}
+          </Typography>
+
           {/* Zoom controls */}
           <ToggleButtonGroup
             value={zoom}

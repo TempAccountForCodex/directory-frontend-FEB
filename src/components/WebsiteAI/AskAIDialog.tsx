@@ -538,6 +538,18 @@ const AskAIDialog: React.FC<AskAIDialogProps> = ({
                 </button>
               ))}
             </div>
+
+            <div
+              style={{
+                color: "#667085",
+                fontSize: 11,
+                fontWeight: 600,
+                lineHeight: 1.4,
+                marginTop: 8,
+              }}
+            >
+              Only the last two AI changes can be reverted.
+            </div>
           </div>
         </div>
       </div>

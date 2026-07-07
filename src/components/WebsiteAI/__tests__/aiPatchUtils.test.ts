@@ -116,6 +116,23 @@ describe("aiPatchUtils", () => {
     ]);
   });
 
+  it("extracts blockId from persisted page/block patch paths when blockId is absent", () => {
+    const out = normalizeChatPatches([
+      { path: "pages.10.blocks.9.content.heading", value: "Hi" },
+    ]);
+    expect(out).toEqual([
+      {
+        aiEditKey: undefined,
+        blockId: 9,
+        pageId: undefined,
+        fieldPath: "heading",
+        persistedFieldPath: "pages.10.blocks.9.content.heading",
+        value: "Hi",
+        before: undefined,
+      },
+    ]);
+  });
+
   it("converts a patch map into a patch list", () => {
     const out = patchMapToList({ "content.heading": "Hi" }, 789);
     expect(out).toEqual([

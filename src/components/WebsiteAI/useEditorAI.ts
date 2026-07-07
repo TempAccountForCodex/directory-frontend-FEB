@@ -11,7 +11,7 @@
  *   backend records a revertible AI turn without fighting the editor save flow.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   editElement,
   editorChat,
@@ -39,6 +39,31 @@ import {
 
 export const MAX_ATTEMPTS = 3;
 export const MAX_REVERT_DEPTH = 2;
+
+/**
+ * edit-element errors that are worth retrying through the editor-chat endpoint
+ * (scope "target"): provider failures mean the AI call itself failed (the chat
+ * path is more reliable), and moderation blocks are often resolved by the
+ * fallback's on-brand steering of the rewrite. The retry runs the same rewrite
+ * against the same schema target.
+ */
+const CHAT_RETRYABLE_CODES = new Set<WebsiteAIError["code"]>([
+  "AI_PROVIDER_UNAVAILABLE",
+  "AI_UNAVAILABLE",
+  "AI_FAILED",
+  "PATCH_MODERATION_BLOCKED",
+]);
+
+const isWebsiteFieldPath = (path?: string | null) =>
+  String(path || "").startsWith("website.");
+
+const isLocallyApplicablePatch = (patch: {
+  blockId?: number | string;
+  fieldPath?: string;
+  persistedFieldPath?: string;
+}) =>
+  (patch.blockId != null && patch.persistedFieldPath && isBlockContentPath(patch.persistedFieldPath)) ||
+  isWebsiteFieldPath(patch.persistedFieldPath || patch.fieldPath);
 
 export interface AITargetRef {
   blockId?: number | string;
@@ -109,10 +134,18 @@ export interface AIConflict {
 
 export interface RevertEntry {
   turnId: string;
+  /**
+   * The backend turn id this local entry was recorded under (returned by
+   * record-applied-edit). Lets a local undo also mark the server turn reverted
+   * and deduplicates the entry against server history.
+   */
+  serverTurnId?: string;
   patches: Array<{
     blockId?: number | string;
     fieldPath: string;
+    persistedFieldPath?: string;
     beforeValue: unknown;
+    afterValue: unknown;
   }>;
   label?: string;
 }
@@ -132,6 +165,7 @@ export interface ChatMessage {
     before?: unknown;
   }[];
   requiresConfirmation?: boolean;
+  applied?: boolean;
   sessionId?: string;
   versionId?: string;
   isError?: boolean;
@@ -141,6 +175,7 @@ export interface UseEditorAIDeps {
   websiteId: number;
   pageId: number | null;
   revertibleTurns?: AIHistoryEntry[];
+  aiHistory?: AIHistoryEntry[];
   getCurrentValue: (
     blockId: number | string | undefined,
     fieldPath: string,
@@ -152,6 +187,13 @@ export interface UseEditorAIDeps {
   ) => void;
   onLocalPatchesApplied?: (patches: AIProposalPatch[]) => void | Promise<void>;
   onRefresh?: () => void | Promise<void>;
+  /**
+   * Lightweight refresh of ONLY the website AI context (aiHistory /
+   * revertible turns). Used after reverts instead of `onRefresh` — a full
+   * website refetch reloads every block and makes the editor flicker
+   * old<->new while its state mirrors rehydrate.
+   */
+  onRefreshAIContext?: () => void | Promise<void>;
 }
 
 function buildEditSessionId(
@@ -478,26 +520,86 @@ export function useEditorAI({
   websiteId,
   pageId,
   revertibleTurns = [],
+  aiHistory = [],
   getCurrentValue,
   applyPatch,
   onLocalPatchesApplied,
   onRefresh,
+  onRefreshAIContext,
 }: UseEditorAIDeps) {
   const [activeRequest, setActiveRequest] = useState(false);
   const [proposal, setProposal] = useState<AIProposal | null>(null);
   const [conflict, setConflict] = useState<AIConflict | null>(null);
   const [error, setError] = useState<WebsiteAIError | null>(null);
   const [localRevertStack, setLocalRevertStack] = useState<RevertEntry[]>([]);
+  const [localRedoStack, setLocalRedoStack] = useState<RevertEntry[]>([]);
+  // Server turns already reverted (or found dead) this session. The parent's
+  // aiHistory only refreshes on a full website reload, so without this a
+  // reverted/unrevertible turn would keep being offered for undo.
+  const [consumedServerTurnIds, setConsumedServerTurnIds] = useState<
+    ReadonlySet<string>
+  >(new Set());
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
+
+  // Load chat history from backend aiHistory on mount
+  useEffect(() => {
+    if (aiHistory.length > 0) {
+      const historyMessages: ChatMessage[] = aiHistory
+        .filter(item => item.prompt || item.response)
+        .flatMap(item => {
+          const messages: ChatMessage[] = [];
+          if (item.prompt) {
+            messages.push({
+              id: item.turnId || `h_${item.timestamp || Date.now()}`,
+              role: "user" as const,
+              text: item.prompt,
+              turnId: item.turnId,
+            });
+          }
+          if (item.response) {
+            // Handle response which might be an object or string
+            let responseText = "";
+            if (typeof item.response === "string") {
+              responseText = item.response;
+            } else if (item.response && typeof item.response === "object") {
+              // Try to extract text from common response structures
+              const resp = item.response as Record<string, unknown>;
+              responseText = (resp.reply || resp.text || resp.message || JSON.stringify(resp)) as string;
+            }
+            if (responseText) {
+              messages.push({
+                id: `a_${item.timestamp || Date.now()}`,
+                role: "assistant" as const,
+                text: responseText,
+                turnId: item.turnId,
+              });
+            }
+          }
+          return messages;
+        });
+      setChatMessages(historyMessages);
+    }
+  }, [aiHistory]);
 
   const attemptsRef = useRef<Map<string, number>>(new Map());
   const editSessionRef = useRef<Map<string, string>>(new Map());
 
-  const latestRevertibleTurns = useMemo(
-    () => revertibleTurns.slice(0, MAX_REVERT_DEPTH),
-    [revertibleTurns],
-  );
+  const latestRevertibleTurns = useMemo(() => {
+    // Server turns that duplicate a local entry (same recorded turn) or were
+    // already consumed this session are not offered again.
+    const localServerIds = new Set(
+      localRevertStack
+        .map((entry) => entry.serverTurnId)
+        .filter((id): id is string => Boolean(id)),
+    );
+    return revertibleTurns
+      .filter((turn) => {
+        const id = turnIdFromHistory(turn);
+        return id && !consumedServerTurnIds.has(id) && !localServerIds.has(id);
+      })
+      .slice(0, MAX_REVERT_DEPTH);
+  }, [consumedServerTurnIds, localRevertStack, revertibleTurns]);
 
   const attemptKey = (target: AITargetRef, instruction: string) =>
     `${target.blockId ?? "page"}::${target.fieldPath}::${target.aiEditKey ?? ""}::${instruction
@@ -554,10 +656,7 @@ export function useEditorAI({
       // writer fighting the editor save) and we never refetch the whole website
       // (a full refresh races with lock/approval polling and briefly rehydrates
       // stale template data, making the selection flip old<->new).
-      const applied = patches.filter(
-        (patch) =>
-          patch.blockId != null && isBlockContentPath(patch.persistedFieldPath),
-      );
+      const applied = patches.filter(isLocallyApplicablePatch);
       applied.forEach((patch) => {
         applyPatch(patch.blockId, patch.fieldPath, patch.value);
       });
@@ -566,12 +665,35 @@ export function useEditorAI({
       // (blocks/blocksRef/pages/selectedPage/persistedPages) and mark dirty.
       await onLocalPatchesApplied?.(applied.length ? applied : patches);
 
+      const localTurnId = applied.length
+        ? meta?.turnId ||
+          `local:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`
+        : null;
+
+      if (applied.length && localTurnId) {
+        setLocalRevertStack((prev) => [
+          ...prev.filter((entry) => entry.turnId !== localTurnId),
+          {
+            turnId: localTurnId,
+            label: meta?.summary || meta?.instruction || "AI change",
+            patches: applied.map((patch) => ({
+              blockId: patch.blockId,
+              fieldPath: patch.fieldPath,
+              persistedFieldPath: patch.persistedFieldPath,
+              beforeValue: patch.baselineValue,
+              afterValue: patch.value,
+            })),
+          },
+        ].slice(-MAX_REVERT_DEPTH));
+        setLocalRedoStack([]);
+      }
+
       // Best-effort revert bookkeeping. Sends explicit before/after so the turn
       // is accurate regardless of when the editor save lands. Never blocks the UI.
       if (applied.length) {
         recordAppliedEdit({
           websiteId,
-          turnId: meta?.turnId,
+          turnId: localTurnId,
           aiEditKey: meta?.aiEditKey ?? applied[0]?.aiEditKey,
           instruction: meta?.instruction,
           summary: meta?.summary,
@@ -582,13 +704,85 @@ export function useEditorAI({
             before: patch.baselineValue,
             value: patch.value,
           })),
-        }).catch(() => {
+        })
+          .then((result) => {
+            if (!result?.turnId) return;
+            if (!localTurnId) return;
+            setLocalRevertStack((prev) =>
+              prev.map((entry) =>
+                entry.turnId === localTurnId
+                  ? { ...entry, serverTurnId: result.turnId || undefined }
+                  : entry,
+              ),
+            );
+          })
+          .catch(() => {
           /* bookkeeping only — ignore failures */
-        });
+          });
       }
       return true;
     },
     [applyPatch, getCurrentValue, onLocalPatchesApplied, websiteId],
+  );
+
+  const applyLocalTurn = useCallback(
+    async (turn: RevertEntry, direction: "undo" | "redo") => {
+      const applied = turn.patches.map((patch) => {
+        const value =
+          direction === "undo" ? patch.beforeValue : patch.afterValue;
+        const websiteFieldPath = patch.persistedFieldPath || patch.fieldPath;
+        if (isWebsiteFieldPath(websiteFieldPath)) {
+          applyPatch(undefined, websiteFieldPath, value);
+          return {
+            blockId: patch.blockId,
+            fieldPath: websiteFieldPath,
+            persistedFieldPath: websiteFieldPath,
+            value,
+            baselineValue: getCurrentValue(undefined, websiteFieldPath),
+          };
+        }
+
+        // Attempt to resolve persisted path if available to ensure correct
+        // block lookup when block ids shifted after saves.
+        const persisted =
+          patch.persistedFieldPath ||
+          toPersistedBlockContentPath(patch.fieldPath, pageId, patch.blockId);
+
+        let fieldPath = toFieldPath(persisted);
+
+        // If resolving the persisted path yields no current value for the
+        // expected block (likely because block ids changed), fall back to the
+        // original editor-internal `fieldPath` the revert entry carried. This
+        // improves robustness when block ids are remapped by backend saves.
+        const current = getCurrentValue(patch.blockId, fieldPath);
+        if (typeof current === "undefined") {
+          fieldPath = patch.fieldPath || fieldPath;
+        }
+
+        applyPatch(patch.blockId, fieldPath, value);
+        return {
+          blockId: patch.blockId,
+          fieldPath,
+          persistedFieldPath: persisted,
+          value,
+          baselineValue: getCurrentValue(patch.blockId, fieldPath),
+        };
+      });
+
+      await onLocalPatchesApplied?.(applied);
+      if (direction === "undo") {
+        setLocalRevertStack((prev) =>
+          prev.filter((entry) => entry.turnId !== turn.turnId),
+        );
+        setLocalRedoStack((prev) => [...prev, turn].slice(-MAX_REVERT_DEPTH));
+      } else {
+        setLocalRedoStack((prev) =>
+          prev.filter((entry) => entry.turnId !== turn.turnId),
+        );
+        setLocalRevertStack((prev) => [...prev, turn].slice(-MAX_REVERT_DEPTH));
+      }
+    },
+    [applyPatch, getCurrentValue, onLocalPatchesApplied, pageId],
   );
 
   const askAI = useCallback(
@@ -760,6 +954,96 @@ export function useEditorAI({
           });
         }
 
+        // No deterministic patch (content/text rewrites): retry the same
+        // rewrite through editor-chat before giving up. The provider behind
+        // the backend fails transiently, so one extra chat attempt is allowed.
+        if (CHAT_RETRYABLE_CODES.has(aiErr.code)) {
+          try {
+            // Backend moderation rejects copy it deems unrelated to the
+            // business/category. Steering the rewrite towards on-brand,
+            // same-length copy measurably raises the moderation pass rate.
+            const chatMessage = isStyleInstruction(instruction)
+              ? instruction
+              : `${instruction.replace(/[.\s]+$/, "")}. Keep the new text directly relevant to this business and its category, and roughly the same length as the current text.`;
+            let chatResult: Awaited<ReturnType<typeof editorChat>>;
+            for (let chatAttempt = 1; ; chatAttempt += 1) {
+              try {
+                chatResult = await editorChat({
+                  websiteId,
+                  scope: "target",
+                  pageId: pageId ?? undefined,
+                  blockId: requestTarget.blockId,
+                  target: {
+                    kind: "target",
+                    fieldPath: apiTarget.fieldPath,
+                    aiEditKey: apiTarget.aiEditKey,
+                  },
+                  message: chatMessage,
+                });
+                break;
+              } catch (chatCallErr) {
+                const chatCallAiErr =
+                  chatCallErr instanceof WebsiteAIRequestError
+                    ? chatCallErr.aiError
+                    : normalizeWebsiteAIError(chatCallErr);
+                if (
+                  chatAttempt >= 2 ||
+                  !CHAT_RETRYABLE_CODES.has(chatCallAiErr.code)
+                ) {
+                  throw chatCallErr;
+                }
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+              }
+            }
+            const chatPatches = normalizeChatPatches(chatResult.patches || [])
+              .filter((patch) => patch.value != null)
+              .map((patch) => {
+                const blockId = patch.blockId ?? requestTarget.blockId;
+                const isRequestedField =
+                  patch.fieldPath === requestTarget.fieldPath &&
+                  String(blockId ?? "") === String(requestTarget.blockId ?? "");
+                return {
+                  aiEditKey: patch.aiEditKey,
+                  blockId,
+                  pageId: patch.pageId,
+                  fieldPath: patch.fieldPath,
+                  persistedFieldPath: patch.persistedFieldPath,
+                  value: patch.value,
+                  baselineValue: isRequestedField
+                    ? baselineValue
+                    : patch.before ?? getCurrentValue(blockId, patch.fieldPath),
+                };
+              });
+            if (chatPatches.length) {
+              attemptsRef.current.set(key, priorAttempts + 1);
+              const chatTurnId = (chatResult as { turnId?: string }).turnId;
+              return await applyBackendPatches(chatPatches, {
+                instruction,
+                summary: chatResult.reply,
+                turnId:
+                  typeof chatTurnId === "string"
+                    ? chatTurnId
+                    : chatResult.sessionId,
+                aiEditKey: chatPatches[0]?.aiEditKey ?? requestTarget.aiEditKey,
+              });
+            }
+            setError({
+              code: "INVALID_EDIT_RESULT",
+              message:
+                chatResult.reply ||
+                "The AI service did not return a result. Please try again.",
+            });
+            return false;
+          } catch (chatErr) {
+            setError(
+              chatErr instanceof WebsiteAIRequestError
+                ? chatErr.aiError
+                : normalizeWebsiteAIError(chatErr),
+            );
+            return false;
+          }
+        }
+
         setError(aiErr);
         return false;
       } finally {
@@ -853,8 +1137,8 @@ export function useEditorAI({
   );
 
   const revertLast = useCallback(async (): Promise<void> => {
-    const serverTurn = latestRevertibleTurns[0];
     const localTurn = localRevertStack[localRevertStack.length - 1];
+    const serverTurn = localTurn ? null : latestRevertibleTurns[0];
     const turnId = serverTurn
       ? turnIdFromHistory(serverTurn)
       : localTurn
@@ -865,34 +1149,95 @@ export function useEditorAI({
     setActiveRequest(true);
     setError(null);
     try {
+      if (localTurn) {
+        await applyLocalTurn(localTurn, "undo");
+        if (localTurn.serverTurnId) {
+          setConsumedServerTurnIds((prev) => {
+            const next = new Set(prev);
+            next.add(localTurn.serverTurnId as string);
+            return next;
+          });
+          revertAITurn({ websiteId, turnId: localTurn.serverTurnId }).catch(
+            () => {
+              /* backend bookkeeping only */
+            },
+          );
+        }
+        return;
+      }
+
       const result = await revertAITurn({ websiteId, turnId });
       result.restored?.forEach((patch) => {
         const blockId = patch.fieldPath.match(/blocks\.([^.]+)\.content\./)?.[1];
         if (blockId && isBlockContentPath(patch.fieldPath)) {
           applyPatch(blockId, toFieldPath(patch.fieldPath), patch.value);
+        } else if (isWebsiteFieldPath(patch.fieldPath)) {
+          applyPatch(undefined, patch.fieldPath, patch.value);
         }
       });
-      setLocalRevertStack((prev) =>
-        prev.filter((entry) => entry.turnId !== turnId),
-      );
-      await onRefresh?.();
+      if (turnId) {
+        setConsumedServerTurnIds((prev) => {
+          const next = new Set(prev);
+          next.add(turnId);
+          return next;
+        });
+      }
+      await onRefreshAIContext?.();
+    } catch (err) {
+      const aiErr =
+        err instanceof WebsiteAIRequestError
+          ? err.aiError
+          : normalizeWebsiteAIError(err);
+      if (localTurn) {
+        await applyLocalTurn(localTurn, "undo");
+        return;
+      }
+      if (turnId && aiErr.code === "TARGETS_GONE") {
+        setConsumedServerTurnIds((prev) => {
+          const next = new Set(prev);
+          next.add(turnId);
+          return next;
+        });
+      }
+      setError(aiErr);
+      await onRefreshAIContext?.();
+    } finally {
+      setActiveRequest(false);
+    }
+  }, [
+    applyPatch,
+    applyLocalTurn,
+    latestRevertibleTurns,
+    localRevertStack,
+    onRefreshAIContext,
+    websiteId,
+  ]);
+
+  const redoLast = useCallback(async (): Promise<void> => {
+    const localTurn = localRedoStack[localRedoStack.length - 1];
+    if (!localTurn || activeRequest) return;
+
+    setActiveRequest(true);
+    setError(null);
+    try {
+      await applyLocalTurn(localTurn, "redo");
+      if (localTurn.serverTurnId) {
+        setConsumedServerTurnIds((prev) => {
+          const next = new Set(prev);
+          next.delete(localTurn.serverTurnId as string);
+          return next;
+        });
+      }
     } catch (err) {
       const aiErr =
         err instanceof WebsiteAIRequestError
           ? err.aiError
           : normalizeWebsiteAIError(err);
       setError(aiErr);
-      await onRefresh?.();
     } finally {
       setActiveRequest(false);
     }
-  }, [
-    applyPatch,
-    latestRevertibleTurns,
-    localRevertStack,
-    onRefresh,
-    websiteId,
-  ]);
+  }, [activeRequest, applyLocalTurn, localRedoStack]);
 
   const sendChat = useCallback(
     async (
@@ -908,37 +1253,69 @@ export function useEditorAI({
       const text = message.trim();
       if (!text) return;
 
+      // Add user message immediately - this should render right away
       setChatMessages((prev) => [
         ...prev,
         { id: `u_${Date.now()}`, role: "user", text },
       ]);
+      
       setChatLoading(true);
       setError(null);
 
       try {
+        const scopedTarget =
+          scope === "target" || scope === "section"
+            ? {
+                kind: scope,
+                fieldPath: opts?.fieldPath,
+                aiEditKey: opts?.aiEditKey,
+              }
+            : undefined;
         const result = await editorChat({
           websiteId,
           scope,
           pageId: pageId ?? undefined,
           blockId: opts?.blockId,
-          target:
-            scope === "target"
-              ? {
-                  kind: scope,
-                  fieldPath: opts?.fieldPath,
-                  aiEditKey: opts?.aiEditKey,
-                }
-              : undefined,
+          target: scopedTarget,
           message: text,
         });
-        const patches = normalizeChatPatches(result.patches || []);
+        const normalizedPatches = normalizeChatPatches(result.patches || []);
+        const patches = normalizedPatches
+          .filter((patch) => patch.value != null)
+          .map((patch) => ({
+            aiEditKey: patch.aiEditKey,
+            blockId: patch.blockId,
+            pageId: patch.pageId,
+            fieldPath: patch.fieldPath,
+            persistedFieldPath: patch.persistedFieldPath,
+            value: patch.value,
+            baselineValue:
+              patch.before ?? getCurrentValue(patch.blockId, patch.fieldPath),
+          }));
+        const resultWithTurn = result as unknown as { turnId?: string };
+        const applied = patches.length
+          ? await applyBackendPatches(patches, {
+              instruction: text,
+              summary: result.reply,
+              turnId:
+                typeof resultWithTurn.turnId === "string"
+                  ? resultWithTurn.turnId
+                  : result.sessionId,
+              aiEditKey: patches[0]?.aiEditKey,
+            })
+          : false;
+        
         setChatMessages((prev) => [
           ...prev,
           {
             id: `a_${Date.now()}`,
             role: "assistant",
-            text: result.reply || "Done.",
-            pendingPatches: patches.length ? patches : undefined,
+            text:
+              result.reply ||
+              (applied
+                ? `${patches.length} AI ${patches.length === 1 ? "change" : "changes"} applied.`
+                : "Done."),
+            applied,
             sessionId: result.sessionId,
           },
         ]);
@@ -965,7 +1342,14 @@ export function useEditorAI({
         setChatLoading(false);
       }
     },
-    [activeRequest, chatLoading, pageId, websiteId],
+    [
+      activeRequest,
+      applyBackendPatches,
+      chatLoading,
+      getCurrentValue,
+      pageId,
+      websiteId,
+    ],
   );
 
   const recreateSite = useCallback(
@@ -993,6 +1377,22 @@ export function useEditorAI({
             versionId: result.versionId,
           },
         ]);
+        // Trigger a refresh to let the parent pick up the new version; poll a
+        // few times in case the backend takes a moment to persist the version.
+        try {
+          if (onRefresh) {
+            for (let i = 0; i < 5; i++) {
+              // Ask parent to refresh website data
+              // eslint-disable-next-line no-await-in-loop
+              await onRefresh();
+              // Wait a short moment for the backend to settle
+              // eslint-disable-next-line no-await-in-loop
+              await new Promise((r) => setTimeout(r, 1500));
+            }
+          }
+        } catch {
+          // Best-effort only — ignore polling errors
+        }
       } catch (err) {
         const aiErr =
           err instanceof WebsiteAIRequestError
@@ -1065,11 +1465,7 @@ export function useEditorAI({
         // Same contract as selected-element edits: apply locally using the
         // backend editor path, persist via the editor Save Changes flow, record
         // for revert — no generate-content patch mode and no full refresh.
-        const appliedChat = applicablePatches.filter(
-          (patch) =>
-            patch.blockId != null &&
-            isBlockContentPath(patch.persistedFieldPath),
-        );
+        const appliedChat = applicablePatches.filter(isLocallyApplicablePatch);
         appliedChat.forEach((patch) => {
           applyPatch(patch.blockId, patch.fieldPath, patch.value);
         });
@@ -1127,15 +1523,22 @@ export function useEditorAI({
 
   const clearError = useCallback(() => setError(null), []);
 
+  const clearChatHistory = useCallback(() => {
+    // Clear local chat messages only - backend history remains intact
+    // This allows users to start fresh in their current session
+    setChatMessages([]);
+  }, []);
+
   return {
     activeRequest,
     proposal,
     conflict,
     error,
-    revertStack: latestRevertibleTurns.length
-      ? latestRevertibleTurns
-      : localRevertStack,
-    revertDepth: latestRevertibleTurns.length || localRevertStack.length,
+    revertStack: localRevertStack.length
+      ? localRevertStack
+      : latestRevertibleTurns,
+    revertDepth: localRevertStack.length || latestRevertibleTurns.length,
+    redoDepth: localRedoStack.length,
     chatMessages,
     chatLoading,
     askAI,
@@ -1144,12 +1547,14 @@ export function useEditorAI({
     resolveConflict,
     getAttempts,
     revertLast,
+    redoLast,
     sendChat,
     recreateSite,
     restoreVersion,
     applyChatMessage,
     dismissChatPatches,
     clearError,
+    clearChatHistory,
   };
 }
 

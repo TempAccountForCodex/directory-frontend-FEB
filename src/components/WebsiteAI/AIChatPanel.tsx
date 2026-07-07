@@ -1,11 +1,15 @@
 /**
- * AIChatPanel — toggleable right-side editor AI chat (PRD "Editor AI Chat Panel").
+ * AIChatPanel — light modal-themed right-side editor AI chat.
  *
- * Scopes: current selected field, section, page, or full website.
- * - Failed responses appear under the chat and can be referenced in follow-ups.
- * - Apply/Cancel for returned patches.
- * - Full-site recreation requires explicit confirmation and creates a
- *   restorable website version.
+ * Same original sidebar structure:
+ * - Header
+ * - Scope selector
+ * - Chat / restore points body
+ * - Bottom composer
+ *
+ * Updated:
+ * - Light modal theme
+ * - Smaller proportional sizing
  */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -14,8 +18,17 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import CircularProgress from "@mui/material/CircularProgress";
-import Tooltip from "@mui/material/Tooltip";
-import { X, Send, Star, CircleAlert, RefreshCw } from "lucide-react";
+import {
+  X,
+  Send,
+  Sparkles,
+  CircleAlert,
+  RefreshCw,
+  Check,
+  ChevronDown,
+  Paperclip,
+  Trash2,
+} from "lucide-react";
 import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
 import DashboardActionButton from "../Dashboard/shared/DashboardActionButton";
 import ConfirmationDialog from "../Dashboard/shared/ConfirmationDialog";
@@ -23,10 +36,29 @@ import { useRotatingPhrase } from "../../hooks/useRotatingPhrase";
 import type { EditorChatScope } from "../../api/websiteAI";
 import type { VersionMeta } from "../../api/websiteAI";
 import type { EditorAIController } from "./useEditorAI";
+import { Fade } from "@mui/material";
+import chatPanelBg from "../../assets/images/ai-chat-panel-bg.svg";
 
+const MODAL_BG = "#ffffff";
+const MODAL_BORDER = "#d8e4f2";
+const MODAL_BORDER_STRONG = "#c7d6e8";
+const MODAL_SOFT = "#f7faff";
+const MODAL_BUTTON = "#d5e0ec";
 const THEME = "#378C92";
-const THEME_DIM = "#378C9222";
-const THEME_BORDER = "#378C9244";
+const THEME_LIGHT = "rgba(55,140,146,0.12)";
+const THEME_BORDER = "rgba(55,140,146,0.15)";
+const THEME_BORDER_M = "rgba(55,140,146,0.25)";
+const TEXT_DARK = "#1f2937";
+const TEXT_MID = "#374151";
+const TEXT_MUTED = "#9ca3af";
+const TEXT_LIGHT = "#d1d5db";
+const USER_BUBBLE_BG = "#378C92";
+const USER_BUBBLE_BORDER = "rgba(55,140,146,0.28)";
+const ASSISTANT_BUBBLE_BG = "rgba(255,255,255,0.92)";
+const ASSISTANT_BUBBLE_BORDER = "rgba(55,140,146,0.16)";
+const CHAT_AREA_BG = "#e7f2f3";
+const BG_PATTERN =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2000 1500'%3E%3Cdefs%3E%3Crect stroke='%23ffffff' stroke-width='0' width='1' height='1' id='s'/%3E%3Cpattern id='a' width='3' height='3' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cuse fill='%23fcfcfc' href='%23s' y='2'/%3E%3Cuse fill='%23fcfcfc' href='%23s' x='1' y='2'/%3E%3Cuse fill='%23fafafa' href='%23s' x='2' y='2'/%3E%3Cuse fill='%23fafafa' href='%23s'/%3E%3Cuse fill='%23f7f7f7' href='%23s' x='2'/%3E%3Cuse fill='%23f7f7f7' href='%23s' x='1' y='1'/%3E%3C/pattern%3E%3Cpattern id='b' width='7' height='11' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23f5f5f5'%3E%3Cuse href='%23s'/%3E%3Cuse href='%23s' y='5' /%3E%3Cuse href='%23s' x='1' y='10'/%3E%3Cuse href='%23s' x='2' y='1'/%3E%3Cuse href='%23s' x='2' y='4'/%3E%3Cuse href='%23s' x='3' y='8'/%3E%3Cuse href='%23s' x='4' y='3'/%3E%3Cuse href='%23s' x='4' y='7'/%3E%3Cuse href='%23s' x='5' y='2'/%3E%3Cuse href='%23s' x='5' y='6'/%3E%3Cuse href='%23s' x='6' y='9'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='h' width='5' height='13' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23f5f5f5'%3E%3Cuse href='%23s' y='5'/%3E%3Cuse href='%23s' y='8'/%3E%3Cuse href='%23s' x='1' y='1'/%3E%3Cuse href='%23s' x='1' y='9'/%3E%3Cuse href='%23s' x='1' y='12'/%3E%3Cuse href='%23s' x='2'/%3E%3Cuse href='%23s' x='2' y='4'/%3E%3Cuse href='%23s' x='3' y='2'/%3E%3Cuse href='%23s' x='3' y='6'/%3E%3Cuse href='%23s' x='3' y='11'/%3E%3Cuse href='%23s' x='4' y='3'/%3E%3Cuse href='%23s' x='4' y='7'/%3E%3Cuse href='%23s' x='4' y='10'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='c' width='17' height='13' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23f2f2f2'%3E%3Cuse href='%23s' y='11'/%3E%3Cuse href='%23s' x='2' y='9'/%3E%3Cuse href='%23s' x='5' y='12'/%3E%3Cuse href='%23s' x='9' y='4'/%3E%3Cuse href='%23s' x='12' y='1'/%3E%3Cuse href='%23s' x='16' y='6'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='d' width='19' height='17' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23ffffff'%3E%3Cuse href='%23s' y='9'/%3E%3Cuse href='%23s' x='16' y='5'/%3E%3Cuse href='%23s' x='14' y='2'/%3E%3Cuse href='%23s' x='11' y='11'/%3E%3Cuse href='%23s' x='6' y='14'/%3E%3C/g%3E%3Cg fill='%23efefef'%3E%3Cuse href='%23s' x='3' y='13'/%3E%3Cuse href='%23s' x='9' y='7'/%3E%3Cuse href='%23s' x='13' y='10'/%3E%3Cuse href='%23s' x='15' y='4'/%3E%3Cuse href='%23s' x='18' y='1'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='e' width='47' height='53' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23378C92'%3E%3Cuse href='%23s' x='2' y='5'/%3E%3Cuse href='%23s' x='16' y='38'/%3E%3Cuse href='%23s' x='46' y='42'/%3E%3Cuse href='%23s' x='29' y='20'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='f' width='59' height='71' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23378C92'%3E%3Cuse href='%23s' x='33' y='13'/%3E%3Cuse href='%23s' x='27' y='54'/%3E%3Cuse href='%23s' x='55' y='55'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='g' width='139' height='97' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23378C92'%3E%3Cuse href='%23s' x='11' y='8'/%3E%3Cuse href='%23s' x='51' y='13'/%3E%3Cuse href='%23s' x='17' y='73'/%3E%3Cuse href='%23s' x='99' y='57'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Crect fill='url(%23a)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23b)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23h)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23c)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23d)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23e)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23f)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23g)' width='100%25' height='100%25'/%3E%3C/svg%3E\")";
 
 interface ScopeOption {
   scope: EditorChatScope;
@@ -64,13 +96,18 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
     restoreVersion,
     applyChatMessage,
     dismissChatPatches,
+    clearChatHistory,
   } = controller;
+
+  const [selectingElement, setSelectingElement] = useState(false);
 
   const [message, setMessage] = useState("");
   const [scope, setScope] = useState<EditorChatScope>("page");
+  const [scopeMenuOpen, setScopeMenuOpen] = useState(false);
   const [confirmFullSite, setConfirmFullSite] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<VersionMeta | null>(null);
   const [composerFocused, setComposerFocused] = useState(false);
+
   const listRef = useRef<HTMLDivElement | null>(null);
   const phrase = useRotatingPhrase(chatLoading);
 
@@ -79,7 +116,6 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
     [scopeOptions],
   );
 
-  // Keep scope valid as selection changes.
   useEffect(() => {
     if (!available.some((o) => o.scope === scope) && available.length) {
       setScope(available[available.length - 1].scope);
@@ -94,9 +130,104 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
 
   const activeScopeOption = available.find((o) => o.scope === scope);
 
+  const scopeMeta: Record<
+    EditorChatScope,
+    { label: string; description: string; disabled: string }
+  > = {
+    target: {
+      label: "Element",
+      description: "Edit the selected item",
+      disabled: "Attach or select an element first",
+    },
+    section: {
+      label: "Section",
+      description: "Edit this block area",
+      disabled: "Select an element or section first",
+    },
+    page: {
+      label: "Page",
+      description: "Edit this page",
+      disabled: "Open a page first",
+    },
+    website: {
+      label: "Site",
+      description: "Edit the whole website",
+      disabled: "Whole-site AI is unavailable",
+    },
+  };
+
+  const selectedScopeName =
+    activeScopeOption?.label || scopeMeta[scope]?.label || "Current scope";
+  const canClearTargetScope = selectingElement || scope === "target" || scope === "section";
+
+  const clearTargetScope = () => {
+    setSelectingElement(false);
+    const nextScope =
+      scopeOptions.find((o) => o.scope === "page" && o.available)?.scope ??
+      scopeOptions.find((o) => o.scope === "website" && o.available)?.scope;
+
+    if (nextScope) {
+      setScope(nextScope);
+    }
+  };
+
+  const scopeDescription = useMemo(() => {
+    switch (scope) {
+      case "target":
+        return "Describe what to change in this element.";
+      case "section":
+        return "Describe what to change in this section.";
+      case "page":
+        return "Describe what to change on this page.";
+      case "website":
+        return "Describe what to change across the whole site.";
+      default:
+        return "Describe what to change.";
+    }
+  }, [scope]);
+
+  const composerPlaceholder = useMemo(() => {
+    if (!canUseAI) return "AI unavailable";
+    switch (scope) {
+      case "target":
+        return "e.g. Improve this headline";
+      case "section":
+        return "e.g. Make this section more visual";
+      case "page":
+        return "e.g. Restyle this page for a modren vibe";
+      case "website":
+        return "e.g. Refresh the whole site to feel more modern";
+      default:
+        return "e.g. Describe the change you want";
+    }
+  }, [canUseAI, scope]);
+
+  // When the parent updates selection (scopeOptions shows Selection available)
+  // stop the attach mode so the UI returns to normal.
+  useEffect(() => {
+    if (selectingElement) {
+      const sel = scopeOptions.find((o) => o.scope === "target" && o.available);
+      if (sel) {
+        setSelectingElement(false);
+        setScope("target");
+      }
+    }
+  }, [scopeOptions, selectingElement]);
+
+  // Escape cancels attach mode
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectingElement(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const doSend = (confirmFullSiteRecreation?: boolean) => {
     const text = message.trim();
+
     if (!text || !canUseAI) return;
+
     if (scope === "website" && confirmFullSiteRecreation) {
       recreateSite(text);
     } else {
@@ -106,20 +237,21 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
         aiEditKey: activeScopeOption?.aiEditKey,
       });
     }
+
     setMessage("");
   };
 
   const canSend = canUseAI && !chatLoading && message.trim().length > 0;
 
-  const getMessageTime = (id: string) => {
-    const match = String(id).match(/_(\d+)/);
-    const timestamp = match ? Number(match[1]) : Date.now();
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const handleSend = () => {
+    if (!canSend) return;
+
+    if (scope === "website") {
+      setConfirmFullSite(true);
+      return;
+    }
+
+    doSend();
   };
 
   const botAvatar = (
@@ -128,26 +260,17 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
         flex: "0 0 auto",
         width: 26,
         height: 26,
-        borderRadius: "50%",
+        borderRadius: "999px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: `linear-gradient(135deg, ${THEME}33, ${THEME}55)`,
-        border: `1px solid ${THEME}44`,
-        color: THEME,
+        background: MODAL_BUTTON,
+        color: "#ffffff",
       }}
     >
-      <Star size={15} fill="currentColor" />
+      <Sparkles size={15} color="#378C92"/>
     </Box>
   );
-
-  const handleSend = () => {
-    if (scope === "website") {
-      setConfirmFullSite(true);
-      return;
-    }
-    doSend();
-  };
 
   return (
     <>
@@ -158,91 +281,86 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
         variant="persistent"
         PaperProps={{
           sx: {
-            width: { xs: "100%", sm: 392 },
-            backgroundColor: "#09090b",
-            borderLeft: "1px solid rgba(255,255,255,0.08)",
-            backgroundImage: "none",
-            p: { xs: 0, sm: 1.5 },
+            width: { xs: "100%", sm: 430 },
+            background: "transparent",
+            border: 0,
+            boxShadow: "none",
+            p: { xs: 1, sm: 1.5 },
             boxSizing: "border-box",
+            pointerEvents: selectingElement ? "none" : "auto",
+            opacity: selectingElement ? 0.42 : 1,
+            transition: "opacity 160ms ease",
           },
         }}
       >
         <Box
           sx={{
-            position: "relative",
+            height: "100%",
+            width: "100%",
             display: "flex",
             flexDirection: "column",
-            height: "100%",
-            minHeight: 0,
-            background:
-              "linear-gradient(160deg, #1a1a1f 0%, #141418 60%, #111114 100%)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            maxWidth: { xs: "100%", sm: 368 },
-            width: "100%",
-            alignSelf: "center",
-            borderRadius: { xs: 0, sm: "20px" },
+            fontFamily:
+              'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            backgroundColor: CHAT_AREA_BG,
+            backgroundImage: `url(${chatPanelBg})`,
+            backgroundSize: "cover",
+            border: `1px solid ${THEME_BORDER}`,
+            borderRadius: "12px",
             boxShadow:
-              "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)",
+              "0 8px 48px rgba(55,140,146,0.18), 0 2px 8px rgba(55,140,146,0.08)",
             overflow: "hidden",
           }}
         >
           <Box
             sx={{
-              position: "absolute",
-              top: 0,
-              left: "10%",
-              right: "10%",
-              height: 1,
-              background: `linear-gradient(90deg, transparent, ${THEME}55, transparent)`,
-              pointerEvents: "none",
-            }}
-          />
-
-          <Box
-            sx={{
               px: 2.5,
               py: 2,
-              borderBottom: "1px solid rgba(255,255,255,0.05)",
+              borderBottom: `1px solid rgba(55,140,146,0.10)`,
+              backgroundColor: CHAT_AREA_BG,
+              backgroundImage: `url(${chatPanelBg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backdropFilter: "blur(8px)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              gap: 1.5,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.15 }}>
               <Box
                 sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "12px",
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background: `linear-gradient(135deg, ${THEME}33, ${THEME}18)`,
-                  border: `1px solid ${THEME}44`,
-                  color: THEME,
-                  boxShadow: `0 4px 12px ${THEME}22`,
+                  background: THEME_LIGHT,
                 }}
               >
-                <Star size={16} fill="currentColor" />
+                <Sparkles size={14} color={THEME} />
               </Box>
+
               <Box>
                 <Typography
                   sx={{
-                    color: "#f9fafb",
+                    color: TEXT_DARK,
                     fontSize: 14,
-                    fontWeight: 700,
-                    letterSpacing: "0.02em",
+                    fontWeight: 600,
                     lineHeight: 1.15,
+                    letterSpacing: "-0.01em",
                   }}
                 >
                   AI Assistant
                 </Typography>
+
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 0.75,
-                    mt: 0.5,
+                    gap: 0.65,
+                    mt: 0.45,
                   }}
                 >
                   <Box
@@ -250,97 +368,389 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      background: "#4ade80",
-                      boxShadow: "0 0 4px #4ade80aa",
+                      background: "#10b981",
                     }}
                   />
-                  <Typography sx={{ color: "#6b7280", fontSize: 12 }}>
+
+                  <Typography
+                    sx={{
+                      color: TEXT_MUTED,
+                      fontSize: 10,
+                      fontWeight: 500,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
                     Online
                   </Typography>
                 </Box>
               </Box>
             </Box>
+
             <IconButton
               onClick={onClose}
               size="small"
               sx={{
-                width: 28,
-                height: 28,
-                borderRadius: "9px",
-                color: "#4b5563",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                width: 30,
+                height: 30,
+                borderRadius: "999px",
+                color: TEXT_LIGHT,
+                background: "transparent",
                 "&:hover": {
-                  color: "#9ca3af",
-                  background: "rgba(255,255,255,0.08)",
+                  background: "transparent",
+                  color: TEXT_MID,
                 },
               }}
             >
-              <X size={18} />
+              <X size={16} />
             </IconButton>
           </Box>
 
           <Box
             sx={{
-              px: 2,
-              py: 1.5,
-              borderBottom: "1px solid rgba(255,255,255,0.04)",
+              position: "relative",
+              zIndex: 30,
+              px: 2.5,
+              py: 2,
+              borderBottom: `1px solid rgba(55,140,146,0.10)`,
+              backgroundColor: CHAT_AREA_BG,
+              backgroundImage: `url(${chatPanelBg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backdropFilter: "blur(8px)",
             }}
           >
             <Box
               sx={{
                 display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-                p: 0.5,
-                borderRadius: "14px",
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.05)",
+                flexDirection: "column",
+                gap: 1.5,
               }}
             >
-              {scopeOptions.map((o) => {
-                const active = scope === o.scope;
-                return (
-                  <Tooltip
-                    key={o.scope}
-                    title={
-                      o.available ? "" : "Select an element to use this scope"
-                    }
+              <Box>
+                <Typography
+                  sx={{
+                    color: TEXT_DARK,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  What should AI work on?
+                </Typography>
+                <Typography
+                  sx={{
+                    color: TEXT_MUTED,
+                    fontSize: 11,
+                    fontWeight: 500,
+                    lineHeight: 1.25,
+                    mt: 0.25,
+                  }}
+                >
+                  Choose the scope before sending your message.
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ position: "relative", flex: 1, minWidth: 0 }}>
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={() => setScopeMenuOpen((open) => !open)}
+                    sx={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 1,
+                      px: 1.75,
+                      py: 1.25,
+                      background: "rgba(255,255,255,0.90)",
+                      border: `1px solid ${THEME_BORDER_M}`,
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                      transition: "border-color 0.15s, box-shadow 0.15s",
+                      "&:hover": {
+                        borderColor: THEME,
+                      },
+                    }}
                   >
                     <Box
-                      component="button"
-                      type="button"
-                      aria-disabled={!o.available}
-                      onClick={() => o.available && setScope(o.scope)}
                       sx={{
-                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
                         minWidth: 0,
-                        height: 30,
-                        px: 1,
-                        border: 0,
-                        borderRadius: "8px",
-                        background: active
-                          ? `linear-gradient(135deg, ${THEME}, ${THEME}cc)`
-                          : "transparent",
-                        color: active
-                          ? "#ffffff"
-                          : o.available
-                            ? "#6b7280"
-                            : "#374151",
-                        boxShadow: active ? `0 2px 8px ${THEME}44` : "none",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        lineHeight: 1,
-                        cursor: o.available ? "pointer" : "default",
-                        transition: "all 0.15s ease",
-                        whiteSpace: "nowrap",
                       }}
                     >
-                      {o.label}
+                      <Typography
+                        sx={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.08em",
+                          color: THEME,
+                          flex: "0 0 auto",
+                        }}
+                      >
+                        Scope
+                      </Typography>
+                      <Typography sx={{ color: TEXT_LIGHT, fontSize: 13 }}>
+                        |
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 13,
+                          fontWeight: 500,
+                          color: TEXT_DARK,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {scopeMeta[scope]?.label ||
+                          activeScopeOption?.label ||
+                          "Scope"}
+                      </Typography>
                     </Box>
-                  </Tooltip>
-                );
-              })}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        color: THEME,
+                        transform: scopeMenuOpen ? "rotate(180deg)" : "none",
+                        transition: "transform 0.2s ease",
+                      }}
+                    >
+                      <ChevronDown size={16} />
+                    </Box>
+                  </Box>
+
+                  {scopeMenuOpen && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: "calc(100% + 4px)",
+                        left: 0,
+                        right: 0,
+                        zIndex: 50,
+                        overflow: "hidden",
+                        background: "#ffffff",
+                        border: "1px solid rgba(55,140,146,0.20)",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+                      }}
+                    >
+                      {scopeOptions.map((option) => {
+                        const active = scope === option.scope;
+                        const meta = scopeMeta[option.scope];
+                        return (
+                          <Box
+                            key={option.scope}
+                            component="button"
+                            type="button"
+                            disabled={!option.available}
+                            onClick={() => {
+                              if (!option.available) return;
+                              setScope(option.scope);
+                              setScopeMenuOpen(false);
+                            }}
+                            sx={{
+                              width: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              px: 1.75,
+                              py: 1.25,
+                              border: 0,
+                              background: active ? THEME : "transparent",
+                              color: active
+                                ? "#ffffff"
+                                : option.available
+                                  ? TEXT_MID
+                                  : "#c5d0dd",
+                              cursor: option.available ? "pointer" : "default",
+                              fontSize: 13,
+                              fontWeight: 500,
+                              textAlign: "left",
+                              opacity: option.available ? 1 : 0.7,
+                              "&:hover": {
+                                background: active
+                                  ? THEME
+                                  : option.available
+                                    ? "rgba(55,140,146,0.06)"
+                                    : "transparent",
+                              },
+                            }}
+                          >
+                            <span>{meta.label}</span>
+                            {!option.available && (
+                              <Typography
+                                component="span"
+                                sx={{
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  color: "inherit",
+                                  opacity: 0.8,
+                                }}
+                              >
+                                unavailable
+                              </Typography>
+                            )}
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  )}
+                </Box>
+
+                <Box
+                  component="button"
+                  type="button"
+                  aria-label="Attach element"
+                  onClick={() => setSelectingElement(true)}
+                  sx={{
+                    flex: "0 0 auto",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                    px: 1.5,
+                    py: 1.25,
+                    border: `1px solid ${THEME_BORDER_M}`,
+                    borderRadius: "8px",
+                    background: selectingElement
+                      ? "rgba(55,140,146,0.12)"
+                      : "rgba(255,255,255,0.80)",
+                    color: THEME,
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                    transition: "border-color 0.15s, background 0.15s",
+                    "&:hover": {
+                      borderColor: THEME,
+                      background: "rgba(55,140,146,0.05)",
+                    },
+                  }}
+                >
+                  <Paperclip size={14} />
+                  {selectingElement ? "Attaching" : "Attach"}
+                </Box>
+
+                {chatMessages.length > 0 && (
+                  <Box
+                    component="button"
+                    title="Clear chat"
+                    aria-label="Clear chat history"
+                    type="button"
+                    onClick={() => clearChatHistory()}
+                    sx={{
+                      flex: "0 0 auto",
+                      width: 40,
+                      height: 40,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "1px solid rgba(229,231,235,0.80)",
+                      borderRadius: "8px",
+                      background: "rgba(255,255,255,0.80)",
+                      cursor: "pointer",
+                      color: TEXT_MUTED,
+                      transition:
+                        "border-color 0.15s, background 0.15s, color 0.15s",
+                      "&:hover": {
+                        borderColor: "rgba(55,140,146,0.40)",
+                        background: "rgba(55,140,146,0.05)",
+                        color: THEME,
+                      },
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </Box>
+                )}
+              </Box>
+
+              {selectingElement && (
+                <Box
+                  sx={{
+                    px: 1.2,
+                    py: 0.85,
+                    borderRadius: "10px",
+                    background: "rgba(55,140,146,0.08)",
+                    border: "1px solid rgba(55,140,146,0.16)",
+                    color: THEME,
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    lineHeight: 1.35,
+                  }}
+                >
+                  Click any editable item on the page to attach it. Press Esc to
+                  cancel.
+                </Box>
+              )}
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: TEXT_MUTED,
+                  }}
+                >
+                  Selected {scopeMeta[scope]?.label || "Scope"}
+                </Typography>
+                <Typography
+                  sx={{ color: "rgba(55,140,146,0.30)", fontSize: 12 }}
+                >
+                  /
+                </Typography>
+                <Typography
+                  title={selectedScopeName}
+                  sx={{
+                    minWidth: 0,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: THEME,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {selectingElement ? "Waiting for element" : selectedScopeName}
+                </Typography>
+
+                {canClearTargetScope && (
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={clearTargetScope}
+                    sx={{
+                      ml: "auto",
+                      border: 0,
+                      background: "transparent",
+                      color: TEXT_MUTED,
+                      cursor: "pointer",
+                      fontSize: 10,
+                      fontWeight: 600,
+                      "&:hover": {
+                        color: THEME,
+                      },
+                    }}
+                  >
+                    Clear
+                  </Box>
+                )}
+              </Box>
             </Box>
           </Box>
 
@@ -348,298 +758,430 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
             ref={listRef}
             sx={{
               flex: 1,
+              minHeight: 0,
               overflowY: "auto",
-              px: 2,
-              py: 2,
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
+              px: 1,
+              py: 0,
+              backgroundColor: CHAT_AREA_BG,
+              backgroundImage: `url(${chatPanelBg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
               scrollbarWidth: "none",
-              "&::-webkit-scrollbar": { display: "none" },
+              pointerEvents: selectingElement ? "none" : "auto",
+              "&::-webkit-scrollbar": {
+                display: "none",
+              },
             }}
           >
-            {chatMessages.length === 0 && !chatLoading && (
-              <Box sx={{ textAlign: "center", mt: 4, px: 2 }}>
-                <Typography
-                  sx={{ color: "#6b7280", fontSize: 14, lineHeight: 1.45 }}
-                >
-                  Ask the AI to rewrite copy, adjust a section, or refresh a
-                  page. Choose a scope above.
-                </Typography>
-              </Box>
-            )}
-
-            {versions.length > 0 && (
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "16px",
-                  border: `1px solid ${THEME_BORDER}`,
-                  background: `linear-gradient(135deg, ${THEME_DIM}, rgba(255,255,255,0.025))`,
-                }}
-              >
-                <Typography
+            <Box
+              sx={{
+                minHeight: "100%",
+                px: 1.25,
+                py: 1.75,
+                display: "flex",
+                flexDirection: "column",
+                gap: 1.5,
+                backgroundColor: MODAL_BG,
+                backgroundImage: BG_PATTERN,
+                backgroundSize: "auto",
+                backgroundPosition: "center top",
+                backgroundRepeat: "repeat",
+                backgroundAttachment: "fixed",
+                borderRadius: "10px",
+              }}
+            >
+              {chatMessages.length === 0 && !chatLoading && (
+                <Box
                   sx={{
-                    color: "#6b7280",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    mb: 0.5,
+                    textAlign: "center",
+                    px: 1,
+                    py: 4,
                   }}
                 >
-                  Restore points
-                </Typography>
-                {versions
-                  .slice(-3)
-                  .reverse()
-                  .map((version) => (
-                    <Box
-                      key={version.versionId}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mt: 0.75,
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          color: "#6b7280",
-                          flex: 1,
-                          fontSize: 12,
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {version.label || "Saved version"} ·{" "}
-                        {version.createdAt
-                          ? new Date(version.createdAt).toLocaleString()
-                          : "recent"}
-                      </Typography>
-                      <DashboardActionButton
-                        size="small"
-                        onClick={() => setRestoreTarget(version)}
-                      >
-                        Restore
-                      </DashboardActionButton>
-                    </Box>
-                  ))}
-              </Box>
-            )}
+                  <Typography
+                    sx={{
+                      color: TEXT_MID,
+                      fontSize: 15,
+                      fontWeight: 600,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {scopeDescription}
+                  </Typography>
 
-            {chatMessages.map((m) => (
-              <Box
-                key={m.id}
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: m.role === "user" ? "flex-end" : "flex-start",
-                  gap: 0.5,
-                }}
-              >
-                {m.role === "user" ? (
-                  <>
-                    <Box
-                      sx={{
-                        maxWidth: "86%",
-                        px: 2,
-                        py: 1.5,
-                        borderRadius: "16px 16px 4px 16px",
-                        background: `linear-gradient(135deg, ${THEME}28, ${THEME}18)`,
-                        border: `1px solid ${THEME_BORDER}`,
-                        color: "#e2e8f0",
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 14, lineHeight: 1.55 }}>
-                        {m.text}
-                      </Typography>
-                    </Box>
-                    <Typography
-                      sx={{ color: "#374151", fontSize: 12, pr: 0.5 }}
-                    >
-                      {getMessageTime(m.id)}
-                    </Typography>
-                  </>
-                ) : (
-                  <>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 1,
-                        maxWidth: "88%",
-                      }}
-                    >
-                      {botAvatar}
+                  <Typography
+                    sx={{
+                      color: TEXT_MUTED,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      lineHeight: 1.45,
+                      mt: 1,
+                    }}
+                  >
+                    Ask the AI to rewrite copy, adjust a section, refresh a
+                    page, or recreate the site.
+                  </Typography>
+                </Box>
+              )}
+
+              {versions.length > 0 && (
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: "18px",
+                    border: `1.5px solid ${MODAL_BORDER}`,
+                    background: "#ffffff",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: TEXT_DARK,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      mb: 0.75,
+                    }}
+                  >
+                    Restore points
+                  </Typography>
+
+                  {versions
+                    .slice(-3)
+                    .reverse()
+                    .map((version) => (
                       <Box
+                        key={version.versionId}
                         sx={{
-                          flex: 1,
-                          px: 2,
-                          py: 1.5,
-                          borderRadius: "4px 16px 16px 16px",
-                          background: m.isError
-                            ? "linear-gradient(135deg, #1e1215, #180e12)"
-                            : "rgba(255,255,255,0.04)",
-                          border: m.isError
-                            ? "1px solid rgba(239,68,68,0.18)"
-                            : "1px solid rgba(255,255,255,0.07)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mt: 0.75,
                         }}
                       >
-                        {m.isError && (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              mb: 1,
-                            }}
-                          >
-                            <CircleAlert size={13} color="#f87171" />
-                            <Typography
-                              sx={{
-                                color: "#f87171",
-                                opacity: 0.85,
-                                fontSize: 12,
-                                fontWeight: 600,
-                                lineHeight: 1.35,
-                              }}
-                            >
-                              Failed — you can mention this in your next message
-                            </Typography>
-                          </Box>
-                        )}
                         <Typography
                           sx={{
-                            color: m.isError ? "#6b7280" : "#d1d5db",
-                            fontSize: 14,
-                            lineHeight: 1.55,
+                            color: TEXT_MID,
+                            flex: 1,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            lineHeight: 1.35,
+                          }}
+                        >
+                          {version.label || "Saved version"} ·{" "}
+                          {version.createdAt
+                            ? new Date(version.createdAt).toLocaleString()
+                            : "recent"}
+                        </Typography>
+
+                        <DashboardActionButton
+                          size="small"
+                          onClick={() => setRestoreTarget(version)}
+                        >
+                          Restore
+                        </DashboardActionButton>
+                      </Box>
+                    ))}
+                </Box>
+              )}
+
+              {scope === "website" && (
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 1.25,
+                    borderRadius: "16px",
+                    border: `1.5px solid ${MODAL_BORDER}`,
+                    background: MODAL_SOFT,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1,
+                  }}
+                >
+                  <RefreshCw size={14} color={TEXT_MID} />
+
+                  <Typography
+                    sx={{
+                      color: TEXT_MID,
+                      fontSize: 12.5,
+                      fontWeight: 500,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    Full-site changes ask for confirmation and save a restore
+                    point.
+                  </Typography>
+                </Box>
+              )}
+
+              {chatMessages.map((m) => (
+                <Box
+                  key={m.id}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: m.role === "user" ? "flex-end" : "flex-start",
+                    gap: 0.5,
+                  }}
+                >
+                  {m.role === "user" ? (
+                    <>
+                      <Box
+                        sx={{
+                          maxWidth: "88%",
+                          px: 1.5,
+                          py: 1.15,
+                          borderRadius: "18px 18px 5px 18px",
+                          background: USER_BUBBLE_BG,
+                          border: `1.5px solid ${USER_BUBBLE_BORDER}`,
+                          color: "#ffffff",
+                          boxShadow: "0 8px 20px rgba(55,140,146,0.18)",
+                          overflow: "hidden",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: 13,
+                            fontWeight: 500,
+                            lineHeight: 1.5,
+                            wordBreak: "break-word",
                           }}
                         >
                           {m.text}
                         </Typography>
                       </Box>
+                    </>
+                  ) : (
+                    <>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 0.85,
+                          maxWidth: "92%",
+                        }}
+                      >
+                        {botAvatar}
+
+                        <Box
+                          sx={{
+                            flex: 1,
+                            px: 1.5,
+                            py: 1.15,
+                            borderRadius: "5px 18px 18px 18px",
+                            background: m.isError
+                              ? "rgba(255,247,247,0.95)"
+                              : ASSISTANT_BUBBLE_BG,
+                            border: m.isError
+                              ? "1.5px solid rgba(239,68,68,0.18)"
+                              : `1.5px solid ${ASSISTANT_BUBBLE_BORDER}`,
+                            color: TEXT_MID,
+                            boxShadow: m.isError
+                              ? "0 8px 20px rgba(239,68,68,0.08)"
+                              : "0 8px 20px rgba(55,140,146,0.08)",
+                            overflow: "hidden",
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {m.isError && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.75,
+                                mb: 0.75,
+                              }}
+                            >
+                              <CircleAlert size={13} color="#f87171" />
+
+                              <Typography
+                                sx={{
+                                  color: "#f87171",
+                                  fontSize: 11.5,
+                                  fontWeight: 600,
+                                  lineHeight: 1.35,
+                                }}
+                              >
+                                Failed - you can mention this in your next
+                                message
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {!m.isError && m.applied && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.75,
+                                mb: 0.75,
+                                color: "#16a34a",
+                              }}
+                            >
+                              <Check size={13} strokeWidth={3} />
+
+                              <Typography
+                                sx={{
+                                  color: "inherit",
+                                  fontSize: 11.5,
+                                  fontWeight: 600,
+                                  lineHeight: 1.35,
+                                }}
+                              >
+                                AI changes applied
+                              </Typography>
+                            </Box>
+                          )}
+
+                          <Typography
+                            sx={{
+                              color: m.isError ? TEXT_MID : TEXT_MID,
+                              fontSize: 13,
+                              fontWeight: 500,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {m.text}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </>
+                  )}
+
+                  {m.pendingPatches && m.pendingPatches.length > 0 && (
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        display: "flex",
+                        gap: 0.75,
+                        pl: 4.35,
+                      }}
+                    >
+                      <DashboardGradientButton
+                        size="small"
+                        onClick={() => applyChatMessage(m.id)}
+                      >
+                        Apply{" "}
+                        {m.pendingPatches.length > 1
+                          ? `${m.pendingPatches.length} changes`
+                          : "change"}
+                      </DashboardGradientButton>
+
+                      <DashboardActionButton
+                        size="small"
+                        onClick={() => dismissChatPatches(m.id)}
+                      >
+                        Cancel
+                      </DashboardActionButton>
                     </Box>
+                  )}
+
+                  {m.requiresConfirmation && (
                     <Typography
-                      sx={{ color: "#374151", fontSize: 12, pl: 4.5 }}
+                      sx={{
+                        color: TEXT_MUTED,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        mt: 0.5,
+                        display: "block",
+                        pl: 4.35,
+                      }}
                     >
-                      {getMessageTime(m.id)}
+                      A restorable version was saved before this change.
                     </Typography>
-                  </>
-                )}
+                  )}
+                </Box>
+              ))}
 
-                {m.pendingPatches && m.pendingPatches.length > 0 && (
-                  <Box sx={{ mt: 0.75, display: "flex", gap: 0.75, pl: 4.5 }}>
-                    <DashboardGradientButton
-                      size="small"
-                      onClick={() => applyChatMessage(m.id)}
-                    >
-                      Apply{" "}
-                      {m.pendingPatches.length > 1
-                        ? `${m.pendingPatches.length} changes`
-                        : "change"}
-                    </DashboardGradientButton>
-                    <DashboardActionButton
-                      size="small"
-                      onClick={() => dismissChatPatches(m.id)}
-                    >
-                      Cancel
-                    </DashboardActionButton>
-                  </Box>
-                )}
-
-                {m.requiresConfirmation && (
-                  <Typography
-                    sx={{
-                      color: "#6b7280",
-                      fontSize: 12,
-                      mt: 0.5,
-                      display: "block",
-                      pl: 4.5,
-                    }}
-                  >
-                    A restorable version was saved before this change.
-                  </Typography>
-                )}
-              </Box>
-            ))}
-
-            {chatLoading && (
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-                {botAvatar}
+              {chatLoading && (
                 <Box
                   sx={{
-                    px: 2,
-                    py: 1.5,
-                    borderRadius: "6px 18px 18px 18px",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.07)",
                     display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    color: "#6b7280",
+                    alignItems: "flex-start",
+                    gap: 0.85,
                   }}
                 >
-                  <CircularProgress size={14} sx={{ color: THEME }} />
-                  <Typography variant="caption">{phrase}…</Typography>
+                  {botAvatar}
+
+                  <Box
+                    sx={{
+                      px: 1.5,
+                      py: 1.15,
+                      borderRadius: "5px 18px 18px 18px",
+                      background: "#ffffff",
+                      border: `1.5px solid ${MODAL_BORDER}`,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      color: TEXT_MID,
+                    }}
+                  >
+                    <CircularProgress size={14} sx={{ color: THEME }} />
+
+                    <Fade key={phrase} in timeout={250}>
+                      <Typography
+                        sx={{
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {phrase}…
+                      </Typography>
+                    </Fade>
+                  </Box>
                 </Box>
-              </Box>
-            )}
+              )}
+            </Box>
           </Box>
 
-          <Box sx={{ px: 2, pb: 2 }}>
+          <Box
+            sx={{
+              position: "relative",
+              zIndex: 10,
+              px: 2.5,
+              pt: 2,
+              pb: 1.5,
+              borderTop: `1px solid rgba(55,140,146,0.10)`,
+              backgroundColor: CHAT_AREA_BG,
+              backgroundImage: `url(${chatPanelBg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backdropFilter: "blur(8px)",
+            }}
+          >
             {!canUseAI && disabledReason && (
               <Typography
-                variant="caption"
-                sx={{ color: "#6b7280", mb: 1, display: "block" }}
+                sx={{
+                  color: TEXT_MUTED,
+                  mb: 1,
+                  display: "block",
+                  fontSize: 12.5,
+                  fontWeight: 500,
+                }}
               >
                 {disabledReason}
               </Typography>
             )}
-            {scope === "website" && (
-              <Box
-                sx={{
-                  mb: 1.5,
-                  px: 2.5,
-                  py: 1.25,
-                  borderRadius: "12px",
-                  background: "rgba(255,255,255,0.025)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                <RefreshCw size={12} color={THEME} opacity={0.6} />
-                <Typography
-                  sx={{ color: "#374151", fontSize: 12, lineHeight: 1.35 }}
-                >
-                  Full-site changes ask for confirmation and save a restore
-                  point.
-                </Typography>
-              </Box>
-            )}
+
             <Box
               sx={{
+                position: "relative",
                 display: "flex",
-                gap: 1,
                 alignItems: "flex-end",
-                px: 2,
-                py: 1.5,
-                borderRadius: "16px",
-                background: composerFocused
-                  ? "rgba(255,255,255,0.06)"
-                  : "rgba(255,255,255,0.04)",
-                border: composerFocused
-                  ? `1px solid ${THEME}55`
-                  : "1px solid rgba(255,255,255,0.08)",
-                boxShadow: composerFocused ? `0 0 0 3px ${THEME}12` : "none",
-                transition: "all 0.15s ease",
+                border: `1px solid ${
+                  composerFocused ? THEME : "rgba(55,140,146,0.20)"
+                }`,
+                borderRadius: "12px",
+                background: "rgba(255,255,255,0.90)",
+                boxShadow: composerFocused
+                  ? "0 0 0 2px rgba(55,140,146,0.15)"
+                  : "none",
+                transition: "border-color 0.15s, box-shadow 0.15s",
               }}
             >
               <Box
                 component="textarea"
                 rows={1}
-                placeholder={
-                  canUseAI ? "Ask AI to make a change…" : "AI unavailable"
-                }
+                placeholder={canUseAI ? composerPlaceholder : "AI unavailable"}
                 value={message}
                 disabled={!canUseAI || chatLoading}
                 onFocus={() => setComposerFocused(true)}
@@ -655,54 +1197,76 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 }}
                 sx={{
                   flex: 1,
-                  minHeight: 24,
-                  maxHeight: 100,
+                  minHeight: 22,
+                  maxHeight: 88,
                   border: 0,
                   outline: "none",
                   resize: "none",
                   background: "transparent",
-                  color: "#e2e8f0",
-                  caretColor: THEME,
+                  color: TEXT_DARK,
                   font: "inherit",
-                  fontSize: 14,
-                  lineHeight: 1.55,
-                  p: 0,
-                  "&::placeholder": { color: "#6b7280" },
+                  fontSize: 13,
+                  fontWeight: 500,
+                  lineHeight: 1.6,
+                  pr: 5.5,
+                  pl: 2,
+                  py: 1.25,
+                  "&::placeholder": {
+                    color: TEXT_LIGHT,
+                    opacity: 1,
+                  },
                   "&:disabled": {
-                    color: "#4b5563",
-                    WebkitTextFillColor: "#4b5563",
+                    color: TEXT_MUTED,
+                    WebkitTextFillColor: TEXT_MUTED,
                   },
                 }}
               />
+
               <IconButton
                 onClick={handleSend}
                 disabled={!canSend}
                 sx={{
-                  flex: "0 0 auto",
-                  width: 28,
-                  height: 28,
-                  borderRadius: "12px",
-                  mb: 0.25,
-                  bgcolor: canSend ? THEME : "rgba(255,255,255,0.06)",
-                  background: canSend
-                    ? `linear-gradient(135deg, ${THEME}, ${THEME}cc)`
-                    : "rgba(255,255,255,0.06)",
-                  color: canSend ? "#fff" : "#374151",
-                  border: canSend ? "none" : "1px solid rgba(255,255,255,0.06)",
-                  boxShadow: canSend ? `0 4px 12px ${THEME}44` : "none",
+                  position: "absolute",
+                  right: 4,
+                  bottom: 4,
+                  width: 32,
+                  height: 32,
+                  borderRadius: "8px",
+                  background: canSend ? THEME : MODAL_BUTTON,
+                  color: "#ffffff",
+                  boxShadow: canSend
+                    ? "0 2px 6px rgba(55,140,146,0.30)"
+                    : "none",
+                  transition: "background 0.15s ease",
                   "&:hover": {
-                    background: canSend
-                      ? `linear-gradient(135deg, ${THEME}, ${THEME}dd)`
-                      : "rgba(255,255,255,0.06)",
+                    background: canSend ? "#2f7a80" : MODAL_BUTTON,
                   },
                   "&.Mui-disabled": {
-                    color: "#374151",
+                    color: "#ffffff",
+                    background: MODAL_BUTTON,
+                    opacity: 0.95,
                   },
                 }}
               >
-                <Send size={15} />
+                {chatLoading ? (
+                  <CircularProgress size={15} sx={{ color: "#fff" }} />
+                ) : (
+                  <Send size={14} />
+                )}
               </IconButton>
             </Box>
+            <Typography
+              sx={{
+                textAlign: "center",
+                fontSize: 10,
+                color: TEXT_DARK,
+                mt: 1.25,
+                lineHeight: 1.4,
+                px: 1,
+              }}
+            >
+              AI can make mistakes. Always review changes before publishing.
+            </Typography>
           </Box>
         </Box>
       </Drawer>
@@ -729,6 +1293,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
         onConfirm={() => {
           const versionId = restoreTarget?.versionId;
           setRestoreTarget(null);
+
           if (versionId) void restoreVersion(versionId);
         }}
         onCancel={() => setRestoreTarget(null)}

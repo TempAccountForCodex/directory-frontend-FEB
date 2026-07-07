@@ -1929,6 +1929,7 @@ const WebsiteEditorInner = () => {
   const editorLabelText = "#4b5563";
 
   const [website, setWebsite] = useState(null);
+  const pendingAIWebsitePatchRef = useRef({});
   const [websiteAIExternalTargets, setWebsiteAIExternalTargets] = useState([]);
   const [websiteAISchemaRefreshKey, setWebsiteAISchemaRefreshKey] = useState(0);
   const [pages, setPages] = useState([]);
@@ -2298,6 +2299,22 @@ const WebsiteEditorInner = () => {
 
       let blocksToSave = [];
 
+      const persistPendingAIWebsitePatch = async () => {
+        const patch = pendingAIWebsitePatchRef.current || {};
+        if (!Object.keys(patch).length) return;
+
+        const websiteResponse = await apiClient.put(
+          `/websites/${websiteId}`,
+          patch,
+        );
+        const updatedWebsite =
+          websiteResponse.data?.data || websiteResponse.data || patch;
+        setWebsite((prev) =>
+          prev ? { ...prev, ...patch, ...updatedWebsite } : prev,
+        );
+        pendingAIWebsitePatchRef.current = {};
+      };
+
       try {
         const normalizedBlocks = data.blocks.map(sanitizeBlockForSave);
         const resolvedThemeSettings = templateThemeSelection
@@ -2418,6 +2435,8 @@ const WebsiteEditorInner = () => {
           }
         }
 
+        await persistPendingAIWebsitePatch();
+
         if (selectedPage?.localOnly) {
           setPersistedPages((prevPages) =>
             prevPages.map((page) =>
@@ -2499,6 +2518,8 @@ const WebsiteEditorInner = () => {
               setPersistedPages,
             });
             setWebsiteAISchemaRefreshKey((key) => key + 1);
+
+            await persistPendingAIWebsitePatch();
 
             localConflictRetryRef.current = false;
             refreshPreview();
@@ -5350,6 +5371,23 @@ const WebsiteEditorInner = () => {
   // Inline edit save handler — Step 9.24: nested path update for content fields
   const handleInlineEditSave = useCallback(
     (blockId, fieldPath, newValue) => {
+      if (String(fieldPath || "").startsWith("website.")) {
+        const websitePath = String(fieldPath).replace(/^website\./, "");
+        pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
+        flushSync(() => {
+          setWebsite((prev) => {
+            const nextWebsite = setValueAtPath(prev || {}, websitePath, newValue);
+            pendingAIWebsitePatchRef.current = setValueAtPath(
+              pendingAIWebsitePatchRef.current || {},
+              websitePath,
+              newValue,
+            );
+            return nextWebsite;
+          });
+        });
+        return;
+      }
+
       pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
       flushSync(() => {
         const nextBlocks = blocksRef.current.map((block) => {
@@ -5636,24 +5674,35 @@ const WebsiteEditorInner = () => {
     selectedEditableElement?.blockId,
     selectedEditableElement?.fieldPath,
   ]);
+  const aiSectionBlockId =
+    selectedSectionElement?.blockId ?? selectedEditableElement?.blockId ?? null;
+  const aiSectionStyleKey = selectedSectionElement?.styleKey || "sectionStyle";
+  const aiSectionLabel = selectedSectionElement?.label || "Section";
+
   const selectedSectionAITarget = useMemo(
     () =>
       findEditableSchemaTarget(websiteAIEditableTargets, {
         pageId: selectedPage?.id,
-        blockId: selectedSectionElement?.blockId,
-        fieldPath: selectedSectionElement?.styleKey || "sectionStyle",
+        blockId: aiSectionBlockId,
+        fieldPath: aiSectionStyleKey,
       }),
     [
       websiteAIEditableTargets,
       selectedPage?.id,
-      selectedSectionElement?.blockId,
-      selectedSectionElement?.styleKey,
+      aiSectionBlockId,
+      aiSectionStyleKey,
     ],
   );
 
   // Read the current value of a block content field (for AI conflict/revert).
   const getAIFieldValue = useCallback((blockId, fieldPath) => {
     const persistedPath = String(fieldPath || "");
+    if (persistedPath.startsWith("website.")) {
+      return getValueAtPath(
+        website || {},
+        persistedPath.replace(/^website\./, ""),
+      );
+    }
     if (
       persistedPath.startsWith("pages.") &&
       persistedPath.includes(".content.")
@@ -5674,7 +5723,7 @@ const WebsiteEditorInner = () => {
       : null;
     if (!block) return undefined;
     return getValueAtPath(block.content || {}, persistedPath);
-  }, []);
+  }, [website]);
 
   // BlockLibrary insert handler — creates a block via API (Phase 9 gap fix)
   const handleInsertBlockFromLibrary = useCallback(
@@ -5773,6 +5822,36 @@ const WebsiteEditorInner = () => {
     }
   }, [website?.slug]);
 
+  const applyHistoryBlocksToActivePage = useCallback(
+    (historyBlocks) => {
+      if (!historyBlocks || !selectedPage?.id) return;
+      const nextBlocks = historyBlocks.map(normalizeLoadedBlock);
+      suppressHistoryRef.current = true;
+      blocksRef.current = nextBlocks;
+      setBlocks(nextBlocks);
+      setSelectedPage((prevSelectedPage) =>
+        String(prevSelectedPage?.id) === String(selectedPage.id)
+          ? { ...prevSelectedPage, blocks: nextBlocks }
+          : prevSelectedPage,
+      );
+      setPages((prevPages) =>
+        prevPages.map((page) =>
+          String(page.id) === String(selectedPage.id)
+            ? { ...page, blocks: nextBlocks }
+            : page,
+        ),
+      );
+      setPersistedPages((prevPages) =>
+        prevPages.map((page) =>
+          String(page.id) === String(selectedPage.id)
+            ? { ...page, blocks: nextBlocks }
+            : page,
+        ),
+      );
+    },
+    [selectedPage?.id],
+  );
+
   const handleUndoBlocks = useCallback(() => {
     if (previewTransformHistoryTimerRef.current) {
       clearTimeout(previewTransformHistoryTimerRef.current);
@@ -5780,11 +5859,8 @@ const WebsiteEditorInner = () => {
     }
     previewTransformHistoryPrimedRef.current = false;
     const previous = undo();
-    if (!previous || !selectedPage?.id) return;
-    suppressHistoryRef.current = true;
-    blocksRef.current = previous;
-    setBlocks(previous);
-  }, [undo, selectedPage?.id]);
+    applyHistoryBlocksToActivePage(previous);
+  }, [applyHistoryBlocksToActivePage, undo]);
 
   const handleRedoBlocks = useCallback(() => {
     if (previewTransformHistoryTimerRef.current) {
@@ -5793,11 +5869,8 @@ const WebsiteEditorInner = () => {
     }
     previewTransformHistoryPrimedRef.current = false;
     const next = redo();
-    if (!next || !selectedPage?.id) return;
-    suppressHistoryRef.current = true;
-    blocksRef.current = next;
-    setBlocks(next);
-  }, [redo, selectedPage?.id]);
+    applyHistoryBlocksToActivePage(next);
+  }, [applyHistoryBlocksToActivePage, redo]);
 
   const liveSiteHref = website?.slug ? `/site/${website.slug}` : null;
   const headerMenuOpen = Boolean(headerMenuAnchorEl);
@@ -9182,11 +9255,11 @@ const WebsiteEditorInner = () => {
                   ),
                 }
               : null,
-            section: selectedSectionElement?.blockId
+            section: aiSectionBlockId
               ? {
-                  blockId: selectedSectionElement.blockId,
-                  label: selectedSectionElement.label,
-                  fieldPath: selectedSectionElement.styleKey || "sectionStyle",
+                  blockId: aiSectionBlockId,
+                  label: aiSectionLabel,
+                  fieldPath: aiSectionStyleKey,
                   persistedFieldPath: selectedSectionAITarget?.fieldPath,
                   aiEditKey: selectedSectionAITarget?.aiEditKey,
                 }
@@ -9196,6 +9269,7 @@ const WebsiteEditorInner = () => {
               : null,
           }}
           revertibleTurns={websiteAIRevertibleTurns}
+          aiHistory={Array.isArray(websiteAIContext?.aiHistory) ? websiteAIContext.aiHistory : []}
           versions={websiteAIVersions}
           openAskSignal={askAIOpenSignal}
           openAskAnchorRect={askAIAnchorRect}
