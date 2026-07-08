@@ -100,13 +100,14 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
           "Directory listing extraction encountered an issue. Your saved details are still available in settings.",
         );
       }
-      await apiClient.patch(`/websites/${websiteId}/listing`, {
-        directoryOptedIn: true,
-        ...(shortDescription.trim()
-          ? { shortDescription: shortDescription.trim() }
-          : {}),
-        ...(businessCategory ? { businessCategory } : {}),
-      });
+
+      const patchPayload: Record<string, unknown> = {};
+      if (shortDescription.trim()) patchPayload.shortDescription = shortDescription.trim();
+      if (businessCategory) patchPayload.businessCategory = businessCategory;
+
+      if (Object.keys(patchPayload).length > 0) {
+        await apiClient.patch(`/websites/${websiteId}/listing`, patchPayload);
+      }
     } catch (err: any) {
       setError(
         err.response?.data?.message ||

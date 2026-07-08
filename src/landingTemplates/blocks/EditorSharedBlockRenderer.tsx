@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import {
+  Alert,
   Box,
   Button,
   Chip,
+  CircularProgress,
   Divider,
   Drawer,
   IconButton,
@@ -12,6 +14,13 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import {
+  classifyContactField,
+  fieldTypeForKind,
+  isEditorPreviewEnvironment,
+  isValidEmail,
+  submitWebsiteFormSubmission,
+} from "../../api/formSubmissions";
 import {
   Facebook,
   Globe,
@@ -1013,6 +1022,206 @@ const BeforeAfterEditorPreview: React.FC<{
         </Box>
       </Box>
     </Box>
+  );
+};
+
+type SharedContactField = { key: string; label: string };
+
+interface SharedContactFormProps {
+  websiteId?: string | number;
+  blockId: string | number | undefined;
+  blockPath: string;
+  formTitle: string;
+  buttonText: string;
+  formFields: SharedContactField[];
+  formInputSx: Record<string, any>;
+  textColor: string;
+  headingFont: string;
+  headingStyle: Record<string, any>;
+  buttonStyle: Record<string, any>;
+  themeColor: string;
+  whiteColor: string;
+}
+
+/**
+ * Interactive contact form used by the shared "contact" block on both the
+ * editor preview and the live public site. It keeps the exact visual layout of
+ * the previous static version but adds controlled inputs, validation, and a
+ * real submission to POST /forms/websites/:websiteId/submissions. In the editor
+ * preview it validates nothing and never persists, so designing never creates
+ * junk submissions.
+ */
+const SharedContactForm: React.FC<SharedContactFormProps> = ({
+  websiteId,
+  blockId,
+  blockPath,
+  formTitle,
+  buttonText,
+  formFields,
+  formInputSx,
+  textColor,
+  headingFont,
+  headingStyle,
+  buttonStyle,
+  themeColor,
+  whiteColor,
+}) => {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleChange =
+    (key: string) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const nextValue = event.target.value;
+      setValues((prev) => ({ ...prev, [key]: nextValue }));
+    };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (status === "loading") return;
+
+    // Editor preview: never validate or persist — the button doubles as an
+    // editable text node while designing.
+    if (isEditorPreviewEnvironment()) return;
+
+    const fields = formFields.map((field) => {
+      const kind = classifyContactField(field.label);
+      return {
+        label: field.label,
+        kind,
+        value: (values[field.key] || "").trim(),
+      };
+    });
+
+    const emailField = fields.find((field) => field.kind === "email");
+    const nameField = fields.find((field) => field.kind === "name");
+
+    // Prevent empty/invalid submissions: core fields required, valid email.
+    const missingRequired = fields.some(
+      (field) =>
+        (field.kind === "name" ||
+          field.kind === "email" ||
+          field.kind === "message") &&
+        !field.value,
+    );
+    if (missingRequired || fields.every((field) => !field.value)) {
+      setErrorMessage("Please fill in all required fields.");
+      setStatus("error");
+      return;
+    }
+    if (emailField && !isValidEmail(emailField.value)) {
+      setErrorMessage("Please enter a valid email address.");
+      setStatus("error");
+      return;
+    }
+
+    if (!websiteId) {
+      setErrorMessage("This form isn't connected yet. Please try again later.");
+      setStatus("error");
+      return;
+    }
+
+    setStatus("loading");
+    setErrorMessage("");
+    try {
+      await submitWebsiteFormSubmission(websiteId, {
+        submitterName: nameField?.value || undefined,
+        submitterEmail: emailField?.value || undefined,
+        source: "template-contact-block",
+        formData: fields.map((field) => ({
+          fieldName: field.label,
+          fieldValue: field.value,
+          fieldType: fieldTypeForKind(field.kind),
+        })),
+      });
+      setStatus("success");
+      setValues({});
+    } catch {
+      setErrorMessage("Something went wrong. Please try again.");
+      setStatus("error");
+    }
+  };
+
+  return (
+    <Stack
+      component="form"
+      onSubmit={handleSubmit}
+      spacing={1.15}
+      sx={{ minWidth: 0, width: "100%" }}
+    >
+      <Typography
+        {...getEditableTextProps(blockId, `${blockPath}.formTitle`, "single")}
+        sx={{
+          color: textColor,
+          fontFamily: headingFont,
+          fontSize: { xs: "1.15rem", md: "1.35rem" },
+          fontWeight: 800,
+          letterSpacing: "-0.03em",
+          ...headingStyle,
+        }}
+      >
+        {formTitle}
+      </Typography>
+
+      {status === "success" && (
+        <Alert severity="success">
+          Thank you! Your message has been sent.
+        </Alert>
+      )}
+      {status === "error" && <Alert severity="error">{errorMessage}</Alert>}
+
+      {formFields.map((field) => {
+        const isMessage = classifyContactField(field.label) === "message";
+        return (
+          <TextField
+            key={field.key}
+            size="small"
+            fullWidth
+            multiline={isMessage}
+            minRows={isMessage ? 4 : undefined}
+            placeholder={field.label}
+            value={values[field.key] || ""}
+            onChange={handleChange(field.key)}
+            disabled={status === "loading"}
+            inputProps={{ "aria-label": field.label }}
+            sx={formInputSx}
+          />
+        );
+      })}
+
+      <Button
+        type="submit"
+        variant="contained"
+        disabled={status === "loading"}
+        {...getEditableTextProps(blockId, `${blockPath}.buttonText`, "single")}
+        sx={{
+          alignSelf: "flex-start",
+          bgcolor: themeColor,
+          color: whiteColor,
+          borderRadius: "999px",
+          textTransform: "none",
+          px: 3,
+          py: 1.1,
+          fontWeight: 800,
+          boxShadow: "none",
+          "&:hover": {
+            bgcolor: themeColor,
+            boxShadow: "none",
+            opacity: 0.92,
+          },
+          ...buttonStyle,
+        }}
+      >
+        {status === "loading" ? (
+          <CircularProgress size={20} color="inherit" />
+        ) : (
+          buttonText
+        )}
+      </Button>
+    </Stack>
   );
 };
 
@@ -2249,78 +2458,21 @@ export const renderEditorSharedBlock = ({
           </Stack>
 
           {/* Right form */}
-          <Stack
-            spacing={1.15}
-            sx={{
-              minWidth: 0,
-              width: "100%",
-            }}
-          >
-            <Typography
-              {...getEditableTextProps(
-                section.blockId,
-                `${blockPath}.formTitle`,
-                "single",
-              )}
-              sx={{
-                color: textColor,
-                fontFamily: headingFont,
-                fontSize: { xs: "1.15rem", md: "1.35rem" },
-                fontWeight: 800,
-                letterSpacing: "-0.03em",
-                ...headingStyle,
-              }}
-            >
-              {block.content?.formTitle || "Send a message"}
-            </Typography>
-
-            {formFields.map((field, fieldIndex: number) => {
-              const fieldLabel = field.label;
-              const isMessage =
-                fieldLabel.toLowerCase().includes("message") ||
-                fieldLabel.toLowerCase().includes("detail");
-
-              return (
-                <TextField
-                  key={field.key}
-                  size="small"
-                  fullWidth
-                  multiline={isMessage}
-                  minRows={isMessage ? 4 : undefined}
-                  placeholder={fieldLabel}
-                  sx={formInputSx}
-                />
-              );
-            })}
-
-            <Button
-              variant="contained"
-              {...getEditableTextProps(
-                section.blockId,
-                `${blockPath}.buttonText`,
-                "single",
-              )}
-              sx={{
-                alignSelf: "flex-start",
-                bgcolor: themeColor,
-                color: whiteColor,
-                borderRadius: "999px",
-                textTransform: "none",
-                px: 3,
-                py: 1.1,
-                fontWeight: 800,
-                boxShadow: "none",
-                "&:hover": {
-                  bgcolor: themeColor,
-                  boxShadow: "none",
-                  opacity: 0.92,
-                },
-                ...buttonStyle,
-              }}
-            >
-              {block.content?.buttonText || "Contact us"}
-            </Button>
-          </Stack>
+          <SharedContactForm
+            websiteId={websiteId}
+            blockId={section.blockId}
+            blockPath={blockPath}
+            formTitle={block.content?.formTitle || "Send a message"}
+            buttonText={block.content?.buttonText || "Contact us"}
+            formFields={formFields}
+            formInputSx={formInputSx}
+            textColor={textColor}
+            headingFont={headingFont}
+            headingStyle={headingStyle}
+            buttonStyle={buttonStyle}
+            themeColor={themeColor}
+            whiteColor={whiteColor}
+          />
         </Box>
       </Stack>
     );

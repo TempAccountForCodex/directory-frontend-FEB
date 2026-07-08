@@ -28,6 +28,12 @@ import {
   getSectionStyleSx,
   type SectionStyleValue,
 } from "../../utils/sectionStyle";
+import {
+  EditableSection,
+  EditableText,
+  EditableButton,
+  EditorExtraBlocks,
+} from "../../utils/editableComponents";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
@@ -127,8 +133,16 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
   const aboutContent = content.about ?? {};
   const portfolioContent = content.portfolio ?? {};
   const servicesContent = content.services ?? {};
+  const gardenServices = (
+    Array.isArray(servicesContent.items) && (servicesContent.items as unknown[]).length > 0
+      ? (servicesContent.items as Array<Record<string, unknown>>)
+      : services.map((s) => ({ name: s.name, description: s.description, price: s.price }))
+  );
   const testimonialsContent = content.testimonials ?? {};
   const contactContent = content.contact ?? {};
+  const extraBlocks = Array.isArray((content as Record<string, unknown>).extraBlocks)
+    ? ((content as Record<string, unknown>).extraBlocks as Array<Record<string, any>>)
+    : [];
 
   return (
     <Box
@@ -252,11 +266,10 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         maxWidth="lg"
         sx={{ px: { xs: 2, md: 3 }, pt: { xs: 3, md: 4 } }}
       >
-        <Box
+        <EditableSection
           id="hero"
-          data-preview-section="true"
-          data-preview-label="Hero"
-          data-preview-block-id={heroContent.blockId}
+          blockId={heroContent.blockId}
+          label="Hero"
           {...getSectionStyleDomProps(heroContent)}
           sx={getSectionStyleSx(heroContent)}
         >
@@ -279,7 +292,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <Grid item xs={12} md={9}>
               <FadeIn delay={0.06}>
-                <Typography
+                <EditableText
+                  field="heading"
+                  kind="multi"
                   sx={{
                     fontFamily: serifFont,
                     fontSize: { xs: "2.8rem", md: "4.45rem" },
@@ -290,9 +305,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 780,
                   }}
                 >
-                  Bringing Nature Home
-                </Typography>
-                <Typography
+                  {(heroContent.heading as string) || "Bringing Nature Home"}
+                </EditableText>
+                <EditableText
+                  field="subheading"
+                  kind="multi"
                   sx={{
                     mt: 1.6,
                     maxWidth: 520,
@@ -301,9 +318,8 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: { xs: "0.98rem", md: "1.02rem" },
                   }}
                 >
-                  We create calm outdoor environments that feel natural,
-                  refined, and deeply connected to everyday living.
-                </Typography>
+                  {(heroContent.subheading as string) || "We create calm outdoor environments that feel natural, refined, and deeply connected to everyday living."}
+                </EditableText>
               </FadeIn>
             </Grid>
             <Grid item xs={12} md={3}>
@@ -312,7 +328,8 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                   direction="row"
                   justifyContent={{ xs: "flex-start", md: "flex-end" }}
                 >
-                  <Button
+                  <EditableButton
+                    field="ctaText"
                     variant="contained"
                     onClick={() => scrollToSection("portfolio")}
                     sx={{
@@ -329,13 +346,13 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                       },
                     }}
                   >
-                    View Portfolio
-                  </Button>
+                    {(heroContent.ctaText as string) || "View Portfolio"}
+                  </EditableButton>
                 </Stack>
               </FadeIn>
             </Grid>
           </Grid>
-        </Box>
+        </EditableSection>
       </Container>
 
       <Box
@@ -363,11 +380,10 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box
+      <EditableSection
         id="about"
-        data-preview-section="true"
-        data-preview-label="About"
-        data-preview-block-id={aboutContent.blockId}
+        blockId={aboutContent.blockId}
+        label="About"
         {...getSectionStyleDomProps(aboutContent)}
         sx={{
           ...getSectionStyleSx(aboutContent),
@@ -379,7 +395,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Grid container spacing={{ xs: 4, md: 8 }} alignItems="center">
             <Grid item xs={12} md={5}>
               <FadeIn>
-                <Typography
+                <EditableText
+                  field="heading"
+                  kind="multi"
                   sx={{
                     fontFamily: serifFont,
                     fontSize: { xs: "2.2rem", md: "3.2rem" },
@@ -387,9 +405,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     color: "#224c24",
                   }}
                 >
-                  About
-                </Typography>
-                <Typography
+                  {(aboutContent.heading as string) || "About"}
+                </EditableText>
+                <EditableText
+                  field="body"
+                  kind="multi"
                   sx={{
                     mt: 2,
                     color: theme.bodyColor,
@@ -397,11 +417,10 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 420,
                   }}
                 >
-                  We shape outdoor spaces with a careful balance of structure,
-                  softness, and plant-led calm. Every garden is designed to feel
-                  lived-in, seasonal, and quietly memorable.
-                </Typography>
-                <Button
+                  {(aboutContent.body as string) || "We shape outdoor spaces with a careful balance of structure, softness, and plant-led calm. Every garden is designed to feel lived-in, seasonal, and quietly memorable."}
+                </EditableText>
+                <EditableButton
+                  field="buttonLabel"
                   variant="contained"
                   sx={{
                     mt: 3,
@@ -418,8 +437,8 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  Learn More
-                </Button>
+                  {(aboutContent.buttonLabel as string) || "Learn More"}
+                </EditableButton>
               </FadeIn>
             </Grid>
             <Grid item xs={12} md={7}>
@@ -437,13 +456,12 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="portfolio"
-        data-preview-section="true"
-        data-preview-label="Portfolio"
-        data-preview-block-id={portfolioContent.blockId}
+        blockId={portfolioContent.blockId}
+        label="Portfolio"
         {...getSectionStyleDomProps(portfolioContent)}
         sx={{
           py: { xs: 8, md: 11 },
@@ -453,7 +471,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <Container maxWidth="lg">
           <FadeIn>
-            <Typography
+            <EditableText
+              field="heading"
+              kind="multi"
               sx={{
                 textAlign: "center",
                 fontFamily: serifFont,
@@ -461,9 +481,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 color: "#224c24",
               }}
             >
-              Portfolio
-            </Typography>
-            <Typography
+              {(portfolioContent.heading as string) || "Portfolio"}
+            </EditableText>
+            <EditableText
+              field="description"
+              kind="multi"
               sx={{
                 textAlign: "center",
                 mt: 1.2,
@@ -473,9 +495,8 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 lineHeight: 1.8,
               }}
             >
-              Selected gardens, courtyards, and outdoor compositions designed to
-              feel balanced, bright, and deeply rooted in place.
-            </Typography>
+              {(portfolioContent.description as string) || "Selected gardens, courtyards, and outdoor compositions designed to feel balanced, bright, and deeply rooted in place."}
+            </EditableText>
           </FadeIn>
 
           <Grid container spacing={2.2} sx={{ mt: 4 }}>
@@ -604,13 +625,12 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Button>
           </Stack>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="services"
-        data-preview-section="true"
-        data-preview-label="Services"
-        data-preview-block-id={servicesContent.blockId}
+        blockId={servicesContent.blockId}
+        label="Services"
         {...getSectionStyleDomProps(servicesContent)}
         sx={{
           ...getSectionStyleSx(servicesContent),
@@ -620,7 +640,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <Container maxWidth="lg">
           <FadeIn>
-            <Typography
+            <EditableText
+              field="heading"
+              kind="multi"
               sx={{
                 fontFamily: serifFont,
                 fontSize: { xs: "2.35rem", md: "3.4rem" },
@@ -628,18 +650,19 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 mb: 5.5,
               }}
             >
-              Our Services
-            </Typography>
+              {(servicesContent.heading as string) || "Our Services"}
+            </EditableText>
           </FadeIn>
 
-          {services.slice(0, 3).map((service, index) => {
+          {gardenServices.slice(0, 3).map((item, index) => {
             const reverse = index % 2 === 1;
+            const name = (item.name as string) || "";
             return (
               <Grid
                 container
                 spacing={{ xs: 3, md: 7 }}
                 alignItems="center"
-                key={service.name}
+                key={index}
                 sx={{
                   mb: { xs: 6, md: 8 },
                   flexDirection: reverse ? { md: "row-reverse" } : undefined,
@@ -656,14 +679,15 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     >
                       <ScrollZoomImage
                         src={serviceImages[index] || heroImage}
-                        alt={service.name}
+                        alt={name}
                       />
                     </Box>
                   </FadeIn>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <FadeIn delay={index * 0.08}>
-                    <Typography
+                    <EditableText
+                      field={`features.${index}.name`}
                       sx={{
                         fontFamily: serifFont,
                         fontSize: { xs: "2rem", md: "2.65rem" },
@@ -671,35 +695,35 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                         mb: 1.5,
                       }}
                     >
-                      {service.name.replace("& ", "")}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        color: theme.bodyColor,
-                        lineHeight: 1.9,
-                        maxWidth: 420,
-                      }}
+                      {name.replace("& ", "")}
+                    </EditableText>
+                    <EditableText
+                      field={`features.${index}.description`}
+                      kind="multi"
+                      sx={{ color: theme.bodyColor, lineHeight: 1.9, maxWidth: 420 }}
                     >
-                      {service.description}
-                    </Typography>
-                    <Typography
-                      sx={{ mt: 1.5, color: "#2f6b2a", fontWeight: 700 }}
-                    >
-                      {service.price}
-                    </Typography>
+                      {(item.description as string) || ""}
+                    </EditableText>
+                    {item.price && (
+                      <EditableText
+                        field={`features.${index}.price`}
+                        sx={{ mt: 1.5, color: "#2f6b2a", fontWeight: 700 }}
+                      >
+                        {(item.price as string) || ""}
+                      </EditableText>
+                    )}
                   </FadeIn>
                 </Grid>
               </Grid>
             );
           })}
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="testimonials"
-        data-preview-section="true"
-        data-preview-label="Testimonials"
-        data-preview-block-id={testimonialsContent.blockId}
+        blockId={testimonialsContent.blockId}
+        label="Testimonials"
         {...getSectionStyleDomProps(testimonialsContent)}
         sx={{
           py: { xs: 8, md: 10 },
@@ -709,15 +733,17 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <Container maxWidth="lg">
           <FadeIn>
-            <Typography
+            <EditableText
+              field="heading"
+              kind="multi"
               sx={{
                 fontFamily: serifFont,
                 fontSize: { xs: "2.2rem", md: "3.2rem" },
                 color: "#224c24",
               }}
             >
-              Testimonials
-            </Typography>
+              {(testimonialsContent.heading as string) || "Testimonials"}
+            </EditableText>
           </FadeIn>
 
           <Grid container spacing={3} sx={{ mt: 1.5 }}>
@@ -751,13 +777,12 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             ))}
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="contact"
-        data-preview-section="true"
-        data-preview-label="Contact"
-        data-preview-block-id={contactContent.blockId}
+        blockId={contactContent.blockId}
+        label="Contact"
         {...getSectionStyleDomProps(contactContent)}
         sx={{
           py: { xs: 8, md: 11 },
@@ -767,7 +792,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <Container maxWidth="md">
           <FadeIn>
-            <Typography
+            <EditableText
+              field="heading"
+              kind="multi"
               sx={{
                 textAlign: "center",
                 fontFamily: serifFont,
@@ -775,9 +802,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 color: "#224c24",
               }}
             >
-              Contact Us
-            </Typography>
-            <Typography
+              {(contactContent.heading as string) || "Contact Us"}
+            </EditableText>
+            <EditableText
+              field="description"
+              kind="multi"
               sx={{
                 textAlign: "center",
                 mt: 1.2,
@@ -787,9 +816,8 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 lineHeight: 1.8,
               }}
             >
-              Share your space, goals, and style direction. We’ll help shape an
-              outdoor environment that feels effortless and alive.
-            </Typography>
+              {(contactContent.description as string) || "Share your space, goals, and style direction. We’ll help shape an outdoor environment that feels effortless and alive."}
+            </EditableText>
           </FadeIn>
 
           <FadeIn delay={0.08}>
@@ -822,7 +850,8 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Grid>
               </Grid>
               <Stack direction="row" justifyContent="center">
-                <Button
+                <EditableButton
+                  field="buttonLabel"
                   variant="contained"
                   sx={{
                     mt: 2.8,
@@ -839,13 +868,13 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  Submit
-                </Button>
+                  {(contactContent.buttonLabel as string) || "Submit"}
+                </EditableButton>
               </Stack>
             </Box>
           </FadeIn>
         </Container>
-      </Box>
+      </EditableSection>
 
       <Box
         sx={{
@@ -952,6 +981,13 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
           </Grid>
         </Container>
       </Box>
+
+      <EditorExtraBlocks
+        blocks={extraBlocks}
+        themeColor={String(data.primaryColor || "#2f6b2a")}
+        fallbackImageSrc={String((data as any).heroBannerUrl || "")}
+        websiteId={data.websiteId}
+      />
     </Box>
   );
 };

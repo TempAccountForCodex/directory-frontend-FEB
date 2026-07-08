@@ -1664,6 +1664,15 @@ const sanitizeNestedInnerBlocksForSave = (innerBlocks) => {
   });
 };
 
+const hasValidGalleryImages = (block) => {
+  if (String(block?.blockType || "").toUpperCase() !== "GALLERY") return true;
+  const images = block.content?.images;
+  return (
+    Array.isArray(images) &&
+    images.some((img) => img?.image || img?.src || img?.url)
+  );
+};
+
 const sanitizeBlockForSave = (block) => {
   if (!block?.content || typeof block.content !== "object") {
     return block;
@@ -2361,16 +2370,18 @@ const WebsiteEditorInner = () => {
         const response = await apiClient.put(
           `/websites/${websiteId}/pages/${effectivePageId}/blocks`,
           {
-            blocks: blocksToSave.map((b, idx) => ({
-              ...(b.id && !String(b.id).startsWith("local-")
-                ? { id: b.id }
-                : {}),
-              blockType: b.blockType,
-              content: b.content,
-              variant: b.variant,
-              sortOrder: idx,
-              isVisible: b.isVisible,
-            })),
+            blocks: blocksToSave
+              .filter(hasValidGalleryImages)
+              .map((b, idx) => ({
+                ...(b.id && !String(b.id).startsWith("local-")
+                  ? { id: b.id }
+                  : {}),
+                blockType: b.blockType,
+                content: b.content,
+                variant: b.variant,
+                sortOrder: idx,
+                isVisible: b.isVisible,
+              })),
             ...(expectedUpdatedAtRef.current
               ? { expectedUpdatedAt: expectedUpdatedAtRef.current }
               : {}),
@@ -2480,16 +2491,18 @@ const WebsiteEditorInner = () => {
             const retryResponse = await apiClient.put(
               `/websites/${websiteId}/pages/${retryPageId}/blocks`,
               {
-                blocks: retryBlocks.map((b, idx) => ({
-                  ...(b.id && !String(b.id).startsWith("local-")
-                    ? { id: b.id }
-                    : {}),
-                  blockType: b.blockType,
-                  content: b.content,
-                  variant: b.variant,
-                  sortOrder: idx,
-                  isVisible: b.isVisible,
-                })),
+                blocks: retryBlocks
+                  .filter(hasValidGalleryImages)
+                  .map((b, idx) => ({
+                    ...(b.id && !String(b.id).startsWith("local-")
+                      ? { id: b.id }
+                      : {}),
+                    blockType: b.blockType,
+                    content: b.content,
+                    variant: b.variant,
+                    sortOrder: idx,
+                    isVisible: b.isVisible,
+                  })),
                 ...(error.response.data?.serverUpdatedAt
                   ? { expectedUpdatedAt: error.response.data.serverUpdatedAt }
                   : {}),
@@ -2616,7 +2629,7 @@ const WebsiteEditorInner = () => {
               },
             };
 
-            const parts = fieldPath.split(".");
+            const parts = fieldPath.split(".").filter(Boolean);
             let obj = updated.content;
             for (let i = 0; i < parts.length - 1; i++) {
               obj[parts[i]] = {
@@ -2688,7 +2701,8 @@ const WebsiteEditorInner = () => {
     allowNavigation: (nextLocation) =>
       nextLocation?.pathname === "/dashboard/websites" ||
       (nextLocation?.pathname === "/dashboard" &&
-        new URLSearchParams(nextLocation?.search || "").get("tab") === "websites"),
+        new URLSearchParams(nextLocation?.search || "").get("tab") ===
+          "websites"),
   });
 
   // LocalStorage backup — saves unsaved data on beforeunload, detects on mount (Step 5.10)
@@ -5376,7 +5390,11 @@ const WebsiteEditorInner = () => {
         pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
         flushSync(() => {
           setWebsite((prev) => {
-            const nextWebsite = setValueAtPath(prev || {}, websitePath, newValue);
+            const nextWebsite = setValueAtPath(
+              prev || {},
+              websitePath,
+              newValue,
+            );
             pendingAIWebsitePatchRef.current = setValueAtPath(
               pendingAIWebsitePatchRef.current || {},
               websitePath,
@@ -5695,35 +5713,38 @@ const WebsiteEditorInner = () => {
   );
 
   // Read the current value of a block content field (for AI conflict/revert).
-  const getAIFieldValue = useCallback((blockId, fieldPath) => {
-    const persistedPath = String(fieldPath || "");
-    if (persistedPath.startsWith("website.")) {
-      return getValueAtPath(
-        website || {},
-        persistedPath.replace(/^website\./, ""),
-      );
-    }
-    if (
-      persistedPath.startsWith("pages.") &&
-      persistedPath.includes(".content.")
-    ) {
-      const match = persistedPath.match(/blocks\.([^.]+)\.content\.(.+)$/);
-      if (match) {
-        const [, resolvedBlockId, contentPath] = match;
-        const block = blocksRef.current.find(
-          (b) => String(b.id) === String(resolvedBlockId),
+  const getAIFieldValue = useCallback(
+    (blockId, fieldPath) => {
+      const persistedPath = String(fieldPath || "");
+      if (persistedPath.startsWith("website.")) {
+        return getValueAtPath(
+          website || {},
+          persistedPath.replace(/^website\./, ""),
         );
-        return block
-          ? getValueAtPath(block.content || {}, contentPath)
-          : undefined;
       }
-    }
-    const block = blockId
-      ? blocksRef.current.find((b) => String(b.id) === String(blockId))
-      : null;
-    if (!block) return undefined;
-    return getValueAtPath(block.content || {}, persistedPath);
-  }, [website]);
+      if (
+        persistedPath.startsWith("pages.") &&
+        persistedPath.includes(".content.")
+      ) {
+        const match = persistedPath.match(/blocks\.([^.]+)\.content\.(.+)$/);
+        if (match) {
+          const [, resolvedBlockId, contentPath] = match;
+          const block = blocksRef.current.find(
+            (b) => String(b.id) === String(resolvedBlockId),
+          );
+          return block
+            ? getValueAtPath(block.content || {}, contentPath)
+            : undefined;
+        }
+      }
+      const block = blockId
+        ? blocksRef.current.find((b) => String(b.id) === String(blockId))
+        : null;
+      if (!block) return undefined;
+      return getValueAtPath(block.content || {}, persistedPath);
+    },
+    [website],
+  );
 
   // BlockLibrary insert handler — creates a block via API (Phase 9 gap fix)
   const handleInsertBlockFromLibrary = useCallback(
@@ -9269,7 +9290,11 @@ const WebsiteEditorInner = () => {
               : null,
           }}
           revertibleTurns={websiteAIRevertibleTurns}
-          aiHistory={Array.isArray(websiteAIContext?.aiHistory) ? websiteAIContext.aiHistory : []}
+          aiHistory={
+            Array.isArray(websiteAIContext?.aiHistory)
+              ? websiteAIContext.aiHistory
+              : []
+          }
           versions={websiteAIVersions}
           openAskSignal={askAIOpenSignal}
           openAskAnchorRect={askAIAnchorRect}

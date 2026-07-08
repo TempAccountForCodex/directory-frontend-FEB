@@ -24,12 +24,7 @@ import Fade from "@mui/material/Fade";
 import { alpha } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
-import {
-  X,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-} from "lucide-react";
+import { X, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { apiClient } from "../../api/client";
 import { type TemplateSummary } from "../../templates/templateApi";
 import { getDashboardColors } from "../../styles/dashboardTheme";
@@ -62,6 +57,239 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, "")
     .slice(0, 63);
 }
+
+const hasValidGalleryImages = (content: Record<string, unknown>): boolean => {
+  const images = content?.images;
+  return (
+    Array.isArray(images) &&
+    images.length > 0 &&
+    images.some(
+      (img: unknown) =>
+        typeof (img as any)?.image === "string" &&
+        (img as any).image.trim() !== "",
+    )
+  );
+};
+
+const serializeTemplatePagesForCreation = (pages: TemplateEditorPage[]) =>
+  pages.map((page, pageIndex) => ({
+    title: page.title,
+    path: page.path,
+    isHome: page.isHome,
+    sortOrder: page.sortOrder ?? pageIndex,
+    isPublished: page.isPublished ?? true,
+    blocks: (page.blocks || [])
+      .filter((block) => {
+        if (block.blockType === "GALLERY") {
+          return hasValidGalleryImages(block.content || {});
+        }
+        return true;
+      })
+      .map((block, blockIndex) => ({
+        blockType: block.blockType,
+        type: block.blockType,
+        content: block.content || {},
+        sortOrder: block.sortOrder ?? blockIndex,
+        isVisible: block.isVisible ?? true,
+      })),
+  }));
+
+const buildFallbackFrontendTemplatePages = (
+  templateId: string,
+  websiteName: string,
+  primaryColor: string,
+): TemplateEditorPage[] => {
+  const data = buildFrontendTemplateBusinessData(templateId, {
+    name: websiteName,
+    businessName: websiteName,
+    primaryColor,
+    themeSettings: { primaryColor },
+  });
+
+  if (!data) {
+    return [];
+  }
+
+  const featureItems =
+    (data.features || []).slice(0, 6).map((feature, index) => ({
+      title: feature?.title || `Feature ${index + 1}`,
+      description: feature?.description || "",
+      icon: feature?.icon || `feature-${index + 1}`,
+    })) || [];
+
+  const serviceItems =
+    (data.services || []).slice(0, 6).map((service, index) => ({
+      title: service?.name || `Service ${index + 1}`,
+      description: service?.description || "",
+      icon: `service-${index + 1}`,
+    })) || [];
+
+  const productItems =
+    (data.products || []).slice(0, 6).map((product, index) => ({
+      title: product?.name || `Product ${index + 1}`,
+      description:
+        product?.description || product?.price || product?.category || "",
+      icon: `product-${index + 1}`,
+    })) || [];
+
+  const articleItems =
+    (data.blogPosts || []).slice(0, 6).map((post, index) => ({
+      title: post?.title || `Article ${index + 1}`,
+      description: post?.description || "",
+      icon: post?.category || `article-${index + 1}`,
+    })) || [];
+
+  const galleryImages =
+    (data.portfolioItems || []).slice(0, 6).map((item, index) => ({
+      image: item?.image || "",
+      alt: item?.title || `Gallery image ${index + 1}`,
+      caption: item?.description || item?.category || "",
+    })) || [];
+
+  const testimonialItems =
+    (data.reviews || []).slice(0, 3).map((review, index) => ({
+      quote: review?.text || review?.comment || "",
+      author: review?.author || review?.name || `Client ${index + 1}`,
+      position: review?.role || "",
+    })) || [];
+
+  const statsItems =
+    (data.stats || []).slice(0, 4).map((stat, index) => ({
+      value: stat?.value || "",
+      label: stat?.label || `Metric ${index + 1}`,
+    })) || [];
+
+  const blocks = [
+    {
+      id: `${templateId}-home-hero`,
+      blockType: "HERO",
+      sortOrder: 0,
+      isVisible: true,
+      content: {
+        editorLabel: "Hero",
+        heading: data.tagline || data.name || websiteName,
+        body: data.description || "",
+        buttonText: "Get started",
+      },
+    },
+  ];
+
+  const supportingItems =
+    featureItems.length > 0
+      ? featureItems
+      : serviceItems.length > 0
+        ? serviceItems
+        : productItems.length > 0
+          ? productItems
+          : articleItems;
+
+  if (supportingItems.length > 0) {
+    blocks.push({
+      id: `${templateId}-home-features`,
+      blockType: "FEATURES",
+      sortOrder: blocks.length,
+      isVisible: true,
+      content: {
+        editorLabel: "Highlights",
+        heading: "Highlights",
+        features: supportingItems,
+      },
+    });
+  }
+
+  if (galleryImages.some((item) => item.image)) {
+    blocks.push({
+      id: `${templateId}-home-gallery`,
+      blockType: "GALLERY",
+      sortOrder: blocks.length,
+      isVisible: true,
+      content: {
+        editorLabel: "Gallery",
+        heading: "Gallery",
+        images: galleryImages.filter((item) => item.image),
+      },
+    });
+  }
+
+  if (statsItems.length > 0) {
+    blocks.push({
+      id: `${templateId}-home-stats`,
+      blockType: "STATS",
+      sortOrder: blocks.length,
+      isVisible: true,
+      content: {
+        editorLabel: "Stats",
+        heading: "Key numbers",
+        items: statsItems,
+      },
+    });
+  }
+
+  if (testimonialItems.length > 0) {
+    blocks.push({
+      id: `${templateId}-home-testimonials`,
+      blockType: "TESTIMONIALS",
+      sortOrder: blocks.length,
+      isVisible: true,
+      content: {
+        editorLabel: "Testimonials",
+        heading: "What clients say",
+        testimonials: testimonialItems,
+      },
+    });
+  }
+
+  blocks.push({
+    id: `${templateId}-home-contact`,
+    blockType: "CONTACT",
+    sortOrder: blocks.length,
+    isVisible: true,
+    content: {
+      editorLabel: "Contact",
+      heading: "Get in touch",
+      body:
+        data.description || "Reach out and we will get back to you shortly.",
+      email: data.contact?.email || "hello@yourcompany.com",
+      phone: data.contact?.phone || "",
+      address: data.fullAddress || "",
+      formTitle: "Send a message",
+      fullNamePlaceholder: "Full name",
+      emailPlaceholder: "Email address",
+      messagePlaceholder: "Message",
+      buttonText: "Contact us",
+    },
+  });
+
+  return [
+    {
+      id: `${templateId}-page-home`,
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sortOrder: 0,
+      isPublished: true,
+      localOnly: true,
+      blocks,
+    },
+  ];
+};
+
+const buildFrontendTemplateCreationPages = (
+  templateId: string,
+  websiteName: string,
+  primaryColor: string,
+): TemplateEditorPage[] => {
+  const seededPages = buildFrontendTemplateEditorPages(templateId, {
+    name: websiteName,
+    businessName: websiteName,
+    primaryColor,
+    themeSettings: { primaryColor },
+  });
+
+  return seededPages.length > 0
+    ? seededPages
+    : buildFallbackFrontendTemplatePages(templateId, websiteName, primaryColor);
+};
 
 type SubdomainStatus =
   | "idle"
@@ -223,29 +451,83 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
 
     try {
       const isDbTemplateId = UUID_REGEX.test(template.id);
-      const payload = {
-        ...(isDbTemplateId
-          ? { templateId: template.id }
-          : { frontendTemplateId: template.id }),
-        name: websiteName.trim(),
-        subdomain: subdomain.trim(),
-        businessCategory: businessCategory.trim() || undefined,
-        customization: {
-          primaryColor,
-        },
-      };
+      let res;
 
-      const res = await apiClient.post(`/websites/from-template`, payload);
+      if (isDbTemplateId) {
+        res = await apiClient.post(`/websites/from-template`, {
+          templateId: template.id,
+          name: websiteName.trim(),
+          subdomain: subdomain.trim(),
+          customization: {
+            primaryColor,
+          },
+        });
+      } else {
+        try {
+          res = await apiClient.post(`/websites/from-template`, {
+            frontendTemplateId: template.id,
+            name: websiteName.trim(),
+            subdomain: subdomain.trim(),
+            customization: {
+              primaryColor,
+            },
+          });
+        } catch (err: any) {
+          const backendMessage =
+            err?.response?.data?.message || err?.message || "";
+          const shouldUseFrontendFallback = /frontend template not found/i.test(
+            String(backendMessage),
+          );
 
-      if (res.data?.success) {
-        const createdWebsiteId = res.data.data.id;
-        if (!isDbTemplateId && createdWebsiteId) {
+          if (!shouldUseFrontendFallback) {
+            throw err;
+          }
+
+          const creationPages = buildFrontendTemplateCreationPages(
+            template.id,
+            websiteName.trim(),
+            primaryColor,
+          );
+
+          if (creationPages.length === 0) {
+            setError(
+              "Selected template is missing frontend setup. Please choose another template.",
+            );
+            return;
+          }
+
+          const customPages = serializeTemplatePagesForCreation(creationPages);
+
+          res = await apiClient.post(`/websites`, {
+            name: websiteName.trim(),
+            slug: subdomain.trim(),
+            primaryColor,
+            isPublic: true,
+            frontendTemplateId: template.id,
+            customPages,
+            templateSnapshot: {
+              templateId: template.id,
+              version: 1,
+              themeSettings: {
+                primaryColor,
+              },
+              pages: customPages,
+            },
+          });
+        }
+      }
+
+      const createdWebsiteId =
+        res?.data?.data?.id || res?.data?.website?.id || null;
+
+      if (res?.data?.success !== false && createdWebsiteId) {
+        if (!isDbTemplateId) {
           storeWebsiteFrontendTemplateId(createdWebsiteId, template.id);
         }
         setCreatedWebsiteId(createdWebsiteId);
-        setActiveStep(3); // Go to directory opt-in step
+        setActiveStep(3);
       } else {
-        setError(res.data?.message || "Failed to create website");
+        setError(res?.data?.message || "Failed to create website");
       }
     } catch (err: any) {
       const msg =
@@ -537,7 +819,6 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                 {primaryColor}
               </Typography>
             </Box>
-
           </Box>
         )}
 

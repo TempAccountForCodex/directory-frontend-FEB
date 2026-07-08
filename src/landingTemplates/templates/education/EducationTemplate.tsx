@@ -22,6 +22,14 @@ import {
   getSectionStyleSx,
   type SectionStyleValue,
 } from "../../utils/sectionStyle";
+import {
+  EditableSection,
+  EditableText,
+  EditableButton,
+  EditableCard,
+  EditableImage,
+  EditorExtraBlocks,
+} from "../../utils/editableComponents";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
@@ -64,11 +72,60 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
   >;
   const heroContent = content.hero ?? {};
   const programsContent = content.programs ?? {};
+  const programServices =
+    Array.isArray(programsContent.items) &&
+    (programsContent.items as unknown[]).length > 0
+      ? (programsContent.items as Array<Record<string, unknown>>)
+      : services.map((s) => ({
+          name: s.name,
+          description: s.description,
+          price: s.price,
+        }));
   const highlightsContent = content.highlights ?? {};
+  const defaultHighlightPoints = [
+    "Certified instructors and subject specialists",
+    "Progress tracking shared with families",
+    "Flexible in-person and online formats",
+    "Confidence-building beyond grades alone",
+  ];
+  const highlightItems: Array<Record<string, unknown>> =
+    Array.isArray(highlightsContent.items) &&
+    (highlightsContent.items as unknown[]).length > 0
+      ? (highlightsContent.items as Array<Record<string, unknown>>)
+      : defaultHighlightPoints.map((name) => ({ name }));
   const galleryContent = content.gallery ?? {};
   const reviewsContent = content.reviews ?? {};
   const contactContent = content.contact ?? {};
   const campusContent = content.campus ?? {};
+  const extraBlocks = Array.isArray(
+    (content as Record<string, unknown>).extraBlocks,
+  )
+    ? ((content as Record<string, unknown>).extraBlocks as Array<
+        Record<string, any>
+      >)
+    : [];
+
+  const defaultReviewItems = (data.reviews ?? []).slice(0, 3).map((r) => ({
+    rating: r.rating || 5,
+    text: r.text || r.comment || "",
+    author: r.author || r.name || "",
+    date: r.date || "",
+  }));
+  const reviewItems: Array<Record<string, unknown>> =
+    Array.isArray(reviewsContent.items) &&
+    (reviewsContent.items as unknown[]).length > 0
+      ? (reviewsContent.items as Array<Record<string, unknown>>)
+      : defaultReviewItems;
+
+  const defaultGalleryItems = (data.gallery ?? []).slice(0, 5).map((g) => ({
+    url: g.url || "",
+    caption: g.caption || "",
+  }));
+  const galleryItems: Array<Record<string, unknown>> =
+    Array.isArray(galleryContent.items) &&
+    (galleryContent.items as unknown[]).length > 0
+      ? (galleryContent.items as Array<Record<string, unknown>>)
+      : defaultGalleryItems;
 
   return (
     <Box sx={{ bgcolor: theme.bgPrimary, fontFamily: theme.fontFamily }}>
@@ -203,11 +260,10 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Toolbar>
       </AppBar>
 
-      <Box
+      <EditableSection
         id="hero"
-        data-preview-section="true"
-        data-preview-label="Hero"
-        data-preview-block-id={heroContent.blockId}
+        blockId={heroContent.blockId}
+        label="Hero"
         {...getSectionStyleDomProps(heroContent)}
         sx={{
           ...getSectionStyleSx(heroContent),
@@ -275,7 +331,9 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             </FadeIn>
 
             <FadeIn delay={0.08}>
-              <Typography
+              <EditableText
+                field="heading"
+                kind="multi"
                 sx={{
                   color: "#ffffff",
                   fontSize: { xs: "2.6rem", md: "5.2rem" },
@@ -286,12 +344,15 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                   textShadow: "0 10px 28px rgba(0,0,0,0.24)",
                 }}
               >
-                A brighter learning journey starts here.
-              </Typography>
+                {(heroContent.heading as string) ||
+                  "A brighter learning journey starts here."}
+              </EditableText>
             </FadeIn>
 
             <FadeIn delay={0.14}>
-              <Typography
+              <EditableText
+                field="subheading"
+                kind="multi"
                 sx={{
                   mt: 2.5,
                   maxWidth: 600,
@@ -300,8 +361,8 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                   lineHeight: 1.8,
                 }}
               >
-                {data.description}
-              </Typography>
+                {(heroContent.subheading as string) || data.description}
+              </EditableText>
             </FadeIn>
 
             <FadeIn delay={0.2}>
@@ -310,7 +371,8 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 spacing={2}
                 sx={{ mt: 4 }}
               >
-                <Button
+                <EditableButton
+                  field="ctaText"
                   variant="contained"
                   endIcon={<ArrowForwardIcon />}
                   onClick={() => scrollToSection("programs")}
@@ -328,9 +390,10 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  Explore Programs
-                </Button>
-                <Button
+                  {(heroContent.ctaText as string) || "Explore Programs"}
+                </EditableButton>
+                <EditableButton
+                  field="secondaryCtaText"
                   variant="outlined"
                   onClick={() => scrollToSection("contact")}
                   sx={{
@@ -347,19 +410,19 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  Talk to Admissions
-                </Button>
+                  {(heroContent.secondaryCtaText as string) ||
+                    "Talk to Admissions"}
+                </EditableButton>
               </Stack>
             </FadeIn>
           </Box>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="programs"
-        data-preview-section="true"
-        data-preview-label="Programs"
-        data-preview-block-id={programsContent.blockId}
+        blockId={programsContent.blockId}
+        label="Programs"
         {...getSectionStyleDomProps(programsContent)}
         sx={{
           py: { xs: 8, md: 12 },
@@ -369,7 +432,8 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <Container maxWidth="lg">
           <FadeIn>
-            <Typography
+            <EditableText
+              field="sectionLabel"
               sx={{
                 textAlign: "center",
                 color: theme.primaryColor,
@@ -379,9 +443,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 fontSize: "0.78rem",
               }}
             >
-              Signature Programs
-            </Typography>
-            <Typography
+              {(programsContent.sectionLabel as string) || "Signature Programs"}
+            </EditableText>
+            <EditableText
+              field="heading"
+              kind="multi"
               sx={{
                 textAlign: "center",
                 mt: 1.5,
@@ -391,9 +457,12 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 lineHeight: 1.05,
               }}
             >
-              Built for real academic momentum.
-            </Typography>
-            <Typography
+              {(programsContent.heading as string) ||
+                "Built for real academic momentum."}
+            </EditableText>
+            <EditableText
+              field="description"
+              kind="multi"
               sx={{
                 textAlign: "center",
                 mt: 2,
@@ -403,18 +472,19 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 lineHeight: 1.8,
               }}
             >
-              Each learning track is structured to combine expert instruction,
-              targeted practice, and ongoing mentorship so students keep
-              progressing with clarity.
-            </Typography>
+              {(programsContent.description as string) ||
+                "Each learning track is structured to combine expert instruction, targeted practice, and ongoing mentorship so students keep progressing with clarity."}
+            </EditableText>
           </FadeIn>
 
           <Grid container spacing={3} sx={{ mt: 3 }}>
-            {services.map((service, index) => (
-              <Grid item xs={12} md={6} lg={4} key={service.name}>
+            {programServices.map((item, index) => (
+              <Grid item xs={12} md={6} lg={4} key={index}>
                 <FadeIn delay={index * 0.06}>
-                  <Card
+                  <EditableCard
                     elevation={0}
+                    field={`features.${index}`}
+                    label={`Program ${index + 1}`}
                     sx={{
                       height: "100%",
                       borderRadius: 4,
@@ -439,45 +509,48 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                       >
                         {String(index + 1).padStart(2, "0")}
                       </Box>
-                      <Typography
+                      <EditableText
+                        field={`features.${index}.name`}
                         sx={{
                           color: "#12264f",
                           fontWeight: 800,
                           fontSize: "1.18rem",
                         }}
                       >
-                        {service.name}
-                      </Typography>
-                      <Typography
+                        {(item.name as string) || ""}
+                      </EditableText>
+                      <EditableText
+                        field={`features.${index}.description`}
+                        kind="multi"
                         sx={{ mt: 1.1, color: "#62718e", lineHeight: 1.75 }}
                       >
-                        {service.description}
-                      </Typography>
-                      {service.price && (
-                        <Typography
+                        {(item.description as string) || ""}
+                      </EditableText>
+                      {item.price && (
+                        <EditableText
+                          field={`features.${index}.price`}
                           sx={{
                             mt: 2.2,
                             color: theme.primaryColor,
                             fontWeight: 800,
                           }}
                         >
-                          {service.price}
-                        </Typography>
+                          {(item.price as string) || ""}
+                        </EditableText>
                       )}
                     </CardContent>
-                  </Card>
+                  </EditableCard>
                 </FadeIn>
               </Grid>
             ))}
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="highlights"
-        data-preview-section="true"
-        data-preview-label="Why Choose Us"
-        data-preview-block-id={highlightsContent.blockId}
+        blockId={highlightsContent.blockId}
+        label="Why Choose Us"
         {...getSectionStyleDomProps(highlightsContent)}
         sx={{
           py: { xs: 8, md: 12 },
@@ -489,7 +562,8 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
             <Grid item xs={12} md={5}>
               <FadeIn>
-                <Typography
+                <EditableText
+                  field="sectionLabel"
                   sx={{
                     color: theme.primaryColor,
                     fontWeight: 800,
@@ -498,9 +572,12 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: "0.78rem",
                   }}
                 >
-                  Why Families Choose Us
-                </Typography>
-                <Typography
+                  {(highlightsContent.sectionLabel as string) ||
+                    "Why Families Choose Us"}
+                </EditableText>
+                <EditableText
+                  field="heading"
+                  kind="multi"
                   sx={{
                     mt: 1.5,
                     color: "#10244c",
@@ -509,28 +586,29 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     lineHeight: 1.08,
                   }}
                 >
-                  Support that feels personal, structured, and ambitious.
-                </Typography>
-                <Typography sx={{ mt: 2, color: "#62718e", lineHeight: 1.85 }}>
-                  We combine high-touch mentorship with clear academic systems
-                  so students know what to work on, why it matters, and how to
-                  keep moving forward.
-                </Typography>
+                  {(highlightsContent.heading as string) ||
+                    "Support that feels personal, structured, and ambitious."}
+                </EditableText>
+                <EditableText
+                  field="description"
+                  kind="multi"
+                  sx={{ mt: 2, color: "#62718e", lineHeight: 1.85 }}
+                >
+                  {(highlightsContent.description as string) ||
+                    "We combine high-touch mentorship with clear academic systems so students know what to work on, why it matters, and how to keep moving forward."}
+                </EditableText>
               </FadeIn>
             </Grid>
 
             <Grid item xs={12} md={7}>
               <Grid container spacing={2}>
-                {[
-                  "Certified instructors and subject specialists",
-                  "Progress tracking shared with families",
-                  "Flexible in-person and online formats",
-                  "Confidence-building beyond grades alone",
-                ].map((point, index) => (
-                  <Grid item xs={12} sm={6} key={point}>
+                {highlightItems.map((item, index) => (
+                  <Grid item xs={12} sm={6} key={index}>
                     <FadeIn delay={index * 0.06}>
-                      <Card
+                      <EditableCard
                         elevation={0}
+                        field={`features.${index}`}
+                        label={`Highlight ${index + 1}`}
                         sx={{
                           borderRadius: 4,
                           border: "1px solid rgba(37,99,235,0.08)",
@@ -542,17 +620,18 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                           <CheckCircleIcon
                             sx={{ color: theme.primaryColor, mb: 1.4 }}
                           />
-                          <Typography
+                          <EditableText
+                            field={`features.${index}.name`}
                             sx={{
                               color: "#12264f",
                               fontWeight: 800,
                               lineHeight: 1.45,
                             }}
                           >
-                            {point}
-                          </Typography>
+                            {(item.name as string) || ""}
+                          </EditableText>
                         </CardContent>
-                      </Card>
+                      </EditableCard>
                     </FadeIn>
                   </Grid>
                 ))}
@@ -560,105 +639,24 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="gallery"
-        data-preview-section="true"
-        data-preview-label="Gallery"
-        data-preview-block-id={galleryContent.blockId}
+        blockId={galleryContent.blockId}
+        label="Gallery"
         {...getSectionStyleDomProps(galleryContent)}
         sx={{
           py: { xs: 8, md: 12 },
           bgcolor: "#ffffff",
           ...getSectionStyleSx(galleryContent),
         }}
-      >
-        <Container maxWidth="lg">
-          <FadeIn>
-            <Typography
-              sx={{
-                textAlign: "center",
-                color: theme.primaryColor,
-                fontWeight: 800,
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                fontSize: "0.78rem",
-              }}
-            >
-              Campus Moments
-            </Typography>
-            <Typography
-              sx={{
-                textAlign: "center",
-                mt: 1.5,
-                color: "#10244c",
-                fontWeight: 900,
-                fontSize: { xs: "2rem", md: "3rem" },
-              }}
-            >
-              Learning spaces that feel active and inspiring.
-            </Typography>
-          </FadeIn>
+      ></EditableSection>
 
-          <Grid container spacing={2} sx={{ mt: 4 }}>
-            {gallery.slice(0, 5).map((item, index) => (
-              <Grid
-                item
-                xs={12}
-                sm={index === 0 ? 12 : 6}
-                md={index === 0 ? 6 : index === 1 ? 3 : index === 2 ? 3 : 6}
-                key={item.url}
-              >
-                <FadeIn delay={index * 0.06}>
-                  <Box
-                    sx={{
-                      position: "relative",
-                      overflow: "hidden",
-                      borderRadius: 4,
-                      minHeight: index === 0 ? 420 : 280,
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src={item.url}
-                      alt={item.caption || data.name}
-                      sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        inset: 0,
-                        background:
-                          "linear-gradient(180deg, rgba(0,0,0,0.02) 20%, rgba(11,22,49,0.55) 100%)",
-                      }}
-                    />
-                    <Typography
-                      sx={{
-                        position: "absolute",
-                        left: 18,
-                        right: 18,
-                        bottom: 16,
-                        color: "#fff",
-                        fontWeight: 700,
-                        fontSize: "1rem",
-                      }}
-                    >
-                      {item.caption}
-                    </Typography>
-                  </Box>
-                </FadeIn>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-
-      <Box
+      <EditableSection
         id="reviews"
-        data-preview-section="true"
-        data-preview-label="Reviews"
-        data-preview-block-id={reviewsContent.blockId}
+        blockId={reviewsContent.blockId}
+        label="Reviews"
         {...getSectionStyleDomProps(reviewsContent)}
         sx={{
           py: { xs: 8, md: 12 },
@@ -668,7 +666,8 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <Container maxWidth="lg">
           <FadeIn>
-            <Typography
+            <EditableText
+              field="sectionLabel"
               sx={{
                 textAlign: "center",
                 color: theme.primaryColor,
@@ -678,9 +677,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 fontSize: "0.78rem",
               }}
             >
-              Parent Feedback
-            </Typography>
-            <Typography
+              {(reviewsContent.sectionLabel as string) || "Parent Feedback"}
+            </EditableText>
+            <EditableText
+              field="heading"
+              kind="multi"
               sx={{
                 textAlign: "center",
                 mt: 1.5,
@@ -689,16 +690,19 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 fontSize: { xs: "2rem", md: "3rem" },
               }}
             >
-              Trusted by families who want more than tutoring.
-            </Typography>
+              {(reviewsContent.heading as string) ||
+                "Trusted by families who want more than tutoring."}
+            </EditableText>
           </FadeIn>
 
           <Grid container spacing={3} sx={{ mt: 3 }}>
-            {reviews.map((review, index) => (
-              <Grid item xs={12} md={4} key={review.author}>
+            {reviewItems.map((review, index) => (
+              <Grid item xs={12} md={4} key={index}>
                 <FadeIn delay={index * 0.06}>
-                  <Card
+                  <EditableCard
                     elevation={0}
+                    field={`items.${index}`}
+                    label={`Review ${index + 1}`}
                     sx={{
                       height: "100%",
                       borderRadius: 4,
@@ -707,46 +711,50 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     }}
                   >
                     <CardContent sx={{ p: 3 }}>
-                      <Typography
+                      <EditableText
+                        field={`items.${index}.rating`}
                         sx={{
                           color: "#f4b400",
                           letterSpacing: "0.12em",
                           fontWeight: 800,
                         }}
                       >
-                        {"★".repeat(review.rating)}
-                      </Typography>
-                      <Typography
+                        {"★".repeat(Number(review.rating) || 5)}
+                      </EditableText>
+                      <EditableText
+                        field={`items.${index}.text`}
+                        kind="multi"
                         sx={{ mt: 1.8, color: "#4d5d79", lineHeight: 1.85 }}
                       >
-                        {review.text}
-                      </Typography>
-                      <Typography
+                        {(review.text as string) || ""}
+                      </EditableText>
+                      <EditableText
+                        field={`items.${index}.author`}
                         sx={{ mt: 2.4, color: "#12264f", fontWeight: 800 }}
                       >
-                        {review.author}
-                      </Typography>
+                        {(review.author as string) || ""}
+                      </EditableText>
                       {review.date && (
-                        <Typography
+                        <EditableText
+                          field={`items.${index}.date`}
                           sx={{ mt: 0.4, color: "#7b8aa6", fontSize: "0.9rem" }}
                         >
-                          {review.date}
-                        </Typography>
+                          {(review.date as string) || ""}
+                        </EditableText>
                       )}
                     </CardContent>
-                  </Card>
+                  </EditableCard>
                 </FadeIn>
               </Grid>
             ))}
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="contact"
-        data-preview-section="true"
-        data-preview-label="Contact"
-        data-preview-block-id={contactContent.blockId}
+        blockId={contactContent.blockId}
+        label="Contact"
         {...getSectionStyleDomProps(contactContent)}
         sx={{
           py: { xs: 8, md: 12 },
@@ -758,7 +766,8 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
             <Grid item xs={12} md={6}>
               <FadeIn>
-                <Typography
+                <EditableText
+                  field="sectionLabel"
                   sx={{
                     color: "#8eb5ff",
                     fontWeight: 800,
@@ -767,9 +776,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: "0.78rem",
                   }}
                 >
-                  Admissions Desk
-                </Typography>
-                <Typography
+                  {(contactContent.sectionLabel as string) || "Admissions Desk"}
+                </EditableText>
+                <EditableText
+                  field="heading"
+                  kind="multi"
                   sx={{
                     mt: 1.5,
                     color: "#ffffff",
@@ -779,9 +790,12 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 540,
                   }}
                 >
-                  Let’s find the right program for your learner.
-                </Typography>
-                <Typography
+                  {(contactContent.heading as string) ||
+                    "Let’s find the right program for your learner."}
+                </EditableText>
+                <EditableText
+                  field="description"
+                  kind="multi"
                   sx={{
                     mt: 2,
                     color: "rgba(255,255,255,0.76)",
@@ -789,17 +803,18 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     maxWidth: 560,
                   }}
                 >
-                  Speak with our team about goals, schedules, and the best next
-                  step. We’ll help you choose a path that matches academic needs
-                  and learning style.
-                </Typography>
+                  {(contactContent.description as string) ||
+                    "Speak with our team about goals, schedules, and the best next step. We’ll help you choose a path that matches academic needs and learning style."}
+                </EditableText>
               </FadeIn>
             </Grid>
 
             <Grid item xs={12} md={6}>
               <FadeIn delay={0.08}>
-                <Card
+                <EditableCard
                   elevation={0}
+                  field="contactCard"
+                  label="Contact Card"
                   sx={{
                     borderRadius: 4,
                     bgcolor: "rgba(255,255,255,0.08)",
@@ -811,18 +826,27 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                     {[
                       {
                         icon: <Phone size={18} />,
+                        fieldLabel: "phoneLabel",
+                        fieldValue: "phone",
                         label: "Call us",
                         value: data.contact.phone,
+                        last: false,
                       },
                       {
                         icon: <Mail size={18} />,
+                        fieldLabel: "emailLabel",
+                        fieldValue: "email",
                         label: "Email",
                         value: data.contact.email,
+                        last: false,
                       },
                       {
                         icon: <MapPin size={18} />,
+                        fieldLabel: "addressLabel",
+                        fieldValue: "address",
                         label: "Visit",
                         value: data.contact.address,
+                        last: true,
                       },
                     ].map((item) => (
                       <Stack
@@ -832,17 +856,17 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                         alignItems="flex-start"
                         sx={{
                           py: 1.4,
-                          borderBottom:
-                            item.label === "Visit"
-                              ? "none"
-                              : "1px solid rgba(255,255,255,0.08)",
+                          borderBottom: item.last
+                            ? "none"
+                            : "1px solid rgba(255,255,255,0.08)",
                         }}
                       >
                         <Box sx={{ color: "#9ac0ff", mt: 0.2 }}>
                           {item.icon}
                         </Box>
                         <Box>
-                          <Typography
+                          <EditableText
+                            field={item.fieldLabel}
                             sx={{
                               color: "#9ac0ff",
                               fontSize: "0.82rem",
@@ -850,18 +874,23 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                               letterSpacing: "0.14em",
                             }}
                           >
-                            {item.label}
-                          </Typography>
-                          <Typography
+                            {(contactContent[item.fieldLabel] as string) ||
+                              item.label}
+                          </EditableText>
+                          <EditableText
+                            field={item.fieldValue}
                             sx={{ mt: 0.6, color: "#ffffff", lineHeight: 1.7 }}
                           >
-                            {item.value}
-                          </Typography>
+                            {(contactContent[item.fieldValue] as string) ||
+                              item.value ||
+                              ""}
+                          </EditableText>
                         </Box>
                       </Stack>
                     ))}
 
-                    <Button
+                    <EditableButton
+                      field="buttonLabel"
                       variant="contained"
                       fullWidth
                       href={
@@ -883,21 +912,21 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                         },
                       }}
                     >
-                      Schedule a Consultation
-                    </Button>
+                      {(contactContent.buttonLabel as string) ||
+                        "Schedule a Consultation"}
+                    </EditableButton>
                   </CardContent>
-                </Card>
+                </EditableCard>
               </FadeIn>
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="location"
-        data-preview-section="true"
-        data-preview-label="Campus"
-        data-preview-block-id={campusContent.blockId}
+        blockId={campusContent.blockId}
+        label="Campus"
         {...getSectionStyleDomProps(campusContent)}
         sx={{
           ...getSectionStyleSx(campusContent),
@@ -921,7 +950,8 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
         />
         <Container maxWidth="lg">
           <FadeIn>
-            <Typography
+            <EditableText
+              field="sectionLabel"
               sx={{
                 textAlign: "center",
                 color: theme.primaryColor,
@@ -931,9 +961,11 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 fontSize: "0.78rem",
               }}
             >
-              Visit Our Campus
-            </Typography>
-            <Typography
+              {(campusContent.sectionLabel as string) || "Visit Our Campus"}
+            </EditableText>
+            <EditableText
+              field="heading"
+              kind="multi"
               sx={{
                 textAlign: "center",
                 mt: 1.5,
@@ -943,9 +975,12 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 lineHeight: 1.08,
               }}
             >
-              Find us, visit us, and talk with our team.
-            </Typography>
-            <Typography
+              {(campusContent.heading as string) ||
+                "Find us, visit us, and talk with our team."}
+            </EditableText>
+            <EditableText
+              field="description"
+              kind="multi"
               sx={{
                 textAlign: "center",
                 mt: 2,
@@ -955,9 +990,9 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 lineHeight: 1.8,
               }}
             >
-              Our learning center is designed to feel welcoming, focused, and
-              easy to access for students and families throughout the week.
-            </Typography>
+              {(campusContent.description as string) ||
+                "Our learning center is designed to feel welcoming, focused, and easy to access for students and families throughout the week."}
+            </EditableText>
           </FadeIn>
 
           <Grid
@@ -1026,20 +1061,25 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                       >
                         <MapPin size={18} />
                         <Box>
-                          <Typography
+                          <EditableText
+                            field="campusName"
                             sx={{ fontWeight: 800, fontSize: "0.95rem" }}
                           >
-                            Bright Minds Campus
-                          </Typography>
-                          <Typography
+                            {(campusContent.campusName as string) ||
+                              "Bright Minds Campus"}
+                          </EditableText>
+                          <EditableText
+                            field="mapAddress"
                             sx={{
                               mt: 0.4,
                               color: "rgba(255,255,255,0.82)",
                               lineHeight: 1.6,
                             }}
                           >
-                            {data.location.address}
-                          </Typography>
+                            {(campusContent.mapAddress as string) ||
+                              data.location?.address ||
+                              ""}
+                          </EditableText>
                         </Box>
                       </Stack>
                     </Box>
@@ -1049,7 +1089,16 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
+
+      <EditorExtraBlocks
+        blocks={extraBlocks}
+        themeColor={String(data.primaryColor || "#2563eb")}
+        fallbackImageSrc={String(
+          (data as any).heroBannerUrl || (data as any).coverImage || "",
+        )}
+        websiteId={data.websiteId}
+      />
     </Box>
   );
 };

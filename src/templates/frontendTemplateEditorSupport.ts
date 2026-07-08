@@ -98,6 +98,10 @@ const LOCAL_TEMPLATE_EDITOR_IDS = new Set([
   "company-executive",
   "education",
   "gardening",
+  "plumbing",
+  "portfolio-agency",
+  "portfolio-creative",
+  "portfolio-photo-studio",
   "restaurant",
 ]);
 
@@ -184,6 +188,56 @@ const featuresToFeatureItems = (features: Feature[] = []) =>
     title: feature.title,
     description: feature.description,
   }));
+
+const servicesToFeatureItems = (services: BusinessData["services"] = []) =>
+  (services || []).slice(0, 6).map((service, index) => ({
+    icon: `service-${index + 1}`,
+    title: service?.name || `Service ${index + 1}`,
+    description: service?.description || service?.price || "",
+  }));
+
+const productsToFeatureItems = (products: BusinessData["products"] = []) =>
+  (products || []).slice(0, 6).map((product, index) => ({
+    icon: `product-${index + 1}`,
+    title: product?.name || `Product ${index + 1}`,
+    description:
+      product?.description ||
+      product?.price ||
+      product?.category ||
+      product?.badge ||
+      "",
+  }));
+
+const statsToFeatureItems = (stats: BusinessData["stats"] = []) =>
+  (stats || []).slice(0, 6).map((stat, index) => ({
+    icon: `stat-${index + 1}`,
+    title: stat?.label || `Metric ${index + 1}`,
+    description: stat?.value || "",
+  }));
+
+const resolveFeatureItems = (data: BusinessData) => {
+  const featureItems = featuresToFeatureItems(data.features || []);
+  if (featureItems.length > 0) {
+    return featureItems;
+  }
+
+  const serviceItems = servicesToFeatureItems(data.services || []);
+  if (serviceItems.length > 0) {
+    return serviceItems;
+  }
+
+  const productItems = productsToFeatureItems(data.products || []);
+  if (productItems.length > 0) {
+    return productItems;
+  }
+
+  const postItems = postsToFeatures(data.blogPosts || []);
+  if (postItems.length > 0) {
+    return postItems;
+  }
+
+  return statsToFeatureItems(data.stats || []);
+};
 
 const reviewsToTestimonials = (reviews: Review[] = []) =>
   reviews.slice(0, 3).map((review, index) => ({
@@ -363,7 +417,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           buildContent: (data) => ({
             heading: "Studio",
             body: data.description || data.tagline || "",
-            features: featuresToFeatureItems(data.features || []),
+            features: resolveFeatureItems(data),
           }),
         },
         {
@@ -429,7 +483,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           blockType: "FEATURES",
           buildContent: (data) => ({
             heading: "What we do",
-            features: featuresToFeatureItems(data.features || []),
+            features: resolveFeatureItems(data),
           }),
         },
         {
@@ -500,8 +554,8 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           buildContent: (data) => ({
             heading: "Built for business trust, clarity, and conversion.",
             description: data.description || data.tagline || "",
-            features: featuresToFeatureItems(data.features || []).length
-              ? featuresToFeatureItems(data.features || [])
+            features: resolveFeatureItems(data).length
+              ? resolveFeatureItems(data)
               : companyStatsToItems(data.stats),
           }),
         },
@@ -579,7 +633,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           buildContent: (data) => ({
             heading: "Built for real academic momentum.",
             description: data.description || data.tagline || "",
-            features: featuresToFeatureItems(data.features || []),
+            features: resolveFeatureItems(data),
           }),
         },
         {
@@ -589,22 +643,33 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           buildContent: (data) => ({
             heading: "Support that feels personal, structured, and ambitious.",
             description: data.description || data.tagline || "",
+            features: resolveFeatureItems(data),
           }),
         },
         {
           key: "gallery",
           label: "Gallery",
           blockType: "GALLERY",
-          buildContent: () => ({
+          buildContent: (data) => ({
             heading: "Learning spaces that feel active and inspiring.",
+            items: (data.gallery ?? []).slice(0, 5).map((g) => ({
+              url: g.url || "",
+              caption: g.caption || "",
+            })),
           }),
         },
         {
           key: "reviews",
           label: "Reviews",
           blockType: "REVIEWS",
-          buildContent: () => ({
+          buildContent: (data) => ({
             heading: "Trusted by families who want more than tutoring.",
+            items: (data.reviews ?? []).slice(0, 3).map((r) => ({
+              rating: r.rating || 5,
+              text: r.text || r.comment || "",
+              author: r.author || r.name || "",
+              date: r.date || "",
+            })),
           }),
         },
         {
@@ -627,6 +692,8 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           buildContent: (data) => ({
             heading: "Find us, visit us, and talk with our team.",
             description: data.contact.address || data.location?.address || "",
+            campusName: data.name || "Our Campus",
+            mapAddress: data.location?.address || data.contact.address || "",
           }),
         },
       ],
@@ -671,7 +738,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           blockType: "FEATURES",
           buildContent: (data) => ({
             heading: "Services",
-            features: featuresToFeatureItems(data.features || []),
+            features: resolveFeatureItems(data),
           }),
         },
         {
@@ -739,6 +806,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           buildContent: (data) => ({
             heading: "Why guests keep coming back.",
             description: data.description || data.tagline || "",
+            features: resolveFeatureItems(data),
           }),
         },
         {
@@ -760,6 +828,212 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
               data.contact.email ||
               data.contact.phone ||
               "",
+          }),
+        },
+      ],
+    },
+  ],
+  "plumbing": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: data.tagline || data.name,
+            subheading: data.description || "",
+            ctaText: "Book Now",
+            ctaLink: "#contact",
+          }),
+        },
+        {
+          key: "about",
+          label: "About",
+          blockType: "TEXT",
+          buildContent: (data) => ({
+            title: "Reliable, licensed, and on call.",
+            body: data.description || data.tagline || "",
+          }),
+        },
+        {
+          key: "services",
+          label: "Services",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            heading: "Our services.",
+            features: resolveFeatureItems(data),
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Need a plumber?",
+            description:
+              data.contact.phone ||
+              data.contact.email ||
+              data.contact.address ||
+              "",
+            buttonLabel: "Book a visit",
+          }),
+        },
+      ],
+    },
+  ],
+  "portfolio-agency": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: data.tagline || data.name,
+            subheading: data.description || "",
+            ctaText: "View Work",
+            ctaLink: "#services",
+          }),
+        },
+        {
+          key: "services",
+          label: "Services",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            heading: "What We Specialise In.",
+            features: resolveFeatureItems(data),
+          }),
+        },
+        {
+          key: "about",
+          label: "About",
+          blockType: "TEXT",
+          buildContent: (data) => ({
+            title: "A studio built for ambitious brands.",
+            body: data.description || data.tagline || "",
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Let's build something together.",
+            description:
+              data.contact.email ||
+              data.contact.phone ||
+              data.contact.address ||
+              "",
+            buttonLabel: "Get in touch",
+          }),
+        },
+      ],
+    },
+  ],
+  "portfolio-creative": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: data.tagline || data.name,
+            subheading: data.description || "",
+            ctaText: "See My Work",
+            ctaLink: "#portfolio",
+          }),
+        },
+        {
+          key: "portfolio",
+          label: "Portfolio",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            heading: "Selected Work.",
+            features: resolveFeatureItems(data),
+          }),
+        },
+        {
+          key: "services",
+          label: "Services",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            heading: "What I Offer.",
+            features: resolveFeatureItems(data),
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Let's create something amazing.",
+            description:
+              data.contact.email || data.contact.phone || "",
+            buttonLabel: "Say hello",
+          }),
+        },
+      ],
+    },
+  ],
+  "portfolio-photo-studio": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: data.tagline || data.name,
+            subheading: data.description || "",
+            ctaText: "View Portfolio",
+            ctaLink: "#services",
+          }),
+        },
+        {
+          key: "services",
+          label: "Services",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            heading: "What I Shoot.",
+            features: resolveFeatureItems(data),
+          }),
+        },
+        {
+          key: "about",
+          label: "About",
+          blockType: "TEXT",
+          buildContent: (data) => ({
+            title: "Behind the lens.",
+            body: data.description || data.tagline || "",
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Book a session.",
+            description:
+              data.contact.email || data.contact.phone || "",
+            buttonLabel: "Enquire now",
           }),
         },
       ],
@@ -1146,7 +1420,12 @@ const hydrateSeededPages = (
             ? block.content.editorSection.trim()
             : "";
 
-        return !!sectionKey && !templateSectionKeys.has(sectionKey);
+        // Keep every persisted block that is NOT one of the template's seeded
+        // sections. This covers blocks added from the Library (which carry no
+        // editorSection) as well as blocks with a custom section key. Seeded
+        // section blocks are hydrated separately via persistedSections below,
+        // so we exclude only those here to avoid rendering them twice.
+        return !(sectionKey && templateSectionKeys.has(sectionKey));
       },
     );
 
@@ -1990,6 +2269,12 @@ const buildTemplatePreviewBusinessDataImpl = (
     const reviewsBlock = findSectionBlock(templateId, pages, "reviews");
     const contactBlock = findSectionBlock(templateId, pages, "contact");
     const campusBlock = findSectionBlock(templateId, pages, "campus");
+    const claimedIds = new Set<string | number | undefined>(
+      [heroBlock?.id, programsBlock?.id, highlightsBlock?.id, galleryBlock?.id, reviewsBlock?.id, contactBlock?.id, campusBlock?.id].filter((v) => v !== undefined),
+    );
+    const extraBlocks = getOrderedBlocksForHomePage(pages).filter(
+      (block) => !claimedIds.has(block.id),
+    );
     const hero = getSectionContent("hero");
     const programs = getSectionContent("programs");
     const highlights = getSectionContent("highlights");
@@ -2038,6 +2323,7 @@ const buildTemplatePreviewBusinessDataImpl = (
           heading: readString(hero, ["heading", "title"]),
           subheading: readString(hero, ["subheading", "description", "body"]),
           ctaText: readString(hero, ["ctaText", "buttonText", "buttonLabel"]),
+          secondaryCtaText: readString(hero, ["secondaryCtaText", "secondaryButtonLabel"]),
           heroImage: readString(hero, ["heroImage", "image", "imageUrl"]),
           image: readString(hero, ["heroImage", "image", "imageUrl"]),
           headingStyle: hero.headingStyle,
@@ -2051,6 +2337,7 @@ const buildTemplatePreviewBusinessDataImpl = (
           blockId: programsBlock?.id,
           heading: readString(programs, ["heading", "title"]),
           description: readString(programs, ["description", "subheading", "body"]),
+          sectionLabel: readString(programs, ["sectionLabel", "label"]),
           items: programItems,
           headingStyle: programs.headingStyle,
           descriptionStyle: programs.descriptionStyle || programs.subheadingStyle,
@@ -2062,6 +2349,8 @@ const buildTemplatePreviewBusinessDataImpl = (
           blockId: highlightsBlock?.id,
           heading: readString(highlights, ["heading", "title"]),
           description: readString(highlights, ["description", "subheading", "body"]),
+          sectionLabel: readString(highlights, ["sectionLabel", "label"]),
+          items: readArray<Record<string, unknown>>(highlights, ["features", "items"]),
           headingStyle: highlights.headingStyle,
           descriptionStyle: highlights.descriptionStyle || highlights.subheadingStyle,
           innerBlocks: Array.isArray(highlights.innerBlocks) ? highlights.innerBlocks : [],
@@ -2071,6 +2360,8 @@ const buildTemplatePreviewBusinessDataImpl = (
         gallery: {
           blockId: galleryBlock?.id,
           heading: readString(gallery, ["heading", "title"]),
+          sectionLabel: readString(gallery, ["sectionLabel", "label"]),
+          items: readArray<Record<string, unknown>>(gallery, ["items", "gallery"]),
           headingStyle: gallery.headingStyle,
           sectionStyle: getSectionStyleValue(gallery),
           outerSectionStyle: getSectionStyleValue(gallery, "outerSectionStyle"),
@@ -2078,6 +2369,8 @@ const buildTemplatePreviewBusinessDataImpl = (
         reviews: {
           blockId: reviewsBlock?.id,
           heading: readString(reviews, ["heading", "title"]),
+          sectionLabel: readString(reviews, ["sectionLabel", "label"]),
+          items: readArray<Record<string, unknown>>(reviews, ["items", "reviews"]),
           headingStyle: reviews.headingStyle,
           sectionStyle: getSectionStyleValue(reviews),
           outerSectionStyle: getSectionStyleValue(reviews, "outerSectionStyle"),
@@ -2087,9 +2380,16 @@ const buildTemplatePreviewBusinessDataImpl = (
           heading: contactHeading,
           description: contactDescription,
           subheading: contactDescription,
+          sectionLabel: readString(contact, ["sectionLabel", "label"]),
           buttonLabel: contactButton,
           primaryCtaText: contactButton,
           ctaText: contactButton,
+          phoneLabel: readString(contact, ["phoneLabel"], "Call us"),
+          emailLabel: readString(contact, ["emailLabel"], "Email"),
+          addressLabel: readString(contact, ["addressLabel"], "Visit"),
+          phone: readString(contact, ["phone"]),
+          email: readString(contact, ["email"]),
+          address: readString(contact, ["address"]),
           headingStyle: contact.headingStyle,
           descriptionStyle: contact.descriptionStyle || contact.subheadingStyle || contact.bodyStyle,
           buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
@@ -2101,12 +2401,16 @@ const buildTemplatePreviewBusinessDataImpl = (
           blockId: campusBlock?.id,
           heading: readString(campus, ["heading", "title"]),
           description: readString(campus, ["description", "subheading", "body"]),
+          sectionLabel: readString(campus, ["sectionLabel", "label"]),
+          campusName: readString(campus, ["campusName", "name"]),
+          mapAddress: readString(campus, ["mapAddress", "address"]),
           headingStyle: campus.headingStyle,
           descriptionStyle: campus.descriptionStyle || campus.subheadingStyle,
           sectionStyle: getSectionStyleValue(campus),
           outerSectionStyle: getSectionStyleValue(campus, "outerSectionStyle"),
         },
         sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
+        extraBlocks,
       },
     };
   }
@@ -2122,6 +2426,12 @@ const buildTemplatePreviewBusinessDataImpl = (
       "testimonials",
     );
     const contactBlock = findSectionBlock(templateId, pages, "contact");
+    const claimedIds = new Set<string | number | undefined>(
+      [heroBlock?.id, aboutBlock?.id, portfolioBlock?.id, servicesBlock?.id, testimonialsBlock?.id, contactBlock?.id].filter((v) => v !== undefined),
+    );
+    const extraBlocks = getOrderedBlocksForHomePage(pages).filter(
+      (block) => !claimedIds.has(block.id),
+    );
     const hero = getSectionContent("hero");
     const about = getSectionContent("about");
     const portfolio = getSectionContent("portfolio");
@@ -2168,6 +2478,7 @@ const buildTemplatePreviewBusinessDataImpl = (
           blockId: heroBlock?.id,
           heading: readString(hero, ["heading", "title"]),
           subheading: readString(hero, ["subheading", "description", "body"]),
+          ctaText: readString(hero, ["ctaText", "primaryCtaText", "buttonLabel"]),
           heroImage: readString(hero, ["heroImage", "image", "imageUrl"]),
           image: readString(hero, ["heroImage", "image", "imageUrl"]),
           headingStyle: hero.headingStyle,
@@ -2180,6 +2491,7 @@ const buildTemplatePreviewBusinessDataImpl = (
           blockId: aboutBlock?.id,
           heading: readString(about, ["title", "heading"]),
           body: readString(about, ["body", "description", "subheading"]),
+          buttonLabel: readString(about, ["buttonLabel", "ctaText", "primaryCtaText"]),
           image: readString(about, ["image", "imageUrl"]),
           headingStyle: about.headingStyle || about.titleStyle,
           bodyStyle: about.bodyStyle || about.descriptionStyle,
@@ -2190,6 +2502,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         portfolio: {
           blockId: portfolioBlock?.id,
           heading: readString(portfolio, ["heading", "title"]),
+          description: readString(portfolio, ["description", "subheading", "body"]),
           headingStyle: portfolio.headingStyle,
           sectionStyle: getSectionStyleValue(portfolio),
           outerSectionStyle: getSectionStyleValue(portfolio, "outerSectionStyle"),
@@ -2227,6 +2540,7 @@ const buildTemplatePreviewBusinessDataImpl = (
           outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },
         sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
+        extraBlocks,
       },
     };
   }
@@ -2238,6 +2552,12 @@ const buildTemplatePreviewBusinessDataImpl = (
     const whyUsBlock = findSectionBlock(templateId, pages, "why-us");
     const reviewsBlock = findSectionBlock(templateId, pages, "reviews");
     const contactBlock = findSectionBlock(templateId, pages, "contact");
+    const claimedIds = new Set<string | number | undefined>(
+      [heroBlock?.id, storyBlock?.id, locationBlock?.id, whyUsBlock?.id, reviewsBlock?.id, contactBlock?.id].filter((v) => v !== undefined),
+    );
+    const extraBlocks = getOrderedBlocksForHomePage(pages).filter(
+      (block) => !claimedIds.has(block.id),
+    );
     const hero = getSectionContent("hero");
     const story = getSectionContent("story");
     const location = getSectionContent("location");
@@ -2284,6 +2604,7 @@ const buildTemplatePreviewBusinessDataImpl = (
           blockId: heroBlock?.id,
           heading: readString(hero, ["heading", "title"]),
           subheading: readString(hero, ["subheading", "description", "body"]),
+          ctaText: readString(hero, ["ctaText", "primaryCtaText", "buttonLabel"]),
           heroImage: readString(hero, ["heroImage", "image", "imageUrl"]),
           image: readString(hero, ["heroImage", "image", "imageUrl"]),
           headingStyle: hero.headingStyle,
@@ -2296,6 +2617,7 @@ const buildTemplatePreviewBusinessDataImpl = (
           blockId: storyBlock?.id,
           heading: readString(story, ["title", "heading"]),
           body: readString(story, ["body", "description", "subheading"]),
+          subItems: readArray<Record<string, unknown>>(story, ["subItems"]),
           image: readString(story, ["image", "imageUrl"]),
           headingStyle: story.headingStyle || story.titleStyle,
           bodyStyle: story.bodyStyle || story.descriptionStyle,
@@ -2344,6 +2666,153 @@ const buildTemplatePreviewBusinessDataImpl = (
           innerBlocks: Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
           sectionStyle: getSectionStyleValue(contact),
           outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
+        },
+        sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
+        extraBlocks,
+      },
+    };
+  }
+
+  if (
+    templateId === "portfolio-agency" ||
+    templateId === "portfolio-creative" ||
+    templateId === "portfolio-photo-studio"
+  ) {
+    const heroBlock = findSectionBlock(templateId, pages, "hero");
+    const servicesBlock = findSectionBlock(templateId, pages, "services");
+    const aboutBlock = findSectionBlock(templateId, pages, "about");
+    const contactBlock = findSectionBlock(templateId, pages, "contact");
+    const hero = getSectionContent("hero");
+    const services = getSectionContent("services");
+    const about = getSectionContent("about");
+    const contact = getSectionContent("contact");
+    const serviceItems = readArray<Record<string, unknown>>(services, ["features", "items"]);
+    const contactHeading = readString(contact, ["heading", "title"], "Let's build something together.");
+    const contactDescription = readString(contact, ["description", "subheading", "body"], "");
+    const contactButton = readString(contact, ["buttonLabel", "primaryCtaText", "ctaText"], "Get in touch");
+
+    return {
+      ...themedBase,
+      tagline: readString(hero, ["heading", "title"], String(themedBase.tagline || themedBase.name)),
+      description: readString(
+        about,
+        ["body", "description", "subheading"],
+        readString(hero, ["subheading", "description", "body"], String(themedBase.description)),
+      ),
+      services: serviceItems.length
+        ? serviceItems.map((item) => ({
+            name: readString(item, ["title"], "Service"),
+            description: readString(item, ["description"], ""),
+          }))
+        : themedBase.services,
+      templateContent: {
+        hero: {
+          blockId: heroBlock?.id,
+          heading: readString(hero, ["heading", "title"]),
+          subheading: readString(hero, ["subheading", "description", "body"]),
+          ctaText: readString(hero, ["ctaText", "buttonText", "buttonLabel"]),
+          headingStyle: hero.headingStyle,
+          subheadingStyle: hero.subheadingStyle || hero.descriptionStyle,
+          sectionStyle: getSectionStyleValue(hero),
+        },
+        services: {
+          blockId: servicesBlock?.id,
+          heading: readString(services, ["heading", "title"]),
+          items: serviceItems,
+          headingStyle: services.headingStyle,
+          sectionStyle: getSectionStyleValue(services),
+        },
+        about: {
+          blockId: aboutBlock?.id,
+          heading: readString(about, ["title", "heading"]),
+          body: readString(about, ["body", "description", "subheading"]),
+          headingStyle: about.headingStyle || about.titleStyle,
+          bodyStyle: about.bodyStyle || about.descriptionStyle,
+          sectionStyle: getSectionStyleValue(about),
+        },
+        contact: {
+          blockId: contactBlock?.id,
+          heading: contactHeading,
+          description: contactDescription,
+          subheading: contactDescription,
+          buttonLabel: contactButton,
+          primaryCtaText: contactButton,
+          ctaText: contactButton,
+          headingStyle: contact.headingStyle,
+          descriptionStyle: contact.descriptionStyle || contact.subheadingStyle || contact.bodyStyle,
+          buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
+          sectionStyle: getSectionStyleValue(contact),
+        },
+        sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
+      },
+    };
+  }
+
+  if (templateId === "plumbing") {
+    const heroBlock = findSectionBlock(templateId, pages, "hero");
+    const aboutBlock = findSectionBlock(templateId, pages, "about");
+    const servicesBlock = findSectionBlock(templateId, pages, "services");
+    const contactBlock = findSectionBlock(templateId, pages, "contact");
+    const hero = getSectionContent("hero");
+    const about = getSectionContent("about");
+    const services = getSectionContent("services");
+    const contact = getSectionContent("contact");
+    const serviceItems = readArray<Record<string, unknown>>(services, ["features", "items"]);
+    const contactHeading = readString(contact, ["heading", "title"], "Need a plumber?");
+    const contactDescription = readString(contact, ["description", "subheading", "body"], "");
+    const contactButton = readString(contact, ["buttonLabel", "primaryCtaText", "ctaText"], "Book a visit");
+
+    return {
+      ...themedBase,
+      tagline: readString(hero, ["heading", "title"], String(themedBase.tagline || themedBase.name)),
+      description: readString(
+        about,
+        ["body", "description", "subheading"],
+        readString(hero, ["subheading", "description", "body"], String(themedBase.description)),
+      ),
+      services: serviceItems.length
+        ? serviceItems.map((item) => ({
+            name: readString(item, ["title"], "Service"),
+            description: readString(item, ["description"], ""),
+          }))
+        : themedBase.services,
+      templateContent: {
+        hero: {
+          blockId: heroBlock?.id,
+          heading: readString(hero, ["heading", "title"]),
+          subheading: readString(hero, ["subheading", "description", "body"]),
+          ctaText: readString(hero, ["ctaText", "buttonText", "buttonLabel"], "Book Now"),
+          headingStyle: hero.headingStyle,
+          subheadingStyle: hero.subheadingStyle || hero.descriptionStyle,
+          sectionStyle: getSectionStyleValue(hero),
+        },
+        about: {
+          blockId: aboutBlock?.id,
+          heading: readString(about, ["title", "heading"]),
+          body: readString(about, ["body", "description", "subheading"]),
+          headingStyle: about.headingStyle || about.titleStyle,
+          bodyStyle: about.bodyStyle || about.descriptionStyle,
+          sectionStyle: getSectionStyleValue(about),
+        },
+        services: {
+          blockId: servicesBlock?.id,
+          heading: readString(services, ["heading", "title"]),
+          items: serviceItems,
+          headingStyle: services.headingStyle,
+          sectionStyle: getSectionStyleValue(services),
+        },
+        contact: {
+          blockId: contactBlock?.id,
+          heading: contactHeading,
+          description: contactDescription,
+          subheading: contactDescription,
+          buttonLabel: contactButton,
+          primaryCtaText: contactButton,
+          ctaText: contactButton,
+          headingStyle: contact.headingStyle,
+          descriptionStyle: contact.descriptionStyle || contact.subheadingStyle || contact.bodyStyle,
+          buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
+          sectionStyle: getSectionStyleValue(contact),
         },
         sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
       },

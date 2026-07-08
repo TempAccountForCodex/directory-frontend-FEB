@@ -14,6 +14,11 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import type { BusinessData } from "../types/BusinessData";
 import type { TemplateTheme } from "../templateEngine/types";
 import FadeIn from "./FadeIn";
+import {
+  isEditorPreviewEnvironment,
+  isValidEmail,
+  submitWebsiteFormSubmission,
+} from "../../api/formSubmissions";
 
 export interface ContactBlockProps {
   data: BusinessData;
@@ -27,25 +32,81 @@ interface FormState {
   message: string;
 }
 
-function useContactForm() {
+function useContactForm(websiteId?: string | number) {
   const [form, setForm] = useState<FormState>({
     name: "",
     email: "",
     message: "",
   });
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+
+    // Editor preview: never validate or persist while designing.
+    if (isEditorPreviewEnvironment()) return;
+
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const message = form.message.trim();
+
+    if (!name || !email || !message) {
+      setErrorMessage("Please fill in all required fields.");
+      setStatus("error");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setErrorMessage("Please enter a valid email address.");
+      setStatus("error");
+      return;
+    }
+    if (!websiteId) {
+      setErrorMessage("This form isn't connected yet. Please try again later.");
+      setStatus("error");
+      return;
+    }
+
+    setStatus("loading");
+    setErrorMessage("");
+    try {
+      await submitWebsiteFormSubmission(websiteId, {
+        submitterName: name,
+        submitterEmail: email,
+        source: "template-contact-block",
+        formData: [
+          { fieldName: "Name", fieldValue: name, fieldType: "text" },
+          { fieldName: "Email", fieldValue: email, fieldType: "email" },
+          { fieldName: "Message", fieldValue: message, fieldType: "textarea" },
+        ],
+      });
+      setStatus("success");
+      setForm({ name: "", email: "", message: "" });
+    } catch {
+      setErrorMessage("Something went wrong. Please try again.");
+      setStatus("error");
+    }
   };
-  return { form, submitted, handleChange, handleSubmit };
+
+  return {
+    form,
+    status,
+    errorMessage,
+    submitted: status === "success",
+    handleChange,
+    handleSubmit,
+  };
 }
 
 function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
-  const { form, submitted, handleChange, handleSubmit } = useContactForm();
+  const { form, status, errorMessage, submitted, handleChange, handleSubmit } =
+    useContactForm(data.websiteId);
   const { contact } = data;
   return (
     <Box sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}>
@@ -131,6 +192,11 @@ function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
             ) : (
               <Box component="form" onSubmit={handleSubmit}>
                 <Grid container spacing={2}>
+                  {status === "error" && (
+                    <Grid item xs={12}>
+                      <Alert severity="error">{errorMessage}</Alert>
+                    </Grid>
+                  )}
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
@@ -172,6 +238,7 @@ function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                       variant="contained"
                       size="large"
                       fullWidth
+                      disabled={status === "loading"}
                       sx={{
                         bgcolor: theme.primaryColor,
                         fontWeight: 700,
@@ -182,7 +249,7 @@ function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                         },
                       }}
                     >
-                      Send Message
+                      {status === "loading" ? "Sending…" : "Send Message"}
                     </Button>
                   </Grid>
                 </Grid>
@@ -196,7 +263,8 @@ function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
 }
 
 function InlineContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
-  const { form, submitted, handleChange, handleSubmit } = useContactForm();
+  const { form, status, errorMessage, submitted, handleChange, handleSubmit } =
+    useContactForm(data.websiteId);
   const { contact } = data;
   return (
     <Box sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}>
@@ -236,6 +304,11 @@ function InlineContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
           <FadeIn delay={0.15}>
             <Box component="form" onSubmit={handleSubmit}>
               <Grid container spacing={2}>
+                {status === "error" && (
+                  <Grid item xs={12}>
+                    <Alert severity="error">{errorMessage}</Alert>
+                  </Grid>
+                )}
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -273,6 +346,7 @@ function InlineContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                   <Button
                     type="submit"
                     variant="contained"
+                    disabled={status === "loading"}
                     sx={{
                       bgcolor: theme.primaryColor,
                       fontWeight: 700,
@@ -285,7 +359,7 @@ function InlineContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                       },
                     }}
                   >
-                    Send Message
+                    {status === "loading" ? "Sending…" : "Send Message"}
                   </Button>
                 </Grid>
               </Grid>
@@ -298,7 +372,8 @@ function InlineContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
 }
 
 function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
-  const { form, submitted, handleChange, handleSubmit } = useContactForm();
+  const { form, status, errorMessage, submitted, handleChange, handleSubmit } =
+    useContactForm(data.websiteId);
   const { contact } = data;
   const inputSx = {
     "& .MuiOutlinedInput-root": {
@@ -342,6 +417,11 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
           <FadeIn delay={0.1}>
             <Box component="form" onSubmit={handleSubmit}>
               <Grid container spacing={2.5}>
+                {status === "error" && (
+                  <Grid item xs={12}>
+                    <Alert severity="error">{errorMessage}</Alert>
+                  </Grid>
+                )}
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -412,6 +492,7 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                     variant="contained"
                     fullWidth
                     size="large"
+                    disabled={status === "loading"}
                     sx={{
                       bgcolor: theme.accentColor,
                       color: "#000",
@@ -424,7 +505,7 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
                       },
                     }}
                   >
-                    Send Message
+                    {status === "loading" ? "Sending…" : "Send Message"}
                   </Button>
                 </Grid>
               </Grid>

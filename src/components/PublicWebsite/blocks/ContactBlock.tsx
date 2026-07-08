@@ -31,7 +31,14 @@ import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import DOMPurify from "dompurify";
 import { BlockWrapper } from "../BlockWrapper";
-import { API_URL } from "@/config/api";
+import {
+  classifyContactField,
+  fieldTypeForKind,
+  isEditorPreviewEnvironment,
+  isValidEmail,
+  submitWebsiteFormSubmission,
+} from "@/api/formSubmissions";
+import { isAxiosError } from "@/api/client";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -73,6 +80,7 @@ interface ContactBlockProps {
   secondaryColor?: string;
   headingColor?: string;
   bodyColor?: string;
+  websiteId?: string | number;
   onFormSubmit?: (formName: string, success: boolean) => void;
 }
 
@@ -125,6 +133,7 @@ interface ContactFormProps {
   fieldColor?: string;
   formFields?: FormFieldConfig[];
   content?: ContactContent;
+  websiteId?: string | number;
   onFormSubmit?: (formName: string, success: boolean) => void;
 }
 
@@ -134,6 +143,7 @@ function ContactForm({
   fieldColor = "",
   formFields,
   content,
+  websiteId,
   onFormSubmit,
 }: ContactFormProps) {
   const fields =
@@ -161,65 +171,57 @@ function ContactForm({
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+
+      // Editor preview: never validate or persist while designing.
+      if (isEditorPreviewEnvironment()) return;
+
+      // Classify every visible field and read its trimmed value.
+      const builtFields = fields.map((f) => ({
+        label: f.label,
+        kind: classifyContactField(f.label),
+        required: f.required !== false,
+        value: (formData[f.label] || "").trim(),
+      }));
+
+      // Prevent empty/invalid submissions.
+      const missingRequired = builtFields.some((f) => f.required && !f.value);
+      if (missingRequired || builtFields.every((f) => !f.value)) {
+        setErrorMessage("Please fill in all required fields.");
+        setFormStatus("error");
+        return;
+      }
+      const emailField = builtFields.find((f) => f.kind === "email");
+      if (emailField?.value && !isValidEmail(emailField.value)) {
+        setErrorMessage("Please enter a valid email address.");
+        setFormStatus("error");
+        return;
+      }
+
+      const effectiveWebsiteId = websiteId ?? content?.websiteId;
+      if (!effectiveWebsiteId) {
+        setErrorMessage(
+          "This form isn't connected yet. Please try again later.",
+        );
+        setFormStatus("error");
+        return;
+      }
+
       setFormStatus("loading");
       setErrorMessage("");
 
+      const nameField = builtFields.find((f) => f.kind === "name");
+
       try {
-        // Build payload — map well-known labels to API fields, include all others as extra
-        const nameVal = formData["Name"] || "";
-        const emailVal = formData["Email"] || "";
-        const messageVal = formData["Message"] || "";
-        const phoneVal = formData["Phone"] || formData["Phone Number"] || "";
-        const subjectVal = formData["Subject"] || "";
-
-        const payload: Record<string, unknown> = {
-          name: nameVal,
-          email: emailVal,
-          message: messageVal,
+        await submitWebsiteFormSubmission(effectiveWebsiteId, {
+          submitterName: nameField?.value || undefined,
+          submitterEmail: emailField?.value || undefined,
           source: "contact-block",
-        };
-        if (phoneVal) payload.phone = phoneVal;
-        if (subjectVal) payload.subject = subjectVal;
-        if (content?.websiteId) payload.websiteId = content.websiteId;
-
-        // Include any additional custom field values
-        for (const field of fields) {
-          const key = field.label;
-          if (
-            ![
-              "Name",
-              "Email",
-              "Message",
-              "Phone",
-              "Phone Number",
-              "Subject",
-            ].includes(key) &&
-            formData[key]
-          ) {
-            payload[key] = formData[key];
-          }
-        }
-
-        const res = await fetch(`${API_URL}/contact`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          formData: builtFields.map((f) => ({
+            fieldName: f.label,
+            fieldValue: f.value,
+            fieldType: fieldTypeForKind(f.kind),
+          })),
         });
-
-        if (res.status === 429) {
-          setErrorMessage("Too many requests. Please try again later.");
-          setFormStatus("error");
-          return;
-        }
-
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          setErrorMessage(
-            (body as any).message || "Failed to submit. Please try again.",
-          );
-          setFormStatus("error");
-          return;
-        }
 
         setFormStatus("success");
         onFormSubmit?.("contact", true);
@@ -229,15 +231,19 @@ function ContactForm({
         });
         setFormData(reset);
         setTimeout(() => setFormStatus("idle"), 5000);
-      } catch {
-        setErrorMessage(
-          "Unable to send message. Please check your connection and try again.",
-        );
+      } catch (err) {
+        if (isAxiosError(err) && err.response?.status === 429) {
+          setErrorMessage("Too many requests. Please try again later.");
+        } else {
+          setErrorMessage(
+            "Unable to send message. Please check your connection and try again.",
+          );
+        }
         setFormStatus("error");
         onFormSubmit?.("contact", false);
       }
     },
-    [formData, fields, content, onFormSubmit],
+    [formData, fields, content, websiteId, onFormSubmit],
   );
 
   return (
@@ -308,9 +314,11 @@ const ContactBlock = React.memo(function ContactBlock({
   primaryColor = "#2563eb",
   headingColor = "#1e293b",
   bodyColor = "#475569",
+  websiteId,
   onFormSubmit,
 }: ContactBlockProps) {
   const content = (block.content ?? {}) as ContactContent;
+  const effectiveWebsiteId = websiteId ?? content.websiteId;
 
   const layout = content.layout ?? "stacked";
   const contactImage = content.contactImage ?? "";
@@ -447,6 +455,7 @@ const ContactBlock = React.memo(function ContactBlock({
                       fieldVariant={fieldVariant}
                       fieldColor={fieldColor}
                       content={content}
+                      websiteId={effectiveWebsiteId}
                       onFormSubmit={onFormSubmit}
                     />
                   )}
@@ -629,6 +638,7 @@ const ContactBlock = React.memo(function ContactBlock({
             fieldColor={fieldColor}
             formFields={content.formFields}
             content={content}
+            websiteId={effectiveWebsiteId}
             onFormSubmit={onFormSubmit}
           />
         )}
@@ -720,6 +730,7 @@ const ContactBlock = React.memo(function ContactBlock({
                     fieldVariant={fieldVariant}
                     fieldColor={fieldColor}
                     content={content}
+                    websiteId={effectiveWebsiteId}
                     onFormSubmit={onFormSubmit}
                   />
                 </Box>

@@ -18,6 +18,12 @@ import {
   getSectionStyleSx,
   type SectionStyleValue,
 } from "../../utils/sectionStyle";
+import {
+  EditableSection,
+  EditableText,
+  EditableButton,
+  EditorExtraBlocks,
+} from "../../utils/editableComponents";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
@@ -75,8 +81,32 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
   const storyContent = content.story ?? {};
   const locationContent = content.location ?? {};
   const whyUsContent = content.whyUs ?? {};
+  const restaurantWhyItems: Array<Record<string, unknown>> =
+    Array.isArray(whyUsContent.items) && (whyUsContent.items as unknown[]).length > 0
+      ? (whyUsContent.items as Array<Record<string, unknown>>)
+      : (data.services ?? []).length > 0
+        ? (data.services ?? []).map((s: { name: string; description?: string }) => ({ name: s.name, description: s.description || "" }))
+        : [
+            { name: "Quality Ingredients", description: "We use fresh ingredients and bold seasoning to deliver full flavor in every dish." },
+            { name: "Unique Flavors", description: "Our menu balances comfort favorites with recipes that feel distinctive and memorable." },
+            { name: "Exceptional Service", description: "Fast, warm, and attentive hospitality is part of the experience from arrival to last bite." },
+            { name: "Customer Satisfaction", description: "Guests return because the food, service, and atmosphere consistently deliver." },
+            { name: "Crafted In-House", description: "From sauces to signature specials, much of what you taste is prepared with care in-house." },
+          ];
   const reviewsContent = content.reviews ?? {};
   const contactContent = content.contact ?? {};
+  const extraBlocks = Array.isArray((content as Record<string, unknown>).extraBlocks)
+    ? ((content as Record<string, unknown>).extraBlocks as Array<Record<string, any>>)
+    : [];
+  const defaultStorySubItems = [
+    { title: "Our Mission", text: "Serve memorable food with warmth, speed, and consistency in every service." },
+    { title: "Our Vision", text: "Create a dining experience that feels lively, welcoming, and worth returning to." },
+    { title: "Our Promise", text: "Fresh ingredients, bold flavors, and hospitality that remains personal." },
+  ];
+  const storySubItems: Array<Record<string, unknown>> =
+    Array.isArray(storyContent.subItems) && (storyContent.subItems as unknown[]).length > 0
+      ? (storyContent.subItems as Array<Record<string, unknown>>)
+      : defaultStorySubItems;
 
   return (
     <Box sx={{ bgcolor: black, color: "#fff", fontFamily: bodyFont }}>
@@ -169,11 +199,10 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Toolbar>
       </AppBar>
 
-      <Box
+      <EditableSection
         id="hero"
-        data-preview-section="true"
-        data-preview-label="Hero"
-        data-preview-block-id={heroContent.blockId}
+        blockId={heroContent.blockId}
+        label="Hero"
         {...getSectionStyleDomProps(heroContent)}
         sx={{
           ...getSectionStyleSx(heroContent),
@@ -185,7 +214,9 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         }}
       >
         <FadeIn>
-          <Typography
+          <EditableText
+            field="heading"
+            kind="multi"
             sx={{
               fontFamily: serifFont,
               fontSize: { xs: "2.5rem", md: "4rem" },
@@ -193,11 +224,13 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
               color: "#fff",
             }}
           >
-            Taste the Difference
-          </Typography>
+            {(heroContent.heading as string) || "Taste the Difference"}
+          </EditableText>
         </FadeIn>
         <FadeIn delay={0.08}>
-          <Typography
+          <EditableText
+            field="subheading"
+            kind="multi"
             sx={{
               mt: 1.5,
               maxWidth: 580,
@@ -206,12 +239,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
               lineHeight: 1.75,
             }}
           >
-            Bold comfort food, warm atmosphere, and dishes built to leave a
-            lasting impression at every table.
-          </Typography>
+            {(heroContent.subheading as string) || "Bold comfort food, warm atmosphere, and dishes built to leave a lasting impression at every table."}
+          </EditableText>
         </FadeIn>
         <FadeIn delay={0.16}>
-          <Button
+          <EditableButton
+            field="ctaText"
             variant="contained"
             sx={{
               mt: 3,
@@ -228,10 +261,10 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
               },
             }}
           >
-            Book Table
-          </Button>
+            {(heroContent.ctaText as string) || "Book Table"}
+          </EditableButton>
         </FadeIn>
-      </Box>
+      </EditableSection>
 
       <Box sx={{ height: { xs: 120, md: 500 }, overflow: "hidden" }}>
         <FadeIn direction="up">
@@ -249,11 +282,10 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         </FadeIn>
       </Box>
 
-      <Box
+      <EditableSection
         id="story"
-        data-preview-section="true"
-        data-preview-label="Story"
-        data-preview-block-id={storyContent.blockId}
+        blockId={storyContent.blockId}
+        label="Story"
         {...getSectionStyleDomProps(storyContent)}
         sx={{ bgcolor: black, ...getSectionStyleSx(storyContent) }}
       >
@@ -274,7 +306,9 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
               }}
             >
               <FadeIn>
-                <Typography
+                <EditableText
+                  field="heading"
+                  kind="multi"
                   sx={{
                     fontFamily: serifFont,
                     fontSize: { xs: "2rem", md: "2.9rem" },
@@ -282,57 +316,55 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mb: 2,
                   }}
                 >
-                  Our Story
-                </Typography>
+                  {(storyContent.heading as string) || "Our Story"}
+                </EditableText>
               </FadeIn>
               <FadeIn delay={0.08}>
-                <Typography
+                <EditableText
+                  field="body"
+                  kind="multi"
                   sx={{
                     color: "rgba(255,255,255,0.76)",
                     lineHeight: 1.9,
                     maxWidth: 360,
                   }}
                 >
-                  {data.description}
-                </Typography>
+                  {(storyContent.body as string) || data.description}
+                </EditableText>
               </FadeIn>
               <Stack spacing={2.6} sx={{ mt: 4.5, maxWidth: 360 }}>
-                {["Our Mission", "Our Vision", "Our Promise"].map(
-                  (title, index) => (
-                    <FadeIn
-                      key={title}
-                      delay={0.16 + index * 0.08}
-                      direction="right"
-                    >
-                      <Box>
-                        <Typography
-                          sx={{
-                            color: cream,
-                            fontFamily: serifFont,
-                            fontSize: "1.45rem",
-                            mb: 0.7,
-                          }}
-                        >
-                          {title}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            color: "rgba(255,255,255,0.7)",
-                            lineHeight: 1.8,
-                            fontSize: "0.94rem",
-                          }}
-                        >
-                          {index === 0 &&
-                            "Serve memorable food with warmth, speed, and consistency in every service."}
-                          {index === 1 &&
-                            "Create a dining experience that feels lively, welcoming, and worth returning to."}
-                          {index === 2 &&
-                            "Fresh ingredients, bold flavors, and hospitality that remains personal."}
-                        </Typography>
-                      </Box>
-                    </FadeIn>
-                  ),
-                )}
+                {storySubItems.map((subItem, index) => (
+                  <FadeIn
+                    key={index}
+                    delay={0.16 + index * 0.08}
+                    direction="right"
+                  >
+                    <Box>
+                      <EditableText
+                        field={`subItems.${index}.title`}
+                        sx={{
+                          color: cream,
+                          fontFamily: serifFont,
+                          fontSize: "1.45rem",
+                          mb: 0.7,
+                        }}
+                      >
+                        {(subItem.title as string) || ""}
+                      </EditableText>
+                      <EditableText
+                        field={`subItems.${index}.text`}
+                        kind="multi"
+                        sx={{
+                          color: "rgba(255,255,255,0.7)",
+                          lineHeight: 1.8,
+                          fontSize: "0.94rem",
+                        }}
+                      >
+                        {(subItem.text as string) || ""}
+                      </EditableText>
+                    </Box>
+                  </FadeIn>
+                ))}
               </Stack>
             </Grid>
 
@@ -375,13 +407,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="menu"
-        data-preview-section="true"
-        data-preview-label="Location"
-        data-preview-block-id={locationContent.blockId}
+        blockId={locationContent.blockId}
+        label="Location"
         {...getSectionStyleDomProps(locationContent)}
         sx={{
           bgcolor: brown,
@@ -394,20 +425,24 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Grid container spacing={{ xs: 3, md: 5 }}>
             <Grid item xs={12} md={3}>
               <FadeIn>
-                <Typography sx={{ fontFamily: serifFont, fontSize: "2rem" }}>
-                  Location
-                </Typography>
+                <EditableText
+                  field="heading"
+                  kind="multi"
+                  sx={{ fontFamily: serifFont, fontSize: "2rem" }}
+                >
+                  {(locationContent.heading as string) || "Location"}
+                </EditableText>
               </FadeIn>
             </Grid>
             <Grid item xs={12} md={4.5}>
               <FadeIn delay={0.08}>
-                <Typography
+                <EditableText
+                  field="description"
+                  kind="multi"
                   sx={{ lineHeight: 1.85, color: "rgba(255,255,255,0.82)" }}
                 >
-                  Find us in the heart of the city where warm interiors,
-                  open-grill cooking, and late-evening energy come together in
-                  one memorable dining room.
-                </Typography>
+                  {(locationContent.description as string) || "Find us in the heart of the city where warm interiors, open-grill cooking, and late-evening energy come together in one memorable dining room."}
+                </EditableText>
               </FadeIn>
             </Grid>
             <Grid item xs={12} md={4.5}>
@@ -425,7 +460,7 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
       <Box
         sx={{
@@ -503,11 +538,10 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Grid>
       </Grid>
 
-      <Box
+      <EditableSection
         id="why-us"
-        data-preview-section="true"
-        data-preview-label="Why Us"
-        data-preview-block-id={whyUsContent.blockId}
+        blockId={whyUsContent.blockId}
+        label="Why Us"
         {...getSectionStyleDomProps(whyUsContent)}
         sx={{
           bgcolor: brown,
@@ -520,54 +554,38 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Grid container spacing={{ xs: 4, md: 6 }}>
             <Grid item xs={12} md={7}>
               <FadeIn>
-                <Typography
+                <EditableText
+                  field="heading"
+                  kind="multi"
                   sx={{
                     fontFamily: serifFont,
                     fontSize: { xs: "2rem", md: "3rem" },
                     mb: 2.5,
                   }}
                 >
-                  Why Us
-                </Typography>
+                  {(whyUsContent.heading as string) || "Why Us"}
+                </EditableText>
               </FadeIn>
-              {[
-                [
-                  "Quality Ingredients",
-                  "We use fresh ingredients and bold seasoning to deliver full flavor in every dish.",
-                ],
-                [
-                  "Unique Flavors",
-                  "Our menu balances comfort favorites with recipes that feel distinctive and memorable.",
-                ],
-                [
-                  "Exceptional Service",
-                  "Fast, warm, and attentive hospitality is part of the experience from arrival to last bite.",
-                ],
-                [
-                  "Customer Satisfaction",
-                  "Guests return because the food, service, and atmosphere consistently deliver.",
-                ],
-                [
-                  "Crafted In-House",
-                  "From sauces to signature specials, much of what you taste is prepared with care in-house.",
-                ],
-              ].map(([title, text], index) => (
+              {restaurantWhyItems.map((item, index) => (
                 <FadeIn
-                  key={title}
+                  key={index}
                   delay={0.08 + index * 0.08}
                   direction="right"
                 >
                   <Box sx={{ mb: 2.3 }}>
-                    <Typography
+                    <EditableText
+                      field={`features.${index}.name`}
                       sx={{
                         fontFamily: serifFont,
                         fontSize: "1.35rem",
                         color: cream,
                       }}
                     >
-                      {title}
-                    </Typography>
-                    <Typography
+                      {(item.name as string) || ""}
+                    </EditableText>
+                    <EditableText
+                      field={`features.${index}.description`}
+                      kind="multi"
                       sx={{
                         mt: 0.55,
                         color: "rgba(255,255,255,0.82)",
@@ -575,8 +593,8 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                         maxWidth: 460,
                       }}
                     >
-                      {text}
-                    </Typography>
+                      {(item.description as string) || ""}
+                    </EditableText>
                   </Box>
                 </FadeIn>
               ))}
@@ -607,13 +625,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="reviews"
-        data-preview-section="true"
-        data-preview-label="Reviews"
-        data-preview-block-id={reviewsContent.blockId}
+        blockId={reviewsContent.blockId}
+        label="Reviews"
         {...getSectionStyleDomProps(reviewsContent)}
         sx={{
           ...getSectionStyleSx(reviewsContent),
@@ -625,15 +642,17 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
       >
         <Container maxWidth="md">
           <FadeIn>
-            <Typography
+            <EditableText
+              field="heading"
+              kind="multi"
               sx={{
                 fontFamily: serifFont,
                 fontSize: { xs: "2rem", md: "3rem" },
                 mb: 5,
               }}
             >
-              Customer Reviews
-            </Typography>
+              {(reviewsContent.heading as string) || "Customer Reviews"}
+            </EditableText>
           </FadeIn>
           {reviews[0] && (
             <FadeIn delay={0.08}>
@@ -660,13 +679,12 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
             </FadeIn>
           )}
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Box
+      <EditableSection
         id="contact"
-        data-preview-section="true"
-        data-preview-label="Contact"
-        data-preview-block-id={contactContent.blockId}
+        blockId={contactContent.blockId}
+        label="Contact"
         {...getSectionStyleDomProps(contactContent)}
         sx={{
           bgcolor: brown,
@@ -697,15 +715,17 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
             <Grid item xs={12} md={6}>
               <FadeIn>
-                <Typography
+                <EditableText
+                  field="heading"
+                  kind="multi"
                   sx={{
                     fontFamily: serifFont,
                     fontSize: { xs: "2rem", md: "3rem" },
                     mb: 2,
                   }}
                 >
-                  Get in Touch Today
-                </Typography>
+                  {(contactContent.heading as string) || "Get in Touch Today"}
+                </EditableText>
               </FadeIn>
               <Stack spacing={2}>
                 {[
@@ -743,7 +763,8 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                 ))}
               </Stack>
               <FadeIn delay={0.46}>
-                <Button
+                <EditableButton
+                  field="buttonLabel"
                   variant="contained"
                   sx={{
                     mt: 3,
@@ -760,13 +781,13 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  Send
-                </Button>
+                  {(contactContent.buttonLabel as string) || "Send"}
+                </EditableButton>
               </FadeIn>
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
       <Box
         sx={{
@@ -904,6 +925,14 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
           </FadeIn>
         </Container>
       </Box>
+
+      <EditorExtraBlocks
+        blocks={extraBlocks}
+        themeColor={String(data.primaryColor || brown)}
+        fallbackImageSrc={String((data as any).heroBannerUrl || "")}
+        headingFont={serifFont}
+        websiteId={data.websiteId}
+      />
     </Box>
   );
 };

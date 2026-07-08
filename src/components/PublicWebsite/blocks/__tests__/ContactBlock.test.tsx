@@ -65,6 +65,19 @@ vi.mock("dompurify", () => ({
   default: { sanitize: (s: string) => s },
 }));
 
+// Mock only the network call; keep the real field-classification / validation
+// helpers so behavior matches production.
+vi.mock("@/api/formSubmissions", async (importActual) => {
+  const actual =
+    await importActual<typeof import("@/api/formSubmissions")>();
+  return {
+    ...actual,
+    submitWebsiteFormSubmission: vi
+      .fn()
+      .mockResolvedValue({ data: { data: { id: 1 } } }),
+  };
+});
+
 // Hooks used by BlockWrapper
 vi.mock("../../hooks", () => ({
   useBlockAnimation: () => ({ shouldAnimate: false, motionProps: {} }),
@@ -186,15 +199,15 @@ describe("ContactBlock", () => {
 
   // 9
   it("shows success alert after form submit", async () => {
-    renderBlock({});
+    renderBlock({}, { websiteId: 1 });
     fireEvent.change(screen.getByLabelText("Name"), {
-      target: { name: "name", value: "Alice" },
+      target: { value: "Alice" },
     });
     fireEvent.change(screen.getByLabelText("Email"), {
-      target: { name: "email", value: "alice@example.com" },
+      target: { value: "alice@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Message"), {
-      target: { name: "message", value: "Hello" },
+      target: { value: "Hello" },
     });
     fireEvent.submit(screen.getByLabelText("Name").closest("form")!);
     await waitFor(() => {
@@ -303,17 +316,18 @@ describe("ContactBlock", () => {
       <ContactBlock
         block={makeBlock({ showForm: true })}
         primaryColor="#2563eb"
+        websiteId={1}
         onFormSubmit={onFormSubmit}
       />,
     );
     fireEvent.change(screen.getByLabelText("Name"), {
-      target: { name: "name", value: "Bob" },
+      target: { value: "Bob" },
     });
     fireEvent.change(screen.getByLabelText("Email"), {
-      target: { name: "email", value: "bob@x.com" },
+      target: { value: "bob@x.com" },
     });
     fireEvent.change(screen.getByLabelText("Message"), {
-      target: { name: "message", value: "Hi" },
+      target: { value: "Hi" },
     });
     fireEvent.submit(screen.getByLabelText("Name").closest("form")!);
     await waitFor(() =>
@@ -323,15 +337,16 @@ describe("ContactBlock", () => {
 
   // 24
   it("form fields clear after successful submission", async () => {
-    renderBlock({});
+    renderBlock({}, { websiteId: 1 });
     const nameInput = screen.getByLabelText("Name") as HTMLInputElement;
-    fireEvent.change(nameInput, { target: { name: "name", value: "Alice" } });
+    fireEvent.change(nameInput, { target: { value: "Alice" } });
     fireEvent.change(screen.getByLabelText("Email"), {
-      target: { name: "email", value: "a@b.com" },
+      target: { value: "a@b.com" },
     });
     fireEvent.change(screen.getByLabelText("Message"), {
-      target: { name: "message", value: "Test" },
+      target: { value: "Test" },
     });
+    expect(nameInput.value).toBe("Alice");
     fireEvent.submit(nameInput.closest("form")!);
     await waitFor(() => expect(nameInput.value).toBe(""));
   });
@@ -461,6 +476,7 @@ describe("ContactBlock", () => {
           ],
         })}
         primaryColor="#2563eb"
+        websiteId={1}
         onFormSubmit={onFormSubmit}
       />,
     );
