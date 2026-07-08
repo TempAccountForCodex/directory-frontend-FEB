@@ -62,6 +62,7 @@ export interface UseAutosaveReturn {
   saveStatus: SaveStatus;
   saveError: string | null;
   conflictData: ConflictData | null;
+  getHasUnsavedChanges: () => boolean;
   triggerSave: (overrideData?: Record<string, unknown>) => Promise<void>;
   clearDirty: () => void;
   resolveConflict: (resolution: ConflictResolution) => void;
@@ -370,6 +371,14 @@ export function useAutosave({
     [performSave],
   );
 
+  const getHasUnsavedChanges = useCallback(() => {
+    try {
+      return JSON.stringify(dataRef.current) !== lastDataStringRef.current;
+    } catch {
+      return hasUnsavedChanges;
+    }
+  }, [hasUnsavedChanges]);
+
   const clearDirty = useCallback(() => {
     setHasUnsavedChanges(false);
     setSaveStatus("idle");
@@ -394,6 +403,7 @@ export function useAutosave({
     saveStatus,
     saveError,
     conflictData,
+    getHasUnsavedChanges,
     triggerSave,
     clearDirty,
     resolveConflict,

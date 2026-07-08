@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildFrontendTemplateEditorPages } from "../frontendTemplateEditorSupport";
+import {
+  buildFrontendTemplateEditorPages,
+  buildTemplatePreviewBusinessData,
+} from "../frontendTemplateEditorSupport";
 
 describe("buildFrontendTemplateEditorPages", () => {
   it("preserves persisted block sort order for frontend template sections", () => {
@@ -147,5 +150,51 @@ describe("buildFrontendTemplateEditorPages", () => {
     expect(overviewBlock?.id).toBe("9001");
     expect(overviewBlock?.localOnly).toBe(false);
     expect(overviewBlock?.content.heading).toBe("Persisted heading");
+  });
+
+  it("uses the current website theme over older template theme data", () => {
+    const previewData = buildTemplatePreviewBusinessData(
+      "company-executive",
+      {
+        id: 92,
+        name: "PNC Company",
+        businessName: "PNC Company",
+        primaryColor: "#FF00FF",
+        templateSnapshot: {
+          themeSettings: {
+            primaryColor: "#378C92",
+          },
+        },
+      },
+      [
+        {
+          id: 184,
+          title: "Home",
+          path: "/",
+          isHome: true,
+          sortOrder: 0,
+          isPublished: true,
+          blocks: [
+            {
+              id: 8334,
+              blockType: "HERO",
+              sortOrder: 0,
+              isVisible: true,
+              content: {
+                editorSection: "overview",
+                editorLabel: "Overview",
+                heading: "Trusted Solutions That Drive Your Business Forward",
+                __templateTheme: {
+                  primaryColor: "#001F3F",
+                },
+              },
+            },
+          ],
+        },
+      ],
+    );
+
+    expect(previewData?.primaryColor).toBe("#FF00FF");
+    expect(previewData?.themeSettings?.primaryColor).toBe("#FF00FF");
   });
 });

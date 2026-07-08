@@ -62,7 +62,7 @@ export interface UseUnsavedChangesReturn {
   /** Save changes then proceed with navigation */
   saveAndNavigate: () => Promise<void>;
   /** Manual override for unsaved changes state */
-  setUnsavedChanges: (value: boolean) => void;
+  setUnsavedChanges: (value: boolean | null) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -208,7 +208,7 @@ export function useUnsavedChanges({
   // -------------------------------------------------------------------------
   // Manual override
   // -------------------------------------------------------------------------
-  const setUnsavedChanges = useCallback((value: boolean) => {
+  const setUnsavedChanges = useCallback((value: boolean | null) => {
     setManualDirty(value);
   }, []);
 

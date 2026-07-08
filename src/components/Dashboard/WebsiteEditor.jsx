@@ -1842,6 +1842,7 @@ const syncEditorBlocksState = ({
   blocks,
   blocksRef,
   effectivePageId,
+  editorPageId,
   updatedAt,
   setBlocks,
   setPages,
@@ -1849,13 +1850,17 @@ const syncEditorBlocksState = ({
   setPersistedPages,
 }) => {
   const normalizedBlocks = blocks.map(normalizeLoadedBlock);
+  const shouldUpdateEditorPage = (pageId) =>
+    String(pageId) === String(effectivePageId) ||
+    (editorPageId != null && String(pageId) === String(editorPageId));
+
   if (blocksRef) {
     blocksRef.current = normalizedBlocks;
   }
   setBlocks(normalizedBlocks);
   setPages((prevPages) =>
     prevPages.map((page) =>
-      String(page.id) === String(effectivePageId)
+      shouldUpdateEditorPage(page.id)
         ? {
             ...page,
             ...(updatedAt ? { updatedAt } : {}),
@@ -1865,7 +1870,7 @@ const syncEditorBlocksState = ({
     ),
   );
   setSelectedPage((prevSelectedPage) =>
-    String(prevSelectedPage?.id) === String(effectivePageId)
+    prevSelectedPage && shouldUpdateEditorPage(prevSelectedPage.id)
       ? {
           ...prevSelectedPage,
           ...(updatedAt ? { updatedAt } : {}),
@@ -1964,6 +1969,8 @@ const WebsiteEditorInner = () => {
   // Theme Manager state — Step 9.21
   const [sidebarMode, setSidebarMode] = useState("blocks");
   const [templateThemeSelection, setTemplateThemeSelection] = useState(null);
+  const [templateThemeSelectionDirty, setTemplateThemeSelectionDirty] =
+    useState(false);
 
   const [selectedEditableElement, setSelectedEditableElement] = useState(null);
   const [askAIOpenSignal, setAskAIOpenSignal] = useState(0);
@@ -1983,6 +1990,9 @@ const WebsiteEditorInner = () => {
     useState([]);
   const [activeToolbarMode, setActiveToolbarMode] = useState("text");
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
+  // AI chat panel now docks into the inspector (style bar) slot on the right.
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [aiChatDockNode, setAiChatDockNode] = useState(null);
   const [uploadedLibraryImages, setUploadedLibraryImages] = useState([]);
   const [uploadedLibraryVideos, setUploadedLibraryVideos] = useState([]);
   const [previewContextMenu, setPreviewContextMenu] = useState(null);
@@ -2326,7 +2336,8 @@ const WebsiteEditorInner = () => {
 
       try {
         const normalizedBlocks = data.blocks.map(sanitizeBlockForSave);
-        const resolvedThemeSettings = templateThemeSelection
+        const resolvedThemeSettings =
+          templateThemeSelection && templateThemeSelectionDirty
           ? getTemplateThemeSettings(templateThemeSelection)
           : persistedTemplateThemeSettings;
         blocksToSave = selectedPage?.localOnly
@@ -2404,6 +2415,7 @@ const WebsiteEditorInner = () => {
             blocks: savedBlocks,
             blocksRef,
             effectivePageId,
+            editorPageId: selectedPage?.id,
             updatedAt,
             setBlocks,
             setPages,
@@ -2524,6 +2536,7 @@ const WebsiteEditorInner = () => {
               blocks: savedBlocks,
               blocksRef,
               effectivePageId: retryPageId,
+              editorPageId: selectedPage?.id,
               updatedAt: retryUpdatedAt,
               setBlocks,
               setPages,
@@ -2570,6 +2583,7 @@ const WebsiteEditorInner = () => {
     saveStatus,
     saveError,
     conflictData,
+    getHasUnsavedChanges,
     triggerSave,
     resolveConflict,
   } = useAutosave({
@@ -2664,6 +2678,7 @@ const WebsiteEditorInner = () => {
   useEffect(() => {
     if (!supportsTemplateThemeSidebar) {
       setTemplateThemeSelection(null);
+      setTemplateThemeSelectionDirty(false);
       if (sidebarMode === "theme") {
         setSidebarMode("blocks");
       }
@@ -2693,17 +2708,69 @@ const WebsiteEditorInner = () => {
     confirmNavigation,
     cancelNavigation,
     saveAndNavigate,
+    setUnsavedChanges: setNavigationUnsavedChanges,
   } = useUnsavedChanges({
     hasUnsavedChanges,
     onSaveBeforeLeave: triggerManualSave,
     skipBeforeUnload: true,
     saveStatus,
-    allowNavigation: (nextLocation) =>
-      nextLocation?.pathname === "/dashboard/websites" ||
-      (nextLocation?.pathname === "/dashboard" &&
-        new URLSearchParams(nextLocation?.search || "").get("tab") ===
-          "websites"),
   });
+
+  const pendingWebsitesReloadRef = useRef(false);
+
+  const reloadWebsitesDashboard = useCallback(() => {
+    window.location.assign("/dashboard/websites");
+  }, []);
+
+  const handleBackToWebsites = useCallback(() => {
+    pendingWebsitesReloadRef.current = true;
+
+    const hasPendingChanges =
+      hasUnsavedChanges || getHasUnsavedChanges?.() || saveStatus === "error";
+
+    if (hasPendingChanges) {
+      flushSync(() => {
+        setNavigationUnsavedChanges(true);
+      });
+      navigate("/dashboard/websites/");
+      return;
+    }
+
+    reloadWebsitesDashboard();
+  }, [
+    getHasUnsavedChanges,
+    hasUnsavedChanges,
+    navigate,
+    reloadWebsitesDashboard,
+    saveStatus,
+    setNavigationUnsavedChanges,
+  ]);
+
+  const handleConfirmNavigation = useCallback(() => {
+    const shouldReload = pendingWebsitesReloadRef.current;
+    pendingWebsitesReloadRef.current = false;
+    confirmNavigation();
+
+    if (shouldReload) {
+      window.setTimeout(reloadWebsitesDashboard, 0);
+    }
+  }, [confirmNavigation, reloadWebsitesDashboard]);
+
+  const handleCancelNavigation = useCallback(() => {
+    pendingWebsitesReloadRef.current = false;
+    setNavigationUnsavedChanges(null);
+    cancelNavigation();
+  }, [cancelNavigation, setNavigationUnsavedChanges]);
+
+  const handleSaveAndNavigate = useCallback(async () => {
+    const shouldReload = pendingWebsitesReloadRef.current;
+    pendingWebsitesReloadRef.current = false;
+    await saveAndNavigate();
+
+    if (shouldReload) {
+      window.setTimeout(reloadWebsitesDashboard, 0);
+    }
+  }, [reloadWebsitesDashboard, saveAndNavigate]);
 
   // LocalStorage backup — saves unsaved data on beforeunload, detects on mount (Step 5.10)
   const backupData = useMemo(() => ({ blocks }), [blocks]);
@@ -2830,7 +2897,8 @@ const WebsiteEditorInner = () => {
     );
     if (!baseTemplateDataOverride) return null;
 
-    const resolvedThemeSelection = templateThemeSelection
+    const resolvedThemeSelection =
+      templateThemeSelection && templateThemeSelectionDirty
       ? resolveTemplateThemeSelection(templateThemeSelection)
       : null;
 
@@ -2856,6 +2924,7 @@ const WebsiteEditorInner = () => {
     pages,
     supportsLocalTemplateEditor,
     templateThemeSelection,
+    templateThemeSelectionDirty,
     resolvedFrontendTemplateId,
   ]);
 
@@ -5932,6 +6001,9 @@ const WebsiteEditorInner = () => {
     !isMobile &&
     isInspectorOpen &&
     (Boolean(selectedEditableElement) || Boolean(selectedSectionElement));
+  // The right rail (style bar slot) is reserved when either the style bar or
+  // the AI chat panel occupies it, so the preview keeps the same padding.
+  const showDesktopRightRail = showDesktopInspector || (!isMobile && isAIChatOpen);
   const showDesktopSidebar = !showDesktopInspector;
 
   const builderPanelSx = {
@@ -6058,7 +6130,7 @@ const WebsiteEditorInner = () => {
         >
           <Box display="flex" alignItems="center" gap={0.9} minWidth={0}>
             <IconButton
-              onClick={() => navigate("/dashboard/websites")}
+              onClick={handleBackToWebsites}
               sx={{
                 width: 32,
                 height: 32,
@@ -7617,7 +7689,12 @@ const WebsiteEditorInner = () => {
                                     <FrontendTemplateThemePanel
                                       templateId={resolvedFrontendTemplateId}
                                       selection={templateThemeSelection}
-                                      onChange={setTemplateThemeSelection}
+                                      onChange={(nextSelection) => {
+                                        setTemplateThemeSelectionDirty(true);
+                                        setTemplateThemeSelection(
+                                          nextSelection,
+                                        );
+                                      }}
                                     />
                                   </Box>
                                 )}
@@ -7635,7 +7712,7 @@ const WebsiteEditorInner = () => {
                           ...builderPanelSx,
                           p: 1.15,
                           pr: {
-                            lg: showDesktopInspector
+                            lg: showDesktopRightRail
                               ? `calc(${desktopInspectorWidth} + 16px)`
                               : 1.15,
                           },
@@ -7745,8 +7822,11 @@ const WebsiteEditorInner = () => {
                         </Box>
                       </Paper>
                     </Grid>
-                    {showDesktopInspector && (
+                    {!isMobile && (
                       <Box
+                        /* Right rail — shared slot for the style bar and AI
+                           chat. Toggling chat slides the style bar out to the
+                           left while the chat slides in from the right. */
                         sx={{
                           display: { xs: "none", lg: "block" },
                           position: "absolute",
@@ -7754,26 +7834,40 @@ const WebsiteEditorInner = () => {
                           right: 0,
                           width: desktopInspectorWidth,
                           height: "100%",
-                          zIndex: 3,
+                          zIndex: 5,
+                          overflow: "hidden",
                           pointerEvents: "none",
                         }}
                       >
-                        <Paper
+                        {/* Style bar layer */}
+                        <Box
                           sx={{
-                            ...builderPanelSx,
-                            p: 0,
-                            borderRadius: 5,
-                            minHeight: { lg: 860 },
-                            position: { md: "sticky" },
-                            top: { md: 16 },
-                            display: "flex",
-                            flexDirection: "column",
-                            height: { md: "calc(100vh - 32px)" },
-                            maxHeight: { md: "calc(100vh - 32px)" },
-                            overflow: "hidden",
-                            pointerEvents: "auto",
+                            position: "absolute",
+                            inset: 0,
+                            zIndex: 1,
+                            pointerEvents:
+                              !isAIChatOpen && showDesktopInspector
+                                ? "auto"
+                                : "none",
+                            transform: isAIChatOpen
+                              ? "translateX(-100%)"
+                              : "translateX(0)",
+                            transition: "transform 0.3s ease",
                           }}
                         >
+                          {showDesktopInspector && (
+                            <Paper
+                              sx={{
+                                ...builderPanelSx,
+                                p: 0,
+                                borderRadius: 5,
+                                display: "flex",
+                                flexDirection: "column",
+                                height: "100%",
+                                maxHeight: "100%",
+                                overflow: "hidden",
+                              }}
+                            >
                           <Box
                             sx={{
                               px: 1.45,
@@ -7958,7 +8052,29 @@ const WebsiteEditorInner = () => {
                               />
                             )}
                           </Box>
-                        </Paper>
+                            </Paper>
+                          )}
+                        </Box>
+                        {/* AI chat layer — portal target; slides in from the
+                            right, replacing the style bar in the same slot. */}
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            inset: 0,
+                            zIndex: 2,
+                            bgcolor: "#fff",
+                            pointerEvents: isAIChatOpen ? "auto" : "none",
+                            transform: isAIChatOpen
+                              ? "translateX(0)"
+                              : "translateX(100%)",
+                            transition: "transform 0.3s ease",
+                          }}
+                        >
+                          <Box
+                            ref={setAiChatDockNode}
+                            sx={{ height: "100%", width: "100%" }}
+                          />
+                        </Box>
                       </Box>
                     )}
                   </Grid>
@@ -9065,9 +9181,9 @@ const WebsiteEditorInner = () => {
           confirmLabel="Leave"
           cancelLabel="Cancel"
           secondaryLabel="Save & Leave"
-          onConfirm={confirmNavigation}
-          onCancel={cancelNavigation}
-          onSecondary={saveAndNavigate}
+          onConfirm={handleConfirmNavigation}
+          onCancel={handleCancelNavigation}
+          onSecondary={handleSaveAndNavigate}
         />
 
         {/* Conflict resolution modal */}
@@ -9230,6 +9346,9 @@ const WebsiteEditorInner = () => {
           }
           canUseAI={websiteAIAccess.canUseAI}
           disabledReason={websiteAIAccess.disabledReason}
+          chatOpen={isAIChatOpen}
+          onChatOpenChange={setIsAIChatOpen}
+          chatDockNode={aiChatDockNode}
           selection={{
             editable: selectedEditableElement?.blockId
               ? {

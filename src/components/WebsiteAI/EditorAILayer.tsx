@@ -18,6 +18,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import Box from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -79,6 +80,11 @@ export interface EditorAILayerProps {
   pageId: number | null;
   canUseAI: boolean;
   disabledReason: string | null;
+  /** Controlled open state for the docked AI chat panel. */
+  chatOpen?: boolean;
+  onChatOpenChange?: (open: boolean) => void;
+  /** DOM node (the editor's right-rail / style-bar slot) to portal the chat into. */
+  chatDockNode?: HTMLElement | null;
   selection: EditorAISelection;
   revertibleTurns?: AIHistoryEntry[];
   aiHistory?: AIHistoryEntry[];
@@ -124,6 +130,9 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
   pageId,
   canUseAI,
   disabledReason,
+  chatOpen: chatOpenProp,
+  onChatOpenChange,
+  chatDockNode,
   selection,
   revertibleTurns,
   aiHistory,
@@ -141,7 +150,14 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
   const [askOpen, setAskOpen] = useState(false);
   const [dialogAnchorRect, setDialogAnchorRect] =
     useState<EditorAILayerProps["openAskAnchorRect"]>(null);
-  const [chatOpen, setChatOpen] = useState(false);
+  const chatOpen = chatOpenProp ?? false;
+  const setChatOpen = useCallback(
+    (next: boolean | ((prev: boolean) => boolean)) => {
+      const value = typeof next === "function" ? next(chatOpen) : next;
+      onChatOpenChange?.(value);
+    },
+    [chatOpen, onChatOpenChange],
+  );
   const lastOpenAskSignalRef = useRef(openAskSignal ?? 0);
   const [pillStatus, setPillStatus] = useState<AIPillStatus>("idle");
   const [lastPillResult, setLastPillResult] = useState<AIPillResult>("success");
@@ -840,15 +856,20 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
         onResolve={controller.resolveConflict}
       />
 
-      <AIChatPanel
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-        controller={controller}
-        canUseAI={canUseAI}
-        disabledReason={disabledReason}
-        scopeOptions={scopeOptions}
-        versions={versions}
-      />
+      {chatDockNode
+        ? createPortal(
+            <AIChatPanel
+              open={chatOpen}
+              onClose={() => setChatOpen(false)}
+              controller={controller}
+              canUseAI={canUseAI}
+              disabledReason={disabledReason}
+              scopeOptions={scopeOptions}
+              versions={versions}
+            />,
+            chatDockNode,
+          )
+        : null}
     </>
   );
 };

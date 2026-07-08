@@ -194,6 +194,13 @@ export interface EditorChatRequest {
   message: string;
 }
 
+function normalizeNumericId(value: number | string | undefined) {
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    return Number(value);
+  }
+  return value;
+}
+
 export type EditorChatMode = "patch" | "reply" | "session";
 
 export interface ChatHistoryItem {
@@ -798,7 +805,11 @@ export async function editorChat(
   payload: EditorChatRequest,
 ): Promise<EditorChatResult> {
   try {
-    const res = await apiClient.post("/ai/editor-chat", payload);
+    const res = await apiClient.post("/ai/editor-chat", {
+      ...payload,
+      pageId: normalizeNumericId(payload.pageId),
+      blockId: normalizeNumericId(payload.blockId),
+    });
     return unwrap<EditorChatResult>(res.data);
   } catch (err) {
     if (err instanceof WebsiteAIRequestError) throw err;

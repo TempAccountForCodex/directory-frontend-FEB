@@ -1352,19 +1352,6 @@ const getTemplateSectionMap = (
   return map;
 };
 
-const hasCompatiblePersistedTemplateData = (
-  templateId: string,
-  pages: TemplateEditorPage[],
-): boolean => {
-  const expectedKeys = getTemplateSectionKeys(templateId, true);
-  if (!expectedKeys.length) {
-    return false;
-  }
-
-  const sectionMap = getTemplateSectionMap(templateId, pages);
-  return expectedKeys.every((key) => sectionMap.has(key));
-};
-
 const mergeTemplateBlockContent = (
   seededContent: Record<string, unknown>,
   persistedContent: Record<string, unknown>,
@@ -1400,7 +1387,7 @@ const hydrateSeededPages = (
   seededPages: TemplateEditorPage[],
   persistedPages: TemplateEditorPage[],
 ): TemplateEditorPage[] => {
-  if (!hasCompatiblePersistedTemplateData(templateId, persistedPages)) {
+  if (!persistedPages.length) {
     return seededPages;
   }
 
@@ -1408,6 +1395,9 @@ const hydrateSeededPages = (
     persistedPages.map((page) => [getPageStorageKey(page), page]),
   );
   const persistedSections = getTemplateSectionMap(templateId, persistedPages);
+  if (!persistedSections.size) {
+    return seededPages;
+  }
   const templateSectionKeys = new Set(getTemplateSectionKeys(templateId));
 
   return seededPages.map((page) => {
@@ -1752,16 +1742,23 @@ const buildTemplatePreviewBusinessDataImpl = (
 
   if (!base) return null;
 
-  const themeSettings =
-    readTemplateThemeSettingsFromPages(pages) ||
-    getThemeSettingsFromUnknown(website.templateSnapshot?.themeSettings) ||
-    undefined;
+  const themeSettings = {
+    ...(getThemeSettingsFromUnknown(website.templateSnapshot?.themeSettings) ||
+      {}),
+    ...(readTemplateThemeSettingsFromPages(pages) || {}),
+    ...(getThemeSettingsFromUnknown(website.themeSettings) || {}),
+    ...(website.primaryColor ? { primaryColor: website.primaryColor } : {}),
+    ...(website.secondaryColor
+      ? { secondaryColor: website.secondaryColor }
+      : {}),
+  };
+  const hasThemeSettings = Object.keys(themeSettings).length > 0;
 
   const themedBase: BusinessData = {
     ...base,
-    primaryColor: themeSettings?.primaryColor || base.primaryColor,
-    secondaryColor: themeSettings?.secondaryColor || base.secondaryColor,
-    themeSettings: themeSettings
+    primaryColor: themeSettings.primaryColor || base.primaryColor,
+    secondaryColor: themeSettings.secondaryColor || base.secondaryColor,
+    themeSettings: hasThemeSettings
       ? {
           ...(base.themeSettings || {}),
           ...themeSettings,

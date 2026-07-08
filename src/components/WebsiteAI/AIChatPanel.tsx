@@ -13,7 +13,6 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Drawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
@@ -22,6 +21,7 @@ import {
   X,
   Send,
   Sparkles,
+  Bot,
   CircleAlert,
   RefreshCw,
   Check,
@@ -35,30 +35,35 @@ import ConfirmationDialog from "../Dashboard/shared/ConfirmationDialog";
 import { useRotatingPhrase } from "../../hooks/useRotatingPhrase";
 import type { EditorChatScope } from "../../api/websiteAI";
 import type { VersionMeta } from "../../api/websiteAI";
-import type { EditorAIController } from "./useEditorAI";
+import {
+  formatAIChatMessageText,
+  type EditorAIController,
+} from "./useEditorAI";
 import { Fade } from "@mui/material";
-import chatPanelBg from "../../assets/images/ai-chat-panel-bg.svg";
+import { WidthFull } from "@mui/icons-material";
 
-const MODAL_BG = "#ffffff";
-const MODAL_BORDER = "#d8e4f2";
-const MODAL_BORDER_STRONG = "#c7d6e8";
-const MODAL_SOFT = "#f7faff";
-const MODAL_BUTTON = "#d5e0ec";
-const THEME = "#378C92";
-const THEME_LIGHT = "rgba(55,140,146,0.12)";
-const THEME_BORDER = "rgba(55,140,146,0.15)";
-const THEME_BORDER_M = "rgba(55,140,146,0.25)";
-const TEXT_DARK = "#1f2937";
+const MODAL_BORDER = "#e5e7eb";
+const MODAL_BORDER_STRONG = "#d1d5db";
+const MODAL_SOFT = "#f9fafb";
+const MODAL_BUTTON = "#f3f4f6";
+const THEME = "#0f172a";
+const THEME_HOVER = "#1e293b";
+const THEME_LIGHT = "#f3f4f6";
+const THEME_BORDER = "#f0f0f0";
+const THEME_BORDER_M = "#e5e7eb";
+const TEXT_DARK = "#0f172a";
 const TEXT_MID = "#374151";
 const TEXT_MUTED = "#9ca3af";
-const TEXT_LIGHT = "#d1d5db";
-const USER_BUBBLE_BG = "#378C92";
-const USER_BUBBLE_BORDER = "rgba(55,140,146,0.28)";
-const ASSISTANT_BUBBLE_BG = "rgba(255,255,255,0.92)";
-const ASSISTANT_BUBBLE_BORDER = "rgba(55,140,146,0.16)";
-const CHAT_AREA_BG = "#e7f2f3";
-const BG_PATTERN =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2000 1500'%3E%3Cdefs%3E%3Crect stroke='%23ffffff' stroke-width='0' width='1' height='1' id='s'/%3E%3Cpattern id='a' width='3' height='3' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cuse fill='%23fcfcfc' href='%23s' y='2'/%3E%3Cuse fill='%23fcfcfc' href='%23s' x='1' y='2'/%3E%3Cuse fill='%23fafafa' href='%23s' x='2' y='2'/%3E%3Cuse fill='%23fafafa' href='%23s'/%3E%3Cuse fill='%23f7f7f7' href='%23s' x='2'/%3E%3Cuse fill='%23f7f7f7' href='%23s' x='1' y='1'/%3E%3C/pattern%3E%3Cpattern id='b' width='7' height='11' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23f5f5f5'%3E%3Cuse href='%23s'/%3E%3Cuse href='%23s' y='5' /%3E%3Cuse href='%23s' x='1' y='10'/%3E%3Cuse href='%23s' x='2' y='1'/%3E%3Cuse href='%23s' x='2' y='4'/%3E%3Cuse href='%23s' x='3' y='8'/%3E%3Cuse href='%23s' x='4' y='3'/%3E%3Cuse href='%23s' x='4' y='7'/%3E%3Cuse href='%23s' x='5' y='2'/%3E%3Cuse href='%23s' x='5' y='6'/%3E%3Cuse href='%23s' x='6' y='9'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='h' width='5' height='13' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23f5f5f5'%3E%3Cuse href='%23s' y='5'/%3E%3Cuse href='%23s' y='8'/%3E%3Cuse href='%23s' x='1' y='1'/%3E%3Cuse href='%23s' x='1' y='9'/%3E%3Cuse href='%23s' x='1' y='12'/%3E%3Cuse href='%23s' x='2'/%3E%3Cuse href='%23s' x='2' y='4'/%3E%3Cuse href='%23s' x='3' y='2'/%3E%3Cuse href='%23s' x='3' y='6'/%3E%3Cuse href='%23s' x='3' y='11'/%3E%3Cuse href='%23s' x='4' y='3'/%3E%3Cuse href='%23s' x='4' y='7'/%3E%3Cuse href='%23s' x='4' y='10'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='c' width='17' height='13' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23f2f2f2'%3E%3Cuse href='%23s' y='11'/%3E%3Cuse href='%23s' x='2' y='9'/%3E%3Cuse href='%23s' x='5' y='12'/%3E%3Cuse href='%23s' x='9' y='4'/%3E%3Cuse href='%23s' x='12' y='1'/%3E%3Cuse href='%23s' x='16' y='6'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='d' width='19' height='17' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23ffffff'%3E%3Cuse href='%23s' y='9'/%3E%3Cuse href='%23s' x='16' y='5'/%3E%3Cuse href='%23s' x='14' y='2'/%3E%3Cuse href='%23s' x='11' y='11'/%3E%3Cuse href='%23s' x='6' y='14'/%3E%3C/g%3E%3Cg fill='%23efefef'%3E%3Cuse href='%23s' x='3' y='13'/%3E%3Cuse href='%23s' x='9' y='7'/%3E%3Cuse href='%23s' x='13' y='10'/%3E%3Cuse href='%23s' x='15' y='4'/%3E%3Cuse href='%23s' x='18' y='1'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='e' width='47' height='53' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23378C92'%3E%3Cuse href='%23s' x='2' y='5'/%3E%3Cuse href='%23s' x='16' y='38'/%3E%3Cuse href='%23s' x='46' y='42'/%3E%3Cuse href='%23s' x='29' y='20'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='f' width='59' height='71' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23378C92'%3E%3Cuse href='%23s' x='33' y='13'/%3E%3Cuse href='%23s' x='27' y='54'/%3E%3Cuse href='%23s' x='55' y='55'/%3E%3C/g%3E%3C/pattern%3E%3Cpattern id='g' width='139' height='97' patternUnits='userSpaceOnUse' patternTransform='scale(5) translate(-800 -600)'%3E%3Cg fill='%23378C92'%3E%3Cuse href='%23s' x='11' y='8'/%3E%3Cuse href='%23s' x='51' y='13'/%3E%3Cuse href='%23s' x='17' y='73'/%3E%3Cuse href='%23s' x='99' y='57'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Crect fill='url(%23a)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23b)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23h)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23c)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23d)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23e)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23f)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23g)' width='100%25' height='100%25'/%3E%3C/svg%3E\")";
+const TEXT_LIGHT = "#9ca3af";
+const USER_BUBBLE_BG = "#0f172a";
+const USER_BUBBLE_BORDER = "transparent";
+const ASSISTANT_BUBBLE_BG = "#ffffff";
+const ASSISTANT_BUBBLE_BORDER = "#e5e7eb";
+const CHAT_AREA_BG = "#ffffff";
+const CHAT_MESSAGES_BG = "#f2f2f2";
+const PANEL_RADIUS = "24px";
+const FULL_SITE_RECREATE_RE =
+  /\b(recreate|rebuild|regenerate|redesign|remake|start over|from scratch|entire new|whole new)\b/i;
 
 interface ScopeOption {
   scope: EditorChatScope;
@@ -158,7 +163,10 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
 
   const selectedScopeName =
     activeScopeOption?.label || scopeMeta[scope]?.label || "Current scope";
-  const canClearTargetScope = selectingElement || scope === "target" || scope === "section";
+  const hasAttachedElement =
+    scope === "target" && Boolean(activeScopeOption?.available);
+  const canClearTargetScope =
+    selectingElement || scope === "target" || scope === "section";
 
   const clearTargetScope = () => {
     setSelectingElement(false);
@@ -246,7 +254,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
   const handleSend = () => {
     if (!canSend) return;
 
-    if (scope === "website") {
+    if (scope === "website" && FULL_SITE_RECREATE_RE.test(message)) {
       setConfirmFullSite(true);
       return;
     }
@@ -258,39 +266,35 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
     <Box
       sx={{
         flex: "0 0 auto",
-        width: 26,
-        height: 26,
+        width: 28,
+        height: 28,
         borderRadius: "999px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: MODAL_BUTTON,
-        color: "#ffffff",
+        background: "#f4f6fa",
+        border: "1px solid #e3e9f1",
+        color: "#66758a",
       }}
     >
-      <Sparkles size={15} color="#378C92"/>
+      <Sparkles size={15} strokeWidth={2.5} />
     </Box>
   );
 
   return (
     <>
-      <Drawer
-        anchor="right"
-        open={open}
-        onClose={onClose}
-        variant="persistent"
-        PaperProps={{
-          sx: {
-            width: { xs: "100%", sm: 430 },
-            background: "transparent",
-            border: 0,
-            boxShadow: "none",
-            p: { xs: 1, sm: 1.5 },
-            boxSizing: "border-box",
-            pointerEvents: selectingElement ? "none" : "auto",
-            opacity: selectingElement ? 0.42 : 1,
-            transition: "opacity 160ms ease",
-          },
+      {/* Docked into the editor's right-rail (style bar) slot; the slot itself
+          handles the slide-in/out animation and sizing. */}
+      <Box
+        sx={{
+          width: "100%",
+          height: "100%",
+          boxSizing: "border-box",
+          borderRadius: PANEL_RADIUS,
+          overflow: "hidden",
+          pointerEvents: !open || selectingElement ? "none" : "auto",
+          opacity: selectingElement ? 0.42 : 1,
+          transition: "opacity 160ms ease",
         }}
       >
         <Box
@@ -302,22 +306,24 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
             fontFamily:
               'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
             backgroundColor: CHAT_AREA_BG,
-            backgroundImage: `url(${chatPanelBg})`,
+            backgroundImage: "none",
             backgroundSize: "cover",
             border: `1px solid ${THEME_BORDER}`,
-            borderRadius: "12px",
+            borderRadius: PANEL_RADIUS,
             boxShadow:
-              "0 8px 48px rgba(55,140,146,0.18), 0 2px 8px rgba(55,140,146,0.08)",
+              "0 18px 40px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04)",
             overflow: "hidden",
+            clipPath: `inset(0 round ${PANEL_RADIUS})`,
+            contain: "paint",
           }}
         >
           <Box
             sx={{
               px: 2.5,
               py: 2,
-              borderBottom: `1px solid rgba(55,140,146,0.10)`,
+              borderBottom: `1px solid #f0f0f0`,
               backgroundColor: CHAT_AREA_BG,
-              backgroundImage: `url(${chatPanelBg})`,
+              backgroundImage: "none",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backdropFilter: "blur(8px)",
@@ -368,15 +374,15 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      background: "#10b981",
+                      background: "#22c55e",
                     }}
                   />
 
                   <Typography
                     sx={{
-                      color: TEXT_MUTED,
+                      color: "#22c55e",
                       fontSize: 10,
-                      fontWeight: 500,
+                      fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.08em",
                     }}
@@ -411,10 +417,10 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
               position: "relative",
               zIndex: 30,
               px: 2.5,
-              py: 2,
-              borderBottom: `1px solid rgba(55,140,146,0.10)`,
+              py: 1.65,
+              borderBottom: `1px solid #f0f0f0`,
               backgroundColor: CHAT_AREA_BG,
-              backgroundImage: `url(${chatPanelBg})`,
+              backgroundImage: "none",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backdropFilter: "blur(8px)",
@@ -441,7 +447,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 <Typography
                   sx={{
                     color: TEXT_MUTED,
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: 500,
                     lineHeight: 1.25,
                     mt: 0.25,
@@ -451,7 +457,13 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 </Typography>
               </Box>
 
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 0.75,
+                }}
+              >
                 <Box sx={{ position: "relative", flex: 1, minWidth: 0 }}>
                   <Box
                     component="button"
@@ -464,7 +476,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                       justifyContent: "space-between",
                       gap: 1,
                       px: 1.75,
-                      py: 1.25,
+                      py: 1.05,
                       background: "rgba(255,255,255,0.90)",
                       border: `1px solid ${THEME_BORDER_M}`,
                       borderRadius: "8px",
@@ -531,12 +543,12 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                       sx={{
                         position: "absolute",
                         top: "calc(100% + 4px)",
-                        left: 0,
+                        left: 60,
                         right: 0,
                         zIndex: 50,
                         overflow: "hidden",
                         background: "#ffffff",
-                        border: "1px solid rgba(55,140,146,0.20)",
+                        border: "1px solid #e5e7eb",
                         borderRadius: "8px",
                         boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
                       }}
@@ -578,7 +590,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                                 background: active
                                   ? THEME
                                   : option.available
-                                    ? "rgba(55,140,146,0.06)"
+                                    ? "#f3f4f6"
                                     : "transparent",
                               },
                             }}
@@ -605,87 +617,151 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 </Box>
 
                 <Box
-                  component="button"
-                  type="button"
-                  aria-label="Attach element"
-                  onClick={() => setSelectingElement(true)}
                   sx={{
-                    flex: "0 0 auto",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.75,
-                    px: 1.5,
-                    py: 1.25,
-                    border: `1px solid ${THEME_BORDER_M}`,
-                    borderRadius: "8px",
-                    background: selectingElement
-                      ? "rgba(55,140,146,0.12)"
-                      : "rgba(255,255,255,0.80)",
-                    color: THEME,
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: 500,
-                    whiteSpace: "nowrap",
-                    transition: "border-color 0.15s, background 0.15s",
-                    "&:hover": {
-                      borderColor: THEME,
-                      background: "rgba(55,140,146,0.05)",
-                    },
+                    display: "grid",
+                    gridTemplateColumns: "1.2fr 1fr",
+                    gap: 0.7,
                   }}
                 >
-                  <Paperclip size={14} />
-                  {selectingElement ? "Attaching" : "Attach"}
-                </Box>
+                  <Box
+                    component="button"
+                    type="button"
+                    aria-label={
+                      hasAttachedElement || selectingElement
+                        ? "Clear attached element"
+                        : "Attach element"
+                    }
+                    onClick={() => {
+                      if (hasAttachedElement || selectingElement) {
+                        clearTargetScope();
+                      } else {
+                        setSelectingElement(true);
+                      }
+                    }}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 0.6,
+                      minHeight: 44,
+                      px: 1,
+                      py: 0.85,
+                      border: `1px solid ${THEME_BORDER_M}`,
+                      borderRadius: "8px",
+                      background:
+                        hasAttachedElement || selectingElement
+                          ? "#f3f4f6"
+                          : "rgba(255,255,255,0.84)",
+                      cursor: "pointer",
+                      color: TEXT_DARK,
+                      transition:
+                        "border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease",
+                      "&:hover": {
+                        borderColor: "#d1d5db",
+                        background: "#f9fafb",
+                        boxShadow: "0 1px 4px rgba(15,23,42,0.04)",
+                      },
+                    }}
+                  >
+                    {hasAttachedElement || selectingElement ? (
+                      <X size={16} strokeWidth={2.35} />
+                    ) : (
+                      <Paperclip size={17} strokeWidth={2.25} />
+                    )}
+                    <Typography
+                      component="span"
+                      sx={{
+                        justifySelf: "center",
+                        color: "inherit",
+                        fontSize: 11.5,
+                        fontWeight: 650,
+                        letterSpacing: 0,
+                        lineHeight: 1.2,
+                        textAlign: "left",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {hasAttachedElement || selectingElement
+                        ? "Clear Element"
+                        : "Attach Element"}
+                    </Typography>
+                  </Box>
 
-                {chatMessages.length > 0 && (
                   <Box
                     component="button"
                     title="Clear chat"
                     aria-label="Clear chat history"
                     type="button"
-                    onClick={() => clearChatHistory()}
+                    disabled={chatMessages.length === 0}
+                    onClick={() => {
+                      if (chatMessages.length > 0) clearChatHistory();
+                    }}
                     sx={{
-                      flex: "0 0 auto",
-                      width: 40,
-                      height: 40,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      border: "1px solid rgba(229,231,235,0.80)",
+                      gap: 0.6,
+                      minHeight: 44,
+                      px: 1,
+                      py: 0.85,
+                      border: `1px solid ${THEME_BORDER_M}`,
                       borderRadius: "8px",
-                      background: "rgba(255,255,255,0.80)",
-                      cursor: "pointer",
-                      color: TEXT_MUTED,
+                      background: "rgba(255,255,255,0.84)",
+                      cursor:
+                        chatMessages.length > 0 ? "pointer" : "not-allowed",
+                      color: chatMessages.length > 0 ? TEXT_DARK : "#c5d0dd",
+                      opacity: chatMessages.length > 0 ? 1 : 0.75,
                       transition:
-                        "border-color 0.15s, background 0.15s, color 0.15s",
+                        "border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease",
                       "&:hover": {
-                        borderColor: "rgba(55,140,146,0.40)",
-                        background: "rgba(55,140,146,0.05)",
-                        color: THEME,
+                        borderColor:
+                          chatMessages.length > 0 ? "#d1d5db" : THEME_BORDER_M,
+                        background:
+                          chatMessages.length > 0
+                            ? "#f9fafb"
+                            : "rgba(255,255,255,0.84)",
+                        boxShadow:
+                          chatMessages.length > 0
+                            ? "0 1px 4px rgba(15,23,42,0.04)"
+                            : "none",
                       },
                     }}
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={17} strokeWidth={2.25} />
+                    <Typography
+                      component="span"
+                      sx={{
+                        color: "inherit",
+                        fontSize: 11.5,
+                        fontWeight: 650,
+                        letterSpacing: 0,
+                        lineHeight: 1.2,
+                        textAlign: "left",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Clear Chat
+                    </Typography>
                   </Box>
-                )}
+                </Box>
               </Box>
 
               {selectingElement && (
                 <Box
                   sx={{
-                    px: 1.2,
-                    py: 0.85,
+                    px: 1.05,
+                    py: 0.75,
                     borderRadius: "10px",
-                    background: "rgba(55,140,146,0.08)",
-                    border: "1px solid rgba(55,140,146,0.16)",
+                    background: "rgba(243,244,246,0.72)",
+                    border: "1px solid #e5e7eb",
                     color: THEME,
-                    fontSize: 11.5,
+                    fontSize: 11,
                     fontWeight: 600,
                     lineHeight: 1.35,
                   }}
                 >
-                  Click any editable item on the page to attach it. Press Esc to
-                  cancel.
+                  Waiting for an element to be attached. Click an editable item,
+                  or clear this state to cancel.
                 </Box>
               )}
 
@@ -707,9 +783,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 >
                   Selected {scopeMeta[scope]?.label || "Scope"}
                 </Typography>
-                <Typography
-                  sx={{ color: "rgba(55,140,146,0.30)", fontSize: 12 }}
-                >
+                <Typography sx={{ color: "#9ca3af", fontSize: 12 }}>
                   /
                 </Typography>
                 <Typography
@@ -760,10 +834,10 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
               flex: 1,
               minHeight: 0,
               overflowY: "auto",
-              px: 1,
+              // px: 1,
               py: 0,
-              backgroundColor: CHAT_AREA_BG,
-              backgroundImage: `url(${chatPanelBg})`,
+              backgroundColor: CHAT_MESSAGES_BG,
+              backgroundImage: "none",
               backgroundSize: "cover",
               backgroundPosition: "center",
               scrollbarWidth: "none",
@@ -781,12 +855,8 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 display: "flex",
                 flexDirection: "column",
                 gap: 1.5,
-                backgroundColor: MODAL_BG,
-                backgroundImage: BG_PATTERN,
-                backgroundSize: "auto",
-                backgroundPosition: "center top",
-                backgroundRepeat: "repeat",
-                backgroundAttachment: "fixed",
+                backgroundColor: "transparent",
+                backgroundImage: "none",
                 borderRadius: "10px",
               }}
             >
@@ -912,185 +982,195 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 </Box>
               )}
 
-              {chatMessages.map((m) => (
-                <Box
-                  key={m.id}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: m.role === "user" ? "flex-end" : "flex-start",
-                    gap: 0.5,
-                  }}
-                >
-                  {m.role === "user" ? (
-                    <>
-                      <Box
-                        sx={{
-                          maxWidth: "88%",
-                          px: 1.5,
-                          py: 1.15,
-                          borderRadius: "18px 18px 5px 18px",
-                          background: USER_BUBBLE_BG,
-                          border: `1.5px solid ${USER_BUBBLE_BORDER}`,
-                          color: "#ffffff",
-                          boxShadow: "0 8px 20px rgba(55,140,146,0.18)",
-                          overflow: "hidden",
-                          wordBreak: "break-word",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            fontSize: 13,
-                            fontWeight: 500,
-                            lineHeight: 1.5,
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {m.text}
-                        </Typography>
-                      </Box>
-                    </>
-                  ) : (
-                    <>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 0.85,
-                          maxWidth: "92%",
-                        }}
-                      >
-                        {botAvatar}
+              {chatMessages.map((m) => {
+                const displayText =
+                  m.role === "assistant"
+                    ? formatAIChatMessageText(
+                        m.text,
+                        m.applied ? "AI changes applied." : "",
+                      )
+                    : m.text;
 
+                return (
+                  <Box
+                    key={m.id}
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: m.role === "user" ? "flex-end" : "flex-start",
+                      gap: 0.5,
+                    }}
+                  >
+                    {m.role === "user" ? (
+                      <>
                         <Box
                           sx={{
-                            flex: 1,
+                            maxWidth: "88%",
                             px: 1.5,
                             py: 1.15,
-                            borderRadius: "5px 18px 18px 18px",
-                            background: m.isError
-                              ? "rgba(255,247,247,0.95)"
-                              : ASSISTANT_BUBBLE_BG,
-                            border: m.isError
-                              ? "1.5px solid rgba(239,68,68,0.18)"
-                              : `1.5px solid ${ASSISTANT_BUBBLE_BORDER}`,
-                            color: TEXT_MID,
-                            boxShadow: m.isError
-                              ? "0 8px 20px rgba(239,68,68,0.08)"
-                              : "0 8px 20px rgba(55,140,146,0.08)",
+                            borderRadius: "18px 18px 5px 18px",
+                            background: USER_BUBBLE_BG,
+                            border: `1.5px solid ${USER_BUBBLE_BORDER}`,
+                            color: "#ffffff",
+                            boxShadow: "0 1px 2px rgba(15,23,42,0.08)",
                             overflow: "hidden",
                             wordBreak: "break-word",
                           }}
                         >
-                          {m.isError && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.75,
-                                mb: 0.75,
-                              }}
-                            >
-                              <CircleAlert size={13} color="#f87171" />
-
-                              <Typography
-                                sx={{
-                                  color: "#f87171",
-                                  fontSize: 11.5,
-                                  fontWeight: 600,
-                                  lineHeight: 1.35,
-                                }}
-                              >
-                                Failed - you can mention this in your next
-                                message
-                              </Typography>
-                            </Box>
-                          )}
-
-                          {!m.isError && m.applied && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.75,
-                                mb: 0.75,
-                                color: "#16a34a",
-                              }}
-                            >
-                              <Check size={13} strokeWidth={3} />
-
-                              <Typography
-                                sx={{
-                                  color: "inherit",
-                                  fontSize: 11.5,
-                                  fontWeight: 600,
-                                  lineHeight: 1.35,
-                                }}
-                              >
-                                AI changes applied
-                              </Typography>
-                            </Box>
-                          )}
-
                           <Typography
                             sx={{
-                              color: m.isError ? TEXT_MID : TEXT_MID,
-                              fontSize: 13,
+                              fontSize: 11,
                               fontWeight: 500,
                               lineHeight: 1.5,
+                              wordBreak: "break-word",
                             }}
                           >
-                            {m.text}
+                            {displayText}
                           </Typography>
                         </Box>
+                      </>
+                    ) : (
+                      <>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 0.85,
+                            maxWidth: "92%",
+                          }}
+                        >
+                          {botAvatar}
+
+                          <Box
+                            sx={{
+                              flex: 1,
+                              px: 1.5,
+                              py: 1.15,
+                              borderRadius: "5px 18px 18px 18px",
+                              background: m.isError
+                                ? "rgba(255,247,247,0.95)"
+                                : ASSISTANT_BUBBLE_BG,
+                              border: m.isError
+                                ? "1.5px solid rgba(239,68,68,0.18)"
+                                : `1.5px solid ${ASSISTANT_BUBBLE_BORDER}`,
+                              color: TEXT_MID,
+                              boxShadow: m.isError
+                                ? "0 8px 20px rgba(239,68,68,0.08)"
+                                : "0 1px 2px rgba(15,23,42,0.06)",
+                              overflow: "hidden",
+                              wordBreak: "break-word",
+                            }}
+                          >
+                            {m.isError && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.75,
+                                  mb: 0.75,
+                                }}
+                              >
+                                <CircleAlert size={13} color="#f87171" />
+
+                                <Typography
+                                  sx={{
+                                    color: "#f87171",
+                                    fontSize: 11.5,
+                                    fontWeight: 600,
+                                    lineHeight: 1.35,
+                                  }}
+                                >
+                                  Failed - you can mention this in your next
+                                  message
+                                </Typography>
+                              </Box>
+                            )}
+
+                            {!m.isError && m.applied && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.75,
+                                  mb: 0.75,
+                                  color: "#16a34a",
+                                }}
+                              >
+                                <Check size={13} strokeWidth={3} />
+
+                                <Typography
+                                  sx={{
+                                    color: "inherit",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    lineHeight: 1.35,
+                                  }}
+                                >
+                                  AI changes applied
+                                </Typography>
+                              </Box>
+                            )}
+
+                            <Typography
+                              sx={{
+                                color: m.isError ? TEXT_MID : TEXT_MID,
+                                fontSize: 11,
+                                fontWeight: 500,
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {displayText}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </>
+                    )}
+
+                    {m.pendingPatches && m.pendingPatches.length > 0 && (
+                      <Box
+                        sx={{
+                          mt: 0.5,
+                          display: "flex",
+                          gap: 0.75,
+                          pl: 4.35,
+                        }}
+                      >
+                        <DashboardGradientButton
+                          size="small"
+                          onClick={() => applyChatMessage(m.id)}
+                        >
+                          Apply{" "}
+                          {m.pendingPatches.length > 1
+                            ? `${m.pendingPatches.length} changes`
+                            : "change"}
+                        </DashboardGradientButton>
+
+                        <DashboardActionButton
+                          size="small"
+                          onClick={() => dismissChatPatches(m.id)}
+                        >
+                          Cancel
+                        </DashboardActionButton>
                       </Box>
-                    </>
-                  )}
+                    )}
 
-                  {m.pendingPatches && m.pendingPatches.length > 0 && (
-                    <Box
-                      sx={{
-                        mt: 0.5,
-                        display: "flex",
-                        gap: 0.75,
-                        pl: 4.35,
-                      }}
-                    >
-                      <DashboardGradientButton
-                        size="small"
-                        onClick={() => applyChatMessage(m.id)}
+                    {m.requiresConfirmation && (
+                      <Typography
+                        sx={{
+                          color: TEXT_MUTED,
+                          fontSize: 12,
+                          fontWeight: 500,
+                          mt: 0.5,
+                          display: "block",
+                          pl: 4.35,
+                        }}
                       >
-                        Apply{" "}
-                        {m.pendingPatches.length > 1
-                          ? `${m.pendingPatches.length} changes`
-                          : "change"}
-                      </DashboardGradientButton>
-
-                      <DashboardActionButton
-                        size="small"
-                        onClick={() => dismissChatPatches(m.id)}
-                      >
-                        Cancel
-                      </DashboardActionButton>
-                    </Box>
-                  )}
-
-                  {m.requiresConfirmation && (
-                    <Typography
-                      sx={{
-                        color: TEXT_MUTED,
-                        fontSize: 12,
-                        fontWeight: 500,
-                        mt: 0.5,
-                        display: "block",
-                        pl: 4.35,
-                      }}
-                    >
-                      A restorable version was saved before this change.
-                    </Typography>
-                  )}
-                </Box>
-              ))}
+                        A restorable version was saved before this change.
+                      </Typography>
+                    )}
+                  </Box>
+                );
+              })}
 
               {chatLoading && (
                 <Box
@@ -1115,12 +1195,15 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                       color: TEXT_MID,
                     }}
                   >
-                    <CircularProgress size={14} sx={{ color: THEME }} />
+                    <CircularProgress
+                      size={14}
+                      sx={{ color: THEME }}
+                    />
 
                     <Fade key={phrase} in timeout={250}>
                       <Typography
                         sx={{
-                          fontSize: 12.5,
+                          fontSize: 11,
                           fontWeight: 600,
                         }}
                       >
@@ -1140,9 +1223,9 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
               px: 2.5,
               pt: 2,
               pb: 1.5,
-              borderTop: `1px solid rgba(55,140,146,0.10)`,
+              borderTop: `1px solid #f0f0f0`,
               backgroundColor: CHAT_AREA_BG,
-              backgroundImage: `url(${chatPanelBg})`,
+              backgroundImage: "none",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backdropFilter: "blur(8px)",
@@ -1154,7 +1237,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                   color: TEXT_MUTED,
                   mb: 1,
                   display: "block",
-                  fontSize: 12.5,
+                  fontSize: 11,
                   fontWeight: 500,
                 }}
               >
@@ -1168,12 +1251,12 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 display: "flex",
                 alignItems: "flex-end",
                 border: `1px solid ${
-                  composerFocused ? THEME : "rgba(55,140,146,0.20)"
+                  composerFocused ? "#94a3b8" : MODAL_BORDER
                 }`,
                 borderRadius: "12px",
-                background: "rgba(255,255,255,0.90)",
+                background: MODAL_SOFT,
                 boxShadow: composerFocused
-                  ? "0 0 0 2px rgba(55,140,146,0.15)"
+                  ? "0 0 0 2px rgba(148,163,184,0.20)"
                   : "none",
                 transition: "border-color 0.15s, box-shadow 0.15s",
               }}
@@ -1181,7 +1264,12 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
               <Box
                 component="textarea"
                 rows={1}
-                placeholder={canUseAI ? composerPlaceholder : "AI unavailable"}
+                placeholder={
+                  canUseAI
+                    ? `Type your request for AI here
+${composerPlaceholder}`
+                    : "AI unavailable"
+                }
                 value={message}
                 disabled={!canUseAI || chatLoading}
                 onFocus={() => setComposerFocused(true)}
@@ -1197,15 +1285,15 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 }}
                 sx={{
                   flex: 1,
-                  minHeight: 22,
-                  maxHeight: 88,
+                  minHeight: 73,
+                  maxHeight: 108,
                   border: 0,
                   outline: "none",
                   resize: "none",
                   background: "transparent",
                   color: TEXT_DARK,
                   font: "inherit",
-                  fontSize: 13,
+                  fontSize: 11,
                   fontWeight: 500,
                   lineHeight: 1.6,
                   pr: 5.5,
@@ -1234,12 +1322,10 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                   borderRadius: "8px",
                   background: canSend ? THEME : MODAL_BUTTON,
                   color: "#ffffff",
-                  boxShadow: canSend
-                    ? "0 2px 6px rgba(55,140,146,0.30)"
-                    : "none",
+                  boxShadow: canSend ? "0 2px 6px rgba(15,23,42,0.25)" : "none",
                   transition: "background 0.15s ease",
                   "&:hover": {
-                    background: canSend ? "#2f7a80" : MODAL_BUTTON,
+                    background: canSend ? THEME_HOVER : MODAL_BUTTON,
                   },
                   "&.Mui-disabled": {
                     color: "#ffffff",
@@ -1255,21 +1341,35 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 )}
               </IconButton>
             </Box>
-            <Typography
+            <Box
               sx={{
-                textAlign: "center",
-                fontSize: 10,
-                color: TEXT_DARK,
-                mt: 1.25,
-                lineHeight: 1.4,
-                px: 1,
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
-              AI can make mistakes. Always review changes before publishing.
-            </Typography>
+              <Typography
+                sx={{
+                  textAlign: "center",
+                  fontSize: 10,
+                  color: TEXT_DARK,
+                  letterSpacing: 0.35,
+                  mt: 1.25,
+                  lineHeight: 1.4,
+                  // px: 1,
+                  width: "90%",
+                  fontStyle: "italic",
+                }}
+              >
+                Please review all changes carefully
+                <br />
+                before publishing.
+              </Typography>
+            </Box>
           </Box>
         </Box>
-      </Drawer>
+      </Box>
 
       <ConfirmationDialog
         open={confirmFullSite}

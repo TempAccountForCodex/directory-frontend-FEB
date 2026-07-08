@@ -62,8 +62,78 @@ const isLocallyApplicablePatch = (patch: {
   fieldPath?: string;
   persistedFieldPath?: string;
 }) =>
-  (patch.blockId != null && patch.persistedFieldPath && isBlockContentPath(patch.persistedFieldPath)) ||
+  (patch.blockId != null &&
+    patch.persistedFieldPath &&
+    isBlockContentPath(patch.persistedFieldPath)) ||
   isWebsiteFieldPath(patch.persistedFieldPath || patch.fieldPath);
+
+const stripJsonFence = (value: string) =>
+  value
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+const friendlyTextFromObject = (
+  value: Record<string, unknown>,
+  fallback = "",
+): string => {
+  const direct =
+    typeof value.summary === "string"
+      ? value.summary
+      : typeof value.reply === "string"
+        ? value.reply
+        : typeof value.text === "string"
+          ? value.text
+          : typeof value.message === "string"
+            ? value.message
+            : "";
+
+  if (direct.trim()) {
+    return direct.trim();
+  }
+
+  if (Array.isArray(value.applied) || Array.isArray(value.patches)) {
+    return fallback || "AI changes applied.";
+  }
+
+  return fallback;
+};
+
+export const formatAIChatMessageText = (
+  value: unknown,
+  fallback = "",
+): string => {
+  if (value == null) return fallback;
+
+  if (typeof value === "object") {
+    return friendlyTextFromObject(value as Record<string, unknown>, fallback);
+  }
+
+  const text = String(value).trim();
+  if (!text) return fallback;
+
+  const unfenced = stripJsonFence(text);
+  if (unfenced.startsWith("{") || unfenced.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(unfenced);
+      if (Array.isArray(parsed)) {
+        return fallback || "AI changes applied.";
+      }
+      if (parsed && typeof parsed === "object") {
+        const friendly = friendlyTextFromObject(
+          parsed as Record<string, unknown>,
+          fallback,
+        );
+        if (friendly) return friendly;
+      }
+    } catch {
+      // Keep the original text if it only looked like JSON.
+    }
+  }
+
+  return text;
+};
 
 export interface AITargetRef {
   blockId?: number | string;
@@ -196,10 +266,7 @@ export interface UseEditorAIDeps {
   onRefreshAIContext?: () => void | Promise<void>;
 }
 
-function buildEditSessionId(
-  websiteId: number,
-  target: AITargetRef,
-): string {
+function buildEditSessionId(websiteId: number, target: AITargetRef): string {
   return `edit-${websiteId}-${target.blockId ?? "page"}-${Date.now()}`;
 }
 
@@ -226,10 +293,17 @@ function scoreStyleTargetForInstruction(
   const prompt = instruction.toLowerCase();
   let score = 0;
 
-  if (/\b(colou?r|teal|yellow|red|green|blue|purple|black|white|gr[ae]y)\b/.test(prompt)) {
+  if (
+    /\b(colou?r|teal|yellow|red|green|blue|purple|black|white|gr[ae]y)\b/.test(
+      prompt,
+    )
+  ) {
     if (path.includes("color") || path.includes("colour")) score += 100;
     if (path.includes("style")) score += 20;
-    if (/\b(button|cta)\b/.test(prompt) && /\b(text|label|copy)\b/.test(prompt)) {
+    if (
+      /\b(button|cta)\b/.test(prompt) &&
+      /\b(text|label|copy)\b/.test(prompt)
+    ) {
       if (path.includes("buttontextstyle") || path.includes("ctatextstyle")) {
         score += 80;
       }
@@ -260,7 +334,11 @@ function scoreStyleTargetForInstruction(
     }
     if (path.includes("style")) score += 20;
   }
-  if (/\b(font|size|bigger|larger|smaller|increase|decrease|weight|bold|italic|underline|align|alignment|opacity|width|height)\b/.test(prompt)) {
+  if (
+    /\b(font|size|bigger|larger|smaller|increase|decrease|weight|bold|italic|underline|align|alignment|opacity|width|height)\b/.test(
+      prompt,
+    )
+  ) {
     if (/\b(size|bigger|larger|smaller|increase|decrease)\b/.test(prompt)) {
       if (path.includes("fontsize") || path.includes("font-size")) {
         score += 130;
@@ -361,11 +439,7 @@ function describeProposalPatches(patches: AIProposalPatch[]): string {
   if (patches.length > 1) return `${patches.length} changes ready to apply`;
 
   const patch = patches[0];
-  const label = patch.fieldPath
-    .split(".")
-    .filter(Boolean)
-    .slice(-2)
-    .join(" ");
+  const label = patch.fieldPath.split(".").filter(Boolean).slice(-2).join(" ");
   return `${label || "Field"} → ${formatPatchValue(patch.value)}`;
 }
 
@@ -421,8 +495,13 @@ function extractFontSizeValue(instruction: string): string | null {
   return null;
 }
 
-function resolveRelativeFontSize(currentValue: unknown, requested: string): string {
-  const scaleMatch = requested.match(/^scale:(smaller|larger):(\d+(?:\.\d+)?)$/);
+function resolveRelativeFontSize(
+  currentValue: unknown,
+  requested: string,
+): string {
+  const scaleMatch = requested.match(
+    /^scale:(smaller|larger):(\d+(?:\.\d+)?)$/,
+  );
   if (requested !== "smaller" && requested !== "larger" && !scaleMatch) {
     return requested;
   }
@@ -433,7 +512,8 @@ function resolveRelativeFontSize(currentValue: unknown, requested: string): stri
 
   const amount = Number(match[1]);
   const unit = match[2].toLowerCase();
-  if (!Number.isFinite(amount)) return requested === "smaller" ? "14px" : "20px";
+  if (!Number.isFinite(amount))
+    return requested === "smaller" ? "14px" : "20px";
 
   if (scaleMatch) {
     const direction = scaleMatch[1];
@@ -546,8 +626,8 @@ export function useEditorAI({
   useEffect(() => {
     if (aiHistory.length > 0) {
       const historyMessages: ChatMessage[] = aiHistory
-        .filter(item => item.prompt || item.response)
-        .flatMap(item => {
+        .filter((item) => item.prompt || item.response)
+        .flatMap((item) => {
           const messages: ChatMessage[] = [];
           if (item.prompt) {
             messages.push({
@@ -559,14 +639,7 @@ export function useEditorAI({
           }
           if (item.response) {
             // Handle response which might be an object or string
-            let responseText = "";
-            if (typeof item.response === "string") {
-              responseText = item.response;
-            } else if (item.response && typeof item.response === "object") {
-              // Try to extract text from common response structures
-              const resp = item.response as Record<string, unknown>;
-              responseText = (resp.reply || resp.text || resp.message || JSON.stringify(resp)) as string;
-            }
+            const responseText = formatAIChatMessageText(item.response);
             if (responseText) {
               messages.push({
                 id: `a_${item.timestamp || Date.now()}`,
@@ -640,7 +713,10 @@ export function useEditorAI({
           setConflict({
             blockId: conflicting.blockId,
             fieldPath: conflicting.fieldPath,
-            userValue: getCurrentValue(conflicting.blockId, conflicting.fieldPath),
+            userValue: getCurrentValue(
+              conflicting.blockId,
+              conflicting.fieldPath,
+            ),
             aiValue: conflicting.value,
             turnId: meta?.turnId ?? "",
             summary: meta?.summary ?? "",
@@ -671,20 +747,22 @@ export function useEditorAI({
         : null;
 
       if (applied.length && localTurnId) {
-        setLocalRevertStack((prev) => [
-          ...prev.filter((entry) => entry.turnId !== localTurnId),
-          {
-            turnId: localTurnId,
-            label: meta?.summary || meta?.instruction || "AI change",
-            patches: applied.map((patch) => ({
-              blockId: patch.blockId,
-              fieldPath: patch.fieldPath,
-              persistedFieldPath: patch.persistedFieldPath,
-              beforeValue: patch.baselineValue,
-              afterValue: patch.value,
-            })),
-          },
-        ].slice(-MAX_REVERT_DEPTH));
+        setLocalRevertStack((prev) =>
+          [
+            ...prev.filter((entry) => entry.turnId !== localTurnId),
+            {
+              turnId: localTurnId,
+              label: meta?.summary || meta?.instruction || "AI change",
+              patches: applied.map((patch) => ({
+                blockId: patch.blockId,
+                fieldPath: patch.fieldPath,
+                persistedFieldPath: patch.persistedFieldPath,
+                beforeValue: patch.baselineValue,
+                afterValue: patch.value,
+              })),
+            },
+          ].slice(-MAX_REVERT_DEPTH),
+        );
         setLocalRedoStack([]);
       }
 
@@ -717,7 +795,7 @@ export function useEditorAI({
             );
           })
           .catch(() => {
-          /* bookkeeping only — ignore failures */
+            /* bookkeeping only — ignore failures */
           });
       }
       return true;
@@ -886,8 +964,7 @@ export function useEditorAI({
             )
           : [
               {
-                aiEditKey:
-                  result.target?.aiEditKey ?? requestTarget.aiEditKey,
+                aiEditKey: result.target?.aiEditKey ?? requestTarget.aiEditKey,
                 blockId: requestTarget.blockId,
                 fieldPath: requestTarget.fieldPath,
                 persistedFieldPath:
@@ -917,7 +994,8 @@ export function useEditorAI({
         if (!patches.length || patches.every((patch) => patch.value == null)) {
           setError({
             code: "INVALID_EDIT_RESULT",
-            message: "The AI service did not return a result. Please try again.",
+            message:
+              "The AI service did not return a result. Please try again.",
           });
           return false;
         }
@@ -1011,7 +1089,8 @@ export function useEditorAI({
                   value: patch.value,
                   baselineValue: isRequestedField
                     ? baselineValue
-                    : patch.before ?? getCurrentValue(blockId, patch.fieldPath),
+                    : (patch.before ??
+                      getCurrentValue(blockId, patch.fieldPath)),
                 };
               });
             if (chatPatches.length) {
@@ -1168,7 +1247,9 @@ export function useEditorAI({
 
       const result = await revertAITurn({ websiteId, turnId });
       result.restored?.forEach((patch) => {
-        const blockId = patch.fieldPath.match(/blocks\.([^.]+)\.content\./)?.[1];
+        const blockId = patch.fieldPath.match(
+          /blocks\.([^.]+)\.content\./,
+        )?.[1];
         if (blockId && isBlockContentPath(patch.fieldPath)) {
           applyPatch(blockId, toFieldPath(patch.fieldPath), patch.value);
         } else if (isWebsiteFieldPath(patch.fieldPath)) {
@@ -1258,7 +1339,7 @@ export function useEditorAI({
         ...prev,
         { id: `u_${Date.now()}`, role: "user", text },
       ]);
-      
+
       setChatLoading(true);
       setError(null);
 
@@ -1304,17 +1385,18 @@ export function useEditorAI({
               aiEditKey: patches[0]?.aiEditKey,
             })
           : false;
-        
+
         setChatMessages((prev) => [
           ...prev,
           {
             id: `a_${Date.now()}`,
             role: "assistant",
-            text:
-              result.reply ||
-              (applied
+            text: formatAIChatMessageText(
+              result.reply,
+              applied
                 ? `${patches.length} AI ${patches.length === 1 ? "change" : "changes"} applied.`
-                : "Done."),
+                : "Done.",
+            ),
             applied,
             sessionId: result.sessionId,
           },
@@ -1497,7 +1579,9 @@ export function useEditorAI({
         );
         setChatMessages((prev) =>
           prev.map((item) =>
-            item.id === messageId ? { ...item, pendingPatches: undefined } : item,
+            item.id === messageId
+              ? { ...item, pendingPatches: undefined }
+              : item,
           ),
         );
       } catch (err) {
