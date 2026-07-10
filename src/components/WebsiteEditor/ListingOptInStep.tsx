@@ -3,32 +3,14 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import Collapse from "@mui/material/Collapse";
 import Alert from "@mui/material/Alert";
 import Skeleton from "@mui/material/Skeleton";
 import CircularProgress from "@mui/material/CircularProgress";
-import MenuItem from "@mui/material/MenuItem";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Info } from "lucide-react";
 import { apiClient } from "../../api/client";
-import DashboardInput from "../Dashboard/shared/DashboardInput";
-import DashboardSelect from "../Dashboard/shared/DashboardSelect";
 import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
 import DashboardActionButton from "../Dashboard/shared/DashboardActionButton";
 import PropertyItemCard from "../publicComponents/Listing/PropertyCardItem";
-
-const BUSINESS_CATEGORIES = [
-  "Restaurant",
-  "Retail",
-  "Professional Services",
-  "Health & Wellness",
-  "Technology",
-  "Education",
-  "Real Estate",
-  "Automotive",
-  "Home Services",
-  "Entertainment",
-  "Other",
-];
 
 export interface ListingOptInStepProps {
   websiteId: number;
@@ -47,8 +29,6 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
   onSkip,
 }: ListingOptInStepProps) {
   const [optedIn, setOptedIn] = useState(true);
-  const [expanded, setExpanded] = useState(false);
-  const [shortDescription, setShortDescription] = useState("");
   const [businessCategory, setBusinessCategory] = useState(
     defaultBusinessCategory || "",
   );
@@ -68,21 +48,6 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
     }
   }, [businessCategory, defaultBusinessCategory]);
 
-  const handleToggleExpand = useCallback(() => {
-    setExpanded((prev) => !prev);
-  }, []);
-
-  const handleShortDescChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setShortDescription(e.target.value);
-    },
-    [],
-  );
-
-  const handleCategoryChange = useCallback((e: any) => {
-    setBusinessCategory(e.target.value as string);
-  }, []);
-
   const handleComplete = useCallback(async () => {
     if (!optedIn) {
       onComplete();
@@ -101,12 +66,10 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
         );
       }
 
-      const patchPayload: Record<string, unknown> = {};
-      if (shortDescription.trim()) patchPayload.shortDescription = shortDescription.trim();
-      if (businessCategory) patchPayload.businessCategory = businessCategory;
-
-      if (Object.keys(patchPayload).length > 0) {
-        await apiClient.patch(`/websites/${websiteId}/listing`, patchPayload);
+      if (businessCategory) {
+        await apiClient.patch(`/websites/${websiteId}/listing`, {
+          businessCategory,
+        });
       }
     } catch (err: any) {
       setError(
@@ -117,7 +80,7 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
       setExtracting(false);
       onComplete();
     }
-  }, [businessCategory, optedIn, shortDescription, websiteId, onComplete]);
+  }, [businessCategory, optedIn, websiteId, onComplete]);
 
   const previewData = useMemo(
     () => ({
@@ -126,13 +89,12 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
       title: websiteName,
       category: businessCategory || "Business",
       businessCategory: businessCategory || "Business",
-      shortDescription:
-        shortDescription || "Your business description will appear here...",
-      desc: shortDescription || "Your business description will appear here...",
+      shortDescription: "Your business description will appear here...",
+      desc: "Your business description will appear here...",
       averageRating: 0,
       reviewCount: 0,
     }),
-    [websiteId, websiteName, businessCategory, shortDescription],
+    [websiteId, websiteName, businessCategory],
   );
 
   if (extracting) {
@@ -167,33 +129,10 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
         </Alert>
       )}
 
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={optedIn}
-            onChange={handleOptInChange}
-            data-testid="opt-in-checkbox"
-            sx={{
-              color: "primary.main",
-              "&.Mui-checked": { color: "primary.main" },
-            }}
-          />
-        }
-        label={
-          <Typography
-            variant="body1"
-            sx={{ color: "text.primary", fontWeight: 500 }}
-          >
-            List my business in the Techietribe Directory
-          </Typography>
-        }
-        sx={{ mb: 2 }}
-      />
-
       {optedIn && (
         <>
           {/* Preview card */}
-          <Box data-testid="listing-preview" sx={{ mb: 2, maxWidth: 400 }}>
+          <Box data-testid="listing-preview" sx={{ mb: 0, maxWidth: 280 }}>
             <PropertyItemCard
               item={previewData}
               handleDeleteItem={() => undefined}
@@ -204,90 +143,89 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
             />
           </Box>
 
-          {/* Expandable customize section */}
+          {/* Reassurance that listing details stay editable later */}
           <Box
-            onClick={handleToggleExpand}
             sx={{
               display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
+              alignItems: "flex-start",
+              gap: 1,
               mb: 1,
-              userSelect: "none",
-            }}
-            role="button"
-            tabIndex={0}
-            aria-expanded={expanded}
-            aria-label="Customize Listing Details"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleToggleExpand();
-              }
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{ color: "primary.main", fontWeight: 500, mr: 0.5 }}
-            >
-              Customize Listing Details
-            </Typography>
-            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </Box>
-
-          <Collapse in={expanded}>
             <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+              sx={{
+                color: "primary.main",
+                mt: "2px",
+                flexShrink: 0,
+                display: "flex",
+              }}
             >
-              <DashboardInput
-                label="Short Description"
-                placeholder="A brief description of your business"
-                value={shortDescription}
-                onChange={handleShortDescChange}
-                multiline
-                rows={2}
-                inputProps={{ maxLength: 500 }}
-              />
-              <DashboardSelect
-                label="Business Category"
-                value={businessCategory}
-                onChange={handleCategoryChange}
-                name="businessCategory"
-              >
-                <MenuItem value="">
-                  <em>Select a category</em>
-                </MenuItem>
-                {businessCategory &&
-                  !BUSINESS_CATEGORIES.includes(businessCategory) && (
-                    <MenuItem value={businessCategory}>
-                      {businessCategory}
-                    </MenuItem>
-                  )}
-                {BUSINESS_CATEGORIES.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
-                    {cat}
-                  </MenuItem>
-                ))}
-              </DashboardSelect>
+              <Info size={16} />
             </Box>
-          </Collapse>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              You can customize your listing details anytime <br /> edit the
+              description, category, photos and more from your dashboard under
+              <br />
+              <Box
+                component="span"
+                sx={{ color: "text.primary", fontWeight: 600 }}
+              >
+                Websites → Manage → Listing
+              </Box>
+              .
+            </Typography>
+          </Box>
         </>
       )}
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}>
-        <DashboardActionButton onClick={onSkip} disabled={extracting}>
-          Skip
-        </DashboardActionButton>
-        <DashboardGradientButton
-          onClick={handleComplete}
-          disabled={extracting}
-          data-testid="complete-btn"
-        >
-          {extracting ? (
-            <CircularProgress size={16} sx={{ color: "inherit" }} />
-          ) : (
-            "Continue"
-          )}
-        </DashboardGradientButton>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          mt: 0,
+          flexWrap: "wrap",
+        }}
+      >
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={optedIn}
+              onChange={handleOptInChange}
+              data-testid="opt-in-checkbox"
+              sx={{
+                color: "primary.main",
+                "&.Mui-checked": { color: "primary.main" },
+              }}
+            />
+          }
+          label={
+            <Typography
+              variant="body1"
+              sx={{ color: "text.primary", fontWeight: 500 }}
+            >
+              List my business in the Techietribe Directory
+            </Typography>
+          }
+          sx={{ m: 0 }}
+        />
+        <Box sx={{ display: "flex", gap: 1, scale: 0.9 }}>
+          <DashboardActionButton onClick={onSkip} disabled={extracting}>
+            Skip
+          </DashboardActionButton>
+          <DashboardGradientButton
+            onClick={handleComplete}
+            disabled={extracting}
+            data-testid="complete-btn"
+          >
+            {extracting ? (
+              <CircularProgress size={16} sx={{ color: "inherit" }} />
+            ) : (
+              "Continue"
+            )}
+          </DashboardGradientButton>
+        </Box>
       </Box>
     </Box>
   );

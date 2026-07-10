@@ -236,6 +236,35 @@ export interface GenerateContentResult {
   sessionId: string;
 }
 
+/** Questionnaire payload sent to POST /api/ai/generate-website-draft. */
+export interface GenerateWebsiteDraftQuestionnaire {
+  businessName: string;
+  category?: string;
+  primaryGoal?: string;
+  contactInfo?: string;
+  location?: string;
+  shortDescription?: string;
+  targetAudience?: string;
+  servicesOrProducts?: string[];
+  tone?: string;
+  preferredColorsOrStyleNotes?: string;
+  aiInstructions?: string;
+  [key: string]: unknown;
+}
+
+export interface GenerateWebsiteDraftRequest {
+  websiteId: number;
+  pageId?: number;
+  questionnaire: GenerateWebsiteDraftQuestionnaire;
+}
+
+export interface GenerateWebsiteDraftResult {
+  success?: true;
+  mode?: "website-draft";
+  patches: AIPatch[];
+  summary?: string;
+}
+
 export interface ApplyPatchesResult {
   success?: true;
   mode: "patch";
@@ -606,6 +635,68 @@ export async function startWebsiteAIGeneration(params: {
   try {
     const res = await apiClient.post("/ai/generate-content", params);
     return unwrap<GenerateContentResult>(res.data);
+  } catch (err) {
+    if (err instanceof WebsiteAIRequestError) throw err;
+    throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));
+  }
+}
+
+/**
+ * Pull the preview patch array out of a generate-website-draft response,
+ * accepting any of the shapes the backend may use: `patches`, `patch`,
+ * `data.patches`, or `data.patch`.
+ */
+function extractDraftPatches(body: unknown): AIPatch[] {
+  if (!body || typeof body !== "object") return [];
+  const record = body as Record<string, unknown>;
+  const nested =
+    record.data && typeof record.data === "object"
+      ? (record.data as Record<string, unknown>)
+      : undefined;
+  const candidates = [
+    record.patches,
+    record.patch,
+    nested?.patches,
+    nested?.patch,
+  ];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate as AIPatch[];
+  }
+  return [];
+}
+
+/**
+ * Generate a preview-only AI website draft from the creation questionnaire.
+ * The backend never persists content — it returns editableSchema-backed patches
+ * the editor applies locally so the user can preview, then Accept (save through
+ * the normal Save Changes flow) or Reject (restore the template snapshot).
+ */
+export async function generateWebsiteDraft(
+  payload: GenerateWebsiteDraftRequest,
+): Promise<GenerateWebsiteDraftResult> {
+  try {
+    const res = await apiClient.post("/ai/generate-website-draft", payload);
+    const body = res.data;
+    if (
+      body &&
+      typeof body === "object" &&
+      "success" in body &&
+      (body as { success?: boolean }).success === false
+    ) {
+      throw new WebsiteAIRequestError(
+        errorFromBody(body as Record<string, unknown>),
+      );
+    }
+    const patches = extractDraftPatches(body);
+    const record = (body || {}) as Record<string, unknown>;
+    const nested =
+      record.data && typeof record.data === "object"
+        ? (record.data as Record<string, unknown>)
+        : undefined;
+    const summary =
+      (typeof record.summary === "string" ? record.summary : undefined) ??
+      (typeof nested?.summary === "string" ? nested.summary : undefined);
+    return { success: true, mode: "website-draft", patches, summary };
   } catch (err) {
     if (err instanceof WebsiteAIRequestError) throw err;
     throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));

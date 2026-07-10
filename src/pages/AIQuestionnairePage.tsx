@@ -17,9 +17,38 @@ import AIQuestionnaire from "../components/WebsiteCreation/AIQuestionnaire";
 import QuestionnaireNavigation from "../components/WebsiteCreation/QuestionnaireNavigation";
 import {
   useAIQuestionnaire,
+  type QuestionnaireData,
   type ValidationErrors,
 } from "../hooks/useAIQuestionnaire";
 import { API_URL } from "@/config/api";
+
+/** sessionStorage key the editor reads to run the AI draft for a website. */
+export const aiDraftQuestionnaireKey = (websiteId: number | string) =>
+  `ai_website_draft_questionnaire_${websiteId}`;
+
+/** Map the questionnaire form fields into the generate-website-draft payload. */
+function buildDraftQuestionnaire(data: QuestionnaireData) {
+  const contactParts: string[] = [];
+  if (data.email) contactParts.push(data.email);
+  if (data.phone) contactParts.push(data.phone);
+  if (data.address) contactParts.push(data.address);
+
+  const servicesArray = data.services
+    ? data.services.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  return {
+    businessName: data.websiteName,
+    category: data.businessType,
+    primaryGoal: "leads",
+    contactInfo: contactParts.length ? contactParts.join(' / ') : undefined,
+    location: data.serviceArea || undefined,
+    shortDescription: data.usp || undefined,
+    targetAudience: data.targetAudience || undefined,
+    servicesOrProducts: servicesArray.length ? servicesArray : undefined,
+    tone: data.brandPersonality || undefined,
+  };
+}
 
 interface AIQuestionnairePageProps {
   embedded?: boolean;
@@ -53,9 +82,14 @@ export default function AIQuestionnairePage({
     navigate(`/dashboard/websites/create/customize?template=${templateId}`);
   }, [navigate, templateId]);
 
-  /** Create website with template defaults. Creation-time AI generation is disabled for now. */
+  /**
+   * Create the website from the template, then either route into the editor to
+   * run the AI draft (`useAI`) or drop the user on the website list (skip path).
+   * Nothing AI-related is persisted here — the draft runs preview-only in the
+   * editor and only sticks if the user saves.
+   */
   const createWebsite = useCallback(
-    async () => {
+    async (useAI: boolean) => {
       setSubmitting(true);
       setSubmitError("");
       try {
@@ -63,6 +97,9 @@ export default function AIQuestionnairePage({
         const websitePayload = {
           name: data.websiteName || "My Website",
           templateId: templateId || undefined, // Pass as-is (UUID string), not Number()
+          // Category hint for backends that accept it at creation time.
+          businessCategory: data.businessType || undefined,
+          category: data.businessType || undefined,
         };
 
         const createResponse = await axios.post(
@@ -85,6 +122,29 @@ export default function AIQuestionnairePage({
 
         // Copy questionnaire data to website key so the editor can find it later
         copyToWebsiteKey(websiteId);
+
+        if (useAI) {
+          // Stash the draft questionnaire so the editor can run the AI draft,
+          // then hand off to the editor with the aiDraft marker. The draft is
+          // preview-only; nothing persists until the user saves.
+          const questionnaireData = buildDraftQuestionnaire(data);
+          try {
+            sessionStorage.setItem(
+              aiDraftQuestionnaireKey(websiteId),
+              JSON.stringify(questionnaireData),
+            );
+          } catch {
+            // Non-fatal: the editor also receives the questionnaire via route state.
+          }
+
+          // Clean up the template-scoped questionnaire draft.
+          reset();
+
+          navigate(`/dashboard/websites/${websiteId}/editor?aiDraft=1`, {
+            state: { aiDraftQuestionnaire: questionnaireData },
+          });
+          return;
+        }
 
         // Clean up sessionStorage
         reset();
@@ -119,12 +179,12 @@ export default function AIQuestionnairePage({
     const { valid, errors: validationErrors } = validateRequired();
     setErrors(validationErrors);
     if (!valid) return;
-    await createWebsite();
+    await createWebsite(true);
   }, [validateRequired, createWebsite]);
 
   const handleSkip = useCallback(async () => {
     setSubmitError("");
-    await createWebsite();
+    await createWebsite(false);
   }, [createWebsite]);
 
   const content = (
@@ -137,8 +197,9 @@ export default function AIQuestionnairePage({
           Tell Us About Your Business
         </Typography>
         <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-          This information helps set up your website. AI generation during
-          creation is disabled for now; you can use AI inside the editor.
+          This information helps set up your website. Generate with AI to draft
+          your content, then review and save it inside the editor — or skip and
+          start from the template defaults.
         </Typography>
       </Box>
 
@@ -158,7 +219,6 @@ export default function AIQuestionnairePage({
         errorMessage={submitError}
         onClearError={() => setSubmitError("")}
         submitting={submitting}
-        aiGenerationDisabled
       />
     </Box>
   );

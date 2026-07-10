@@ -16,7 +16,12 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { apiClient } from "../../api/client";
-import { useParams, useNavigate } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 import {
   Box,
   ButtonBase,
@@ -60,6 +65,7 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
+  CheckCircle2,
   Clipboard,
   ClipboardPaste,
   Copy,
@@ -71,6 +77,7 @@ import {
   Pencil,
   Plus,
   Redo2,
+  RotateCcw,
   Scissors,
   Save,
   Type,
@@ -136,10 +143,16 @@ import {
 import { getStoredWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
 import { color } from "framer-motion";
 import { EditorAILayer } from "../WebsiteAI";
-import { getWebsiteEditableSchema } from "../../api/websiteAI";
+import {
+  getWebsiteEditableSchema,
+  generateWebsiteDraft,
+  WebsiteAIRequestError,
+  normalizeWebsiteAIError,
+} from "../../api/websiteAI";
 import {
   extractEditableSchemaTargets,
   findEditableSchemaTarget,
+  normalizeChatPatches,
   resolveStyleTargetsForSelection,
   toFieldPath,
 } from "../WebsiteAI/aiPatchUtils";
@@ -158,6 +171,8 @@ const EDITABLE_STYLE_FIELD_MAP = {
   brandName: { styleKey: "brandNameStyle", label: "Brand name" },
   copyright: { styleKey: "copyrightStyle", label: "Footer text" },
 };
+
+const AI_DRAFT_LONG_RUNNING_DELAY_MS = 8000;
 
 const imageEditorInputSx = {
   "& .MuiOutlinedInput-root": {
@@ -1628,10 +1643,124 @@ const normalizeUploadedImageUrl = (value) => {
 // uses BlockLibrary (fetches from /api/content-types/blocks with all 34 types).
 
 const MAX_CTA_TEXT_LENGTH = 24;
+const SAVE_ENUM_FIELDS = {
+  VIDEO: {
+    aspectRatio: { values: ["16:9", "4:3", "1:1"], fallback: "16:9" },
+  },
+  FEATURES: {
+    variant: {
+      values: ["default", "4-column", "stacked", "badges"],
+      fallback: "default",
+    },
+    badgeSpacing: { values: ["compact", "normal", "wide"], fallback: "normal" },
+  },
+  IMAGE_TEXT_SPLIT: {
+    imagePosition: { values: ["left", "right"], fallback: "left" },
+  },
+  TABS: {
+    variant: { values: ["standard", "outlined", "pills"], fallback: "standard" },
+  },
+  NAVBAR: {
+    logoType: { values: ["text", "image"], fallback: "text" },
+  },
+  WEBSITE_HEADER: {
+    logoType: { values: ["text", "image"], fallback: "text" },
+  },
+};
+
+const SAVE_REPEATER_ENUM_FIELDS = {
+  FOOTER: {
+    socialLinks: {
+      platform: {
+        values: [
+          "linkedin",
+          "instagram",
+          "facebook",
+          "twitter",
+          "youtube",
+          "tiktok",
+          "website",
+        ],
+        fallback: "website",
+      },
+    },
+  },
+  SOCIAL_EMBED: {
+    embeds: {
+      platform: {
+        values: ["youtube", "instagram", "facebook", "tiktok"],
+        fallback: "youtube",
+      },
+    },
+  },
+};
 
 const truncateText = (value, maxLength) => {
   if (typeof value !== "string") return value;
-  return value.length > maxLength ? value.slice(0, maxLength) : value;
+  const trimmed = value.trim();
+  if (trimmed.length <= maxLength) return trimmed;
+
+  const sliced = trimmed.slice(0, maxLength).trimEnd();
+  const lastSpace = sliced.lastIndexOf(" ");
+  if (lastSpace >= Math.floor(maxLength * 0.55)) {
+    return sliced.slice(0, lastSpace);
+  }
+
+  return sliced;
+};
+
+const truncateContentFields = (content, fieldNames, maxLength) => {
+  fieldNames.forEach((fieldName) => {
+    if (content[fieldName] != null) {
+      content[fieldName] = truncateText(content[fieldName], maxLength);
+    }
+  });
+};
+
+const normalizeEnumField = (content, fieldName, config) => {
+  if (content[fieldName] == null) return;
+  const value = String(content[fieldName]).trim();
+  content[fieldName] = config.values.includes(value) ? value : config.fallback;
+};
+
+const normalizeEnumFieldsForSave = (blockType, content) => {
+  const configByField = SAVE_ENUM_FIELDS[blockType];
+  if (configByField) {
+    Object.entries(configByField).forEach(([fieldName, config]) => {
+      normalizeEnumField(content, fieldName, config);
+    });
+  }
+
+  const repeaterConfig = SAVE_REPEATER_ENUM_FIELDS[blockType];
+  if (!repeaterConfig) return;
+  Object.entries(repeaterConfig).forEach(([arrayField, fieldConfig]) => {
+    if (!Array.isArray(content[arrayField])) return;
+    content[arrayField] = content[arrayField].map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return item;
+      }
+      const nextItem = { ...item };
+      Object.entries(fieldConfig).forEach(([fieldName, config]) => {
+        normalizeEnumField(nextItem, fieldName, config);
+      });
+      return nextItem;
+    });
+  });
+};
+
+const clampNumberField = (content, fieldName, min, max, fallback) => {
+  if (content[fieldName] == null) return;
+  const parsed = Number(content[fieldName]);
+  content[fieldName] = Number.isFinite(parsed)
+    ? Math.min(max, Math.max(min, Math.round(parsed)))
+    : fallback;
+};
+
+const normalizeNumberFieldsForSave = (blockType, content) => {
+  if (blockType !== "COUNTDOWN") return;
+  clampNumberField(content, "days", 0, 3650, 0);
+  clampNumberField(content, "hours", 0, 23, 0);
+  clampNumberField(content, "minutes", 0, 59, 0);
 };
 
 const omitInnerBlocksMirror = (value) => {
@@ -1643,21 +1772,60 @@ const omitInnerBlocksMirror = (value) => {
   return rest;
 };
 
+const sanitizeBlockContentForSave = (blockType, content) => {
+  const rawBlockType = String(blockType || "").toUpperCase();
+  const sanitizedContent = {
+    ...omitInnerBlocksMirror(content || {}),
+  };
+
+  if (rawBlockType === "CONTACT") {
+    Object.assign(
+      sanitizedContent,
+      normalizeContactEditorContent(sanitizedContent),
+    );
+  }
+
+  if (rawBlockType === "TEAM" && Array.isArray(sanitizedContent.members)) {
+    sanitizedContent.members = sanitizedContent.members.map(
+      (member, index) => ({
+        ...member,
+        name: member?.name || `Team member ${index + 1}`,
+        role: member?.role || "Team member",
+      }),
+    );
+  }
+
+  if (rawBlockType === "CTA" || rawBlockType === "HERO") {
+    truncateContentFields(
+      sanitizedContent,
+      ["ctaText", "primaryCtaText", "secondaryCtaText"],
+      MAX_CTA_TEXT_LENGTH,
+    );
+  }
+
+  normalizeEnumFieldsForSave(rawBlockType, sanitizedContent);
+  normalizeNumberFieldsForSave(rawBlockType, sanitizedContent);
+
+  return sanitizedContent;
+};
+
 const sanitizeNestedInnerBlocksForSave = (innerBlocks) => {
   if (!Array.isArray(innerBlocks)) {
     return [];
   }
 
   return innerBlocks.map((innerBlock) => {
-    const content = innerBlock?.content || {};
-    const nestedInnerBlocks = Array.isArray(content.innerBlocks)
-      ? sanitizeNestedInnerBlocksForSave(content.innerBlocks)
+    const rawBlockType = String(innerBlock?.blockType || "").toUpperCase();
+    const sourceContent = innerBlock?.content || {};
+    const content = sanitizeBlockContentForSave(rawBlockType, sourceContent);
+    const nestedInnerBlocks = Array.isArray(sourceContent.innerBlocks)
+      ? sanitizeNestedInnerBlocksForSave(sourceContent.innerBlocks)
       : undefined;
 
     return {
       ...innerBlock,
       content: {
-        ...omitInnerBlocksMirror(content),
+        ...content,
         ...(nestedInnerBlocks ? { innerBlocks: nestedInnerBlocks } : {}),
       },
     };
@@ -1679,9 +1847,10 @@ const sanitizeBlockForSave = (block) => {
   }
 
   const rawBlockType = String(block.blockType || "").toUpperCase();
-  const sanitizedContent = {
-    ...omitInnerBlocksMirror(block.content),
-  };
+  const sanitizedContent = sanitizeBlockContentForSave(
+    rawBlockType,
+    block.content,
+  );
 
   const templateSectionByBlockType = {
     ABOUT: "about",
@@ -1700,33 +1869,9 @@ const sanitizeBlockForSave = (block) => {
       sanitizedContent.editorBlockType || rawBlockType;
   }
 
-  if (rawBlockType === "CONTACT") {
-    Object.assign(
-      sanitizedContent,
-      normalizeContactEditorContent(sanitizedContent),
-    );
-  }
-
-  if (rawBlockType === "TEAM" && Array.isArray(sanitizedContent.members)) {
-    sanitizedContent.members = sanitizedContent.members.map(
-      (member, index) => ({
-        ...member,
-        name: member?.name || `Team member ${index + 1}`,
-        role: member?.role || "Team member",
-      }),
-    );
-  }
-
   if (Array.isArray(block.content.innerBlocks)) {
     sanitizedContent.innerBlocks = sanitizeNestedInnerBlocksForSave(
       block.content.innerBlocks,
-    );
-  }
-
-  if (rawBlockType === "CTA") {
-    sanitizedContent.ctaText = truncateText(
-      block.content.ctaText,
-      MAX_CTA_TEXT_LENGTH,
     );
   }
 
@@ -1932,6 +2077,8 @@ const OPEN_MEDIA_LIBRARY_EVENT = "editor:open-media-library";
 const WebsiteEditorInner = () => {
   const { websiteId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
   const desktopInspectorWidth = "clamp(300px, 18vw, 360px)";
@@ -1951,6 +2098,25 @@ const WebsiteEditorInner = () => {
   const [selectedPage, setSelectedPage] = useState(null);
   const [blocks, setBlocks] = useState([]);
   const blocksRef = useRef([]);
+
+  // AI website draft (creation questionnaire → editor preview). The draft runs
+  // preview-only: patches are applied to local editor state and only persist if
+  // the user keeps them and saves. A snapshot lets us restore the template.
+  const [aiDraftLoading, setAiDraftLoading] = useState(false);
+  const [aiDraftReadyPromptOpen, setAiDraftReadyPromptOpen] = useState(false);
+  const [aiDraftReviewOpen, setAiDraftReviewOpen] = useState(false);
+  const [aiDraftSummary, setAiDraftSummary] = useState("");
+  const aiDraftSnapshotRef = useRef(null);
+  const aiDraftPendingResultRef = useRef(null);
+  const aiDraftLongRunningRef = useRef(false);
+  const aiDraftStartedRef = useRef(false);
+  // Non-selected pages a full-site draft touched, so "Save Changes" can persist
+  // them too (the normal save only writes the selected page).
+  const draftedOtherPageIdsRef = useRef(new Set());
+  // Live mirror of pages/persistedPages for stable, closure-safe reads inside
+  // draft apply/save callbacks.
+  const pagesStateRef = useRef({ pages: [], persistedPages: [] });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [blockError, setBlockError] = useState(null);
@@ -2094,6 +2260,10 @@ const WebsiteEditorInner = () => {
   useEffect(() => {
     blocksRef.current = blocks;
   }, [blocks]);
+
+  useEffect(() => {
+    pagesStateRef.current = { pages, persistedPages };
+  }, [pages, persistedPages]);
 
   useEffect(() => {
     if (editingBlock) {
@@ -2610,6 +2780,49 @@ const WebsiteEditorInner = () => {
     }
   }, [saveError, showSaveToast]);
 
+  // Persist any non-selected pages a full-site AI draft modified. The normal
+  // save only writes the selected page, so without this those pages' draft
+  // changes would be lost. Best-effort per page; localOnly pages are skipped
+  // (their blocks persist through the selected/home page). Successfully saved
+  // pages are dropped from the set; failures are kept so a later save retries.
+  const saveDraftedOtherPages = useCallback(async () => {
+    const ids = Array.from(draftedOtherPageIdsRef.current);
+    if (!ids.length) return;
+    const { pages: curPages, persistedPages: curPersisted } =
+      pagesStateRef.current;
+    const remaining = new Set(draftedOtherPageIdsRef.current);
+    for (const pageId of ids) {
+      const page =
+        curPages.find((p) => String(p.id) === String(pageId)) ||
+        curPersisted.find((p) => String(p.id) === String(pageId));
+      if (!page || page.localOnly) {
+        remaining.delete(pageId);
+        continue;
+      }
+      const blocksToSave = (page.blocks || [])
+        .map(sanitizeBlockForSave)
+        .filter(hasValidGalleryImages)
+        .map((b, idx) => ({
+          ...(b.id && !String(b.id).startsWith("local-") ? { id: b.id } : {}),
+          blockType: b.blockType,
+          content: b.content,
+          variant: b.variant,
+          sortOrder: idx,
+          isVisible: b.isVisible,
+        }));
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await apiClient.put(`/websites/${websiteId}/pages/${pageId}/blocks`, {
+          blocks: blocksToSave,
+        });
+        remaining.delete(pageId);
+      } catch (err) {
+        console.error(`Failed to save AI draft for page ${pageId}:`, err);
+      }
+    }
+    draftedOtherPageIdsRef.current = remaining;
+  }, [websiteId]);
+
   const triggerManualSave = useCallback(async () => {
     localConflictRetryRef.current = false;
     const iframeDoc = iframeRef.current?.contentDocument || null;
@@ -2666,8 +2879,11 @@ const WebsiteEditorInner = () => {
 
     setPreviewSaveSignal((prev) => prev + 1);
     await new Promise((resolve) => setTimeout(resolve, 0));
+    // Persist non-selected pages a full-site AI draft touched, then the selected
+    // page through the normal (conflict-aware) save.
+    await saveDraftedOtherPages();
     await triggerSave({ blocks: nextBlocks.map(sanitizeBlockForSave) });
-  }, [triggerSave]);
+  }, [saveDraftedOtherPages, triggerSave]);
 
   const handleAIBlocksPatched = useCallback(async () => {
     await triggerSave({
@@ -5526,6 +5742,343 @@ const WebsiteEditorInner = () => {
     [selectedPage?.id],
   );
 
+  // ---- AI website draft (creation questionnaire preview) ----
+
+  const aiDraftStorageKey = websiteId
+    ? `ai_website_draft_questionnaire_${websiteId}`
+    : null;
+
+  const cloneEditorValue = useCallback((value) => {
+    if (value == null) return value;
+    try {
+      return structuredClone(value);
+    } catch {
+      try {
+        return JSON.parse(JSON.stringify(value));
+      } catch {
+        return value;
+      }
+    }
+  }, []);
+
+  /** Snapshot every editor state container the draft can mutate. */
+  const captureEditorSnapshot = useCallback(
+    () => ({
+      website: cloneEditorValue(website),
+      pages: cloneEditorValue(pages),
+      persistedPages: cloneEditorValue(persistedPages),
+      selectedPage: cloneEditorValue(selectedPage),
+      blocks: cloneEditorValue(blocksRef.current),
+      pendingAIWebsitePatch: cloneEditorValue(pendingAIWebsitePatchRef.current),
+    }),
+    [cloneEditorValue, website, pages, persistedPages, selectedPage],
+  );
+
+  /** Restore a snapshot into every editor state container consistently. */
+  const restoreEditorSnapshot = useCallback((snapshot) => {
+    if (!snapshot) return;
+    flushSync(() => {
+      setWebsite(snapshot.website);
+      setPages(snapshot.pages || []);
+      setPersistedPages(snapshot.persistedPages || []);
+      setSelectedPage(snapshot.selectedPage || null);
+      blocksRef.current = snapshot.blocks || [];
+      setBlocks(snapshot.blocks || []);
+      pendingAIWebsitePatchRef.current = snapshot.pendingAIWebsitePatch || {};
+    });
+    // Nudge the live preview to re-render from the restored blocks.
+    setPreviewSaveSignal((prev) => prev + 1);
+  }, []);
+
+  /** Clear the aiDraft query marker, route state, and stored questionnaire. */
+  const clearAiDraftMarker = useCallback(() => {
+    if (aiDraftStorageKey) {
+      try {
+        sessionStorage.removeItem(aiDraftStorageKey);
+      } catch {
+        /* ignore storage errors */
+      }
+    }
+    if (
+      searchParams.get("aiDraft") ||
+      location.state?.aiDraftQuestionnaire
+    ) {
+      navigate(`/dashboard/websites/${websiteId}/editor`, {
+        replace: true,
+        state: {},
+      });
+    }
+  }, [aiDraftStorageKey, searchParams, location.state, navigate, websiteId]);
+
+  /**
+   * Apply a single block-content patch to a NON-selected page's in-memory state
+   * (both `pages` and `persistedPages`) so a full-site draft previews when the
+   * user switches pages. Returns false if the target block wasn't found.
+   */
+  const applyBlockPatchToPage = useCallback(
+    (pageId, blockId, editorPath, value) => {
+      const { pages: curPages, persistedPages: curPersisted } =
+        pagesStateRef.current;
+      const pageHasBlock = (list) =>
+        (
+          list.find((p) => String(p.id) === String(pageId))?.blocks || []
+        ).some((b) => String(b.id) === String(blockId));
+      if (!pageHasBlock(curPages) && !pageHasBlock(curPersisted)) {
+        return false;
+      }
+      const updater = (prevPages) =>
+        prevPages.map((page) => {
+          if (String(page.id) !== String(pageId)) return page;
+          const nextBlocks = (page.blocks || []).map((block) => {
+            if (String(block.id) !== String(blockId)) return block;
+            const nextContent = setValueAtPath(
+              block.content || {},
+              editorPath,
+              value,
+            );
+            return withSyncedBlockContent(block, nextContent);
+          });
+          return { ...page, blocks: nextBlocks };
+        });
+      setPages(updater);
+      setPersistedPages(updater);
+      return true;
+    },
+    [],
+  );
+
+  /**
+   * Apply draft patches to LOCAL editor state only (never persist). Website-level
+   * fields flow through the `website.*` path; block content on the selected page
+   * through the inline-edit handler (keeps live editing state in sync); block
+   * content on OTHER pages through {@link applyBlockPatchToPage} so a full-site
+   * draft previews everywhere and can be saved for every page.
+   */
+  const applyAiDraftPatches = useCallback(
+    (rawPatches) => {
+      const normalized = normalizeChatPatches(rawPatches || []).filter(
+        (patch) => patch.value != null,
+      );
+      const selectedId =
+        selectedPage?.id != null ? String(selectedPage.id) : null;
+      let applied = 0;
+      normalized.forEach((patch) => {
+        const persisted = patch.persistedFieldPath || "";
+        const editorPath = patch.fieldPath || "";
+        const isWebsiteField =
+          persisted.startsWith("website.") || editorPath.startsWith("website.");
+        if (isWebsiteField) {
+          const websitePath = persisted.startsWith("website.")
+            ? persisted
+            : editorPath;
+          handleInlineEditSave(undefined, websitePath, patch.value);
+          applied += 1;
+          return;
+        }
+        const isBlockContent =
+          persisted.startsWith("content.") || persisted.includes(".content.");
+        if (patch.blockId == null || !(isBlockContent || editorPath)) return;
+
+        const targetPageId =
+          patch.pageId != null ? String(patch.pageId) : selectedId;
+        const onSelectedPage =
+          selectedId != null &&
+          (targetPageId == null || targetPageId === selectedId) &&
+          blocksRef.current.some(
+            (b) => String(b.id) === String(patch.blockId),
+          );
+
+        if (onSelectedPage) {
+          handleInlineEditSave(patch.blockId, editorPath, patch.value);
+          applied += 1;
+          return;
+        }
+
+        if (targetPageId == null) return;
+        const ok = applyBlockPatchToPage(
+          targetPageId,
+          patch.blockId,
+          editorPath,
+          patch.value,
+        );
+        if (ok) {
+          applied += 1;
+          if (targetPageId !== selectedId) {
+            draftedOtherPageIdsRef.current.add(targetPageId);
+          }
+        }
+      });
+      return applied;
+    },
+    [applyBlockPatchToPage, handleInlineEditSave, selectedPage?.id],
+  );
+
+  const applyAiDraftResult = useCallback(
+    (result, snapshot) => {
+      const appliedCount = applyAiDraftPatches(result?.patches);
+      if (!appliedCount) {
+        // Nothing applied — treat as a soft failure and keep the template.
+        restoreEditorSnapshot(snapshot);
+        aiDraftSnapshotRef.current = null;
+        aiDraftPendingResultRef.current = null;
+        draftedOtherPageIdsRef.current = new Set();
+        clearAiDraftMarker();
+        showSaveToast(
+          "AI did not return any changes to apply. Showing the template as-is.",
+          "info",
+        );
+        return;
+      }
+      setAiDraftSummary(
+        result.summary ||
+          `AI applied ${appliedCount} ${
+            appliedCount === 1 ? "change" : "changes"
+          }. Review and save when ready.`,
+      );
+      setAiDraftReadyPromptOpen(false);
+      setAiDraftReviewOpen(true);
+      aiDraftPendingResultRef.current = null;
+    },
+    [
+      applyAiDraftPatches,
+      clearAiDraftMarker,
+      restoreEditorSnapshot,
+      showSaveToast,
+    ],
+  );
+
+  const runAiDraft = useCallback(
+    async (questionnaireData) => {
+      let longRunningTimer = null;
+      setAiDraftLoading(true);
+      setAiDraftReadyPromptOpen(false);
+      aiDraftLongRunningRef.current = false;
+      aiDraftPendingResultRef.current = null;
+      const snapshot = captureEditorSnapshot();
+      aiDraftSnapshotRef.current = snapshot;
+      // Fresh draft — forget any pages a previous draft attempt tracked.
+      draftedOtherPageIdsRef.current = new Set();
+      longRunningTimer = window.setTimeout(() => {
+        aiDraftLongRunningRef.current = true;
+      }, AI_DRAFT_LONG_RUNNING_DELAY_MS);
+      try {
+        const pageIdNum =
+          selectedPage?.id && !selectedPage?.localOnly
+            ? Number(selectedPage.id)
+            : undefined;
+        const result = await generateWebsiteDraft({
+          websiteId: Number(websiteId),
+          pageId: Number.isFinite(pageIdNum) ? pageIdNum : undefined,
+          questionnaire: questionnaireData,
+        });
+        if (aiDraftLongRunningRef.current) {
+          aiDraftPendingResultRef.current = result;
+          setAiDraftReadyPromptOpen(true);
+          return;
+        }
+        applyAiDraftResult(result, snapshot);
+      } catch (err) {
+        const aiErr =
+          err instanceof WebsiteAIRequestError
+            ? err.aiError
+            : normalizeWebsiteAIError(err);
+        restoreEditorSnapshot(snapshot);
+        aiDraftSnapshotRef.current = null;
+        draftedOtherPageIdsRef.current = new Set();
+        clearAiDraftMarker();
+        showSaveToast(
+          aiErr.message || "AI draft failed. Showing the template as-is.",
+          "error",
+        );
+      } finally {
+        if (longRunningTimer) {
+          window.clearTimeout(longRunningTimer);
+        }
+        setAiDraftLoading(false);
+        aiDraftLongRunningRef.current = false;
+      }
+    },
+    [
+      applyAiDraftResult,
+      captureEditorSnapshot,
+      clearAiDraftMarker,
+      restoreEditorSnapshot,
+      selectedPage,
+      showSaveToast,
+      websiteId,
+    ],
+  );
+
+  const handleShowAiDraft = useCallback(() => {
+    applyAiDraftResult(
+      aiDraftPendingResultRef.current,
+      aiDraftSnapshotRef.current,
+    );
+  }, [applyAiDraftResult]);
+
+  const handleKeepAiDraft = useCallback(() => {
+    aiDraftSnapshotRef.current = null;
+    aiDraftPendingResultRef.current = null;
+    setAiDraftReviewOpen(false);
+    setAiDraftReadyPromptOpen(false);
+    clearAiDraftMarker();
+    showSaveToast("AI draft applied. Review and save when ready.", "success");
+  }, [clearAiDraftMarker, showSaveToast]);
+
+  const handleRevertAiDraft = useCallback(() => {
+    restoreEditorSnapshot(aiDraftSnapshotRef.current);
+    aiDraftSnapshotRef.current = null;
+    aiDraftPendingResultRef.current = null;
+    // Snapshot restore already reverted other pages' in-memory blocks; forget
+    // them so a later save doesn't re-persist reverted content.
+    draftedOtherPageIdsRef.current = new Set();
+    setAiDraftReviewOpen(false);
+    setAiDraftReadyPromptOpen(false);
+    clearAiDraftMarker();
+    showSaveToast("AI draft reverted. Showing the original template.", "info");
+  }, [clearAiDraftMarker, restoreEditorSnapshot, showSaveToast]);
+
+  // Detect the aiDraft marker once the editor has loaded, then run the draft.
+  useEffect(() => {
+    if (aiDraftStartedRef.current) return;
+    if (loading || !website || !selectedPage || !websiteId) return;
+
+    const hasMarker = searchParams.get("aiDraft") === "1";
+    const routeQuestionnaire = location.state?.aiDraftQuestionnaire || null;
+    let storedQuestionnaire = null;
+    if (aiDraftStorageKey) {
+      try {
+        const raw = sessionStorage.getItem(aiDraftStorageKey);
+        if (raw) storedQuestionnaire = JSON.parse(raw);
+      } catch {
+        storedQuestionnaire = null;
+      }
+    }
+
+    if (!hasMarker && !routeQuestionnaire && !storedQuestionnaire) return;
+
+    const questionnaireData = routeQuestionnaire || storedQuestionnaire;
+    aiDraftStartedRef.current = true;
+
+    if (!questionnaireData) {
+      // Marker present but no questionnaire data — nothing to generate.
+      clearAiDraftMarker();
+      return;
+    }
+
+    void runAiDraft(questionnaireData);
+  }, [
+    loading,
+    website,
+    selectedPage,
+    websiteId,
+    searchParams,
+    location.state,
+    aiDraftStorageKey,
+    clearAiDraftMarker,
+    runAiDraft,
+  ]);
+
   // ---- Website AI (Ask AI / chat) integration helpers ----
   const websiteAIContext = useMemo(() => {
     const raw = website?.aiContext ?? website?.ai_context ?? null;
@@ -6072,9 +6625,24 @@ const WebsiteEditorInner = () => {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        minHeight="400px"
+        minHeight="100vh"
+        sx={{ bgcolor: "#ffffff" }}
       >
-        <CircularProgress sx={{ color: colors.primary }} />
+        <Box
+          component="video"
+          src="/assets/video/logoLoader.webm"
+          autoPlay
+          loop
+          muted
+          playsInline
+          aria-label="Loading editor"
+          sx={{
+            width: { xs: 112, sm: 136 },
+            height: { xs: 112, sm: 136 },
+            objectFit: "contain",
+            display: "block",
+          }}
+        />
       </Box>
     );
 
@@ -7868,190 +8436,197 @@ const WebsiteEditorInner = () => {
                                 overflow: "hidden",
                               }}
                             >
-                          <Box
-                            sx={{
-                              px: 1.45,
-                              py: 1.15,
-                              borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: 1,
-                              backgroundColor: "rgba(255,255,255,0.74)",
-                            }}
-                          >
-                            <Box>
-                              <Typography sx={builderSectionLabelSx}>
-                                {activeToolbarMode === "section"
-                                  ? "Section"
-                                  : selectedImageElement
-                                    ? "Media"
-                                    : "Typography"}
-                              </Typography>
-                              <Typography
-                                variant="subtitle1"
-                                sx={{
-                                  mt: 0.35,
-                                  color: colors.text,
-                                  fontWeight: 700,
-                                }}
-                              >
-                                {inspectorTitle}
-                              </Typography>
-                            </Box>
-                            <Chip
-                              size="small"
-                              label={
-                                activeToolbarMode === "section"
-                                  ? "Layout"
-                                  : selectedImageElement
-                                    ? "Image"
-                                    : "Style"
-                              }
-                              sx={{
-                                borderRadius: 999,
-                                backgroundColor: alpha(colors.primary, 0.08),
-                                color: colors.text,
-                                fontWeight: 700,
-                              }}
-                            />
-                            <IconButton
-                              size="small"
-                              onClick={() => setIsInspectorOpen(false)}
-                              sx={{
-                                width: 30,
-                                height: 30,
-                                border: `1px solid ${alpha(colors.primary, 0.12)}`,
-                                backgroundColor: "rgba(255,255,255,0.84)",
-                                color: editorMutedText,
-                                ml: 0.5,
-                              }}
-                              aria-label="Hide inspector"
-                            >
-                              <X size={15} />
-                            </IconButton>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              p: 1.45,
-                              paddingBottom: "70px !important",
-                              flex: 1,
-                              minHeight: 0,
-                              overflowY: "auto",
-                              overflowX: "hidden",
-                              "&::-webkit-scrollbar": {
-                                width: 8,
-                              },
-                              "&::-webkit-scrollbar-thumb": {
-                                backgroundColor: "rgba(148,163,184,0.38)",
-                                borderRadius: 999,
-                              },
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                mb: 1.6,
-                                color: editorMutedText,
-                                lineHeight: 1.6,
-                              }}
-                            >
-                              {inspectorCaption}
-                            </Typography>
-
-                            {selectedImageElement ? (
                               <Box
                                 sx={{
-                                  p: 1.4,
-                                  borderRadius: 3,
-                                  border: `1px solid ${alpha(colors.primary, 0.14)}`,
-                                  backgroundColor: "rgba(255,255,255,0.84)",
+                                  px: 1.45,
+                                  py: 1.15,
+                                  borderBottom: `1px solid ${alpha(colors.primary, 0.1)}`,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  gap: 1,
+                                  backgroundColor: "rgba(255,255,255,0.74)",
+                                }}
+                              >
+                                <Box>
+                                  <Typography sx={builderSectionLabelSx}>
+                                    {activeToolbarMode === "section"
+                                      ? "Section"
+                                      : selectedImageElement
+                                        ? "Media"
+                                        : "Typography"}
+                                  </Typography>
+                                  <Typography
+                                    variant="subtitle1"
+                                    sx={{
+                                      mt: 0.35,
+                                      color: colors.text,
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {inspectorTitle}
+                                  </Typography>
+                                </Box>
+                                <Chip
+                                  size="small"
+                                  label={
+                                    activeToolbarMode === "section"
+                                      ? "Layout"
+                                      : selectedImageElement
+                                        ? "Image"
+                                        : "Style"
+                                  }
+                                  sx={{
+                                    borderRadius: 999,
+                                    backgroundColor: alpha(
+                                      colors.primary,
+                                      0.08,
+                                    ),
+                                    color: colors.text,
+                                    fontWeight: 700,
+                                  }}
+                                />
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setIsInspectorOpen(false)}
+                                  sx={{
+                                    width: 30,
+                                    height: 30,
+                                    border: `1px solid ${alpha(colors.primary, 0.12)}`,
+                                    backgroundColor: "rgba(255,255,255,0.84)",
+                                    color: editorMutedText,
+                                    ml: 0.5,
+                                  }}
+                                  aria-label="Hide inspector"
+                                >
+                                  <X size={15} />
+                                </IconButton>
+                              </Box>
+
+                              <Box
+                                sx={{
+                                  p: 1.45,
+                                  paddingBottom: "70px !important",
+                                  flex: 1,
+                                  minHeight: 0,
+                                  overflowY: "auto",
+                                  overflowX: "hidden",
+                                  "&::-webkit-scrollbar": {
+                                    width: 8,
+                                  },
+                                  "&::-webkit-scrollbar-thumb": {
+                                    backgroundColor: "rgba(148,163,184,0.38)",
+                                    borderRadius: 999,
+                                  },
                                 }}
                               >
                                 <Typography
                                   variant="body2"
-                                  sx={{ color: colors.text, fontWeight: 600 }}
+                                  sx={{
+                                    mb: 1.6,
+                                    color: editorMutedText,
+                                    lineHeight: 1.6,
+                                  }}
                                 >
-                                  Image editing opens in the media popup so the
-                                  existing replace flow keeps working.
+                                  {inspectorCaption}
                                 </Typography>
+
+                                {selectedImageElement ? (
+                                  <Box
+                                    sx={{
+                                      p: 1.4,
+                                      borderRadius: 3,
+                                      border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                                      backgroundColor: "rgba(255,255,255,0.84)",
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        color: colors.text,
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      Image editing opens in the media popup so
+                                      the existing replace flow keeps working.
+                                    </Typography>
+                                  </Box>
+                                ) : activeToolbarMode === "section" ? (
+                                  <EditorSectionStyleToolbar
+                                    selection={
+                                      selectedSectionElement
+                                        ? {
+                                            blockId:
+                                              selectedSectionElement.blockId,
+                                            label: selectedSectionElement.label,
+                                          }
+                                        : null
+                                    }
+                                    value={selectedSectionStyle}
+                                    disabled={!selectedSectionElement}
+                                    onStyleChange={handleSectionStyleChange}
+                                    layout="panel"
+                                    containerSx={{
+                                      flexWrap: "wrap",
+                                      alignItems: "flex-start",
+                                      overflowX: "visible",
+                                      rowGap: 1.1,
+                                      p: "0 !important",
+                                      background: "transparent",
+                                      boxShadow: "none",
+                                      border: "none",
+                                      "& .MuiDivider-root": { display: "none" },
+                                      "& .editor-toolbar-selection-label": {
+                                        display: "none",
+                                      },
+                                      "& .MuiFormControl-root": {
+                                        width: "100%",
+                                        minWidth: "100% !important",
+                                      },
+                                    }}
+                                  />
+                                ) : (
+                                  <EditorStyleToolbar
+                                    selection={
+                                      selectedEditableElement
+                                        ? {
+                                            blockId:
+                                              selectedEditableElement.blockId,
+                                            fieldPath:
+                                              selectedEditableElement.fieldPath,
+                                            label: getEditableStyleConfig(
+                                              selectedEditableElement.fieldPath,
+                                            ).label,
+                                            editType:
+                                              selectedEditableElement.editType,
+                                          }
+                                        : null
+                                    }
+                                    value={selectedEditableStyle}
+                                    disabled={!selectedEditableElement}
+                                    onStyleChange={handleEditableStyleChange}
+                                    layout="panel"
+                                    containerSx={{
+                                      flexWrap: "wrap",
+                                      alignItems: "flex-start",
+                                      overflowX: "visible",
+                                      rowGap: 1.1,
+                                      p: 0,
+                                      background: "transparent",
+                                      boxShadow: "none",
+                                      border: "none",
+                                      "& .MuiDivider-root": { display: "none" },
+                                      "& .editor-toolbar-selection-label": {
+                                        display: "none",
+                                      },
+                                      "& .MuiFormControl-root": {
+                                        width: "100%",
+                                        minWidth: "100% !important",
+                                      },
+                                    }}
+                                  />
+                                )}
                               </Box>
-                            ) : activeToolbarMode === "section" ? (
-                              <EditorSectionStyleToolbar
-                                selection={
-                                  selectedSectionElement
-                                    ? {
-                                        blockId: selectedSectionElement.blockId,
-                                        label: selectedSectionElement.label,
-                                      }
-                                    : null
-                                }
-                                value={selectedSectionStyle}
-                                disabled={!selectedSectionElement}
-                                onStyleChange={handleSectionStyleChange}
-                                layout="panel"
-                                containerSx={{
-                                  flexWrap: "wrap",
-                                  alignItems: "flex-start",
-                                  overflowX: "visible",
-                                  rowGap: 1.1,
-                                  p: "0 !important",
-                                  background: "transparent",
-                                  boxShadow: "none",
-                                  border: "none",
-                                  "& .MuiDivider-root": { display: "none" },
-                                  "& .editor-toolbar-selection-label": {
-                                    display: "none",
-                                  },
-                                  "& .MuiFormControl-root": {
-                                    width: "100%",
-                                    minWidth: "100% !important",
-                                  },
-                                }}
-                              />
-                            ) : (
-                              <EditorStyleToolbar
-                                selection={
-                                  selectedEditableElement
-                                    ? {
-                                        blockId:
-                                          selectedEditableElement.blockId,
-                                        fieldPath:
-                                          selectedEditableElement.fieldPath,
-                                        label: getEditableStyleConfig(
-                                          selectedEditableElement.fieldPath,
-                                        ).label,
-                                        editType:
-                                          selectedEditableElement.editType,
-                                      }
-                                    : null
-                                }
-                                value={selectedEditableStyle}
-                                disabled={!selectedEditableElement}
-                                onStyleChange={handleEditableStyleChange}
-                                layout="panel"
-                                containerSx={{
-                                  flexWrap: "wrap",
-                                  alignItems: "flex-start",
-                                  overflowX: "visible",
-                                  rowGap: 1.1,
-                                  p: 0,
-                                  background: "transparent",
-                                  boxShadow: "none",
-                                  border: "none",
-                                  "& .MuiDivider-root": { display: "none" },
-                                  "& .editor-toolbar-selection-label": {
-                                    display: "none",
-                                  },
-                                  "& .MuiFormControl-root": {
-                                    width: "100%",
-                                    minWidth: "100% !important",
-                                  },
-                                }}
-                              />
-                            )}
-                          </Box>
                             </Paper>
                           )}
                         </Box>
@@ -9334,6 +9909,314 @@ const WebsiteEditorInner = () => {
           </Alert>
         </Snackbar>
       </Container>
+
+      {aiDraftLoading && (
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 2100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            p: 2,
+            bgcolor: "rgba(15,23,42,0.38)",
+            backdropFilter: "blur(5px)",
+          }}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              width: { xs: 286, sm: 330 },
+              height: { xs: 286, sm: 330 },
+              px: { xs: 3, sm: 4 },
+              py: { xs: 3, sm: 4 },
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              gap: { xs: 1.1, sm: 1.35 },
+              borderRadius: "50%",
+              bgcolor: "rgba(255,255,255,0.96)",
+              border: `1px solid ${alpha("#ffffff", 0.56)}`,
+              boxShadow:
+                "0 24px 70px rgba(15, 23, 42, 0.22), inset 0 1px 18px rgba(255,255,255,0.42)",
+              position: "relative",
+              isolation: "isolate",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                inset: -10,
+                borderRadius: "50%",
+                bgcolor: "rgba(255,255,255,0.34)",
+                filter: "blur(14px)",
+                zIndex: -1,
+              },
+            }}
+          >
+            <Box
+              component="video"
+              src="/assets/video/logoLoader.webm"
+              autoPlay
+              loop
+              muted
+              speed
+              playsInline
+              aria-hidden="true"
+              sx={{
+                width: { xs: 70, sm: 120 },
+                height: { xs: 70, sm: 120 },
+                flexShrink: 0,
+                objectFit: "contain",
+                display: "block",
+              }}
+            />
+            <Box sx={{ maxWidth: { xs: 210, sm: 235 } }}>
+              <Typography
+                sx={{
+                  color: editorText,
+                  fontSize: { xs: "0.94rem", sm: "1rem" },
+                  fontWeight: 800,
+                  lineHeight: 1.25,
+                }}
+              >
+                Generating your AI draft…
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: editorMutedText,
+                  fontSize: { xs: "0.74rem", sm: "0.8rem" },
+                  lineHeight: 1.45,
+                  mt: 0.65,
+                }}
+              >
+                We are tailoring the template to your answers. Nothing is saved
+                until you review it.
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+      )}
+
+      <Dialog
+        open={aiDraftReadyPromptOpen}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 4,
+            bgcolor: "rgba(255,255,255,0.98)",
+            border: `1px solid ${alpha(colors.primary, 0.18)}`,
+            boxShadow: "0 24px 70px rgba(15, 23, 42, 0.24)",
+          },
+        }}
+      >
+        <DialogContent
+          sx={{
+            px: { xs: 2.5, sm: 3 },
+            pt: { xs: 2.5, sm: 3 },
+            pb: 2,
+            textAlign: "center",
+          }}
+        >
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              mx: "auto",
+              mb: 1.5,
+              borderRadius: "14px",
+              bgcolor: alpha(colors.primary, 0.1),
+              color: colors.primary,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <CheckCircle2 size={24} strokeWidth={2.3} color={colors.text} />
+          </Box>
+          <Typography
+            sx={{
+              color: editorText,
+              fontSize: "1.05rem",
+              fontWeight: 800,
+              lineHeight: 1.25,
+            }}
+          >
+            Your AI generated draft is ready for review
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: editorMutedText,
+              fontSize: "0.84rem",
+              lineHeight: 1.55,
+              mt: 0.75,
+            }}
+          >
+            Preview the AI draft in the editor, then decide whether to keep it
+            or revert back to the template.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 0, justifyContent: "center" }}>
+          <Button
+            variant="contained"
+            onClick={handleShowAiDraft}
+            startIcon={<Eye size={16} />}
+            sx={{
+              textTransform: "none",
+              minHeight: 40,
+              borderRadius: 999,
+              px: 2.4,
+              background:
+                "linear-gradient(135deg, #111827e8 0%, #020617d4 100%)",
+              color: "white !important",
+              fontSize: "0.82rem",
+              fontWeight: 800,
+              boxShadow: "0 12px 26px rgba(0, 0, 0, 0.28)",
+              "&:hover": {
+                background: "linear-gradient(135deg, #0f172a 0%, #000000 100%)",
+                boxShadow: "0 14px 30px rgba(0, 0, 0, 0.45)",
+              },
+            }}
+          >
+            Proceed
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {aiDraftReviewOpen && (
+        <Paper
+          elevation={0}
+          sx={{
+            position: "fixed",
+            top: { xs: 12, sm: 18 },
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 2100,
+            p: { xs: 1.25, sm: 1.5 },
+            borderRadius: 3,
+            maxWidth: 850,
+            width: "calc(100% - 32px)",
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
+            gap: { xs: 1.25, sm: 1.5 },
+            bgcolor: "rgba(15, 23, 42, 0.96)",
+            border: `1px solid ${alpha("#f8fafc", 0.16)}`,
+            boxShadow: "0 18px 50px rgba(2, 6, 23, 0.38)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            <Box
+              sx={{
+                width: 60,
+                height: 60,
+                borderRadius: "10px",
+                bgcolor: alpha("#f8fafc", 0.1),
+                color: "#f8fafc",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <CheckCircle2 size={45} strokeWidth={2.3} />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                sx={{
+                  color: "#f8fafc",
+                  fontSize: "0.92rem",
+                  fontWeight: 800,
+                  lineHeight: 1.25,
+                }}
+              >
+                AI draft applied
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: alpha("#f8fafc", 0.72),
+                  fontSize: "0.75rem",
+                  lineHeight: 1.45,
+                  mt: 0.2,
+                }}
+              >
+                {aiDraftSummary || "Review the changes before saving."}
+              </Typography>
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              flexShrink: 0,
+              justifyContent: { xs: "flex-end", sm: "initial" },
+              flexWrap: "wrap",
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={handleRevertAiDraft}
+              startIcon={<RotateCcw size={16} />}
+              size="small"
+              sx={{
+                minHeight: 36,
+                borderRadius: 999,
+                px: 1.7,
+                color: alpha("#f8fafc", 0.82),
+                borderColor: alpha("#f8fafc", 0.2),
+                fontSize: "0.78rem",
+                fontWeight: 800,
+                textTransform: "none",
+                "&:hover": {
+                  borderColor: alpha("#f8fafc", 0.36),
+                  bgcolor: alpha("#f8fafc", 0.08),
+                },
+              }}
+            >
+              Revert
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleKeepAiDraft}
+              startIcon={<CheckCircle2 size={16} />}
+              size="small"
+              sx={{
+                textTransform: "none",
+                minHeight: 40,
+                borderRadius: 999,
+                px: 2.4,
+                background: "linear-gradient(135deg, #ffffff 0%, #e5e7eb 100%)",
+                color: "#020617 !important",
+                fontSize: "0.82rem",
+                fontWeight: 800,
+                boxShadow: "0 12px 26px rgba(255, 255, 255, 0.16)",
+                "&:hover": {
+                  background:
+                    "linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%)",
+                  boxShadow: "0 14px 30px rgba(255, 255, 255, 0.2)",
+                },
+              }}
+            >
+              Keep draft
+            </Button>
+          </Box>
+        </Paper>
+      )}
 
       {websiteId && (
         <EditorAILayer

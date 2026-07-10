@@ -7,7 +7,9 @@ import { PageHeader } from "../components/Dashboard/shared";
 import TemplateFilters from "../components/Templates/TemplateFilters";
 import TemplateGallery from "../components/Templates/TemplateGallery";
 import TemplatePreviewModal from "../components/Templates/TemplatePreviewModal";
-import CreateWebsiteModal from "../components/Templates/CreateWebsiteModal";
+import CreateWebsiteModal, {
+  type CreateWebsiteAIDraftIntent,
+} from "../components/Templates/CreateWebsiteModal";
 import { usePlanSummary } from "../hooks/usePlanSummary";
 import { type TemplateSummary } from "../templates/templateApi";
 import { getFrontendWebsiteTemplates } from "../templates/frontendTemplateCatalog";
@@ -110,9 +112,27 @@ const TemplatesPage = ({
   }, []);
 
   const onCreateSuccess = useCallback(
-    (websiteId: number) => {
+    (websiteId: number, intent?: CreateWebsiteAIDraftIntent) => {
       setCreateOpen(false);
       setCreateTemplate(null);
+
+      // AI path: stash the questionnaire and open the editor with the aiDraft
+      // marker so it runs the preview-only draft. Nothing persists until save.
+      if (intent?.aiDraft) {
+        try {
+          sessionStorage.setItem(
+            `ai_website_draft_questionnaire_${websiteId}`,
+            JSON.stringify(intent.questionnaireData),
+          );
+        } catch {
+          // Non-fatal — the editor also receives the questionnaire via route state.
+        }
+        navigate(`/dashboard/websites/${websiteId}/editor?aiDraft=1`, {
+          state: { aiDraftQuestionnaire: intent.questionnaireData },
+        });
+        return;
+      }
+
       setSuccessMessage("Website created successfully!");
       // Navigate to website editor after short delay for snackbar visibility
       setTimeout(() => {

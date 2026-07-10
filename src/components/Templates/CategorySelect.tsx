@@ -33,6 +33,7 @@ interface CategorySelectProps {
   error?: boolean;
   helperText?: string;
   disabled?: boolean;
+  required?: boolean;
 }
 
 const CategorySelect: React.FC<CategorySelectProps> = ({
@@ -41,6 +42,7 @@ const CategorySelect: React.FC<CategorySelectProps> = ({
   error,
   helperText,
   disabled,
+  required = false,
 }) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -131,6 +133,11 @@ const CategorySelect: React.FC<CategorySelectProps> = ({
         }}
       >
         Business / Website Category
+        {required && (
+          <Box component="span" sx={{ color: "#ff6b6b", ml: 0.5 }}>
+            *
+          </Box>
+        )}
       </Typography>
       <Autocomplete<CategoryOption, false, false, true>
         value={selectedOption}
@@ -142,6 +149,26 @@ const CategorySelect: React.FC<CategorySelectProps> = ({
         selectOnFocus
         clearOnBlur
         handleHomeEndKeys
+        componentsProps={{
+          paper: {
+            sx: {
+              mt: 0.75,
+              bgcolor: isLight ? "#ffffff" : "#142021",
+              backgroundImage: "none",
+              border: `1px solid ${palette.border}`,
+              borderRadius: "10px",
+              color: palette.text,
+              "& .MuiAutocomplete-option": {
+                minHeight: 40,
+                fontSize: "0.92rem",
+                "&:hover": { bgcolor: alpha(palette.accent, 0.16) },
+                '&[aria-selected="true"]': {
+                  bgcolor: alpha(palette.accent, 0.22),
+                },
+              },
+            },
+          },
+        }}
         groupBy={(o) => (o.source === "user" ? "Your categories" : "Templates")}
         getOptionLabel={(option) =>
           typeof option === "string"
@@ -220,7 +247,7 @@ const CategorySelect: React.FC<CategorySelectProps> = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 backgroundColor: palette.fill,
-                borderRadius: "12px",
+                borderRadius: "10px",
                 color: palette.text,
                 "& fieldset": { borderColor: palette.border },
                 "&:hover fieldset": { borderColor: palette.accent },

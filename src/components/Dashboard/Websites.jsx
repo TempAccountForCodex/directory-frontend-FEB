@@ -1542,7 +1542,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
   }, [websites, roleFilter]);
 
   // const websitelog = filteredWebsites()
-  console.log("Here are the websites data: ", filteredWebsites[0]);
+  // console.log("Here are the websites data: ", filteredWebsites[0]);
 
   const ownershipStats = useMemo(() => {
     const owned = websites.filter(
