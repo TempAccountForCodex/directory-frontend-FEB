@@ -2,9 +2,16 @@ import React from "react";
 import {
   Box,
   Button,
+  Checkbox,
   Chip,
   Container,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
   Stack,
+  Radio,
+  RadioGroup,
+  MenuItem,
   TextField,
   Typography,
   Grid,
@@ -17,6 +24,8 @@ import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import type { Variants } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import TemplateNavbarHeader from "../../components/TemplateNavbarHeader";
 import {
   getEditableImageProps,
@@ -358,6 +367,30 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const processContent = templateContent.process || {};
   const testimonialsContent = templateContent.testimonials || {};
   const contactContent = templateContent.contact || {};
+  const companyContactFields = React.useMemo(
+    () =>
+      normalizeContactFormFields(contactContent.formFields, contactContent).map(
+        (field) => ({
+          label: field.label,
+          required: field.required,
+          fieldType: field.fieldType,
+          placeholder: field.placeholder,
+          options: field.options,
+          key: field.key,
+        }),
+      ),
+    [contactContent],
+  );
+  const {
+    status: contactStatus,
+    errorMessage: contactError,
+    getFieldProps: getContactFieldProps,
+    handleSubmit: handleContactSubmit,
+  } = useTemplateContactForm(
+    companyContactFields,
+    data.websiteId,
+    "company-contact-form",
+  );
   const headingFont = data.themeSettings?.headingFont || defaultHeadingFont;
   const bodyFont = data.themeSettings?.bodyFont || defaultBodyFont;
   const features = (
@@ -401,6 +434,127 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     contactContent.buttonLabel ||
     contactContent.ctaText ||
     "Contact Us";
+  const renderCompanyContactField = (
+    field: (typeof companyContactFields)[number],
+  ) => {
+    const commonTextFieldSx = {
+      "& .MuiInputBase-root": {
+        color: palette.white,
+        pb: 1,
+        borderBottom: "1px solid rgba(255,255,255,0.18)",
+      },
+    };
+    const fieldProps = getContactFieldProps(field.label);
+    const placeholder = field.placeholder || field.label;
+
+    if (field.fieldType === "select") {
+      return (
+        <TextField
+          key={field.key || field.label}
+          select
+          size="small"
+          fullWidth
+          variant="standard"
+          required={field.required}
+          SelectProps={{ displayEmpty: true }}
+          {...fieldProps}
+          InputProps={{ disableUnderline: true }}
+          sx={commonTextFieldSx}
+        >
+          <MenuItem value="">
+            <em>{placeholder}</em>
+          </MenuItem>
+          {(field.options || []).map((option) => (
+            <MenuItem key={`${field.label}-${option}`} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+      );
+    }
+
+    if (field.fieldType === "checkbox") {
+      return (
+        <FormControlLabel
+          key={field.key || field.label}
+          control={
+            <Checkbox
+              checked={Boolean(fieldProps.value)}
+              disabled={fieldProps.disabled}
+              onChange={(event) =>
+                fieldProps.onChange({
+                  target: { value: event.target.checked ? "Yes" : "" },
+                } as React.ChangeEvent<HTMLInputElement>)
+              }
+              sx={{
+                color: palette.white,
+                "&.Mui-checked": { color: themeColor },
+              }}
+            />
+          }
+          label={placeholder}
+          sx={{ color: palette.white, ml: 0 }}
+        />
+      );
+    }
+
+    if (field.fieldType === "radio") {
+      return (
+        <FormControl key={field.key || field.label} disabled={fieldProps.disabled}>
+          <FormLabel sx={{ color: palette.white, mb: 1 }}>{field.label}</FormLabel>
+          <RadioGroup
+            value={fieldProps.value || ""}
+            onChange={(event) =>
+              fieldProps.onChange(
+                event as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+              )
+            }
+          >
+            {(field.options || []).map((option) => (
+              <FormControlLabel
+                key={`${field.label}-${option}`}
+                value={option}
+                control={
+                  <Radio
+                    sx={{
+                      color: palette.white,
+                      "&.Mui-checked": { color: themeColor },
+                    }}
+                  />
+                }
+                label={option}
+                sx={{ color: palette.white }}
+              />
+            ))}
+          </RadioGroup>
+        </FormControl>
+      );
+    }
+
+    return (
+      <TextField
+        key={field.key || field.label}
+        placeholder={placeholder}
+        size="small"
+        fullWidth
+        multiline={field.fieldType === "textarea"}
+        minRows={field.fieldType === "textarea" ? 6 : undefined}
+        variant="standard"
+        type={
+          field.fieldType === "email" ||
+          field.fieldType === "tel" ||
+          field.fieldType === "number" ||
+          field.fieldType === "date"
+            ? field.fieldType
+            : "text"
+        }
+        required={field.required}
+        {...fieldProps}
+        InputProps={{ disableUnderline: true }}
+        sx={commonTextFieldSx}
+      />
+    );
+  };
   const whyBody = featuresContent.description || aboutBody;
   const whyImageEyebrow =
     featuresContent.imageEyebrowText || "Business presentation";
@@ -632,7 +786,35 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     },
   ) => {
     const blockPath = `innerBlocks.${index}.content`;
-    const blockType = String(block.type || "text").toLowerCase();
+    const wrapperBlockType = String(section?.editorBlockType || "").toLowerCase();
+    const rawBlockType = String(block.type || "text").toLowerCase();
+    const blockType = rawBlockType;
+    const wrapperContent =
+      wrapperBlockType &&
+      wrapperBlockType === rawBlockType &&
+      index === 0 &&
+      section &&
+      typeof section === "object"
+        ? Object.fromEntries(
+            Object.entries(section).filter(
+              ([key]) =>
+                key !== "innerBlocks" &&
+                key !== "blockId" &&
+                key !== "editorBlockType" &&
+                key !== "editorLabel",
+            ),
+          )
+        : null;
+    const normalizedBlock =
+      wrapperContent && typeof block?.content === "object"
+        ? {
+            ...block,
+            content: {
+              ...(block.content || {}),
+              ...wrapperContent,
+            },
+          }
+        : block;
     const tone = options?.tone || "dark";
     const textColor = tone === "light" ? palette.white : palette.ink;
     const mutedTextColor =
@@ -640,14 +822,15 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const lineColor =
       tone === "light" ? "rgba(255,255,255,0.22)" : rgba(themeColor, 0.22);
     const blockMaxWidth = options?.maxWidth || 880;
-    const rawTextStyle = block.content?.textStyle || {};
-    const rawHeadingStyle = block.content?.headingStyle || rawTextStyle;
-    const rawBodyStyle = block.content?.bodyStyle || rawTextStyle;
-    const rawEyebrowStyle = block.content?.eyebrowStyle || rawTextStyle;
-    const rawButtonStyle = block.content?.buttonTextStyle || rawTextStyle;
-    const rawImageStyle = block.content?.imageStyle || {};
-    const rawCardStyle = block.content?.cardStyle || {};
-    const rawSectionStyle = block.content?.sectionStyle || {};
+    const rawTextStyle = normalizedBlock.content?.textStyle || {};
+    const rawHeadingStyle = normalizedBlock.content?.headingStyle || rawTextStyle;
+    const rawBodyStyle = normalizedBlock.content?.bodyStyle || rawTextStyle;
+    const rawEyebrowStyle = normalizedBlock.content?.eyebrowStyle || rawTextStyle;
+    const rawButtonStyle =
+      normalizedBlock.content?.buttonTextStyle || rawTextStyle;
+    const rawImageStyle = normalizedBlock.content?.imageStyle || {};
+    const rawCardStyle = normalizedBlock.content?.cardStyle || {};
+    const rawSectionStyle = normalizedBlock.content?.sectionStyle || {};
     const canvas = options?.canvas === true;
     const getFlowSafeStyle = (
       style: Record<string, any>,
@@ -765,7 +948,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
     const sharedEditorBlock = renderEditorSharedBlock({
       section,
-      block,
+      block: normalizedBlock,
       index,
       blockPath,
       tone,
@@ -2652,78 +2835,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   </Typography>
 
                   <Stack spacing={1.6}>
-                    <Stack
-                      direction={{ xs: "column", md: "row" }}
-                      spacing={1.6}
-                    >
-                      <TextField
-                        placeholder="Full name *"
-                        size="small"
-                        fullWidth
-                        variant="standard"
-                        InputProps={{ disableUnderline: true }}
-                        sx={{
-                          "& .MuiInputBase-root": {
-                            color: palette.white,
-                            pb: 1,
-                            borderBottom: "1px solid rgba(255,255,255,0.18)",
-                          },
-                        }}
-                      />
-                      <TextField
-                        placeholder="Email address *"
-                        size="small"
-                        fullWidth
-                        variant="standard"
-                        InputProps={{ disableUnderline: true }}
-                        sx={{
-                          "& .MuiInputBase-root": {
-                            color: palette.white,
-                            pb: 1,
-                            borderBottom: "1px solid rgba(255,255,255,0.18)",
-                          },
-                        }}
-                      />
-                    </Stack>
-
-                    <Stack
-                      direction={{ xs: "column", md: "row" }}
-                      spacing={1.6}
-                    >
-                      <TextField
-                        placeholder="Phone number *"
-                        size="small"
-                        fullWidth
-                        variant="standard"
-                        InputProps={{ disableUnderline: true }}
-                        sx={{
-                          "& .MuiInputBase-root": {
-                            color: palette.white,
-                            pb: 1,
-                            borderBottom: "1px solid rgba(255,255,255,0.18)",
-                          },
-                        }}
-                      />
-                    </Stack>
-
-                    <TextField
-                      placeholder="Type message *"
-                      size="small"
-                      fullWidth
-                      multiline
-                      minRows={6}
-                      variant="standard"
-                      InputProps={{ disableUnderline: true }}
-                      sx={{
-                        "& .MuiInputBase-root": {
-                          color: palette.white,
-                          pb: 1,
-                          borderBottom: "1px solid rgba(255,255,255,0.18)",
-                        },
-                      }}
-                    />
+                    {companyContactFields.map((field) => (
+                      <Box key={field.key || field.label}>
+                        {renderCompanyContactField(field)}
+                      </Box>
+                    ))}
                     <Button
                       variant="contained"
+                      type="button"
+                      disabled={contactStatus === "loading"}
+                      onClick={handleContactSubmit}
                       endIcon={<EastIcon />}
                       data-editable="buttonText"
                       data-edit-type="single"
@@ -2748,10 +2869,22 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         },
                       }}
                     >
-                      {contactContent.buttonLabel ||
-                        contactContent.ctaText ||
-                        "Send message"}
+                      {contactStatus === "loading"
+                        ? "Sending…"
+                        : contactContent.buttonLabel ||
+                          contactContent.ctaText ||
+                          "Send message"}
                     </Button>
+                    {contactStatus === "success" && (
+                      <Typography sx={{ color: "#8fe28f", fontWeight: 600 }}>
+                        Thanks! Your message has been sent.
+                      </Typography>
+                    )}
+                    {contactStatus === "error" && (
+                      <Typography sx={{ color: "#ffb4a2", fontWeight: 600 }}>
+                        {contactError}
+                      </Typography>
+                    )}
                   </Stack>
                 </Box>
               </Box>

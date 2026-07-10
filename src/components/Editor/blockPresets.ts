@@ -121,10 +121,10 @@ export const getBlockDefaultContent = (
       fullNamePlaceholder: "Full name",
       emailPlaceholder: "Email address",
       messagePlaceholder: "Message",
-      fields: [
-        { label: "Full name" },
-        { label: "Email address" },
-        { label: "Message" },
+      formFields: [
+        { _id: "full-name", label: "Full name", placeholder: "Full name", fieldType: "text", required: true, options: "" },
+        { _id: "email-address", label: "Email address", placeholder: "Email address", fieldType: "email", required: true, options: "" },
+        { _id: "message", label: "Message", placeholder: "Message", fieldType: "textarea", required: true, options: "" },
       ],
     };
   }
@@ -745,10 +745,45 @@ export const getLocalFieldMetadata = (
         makeTextField("phone", "Phone Number", 4),
         makeTextField("address", "Address", 5, true),
         makeTextField("formTitle", "Form Title", 6),
-        makeTextField("fullNamePlaceholder", "Name Field Placeholder", 7),
-        makeTextField("emailPlaceholder", "Email Field Placeholder", 8),
-        makeTextField("messagePlaceholder", "Message Field Placeholder", 9),
-        makeTextField("buttonText", "Button Text", 10),
+        makeRepeaterField("formFields", "Form Fields", 7, {
+          label: makeTextField("label", "Label", 1),
+          placeholder: makeTextField("placeholder", "Placeholder", 2),
+          fieldType: {
+            name: "fieldType",
+            label: "Field Type",
+            type: "SELECT",
+            order: 3,
+            defaultValue: "text",
+            ui: {
+              props: {
+                options: [
+                  { label: "Text", value: "text" },
+                  { label: "Email", value: "email" },
+                  { label: "Phone", value: "tel" },
+                  { label: "Message (Textarea)", value: "textarea" },
+                  { label: "Number", value: "number" },
+                  { label: "Dropdown", value: "select" },
+                  { label: "Checkbox", value: "checkbox" },
+                  { label: "Radio", value: "radio" },
+                  { label: "Date", value: "date" },
+                ],
+              },
+            },
+          } as LocalFieldDefinition,
+          options: {
+            name: "options",
+            label: "Options (comma-separated, for Dropdown/Radio)",
+            type: "TEXT",
+            order: 4,
+          },
+          required: {
+            name: "required",
+            label: "Required",
+            type: "TOGGLE",
+            order: 5,
+          } as LocalFieldDefinition,
+        }),
+        makeTextField("buttonText", "Button Text", 8),
       ]);
     case "TEAM":
       return contentGroup([

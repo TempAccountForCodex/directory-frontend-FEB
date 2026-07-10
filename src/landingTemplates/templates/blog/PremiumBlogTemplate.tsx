@@ -22,6 +22,14 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import CloseIcon from "@mui/icons-material/Close";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+
+const BLOG_CONTACT_FIELDS = [
+  { label: "Your name" },
+  { label: "Email address" },
+  { label: "Subject" },
+  { label: "Tell us about your inquiry", fieldType: "textarea" },
+];
 import type { BlogPost } from "../../types/BusinessData";
 import FadeIn from "../../blocks/FadeIn";
 import {
@@ -162,6 +170,12 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
   const articlesContent = templateContent.articles || {};
   const aboutContent = templateContent.about || {};
   const contactContent = templateContent.contact || {};
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      BLOG_CONTACT_FIELDS,
+      data.websiteId,
+      "blog-contact-form",
+    );
   const primary = data.primaryColor || "#8DC63F";
   const secondary = data.secondaryColor || "#d9e9b5";
   const posts = useMemo(() => getPosts(data), [data]);
@@ -909,6 +923,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   placeholder="Your name"
                   variant="standard"
                   fullWidth
+                  {...getFieldProps("Your name")}
                   InputProps={{ disableUnderline: true }}
                   sx={{
                     "& .MuiInputBase-root": {
@@ -921,6 +936,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   placeholder="Email address"
                   variant="standard"
                   fullWidth
+                  {...getFieldProps("Email address")}
                   InputProps={{ disableUnderline: true }}
                   sx={{
                     "& .MuiInputBase-root": {
@@ -933,6 +949,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   placeholder="Subject"
                   variant="standard"
                   fullWidth
+                  {...getFieldProps("Subject")}
                   InputProps={{ disableUnderline: true }}
                   sx={{
                     "& .MuiInputBase-root": {
@@ -947,6 +964,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fullWidth
                   multiline
                   minRows={5}
+                  {...getFieldProps("Tell us about your inquiry")}
                   InputProps={{ disableUnderline: true }}
                   sx={{
                     "& .MuiInputBase-root": {
@@ -957,6 +975,9 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 />
                 <Button
                   variant="contained"
+                  type="button"
+                  disabled={status === "loading"}
+                  onClick={handleSubmit}
                   data-editable="buttonText"
                   data-edit-type="single"
                   data-block-id={contactBlockId}
@@ -977,8 +998,18 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  {contactButton}
+                  {status === "loading" ? "Sending…" : contactButton}
                 </Button>
+                {status === "success" && (
+                  <Typography sx={{ color: "#128a3a", fontWeight: 600 }}>
+                    Thanks! Your message has been sent.
+                  </Typography>
+                )}
+                {status === "error" && (
+                  <Typography sx={{ color: "#b3261e", fontWeight: 600 }}>
+                    {errorMessage}
+                  </Typography>
+                )}
               </Stack>
             </Box>
           </FadeIn>

@@ -16,7 +16,7 @@
  *   formFields    array — configurable form fields [{label, fieldType, required}]
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   Box,
   Container,
@@ -146,19 +146,49 @@ function ContactForm({
   websiteId,
   onFormSubmit,
 }: ContactFormProps) {
-  const fields =
-    formFields && formFields.length > 0 ? formFields : DEFAULT_FORM_FIELDS;
-  const [formData, setFormData] = useState<Record<string, string>>(() => {
+  const fields = useMemo(
+    () =>
+      formFields && formFields.length > 0 ? formFields : DEFAULT_FORM_FIELDS,
+    [formFields],
+  );
+  const buildFormData = useCallback((nextFields: FormFieldConfig[]) => {
     const init: Record<string, string> = {};
-    fields.forEach((f) => {
+    nextFields.forEach((f) => {
       init[f.label] = "";
     });
     return init;
-  });
+  }, []);
+  const [formData, setFormData] = useState<Record<string, string>>(() =>
+    buildFormData(fields),
+  );
   const [formStatus, setFormStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    setFormData((prev) => {
+      const next = buildFormData(fields);
+      let changed = false;
+
+      fields.forEach((field) => {
+        const previousValue = prev[field.label];
+        if (previousValue !== undefined) {
+          next[field.label] = previousValue;
+        }
+      });
+
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(next);
+      if (prevKeys.length !== nextKeys.length) {
+        changed = true;
+      } else {
+        changed = nextKeys.some((key) => prev[key] !== next[key]);
+      }
+
+      return changed ? next : prev;
+    });
+  }, [buildFormData, fields]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -225,11 +255,7 @@ function ContactForm({
 
         setFormStatus("success");
         onFormSubmit?.("contact", true);
-        const reset: Record<string, string> = {};
-        fields.forEach((f) => {
-          reset[f.label] = "";
-        });
-        setFormData(reset);
+        setFormData(buildFormData(fields));
         setTimeout(() => setFormStatus("idle"), 5000);
       } catch (err) {
         if (isAxiosError(err) && err.response?.status === 429) {
@@ -243,7 +269,7 @@ function ContactForm({
         onFormSubmit?.("contact", false);
       }
     },
-    [formData, fields, content, websiteId, onFormSubmit],
+    [buildFormData, formData, fields, content, websiteId, onFormSubmit],
   );
 
   return (

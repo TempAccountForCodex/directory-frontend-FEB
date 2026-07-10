@@ -13,6 +13,7 @@ import {
 import { ArrowRight, Facebook, Instagram } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
@@ -46,7 +47,22 @@ function scrollToSection(id: string) {
   window.scrollTo({ top: y, behavior: "smooth" });
 }
 
+const RESTAURANT_CONTACT_FIELDS = [
+  { label: "Full Name" },
+  { label: "Email Address" },
+  { label: "Phone" },
+  { label: "Date" },
+  { label: "Time" },
+  { label: "Message" },
+];
+
 const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      RESTAURANT_CONTACT_FIELDS,
+      data.websiteId,
+      "restaurant-contact-form",
+    );
   const reviews = data.reviews ?? [];
 
   const navItems = [
@@ -746,6 +762,7 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                       multiline={label === "Message"}
                       minRows={label === "Message" ? 3 : undefined}
                       placeholder={label}
+                      {...getFieldProps(label)}
                       variant="standard"
                       InputProps={{
                         disableUnderline: false,
@@ -762,10 +779,23 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                   </FadeIn>
                 ))}
               </Stack>
+              {status === "success" && (
+                <Typography sx={{ mt: 2, color: "#8fe28f", fontWeight: 600 }}>
+                  Thanks! Your message has been sent.
+                </Typography>
+              )}
+              {status === "error" && (
+                <Typography sx={{ mt: 2, color: "#ffb4a2", fontWeight: 600 }}>
+                  {errorMessage}
+                </Typography>
+              )}
               <FadeIn delay={0.46}>
                 <EditableButton
                   field="buttonLabel"
                   variant="contained"
+                  type="button"
+                  disabled={status === "loading"}
+                  onClick={handleSubmit}
                   sx={{
                     mt: 3,
                     bgcolor: "#fff",
@@ -781,7 +811,9 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  {(contactContent.buttonLabel as string) || "Send"}
+                  {status === "loading"
+                    ? "Sending…"
+                    : (contactContent.buttonLabel as string) || "Send"}
                 </EditableButton>
               </FadeIn>
             </Grid>

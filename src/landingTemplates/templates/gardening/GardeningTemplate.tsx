@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
 import { buildModernTheme } from "../modern/modernTheme";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 import FadeIn from "../../blocks/FadeIn";
 import {
   getSectionStyleDomProps,
@@ -81,7 +82,21 @@ function scrollToSection(id: string) {
   window.scrollTo({ top: y, behavior: "smooth" });
 }
 
+const GARDENING_CONTACT_FIELDS = [
+  { label: "Name" },
+  { label: "Email" },
+  { label: "Phone" },
+  { label: "Project Type" },
+  { label: "Message" },
+];
+
 const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      GARDENING_CONTACT_FIELDS,
+      data.websiteId,
+      "gardening-contact-form",
+    );
   const theme = {
     ...buildModernTheme(data.primaryColor, data.secondaryColor),
     bgPrimary: "#f7f4ea",
@@ -824,19 +839,35 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Box sx={{ mt: 4.5, maxWidth: 620, mx: "auto" }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth placeholder="Name" variant="outlined" />
+                  <TextField
+                    fullWidth
+                    placeholder="Name"
+                    variant="outlined"
+                    {...getFieldProps("Name")}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth placeholder="Email" variant="outlined" />
+                  <TextField
+                    fullWidth
+                    placeholder="Email"
+                    variant="outlined"
+                    {...getFieldProps("Email")}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth placeholder="Phone" variant="outlined" />
+                  <TextField
+                    fullWidth
+                    placeholder="Phone"
+                    variant="outlined"
+                    {...getFieldProps("Phone")}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     placeholder="Project Type"
                     variant="outlined"
+                    {...getFieldProps("Project Type")}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -846,13 +877,31 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     minRows={4}
                     placeholder="Message"
                     variant="outlined"
+                    {...getFieldProps("Message")}
                   />
                 </Grid>
               </Grid>
+              {status === "success" && (
+                <Typography
+                  sx={{ mt: 2, textAlign: "center", color: "#2f6b2a", fontWeight: 600 }}
+                >
+                  Thanks! Your message has been sent.
+                </Typography>
+              )}
+              {status === "error" && (
+                <Typography
+                  sx={{ mt: 2, textAlign: "center", color: "#b3261e", fontWeight: 600 }}
+                >
+                  {errorMessage}
+                </Typography>
+              )}
               <Stack direction="row" justifyContent="center">
                 <EditableButton
                   field="buttonLabel"
                   variant="contained"
+                  type="button"
+                  disabled={status === "loading"}
+                  onClick={handleSubmit}
                   sx={{
                     mt: 2.8,
                     bgcolor: "#2f6b2a",
@@ -868,7 +917,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  {(contactContent.buttonLabel as string) || "Submit"}
+                  {status === "loading"
+                    ? "Sending…"
+                    : (contactContent.buttonLabel as string) || "Submit"}
                 </EditableButton>
               </Stack>
             </Box>

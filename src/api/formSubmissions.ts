@@ -89,6 +89,142 @@ export const isValidEmail = (value: string): boolean =>
   EMAIL_RE.test((value || "").trim());
 
 /**
+ * A single, fully-configurable field on a Contact/Form block. This is the
+ * canonical shape every Contact/Form block renders from, so field config is
+ * managed in one place (the editor's "Form Fields" repeater) and consumed
+ * identically everywhere.
+ */
+export interface ContactFormField {
+  /** Stable key for value storage (repeater `_id`, or derived). */
+  key: string;
+  label: string;
+  placeholder: string;
+  /** text | email | tel | textarea | number | select | checkbox | radio | date */
+  fieldType: string;
+  required: boolean;
+  /** Choices for select / radio. */
+  options: string[];
+}
+
+export const CONTACT_FIELD_TYPES = [
+  "text",
+  "email",
+  "tel",
+  "textarea",
+  "number",
+  "select",
+  "checkbox",
+  "radio",
+  "date",
+] as const;
+
+const CONTACT_FIELD_TYPE_SET = new Set<string>(CONTACT_FIELD_TYPES);
+
+/** The default fields a Contact block ships with (removable/editable). */
+export const DEFAULT_CONTACT_FORM_FIELDS: ContactFormField[] = [
+  { key: "full-name", label: "Full name", placeholder: "Full name", fieldType: "text", required: true, options: [] },
+  { key: "email-address", label: "Email address", placeholder: "Email address", fieldType: "email", required: true, options: [] },
+  { key: "message", label: "Message", placeholder: "Message", fieldType: "textarea", required: true, options: [] },
+];
+
+const parseFieldOptions = (raw: unknown): string[] => {
+  if (Array.isArray(raw)) {
+    return raw.map((o) => String(o).trim()).filter(Boolean);
+  }
+  if (typeof raw === "string") {
+    return raw
+      .split(/[,\n]/)
+      .map((o) => o.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+/**
+ * Normalize whatever a Contact block has stored into a clean ContactFormField[].
+ * Precedence: the editor's `formFields` repeater → a legacy `fields` array →
+ * legacy `*Placeholder` strings → the built-in defaults. This keeps every older
+ * saved block rendering correctly while new blocks are fully managed.
+ */
+export const normalizeContactFormFields = (
+  formFields: unknown,
+  legacy?: {
+    fields?: unknown;
+    fullNamePlaceholder?: unknown;
+    emailPlaceholder?: unknown;
+    messagePlaceholder?: unknown;
+  },
+): ContactFormField[] => {
+  const source =
+    Array.isArray(formFields) && formFields.length
+      ? formFields
+      : Array.isArray(legacy?.fields) && legacy!.fields!.length
+        ? (legacy!.fields as unknown[])
+        : null;
+
+  if (!source) {
+    const hasLegacyPlaceholders =
+      legacy &&
+      (legacy.fullNamePlaceholder ||
+        legacy.emailPlaceholder ||
+        legacy.messagePlaceholder);
+    if (hasLegacyPlaceholders) {
+      const name = String(legacy!.fullNamePlaceholder || "Full name");
+      const email = String(legacy!.emailPlaceholder || "Email address");
+      const message = String(legacy!.messagePlaceholder || "Message");
+      return [
+        { key: "full-name", label: name, placeholder: name, fieldType: "text", required: true, options: [] },
+        { key: "email-address", label: email, placeholder: email, fieldType: "email", required: true, options: [] },
+        { key: "message", label: message, placeholder: message, fieldType: "textarea", required: true, options: [] },
+      ];
+    }
+    return DEFAULT_CONTACT_FORM_FIELDS;
+  }
+
+  const normalized = source
+    .map((item, index): ContactFormField | null => {
+      if (typeof item === "string") {
+        const label = item.trim();
+        if (!label) return null;
+        const kind = classifyContactField(label);
+        return {
+          key: `${label}-${index}`,
+          label,
+          placeholder: label,
+          fieldType: fieldTypeForKind(kind),
+          required: kind === "name" || kind === "email" || kind === "message",
+          options: [],
+        };
+      }
+      if (item && typeof item === "object") {
+        const rec = item as Record<string, unknown>;
+        const label = String(rec.label ?? rec.placeholder ?? "").trim();
+        if (!label) return null;
+        const rawType = String(rec.fieldType ?? "").trim().toLowerCase();
+        const fieldType = CONTACT_FIELD_TYPE_SET.has(rawType)
+          ? rawType
+          : fieldTypeForKind(classifyContactField(label));
+        const key =
+          typeof rec._id === "string" && rec._id
+            ? rec._id
+            : `${label}-${index}`;
+        return {
+          key,
+          label,
+          placeholder: String(rec.placeholder ?? label),
+          fieldType,
+          required: rec.required === true,
+          options: parseFieldOptions(rec.options),
+        };
+      }
+      return null;
+    })
+    .filter((f): f is ContactFormField => f !== null);
+
+  return normalized.length ? normalized : DEFAULT_CONTACT_FORM_FIELDS;
+};
+
+/**
  * True when running inside the website editor's preview iframe. Public sites
  * render top-level, so this reliably distinguishes "designing in the editor"
  * from a real visitor and lets blocks skip real submissions while editing.

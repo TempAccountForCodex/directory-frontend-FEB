@@ -12,6 +12,7 @@ import {
 import { motion, cubicBezier } from "framer-motion";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 
 const headingFont = '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Inter", "Segoe UI", sans-serif';
@@ -140,7 +141,21 @@ const TextReveal: React.FC<{ text: string; sx?: Record<string, unknown> }> = ({
   </Box>
 );
 
+const CONTACT_FIELDS = [
+  { label: "Full name" },
+  { label: "Email address" },
+  { label: "Phone number" },
+  { label: "Project type" },
+  { label: "Project brief", fieldType: "textarea" },
+];
+
 const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      CONTACT_FIELDS,
+      data.websiteId,
+      "portfolio-photo-form",
+    );
   const gallery = data.gallery?.length ? data.gallery : [];
   const portfolioItems = useMemo(
     () =>
@@ -1285,6 +1300,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               <FadeIn direction="up" delay={0.08}>
                 <Box
                   component="form"
+                  onSubmit={handleSubmit}
                   sx={{
                     display: "grid",
                     gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
@@ -1315,6 +1331,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       <Box
                         component="input"
                         placeholder={field.placeholder}
+                        {...getFieldProps(field.label)}
                         sx={{
                           width: "100%",
                           height: 56,
@@ -1349,6 +1366,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Box
                       component="textarea"
                       placeholder="Tell us about the style, mood, dates, location, and anything important for the shoot."
+                      {...getFieldProps("Project brief")}
                       sx={{
                         width: "100%",
                         minHeight: 170,
@@ -1386,15 +1404,24 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         maxWidth: 360,
                         fontSize: "0.92rem",
                         lineHeight: 1.7,
-                        color: "rgba(255,255,255,0.62)",
+                        color:
+                          status === "success"
+                            ? "#7CFFB2"
+                            : status === "error"
+                              ? "#FFB4A2"
+                              : "rgba(255,255,255,0.62)",
                       }}
                     >
-                      We usually reply within one business day with
-                      availability, direction, and next steps.
+                      {status === "success"
+                        ? "Thanks! Your enquiry has been sent."
+                        : status === "error"
+                          ? errorMessage
+                          : "We usually reply within one business day with availability, direction, and next steps."}
                     </Typography>
                     <Button
                       type="submit"
                       variant="contained"
+                      disabled={status === "loading"}
                       endIcon={<ArrowUpRight size={16} />}
                       sx={{
                         bgcolor: "#ffffff",
@@ -1409,7 +1436,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         "&:hover": { bgcolor: "#ff7a1a", boxShadow: "none" },
                       }}
                     >
-                      Send enquiry
+                      {status === "loading" ? "Sending…" : "Send enquiry"}
                     </Button>
                   </Box>
                 </Box>

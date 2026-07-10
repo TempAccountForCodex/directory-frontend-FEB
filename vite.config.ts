@@ -21,9 +21,10 @@ const normalizeDevProxyCookies = (cookies?: string[]) => {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const apiUrl = env.VITE_API_URL || 'http://localhost:5001/api';
-  const apiProxyTarget =
+  const rawProxyTarget =
     env.VITE_API_PROXY_TARGET ||
     (/^https?:\/\//.test(apiUrl) ? apiUrl.replace(/\/api\/?$/, '') : 'http://localhost:5001');
+  const apiProxyTarget = rawProxyTarget.replace(/\/api\/?$/, '');
 
   return {
     plugins: [

@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useCallback, useMemo } from 'react';
+import { memo, useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   Checkbox,
@@ -16,13 +16,23 @@ import {
   Alert,
   Skeleton,
   useMediaQuery,
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { alpha } from '@mui/material/styles';
-import { MessageSquare, Download, Trash2, Eye, EyeOff, AlertTriangle, Mail } from 'lucide-react';
-import { apiClient } from '../../../api/client';
-import { getDashboardColors } from '../../../styles/dashboardTheme';
-import { useTheme as useCustomTheme } from '../../../context/ThemeContext';
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { alpha } from "@mui/material/styles";
+import {
+  MessageSquare,
+  Download,
+  Trash2,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  Mail,
+} from "lucide-react";
+import { apiClient } from "../../../api/client";
+import { getDashboardColors } from "../../../styles/dashboardTheme";
+import { useTheme as useCustomTheme } from "../../../context/ThemeContext";
 import {
   EmptyState,
   SearchBar,
@@ -35,14 +45,14 @@ import {
   DashboardIconButton,
   DashboardDateField,
   ConfirmationDialog,
-} from '../shared';
-import { useNavigate } from 'react-router-dom';
+} from "../shared";
+import { useNavigate } from "react-router-dom";
 
 const FILTER_OPTIONS = [
-  { value: 'all', label: 'All' },
-  { value: 'unread', label: 'Unread' },
-  { value: 'read', label: 'Read' },
-  { value: 'spam', label: 'Spam' },
+  { value: "all", label: "All" },
+  { value: "unread", label: "Unread" },
+  { value: "read", label: "Read" },
+  { value: "spam", label: "Spam" },
 ];
 
 const FormsTab = memo(({ website, websiteId }) => {
@@ -50,7 +60,7 @@ const FormsTab = memo(({ website, websiteId }) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
   const muiTheme = useTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
 
   // State
   const [submissions, setSubmissions] = useState([]);
@@ -60,10 +70,10 @@ const FormsTab = memo(({ website, websiteId }) => {
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState({ total: 0, unread: 0, spam: 0 });
-  const [filter, setFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [selected, setSelected] = useState([]);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailSubmission, setDetailSubmission] = useState(null);
@@ -78,25 +88,29 @@ const FormsTab = memo(({ website, websiteId }) => {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams();
-      params.set('page', String(page + 1));
-      params.set('limit', String(rowsPerPage));
-      if (filter === 'unread') { params.set('isRead', 'false'); params.set('isSpam', 'false'); }
-      else if (filter === 'read') params.set('isRead', 'true');
-      else if (filter === 'spam') params.set('isSpam', 'true');
-      if (search) params.set('search', search);
-      if (startDate) params.set('startDate', startDate);
-      if (endDate) params.set('endDate', endDate);
+      params.set("page", String(page + 1));
+      params.set("limit", String(rowsPerPage));
+      if (filter === "unread") {
+        params.set("isRead", "false");
+        params.set("isSpam", "false");
+      } else if (filter === "read") params.set("isRead", "true");
+      else if (filter === "spam") params.set("isSpam", "true");
+      if (search) params.set("search", search);
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
 
       const res = await apiClient.get(
         `/forms/websites/${websiteId}/submissions?${params.toString()}`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       const data = res.data?.data || {};
       setSubmissions(data.submissions || []);
       setTotal(data.total || 0);
       setStats(data.stats || { total: 0, unread: 0, spam: 0 });
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load form submissions.');
+      setError(
+        err?.response?.data?.message || "Failed to load form submissions.",
+      );
     } finally {
       setLoading(false);
     }
@@ -129,33 +143,39 @@ const FormsTab = memo(({ website, websiteId }) => {
     setSelected([]);
   }, []);
 
-  const handleSelectAll = useCallback((e) => {
-    if (e.target.checked) {
-      setSelected(submissions.map((s) => s.id));
-    } else {
-      setSelected([]);
-    }
-  }, [submissions]);
+  const handleSelectAll = useCallback(
+    (e) => {
+      if (e.target.checked) {
+        setSelected(submissions.map((s) => s.id));
+      } else {
+        setSelected([]);
+      }
+    },
+    [submissions],
+  );
 
   const handleSelectOne = useCallback((id) => {
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   }, []);
 
-  const handleOpenDetail = useCallback(async (submission) => {
-    try {
-      const res = await apiClient.get(
-        `/forms/websites/${websiteId}/submissions/${submission.id}`,
-        { withCredentials: true }
-      );
-      setDetailSubmission(res.data?.data || submission);
-      setDetailOpen(true);
-    } catch {
-      setDetailSubmission(submission);
-      setDetailOpen(true);
-    }
-  }, [websiteId]);
+  const handleOpenDetail = useCallback(
+    async (submission) => {
+      try {
+        const res = await apiClient.get(
+          `/forms/websites/${websiteId}/submissions/${submission.id}`,
+          { withCredentials: true },
+        );
+        setDetailSubmission(res.data?.data || submission);
+        setDetailOpen(true);
+      } catch {
+        setDetailSubmission(submission);
+        setDetailOpen(true);
+      }
+    },
+    [websiteId],
+  );
 
   const handleCloseDetail = useCallback(() => {
     setDetailOpen(false);
@@ -163,33 +183,43 @@ const FormsTab = memo(({ website, websiteId }) => {
     fetchSubmissions();
   }, [fetchSubmissions]);
 
-  const handleMarkRead = useCallback(async (id, isRead) => {
-    try {
-      await apiClient.patch(
-        `/forms/websites/${websiteId}/submissions/${id}`,
-        { isRead },
-        { withCredentials: true }
-      );
-      fetchSubmissions();
-      if (detailSubmission?.id === id) {
-        setDetailSubmission((prev) => prev ? { ...prev, isRead } : prev);
+  const handleMarkRead = useCallback(
+    async (id, isRead) => {
+      try {
+        await apiClient.patch(
+          `/forms/websites/${websiteId}/submissions/${id}`,
+          { isRead },
+          { withCredentials: true },
+        );
+        fetchSubmissions();
+        if (detailSubmission?.id === id) {
+          setDetailSubmission((prev) => (prev ? { ...prev, isRead } : prev));
+        }
+      } catch {
+        /* handled by refetch */
       }
-    } catch { /* handled by refetch */ }
-  }, [websiteId, fetchSubmissions, detailSubmission]);
+    },
+    [websiteId, fetchSubmissions, detailSubmission],
+  );
 
-  const handleMarkSpam = useCallback(async (id, isSpam) => {
-    try {
-      await apiClient.patch(
-        `/forms/websites/${websiteId}/submissions/${id}`,
-        { isSpam },
-        { withCredentials: true }
-      );
-      fetchSubmissions();
-      if (detailSubmission?.id === id) {
-        setDetailSubmission((prev) => prev ? { ...prev, isSpam } : prev);
+  const handleMarkSpam = useCallback(
+    async (id, isSpam) => {
+      try {
+        await apiClient.patch(
+          `/forms/websites/${websiteId}/submissions/${id}`,
+          { isSpam },
+          { withCredentials: true },
+        );
+        fetchSubmissions();
+        if (detailSubmission?.id === id) {
+          setDetailSubmission((prev) => (prev ? { ...prev, isSpam } : prev));
+        }
+      } catch {
+        /* handled by refetch */
       }
-    } catch { /* handled by refetch */ }
-  }, [websiteId, fetchSubmissions, detailSubmission]);
+    },
+    [websiteId, fetchSubmissions, detailSubmission],
+  );
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
@@ -198,21 +228,29 @@ const FormsTab = memo(({ website, websiteId }) => {
         await apiClient.post(
           `/forms/websites/${websiteId}/submissions/bulk-delete`,
           { ids: deleteTarget },
-          { withCredentials: true }
+          { withCredentials: true },
         );
         setSelected([]);
       } else {
         await apiClient.delete(
           `/forms/websites/${websiteId}/submissions/${deleteTarget}`,
-          { withCredentials: true }
+          { withCredentials: true },
         );
         if (detailSubmission?.id === deleteTarget) handleCloseDetail();
       }
       setDeleteConfirmOpen(false);
       setDeleteTarget(null);
       fetchSubmissions();
-    } catch { /* handled by refetch */ }
-  }, [websiteId, deleteTarget, fetchSubmissions, detailSubmission, handleCloseDetail]);
+    } catch {
+      /* handled by refetch */
+    }
+  }, [
+    websiteId,
+    deleteTarget,
+    fetchSubmissions,
+    detailSubmission,
+    handleCloseDetail,
+  ]);
 
   const handleBulkMarkRead = useCallback(async () => {
     if (selected.length === 0) return;
@@ -221,11 +259,13 @@ const FormsTab = memo(({ website, websiteId }) => {
       await apiClient.post(
         `/forms/websites/${websiteId}/submissions/bulk-update`,
         { ids: selected, isRead: true },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setSelected([]);
       fetchSubmissions();
-    } catch { /* handled by refetch */ } finally {
+    } catch {
+      /* handled by refetch */
+    } finally {
       setBulkLoading(false);
     }
   }, [websiteId, selected, fetchSubmissions]);
@@ -233,49 +273,65 @@ const FormsTab = memo(({ website, websiteId }) => {
   const handleExport = useCallback(async () => {
     try {
       const params = new URLSearchParams();
-      if (filter === 'unread') { params.set('isRead', 'false'); params.set('isSpam', 'false'); }
-      else if (filter === 'read') params.set('isRead', 'true');
-      else if (filter === 'spam') params.set('isSpam', 'true');
-      if (startDate) params.set('startDate', startDate);
-      if (endDate) params.set('endDate', endDate);
+      if (filter === "unread") {
+        params.set("isRead", "false");
+        params.set("isSpam", "false");
+      } else if (filter === "read") params.set("isRead", "true");
+      else if (filter === "spam") params.set("isSpam", "true");
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
 
       const res = await apiClient.get(
         `/forms/websites/${websiteId}/submissions/export?${params.toString()}`,
-        { withCredentials: true, responseType: 'blob' }
+        { withCredentials: true, responseType: "blob" },
       );
       const url = window.URL.createObjectURL(new Blob([res.data]));
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `form-submissions-${websiteId}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch { /* silent */ }
+    } catch {
+      /* silent */
+    }
   }, [websiteId, filter, startDate, endDate]);
 
   // Computed filter options with counts
-  const filterOptions = useMemo(() => [
-    { value: 'all', label: `All (${stats.total})` },
-    { value: 'unread', label: `Unread (${stats.unread})` },
-    { value: 'read', label: 'Read' },
-    { value: 'spam', label: `Spam (${stats.spam})` },
-  ], [stats]);
+  const filterOptions = useMemo(
+    () => [
+      { value: "all", label: `All (${stats.total})` },
+      { value: "unread", label: `Unread (${stats.unread})` },
+      { value: "read", label: "Read" },
+      { value: "spam", label: `Spam (${stats.spam})` },
+    ],
+    [stats],
+  );
 
   // Truncate helper
   const truncate = (str, len = 80) => {
-    if (!str) return '';
-    return str.length > len ? str.slice(0, len) + '...' : str;
+    if (!str) return "";
+    return str.length > len ? str.slice(0, len) + "..." : str;
   };
 
   const getMessagePreview = (formData) => {
-    if (!Array.isArray(formData)) return '';
-    const msg = formData.find((f) => f.fieldName === 'message' || f.fieldType === 'textarea');
-    return truncate(msg?.fieldValue || formData[0]?.fieldValue || '');
+    if (!Array.isArray(formData)) return "";
+    const msg = formData.find(
+      (f) => f.fieldName === "message" || f.fieldType === "textarea",
+    );
+    return truncate(msg?.fieldValue || formData[0]?.fieldValue || "");
   };
 
   // Empty state
-  if (!loading && submissions.length === 0 && filter === 'all' && !search && !startDate && !endDate) {
+  if (
+    !loading &&
+    submissions.length === 0 &&
+    filter === "all" &&
+    !search &&
+    !startDate &&
+    !endDate
+  ) {
     return (
       <EmptyState
         icon={<MessageSquare size={48} />}
@@ -297,18 +353,20 @@ const FormsTab = memo(({ website, websiteId }) => {
   return (
     <Box>
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
       )}
 
       {/* Filters + Search */}
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
           gap: 2,
           mb: 2,
-          alignItems: isMobile ? 'stretch' : 'center',
-          flexWrap: 'wrap',
+          alignItems: isMobile ? "stretch" : "center",
+          flexWrap: "wrap",
         }}
       >
         <FilterBar
@@ -326,12 +384,18 @@ const FormsTab = memo(({ website, websiteId }) => {
         <DashboardDateField
           label="From"
           value={startDate}
-          onChange={(e) => { setStartDate(e.target.value); setPage(0); }}
+          onChange={(e) => {
+            setStartDate(e.target.value);
+            setPage(0);
+          }}
         />
         <DashboardDateField
           label="To"
           value={endDate}
-          onChange={(e) => { setEndDate(e.target.value); setPage(0); }}
+          onChange={(e) => {
+            setEndDate(e.target.value);
+            setPage(0);
+          }}
         />
         <DashboardActionButton
           variant="outlined"
@@ -345,7 +409,7 @@ const FormsTab = memo(({ website, websiteId }) => {
 
       {/* Bulk action bar */}
       {selected.length > 0 && (
-        <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
+        <Box sx={{ display: "flex", gap: 1, mb: 2, alignItems: "center" }}>
           <Typography variant="body2" sx={{ color: colors.text }}>
             {selected.length} selected
           </Typography>
@@ -362,10 +426,13 @@ const FormsTab = memo(({ website, websiteId }) => {
           <DashboardActionButton
             variant="outlined"
             size="small"
-            onClick={() => { setDeleteTarget(selected); setDeleteConfirmOpen(true); }}
+            onClick={() => {
+              setDeleteTarget(selected);
+              setDeleteConfirmOpen(true);
+            }}
             startIcon={<Trash2 size={14} />}
             aria-label="Delete selected submissions"
-            sx={{ color: 'error.main', borderColor: 'error.main' }}
+            sx={{ color: "error.main", borderColor: "error.main" }}
           >
             Delete Selected
           </DashboardActionButton>
@@ -376,29 +443,52 @@ const FormsTab = memo(({ website, websiteId }) => {
       {loading ? (
         <Box>
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={`skel-${i}`} variant="rectangular" height={48} sx={{ mb: 1, borderRadius: 1 }} />
+            <Skeleton
+              key={`skel-${i}`}
+              variant="rectangular"
+              height={48}
+              sx={{ mb: 1, borderRadius: 1 }}
+            />
           ))}
         </Box>
       ) : (
-        <Box sx={{ overflowX: 'auto' }}>
+        <Box sx={{ overflowX: "auto" }}>
           <DashboardTable variant="inset" colors={colors}>
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell padding="checkbox">
                     <Checkbox
-                      checked={selected.length === submissions.length && submissions.length > 0}
-                      indeterminate={selected.length > 0 && selected.length < submissions.length}
+                      checked={
+                        selected.length === submissions.length &&
+                        submissions.length > 0
+                      }
+                      indeterminate={
+                        selected.length > 0 &&
+                        selected.length < submissions.length
+                      }
                       onChange={handleSelectAll}
                       sx={{ color: alpha(colors.text, 0.5) }}
-                      inputProps={{ 'aria-label': 'Select all submissions' }}
+                      inputProps={{ "aria-label": "Select all submissions" }}
                     />
                   </TableCell>
-                  <DashboardTableHeadCell colors={colors}>Date</DashboardTableHeadCell>
-                  {!isMobile && <DashboardTableHeadCell colors={colors}>Name / Email</DashboardTableHeadCell>}
-                  <DashboardTableHeadCell colors={colors}>Message</DashboardTableHeadCell>
-                  <DashboardTableHeadCell colors={colors}>Status</DashboardTableHeadCell>
-                  <DashboardTableHeadCell colors={colors} align="right">Actions</DashboardTableHeadCell>
+                  <DashboardTableHeadCell colors={colors}>
+                    Date
+                  </DashboardTableHeadCell>
+                  {!isMobile && (
+                    <DashboardTableHeadCell colors={colors}>
+                      Name / Email
+                    </DashboardTableHeadCell>
+                  )}
+                  <DashboardTableHeadCell colors={colors}>
+                    Message
+                  </DashboardTableHeadCell>
+                  <DashboardTableHeadCell colors={colors}>
+                    Status
+                  </DashboardTableHeadCell>
+                  <DashboardTableHeadCell colors={colors} align="right">
+                    Actions
+                  </DashboardTableHeadCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -407,62 +497,181 @@ const FormsTab = memo(({ website, websiteId }) => {
                     key={sub.id}
                     colors={colors}
                     onClick={() => handleOpenDetail(sub)}
-                    sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha(colors.text, 0.02) } }}
+                    sx={{
+                      cursor: "pointer",
+                      "&:hover": { bgcolor: alpha(colors.text, 0.02) },
+                    }}
                   >
-                    <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                    <TableCell
+                      padding="checkbox"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Checkbox
                         checked={selected.includes(sub.id)}
                         onChange={() => handleSelectOne(sub.id)}
                         sx={{ color: alpha(colors.text, 0.5) }}
-                        inputProps={{ 'aria-label': `Select submission ${sub.id}` }}
+                        inputProps={{
+                          "aria-label": `Select submission ${sub.id}`,
+                        }}
                       />
                     </TableCell>
-                    <TableCell sx={{ color: colors.text, whiteSpace: 'nowrap' }}>
+                    <TableCell
+                      sx={{ color: colors.text, whiteSpace: "nowrap" }}
+                    >
                       {new Date(sub.createdAt).toLocaleDateString()}
                     </TableCell>
                     {!isMobile && (
                       <TableCell sx={{ color: colors.text }}>
-                        <Typography variant="body2" sx={{ fontWeight: sub.isRead ? 400 : 600, color: colors.text }}>
-                          {sub.submitterName || '—'}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: sub.isRead ? 400 : 600,
+                            color: colors.text,
+                          }}
+                        >
+                          {sub.submitterName || "—"}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: alpha(colors.text, 0.6) }}>
-                          {sub.submitterEmail || ''}
+                        <Typography
+                          variant="caption"
+                          sx={{ color: alpha(colors.text, 0.6) }}
+                        >
+                          {sub.submitterEmail || ""}
                         </Typography>
                       </TableCell>
                     )}
                     <TableCell sx={{ color: colors.text, maxWidth: 300 }}>
-                      <Typography variant="body2" noWrap sx={{ color: colors.text, fontWeight: sub.isRead ? 400 : 600 }}>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        sx={{
+                          color: colors.text,
+                          fontWeight: sub.isRead ? 400 : 600,
+                        }}
+                      >
                         {getMessagePreview(sub.formData)}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       {sub.isSpam ? (
-                        <Chip label="Spam" size="small" color="error" variant="outlined" />
+                        <Chip
+                          label="Spam"
+                          size="small"
+                          color="error"
+                          variant="outlined"
+                        />
                       ) : sub.isRead ? (
-                        <Chip label="Read" size="small" sx={{ color: alpha(colors.text, 0.5), borderColor: alpha(colors.text, 0.2) }} variant="outlined" />
+                        <Chip
+                          label="Read"
+                          size="small"
+                          sx={{
+                            color: alpha(colors.text, 0.5),
+                            borderColor: alpha(colors.text, 0.2),
+                          }}
+                          variant="outlined"
+                        />
                       ) : (
-                        <Chip label="New" size="small" color="primary" variant="filled" />
+                        <Chip
+                          label="New"
+                          size="small"
+                          color="primary"
+                          variant="filled"
+                        />
                       )}
                     </TableCell>
-                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                      <DashboardIconButton
-                        aria-label={sub.isRead ? 'Mark as unread' : 'Mark as read'}
-                        onClick={() => handleMarkRead(sub.id, !sub.isRead)}
+                    <TableCell
+                      align="right"
+                      onClick={(e) => e.stopPropagation()}
+                      sx={{
+                        width: 100,
+                        minWidth: 100,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          gap: 0.75,
+                        }}
                       >
-                        {sub.isRead ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </DashboardIconButton>
-                      <DashboardIconButton
-                        aria-label="Delete submission"
-                        onClick={() => { setDeleteTarget(sub.id); setDeleteConfirmOpen(true); }}
-                      >
-                        <Trash2 size={16} />
-                      </DashboardIconButton>
+                        <Tooltip
+                          title={sub.isRead ? "Mark as unread" : "Mark as read"}
+                        >
+                          <IconButton
+                            size="small"
+                            aria-label={
+                              sub.isRead ? "Mark as unread" : "Mark as read"
+                            }
+                            onClick={() => handleMarkRead(sub.id, !sub.isRead)}
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              color: colors.text,
+                              bgcolor: alpha(colors.text, 0.08),
+
+                              "& svg": {
+                                display: "block",
+                                stroke: "currentColor",
+                              },
+
+                              "&:hover": {
+                                bgcolor: alpha(colors.text, 0.14),
+                              },
+                            }}
+                          >
+                            {sub.isRead ? (
+                              <EyeOff size={17} />
+                            ) : (
+                              <Eye size={17} />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Delete submission">
+                          <IconButton
+                            size="small"
+                            aria-label="Delete submission"
+                            onClick={() => {
+                              setDeleteTarget(sub.id);
+                              setDeleteConfirmOpen(true);
+                            }}
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              color: muiTheme.palette.error.main,
+                              bgcolor: alpha(muiTheme.palette.error.main, 0.1),
+
+                              "& svg": {
+                                display: "block",
+                                stroke: "currentColor",
+                              },
+
+                              "&:hover": {
+                                bgcolor: alpha(
+                                  muiTheme.palette.error.main,
+                                  0.16,
+                                ),
+                              },
+                            }}
+                          >
+                            <Trash2 size={17} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </DashboardTableRow>
                 ))}
                 {submissions.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={isMobile ? 5 : 6} sx={{ textAlign: 'center', py: 4, color: alpha(colors.text, 0.5) }}>
+                    <TableCell
+                      colSpan={isMobile ? 5 : 6}
+                      sx={{
+                        textAlign: "center",
+                        py: 4,
+                        color: alpha(colors.text, 0.5),
+                      }}
+                    >
                       No submissions match your filters.
                     </TableCell>
                   </TableRow>
@@ -494,15 +703,23 @@ const FormsTab = memo(({ website, websiteId }) => {
       >
         {detailSubmission && (
           <>
-            <DialogTitle id="submission-detail-title" sx={{ color: colors.text }}>
+            <DialogTitle
+              id="submission-detail-title"
+              sx={{ color: colors.text }}
+            >
               Form Submission
-              <Typography variant="caption" display="block" sx={{ color: alpha(colors.text, 0.6) }}>
+              <Typography
+                variant="caption"
+                display="block"
+                sx={{ color: alpha(colors.text, 0.6) }}
+              >
                 {new Date(detailSubmission.createdAt).toLocaleString()}
               </Typography>
             </DialogTitle>
             <DialogContent dividers>
               {/* Submitter info */}
-              {(detailSubmission.submitterName || detailSubmission.submitterEmail) && (
+              {(detailSubmission.submitterName ||
+                detailSubmission.submitterEmail) && (
                 <Box sx={{ mb: 2 }}>
                   {detailSubmission.submitterName && (
                     <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -510,9 +727,13 @@ const FormsTab = memo(({ website, websiteId }) => {
                     </Typography>
                   )}
                   {detailSubmission.submitterEmail && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
                       <Mail size={14} />
-                      <Typography variant="body2">{detailSubmission.submitterEmail}</Typography>
+                      <Typography variant="body2">
+                        {detailSubmission.submitterEmail}
+                      </Typography>
                     </Box>
                   )}
                 </Box>
@@ -522,18 +743,35 @@ const FormsTab = memo(({ website, websiteId }) => {
               {Array.isArray(detailSubmission.formData) &&
                 detailSubmission.formData.map((field, idx) => (
                   <Box key={`${field.fieldName}-${idx}`} sx={{ mb: 1.5 }}>
-                    <Typography variant="caption" sx={{ color: alpha(colors.text, 0.6), fontWeight: 600, textTransform: 'uppercase' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: alpha(colors.text, 0.6),
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                      }}
+                    >
                       {field.fieldName}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: colors.text, whiteSpace: 'pre-wrap' }}>
-                      {String(field.fieldValue || '')}
+                    <Typography
+                      variant="body2"
+                      sx={{ color: colors.text, whiteSpace: "pre-wrap" }}
+                    >
+                      {String(field.fieldValue || "")}
                     </Typography>
                   </Box>
                 ))}
 
               {/* Status chips */}
-              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                {detailSubmission.isSpam && <Chip label="Spam" size="small" color="error" icon={<AlertTriangle size={14} />} />}
+              <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+                {detailSubmission.isSpam && (
+                  <Chip
+                    label="Spam"
+                    size="small"
+                    color="error"
+                    icon={<AlertTriangle size={14} />}
+                  />
+                )}
                 {detailSubmission.isRead ? (
                   <Chip label="Read" size="small" variant="outlined" />
                 ) : (
@@ -541,29 +779,42 @@ const FormsTab = memo(({ website, websiteId }) => {
                 )}
               </Box>
             </DialogContent>
-            <DialogActions sx={{ flexWrap: 'wrap', gap: 1, p: 2 }}>
+            <DialogActions sx={{ flexWrap: "wrap", gap: 1, p: 2 }}>
               <DashboardActionButton
                 variant="outlined"
                 size="small"
-                onClick={() => handleMarkRead(detailSubmission.id, !detailSubmission.isRead)}
-                startIcon={detailSubmission.isRead ? <EyeOff size={14} /> : <Eye size={14} />}
+                onClick={() =>
+                  handleMarkRead(detailSubmission.id, !detailSubmission.isRead)
+                }
+                startIcon={
+                  detailSubmission.isRead ? (
+                    <EyeOff size={14} />
+                  ) : (
+                    <Eye size={14} />
+                  )
+                }
               >
-                {detailSubmission.isRead ? 'Mark Unread' : 'Mark Read'}
+                {detailSubmission.isRead ? "Mark Unread" : "Mark Read"}
               </DashboardActionButton>
               <DashboardActionButton
                 variant="outlined"
                 size="small"
-                onClick={() => handleMarkSpam(detailSubmission.id, !detailSubmission.isSpam)}
+                onClick={() =>
+                  handleMarkSpam(detailSubmission.id, !detailSubmission.isSpam)
+                }
                 startIcon={<AlertTriangle size={14} />}
               >
-                {detailSubmission.isSpam ? 'Not Spam' : 'Mark Spam'}
+                {detailSubmission.isSpam ? "Not Spam" : "Mark Spam"}
               </DashboardActionButton>
               <DashboardActionButton
                 variant="outlined"
                 size="small"
-                onClick={() => { setDeleteTarget(detailSubmission.id); setDeleteConfirmOpen(true); }}
+                onClick={() => {
+                  setDeleteTarget(detailSubmission.id);
+                  setDeleteConfirmOpen(true);
+                }}
                 startIcon={<Trash2 size={14} />}
-                sx={{ color: 'error.main', borderColor: 'error.main' }}
+                sx={{ color: "error.main", borderColor: "error.main" }}
               >
                 Delete
               </DashboardActionButton>
@@ -575,9 +826,16 @@ const FormsTab = memo(({ website, websiteId }) => {
       {/* Delete confirmation */}
       <ConfirmationDialog
         open={deleteConfirmOpen}
-        onClose={() => { setDeleteConfirmOpen(false); setDeleteTarget(null); }}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setDeleteTarget(null);
+        }}
         onConfirm={handleDelete}
-        title={Array.isArray(deleteTarget) ? `Delete ${deleteTarget.length} submissions?` : 'Delete submission?'}
+        title={
+          Array.isArray(deleteTarget)
+            ? `Delete ${deleteTarget.length} submissions?`
+            : "Delete submission?"
+        }
         message="This action cannot be undone."
         variant="danger"
         confirmText="Delete"
@@ -586,6 +844,6 @@ const FormsTab = memo(({ website, websiteId }) => {
   );
 });
 
-FormsTab.displayName = 'FormsTab';
+FormsTab.displayName = "FormsTab";
 
 export default FormsTab;

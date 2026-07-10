@@ -437,6 +437,33 @@ describe("ContactBlock", () => {
     expect(screen.queryByLabelText("Name")).not.toBeInTheDocument();
   });
 
+  it("updates rendered fields when formFields change after mount", () => {
+    const { rerender } = render(
+      <ContactBlock block={makeBlock({ layout: "split-info", showForm: true })} />,
+    );
+
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+
+    rerender(
+      <ContactBlock
+        block={makeBlock({
+          layout: "split-info",
+          showForm: true,
+          formFields: [
+            { label: "Full Name", fieldType: "text", required: true },
+            { label: "Test", fieldType: "text", required: false },
+            { label: "Comments", fieldType: "textarea", required: true },
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByLabelText("Full Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Test")).toBeInTheDocument();
+    expect(screen.getByLabelText("Comments")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Name")).not.toBeInTheDocument();
+  });
+
   // 35
   it("split-info hides form when showForm=false", () => {
     renderBlock({ layout: "split-info", showForm: false });

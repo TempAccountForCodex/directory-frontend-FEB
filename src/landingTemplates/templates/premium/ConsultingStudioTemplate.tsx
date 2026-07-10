@@ -18,6 +18,14 @@ import {
 } from "lucide-react";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+
+const CONSULTING_CONTACT_FIELDS = [
+  { label: "Your Name" },
+  { label: "Number" },
+  { label: "Email" },
+  { label: "Type Your Message", fieldType: "textarea" },
+];
 
 function scrollToSection(sectionId: string) {
   const section = document.getElementById(sectionId);
@@ -243,6 +251,12 @@ function ConsultingStudioHero({ data }: { data: TemplateProps["data"] }) {
 }
 
 function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      CONSULTING_CONTACT_FIELDS,
+      data.websiteId,
+      "consulting-contact-form",
+    );
   const aboutImages = (data.gallery ?? []).slice(0, 3);
   const projectCards = (data.gallery ?? []).slice(2, 5);
   const processSteps = [
@@ -840,6 +854,7 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                       <Box
                         component="input"
                         placeholder="Your Name"
+                        {...getFieldProps("Your Name")}
                         sx={{
                           width: "100%",
                           height: 52,
@@ -859,6 +874,7 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                       <Box
                         component="input"
                         placeholder="Number"
+                        {...getFieldProps("Number")}
                         sx={{
                           width: "100%",
                           height: 52,
@@ -878,6 +894,7 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                       <Box
                         component="input"
                         placeholder="Email"
+                        {...getFieldProps("Email")}
                         sx={{
                           width: "100%",
                           height: 52,
@@ -897,6 +914,7 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                       <Box
                         component="textarea"
                         placeholder="Type Your Message"
+                        {...getFieldProps("Type Your Message")}
                         sx={{
                           width: "100%",
                           minHeight: 148,
@@ -916,9 +934,26 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                   </Grid>
                 </Grid>
 
+                {status === "success" && (
+                  <Typography
+                    sx={{ mt: 2, color: "#0a7d18", fontWeight: 600 }}
+                  >
+                    Thanks! Your message has been sent.
+                  </Typography>
+                )}
+                {status === "error" && (
+                  <Typography
+                    sx={{ mt: 2, color: "#b3261e", fontWeight: 600 }}
+                  >
+                    {errorMessage}
+                  </Typography>
+                )}
                 <FadeIn delay={0.42}>
                   <Button
+                    type="button"
                     variant="contained"
+                    disabled={status === "loading"}
+                    onClick={handleSubmit}
                     sx={{
                       mt: 3.2,
                       bgcolor: "#172041",
@@ -933,7 +968,7 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
                       "&:hover": { bgcolor: "#10182f", boxShadow: "none" },
                     }}
                   >
-                    Submit Message
+                    {status === "loading" ? "Sending…" : "Submit Message"}
                   </Button>
                 </FadeIn>
               </Box>

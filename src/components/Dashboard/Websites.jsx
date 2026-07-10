@@ -27,6 +27,7 @@ import {
   ArrowLeft,
   ChartBar,
   CircleCheck,
+  Copy,
   Eye,
   EyeOff,
   Globe,
@@ -167,6 +168,109 @@ const getWebsiteId = (website) =>
   website?.website?.website_id;
 
 const isSameWebsiteId = (left, right) => String(left) === String(right);
+
+const slugifyWebsiteValue = (value = "") =>
+  value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const buildCloneDefaults = (website, existingWebsites = []) => {
+  const existingNames = new Set(
+    existingWebsites
+      .map((item) => item?.name?.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const existingSlugs = new Set(
+    existingWebsites
+      .map((item) => item?.slug?.trim().toLowerCase())
+      .filter(Boolean),
+  );
+
+  const baseName = `${website?.name || "Website"} Copy`;
+  const baseSlug =
+    slugifyWebsiteValue(
+      `${website?.slug || website?.name || "website"}-copy`,
+    ) || "website-copy";
+
+  let nextName = baseName;
+  let nextSlug = baseSlug;
+  let suffix = 2;
+
+  while (
+    existingNames.has(nextName.trim().toLowerCase()) ||
+    existingSlugs.has(nextSlug.toLowerCase())
+  ) {
+    nextName = `${baseName} ${suffix}`;
+    nextSlug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+
+  return { name: nextName, slug: nextSlug };
+};
+
+const getApiErrorMessage = (err, fallbackMessage) => {
+  const responseData = err?.response?.data;
+  const nestedMessage =
+    responseData?.message ||
+    responseData?.error?.message ||
+    responseData?.error?.details?.message;
+
+  const validationErrors =
+    responseData?.errors ||
+    responseData?.error?.errors ||
+    responseData?.details ||
+    responseData?.error?.details;
+
+  if (Array.isArray(validationErrors) && validationErrors.length > 0) {
+    const firstError = validationErrors[0];
+    if (typeof firstError === "string") {
+      return firstError;
+    }
+    if (firstError?.msg) {
+      return firstError.msg;
+    }
+    if (firstError?.message) {
+      return firstError.message;
+    }
+  }
+
+  if (typeof validationErrors === "string" && validationErrors.trim()) {
+    return validationErrors;
+  }
+
+  return nestedMessage || err?.message || fallbackMessage;
+};
+
+const pickWebsiteClonePayload = (website, name, slug) => {
+  const resolvedName = name.trim();
+  const resolvedSlug = slug.trim();
+
+  return {
+    name: resolvedName,
+    slug: resolvedSlug,
+    websiteName: resolvedName,
+    websiteSlug: resolvedSlug,
+    title: resolvedName,
+    primaryColor: website?.primaryColor || website?.primary_color || "#378C92",
+    isPublic:
+      typeof website?.isPublic === "boolean"
+        ? website.isPublic
+        : typeof website?.is_public === "boolean"
+          ? website.is_public
+          : true,
+    templateId:
+      website?.templateId ||
+      website?.template_id ||
+      website?.frontendTemplateId ||
+      website?.frontend_template_id ||
+      null,
+    sourceWebsiteId:
+      website?.id || website?.websiteId || website?.website_id || null,
+  };
+};
 
 const extractWebsiteList = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -482,6 +586,18 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const [deleting, setDeleting] = useState(false);
+
+  // Clone / duplicate website state
+
+  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
+
+  const [websiteToClone, setWebsiteToClone] = useState(null);
+
+  const [cloneFormData, setCloneFormData] = useState({ name: "", slug: "" });
+
+  const [cloneError, setCloneError] = useState(null);
+
+  const [cloning, setCloning] = useState(false);
 
   // Search state for server-side filtering
 
@@ -1226,6 +1342,98 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
     setSelectedWebsiteForAnalytics(website);
 
     setAnalyticsDialogOpen(true);
+  };
+
+  const handleOpenCloneDialog = (website) => {
+    const defaults = buildCloneDefaults(website, websites);
+
+    setWebsiteToClone(website);
+
+    setCloneFormData(defaults);
+
+    setCloneError(null);
+
+    setCloneDialogOpen(true);
+  };
+
+  const handleCloneWebsite = async () => {
+    if (
+      !websiteToClone ||
+      !cloneFormData.name.trim() ||
+      !cloneFormData.slug.trim()
+    ) {
+      return;
+    }
+
+    try {
+      setCloning(true);
+
+      setCloneError(null);
+
+      const websiteId = await resolveWebsiteIdForAction(websiteToClone);
+      const payload = pickWebsiteClonePayload(
+        websiteToClone,
+        cloneFormData.name,
+        cloneFormData.slug,
+      );
+      const candidateEndpoints = [
+        `/websites/${websiteId}/clone`,
+
+        `/websites/${websiteId}/duplicate`,
+      ];
+      let response = null;
+      let lastError = null;
+
+      for (const endpoint of candidateEndpoints) {
+        try {
+          response = await apiClient.post(endpoint, payload);
+
+          if (response?.data?.success === false) {
+            throw new Error(
+              response.data.message || "Clone request was rejected",
+            );
+          }
+
+          break;
+        } catch (err) {
+          lastError = err;
+          const status = err?.response?.status;
+
+          if (status !== 404 && status !== 405) {
+            throw err;
+          }
+        }
+      }
+
+      if (!response) {
+        throw lastError || new Error("Clone endpoint not found");
+      }
+
+      const clonedWebsite =
+        response?.data?.data || response?.data?.website || response?.data;
+
+      setCloneDialogOpen(false);
+
+      setWebsiteToClone(null);
+
+      setCloneFormData({ name: "", slug: "" });
+
+      await fetchWebsites(1, true);
+
+      fetchStats();
+
+      const clonedWebsiteId = getWebsiteId(clonedWebsite);
+
+      if (clonedWebsiteId) {
+        navigate(`/dashboard/websites/${clonedWebsiteId}/manage/overview`);
+      }
+    } catch (err) {
+      console.error("Error cloning website:", err);
+
+      setCloneError(getApiErrorMessage(err, "Failed to clone website"));
+    } finally {
+      setCloning(false);
+    }
   };
 
   const handleOpenDeleteDialog = (website) => {
@@ -2193,6 +2401,35 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                             }}
                           >
                             Team
+                          </Button>
+                        )}
+
+                        {/* Clone / duplicate — OWNER only */}
+
+                        {websiteRole === "OWNER" && (
+                          <Button
+                            size="small"
+                            startIcon={<Copy size={18} />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              handleOpenCloneDialog(website);
+                            }}
+                            sx={{
+                              color: colors.primary,
+
+                              textTransform: "none",
+
+                              fontWeight: 600,
+
+                              minHeight: 36,
+
+                              "&:hover": {
+                                bgcolor: alpha(colors.primary, 0.1),
+                              },
+                            }}
+                          >
+                            Clone
                           </Button>
                         )}
 
@@ -3842,6 +4079,141 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
+
+      {/* Clone / Duplicate Website Dialog */}
+
+      <Dialog
+        open={cloneDialogOpen}
+        onClose={() => !cloning && setCloneDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: colors.bgCard,
+
+            borderRadius: 3,
+
+            border: `1px solid ${colors.border}`,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            color: colors.text,
+
+            fontWeight: 700,
+
+            borderBottom: `0.5px solid ${colors.border}`,
+          }}
+        >
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="h6" fontWeight={700}>
+              Clone Website
+            </Typography>
+
+            <IconButton
+              size="small"
+              onClick={() => setCloneDialogOpen(false)}
+              disabled={cloning}
+            >
+              <X size={18} />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ borderColor: colors.border, pt: 3 }}>
+          <Alert severity="info" sx={{ mb: 3 }}>
+            This creates a new copy of{" "}
+            <Box component="span" sx={{ fontWeight: 700 }}>
+              {websiteToClone?.name}
+            </Box>{" "}
+            with its own name and address. The original stays unchanged.
+          </Alert>
+
+          {cloneError && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {cloneError}
+            </Alert>
+          )}
+
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <DashboardInput
+              label="New website name"
+              fullWidth
+              value={cloneFormData.name}
+              onChange={(e) =>
+                setCloneFormData((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }))
+              }
+              disabled={cloning}
+              placeholder="e.g., My Website Copy"
+            />
+
+            <DashboardInput
+              label="New website slug"
+              fullWidth
+              value={cloneFormData.slug}
+              onChange={(e) =>
+                setCloneFormData((prev) => ({
+                  ...prev,
+                  slug: slugifyWebsiteValue(e.target.value),
+                }))
+              }
+              disabled={cloning}
+              placeholder="my-website-copy"
+              helperText="Used in the website address. Lowercase letters, numbers, and dashes."
+            />
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCloneDialogOpen(false)} disabled={cloning}>
+            Cancel
+          </Button>
+
+          <Button
+            onClick={handleCloneWebsite}
+            variant="contained"
+            disabled={
+              cloning ||
+              !cloneFormData.name.trim() ||
+              !cloneFormData.slug.trim()
+            }
+            startIcon={
+              cloning ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <Copy size={16} />
+              )
+            }
+            sx={{
+              background: colors.primary,
+
+              color: "#fff",
+
+              textTransform: "none",
+
+              fontWeight: 600,
+
+              "&:hover": { background: colors.primary },
+
+              "&.Mui-disabled": {
+                background: alpha(colors.textSecondary, 0.2),
+
+                color: alpha(colors.text, 0.4),
+              },
+            }}
+          >
+            {cloning ? "Cloning..." : "Clone Website"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={deleteDialogOpen}

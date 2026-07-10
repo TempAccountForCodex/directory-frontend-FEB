@@ -205,6 +205,18 @@ function setupAxiosMocks(websites = mockWebsites) {
     }
     return Promise.resolve({ data: {} });
   });
+  mockedAxios.post.mockResolvedValue({
+    data: {
+      success: true,
+      data: {
+        id: 99,
+        name: 'My Website Copy',
+        slug: 'my-website-copy',
+        status: 'draft',
+        role: 'OWNER',
+      },
+    },
+  });
 }
 
 function renderWebsites(props = {}) {
@@ -352,6 +364,43 @@ describe('Websites Multi-Tenancy (Step 7.4)', () => {
         expect(editButton).toBeDisabled();
       }
     }
+  });
+
+  it('Clone button opens dialog and submits clone request for editable website', async () => {
+    renderWebsites();
+    await waitFor(() => {
+      expect(screen.getByText('My Website')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('clone-website-1'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Clone Website' })).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('New Website Name'), {
+      target: { value: 'My Website Clone' },
+    });
+    fireEvent.change(screen.getByLabelText('Slug'), {
+      target: { value: 'my-website-clone' },
+    });
+
+    const cloneButtons = screen.getAllByRole('button', { name: 'Clone Website' });
+    fireEvent.click(cloneButtons[cloneButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith('/websites/1/clone', {
+        name: 'My Website Clone',
+        slug: 'my-website-clone',
+        websiteName: 'My Website Clone',
+        websiteSlug: 'my-website-clone',
+        title: 'My Website Clone',
+        primaryColor: '#378C92',
+        isPublic: true,
+        templateId: null,
+        sourceWebsiteId: 1,
+      });
+    });
   });
 
   // Test 9

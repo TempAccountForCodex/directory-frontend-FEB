@@ -16,6 +16,13 @@ import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOu
 import { motion } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
 import { buildStoreTheme, rgba } from "./theme";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+
+const STORE_PAWS_CONTACT_FIELDS = [
+  { label: "Full name" },
+  { label: "Email address" },
+  { label: "Tell us about your dog brand", fieldType: "textarea" },
+];
 
 const defaultHeadingFont = '"Questrial", "Inter", sans-serif';
 const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
@@ -227,15 +234,12 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
     window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   };
 
-  const handleContact = () => {
-    if (data.contact?.email) {
-      window.location.href = `mailto:${data.contact.email}`;
-      return;
-    }
-    if (data.contact?.phone) {
-      window.location.href = `tel:${data.contact.phone}`;
-    }
-  };
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      STORE_PAWS_CONTACT_FIELDS,
+      data.websiteId,
+      "storepaws-contact-form",
+    );
 
   return (
     <Box
@@ -1092,6 +1096,7 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   placeholder="Full name"
                   size="small"
                   fullWidth
+                  {...getFieldProps("Full name")}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       bgcolor: "rgba(255,255,255,0.08)",
@@ -1105,6 +1110,7 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   placeholder="Email address"
                   size="small"
                   fullWidth
+                  {...getFieldProps("Email address")}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       bgcolor: "rgba(255,255,255,0.08)",
@@ -1120,6 +1126,7 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fullWidth
                   multiline
                   minRows={4}
+                  {...getFieldProps("Tell us about your dog brand")}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       bgcolor: "rgba(255,255,255,0.08)",
@@ -1129,8 +1136,20 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 />
+                {status === "success" && (
+                  <Typography sx={{ color: "#c9ffd6", fontWeight: 600 }}>
+                    Thanks! Your enquiry has been sent.
+                  </Typography>
+                )}
+                {status === "error" && (
+                  <Typography sx={{ color: "#ffd4c9", fontWeight: 600 }}>
+                    {errorMessage}
+                  </Typography>
+                )}
                 <Button
-                  onClick={handleContact}
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={status === "loading"}
                   endIcon={<ArrowOutwardIcon />}
                   sx={{
                     alignSelf: "flex-start",
@@ -1143,7 +1162,7 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                     "&:hover": { bgcolor: "#fff" },
                   }}
                 >
-                  Send enquiry
+                  {status === "loading" ? "Sending…" : "Send enquiry"}
                 </Button>
               </Stack>
             </Box>

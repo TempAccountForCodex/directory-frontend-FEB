@@ -16,6 +16,14 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+
+const STORE_PREMIUM_CONTACT_FIELDS = [
+  { label: "Name" },
+  { label: "Email" },
+  { label: "Phone" },
+  { label: "Message", fieldType: "textarea" },
+];
 
 const headingFont = '"Poppins", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Manrope", "Avenir Next", "Segoe UI", sans-serif';
@@ -133,6 +141,16 @@ const benefitItems = [
 type StorePage = "home" | "shop" | "about" | "contact";
 
 const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const {
+    status: contactStatus,
+    errorMessage: contactError,
+    getFieldProps: getContactFieldProps,
+    handleSubmit: handleContactSubmit,
+  } = useTemplateContactForm(
+    STORE_PREMIUM_CONTACT_FIELDS,
+    data.websiteId,
+    "store-premium-contact-form",
+  );
   const navigate = useNavigate();
   const { templateId = "store-premium", pageId } = useParams<{
     templateId?: string;
@@ -1535,12 +1553,14 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 variant="outlined"
                 fullWidth
                 sx={fieldStyles}
+                {...getContactFieldProps("Name")}
               />
               <TextField
                 label="Email"
                 variant="outlined"
                 fullWidth
                 sx={fieldStyles}
+                {...getContactFieldProps("Email")}
               />
             </Box>
             <TextField
@@ -1548,6 +1568,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               variant="outlined"
               fullWidth
               sx={{ mt: 1.6, ...fieldStyles }}
+              {...getContactFieldProps("Phone")}
             />
             <TextField
               label="Message"
@@ -1556,9 +1577,23 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               multiline
               minRows={4}
               sx={{ mt: 1.6, ...fieldStyles }}
+              {...getContactFieldProps("Message")}
             />
+            {contactStatus === "success" && (
+              <Typography sx={{ mt: 1.6, color: "#0a7d18", fontWeight: 600 }}>
+                Thanks! Your enquiry has been sent.
+              </Typography>
+            )}
+            {contactStatus === "error" && (
+              <Typography sx={{ mt: 1.6, color: "#b3261e", fontWeight: 600 }}>
+                {contactError}
+              </Typography>
+            )}
             <Button
               variant="contained"
+              type="button"
+              disabled={contactStatus === "loading"}
+              onClick={handleContactSubmit}
               sx={{
                 mt: 2.2,
                 width: "100%",
@@ -1574,7 +1609,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
               }}
             >
-              Ask
+              {contactStatus === "loading" ? "Sending…" : "Ask"}
             </Button>
           </Box>
         </FadeIn>

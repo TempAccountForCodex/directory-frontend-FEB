@@ -24,8 +24,15 @@ import {
 import { motion, useScroll, useTransform } from "framer-motion";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 
 const neon = "#46ff16";
+
+const STORE_CONTACT_FIELDS = [
+  { label: "Your Name" },
+  { label: "Email Address" },
+  { label: "Tell us what gear you need", fieldType: "textarea" },
+];
 const bg = "#050505";
 const panel = "#0a0a0a";
 const gridLine = "rgba(70,255,22,0.28)";
@@ -168,6 +175,12 @@ const navItems = [
 ];
 
 const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      STORE_CONTACT_FIELDS,
+      data.websiteId,
+      "store-contact-form",
+    );
   const products = data.products?.length ? data.products : fallbackProducts;
   const heroImage = data.heroBannerUrl || fallbackHero;
   const aboutImage = data.gallery?.[1]?.url || fallbackAbout;
@@ -1007,6 +1020,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Typography>
                 <Box
                   component="form"
+                  onSubmit={handleSubmit}
                   sx={{
                     mt: 2.5,
                     maxWidth: 520,
@@ -1018,6 +1032,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     component="input"
                     type="text"
                     placeholder="Your Name"
+                    {...getFieldProps("Your Name")}
                     sx={{
                       width: "100%",
                       border: "1px solid rgba(0,0,0,0.25)",
@@ -1038,6 +1053,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     component="input"
                     type="email"
                     placeholder="Email Address"
+                    {...getFieldProps("Email Address")}
                     sx={{
                       width: "100%",
                       border: "1px solid rgba(0,0,0,0.25)",
@@ -1058,6 +1074,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     component="textarea"
                     placeholder="Tell us what gear you need"
                     rows={5}
+                    {...getFieldProps("Tell us what gear you need")}
                     sx={{
                       width: "100%",
                       border: "1px solid rgba(0,0,0,0.25)",
@@ -1076,9 +1093,25 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                       },
                     }}
                   />
+                  {status === "success" && (
+                    <Typography
+                      sx={{ color: "#0a7d18", fontSize: "0.9rem", fontWeight: 600 }}
+                    >
+                      Thanks! Your inquiry has been sent.
+                    </Typography>
+                  )}
+                  {status === "error" && (
+                    <Typography
+                      sx={{ color: "#b3261e", fontSize: "0.9rem", fontWeight: 600 }}
+                    >
+                      {errorMessage}
+                    </Typography>
+                  )}
                   <Box sx={{ pt: 0.6 }}>
                     <Button
+                      type="submit"
                       component={motion.button}
+                      disabled={status === "loading"}
                       whileHover={{ y: -2, scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       sx={{
@@ -1094,7 +1127,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                         "&:hover": { bgcolor: "#000" },
                       }}
                     >
-                      Send Inquiry
+                      {status === "loading" ? "Sending…" : "Send Inquiry"}
                     </Button>
                   </Box>
                 </Box>

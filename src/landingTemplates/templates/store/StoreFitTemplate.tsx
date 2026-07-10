@@ -9,6 +9,13 @@ import {
 } from "@mui/material";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+
+const STORE_FIT_CONTACT_FIELDS = [
+  { label: "Name" },
+  { label: "Email" },
+  { label: "Message", fieldType: "textarea" },
+];
 
 import heroImage from "./storeFitAssets/hero-clean.png";
 import yogaImage from "./storeFitAssets/yoga-clean.png";
@@ -101,16 +108,12 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
   const contactAddress =
     data.contact.address || "500 Terry Francine St. San Francisco, CA 94158";
 
-  const handleContact = () => {
-    if (data.contact.email) {
-      window.location.href = `mailto:${data.contact.email}`;
-      return;
-    }
-
-    if (data.contact.phone) {
-      window.location.href = `tel:${data.contact.phone}`;
-    }
-  };
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      STORE_FIT_CONTACT_FIELDS,
+      data.websiteId,
+      "storefit-contact-form",
+    );
 
   return (
     <Box sx={{ bgcolor: palette.paper, color: "#000", overflow: "hidden" }}>
@@ -721,12 +724,14 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fullWidth
                     size="small"
                     sx={fieldStyles}
+                    {...getFieldProps("Name")}
                   />
                   <TextField
                     placeholder="Email"
                     fullWidth
                     size="small"
                     sx={fieldStyles}
+                    {...getFieldProps("Email")}
                   />
                   <TextField
                     placeholder="Message"
@@ -735,9 +740,22 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                     multiline
                     minRows={4}
                     sx={fieldStyles}
+                    {...getFieldProps("Message")}
                   />
+                  {status === "success" && (
+                    <Typography sx={{ color: "#0a7d18", fontWeight: 600 }}>
+                      Thanks! Your message has been sent.
+                    </Typography>
+                  )}
+                  {status === "error" && (
+                    <Typography sx={{ color: "#b3261e", fontWeight: 600 }}>
+                      {errorMessage}
+                    </Typography>
+                  )}
                   <Button
-                    onClick={handleContact}
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={status === "loading"}
                     fullWidth
                     sx={{
                       py: 1.15,
@@ -748,7 +766,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                       "&:hover": { bgcolor: "#000" },
                     }}
                   >
-                    Submit
+                    {status === "loading" ? "Sending…" : "Submit"}
                   </Button>
                 </Stack>
               </Box>

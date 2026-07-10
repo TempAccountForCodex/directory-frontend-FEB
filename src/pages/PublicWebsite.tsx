@@ -19,6 +19,9 @@ import {
 import { apiClient } from "../api/client";
 import DynamicBlockRenderer from "../components/PublicWebsite/DynamicBlockRenderer";
 import BlockErrorBoundary from "../components/PublicWebsite/BlockErrorBoundary";
+import PublicWebsiteIntegrations, {
+  type WebsiteIntegration,
+} from "../components/PublicWebsite/PublicWebsiteIntegrations";
 import { DynamicBlockProvider } from "../context/DynamicBlockContext";
 import {
   BlogArticleSeoContext,
@@ -93,6 +96,7 @@ interface Website {
   id: number;
   name: string;
   slug: string;
+  integrations?: WebsiteIntegration[];
   frontendTemplateId?: string | null;
   primaryColor: string;
   secondaryColor?: string;
@@ -169,10 +173,24 @@ const PublicWebsite: React.FC = () => {
     [blogSeoData, handleSetBlogSeoData],
   );
 
+  const activeIntegrations = useMemo(
+    () => (website?.integrations || []).filter((integration) => integration?.isActive),
+    [website?.integrations],
+  );
+  const hasActiveGaIntegration = useMemo(
+    () =>
+      activeIntegrations.some(
+        (integration) =>
+          integration.integrationType === "GOOGLE_ANALYTICS" &&
+          integration.config?.measurementId,
+      ),
+    [activeIntegrations],
+  );
+
   // Initialize Google Analytics if configured
   const { trackClick, trackFormSubmit } = useGoogleAnalytics({
     measurementId: website?.gaMeasurementId || "",
-    enabled: !!website?.gaMeasurementId,
+    enabled: !!website?.gaMeasurementId && !hasActiveGaIntegration,
     debug: import.meta.env.DEV,
   });
 
@@ -311,10 +329,40 @@ const PublicWebsite: React.FC = () => {
             : [];
         });
 
+        let scopedIntegrations = Array.isArray(websiteData.integrations)
+          ? websiteData.integrations
+          : [];
+
+        if (websiteData.id) {
+          try {
+            const integrationsRes = await apiClient.get(
+              `/websites/${websiteData.id}/integrations`,
+            );
+            const fetchedIntegrations = Array.isArray(integrationsRes.data?.data)
+              ? integrationsRes.data.data
+              : [];
+
+            if (fetchedIntegrations.length > 0 || scopedIntegrations.length === 0) {
+              scopedIntegrations = fetchedIntegrations;
+            }
+          } catch {
+            // Public pages can still use any integrations already present in the slug payload.
+          }
+        }
+
+        scopedIntegrations = scopedIntegrations.filter(
+          (integration: WebsiteIntegration) =>
+            integration &&
+            integration.isActive &&
+            String(integration.websiteId ?? websiteData.id ?? "") ===
+              String(websiteData.id ?? integration.websiteId ?? ""),
+        );
+
         websiteData.pages = sortedPages;
         const normalizedWebsiteData = {
           ...websiteData,
           pages: sortedPages,
+          integrations: scopedIntegrations,
           frontendTemplateId:
             websiteData.frontendTemplateId ||
             inferredFrontendTemplateId ||
@@ -669,6 +717,10 @@ h1, h2, h3, h4, h5, h6 {
           <meta name="twitter:description" content={metaDescription} />
           {ogImage && <meta name="twitter:image" content={ogImage} />}
         </Helmet>
+        <PublicWebsiteIntegrations
+          websiteId={website.id}
+          integrations={website.integrations}
+        />
         <TemplateEngine
           templateId={resolvedFrontendTemplateId}
           data={frontendTemplateData}
@@ -687,6 +739,10 @@ h1, h2, h3, h4, h5, h6 {
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <DynamicBlockProvider>
         <BlogArticleSeoContext.Provider value={blogArticleSeoContextValue}>
+          <PublicWebsiteIntegrations
+            websiteId={website.id}
+            integrations={website.integrations}
+          />
           {/* SEO Meta Tags */}
           <Helmet>
             {/* Basic Meta Tags */}

@@ -244,10 +244,23 @@ export function EditorExtraBlocks({
     <>
       {blocks.map((block, index) => {
         const blockId = block.id ?? block.blockId;
-        const blockType = String(block.type || block.blockType || "").toLowerCase();
+        const rawContent = (block.content as Record<string, any>) || {};
+        // A block persisted as a SECTION wrapper carries its real type in
+        // content.editorBlockType and its live fields in the first inner block.
+        // Resolve to the real type and merge inner + root content (root wins, so
+        // the latest edited fields like `formFields` are used) — otherwise the
+        // wrapper resolves to type "section", renders nothing, and custom fields
+        // never appear on the canvas.
+        const editorBlockType = String(rawContent.editorBlockType || "").toLowerCase();
+        const rawType = String(block.type || block.blockType || "").toLowerCase();
+        const blockType = editorBlockType || rawType;
+        const innerContent =
+          Array.isArray(rawContent.innerBlocks) && rawContent.innerBlocks[0]
+            ? ((rawContent.innerBlocks[0].content as Record<string, any>) || {})
+            : {};
+        const content = { ...innerContent, ...rawContent };
         // Top-level block: field paths are relative to its own content.
         const blockPath = "";
-        const content = (block.content as Record<string, any>) || {};
         const label = String(block.label || blockType || `Block ${index + 1}`);
         const normalizedBlock = { ...block, type: blockType, content };
         const rawCardStyle = (content.cardStyle as Record<string, any>) || {};

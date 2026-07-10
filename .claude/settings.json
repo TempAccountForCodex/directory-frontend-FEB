@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Bash(grep -v \"eslint\\\\|console.log\\\\|^$\")",
+      "Read(//tmp/**)",
+      "Bash(sed -n '/inner content:/,/^ *}/p' /tmp/repro2.txt)",
+      "Bash(ls /c/Users/TechBeast/Desktop/Directory; echo \"=== find prisma/backend anywhere under Desktop \\(maxdepth 6\\) ===\"; find /c/Users/TechBeast/Desktop -maxdepth 6 -name \"schema.prisma\" 2>/dev/null | grep -iv node_modules | head; echo \"=== find integration route/service files ===\"; find /c/Users/TechBeast/Desktop -maxdepth 6 -type f \\\\\\( -iname \"*.controller.js\" -o -iname \"*.service.js\" -o -iname \"*.routes.js\" \\\\\\) 2>/dev/null | grep -iv node_modules | grep -i integ | head)",
+      "Read(//c/Users/TechBeast/Desktop/**)"
     ]
   }
 }

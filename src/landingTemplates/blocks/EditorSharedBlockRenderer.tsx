@@ -5,21 +5,29 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   CircularProgress,
   Divider,
   Drawer,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
   IconButton,
+  MenuItem,
+  Radio,
+  RadioGroup,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import {
   classifyContactField,
-  fieldTypeForKind,
   isEditorPreviewEnvironment,
   isValidEmail,
+  normalizeContactFormFields,
   submitWebsiteFormSubmission,
+  type ContactFormField,
 } from "../../api/formSubmissions";
 import {
   Facebook,
@@ -1025,15 +1033,13 @@ const BeforeAfterEditorPreview: React.FC<{
   );
 };
 
-type SharedContactField = { key: string; label: string };
-
 interface SharedContactFormProps {
   websiteId?: string | number;
   blockId: string | number | undefined;
   blockPath: string;
   formTitle: string;
   buttonText: string;
-  formFields: SharedContactField[];
+  formFields: ContactFormField[];
   formInputSx: Record<string, any>;
   textColor: string;
   headingFont: string;
@@ -1042,6 +1048,22 @@ interface SharedContactFormProps {
   themeColor: string;
   whiteColor: string;
 }
+
+/** Map a Contact field type to the native <input> type. */
+const nativeContactInputType = (fieldType: string): string => {
+  switch (fieldType) {
+    case "email":
+      return "email";
+    case "tel":
+      return "tel";
+    case "number":
+      return "number";
+    case "date":
+      return "date";
+    default:
+      return "text";
+  }
+};
 
 /**
  * Interactive contact form used by the shared "contact" block on both the
@@ -1072,12 +1094,28 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleChange =
-    (key: string) =>
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const nextValue = event.target.value;
-      setValues((prev) => ({ ...prev, [key]: nextValue }));
-    };
+  useEffect(() => {
+    setValues((prev) => {
+      const next: Record<string, string> = {};
+      formFields.forEach((field) => {
+        next[field.key] = prev[field.key] || "";
+      });
+
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(next);
+      if (
+        prevKeys.length === nextKeys.length &&
+        nextKeys.every((key) => prev[key] === next[key])
+      ) {
+        return prev;
+      }
+
+      return next;
+    });
+  }, [formFields]);
+
+  const setValue = (key: string, value: string) =>
+    setValues((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -1087,32 +1125,28 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
     // editable text node while designing.
     if (isEditorPreviewEnvironment()) return;
 
-    const fields = formFields.map((field) => {
-      const kind = classifyContactField(field.label);
-      return {
-        label: field.label,
-        kind,
-        value: (values[field.key] || "").trim(),
-      };
-    });
+    const built = formFields.map((field) => ({
+      ...field,
+      value: (values[field.key] || "").trim(),
+    }));
 
-    const emailField = fields.find((field) => field.kind === "email");
-    const nameField = fields.find((field) => field.kind === "name");
-
-    // Prevent empty/invalid submissions: core fields required, valid email.
-    const missingRequired = fields.some(
+    const emailField = built.find(
       (field) =>
-        (field.kind === "name" ||
-          field.kind === "email" ||
-          field.kind === "message") &&
-        !field.value,
+        field.fieldType === "email" ||
+        classifyContactField(field.label) === "email",
     );
-    if (missingRequired || fields.every((field) => !field.value)) {
+    const nameField = built.find(
+      (field) => classifyContactField(field.label) === "name",
+    );
+
+    // Prevent empty/invalid submissions: respect each field's required flag.
+    const missingRequired = built.some((field) => field.required && !field.value);
+    if (missingRequired || built.every((field) => !field.value)) {
       setErrorMessage("Please fill in all required fields.");
       setStatus("error");
       return;
     }
-    if (emailField && !isValidEmail(emailField.value)) {
+    if (emailField?.value && !isValidEmail(emailField.value)) {
       setErrorMessage("Please enter a valid email address.");
       setStatus("error");
       return;
@@ -1131,10 +1165,10 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
         submitterName: nameField?.value || undefined,
         submitterEmail: emailField?.value || undefined,
         source: "template-contact-block",
-        formData: fields.map((field) => ({
+        formData: built.map((field) => ({
           fieldName: field.label,
           fieldValue: field.value,
-          fieldType: fieldTypeForKind(field.kind),
+          fieldType: field.fieldType,
         })),
       });
       setStatus("success");
@@ -1143,6 +1177,126 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
       setErrorMessage("Something went wrong. Please try again.");
       setStatus("error");
     }
+  };
+
+  const renderField = (field: ContactFormField) => {
+    const value = values[field.key] || "";
+    const disabled = status === "loading";
+    const placeholder = field.placeholder || field.label;
+
+    if (field.fieldType === "textarea") {
+      return (
+        <TextField
+          key={field.key}
+          size="small"
+          fullWidth
+          multiline
+          minRows={4}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => setValue(field.key, e.target.value)}
+          required={field.required}
+          disabled={disabled}
+          inputProps={{ "aria-label": field.label }}
+          sx={formInputSx}
+        />
+      );
+    }
+
+    if (field.fieldType === "select") {
+      return (
+        <TextField
+          key={field.key}
+          select
+          size="small"
+          fullWidth
+          value={value}
+          onChange={(e) => setValue(field.key, e.target.value)}
+          required={field.required}
+          disabled={disabled}
+          SelectProps={{ displayEmpty: true }}
+          inputProps={{ "aria-label": field.label }}
+          sx={formInputSx}
+        >
+          <MenuItem value="">
+            <em>{placeholder}</em>
+          </MenuItem>
+          {field.options.map((opt) => (
+            <MenuItem key={opt} value={opt}>
+              {opt}
+            </MenuItem>
+          ))}
+        </TextField>
+      );
+    }
+
+    if (field.fieldType === "checkbox") {
+      return (
+        <FormControlLabel
+          key={field.key}
+          sx={{ color: textColor, m: 0 }}
+          control={
+            <Checkbox
+              checked={Boolean(value)}
+              disabled={disabled}
+              onChange={(e) => setValue(field.key, e.target.checked ? "Yes" : "")}
+              sx={{ color: textColor, "&.Mui-checked": { color: themeColor } }}
+            />
+          }
+          label={placeholder}
+        />
+      );
+    }
+
+    if (field.fieldType === "radio") {
+      return (
+        <FormControl key={field.key} disabled={disabled}>
+          <FormLabel
+            sx={{ color: textColor, "&.Mui-focused": { color: textColor } }}
+          >
+            {field.label}
+          </FormLabel>
+          <RadioGroup
+            value={value}
+            onChange={(e) => setValue(field.key, e.target.value)}
+          >
+            {field.options.map((opt) => (
+              <FormControlLabel
+                key={opt}
+                value={opt}
+                label={opt}
+                sx={{ color: textColor }}
+                control={
+                  <Radio
+                    sx={{
+                      color: textColor,
+                      "&.Mui-checked": { color: themeColor },
+                    }}
+                  />
+                }
+              />
+            ))}
+          </RadioGroup>
+        </FormControl>
+      );
+    }
+
+    // text | email | tel | number | date
+    return (
+      <TextField
+        key={field.key}
+        size="small"
+        fullWidth
+        type={nativeContactInputType(field.fieldType)}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => setValue(field.key, e.target.value)}
+        required={field.required}
+        disabled={disabled}
+        inputProps={{ "aria-label": field.label }}
+        sx={formInputSx}
+      />
+    );
   };
 
   return (
@@ -1173,24 +1327,7 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
       )}
       {status === "error" && <Alert severity="error">{errorMessage}</Alert>}
 
-      {formFields.map((field) => {
-        const isMessage = classifyContactField(field.label) === "message";
-        return (
-          <TextField
-            key={field.key}
-            size="small"
-            fullWidth
-            multiline={isMessage}
-            minRows={isMessage ? 4 : undefined}
-            placeholder={field.label}
-            value={values[field.key] || ""}
-            onChange={handleChange(field.key)}
-            disabled={status === "loading"}
-            inputProps={{ "aria-label": field.label }}
-            sx={formInputSx}
-          />
-        );
-      })}
+      {formFields.map((field) => renderField(field))}
 
       <Button
         type="submit"
@@ -2183,43 +2320,10 @@ export const renderEditorSharedBlock = ({
   }
 
   if (blockType === "contact") {
-    const placeholderFields = [
-      block.content?.fullNamePlaceholder || "Full name",
-      block.content?.emailPlaceholder || "Email address",
-      block.content?.messagePlaceholder || "Message",
-    ];
-    const fields = Array.isArray(block.content?.fields)
-      ? block.content.fields
-      : placeholderFields;
-    const formFields = (fields.length ? fields : placeholderFields)
-      .map((field, fieldIndex) => {
-        if (typeof field === "string") {
-          return {
-            key: `${field}-${fieldIndex}`,
-            label: field.trim() || `Field ${fieldIndex + 1}`,
-          };
-        }
-
-        if (field && typeof field === "object") {
-          const label =
-            String(
-              (field as Record<string, unknown>).label ??
-                (field as Record<string, unknown>).placeholder ??
-                "",
-            ).trim() || `Field ${fieldIndex + 1}`;
-
-          return {
-            key: `${label}-${fieldIndex}`,
-            label,
-          };
-        }
-
-        return {
-          key: `field-${fieldIndex}`,
-          label: `Field ${fieldIndex + 1}`,
-        };
-      })
-      .filter((field) => field.label);
+    const formFields = normalizeContactFormFields(
+      block.content?.formFields,
+      block.content,
+    );
 
     const contactDetails = [
       {

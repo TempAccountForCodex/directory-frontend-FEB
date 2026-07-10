@@ -1270,6 +1270,37 @@ const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
           ? content.editorSection.trim()
           : `plan-${index + 1}`;
 
+      const rawInnerBlocks = Array.isArray(content.innerBlocks)
+        ? content.innerBlocks
+        : [];
+      // A Contact widget added from the library is persisted as a plan-section
+      // wrapper: its live-edited fields live on the outer `content`, while the
+      // shared renderer reads the first inner block's content. Overlay the
+      // outer (fully-merged) Contact fields onto that inner block so edited
+      // heading/body/email/phone/address and the `formFields` list always
+      // render on the canvas — never a stale inner mirror. Outer wins, matching
+      // the built-in Contact section and EditorExtraBlocks paths.
+      const innerBlocks =
+        String(content.editorBlockType || "").toUpperCase() === "CONTACT" &&
+        rawInnerBlocks[0]
+          ? [
+              {
+                ...rawInnerBlocks[0],
+                content: {
+                  ...(rawInnerBlocks[0].content || {}),
+                  ...buildContactFormConfig(content),
+                  ...(typeof content.heading === "string"
+                    ? { heading: content.heading }
+                    : {}),
+                  ...(typeof content.body === "string"
+                    ? { body: content.body }
+                    : {}),
+                },
+              },
+              ...rawInnerBlocks.slice(1),
+            ]
+          : rawInnerBlocks;
+
       return {
         blockId: block.id,
         sectionKey,
@@ -1296,9 +1327,7 @@ const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
         afterImage: typeof content.afterImage === "string" ? content.afterImage : undefined,
         beforeLabel: typeof content.beforeLabel === "string" ? content.beforeLabel : undefined,
         afterLabel: typeof content.afterLabel === "string" ? content.afterLabel : undefined,
-        innerBlocks: Array.isArray(content.innerBlocks)
-          ? content.innerBlocks
-          : [],
+        innerBlocks,
         sectionStyle: getSectionStyleValue(content),
         outerSectionStyle: getSectionStyleValue(content, "outerSectionStyle"),
       };
@@ -1614,6 +1643,38 @@ const readString = (
     }
   }
   return fallback;
+};
+
+/**
+ * Carry the Contact block's fully-managed form configuration through the
+ * section field-mapping so the shared renderer can render the editable
+ * `formFields` list (added/removed/reordered fields), not just the defaults.
+ * Only defined keys are included so nothing overwrites existing mapped fields.
+ */
+const buildContactFormConfig = (
+  contact: Record<string, unknown>,
+): Record<string, unknown> => {
+  const config: Record<string, unknown> = {};
+  if (Array.isArray(contact.formFields)) {
+    config.formFields = contact.formFields;
+  }
+  const passthroughStrings: Array<[string, string[]]> = [
+    ["formTitle", ["formTitle"]],
+    ["buttonText", ["buttonText"]],
+    ["fullNamePlaceholder", ["fullNamePlaceholder"]],
+    ["emailPlaceholder", ["emailPlaceholder"]],
+    ["messagePlaceholder", ["messagePlaceholder"]],
+    ["email", ["email", "contactEmail"]],
+    ["phone", ["phone", "contactPhone"]],
+    ["address", ["address", "contactAddress"]],
+  ];
+  for (const [target, keys] of passthroughStrings) {
+    const value = readString(contact, keys);
+    if (value) {
+      config[target] = value;
+    }
+  }
+  return config;
 };
 
 const readArray = <T>(source: Record<string, unknown>, keys: string[]): T[] => {
@@ -1941,6 +2002,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         contact: {
           blockId: contactBlock?.id,
+          ...buildContactFormConfig(contact),
           heading: contactHeading,
           subheading: contactDescription,
           description: contactDescription,
@@ -2107,6 +2169,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         contact: {
           blockId: contactBlock?.id,
+          ...buildContactFormConfig(contact),
           heading: contactHeading,
           subheading: contactDescription,
           description: contactDescription,
@@ -2240,6 +2303,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         contact: {
           blockId: contactBlock?.id,
+          ...buildContactFormConfig(contact),
           heading: contactHeading,
           subheading: contactDescription,
           description: contactDescription,
@@ -2374,6 +2438,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         contact: {
           blockId: contactBlock?.id,
+          ...buildContactFormConfig(contact),
           heading: contactHeading,
           description: contactDescription,
           subheading: contactDescription,
@@ -2523,6 +2588,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         contact: {
           blockId: contactBlock?.id,
+          ...buildContactFormConfig(contact),
           heading: contactHeading,
           description: contactDescription,
           subheading: contactDescription,
@@ -2651,6 +2717,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         contact: {
           blockId: contactBlock?.id,
+          ...buildContactFormConfig(contact),
           heading: contactHeading,
           description: contactDescription,
           subheading: contactDescription,
@@ -2729,6 +2796,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         contact: {
           blockId: contactBlock?.id,
+          ...buildContactFormConfig(contact),
           heading: contactHeading,
           description: contactDescription,
           subheading: contactDescription,
@@ -2800,6 +2868,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         contact: {
           blockId: contactBlock?.id,
+          ...buildContactFormConfig(contact),
           heading: contactHeading,
           description: contactDescription,
           subheading: contactDescription,
@@ -2906,6 +2975,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         contact: {
           blockId: contactBlock?.id,
+          ...buildContactFormConfig(contact),
           heading: contactHeading,
           description: contactDescription,
           buttonLabel: contactButton,
@@ -2995,6 +3065,7 @@ const buildTemplatePreviewBusinessDataImpl = (
       },
       contact: {
         blockId: contactBlock?.id,
+        ...buildContactFormConfig(contact),
         heading: contactHeading,
         description: contactDescription,
         buttonLabel: contactButton,
