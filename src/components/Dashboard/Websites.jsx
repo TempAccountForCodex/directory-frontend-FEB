@@ -2429,7 +2429,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                     elevation={0}
                     sx={{
                       width: "100%",
-                      minHeight: { xs: 430, sm: 462, md: 382, xl: 458 },
+                      minHeight: { xs: 408, sm: 438, md: 358, xl: 430 },
                       position: "relative",
                       overflow: "hidden",
                       borderRadius: "16px",
@@ -2743,7 +2743,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                       sx={{
                         position: "relative",
                         zIndex: 1,
-                        height: { xs: 122, sm: 128, md: 114, xl: 132 },
+                        height: { xs: 104, sm: 110, md: 96, xl: 114 },
                         overflow: "hidden",
                       }}
                     >
@@ -2753,8 +2753,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                           position: "absolute",
                           inset: 0,
                           px: { xs: 1.25, md: 1, lg: 1.2, xl: 1.8 },
-                          // pt: { xs: 0.55, md: 0.45, lg: 0.5, xl: 0.65 },
-                          pb: { xs: 1.15, md: 0.95, lg: 1.05, xl: 1.45 },
+                          pb: { xs: 0.8, md: 0.65, lg: 0.75, xl: 1 },
                           bgcolor: "transparent",
                           display: "flex",
                           flexDirection: "column",
@@ -2848,8 +2847,8 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
                         justifyContent: "flex-end",
                         gap: { xs: 0.75, md: 0.5, xl: 0.85 },
                         px: { xs: 1.25, md: 1, lg: 1.2, xl: 1.8 },
-                        pb: { xs: 1.25, md: 1, lg: 1.2, xl: 1.8 },
-                        pt: { xs: 1.1, md: 0.85, lg: 1, xl: 1.35 },
+                        pb: { xs: 1, md: 0.8, lg: 0.95, xl: 1.35 },
+                        pt: { xs: 0.9, md: 0.7, lg: 0.8, xl: 1 },
                         borderTop: `1px solid ${
                           isDarkCard
                             ? "rgba(255,255,255,0.10)"
