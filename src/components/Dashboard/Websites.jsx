@@ -27,6 +27,7 @@ import {
   ArrowLeft,
   ChartBar,
   CircleCheck,
+  Clock,
   Copy,
   Eye,
   EyeOff,
@@ -36,6 +37,7 @@ import {
   Plus,
   RotateCcw,
   Settings,
+  SlidersHorizontal,
   Trash,
   Trash2,
   Upload,
@@ -61,7 +63,10 @@ import {
   refreshTemplateCache,
 } from "../../templates/templateApi";
 
-import { getFrontendTemplatePreviewImage } from "../../templates/frontendTemplateCatalog";
+import {
+  FRONTEND_TEMPLATE_CATALOG,
+  getFrontendTemplatePreviewImage,
+} from "../../templates/frontendTemplateCatalog";
 import ColorPickerWithAlpha from "../UI/ColorPickerWithAlpha";
 
 import {
@@ -135,6 +140,89 @@ const getOwnerLabel = (website, websiteRole) =>
   website?.ownerName ||
   website?.createdBy?.name ||
   (websiteRole === "OWNER" ? "Owner" : websiteRole);
+
+const getWebsitePageCountLabel = (website) => {
+  const pageCount = Number(
+    website?.pageCount ?? website?.pagesCount ?? website?.website?.pageCount ?? 0,
+  );
+
+  if (!Number.isFinite(pageCount) || pageCount <= 0) {
+    return "1 page";
+  }
+
+  return `${pageCount} page${pageCount === 1 ? "" : "s"}`;
+};
+
+const formatWebsiteUpdatedAt = (value) => {
+  const date = value ? new Date(value) : null;
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return "Updated recently";
+  }
+
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
+
+  if (diffMinutes < 1) return "Updated just now";
+  if (diffMinutes < 60) {
+    return `Updated ${diffMinutes} minute${diffMinutes === 1 ? "" : "s"} ago`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `Updated ${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) {
+    return `Updated ${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+  }
+
+  return `Updated ${date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
+  })}`;
+};
+
+const getWebsiteTemplateLabel = (website, websiteTemplates = [], storeTemplates = []) => {
+  const directTemplateName =
+    website?.template?.name ||
+    website?.templateName ||
+    website?.template_name ||
+    website?.website?.template?.name ||
+    website?.website?.templateName;
+
+  if (directTemplateName) return directTemplateName;
+
+  const frontendTemplateId =
+    website?.frontendTemplateId ||
+    website?.frontend_template_id ||
+    website?.website?.frontendTemplateId ||
+    website?.website?.frontend_template_id;
+
+  if (frontendTemplateId) {
+    const frontendTemplate = FRONTEND_TEMPLATE_CATALOG.find(
+      (template) => template.id === frontendTemplateId,
+    );
+    if (frontendTemplate?.name) return frontendTemplate.name;
+  }
+
+  const templateId =
+    website?.templateId ||
+    website?.template_id ||
+    website?.website?.templateId ||
+    website?.website?.template_id;
+
+  if (templateId) {
+    const template = [...websiteTemplates, ...storeTemplates].find(
+      (item) => String(item.id) === String(templateId),
+    );
+    if (template?.name) return template.name;
+  }
+
+  return null;
+};
 
 /**
 
@@ -1862,56 +1950,347 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
         <Grid container spacing={3}>
           {/* Create New Website Card */}
 
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <Card
               onClick={() => navigate("/dashboard/websites/templates")}
               sx={{
-                aspectRatio: "16/10",
-
-                border: `2px dashed ${alpha(colors.textSecondary, 0.3)}`,
-
-                borderRadius: 2,
-
-                background: alpha(colors.bgCard, 0.3),
-
+                minHeight: { xs: 430, sm: 462, md: 382, xl: 458 },
+                position: "relative",
+                overflow: "hidden",
+                borderRadius: "16px",
+                border: `1px dashed ${
+                  actualTheme === "dark"
+                    ? "rgba(255,255,255,0.16)"
+                    : "rgba(15,23,42,0.16)"
+                }`,
+                bgcolor: actualTheme === "dark" ? colors.bgCard : "#ffffff",
+                boxShadow:
+                  actualTheme === "dark"
+                    ? "0 26px 60px rgba(0,0,0,0.68), 0 8px 18px rgba(0,0,0,0.42), 0 0 0 1px rgba(255,255,255,0.03)"
+                    : "0 3px 18px rgba(0,0,0,0.08)",
                 display: "flex",
-
                 flexDirection: "column",
-
-                alignItems: "center",
-
-                justifyContent: "center",
-
+                justifyContent: "space-between",
+                p: 0,
                 cursor: "pointer",
-
-                transition: "all 0.3s ease",
-
+                transition:
+                  "transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: { xs: 14, md: 10, xl: 14 },
+                  borderRadius: "14px",
+                  border: `1px dashed ${
+                    actualTheme === "dark"
+                      ? "rgba(255,255,255,0.10)"
+                      : "rgba(15,23,42,0.10)"
+                  }`,
+                  pointerEvents: "none",
+                },
                 "&:hover": {
                   borderColor: colors.primary,
-
-                  background: alpha(colors.primary, 0.05),
-
-                  transform: "translateY(-4px)",
+                  transform: "translateY(-3px)",
+                  boxShadow:
+                    actualTheme === "dark"
+                      ? "0 34px 78px rgba(0,0,0,0.78), 0 14px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)"
+                      : "0 14px 38px rgba(15,23,42,0.16)",
+                  "& .create-website-icon": {
+                    bgcolor: colors.primary,
+                    color: "#fff",
+                    transform: "scale(1.04)",
+                  },
+                  "& .create-website-hover-grid": {
+                    opacity: 1,
+                    transform: "translateY(0)",
+                  },
+                  "& .create-website-idle-panel": {
+                    opacity: 0,
+                    transform: "translateY(-8px) scale(0.96)",
+                  },
                 },
               }}
             >
-              <Box sx={{ color: colors.textSecondary, mb: 2 }}>
-                <Plus size={48} />
+              <Box
+                sx={{
+                  position: "relative",
+                  zIndex: 1,
+                  flex: "0 0 auto",
+                  minHeight: { xs: 238, sm: 260, md: 206, xl: 276 },
+                  px: { xs: 2.25, md: 1.5, xl: 2.25 },
+                  pt: { xs: 2.25, md: 1.5, xl: 2.25 },
+                  pb: { xs: 1.75, md: 1.25, xl: 1.75 },
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  background:
+                    actualTheme === "dark"
+                      ? "linear-gradient(145deg, rgba(55,140,146,0.18), rgba(255,255,255,0.035) 42%, rgba(0,0,0,0.16))"
+                      : "linear-gradient(145deg, rgba(55,140,146,0.12), rgba(15,23,42,0.025) 44%, rgba(15,23,42,0.045))",
+                  borderBottom: `1px solid ${
+                    actualTheme === "dark"
+                      ? "rgba(255,255,255,0.08)"
+                      : "rgba(15,23,42,0.08)"
+                  }`,
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    opacity: actualTheme === "dark" ? 0.55 : 0.42,
+                    background:
+                      "radial-gradient(circle at 50% 42%, rgba(55,140,146,0.34), transparent 38%)",
+                    pointerEvents: "none",
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    position: "relative",
+                    zIndex: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1,
+                    width: "100%",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      maxWidth: "calc(100% - 46px)",
+                      px: { xs: 1.25, md: 1, xl: 1.35 },
+                      py: { xs: 0.7, md: 0.55, xl: 0.75 },
+                      borderRadius: "999px",
+                      color: colors.text,
+                      bgcolor:
+                        actualTheme === "dark"
+                          ? "rgba(255,255,255,0.08)"
+                          : "rgba(255,255,255,0.72)",
+                      border: `1px solid ${
+                        actualTheme === "dark"
+                          ? "rgba(255,255,255,0.1)"
+                          : "rgba(15,23,42,0.09)"
+                      }`,
+                      boxShadow:
+                        actualTheme === "dark"
+                          ? "0 10px 24px rgba(0,0,0,0.24)"
+                          : "0 10px 24px rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    <LayoutTemplate size={15} />
+                    <Typography
+                      sx={{
+                        fontSize: {
+                          xs: "0.82rem",
+                          md: "0.66rem",
+                          lg: "0.74rem",
+                          xl: "0.86rem",
+                        },
+                        fontWeight: 800,
+                        lineHeight: 1,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      Template Library
+                    </Typography>
+                  </Box>
+
+                  <Box
+                    className="create-website-icon"
+                    sx={{
+                      width: { xs: 42, md: 34, xl: 46 },
+                      height: { xs: 42, md: 34, xl: 46 },
+                      flexShrink: 0,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: colors.textSecondary,
+                      bgcolor:
+                        actualTheme === "dark"
+                          ? "rgba(255,255,255,0.08)"
+                          : "rgba(255,255,255,0.8)",
+                      border: `1px solid ${
+                        actualTheme === "dark"
+                          ? "rgba(255,255,255,0.1)"
+                          : "rgba(15,23,42,0.09)"
+                      }`,
+                      transition:
+                        "transform 0.22s ease, background-color 0.22s ease, color 0.22s ease",
+                    }}
+                  >
+                    <Plus size={actualTheme === "dark" ? 24 : 22} />
+                  </Box>
+                </Box>
+
+                <Box
+                  className="create-website-idle-panel"
+                  sx={{
+                    position: "relative",
+                    zIndex: 2,
+                    width: { xs: 96, md: 76, xl: 108 },
+                    height: { xs: 96, md: 76, xl: 108 },
+                    mx: "auto",
+                    mt: { xs: 2, md: 1.2, xl: 2.4 },
+                    mb: { xs: 1.2, md: 0.8, xl: 1.4 },
+                    borderRadius: { xs: "22px", md: "18px", xl: "24px" },
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: colors.primary,
+                    bgcolor:
+                      actualTheme === "dark"
+                        ? "rgba(8,12,18,0.42)"
+                        : "rgba(255,255,255,0.64)",
+                    border: `1px solid ${
+                      actualTheme === "dark"
+                        ? "rgba(255,255,255,0.1)"
+                        : "rgba(15,23,42,0.08)"
+                    }`,
+                    boxShadow:
+                      actualTheme === "dark"
+                        ? "0 18px 36px rgba(0,0,0,0.26)"
+                        : "0 18px 36px rgba(15,23,42,0.08)",
+                    transition: "opacity 0.2s ease, transform 0.2s ease",
+                  }}
+                >
+                  <Plus size={actualTheme === "dark" ? 42 : 40} />
+                </Box>
+
+                <Box
+                  className="create-website-hover-grid"
+                  sx={{
+                    position: "absolute",
+                    zIndex: 3,
+                    left: { xs: 18, md: 12, xl: 18 },
+                    right: { xs: 18, md: 12, xl: 18 },
+                    bottom: { xs: 16, md: 12, xl: 16 },
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: { xs: 1, md: 0.75, xl: 1 },
+                    opacity: 0,
+                    transform: "translateY(8px)",
+                    transition: "opacity 0.2s ease, transform 0.2s ease",
+                    pointerEvents: "none",
+                  }}
+                >
+                  {[
+                    { label: "Landing", rows: [88, 68, 46] },
+                    { label: "Store", rows: [72, 86, 54] },
+                    { label: "Portfolio", rows: [58, 92, 62] },
+                    { label: "Directory", rows: [82, 52, 76] },
+                  ].map((item) => (
+                    <Box
+                      key={item.label}
+                      sx={{
+                        minWidth: 0,
+                        borderRadius: { xs: "12px", md: "10px", xl: "12px" },
+                        p: { xs: 1, md: 0.75, xl: 1 },
+                        bgcolor:
+                          actualTheme === "dark"
+                            ? "rgba(8,12,18,0.44)"
+                            : "rgba(255,255,255,0.58)",
+                        border: `1px solid ${
+                          actualTheme === "dark"
+                            ? "rgba(255,255,255,0.08)"
+                            : "rgba(15,23,42,0.07)"
+                        }`,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          mb: 0.8,
+                          color: colors.textSecondary,
+                          fontSize: {
+                            xs: "0.68rem",
+                            md: "0.54rem",
+                            lg: "0.6rem",
+                            xl: "0.72rem",
+                          },
+                          fontWeight: 700,
+                          lineHeight: 1,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {item.label}
+                      </Typography>
+                      {item.rows.map((width, index) => (
+                        <Box
+                          key={`${item.label}-${width}-${index}`}
+                          sx={{
+                            width: `${width}%`,
+                            height: { xs: 5, md: 4, xl: 5 },
+                            mb: index === item.rows.length - 1 ? 0 : 0.55,
+                            borderRadius: "999px",
+                            bgcolor:
+                              index === 0
+                                ? alpha(colors.primary, 0.65)
+                                : actualTheme === "dark"
+                                  ? "rgba(255,255,255,0.14)"
+                                  : "rgba(15,23,42,0.14)",
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  ))}
+                </Box>
               </Box>
 
-              <Typography
-                variant="h6"
-                sx={{ color: colors.text, fontWeight: 600 }}
+              <Box
+                sx={{
+                  position: "relative",
+                  zIndex: 1,
+                  flex: 1,
+                  width: "100%",
+                  px: { xs: 2.5, md: 1.75, xl: 2.5 },
+                  py: { xs: 2.35, md: 1.55, xl: 2.45 },
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  gap: { xs: 1, md: 0.7, xl: 1 },
+                }}
               >
-                Create New Website
-              </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: colors.text,
+                    fontWeight: 800,
+                    fontSize: {
+                      xs: "1.08rem",
+                      md: "0.9rem",
+                      lg: "1rem",
+                      xl: "1.16rem",
+                    },
+                    lineHeight: 1.18,
+                  }}
+                >
+                  Create New Website
+                </Typography>
 
-              <Typography
-                variant="body2"
-                sx={{ color: colors.textSecondary, mt: 1 }}
-              >
-                Start from a template
-              </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: colors.textSecondary,
+                    fontSize: {
+                      xs: "0.82rem",
+                      md: "0.7rem",
+                      lg: "0.78rem",
+                      xl: "0.9rem",
+                    },
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Choose a template and launch a new project from your
+                  dashboard.
+                </Typography>
+              </Box>
             </Card>
           </Grid>
 
@@ -1919,7 +2298,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
 
           {loading &&
             [...Array(6)].map((_, index) => (
-              <Grid item xs={12} sm={6} md={4} key={`skeleton-${index}`}>
+              <Grid item xs={12} sm={6} md={3} key={`skeleton-${index}`}>
                 <SkeletonCard />
               </Grid>
             ))}
@@ -1956,6 +2335,26 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
               const categoryLabel = getWebsiteCategoryLabel(website);
               const ownerLabel = getOwnerLabel(website, websiteRole);
               const description = getWebsiteDescription(website);
+              const templateLabel = getWebsiteTemplateLabel(
+                website,
+                websiteTemplates,
+                storeTemplates,
+              );
+              const pageCountLabel = getWebsitePageCountLabel(website);
+              const updatedAtLabel = formatWebsiteUpdatedAt(
+                website.updatedAt || website.updated_at || website.createdAt,
+              );
+              const statusLabel = String(website.status || "DRAFT").toUpperCase();
+              const isDarkCard = actualTheme === "dark";
+              const teal = "#378C92";
+              const cardBorder = isDarkCard
+                ? colors.panelBorder
+                : "#e4eaf2";
+              const actionHover = isDarkCard
+                ? "rgba(255,255,255,0.07)"
+                : "rgba(55,140,146,0.09)";
+              const cardBg = isDarkCard ? colors.bgCard : "#0f1418";
+              const textSecondary = "rgba(226,232,240,0.72)";
               const canViewAnalytics = canPerformAction(
                 websiteRole,
                 WEBSITE_ACTIONS.VIEW_ANALYTICS,
@@ -1967,552 +2366,650 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
               );
 
               const isShared = websiteRole !== "OWNER";
+              const stopCardAction = (handler) => async (e) => {
+                e.stopPropagation();
+                await handler(e);
+              };
+              const isPublished = website.status === "PUBLISHED";
+              const actionItems = [
+                {
+                  label: "Edit",
+                  Icon: Pencil,
+                  disabled: !canEdit,
+                  tooltip: canEdit ? "Edit" : "You need EDITOR role to edit",
+                  onClick: stopCardAction(async () => {
+                    const websiteId = await resolveWebsiteIdForAction(website);
+                    navigate(`/dashboard/websites/${websiteId}/editor`);
+                  }),
+                },
+                {
+                  label: "Preview",
+                  Icon: Eye,
+                  onClick: stopCardAction(() => handlePreviewWebsite(website)),
+                },
+                {
+                  label: "Analytics",
+                  Icon: ChartBar,
+                  visible: canViewAnalytics,
+                  onClick: stopCardAction(() => handleOpenAnalytics(website)),
+                },
+                {
+                  label: "Team",
+                  Icon: Users,
+                  visible: canManageCollaborators || websiteRole === "OWNER",
+                  onClick: stopCardAction(() => handleOpenCollaboratorModal(website)),
+                },
+                {
+                  label: "Clone",
+                  Icon: Copy,
+                  visible: websiteRole === "OWNER",
+                  onClick: stopCardAction(() => handleOpenCloneDialog(website)),
+                },
+                {
+                  label: isPublished ? "Unpublish" : "Publish",
+                  Icon: isPublished ? EyeOff : Globe,
+                  visible: canPublish,
+                  onClick: stopCardAction(() =>
+                    isPublished
+                      ? handleUnpublish(website)
+                      : handlePublish(website),
+                  ),
+                },
+              ].filter((item) => item.visible !== false);
+              const previewAction = actionItems.find(
+                (item) => item.label === "Preview",
+              );
+              const secondaryActionItems = actionItems.filter(
+                (item) => item.label !== "Preview",
+              );
 
               return (
-                <Grid item xs={12} sm={6} md={4} key={getWebsiteId(website)}>
+                <Grid item xs={12} sm={6} md={3} key={getWebsiteId(website)}>
                   <Card
                     elevation={0}
                     sx={{
-                      minHeight: { xs: 320, sm: 390, lg: 410 },
+                      width: "100%",
+                      minHeight: { xs: 430, sm: 462, md: 382, xl: 458 },
                       position: "relative",
                       overflow: "hidden",
-                      borderRadius: "1em",
-                      border: "none",
-                      color: "#fff",
+                      borderRadius: "16px",
+                      border: `1px solid ${cardBorder}`,
+                      bgcolor: cardBg,
+                      color: "#eef2f8",
                       cursor: "pointer",
                       display: "flex",
-                      alignItems: "flex-end",
-                      p: { xs: 2.5, md: 3 },
-                      isolation: "isolate",
-                      backgroundImage: `linear-gradient(rgba(0,0,0,0.46), rgba(0,0,0,0.5)), url("${escapeCssUrl(cardImage)}")`,
-                      backgroundSize: "cover",
-                      backgroundPosition: websitePreviewImage
-                        ? "top center"
-                        : "center",
-                      boxShadow:
-                        "0 0 0 1px rgba(255,255,255,0.08), 0 4px 24px rgba(0,0,0,0.28), 0 1px 3px rgba(0,0,0,0.18)",
+                      flexDirection: "column",
+                      boxShadow: isDarkCard
+                        ? "0 26px 60px rgba(0,0,0,0.68), 0 8px 18px rgba(0,0,0,0.42), 0 0 0 1px rgba(255,255,255,0.03)"
+                        : "0 3px 18px rgba(0,0,0,0.08)",
                       transition:
-                        "transform 700ms cubic-bezier(0.19, 1, 0.22, 1), box-shadow 700ms cubic-bezier(0.19, 1, 0.22, 1)",
-                      "&::before, &::after": {
-                        content: '""',
-                        position: "absolute",
-                        inset: 0,
-                        transform: "scaleY(0)",
-                        transformOrigin: "bottom",
-                        transition:
-                          "transform 760ms cubic-bezier(0.19, 1, 0.22, 1)",
-                        pointerEvents: "none",
-                        zIndex: 1,
-                      },
-                      "&::before": {
-                        background:
-                          "linear-gradient(to top, rgba(255,255,255,0.55) 0%, transparent 72%)",
-                      },
-                      "&::after": {
-                        background:
-                          "linear-gradient(to top, rgba(255,255,255,0.98) 0%, transparent 100%)",
-                      },
+                        "transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease",
                       "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: `0 10px 34px ${alpha(colors.primary, 0.18)}`,
-                        "&::before, &::after": {
-                          transform: "scaleY(1)",
+                        transform: "translateY(-3px)",
+                        borderColor: teal,
+                        boxShadow: isDarkCard
+                          ? "0 34px 78px rgba(0,0,0,0.78), 0 14px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)"
+                          : "0 14px 38px rgba(15,23,42,0.16)",
+                        "& .website-card-image": {
+                          transform: {
+                            xs: "translateY(-30px)",
+                            md: "translateY(-18px)",
+                            xl: "translateY(-36px)",
+                          },
                         },
-                        "& .website-card-copy": {
-                          color: "#1f2937",
-                        },
-                        "& .website-card-actions": {
+                        "& .website-card-action-tray": {
+                          maxWidth: {
+                            xs: 260,
+                            md: 210,
+                            lg: 240,
+                            xl: 320,
+                          },
                           opacity: 1,
-                          transform: "translateY(0)",
-                          pointerEvents: "auto",
+                          transform: "translateX(0)",
                         },
-                        "& .website-card-border": {
-                          background:
-                            "linear-gradient(135deg, rgba(20,184,166,0.5), rgba(99,102,241,0.3), rgba(255,255,255,0.15))",
+                        "& .website-card-action-item": {
+                          opacity: 1,
+                          transform: "translateX(0)",
+                        },
+                        "& .website-card-preview-label": {
+                          maxWidth: 0,
+                          opacity: 0,
+                          transform: "translateX(8px)",
+                          marginLeft: 0,
+                        },
+                        "& .website-card-preview-button": {
+                          minWidth: {
+                            xs: 38,
+                            md: 33,
+                            lg: 36,
+                            xl: 42,
+                          },
+                          paddingLeft: 0,
+                          paddingRight: 0,
                         },
                       },
                       "&:focus-within": {
-                        transform: "translateY(-4px)",
-                        boxShadow: `0 10px 34px ${alpha(colors.primary, 0.18)}`,
-                        "&::before, &::after": {
-                          transform: "scaleY(1)",
-                        },
-                        "& .website-card-copy": {
-                          color: "#1f2937",
-                        },
-                        "& .website-card-actions": {
+                        borderColor: teal,
+                        "& .website-card-action-tray": {
+                          maxWidth: {
+                            xs: 260,
+                            md: 210,
+                            lg: 240,
+                            xl: 320,
+                          },
                           opacity: 1,
-                          transform: "translateY(0)",
-                          pointerEvents: "auto",
+                          transform: "translateX(0)",
+                        },
+                        "& .website-card-action-item": {
+                          opacity: 1,
+                          transform: "translateX(0)",
+                        },
+                        "& .website-card-preview-label": {
+                          maxWidth: 0,
+                          opacity: 0,
+                          transform: "translateX(8px)",
+                          marginLeft: 0,
+                        },
+                        "& .website-card-preview-button": {
+                          minWidth: {
+                            xs: 38,
+                            md: 33,
+                            lg: 36,
+                            xl: 42,
+                          },
+                          paddingLeft: 0,
+                          paddingRight: 0,
                         },
                       },
                     }}
                     onClick={() => handleCardClick(website)}
                   >
                     <Box
-                      className="website-card-border"
+                      component="img"
+                      className="website-card-image"
+                      src={cardImage}
+                      alt={`${website.name || "Website"} preview`}
+                      loading="lazy"
                       sx={{
                         position: "absolute",
                         inset: 0,
-                        borderRadius: "1em",
+                        width: "100%",
+                        height: "118%",
+                        objectFit: "cover",
+                        objectPosition: websitePreviewImage
+                          ? "center top"
+                          : "center",
+                        transform: "translateY(0)",
+                        transition: "transform 2000ms ease-out",
                         pointerEvents: "none",
-                        zIndex: 10,
-                        p: "1px",
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        pointerEvents: "none",
                         background:
-                          "linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04), rgba(255,255,255,0.1))",
-                        WebkitMask:
-                          "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                        WebkitMaskComposite: "xor",
-                        maskComposite: "exclude",
-                        transition: "background 0.3s ease",
-                      }}
-                    />
-
-                    <Chip
-                      label={categoryLabel}
-                      size="small"
-                      sx={{
-                        position: "absolute",
-                        top: 12,
-                        left: 12,
-                        zIndex: 4,
-                        maxWidth: "50%",
-                        bgcolor: "rgba(0,0,0,0.38)",
-                        color: "#fff",
-                        fontWeight: 700,
-                        fontSize: "0.68rem",
-                        backdropFilter: "blur(10px)",
-                        "& .MuiChip-label": {
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        },
-                      }}
-                    />
-
-                    <Chip
-                      label={ownerLabel}
-                      size="small"
-                      data-testid={`role-badge-${getWebsiteId(website)}`}
-                      sx={{
-                        position: "absolute",
-                        top: 12,
-                        right: 12,
-                        zIndex: 4,
-                        maxWidth: "44%",
-                        bgcolor: alpha(
-                          ROLE_COLORS[websiteRole] || colors.primary,
-                          0.9,
-                        ),
-                        color: "#fff",
-                        fontWeight: 700,
-                        fontSize: "0.68rem",
-                        textTransform: "uppercase",
-                        backdropFilter: "blur(10px)",
-                        "& .MuiChip-label": {
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        },
+                          "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.24) 24%, rgba(0,0,0,0.55) 54%, rgba(0,0,0,0.82) 75%, rgba(0,0,0,0.96) 100%), linear-gradient(90deg, rgba(0,0,0,0.22) 0%, transparent 46%, rgba(0,0,0,0.18) 100%)",
                       }}
                     />
 
                     <Box
-                      className="website-card-copy"
                       sx={{
                         position: "relative",
-                        zIndex: 3,
-                        width: "100%",
-                        color: "#fff",
-                        transition:
-                          "color 700ms cubic-bezier(0.19, 1, 0.22, 1)",
+                        zIndex: 1,
+                        height: { xs: 232, sm: 256, md: 178, xl: 276 },
+                        overflow: "hidden",
+                      }}
+                    >
+                      <Chip
+                        label={categoryLabel}
+                        size="small"
+                        sx={{
+                          position: "absolute",
+                          top: { xs: 10, lg: 12 },
+                          left: { xs: 10, lg: 12 },
+                          height: { xs: 26, md: 25, lg: 26, xl: 29 },
+                          maxWidth: "44%",
+                          px: 0.5,
+                          fontSize: {
+                            xs: "0.72rem",
+                            md: "0.61rem",
+                            xl: "0.81rem",
+                          },
+                          fontWeight: 700,
+                          color: "#fff",
+                          background:
+                            "linear-gradient(135deg, #378C92, #2a6b70)",
+                          backdropFilter: "blur(6px)",
+                          // border: "1px solid rgba(255,255,255,0.14)",
+                          borderRadius: "999px",
+                          "& .MuiChip-label": {
+                            px: 1,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          },
+                        }}
+                      />
+
+                      <Chip
+                        label={ownerLabel}
+                        size="small"
+                        data-testid={`role-badge-${getWebsiteId(website)}`}
+                        sx={{
+                          position: "absolute",
+                          top: { xs: 10, lg: 12 },
+                          right: { xs: 10, lg: 12 },
+                          height: { xs: 26, md: 25, lg: 26, xl: 29 },
+                          maxWidth: "44%",
+                          px: 0.5,
+                          fontSize: {
+                            xs: "0.45rem",
+                            md: "0.45rem",
+                            xl: "0.61rem",
+                          },
+                          fontWeight: 800,
+                          color: "#fff",
+                          bgcolor:
+                            websiteRole === "OWNER"
+                              ? "#d97706"
+                              : alpha(ROLE_COLORS[websiteRole] || teal, 0.95),
+                          borderRadius: "999px",
+                          textTransform: "uppercase",
+                          "& .MuiChip-label": {
+                            px: 1,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          },
+                        }}
+                      />
+
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: { xs: 4, md: 5, xl: 7 },
+                          left: 0,
+                          right: 0,
+                          px: { xs: 1.5, lg: 2 },
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 1,
+                            mb: { xs: 0.55, md: 0.45, xl: 2 },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "inline-flex",
+                              px: 1,
+                              py: 0.25,
+                              borderRadius: "999px",
+                              bgcolor: "rgba(255,255,255,0.16)",
+                              backdropFilter: "blur(4px)",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: {
+                                  xs: "0.6rem",
+                                  md: "0.5rem",
+                                  xl: "0.6rem",
+                                },
+                                fontWeight: 800,
+                                color: "#fff",
+                                letterSpacing: "0.07em",
+                              }}
+                            >
+                              {statusLabel}
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              minWidth: 0,
+                              maxWidth: "58%",
+                              px: { xs: 1, lg: 1.15 },
+                              py: 0.25,
+                              borderRadius: "999px",
+                              fontSize: {
+                                xs: "0.58rem",
+                                md: "0.5rem",
+                                lg: "0.56rem",
+                                xl: "0.64rem",
+                              },
+                              fontWeight: 700,
+                              color: "rgba(255,255,255,0.74)",
+                              bgcolor: "rgba(255,255,255,0.12)",
+                              backdropFilter: "blur(8px)",
+                              border: "1px solid rgba(255,255,255,0.16)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Template{templateLabel ? ` · ${templateLabel}` : ""}
+                          </Box>
+                        </Box>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              minWidth: 0,
+                              fontSize: {
+                                xs: "1.16rem",
+                                sm: "1.22rem",
+                                md: "0.88rem",
+                                lg: "1.06rem",
+                                xl: "1.4rem",
+                              },
+                              fontWeight: 800,
+                              color: "#fff",
+                              lineHeight: 1.2,
+                              textShadow: "0 2px 6px rgba(0,0,0,0.5)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {website.name}
+                          </Typography>
+                          {isShared && (
+                            <Chip
+                              label="Shared"
+                              size="small"
+                              sx={{
+                                height: 22,
+                                bgcolor: "rgba(0,0,0,0.32)",
+                                color: "#fff",
+                                fontWeight: 700,
+                                fontSize: "0.65rem",
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        height: { xs: 122, sm: 128, md: 114, xl: 132 },
+                        overflow: "hidden",
                       }}
                     >
                       <Box
+                        className="website-card-meta"
                         sx={{
+                          position: "absolute",
+                          inset: 0,
+                          px: { xs: 1.25, md: 1, lg: 1.2, xl: 1.8 },
+                          // pt: { xs: 0.55, md: 0.45, lg: 0.5, xl: 0.65 },
+                          pb: { xs: 1.15, md: 0.95, lg: 1.05, xl: 1.45 },
+                          bgcolor: "transparent",
+                          display: "flex",
+                          flexDirection: "column",
+                          transform: "translateY(0)",
+                          transition: "transform 300ms ease-in-out",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: {
+                              xs: "0.78rem",
+                              md: "0.65rem",
+                              lg: "0.74rem",
+                              xl: "0.86rem",
+                            },
+                            lineHeight: { xs: 1.5, md: 1.4, xl: 1.6 },
+                            color: textSecondary,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {description}
+                        </Typography>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 1,
+                            mt: "auto",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: {
+                                xs: "0.68rem",
+                                md: "0.6rem",
+                                lg: "0.65rem",
+                                xl: "0.74rem",
+                              },
+                              color: textSecondary,
+                              opacity: 0.75,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {pageCountLabel}
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                              color: textSecondary,
+                              opacity: 0.6,
+                              minWidth: 0,
+                            }}
+                          >
+                            <Clock size={14} />
+                            <Typography
+                              sx={{
+                                fontSize: {
+                                  xs: "0.68rem",
+                                  md: "0.6rem",
+                                  lg: "0.65rem",
+                                  xl: "0.74rem",
+                                },
+                                color: "inherit",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {updatedAtLabel}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+
+                    </Box>
+
+                    <Box
+                      onClick={(e) => e.stopPropagation()}
+                      sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        gap: { xs: 0.75, md: 0.5, xl: 0.85 },
+                        px: { xs: 1.25, md: 1, lg: 1.2, xl: 1.8 },
+                        pb: { xs: 1.25, md: 1, lg: 1.2, xl: 1.8 },
+                        pt: { xs: 1.1, md: 0.85, lg: 1, xl: 1.35 },
+                        borderTop: `1px solid ${
+                          isDarkCard
+                            ? "rgba(255,255,255,0.10)"
+                            : "rgba(255,255,255,0.14)"
+                        }`,
+                      }}
+                    >
+                      <Box
+                        className="website-card-action-tray"
+                        sx={{
+                          minWidth: 0,
+                          maxWidth: 0,
+                          opacity: 0,
+                          overflow: "hidden",
                           display: "flex",
                           alignItems: "center",
-                          gap: 1,
-                          mb: 1,
-                        }}
-                      >
-                        <Chip
-                          label={website.status || "DRAFT"}
-                          size="small"
-                          sx={{
-                            height: 22,
-                            bgcolor: alpha(getStatusColor(website.status), 0.9),
-                            color: "#fff",
-                            fontWeight: 700,
-                            fontSize: "0.65rem",
-                            textTransform: "uppercase",
-                          }}
-                        />
-                        {isShared && (
-                          <Chip
-                            label="Shared"
-                            size="small"
-                            sx={{
-                              height: 22,
-                              bgcolor: "rgba(0,0,0,0.32)",
-                              color: "#fff",
-                              fontWeight: 700,
-                              fontSize: "0.65rem",
-                            }}
-                          />
-                        )}
-                      </Box>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 800,
-                          lineHeight: 1.15,
-                          mb: 0.75,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {website.name}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontSize: "0.86rem",
-                          lineHeight: 1.45,
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                          maxWidth: "95%",
-                        }}
-                      >
-                        {description}
-                      </Typography>
-
-                      <Box
-                        className="website-card-actions"
-                        onClick={(e) => e.stopPropagation()}
-                        sx={{
-                          mt: 2,
-                          display: "flex",
-                          gap: 1,
-                          flexWrap: "wrap",
-                          opacity: 0,
-                          transform: "translateY(10px)",
-                          pointerEvents: "none",
+                          justifyContent: "flex-end",
+                          gap: { xs: 0.55, md: 0.35, xl: 0.7 },
+                          transform: "translateX(18px)",
                           transition:
-                            "opacity 260ms ease, transform 260ms cubic-bezier(0.19, 1, 0.22, 1)",
+                            "max-width 260ms ease, opacity 180ms ease, transform 260ms ease",
                         }}
                       >
-                        {/* Manage — always visible for EDITOR+ roles */}
-
-                        <Button
-                          size="small"
-                          startIcon={<Settings size={18} />}
-                          onClick={async (e) => {
-                            e.stopPropagation();
-
-                            const websiteId =
-                              await resolveWebsiteIdForAction(website);
-
-                            navigate(
-                              `/dashboard/websites/${websiteId}/manage/overview`,
-                            );
-                          }}
-                          sx={{
-                            color: colors.primary,
-
-                            textTransform: "none",
-
-                            fontWeight: 600,
-
-                            minHeight: 36,
-
-                            bgcolor: alpha(colors.primary, 0.08),
-
-                            "&:hover": { bgcolor: alpha(colors.primary, 0.15) },
-                          }}
-                        >
-                          Manage
-                        </Button>
-
-                        {/* Edit — requires EDIT_CONTENT */}
-
-                        {canEdit ? (
-                          <Button
-                            size="small"
-                            startIcon={<Pencil size={18} />}
-                            onClick={async (e) => {
-                              e.stopPropagation();
-
-                              const websiteId =
-                                await resolveWebsiteIdForAction(website);
-
-                              navigate(
-                                `/dashboard/websites/${websiteId}/editor`,
-                              );
-                            }}
-                            sx={{
-                              color: colors.primary,
-
-                              textTransform: "none",
-
-                              fontWeight: 600,
-
-                              minHeight: 36,
-
-                              "&:hover": {
-                                bgcolor: alpha(colors.primary, 0.1),
-                              },
-                            }}
-                          >
-                            Edit
-                          </Button>
-                        ) : (
-                          <Tooltip title="You need EDITOR role to edit" arrow>
-                            <Box
-                              component="span"
-                              sx={{ display: "inline-flex" }}
+                        {secondaryActionItems.map(
+                          (
+                            {
+                              Icon,
+                              label,
+                              onClick,
+                              disabled,
+                              tooltip,
+                              danger,
+                            },
+                            actionIndex,
+                          ) => (
+                            <Tooltip
+                              key={label}
+                              title={tooltip || label}
+                              placement="top"
+                              arrow
                             >
-                              <Button
-                                size="small"
-                                startIcon={<Pencil size={18} />}
-                                disabled
+                              <Box
+                                className="website-card-action-item"
+                                component="span"
                                 sx={{
-                                  textTransform: "none",
-
-                                  fontWeight: 600,
-
-                                  minHeight: 36,
+                                  opacity: 0,
+                                  transform: "translateX(14px)",
+                                  transition:
+                                    "opacity 180ms ease, transform 240ms ease",
+                                  transitionDelay: `${actionIndex * 22}ms`,
                                 }}
                               >
-                                Edit
-                              </Button>
-                            </Box>
-                          </Tooltip>
-                        )}
-
-                        {/* Preview — always visible */}
-
-                        <Button
-                          size="small"
-                          startIcon={<Eye size={18} />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-
-                            handlePreviewWebsite(website);
-                          }}
-                          sx={{
-                            color: colors.primary,
-
-                            textTransform: "none",
-
-                            fontWeight: 600,
-
-                            minHeight: 36,
-
-                            "&:hover": { bgcolor: alpha(colors.primary, 0.1) },
-                          }}
-                        >
-                          Preview
-                        </Button>
-
-                        {/* Settings — requires EDIT_SETTINGS (ADMIN+) */}
-
-                        {canEditSettings && (
-                          <Button
-                            size="small"
-                            startIcon={<Settings size={18} />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              handleOpenSettings(website);
-                            }}
-                            sx={{
-                              color: colors.textSecondary,
-
-                              textTransform: "none",
-
-                              fontWeight: 600,
-
-                              minHeight: 36,
-
-                              "&:hover": {
-                                bgcolor: alpha(colors.textSecondary, 0.1),
-                              },
-                            }}
-                          >
-                            Settings
-                          </Button>
-                        )}
-
-                        {/* Analytics — requires VIEW_ANALYTICS */}
-
-                        {canViewAnalytics && (
-                          <Button
-                            size="small"
-                            startIcon={<ChartBar size={18} />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              handleOpenAnalytics(website);
-                            }}
-                            sx={{
-                              color: colors.primary,
-
-                              textTransform: "none",
-
-                              fontWeight: 600,
-
-                              minHeight: 36,
-
-                              "&:hover": {
-                                bgcolor: alpha(colors.primary, 0.1),
-                              },
-                            }}
-                          >
-                            Analytics
-                          </Button>
-                        )}
-
-                        {/* Collaborators — requires MANAGE_COLLABORATORS or is OWNER */}
-
-                        {(canManageCollaborators ||
-                          websiteRole === "OWNER") && (
-                          <Button
-                            size="small"
-                            startIcon={<Users size={18} />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              handleOpenCollaboratorModal(website);
-                            }}
-                            sx={{
-                              color: colors.primary,
-
-                              textTransform: "none",
-
-                              fontWeight: 600,
-
-                              minHeight: 36,
-
-                              "&:hover": {
-                                bgcolor: alpha(colors.primary, 0.1),
-                              },
-                            }}
-                          >
-                            Team
-                          </Button>
-                        )}
-
-                        {/* Clone / duplicate — OWNER only */}
-
-                        {websiteRole === "OWNER" && (
-                          <Button
-                            size="small"
-                            startIcon={<Copy size={18} />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              handleOpenCloneDialog(website);
-                            }}
-                            sx={{
-                              color: colors.primary,
-
-                              textTransform: "none",
-
-                              fontWeight: 600,
-
-                              minHeight: 36,
-
-                              "&:hover": {
-                                bgcolor: alpha(colors.primary, 0.1),
-                              },
-                            }}
-                          >
-                            Clone
-                          </Button>
-                        )}
-
-                        {/* Publish/Unpublish — requires PUBLISH */}
-
-                        {canPublish &&
-                          (website.status === "PUBLISHED" ? (
-                            <Button
-                              size="small"
-                              startIcon={<EyeOff size={18} />}
-                              onClick={(e) => {
-                                e.stopPropagation();
-
-                                handleUnpublish(website);
-                              }}
-                              sx={{
-                                color: colors.textSecondary,
-
-                                textTransform: "none",
-
-                                fontWeight: 600,
-
-                                minHeight: 36,
-
-                                "&:hover": {
-                                  bgcolor: alpha(colors.textSecondary, 0.1),
-                                },
-                              }}
-                            >
-                              Unpublish
-                            </Button>
-                          ) : (
-                            <Button
-                              size="small"
-                              startIcon={<Eye size={18} />}
-                              onClick={(e) => {
-                                e.stopPropagation();
-
-                                handlePublish(website);
-                              }}
-                              sx={{
-                                color: "#4ade80",
-
-                                textTransform: "none",
-
-                                fontWeight: 600,
-
-                                minHeight: 36,
-
-                                "&:hover": { bgcolor: alpha("#4ade80", 0.1) },
-                              }}
-                            >
-                              Publish
-                            </Button>
-                          ))}
-
-                        {/* Delete — requires DELETE (OWNER/ADMIN only) */}
-
-                        {canDelete && (
-                          <Button
-                            size="small"
-                            startIcon={<Trash2 size={18} />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              handleOpenDeleteDialog(website);
-                            }}
-                            sx={{
-                              color: "#f44336",
-
-                              textTransform: "none",
-
-                              fontWeight: 600,
-
-                              minHeight: 36,
-
-                              "&:hover": { bgcolor: alpha("#f44336", 0.1) },
-                            }}
-                          >
-                            Delete
-                          </Button>
+                                <IconButton
+                                  size="small"
+                                  disabled={disabled}
+                                  onClick={disabled ? undefined : onClick}
+                                  aria-label={label}
+                                  sx={{
+                                    width: { xs: 33, md: 27, lg: 30, xl: 36 },
+                                    height: { xs: 33, md: 27, lg: 30, xl: 36 },
+                                    borderRadius: "10px",
+                                    color: disabled
+                                      ? alpha(textSecondary, 0.42)
+                                      : danger
+                                        ? "#ef4444"
+                                        : teal,
+                                    bgcolor: danger
+                                      ? "rgba(239,68,68,0.08)"
+                                      : isDarkCard
+                                        ? "rgba(255,255,255,0.045)"
+                                        : "rgba(55,140,146,0.06)",
+                                    border: `1px solid ${
+                                      danger
+                                        ? "rgba(239,68,68,0.18)"
+                                        : isDarkCard
+                                          ? "rgba(255,255,255,0.07)"
+                                          : "rgba(55,140,146,0.10)"
+                                    }`,
+                                    "&:hover": {
+                                      bgcolor: disabled
+                                        ? undefined
+                                        : danger
+                                          ? "rgba(239,68,68,0.14)"
+                                          : actionHover,
+                                    },
+                                  }}
+                                >
+                                  <Icon size={16} />
+                                </IconButton>
+                              </Box>
+                            </Tooltip>
+                          ),
                         )}
                       </Box>
+
+                      {previewAction && (
+                        <Tooltip title="Preview" placement="top" arrow>
+                          <Box
+                            component="button"
+                            className="website-card-preview-button"
+                            onClick={previewAction.onClick}
+                            aria-label="Preview"
+                            sx={{
+                              width: "auto",
+                              height: { xs: 38, md: 33, lg: 36, xl: 42 },
+                              minWidth: { xs: 104, md: 84, lg: 96, xl: 112 },
+                              flexShrink: 0,
+                              borderRadius: "10px",
+                              border: "none",
+                              px: { xs: 1.35, md: 1.05, lg: 1.2, xl: 1.45 },
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 0,
+                              color: "#fff",
+                              background:
+                                "linear-gradient(135deg, #378C92, #2a6b70)",
+                              boxShadow: "none",
+                              cursor: "pointer",
+                              fontFamily: "inherit",
+                              fontWeight: 700,
+                              fontSize: {
+                                xs: "0.78rem",
+                                md: "0.64rem",
+                                lg: "0.72rem",
+                                xl: "0.84rem",
+                              },
+                              lineHeight: 1,
+                              overflow: "hidden",
+                              transition:
+                                "min-width 260ms ease, padding 260ms ease, background 160ms ease",
+                              "&:hover": {
+                                background:
+                                  "linear-gradient(135deg, #2e7a80, #225a5f)",
+                                boxShadow: "none",
+                              },
+                            }}
+                          >
+                            <Eye size={17} />
+                            <Box
+                              component="span"
+                              className="website-card-preview-label"
+                              sx={{
+                                display: "inline-block",
+                                maxWidth: 72,
+                                ml: 0.75,
+                                opacity: 1,
+                                overflow: "hidden",
+                                whiteSpace: "nowrap",
+                                transform: "translateX(0)",
+                                scale: 0.9,
+                                transition:
+                                  "max-width 240ms ease, opacity 160ms ease, transform 220ms ease, margin-left 240ms ease",
+                              }}
+                            >
+                              Preview
+                            </Box>
+                          </Box>
+                        </Tooltip>
+                      )}
                     </Box>
                   </Card>
                 </Grid>
@@ -2523,7 +3020,7 @@ const Websites = ({ pageTitle, pageSubtitle, initialView }) => {
 
           {activeLoadingMore &&
             [...Array(3)].map((_, index) => (
-              <Grid item xs={12} sm={6} md={4} key={`loading-more-${index}`}>
+              <Grid item xs={12} sm={6} md={3} key={`loading-more-${index}`}>
                 <SkeletonCard />
               </Grid>
             ))}

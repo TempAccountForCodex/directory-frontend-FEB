@@ -4,9 +4,6 @@ import { useNavigate } from "react-router-dom";
 const TRANSPARENT_PIXEL =
   "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
 
-const HeroMobile = "/assets/publicAssets/videos/Home/hero7.mp4";
-const HeroMobileFrame = "/assets/publicAssets/images/home/heroFrames/hero7.webp";
-
 // `frame` is the video's first frame, shown as placeholder while it loads
 const SLIDES = [
   {
@@ -143,8 +140,8 @@ export default function HeroDepthCarousel() {
     };
   }, [prefersReducedMotion]);
 
-  const heroVideoSrc = isMobile ? HeroMobile : SLIDES[index].video;
-  const heroPlaceholderSrc = isMobile ? HeroMobileFrame : SLIDES[index].frame;
+  const heroVideoSrc = SLIDES[index].video;
+  const heroPlaceholderSrc = SLIDES[index].frame;
 
   // (Re)load the video whenever its source changes; fade it back in once
   // the new source is playable so the per-slide placeholder shows meanwhile
@@ -174,12 +171,12 @@ export default function HeroDepthCarousel() {
 
   // Prefetch first-frame placeholders so they show instantly on slide switch
   React.useEffect(() => {
-    if (!shouldLoadVideo || isMobile) return;
+    if (!shouldLoadVideo) return;
     SLIDES.forEach((s) => {
       const img = new Image();
       img.src = s.frame;
     });
-  }, [shouldLoadVideo, isMobile]);
+  }, [shouldLoadVideo]);
 
   // Auto-scroll carousel every 6 seconds
   React.useEffect(() => {

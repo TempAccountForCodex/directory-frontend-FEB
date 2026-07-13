@@ -75,17 +75,23 @@ const UniqueSellingSection = () => {
                           letterSpacing: 1,
                         }}
                       >
-                        FREE LANDING PAGE
+                        LANDING PAGE
                       </Typography>
                     </Stack>
                     <Typography
                       variant="h2"
                       sx={{
                         fontWeight: 500,
-                        fontSize: { xs: "2.5rem", md: "3.5rem" },
+                        fontSize: {
+                          xs: "2.35rem",
+                          sm: "2.15rem",
+                          md: "3rem",
+                          lg: "3.2rem",
+                        },
+                        lineHeight: 1.05,
                       }}
                     >
-                      $0
+                      AI Guided
                     </Typography>
                     <Box
                       sx={{
@@ -98,9 +104,8 @@ const UniqueSellingSection = () => {
                         variant="body2"
                         sx={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}
                       >
-                        Get a high-converting{" "}
-                        <strong>Carrd-style website</strong> for your business.
-                        No code, no cost, no hosting fees.
+                        Launch a high-converting website for your business with
+                        AI-guided setup, hosting, and publishing built in.
                       </Typography>
                     </Box>
                   </Stack>

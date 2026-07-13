@@ -696,57 +696,66 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
           </FadeIn>
 
           <Grid container spacing={3} sx={{ mt: 3 }}>
-            {reviewItems.map((review, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <FadeIn delay={index * 0.06}>
-                  <EditableCard
-                    elevation={0}
-                    field={`items.${index}`}
-                    label={`Review ${index + 1}`}
-                    sx={{
-                      height: "100%",
-                      borderRadius: 4,
-                      border: "1px solid rgba(37,99,235,0.08)",
-                      bgcolor: "#ffffff",
-                    }}
-                  >
-                    <CardContent sx={{ p: 3 }}>
-                      <EditableText
-                        field={`items.${index}.rating`}
-                        sx={{
-                          color: "#f4b400",
-                          letterSpacing: "0.12em",
-                          fontWeight: 800,
-                        }}
-                      >
-                        {"★".repeat(Number(review.rating) || 5)}
-                      </EditableText>
-                      <EditableText
-                        field={`items.${index}.text`}
-                        kind="multi"
-                        sx={{ mt: 1.8, color: "#4d5d79", lineHeight: 1.85 }}
-                      >
-                        {(review.text as string) || ""}
-                      </EditableText>
-                      <EditableText
-                        field={`items.${index}.author`}
-                        sx={{ mt: 2.4, color: "#12264f", fontWeight: 800 }}
-                      >
-                        {(review.author as string) || ""}
-                      </EditableText>
-                      {review.date && (
+            {reviewItems.map((review, index) => {
+              const reviewDate =
+                typeof review.date === "string" ? review.date : "";
+
+              return (
+                <Grid item xs={12} md={4} key={index}>
+                  <FadeIn delay={index * 0.06}>
+                    <EditableCard
+                      elevation={0}
+                      field={`items.${index}`}
+                      label={`Review ${index + 1}`}
+                      sx={{
+                        height: "100%",
+                        borderRadius: 4,
+                        border: "1px solid rgba(37,99,235,0.08)",
+                        bgcolor: "#ffffff",
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
                         <EditableText
-                          field={`items.${index}.date`}
-                          sx={{ mt: 0.4, color: "#7b8aa6", fontSize: "0.9rem" }}
+                          field={`items.${index}.rating`}
+                          sx={{
+                            color: "#f4b400",
+                            letterSpacing: "0.12em",
+                            fontWeight: 800,
+                          }}
                         >
-                          {(review.date as string) || ""}
+                          {"★".repeat(Number(review.rating) || 5)}
                         </EditableText>
-                      )}
-                    </CardContent>
-                  </EditableCard>
-                </FadeIn>
-              </Grid>
-            ))}
+                        <EditableText
+                          field={`items.${index}.text`}
+                          kind="multi"
+                          sx={{ mt: 1.8, color: "#4d5d79", lineHeight: 1.85 }}
+                        >
+                          {(review.text as string) || ""}
+                        </EditableText>
+                        <EditableText
+                          field={`items.${index}.author`}
+                          sx={{ mt: 2.4, color: "#12264f", fontWeight: 800 }}
+                        >
+                          {(review.author as string) || ""}
+                        </EditableText>
+                        {reviewDate && (
+                          <EditableText
+                            field={`items.${index}.date`}
+                            sx={{
+                              mt: 0.4,
+                              color: "#7b8aa6",
+                              fontSize: "0.9rem",
+                            }}
+                          >
+                            {reviewDate}
+                          </EditableText>
+                        )}
+                      </CardContent>
+                    </EditableCard>
+                  </FadeIn>
+                </Grid>
+              );
+            })}
           </Grid>
         </Container>
       </EditableSection>

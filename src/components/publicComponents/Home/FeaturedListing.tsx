@@ -26,44 +26,44 @@ const FeaturedListing: React.FC = () => {
 
   const featuredBusinesses = [
     {
-      name: "Bright Solutions",
+      name: "Zentavo Webworks",
       category: "Web Services",
-      location: "Lahore, Pakistan",
+      location: "Toronto, Canada",
       description:
         "Helping small businesses build a strong online presence with modern websites and digital solutions.",
     },
     {
-      name: "Urban Eats",
+      name: "Kavora Kitchen",
       category: "Restaurant",
-      location: "Karachi, Pakistan",
+      location: "Melbourne, Australia",
       description:
         "A modern dining experience offering fresh flavors and fast service for busy professionals.",
     },
     {
-      name: "FitZone Studio",
+      name: "Orvanta Fit Studio",
       category: "Fitness",
-      location: "Islamabad, Pakistan",
+      location: "London, United Kingdom",
       description:
         "Personal training and group fitness programs designed to help you stay active and healthy.",
     },
     {
-      name: "TechNest Solutions",
+      name: "Veltrixor Systems",
       category: "IT Services",
-      location: "Lahore, Pakistan",
+      location: "Singapore",
       description:
         "Reliable IT support and software solutions tailored for startups and growing businesses.",
     },
     {
-      name: "Bloom Beauty Salon",
+      name: "Solvanta Beauty Lounge",
       category: "Beauty & Wellness",
-      location: "Karachi, Pakistan",
+      location: "Dubai, UAE",
       description:
         "Professional beauty and wellness services designed to help you look and feel your best.",
     },
     {
-      name: "AutoCare Hub",
+      name: "Noventra Auto Care",
       category: "Automotive",
-      location: "Islamabad, Pakistan",
+      location: "Austin, USA",
       description:
         "Trusted automotive repair and maintenance services with a focus on quality and reliability.",
     },

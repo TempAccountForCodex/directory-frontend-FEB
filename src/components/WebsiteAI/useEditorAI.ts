@@ -771,7 +771,7 @@ export function useEditorAI({
       if (applied.length) {
         recordAppliedEdit({
           websiteId,
-          turnId: localTurnId,
+          turnId: localTurnId ?? undefined,
           aiEditKey: meta?.aiEditKey ?? applied[0]?.aiEditKey,
           instruction: meta?.instruction,
           summary: meta?.summary,

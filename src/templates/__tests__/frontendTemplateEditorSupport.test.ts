@@ -168,7 +168,7 @@ describe("buildFrontendTemplateEditorPages", () => {
       },
       [
         {
-          id: 184,
+          id: "184",
           title: "Home",
           path: "/",
           isHome: true,
@@ -176,7 +176,7 @@ describe("buildFrontendTemplateEditorPages", () => {
           isPublished: true,
           blocks: [
             {
-              id: 8334,
+              id: "8334",
               blockType: "HERO",
               sortOrder: 0,
               isVisible: true,

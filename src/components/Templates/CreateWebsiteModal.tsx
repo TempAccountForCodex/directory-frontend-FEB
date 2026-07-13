@@ -48,6 +48,12 @@ import DashboardInput from "../Dashboard/shared/DashboardInput";
 import ListingOptInStep from "../WebsiteEditor/ListingOptInStep";
 import CategorySelect from "./CategorySelect";
 import { storeWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
+import {
+  buildFrontendTemplateEditorPages,
+  type TemplateEditorBlock,
+  type TemplateEditorPage,
+} from "../../templates/frontendTemplateEditorSupport";
+import { buildFrontendTemplateBusinessData } from "../../templates/frontendTemplateSiteData";
 
 const AI_TONES = [
   { value: "professional", label: "Professional" },
@@ -281,7 +287,7 @@ const buildFallbackFrontendTemplatePages = (
       label: stat?.label || `Metric ${index + 1}`,
     })) || [];
 
-  const blocks = [
+  const blocks: TemplateEditorBlock[] = [
     {
       id: `${templateId}-home-hero`,
       blockType: "HERO",
@@ -373,7 +379,7 @@ const buildFallbackFrontendTemplatePages = (
         data.description || "Reach out and we will get back to you shortly.",
       email: data.contact?.email || "hello@yourcompany.com",
       phone: data.contact?.phone || "",
-      address: data.fullAddress || "",
+      address: data.contact?.address || data.location?.address || "",
       formTitle: "Send a message",
       fullNamePlaceholder: "Full name",
       emailPlaceholder: "Email address",

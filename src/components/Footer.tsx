@@ -65,8 +65,11 @@ const Footer = () => {
       });
       return () => window.cancelIdleCallback(idleId);
     }
-    const timeoutId = window.setTimeout(() => setShowRotating(true), 600);
-    return () => window.clearTimeout(timeoutId);
+    const timeoutId = globalThis.setTimeout(
+      () => setShowRotating(true),
+      600,
+    );
+    return () => globalThis.clearTimeout(timeoutId);
   }, []);
 
   if (
