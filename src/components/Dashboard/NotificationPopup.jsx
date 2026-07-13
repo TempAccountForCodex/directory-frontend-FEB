@@ -26,6 +26,181 @@ import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { API_URL } from '@/config/api';
 
+const FORM_SUBMISSION_TYPE = 'FORM_SUBMISSION';
+
+const toRecord = (value) =>
+  value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+
+const readNotificationValue = (notification, keys) => {
+  for (const key of keys) {
+    const direct = notification?.[key];
+    if (direct !== undefined && direct !== null && direct !== '') {
+      return direct;
+    }
+  }
+
+  const metadata = toRecord(notification?.metadata);
+  if (metadata) {
+    for (const key of keys) {
+      const nested = metadata[key];
+      if (nested !== undefined && nested !== null && nested !== '') {
+        return nested;
+      }
+    }
+  }
+
+  return undefined;
+};
+
+const normalizeKeyPart = (value) => {
+  if (value === undefined || value === null) return '';
+  return String(value).trim().toLowerCase();
+};
+
+const extractWebsiteIdFromLink = (link) => {
+  if (typeof link !== 'string' || !link) return '';
+  const match = link.match(/\/dashboard\/websites\/([^/]+)\/manage(?:\/|$)/i);
+  return match?.[1] ? normalizeKeyPart(match[1]) : '';
+};
+
+const extractWebsiteNameFromTitle = (title) => {
+  if (typeof title !== 'string') return '';
+  const match = title.match(/form submission(?:s)? on (.+)$/i);
+  return match?.[1]?.trim() ?? '';
+};
+
+const extractLatestSubmitter = (notification) => {
+  const directValue = readNotificationValue(notification, [
+    'submitterEmail',
+    'submitterName',
+    'email',
+    'name',
+  ]);
+  if (directValue) return String(directValue).trim();
+
+  const message = typeof notification?.message === 'string' ? notification.message : '';
+  const emailMatch = message.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  if (emailMatch?.[0]) return emailMatch[0];
+
+  return '';
+};
+
+const buildFormSubmissionGroupKey = (notification) => {
+  if (notification?.type !== FORM_SUBMISSION_TYPE) return null;
+  if (notification?.isRead) return null;
+
+  const websiteId = normalizeKeyPart(
+    readNotificationValue(notification, ['websiteId', 'siteId', 'listingId']) ??
+      extractWebsiteIdFromLink(notification?.link),
+  );
+  const formId = normalizeKeyPart(readNotificationValue(notification, ['formId']));
+  const websiteName = normalizeKeyPart(
+    readNotificationValue(notification, ['websiteName', 'siteName']) ??
+      extractWebsiteNameFromTitle(notification?.title),
+  );
+  const websiteScope = websiteId || websiteName;
+
+  if (!websiteScope) return null;
+
+  return formId
+    ? `form-submission:${websiteScope}:form:${formId}`
+    : `form-submission:${websiteScope}:type:${FORM_SUBMISSION_TYPE}`;
+};
+
+const buildGroupedNotificationTitle = (notification, count) => {
+  const websiteName =
+    readNotificationValue(notification, ['websiteName', 'siteName']) ??
+    extractWebsiteNameFromTitle(notification?.title);
+  const suffix = websiteName ? ` on ${String(websiteName).trim()}` : '';
+
+  if (count <= 1) {
+    return notification?.title || `New form submission${suffix}`;
+  }
+
+  return `${count} new form submissions${suffix}`;
+};
+
+const buildGroupedNotificationMessage = (notification, count) => {
+  if (count <= 1) {
+    return notification?.message;
+  }
+
+  const latestSubmitter = extractLatestSubmitter(notification);
+  if (latestSubmitter) {
+    return `Latest: ${latestSubmitter}`;
+  }
+
+  return notification?.message;
+};
+
+const buildGroupedNotificationLink = (notification) => {
+  if (notification?.link) return notification.link;
+
+  const websiteId =
+    readNotificationValue(notification, ['websiteId', 'siteId', 'listingId']) ??
+    extractWebsiteIdFromLink(notification?.link);
+
+  if (!websiteId) return null;
+  return `/dashboard/websites/${websiteId}/manage/forms`;
+};
+
+const groupNotifications = (notifications) => {
+  const grouped = [];
+  const groupedIndexByKey = new Map();
+
+  notifications.forEach((notification) => {
+    const groupKey = buildFormSubmissionGroupKey(notification);
+    if (!groupKey) {
+      grouped.push({
+        ...notification,
+        groupedIds: [notification.id],
+        groupedCount: 1,
+      });
+      return;
+    }
+
+    const existingIndex = groupedIndexByKey.get(groupKey);
+    if (existingIndex === undefined) {
+      groupedIndexByKey.set(groupKey, grouped.length);
+      grouped.push({
+        ...notification,
+        link: buildGroupedNotificationLink(notification),
+        title: buildGroupedNotificationTitle(notification, 1),
+        message: buildGroupedNotificationMessage(notification, 1),
+        groupedIds: [notification.id],
+        groupedCount: 1,
+      });
+      return;
+    }
+
+    const currentGroup = grouped[existingIndex];
+    const currentDate = new Date(currentGroup.createdAt).getTime();
+    const nextDate = new Date(notification.createdAt).getTime();
+    const latestNotification =
+      Number.isFinite(nextDate) && (!Number.isFinite(currentDate) || nextDate >= currentDate)
+        ? notification
+        : currentGroup;
+    const groupedIds = [...currentGroup.groupedIds, notification.id];
+    const groupedCount = currentGroup.groupedCount + 1;
+
+    grouped[existingIndex] = {
+      ...currentGroup,
+      ...latestNotification,
+      id: currentGroup.id,
+      isRead: currentGroup.isRead && notification.isRead,
+      createdAt:
+        latestNotification === notification ? notification.createdAt : currentGroup.createdAt,
+      link: buildGroupedNotificationLink(latestNotification),
+      groupedIds,
+      groupedCount,
+      title: buildGroupedNotificationTitle(latestNotification, groupedCount),
+      message: buildGroupedNotificationMessage(latestNotification, groupedCount),
+    };
+  });
+
+  return grouped;
+};
+
 const NotificationPopup = () => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -46,6 +221,7 @@ const NotificationPopup = () => {
   const pollingActiveRef = useRef(false);
 
   const open = Boolean(anchorEl);
+  const groupedNotifications = groupNotifications(notifications);
 
   // Fetch notifications with optimized pagination (6 per page for performance)
   const fetchNotifications = async (pageNum = 1, append = false) => {
@@ -205,11 +381,15 @@ const NotificationPopup = () => {
   };
 
   // Mark notification as read
-  const markAsRead = async (notificationId, isRead) => {
+  const markAsRead = async (notificationIds, isRead) => {
     if (isRead) return; // Already read
 
     try {
-      await apiClient.patch(`/notifications/${notificationId}/read`, {});
+      await Promise.all(
+        notificationIds.map((notificationId) =>
+          apiClient.patch(`/notifications/${notificationId}/read`, {}),
+        ),
+      );
 
       // IMMEDIATELY refetch data for real-time updates
       await fetchNotifications(page, false);
@@ -233,10 +413,14 @@ const NotificationPopup = () => {
   };
 
   // Delete notification
-  const deleteNotification = async (notificationId, event) => {
+  const deleteNotification = async (notificationIds, event) => {
     event.stopPropagation();
     try {
-      await apiClient.delete(`/notifications/${notificationId}`);
+      await Promise.all(
+        notificationIds.map((notificationId) =>
+          apiClient.delete(`/notifications/${notificationId}`),
+        ),
+      );
 
       // IMMEDIATELY refetch data for real-time updates
       await fetchNotifications(page, false);
@@ -248,7 +432,7 @@ const NotificationPopup = () => {
 
   // Handle notification click
   const handleNotificationClick = (notification) => {
-    markAsRead(notification.id, notification.isRead);
+    markAsRead(notification.groupedIds || [notification.id], notification.isRead);
     if (notification.link) {
       handleClose();
       navigate(notification.link);
@@ -418,7 +602,7 @@ const NotificationPopup = () => {
             </IconButton>
           </Box>
 
-          {notifications.length > 0 && unreadCount > 0 && (
+          {groupedNotifications.length > 0 && unreadCount > 0 && (
             <Button
               size="small"
               onClick={markAllAsRead}
@@ -474,7 +658,7 @@ const NotificationPopup = () => {
             >
               <CircularProgress size={32} sx={{ color: colors.panelAccent }} />
             </Box>
-          ) : notifications.length === 0 ? (
+          ) : groupedNotifications.length === 0 ? (
             <Box
               sx={{
                 display: 'flex',
@@ -499,7 +683,7 @@ const NotificationPopup = () => {
               </Typography>
             </Box>
           ) : (
-            notifications.map((notification, index) => (
+            groupedNotifications.map((notification, index) => (
               <Box key={notification.id}>
                 {index > 0 && <Divider sx={{ borderColor: colors.panelBorder }} />}
                 <ListItem
@@ -513,7 +697,7 @@ const NotificationPopup = () => {
                     <IconButton
                       edge="end"
                       size="small"
-                      onClick={(e) => deleteNotification(notification.id, e)}
+                      onClick={(e) => deleteNotification(notification.groupedIds || [notification.id], e)}
                       sx={{
                         color: colors.panelMuted,
                         '&:hover': {
@@ -610,7 +794,7 @@ const NotificationPopup = () => {
         </List>
 
         {/* View All link */}
-        {notifications.length > 0 && (
+        {groupedNotifications.length > 0 && (
           <Box
             sx={{
               p: 1.5,
