@@ -55,6 +55,45 @@ const FILTER_OPTIONS = [
   { value: "spam", label: "Spam" },
 ];
 
+/**
+ * A block whose submissions land in this tab is a Contact-type form. Detect
+ * both flat CONTACT blocks and plan-section wrappers that hold a contact block
+ * (matching how the editor persists an added Contact widget). Returns the
+ * dropdown entry `{ formId, formName }` — `formId` is the block id, the same
+ * value each Contact form sends on submit — or null for non-form blocks.
+ *
+ * Note: Newsletter and custom Form-Builder blocks post to separate pipelines
+ * (`/newsletter/subscribe` / their own endpoint) and never reach this tab, so
+ * they are intentionally not listed here.
+ */
+const getContactFormMeta = (block) => {
+  if (!block || block.id == null) return null;
+  const content = block.content || {};
+  const blockType = String(block.blockType || "").toUpperCase();
+  const editorBlockType = String(content.editorBlockType || "").toUpperCase();
+  const innerBlocks = Array.isArray(content.innerBlocks)
+    ? content.innerBlocks
+    : [];
+  const firstInner = innerBlocks[0] || {};
+  const firstInnerType = String(
+    firstInner.type || firstInner.blockType || "",
+  ).toUpperCase();
+
+  const isContactForm =
+    blockType === "CONTACT" ||
+    editorBlockType === "CONTACT" ||
+    firstInnerType === "CONTACT";
+  if (!isContactForm) return null;
+
+  const innerContent = firstInner.content || {};
+  const formName =
+    content.heading ||
+    content.editorLabel ||
+    innerContent.heading ||
+    "Contact form";
+  return { formId: String(block.id), formName: String(formName) };
+};
+
 const FormsTab = memo(({ website, websiteId }) => {
   const navigate = useNavigate();
   const { actualTheme } = useCustomTheme();
@@ -71,6 +110,8 @@ const FormsTab = memo(({ website, websiteId }) => {
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState({ total: 0, unread: 0, spam: 0 });
   const [filter, setFilter] = useState("all");
+  const [forms, setForms] = useState([]);
+  const [formFilter, setFormFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -98,6 +139,7 @@ const FormsTab = memo(({ website, websiteId }) => {
       if (search) params.set("search", search);
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
+      if (formFilter !== "all") params.set("formId", formFilter);
 
       const res = await apiClient.get(
         `/forms/websites/${websiteId}/submissions?${params.toString()}`,
@@ -114,11 +156,83 @@ const FormsTab = memo(({ website, websiteId }) => {
     } finally {
       setLoading(false);
     }
-  }, [websiteId, page, rowsPerPage, filter, search, startDate, endDate]);
+  }, [
+    websiteId,
+    page,
+    rowsPerPage,
+    filter,
+    formFilter,
+    search,
+    startDate,
+    endDate,
+  ]);
 
   useEffect(() => {
     fetchSubmissions();
   }, [fetchSubmissions]);
+
+  // Detect the site's Contact-type forms from its live page blocks so the
+  // dropdown reflects exactly what's on the site right now — adding/removing a
+  // form block on the site changes what's listed on the next load.
+  useEffect(() => {
+    if (!websiteId) return undefined;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const pagesRes = await apiClient.get(`/websites/${websiteId}/pages`, {
+          withCredentials: true,
+        });
+        const pages = Array.isArray(pagesRes.data?.data)
+          ? pagesRes.data.data
+          : Array.isArray(pagesRes.data)
+            ? pagesRes.data
+            : [];
+
+        const perPage = await Promise.all(
+          pages.map(async (pg) => {
+            try {
+              const blocksRes = await apiClient.get(`/pages/${pg.id}/blocks`, {
+                withCredentials: true,
+              });
+              const blocks = Array.isArray(blocksRes.data?.data)
+                ? blocksRes.data.data
+                : Array.isArray(blocksRes.data)
+                  ? blocksRes.data
+                  : [];
+              return blocks.map(getContactFormMeta).filter(Boolean);
+            } catch {
+              return [];
+            }
+          }),
+        );
+
+        if (cancelled) return;
+
+        // De-dupe by formId (stable block id) while preserving order.
+        const seen = new Set();
+        const unique = [];
+        for (const form of perPage.flat()) {
+          if (seen.has(form.formId)) continue;
+          seen.add(form.formId);
+          unique.push(form);
+        }
+        setForms(unique);
+        // If the selected form no longer exists on the site, fall back to All.
+        setFormFilter((prev) =>
+          prev === "all" || unique.some((f) => f.formId === prev)
+            ? prev
+            : "all",
+        );
+      } catch {
+        if (!cancelled) setForms([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [websiteId]);
 
   // Handlers
   const handleFilterChange = useCallback((e) => {
@@ -280,6 +394,7 @@ const FormsTab = memo(({ website, websiteId }) => {
       else if (filter === "spam") params.set("isSpam", "true");
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
+      if (formFilter !== "all") params.set("formId", formFilter);
 
       const res = await apiClient.get(
         `/forms/websites/${websiteId}/submissions/export?${params.toString()}`,
@@ -296,7 +411,7 @@ const FormsTab = memo(({ website, websiteId }) => {
     } catch {
       /* silent */
     }
-  }, [websiteId, filter, startDate, endDate]);
+  }, [websiteId, filter, formFilter, startDate, endDate]);
 
   // Computed filter options with counts
   const filterOptions = useMemo(
@@ -308,6 +423,21 @@ const FormsTab = memo(({ website, websiteId }) => {
     ],
     [stats],
   );
+
+  // Form dropdown options — "All Forms" plus one entry per detected form.
+  const formOptions = useMemo(
+    () => [
+      { value: "all", label: "All Forms" },
+      ...forms.map((f) => ({ value: f.formId, label: f.formName })),
+    ],
+    [forms],
+  );
+
+  const handleFormChange = useCallback((e) => {
+    setFormFilter(e.target.value);
+    setPage(0);
+    setSelected([]);
+  }, []);
 
   // Truncate helper
   const truncate = (str, len = 80) => {
@@ -323,11 +453,13 @@ const FormsTab = memo(({ website, websiteId }) => {
     return truncate(msg?.fieldValue || formData[0]?.fieldValue || "");
   };
 
-  // Empty state
+  // Empty state — only when nothing is filtered (keep the dropdown/table
+  // visible when a specific form or filter simply has no matches).
   if (
     !loading &&
     submissions.length === 0 &&
     filter === "all" &&
+    formFilter === "all" &&
     !search &&
     !startDate &&
     !endDate
@@ -369,6 +501,12 @@ const FormsTab = memo(({ website, websiteId }) => {
           flexWrap: "wrap",
         }}
       >
+        <FilterBar
+          label="Form"
+          value={formFilter}
+          onChange={handleFormChange}
+          options={formOptions}
+        />
         <FilterBar
           label="Status"
           value={filter}
@@ -707,7 +845,7 @@ const FormsTab = memo(({ website, websiteId }) => {
               id="submission-detail-title"
               sx={{ color: colors.text }}
             >
-              Form Submission
+              {detailSubmission.formName || "Form Submission"}
               <Typography
                 variant="caption"
                 display="block"

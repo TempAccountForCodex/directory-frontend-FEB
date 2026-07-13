@@ -113,6 +113,11 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
       STORE_FIT_CONTACT_FIELDS,
       data.websiteId,
       "storefit-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
     );
 
   return (

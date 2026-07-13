@@ -1037,6 +1037,8 @@ interface SharedContactFormProps {
   websiteId?: string | number;
   blockId: string | number | undefined;
   blockPath: string;
+  /** Heading of the parent contact block — shown as the form name in the dashboard. */
+  formName?: string;
   formTitle: string;
   buttonText: string;
   formFields: ContactFormField[];
@@ -1077,6 +1079,7 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
   websiteId,
   blockId,
   blockPath,
+  formName,
   formTitle,
   buttonText,
   formFields,
@@ -1089,6 +1092,7 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
   whiteColor,
 }) => {
   const [values, setValues] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
@@ -1112,10 +1116,22 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
 
       return next;
     });
+    setFieldErrors({});
   }, [formFields]);
 
-  const setValue = (key: string, value: string) =>
+  const setValue = (key: string, value: string) => {
     setValues((prev) => ({ ...prev, [key]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    if (status === "error") {
+      setStatus("idle");
+      setErrorMessage("");
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -1139,15 +1155,19 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
       (field) => classifyContactField(field.label) === "name",
     );
 
-    // Prevent empty/invalid submissions: respect each field's required flag.
-    const missingRequired = built.some((field) => field.required && !field.value);
-    if (missingRequired || built.every((field) => !field.value)) {
-      setErrorMessage("Please fill in all required fields.");
-      setStatus("error");
-      return;
-    }
+    const nextErrors: Record<string, string> = {};
+    built.forEach((field) => {
+      if (field.required && !field.value) {
+        nextErrors[field.key] = "This field is required.";
+      }
+    });
     if (emailField?.value && !isValidEmail(emailField.value)) {
-      setErrorMessage("Please enter a valid email address.");
+      nextErrors[emailField.key] = "Enter a valid email address.";
+    }
+
+    if (Object.keys(nextErrors).length > 0 || built.every((field) => !field.value)) {
+      setFieldErrors(nextErrors);
+      setErrorMessage("Please fill in all required fields.");
       setStatus("error");
       return;
     }
@@ -1165,6 +1185,8 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
         submitterName: nameField?.value || undefined,
         submitterEmail: emailField?.value || undefined,
         source: "template-contact-block",
+        ...(blockId != null ? { formId: String(blockId) } : {}),
+        ...(formName ? { formName } : {}),
         formData: built.map((field) => ({
           fieldName: field.label,
           fieldValue: field.value,
@@ -1173,6 +1195,7 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
       });
       setStatus("success");
       setValues({});
+      setFieldErrors({});
     } catch {
       setErrorMessage("Something went wrong. Please try again.");
       setStatus("error");
@@ -1183,6 +1206,9 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
     const value = values[field.key] || "";
     const disabled = status === "loading";
     const placeholder = field.placeholder || field.label;
+    const helperText = fieldErrors[field.key] || " ";
+    const showError = Boolean(fieldErrors[field.key]);
+    const label = field.required ? `${field.label} *` : field.label;
 
     if (field.fieldType === "textarea") {
       return (
@@ -1192,11 +1218,15 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
           fullWidth
           multiline
           minRows={4}
+          label={label}
           placeholder={placeholder}
           value={value}
           onChange={(e) => setValue(field.key, e.target.value)}
           required={field.required}
           disabled={disabled}
+          error={showError}
+          helperText={helperText}
+          InputLabelProps={{ shrink: true }}
           inputProps={{ "aria-label": field.label }}
           sx={formInputSx}
         />
@@ -1210,10 +1240,14 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
           select
           size="small"
           fullWidth
+          label={label}
           value={value}
           onChange={(e) => setValue(field.key, e.target.value)}
           required={field.required}
           disabled={disabled}
+          error={showError}
+          helperText={helperText}
+          InputLabelProps={{ shrink: true }}
           SelectProps={{ displayEmpty: true }}
           inputProps={{ "aria-label": field.label }}
           sx={formInputSx}
@@ -1243,18 +1277,18 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
               sx={{ color: textColor, "&.Mui-checked": { color: themeColor } }}
             />
           }
-          label={placeholder}
+          label={field.required ? `${placeholder} *` : placeholder}
         />
       );
     }
 
     if (field.fieldType === "radio") {
       return (
-        <FormControl key={field.key} disabled={disabled}>
+        <FormControl key={field.key} disabled={disabled} error={showError}>
           <FormLabel
             sx={{ color: textColor, "&.Mui-focused": { color: textColor } }}
           >
-            {field.label}
+            {label}
           </FormLabel>
           <RadioGroup
             value={value}
@@ -1277,6 +1311,17 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
               />
             ))}
           </RadioGroup>
+          <Typography
+            component="span"
+            sx={{
+              minHeight: "20px",
+              fontSize: "0.75rem",
+              color: showError ? "#d32f2f" : "transparent",
+              mt: 0.25,
+            }}
+          >
+            {helperText}
+          </Typography>
         </FormControl>
       );
     }
@@ -1288,11 +1333,15 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
         size="small"
         fullWidth
         type={nativeContactInputType(field.fieldType)}
+        label={label}
         placeholder={placeholder}
         value={value}
         onChange={(e) => setValue(field.key, e.target.value)}
         required={field.required}
         disabled={disabled}
+        error={showError}
+        helperText={helperText}
+        InputLabelProps={{ shrink: true }}
         inputProps={{ "aria-label": field.label }}
         sx={formInputSx}
       />
@@ -2360,6 +2409,30 @@ export const renderEditorSharedBlock = ({
       resolvedCardStyle.backgroundColor !== undefined;
 
     const formInputSx = {
+      "& .MuiInputLabel-root": {
+        color: textColor,
+        opacity: 0.88,
+      },
+
+      "& .MuiInputLabel-root.Mui-focused": {
+        color: themeColor,
+        opacity: 1,
+      },
+
+      "& .MuiInputLabel-root.MuiFormLabel-filled": {
+        color: textColor,
+        opacity: 0.92,
+      },
+
+      "& .MuiInputLabel-root.Mui-error": {
+        color: "#d32f2f",
+        opacity: 1,
+      },
+
+      "& .MuiFormLabel-asterisk": {
+        color: "#d32f2f",
+      },
+
       "& .MuiOutlinedInput-root": {
         color: textColor,
         backgroundColor:
@@ -2566,6 +2639,9 @@ export const renderEditorSharedBlock = ({
             websiteId={websiteId}
             blockId={section.blockId}
             blockPath={blockPath}
+            formName={
+              block.content?.heading || block.label || "Contact form"
+            }
             formTitle={block.content?.formTitle || "Send a message"}
             buttonText={block.content?.buttonText || "Contact us"}
             formFields={formFields}

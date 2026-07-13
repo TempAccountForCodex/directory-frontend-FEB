@@ -64,6 +64,7 @@ const Toggle: React.FC<ToggleProps> = React.memo(
     const errorId = `${uid}-error`;
     const resolvedLabel = label ?? field.label ?? "";
     const hasErrors = errors.length > 0;
+    const isRequiredToggle = field.name === "required";
 
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,6 +82,36 @@ const Toggle: React.FC<ToggleProps> = React.memo(
           "aria-invalid": hasErrors ? true : undefined,
           "aria-describedby": hasErrors ? errorId : undefined,
         }}
+        sx={
+          isRequiredToggle
+            ? {
+                width: 40,
+                height: 24,
+                p: 0,
+                "& .MuiSwitch-switchBase": {
+                  p: "2px",
+                  "&.Mui-checked": {
+                    transform: "translateX(16px)",
+                    color: "#111111",
+                    "& + .MuiSwitch-track": {
+                      backgroundColor: "#d1d5db",
+                      opacity: 1,
+                    },
+                  },
+                },
+                "& .MuiSwitch-thumb": {
+                  width: 20,
+                  height: 20,
+                  boxShadow: "0 1px 3px rgba(15, 23, 42, 0.28)",
+                },
+                "& .MuiSwitch-track": {
+                  borderRadius: 999,
+                  backgroundColor: "#e5e7eb",
+                  opacity: 1,
+                },
+              }
+            : undefined
+        }
       />
     );
 

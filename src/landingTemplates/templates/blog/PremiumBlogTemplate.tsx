@@ -175,6 +175,11 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
       BLOG_CONTACT_FIELDS,
       data.websiteId,
       "blog-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
     );
   const primary = data.primaryColor || "#8DC63F";
   const secondary = data.secondaryColor || "#d9e9b5";

@@ -4,6 +4,7 @@ import type {
   Feature,
   Review,
 } from "../landingTemplates/types/BusinessData";
+import { normalizeContactFormFields } from "../api/formSubmissions";
 import { buildFrontendTemplateBusinessData } from "./frontendTemplateSiteData";
 
 export type TemplateThemeSettings = {
@@ -1273,33 +1274,10 @@ const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
       const rawInnerBlocks = Array.isArray(content.innerBlocks)
         ? content.innerBlocks
         : [];
-      // A Contact widget added from the library is persisted as a plan-section
-      // wrapper: its live-edited fields live on the outer `content`, while the
-      // shared renderer reads the first inner block's content. Overlay the
-      // outer (fully-merged) Contact fields onto that inner block so edited
-      // heading/body/email/phone/address and the `formFields` list always
-      // render on the canvas — never a stale inner mirror. Outer wins, matching
-      // the built-in Contact section and EditorExtraBlocks paths.
-      const innerBlocks =
-        String(content.editorBlockType || "").toUpperCase() === "CONTACT" &&
-        rawInnerBlocks[0]
-          ? [
-              {
-                ...rawInnerBlocks[0],
-                content: {
-                  ...(rawInnerBlocks[0].content || {}),
-                  ...buildContactFormConfig(content),
-                  ...(typeof content.heading === "string"
-                    ? { heading: content.heading }
-                    : {}),
-                  ...(typeof content.body === "string"
-                    ? { body: content.body }
-                    : {}),
-                },
-              },
-              ...rawInnerBlocks.slice(1),
-            ]
-          : rawInnerBlocks;
+      // Overlay live-edited outer Contact fields onto the first inner block so
+      // the canvas never renders a stale inner mirror. See
+      // overlayContactInnerBlocks — outer always wins for contact widgets.
+      const innerBlocks = overlayContactInnerBlocks(content, rawInnerBlocks);
 
       return {
         blockId: block.id,
@@ -1655,8 +1633,19 @@ const buildContactFormConfig = (
   contact: Record<string, unknown>,
 ): Record<string, unknown> => {
   const config: Record<string, unknown> = {};
-  if (Array.isArray(contact.formFields)) {
-    config.formFields = contact.formFields;
+  const normalizedFormFields = normalizeContactFormFields(
+    contact.formFields,
+    contact,
+  );
+  if (normalizedFormFields.length) {
+    config.formFields = normalizedFormFields.map((field) => ({
+      _id: field.key,
+      label: field.label,
+      placeholder: field.placeholder,
+      fieldType: field.fieldType,
+      required: field.required,
+      options: field.options.join(", "),
+    }));
   }
   const passthroughStrings: Array<[string, string[]]> = [
     ["formTitle", ["formTitle"]],
@@ -1675,6 +1664,59 @@ const buildContactFormConfig = (
     }
   }
   return config;
+};
+
+/**
+ * A Contact widget added from the library is persisted as a section wrapper: its
+ * live-edited fields live on the outer `content`, while the shared renderer reads
+ * the FIRST inner block's content. Overlay the outer (fully-merged) Contact
+ * fields onto that inner block so edited heading/body/email/phone/address and the
+ * `formFields` list always render on the canvas — never a stale inner mirror.
+ * Outer wins, matching the built-in Contact section and EditorExtraBlocks paths.
+ *
+ * Detect the contact widget robustly: the wrapper may carry `editorBlockType`
+ * "CONTACT", or — for blocks seeded/persisted with a differing wrapper type or
+ * before that flag existed — simply hold a first inner block of type "contact".
+ * Either way the outer content owns the contact fields and must win.
+ */
+const overlayContactInnerBlocks = (
+  outerContent: Record<string, unknown>,
+  rawInnerBlocks: unknown[],
+): unknown[] => {
+  const firstInner = rawInnerBlocks[0] as
+    | { type?: string; blockType?: string; content?: Record<string, unknown> }
+    | undefined;
+  if (!firstInner) {
+    return rawInnerBlocks;
+  }
+
+  const firstInnerType = String(
+    firstInner.type || firstInner.blockType || "",
+  ).toUpperCase();
+  const isContactWidget =
+    String(outerContent.editorBlockType || "").toUpperCase() === "CONTACT" ||
+    firstInnerType === "CONTACT";
+
+  if (!isContactWidget) {
+    return rawInnerBlocks;
+  }
+
+  return [
+    {
+      ...firstInner,
+      content: {
+        ...(firstInner.content || {}),
+        ...buildContactFormConfig(outerContent),
+        ...(typeof outerContent.heading === "string"
+          ? { heading: outerContent.heading }
+          : {}),
+        ...(typeof outerContent.body === "string"
+          ? { body: outerContent.body }
+          : {}),
+      },
+    },
+    ...rawInnerBlocks.slice(1),
+  ];
 };
 
 const readArray = <T>(source: Record<string, unknown>, keys: string[]): T[] => {
@@ -2015,9 +2057,10 @@ const buildTemplatePreviewBusinessDataImpl = (
             contact.bodyStyle ||
             contact.subheadingStyle,
           buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
-          innerBlocks: Array.isArray(contact.innerBlocks)
-            ? contact.innerBlocks
-            : [],
+          innerBlocks: overlayContactInnerBlocks(
+            contact,
+            Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
+          ),
           sectionStyle: getSectionStyleValue(contact),
           outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },
@@ -2455,7 +2498,10 @@ const buildTemplatePreviewBusinessDataImpl = (
           headingStyle: contact.headingStyle,
           descriptionStyle: contact.descriptionStyle || contact.subheadingStyle || contact.bodyStyle,
           buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
-          innerBlocks: Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
+          innerBlocks: overlayContactInnerBlocks(
+            contact,
+            Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
+          ),
           sectionStyle: getSectionStyleValue(contact),
           outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },
@@ -2598,7 +2644,10 @@ const buildTemplatePreviewBusinessDataImpl = (
           headingStyle: contact.headingStyle,
           descriptionStyle: contact.descriptionStyle || contact.subheadingStyle || contact.bodyStyle,
           buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
-          innerBlocks: Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
+          innerBlocks: overlayContactInnerBlocks(
+            contact,
+            Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
+          ),
           sectionStyle: getSectionStyleValue(contact),
           outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },
@@ -2727,7 +2776,10 @@ const buildTemplatePreviewBusinessDataImpl = (
           headingStyle: contact.headingStyle,
           descriptionStyle: contact.descriptionStyle || contact.subheadingStyle || contact.bodyStyle,
           buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
-          innerBlocks: Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
+          innerBlocks: overlayContactInnerBlocks(
+            contact,
+            Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
+          ),
           sectionStyle: getSectionStyleValue(contact),
           outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
         },

@@ -256,6 +256,11 @@ function ConsultingStudioBody({ data }: { data: TemplateProps["data"] }) {
       CONSULTING_CONTACT_FIELDS,
       data.websiteId,
       "consulting-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
     );
   const aboutImages = (data.gallery ?? []).slice(0, 3);
   const projectCards = (data.gallery ?? []).slice(2, 5);

@@ -23,6 +23,16 @@ export interface SubmitWebsiteFormPayload {
   submitterEmail?: string;
   formData: FormFieldPayload[];
   source?: string;
+  /**
+   * Stable identifier of the form the submission came from — the source block's
+   * id. Lets the dashboard Forms tab attribute each submission to a specific
+   * form and filter by it (multiple Contact/Form blocks per site are otherwise
+   * indistinguishable, since `source` is only a coarse category). Optional and
+   * backward-compatible: legacy submissions simply have no `formId`.
+   */
+  formId?: string;
+  /** Human-readable label for the form (its heading), shown in the dashboard. */
+  formName?: string;
 }
 
 /**
@@ -140,6 +150,17 @@ const parseFieldOptions = (raw: unknown): string[] => {
   return [];
 };
 
+const parseRequiredFlag = (raw: unknown): boolean => {
+  if (typeof raw === "boolean") return raw;
+  if (typeof raw === "number") return raw !== 0;
+  if (typeof raw === "string") {
+    const normalized = raw.trim().toLowerCase();
+    if (!normalized) return false;
+    return !["false", "0", "off", "no"].includes(normalized);
+  }
+  return false;
+};
+
 /**
  * Normalize whatever a Contact block has stored into a clean ContactFormField[].
  * Precedence: the editor's `formFields` repeater → a legacy `fields` array →
@@ -213,7 +234,7 @@ export const normalizeContactFormFields = (
           label,
           placeholder: String(rec.placeholder ?? label),
           fieldType,
-          required: rec.required === true,
+          required: parseRequiredFlag(rec.required),
           options: parseFieldOptions(rec.options),
         };
       }

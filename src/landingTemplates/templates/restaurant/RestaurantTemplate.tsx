@@ -62,6 +62,11 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
       RESTAURANT_CONTACT_FIELDS,
       data.websiteId,
       "restaurant-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
     );
   const reviews = data.reviews ?? [];
 

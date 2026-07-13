@@ -267,4 +267,106 @@ describe("Contact widget custom-section overlay (company-executive)", () => {
       (inner?.formFields as Array<{ label: string }>).map((f) => f.label),
     ).toContain("Phone");
   });
+
+  // Regression: some contact widgets are persisted with a wrapper whose
+  // `editorBlockType` is NOT the literal string "CONTACT" (e.g. "SECTION", or
+  // missing entirely on older/AI-seeded data). The overlay must still fire —
+  // detection keys off the first inner block being a contact — otherwise the
+  // edited outer heading/body/email are dropped and the stale inner renders.
+  it.each([["SECTION"], [undefined]])(
+    "overlays outer contact content when wrapper editorBlockType=%s",
+    (editorBlockType) => {
+      const contactWidget = {
+        id: "contact-widget",
+        blockType: "CONTACT",
+        sortOrder: 5,
+        isVisible: true,
+        content: {
+          ...(editorBlockType ? { editorBlockType } : {}),
+          editorLabel: "Contact",
+          editorSection: "plan-1700000000000",
+          heading: "Get in touchdfdd",
+          body: "Edited body copy.",
+          email: "edited@company.com",
+          innerBlocks: [
+            {
+              id: "inner",
+              type: "contact",
+              content: {
+                heading: "Get in touch",
+                email: "hello@yourcompany.com",
+              },
+            },
+          ],
+        },
+      };
+
+      const data = buildTemplatePreviewBusinessData(
+        "company-executive",
+        { id: "w1", name: "Consulting Co" } as never,
+        [
+          {
+            id: "home",
+            title: "Home",
+            path: "/",
+            isHome: true,
+            sortOrder: 0,
+            isPublished: true,
+            blocks: [contactWidget],
+          },
+        ] as never,
+      ) as never as {
+        templateContent?: { customSections?: Array<Record<string, never>> };
+      };
+
+      const section = (data?.templateContent?.customSections ?? []).find((s) =>
+        Array.isArray((s as { innerBlocks?: unknown[] }).innerBlocks),
+      ) as
+        | { innerBlocks: Array<{ content: Record<string, unknown> }> }
+        | undefined;
+      const inner = section?.innerBlocks?.[0]?.content;
+
+      expect(inner?.heading).toBe("Get in touchdfdd");
+      expect(inner?.body).toBe("Edited body copy.");
+      expect(inner?.email).toBe("edited@company.com");
+    },
+  );
+});
+
+describe("Built-in contact section formFields mapping", () => {
+  it("maps template contact defaults into editor repeater fields", () => {
+    const data = buildTemplatePreviewBusinessData(
+      "company-executive",
+      {
+        id: "w1",
+        name: "Consulting Co",
+        description: "Professional business services.",
+      } as never,
+      [] as never,
+    ) as never as {
+      templateContent?: {
+        contact?: {
+          formFields?: Array<{
+            _id: string;
+            label: string;
+            placeholder: string;
+            fieldType: string;
+            required: boolean;
+            options: string;
+          }>;
+        };
+      };
+    };
+
+    const fields = data?.templateContent?.contact?.formFields ?? [];
+    expect(fields.length).toBeGreaterThan(0);
+    expect(fields[0]).toMatchObject({
+      _id: "full-name",
+      label: "Full name",
+      placeholder: "Full name",
+      fieldType: "text",
+      required: true,
+      options: "",
+    });
+  });
 });

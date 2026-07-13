@@ -150,6 +150,11 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
     STORE_PREMIUM_CONTACT_FIELDS,
     data.websiteId,
     "store-premium-contact-form",
+    {
+      formId: (data.templateContent?.contact as any)?.blockId,
+      formName:
+        (data.templateContent?.contact as any)?.heading || "Contact form",
+    },
   );
   const navigate = useNavigate();
   const { templateId = "store-premium", pageId } = useParams<{

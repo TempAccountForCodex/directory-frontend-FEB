@@ -390,6 +390,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     companyContactFields,
     data.websiteId,
     "company-contact-form",
+    {
+      formId: (data.templateContent?.contact as any)?.blockId,
+      formName:
+        (data.templateContent?.contact as any)?.heading || "Contact form",
+    },
   );
   const headingFont = data.themeSettings?.headingFont || defaultHeadingFont;
   const bodyFont = data.themeSettings?.bodyFont || defaultBodyFont;

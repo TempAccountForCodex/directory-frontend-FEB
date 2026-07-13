@@ -180,6 +180,11 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
       STORE_CONTACT_FIELDS,
       data.websiteId,
       "store-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
     );
   const products = data.products?.length ? data.products : fallbackProducts;
   const heroImage = data.heroBannerUrl || fallbackHero;

@@ -98,22 +98,32 @@ function getFieldColorSx(variant: string, color: string): object {
   if (!color) return {};
   if (variant === "standard") {
     return {
+      "& .MuiInputLabel-root": { color, opacity: 0.88 },
+      "& .MuiInputLabel-root.MuiFormLabel-filled": { color, opacity: 0.92 },
       "& .MuiInput-underline:after": { borderBottomColor: color },
       "& .MuiInputLabel-root.Mui-focused": { color },
+      "& .MuiFormLabel-asterisk": { color: "#d32f2f" },
     };
   }
   if (variant === "filled") {
     return {
+      "& .MuiInputLabel-root": { color, opacity: 0.88 },
+      "& .MuiInputLabel-root.MuiFormLabel-filled": { color, opacity: 0.92 },
       "& .MuiFilledInput-root:after": { borderBottomColor: color },
       "& .MuiInputLabel-root.Mui-focused": { color },
+      "& .MuiFormLabel-asterisk": { color: "#d32f2f" },
     };
   }
   // outlined (default)
   return {
+    "& .MuiInputLabel-root": { color, opacity: 0.88 },
+    "& .MuiInputLabel-root.MuiFormLabel-filled": { color, opacity: 0.92 },
     "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
       borderColor: color,
     },
     "& .MuiInputLabel-root.Mui-focused": { color },
+    "& .MuiInputLabel-root.Mui-error": { color: "#d32f2f", opacity: 1 },
+    "& .MuiFormLabel-asterisk": { color: "#d32f2f" },
   };
 }
 
@@ -134,6 +144,9 @@ interface ContactFormProps {
   formFields?: FormFieldConfig[];
   content?: ContactContent;
   websiteId?: string | number;
+  /** Source block id + heading, so the dashboard can attribute/filter submissions. */
+  formId?: string | number;
+  formName?: string;
   onFormSubmit?: (formName: string, success: boolean) => void;
 }
 
@@ -144,6 +157,8 @@ function ContactForm({
   formFields,
   content,
   websiteId,
+  formId,
+  formName,
   onFormSubmit,
 }: ContactFormProps) {
   const fields = useMemo(
@@ -164,6 +179,7 @@ function ContactForm({
   const [formStatus, setFormStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -188,14 +204,25 @@ function ContactForm({
 
       return changed ? next : prev;
     });
+    setFieldErrors({});
   }, [buildFormData, fields]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
       setFormData((prev) => ({ ...prev, [name]: value }));
+      setFieldErrors((prev) => {
+        if (!prev[name]) return prev;
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+      if (formStatus === "error") {
+        setFormStatus("idle");
+        setErrorMessage("");
+      }
     },
-    [],
+    [formStatus],
   );
 
   const handleSubmit = useCallback(
@@ -213,16 +240,20 @@ function ContactForm({
         value: (formData[f.label] || "").trim(),
       }));
 
-      // Prevent empty/invalid submissions.
-      const missingRequired = builtFields.some((f) => f.required && !f.value);
-      if (missingRequired || builtFields.every((f) => !f.value)) {
-        setErrorMessage("Please fill in all required fields.");
-        setFormStatus("error");
-        return;
-      }
+      const nextErrors: Record<string, string> = {};
+      builtFields.forEach((field) => {
+        if (field.required && !field.value) {
+          nextErrors[field.label] = "This field is required.";
+        }
+      });
       const emailField = builtFields.find((f) => f.kind === "email");
       if (emailField?.value && !isValidEmail(emailField.value)) {
-        setErrorMessage("Please enter a valid email address.");
+        nextErrors[emailField.label] = "Enter a valid email address.";
+      }
+
+      if (Object.keys(nextErrors).length > 0 || builtFields.every((f) => !f.value)) {
+        setFieldErrors(nextErrors);
+        setErrorMessage("Please fill in all required fields.");
         setFormStatus("error");
         return;
       }
@@ -246,6 +277,8 @@ function ContactForm({
           submitterName: nameField?.value || undefined,
           submitterEmail: emailField?.value || undefined,
           source: "contact-block",
+          ...(formId != null ? { formId: String(formId) } : {}),
+          ...(formName ? { formName } : {}),
           formData: builtFields.map((f) => ({
             fieldName: f.label,
             fieldValue: f.value,
@@ -254,6 +287,7 @@ function ContactForm({
         });
 
         setFormStatus("success");
+        setFieldErrors({});
         onFormSubmit?.("contact", true);
         setFormData(buildFormData(fields));
         setTimeout(() => setFormStatus("idle"), 5000);
@@ -269,7 +303,16 @@ function ContactForm({
         onFormSubmit?.("contact", false);
       }
     },
-    [buildFormData, formData, fields, content, websiteId, onFormSubmit],
+    [
+      buildFormData,
+      formData,
+      fields,
+      content,
+      websiteId,
+      formId,
+      formName,
+      onFormSubmit,
+    ],
   );
 
   return (
@@ -293,7 +336,7 @@ function ContactForm({
         <TextField
           key={field.label}
           fullWidth
-          label={field.label}
+          label={field.required !== false ? `${field.label} *` : field.label}
           name={field.label}
           type={
             field.fieldType === "email"
@@ -310,6 +353,8 @@ function ContactForm({
           variant={fieldVariant}
           sx={getFieldColorSx(fieldVariant, fieldColor)}
           disabled={formStatus === "loading"}
+          error={Boolean(fieldErrors[field.label])}
+          helperText={fieldErrors[field.label] || " "}
           inputProps={{ "aria-label": field.label }}
         />
       ))}
@@ -482,6 +527,8 @@ const ContactBlock = React.memo(function ContactBlock({
                       fieldColor={fieldColor}
                       content={content}
                       websiteId={effectiveWebsiteId}
+                      formId={block.id}
+                      formName={content.heading || "Contact form"}
                       onFormSubmit={onFormSubmit}
                     />
                   )}
@@ -665,6 +712,8 @@ const ContactBlock = React.memo(function ContactBlock({
             formFields={content.formFields}
             content={content}
             websiteId={effectiveWebsiteId}
+            formId={block.id}
+            formName={content.heading || "Contact form"}
             onFormSubmit={onFormSubmit}
           />
         )}
@@ -757,6 +806,8 @@ const ContactBlock = React.memo(function ContactBlock({
                     fieldColor={fieldColor}
                     content={content}
                     websiteId={effectiveWebsiteId}
+                    formId={block.id}
+                    formName={content.heading || "Contact form"}
                     onFormSubmit={onFormSubmit}
                   />
                 </Box>

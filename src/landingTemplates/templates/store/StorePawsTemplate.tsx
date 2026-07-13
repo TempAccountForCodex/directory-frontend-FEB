@@ -239,6 +239,11 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
       STORE_PAWS_CONTACT_FIELDS,
       data.websiteId,
       "storepaws-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
     );
 
   return (

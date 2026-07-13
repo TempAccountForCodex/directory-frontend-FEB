@@ -46,6 +46,13 @@ export function useTemplateContactForm(
   fields: TemplateContactField[],
   websiteId?: string | number,
   source = "template-form",
+  /**
+   * Optional per-form identity so the dashboard Forms tab can attribute and
+   * filter these submissions. `formId` is the source block's id; `formName` its
+   * heading. Both are optional and backward-compatible — omitting them keeps the
+   * previous behaviour (submission still records, just unattributed to a form).
+   */
+  formIdentity?: { formId?: string | number; formName?: string },
 ) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<TemplateFormStatus>("idle");
@@ -126,6 +133,12 @@ export function useTemplateContactForm(
           submitterName: nameField?.value || undefined,
           submitterEmail: emailField?.value || undefined,
           source,
+          ...(formIdentity?.formId != null
+            ? { formId: String(formIdentity.formId) }
+            : {}),
+          ...(formIdentity?.formName
+            ? { formName: formIdentity.formName }
+            : {}),
           formData: built.map((f) => ({
             fieldName: f.label,
             fieldValue: f.value,
@@ -141,7 +154,7 @@ export function useTemplateContactForm(
         submittingRef.current = false;
       }
     },
-    [fields, values, websiteId, source],
+    [fields, values, websiteId, source, formIdentity?.formId, formIdentity?.formName],
   );
 
   return { values, status, errorMessage, getFieldProps, handleSubmit };

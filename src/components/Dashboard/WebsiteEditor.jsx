@@ -16,6 +16,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { apiClient } from "../../api/client";
+import { normalizeContactFormFields } from "../../api/formSubmissions";
 import {
   useParams,
   useNavigate,
@@ -1529,6 +1530,17 @@ const normalizeContactEditorContent = (value) => {
   }
 
   const normalized = { ...value };
+  normalized.formFields = normalizeContactFormFields(
+    normalized.formFields,
+    normalized,
+  ).map((field) => ({
+    _id: field.key,
+    label: field.label,
+    placeholder: field.placeholder,
+    fieldType: field.fieldType,
+    required: field.required,
+    options: field.options.join(", "),
+  }));
   const email = normalized.email ?? normalized.contactEmail;
   const phone = normalized.phone ?? normalized.contactPhone;
   const address = normalized.address ?? normalized.contactAddress;
@@ -1909,10 +1921,48 @@ const sanitizeBlockForSave = (block) => {
 
 // Remap NAVBAR → WEBSITE_HEADER when content._subType identifies it as such
 const normalizeLoadedBlock = (block) => {
+  const rawBlockType = String(block?.blockType || "").toUpperCase();
+  const editorBlockType = String(
+    block?.content?.editorBlockType || "",
+  ).toUpperCase();
+
+  if (rawBlockType === "CONTACT") {
+    return {
+      ...block,
+      content: normalizeContactEditorContent(block?.content || {}),
+    };
+  }
+
   if (
-    String(block?.blockType || "").toUpperCase() === "NAVBAR" &&
-    block?.content?._subType === "website_header"
+    editorBlockType === "CONTACT" &&
+    block?.content &&
+    !Array.isArray(block.content)
   ) {
+    const normalizedContent = normalizeContactEditorContent(block.content);
+    const innerBlocks = Array.isArray(block.content.innerBlocks)
+      ? block.content.innerBlocks
+      : [];
+
+    if (innerBlocks[0]) {
+      normalizedContent.innerBlocks = [
+        {
+          ...innerBlocks[0],
+          content: normalizeContactEditorContent({
+            ...(innerBlocks[0]?.content || {}),
+            formFields: normalizedContent.formFields,
+          }),
+        },
+        ...innerBlocks.slice(1),
+      ];
+    }
+
+    return {
+      ...block,
+      content: normalizedContent,
+    };
+  }
+
+  if (rawBlockType === "NAVBAR" && block?.content?._subType === "website_header") {
     return { ...block, blockType: "WEBSITE_HEADER" };
   }
   return block;
@@ -3273,13 +3323,21 @@ const WebsiteEditorInner = () => {
   useEffect(() => {
     if (selectedPage?.id) {
       if (supportsLocalTemplateEditor) {
-        const templateBlocks = Array.isArray(selectedPage.blocks)
-          ? selectedPage.blocks.map(normalizeLoadedBlock)
-          : [];
-        localTemplateHydratedPageRef.current =
+        const selectedPageId =
           typeof selectedPage.id === "string"
             ? selectedPage.id
             : String(selectedPage.id);
+
+        if (localTemplateHydratedPageRef.current === selectedPageId) {
+          setBlockError(null);
+          isLoadingRef.current = false;
+          return;
+        }
+
+        const templateBlocks = Array.isArray(selectedPage.blocks)
+          ? selectedPage.blocks.map(normalizeLoadedBlock)
+          : [];
+        localTemplateHydratedPageRef.current = selectedPageId;
         setBlocks(templateBlocks);
         setBlockError(null);
         isLoadingRef.current = false;

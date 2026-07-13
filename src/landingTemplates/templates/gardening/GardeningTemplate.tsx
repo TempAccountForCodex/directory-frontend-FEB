@@ -96,6 +96,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
       GARDENING_CONTACT_FIELDS,
       data.websiteId,
       "gardening-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
     );
   const theme = {
     ...buildModernTheme(data.primaryColor, data.secondaryColor),

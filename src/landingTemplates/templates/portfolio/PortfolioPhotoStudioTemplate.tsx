@@ -155,6 +155,11 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       CONTACT_FIELDS,
       data.websiteId,
       "portfolio-photo-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
     );
   const gallery = data.gallery?.length ? data.gallery : [];
   const portfolioItems = useMemo(
