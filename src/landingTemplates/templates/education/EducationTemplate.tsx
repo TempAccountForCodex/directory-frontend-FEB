@@ -31,6 +31,8 @@ import {
   EditableBox,
   EditorExtraBlocks,
 } from "../../utils/editableComponents";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
@@ -62,6 +64,7 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
     { label: "Gallery", id: "gallery" },
     { label: "Contact", id: "contact" },
   ];
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
 
   const heroImage = data.heroBannerUrl;
   const gallery = data.gallery ?? [];
@@ -232,6 +235,20 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
                 {item.label}
               </Box>
             ))}
+            <TemplatePageNavLinks
+              links={pageNavLinks}
+              itemSx={{
+                color: "#243b6b",
+                fontWeight: 700,
+                fontFamily: theme.fontFamily,
+                fontSize: "0.82rem",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                transition: "color 160ms ease",
+                "&:hover": { color: theme.primaryColor },
+              }}
+            />
           </Stack>
 
           <Stack direction="row" justifyContent="flex-end">

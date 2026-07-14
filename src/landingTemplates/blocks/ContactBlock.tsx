@@ -26,6 +26,12 @@ export interface ContactBlockProps {
   variant?: "card" | "inline" | "dark";
 }
 
+const getTemplateBlockId = (
+  data: BusinessData,
+  key: string,
+): string | number | undefined =>
+  (data.templateContent as Record<string, any> | undefined)?.[key]?.blockId;
+
 interface FormState {
   name: string;
   email: string;
@@ -108,8 +114,15 @@ function CardContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
   const { form, status, errorMessage, submitted, handleChange, handleSubmit } =
     useContactForm(data.websiteId);
   const { contact } = data;
+  const contactBlockId = getTemplateBlockId(data, "contact");
   return (
-    <Box sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Contact"
+      data-preview-block-id={contactBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <Box
         sx={{
           maxWidth: 1000,
@@ -266,8 +279,15 @@ function InlineContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
   const { form, status, errorMessage, submitted, handleChange, handleSubmit } =
     useContactForm(data.websiteId);
   const { contact } = data;
+  const contactBlockId = getTemplateBlockId(data, "contact");
   return (
-    <Box sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Contact"
+      data-preview-block-id={contactBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <Box sx={{ maxWidth: 760, mx: "auto" }}>
         <FadeIn>
           <Typography
@@ -375,6 +395,7 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
   const { form, status, errorMessage, submitted, handleChange, handleSubmit } =
     useContactForm(data.websiteId);
   const { contact } = data;
+  const contactBlockId = getTemplateBlockId(data, "contact");
   const inputSx = {
     "& .MuiOutlinedInput-root": {
       color: theme.headingColor,
@@ -385,7 +406,13 @@ function DarkContact({ data, theme }: Omit<ContactBlockProps, "variant">) {
     "& .MuiInputAdornment-root .MuiSvgIcon-root": { color: theme.bodyColor },
   };
   return (
-    <Box sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Contact"
+      data-preview-block-id={contactBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <Box sx={{ maxWidth: 640, mx: "auto" }}>
         <FadeIn>
           <Typography

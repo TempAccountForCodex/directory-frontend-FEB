@@ -25,14 +25,11 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
+import { getEditableTextProps } from "../../utils/editableProps";
 
 const neon = "#46ff16";
 
-const STORE_CONTACT_FIELDS = [
-  { label: "Your Name" },
-  { label: "Email Address" },
-  { label: "Tell us what gear you need", fieldType: "textarea" },
-];
 const bg = "#050505";
 const panel = "#0a0a0a";
 const gridLine = "rgba(70,255,22,0.28)";
@@ -175,15 +172,20 @@ const navItems = [
 ];
 
 const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const contactContent =
+    (data.templateContent?.contact as Record<string, any>) || {};
+  const contactFields = normalizeContactFormFields(
+    contactContent.formFields,
+    contactContent,
+  );
   const { status, errorMessage, getFieldProps, handleSubmit } =
     useTemplateContactForm(
-      STORE_CONTACT_FIELDS,
+      contactFields,
       data.websiteId,
       "store-contact-form",
       {
-        formId: (data.templateContent?.contact as any)?.blockId,
-        formName:
-          (data.templateContent?.contact as any)?.heading || "Contact form",
+        formId: contactContent.blockId,
+        formName: contactContent.heading || "Contact form",
       },
     );
   const products = data.products?.length ? data.products : fallbackProducts;
@@ -237,6 +239,10 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
       window.location.href = `tel:${data.contact.phone}`;
     }
   };
+  const contactHeading =
+    contactContent.heading ||
+    "Contact our team for product help and gym setup guidance.";
+  const contactButton = contactContent.buttonLabel || "Send Inquiry";
 
   return (
     <Box
@@ -1021,7 +1027,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontWeight: 700,
                   }}
                 >
-                  Contact Us
+                  {contactHeading}
                 </Typography>
                 <Box
                   component="form"
@@ -1036,8 +1042,8 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Box
                     component="input"
                     type="text"
-                    placeholder="Your Name"
-                    {...getFieldProps("Your Name")}
+                    placeholder={contactFields[0]?.label || "Your Name"}
+                    {...getFieldProps(contactFields[0]?.label || "Your Name")}
                     sx={{
                       width: "100%",
                       border: "1px solid rgba(0,0,0,0.25)",
@@ -1057,8 +1063,10 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Box
                     component="input"
                     type="email"
-                    placeholder="Email Address"
-                    {...getFieldProps("Email Address")}
+                    placeholder={contactFields[1]?.label || "Email Address"}
+                    {...getFieldProps(
+                      contactFields[1]?.label || "Email Address",
+                    )}
                     sx={{
                       width: "100%",
                       border: "1px solid rgba(0,0,0,0.25)",
@@ -1077,9 +1085,13 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                   />
                   <Box
                     component="textarea"
-                    placeholder="Tell us what gear you need"
+                    placeholder={
+                      contactFields[2]?.label || "Tell us what gear you need"
+                    }
                     rows={5}
-                    {...getFieldProps("Tell us what gear you need")}
+                    {...getFieldProps(
+                      contactFields[2]?.label || "Tell us what gear you need",
+                    )}
                     sx={{
                       width: "100%",
                       border: "1px solid rgba(0,0,0,0.25)",
@@ -1119,6 +1131,11 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                       disabled={status === "loading"}
                       whileHover={{ y: -2, scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      {...getEditableTextProps(
+                        contactContent.blockId,
+                        "buttonLabel",
+                        "single",
+                      )}
                       sx={{
                         minWidth: 0,
                         borderRadius: 999,
@@ -1132,7 +1149,7 @@ const StorePerformanceTemplate: React.FC<TemplateProps> = ({ data }) => {
                         "&:hover": { bgcolor: "#000" },
                       }}
                     >
-                      {status === "loading" ? "Sending…" : "Send Inquiry"}
+                      {status === "loading" ? "Sending…" : contactButton}
                     </Button>
                   </Box>
                 </Box>

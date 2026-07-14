@@ -27,6 +27,8 @@ import {
   renderEditableMedia,
   EditorExtraBlocks,
 } from "../../utils/editableComponents";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
@@ -59,6 +61,7 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
     { label: "Reviews", id: "reviews" },
     { label: "Contact", id: "contact" },
   ];
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
 
   const storyTopImage =
     "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=1200&q=80";
@@ -191,6 +194,18 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                 {item.label}
               </Box>
             ))}
+            <TemplatePageNavLinks
+              links={pageNavLinks}
+              itemSx={{
+                color: "#fff",
+                cursor: "pointer",
+                fontFamily: bodyFont,
+                fontSize: "0.78rem",
+                fontWeight: 500,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              }}
+            />
           </Stack>
 
           <Stack direction="row" justifyContent="flex-end">

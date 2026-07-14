@@ -42,6 +42,8 @@ import {
   EditableButton,
   EditableCard,
 } from "../../utils/editableComponents";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
@@ -140,6 +142,7 @@ function StackCard({
 }
 
 const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
   const stackSectionRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: stackSectionRef,
@@ -310,6 +313,16 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                     {item.label}
                   </Box>
                 ))}
+                <TemplatePageNavLinks
+                  links={pageNavLinks}
+                  itemSx={{
+                    color: "rgba(255,255,255,0.92)",
+                    cursor: "pointer",
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                    "&:hover": { color: "#ffffff" },
+                  }}
+                />
               </Stack>
 
               <Stack spacing={0.7} alignItems="flex-end" sx={{ pr: { md: 1 } }}>

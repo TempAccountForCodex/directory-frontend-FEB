@@ -63,6 +63,8 @@ function ConsultingHeader({
   return (
     <Box
       component="header"
+      data-preview-section="true"
+      data-preview-label="Header"
       sx={{
         position: "sticky",
         top: 0,
@@ -404,6 +406,8 @@ function ExecutiveOverview({
 
   return (
     <Box
+      data-preview-section="true"
+      data-preview-label="Overview"
       sx={{
         bgcolor: theme.bgPrimary,
         px: { xs: 3, md: 6 },
@@ -719,6 +723,8 @@ function MetricsStrip({
         px: { xs: 3, md: 6 },
         py: { xs: 6, md: 8 },
       }}
+      data-preview-section="true"
+      data-preview-label="Metrics"
     >
       <Grid container spacing={2} sx={{ maxWidth: 1240, mx: "auto" }}>
         {metrics.map((m, i) => (

@@ -23,6 +23,8 @@ function MinimalHeader({
   return (
     <Box
       component="header"
+      data-preview-section="true"
+      data-preview-label="Header"
       sx={{
         position: "sticky",
         top: 0,
@@ -83,6 +85,8 @@ function MinimalFooter({
   const social = data.socialLinks;
   return (
     <Box
+      data-preview-section="true"
+      data-preview-label="Footer"
       sx={{
         bgcolor: theme.bgPrimary,
         borderTop: `1px solid ${theme.borderColor}`,

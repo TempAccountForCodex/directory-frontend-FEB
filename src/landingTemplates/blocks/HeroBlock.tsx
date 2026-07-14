@@ -12,15 +12,26 @@ export interface HeroBlockProps {
   variant?: "gradient" | "split" | "dark" | "photo";
 }
 
+const getTemplateBlockId = (
+  data: BusinessData,
+  key: string,
+): string | number | undefined =>
+  (data.templateContent as Record<string, any> | undefined)?.[key]?.blockId;
+
 const MotionBox = motion(Box);
 const MotionImg = motion.img;
 
 /* ─── PHOTO HERO (full-bleed bg image + overlay) ─────────────── */
 function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
   const imgSrc = data.gallery?.[0]?.url;
+  const heroBlockId = getTemplateBlockId(data, "hero");
 
   return (
     <Box
+      data-preview-section="true"
+      data-preview-label="Hero"
+      data-preview-block-id={heroBlockId}
+      data-preview-style-key="sectionStyle"
       sx={{
         position: "relative",
         minHeight: { xs: "85vh", md: "92vh" },
@@ -51,6 +62,12 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
       {/* Fallback gradient when no image */}
       {!imgSrc && (
         <Box
+          data-static-selectable="true"
+          data-static-style-only="true"
+          data-preview-section="true"
+          data-preview-label="Social proof"
+          data-preview-block-id={heroBlockId}
+          data-preview-style-key="sectionStyle"
           sx={{
             position: "absolute",
             inset: 0,
@@ -94,6 +111,13 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
       >
         {/* Top accent chip */}
         <Chip
+          data-static-selectable="true"
+          data-static-style-only="true"
+          data-static-id="hero-badge"
+          data-preview-section="true"
+          data-preview-label="Hero badge"
+          data-preview-block-id={heroBlockId}
+          data-preview-style-key="static.heroBadgeStyle"
           label="Welcome"
           size="small"
           sx={{
@@ -210,11 +234,36 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
             flexWrap: "wrap",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ display: "flex", gap: 0.25 }}>
+          <Box
+            data-static-selectable="true"
+            data-static-style-only="true"
+            data-static-id="hero-social-proof-row"
+            data-preview-section="true"
+            data-preview-label="Social proof row"
+            data-preview-block-id={heroBlockId}
+            data-preview-style-key="static.socialProofRowStyle"
+            sx={{ display: "flex", alignItems: "center", gap: 1 }}
+          >
+            <Box
+              data-static-selectable="true"
+              data-static-style-only="true"
+              data-static-id="hero-star-row"
+              data-preview-section="true"
+              data-preview-label="Star row"
+              data-preview-block-id={heroBlockId}
+              data-preview-style-key="static.starRowStyle"
+              sx={{ display: "flex", gap: 0.25 }}
+            >
               {["★", "★", "★", "★", "★"].map((s, i) => (
                 <Typography
                   key={i}
+                  data-static-selectable="true"
+                  data-static-style-only="true"
+                  data-static-id={`hero-star-${i}`}
+                  data-preview-section="true"
+                  data-preview-label={`Star ${i + 1}`}
+                  data-preview-block-id={heroBlockId}
+                  data-preview-style-key={`static.star.${i}`}
                   sx={{ color: "#fbbf24", fontSize: "0.85rem" }}
                 >
                   {s}
@@ -223,6 +272,13 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
             </Box>
             <Typography
               variant="caption"
+              data-static-selectable="true"
+              data-static-style-only="true"
+              data-static-id="hero-client-count"
+              data-preview-section="true"
+              data-preview-label="Client count"
+              data-preview-block-id={heroBlockId}
+              data-preview-style-key="static.clientCountStyle"
               sx={{ color: "rgba(255,255,255,0.7)", letterSpacing: 0.5 }}
             >
               {data.reviews.length * 100}+ happy clients
@@ -255,8 +311,13 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
 /* ─── SPLIT HERO (text left, full-height image right) ────────── */
 function SplitHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
   const imgSrc = data.gallery?.[0]?.url;
+  const heroBlockId = getTemplateBlockId(data, "hero");
   return (
     <Box
+      data-preview-section="true"
+      data-preview-label="Hero"
+      data-preview-block-id={heroBlockId}
+      data-preview-style-key="sectionStyle"
       sx={{
         display: "grid",
         gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
@@ -469,8 +530,13 @@ function SplitHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
 
 /* ─── GRADIENT HERO ───────────────────────────────────────────── */
 function GradientHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
+  const heroBlockId = getTemplateBlockId(data, "hero");
   return (
     <Box
+      data-preview-section="true"
+      data-preview-label="Hero"
+      data-preview-block-id={heroBlockId}
+      data-preview-style-key="sectionStyle"
       sx={{
         background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
         minHeight: { xs: 480, md: 600 },
@@ -568,8 +634,13 @@ function GradientHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
 /* ─── DARK HERO ───────────────────────────────────────────────── */
 function DarkHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
   const imgSrc = data.gallery?.[0]?.url;
+  const heroBlockId = getTemplateBlockId(data, "hero");
   return (
     <Box
+      data-preview-section="true"
+      data-preview-label="Hero"
+      data-preview-block-id={heroBlockId}
+      data-preview-style-key="sectionStyle"
       sx={{
         position: "relative",
         bgcolor: theme.bgPrimary,
@@ -601,6 +672,10 @@ function DarkHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
             }}
           />
           <Box
+            data-preview-section="true"
+            data-preview-label="Social proof row"
+            data-preview-block-id={heroBlockId}
+            data-preview-style-key="sectionStyle"
             sx={{
               position: "absolute",
               inset: 0,

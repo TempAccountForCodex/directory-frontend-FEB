@@ -37,6 +37,8 @@ import {
   renderEditableMedia,
   EditorExtraBlocks,
 } from "../../utils/editableComponents";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
@@ -136,6 +138,7 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
     { label: "Testimonials", id: "testimonials" },
     { label: "Contact", id: "contact" },
   ];
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
 
   const heroImage =
     data.heroBannerUrl ||
@@ -284,6 +287,18 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 {item.label}
               </Box>
             ))}
+            <TemplatePageNavLinks
+              links={pageNavLinks}
+              itemSx={{
+                color: theme.headingColor,
+                cursor: "pointer",
+                fontFamily: bodyFont,
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+              }}
+            />
           </Stack>
 
           <Stack direction="row" justifyContent="flex-end">

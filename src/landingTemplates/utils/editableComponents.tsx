@@ -24,6 +24,7 @@ import {
   getEditableTextProps,
   getEditableImageProps,
   getEditableSectionProps,
+  getStaticSelectableProps,
   type EditableTextKind,
 } from "./editableProps";
 import { renderEditorSharedBlock } from "../blocks/EditorSharedBlockRenderer";
@@ -172,6 +173,37 @@ export function EditableLink({
     <EditableBox field={field} kind={kind} component="a" {...rest}>
       {children}
     </EditableBox>
+  );
+}
+
+interface StaticSelectableBoxProps extends BoxProps {
+  label: string;
+  staticId: string;
+  blockId?: string | number;
+  styleKey?: string;
+}
+
+export function StaticSelectableBox({
+  label,
+  staticId,
+  blockId,
+  styleKey = "sectionStyle",
+  children,
+  ...rest
+}: StaticSelectableBoxProps) {
+  const contextBlockId = useEditableBlockId();
+  return (
+    <Box
+      {...getStaticSelectableProps(
+        blockId ?? contextBlockId,
+        label,
+        staticId,
+        styleKey,
+      )}
+      {...rest}
+    >
+      {children}
+    </Box>
   );
 }
 

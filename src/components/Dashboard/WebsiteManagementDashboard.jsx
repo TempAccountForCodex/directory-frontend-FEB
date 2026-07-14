@@ -23,6 +23,7 @@ import {
   Users,
   Wrench,
   LayoutGrid,
+  ListTree,
   MessageSquare,
   Newspaper,
 } from "lucide-react";
@@ -40,6 +41,7 @@ import ListingEditTab from "./ListingEditTab";
 import ReviewsTab from "./website-manage/ReviewsTab";
 import PagesTab from "./website-manage/PagesTab";
 import MediaTab from "./website-manage/MediaTab";
+import MenusTab from "./website-manage/MenusTab";
 import DesignTab from "./website-manage/DesignTab";
 import SeoTab from "./website-manage/SeoTab";
 import DomainTab from "./website-manage/DomainTab";
@@ -56,6 +58,7 @@ const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
       { id: "pages", label: "Pages", icon: FileText },
       { id: "blog", label: "Blog", icon: Newspaper },
       { id: "media", label: "Media", icon: Image },
+      { id: "menus", label: "Menus", icon: ListTree },
     ],
   },
   {
@@ -305,6 +308,8 @@ const WebsiteManagementDashboard = ({
         );
       case "media":
         return <MediaTab {...tabProps} />;
+      case "menus":
+        return <MenusTab {...tabProps} />;
       case "design":
         return <DesignTab {...tabProps} />;
       case "analytics":

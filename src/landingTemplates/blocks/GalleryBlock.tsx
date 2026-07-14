@@ -11,19 +11,31 @@ export interface GalleryBlockProps {
   variant?: "masonry" | "strip" | "cinema";
 }
 
+const getTemplateBlockId = (
+  data: BusinessData,
+  key: string,
+): string | number | undefined =>
+  (data.templateContent as Record<string, any> | undefined)?.[key]?.blockId;
+
 interface GalleryTileProps {
   url: string;
   alt?: string;
   onClick: () => void;
   sx?: object;
+  blockId?: string | number;
+  label?: string;
 }
 
-function GalleryTile({ url, alt, onClick, sx }: GalleryTileProps) {
+function GalleryTile({ url, alt, onClick, sx, blockId, label }: GalleryTileProps) {
   return (
     <Box
       component="img"
       src={url}
       alt={alt ?? "Gallery image"}
+      data-preview-section="true"
+      data-preview-label={label || alt || "Gallery image"}
+      data-preview-block-id={blockId}
+      data-preview-style-key="sectionStyle"
       onClick={onClick}
       sx={{
         width: "100%",
@@ -100,8 +112,15 @@ function Lightbox({
 function MasonryGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const items = data.gallery ?? [];
+  const galleryBlockId = getTemplateBlockId(data, "gallery");
   return (
-    <Box sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Gallery"
+      data-preview-block-id={galleryBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <FadeIn>
         <Typography
           variant="h3"
@@ -137,6 +156,8 @@ function MasonryGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
               <GalleryTile
                 url={it.url}
                 alt={it.alt}
+                blockId={galleryBlockId}
+                label={`Gallery image ${i + 1}`}
                 onClick={() => setLightboxIdx(i)}
               />
             </Box>
@@ -155,8 +176,13 @@ function MasonryGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
 function StripGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const items = data.gallery ?? [];
+  const galleryBlockId = getTemplateBlockId(data, "gallery");
   return (
     <Box
+      data-preview-section="true"
+      data-preview-label="Gallery"
+      data-preview-block-id={galleryBlockId}
+      data-preview-style-key="sectionStyle"
       sx={{
         bgcolor: theme.bgSecondary,
         py: { xs: 6, md: 10 },
@@ -207,6 +233,8 @@ function StripGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
             <GalleryTile
               url={it.url}
               alt={it.alt}
+              blockId={galleryBlockId}
+              label={`Gallery image ${i + 1}`}
               onClick={() => setLightboxIdx(i)}
             />
           </Box>
@@ -226,8 +254,15 @@ function CinemaGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
   const [active, setActive] = useState(0);
   const items = data.gallery ?? [];
   const hero = items[active];
+  const galleryBlockId = getTemplateBlockId(data, "gallery");
   return (
-    <Box sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Gallery"
+      data-preview-block-id={galleryBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <FadeIn>
         <Typography
           variant="h3"
@@ -257,6 +292,8 @@ function CinemaGallery({ data, theme }: Omit<GalleryBlockProps, "variant">) {
             <GalleryTile
               url={hero.url}
               alt={hero.alt}
+              blockId={galleryBlockId}
+              label={`Gallery hero image ${active + 1}`}
               onClick={() => setLightboxIdx(active)}
               sx={{ borderRadius: 0 }}
             />

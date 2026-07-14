@@ -19,9 +19,31 @@ export interface ReviewsBlockProps {
   variant?: "cards" | "quotes" | "featured";
 }
 
-function StarRating({ rating, color }: { rating: number; color: string }) {
+const getTemplateBlockId = (
+  data: BusinessData,
+  key: string,
+): string | number | undefined =>
+  (data.templateContent as Record<string, any> | undefined)?.[key]?.blockId;
+
+function StarRating({
+  rating,
+  color,
+  blockId,
+  label = "Star rating",
+}: {
+  rating: number;
+  color: string;
+  blockId?: string | number;
+  label?: string;
+}) {
   return (
-    <Box sx={{ display: "flex", gap: 0.25 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label={label}
+      data-preview-block-id={blockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ display: "flex", gap: 0.25 }}
+    >
       {[1, 2, 3, 4, 5].map((n) => (
         <StarIcon
           key={n}
@@ -34,8 +56,15 @@ function StarRating({ rating, color }: { rating: number; color: string }) {
 
 function CardsReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
   const reviews = data.reviews ?? [];
+  const reviewsBlockId = getTemplateBlockId(data, "reviews");
   return (
-    <Box sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Reviews"
+      data-preview-block-id={reviewsBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <FadeIn>
         <Typography
           variant="h3"
@@ -65,8 +94,17 @@ function CardsReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                 }}
               >
                 <CardContent>
-                  <StarRating rating={r.rating} color={theme.borderColor} />
+                  <StarRating
+                    rating={r.rating}
+                    color={theme.borderColor}
+                    blockId={reviewsBlockId}
+                    label={`Review ${i + 1} rating`}
+                  />
                   <Typography
+                    data-preview-section="true"
+                    data-preview-label={`Review ${i + 1} text`}
+                    data-preview-block-id={reviewsBlockId}
+                    data-preview-style-key="sectionStyle"
                     sx={{
                       mt: 2,
                       color: theme.bodyColor,
@@ -86,6 +124,10 @@ function CardsReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                     }}
                   >
                     <Avatar
+                      data-preview-section="true"
+                      data-preview-label={`Review ${i + 1} avatar`}
+                      data-preview-block-id={reviewsBlockId}
+                      data-preview-style-key="sectionStyle"
                       src={r.avatarUrl}
                       sx={{
                         width: 40,
@@ -97,6 +139,10 @@ function CardsReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                     </Avatar>
                     <Box>
                       <Typography
+                        data-preview-section="true"
+                        data-preview-label={`Review ${i + 1} author`}
+                        data-preview-block-id={reviewsBlockId}
+                        data-preview-style-key="sectionStyle"
                         variant="subtitle2"
                         sx={{
                           fontFamily: theme.fontFamily,
@@ -128,8 +174,15 @@ function CardsReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
 
 function QuotesReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
   const reviews = data.reviews ?? [];
+  const reviewsBlockId = getTemplateBlockId(data, "reviews");
   return (
-    <Box sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Reviews"
+      data-preview-block-id={reviewsBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <Box sx={{ maxWidth: 860, mx: "auto" }}>
         <FadeIn>
           <Typography
@@ -167,8 +220,17 @@ function QuotesReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                 }}
               />
               <Box>
-                <StarRating rating={r.rating} color={theme.borderColor} />
+                <StarRating
+                  rating={r.rating}
+                  color={theme.borderColor}
+                  blockId={reviewsBlockId}
+                  label={`Review ${i + 1} rating`}
+                />
                 <Typography
+                  data-preview-section="true"
+                  data-preview-label={`Review ${i + 1} text`}
+                  data-preview-block-id={reviewsBlockId}
+                  data-preview-style-key="sectionStyle"
                   sx={{
                     mt: 1.5,
                     color: theme.bodyColor,
@@ -180,6 +242,10 @@ function QuotesReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                   {r.text}
                 </Typography>
                 <Typography
+                  data-preview-section="true"
+                  data-preview-label={`Review ${i + 1} author`}
+                  data-preview-block-id={reviewsBlockId}
+                  data-preview-style-key="sectionStyle"
                   sx={{
                     mt: 2,
                     fontWeight: 700,
@@ -201,8 +267,15 @@ function QuotesReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
 function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
   const reviews = data.reviews ?? [];
   const [featured, ...rest] = reviews;
+  const reviewsBlockId = getTemplateBlockId(data, "reviews");
   return (
-    <Box sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Reviews"
+      data-preview-block-id={reviewsBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <FadeIn>
         <Typography
           variant="h3"
@@ -243,8 +316,14 @@ function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                 <StarRating
                   rating={featured.rating}
                   color="rgba(255,255,255,0.3)"
+                  blockId={reviewsBlockId}
+                  label="Featured review rating"
                 />
                 <Typography
+                  data-preview-section="true"
+                  data-preview-label="Featured review text"
+                  data-preview-block-id={reviewsBlockId}
+                  data-preview-style-key="sectionStyle"
                   sx={{
                     mt: 3,
                     color: "#fff",
@@ -261,6 +340,10 @@ function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                 sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 4 }}
               >
                 <Avatar
+                  data-preview-section="true"
+                  data-preview-label="Featured review avatar"
+                  data-preview-block-id={reviewsBlockId}
+                  data-preview-style-key="sectionStyle"
                   src={featured.avatarUrl}
                   sx={{
                     width: 48,
@@ -271,6 +354,10 @@ function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                   {featured.author[0]}
                 </Avatar>
                 <Typography
+                  data-preview-section="true"
+                  data-preview-label="Featured review author"
+                  data-preview-block-id={reviewsBlockId}
+                  data-preview-style-key="sectionStyle"
                   sx={{
                     fontWeight: 700,
                     color: "#fff",
@@ -294,7 +381,12 @@ function FeaturedReviews({ data, theme }: Omit<ReviewsBlockProps, "variant">) {
                   p: 3,
                 }}
               >
-                <StarRating rating={r.rating} color={theme.borderColor} />
+                <StarRating
+                  rating={r.rating}
+                  color={theme.borderColor}
+                  blockId={reviewsBlockId}
+                  label={`Review ${i + 2} rating`}
+                />
                 <Typography
                   sx={{
                     mt: 1.5,

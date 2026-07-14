@@ -17,12 +17,8 @@ import { motion } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
 import { buildStoreTheme, rgba } from "./theme";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
-
-const STORE_PAWS_CONTACT_FIELDS = [
-  { label: "Full name" },
-  { label: "Email address" },
-  { label: "Tell us about your dog brand", fieldType: "textarea" },
-];
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
+import { getEditableTextProps } from "../../utils/editableProps";
 
 const defaultHeadingFont = '"Questrial", "Inter", sans-serif';
 const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
@@ -183,6 +179,12 @@ const imageReveal = {
 } as const;
 
 const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const contactContent =
+    (data.templateContent?.contact as Record<string, any>) || {};
+  const contactFields = normalizeContactFormFields(
+    contactContent.formFields,
+    contactContent,
+  );
   const theme = buildStoreTheme({
     data,
     defaultPrimary: "#7f4f3d",
@@ -236,15 +238,15 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
 
   const { status, errorMessage, getFieldProps, handleSubmit } =
     useTemplateContactForm(
-      STORE_PAWS_CONTACT_FIELDS,
+      contactFields,
       data.websiteId,
       "storepaws-contact-form",
       {
-        formId: (data.templateContent?.contact as any)?.blockId,
-        formName:
-          (data.templateContent?.contact as any)?.heading || "Contact form",
+        formId: contactContent.blockId,
+        formName: contactContent.heading || "Contact form",
       },
     );
+  const contactButton = contactContent.buttonLabel || "Send enquiry";
 
   return (
     <Box
@@ -1070,6 +1072,7 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                 Newsletter + contact
               </Typography>
               <Typography
+                {...getEditableTextProps(contactContent.blockId, "heading", "multi")}
                 sx={{
                   fontFamily: headingFont,
                   fontSize: { xs: "2rem", md: "3.4rem" },
@@ -1078,13 +1081,19 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   maxWidth: 460,
                 }}
               >
-                Launch your next dog-product collection with style.
+                {contactContent.heading ||
+                  "Launch your next dog-product collection with style."}
               </Typography>
               <Typography
+                {...getEditableTextProps(
+                  contactContent.blockId,
+                  "description",
+                  "multi",
+                )}
                 sx={{ mt: 1.5, maxWidth: 460, opacity: 0.82, lineHeight: 1.7 }}
               >
-                Use this template for a premium pet brand, curated dog store, or
-                campaign-led ecommerce landing page.
+                {contactContent.description ||
+                  "Use this template for a premium pet brand, curated dog store, or campaign-led ecommerce landing page."}
               </Typography>
             </Box>
 
@@ -1098,10 +1107,10 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Stack spacing={1.2}>
                 <TextField
-                  placeholder="Full name"
+                  placeholder={contactFields[0]?.label || "Full name"}
                   size="small"
                   fullWidth
-                  {...getFieldProps("Full name")}
+                  {...getFieldProps(contactFields[0]?.label || "Full name")}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       bgcolor: "rgba(255,255,255,0.08)",
@@ -1112,10 +1121,10 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 />
                 <TextField
-                  placeholder="Email address"
+                  placeholder={contactFields[1]?.label || "Email address"}
                   size="small"
                   fullWidth
-                  {...getFieldProps("Email address")}
+                  {...getFieldProps(contactFields[1]?.label || "Email address")}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       bgcolor: "rgba(255,255,255,0.08)",
@@ -1126,12 +1135,16 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 />
                 <TextField
-                  placeholder="Tell us about your dog brand"
+                  placeholder={
+                    contactFields[2]?.label || "Tell us about your dog brand"
+                  }
                   size="small"
                   fullWidth
                   multiline
                   minRows={4}
-                  {...getFieldProps("Tell us about your dog brand")}
+                  {...getFieldProps(
+                    contactFields[2]?.label || "Tell us about your dog brand",
+                  )}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       bgcolor: "rgba(255,255,255,0.08)",
@@ -1156,6 +1169,11 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                   onClick={handleSubmit}
                   disabled={status === "loading"}
                   endIcon={<ArrowOutwardIcon />}
+                  {...getEditableTextProps(
+                    contactContent.blockId,
+                    "buttonLabel",
+                    "single",
+                  )}
                   sx={{
                     alignSelf: "flex-start",
                     bgcolor: palette.white,
@@ -1167,7 +1185,7 @@ const StorePawsTemplate: React.FC<TemplateProps> = ({ data }) => {
                     "&:hover": { bgcolor: "#fff" },
                   }}
                 >
-                  {status === "loading" ? "Sending…" : "Send enquiry"}
+                  {status === "loading" ? "Sending…" : contactButton}
                 </Button>
               </Stack>
             </Box>

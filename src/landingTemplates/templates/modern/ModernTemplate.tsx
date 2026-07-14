@@ -148,6 +148,8 @@ function ModernHeader({
     <AppBar
       position="sticky"
       elevation={0}
+      data-preview-section="true"
+      data-preview-label="Header"
       sx={{
         top: { xs: 64, md: 48 },
         left: 0,

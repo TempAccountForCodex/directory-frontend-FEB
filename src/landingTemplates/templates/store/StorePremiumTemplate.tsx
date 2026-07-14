@@ -17,13 +17,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
-
-const STORE_PREMIUM_CONTACT_FIELDS = [
-  { label: "Name" },
-  { label: "Email" },
-  { label: "Phone" },
-  { label: "Message", fieldType: "textarea" },
-];
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
+import { getEditableTextProps } from "../../utils/editableProps";
 
 const headingFont = '"Poppins", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Manrope", "Avenir Next", "Segoe UI", sans-serif';
@@ -141,19 +136,24 @@ const benefitItems = [
 type StorePage = "home" | "shop" | "about" | "contact";
 
 const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const contactContent =
+    (data.templateContent?.contact as Record<string, any>) || {};
+  const contactFields = normalizeContactFormFields(
+    contactContent.formFields,
+    contactContent,
+  );
   const {
     status: contactStatus,
     errorMessage: contactError,
     getFieldProps: getContactFieldProps,
     handleSubmit: handleContactSubmit,
   } = useTemplateContactForm(
-    STORE_PREMIUM_CONTACT_FIELDS,
+    contactFields,
     data.websiteId,
     "store-premium-contact-form",
     {
-      formId: (data.templateContent?.contact as any)?.blockId,
-      formName:
-        (data.templateContent?.contact as any)?.heading || "Contact form",
+      formId: contactContent.blockId,
+      formName: contactContent.heading || "Contact form",
     },
   );
   const navigate = useNavigate();
@@ -190,6 +190,11 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
   const featureBandImage = data.gallery?.[2]?.url || fallbackBand;
   const touchImage = data.gallery?.[3]?.url || fallbackTouch;
   const logoSrc = data.logoUrl || fallbackLogo;
+  const contactHeading = contactContent.heading || "Get In Touch";
+  const contactDescription =
+    contactContent.description ||
+    "Request availability, custom color options, wholesale details, or personal styling support for your next handbag selection.";
+  const contactButton = contactContent.buttonLabel || "Ask";
 
   const socialLinks = [
     { key: "instagram", icon: Instagram },
@@ -1453,6 +1458,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               Contact atelier
             </Typography>
             <Typography
+              {...getEditableTextProps(contactContent.blockId, "heading", "multi")}
               sx={{
                 mt: 1,
                 fontFamily: headingFont,
@@ -1463,9 +1469,14 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 maxWidth: 420,
               }}
             >
-              Get In Touch
+              {contactHeading}
             </Typography>
             <Typography
+              {...getEditableTextProps(
+                contactContent.blockId,
+                "description",
+                "multi",
+              )}
               sx={{
                 mt: 1.8,
                 maxWidth: 360,
@@ -1474,8 +1485,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 lineHeight: 1.85,
               }}
             >
-              Request availability, custom color options, wholesale details, or
-              personal styling support for your next handbag selection.
+              {contactDescription}
             </Typography>
           </Box>
           <FadeIn delay={0.08} direction="right">
@@ -1554,35 +1564,35 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               }}
             >
               <TextField
-                label="Name"
+                label={contactFields[0]?.label || "Name"}
                 variant="outlined"
                 fullWidth
                 sx={fieldStyles}
-                {...getContactFieldProps("Name")}
+                {...getContactFieldProps(contactFields[0]?.label || "Name")}
               />
               <TextField
-                label="Email"
+                label={contactFields[1]?.label || "Email"}
                 variant="outlined"
                 fullWidth
                 sx={fieldStyles}
-                {...getContactFieldProps("Email")}
+                {...getContactFieldProps(contactFields[1]?.label || "Email")}
               />
             </Box>
             <TextField
-              label="Phone"
+              label={contactFields[2]?.label || "Phone"}
               variant="outlined"
               fullWidth
               sx={{ mt: 1.6, ...fieldStyles }}
-              {...getContactFieldProps("Phone")}
+              {...getContactFieldProps(contactFields[2]?.label || "Phone")}
             />
             <TextField
-              label="Message"
+              label={contactFields[3]?.label || "Message"}
               variant="outlined"
               fullWidth
               multiline
               minRows={4}
               sx={{ mt: 1.6, ...fieldStyles }}
-              {...getContactFieldProps("Message")}
+              {...getContactFieldProps(contactFields[3]?.label || "Message")}
             />
             {contactStatus === "success" && (
               <Typography sx={{ mt: 1.6, color: "#0a7d18", fontWeight: 600 }}>
@@ -1599,6 +1609,11 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
               type="button"
               disabled={contactStatus === "loading"}
               onClick={handleContactSubmit}
+              {...getEditableTextProps(
+                contactContent.blockId,
+                "buttonLabel",
+                "single",
+              )}
               sx={{
                 mt: 2.2,
                 width: "100%",
@@ -1614,7 +1629,7 @@ const StorePremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 "&:hover": { bgcolor: "#e6b12c", boxShadow: "none" },
               }}
             >
-              {contactStatus === "loading" ? "Sending…" : "Ask"}
+              {contactStatus === "loading" ? "Sending…" : contactButton}
             </Button>
           </Box>
         </FadeIn>

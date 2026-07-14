@@ -17,6 +17,8 @@ import {
   getEditableSectionProps,
   getEditableTextProps,
 } from "../../utils/editableProps";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
@@ -49,6 +51,7 @@ const sansFont =
   '"Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 
 const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
   const templateContent =
     (data.templateContent as Record<string, any> | undefined) || {};
   const homeContent = templateContent.home || {};
@@ -254,6 +257,17 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {item.label}
                 </Box>
               ))}
+              <TemplatePageNavLinks
+                links={pageNavLinks}
+                itemSx={{
+                  cursor: "pointer",
+                  fontFamily: sansFont,
+                  fontSize: "0.76rem",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "rgba(20,20,20,0.68)",
+                }}
+              />
             </Stack>
 
             <Typography

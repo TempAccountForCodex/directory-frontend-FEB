@@ -19,10 +19,23 @@ export interface ServicesBlockProps {
   variant?: "cards" | "list" | "grid";
 }
 
+const getTemplateBlockId = (
+  data: BusinessData,
+  key: string,
+): string | number | undefined =>
+  (data.templateContent as Record<string, any> | undefined)?.[key]?.blockId;
+
 function CardsServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
   const services = data.services ?? [];
+  const servicesBlockId = getTemplateBlockId(data, "services");
   return (
-    <Box sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Services"
+      data-preview-block-id={servicesBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <FadeIn>
         <Typography
           variant="h3"
@@ -64,6 +77,10 @@ function CardsServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
               >
                 <CardContent sx={{ p: 3 }}>
                   <Avatar
+                    data-preview-section="true"
+                    data-preview-label={`Service ${i + 1} icon`}
+                    data-preview-block-id={servicesBlockId}
+                    data-preview-style-key="sectionStyle"
                     sx={{
                       bgcolor: `${theme.primaryColor}18`,
                       color: theme.primaryColor,
@@ -120,8 +137,15 @@ function CardsServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
 
 function ListServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
   const services = data.services ?? [];
+  const servicesBlockId = getTemplateBlockId(data, "services");
   return (
-    <Box sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Services"
+      data-preview-block-id={servicesBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <Box sx={{ maxWidth: 760, mx: "auto" }}>
         <FadeIn>
           <Typography
@@ -148,6 +172,10 @@ function ListServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
                 }}
               >
                 <CheckCircleOutlineIcon
+                  data-preview-section="true"
+                  data-preview-label={`Service ${i + 1} icon`}
+                  data-preview-block-id={servicesBlockId}
+                  data-preview-style-key="sectionStyle"
                   sx={{ color: theme.primaryColor, mt: 0.5 }}
                 />
                 <Box sx={{ flex: 1 }}>
@@ -207,8 +235,15 @@ function ListServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
 
 function GridServices({ data, theme }: Omit<ServicesBlockProps, "variant">) {
   const services = data.services ?? [];
+  const servicesBlockId = getTemplateBlockId(data, "services");
   return (
-    <Box sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="Services"
+      data-preview-block-id={servicesBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgSecondary, py: { xs: 8, md: 12 }, px: 3 }}
+    >
       <FadeIn>
         <Typography
           variant="h3"

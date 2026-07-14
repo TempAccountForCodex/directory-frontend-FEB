@@ -33,3 +33,20 @@ export const getEditableSectionProps = (
   "data-preview-block-id": blockId,
   ...(styleKey ? { "data-preview-style-key": styleKey } : {}),
 });
+
+export const getStaticSelectableProps = (
+  blockId: string | number | undefined,
+  label: string,
+  staticId: string,
+  styleKey = "sectionStyle",
+) => ({
+  "data-static-selectable": "true",
+  "data-static-style-only": "true",
+  "data-static-id": staticId,
+  "data-static-label": label,
+  "data-preview-target-kind": "static",
+  "data-preview-section": "true",
+  "data-preview-label": label,
+  "data-preview-block-id": blockId,
+  "data-preview-style-key": styleKey,
+});

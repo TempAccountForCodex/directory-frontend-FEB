@@ -34,6 +34,8 @@ import {
   getEditableSectionProps,
   getEditableTextProps,
 } from "../../utils/editableProps";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 
 const MotionBox = motion(Box);
 const MotionTypography = motion(Typography);
@@ -114,6 +116,7 @@ function ParallaxHeroImage({ src }: { src: string }) {
 
 /* ── Main component ─────────────────────────────────────────────────────────── */
 const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
   const primary = data.primaryColor || "#111";
   const accent = data.secondaryColor || "#f59e0b";
   const heroContent = (data.templateContent?.hero as Record<string, any>) || {};
@@ -250,6 +253,16 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
               {item}
             </Typography>
           ))}
+          <TemplatePageNavLinks
+            links={pageNavLinks}
+            itemSx={{
+              color: "#555",
+              cursor: "pointer",
+              fontWeight: 500,
+              "&:hover": { color: "#111" },
+              transition: "color 0.2s",
+            }}
+          />
         </Stack>
         <Button
           variant="outlined"

@@ -528,13 +528,20 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
     if (field.fieldType === "radio") {
       return (
-        <FormControl key={field.key || field.label} disabled={fieldProps.disabled}>
-          <FormLabel sx={{ color: palette.white, mb: 1 }}>{field.label}</FormLabel>
+        <FormControl
+          key={field.key || field.label}
+          disabled={fieldProps.disabled}
+        >
+          <FormLabel sx={{ color: palette.white, mb: 1 }}>
+            {field.label}
+          </FormLabel>
           <RadioGroup
             value={fieldProps.value || ""}
             onChange={(event) =>
               fieldProps.onChange(
-                event as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+                event as React.ChangeEvent<
+                  HTMLInputElement | HTMLTextAreaElement
+                >,
               )
             }
           >
@@ -646,8 +653,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const processItems = (
     (processContent.items as Array<Record<string, unknown>> | undefined) ||
     (testimonialsContent.items as
-      | Array<Record<string, unknown>>
-      | undefined) || [
+      Array<Record<string, unknown>> | undefined) || [
       {
         icon: "01",
         title: "Discovery & planning",
@@ -670,8 +676,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   ).slice(0, 3);
   const aboutDetailGroups = (
     (aboutContent.detailGroups as
-      | Array<{ title?: string; items?: string[] }>
-      | undefined) || [
+      Array<{ title?: string; items?: string[] }> | undefined) || [
       {
         title: "What we build",
         items: ["Clear systems", "Premium visuals", "Business growth"],
@@ -805,7 +810,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     ? data.pages
         .filter((page) => {
           const path = String(page.path || "").trim();
-          return path && path !== "/" && !page.isHome && page.isPublished !== false;
+          return (
+            path && path !== "/" && !page.isHome && page.isPublished !== false
+          );
         })
         .map((page) => ({
           label: page.title || "Page",
@@ -833,7 +840,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     },
   ) => {
     const blockPath = `innerBlocks.${index}.content`;
-    const wrapperBlockType = String(section?.editorBlockType || "").toLowerCase();
+    const wrapperBlockType = String(
+      section?.editorBlockType || "",
+    ).toLowerCase();
     const rawBlockType = String(
       block.type || block.blockType || "text",
     ).toLowerCase();
@@ -872,9 +881,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       tone === "light" ? "rgba(255,255,255,0.22)" : rgba(themeColor, 0.22);
     const blockMaxWidth = options?.maxWidth || 880;
     const rawTextStyle = normalizedBlock.content?.textStyle || {};
-    const rawHeadingStyle = normalizedBlock.content?.headingStyle || rawTextStyle;
+    const rawHeadingStyle =
+      normalizedBlock.content?.headingStyle || rawTextStyle;
     const rawBodyStyle = normalizedBlock.content?.bodyStyle || rawTextStyle;
-    const rawEyebrowStyle = normalizedBlock.content?.eyebrowStyle || rawTextStyle;
+    const rawEyebrowStyle =
+      normalizedBlock.content?.eyebrowStyle || rawTextStyle;
     const rawButtonStyle =
       normalizedBlock.content?.buttonTextStyle || rawTextStyle;
     const rawImageStyle = normalizedBlock.content?.imageStyle || {};
@@ -1695,6 +1706,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
                 <Box
                   component={motion.div}
+                  data-static-selectable="true"
+                  data-static-style-only="true"
+                  data-static-id="hero-social-proof"
+                  data-preview-section="true"
+                  data-preview-label="Social proof"
+                  data-preview-block-id={overviewBlockId}
+                  data-preview-style-key="static.socialProofStyle"
                   variants={fadeUp}
                   sx={{
                     mt: { xs: 4, md: 7 },
@@ -1704,7 +1722,17 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     flexWrap: "wrap",
                   }}
                 >
-                  <Stack direction="row" spacing={-1.2}>
+                  <Stack
+                    direction="row"
+                    spacing={-1.2}
+                    data-static-selectable="true"
+                    data-static-style-only="true"
+                    data-static-id="hero-avatar-group"
+                    data-preview-section="true"
+                    data-preview-label="Avatar group"
+                    data-preview-block-id={overviewBlockId}
+                    data-preview-style-key="static.avatarGroupStyle"
+                  >
                     {[
                       visualSet.avatarOne,
                       visualSet.avatarTwo,
@@ -1714,6 +1742,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       <Box
                         key={`${avatar}-${index}`}
                         component="img"
+                        data-static-selectable="true"
+                        data-static-style-only="true"
+                        data-static-id={`hero-avatar-${index}`}
+                        data-preview-section="true"
+                        data-preview-label={`Avatar ${index + 1}`}
+                        data-preview-block-id={overviewBlockId}
+                        data-preview-style-key={`static.avatar.${index}`}
                         src={avatar}
                         alt={`Client ${index + 1}`}
                         sx={{
@@ -1728,8 +1763,23 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     ))}
                   </Stack>
 
-                  <Box>
+                  <Box
+                    data-static-selectable="true"
+                    data-static-style-only="true"
+                    data-static-id="hero-review-text-group"
+                    data-preview-section="true"
+                    data-preview-label="Review text group"
+                    data-preview-block-id={overviewBlockId}
+                    data-preview-style-key="static.reviewTextGroupStyle"
+                  >
                     <Typography
+                      data-static-selectable="true"
+                      data-static-style-only="true"
+                      data-static-id="hero-star-row"
+                      data-preview-section="true"
+                      data-preview-label="Star row"
+                      data-preview-block-id={overviewBlockId}
+                      data-preview-style-key="static.starRowStyle"
                       sx={{
                         color: themeHighlight,
                         fontWeight: 800,
@@ -1747,7 +1797,18 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         fontWeight: 700,
                       }}
                     >
-                      100+ happy customers.
+                      <Box
+                        component="span"
+                        data-static-selectable="true"
+                        data-static-style-only="true"
+                        data-static-id="hero-customer-count"
+                        data-preview-section="true"
+                        data-preview-label="Customer count"
+                        data-preview-block-id={overviewBlockId}
+                        data-preview-style-key="static.customerCountStyle"
+                      >
+                        100+ happy customers.
+                      </Box>
                     </Typography>
                   </Box>
                 </Box>
@@ -1988,6 +2049,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   <Box component={motion.div} {...sectionReveal}>
                     <Chip
+                      data-static-selectable="true"
+                      data-static-style-only="true"
+                      data-static-id="about-badge"
+                      data-preview-section="true"
+                      data-preview-label="About badge"
+                      data-preview-block-id={aboutBlockId}
+                      data-preview-style-key="static.aboutBadgeStyle"
                       label="Get to know us"
                       sx={{
                         bgcolor: themeColor,

@@ -18,6 +18,8 @@ import {
   getEditableSectionProps,
   getEditableTextProps,
 } from "../../utils/editableProps";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 
 const headingFont = '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Inter", "Segoe UI", sans-serif';
@@ -147,6 +149,7 @@ const TextReveal: React.FC<{ text: string; sx?: Record<string, unknown> }> = ({
 );
 
 const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
   const contactContent =
     (data.templateContent?.contact as Record<string, any>) || {};
   const contactFields = normalizeContactFormFields(
@@ -534,6 +537,19 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     </Box>
                   </Box>
                 ))}
+                <TemplatePageNavLinks
+                  links={pageNavLinks}
+                  itemSx={{
+                    cursor: "pointer",
+                    color: "#fff",
+                    textUnderlineOffset: "8px",
+                    fontFamily: headingFont,
+                    fontSize: { xs: "1.3rem", md: "1.05rem" },
+                    fontWeight: 500,
+                    textTransform: "uppercase",
+                    letterSpacing: "-0.03em",
+                  }}
+                />
               </Stack>
             </Stack>
           </Box>

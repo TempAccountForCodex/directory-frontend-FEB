@@ -10,9 +10,20 @@ export interface CTASectionProps {
   variant?: "gradient" | "outlined" | "dark";
 }
 
+const getTemplateBlockId = (
+  data: BusinessData,
+  key: string,
+): string | number | undefined =>
+  (data.templateContent as Record<string, any> | undefined)?.[key]?.blockId;
+
 function GradientCTA({ data, theme }: Omit<CTASectionProps, "variant">) {
+  const ctaBlockId = getTemplateBlockId(data, "cta");
   return (
     <Box
+      data-preview-section="true"
+      data-preview-label="CTA"
+      data-preview-block-id={ctaBlockId}
+      data-preview-style-key="sectionStyle"
       sx={{
         background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
         py: { xs: 8, md: 10 },
@@ -64,8 +75,15 @@ function GradientCTA({ data, theme }: Omit<CTASectionProps, "variant">) {
 }
 
 function OutlinedCTA({ data, theme }: Omit<CTASectionProps, "variant">) {
+  const ctaBlockId = getTemplateBlockId(data, "cta");
   return (
-    <Box sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 10 }, px: 3 }}>
+    <Box
+      data-preview-section="true"
+      data-preview-label="CTA"
+      data-preview-block-id={ctaBlockId}
+      data-preview-style-key="sectionStyle"
+      sx={{ bgcolor: theme.bgPrimary, py: { xs: 8, md: 10 }, px: 3 }}
+    >
       <FadeIn>
         <Box
           sx={{
@@ -123,8 +141,13 @@ function OutlinedCTA({ data, theme }: Omit<CTASectionProps, "variant">) {
 }
 
 function DarkCTA({ data, theme }: Omit<CTASectionProps, "variant">) {
+  const ctaBlockId = getTemplateBlockId(data, "cta");
   return (
     <Box
+      data-preview-section="true"
+      data-preview-label="CTA"
+      data-preview-block-id={ctaBlockId}
+      data-preview-style-key="sectionStyle"
       sx={{
         bgcolor: theme.bgSecondary,
         py: { xs: 8, md: 12 },

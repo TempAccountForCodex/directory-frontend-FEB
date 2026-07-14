@@ -26,6 +26,8 @@ import {
   getSectionStyleDomProps,
   getSectionStyleSx,
 } from "../../utils/sectionStyle";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 
 const LOCAL_DEMO_POSTS: BlogPost[] = [
   {
@@ -136,6 +138,7 @@ function getReadTime(post: BlogPost) {
 }
 
 const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
   const posts = useMemo(() => getPosts(data), [data]);
   const templateContent =
     (data.templateContent as Record<string, any> | undefined) || {};
@@ -221,6 +224,14 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {label}
                 </Typography>
               ))}
+              <TemplatePageNavLinks
+                links={pageNavLinks}
+                itemSx={{
+                  cursor: "pointer",
+                  fontSize: "0.95rem",
+                  color: "inherit",
+                }}
+              />
             </Stack>
 
             <Stack direction="row" spacing={1} alignItems="center">

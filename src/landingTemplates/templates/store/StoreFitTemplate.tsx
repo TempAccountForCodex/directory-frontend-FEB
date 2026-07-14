@@ -10,12 +10,8 @@ import {
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
-
-const STORE_FIT_CONTACT_FIELDS = [
-  { label: "Name" },
-  { label: "Email" },
-  { label: "Message", fieldType: "textarea" },
-];
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
+import { getEditableTextProps } from "../../utils/editableProps";
 
 import heroImage from "./storeFitAssets/hero-clean.png";
 import yogaImage from "./storeFitAssets/yoga-clean.png";
@@ -102,6 +98,12 @@ const footerLinks = [
 ];
 
 const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const contactContent =
+    (data.templateContent?.contact as Record<string, any>) || {};
+  const contactFields = normalizeContactFormFields(
+    contactContent.formFields,
+    contactContent,
+  );
   const brand = "L.SANTOS";
   const contactEmail = data.contact.email || "info@mysite.com";
   const contactPhone = data.contact.phone || "123-456-7890";
@@ -110,15 +112,19 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
 
   const { status, errorMessage, getFieldProps, handleSubmit } =
     useTemplateContactForm(
-      STORE_FIT_CONTACT_FIELDS,
+      contactFields,
       data.websiteId,
       "storefit-contact-form",
       {
-        formId: (data.templateContent?.contact as any)?.blockId,
-        formName:
-          (data.templateContent?.contact as any)?.heading || "Contact form",
+        formId: contactContent.blockId,
+        formName: contactContent.heading || "Contact form",
       },
     );
+  const contactHeading = contactContent.heading || "Contact Us";
+  const contactDescription =
+    contactContent.description ||
+    "Reach out for sizing help, stock questions, or private shopping support.";
+  const contactButton = contactContent.buttonLabel || "Submit";
 
   return (
     <Box sx={{ bgcolor: palette.paper, color: "#000", overflow: "hidden" }}>
@@ -701,6 +707,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Box sx={{ width: "100%", maxWidth: 420, mx: "auto" }}>
                 <Typography
+                  {...getEditableTextProps(contactContent.blockId, "heading", "multi")}
                   sx={{
                     textAlign: "center",
                     fontSize: "0.72rem",
@@ -709,9 +716,14 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                     color: palette.mutedDark,
                   }}
                 >
-                  Contact Us
+                  {contactHeading}
                 </Typography>
                 <Typography
+                  {...getEditableTextProps(
+                    contactContent.blockId,
+                    "description",
+                    "multi",
+                  )}
                   sx={{
                     mt: 1,
                     textAlign: "center",
@@ -719,33 +731,32 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                     color: "rgba(0,0,0,0.62)",
                   }}
                 >
-                  Reach out for sizing help, stock questions, or private
-                  shopping support.
+                  {contactDescription}
                 </Typography>
 
                 <Stack spacing={1.5} sx={{ mt: 3 }}>
                   <TextField
-                    placeholder="Name"
+                    placeholder={contactFields[0]?.label || "Name"}
                     fullWidth
                     size="small"
                     sx={fieldStyles}
-                    {...getFieldProps("Name")}
+                    {...getFieldProps(contactFields[0]?.label || "Name")}
                   />
                   <TextField
-                    placeholder="Email"
+                    placeholder={contactFields[1]?.label || "Email"}
                     fullWidth
                     size="small"
                     sx={fieldStyles}
-                    {...getFieldProps("Email")}
+                    {...getFieldProps(contactFields[1]?.label || "Email")}
                   />
                   <TextField
-                    placeholder="Message"
+                    placeholder={contactFields[2]?.label || "Message"}
                     fullWidth
                     size="small"
                     multiline
                     minRows={4}
                     sx={fieldStyles}
-                    {...getFieldProps("Message")}
+                    {...getFieldProps(contactFields[2]?.label || "Message")}
                   />
                   {status === "success" && (
                     <Typography sx={{ color: "#0a7d18", fontWeight: 600 }}>
@@ -762,6 +773,11 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                     onClick={handleSubmit}
                     disabled={status === "loading"}
                     fullWidth
+                    {...getEditableTextProps(
+                      contactContent.blockId,
+                      "buttonLabel",
+                      "single",
+                    )}
                     sx={{
                       py: 1.15,
                       bgcolor: "#000",
@@ -771,7 +787,7 @@ const StoreFitTemplate: React.FC<TemplateProps> = ({ data }) => {
                       "&:hover": { bgcolor: "#000" },
                     }}
                   >
-                    {status === "loading" ? "Sending…" : "Submit"}
+                    {status === "loading" ? "Sending…" : contactButton}
                   </Button>
                 </Stack>
               </Box>

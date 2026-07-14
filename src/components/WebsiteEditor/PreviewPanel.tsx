@@ -199,7 +199,7 @@ const FrontendTemplateIframePreview = React.memo(
       (
         _target: HTMLElement | null,
         _label: string,
-        _kind: "editable" | "image" | "section",
+        _kind: "editable" | "image" | "section" | "static",
       ) => {},
     );
     const hideSelectionOverlayRef = React.useRef(() => {});
@@ -387,7 +387,8 @@ const FrontendTemplateIframePreview = React.memo(
 
       let overlayTarget: HTMLElement | null = null;
       let overlayLabel = "";
-      let overlayKind: "editable" | "image" | "section" | null = null;
+      let overlayKind: "editable" | "image" | "section" | "static" | null =
+        null;
       let overlayFrame: number | null = null;
       let currentAskAIButtonStatus: AskAIButtonStatus = askAIButtonStatus;
       let interactionCleanup: (() => void) | null = null;
@@ -476,7 +477,7 @@ const FrontendTemplateIframePreview = React.memo(
             .querySelectorAll(".tt-section-add-button")
             .forEach((button) => {
               (button as HTMLButtonElement).style.display =
-                overlayKind === "section" ? "inline-flex" : "none";
+              overlayKind === "section" ? "inline-flex" : "none";
             });
           const innerAddButton = overlayEl.querySelector(
             ".tt-section-inner-add-button",
@@ -495,7 +496,9 @@ const FrontendTemplateIframePreview = React.memo(
           ) as HTMLButtonElement | null;
           if (aiButton) {
             aiButton.style.display =
-              overlayKind === "editable" || overlayKind === "section"
+              overlayKind === "editable" ||
+              overlayKind === "section" ||
+              overlayKind === "static"
                 ? "inline-flex"
                 : "none";
             applyAskAIButtonStatus(currentAskAIButtonStatus);
@@ -519,7 +522,7 @@ const FrontendTemplateIframePreview = React.memo(
       const showSelectionOverlay = (
         target: HTMLElement | null,
         label: string,
-        kind: "editable" | "image" | "section",
+        kind: "editable" | "image" | "section" | "static",
       ) => {
         overlayTarget = target;
         overlayLabel = label;
@@ -738,8 +741,66 @@ const FrontendTemplateIframePreview = React.memo(
             node.classList.remove("tt-section-selected");
           },
         );
+        Array.from(doc.querySelectorAll(".tt-static-selected")).forEach(
+          (node) => {
+            node.classList.remove("tt-static-selected");
+          },
+        );
         activeSelectionTargetRef.current = null;
         hideSelectionOverlay();
+      };
+
+      const resolveEventTargetElement = (target: EventTarget | null) => {
+        if (!target) {
+          return null;
+        }
+        const node = target as Node;
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          return node as HTMLElement;
+        }
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.parentElement;
+        }
+        return null;
+      };
+
+      const resolvePointerTargetElement = (
+        target: EventTarget | null,
+        clientX: number,
+        clientY: number,
+      ) => {
+        const baseTarget = resolveEventTargetElement(target);
+        if (!baseTarget) {
+          return null;
+        }
+
+        if (!baseTarget.closest?.(".tt-selection-overlay")) {
+          return baseTarget;
+        }
+
+        const elementsFromPoint =
+          doc.elementsFromPoint?.(clientX, clientY) ||
+          doc.defaultView?.document.elementsFromPoint?.(clientX, clientY) ||
+          [];
+
+        const resolvedUnderlying = elementsFromPoint.find((element) => {
+          if (!(element instanceof HTMLElement) && !(element instanceof SVGElement)) {
+            return false;
+          }
+
+          const htmlElement = element as HTMLElement;
+          return !htmlElement.closest?.(".tt-selection-overlay");
+        });
+
+        if (resolvedUnderlying instanceof HTMLElement) {
+          return resolvedUnderlying;
+        }
+
+        if (resolvedUnderlying instanceof SVGElement) {
+          return resolvedUnderlying as unknown as HTMLElement;
+        }
+
+        return baseTarget;
       };
 
       const getSectionChain = (sectionEl: HTMLElement | null) => {
@@ -761,6 +822,14 @@ const FrontendTemplateIframePreview = React.memo(
           return null;
         }
 
+        if (
+          sectionEl.getAttribute("data-static-selectable") === "true" ||
+          sectionEl.getAttribute("data-fallback-selectable") === "true" ||
+          sectionEl.getAttribute("data-fallback-media") === "true"
+        ) {
+          return null;
+        }
+
         const blockId = sectionEl.getAttribute("data-preview-block-id");
         if (!blockId) {
           return null;
@@ -768,19 +837,73 @@ const FrontendTemplateIframePreview = React.memo(
 
         const label = sectionEl.getAttribute("data-preview-label") || "Section";
         const styleKey =
-          (sectionEl.getAttribute("data-preview-style-key") as
-            | "sectionStyle"
-            | "outerSectionStyle"
-            | null) || "sectionStyle";
+          sectionEl.getAttribute("data-preview-style-key") || "sectionStyle";
         const rect = sectionEl.getBoundingClientRect();
 
         return {
           blockId,
           label,
           styleKey,
+          targetKind: "section",
           supportsInnerBlocks:
             sectionEl.getAttribute("data-preview-accepts-inner-blocks") ===
             "true",
+          rect: {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+          },
+        };
+      };
+
+      const buildStaticSelection = (
+        element: HTMLElement | null,
+      ): SectionSelectionData | null => {
+        if (!element) {
+          return null;
+        }
+
+        const isStaticNode =
+          element.getAttribute("data-static-selectable") === "true" ||
+          element.getAttribute("data-fallback-selectable") === "true" ||
+          element.getAttribute("data-fallback-media") === "true";
+        if (!isStaticNode) {
+          return null;
+        }
+
+        const blockId =
+          element.getAttribute("data-preview-block-id") ||
+          element.getAttribute("data-fallback-context-block-id") ||
+          element.getAttribute("data-block-id");
+        const staticId =
+          element.getAttribute("data-static-id") ||
+          element.getAttribute("data-fallback-id");
+        if (!blockId || !staticId) {
+          return null;
+        }
+
+        const tagName =
+          element.getAttribute("data-fallback-tag") ||
+          element.tagName.toLowerCase();
+        const label =
+          element.getAttribute("data-static-label") ||
+          element.getAttribute("data-preview-label") ||
+          element.getAttribute("aria-label") ||
+          element.getAttribute("alt") ||
+          humanizeTagName(tagName);
+        const styleKey =
+          element.getAttribute("data-preview-style-key") ||
+          `static.${staticId}`;
+        const rect = element.getBoundingClientRect();
+
+        return {
+          blockId,
+          label,
+          styleKey,
+          staticId,
+          styleOnly: true,
+          targetKind: "static",
           rect: {
             top: rect.top,
             left: rect.left,
@@ -893,9 +1016,32 @@ const FrontendTemplateIframePreview = React.memo(
           kind: "section",
           blockId: selection.blockId,
           styleKey: selection.styleKey || "sectionStyle",
+          staticId: selection.staticId,
           nonce: Date.now(),
         };
         activeSectionRef.current = sectionEl;
+        onSectionSelectedRef.current?.(selection);
+        return selection;
+      };
+
+      const applyStaticSelection = (staticEl: HTMLElement | null) => {
+        const selection = buildStaticSelection(staticEl);
+        if (!selection || !staticEl) {
+          return null;
+        }
+
+        finishEditing(true);
+        clearVisualSelections();
+        activeSectionRef.current = null;
+        staticEl.classList.add("tt-static-selected");
+        showSelectionOverlay(staticEl, selection.label || "Element", "static");
+        activeSelectionTargetRef.current = {
+          kind: "static",
+          blockId: selection.blockId,
+          styleKey: selection.styleKey || "sectionStyle",
+          staticId: selection.staticId,
+          nonce: Date.now(),
+        };
         onSectionSelectedRef.current?.(selection);
         return selection;
       };
@@ -984,15 +1130,19 @@ const FrontendTemplateIframePreview = React.memo(
         const sectionLayers = getSectionChain(sectionEl)
           .reverse()
           .flatMap((node, index) => {
-            const selection = buildSectionSelection(node);
+            const selection =
+              buildStaticSelection(node) || buildSectionSelection(node);
             if (!selection) {
               return [];
             }
 
             return [
               {
-                id: `section:${selection.blockId}:${selection.styleKey || "sectionStyle"}:${index}`,
-                kind: "section" as const,
+                id: `${selection.targetKind || "section"}:${selection.blockId}:${selection.styleKey || "sectionStyle"}:${selection.staticId || "root"}:${index}`,
+                kind:
+                  selection.targetKind === "static"
+                    ? ("static" as const)
+                    : ("section" as const),
                 label: selection.label,
                 depth: index,
                 section: selection,
@@ -1059,6 +1209,18 @@ const FrontendTemplateIframePreview = React.memo(
         outline-offset: 3px;
       }
       .tt-image-selected {
+        outline: 1px solid rgba(37, 99, 235, 0.18);
+        outline-offset: 0;
+        box-shadow: none;
+        cursor: grab !important;
+        user-select: none;
+      }
+      [data-static-selectable="true"],
+      [data-fallback-selectable="true"],
+      [data-fallback-media="true"] {
+        cursor: pointer;
+      }
+      .tt-static-selected {
         outline: 1px solid rgba(37, 99, 235, 0.18);
         outline-offset: 0;
         box-shadow: none;
@@ -1504,29 +1666,42 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
 
-        const target = event.target as HTMLElement | null;
+        const target = resolvePointerTargetElement(
+          event.target,
+          event.clientX,
+          event.clientY,
+        );
+        const imageEl = target?.closest?.(
+          "[data-edit-image]",
+        ) as HTMLElement | null;
+        const staticSelectableEl = target?.closest?.(
+          "[data-static-selectable='true']",
+        ) as HTMLElement | null;
         const editableEl = target?.closest?.(
           "[data-editable]",
         ) as HTMLElement | null;
         const cardEditableEl = target?.closest?.(
           '[data-editable$=".__card"], [data-editable$=".__container"]',
         ) as HTMLElement | null;
-        const imageEl = target?.closest?.(
-          "[data-edit-image]",
-        ) as HTMLElement | null;
         const fallbackMediaEl = target?.closest?.(
           "[data-fallback-media='true']",
+        ) as HTMLElement | null;
+        const fallbackSelectableEl = target?.closest?.(
+          "[data-fallback-selectable='true']",
         ) as HTMLElement | null;
         const sectionEl = target?.closest?.(
           '[data-preview-section="true"]',
         ) as HTMLElement | null;
-        const shouldPreferImageSelection =
-          !!imageEl &&
-          (!editableEl ||
-            editableEl === imageEl ||
-            editableEl.contains(imageEl));
+        const shouldPreferImageSelection = !!imageEl;
 
-        if (!editableEl && !imageEl && !fallbackMediaEl && !sectionEl) {
+        if (
+          !editableEl &&
+          !imageEl &&
+          !staticSelectableEl &&
+          !fallbackMediaEl &&
+          !fallbackSelectableEl &&
+          !sectionEl
+        ) {
           finishEditing(true);
           clearVisualSelections();
           activeSectionRef.current = null;
@@ -1543,26 +1718,36 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
 
+        if (!editableEl && !imageEl && staticSelectableEl) {
+          event.preventDefault();
+          event.stopPropagation();
+          applyStaticSelection(staticSelectableEl);
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+
         if (!editableEl && !imageEl && fallbackMediaEl) {
           event.preventDefault();
           event.stopPropagation();
-          applySectionSelection(fallbackMediaEl);
+          applyStaticSelection(fallbackMediaEl);
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+
+        if (!editableEl && !imageEl && fallbackSelectableEl) {
+          event.preventDefault();
+          event.stopPropagation();
+          applyStaticSelection(fallbackSelectableEl);
           onPreviewContextMenuRef.current?.(null);
           return;
         }
 
         if (!editableEl && !imageEl && sectionEl) {
-          const sectionChain = getSectionChain(sectionEl);
-          let resolvedSectionEl = sectionChain[0];
-          if (activeSectionRef.current) {
-            const activeIndex = sectionChain.findIndex(
-              (node) => node === activeSectionRef.current,
-            );
-            if (activeIndex >= 0) {
-              resolvedSectionEl =
-                sectionChain[
-                  Math.min(activeIndex + 1, sectionChain.length - 1)
-                ];
+          let resolvedSectionEl = sectionEl;
+          if (activeSectionRef.current === sectionEl) {
+            const sectionChain = getSectionChain(sectionEl);
+            if (sectionChain.length > 1) {
+              resolvedSectionEl = sectionChain[1];
             }
           }
           applySectionSelection(resolvedSectionEl);
@@ -1598,22 +1783,34 @@ const FrontendTemplateIframePreview = React.memo(
       };
 
       const handleDoubleClick = (event: MouseEvent) => {
-        const target = event.target as HTMLElement | null;
+        const target = resolvePointerTargetElement(
+          event.target,
+          event.clientX,
+          event.clientY,
+        );
         const imageEl = target?.closest?.(
           "[data-edit-image]",
+        ) as HTMLElement | null;
+        const staticSelectableEl = target?.closest?.(
+          "[data-static-selectable='true']",
         ) as HTMLElement | null;
         const fallbackMediaEl = target?.closest?.(
           "[data-fallback-media='true']",
         ) as HTMLElement | null;
+        const fallbackSelectableEl = target?.closest?.(
+          "[data-fallback-selectable='true']",
+        ) as HTMLElement | null;
         const editableEl = target?.closest?.(
           "[data-editable]",
         ) as HTMLElement | null;
-        const shouldPreferImageSelection =
-          !!imageEl &&
-          (!editableEl ||
-            editableEl === imageEl ||
-            editableEl.contains(imageEl));
-        if (!editableEl && !imageEl && !fallbackMediaEl) {
+        const shouldPreferImageSelection = !!imageEl;
+        if (
+          !editableEl &&
+          !imageEl &&
+          !staticSelectableEl &&
+          !fallbackMediaEl &&
+          !fallbackSelectableEl
+        ) {
           return;
         }
 
@@ -1628,7 +1825,17 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
         if (!editableEl && !imageEl && fallbackMediaEl) {
-          applySectionSelection(fallbackMediaEl);
+          applyStaticSelection(fallbackMediaEl);
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+        if (!editableEl && !imageEl && staticSelectableEl) {
+          applyStaticSelection(staticSelectableEl);
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+        if (!editableEl && !imageEl && fallbackSelectableEl) {
+          applyStaticSelection(fallbackSelectableEl);
           onPreviewContextMenuRef.current?.(null);
           return;
         }
@@ -1637,7 +1844,11 @@ const FrontendTemplateIframePreview = React.memo(
       };
 
       const handleContextMenu = (event: MouseEvent) => {
-        const target = event.target as HTMLElement | null;
+        const target = resolvePointerTargetElement(
+          event.target,
+          event.clientX,
+          event.clientY,
+        );
         event.preventDefault();
         event.stopPropagation();
         const clickedInsideOverlay = !!target?.closest?.(
@@ -1645,6 +1856,18 @@ const FrontendTemplateIframePreview = React.memo(
         );
         const resolvedOverlayTarget =
           clickedInsideOverlay && overlayTarget ? overlayTarget : null;
+        const imageEl =
+          (resolvedOverlayTarget?.matches?.("[data-edit-image]")
+            ? resolvedOverlayTarget
+            : null) ||
+          (target?.closest?.("[data-edit-image]") as HTMLElement | null);
+        const staticSelectableEl =
+          (resolvedOverlayTarget?.matches?.("[data-static-selectable='true']")
+            ? resolvedOverlayTarget
+            : null) ||
+          (target?.closest?.(
+            "[data-static-selectable='true']",
+          ) as HTMLElement | null);
         const editableEl =
           (resolvedOverlayTarget?.matches?.("[data-editable]")
             ? resolvedOverlayTarget
@@ -1659,17 +1882,19 @@ const FrontendTemplateIframePreview = React.memo(
           (target?.closest?.(
             '[data-editable$=".__card"], [data-editable$=".__container"]',
           ) as HTMLElement | null);
-        const imageEl =
-          (resolvedOverlayTarget?.matches?.("[data-edit-image]")
-            ? resolvedOverlayTarget
-            : null) ||
-          (target?.closest?.("[data-edit-image]") as HTMLElement | null);
         const fallbackMediaEl =
           (resolvedOverlayTarget?.matches?.("[data-fallback-media='true']")
             ? resolvedOverlayTarget
             : null) ||
           (target?.closest?.(
             "[data-fallback-media='true']",
+          ) as HTMLElement | null);
+        const fallbackSelectableEl =
+          (resolvedOverlayTarget?.matches?.("[data-fallback-selectable='true']")
+            ? resolvedOverlayTarget
+            : null) ||
+          (target?.closest?.(
+            "[data-fallback-selectable='true']",
           ) as HTMLElement | null);
         const directSectionEl =
           (resolvedOverlayTarget?.matches?.('[data-preview-section="true"]')
@@ -1679,19 +1904,70 @@ const FrontendTemplateIframePreview = React.memo(
             '[data-preview-section="true"]',
           ) as HTMLElement | null);
         const resolvedSectionEl =
-          editableEl || imageEl || fallbackMediaEl
-            ? ((editableEl || imageEl || fallbackMediaEl)?.closest(
+          editableEl ||
+          imageEl ||
+          staticSelectableEl ||
+          fallbackMediaEl ||
+          fallbackSelectableEl
+            ? ((editableEl ||
+                imageEl ||
+                staticSelectableEl ||
+                fallbackMediaEl ||
+                fallbackSelectableEl)?.closest(
                 '[data-preview-section="true"]',
               ) as HTMLElement | null)
             : directSectionEl || activeSectionRef.current;
-        const shouldPreferImageSelection =
-          !!imageEl &&
-          (!editableEl ||
-            editableEl === imageEl ||
-            editableEl.contains(imageEl));
+        const shouldPreferImageSelection = !!imageEl;
 
-        if (!editableEl && !imageEl && !fallbackMediaEl && !resolvedSectionEl) {
+        if (
+          !editableEl &&
+          !imageEl &&
+          !staticSelectableEl &&
+          !fallbackMediaEl &&
+          !fallbackSelectableEl &&
+          !resolvedSectionEl
+        ) {
           onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+
+        const staticSelection =
+          !editableEl && !imageEl && staticSelectableEl
+            ? applyStaticSelection(staticSelectableEl)
+            : !editableEl && !imageEl && fallbackMediaEl
+              ? applyStaticSelection(fallbackMediaEl)
+              : !editableEl && !imageEl && fallbackSelectableEl
+                ? applyStaticSelection(fallbackSelectableEl)
+                : null;
+
+        if (staticSelection) {
+          const layers = buildLayerItems(
+            null,
+            null,
+            staticSelectableEl || fallbackMediaEl || fallbackSelectableEl,
+          );
+          onPreviewContextMenuRef.current?.({
+            x: event.clientX,
+            y: event.clientY,
+            layers,
+            target:
+              layers.find(
+                (layer) =>
+                  layer.kind === "static" &&
+                  layer.section?.blockId === staticSelection.blockId &&
+                  layer.section?.staticId === staticSelection.staticId,
+              ) || null,
+            targetLayer:
+              layers.find(
+                (layer) =>
+                  layer.kind === "static" &&
+                  layer.section?.blockId === staticSelection.blockId &&
+                  layer.section?.staticId === staticSelection.staticId,
+              ) || null,
+            section: staticSelection,
+            editable: null,
+            image: null,
+          });
           return;
         }
 
@@ -1975,8 +2251,18 @@ const FrontendTemplateIframePreview = React.memo(
       }
 
       const fallbackSectionAttributes = [
+        "data-static-selectable",
+        "data-static-style-only",
+        "data-static-id",
+        "data-static-label",
         "data-fallback-section",
+        "data-fallback-selectable",
+        "data-fallback-id",
+        "data-fallback-style-only",
+        "data-fallback-tag",
+        "data-fallback-context-block-id",
         "data-fallback-media",
+        "data-preview-target-kind",
         "data-preview-section",
         "data-preview-block-id",
         "data-preview-style-key",
@@ -2019,6 +2305,10 @@ const FrontendTemplateIframePreview = React.memo(
         "MuiChip-root",
         "MuiButtonBase-root",
         "MuiAvatar-root",
+        "MuiChip-root",
+        "MuiBadge-root",
+        "MuiSvgIcon-root",
+        "MuiButtonBase-root",
         "MuiListItem-root",
       ];
 
@@ -2119,6 +2409,40 @@ const FrontendTemplateIframePreview = React.memo(
           styleKey: string;
           sectionLabel: string;
         } | null = null;
+        let fallbackCounter = 0;
+
+        const applyFallbackSelectableMetadata = (
+          element: HTMLElement,
+          context: {
+            blockId: string;
+            styleKey: string;
+            sectionLabel: string;
+          },
+          tagName: string,
+          label: string,
+          isMedia = false,
+        ) => {
+          fallbackCounter += 1;
+          element.setAttribute("data-fallback-section", "true");
+          element.setAttribute("data-fallback-selectable", "true");
+          element.setAttribute("data-fallback-style-only", "true");
+          element.setAttribute("data-fallback-tag", tagName);
+          element.setAttribute("data-fallback-id", `fallback-${fallbackCounter}`);
+          element.setAttribute("data-fallback-context-block-id", context.blockId);
+          element.setAttribute("data-static-id", `fallback-${fallbackCounter}`);
+          element.setAttribute("data-static-label", label);
+          if (isMedia) {
+            element.setAttribute("data-fallback-media", "true");
+          }
+          element.setAttribute("data-preview-target-kind", "static");
+          element.setAttribute("data-preview-section", "true");
+          element.setAttribute("data-preview-block-id", context.blockId);
+          element.setAttribute(
+            "data-preview-style-key",
+            `static.__fallback.${fallbackCounter}`,
+          );
+          element.setAttribute("data-preview-label", label);
+        };
 
         Array.from(root.querySelectorAll<HTMLElement>("*")).forEach(
           (element) => {
@@ -2165,6 +2489,12 @@ const FrontendTemplateIframePreview = React.memo(
             const hasExplicitSection = element.getAttribute(
               "data-preview-section",
             ) === "true";
+            const explicitEditableAncestor = element.parentElement?.closest?.(
+              "[data-editable], [data-edit-image]",
+            );
+            if (explicitEditableAncestor) {
+              return;
+            }
 
             const textContent = (element.textContent || "").trim();
             const containsDirectText =
@@ -2178,10 +2508,22 @@ const FrontendTemplateIframePreview = React.memo(
             const hasMeaningfulClass = meaningfulContainerClasses.some((name) =>
               element.classList.contains(name),
             );
+            const hasVisualChildren = Array.from(element.children).some(
+              (child) => {
+                const childTag = child.tagName.toLowerCase();
+                return (
+                  childTag === "img" ||
+                  childTag === "svg" ||
+                  childTag === "video" ||
+                  child.getAttribute("role") === "img"
+                );
+              },
+            );
             const isContainerLike =
               containerLikeTags.has(tagName) ||
               hasMeaningfulClass ||
-              element.getAttribute("role") === "button";
+              element.getAttribute("role") === "button" ||
+              hasVisualChildren;
 
             if (!hasExplicitSection && isContainerLike) {
               const rect = element.getBoundingClientRect();
@@ -2192,15 +2534,10 @@ const FrontendTemplateIframePreview = React.memo(
                   !!element.getAttribute("aria-label") ||
                   textContent.length > 0)
               ) {
-                element.setAttribute("data-fallback-section", "true");
-                element.setAttribute("data-preview-section", "true");
-                element.setAttribute("data-preview-block-id", context.blockId);
-                element.setAttribute(
-                  "data-preview-style-key",
-                  context.styleKey,
-                );
-                element.setAttribute(
-                  "data-preview-label",
+                applyFallbackSelectableMetadata(
+                  element,
+                  context,
+                  tagName,
                   element.getAttribute("aria-label") ||
                     humanizeTagName(tagName),
                 );
@@ -2215,21 +2552,14 @@ const FrontendTemplateIframePreview = React.memo(
               !hasExplicitSection &&
               (isMediaTag || textLikeTags.has(tagName) || containsDirectText)
             ) {
-              element.setAttribute("data-fallback-section", "true");
-              if (isMediaTag) {
-                element.setAttribute("data-fallback-media", "true");
-              }
-              element.setAttribute("data-preview-section", "true");
-              element.setAttribute("data-preview-block-id", context.blockId);
-              element.setAttribute(
-                "data-preview-style-key",
-                context.styleKey,
-              );
-              element.setAttribute(
-                "data-preview-label",
+              applyFallbackSelectableMetadata(
+                element,
+                context,
+                tagName,
                 element.getAttribute("aria-label") ||
                   element.getAttribute("alt") ||
                   humanizeTagName(tagName),
+                isMediaTag,
               );
             }
           },
@@ -2291,6 +2621,11 @@ const FrontendTemplateIframePreview = React.memo(
           node.classList.remove("tt-section-selected");
         },
       );
+      Array.from(doc.querySelectorAll(".tt-static-selected")).forEach(
+        (node) => {
+          node.classList.remove("tt-static-selected");
+        },
+      );
       hideSelectionOverlayRef.current();
 
       if (selectedPreviewTarget.kind === "section") {
@@ -2298,9 +2633,12 @@ const FrontendTemplateIframePreview = React.memo(
           doc.querySelectorAll('[data-preview-section="true"]'),
         ).find((node) => {
           const element = node as HTMLElement;
+          const targetStaticId = selectedPreviewTarget.staticId || "";
+          const elementStaticId = element.getAttribute("data-static-id") || "";
           return (
             element.getAttribute("data-preview-block-id") ===
               String(selectedPreviewTarget.blockId) &&
+            elementStaticId === targetStaticId &&
             (element.getAttribute("data-preview-style-key") ||
               "sectionStyle") ===
               (selectedPreviewTarget.styleKey || "sectionStyle")
@@ -2316,10 +2654,49 @@ const FrontendTemplateIframePreview = React.memo(
             kind: "section",
             blockId: selectedPreviewTarget.blockId,
             styleKey: selectedPreviewTarget.styleKey || "sectionStyle",
+            staticId: selectedPreviewTarget.staticId,
             nonce: selectedPreviewTarget.nonce,
           };
         }
         activeSectionRef.current = matchingSection || null;
+        return;
+      }
+
+      if (selectedPreviewTarget.kind === "static") {
+        const matchingStatic = Array.from(
+          doc.querySelectorAll(
+            "[data-static-selectable='true'], [data-fallback-selectable='true'], [data-fallback-media='true']",
+          ),
+        ).find((node) => {
+          const element = node as HTMLElement;
+          return (
+            element.getAttribute("data-preview-block-id") ===
+              String(selectedPreviewTarget.blockId) &&
+            (element.getAttribute("data-static-id") ||
+              element.getAttribute("data-fallback-id")) ===
+              (selectedPreviewTarget.staticId || "") &&
+            (element.getAttribute("data-preview-style-key") ||
+              "sectionStyle") ===
+              (selectedPreviewTarget.styleKey || "sectionStyle")
+          );
+        }) as HTMLElement | undefined;
+
+        matchingStatic?.classList.add("tt-static-selected");
+        if (matchingStatic) {
+          const label =
+            matchingStatic.getAttribute("data-static-label") ||
+            matchingStatic.getAttribute("data-preview-label") ||
+            "Element";
+          showSelectionOverlayRef.current(matchingStatic, label, "static");
+          activeSelectionTargetRef.current = {
+            kind: "static",
+            blockId: selectedPreviewTarget.blockId,
+            styleKey: selectedPreviewTarget.styleKey || "sectionStyle",
+            staticId: selectedPreviewTarget.staticId,
+            nonce: selectedPreviewTarget.nonce,
+          };
+        }
+        activeSectionRef.current = null;
         return;
       }
 
@@ -2463,14 +2840,17 @@ export interface ImageSelectionData {
 export interface SectionSelectionData {
   blockId: string;
   label: string;
-  styleKey?: "sectionStyle" | "outerSectionStyle";
+  styleKey?: string;
+  staticId?: string;
+  styleOnly?: boolean;
+  targetKind?: "section" | "static";
   supportsInnerBlocks?: boolean;
   rect?: { top: number; left: number; width: number; height: number };
 }
 
 export interface PreviewLayerNodeData {
   id: string;
-  kind: "section" | "editable" | "image";
+  kind: "section" | "static" | "editable" | "image";
   label: string;
   depth: number;
   section?: SectionSelectionData;
@@ -2490,10 +2870,11 @@ export interface PreviewContextMenuData {
 }
 
 export interface PreviewSelectionTarget {
-  kind: "section" | "editable" | "image";
+  kind: "section" | "static" | "editable" | "image";
   blockId: string;
   fieldPath?: string;
-  styleKey?: "sectionStyle" | "outerSectionStyle";
+  styleKey?: string;
+  staticId?: string;
   nonce: number;
 }
 

@@ -34,6 +34,8 @@ import {
   getSectionStyleDomProps,
   getSectionStyleSx,
 } from "../../utils/sectionStyle";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 
 const LOCAL_DEMO_POSTS: BlogPost[] = [
   {
@@ -158,6 +160,7 @@ function formatDate(date?: string) {
 }
 
 const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
   const templateContent =
     (data.templateContent as Record<string, any> | undefined) || {};
   const homeContent = templateContent.home || {};
@@ -304,6 +307,14 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   {item.label}
                 </Typography>
               ))}
+              <TemplatePageNavLinks
+                links={pageNavLinks}
+                itemSx={{
+                  fontSize: "0.92rem",
+                  color: "#4b5563",
+                  cursor: "pointer",
+                }}
+              />
             </Stack>
 
             <Button
@@ -1090,6 +1101,13 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                       {item.label}
                     </Typography>
                   ))}
+                  <TemplatePageNavLinks
+                    links={pageNavLinks}
+                    itemSx={{
+                      color: "rgba(255,255,255,0.7)",
+                      cursor: "pointer",
+                    }}
+                  />
                 </Stack>
               </Box>
             </FadeIn>

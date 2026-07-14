@@ -4381,6 +4381,7 @@ const WebsiteEditorInner = () => {
     (data) => {
       setPreviewContextMenu(null);
       if (data) {
+        setSelectedEditableElement(null);
         setSelectedImageElement(null);
         setIsImageDialogOpen(false);
       }
@@ -4389,9 +4390,10 @@ const WebsiteEditorInner = () => {
         setActiveToolbarMode("section");
         setIsInspectorOpen(true);
         syncPreviewSelection({
-          kind: "section",
+          kind: data.targetKind === "static" ? "static" : "section",
           blockId: data.blockId,
           styleKey: data.styleKey || "sectionStyle",
+          staticId: data.staticId,
         });
       }
       setBlockDialogOpen(false);
@@ -4577,6 +4579,8 @@ const WebsiteEditorInner = () => {
       pendingHistoryDescriptionRef.current =
         target.kind === "section"
           ? "Moved or resized section"
+          : target.kind === "static"
+            ? "Moved or resized static element"
           : target.kind === "image"
             ? "Moved or resized image"
             : "Moved or resized text";
@@ -4605,6 +4609,10 @@ const WebsiteEditorInner = () => {
               },
             },
           };
+        }
+
+        if (target.kind === "static") {
+          return block;
         }
 
         if (target.kind === "image" && target.fieldPath) {
@@ -4750,7 +4758,10 @@ const WebsiteEditorInner = () => {
         handlePreviewEditableSelection(layer.editable);
       } else if (layer.kind === "image" && layer.image) {
         handlePreviewImageSelection(layer.image);
-      } else if (layer.kind === "section" && layer.section) {
+      } else if (
+        (layer.kind === "section" || layer.kind === "static") &&
+        layer.section
+      ) {
         handlePreviewSectionSelection(layer.section);
       }
 
@@ -5861,6 +5872,12 @@ const WebsiteEditorInner = () => {
       }
 
       const styleKey = getSectionStyleKey(selectedSectionElement);
+      if (
+        selectedSectionElement?.styleOnly &&
+        selectedSectionElement?.staticId
+      ) {
+        return;
+      }
       pendingHistoryDescriptionRef.current =
         `Styled section ${selectedSectionElement.label || ""}`.trim();
       setBlocks((prev) =>
@@ -7390,6 +7407,8 @@ const WebsiteEditorInner = () => {
                       : selectedSectionElement &&
                         String(selectedSectionElement.blockId) ===
                           String(layer.section?.blockId) &&
+                        (selectedSectionElement.staticId || "") ===
+                          (layer.section?.staticId || "") &&
                         getSectionStyleKey(selectedSectionElement) ===
                           (layer.section?.styleKey || "sectionStyle");
 
@@ -7422,6 +7441,8 @@ const WebsiteEditorInner = () => {
                     >
                       {layer.kind === "section" ? (
                         <Layers size={16} />
+                      ) : layer.kind === "static" ? (
+                        <Pencil size={16} />
                       ) : layer.kind === "image" ? (
                         <Palette size={16} />
                       ) : (
@@ -7447,6 +7468,8 @@ const WebsiteEditorInner = () => {
                       >
                         {layer.kind === "section"
                           ? "Section"
+                          : layer.kind === "static"
+                            ? "Static element"
                           : layer.kind === "image"
                             ? "Image"
                             : "Typography"}

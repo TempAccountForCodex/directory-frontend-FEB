@@ -32,6 +32,8 @@ import {
   getEditableSectionProps,
   getEditableTextProps,
 } from "../../utils/editableProps";
+import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
+import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
 
 const MotionBox = motion(Box);
 const MotionTypography = motion(Typography);
@@ -307,6 +309,7 @@ function Lightbox({
 
 /* ─── Main Component ──────────────────────────────────────────── */
 const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
   const accent = GOLD;
   const heroContent = (data.templateContent?.hero as Record<string, any>) || {};
   const servicesContent =
@@ -448,6 +451,19 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
               {item}
             </Typography>
           ))}
+          <TemplatePageNavLinks
+            links={pageNavLinks}
+            itemSx={{
+              color: TEXT_DIM,
+              cursor: "pointer",
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              fontSize: "0.68rem",
+              fontWeight: 600,
+              transition: "color 0.2s",
+              "&:hover": { color: accent },
+            }}
+          />
         </Stack>
 
         <Button

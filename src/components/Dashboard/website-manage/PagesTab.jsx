@@ -54,6 +54,21 @@ const generateSlug = (title) =>
 
 const getPagePath = (page) => page?.path || page?.slug || '';
 
+// Normalize a nav/menu target so page paths compare reliably regardless of how
+// they were stored (leading slash, trailing slash). Anchors ("#...") and
+// external URLs are returned untouched so they are never treated as pages.
+const normalizePath = (value) => {
+  if (!value || typeof value !== 'string') return '';
+  let path = value.trim();
+  if (!path) return '';
+  if (path.startsWith('#') || path.startsWith('http') || path.startsWith('//')) {
+    return path;
+  }
+  if (!path.startsWith('/')) path = `/${path}`;
+  if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+  return path;
+};
+
 const PagesTab = memo(({ website, websiteId, onSaved }) => {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -77,6 +92,85 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
   const [pageToDelete, setPageToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Prune any menu / navbar link that points to a page which no longer exists.
+  // The site navigation is menu-driven, so a deleted page keeps showing up until
+  // its menu item is removed. Reconciling on load makes the menu self-healing:
+  // whatever isn't a real page (or a section/custom link) gets stripped and
+  // persisted, so stale items disappear everywhere — not only on fresh deletes.
+  const reconcileNavigationWithPages = useCallback(
+    async (loadedPages) => {
+      if (!websiteId) return;
+      const list = Array.isArray(loadedPages) ? loadedPages : [];
+      const pagePaths = new Set(
+        list.map((page) => normalizePath(getPagePath(page))).filter(Boolean)
+      );
+      // Home is always valid even if formatted oddly.
+      pagePaths.add('/');
+
+      const isStalePageTarget = (rawTarget) => {
+        const target = normalizePath(rawTarget || '');
+        // Only internal page paths are candidates; leave anchors + external URLs.
+        if (!target || !target.startsWith('/')) return false;
+        return !pagePaths.has(target);
+      };
+
+      // 1) Menus (primary source the site nav reads).
+      try {
+        const res = await apiClient.get(`/websites/${websiteId}/menus`);
+        const raw = res.data?.data ?? res.data;
+        const menuList = Array.isArray(raw) ? raw : [];
+        await Promise.all(
+          menuList.map(async (menu) => {
+            const items = Array.isArray(menu.items) ? menu.items : [];
+            const nextItems = items.filter((item) => {
+              // Keep sections + custom URLs; only drop page links with no page.
+              if (item.type && item.type !== 'page') return true;
+              return !isStalePageTarget(item.target || item.link || item.url);
+            });
+            if (nextItems.length === items.length) return;
+            await apiClient.put(`/menus/${menu.id}`, {
+              name: menu.name,
+              items: nextItems.map(({ id, label, type, target }, order) => ({
+                id,
+                label,
+                type,
+                target,
+                order,
+              })),
+            });
+          })
+        );
+      } catch {
+        // best-effort — navigation cleanup should never block the pages list
+      }
+
+      // 2) Global navbar component (mirrors the add-blog navbar entry).
+      try {
+        const res = await apiClient.get(
+          `/websites/${websiteId}/global-components/navbar`
+        );
+        const navbar = res.data?.data?.config || res.data?.config;
+        if (navbar) {
+          const navigationItems = Array.isArray(navbar.navigationItems)
+            ? navbar.navigationItems
+            : [];
+          const nextItems = navigationItems.filter(
+            (item) => !isStalePageTarget(item.link || item.target || item.url)
+          );
+          if (nextItems.length !== navigationItems.length) {
+            await apiClient.put(
+              `/websites/${websiteId}/global-components/navbar`,
+              { config: { ...navbar, navigationItems: nextItems } }
+            );
+          }
+        }
+      } catch {
+        // best-effort (404 = no navbar component configured)
+      }
+    },
+    [websiteId]
+  );
+
   const fetchPages = useCallback(async () => {
     if (!websiteId) return;
     try {
@@ -84,13 +178,16 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
       setError(null);
       const res = await apiClient.get(`/websites/${websiteId}/pages`);
       // Backend returns { success, data: [...pages] }
-      setPages(res.data?.data || res.data?.pages || []);
+      const list = res.data?.data || res.data?.pages || [];
+      setPages(list);
+      // Self-heal the navigation against the real page list.
+      void reconcileNavigationWithPages(list);
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load pages.');
     } finally {
       setLoading(false);
     }
-  }, [websiteId]);
+  }, [websiteId, reconcileNavigationWithPages]);
 
   useEffect(() => {
     fetchPages();
@@ -242,6 +339,80 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     [website?.name, websiteId]
   );
 
+  // Remove every menu item that links to `path` (mirrors addBlogMenuEntry) so a
+  // deleted page no longer lingers in the site navigation.
+  const removeMenuEntry = useCallback(
+    async (path) => {
+      try {
+        const res = await apiClient.get(`/websites/${websiteId}/menus`);
+        const raw = res.data?.data ?? res.data;
+        const menuList = Array.isArray(raw) ? raw : [];
+
+        await Promise.all(
+          menuList.map(async (menu) => {
+            const items = Array.isArray(menu.items) ? menu.items : [];
+            const nextItems = items.filter((item) => {
+              const target = item.target || item.link || item.url;
+              return target !== path;
+            });
+            if (nextItems.length === items.length) return;
+            await apiClient.put(`/menus/${menu.id}`, {
+              name: menu.name,
+              items: nextItems.map(({ id, label, type, target }, order) => ({
+                id,
+                label,
+                type,
+                target,
+                order,
+              })),
+            });
+          })
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [websiteId]
+  );
+
+  // Remove a matching link from the global navbar component (mirrors
+  // addBlogNavbarEntry).
+  const removeNavbarEntry = useCallback(
+    async (path) => {
+      try {
+        let navbar;
+        try {
+          const res = await apiClient.get(
+            `/websites/${websiteId}/global-components/navbar`
+          );
+          navbar = res.data?.data?.config || res.data?.config;
+        } catch (err) {
+          if (err?.response?.status === 404) return true;
+          throw err;
+        }
+        if (!navbar) return true;
+
+        const navigationItems = Array.isArray(navbar.navigationItems)
+          ? navbar.navigationItems
+          : [];
+        const nextItems = navigationItems.filter((item) => {
+          const target = item.link || item.target || item.url;
+          return target !== path;
+        });
+        if (nextItems.length === navigationItems.length) return true;
+
+        await apiClient.put(`/websites/${websiteId}/global-components/navbar`, {
+          config: { ...navbar, navigationItems: nextItems },
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [websiteId]
+  );
+
   const handleAddBlogPage = async () => {
     const existing = findBlogIndexPage();
     if (existing) {
@@ -322,11 +493,22 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     if (!pageToDelete) return;
     try {
       setDeleteLoading(true);
+      const deletedPath = getPagePath(pageToDelete);
       // Backend page delete is DELETE /api/pages/:pageId (standalone route)
       await apiClient.delete(`/pages/${pageToDelete.id}`);
+      // Also strip this page from the menu + navbar so it stops appearing in the
+      // site navigation (mirrors the add flow). Without this the deleted page's
+      // menu item lingers because the nav is menu-driven, not page-driven.
+      if (deletedPath) {
+        await Promise.all([
+          removeMenuEntry(deletedPath),
+          removeNavbarEntry(deletedPath),
+        ]);
+      }
       setPages((prev) => prev.filter((p) => p.id !== pageToDelete.id));
       setDeleteDialogOpen(false);
       setPageToDelete(null);
+      onSaved?.();
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to delete page.');
     } finally {
