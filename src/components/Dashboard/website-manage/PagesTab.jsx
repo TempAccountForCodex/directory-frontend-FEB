@@ -39,6 +39,7 @@ import DashboardInput from '../shared/DashboardInput';
 import DashboardCancelButton from '../shared/DashboardCancelButton';
 import DashboardConfirmButton from '../shared/DashboardConfirmButton';
 import DashboardTooltip from '../shared/DashboardTooltip';
+import { getBlockDefaultContent } from '../../Editor/blockPresets';
 
 
 
@@ -50,6 +51,8 @@ const generateSlug = (title) =>
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
+
+const getPagePath = (page) => page?.path || page?.slug || '';
 
 const PagesTab = memo(({ website, websiteId, onSaved }) => {
   const { actualTheme } = useCustomTheme();
@@ -66,6 +69,8 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
   const [newPageSlug, setNewPageSlug] = useState('');
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState(null);
+  const [blogLoading, setBlogLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -109,6 +114,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     try {
       setAddLoading(true);
       setAddError(null);
+      setSuccessMessage(null);
       // Backend expects { title, path } — not { title, slug }
       const res = await apiClient.post(`/websites/${websiteId}/pages`, {
         title: newPageTitle.trim(),
@@ -118,10 +124,181 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
       setAddDialogOpen(false);
       setNewPageTitle('');
       setNewPageSlug('');
+      setSuccessMessage('Page created.');
+      onSaved?.();
     } catch (err) {
       setAddError(err?.response?.data?.message || 'Failed to create page.');
     } finally {
       setAddLoading(false);
+    }
+  };
+
+  const findBlogIndexPage = useCallback(
+    () =>
+      pages.find((page) => {
+        const pagePath = getPagePath(page);
+        return page.pageType === 'BLOG_INDEX' || pagePath === '/blog';
+      }),
+    [pages]
+  );
+
+  const addBlogMenuEntry = useCallback(
+    async (path) => {
+      try {
+        const res = await apiClient.get(`/websites/${websiteId}/menus`);
+        const raw = res.data?.data ?? res.data;
+        const menuList = Array.isArray(raw) ? raw : [];
+        const primary = menuList[0];
+
+        if (primary) {
+          const items = Array.isArray(primary.items) ? primary.items : [];
+          if (
+            items.some((item) => {
+              const target = item.target || item.link || item.url;
+              return target === path;
+            })
+          ) {
+            return true;
+          }
+
+          const nextItems = [
+            ...items.map(({ id, label, type, target }, order) => ({
+              id,
+              label,
+              type,
+              target,
+              order,
+            })),
+            { label: 'Blog', type: 'page', target: path, order: items.length },
+          ];
+
+          await apiClient.put(`/menus/${primary.id}`, {
+            name: primary.name,
+            items: nextItems,
+          });
+        } else {
+          await apiClient.post(`/websites/${websiteId}/menus`, {
+            name: 'Main Menu',
+            items: [{ label: 'Blog', type: 'page', target: path, order: 0 }],
+          });
+        }
+
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [websiteId]
+  );
+
+  const addBlogNavbarEntry = useCallback(
+    async (path) => {
+      try {
+        let navbar = {
+          brandName: website?.name || '',
+          navigationItems: [{ label: 'Home', link: '/' }],
+          ctaText: '',
+          ctaLink: '',
+          sticky: false,
+          logo: '',
+        };
+
+        try {
+          const res = await apiClient.get(`/websites/${websiteId}/global-components/navbar`);
+          navbar = res.data?.data?.config || res.data?.config || navbar;
+        } catch (err) {
+          if (err?.response?.status !== 404) {
+            throw err;
+          }
+        }
+
+        const navigationItems = Array.isArray(navbar.navigationItems)
+          ? navbar.navigationItems
+          : [];
+
+        if (
+          navigationItems.some((item) => {
+            const target = item.link || item.target || item.url;
+            return target === path;
+          })
+        ) {
+          return true;
+        }
+
+        await apiClient.put(`/websites/${websiteId}/global-components/navbar`, {
+          config: {
+            ...navbar,
+            navigationItems: [
+              ...navigationItems,
+              { label: 'Blog', link: path },
+            ],
+          },
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [website?.name, websiteId]
+  );
+
+  const handleAddBlogPage = async () => {
+    const existing = findBlogIndexPage();
+    if (existing) {
+      await Promise.all([
+        addBlogMenuEntry('/blog'),
+        addBlogNavbarEntry('/blog'),
+      ]);
+      navigate(`/dashboard/websites/${websiteId}/editor?page=${existing.id}`);
+      return;
+    }
+
+    try {
+      setBlogLoading(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      const pageRes = await apiClient.post(`/websites/${websiteId}/pages`, {
+        title: 'Blog',
+        path: '/blog',
+        isHome: false,
+        isPublished: true,
+        pageType: 'BLOG_INDEX',
+      });
+      const blogPage = pageRes.data?.data || pageRes.data?.page || pageRes.data;
+
+      await apiClient.put(`/websites/${websiteId}/pages/${blogPage.id}/blocks`, {
+        blocks: [
+          {
+            blockType: 'HERO',
+            content: { ...getBlockDefaultContent('HERO'), heading: 'Our Blog' },
+            sortOrder: 0,
+            isVisible: true,
+          },
+          {
+            blockType: 'BLOG_FEED',
+            content: getBlockDefaultContent('BLOG_FEED'),
+            sortOrder: 1,
+            isVisible: true,
+          },
+        ],
+      });
+
+      setPages((prev) => [...prev, blogPage]);
+      const [menuAdded, navbarAdded] = await Promise.all([
+        addBlogMenuEntry('/blog'),
+        addBlogNavbarEntry('/blog'),
+      ]);
+      setSuccessMessage(
+        menuAdded || navbarAdded
+          ? 'Blog page created and linked in your navigation.'
+          : 'Blog page created. Add it to your menu if visitors should see it.'
+      );
+      onSaved?.();
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to create blog page.');
+    } finally {
+      setBlogLoading(false);
     }
   };
 
@@ -173,9 +350,22 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
           {error}
         </Alert>
       )}
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage(null)}>
+          {successMessage}
+        </Alert>
+      )}
 
       {/* Header with Add Page button */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+        <DashboardActionButton
+          startIcon={<Plus size={16} />}
+          onClick={handleAddBlogPage}
+          disabled={blogLoading}
+          aria-label="Add blog page"
+        >
+          {findBlogIndexPage() ? 'Open Blog Page' : blogLoading ? 'Creating Blog...' : 'Add Blog Page'}
+        </DashboardActionButton>
         <DashboardGradientButton
           startIcon={<Plus size={16} />}
           onClick={() => setAddDialogOpen(true)}
@@ -229,7 +419,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
                       component="code"
                       sx={{ fontSize: '0.8rem', fontFamily: 'monospace' }}
                     >
-                      {page.slug}
+                      {getPagePath(page)}
                     </Box>
                   </TableCell>
                   <TableCell align="center">

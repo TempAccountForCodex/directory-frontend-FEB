@@ -702,8 +702,8 @@ const Dashboard = ({ user }) => {
     };
   }, [fetchTemplatePendingCount, fetchAccountInvitesPendingCount]);
 
-  // Fetch active promo deal on mount — 5-minute stale window (step 10.36)
-  // Silent fetch: no loading state, no error state — banner simply not shown on failure
+  // Fetch active promo deal on mount ï¿½ 5-minute stale window (step 10.36)
+  // Silent fetch: no loading state, no error state ï¿½ banner simply not shown on failure
   useEffect(() => {
     if (activeDealFetchedRef.current) return;
     activeDealFetchedRef.current = true;
@@ -722,7 +722,7 @@ const Dashboard = ({ user }) => {
         }
       }
     } catch {
-      // Storage unavailable — proceed with fetch
+      // Storage unavailable ï¿½ proceed with fetch
     }
 
     axios
@@ -2008,7 +2008,8 @@ const Dashboard = ({ user }) => {
           return <WebsiteManageEvents websiteId={websiteId} />;
         }
         if (activeTab && /^websites\/[^/]+\/blog$/.test(activeTab)) {
-          return <WebsiteManageInsights user={user} />;
+          const websiteId = activeTab.split("/")[1];
+          return <WebsiteManageInsights websiteId={Number(websiteId)} />;
         }
         return null;
     }
@@ -2160,7 +2161,7 @@ const Dashboard = ({ user }) => {
               backgroundRepeat: "repeat",
               overflow: "hidden",
               position: "relative",
-              // Hide dashboard content until ready — prevents any flash
+              // Hide dashboard content until ready ï¿½ prevents any flash
               visibility: dashboardReady ? "visible" : "hidden",
               // Light mode: blurred background image (only shown after dashboard is ready)
               ...(colors.mode === "light" &&
@@ -2282,7 +2283,7 @@ const Dashboard = ({ user }) => {
                 colors={colors}
               />
 
-              {/* Active promo deal banner — sticky below nav (step 10.36) */}
+              {/* Active promo deal banner ï¿½ sticky below nav (step 10.36) */}
               {activeDeal && <DealBanner deal={activeDeal} userId={user?.id} />}
 
               <Box

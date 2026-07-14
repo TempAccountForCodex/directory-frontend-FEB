@@ -24,6 +24,7 @@ import {
   Wrench,
   LayoutGrid,
   MessageSquare,
+  Newspaper,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getDashboardColors } from "../../styles/dashboardTheme";
@@ -44,6 +45,7 @@ import SeoTab from "./website-manage/SeoTab";
 import DomainTab from "./website-manage/DomainTab";
 import TeamTab from "./website-manage/TeamTab";
 import SettingsTab from "./website-manage/SettingsTab";
+import WebsiteManageInsights from "./WebsiteManageInsights";
 
 // ── Nav sections defined outside component for stable reference ──────────────
 const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
@@ -52,6 +54,7 @@ const WEBSITE_MANAGEMENT_NAV_SECTIONS = [
     items: [
       { id: "overview", label: "Overview", icon: Home },
       { id: "pages", label: "Pages", icon: FileText },
+      { id: "blog", label: "Blog", icon: Newspaper },
       { id: "media", label: "Media", icon: Image },
     ],
   },
@@ -292,6 +295,14 @@ const WebsiteManagementDashboard = ({
         );
       case "pages":
         return <PagesTab {...tabProps} />;
+      case "blog":
+        return (
+          <WebsiteManageInsights
+            websiteId={Number(websiteId)}
+            websiteRole={websiteRole}
+            website={website}
+          />
+        );
       case "media":
         return <MediaTab {...tabProps} />;
       case "design":
@@ -403,29 +414,32 @@ const WebsiteManagementDashboard = ({
 
         {/* Main Content Area */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          {/* Section header with breadcrumb and Open Editor button */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              flexWrap: "wrap",
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            <DashboardActionButton
-              startIcon={<Wrench size={16} />}
-              onClick={() =>
-                navigate(`/dashboard/websites/${websiteId}/editor`)
-              }
-              variant="outlined"
-              size="small"
-              aria-label="Open website editor"
+          {/* Section header with Open Editor button. The blog section provides
+              its own in-card "Open Editor" action, so hide it there. */}
+          {activeSection !== "blog" && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                flexWrap: "wrap",
+                gap: 2,
+                mb: 3,
+              }}
             >
-              Open Editor
-            </DashboardActionButton>
-          </Box>
+              <DashboardActionButton
+                startIcon={<Wrench size={16} />}
+                onClick={() =>
+                  navigate(`/dashboard/websites/${websiteId}/editor`)
+                }
+                variant="outlined"
+                size="small"
+                aria-label="Open website editor"
+              >
+                Open Editor
+              </DashboardActionButton>
+            </Box>
+          )}
 
           {/* Tab Content */}
           {renderTabContent()}
