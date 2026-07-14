@@ -56,6 +56,7 @@ import BlogCard, {
   type BlogCardConfig,
   type BlogCardColors,
 } from "./BlogCard";
+import BlogComments from "./BlogComments";
 import { API_URL } from "@/config/api";
 
 /* ===================== SEO Context ===================== */
@@ -70,6 +71,7 @@ export interface BlogArticleSeoData {
   canonicalUrl?: string;
   category?: string;
   slug?: string;
+  noindex?: boolean;
 }
 
 export interface BlogArticleSeoContextType {
@@ -95,12 +97,19 @@ interface ArticlePost {
   category?: string | null;
   description?: string | null;
   headings?: ArticleHeading[];
-  author?: { name: string } | null;
+  author?: {
+    id?: number | string;
+    name?: string;
+    displayName?: string;
+    avatar?: string;
+    bio?: string;
+  } | null;
   publishedAt?: string | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
   keywords?: string | null;
   canonicalUrl?: string | null;
+  noindex?: boolean;
 }
 
 interface Block {
@@ -135,6 +144,7 @@ interface BlogArticleBlockProps {
   headingColor?: string;
   bodyColor?: string;
   onCtaClick?: (blockType: string, ctaText: string) => void;
+  websiteId?: string | number;
 }
 
 /* ===================== Constants ===================== */
@@ -351,6 +361,7 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
   headingColor = "#252525",
   bodyColor = "#6A6F78",
   onCtaClick,
+  websiteId,
 }) => {
   const { content } = block;
   const urlParams = useParams<Record<string, string>>();
@@ -400,10 +411,13 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
     block.id,
     block.blockType,
     dataSource,
+    { websiteId },
   );
 
-  /* --- Resolve post from data or prefetched SSR content --- */
+  /* --- Resolve post from data or prefetched SSR content ---
+     Website-scoped detail returns `blog`; the legacy directory API returns `post`. */
   const post: ArticlePost | null = useMemo(() => {
+    if (data?.blog) return data.blog as ArticlePost;
     if (data?.post) return data.post as ArticlePost;
     if (content.post) return content.post as ArticlePost;
     return null;
@@ -426,9 +440,26 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
       }));
   }, [post]);
 
-  /* --- Fetch related posts once post.category is known --- */
+  /* --- Related posts: prefer the website-scoped `relatedPosts` from the detail
+     response; otherwise fall back to a scoped category query. --- */
   useEffect(() => {
-    if (!showRelated || !post?.category || relatedFetchedRef.current) return;
+    if (!showRelated || !post) return;
+
+    // The website-scoped detail endpoint bundles related posts in the response.
+    const bundled = data?.relatedPosts ?? content.relatedPosts;
+    if (Array.isArray(bundled)) {
+      setRelatedPosts(
+        bundled
+          .filter(
+            (p: BlogPost) =>
+              String(p.id) !== String(post.id) && p.slug !== post.slug,
+          )
+          .slice(0, relatedCount),
+      );
+      return;
+    }
+
+    if (!post.category || relatedFetchedRef.current) return;
     relatedFetchedRef.current = true;
 
     let cancelled = false;
@@ -436,16 +467,18 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
       try {
         const params = new URLSearchParams({
           category: post.category!,
-          limit: String(relatedCount),
+          limit: String(relatedCount + 1),
         });
-        const res = await fetch(
-          `${API_URL}/insights/public?${params.toString()}`,
-        );
+        // Scope to the tenant website when available; else legacy directory feed.
+        const url = websiteId
+          ? `${API_URL}/websites/${websiteId}/blogs/public?${params.toString()}`
+          : `${API_URL}/insights/public?${params.toString()}`;
+        const res = await fetch(url);
         if (!res.ok) return;
         const json = await res.json();
-        if (!cancelled && Array.isArray(json.insights)) {
-          // Exclude the current post
-          const filtered = json.insights.filter(
+        const rows = json.blogs ?? json.insights;
+        if (!cancelled && Array.isArray(rows)) {
+          const filtered = rows.filter(
             (p: BlogPost) =>
               String(p.id) !== String(post.id) && p.slug !== post.slug,
           );
@@ -460,7 +493,14 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [post?.category, post?.id, post?.slug, showRelated, relatedCount]);
+  }, [
+    data?.relatedPosts,
+    content.relatedPosts,
+    post,
+    showRelated,
+    relatedCount,
+    websiteId,
+  ]);
 
   /* --- Sync SEO data via context --- */
   useEffect(() => {
@@ -471,10 +511,11 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
       image: post.image || undefined,
       keywords: post.keywords || undefined,
       publishedAt: post.publishedAt || undefined,
-      authorName: post.author?.name,
+      authorName: post.author?.displayName || post.author?.name,
       canonicalUrl: post.canonicalUrl || undefined,
       category: post.category || undefined,
       slug: post.slug,
+      noindex: post.noindex || undefined,
     });
     return () => {
       seoContext.setSeoData(null);
@@ -639,11 +680,11 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
           }}
         />
       )}
-      {showAuthor && post.author?.name && (
+      {showAuthor && (post.author?.displayName || post.author?.name) && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <PersonIcon sx={{ fontSize: "0.9rem", color: bodyColor }} />
           <Typography variant="caption" sx={{ color: bodyColor }}>
-            {sanitizeText(post.author.name)}
+            {sanitizeText(post.author.displayName || post.author.name)}
           </Typography>
         </Box>
       )}
@@ -813,6 +854,18 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
           {articleBody}
           {relatedSection}
         </>
+      )}
+
+      {/* Comments (website-scoped posts only) */}
+      {websiteId && post.id != null && (
+        <BlogComments
+          websiteId={websiteId}
+          blogId={post.id}
+          postAuthorId={post.author?.id}
+          primaryColor={primaryColor}
+          headingColor={headingColor}
+          bodyColor={bodyColor}
+        />
       )}
     </Container>
   );

@@ -583,6 +583,7 @@ describe("BlogArticleBlock", () => {
       10,
       "BLOG_ARTICLE",
       expect.stringContaining("url-based-slug"),
+      expect.anything(),
     );
   });
 
@@ -595,11 +596,13 @@ describe("BlogArticleBlock", () => {
       10,
       "BLOG_ARTICLE",
       expect.stringContaining("config-slug"),
+      expect.anything(),
     );
     expect(mockUseDynamic).not.toHaveBeenCalledWith(
       10,
       "BLOG_ARTICLE",
       expect.stringContaining("url-slug"),
+      expect.anything(),
     );
   });
 

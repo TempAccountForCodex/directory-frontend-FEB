@@ -48,7 +48,9 @@ interface Page {
   title: string;
   path: string;
   isHome: boolean;
+  isPublished?: boolean;
   blocks: Block[];
+  pageType?: string;
 }
 
 interface Block {
@@ -388,9 +390,53 @@ const PublicWebsite: React.FC = () => {
           // Subdomain or custom domain access — pathname is the page path directly
           pagePath = location.pathname === "/" ? "/" : location.pathname;
         }
+        // Precedence: an exact real page always wins.
         let page = sortedPages.find((p) => p.path === pagePath);
 
-        // If no page found, use home page
+        // Blog detail: a path under the blog-index page (e.g. /blog/:slug) with no exact
+        // page renders a synthetic BLOG_ARTICLE page for that slug. The blog index is
+        // identified by pageType, the /blog path, or containing a BLOG_FEED block.
+        if (!page) {
+          const blogIndex = sortedPages.find(
+            (p) =>
+              p.pageType === "BLOG_INDEX" ||
+              p.path === "/blog" ||
+              (Array.isArray(p.blocks) &&
+                p.blocks.some((b: any) => b.blockType === "BLOG_FEED")),
+          );
+          if (blogIndex) {
+            const indexPath = blogIndex.path || "/blog";
+            const prefix = indexPath.endsWith("/")
+              ? indexPath
+              : `${indexPath}/`;
+            if (pagePath.startsWith(prefix) && pagePath.length > prefix.length) {
+              const postSlug = pagePath.slice(prefix.length).replace(/\/+$/, "");
+              if (postSlug) {
+                // Synthetic page — BlogArticleBlock resolves the post by postIdentifier
+                // (not the website slug in the URL) and shows its own not-found state.
+                page = {
+                  id: -2,
+                  title: "Blog",
+                  path: pagePath,
+                  isHome: false,
+                  blocks: [
+                    {
+                      id: -1,
+                      blockType: "BLOG_ARTICLE",
+                      sortOrder: 0,
+                      content: {
+                        postIdentifier: decodeURIComponent(postSlug),
+                        backButtonLink: indexPath,
+                      },
+                    },
+                  ],
+                };
+              }
+            }
+          }
+        }
+
+        // If still no page, use home page.
         if (!page) {
           page = sortedPages.find((p) => p.isHome) || sortedPages[0];
         }
@@ -652,6 +698,13 @@ h1, h2, h3, h4, h5, h6 {
       logoUrl: website.logoUrl,
       fullAddress: website.fullAddress,
       tags: website.tags as string[] | null | undefined,
+      pages: website.pages?.map((page) => ({
+        id: page.id,
+        title: page.title,
+        path: page.path,
+        isHome: page.isHome,
+        isPublished: page.isPublished,
+      })),
     });
   }, [website, persistedTemplatePages, resolvedFrontendTemplateId]);
 
@@ -798,6 +851,11 @@ h1, h2, h3, h4, h5, h6 {
             {/* Schema.org BlogPosting JSON-LD */}
             {blogPostingJsonLd && (
               <script type="application/ld+json">{blogPostingJsonLd}</script>
+            )}
+
+            {/* Keep unpublished/preview posts out of search indexes */}
+            {isBlogArticle && blogSeoData?.noindex && (
+              <meta name="robots" content="noindex, nofollow" />
             )}
           </Helmet>
 

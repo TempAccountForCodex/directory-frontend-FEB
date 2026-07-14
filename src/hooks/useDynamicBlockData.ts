@@ -24,26 +24,40 @@ import { API_URL } from "@/config/api";
  * (appended to API_URL), which preserves forward-compatibility for future
  * block types that provide a fully-qualified relative path.
  */
-function resolveDataSourceUrl(dataSource: string): string {
+function resolveDataSourceUrl(
+  dataSource: string,
+  websiteId?: string | number | null,
+): string {
   // Split into prefix and query string
   const qIndex = dataSource.indexOf("?");
   const prefix = qIndex >= 0 ? dataSource.slice(0, qIndex) : dataSource;
   const queryString = qIndex >= 0 ? dataSource.slice(qIndex) : "";
 
-  // Special case: blog-article?identifier=<slug> → /api/blogs/public/<slug>
+  // When rendered inside a tenant website, blog data is website-scoped
+  // (/api/websites/:websiteId/blogs/public*). Without a websiteId we fall back to
+  // the global directory endpoints for backward compatibility.
+  const scoped = websiteId !== undefined && websiteId !== null && websiteId !== "";
+  const blogBase = scoped
+    ? `${API_URL}/websites/${websiteId}/blogs/public`
+    : `${API_URL}/blogs/public`;
+
+  // Special case: blog-article?identifier=<slug> → .../blogs/public/<slug>
   if (prefix === "blog-article") {
     const params = new URLSearchParams(queryString);
     const identifier = params.get("identifier");
     if (identifier) {
-      return `${API_URL}/blogs/public/${encodeURIComponent(identifier)}`;
+      return `${blogBase}/${encodeURIComponent(identifier)}`;
     }
     // Fallback — no identifier provided
-    return `${API_URL}/blogs/public`;
+    return blogBase;
+  }
+
+  if (prefix === "blog") {
+    return `${blogBase}${queryString}`;
   }
 
   // Standard prefix → API path mappings
   const ENDPOINT_MAP: Record<string, string> = {
-    blog: "/blogs/public",
     products: "/products/public",
     listing: "/directory/listings",
     review: "/reviews/listings",
@@ -71,6 +85,8 @@ export interface DynamicBlockDataOptions {
   onError?: (error: Error) => void;
   /** Debounce delay for dataSource changes in ms (default: 300) */
   debounceMs?: number;
+  /** Tenant website id — scopes blog data sources to /websites/:websiteId/blogs/public */
+  websiteId?: string | number | null;
 }
 
 export interface DynamicBlockDataResult {
@@ -94,6 +110,7 @@ function useDynamicBlockData(
     initialData = null,
     onError,
     debounceMs = 300,
+    websiteId = null,
   } = options;
 
   // Access context (optional — may not be available in all render contexts)
@@ -168,7 +185,7 @@ function useDynamicBlockData(
       }
 
       try {
-        const url = resolveDataSourceUrl(debouncedDataSource);
+        const url = resolveDataSourceUrl(debouncedDataSource, websiteId);
 
         const response = await fetch(url, { signal });
 
@@ -200,7 +217,7 @@ function useDynamicBlockData(
         }
       }
     },
-    [blockId, context, debouncedDataSource, enabled, onError],
+    [blockId, context, debouncedDataSource, enabled, onError, websiteId],
   );
 
   // Main fetch effect — runs when debouncedDataSource or fetchTrigger changes

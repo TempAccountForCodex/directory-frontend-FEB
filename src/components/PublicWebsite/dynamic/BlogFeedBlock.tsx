@@ -98,6 +98,7 @@ interface BlogFeedBlockProps {
   bodyColor?: string;
   onCtaClick?: (blockType: string, ctaText: string) => void;
   onFormSubmit?: (formName: string, success: boolean) => void;
+  websiteId?: string | number;
 }
 
 /* ===================== Constants ===================== */
@@ -160,6 +161,7 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
   headingColor = "#252525",
   bodyColor = "#6A6F78",
   onCtaClick,
+  websiteId,
 }) => {
   const { content } = block;
 
@@ -228,15 +230,18 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
     selectedCategory,
   ]);
 
-  /* --- Fetch data via useDynamicBlockData --- */
+  /* --- Fetch data via useDynamicBlockData (website-scoped when in a tenant site) --- */
   const { data, loading, error } = useDynamicBlockData(
     block.id,
     block.blockType,
     dataSource,
+    { websiteId },
   );
 
-  /* --- Resolve posts and pagination from data or content (initial SSR) --- */
+  /* --- Resolve posts and pagination from data or content (initial SSR) ---
+     Website-scoped API returns `blogs`; the legacy directory API returns `insights`. */
   const posts: BlogPost[] = useMemo(() => {
+    if (data?.blogs) return data.blogs;
     if (data?.insights) return data.insights;
     if (content.insights) return content.insights;
     return [];
@@ -248,12 +253,15 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
     return null;
   }, [data, content.pagination]);
 
-  /* --- Fetch categories --- */
+  /* --- Fetch categories (website-scoped when in a tenant site) --- */
   useEffect(() => {
     if (!showCategories) return;
     let cancelled = false;
     setCategoriesLoading(true);
-    fetch(`${API_URL}/insights/categories`)
+    const categoriesUrl = websiteId
+      ? `${API_URL}/websites/${websiteId}/blogs/public/categories`
+      : `${API_URL}/insights/categories`;
+    fetch(categoriesUrl)
       .then((res) => res.json())
       .then((json) => {
         if (!cancelled && json.categories) {
@@ -269,7 +277,7 @@ const BlogFeedBlockBase: React.FC<BlogFeedBlockProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [showCategories]);
+  }, [showCategories, websiteId]);
 
   /* --- Cleanup debounce on unmount --- */
   useEffect(() => {

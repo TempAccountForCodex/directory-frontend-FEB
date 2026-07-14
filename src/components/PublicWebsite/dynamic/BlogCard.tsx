@@ -21,6 +21,7 @@ import {
 } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PersonIcon from "@mui/icons-material/Person";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 
 /* ===================== Types ===================== */
 
@@ -31,7 +32,14 @@ export interface BlogPost {
   image?: string | null;
   category?: string | null;
   description?: string | null;
-  author?: { name: string } | null;
+  excerpt?: string | null;
+  commentCount?: number;
+  author?: {
+    id?: number | string;
+    name?: string;
+    displayName?: string;
+    avatar?: string;
+  } | null;
   publishedAt?: string | null;
 }
 
@@ -106,7 +114,9 @@ const BlogCard: React.FC<BlogCardProps> = ({
   }, [onClick, post]);
 
   const formattedDate = formatDate(post.publishedAt);
-  const excerpt = truncate(post.description, excerptLength);
+  const excerpt = truncate(post.excerpt || post.description, excerptLength);
+  const authorName = post.author?.displayName || post.author?.name;
+  const commentCount = post.commentCount ?? 0;
 
   return (
     <Card
@@ -192,8 +202,10 @@ const BlogCard: React.FC<BlogCardProps> = ({
           {post.title}
         </Typography>
 
-        {/* Meta: Author + Date */}
-        {(showAuthor && post.author?.name) || (showDate && formattedDate) ? (
+        {/* Meta: Author + Date + Comment count */}
+        {(showAuthor && authorName) ||
+        (showDate && formattedDate) ||
+        commentCount > 0 ? (
           <Box
             sx={{
               display: "flex",
@@ -202,11 +214,11 @@ const BlogCard: React.FC<BlogCardProps> = ({
               alignItems: "center",
             }}
           >
-            {showAuthor && post.author?.name && (
+            {showAuthor && authorName && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <PersonIcon sx={{ fontSize: "0.875rem", color: bodyColor }} />
                 <Typography variant="caption" sx={{ color: bodyColor }}>
-                  {post.author.name}
+                  {authorName}
                 </Typography>
               </Box>
             )}
@@ -217,6 +229,19 @@ const BlogCard: React.FC<BlogCardProps> = ({
                 />
                 <Typography variant="caption" sx={{ color: bodyColor }}>
                   {formattedDate}
+                </Typography>
+              </Box>
+            )}
+            {commentCount > 0 && (
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                aria-label={`${commentCount} comments`}
+              >
+                <ChatBubbleOutlineIcon
+                  sx={{ fontSize: "0.875rem", color: bodyColor }}
+                />
+                <Typography variant="caption" sx={{ color: bodyColor }}>
+                  {commentCount}
                 </Typography>
               </Box>
             )}

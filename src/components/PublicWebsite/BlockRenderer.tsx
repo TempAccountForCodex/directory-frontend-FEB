@@ -932,6 +932,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
                 headingColor={headingColor}
                 bodyColor={bodyColor}
                 onCtaClick={onCtaClick}
+                websiteId={websiteId}
               />
             )}
           </Suspense>
@@ -960,6 +961,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
               headingColor={headingColor}
               bodyColor={bodyColor}
               onCtaClick={onCtaClick}
+              websiteId={websiteId}
             />
           </Suspense>
         </BlockWrapper>
