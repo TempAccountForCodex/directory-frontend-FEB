@@ -2,7 +2,7 @@
  * useTenantUrl -- Tenant-aware URL builder for dynamic block internal links.
  *
  * Detects delivery mode from:
- * - URL params (/s/:slug/*) -> path-based
+ * - URL params (/site/:slug/*) -> path-based
  * - Subdomain (slug.domain.com) -> subdomain-based
  * - Custom domain -> root-relative
  *
@@ -30,7 +30,7 @@ export function useTenantUrl(): TenantUrlResult {
   const navigate = useNavigate();
 
   const { deliveryMode, siteSlug } = useMemo(() => {
-    // 1. Path-based: /s/:slug or /site/:slug
+    // 1. Path-based: /site/:slug
     if (slug) {
       return { deliveryMode: "path" as DeliveryMode, siteSlug: slug };
     }
@@ -73,8 +73,8 @@ export function useTenantUrl(): TenantUrlResult {
 
       switch (deliveryMode) {
         case "path":
-          // /s/:slug/blog/my-post
-          return `/s/${siteSlug}${normalizedPath}`;
+          // /site/:slug/blog/my-post
+          return `/site/${siteSlug}${normalizedPath}`;
         case "subdomain":
           // Subdomain already scopes the site -- just use relative path
           return normalizedPath;
