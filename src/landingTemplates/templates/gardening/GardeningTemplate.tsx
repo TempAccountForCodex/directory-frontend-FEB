@@ -20,6 +20,7 @@ import {
   Phone,
   Twitter,
 } from "lucide-react";
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import type { TemplateProps } from "../../templateEngine/types";
 import { buildModernTheme } from "../modern/modernTheme";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
@@ -33,6 +34,7 @@ import {
   EditableSection,
   EditableText,
   EditableButton,
+  renderEditableMedia,
   EditorExtraBlocks,
 } from "../../utils/editableComponents";
 
@@ -47,7 +49,19 @@ const bodyFont =
 
 const sectionOffset = 108;
 
-function ScrollZoomImage({ src, alt }: { src: string; alt: string }) {
+function ScrollZoomImage({
+  src,
+  alt,
+  blockId,
+  field,
+  label,
+}: {
+  src: string;
+  alt: string;
+  blockId?: string | number;
+  field?: string;
+  label?: string;
+}) {
   const ref = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -59,18 +73,36 @@ function ScrollZoomImage({ src, alt }: { src: string; alt: string }) {
 
   return (
     <Box ref={ref} sx={{ width: "100%", height: "100%", overflow: "hidden" }}>
-      <Box
-        component={motion.img}
-        src={src}
-        alt={alt}
-        style={{ scale, y }}
-        sx={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          willChange: "transform",
-        }}
-      />
+      {field
+        ? renderEditableMedia({
+            blockId,
+            field,
+            label,
+            src,
+            alt,
+            imageComponent: motion.img,
+            imageProps: { style: { scale, y } },
+            sx: {
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              willChange: "transform",
+            },
+          })
+        : (
+            <Box
+              component={motion.img}
+              src={src}
+              alt={alt}
+              style={{ scale, y }}
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                willChange: "transform",
+              }}
+            />
+          )}
     </Box>
   );
 }
@@ -82,26 +114,7 @@ function scrollToSection(id: string) {
   window.scrollTo({ top: y, behavior: "smooth" });
 }
 
-const GARDENING_CONTACT_FIELDS = [
-  { label: "Name" },
-  { label: "Email" },
-  { label: "Phone" },
-  { label: "Project Type" },
-  { label: "Message" },
-];
-
 const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
-  const { status, errorMessage, getFieldProps, handleSubmit } =
-    useTemplateContactForm(
-      GARDENING_CONTACT_FIELDS,
-      data.websiteId,
-      "gardening-contact-form",
-      {
-        formId: (data.templateContent?.contact as any)?.blockId,
-        formName:
-          (data.templateContent?.contact as any)?.heading || "Contact form",
-      },
-    );
   const theme = {
     ...buildModernTheme(data.primaryColor, data.secondaryColor),
     bgPrimary: "#f7f4ea",
@@ -160,6 +173,21 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
   );
   const testimonialsContent = content.testimonials ?? {};
   const contactContent = content.contact ?? {};
+  const contactFields = normalizeContactFormFields(
+    (contactContent as Record<string, unknown>).formFields,
+    contactContent as Record<string, unknown>,
+  );
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      contactFields,
+      data.websiteId,
+      "gardening-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
+    );
   const extraBlocks = Array.isArray((content as Record<string, unknown>).extraBlocks)
     ? ((content as Record<string, unknown>).extraBlocks as Array<Record<string, any>>)
     : [];
@@ -301,7 +329,13 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                 height: { xs: 280, md: 570 },
               }}
             >
-              <ScrollZoomImage src={heroImage} alt={data.name} />
+              <ScrollZoomImage
+                src={(heroContent.image as string) || heroImage}
+                alt={data.name}
+                blockId={heroContent.blockId}
+                field="image"
+                label="Hero image"
+              />
             </Box>
           </FadeIn>
 
@@ -470,7 +504,13 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
                     height: { xs: 280, md: 420 },
                   }}
                 >
-                  <ScrollZoomImage src={aboutImage} alt="About Green Roots" />
+                  <ScrollZoomImage
+                    src={(aboutContent.image as string) || aboutImage}
+                    alt="About Green Roots"
+                    blockId={aboutContent.blockId}
+                    field="image"
+                    label="About image"
+                  />
                 </Box>
               </FadeIn>
             </Grid>
@@ -843,48 +883,49 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
           <FadeIn delay={0.08}>
             <Box sx={{ mt: 4.5, maxWidth: 620, mx: "auto" }}>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    placeholder="Name"
-                    variant="outlined"
-                    {...getFieldProps("Name")}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    placeholder="Email"
-                    variant="outlined"
-                    {...getFieldProps("Email")}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    placeholder="Phone"
-                    variant="outlined"
-                    {...getFieldProps("Phone")}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    placeholder="Project Type"
-                    variant="outlined"
-                    {...getFieldProps("Project Type")}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={4}
-                    placeholder="Message"
-                    variant="outlined"
-                    {...getFieldProps("Message")}
-                  />
-                </Grid>
+                {contactFields.map((field) => {
+                  const isTextarea = field.fieldType === "textarea";
+                  const isHalfWidth = !isTextarea && contactFields.length > 1;
+                  const inputType = ["email", "tel", "phone", "date", "time"].includes(field.fieldType)
+                    ? field.fieldType === "phone"
+                      ? "tel"
+                      : field.fieldType
+                    : "text";
+
+                  return (
+                    <Grid item xs={12} sm={isHalfWidth ? 6 : 12} key={field.key}>
+                      <TextField
+                        fullWidth
+                        multiline={isTextarea}
+                        minRows={isTextarea ? 4 : undefined}
+                        placeholder={field.placeholder || field.label}
+                        variant="outlined"
+                        required={field.required}
+                        type={inputType}
+                        select={field.fieldType === "dropdown"}
+                        SelectProps={
+                          field.fieldType === "dropdown"
+                            ? { native: true }
+                            : undefined
+                        }
+                        {...getFieldProps(field.label)}
+                      >
+                        {field.fieldType === "dropdown"
+                          ? [
+                              <option key="" value="">
+                                {field.placeholder || field.label}
+                              </option>,
+                              ...field.options.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              )),
+                            ]
+                          : null}
+                      </TextField>
+                    </Grid>
+                  );
+                })}
               </Grid>
               {status === "success" && (
                 <Typography

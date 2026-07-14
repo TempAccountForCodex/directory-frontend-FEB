@@ -31,6 +31,15 @@ import {
 import DashboardActionButton from '../shared/DashboardActionButton';
 import DashboardGradientButton from '../shared/DashboardGradientButton';
 import DashboardInput from '../shared/DashboardInput';
+import {
+  calculateWebsiteMediaUsageBytes,
+  extractMediaItemSizeBytes,
+  formatBytes,
+  getMediaLimitSummary,
+  IMAGE_ACCEPT_ATTR,
+  MEDIA_UPLOAD_LIMITS,
+  validateWebsiteMediaUpload,
+} from '../../../utils/mediaUploadLimits';
 
 const IMAGE_FIELD_PATTERN = /(image|img|photo|picture|logo|icon|thumbnail|hero|cover|banner|background|favicon|gallery|media|avatar)/i;
 const IMAGE_URL_PATTERN = /^data:image\/|^blob:|^https?:\/\/.+\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)(\?.*)?$|^\/.+\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)(\?.*)?$|^.+\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)(\?.*)?$/i;
@@ -107,6 +116,7 @@ function mapWebsiteMediaItem(item, fallbackName = 'Uploaded Asset') {
     sourceType: item?.sourceType || 'Uploaded Asset',
     pages: Array.isArray(item?.pages) ? item.pages : [],
     blocks: Array.isArray(item?.blocks) ? item.blocks : [],
+    sizeBytes: extractMediaItemSizeBytes(item),
   };
 }
 
@@ -240,6 +250,7 @@ const MediaTab = memo(({ website, websiteId }) => {
   const [copiedUrl, setCopiedUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+  const [usedStorageBytes, setUsedStorageBytes] = useState(0);
 
   const loadMedia = useCallback(async ({ silent = false } = {}) => {
     if (!websiteId) return;
@@ -268,6 +279,9 @@ const MediaTab = memo(({ website, websiteId }) => {
       const persistedMedia = extractWebsiteMediaPayload(mediaResponse.data)
         .map((item) => mapWebsiteMediaItem(item))
         .filter(Boolean);
+      setUsedStorageBytes(
+        calculateWebsiteMediaUsageBytes(extractWebsiteMediaPayload(mediaResponse.data))
+      );
 
       setMediaItems(mergeMediaItems(persistedMedia, discovered));
     } catch (err) {
@@ -308,8 +322,12 @@ const MediaTab = memo(({ website, websiteId }) => {
       total: mediaItems.length,
       pagesUsingMedia: pageCount,
       websiteAssets: websiteAssetCount,
+      usedStorageLabel: formatBytes(usedStorageBytes),
+      remainingStorageLabel: formatBytes(
+        Math.max(0, MEDIA_UPLOAD_LIMITS.websiteTotalBytes - usedStorageBytes)
+      ),
     };
-  }, [mediaItems]);
+  }, [mediaItems, usedStorageBytes]);
 
   const handleCopy = useCallback(async (url) => {
     try {
@@ -335,8 +353,20 @@ const MediaTab = memo(({ website, websiteId }) => {
       setUploading(true);
       setUploadError(null);
 
+      const validation = await validateWebsiteMediaUpload({
+        file,
+        websiteId,
+        currentUsageBytes: usedStorageBytes,
+        allowedMediaType: 'image',
+      });
+      if (!validation.ok) {
+        setUploadError(validation.message);
+        return;
+      }
+
       const formData = new FormData();
       formData.append('image', file);
+      formData.append('websiteId', String(websiteId));
 
       const response = await apiClient.post(`/websites/${websiteId}/media`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -354,6 +384,7 @@ const MediaTab = memo(({ website, websiteId }) => {
         if (prev.some((item) => item.url === uploadedItem.url)) return prev;
         return [uploadedItem, ...prev];
       });
+      setUsedStorageBytes((prev) => prev + (uploadedItem.sizeBytes || file.size || 0));
     } catch (err) {
       setUploadError(err?.response?.data?.message || 'Failed to upload image.');
     } finally {
@@ -362,7 +393,7 @@ const MediaTab = memo(({ website, websiteId }) => {
         event.target.value = '';
       }
     }
-  }, []);
+  }, [usedStorageBytes, websiteId]);
 
   if (loading) {
     return (
@@ -391,13 +422,13 @@ const MediaTab = memo(({ website, websiteId }) => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept={IMAGE_ACCEPT_ATTR}
         hidden
         onChange={handleUploadChange}
       />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <DashboardMetricCard
             title="Total Media"
             value={metrics.total}
@@ -405,7 +436,7 @@ const MediaTab = memo(({ website, websiteId }) => {
             iconColor={colors.primary}
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <DashboardMetricCard
             title="Pages Using Media"
             value={metrics.pagesUsingMedia}
@@ -413,11 +444,19 @@ const MediaTab = memo(({ website, websiteId }) => {
             iconColor={colors.primary}
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <DashboardMetricCard
             title="Website Assets"
             value={metrics.websiteAssets}
             icon={ImagePlus}
+            iconColor={colors.primary}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <DashboardMetricCard
+            title="Storage Used"
+            value={metrics.usedStorageLabel}
+            icon={Layers3}
             iconColor={colors.primary}
           />
         </Grid>
@@ -435,6 +474,9 @@ const MediaTab = memo(({ website, websiteId }) => {
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Images currently used across this website appear here automatically. New uploads are
               available immediately in the dashboard.
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.75 }}>
+              {getMediaLimitSummary('image')} Used: {metrics.usedStorageLabel}. Remaining: {metrics.remainingStorageLabel}.
             </Typography>
           </Box>
 

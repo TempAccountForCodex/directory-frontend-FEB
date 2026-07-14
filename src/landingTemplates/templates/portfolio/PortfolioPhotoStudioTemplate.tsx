@@ -13,6 +13,11 @@ import { motion, cubicBezier } from "framer-motion";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
+import {
+  getEditableSectionProps,
+  getEditableTextProps,
+} from "../../utils/editableProps";
 
 const headingFont = '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Inter", "Segoe UI", sans-serif';
@@ -141,24 +146,21 @@ const TextReveal: React.FC<{ text: string; sx?: Record<string, unknown> }> = ({
   </Box>
 );
 
-const CONTACT_FIELDS = [
-  { label: "Full name" },
-  { label: "Email address" },
-  { label: "Phone number" },
-  { label: "Project type" },
-  { label: "Project brief", fieldType: "textarea" },
-];
-
 const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
+  const contactContent =
+    (data.templateContent?.contact as Record<string, any>) || {};
+  const contactFields = normalizeContactFormFields(
+    contactContent.formFields,
+    contactContent,
+  );
   const { status, errorMessage, getFieldProps, handleSubmit } =
     useTemplateContactForm(
-      CONTACT_FIELDS,
+      contactFields,
       data.websiteId,
       "portfolio-photo-form",
       {
-        formId: (data.templateContent?.contact as any)?.blockId,
-        formName:
-          (data.templateContent?.contact as any)?.heading || "Contact form",
+        formId: contactContent.blockId,
+        formName: contactContent.heading || "Contact form",
       },
     );
   const gallery = data.gallery?.length ? data.gallery : [];
@@ -229,6 +231,21 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     data.heroBannerUrl || gallery[0]?.url || fallbackImages.hero;
   const recentWorkImage =
     portfolioItems[0]?.image || fallbackImages.collageThree;
+  const indexedContactFields = contactFields.map((field, index) => ({
+    field,
+    index,
+  }));
+  const contactInputFields = indexedContactFields.filter(
+    ({ field }) => field.fieldType !== "textarea",
+  );
+  const contactTextareaFields = indexedContactFields.filter(
+    ({ field }) => field.fieldType === "textarea",
+  );
+  const contactHeading = contactContent.heading || "Start Your Next Shoot";
+  const contactDescription =
+    contactContent.description ||
+    "Share your concept, timeline, and the kind of visuals you want to create. We'll shape the right direction for the shoot.";
+  const contactButton = contactContent.buttonLabel || "Send enquiry";
 
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
@@ -1202,6 +1219,11 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
           <Box
             id="contact"
+            {...getEditableSectionProps(
+              contactContent.blockId,
+              "Contact",
+              "sectionStyle",
+            )}
             sx={{
               mt: { xs: 6, md: 8 },
               px: { xs: 2.5, md: 4 },
@@ -1244,9 +1266,16 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       color: "rgba(255,255,255,0.58)",
                     }}
                   />
-                  <Box sx={{ mt: 1, maxWidth: 360 }}>
+                  <Box
+                    {...getEditableTextProps(
+                      contactContent.blockId,
+                      "heading",
+                      "multi",
+                    )}
+                    sx={{ mt: 1, maxWidth: 360 }}
+                  >
                     <TextReveal
-                      text="Start Your Next Shoot"
+                      text={contactHeading}
                       sx={{
                         fontFamily: '"Cormorant Garamond", Georgia, serif',
                         fontSize: { xs: "3rem", md: "4.5rem" },
@@ -1267,6 +1296,11 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     }}
                   >
                     <Typography
+                      {...getEditableTextProps(
+                        contactContent.blockId,
+                        "description",
+                        "multi",
+                      )}
                       sx={{
                         mt: 2,
                         maxWidth: 340,
@@ -1275,9 +1309,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         color: "rgba(255,255,255,0.72)",
                       }}
                     >
-                      Share your concept, timeline, and the kind of visuals you
-                      want to create. We&apos;ll shape the right direction for
-                      the shoot.
+                      {contactDescription}
                     </Typography>
                   </Box>
 
@@ -1312,17 +1344,14 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     gap: 2,
                   }}
                 >
-                  {[
-                    { label: "Full name", placeholder: "Your name" },
-                    { label: "Email address", placeholder: "hello@email.com" },
-                    { label: "Phone number", placeholder: "+1 234 567 890" },
-                    {
-                      label: "Project type",
-                      placeholder: "Portrait / Editorial",
-                    },
-                  ].map((field) => (
-                    <Box key={field.label}>
+                  {contactInputFields.map(({ field, index }) => (
+                    <Box key={`${field.key || field.label}-${index}`}>
                       <Typography
+                        {...getEditableTextProps(
+                          contactContent.blockId,
+                          `formFields.${index}.label`,
+                          "single",
+                        )}
                         sx={{
                           mb: 0.8,
                           fontSize: "0.82rem",
@@ -1335,7 +1364,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       </Typography>
                       <Box
                         component="input"
-                        placeholder={field.placeholder}
+                        placeholder={field.placeholder || field.label}
                         {...getFieldProps(field.label)}
                         sx={{
                           width: "100%",
@@ -1356,8 +1385,17 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     </Box>
                   ))}
 
-                  <Box sx={{ gridColumn: { md: "1 / -1" } }}>
+                  {contactTextareaFields.map(({ field, index }) => (
+                  <Box
+                    key={`${field.key || field.label}-${index}`}
+                    sx={{ gridColumn: { md: "1 / -1" } }}
+                  >
                     <Typography
+                      {...getEditableTextProps(
+                        contactContent.blockId,
+                        `formFields.${index}.label`,
+                        "single",
+                      )}
                       sx={{
                         mb: 0.8,
                         fontSize: "0.82rem",
@@ -1366,12 +1404,12 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         color: "rgba(255,255,255,0.62)",
                       }}
                     >
-                      Project brief
+                      {field.label}
                     </Typography>
                     <Box
                       component="textarea"
-                      placeholder="Tell us about the style, mood, dates, location, and anything important for the shoot."
-                      {...getFieldProps("Project brief")}
+                      placeholder={field.placeholder || field.label}
+                      {...getFieldProps(field.label)}
                       sx={{
                         width: "100%",
                         minHeight: 170,
@@ -1392,6 +1430,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     />
                   </Box>
+                  ))}
 
                   <Box
                     sx={{
@@ -1428,6 +1467,11 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       variant="contained"
                       disabled={status === "loading"}
                       endIcon={<ArrowUpRight size={16} />}
+                      {...getEditableTextProps(
+                        contactContent.blockId,
+                        "buttonLabel",
+                        "single",
+                      )}
                       sx={{
                         bgcolor: "#ffffff",
                         color: "#111",
@@ -1441,7 +1485,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         "&:hover": { bgcolor: "#ff7a1a", boxShadow: "none" },
                       }}
                     >
-                      {status === "loading" ? "Sending…" : "Send enquiry"}
+                      {status === "loading" ? "Sending…" : contactButton}
                     </Button>
                   </Box>
                 </Box>

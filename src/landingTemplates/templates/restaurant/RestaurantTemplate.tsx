@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { ArrowRight, Facebook, Instagram } from "lucide-react";
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import type { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
@@ -23,6 +24,7 @@ import {
   EditableSection,
   EditableText,
   EditableButton,
+  renderEditableMedia,
   EditorExtraBlocks,
 } from "../../utils/editableComponents";
 
@@ -47,27 +49,7 @@ function scrollToSection(id: string) {
   window.scrollTo({ top: y, behavior: "smooth" });
 }
 
-const RESTAURANT_CONTACT_FIELDS = [
-  { label: "Full Name" },
-  { label: "Email Address" },
-  { label: "Phone" },
-  { label: "Date" },
-  { label: "Time" },
-  { label: "Message" },
-];
-
 const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
-  const { status, errorMessage, getFieldProps, handleSubmit } =
-    useTemplateContactForm(
-      RESTAURANT_CONTACT_FIELDS,
-      data.websiteId,
-      "restaurant-contact-form",
-      {
-        formId: (data.templateContent?.contact as any)?.blockId,
-        formName:
-          (data.templateContent?.contact as any)?.heading || "Contact form",
-      },
-    );
   const reviews = data.reviews ?? [];
 
   const navItems = [
@@ -116,6 +98,21 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
           ];
   const reviewsContent = content.reviews ?? {};
   const contactContent = content.contact ?? {};
+  const contactFields = normalizeContactFormFields(
+    (contactContent as Record<string, unknown>).formFields,
+    contactContent as Record<string, unknown>,
+  );
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      contactFields,
+      data.websiteId,
+      "restaurant-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
+    );
   const extraBlocks = Array.isArray((content as Record<string, unknown>).extraBlocks)
     ? ((content as Record<string, unknown>).extraBlocks as Array<Record<string, any>>)
     : [];
@@ -289,17 +286,19 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       <Box sx={{ height: { xs: 120, md: 500 }, overflow: "hidden" }}>
         <FadeIn direction="up">
-          <Box
-            component="img"
-            src={heroBannerImage}
-            alt={data.name}
-            sx={{
+          {renderEditableMedia({
+            blockId: heroContent.blockId,
+            field: "image",
+            label: "Hero image",
+            src: heroBannerImage,
+            alt: data.name,
+            sx: {
               width: "100%",
               height: "100%",
               objectFit: "cover",
               backgroundAttachment: "fixed",
-            }}
-          />
+            },
+          })}
         </FadeIn>
       </Box>
 
@@ -392,12 +391,20 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Grid item xs={12} md={6}>
               <FadeIn delay={0.08} direction="left">
                 <Box sx={{ overflow: "hidden", height: { xs: 340, md: 580 } }}>
-                  <Box
-                    component="img"
-                    src={storyTopImage}
-                    alt="French fries tray"
-                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
+                  {renderEditableMedia({
+                    blockId: storyContent.blockId,
+                    field: "image",
+                    label: "Story image",
+                    src:
+                      (storyContent.image as string) ||
+                      storyTopImage,
+                    alt: "French fries tray",
+                    sx: {
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    },
+                  })}
                 </Box>
               </FadeIn>
             </Grid>
@@ -749,40 +756,63 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </EditableText>
               </FadeIn>
               <Stack spacing={2}>
-                {[
-                  "Full Name",
-                  "Email Address",
-                  "Phone",
-                  "Date",
-                  "Time",
-                  "Message",
-                ].map((label, index) => (
-                  <FadeIn
-                    key={label}
-                    delay={0.08 + index * 0.06}
-                    direction="left"
-                  >
-                    <TextField
-                      fullWidth
-                      multiline={label === "Message"}
-                      minRows={label === "Message" ? 3 : undefined}
-                      placeholder={label}
-                      {...getFieldProps(label)}
-                      variant="standard"
-                      InputProps={{
-                        disableUnderline: false,
-                        sx: {
-                          color: "#fff",
-                          "&::before": {
-                            borderBottomColor: "rgba(255,255,255,0.34)",
+                {contactFields.map((field, index) => {
+                  const isTextarea = field.fieldType === "textarea";
+                  const inputType = ["email", "tel", "phone", "date", "time"].includes(field.fieldType)
+                    ? field.fieldType === "phone"
+                      ? "tel"
+                      : field.fieldType
+                    : "text";
+
+                  return (
+                    <FadeIn
+                      key={field.key}
+                      delay={0.08 + index * 0.06}
+                      direction="left"
+                    >
+                      <TextField
+                        fullWidth
+                        multiline={isTextarea}
+                        minRows={isTextarea ? 3 : undefined}
+                        type={inputType}
+                        placeholder={field.placeholder || field.label}
+                        required={field.required}
+                        select={field.fieldType === "dropdown"}
+                        SelectProps={
+                          field.fieldType === "dropdown"
+                            ? { native: true }
+                            : undefined
+                        }
+                        {...getFieldProps(field.label)}
+                        variant="standard"
+                        InputProps={{
+                          disableUnderline: false,
+                          sx: {
+                            color: "#fff",
+                            "&::before": {
+                              borderBottomColor: "rgba(255,255,255,0.34)",
+                            },
+                            "&::after": { borderBottomColor: "#fff" },
                           },
-                          "&::after": { borderBottomColor: "#fff" },
-                        },
-                      }}
-                      inputProps={{ sx: { color: "#fff" } }}
-                    />
-                  </FadeIn>
-                ))}
+                        }}
+                        inputProps={{ sx: { color: "#fff" } }}
+                      >
+                        {field.fieldType === "dropdown"
+                          ? [
+                              <option key="" value="">
+                                {field.placeholder || field.label}
+                              </option>,
+                              ...field.options.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              )),
+                            ]
+                          : null}
+                      </TextField>
+                    </FadeIn>
+                  );
+                })}
               </Stack>
               {status === "success" && (
                 <Typography sx={{ mt: 2, color: "#8fe28f", fontWeight: 600 }}>

@@ -10,6 +10,7 @@ import {
   Container,
   Grid,
   Paper,
+  TextField,
 } from "@mui/material";
 import {
   Facebook,
@@ -26,8 +27,26 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import type { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
+import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+import {
+  getSectionStyleDomProps,
+  getSectionStyleSx,
+  type SectionStyleValue,
+} from "../../utils/sectionStyle";
+import {
+  EditableSection,
+  EditableText,
+  EditableButton,
+  EditableCard,
+} from "../../utils/editableComponents";
+
+type TemplateSectionContent = Record<string, unknown> & {
+  blockId?: string | number;
+  sectionStyle?: SectionStyleValue;
+};
 
 const plumbingHeroImage =
   "https://cdn.prod.website-files.com/68ce363cc9e814fa40d285fd/68ceeb8c65230295abdded06_hero-images.jpg";
@@ -140,6 +159,45 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
       ? galleryItems
       : plumbingAboutImages.map((url) => ({ url }))
   ).slice(0, 5);
+  const content = (data.templateContent ?? {}) as Record<
+    string,
+    TemplateSectionContent | undefined
+  >;
+  const heroContent = content.hero ?? {};
+  const aboutContent = content.about ?? {};
+  const servicesContent = content.services ?? {};
+  const contactContent = content.contact ?? {};
+  const plumbingServices =
+    Array.isArray(servicesContent.items) &&
+    (servicesContent.items as unknown[]).length > 0
+      ? (servicesContent.items as Array<Record<string, unknown>>)
+      : [
+          {
+            title: "Insured Professionals",
+            description:
+              "Our plumbers are trained experts who follow industry standards on every job.",
+          },
+          {
+            title: "Transparent Pricing",
+            description:
+              "We believe in honesty. Every service comes with upfront pricing before work begins.",
+          },
+        ];
+  const contactFields = normalizeContactFormFields(
+    (contactContent as Record<string, unknown>).formFields,
+    contactContent as Record<string, unknown>,
+  );
+  const { status, errorMessage, getFieldProps, handleSubmit } =
+    useTemplateContactForm(
+      contactFields,
+      data.websiteId,
+      "plumbing-contact-form",
+      {
+        formId: (data.templateContent?.contact as any)?.blockId,
+        formName:
+          (data.templateContent?.contact as any)?.heading || "Contact form",
+      },
+    );
   const stackImages = [
     galleryItems[1]?.url || plumbingScrollStackImages[0],
     galleryItems[2]?.url || plumbingScrollStackImages[1],
@@ -149,9 +207,13 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
 
   return (
     <Box sx={{ bgcolor: "#fbfaf7" }}>
-      <Box
+      <EditableSection
         id="hero"
+        blockId={heroContent.blockId}
+        label="Hero"
+        {...getSectionStyleDomProps(heroContent)}
         sx={{
+          ...getSectionStyleSx(heroContent),
           position: "relative",
           minHeight: { xs: 620, md: 760 },
           color: "#ffffff",
@@ -296,48 +358,60 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Grid xs={12} md={8}>
               <Box sx={{ maxWidth: 840 }}>
                 <FadeIn>
-                  <Typography
+                  <EditableText
+                    field="heading"
+                    kind="multi"
+                    component="div"
                     sx={{
-                      fontSize: { xs: "4.4rem", md: "8.2rem" },
-                      lineHeight: 0.9,
-                      letterSpacing: "-0.08em",
-                      fontWeight: 400,
                       color: "#ffffff",
+                      textShadow: "0 12px 30px rgba(0,0,0,0.18)",
                     }}
                   >
-                    Fast
-                  </Typography>
-                </FadeIn>
-                <FadeIn delay={0.08}>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Playfair Display", Georgia, serif',
-                      fontStyle: "italic",
-                      fontSize: { xs: "3.5rem", md: "7.2rem" },
-                      lineHeight: 0.88,
-                      letterSpacing: "-0.06em",
-                      fontWeight: 400,
-                      color: "#ffffff",
-                      ml: { xs: 6, md: 22 },
-                      mt: { xs: -1.5, md: -2.5 },
-                    }}
-                  >
-                    Reliable
-                  </Typography>
-                </FadeIn>
-                <FadeIn delay={0.16}>
-                  <Typography
-                    sx={{
-                      fontSize: { xs: "4.4rem", md: "8.2rem" },
-                      lineHeight: 0.9,
-                      letterSpacing: "-0.08em",
-                      fontWeight: 400,
-                      color: "#ffffff",
-                      mt: { xs: -1.5, md: -3 },
-                    }}
-                  >
-                    Repairs
-                  </Typography>
+                    <Box
+                      component="span"
+                      sx={{
+                        display: "block",
+                        fontSize: { xs: "4.4rem", md: "8.2rem" },
+                        lineHeight: 0.9,
+                        letterSpacing: "-0.08em",
+                        fontWeight: 400,
+                      }}
+                    >
+                      {String(heroContent.heading || "Fast Reliable Repairs").split(" ")[0] || "Fast"}
+                    </Box>
+                    <Box
+                      component="span"
+                      sx={{
+                        display: "block",
+                        fontFamily: '"Playfair Display", Georgia, serif',
+                        fontStyle: "italic",
+                        fontSize: { xs: "3.5rem", md: "7.2rem" },
+                        lineHeight: 0.88,
+                        letterSpacing: "-0.06em",
+                        fontWeight: 400,
+                        ml: { xs: 6, md: 22 },
+                        mt: { xs: -1.5, md: -2.5 },
+                      }}
+                    >
+                      {String(heroContent.heading || "Fast Reliable Repairs").split(" ")[1] || "Reliable"}
+                    </Box>
+                    <Box
+                      component="span"
+                      sx={{
+                        display: "block",
+                        fontSize: { xs: "4.4rem", md: "8.2rem" },
+                        lineHeight: 0.9,
+                        letterSpacing: "-0.08em",
+                        fontWeight: 400,
+                        mt: { xs: -1.5, md: -3 },
+                      }}
+                    >
+                      {String(heroContent.heading || "Fast Reliable Repairs")
+                        .split(" ")
+                        .slice(2)
+                        .join(" ") || "Repairs"}
+                    </Box>
+                  </EditableText>
                 </FadeIn>
               </Box>
             </Grid>
@@ -346,7 +420,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
           <Grid container spacing={3} sx={{ mt: { xs: 1, md: 2 } }}>
             <Grid xs={12} md={4.5}>
               <FadeIn delay={0.24}>
-                <Typography
+                <EditableText
+                  field="subheading"
+                  kind="multi"
                   sx={{
                     maxWidth: 360,
                     color: "rgba(255,255,255,0.92)",
@@ -355,20 +431,54 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mt: 2,
                   }}
                 >
-                  Home service overview. Trusted experts delivering fast,
-                  reliable, and professional home repair solutions.
-                </Typography>
+                  {(heroContent.subheading as string) ||
+                    "Home service overview. Trusted experts delivering fast, reliable, and professional home repair solutions."}
+                </EditableText>
               </FadeIn>
             </Grid>
-            <Grid xs={12} md={3} />
+            <Grid xs={12} md={3}>
+              <FadeIn delay={0.3}>
+                <Stack direction="row" justifyContent={{ xs: "flex-start", md: "flex-end" }}>
+                  <EditableButton
+                    field="ctaText"
+                    variant="contained"
+                    onClick={() => scrollToSection("contact")}
+                    sx={{
+                      mt: 2,
+                      borderRadius: 999,
+                      px: 3,
+                      py: 1.1,
+                      bgcolor: "#ffffff",
+                      color: "#111111",
+                      fontWeight: 700,
+                      boxShadow: "none",
+                      "&:hover": {
+                        bgcolor: "#f5f5f5",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    {(heroContent.ctaText as string) || "Book Now"}
+                  </EditableButton>
+                </Stack>
+              </FadeIn>
+            </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
-      <Container
+      <EditableSection
+        component={Container}
         id="about"
+        blockId={aboutContent.blockId}
+        label="About"
         maxWidth="lg"
-        sx={{ pt: { xs: 7, md: 20 }, pb: { xs: 7, md: 10 } }}
+        {...getSectionStyleDomProps(aboutContent)}
+        sx={{
+          pt: { xs: 7, md: 20 },
+          pb: { xs: 7, md: 10 },
+          ...getSectionStyleSx(aboutContent),
+        }}
       >
         <Grid container spacing={{ xs: 5, md: 10 }} alignItems="center">
           <Grid xs={12} md={4}>
@@ -424,7 +534,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Typography>
             </FadeIn>
             <FadeIn delay={0.08}>
-              <Typography
+              <EditableText
+                field="heading"
+                kind="multi"
                 sx={{
                   color: "#050505",
                   fontSize: { xs: "2.2rem", md: "4rem" },
@@ -434,10 +546,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                   maxWidth: 920,
                 }}
               >
-                From plumbing leaks to full-system fixes, {data.name} delivers
-                dependable maintenance with a cleaner, calmer service
-                experience.
-              </Typography>
+                {(aboutContent.heading as string) ||
+                  `From plumbing leaks to full-system fixes, ${data.name} delivers dependable maintenance with a cleaner, calmer service experience.`}
+              </EditableText>
             </FadeIn>
           </Grid>
         </Grid>
@@ -450,7 +561,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
           }}
         >
           <FadeIn>
-            <Typography
+            <EditableText
+              field="body"
+              kind="multi"
               sx={{
                 color: "#080808",
                 fontSize: { xs: "2.2rem", md: "4.2rem" },
@@ -487,7 +600,7 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                 Results Every
               </Box>
               Time
-            </Typography>
+            </EditableText>
           </FadeIn>
 
           <FadeIn delay={0.12}>
@@ -511,9 +624,18 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Button>
           </FadeIn>
         </Box>
-      </Container>
+      </EditableSection>
 
-      <Box sx={{ bgcolor: "#fbfaf7", py: { xs: 7, md: 10 } }}>
+      <EditableSection
+        blockId={servicesContent.blockId}
+        label="Services"
+        {...getSectionStyleDomProps(servicesContent)}
+        sx={{
+          bgcolor: "#fbfaf7",
+          py: { xs: 7, md: 10 },
+          ...getSectionStyleSx(servicesContent),
+        }}
+      >
         <Container maxWidth="lg">
           <Grid
             container
@@ -535,7 +657,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Typography>
               </FadeIn>
               <FadeIn delay={0.08}>
-                <Typography
+                <EditableText
+                  field="heading"
+                  kind="multi"
                   sx={{
                     color: "#101010",
                     fontSize: { xs: "2.2rem", md: "3.2rem" },
@@ -546,8 +670,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                     mb: 2.2,
                   }}
                 >
-                  Why choose our Services
-                </Typography>
+                  {(servicesContent.heading as string) ||
+                    "Why choose our Services"}
+                </EditableText>
               </FadeIn>
               <FadeIn delay={0.16}>
                 <Typography
@@ -567,8 +692,10 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Grid container spacing={2.2}>
                 <Grid xs={12} sm={6}>
                   <FadeIn delay={0.22} direction="right">
-                    <Paper
+                    <EditableCard
                       elevation={0}
+                      field="features.0"
+                      label="Service 1"
                       sx={{
                         p: { xs: 2.6, md: 3 },
                         borderRadius: 3,
@@ -578,7 +705,8 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     >
                       <Users size={28} color="#111111" />
-                      <Typography
+                      <EditableText
+                        field="features.0.title"
                         sx={{
                           color: "#111111",
                           fontSize: { xs: "1.5rem", md: "1.15rem" },
@@ -587,9 +715,12 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                           mb: 1.6,
                         }}
                       >
-                        Insured Professionals
-                      </Typography>
-                      <Typography
+                        {(plumbingServices[0]?.title as string) ||
+                          "Insured Professionals"}
+                      </EditableText>
+                      <EditableText
+                        field="features.0.description"
+                        kind="multi"
                         sx={{
                           color: "#2f2f2f",
                           fontSize: "0.98rem",
@@ -597,16 +728,18 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                           maxWidth: 240,
                         }}
                       >
-                        Our plumbers are trained experts who follow industry
-                        standards on every job.
-                      </Typography>
-                    </Paper>
+                        {(plumbingServices[0]?.description as string) ||
+                          "Our plumbers are trained experts who follow industry standards on every job."}
+                      </EditableText>
+                    </EditableCard>
                   </FadeIn>
                 </Grid>
                 <Grid xs={12} sm={6}>
                   <FadeIn delay={0.3} direction="right">
-                    <Paper
+                    <EditableCard
                       elevation={0}
+                      field="features.1"
+                      label="Service 2"
                       sx={{
                         p: { xs: 2.6, md: 3 },
                         borderRadius: 3,
@@ -616,7 +749,8 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     >
                       <BadgeDollarSign size={28} color="#111111" />
-                      <Typography
+                      <EditableText
+                        field="features.1.title"
                         sx={{
                           color: "#111111",
                           fontSize: { xs: "1.5rem", md: "1.15rem" },
@@ -625,9 +759,12 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                           mb: 1.6,
                         }}
                       >
-                        Transparent Pricing
-                      </Typography>
-                      <Typography
+                        {(plumbingServices[1]?.title as string) ||
+                          "Transparent Pricing"}
+                      </EditableText>
+                      <EditableText
+                        field="features.1.description"
+                        kind="multi"
                         sx={{
                           color: "#2f2f2f",
                           fontSize: "0.98rem",
@@ -635,10 +772,10 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                           maxWidth: 240,
                         }}
                       >
-                        We believe in honesty. Every service comes with upfront
-                        pricing before work begins.
-                      </Typography>
-                    </Paper>
+                        {(plumbingServices[1]?.description as string) ||
+                          "We believe in honesty. Every service comes with upfront pricing before work begins."}
+                      </EditableText>
+                    </EditableCard>
                   </FadeIn>
                 </Grid>
               </Grid>
@@ -734,7 +871,7 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
       <Box
         ref={stackSectionRef}
@@ -993,7 +1130,18 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
 
-      <Box sx={{ bgcolor: "#090909", color: "#f6efe5", mt: { xs: 0, md: 0 } }}>
+      <EditableSection
+        id="contact"
+        blockId={contactContent.blockId}
+        label="Contact"
+        {...getSectionStyleDomProps(contactContent)}
+        sx={{
+          bgcolor: "#090909",
+          color: "#f6efe5",
+          mt: { xs: 0, md: 0 },
+          ...getSectionStyleSx(contactContent),
+        }}
+      >
         <Container maxWidth="lg" sx={{ py: { xs: 7, md: 9 } }}>
           <Grid
             container
@@ -1070,7 +1218,6 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Stack>
             </Grid>
             <Grid
-              id="contact"
               xs={12}
               md={6}
               sx={{
@@ -1102,7 +1249,9 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                   >
                     Repair Form
                   </Typography>
-                  <Typography
+                  <EditableText
+                    field="heading"
+                    kind="multi"
                     sx={{
                       color: "#161b24",
                       fontSize: { xs: "1.8rem", md: "2rem" },
@@ -1111,48 +1260,88 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                       mb: 2.6,
                     }}
                   >
-                    Get A Repair Quote
-                  </Typography>
+                    {(contactContent.heading as string) || "Get A Repair Quote"}
+                  </EditableText>
+                  <EditableText
+                    field="description"
+                    kind="multi"
+                    sx={{
+                      color: "#6d7078",
+                      lineHeight: 1.75,
+                      mb: 2.2,
+                    }}
+                  >
+                    {(contactContent.description as string) ||
+                      "Share the issue, your timing, and the service you need. We will help you book the right next step quickly."}
+                  </EditableText>
                   <Stack spacing={1.6}>
-                    {["Your Name", "Phone Number", "Service Needed"].map(
-                      (label, index) => (
+                    {contactFields.map((field, index) => (
                         <FadeIn
-                          key={label}
+                          key={field.key}
                           delay={0.14 + index * 0.06}
                           direction="left"
                         >
-                          <Box
+                          <TextField
+                            fullWidth
+                            multiline={field.fieldType === "textarea"}
+                            minRows={field.fieldType === "textarea" ? 4 : undefined}
+                            placeholder={field.placeholder || field.label}
+                            required={field.required}
+                            type={
+                              field.fieldType === "phone"
+                                ? "tel"
+                                : ["email", "date", "time"].includes(field.fieldType)
+                                  ? field.fieldType
+                                  : "text"
+                            }
+                            variant="outlined"
+                            select={field.fieldType === "dropdown"}
+                            SelectProps={
+                              field.fieldType === "dropdown"
+                                ? { native: true }
+                                : undefined
+                            }
+                            {...getFieldProps(field.label)}
                             sx={{
-                              px: 1.8,
-                              py: 1.55,
-                              border: "1px solid #e8dfd4",
-                              color: "#6d7078",
-                              fontSize: "0.98rem",
+                              "& .MuiOutlinedInput-root": {
+                                color: "#6d7078",
+                                "& fieldset": { borderColor: "#e8dfd4" },
+                              },
                             }}
                           >
-                            {label}
-                          </Box>
+                            {field.fieldType === "dropdown"
+                              ? [
+                                  <option key="" value="">
+                                    {field.placeholder || field.label}
+                                  </option>,
+                                  ...field.options.map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  )),
+                                ]
+                              : null}
+                          </TextField>
                         </FadeIn>
-                      ),
-                    )}
-                    <FadeIn delay={0.34} direction="left">
-                      <Box
-                        sx={{
-                          px: 1.8,
-                          py: 1.55,
-                          minHeight: 120,
-                          border: "1px solid #e8dfd4",
-                          color: "#6d7078",
-                          fontSize: "0.98rem",
-                        }}
-                      >
-                        Message
-                      </Box>
-                    </FadeIn>
+                      ))}
                   </Stack>
+                  {status === "success" && (
+                    <Typography sx={{ mt: 2, color: "#2f6b2a", fontWeight: 700 }}>
+                      Thanks! Your message has been sent.
+                    </Typography>
+                  )}
+                  {status === "error" && (
+                    <Typography sx={{ mt: 2, color: "#b3261e", fontWeight: 700 }}>
+                      {errorMessage}
+                    </Typography>
+                  )}
                   <FadeIn delay={0.42}>
-                    <Button
+                    <EditableButton
                       variant="contained"
+                      field="buttonLabel"
+                      type="button"
+                      disabled={status === "loading"}
+                      onClick={handleSubmit}
                       sx={{
                         mt: 2.8,
                         borderRadius: 0,
@@ -1164,15 +1353,17 @@ const PlumbingTemplate: React.FC<TemplateProps> = ({ data }) => {
                         "&:hover": { bgcolor: "#000000" },
                       }}
                     >
-                      Submit
-                    </Button>
+                      {status === "loading"
+                        ? "Sending..."
+                        : (contactContent.buttonLabel as string) || "Submit"}
+                    </EditableButton>
                   </FadeIn>
                 </Paper>
               </FadeIn>
             </Grid>
           </Grid>
         </Container>
-      </Box>
+      </EditableSection>
 
       <Box sx={{ bgcolor: "#fbfaf7", py: { xs: 7, md: 9 } }}>
         <Container maxWidth="md">

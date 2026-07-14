@@ -1606,7 +1606,24 @@ export const buildFrontendTemplateEditorPages = (
     persistedPagesInput || website.templateSnapshot?.pages || null,
   );
 
-  return hydrateSeededPages(templateId, seededPages, persistedPages);
+  const hydratedPages = hydrateSeededPages(
+    templateId,
+    seededPages,
+    persistedPages,
+  );
+
+  // Append any persisted page that is NOT represented by a seeded template page
+  // (e.g. a custom page added from Pages management). Template schemas only define
+  // the Home page, so without this these real backend pages are silently dropped
+  // and never appear in the editor's page dropdown. Each keeps its real id and
+  // blocks (localOnly: false) so it can be selected and saved independently of
+  // Home rather than overwriting the Home page's blocks.
+  const seededStorageKeys = new Set(hydratedPages.map(getPageStorageKey));
+  const extraPersistedPages = persistedPages.filter(
+    (page) => !seededStorageKeys.has(getPageStorageKey(page)),
+  );
+
+  return [...hydratedPages, ...extraPersistedPages];
 };
 
 const readString = (

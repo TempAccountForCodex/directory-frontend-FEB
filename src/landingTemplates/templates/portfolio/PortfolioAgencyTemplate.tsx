@@ -28,6 +28,10 @@ import {
 } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
+import {
+  getEditableSectionProps,
+  getEditableTextProps,
+} from "../../utils/editableProps";
 
 const MotionBox = motion(Box);
 const MotionTypography = motion(Typography);
@@ -304,11 +308,36 @@ function Lightbox({
 /* ─── Main Component ──────────────────────────────────────────── */
 const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
   const accent = GOLD;
+  const heroContent = (data.templateContent?.hero as Record<string, any>) || {};
+  const servicesContent =
+    (data.templateContent?.services as Record<string, any>) || {};
+  const aboutContent =
+    (data.templateContent?.about as Record<string, any>) || {};
+  const contactContent =
+    (data.templateContent?.contact as Record<string, any>) || {};
   const items = data.portfolioItems || [];
   const reviews = data.reviews || [];
   const team = data.team || [];
-  const services = data.services || [];
+  const services =
+    Array.isArray(servicesContent.items) && servicesContent.items.length > 0
+      ? servicesContent.items.map((item: Record<string, any>) => ({
+          name: item.title || item.name || "Service",
+          description: item.description || "",
+          price: item.price,
+        }))
+      : data.services || [];
   const stats = data.stats || [];
+  const heroDescription =
+    heroContent.subheading || data.tagline || data.description;
+  const heroButton = heroContent.ctaText || "View Work";
+  const servicesHeading = servicesContent.heading || "What We Specialise In";
+  const servicesDescription = aboutContent.body || data.description;
+  const contactHeading =
+    contactContent.heading || "Let's Build Something Great.";
+  const contactDescription =
+    contactContent.description ||
+    "Have a project in mind? We'd love to hear about it. Let's create something remarkable together.";
+  const contactButton = contactContent.buttonLabel || "Start a Project";
   const [hoveredWork, setHoveredWork] = useState<number | null>(null);
   const [lightboxItem, setLightboxItem] = useState<(typeof items)[0] | null>(
     null,
@@ -446,6 +475,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       {/* ── 2. HERO ───────────────────────────────────────────── */}
       <Box
+        {...getEditableSectionProps(heroContent.blockId, "Hero", "sectionStyle")}
         sx={{
           position: "relative",
           overflow: "hidden",
@@ -537,6 +567,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Button
                 variant="contained"
                 endIcon={<ArrowForwardIcon />}
+                {...getEditableTextProps(heroContent.blockId, "ctaText", "single")}
                 sx={{
                   bgcolor: accent,
                   color: "#000",
@@ -548,7 +579,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
                   "&:hover": { bgcolor: accent, filter: "brightness(0.88)" },
                 }}
               >
-                View Work
+                {heroButton}
               </Button>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <Box
@@ -589,6 +620,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <Typography
+              {...getEditableTextProps(heroContent.blockId, "subheading", "multi")}
               sx={{
                 color: "rgba(255,255,255,0.72)",
                 fontSize: { xs: "1rem", md: "1.1rem" },
@@ -598,7 +630,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
                 pl: 3,
               }}
             >
-              {data.tagline || data.description}
+              {heroDescription}
             </Typography>
 
             {data.contact?.email && (
@@ -1029,6 +1061,11 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
       {/* ── 7. SERVICES / CAPABILITIES ────────────────────────── */}
       {services.length > 0 && (
         <Box
+          {...getEditableSectionProps(
+            servicesContent.blockId,
+            "Services",
+            "sectionStyle",
+          )}
           sx={{
             bgcolor: SURFACE,
             borderTop: `1px solid ${BORDER}`,
@@ -1060,6 +1097,11 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
                     Capabilities
                   </Typography>
                   <Typography
+                    {...getEditableTextProps(
+                      servicesContent.blockId,
+                      "heading",
+                      "single",
+                    )}
                     variant="h3"
                     sx={{
                       fontWeight: 900,
@@ -1069,15 +1111,18 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
                       lineHeight: 1.1,
                     }}
                   >
-                    What We
-                    <br />
-                    Specialise In
+                    {servicesHeading}
                   </Typography>
                 </Box>
                 <Typography
+                  {...getEditableTextProps(
+                    aboutContent.blockId,
+                    "body",
+                    "multi",
+                  )}
                   sx={{ color: TEXT_DIM, lineHeight: 1.9, fontSize: "0.95rem" }}
                 >
-                  {data.description}
+                  {servicesDescription}
                 </Typography>
               </Box>
             </FadeIn>
@@ -1126,6 +1171,11 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
                       {String(i + 1).padStart(2, "0")}
                     </Typography>
                     <Typography
+                      {...getEditableTextProps(
+                        servicesContent.blockId,
+                        `items.${i}.title`,
+                        "single",
+                      )}
                       className="svc-title"
                       sx={{
                         fontWeight: 700,
@@ -1139,6 +1189,11 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
                     </Typography>
                     {s.description && (
                       <Typography
+                        {...getEditableTextProps(
+                          servicesContent.blockId,
+                          `items.${i}.description`,
+                          "multi",
+                        )}
                         sx={{
                           color: TEXT_DIM,
                           fontSize: "0.82rem",
@@ -1442,6 +1497,11 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       {/* ── 10. CONTACT CTA ───────────────────────────────────── */}
       <Box
+        {...getEditableSectionProps(
+          contactContent.blockId,
+          "Contact",
+          "sectionStyle",
+        )}
         sx={{
           py: { xs: 16, md: 24 },
           px: { xs: 4, md: 10 },
@@ -1480,6 +1540,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
             Get In Touch
           </Typography>
           <Typography
+            {...getEditableTextProps(contactContent.blockId, "heading", "multi")}
             variant="h2"
             sx={{
               fontWeight: 900,
@@ -1490,17 +1551,15 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
               letterSpacing: "-0.03em",
             }}
           >
-            Let's Build
-            <br />
-            <Box
-              component="span"
-              sx={{ WebkitTextStroke: `2px ${accent}`, color: "transparent" }}
-            >
-              Something Great.
-            </Box>
+            {contactHeading}
           </Typography>
 
           <Typography
+            {...getEditableTextProps(
+              contactContent.blockId,
+              "description",
+              "multi",
+            )}
             sx={{
               color: TEXT_DIM,
               fontSize: "1rem",
@@ -1510,8 +1569,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
               mb: 6,
             }}
           >
-            Have a project in mind? We'd love to hear about it. Let's create
-            something remarkable together.
+            {contactDescription}
           </Typography>
 
           <Box
@@ -1526,6 +1584,11 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Button
               variant="contained"
               endIcon={<ArrowForwardIcon />}
+              {...getEditableTextProps(
+                contactContent.blockId,
+                "buttonLabel",
+                "single",
+              )}
               sx={{
                 bgcolor: accent,
                 color: "#000",
@@ -1537,7 +1600,7 @@ const PortfolioAgencyTemplate: React.FC<TemplateProps> = ({ data }) => {
                 "&:hover": { bgcolor: accent, filter: "brightness(0.88)" },
               }}
             >
-              Start a Project
+              {contactButton}
             </Button>
             {data.contact?.email && (
               <Button

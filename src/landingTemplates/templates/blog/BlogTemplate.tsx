@@ -517,7 +517,7 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Button
                 {...getEditableTextProps(
                   contactBlockId,
-                  "buttonText",
+                  "buttonLabel",
                   "single",
                 )}
                 sx={{
@@ -526,7 +526,9 @@ const PremiumBlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                   color: "#fff",
                   px: 2,
                   textTransform: "none",
-                  ...(contactContent.buttonTextStyle || {}),
+                  ...(contactContent.buttonTextStyle ||
+                    contactContent.ctaTextStyle ||
+                    {}),
                   "&:hover": { bgcolor: "#111111" },
                 }}
               >

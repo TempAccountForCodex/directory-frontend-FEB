@@ -142,6 +142,12 @@ import {
   supportsFrontendTemplateEditor,
 } from "../../templates/frontendTemplateEditorSupport";
 import { getStoredWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
+import {
+  getMediaLimitSummary,
+  IMAGE_ACCEPT_ATTR,
+  validateWebsiteMediaUpload,
+  VIDEO_ACCEPT_ATTR,
+} from "../../utils/mediaUploadLimits";
 import { color } from "framer-motion";
 import { EditorAILayer } from "../WebsiteAI";
 import {
@@ -446,12 +452,72 @@ const FOOTER_DEFAULT_CARD_STYLE = {
   paddingRight: "24px",
 };
 
+// Reusable iOS-style toggle. Shows a filled dark track + white thumb when ON,
+// so a `true` value reads clearly. Reuse anywhere a Switch is needed by
+// rendering <MediaToggleSwitch checked={...} onChange={...} /> — the styling
+// travels with the component.
+const MEDIA_TOGGLE_SWITCH_SX = {
+  width: 42,
+  height: 24,
+  padding: 0,
+  display: "inline-flex",
+  "& .MuiSwitch-switchBase": {
+    padding: 0,
+    margin: "2px",
+    transitionDuration: "250ms",
+    "&.Mui-checked": {
+      transform: "translateX(18px)",
+      color: "#ffffff",
+      "& + .MuiSwitch-track": {
+        backgroundColor: "#0f172a",
+        opacity: 1,
+        border: 0,
+      },
+    },
+    "&.Mui-checked.Mui-disabled + .MuiSwitch-track": {
+      opacity: 0.5,
+    },
+  },
+  "& .MuiSwitch-thumb": {
+    boxSizing: "border-box",
+    width: 20,
+    height: 20,
+    backgroundColor: "#ffffff",
+    boxShadow: "0 1px 3px rgba(15,23,42,0.28)",
+  },
+  "& .MuiSwitch-track": {
+    borderRadius: "999px",
+    backgroundColor: "#d1d5db",
+    opacity: 1,
+    transition: "background-color 250ms",
+  },
+};
+
+const MediaToggleSwitch = ({ sx, ...props }) => (
+  <Switch
+    disableRipple
+    {...props}
+    sx={{ ...MEDIA_TOGGLE_SWITCH_SX, ...(sx || {}) }}
+  />
+);
+
 const DEFAULT_IMAGE_VALUE = {
   src: "",
   objectFit: "cover",
   borderRadius: "0px",
   borderWidth: "0px",
   borderColor: "#e5e7eb",
+  heightPreset: "auto",
+  customHeight: "",
+  // Media type + video support. Existing image blocks have no mediaType, so
+  // they default to "image" for backward compatibility.
+  mediaType: "image",
+  videoUrl: "",
+  videoPoster: "",
+  videoAutoplay: false,
+  videoMuted: true,
+  videoLoop: false,
+  videoControls: true,
 };
 
 const SECTION_INNER_BLOCK_LIBRARY = [
@@ -3149,7 +3215,16 @@ const WebsiteEditorInner = () => {
   // Bridges blocks, selected page, and website metadata so PreviewPanel
   // can render a live srcdoc preview without network requests.
   const previewTemplateDataOverride = useMemo(() => {
-    if (!selectedPage?.id || !websiteId || !supportsLocalTemplateEditor) {
+    // Only the Home page is rendered through the single-page frontend template
+    // (its schema always falls back to the full default section layout). Non-home
+    // pages render their OWN blocks via the block canvas instead, so returning
+    // null here keeps the Home body/content from leaking into every other page.
+    if (
+      !selectedPage?.id ||
+      !websiteId ||
+      !supportsLocalTemplateEditor ||
+      !selectedPage?.isHome
+    ) {
       return null;
     }
 
@@ -3213,7 +3288,12 @@ const WebsiteEditorInner = () => {
       websiteMeta: {
         name: website?.name,
         slug: website?.slug,
-        frontendTemplateId: resolvedFrontendTemplateId,
+        // Only advertise the frontend template for the Home page so the preview
+        // renders non-home pages with their own blocks (blank body) instead of
+        // rebuilding the Home template layout from defaults.
+        frontendTemplateId: selectedPage?.isHome
+          ? resolvedFrontendTemplateId
+          : null,
         businessName: website?.businessName,
         primaryColor: website?.primaryColor,
         secondaryColor: website?.secondaryColor,
@@ -3446,8 +3526,17 @@ const WebsiteEditorInner = () => {
       }
       setPages(pagesList);
 
-      // Auto-select home page or first page
-      const homePage = pagesList.find((p) => p.isHome) || pagesList[0];
+      // Select the page requested via ?page=<id> (the Pages management "Edit"
+      // button links here), falling back to the home page or the first page.
+      // Honoring the query param is what makes the editor open the exact page the
+      // user clicked instead of always defaulting to Home, and keeps that page
+      // selected across a reload.
+      const requestedPageId = searchParams.get("page");
+      const requestedPage = requestedPageId
+        ? pagesList.find((p) => String(p.id) === String(requestedPageId))
+        : null;
+      const homePage =
+        requestedPage || pagesList.find((p) => p.isHome) || pagesList[0];
       if (homePage) {
         if (
           supportsFrontendTemplateEditor(
@@ -3970,10 +4059,14 @@ const WebsiteEditorInner = () => {
         return 260;
       case "large":
         return 340;
+      case "custom": {
+        const parsed = parseInt(selectedImageValue.customHeight, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 260;
+      }
       default:
         return 260;
     }
-  }, [selectedImageValue.heightPreset]);
+  }, [selectedImageValue.heightPreset, selectedImageValue.customHeight]);
 
   const imageLibraryItems = useMemo(() => {
     const items = [];
@@ -4054,7 +4147,17 @@ const WebsiteEditorInner = () => {
       });
     };
     blocks.forEach((block) => walk(block.id, block.content || {}, []));
-    return [...items, ...uploadedLibraryVideos];
+    // Dedupe by source URL. Reusing one video across several sections (and the
+    // just-uploaded copy) otherwise stacks the same clip in the gallery.
+    const seen = new Set();
+    const deduped = [];
+    [...items, ...uploadedLibraryVideos].forEach((item) => {
+      const key = String(item?.src || "").trim();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      deduped.push(item);
+    });
+    return deduped;
   }, [blocks, uploadedLibraryVideos]);
 
   const syncPreviewSelection = useCallback((target) => {
@@ -4342,30 +4445,85 @@ const WebsiteEditorInner = () => {
       return null;
     }
 
+    const validation = await validateWebsiteMediaUpload({
+      file,
+      websiteId,
+      allowedMediaType: "image",
+    });
+    if (!validation.ok) {
+      setSaveToast({
+        open: true,
+        message: validation.message,
+        severity: "error",
+      });
+      return null;
+    }
+
     const formData = new FormData();
     formData.append("image", file);
-    const response = await apiClient.post("/upload/image", formData);
-    return normalizeUploadedImageUrl(
-      response?.data?.url ||
-        response?.data?.fileUrl ||
-        response?.data?.data?.url ||
-        response?.data?.data?.fileUrl ||
-        null,
-    );
-  }, []);
+    if (websiteId) {
+      formData.append("websiteId", String(websiteId));
+    }
+
+    try {
+      const response = await apiClient.post("/upload/image", formData);
+      return normalizeUploadedImageUrl(
+        response?.data?.url ||
+          response?.data?.fileUrl ||
+          response?.data?.data?.url ||
+          response?.data?.data?.fileUrl ||
+          null,
+      );
+    } catch (error) {
+      setSaveToast({
+        open: true,
+        message: getRequestErrorMessage(error, "Failed to upload image."),
+        severity: "error",
+      });
+      return null;
+    }
+  }, [websiteId]);
 
   const uploadVideoAsset = useCallback(async (file) => {
     if (!file) return null;
+
+    const validation = await validateWebsiteMediaUpload({
+      file,
+      websiteId,
+      allowedMediaType: "video",
+    });
+    if (!validation.ok) {
+      setSaveToast({
+        open: true,
+        message: validation.message,
+        severity: "error",
+      });
+      return null;
+    }
+
     const formData = new FormData();
     formData.append("video", file);
-    const response = await apiClient.post("/upload/video", formData);
-    const url =
-      response?.data?.url ||
-      response?.data?.fileUrl ||
-      response?.data?.data?.url ||
-      null;
-    return typeof url === "string" && url.trim() ? url.trim() : null;
-  }, []);
+    if (websiteId) {
+      formData.append("websiteId", String(websiteId));
+    }
+
+    try {
+      const response = await apiClient.post("/upload/video", formData);
+      const url =
+        response?.data?.url ||
+        response?.data?.fileUrl ||
+        response?.data?.data?.url ||
+        null;
+      return typeof url === "string" && url.trim() ? url.trim() : null;
+    } catch (error) {
+      setSaveToast({
+        open: true,
+        message: getRequestErrorMessage(error, "Failed to upload video."),
+        severity: "error",
+      });
+      return null;
+    }
+  }, [websiteId]);
 
   const handlePreviewImageSelection = useCallback(
     (data) => {
@@ -5316,6 +5474,52 @@ const WebsiteEditorInner = () => {
       const innerMatch = parseInnerBlockFieldPath(fieldPath);
       const imageStyleKey = `${fieldPath}Style`;
 
+      // Merge only the provided keys into the existing style object. This keeps
+      // image styling controls working and adds media-type + video settings so a
+      // single block can switch between image and video.
+      const buildImageStylePatch = (existingStyle) => ({
+        ...existingStyle,
+        ...(typeof patch.objectFit === "string"
+          ? { objectFit: patch.objectFit }
+          : {}),
+        ...(typeof patch.borderRadius === "string"
+          ? { borderRadius: patch.borderRadius }
+          : {}),
+        ...(typeof patch.borderWidth === "string"
+          ? { borderWidth: patch.borderWidth, borderStyle: "solid" }
+          : {}),
+        ...(typeof patch.borderColor === "string"
+          ? { borderColor: patch.borderColor }
+          : {}),
+        ...(typeof patch.heightPreset === "string"
+          ? { heightPreset: patch.heightPreset }
+          : {}),
+        ...(typeof patch.customHeight === "string"
+          ? { customHeight: patch.customHeight }
+          : {}),
+        ...(typeof patch.mediaType === "string"
+          ? { mediaType: patch.mediaType }
+          : {}),
+        ...(typeof patch.videoUrl === "string"
+          ? { videoUrl: patch.videoUrl }
+          : {}),
+        ...(typeof patch.videoPoster === "string"
+          ? { videoPoster: patch.videoPoster }
+          : {}),
+        ...(typeof patch.videoAutoplay === "boolean"
+          ? { videoAutoplay: patch.videoAutoplay }
+          : {}),
+        ...(typeof patch.videoMuted === "boolean"
+          ? { videoMuted: patch.videoMuted }
+          : {}),
+        ...(typeof patch.videoLoop === "boolean"
+          ? { videoLoop: patch.videoLoop }
+          : {}),
+        ...(typeof patch.videoControls === "boolean"
+          ? { videoControls: patch.videoControls }
+          : {}),
+      });
+
       pendingHistoryDescriptionRef.current = `Updated ${fieldPath} image`;
       setBlocks((prev) =>
         prev.map((block) => {
@@ -5356,24 +5560,7 @@ const WebsiteEditorInner = () => {
               setValueAtPath(
                 nextInnerBlocks,
                 `${innerMatch.index}.content.imageStyle`,
-                {
-                  ...existingStyle,
-                  ...(typeof patch.objectFit === "string"
-                    ? { objectFit: patch.objectFit }
-                    : {}),
-                  ...(typeof patch.borderRadius === "string"
-                    ? { borderRadius: patch.borderRadius }
-                    : {}),
-                  ...(typeof patch.borderWidth === "string"
-                    ? {
-                        borderWidth: patch.borderWidth,
-                        borderStyle: "solid",
-                      }
-                    : {}),
-                  ...(typeof patch.borderColor === "string"
-                    ? { borderColor: patch.borderColor }
-                    : {}),
-                },
+                buildImageStylePatch(existingStyle),
               ),
             );
           }
@@ -5388,21 +5575,7 @@ const WebsiteEditorInner = () => {
             ...(typeof patch.src === "string"
               ? setValueAtPath(block.content || {}, fieldPath, patch.src)
               : { ...(block.content || {}) }),
-            [imageStyleKey]: {
-              ...existingStyle,
-              ...(typeof patch.objectFit === "string"
-                ? { objectFit: patch.objectFit }
-                : {}),
-              ...(typeof patch.borderRadius === "string"
-                ? { borderRadius: patch.borderRadius }
-                : {}),
-              ...(typeof patch.borderWidth === "string"
-                ? { borderWidth: patch.borderWidth, borderStyle: "solid" }
-                : {}),
-              ...(typeof patch.borderColor === "string"
-                ? { borderColor: patch.borderColor }
-                : {}),
-            },
+            [imageStyleKey]: buildImageStylePatch(existingStyle),
           };
 
           return {
@@ -5487,6 +5660,8 @@ const WebsiteEditorInner = () => {
       if (!url) return;
       if (imageLibraryFieldRequest?.onSelect) {
         imageLibraryFieldRequest.onSelect(url);
+      } else {
+        handleImageChange({ videoUrl: url, mediaType: "video" });
       }
       setUploadedLibraryVideos((prev) => [
         ...prev,
@@ -5502,7 +5677,7 @@ const WebsiteEditorInner = () => {
       setImageLibraryFieldRequest(null);
       setIsImageLibraryPickerOpen(false);
     },
-    [imageLibraryFieldRequest, uploadVideoAsset],
+    [handleImageChange, imageLibraryFieldRequest, uploadVideoAsset],
   );
 
   const handleUseLibraryImage = useCallback(
@@ -5511,8 +5686,11 @@ const WebsiteEditorInner = () => {
         return;
       }
 
+      const isVideoRequest = imageLibraryFieldRequest?.mediaType === "video";
       if (imageLibraryFieldRequest?.onSelect) {
         imageLibraryFieldRequest.onSelect(item.src);
+      } else if (isVideoRequest) {
+        handleImageChange({ videoUrl: item.src, mediaType: "video" });
       } else {
         handleImageChange({ src: item.src });
         setSelectedImageElement((prev) =>
@@ -8383,7 +8561,9 @@ const WebsiteEditorInner = () => {
                             pageId={selectedPage?.id}
                             pageTitle={selectedPage?.title}
                             frontendTemplateIdOverride={
-                              resolvedFrontendTemplateId
+                              selectedPage?.isHome
+                                ? resolvedFrontendTemplateId
+                                : null
                             }
                             frontendTemplateDataOverride={
                               previewTemplateDataOverride
@@ -8398,6 +8578,13 @@ const WebsiteEditorInner = () => {
                               );
                               if (nextPage) {
                                 setSelectedPage(nextPage);
+                                // Keep ?page=<id> in sync so the current page
+                                // stays selected after a reload.
+                                const nextParams = new URLSearchParams(
+                                  searchParams,
+                                );
+                                nextParams.set("page", String(nextPage.id));
+                                setSearchParams(nextParams, { replace: true });
                               }
                             }}
                             selectedBlockId={
@@ -8973,7 +9160,7 @@ const WebsiteEditorInner = () => {
           <input
             ref={imageReplaceInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_ACCEPT_ATTR}
             hidden
             onChange={(event) => {
               void handleReplaceSelectedImage(event.target.files?.[0] || null);
@@ -9008,8 +9195,20 @@ const WebsiteEditorInner = () => {
                   color: editorMutedText,
                 }}
               >
-                Replace the image and tune fit, border, and radius for this
-                block.
+                {selectedImageValue.mediaType === "video"
+                  ? "Replace with a video and tune fit, border, and playback for this block."
+                  : "Replace the image or switch to a video, and tune fit, border, and radius for this block."}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 0.5,
+                  fontSize: "0.78rem",
+                  color: editorMutedText,
+                }}
+              >
+                {getMediaLimitSummary(
+                  selectedImageValue.mediaType === "video" ? "video" : "image",
+                )}
               </Typography>
             </Box>
             <IconButton
@@ -9028,33 +9227,132 @@ const WebsiteEditorInner = () => {
             </IconButton>
           </DialogTitle>
           <DialogContent sx={{ px: 3, py: 2.5, backgroundColor: "#f8fafc" }}>
+            {/* Media type tabs — Image / Video */}
             <Box
               sx={{
-                height: selectedImagePreviewHeight,
-                borderRadius: 3,
-                border: `1px solid ${alpha(colors.primary, 0.14)}`,
-                overflow: "hidden",
-                background:
-                  "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(241,245,249,0.95) 100%)",
-                backgroundImage: selectedImageValue.src
-                  ? `url(${selectedImageValue.src})`
-                  : "none",
-                backgroundSize:
-                  selectedImageValue.objectFit === "contain"
-                    ? "contain"
-                    : selectedImageValue.objectFit,
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "center",
+                display: "inline-flex",
+                p: 0.5,
                 mb: 2,
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.55)",
+                borderRadius: 2.5,
+                backgroundColor: alpha("#111827", 0.05),
+                border: `1px solid ${alpha("#111827", 0.08)}`,
               }}
-            />
+            >
+              {["image", "video"].map((mode) => {
+                const active =
+                  (selectedImageValue.mediaType === "video"
+                    ? "video"
+                    : "image") === mode;
+                return (
+                  <Button
+                    key={mode}
+                    disableElevation
+                    onClick={() => handleImageChange({ mediaType: mode })}
+                    sx={{
+                      minWidth: 96,
+                      minHeight: 34,
+                      px: 2,
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      color: active ? "#ffffff" : editorMutedText,
+                      backgroundColor: active ? "#0f172a" : "transparent",
+                      "&:hover": {
+                        backgroundColor: active
+                          ? "#0f172a"
+                          : alpha("#111827", 0.06),
+                      },
+                    }}
+                  >
+                    {mode === "video" ? "Video" : "Image"}
+                  </Button>
+                );
+              })}
+            </Box>
+
+            {/* Preview — image or video */}
+            {selectedImageValue.mediaType === "video" ? (
+              selectedImageValue.videoUrl ? (
+                <Box
+                  component="video"
+                  src={selectedImageValue.videoUrl}
+                  poster={selectedImageValue.videoPoster || undefined}
+                  controls
+                  muted
+                  playsInline
+                  sx={{
+                    display: "block",
+                    width: "100%",
+                    height: selectedImagePreviewHeight,
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                    objectFit:
+                      selectedImageValue.objectFit === "fill"
+                        ? "fill"
+                        : selectedImageValue.objectFit || "cover",
+                    backgroundColor: "#0f172a",
+                    mb: 2,
+                  }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    height: selectedImagePreviewHeight,
+                    borderRadius: 3,
+                    border: `1px dashed ${alpha(colors.primary, 0.3)}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    color: editorMutedText,
+                    fontSize: "0.9rem",
+                    px: 3,
+                    mb: 2,
+                    backgroundColor: alpha("#0f172a", 0.02),
+                  }}
+                >
+                  No video selected yet. Use Replace to upload or choose a video.
+                </Box>
+              )
+            ) : (
+              <Box
+                sx={{
+                  height: selectedImagePreviewHeight,
+                  borderRadius: 3,
+                  border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                  overflow: "hidden",
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(241,245,249,0.95) 100%)",
+                  backgroundImage: selectedImageValue.src
+                    ? `url(${selectedImageValue.src})`
+                    : "none",
+                  backgroundSize:
+                    selectedImageValue.objectFit === "contain"
+                      ? "contain"
+                      : selectedImageValue.objectFit,
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "center",
+                  mb: 2,
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.55)",
+                }}
+              />
+            )}
 
             <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
               <Button
                 variant="contained"
                 startIcon={<Upload size={16} />}
-                onClick={() => setIsImageLibraryPickerOpen(true)}
+                onClick={() => {
+                  setImageLibraryFieldRequest({
+                    label: selectedImageElement?.label || "Media",
+                    mediaType:
+                      selectedImageValue.mediaType === "video"
+                        ? "video"
+                        : "image",
+                  });
+                  setIsImageLibraryPickerOpen(true);
+                }}
                 sx={{
                   minHeight: 42,
                   textTransform: "none",
@@ -9093,19 +9391,35 @@ const WebsiteEditorInner = () => {
                 gap: 1.25,
               }}
             >
-              <DashboardInput
-                fullWidth
-                label="Image URL"
-                labelPlacement="floating"
-                value={selectedImageValue.src || ""}
-                onChange={(event) =>
-                  handleImageChange({ src: event.target.value })
-                }
-                sx={{
-                  gridColumn: "1 / -1",
-                  ...imageEditorInputSx,
-                }}
-              />
+              {selectedImageValue.mediaType === "video" ? (
+                <DashboardInput
+                  fullWidth
+                  label="Video URL"
+                  labelPlacement="floating"
+                  value={selectedImageValue.videoUrl || ""}
+                  onChange={(event) =>
+                    handleImageChange({ videoUrl: event.target.value })
+                  }
+                  sx={{
+                    gridColumn: "1 / -1",
+                    ...imageEditorInputSx,
+                  }}
+                />
+              ) : (
+                <DashboardInput
+                  fullWidth
+                  label="Image URL"
+                  labelPlacement="floating"
+                  value={selectedImageValue.src || ""}
+                  onChange={(event) =>
+                    handleImageChange({ src: event.target.value })
+                  }
+                  sx={{
+                    gridColumn: "1 / -1",
+                    ...imageEditorInputSx,
+                  }}
+                />
+              )}
 
               <DashboardInput
                 fullWidth
@@ -9194,8 +9508,113 @@ const WebsiteEditorInner = () => {
                   <MenuItem value="small">Height: small</MenuItem>
                   <MenuItem value="medium">Height: medium</MenuItem>
                   <MenuItem value="large">Height: large</MenuItem>
+                  <MenuItem value="custom">Height: custom (px)</MenuItem>
                 </Select>
               </FormControl>
+
+              {selectedImageValue.heightPreset === "custom" && (
+                <DashboardInput
+                  fullWidth
+                  type="number"
+                  label="Custom Height (px)"
+                  labelPlacement="floating"
+                  value={getEditableCssUnitValue(selectedImageValue.customHeight)}
+                  onChange={(event) =>
+                    handleImageChange({
+                      customHeight: toEditableCssUnit(event.target.value),
+                    })
+                  }
+                  sx={{ gridColumn: "1 / -1", ...imageEditorInputSx }}
+                />
+              )}
+
+              {/* Video-only playback controls */}
+              {selectedImageValue.mediaType === "video" && (
+                <>
+                  <DashboardInput
+                    fullWidth
+                    label="Poster Image URL (optional)"
+                    labelPlacement="floating"
+                    value={selectedImageValue.videoPoster || ""}
+                    onChange={(event) =>
+                      handleImageChange({ videoPoster: event.target.value })
+                    }
+                    sx={{
+                      gridColumn: "1 / -1",
+                      ...imageEditorInputSx,
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      gridColumn: "1 / -1",
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 0.5,
+                      p: 1,
+                      borderRadius: 2.5,
+                      backgroundColor: "#ffffff",
+                      border: `1px solid ${alpha("#111827", 0.1)}`,
+                    }}
+                  >
+                    <FormControlLabel
+                      control={
+                        <MediaToggleSwitch
+                          checked={Boolean(selectedImageValue.videoAutoplay)}
+                          onChange={(event) =>
+                            handleImageChange({
+                              videoAutoplay: event.target.checked,
+                            })
+                          }
+                        />
+                      }
+                      label="Autoplay"
+                      sx={{ m: 0, gap: 1, color: editorText }}
+                    />
+                    <FormControlLabel
+                      control={
+                        <MediaToggleSwitch
+                          checked={selectedImageValue.videoMuted !== false}
+                          onChange={(event) =>
+                            handleImageChange({
+                              videoMuted: event.target.checked,
+                            })
+                          }
+                        />
+                      }
+                      label="Muted"
+                      sx={{ m: 0, gap: 1, color: editorText }}
+                    />
+                    <FormControlLabel
+                      control={
+                        <MediaToggleSwitch
+                          checked={Boolean(selectedImageValue.videoLoop)}
+                          onChange={(event) =>
+                            handleImageChange({
+                              videoLoop: event.target.checked,
+                            })
+                          }
+                        />
+                      }
+                      label="Loop"
+                      sx={{ m: 0, gap: 1, color: editorText }}
+                    />
+                    <FormControlLabel
+                      control={
+                        <MediaToggleSwitch
+                          checked={selectedImageValue.videoControls !== false}
+                          onChange={(event) =>
+                            handleImageChange({
+                              videoControls: event.target.checked,
+                            })
+                          }
+                        />
+                      }
+                      label="Controls"
+                      sx={{ m: 0, gap: 1, color: editorText }}
+                    />
+                  </Box>
+                </>
+              )}
             </Box>
           </DialogContent>
           <DialogActions
@@ -9255,7 +9674,7 @@ const WebsiteEditorInner = () => {
           <input
             ref={imageLibraryPickerInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_ACCEPT_ATTR}
             hidden
             onChange={(event) => {
               void handleReplaceSelectedImage(event.target.files?.[0] || null);
@@ -9265,7 +9684,7 @@ const WebsiteEditorInner = () => {
           <input
             ref={videoLibraryPickerInputRef}
             type="file"
-            accept="video/*"
+            accept={VIDEO_ACCEPT_ATTR}
             hidden
             onChange={(event) => {
               void handleReplaceSelectedVideo(event.target.files?.[0] || null);
@@ -9321,6 +9740,13 @@ const WebsiteEditorInner = () => {
                 {imageLibraryFieldRequest?.mediaType === "video"
                   ? "Pick from existing website videos or upload a new one."
                   : "Pick from existing website images or upload a new one."}
+              </Typography>
+              <Typography sx={{ fontSize: "0.78rem", color: editorMutedText }}>
+                {getMediaLimitSummary(
+                  imageLibraryFieldRequest?.mediaType === "video"
+                    ? "video"
+                    : "image",
+                )}
               </Typography>
               <Button
                 variant="contained"

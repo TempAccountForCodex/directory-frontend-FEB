@@ -32,6 +32,7 @@ import {
   getEditableSectionProps,
   getEditableTextProps,
 } from "../../utils/editableProps";
+import { renderEditableMedia } from "../../utils/editableComponents";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
@@ -325,7 +326,25 @@ const isLightColor = (hex: string) => {
   return luminance > 0.72;
 };
 
-const getImageHeightPresetSx = (preset?: string) => {
+const normalizeCustomHeight = (
+  value?: string | number,
+): string | number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return `${value}px`;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    // Bare number → px; anything with an explicit unit (px/vh/%…) passes through.
+    return /^\d+(\.\d+)?$/.test(trimmed) ? `${trimmed}px` : trimmed;
+  }
+  return undefined;
+};
+
+const getImageHeightPresetSx = (
+  preset?: string,
+  customHeight?: string | number,
+) => {
   switch (preset) {
     case "small":
       return { height: { xs: 220, md: 300 } };
@@ -333,6 +352,10 @@ const getImageHeightPresetSx = (preset?: string) => {
       return { height: { xs: 320, md: 420 } };
     case "large":
       return { height: { xs: 420, md: 560 } };
+    case "custom": {
+      const normalized = normalizeCustomHeight(customHeight);
+      return normalized ? { height: normalized } : {};
+    }
     default:
       return {};
   }
@@ -585,7 +608,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const heroImageStyle =
     homeContent.heroImageStyle || homeContent.imageStyle || {};
   const heroImageFit = heroImageStyle.objectFit || "contain";
-  const heroImageHeightSx = getImageHeightPresetSx(heroImageStyle.heightPreset);
+  const heroImageHeightSx = getImageHeightPresetSx(
+    heroImageStyle.heightPreset,
+    heroImageStyle.customHeight,
+  );
   const overviewInnerBlocks = Array.isArray(homeContent.innerBlocks)
     ? homeContent.innerBlocks
     : [];
@@ -595,6 +621,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const aboutImageFit = aboutImageStyle.objectFit || "cover";
   const aboutImageHeightSx = getImageHeightPresetSx(
     aboutImageStyle.heightPreset,
+    aboutImageStyle.customHeight,
   );
   const whyUsImage =
     featuresContent.image || featuresContent.imageUrl || visualSet.office;
@@ -602,6 +629,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const whyUsImageFit = whyUsImageStyle.objectFit || "cover";
   const whyUsImageHeightSx = getImageHeightPresetSx(
     whyUsImageStyle.heightPreset,
+    whyUsImageStyle.customHeight,
   );
   const processImage =
     processContent.image || processContent.imageUrl || visualSet.team;
@@ -609,6 +637,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const processImageFit = processImageStyle.objectFit || "cover";
   const processImageHeightSx = getImageHeightPresetSx(
     processImageStyle.heightPreset,
+    processImageStyle.customHeight,
   );
   const aboutBlockId = aboutContent.blockId;
   const whyUsBlockId = featuresContent.blockId;
@@ -1763,23 +1792,20 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Box>
               </Box>
 
-              <Box
-                component={motion.img}
-                initial={{ opacity: 0, y: 40, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  duration: 0.9,
-                  ease: smoothEase,
-                  delay: 0.16,
-                }}
-                src={heroImage}
-                alt="Executive portrait"
-                {...getEditableImageProps(
-                  homeContent.blockId,
-                  "heroImage",
-                  "Hero Image",
-                )}
-                sx={{
+              {renderEditableMedia({
+                blockId: homeContent.blockId,
+                field: "heroImage",
+                label: "Hero Image",
+                src: heroImage,
+                alt: "Executive portrait",
+                style: heroImageStyle,
+                imageComponent: motion.img,
+                imageProps: {
+                  initial: { opacity: 0, y: 40, scale: 0.96 },
+                  animate: { opacity: 1, y: 0, scale: 1 },
+                  transition: { duration: 0.9, ease: smoothEase, delay: 0.16 },
+                },
+                sx: {
                   position: "relative",
                   zIndex: 3,
                   width: "100%",
@@ -1794,8 +1820,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   borderWidth: heroImageStyle.borderWidth,
                   borderColor: heroImageStyle.borderColor,
                   borderStyle: heroImageStyle.borderWidth ? "solid" : undefined,
-                }}
-              />
+                },
+              })}
             </Box>
           </Container>
         </Box>
@@ -1841,14 +1867,14 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     minHeight: { xs: 420, md: 660 },
                   }}
                 >
-                  <Box
-                    component="img"
-                    src={aboutImage}
-                    alt="Business collaboration"
-                    data-edit-image="image"
-                    data-image-label="About Image"
-                    data-block-id={aboutBlockId}
-                    sx={{
+                  {renderEditableMedia({
+                    blockId: aboutBlockId,
+                    field: "image",
+                    label: "About Image",
+                    src: aboutImage,
+                    alt: "Business collaboration",
+                    style: aboutImageStyle,
+                    sx: {
                       width: "100%",
                       height: "100%",
                       ...aboutImageHeightSx,
@@ -1860,8 +1886,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       borderStyle: aboutImageStyle.borderWidth
                         ? "solid"
                         : undefined,
-                    }}
-                  />
+                    },
+                  })}
                   <Box
                     component={motion.div}
                     {...sectionReveal}
@@ -2201,15 +2227,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     position: "relative",
                   }}
                 >
-                  <Box
-                    component={motion.img}
-                    src={whyUsImage}
-                    alt="Business meeting room"
-                    data-edit-image="image"
-                    data-image-label="Why Choose Us Image"
-                    data-block-id={whyUsBlockId}
-                    style={{ scale: whyChooseImageScale }}
-                    sx={{
+                  {renderEditableMedia({
+                    blockId: whyUsBlockId,
+                    field: "image",
+                    label: "Why Choose Us Image",
+                    src: whyUsImage,
+                    alt: "Business meeting room",
+                    style: whyUsImageStyle,
+                    imageComponent: motion.img,
+                    imageProps: { style: { scale: whyChooseImageScale } },
+                    sx: {
                       width: "100%",
                       height: "100%",
                       ...whyUsImageHeightSx,
@@ -2222,8 +2249,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       borderStyle: whyUsImageStyle.borderWidth
                         ? "solid"
                         : undefined,
-                    }}
-                  />
+                    },
+                  })}
                   <Box
                     sx={{
                       position: "absolute",
@@ -2525,14 +2552,14 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     minHeight: { xs: 320, md: 560 },
                   }}
                 >
-                  <Box
-                    component="img"
-                    src={processImage}
-                    alt="Company team"
-                    data-edit-image="image"
-                    data-image-label="Process Image"
-                    data-block-id={processBlockId}
-                    sx={{
+                  {renderEditableMedia({
+                    blockId: processBlockId,
+                    field: "image",
+                    label: "Process Image",
+                    src: processImage,
+                    alt: "Company team",
+                    style: processImageStyle,
+                    sx: {
                       width: "100%",
                       height: "100%",
                       ...processImageHeightSx,
@@ -2544,8 +2571,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       borderStyle: processImageStyle.borderWidth
                         ? "solid"
                         : undefined,
-                    }}
-                  />
+                    },
+                  })}
                 </Box>
 
                 <Box
@@ -2851,9 +2878,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       disabled={contactStatus === "loading"}
                       onClick={handleContactSubmit}
                       endIcon={<EastIcon />}
-                      data-editable="buttonText"
-                      data-edit-type="single"
-                      data-block-id={contactBlockId}
+                      {...getEditableTextProps(
+                        contactBlockId,
+                        "buttonLabel",
+                        "single",
+                      )}
                       sx={{
                         alignSelf: "flex-start",
                         bgcolor: themeColor,

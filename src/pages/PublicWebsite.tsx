@@ -697,8 +697,12 @@ h1, h2, h3, h4, h5, h6 {
   if (
     resolvedFrontendTemplateId &&
     hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
-    frontendTemplateData
+    frontendTemplateData &&
+    currentPage?.isHome
   ) {
+    // Only the Home page renders the single-page frontend template. Additional
+    // pages fall through to the shared block layout below (shared nav header +
+    // their own blocks + footer) so they never inherit the Home page body.
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
         <Helmet>

@@ -21,15 +21,9 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import CloseIcon from "@mui/icons-material/Close";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import type { TemplateProps } from "../../templateEngine/types";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
-
-const BLOG_CONTACT_FIELDS = [
-  { label: "Your name" },
-  { label: "Email address" },
-  { label: "Subject" },
-  { label: "Tell us about your inquiry", fieldType: "textarea" },
-];
 import type { BlogPost } from "../../types/BusinessData";
 import FadeIn from "../../blocks/FadeIn";
 import {
@@ -170,9 +164,13 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
   const articlesContent = templateContent.articles || {};
   const aboutContent = templateContent.about || {};
   const contactContent = templateContent.contact || {};
+  const contactFields = normalizeContactFormFields(
+    contactContent.formFields,
+    contactContent,
+  );
   const { status, errorMessage, getFieldProps, handleSubmit } =
     useTemplateContactForm(
-      BLOG_CONTACT_FIELDS,
+      contactFields,
       data.websiteId,
       "blog-contact-form",
       {
@@ -924,66 +922,57 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                 Send us a message
               </Typography>
               <Stack spacing={2}>
-                <TextField
-                  placeholder="Your name"
-                  variant="standard"
-                  fullWidth
-                  {...getFieldProps("Your name")}
-                  InputProps={{ disableUnderline: true }}
-                  sx={{
-                    "& .MuiInputBase-root": {
-                      borderBottom: "1px solid #d0d5dd",
-                      pb: 1,
-                    },
-                  }}
-                />
-                <TextField
-                  placeholder="Email address"
-                  variant="standard"
-                  fullWidth
-                  {...getFieldProps("Email address")}
-                  InputProps={{ disableUnderline: true }}
-                  sx={{
-                    "& .MuiInputBase-root": {
-                      borderBottom: "1px solid #d0d5dd",
-                      pb: 1,
-                    },
-                  }}
-                />
-                <TextField
-                  placeholder="Subject"
-                  variant="standard"
-                  fullWidth
-                  {...getFieldProps("Subject")}
-                  InputProps={{ disableUnderline: true }}
-                  sx={{
-                    "& .MuiInputBase-root": {
-                      borderBottom: "1px solid #d0d5dd",
-                      pb: 1,
-                    },
-                  }}
-                />
-                <TextField
-                  placeholder="Tell us about your inquiry"
-                  variant="standard"
-                  fullWidth
-                  multiline
-                  minRows={5}
-                  {...getFieldProps("Tell us about your inquiry")}
-                  InputProps={{ disableUnderline: true }}
-                  sx={{
-                    "& .MuiInputBase-root": {
-                      borderBottom: "1px solid #d0d5dd",
-                      pb: 1,
-                    },
-                  }}
-                />
+                {contactFields.map((field) => (
+                  <TextField
+                    key={field.key}
+                    placeholder={field.placeholder || field.label}
+                    variant="standard"
+                    fullWidth
+                    multiline={field.fieldType === "textarea"}
+                    minRows={field.fieldType === "textarea" ? 5 : undefined}
+                    required={field.required}
+                    type={
+                      field.fieldType === "phone"
+                        ? "tel"
+                        : ["email", "date", "time"].includes(field.fieldType)
+                          ? field.fieldType
+                          : "text"
+                    }
+                    select={field.fieldType === "dropdown"}
+                    SelectProps={
+                      field.fieldType === "dropdown"
+                        ? { native: true }
+                        : undefined
+                    }
+                    {...getFieldProps(field.label)}
+                    InputProps={{ disableUnderline: true }}
+                    sx={{
+                      "& .MuiInputBase-root": {
+                        borderBottom: "1px solid #d0d5dd",
+                        pb: 1,
+                      },
+                    }}
+                  >
+                    {field.fieldType === "dropdown"
+                      ? [
+                          <option key="" value="">
+                            {field.placeholder || field.label}
+                          </option>,
+                          ...field.options.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          )),
+                        ]
+                      : null}
+                  </TextField>
+                ))}
                 <Button
                   variant="contained"
                   type="button"
                   disabled={status === "loading"}
                   onClick={handleSubmit}
-                  data-editable="buttonText"
+                  data-editable="buttonLabel"
                   data-edit-type="single"
                   data-block-id={contactBlockId}
                   sx={{
@@ -995,7 +984,9 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
                     px: 3,
                     py: 1.15,
                     boxShadow: "none",
-                    ...(contactContent.buttonTextStyle || {}),
+                    ...(contactContent.buttonTextStyle ||
+                      contactContent.ctaTextStyle ||
+                      {}),
                     "&:hover": {
                       bgcolor: primary,
                       opacity: 0.92,

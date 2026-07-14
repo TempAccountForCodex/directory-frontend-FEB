@@ -30,6 +30,10 @@ import {
 } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
 import type { PortfolioItem } from "../../types/BusinessData";
+import {
+  getEditableSectionProps,
+  getEditableTextProps,
+} from "../../utils/editableProps";
 
 const MotionBox = motion(Box);
 const MotionTypography = motion(Typography);
@@ -112,6 +116,9 @@ function ParallaxHeroImage({ src }: { src: string }) {
 const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const primary = data.primaryColor || "#111";
   const accent = data.secondaryColor || "#f59e0b";
+  const heroContent = (data.templateContent?.hero as Record<string, any>) || {};
+  const contactContent =
+    (data.templateContent?.contact as Record<string, any>) || {};
 
   const items = data.portfolioItems || [];
   const allCategories = [
@@ -129,6 +136,14 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
       ? items
       : items.filter((p) => p.category === activeCategory);
   const featured = items[0];
+  const heroDescription =
+    heroContent.subheading || data.tagline || data.description;
+  const heroPrimaryCta = heroContent.ctaText || "See My Work";
+  const contactHeading =
+    contactContent.heading || "Let's Create Something Amazing.";
+  const contactDescription =
+    contactContent.description ||
+    "Have a project in mind? Let's talk and turn your vision into reality.";
 
   const skillsTicker = [
     "Branding",
@@ -256,6 +271,7 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
       <Box
+        {...getEditableSectionProps(heroContent.blockId, "Hero", "sectionStyle")}
         sx={{
           px: { xs: 4, md: 8 },
           pt: { xs: 12, md: 18 },
@@ -341,6 +357,7 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
               }}
             >
               <Typography
+                {...getEditableTextProps(heroContent.blockId, "subheading", "multi")}
                 sx={{
                   color: "#666",
                   lineHeight: 1.75,
@@ -348,7 +365,7 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontSize: "1.05rem",
                 }}
               >
-                {data.tagline || data.description}
+                {heroDescription}
               </Typography>
             </MotionBox>
             <MotionBox
@@ -360,6 +377,7 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
               <Button
                 variant="contained"
                 endIcon={<ArrowOutwardIcon />}
+                {...getEditableTextProps(heroContent.blockId, "ctaText", "single")}
                 sx={{
                   bgcolor: "#111",
                   color: "#fff",
@@ -371,7 +389,7 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   transition: "background 0.25s",
                 }}
               >
-                See My Work
+                {heroPrimaryCta}
               </Button>
               <Button
                 variant="outlined"
@@ -1189,6 +1207,11 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
       {/* ── Contact / CTA ──────────────────────────────────────────────────── */}
       <Box
+        {...getEditableSectionProps(
+          contactContent.blockId,
+          "Contact",
+          "sectionStyle",
+        )}
         sx={{
           position: "relative",
           overflow: "hidden",
@@ -1245,6 +1268,7 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
             Get In Touch
           </Typography>
           <Typography
+            {...getEditableTextProps(contactContent.blockId, "heading", "multi")}
             variant="h2"
             sx={{
               fontWeight: 900,
@@ -1254,13 +1278,14 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
               mb: 4,
             }}
           >
-            Let's Create Something
-            <Box component="span" sx={{ display: "block", color: accent }}>
-              {" "}
-              Amazing.
-            </Box>
+            {contactHeading}
           </Typography>
           <Typography
+            {...getEditableTextProps(
+              contactContent.blockId,
+              "description",
+              "multi",
+            )}
             sx={{
               color: "rgba(255,255,255,0.5)",
               mb: 6,
@@ -1268,8 +1293,7 @@ const CreativePortfolioTemplate: React.FC<TemplateProps> = ({ data }) => {
               lineHeight: 1.75,
             }}
           >
-            Have a project in mind? Let's talk and turn your vision into
-            reality.
+            {contactDescription}
           </Typography>
           {data.contact.email && (
             <Box

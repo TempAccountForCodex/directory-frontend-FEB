@@ -922,7 +922,9 @@ const FrontendTemplateIframePreview = React.memo(
         onEditableElementSelectedRef.current?.(selection);
         onSectionSelectedRef.current?.(null);
 
-        if (options?.startEditing === false) {
+        const isFallbackEditable = selection.fieldPath.startsWith("__fallback.");
+
+        if (options?.startEditing === false || isFallbackEditable) {
           activeEditableRef.current = null;
           activeEditableMetaRef.current = null;
           return selection;
@@ -1507,16 +1509,24 @@ const FrontendTemplateIframePreview = React.memo(
           "[data-editable]",
         ) as HTMLElement | null;
         const cardEditableEl = target?.closest?.(
-          '[data-editable$=".__card"]',
+          '[data-editable$=".__card"], [data-editable$=".__container"]',
         ) as HTMLElement | null;
         const imageEl = target?.closest?.(
           "[data-edit-image]",
         ) as HTMLElement | null;
+        const fallbackMediaEl = target?.closest?.(
+          "[data-fallback-media='true']",
+        ) as HTMLElement | null;
         const sectionEl = target?.closest?.(
           '[data-preview-section="true"]',
         ) as HTMLElement | null;
+        const shouldPreferImageSelection =
+          !!imageEl &&
+          (!editableEl ||
+            editableEl === imageEl ||
+            editableEl.contains(imageEl));
 
-        if (!editableEl && !imageEl && !sectionEl) {
+        if (!editableEl && !imageEl && !fallbackMediaEl && !sectionEl) {
           finishEditing(true);
           clearVisualSelections();
           activeSectionRef.current = null;
@@ -1525,10 +1535,18 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
 
-        if (!editableEl && imageEl) {
+        if (shouldPreferImageSelection) {
           event.preventDefault();
           event.stopPropagation();
           applyImageSelection(imageEl);
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+
+        if (!editableEl && !imageEl && fallbackMediaEl) {
+          event.preventDefault();
+          event.stopPropagation();
+          applySectionSelection(fallbackMediaEl);
           onPreviewContextMenuRef.current?.(null);
           return;
         }
@@ -1584,20 +1602,33 @@ const FrontendTemplateIframePreview = React.memo(
         const imageEl = target?.closest?.(
           "[data-edit-image]",
         ) as HTMLElement | null;
+        const fallbackMediaEl = target?.closest?.(
+          "[data-fallback-media='true']",
+        ) as HTMLElement | null;
         const editableEl = target?.closest?.(
           "[data-editable]",
         ) as HTMLElement | null;
-        if (!editableEl && !imageEl) {
+        const shouldPreferImageSelection =
+          !!imageEl &&
+          (!editableEl ||
+            editableEl === imageEl ||
+            editableEl.contains(imageEl));
+        if (!editableEl && !imageEl && !fallbackMediaEl) {
           return;
         }
 
         event.preventDefault();
         event.stopPropagation();
-        if (imageEl && !editableEl) {
+        if (shouldPreferImageSelection) {
           const selection = applyImageSelection(imageEl);
           if (selection) {
             onImageDoubleClickRef.current?.(selection);
           }
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+        if (!editableEl && !imageEl && fallbackMediaEl) {
+          applySectionSelection(fallbackMediaEl);
           onPreviewContextMenuRef.current?.(null);
           return;
         }
@@ -1620,17 +1651,26 @@ const FrontendTemplateIframePreview = React.memo(
             : null) ||
           (target?.closest?.("[data-editable]") as HTMLElement | null);
         const cardEditableEl =
-          (resolvedOverlayTarget?.matches?.('[data-editable$=".__card"]')
+          (resolvedOverlayTarget?.matches?.(
+            '[data-editable$=".__card"], [data-editable$=".__container"]',
+          )
             ? resolvedOverlayTarget
             : null) ||
           (target?.closest?.(
-            '[data-editable$=".__card"]',
+            '[data-editable$=".__card"], [data-editable$=".__container"]',
           ) as HTMLElement | null);
         const imageEl =
           (resolvedOverlayTarget?.matches?.("[data-edit-image]")
             ? resolvedOverlayTarget
             : null) ||
           (target?.closest?.("[data-edit-image]") as HTMLElement | null);
+        const fallbackMediaEl =
+          (resolvedOverlayTarget?.matches?.("[data-fallback-media='true']")
+            ? resolvedOverlayTarget
+            : null) ||
+          (target?.closest?.(
+            "[data-fallback-media='true']",
+          ) as HTMLElement | null);
         const directSectionEl =
           (resolvedOverlayTarget?.matches?.('[data-preview-section="true"]')
             ? resolvedOverlayTarget
@@ -1639,13 +1679,18 @@ const FrontendTemplateIframePreview = React.memo(
             '[data-preview-section="true"]',
           ) as HTMLElement | null);
         const resolvedSectionEl =
-          editableEl || imageEl
-            ? ((editableEl || imageEl)?.closest(
+          editableEl || imageEl || fallbackMediaEl
+            ? ((editableEl || imageEl || fallbackMediaEl)?.closest(
                 '[data-preview-section="true"]',
               ) as HTMLElement | null)
             : directSectionEl || activeSectionRef.current;
+        const shouldPreferImageSelection =
+          !!imageEl &&
+          (!editableEl ||
+            editableEl === imageEl ||
+            editableEl.contains(imageEl));
 
-        if (!editableEl && !imageEl && !resolvedSectionEl) {
+        if (!editableEl && !imageEl && !fallbackMediaEl && !resolvedSectionEl) {
           onPreviewContextMenuRef.current?.(null);
           return;
         }
@@ -1714,11 +1759,19 @@ const FrontendTemplateIframePreview = React.memo(
         const sectionSelection = resolvedSectionEl
           ? applySectionSelection(resolvedSectionEl)
           : null;
-        const imageSelection = imageEl ? applyImageSelection(imageEl) : null;
-        const editableSelection = editableEl
-          ? applyEditableSelection(editableEl, { startEditing: false })
+        const imageSelection = shouldPreferImageSelection
+          ? applyImageSelection(imageEl)
           : null;
-        const layers = buildLayerItems(editableEl, imageEl, resolvedSectionEl);
+        const editableSelection = editableEl
+          ? shouldPreferImageSelection
+            ? null
+            : applyEditableSelection(editableEl, { startEditing: false })
+          : null;
+        const layers = buildLayerItems(
+          shouldPreferImageSelection ? null : editableEl,
+          imageEl,
+          resolvedSectionEl,
+        );
         const targetLayer = imageSelection
           ? layers.find(
               (layer) =>
@@ -1911,6 +1964,313 @@ const FrontendTemplateIframePreview = React.memo(
     React.useEffect(() => {
       applyAskAIButtonStatusRef.current(askAIButtonStatus);
     }, [askAIButtonStatus]);
+
+    React.useEffect(() => {
+      const doc = iframeDocumentRef.current;
+      const root = mountNode;
+      const win = doc?.defaultView;
+
+      if (!doc || !root || !win) {
+        return undefined;
+      }
+
+      const fallbackSectionAttributes = [
+        "data-fallback-section",
+        "data-fallback-media",
+        "data-preview-section",
+        "data-preview-block-id",
+        "data-preview-style-key",
+        "data-preview-label",
+      ];
+      const textLikeTags = new Set([
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "p",
+        "span",
+        "small",
+        "strong",
+        "em",
+        "label",
+        "a",
+        "button",
+        "li",
+        "dt",
+        "dd",
+        "blockquote",
+        "figcaption",
+      ]);
+      const containerLikeTags = new Set([
+        "section",
+        "article",
+        "aside",
+        "nav",
+        "footer",
+        "header",
+        "main",
+        "div",
+      ]);
+      const meaningfulContainerClasses = [
+        "MuiCard-root",
+        "MuiPaper-root",
+        "MuiChip-root",
+        "MuiButtonBase-root",
+        "MuiAvatar-root",
+        "MuiListItem-root",
+      ];
+
+      const humanizeTagName = (tagName: string) => {
+        switch (tagName) {
+          case "a":
+            return "Link";
+          case "button":
+            return "Button";
+          case "img":
+            return "Image";
+          case "video":
+            return "Video";
+          case "svg":
+            return "Icon";
+          case "li":
+            return "List item";
+          case "nav":
+            return "Navigation";
+          case "footer":
+            return "Footer";
+          case "section":
+            return "Section";
+          case "article":
+            return "Card";
+          default:
+            return tagName.charAt(0).toUpperCase() + tagName.slice(1);
+        }
+      };
+
+      const isMeaningfullyVisible = (element: HTMLElement) => {
+        const computed = win.getComputedStyle(element);
+        if (
+          computed.display === "none" ||
+          computed.visibility === "hidden" ||
+          computed.opacity === "0"
+        ) {
+          return false;
+        }
+
+        const rect = element.getBoundingClientRect();
+        const hasArea = rect.width > 6 && rect.height > 6;
+        const hasText = (element.textContent || "").trim().length > 0;
+        return hasArea || hasText;
+      };
+
+      const getContext = (
+        element: HTMLElement,
+        fallbackContext: {
+          blockId: string;
+          styleKey: string;
+          sectionLabel: string;
+        } | null,
+      ) => {
+        const contextNode = element.closest(
+          "[data-block-id], [data-preview-block-id]",
+        ) as HTMLElement | null;
+        const blockId =
+          contextNode?.getAttribute("data-block-id") ||
+          contextNode?.getAttribute("data-preview-block-id") ||
+          fallbackContext?.blockId;
+        if (!blockId) {
+          return null;
+        }
+
+        const sectionNode = element.closest(
+          '[data-preview-section="true"]',
+        ) as HTMLElement | null;
+
+        return {
+          blockId,
+          styleKey:
+            sectionNode?.getAttribute("data-preview-style-key") ||
+            fallbackContext?.styleKey ||
+            "sectionStyle",
+          sectionLabel:
+            sectionNode?.getAttribute("data-preview-label") ||
+            fallbackContext?.sectionLabel ||
+            "Section",
+        };
+      };
+
+      const clearFallbackMetadata = () => {
+        Array.from(
+          root.querySelectorAll<HTMLElement>("[data-fallback-section='true']"),
+        ).forEach((element) => {
+          fallbackSectionAttributes.forEach((attribute) =>
+            element.removeAttribute(attribute),
+          );
+        });
+      };
+
+      const annotateFallbackMetadata = () => {
+        clearFallbackMetadata();
+
+        let lastContext: {
+          blockId: string;
+          styleKey: string;
+          sectionLabel: string;
+        } | null = null;
+
+        Array.from(root.querySelectorAll<HTMLElement>("*")).forEach(
+          (element) => {
+            if (
+              element.id === "preview-root" ||
+              element.classList.contains("tt-selection-overlay") ||
+              element.closest(".tt-selection-overlay")
+            ) {
+              return;
+            }
+
+            const tagName = element.tagName.toLowerCase();
+            if (
+              [
+                "html",
+                "head",
+                "body",
+                "style",
+                "script",
+                "path",
+                "circle",
+                "rect",
+                "line",
+                "g",
+                "defs",
+                "clipPath",
+              ].includes(tagName)
+            ) {
+              return;
+            }
+
+            if (!isMeaningfullyVisible(element)) {
+              return;
+            }
+
+            const context = getContext(element, lastContext);
+            if (!context) {
+              return;
+            }
+            lastContext = context;
+
+            const hasExplicitEditable = element.hasAttribute("data-editable");
+            const hasExplicitImage = element.hasAttribute("data-edit-image");
+            const hasExplicitSection = element.getAttribute(
+              "data-preview-section",
+            ) === "true";
+
+            const textContent = (element.textContent || "").trim();
+            const containsDirectText =
+              Array.from(element.childNodes).some(
+                (node) =>
+                  node.nodeType === Node.TEXT_NODE &&
+                  (node.textContent || "").trim().length > 0,
+              ) || textContent.length > 0;
+            const isMediaTag =
+              tagName === "img" || tagName === "video" || tagName === "svg";
+            const hasMeaningfulClass = meaningfulContainerClasses.some((name) =>
+              element.classList.contains(name),
+            );
+            const isContainerLike =
+              containerLikeTags.has(tagName) ||
+              hasMeaningfulClass ||
+              element.getAttribute("role") === "button";
+
+            if (!hasExplicitSection && isContainerLike) {
+              const rect = element.getBoundingClientRect();
+              if (
+                rect.width > 32 &&
+                rect.height > 24 &&
+                (element.children.length > 0 ||
+                  !!element.getAttribute("aria-label") ||
+                  textContent.length > 0)
+              ) {
+                element.setAttribute("data-fallback-section", "true");
+                element.setAttribute("data-preview-section", "true");
+                element.setAttribute("data-preview-block-id", context.blockId);
+                element.setAttribute(
+                  "data-preview-style-key",
+                  context.styleKey,
+                );
+                element.setAttribute(
+                  "data-preview-label",
+                  element.getAttribute("aria-label") ||
+                    humanizeTagName(tagName),
+                );
+              }
+            }
+
+            if (hasExplicitEditable || hasExplicitImage) {
+              return;
+            }
+
+            if (
+              !hasExplicitSection &&
+              (isMediaTag || textLikeTags.has(tagName) || containsDirectText)
+            ) {
+              element.setAttribute("data-fallback-section", "true");
+              if (isMediaTag) {
+                element.setAttribute("data-fallback-media", "true");
+              }
+              element.setAttribute("data-preview-section", "true");
+              element.setAttribute("data-preview-block-id", context.blockId);
+              element.setAttribute(
+                "data-preview-style-key",
+                context.styleKey,
+              );
+              element.setAttribute(
+                "data-preview-label",
+                element.getAttribute("aria-label") ||
+                  element.getAttribute("alt") ||
+                  humanizeTagName(tagName),
+              );
+            }
+          },
+        );
+
+        if (import.meta.env.DEV) {
+          const fallbackSectionCount = root.querySelectorAll(
+            "[data-fallback-section='true']",
+          ).length;
+
+          if (fallbackSectionCount > 0) {
+            console.warn(
+              `[Template Editability] ${templateId} rendered ${fallbackSectionCount} fallback selectable nodes. Replace them with explicit editable primitives and backend-safe schema mapping.`,
+            );
+          }
+        }
+      };
+
+      let frame: number | null = win.requestAnimationFrame(
+        annotateFallbackMetadata,
+      );
+      const observer = new MutationObserver(() => {
+        if (frame !== null) {
+          win.cancelAnimationFrame(frame);
+        }
+        frame = win.requestAnimationFrame(annotateFallbackMetadata);
+      });
+
+      observer.observe(root, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+
+      return () => {
+        if (frame !== null) {
+          win.cancelAnimationFrame(frame);
+        }
+        observer.disconnect();
+      };
+    }, [mountNode, data, templateId]);
 
     React.useEffect(() => {
       const doc = iframeDocumentRef.current;

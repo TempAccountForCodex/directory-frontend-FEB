@@ -30,9 +30,16 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useDropzone } from "react-dropzone";
 import type { FileRejection } from "react-dropzone";
+import { useParams } from "react-router-dom";
 import { apiClient } from "../../../api/client";
 import { registerFieldComponent } from "../registry";
 import { FieldType } from "../types";
+import {
+  getMediaLimitSummary,
+  IMAGE_DROPZONE_ACCEPT,
+  MEDIA_UPLOAD_LIMITS,
+  validateWebsiteMediaUpload,
+} from "../../../utils/mediaUploadLimits";
 
 /* ------------------------------------------------------------------ */
 /* Props interface                                                     */
@@ -61,7 +68,7 @@ export interface ImageUploadProps {
 /* Default constants                                                   */
 /* ------------------------------------------------------------------ */
 
-const DEFAULT_MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+const DEFAULT_MAX_SIZE = MEDIA_UPLOAD_LIMITS.imageMaxBytes;
 const OPEN_MEDIA_LIBRARY_EVENT = "editor:open-media-library";
 
 /* ------------------------------------------------------------------ */
@@ -79,6 +86,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
     label,
     isLoading = false,
   }) => {
+    const { websiteId } = useParams();
     const uid = useId();
     const errorId = `${uid}-error`;
     const [uploadProgress, setUploadProgress] = useState<number | undefined>(
@@ -116,7 +124,9 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
           if (rejection.errors[0]?.code === "file-too-large") {
             setLocalError(`File too large (max ${maxSizeMB}MB)`);
           } else if (rejection.errors[0]?.code === "file-invalid-type") {
-            setLocalError("Invalid file type. Use JPEG, PNG, GIF, or WebP");
+            setLocalError(
+              "Invalid file type. Use JPG, JPEG, PNG, WEBP, GIF, or SVG",
+            );
           } else {
             setLocalError(
               "File rejected: " +
@@ -128,6 +138,15 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
 
         if (acceptedFiles.length === 0) return;
         const file = acceptedFiles[0];
+        const validation = await validateWebsiteMediaUpload({
+          file,
+          websiteId,
+          allowedMediaType: "image",
+        });
+        if (!validation.ok) {
+          setLocalError(validation.message);
+          return;
+        }
 
         // Show instant data URL preview before server upload completes
         const reader = new FileReader();
@@ -147,6 +166,9 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
 
         const formData = new FormData();
         formData.append("image", file);
+        if (websiteId) {
+          formData.append("websiteId", String(websiteId));
+        }
 
         try {
           const response = await apiClient.post("/upload/image", formData, {
@@ -159,19 +181,25 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
           onChange(response.data.url as string); // replace data URL with server URL
           setUploadProgress(undefined);
           setIsUploading(false);
-        } catch {
+        } catch (uploadError: any) {
+          if (uploadError?.response?.data?.message) {
+            setLocalError(uploadError.response.data.message);
+          }
           setLocalError("Upload failed — please try again");
+          if (uploadError?.response?.data?.message) {
+            setLocalError(uploadError.response.data.message);
+          }
           onChange(null); // clear temporary data URL
           setUploadProgress(undefined);
           setIsUploading(false);
         }
       },
-      [onChange, maxSizeMB],
+      [maxSizeMB, onChange, websiteId],
     );
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       onDrop,
-      accept: { "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"] },
+      accept: IMAGE_DROPZONE_ACCEPT,
       maxSize: maxSizeBytes,
       disabled: disabled || isUploading || isLoading,
       multiple: false,
@@ -301,7 +329,7 @@ const ImageUpload: React.FC<ImageUploadProps> = React.memo(
                 : "Drag & drop an image or click to choose"}
             </Typography>
             <Typography variant="caption" sx={{ color: "text.primary" }}>
-              JPEG, PNG, GIF, WebP &mdash; max {maxSizeMB}MB
+              {getMediaLimitSummary("image")}
             </Typography>
 
             {/* ----- Loading state: progress bar ----- */}

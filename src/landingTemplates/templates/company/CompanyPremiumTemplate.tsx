@@ -905,7 +905,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 />
                 <Button
                   variant="contained"
-                  data-editable="buttonText"
+                  data-editable="buttonLabel"
                   data-edit-type="single"
                   data-block-id={contactBlockId}
                   sx={{
@@ -918,7 +918,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontSize: "0.76rem",
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
-                    ...(contactContent.buttonTextStyle || {}),
+                    ...(contactContent.buttonTextStyle ||
+                      contactContent.ctaTextStyle ||
+                      {}),
                     "&:hover": {
                       bgcolor: "#111",
                       boxShadow: "none",

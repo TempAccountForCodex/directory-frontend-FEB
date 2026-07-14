@@ -561,7 +561,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                 />
                 <Button
                   variant="contained"
-                  data-editable="buttonText"
+                  data-editable="buttonLabel"
                   data-edit-type="single"
                   data-block-id={contactBlockId}
                   sx={{
@@ -575,7 +575,9 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontWeight: 700,
                     textTransform: "none",
                     boxShadow: "none",
-                    ...(contactContent.buttonTextStyle || {}),
+                    ...(contactContent.buttonTextStyle ||
+                      contactContent.ctaTextStyle ||
+                      {}),
                     "&:hover": {
                       bgcolor: "#6f6f6f",
                       boxShadow: "none",

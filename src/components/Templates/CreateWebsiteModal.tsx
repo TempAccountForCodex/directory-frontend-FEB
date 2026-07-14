@@ -174,6 +174,33 @@ const getModalColors = (mode: "light" | "dark") =>
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const HERO_SUBHEADING_MAX_LENGTH = 160;
+
+const clampText = (value: unknown, maxLength: number) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+  return trimmed.slice(0, maxLength).trimEnd();
+};
+
+const normalizeCreationBlockContent = (
+  blockType: string,
+  content: Record<string, unknown>,
+) => {
+  if (blockType !== "HERO") {
+    return content;
+  }
+
+  return {
+    ...content,
+    subheading: clampText(
+      content.subheading,
+      HERO_SUBHEADING_MAX_LENGTH,
+    ),
+  };
+};
 
 /** Slugify a name for subdomain use */
 function slugify(name: string): string {
@@ -216,7 +243,10 @@ const serializeTemplatePagesForCreation = (pages: TemplateEditorPage[]) =>
       .map((block, blockIndex) => ({
         blockType: block.blockType,
         type: block.blockType,
-        content: block.content || {},
+        content: normalizeCreationBlockContent(
+          block.blockType,
+          (block.content || {}) as Record<string, unknown>,
+        ),
         sortOrder: block.sortOrder ?? blockIndex,
         isVisible: block.isVisible ?? true,
       })),

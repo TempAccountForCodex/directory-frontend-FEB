@@ -28,6 +28,7 @@ import {
   EditableButton,
   EditableCard,
   EditableImage,
+  EditableBox,
   EditorExtraBlocks,
 } from "../../utils/editableComponents";
 
@@ -651,7 +652,93 @@ const EducationTemplate: React.FC<TemplateProps> = ({ data }) => {
           bgcolor: "#ffffff",
           ...getSectionStyleSx(galleryContent),
         }}
-      ></EditableSection>
+      >
+        <Container maxWidth="lg">
+          <FadeIn>
+            <EditableText
+              field="sectionLabel"
+              sx={{
+                textAlign: "center",
+                color: theme.primaryColor,
+                fontWeight: 800,
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                fontSize: "0.78rem",
+              }}
+            >
+              {(galleryContent.sectionLabel as string) || "Campus Moments"}
+            </EditableText>
+            <EditableText
+              field="heading"
+              kind="multi"
+              sx={{
+                textAlign: "center",
+                mt: 1.5,
+                color: "#10244c",
+                fontWeight: 900,
+                fontSize: { xs: "2rem", md: "3rem" },
+              }}
+            >
+              {(galleryContent.heading as string) ||
+                "A learning space designed for focus, energy, and belonging."}
+            </EditableText>
+          </FadeIn>
+
+          <Grid container spacing={2.4} sx={{ mt: 3 }}>
+            {galleryItems.slice(0, 5).map((item, index) => (
+              <Grid
+                item
+                xs={12}
+                sm={index === 0 ? 12 : 6}
+                md={index === 0 ? 6 : 3}
+                key={index}
+              >
+                <FadeIn delay={index * 0.06}>
+                  <EditableCard
+                    elevation={0}
+                    field={`items.${index}`}
+                    label={`Gallery item ${index + 1}`}
+                    sx={{
+                      height: "100%",
+                      borderRadius: 4,
+                      border: "1px solid rgba(31,72,152,0.08)",
+                      overflow: "hidden",
+                      bgcolor: "#f7fbff",
+                    }}
+                  >
+                    <EditableImage
+                      field={`items.${index}.url`}
+                      label={`Gallery image ${index + 1}`}
+                      src={String(item.url || heroImage || "")}
+                      alt={String(item.caption || `Campus image ${index + 1}`)}
+                      sx={{
+                        width: "100%",
+                        height: index === 0 ? { xs: 260, md: 360 } : 220,
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                    {(item.caption as string) && (
+                      <EditableBox
+                        field={`items.${index}.caption`}
+                        sx={{
+                          px: 2,
+                          py: 1.5,
+                          color: "#4d5d79",
+                          fontSize: "0.95rem",
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {(item.caption as string) || ""}
+                      </EditableBox>
+                    )}
+                  </EditableCard>
+                </FadeIn>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </EditableSection>
 
       <EditableSection
         id="reviews"

@@ -7,8 +7,10 @@
  *
  *   2. Replace Typography with <EditableText field="fieldPath" kind="multi|single">.
  *   3. Replace Button    with <EditableButton field="fieldPath">.
- *   4. Replace Card      with <EditableCard field="features.N" label="Item label">.
- *   5. Replace img Box   with <EditableImage field="fieldPath" label="Image label">.
+ *   4. Replace generic tags (a/li/span/div) with <EditableBox field="fieldPath">.
+ *   5. Replace outer containers with <EditableContainer field="items.N" label="Item label">.
+ *   6. Replace Card      with <EditableCard field="features.N" label="Item label">.
+ *   7. Replace img Box   with <EditableImage field="fieldPath" label="Image label">.
  *
  * All components forward every MUI / HTML prop to their underlying element,
  * so styling, variants, onClick handlers, etc. are unaffected.
@@ -105,6 +107,30 @@ export function EditableText({
   );
 }
 
+interface EditableBoxProps extends BoxProps {
+  /** Dot-notation field path, e.g. "links.0.label", "stats.0.value". */
+  field: string;
+  kind?: EditableTextKind;
+}
+
+/**
+ * Generic editable wrapper for text-bearing non-Typography elements such as
+ * links, list items, pills, badges, chips, counters, and nav/footer labels.
+ */
+export function EditableBox({
+  field,
+  kind = "single",
+  children,
+  ...rest
+}: EditableBoxProps) {
+  const blockId = useEditableBlockId();
+  return (
+    <Box {...getEditableTextProps(blockId, field, kind)} {...rest}>
+      {children}
+    </Box>
+  );
+}
+
 /* ── EditableButton ───────────────────────────────────────────────────────── */
 
 interface EditableButtonProps extends ButtonProps {
@@ -127,6 +153,25 @@ export function EditableButton({
     <Button {...getEditableTextProps(blockId, field, kind)} {...rest}>
       {children}
     </Button>
+  );
+}
+
+interface EditableLinkProps extends BoxProps {
+  field: string;
+  kind?: EditableTextKind;
+}
+
+/** Convenience wrapper for editable anchors / nav items / footer links. */
+export function EditableLink({
+  field,
+  kind = "single",
+  children,
+  ...rest
+}: EditableLinkProps) {
+  return (
+    <EditableBox field={field} kind={kind} component="a" {...rest}>
+      {children}
+    </EditableBox>
   );
 }
 
@@ -156,7 +201,150 @@ export function EditableImage({ field, label, src, alt, ...rest }: EditableImage
   );
 }
 
+/* ── renderEditableMedia ──────────────────────────────────────────────────── */
+
+interface EditableMediaStyle {
+  mediaType?: string;
+  videoUrl?: string;
+  videoPoster?: string;
+  videoAutoplay?: boolean;
+  videoMuted?: boolean;
+  videoLoop?: boolean;
+  videoControls?: boolean;
+  [key: string]: any;
+}
+
+interface RenderEditableMediaArgs {
+  blockId: string | number | undefined;
+  /** data-edit-image field path (e.g. "image"). Keeps double-click editing. */
+  field: string;
+  label?: string;
+  /** Image source used when mediaType is not "video". */
+  src?: string;
+  alt?: string;
+  /** The image/media style object (content[`${field}Style`]). */
+  style?: EditableMediaStyle;
+  /** sx applied to whichever element renders. */
+  sx?: any;
+  /**
+   * Component to use for the IMAGE render (default "img"). Pass `motion.img`
+   * to preserve a template's entrance/scroll animation on the image.
+   */
+  imageComponent?: React.ElementType;
+  /** Extra props for the image element (e.g. motion initial/animate/style). */
+  imageProps?: Record<string, any>;
+  /** Component to use for the VIDEO render (default "video", e.g. motion.video). */
+  videoComponent?: React.ElementType;
+  /** Extra props for the video element. */
+  videoProps?: Record<string, any>;
+}
+
+/**
+ * Renders either an <img> or a <video> for an editable media field, based on
+ * `style.mediaType`. Backward compatible: a missing/"image" mediaType (or a
+ * video mediaType with no videoUrl) renders the <img>, so existing image blocks
+ * keep working. Video attributes come from the style object so the same block
+ * can switch between image and video. Keeps the data-edit-image attributes so
+ * double-clicking still opens the media editor for this field.
+ *
+ * `imageComponent`/`imageProps` let callers keep animated images (e.g.
+ * `motion.img` with initial/animate/scroll `style`) — the image path is
+ * untouched for existing blocks, and only the video path swaps in a <video>.
+ */
+export function renderEditableMedia({
+  blockId,
+  field,
+  label,
+  src,
+  alt,
+  style,
+  sx,
+  imageComponent = "img",
+  imageProps = {},
+  videoComponent = "video",
+  videoProps = {},
+}: RenderEditableMediaArgs) {
+  const s = (style || {}) as EditableMediaStyle;
+  const videoUrl = typeof s.videoUrl === "string" ? s.videoUrl.trim() : "";
+  const isVideo = s.mediaType === "video" && videoUrl.length > 0;
+
+  const editAttrs = {
+    className: "tt-preview-image-node",
+    "data-edit-image": field,
+    ...(label ? { "data-image-label": label } : {}),
+    "data-block-id": blockId,
+  };
+
+  if (isVideo) {
+    return (
+      <Box
+        component={videoComponent}
+        src={videoUrl}
+        poster={s.videoPoster || undefined}
+        autoPlay={Boolean(s.videoAutoplay)}
+        muted={s.videoMuted !== false}
+        loop={Boolean(s.videoLoop)}
+        controls={s.videoControls !== false}
+        playsInline
+        {...videoProps}
+        {...editAttrs}
+        sx={sx}
+      />
+    );
+  }
+
+  return (
+    <Box
+      component={imageComponent}
+      src={src}
+      alt={alt}
+      {...imageProps}
+      {...editAttrs}
+      sx={sx}
+    />
+  );
+}
+
 /* ── EditableCard ─────────────────────────────────────────────────────────── */
+
+interface EditableContainerProps extends BoxProps {
+  field: string;
+  label: string;
+  selectionSuffix?: "__card" | "__container";
+  styleKey?: string;
+}
+
+/**
+ * Generic compound-selection container:
+ * - clicking empty space selects the outer container
+ * - clicking inner editable text/image selects that specific child
+ */
+export function EditableContainer({
+  field,
+  label,
+  selectionSuffix = "__container",
+  styleKey = "cardStyle",
+  children,
+  ...rest
+}: EditableContainerProps) {
+  const blockId = useEditableBlockId();
+  const containerPath = field.endsWith(`.${selectionSuffix}`)
+    ? field
+    : `${field}.${selectionSuffix}`;
+
+  return (
+    <Box
+      {...getEditableTextProps(blockId, containerPath, "single")}
+      data-preview-section="true"
+      data-preview-label={label}
+      data-preview-block-id={blockId}
+      data-preview-style-key={styleKey}
+      {...rest}
+    >
+      {children}
+    </Box>
+  );
+}
 
 interface EditableCardProps extends CardProps {
   /**
@@ -177,18 +365,16 @@ interface EditableCardProps extends CardProps {
  * Reads blockId from the nearest EditableSection context.
  */
 export function EditableCard({ field, label, children, ...rest }: EditableCardProps) {
-  const blockId = useEditableBlockId();
-  const cardPath = field.endsWith(".__card") ? field : `${field}.__card`;
   return (
-    <Card
-      {...getEditableTextProps(blockId, cardPath, "single")}
-      data-preview-section="true"
-      data-preview-label={label}
-      data-preview-block-id={blockId}
+    <EditableContainer
+      component={Card}
+      field={field}
+      label={label}
+      selectionSuffix="__card"
       {...rest}
     >
       {children}
-    </Card>
+    </EditableContainer>
   );
 }
 
