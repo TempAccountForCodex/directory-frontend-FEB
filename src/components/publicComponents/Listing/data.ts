@@ -131,7 +131,7 @@ export const data: PropertyItem[] = [
     city: "Brishtol",
     priceRange: "Moderate",
     accountingAndTaxService: ["Accountants"],
-    areas: ["Austin", "Baltimore"],
+    areas: ["Houston", "Baltimore"],
     slug: "newyork-apr-2024-good-roi",
     businessLogo: "https://www.logodee.com/wp-content/uploads/2021/10/28.jpg",
     businesslogoAvatar: "",

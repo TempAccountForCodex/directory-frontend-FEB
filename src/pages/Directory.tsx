@@ -15,7 +15,7 @@ const DUMMY_LISTINGS: DirectoryListing[] = [
     businessName: "Stellar Design Co.",
     businessCategory: "Design Studio",
     shortDescription: "Branding and web design for early-stage startups.",
-    city: "Austin",
+    city: "Houston",
     region: "TX",
     country: "USA",
     priceLevel: "$$",
@@ -115,7 +115,7 @@ const DUMMY_LISTINGS: DirectoryListing[] = [
 
 const DUMMY_META: DirectoryMeta = {
   locations: [
-    { country: "USA", city: "Austin", count: 1 },
+    { country: "USA", city: "Houston", count: 1 },
     { country: "USA", city: "Chicago", count: 1 },
     { country: "Canada", city: "Toronto", count: 1 },
     { country: "UK", city: "London", count: 1 },

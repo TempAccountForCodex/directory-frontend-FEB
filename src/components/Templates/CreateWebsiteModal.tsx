@@ -1242,11 +1242,16 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         {subdomainIcon}
                         <Typography
                           variant="caption"
-                          sx={{ color: modalColors.textMuted, whiteSpace: "nowrap" }}
+                          sx={{
+                            color: modalColors.textMuted,
+                            whiteSpace: "nowrap",
+                          }}
                         >
                           .techietribe.app
                         </Typography>
@@ -1276,12 +1281,18 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                         setSubdomainStatus("idle");
                         checkSubdomain(suggestion);
                       }}
-                      sx={{ color: ACCENT_BRIGHT, borderColor: alpha(ACCENT, 0.4) }}
+                      sx={{
+                        color: ACCENT_BRIGHT,
+                        borderColor: alpha(ACCENT, 0.4),
+                      }}
                     />
                   ))}
                 </Stack>
               )}
-              <Typography variant="caption" sx={{ color: modalColors.textMuted }}>
+              <Typography
+                variant="caption"
+                sx={{ color: modalColors.textMuted }}
+              >
                 <Box component="span" sx={{ color: REQUIRED_COLOR }}>
                   *
                 </Box>{" "}
@@ -1320,7 +1331,9 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                     mb: 0.5,
                   }}
                 >
-                  <AutoAwesomeIcon sx={{ fontSize: 20, color: ACCENT_BRIGHT }} />
+                  <AutoAwesomeIcon
+                    sx={{ fontSize: 20, color: ACCENT_BRIGHT }}
+                  />
                   <Typography
                     variant="subtitle1"
                     sx={{ color: ACCENT_BRIGHT, fontWeight: 600 }}
@@ -1417,7 +1430,8 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                           .map((value) => value.trim())
                           .filter(
                             (value, index, allValues) =>
-                              value.length > 0 && allValues.indexOf(value) === index,
+                              value.length > 0 &&
+                              allValues.indexOf(value) === index,
                           );
                         setAiTargetAudience(normalizedValues);
                       }}
@@ -1521,7 +1535,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                   />
                   <DashboardInput
                     label="Location"
-                    placeholder="e.g. Austin, TX"
+                    placeholder="e.g. Houston, TX"
                     value={aiLocation}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setAiLocation(e.target.value)
@@ -1540,7 +1554,9 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                       rows={2}
                       placeholder="Any specific requests for the AI generation?"
                       value={aiInstructions}
-                      onChange={(event) => setAiInstructions(event.target.value)}
+                      onChange={(event) =>
+                        setAiInstructions(event.target.value)
+                      }
                       sx={{
                         "& .MuiInputBase-root": {
                           minHeight: 92,
@@ -1655,7 +1671,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
                   maxWidth: "none !important",
                   "& > *": {
                     maxWidth: "none !important",
-                    scale: 0.9
+                    scale: 0.9,
                   },
                 },
               }}

@@ -63,7 +63,7 @@ const FeaturedListing: React.FC = () => {
     {
       name: "Noventra Auto Care",
       category: "Automotive",
-      location: "Austin, USA",
+      location: "Houston, USA",
       description:
         "Trusted automotive repair and maintenance services with a focus on quality and reliability.",
     },

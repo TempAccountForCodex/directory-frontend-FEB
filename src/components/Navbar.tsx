@@ -32,7 +32,7 @@ const NAV_ACCENT_SOFT = "rgba(71,170,182,0.12)";
 const tabs = [
   { label: "Templates", path: "/templates" },
   { label: "Listings", path: "/listings" },
-  { label: "Blog", path: "/blog" },
+  // { label: "Blog", path: "/blog" },
   { label: "About", path: "/about" },
   { label: "Pricing", path: "/pricing" },
   { label: "Contact", path: "/contact" },

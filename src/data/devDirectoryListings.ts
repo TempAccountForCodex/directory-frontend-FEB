@@ -106,7 +106,7 @@ export const devDirectoryListingsResponse: DirectoryListingsResponse = {
       businessCategory: "IT and Technical Support",
       shortDescription:
         "Managed IT support, help desk coverage, cybersecurity monitoring, and cloud administration.",
-      city: "Austin",
+      city: "Houston",
       region: "TX",
       country: "USA",
       priceLevel: "$$$",

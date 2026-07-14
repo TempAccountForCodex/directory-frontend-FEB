@@ -22,7 +22,7 @@ const Shell = styled(Box)(({ theme }) => ({
   borderRadius: 18,
   padding: theme.spacing(7.5, 4.5),
   backgroundImage:
-    "url(https://prestige-solutions.com/wp-content/uploads/2024/06/Our-Work.png)",
+    "url(https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=2148&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)",
   backgroundPosition: "left",
   // background: `linear-gradient(180deg, ${SURFACE} 0%, ${SURFACE2} 100%)`,
   border: `1px solid ${BORDER}`,

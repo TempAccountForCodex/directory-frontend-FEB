@@ -48,7 +48,10 @@ const mockMetaResponse = {
   locations: {
     countries: ["USA", "Canada"],
     regions: { USA: ["California", "Texas"], Canada: ["Ontario", "BC"] },
-    cities: { California: ["Los Angeles", "San Francisco"], Texas: ["Austin"] },
+    cities: {
+      California: ["Los Angeles", "San Francisco"],
+      Texas: ["Houston"],
+    },
   },
   priceLevels: [
     { value: "$", label: "$" },
