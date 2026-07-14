@@ -8,11 +8,14 @@
  * The generated HTML includes a postMessage listener with origin validation.
  */
 
+import { API_URL } from "@/config/api";
+
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
 export interface PreviewWebsite {
+  id?: string | number;
   name: string;
   theme?: Record<string, unknown>;
   fonts?: Record<string, string>;
@@ -38,6 +41,7 @@ export interface PreviewBlock {
   content: Record<string, unknown>;
   order: number;
   designTokens?: Record<string, unknown>;
+  websiteId?: string | number;
 }
 
 /* ------------------------------------------------------------------ */
@@ -135,6 +139,17 @@ export function sanitizeUrl(url: unknown): string {
   return "";
 }
 
+function safeScriptJson(value: unknown): string {
+  return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
+}
+
+function getPreviewApiBase(): string {
+  if (API_URL.startsWith("/") && typeof window !== "undefined") {
+    return `${window.location.origin}${API_URL}`;
+  }
+  return API_URL;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Design Tokens → CSS Custom Properties                              */
 /* ------------------------------------------------------------------ */
@@ -216,27 +231,31 @@ function buildStyleAttr(
 /* ------------------------------------------------------------------ */
 
 function renderHeroBlock(content: Record<string, unknown>): string {
-  const title = escapeHtml(content.title);
-  const subtitle = escapeHtml(content.subtitle);
+  const title = escapeHtml(content.title || content.heading);
+  const subtitle = escapeHtml(content.subtitle || content.body || content.subheading);
   const buttonText = escapeHtml(content.buttonText);
-  const buttonUrl = sanitizeUrl(content.buttonUrl || "#");
+  const buttonUrl = sanitizeUrl(content.buttonUrl || content.buttonLink || "#");
   const titleStyle = buildStyleAttr(
     {
       margin: "0 0 16px",
       fontFamily: "var(--font-heading,sans-serif)",
-      fontSize: "2.5rem",
-      textAlign: "center",
+      fontSize: "3rem",
+      textAlign: "left",
     } as Record<string, string>,
-    content.titleStyle as Record<string, unknown> | undefined,
+    (content.titleStyle || content.headingStyle) as
+      | Record<string, unknown>
+      | undefined,
   );
   const subtitleStyle = buildStyleAttr(
     {
       margin: "0 0 24px",
       fontSize: "1.2rem",
       opacity: "0.9",
-      textAlign: "center",
+      textAlign: "left",
     } as Record<string, string>,
-    content.subtitleStyle as Record<string, unknown> | undefined,
+    (content.subtitleStyle || content.bodyStyle) as
+      | Record<string, unknown>
+      | undefined,
   );
   const buttonTextStyle = buildStyleAttr(
     {
@@ -252,10 +271,12 @@ function renderHeroBlock(content: Record<string, unknown>): string {
   );
 
   return `
-    <section style="padding:60px 20px;text-align:center;background:var(--color-primary,#378C92);color:#fff;">
-      ${title ? `<h1 data-editable="title" data-edit-type="single" style="${titleStyle}">${title}</h1>` : ""}
-      ${subtitle ? `<p data-editable="subtitle" data-edit-type="single" style="${subtitleStyle}">${subtitle}</p>` : ""}
+    <section style="min-height:520px;padding:80px 20px;background:var(--color-primary,#378C92);color:#fff;display:flex;align-items:center;">
+      <div style="width:100%;max-width:1100px;margin:0 auto;">
+      ${title ? `<h1 data-editable="heading" data-edit-type="single" style="${titleStyle}">${title}</h1>` : ""}
+      ${subtitle ? `<p data-editable="body" data-edit-type="single" style="${subtitleStyle}">${subtitle}</p>` : ""}
       ${buttonText ? `<a data-editable="buttonText" data-edit-type="single" href="${buttonUrl}" style="${buttonTextStyle}">${buttonText}</a>` : ""}
+      </div>
     </section>`;
 }
 
@@ -373,6 +394,194 @@ function renderContactBlock(content: Record<string, unknown>): string {
       <div style="max-width:500px;margin:0 auto;padding:20px;border:1px solid #ddd;border-radius:8px;color:#999;">
         Contact form placeholder
       </div>
+    </section>`;
+}
+
+function renderBlogFeedBlock(block: PreviewBlock): string {
+  const content = block.content || {};
+  const blockId = escapeHtml(block.id);
+  const websiteId = block.websiteId || content._websiteId || content.websiteId;
+  const heading = escapeHtml(content.heading || "From our blog");
+  const subheading = escapeHtml(
+    content.subheading || "News, stories, and updates from our team.",
+  );
+  const emptyMessage = escapeHtml(
+    content.emptyMessage ||
+      "No published blog posts yet. Create and publish posts from the Blog tab.",
+  );
+  const postsPerPage = Number(content.postsPerPage || 9);
+  const sortBy = String(content.sortBy || "publishedAt");
+  const sortOrder = String(content.sortOrder || "desc");
+  const showSearch = content.showSearch !== false;
+  const showCategories = content.showCategories !== false;
+  const showImage = content.showImage !== false;
+  const showAuthor = content.showAuthor !== false;
+  const showDate = content.showDate !== false;
+  const showExcerpt = content.showExcerpt !== false;
+  const readMoreText = escapeHtml(content.readMoreText || "Read More");
+
+  const apiBase = getPreviewApiBase();
+  const rootId = `blog-feed-preview-${blockId}`;
+  const listId = `${rootId}-list`;
+  const stateId = `${rootId}-state`;
+  const categoryId = `${rootId}-categories`;
+  const searchId = `${rootId}-search`;
+
+  return `
+    <section style="padding:72px 20px;background:#fff;color:#252525;">
+      <div style="max-width:1100px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:32px;">
+          <h2 data-editable="heading" data-edit-type="single" style="margin:0 0 10px;font-family:var(--font-heading,sans-serif);font-size:2rem;line-height:1.2;">${heading}</h2>
+          ${subheading ? `<p data-editable="subheading" data-edit-type="single" style="margin:0;color:#6A6F78;font-size:1rem;">${subheading}</p>` : ""}
+        </div>
+        ${showSearch ? `<div style="max-width:520px;margin:0 auto 18px;"><input id="${searchId}" placeholder="Search articles..." style="box-sizing:border-box;width:100%;padding:12px 14px;border:1px solid #d5d7dc;border-radius:4px;font-size:0.95rem;" /></div>` : ""}
+        ${showCategories ? `<div id="${categoryId}" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:26px;"></div>` : ""}
+        <div id="${stateId}" style="text-align:center;color:#6A6F78;padding:12px;">Loading blog posts...</div>
+        <div id="${listId}" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,360px));justify-content:start;gap:24px;"></div>
+      </div>
+      <script>
+      (function() {
+        var websiteId = ${safeScriptJson(websiteId ? String(websiteId) : "")};
+        var apiBase = ${safeScriptJson(apiBase)};
+        var list = document.getElementById(${safeScriptJson(listId)});
+        var state = document.getElementById(${safeScriptJson(stateId)});
+        var categoriesEl = document.getElementById(${safeScriptJson(categoryId)});
+        var searchInput = document.getElementById(${safeScriptJson(searchId)});
+        var allPosts = [];
+        var selectedCategory = "";
+        var showImage = ${safeScriptJson(showImage)};
+        var showAuthor = ${safeScriptJson(showAuthor)};
+        var showDate = ${safeScriptJson(showDate)};
+        var showExcerpt = ${safeScriptJson(showExcerpt)};
+
+        function setState(message) {
+          if (state) state.textContent = message || "";
+        }
+
+        function formatDate(value) {
+          if (!value) return "";
+          try {
+            return new Date(value).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric"
+            });
+          } catch (error) {
+            return "";
+          }
+        }
+
+        function makeText(tag, text, style) {
+          var el = document.createElement(tag);
+          el.textContent = text || "";
+          if (style) el.setAttribute("style", style);
+          return el;
+        }
+
+        function renderPosts() {
+          if (!list) return;
+          var query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+          var posts = allPosts.filter(function(post) {
+            var matchesQuery = !query ||
+              String(post.title || "").toLowerCase().indexOf(query) !== -1 ||
+              String(post.excerpt || post.description || "").toLowerCase().indexOf(query) !== -1;
+            var matchesCategory = !selectedCategory || post.category === selectedCategory;
+            return matchesQuery && matchesCategory;
+          });
+          list.innerHTML = "";
+          if (!posts.length) {
+            setState(${safeScriptJson(emptyMessage)});
+            return;
+          }
+          setState("");
+          posts.forEach(function(post) {
+            var card = document.createElement("article");
+            card.setAttribute("style", "border:1px solid #e5e7eb;border-radius:4px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,0.08);");
+
+            if (showImage) {
+              var imageWrap = document.createElement("div");
+              imageWrap.setAttribute("style", "height:180px;background:#f1f1f1;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.85rem;");
+              if (post.image) {
+                var image = document.createElement("img");
+                image.src = post.image;
+                image.alt = post.title || "";
+                image.setAttribute("style", "width:100%;height:100%;object-fit:cover;display:block;");
+                imageWrap.appendChild(image);
+              } else {
+                imageWrap.textContent = "No image";
+              }
+              card.appendChild(imageWrap);
+            }
+
+            var body = document.createElement("div");
+            body.setAttribute("style", "padding:18px;");
+            if (post.category) {
+              body.appendChild(makeText("div", post.category, "display:inline-block;margin-bottom:10px;padding:4px 9px;border-radius:999px;background:rgba(55,140,146,0.1);color:var(--color-primary,#378C92);font-size:0.75rem;font-weight:600;"));
+            }
+            body.appendChild(makeText("h3", post.title || "Untitled post", "margin:0 0 8px;font-size:1.15rem;line-height:1.3;color:#252525;"));
+            if (showAuthor || showDate) {
+              var meta = [showAuthor && post.author && post.author.displayName ? post.author.displayName : "", showDate ? formatDate(post.publishedAt || post.updatedAt) : ""].filter(Boolean).join("  ·  ");
+              if (meta) body.appendChild(makeText("div", meta, "margin-bottom:12px;color:#6A6F78;font-size:0.82rem;"));
+            }
+            if (showExcerpt) {
+              body.appendChild(makeText("p", post.excerpt || post.description || "", "margin:0 0 16px;color:#6A6F78;line-height:1.6;font-size:0.92rem;"));
+            }
+            var link = document.createElement("a");
+            link.href = "/blog/" + encodeURIComponent(post.slug || "");
+            link.textContent = ${safeScriptJson(readMoreText)} + " →";
+            link.setAttribute("style", "color:var(--color-primary,#378C92);font-weight:700;text-decoration:none;font-size:0.9rem;");
+            body.appendChild(link);
+            card.appendChild(body);
+            list.appendChild(card);
+          });
+        }
+
+        function renderCategories(categories) {
+          if (!categoriesEl || !Array.isArray(categories)) return;
+          categoriesEl.innerHTML = "";
+          categories.forEach(function(category) {
+            var button = document.createElement("button");
+            button.type = "button";
+            button.textContent = category;
+            button.setAttribute("style", "border:1px solid rgba(55,140,146,0.55);background:#fff;color:var(--color-primary,#378C92);border-radius:999px;padding:6px 12px;cursor:pointer;");
+            button.addEventListener("click", function() {
+              selectedCategory = selectedCategory === category ? "" : category;
+              renderCategories(categories);
+              renderPosts();
+            });
+            if (selectedCategory === category) {
+              button.style.background = "var(--color-primary,#378C92)";
+              button.style.color = "#fff";
+            }
+            categoriesEl.appendChild(button);
+          });
+        }
+
+        if (!websiteId) {
+          setState(${safeScriptJson(emptyMessage)});
+          return;
+        }
+
+        if (searchInput) {
+          searchInput.addEventListener("input", renderPosts);
+        }
+
+        fetch(apiBase + "/websites/" + encodeURIComponent(websiteId) + "/blogs/public?page=1&limit=${Math.max(1, Math.min(postsPerPage, 24))}&sortBy=${escapeHtml(sortBy)}&sortOrder=${escapeHtml(sortOrder)}")
+          .then(function(response) { return response.ok ? response.json() : Promise.reject(response); })
+          .then(function(json) {
+            allPosts = Array.isArray(json.blogs) ? json.blogs : [];
+            renderPosts();
+          })
+          .catch(function() {
+            setState(${safeScriptJson(emptyMessage)});
+          });
+
+        fetch(apiBase + "/websites/" + encodeURIComponent(websiteId) + "/blogs/public/categories")
+          .then(function(response) { return response.ok ? response.json() : Promise.reject(response); })
+          .then(function(json) { renderCategories(json.categories || []); })
+          .catch(function() {});
+      })();
+      </script>
     </section>`;
 }
 
@@ -505,7 +714,8 @@ export function renderFooterBlock(content: Record<string, unknown>): string {
 
 /** Map a single block to its HTML representation based on blockType */
 function blockToHtml(block: PreviewBlock): string {
-  const { blockType, content, id } = block;
+  const { content, id } = block;
+  const blockType = String(block.blockType || "").toUpperCase();
   let inner: string;
 
   switch (blockType) {
@@ -532,6 +742,9 @@ function blockToHtml(block: PreviewBlock): string {
       break;
     case "FOOTER":
       inner = renderFooterBlock(content);
+      break;
+    case "BLOG_FEED":
+      inner = renderBlogFeedBlock(block);
       break;
     case "CUSTOM_CODE":
       // Render raw user code directly — <style> and <script> tags are preserved
@@ -892,11 +1105,15 @@ export function generateLivePreview(
 
   // Sort blocks by order
   const sorted = [...blocks].sort((a, b) => a.order - b.order);
+  const sortedWithWebsite = sorted.map((block) => ({
+    ...block,
+    websiteId: block.websiteId || website.id,
+  }));
 
   // Render blocks or empty placeholder
   const bodyContent =
-    sorted.length > 0
-      ? sorted.map((b) => blockToHtml(b)).join("\n")
+    sortedWithWebsite.length > 0
+      ? sortedWithWebsite.map((b) => blockToHtml(b)).join("\n")
       : `<div style="display:flex;align-items:center;justify-content:center;min-height:60vh;color:#999;font-size:1.1rem;">Add blocks to see a preview</div>`;
 
   // Global component injection (navbar before content, footer after)

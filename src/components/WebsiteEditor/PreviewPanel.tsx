@@ -2677,6 +2677,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
     const { blocks, websiteMeta } = previewCtx.currentPageContent;
     const website = {
+      id: previewCtx.currentPageContent.websiteId,
       name: websiteMeta?.name || "Preview",
       colors: websiteMeta?.colors,
       fonts: websiteMeta?.fonts,

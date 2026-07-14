@@ -45,6 +45,7 @@ import {
   getEditableTextProps,
 } from "../utils/editableProps";
 import { galleryFallbackImages } from "./assets/gallery/fallbackImages";
+import BlogFeedBlock from "../../components/PublicWebsite/dynamic/BlogFeedBlock";
 
 const hexToRgb = (hex: string) => {
   const normalized = hex.replace("#", "");
@@ -284,6 +285,7 @@ export const EDITOR_SHARED_BLOCK_TYPES = new Set([
   "countdown",
   "testimonials",
   "reviews",
+  "blog_feed",
   "stats",
   "logo_carousel",
   "map_location",
@@ -329,7 +331,7 @@ export const EDITOR_CARD_STYLE_BLOCK_TYPES = new Set([
 ]);
 
 export const getEditorBlockTransform = (block: Record<string, any>) => {
-  const blockType = String(block?.type || "text").toLowerCase();
+  const blockType = String(block?.type || block?.blockType || "text").toLowerCase();
 
   if (blockType === "heading") return block?.content?.headingStyle?.transform;
   if (blockType === "button") return block?.content?.buttonTextStyle?.transform;
@@ -2943,6 +2945,40 @@ export const renderEditorSharedBlock = ({
           </Stack>
         </Box>
       </Stack>
+    );
+  }
+
+  if (blockType === "blog_feed") {
+    return (
+      <Box
+        key={String(block.id || `${blockType}-${index}`)}
+        {...compoundBlockSelectionProps}
+        data-preview-label={compoundBlockLabel}
+        sx={{
+          ...compoundCardSx,
+          width: "100%",
+          p: 0,
+          overflow: "hidden",
+        }}
+      >
+        <BlogFeedBlock
+          block={{
+            id: Number(section.blockId || block.id || index),
+            blockType: "BLOG_FEED",
+            content: {
+              ...(block.content || {}),
+              emptyMessage:
+                block.content?.emptyMessage ||
+                "No published blog posts yet. Create and publish posts from the Blog tab.",
+            },
+            sortOrder: index,
+          }}
+          primaryColor={themeColor}
+          headingColor={textColor}
+          bodyColor={mutedTextColor}
+          websiteId={websiteId}
+        />
+      </Box>
     );
   }
 

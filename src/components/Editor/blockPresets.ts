@@ -173,6 +173,26 @@ export const getBlockDefaultContent = (
         ctaText: "Book a call",
         ctaLink: "#contact",
       };
+    case "BLOG_FEED":
+      return {
+        heading: "From our blog",
+        subheading: "News, stories, and updates from our team.",
+        layout: "grid",
+        columns: 3,
+        postsPerPage: 9,
+        showSearch: true,
+        showCategories: true,
+        showPagination: true,
+        showAuthor: true,
+        showDate: true,
+        showExcerpt: true,
+        showImage: true,
+        sortBy: "publishedAt",
+        sortOrder: "desc",
+        emptyMessage: "No articles yet — check back soon.",
+        readMoreText: "Read More",
+        readMoreLink: "/blog/{slug}",
+      };
     case "CONTACT":
     case "FORM_BUILDER":
       return {
