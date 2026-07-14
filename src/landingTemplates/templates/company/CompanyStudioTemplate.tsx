@@ -801,6 +801,19 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       fieldPath: `navLabels.${key}`,
     };
   });
+  const pageNavItems = Array.isArray(data.pages)
+    ? data.pages
+        .filter((page) => {
+          const path = String(page.path || "").trim();
+          return path && path !== "/" && !page.isHome && page.isPublished !== false;
+        })
+        .map((page) => ({
+          label: page.title || "Page",
+          id: `page-${String(page.id ?? page.path)}`,
+          target: page.path,
+        }))
+    : [];
+  const headerNavItems = [...navItems, ...pageNavItems];
 
   const scrollToSection = (sectionId: string) => {
     const target = document.getElementById(sectionId);
@@ -821,7 +834,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   ) => {
     const blockPath = `innerBlocks.${index}.content`;
     const wrapperBlockType = String(section?.editorBlockType || "").toLowerCase();
-    const rawBlockType = String(block.type || "text").toLowerCase();
+    const rawBlockType = String(
+      block.type || block.blockType || "text",
+    ).toLowerCase();
     const blockType = rawBlockType;
     const wrapperContent =
       wrapperBlockType &&
@@ -848,7 +863,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               ...wrapperContent,
             },
           }
-        : block;
+        : { ...block, type: blockType, content: block.content || {} };
     const tone = options?.tone || "dark";
     const textColor = tone === "light" ? palette.white : palette.ink;
     const mutedTextColor =
@@ -1501,7 +1516,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         <TemplateNavbarHeader
           navbarContent={navbarContent}
           fallbackName={data.name}
-          sectionNavItems={navItems}
+          sectionNavItems={headerNavItems}
           onScrollToSection={scrollToSection}
           themeColor={themeColor}
           headingFont={headingFont}

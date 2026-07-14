@@ -43,7 +43,18 @@ export interface NavbarContentFields {
 export interface SectionNavItem {
   label: string;
   id: string;
+  target?: string;
+  link?: string;
+  url?: string;
+  type?: string;
 }
+
+type TemplateNavItem = SectionNavItem & {
+  target?: string;
+  link?: string;
+  url?: string;
+  type?: string;
+};
 
 interface Props {
   navbarContent: NavbarContentFields;
@@ -70,15 +81,16 @@ const TemplateNavbarHeader: React.FC<Props> = ({
 }) => {
   const menuId: string = navbarContent.menuId || "";
   const [fetchedItems, setFetchedItems] = useState<
-    Array<{ label: string; target: string; type?: string }>
+    TemplateNavItem[]
   >([]);
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const headerRef = React.useRef<HTMLElement>(null);
 
-  // Fetch custom menu items when menuId is set
+  // Fetch custom menu items. If this template has no explicit menu selected,
+  // use the first website menu as supplemental page links.
   useEffect(() => {
-    if (!menuId || !websiteId) {
+    if (!websiteId) {
       setFetchedItems([]);
       return;
     }
@@ -89,9 +101,11 @@ const TemplateNavbarHeader: React.FC<Props> = ({
         if (cancelled) return;
         const raw = res.data?.data ?? res.data ?? [];
         const menus = Array.isArray(raw) ? raw : [];
-        const found = menus.find(
-          (m: any) => String(m.id) === String(menuId) || m.handle === menuId,
-        );
+        const found = menuId
+          ? menus.find(
+              (m: any) => String(m.id) === String(menuId) || m.handle === menuId,
+            )
+          : menus[0];
         setFetchedItems(Array.isArray(found?.items) ? found.items : []);
       })
       .catch(() => {
@@ -125,17 +139,64 @@ const TemplateNavbarHeader: React.FC<Props> = ({
   const logoImage = navbarContent.logoImage || "";
 
   // Determine which nav items to show
-  const hasCustomMenu = fetchedItems.length > 0;
-  const displayNavItems = hasCustomMenu ? fetchedItems : sectionNavItems;
+  const configuredNavItems = Array.isArray(navbarContent.navigationItems)
+    ? (navbarContent.navigationItems as TemplateNavItem[])
+    : Array.isArray(navbarContent.menuItems)
+      ? (navbarContent.menuItems as TemplateNavItem[])
+      : [];
+  const getNavTarget = (item: TemplateNavItem) =>
+    item.target || item.link || item.url || "";
+  const normalizeNavTarget = (target: string) =>
+    target ? target : "";
+  const dedupeNavItems = (items: TemplateNavItem[]) => {
+    const seen = new Set<string>();
+    return items.filter((item) => {
+      const key = normalizeNavTarget(getNavTarget(item)) || item.id || item.label;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+  const hasExplicitMenu = Boolean(menuId && fetchedItems.length > 0);
+  const sectionPageItems = sectionNavItems.filter((item) => {
+    const target = getNavTarget(item);
+    return target && !target.startsWith("#");
+  });
+  const sectionKeys = new Set(
+    sectionNavItems.flatMap((item) => [
+      item.id,
+      item.label?.toLowerCase(),
+      getNavTarget(item).replace(/^#/, ""),
+    ]).filter(Boolean),
+  );
+  const pageOnlyItems = (items: TemplateNavItem[]) =>
+    items.filter((item) => {
+      const target = getNavTarget(item);
+      if (!target || target === "/" || target.startsWith("#")) return false;
+      if (!target.startsWith("/")) return false;
+      const label = item.label?.toLowerCase();
+      return !sectionKeys.has(label) && !sectionKeys.has(target.replace(/^\//, ""));
+    });
+  const supplementalItems = pageOnlyItems(
+    configuredNavItems.length ? configuredNavItems : !menuId ? fetchedItems : [],
+  );
+  const displayNavItems = hasExplicitMenu
+    ? dedupeNavItems([...fetchedItems, ...sectionPageItems])
+    : dedupeNavItems([...sectionNavItems, ...supplementalItems]);
 
-  const handleNavClick = (item: { label: string; target?: string; id?: string }) => {
-    if (hasCustomMenu) {
-      const target = (item as any).target || "";
-      if (target.startsWith("#")) {
-        onScrollToSection?.(target.replace(/^#/, ""));
-      }
-    } else {
-      onScrollToSection?.((item as any).id || "");
+  const handleNavClick = (
+    event: React.MouseEvent,
+    item: TemplateNavItem,
+  ) => {
+    const target = getNavTarget(item);
+    if (target.startsWith("#")) {
+      event.preventDefault();
+      onScrollToSection?.(target.replace(/^#/, ""));
+      return;
+    }
+    if (!target && item.id) {
+      event.preventDefault();
+      onScrollToSection?.(item.id);
     }
   };
 
@@ -195,28 +256,33 @@ const TemplateNavbarHeader: React.FC<Props> = ({
           {/* Desktop nav */}
           {!isMobile && displayNavItems.length > 0 && (
             <Stack direction="row" spacing={0} alignItems="center" sx={{ flex: 1, justifyContent: "center" }}>
-              {displayNavItems.map((item, idx) => (
-                <Box
-                  key={(item as any).id ?? idx}
-                  component={hasCustomMenu ? "a" : "span"}
-                  href={hasCustomMenu ? resolveTarget((item as any).target) : undefined}
-                  onClick={() => !hasCustomMenu && handleNavClick(item)}
-                  sx={{
-                    px: 2,
-                    py: 0.5,
-                    fontSize: "0.82rem",
-                    fontWeight: 500,
-                    letterSpacing: "0.03em",
-                    color: navLinkColor,
-                    textDecoration: "none",
-                    cursor: "pointer",
-                    transition: "color 160ms ease",
-                    "&:hover": { color: themeColor },
-                  }}
-                >
-                  {item.label}
-                </Box>
-              ))}
+              {displayNavItems.map((item, idx) => {
+                const target = getNavTarget(item);
+                return (
+                  <Box
+                    key={item.id ?? `${item.label}-${idx}`}
+                    component={target ? "a" : "span"}
+                    href={target ? resolveTarget(target) : undefined}
+                    onClick={(event: React.MouseEvent) =>
+                      handleNavClick(event, item)
+                    }
+                    sx={{
+                      px: 2,
+                      py: 0.5,
+                      fontSize: "0.82rem",
+                      fontWeight: 500,
+                      letterSpacing: "0.03em",
+                      color: navLinkColor,
+                      textDecoration: "none",
+                      cursor: "pointer",
+                      transition: "color 160ms ease",
+                      "&:hover": { color: themeColor },
+                    }}
+                  >
+                    {item.label}
+                  </Box>
+                );
+              })}
             </Stack>
           )}
 
@@ -277,28 +343,34 @@ const TemplateNavbarHeader: React.FC<Props> = ({
           </IconButton>
         </Stack>
         <Divider sx={{ mb: 2 }} />
-        {displayNavItems.map((item, idx) => (
-          <Box
-            key={(item as any).id ?? idx}
-            component={hasCustomMenu ? "a" : "span"}
-            href={hasCustomMenu ? resolveTarget((item as any).target) : undefined}
-            onClick={() => { handleNavClick(item); closeDrawer(); }}
-            sx={{
-              display: "block",
-              px: 1.5,
-              py: 1.1,
-              fontSize: "0.95rem",
-              fontWeight: 500,
-              color: navLinkColor,
-              textDecoration: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              "&:hover": { color: themeColor, bgcolor: "rgba(0,0,0,0.04)" },
-            }}
-          >
-            {item.label}
-          </Box>
-        ))}
+        {displayNavItems.map((item, idx) => {
+          const target = getNavTarget(item);
+          return (
+            <Box
+              key={item.id ?? `${item.label}-${idx}`}
+              component={target ? "a" : "span"}
+              href={target ? resolveTarget(target) : undefined}
+              onClick={(event: React.MouseEvent) => {
+                handleNavClick(event, item);
+                closeDrawer();
+              }}
+              sx={{
+                display: "block",
+                px: 1.5,
+                py: 1.1,
+                fontSize: "0.95rem",
+                fontWeight: 500,
+                color: navLinkColor,
+                textDecoration: "none",
+                borderRadius: "10px",
+                cursor: "pointer",
+                "&:hover": { color: themeColor, bgcolor: "rgba(0,0,0,0.04)" },
+              }}
+            >
+              {item.label}
+            </Box>
+          );
+        })}
         {ctaText && (
           <Box sx={{ mt: 2.5 }}>
             <Button

@@ -23,6 +23,7 @@ type FrontendTemplateWebsite = {
   businessName?: string | null;
   fullAddress?: string | null;
   tags?: string[] | null;
+  pages?: BusinessData["pages"];
 };
 
 const baseBlogData: BusinessData = {
@@ -296,6 +297,7 @@ export const buildFrontendTemplateBusinessData = (
   return {
     ...base,
     websiteId: website.websiteId,
+    pages: website.pages,
     name: website.businessName || website.name || base.name,
     tagline: website.shortDescription || base.tagline,
     description:

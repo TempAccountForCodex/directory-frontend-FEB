@@ -131,6 +131,13 @@ export interface BusinessData {
   primaryColor: string;
   secondaryColor?: string;
   templateContent?: Record<string, unknown>;
+  pages?: Array<{
+    id?: string | number;
+    title: string;
+    path: string;
+    isHome?: boolean;
+    isPublished?: boolean;
+  }>;
   themeSettings?: {
     primaryColor?: string;
     secondaryColor?: string;

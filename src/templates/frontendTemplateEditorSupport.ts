@@ -1876,6 +1876,13 @@ const buildTemplatePreviewBusinessDataImpl = (
 
   const themedBase: BusinessData = {
     ...base,
+    pages: pages.map((page) => ({
+      id: page.id,
+      title: page.title,
+      path: page.path,
+      isHome: page.isHome,
+      isPublished: page.isPublished,
+    })),
     primaryColor: themeSettings.primaryColor || base.primaryColor,
     secondaryColor: themeSettings.secondaryColor || base.secondaryColor,
     themeSettings: hasThemeSettings
