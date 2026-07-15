@@ -33,7 +33,10 @@ import {
   getEditableSectionProps,
   getEditableTextProps,
 } from "../../utils/editableProps";
-import { renderEditableMedia } from "../../utils/editableComponents";
+import {
+  StaticSelectableBox,
+  renderEditableMedia,
+} from "../../utils/editableComponents";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
@@ -1274,6 +1277,21 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       },
     ]
   ).slice(0, 3);
+  const getProcessEditableFieldStyle = (
+    fieldPath: string,
+    explicitStyleKey?: string,
+    fallbackStyle: Record<string, any> = {},
+  ) => {
+    const styleKey =
+      explicitStyleKey || getEditorSharedTypographyStyleKey(fieldPath);
+    const resolvedStyle = styleKey.includes(".")
+      ? getEditorSharedNestedValue(processContent, styleKey)
+      : (processContent as Record<string, any> | undefined)?.[styleKey];
+
+    return resolvedStyle && typeof resolvedStyle === "object"
+      ? resolvedStyle
+      : fallbackStyle;
+  };
   const aboutDetailGroups = (
     (aboutContent.detailGroups as
       Array<{ title?: string; items?: string[] }> | undefined) || [
@@ -2732,10 +2750,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                             border: `1px solid ${themeLine}`,
                           }}
                         >
-                          <Typography
-                            data-editable={`detailGroups.${index}.title`}
-                            data-edit-type="single"
-                            data-block-id={aboutBlockId}
+                          <StaticSelectableBox
+                            component={Typography}
+                            label={`About detail group ${index + 1} title`}
+                            staticId={`about-detail-group-${index}-title`}
+                            blockId={aboutBlockId}
+                            styleKey={`static.detailGroups.${index}.title`}
+                            staticType="text"
                             sx={{
                               fontFamily: headingFont,
                               fontSize: { xs: "1.3rem", md: "1.6rem" },
@@ -2744,7 +2765,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                             }}
                           >
                             {group.title}
-                          </Typography>
+                          </StaticSelectableBox>
 
                           <Stack spacing={0.9} sx={{ mt: 1.7 }}>
                             {(group.items || []).map((item, itemIndex) => (
@@ -2763,14 +2784,17 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                                     flexShrink: 0,
                                   }}
                                 />
-                                <Typography
-                                  data-editable={`detailGroups.${index}.items.${itemIndex}`}
-                                  data-edit-type="single"
-                                  data-block-id={aboutBlockId}
+                                <StaticSelectableBox
+                                  component={Typography}
+                                  label={`About detail group ${index + 1} item ${itemIndex + 1}`}
+                                  staticId={`about-detail-group-${index}-item-${itemIndex}`}
+                                  blockId={aboutBlockId}
+                                  styleKey={`static.detailGroups.${index}.items.${itemIndex}`}
+                                  staticType="text"
                                   sx={{ color: palette.muted }}
                                 >
                                   {item}
-                                </Typography>
+                                </StaticSelectableBox>
                               </Stack>
                             ))}
                           </Stack>
@@ -3059,9 +3083,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     />
                     <Typography
-                      data-editable="heading"
-                      data-edit-type="single"
-                      data-block-id={processBlockId}
+                      {...getEditableTextProps(
+                        processBlockId,
+                        "heading",
+                        "single",
+                        "headingStyle",
+                      )}
                       sx={{
                         fontFamily: headingFont,
                         fontSize: { xs: "2.45rem", md: "4.5rem" },
@@ -3084,9 +3111,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Typography
                       component={motion.p}
                       {...sectionReveal}
-                      data-editable="subheading"
-                      data-edit-type="multi"
-                      data-block-id={processBlockId}
+                      {...getEditableTextProps(
+                        processBlockId,
+                        "subheading",
+                        "multi",
+                        "subheadingStyle",
+                      )}
                       sx={{
                         maxWidth: 360,
                         color: "rgba(255,255,255,0.7)",
@@ -3102,9 +3132,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Button
                       variant="contained"
                       endIcon={<ArrowOutwardIcon />}
-                      data-editable="ctaText"
-                      data-edit-type="single"
-                      data-block-id={processBlockId}
+                      {...getEditableTextProps(
+                        processBlockId,
+                        "ctaText",
+                        "single",
+                        "ctaTextStyle",
+                      )}
                       sx={{
                         bgcolor: themeColor,
                         color: palette.white,
@@ -3158,9 +3191,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     >
                       <Typography
-                        data-editable={`items.${index}.icon`}
-                        data-edit-type="single"
-                        data-block-id={processBlockId}
+                        {...getEditableTextProps(
+                          processBlockId,
+                          `items.${index}.icon`,
+                          "single",
+                          "textStyle",
+                        )}
                         sx={{
                           fontFamily: headingFont,
                           fontSize: { xs: "4rem", md: "5.4rem" },
@@ -3169,14 +3205,22 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                           fontWeight: 800,
                           color: rgba(themeColor, 0.38),
                           mb: 2.2,
+                          ...getProcessEditableFieldStyle(
+                            `items.${index}.icon`,
+                            "textStyle",
+                            processContent.textStyle || {},
+                          ),
                         }}
                       >
                         {String(item.icon || `0${index + 1}`)}
                       </Typography>
                       <Typography
-                        data-editable={`items.${index}.title`}
-                        data-edit-type="single"
-                        data-block-id={processBlockId}
+                        {...getEditableTextProps(
+                          processBlockId,
+                          `items.${index}.title`,
+                          "single",
+                          "titleStyle",
+                        )}
                         sx={{
                           fontFamily: headingFont,
                           fontSize: { xs: "1.55rem", md: "1.85rem" },
@@ -3184,19 +3228,37 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                           letterSpacing: "-0.04em",
                           fontWeight: 800,
                           maxWidth: 280,
+                          ...getProcessEditableFieldStyle(
+                            `items.${index}.title`,
+                            "titleStyle",
+                            processContent.titleStyle ||
+                              processContent.headingStyle ||
+                              {},
+                          ),
                         }}
                       >
                         {String(item.title || `Step ${index + 1}`)}
                       </Typography>
                       <Typography
-                        data-editable={`items.${index}.description`}
-                        data-edit-type="multi"
-                        data-block-id={processBlockId}
+                        {...getEditableTextProps(
+                          processBlockId,
+                          `items.${index}.description`,
+                          "multi",
+                          "bodyStyle",
+                        )}
                         sx={{
                           mt: 1.6,
                           color: palette.muted,
                           lineHeight: 1.65,
                           maxWidth: 320,
+                          ...getProcessEditableFieldStyle(
+                            `items.${index}.description`,
+                            "bodyStyle",
+                            processContent.bodyStyle ||
+                              processContent.descriptionStyle ||
+                              processContent.subheadingStyle ||
+                              {},
+                          ),
                         }}
                       >
                         {String(item.description || "")}
@@ -3268,18 +3330,24 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       border: `1px solid ${themeLine}`,
                     }}
                   >
-                    <Typography
-                      data-editable="teamLabel"
-                      data-edit-type="single"
-                      data-block-id={processBlockId}
+                    <StaticSelectableBox
+                      component={Typography}
+                      label="Process team label"
+                      staticId="process-team-label"
+                      blockId={processBlockId}
+                      styleKey="static.teamLabelStyle"
+                      staticType="text"
                       sx={{ color: palette.muted, mb: 1 }}
                     >
                       {processContent.teamLabel || "Team"}
-                    </Typography>
-                    <Typography
-                      data-editable="teamHeading"
-                      data-edit-type="single"
-                      data-block-id={processBlockId}
+                    </StaticSelectableBox>
+                    <StaticSelectableBox
+                      component={Typography}
+                      label="Process team heading"
+                      staticId="process-team-heading"
+                      blockId={processBlockId}
+                      styleKey="static.teamHeadingStyle"
+                      staticType="text"
                       sx={{
                         fontFamily: headingFont,
                         fontSize: { xs: "2rem", md: "3.4rem" },
@@ -3291,21 +3359,24 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     >
                       {processContent.teamHeading ||
                         "Strong visuals for trust and leadership."}
-                    </Typography>
+                    </StaticSelectableBox>
                     <Stack spacing={1} sx={{ mt: 2.4 }}>
                       {(teamMembers.length
                         ? teamMembers
                         : [{ name: "Leadership" }, { name: "Operations" }]
                       ).map((member, index) => (
-                        <Typography
+                        <StaticSelectableBox
                           key={member.name}
-                          data-editable={`teamMembers.${index}.name`}
-                          data-edit-type="single"
-                          data-block-id={processBlockId}
+                          component={Typography}
+                          label={`Process team member ${index + 1}`}
+                          staticId={`process-team-member-${index}`}
+                          blockId={processBlockId}
+                          styleKey={`static.teamMembers.${index}.name`}
+                          staticType="text"
                           sx={{ color: palette.muted }}
                         >
                           {member.name}
-                        </Typography>
+                        </StaticSelectableBox>
                       ))}
                     </Stack>
                   </Box>
@@ -3323,10 +3394,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       justifyContent: "space-between",
                     }}
                   >
-                    <Typography
-                      data-editable="reviewText"
-                      data-edit-type="multi"
-                      data-block-id={processBlockId}
+                    <StaticSelectableBox
+                      component={Typography}
+                      label="Process review text"
+                      staticId="process-review-text"
+                      blockId={processBlockId}
+                      styleKey="static.reviewTextStyle"
+                      staticType="text"
                       sx={{
                         fontFamily: headingFont,
                         fontSize: { xs: "1.5rem", md: "2.25rem" },
@@ -3337,17 +3411,20 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     >
                       {processReviewText}
-                    </Typography>
-                    <Typography
-                      data-editable="reviewAuthor"
-                      data-edit-type="single"
-                      data-block-id={processBlockId}
+                    </StaticSelectableBox>
+                    <StaticSelectableBox
+                      component={Typography}
+                      label="Process review author"
+                      staticId="process-review-author"
+                      blockId={processBlockId}
+                      styleKey="static.reviewAuthorStyle"
+                      staticType="text"
                       sx={{ mt: 2, color: "rgba(255,255,255,0.68)" }}
                     >
                       {processContent.reviewAuthor ||
                         reviews[0]?.author ||
                         "Executive team"}
-                    </Typography>
+                    </StaticSelectableBox>
                   </Box>
                 </Box>
               </Box>

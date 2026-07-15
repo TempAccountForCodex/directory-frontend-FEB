@@ -1244,10 +1244,7 @@ const getOrderedBlocksForHomePage = (
 const getOrderedSectionKeysForHomePage = (
   templateId: string,
   pages: TemplateEditorPage[],
-): string[] =>
-  getOrderedBlocksForHomePage(pages)
-    .map((block) => getCompatibleSectionKey(templateId, block))
-    .filter(Boolean);
+): string[] => Array.from(getTemplateSectionMap(templateId, pages).keys());
 
 const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
   getOrderedBlocksForHomePage(pages)
@@ -1315,28 +1312,10 @@ const getOrderedSectionContentMap = (
   templateId: string,
   pages: TemplateEditorPage[],
 ): Map<string, Record<string, unknown>> => {
-  const orderedBlocks = getOrderedBlocksForHomePage(pages);
   const orderedContentMap = new Map<string, Record<string, unknown>>();
-  const templateSlots = new Set(
-    (TEMPLATE_PAGE_SCHEMAS[templateId] || []).flatMap((page) =>
-      page.sections.map((section) => section.key),
-    ),
-  );
+  const sectionMap = getTemplateSectionMap(templateId, pages);
 
-  orderedBlocks.forEach((block) => {
-    const sectionKey =
-      typeof block.content?.editorSection === "string"
-        ? block.content.editorSection.trim()
-        : getCompatibleSectionKey(templateId, block);
-
-    if (
-      !sectionKey ||
-      !templateSlots.has(sectionKey) ||
-      orderedContentMap.has(sectionKey)
-    ) {
-      return;
-    }
-
+  sectionMap.forEach((block, sectionKey) => {
     if (block.content && typeof block.content === "object") {
       orderedContentMap.set(sectionKey, block.content);
     }
@@ -1350,12 +1329,52 @@ const getTemplateSectionMap = (
   pages: TemplateEditorPage[],
 ) => {
   const map = new Map<string, TemplateEditorBlock>();
-  getAllBlocks(pages).forEach((block) => {
-    const sectionKey = getCompatibleSectionKey(templateId, block);
-    if (sectionKey) {
+  const orderedBlocks = getOrderedBlocksForHomePage(pages);
+  const schemaHomePage =
+    (TEMPLATE_PAGE_SCHEMAS[templateId] || []).find((page) => page.isHome) ||
+    (TEMPLATE_PAGE_SCHEMAS[templateId] || [])[0];
+  const seededSections = Array.isArray(schemaHomePage?.sections)
+    ? schemaHomePage.sections
+    : [];
+  const usedBlockIndexes = new Set<number>();
+
+  orderedBlocks.forEach((block, index) => {
+    const sectionKey =
+      typeof block.content?.editorSection === "string"
+        ? block.content.editorSection.trim()
+        : getCompatibleSectionKey(templateId, block);
+
+    if (sectionKey && !map.has(sectionKey)) {
       map.set(sectionKey, block);
+      usedBlockIndexes.add(index);
     }
   });
+
+  seededSections.forEach((section) => {
+    if (map.has(section.key)) {
+      return;
+    }
+
+    const fallbackIndex = orderedBlocks.findIndex((block, index) => {
+      if (usedBlockIndexes.has(index)) {
+        return false;
+      }
+
+      const persistedBlockType = String(
+        block?.content?.editorBlockType || block?.blockType || "",
+      )
+        .trim()
+        .toUpperCase();
+
+      return persistedBlockType === String(section.blockType || "").toUpperCase();
+    });
+
+    if (fallbackIndex >= 0) {
+      map.set(section.key, orderedBlocks[fallbackIndex]);
+      usedBlockIndexes.add(fallbackIndex);
+    }
+  });
+
   return map;
 };
 
@@ -1407,11 +1426,17 @@ const hydrateSeededPages = (
   }
   const templateSectionKeys = new Set(getTemplateSectionKeys(templateId));
 
+  const usedPersistedBlocks = new Set(Array.from(persistedSections.values()));
+
   return seededPages.map((page) => {
     const pageKey = getPageStorageKey(page);
     const persistedPage = persistedPageMap.get(pageKey);
     const customPersistedBlocks = (persistedPage?.blocks || []).filter(
       (block) => {
+        if (usedPersistedBlocks.has(block)) {
+          return false;
+        }
+
         const sectionKey =
           typeof block.content?.editorSection === "string"
             ? block.content.editorSection.trim()
@@ -2054,7 +2079,17 @@ const buildTemplatePreviewBusinessDataImpl = (
           ),
           items: processItems,
           headingStyle: process.headingStyle,
-          subheadingStyle: process.subheadingStyle || process.descriptionStyle,
+          titleStyle: process.titleStyle || process.headingStyle,
+          bodyStyle:
+            process.bodyStyle ||
+            process.descriptionStyle ||
+            process.subheadingStyle,
+          textStyle: process.textStyle,
+          subheadingStyle:
+            process.subheadingStyle ||
+            process.descriptionStyle ||
+            process.bodyStyle,
+          descriptionStyle: process.descriptionStyle || process.bodyStyle,
           ctaTextStyle: process.ctaTextStyle || process.buttonTextStyle,
           innerBlocks: Array.isArray(process.innerBlocks)
             ? process.innerBlocks

@@ -4,11 +4,13 @@ export const getEditableTextProps = (
   blockId: string | number | undefined,
   fieldPath: string,
   kind: EditableTextKind = "single",
+  styleKey?: string,
 ) => ({
   className: "tt-preview-editable-node",
   "data-editable": fieldPath,
   "data-edit-type": kind,
   "data-block-id": blockId,
+  ...(styleKey ? { "data-edit-style-key": styleKey } : {}),
 });
 
 export const getEditableImageProps = (

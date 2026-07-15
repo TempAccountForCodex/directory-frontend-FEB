@@ -25,6 +25,7 @@ export interface MobileActionBarProps {
   onPublish: () => void;
   onPreview: () => void;
   isSaving?: boolean;
+  canSave?: boolean;
   /** True when running on macOS/iPad — affects shortcut hints */
   isMac?: boolean;
 }
@@ -34,6 +35,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
   onPublish,
   onPreview,
   isSaving = false,
+  canSave = true,
   isMac = false,
 }) => {
   const [announcement, setAnnouncement] = useState("");
@@ -61,9 +63,10 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
   }, []);
 
   const handleSave = useCallback(() => {
+    if (!canSave) return;
     announce("Saving changes...");
     onSave();
-  }, [onSave, announce]);
+  }, [onSave, announce, canSave]);
 
   const handlePublish = useCallback(() => {
     announce("Publishing...");
@@ -127,7 +130,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
             variant="contained"
             color="primary"
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || !canSave}
             startIcon={
               isSaving ? (
                 <CircularProgress size={16} color="inherit" />

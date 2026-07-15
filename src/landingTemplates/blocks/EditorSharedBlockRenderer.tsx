@@ -3714,7 +3714,11 @@ export const renderEditorSharedBlock = ({
                   `${blockPath}.items.${itemIndex}.title`,
                   "single",
                 )}
-                sx={{ color: textColor, fontWeight: 700 }}
+                sx={{
+                  color: textColor,
+                  fontWeight: 700,
+                  ...getEditableFieldStyle("items.0.title", headingStyle),
+                }}
               >
                 {item?.title || `Feature ${itemIndex + 1}`}
               </Typography>
@@ -3729,6 +3733,7 @@ export const renderEditorSharedBlock = ({
                   color: mutedTextColor,
                   fontSize: "0.94rem",
                   lineHeight: 1.65,
+                  ...getEditableFieldStyle("items.0.description", bodyStyle),
                 }}
               >
                 {item?.description || "Describe this feature here."}

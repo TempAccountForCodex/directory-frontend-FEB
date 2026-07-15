@@ -7,6 +7,7 @@ import {
   getEditableSectionProps,
   getEditableTextProps,
 } from "../../utils/editableProps";
+import { StaticSelectableBox } from "../../utils/editableComponents";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
@@ -430,26 +431,40 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                 {services.map((service, index) => (
                   <FadeIn key={service.title} delay={index * 0.08}>
                     <Box>
-                      <Typography
-                        data-editable={`items.${index}.title`}
-                        data-edit-type="single"
-                        data-block-id={aboutBlockId}
+                      <StaticSelectableBox
+                        component={Typography}
+                        label={`Studio service ${index + 1} title`}
+                        staticId={`studio-service-${index}-title`}
+                        blockId={aboutBlockId}
+                        styleKey={`static.items.${index}.title`}
+                        staticType="text"
                         sx={{
                           fontSize: "1.1rem",
                           fontWeight: 800,
                           textTransform: "uppercase",
+                          ...(aboutContent.headingStyle || {}),
                         }}
                       >
                         {service.title}
-                      </Typography>
-                      <Typography
-                        data-editable={`items.${index}.description`}
-                        data-edit-type="multi"
-                        data-block-id={aboutBlockId}
-                        sx={{ mt: 0.5, color: "#5f5f5f", lineHeight: 1.7 }}
+                      </StaticSelectableBox>
+                      <StaticSelectableBox
+                        component={Typography}
+                        label={`Studio service ${index + 1} description`}
+                        staticId={`studio-service-${index}-description`}
+                        blockId={aboutBlockId}
+                        styleKey={`static.items.${index}.description`}
+                        staticType="text"
+                        sx={{
+                          mt: 0.5,
+                          color: "#5f5f5f",
+                          lineHeight: 1.7,
+                          ...(aboutContent.descriptionStyle ||
+                            aboutContent.bodyStyle ||
+                            {}),
+                        }}
                       >
                         {service.description}
-                      </Typography>
+                      </StaticSelectableBox>
                     </Box>
                   </FadeIn>
                 ))}

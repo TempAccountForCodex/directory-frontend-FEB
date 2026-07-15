@@ -675,6 +675,106 @@ const getEditableTypographyStyleKey = (fieldName = "text") => {
   }
 };
 
+const syncAliasedBlockContent = (blockType, content) => {
+  if (!content || typeof content !== "object" || Array.isArray(content)) {
+    return content;
+  }
+
+  const normalizedBlockType = String(blockType || "").trim().toUpperCase();
+  const nextContent = { ...content };
+
+  if (normalizedBlockType === "FEATURES") {
+    const items = Array.isArray(nextContent.items) ? nextContent.items : null;
+    const features = Array.isArray(nextContent.features)
+      ? nextContent.features
+      : null;
+
+    if (items) {
+      nextContent.features = items.map((item) => ({ ...item }));
+    } else if (features) {
+      nextContent.items = features.map((item) => ({ ...item }));
+    }
+  }
+
+  if (normalizedBlockType === "GALLERY") {
+    const items = Array.isArray(nextContent.items) ? nextContent.items : null;
+    const images = Array.isArray(nextContent.images) ? nextContent.images : null;
+
+    if (items) {
+      nextContent.images = items.map((item) => ({
+        ...item,
+        image: item?.image || item?.url || item?.src || "",
+        alt: item?.alt || item?.caption || "",
+      }));
+    } else if (images) {
+      nextContent.items = images.map((item) => ({
+        ...item,
+        url: item?.url || item?.image || item?.src || "",
+        caption: item?.caption || item?.alt || "",
+      }));
+    }
+  }
+
+  if (
+    normalizedBlockType === "REVIEWS" ||
+    normalizedBlockType === "TESTIMONIALS"
+  ) {
+    const items = Array.isArray(nextContent.items) ? nextContent.items : null;
+    const testimonials = Array.isArray(nextContent.testimonials)
+      ? nextContent.testimonials
+      : null;
+
+    if (items) {
+      nextContent.testimonials = items.map((item) => ({
+        ...item,
+        quote: item?.quote || item?.text || item?.comment || "",
+        author: item?.author || item?.name || "",
+        position: item?.position || item?.role || "",
+      }));
+    } else if (testimonials) {
+      nextContent.items = testimonials.map((item) => ({
+        ...item,
+        text: item?.text || item?.quote || item?.comment || "",
+        author: item?.author || item?.name || "",
+        role: item?.role || item?.position || "",
+      }));
+    }
+  }
+
+  return nextContent;
+};
+
+const getResolvedEditableStyleKey = (content, fieldPath = "text") => {
+  const directStyleKey = getEditableStyleConfig(fieldPath).styleKey;
+  const typographyStyleKey = getEditableTypographyStyleKey(fieldPath);
+  const styleCandidates = [directStyleKey, typographyStyleKey].filter(
+    (styleKey, index, list) =>
+      Boolean(styleKey) && list.indexOf(styleKey) === index,
+  );
+
+  const existingStyleKey = styleCandidates.find((styleKey) => {
+    const value = styleKey.includes(".")
+      ? getValueAtPath(content || {}, styleKey)
+      : content?.[styleKey];
+    return value && typeof value === "object";
+  });
+
+  if (existingStyleKey) {
+    return existingStyleKey;
+  }
+
+  if (
+    typeof directStyleKey === "string" &&
+    directStyleKey.includes(".") &&
+    typeof typographyStyleKey === "string" &&
+    !typographyStyleKey.includes(".")
+  ) {
+    return typographyStyleKey;
+  }
+
+  return directStyleKey;
+};
+
 const getEditableAIStyleTargetCandidates = (fieldName = "text") => {
   const normalizedFieldName = String(fieldName || "text").trim();
   const leafFieldName =
@@ -1533,13 +1633,20 @@ const getBlockInnerBlocks = (block) => {
   return [];
 };
 
-const withSyncedBlockContent = (block, nextContent) => ({
-  ...block,
-  content: nextContent,
-  ...(Array.isArray(nextContent?.innerBlocks)
-    ? { innerBlocks: nextContent.innerBlocks }
-    : {}),
-});
+const withSyncedBlockContent = (block, nextContent) => {
+  const syncedContent = syncAliasedBlockContent(
+    block?.content?.editorBlockType || block?.blockType || "",
+    nextContent,
+  );
+
+  return {
+    ...block,
+    content: syncedContent,
+    ...(Array.isArray(syncedContent?.innerBlocks)
+      ? { innerBlocks: syncedContent.innerBlocks }
+      : {}),
+  };
+};
 
 const withSyncedInnerBlocks = (block, innerBlocks) =>
   withSyncedBlockContent(block, {
@@ -1688,6 +1795,36 @@ const getValueAtPath = (source, path) => {
       }
       return cursor[/^\d+$/.test(key) ? Number(key) : key];
     }, source);
+};
+
+// Remove a repeated array item that a field path points into (e.g. a feature
+// card / process step / gallery item). For "items.1.title" this drops items[1]
+// entirely — so "Delete" removes the whole element from the layout instead of
+// just blanking its text. Returns the updated content, or null when the path
+// is not an array item (caller then falls back to clearing the field).
+const removeArrayItemAtFieldPath = (content, fieldPath) => {
+  if (!fieldPath || typeof fieldPath !== "string") return null;
+  const segments = fieldPath.split(".").filter(Boolean);
+  let indexPos = -1;
+  for (let i = segments.length - 1; i >= 0; i -= 1) {
+    if (/^\d+$/.test(segments[i])) {
+      indexPos = i;
+      break;
+    }
+  }
+  if (indexPos === -1) return null;
+
+  const arrayPath = segments.slice(0, indexPos).join(".");
+  const itemIndex = Number(segments[indexPos]);
+  const array = arrayPath ? getValueAtPath(content || {}, arrayPath) : content;
+  if (!Array.isArray(array) || itemIndex < 0 || itemIndex >= array.length) {
+    return null;
+  }
+
+  const nextArray = array.filter((_, i) => i !== itemIndex);
+  return arrayPath
+    ? setValueAtPath({ ...(content || {}) }, arrayPath, nextArray)
+    : nextArray;
 };
 
 const looksLikeImageSource = (value = "") =>
@@ -1868,9 +2005,9 @@ const omitInnerBlocksMirror = (value) => {
 
 const sanitizeBlockContentForSave = (blockType, content) => {
   const rawBlockType = String(blockType || "").toUpperCase();
-  const sanitizedContent = {
+  const sanitizedContent = syncAliasedBlockContent(rawBlockType, {
     ...omitInnerBlocksMirror(content || {}),
-  };
+  });
 
   if (rawBlockType === "CONTACT") {
     Object.assign(
@@ -1979,10 +2116,10 @@ const sanitizeBlockForSave = (block) => {
   }
 
   if (rawBlockType === "GALLERY") {
-    sanitizedContent.images = Array.isArray(block.content.images)
-      ? block.content.images.map((item) => ({
+    sanitizedContent.images = Array.isArray(sanitizedContent.images)
+      ? sanitizedContent.images.map((item) => ({
           ...item,
-          image: item?.image || item?.src || "",
+          image: item?.image || item?.src || item?.url || "",
         }))
       : [];
   }
@@ -2011,7 +2148,10 @@ const normalizeLoadedBlock = (block) => {
   if (rawBlockType === "CONTACT") {
     return {
       ...block,
-      content: normalizeContactEditorContent(block?.content || {}),
+      content: syncAliasedBlockContent(
+        rawBlockType,
+        normalizeContactEditorContent(block?.content || {}),
+      ),
     };
   }
 
@@ -2046,6 +2186,15 @@ const normalizeLoadedBlock = (block) => {
 
   if (rawBlockType === "NAVBAR" && block?.content?._subType === "website_header") {
     return { ...block, blockType: "WEBSITE_HEADER" };
+  }
+  if (block?.content && !Array.isArray(block.content)) {
+    return {
+      ...block,
+      content: syncAliasedBlockContent(
+        editorBlockType || rawBlockType,
+        block.content,
+      ),
+    };
   }
   return block;
 };
@@ -2299,6 +2448,10 @@ const WebsiteEditorInner = () => {
   const [selectedPreviewTarget, setSelectedPreviewTarget] = useState(null);
   const [staticStyleDrafts, setStaticStyleDrafts] = useState({});
   const [staticMediaOverrides, setStaticMediaOverrides] = useState({});
+  const staticUndoStackRef = useRef([]);
+  const staticRedoStackRef = useRef([]);
+  const [canUndoStatic, setCanUndoStatic] = useState(false);
+  const [canRedoStatic, setCanRedoStatic] = useState(false);
   const [draggedLibraryBlock, setDraggedLibraryBlock] = useState(null);
   const [previewSaveSignal, setPreviewSaveSignal] = useState(0);
 
@@ -2329,6 +2482,28 @@ const WebsiteEditorInner = () => {
       return next;
     });
   }, [selectedPage?.id, websiteId]);
+
+  const syncStaticHistoryState = useCallback(() => {
+    setCanUndoStatic(staticUndoStackRef.current.length > 0);
+    setCanRedoStatic(staticRedoStackRef.current.length > 0);
+  }, []);
+
+  const cloneStaticOverrideSnapshot = useCallback(
+    () => ({
+      staticStyleDrafts: JSON.parse(JSON.stringify(staticStyleDrafts || {})),
+      staticMediaOverrides: JSON.parse(JSON.stringify(staticMediaOverrides || {})),
+    }),
+    [staticMediaOverrides, staticStyleDrafts],
+  );
+
+  const pushStaticOverrideHistory = useCallback(() => {
+    staticUndoStackRef.current.push(cloneStaticOverrideSnapshot());
+    if (staticUndoStackRef.current.length > 50) {
+      staticUndoStackRef.current.shift();
+    }
+    staticRedoStackRef.current = [];
+    syncStaticHistoryState();
+  }, [cloneStaticOverrideSnapshot, syncStaticHistoryState]);
 
   const getEditableCssUnitValue = useCallback((value) => {
     if (value === null || value === undefined) return "";
@@ -3012,25 +3187,10 @@ const WebsiteEditorInner = () => {
           nextBlocks = blocksRef.current.map((block) => {
             if (String(block.id) !== String(blockId)) return block;
 
-            const updated = {
-              ...block,
-              content: {
-                ...(block.content || {}),
-              },
-            };
-
-            const parts = fieldPath.split(".").filter(Boolean);
-            let obj = updated.content;
-            for (let i = 0; i < parts.length - 1; i++) {
-              obj[parts[i]] = {
-                ...(obj[parts[i]] && typeof obj[parts[i]] === "object"
-                  ? obj[parts[i]]
-                  : {}),
-              };
-              obj = obj[parts[i]];
-            }
-            obj[parts[parts.length - 1]] = nextValue;
-            return updated;
+            return withSyncedBlockContent(
+              block,
+              setValueAtPath(block.content || {}, fieldPath, nextValue),
+            );
           });
           blocksRef.current = nextBlocks;
           setBlocks(nextBlocks);
@@ -3094,6 +3254,13 @@ const WebsiteEditorInner = () => {
     skipBeforeUnload: true,
     saveStatus,
   });
+
+  const canTriggerSave = useMemo(
+    () =>
+      saveStatus !== "saving" &&
+      (hasUnsavedChanges || getHasUnsavedChanges?.() || saveStatus === "error"),
+    [getHasUnsavedChanges, hasUnsavedChanges, saveStatus],
+  );
 
   const pendingWebsitesReloadRef = useRef(false);
 
@@ -3221,6 +3388,7 @@ const WebsiteEditorInner = () => {
       key: "ctrl+s",
       action: (e) => {
         e.preventDefault();
+        if (!canTriggerSave) return;
         triggerManualSave();
       },
       description: "Save changes",
@@ -3252,6 +3420,7 @@ const WebsiteEditorInner = () => {
       unregisterShortcut("escape");
     };
   }, [
+    canTriggerSave,
     registerShortcut,
     unregisterShortcut,
     triggerManualSave,
@@ -3992,8 +4161,12 @@ const WebsiteEditorInner = () => {
       };
     }
 
-    const { styleKey } = getEditableStyleConfig(resolvedFieldName);
-    const blockStyle = targetBlock.content?.[styleKey];
+    const styleKey =
+      selectedEditableElement.styleKey ||
+      getResolvedEditableStyleKey(targetBlock.content || {}, resolvedFieldName);
+    const blockStyle = styleKey.includes(".")
+      ? getValueAtPath(targetBlock.content || {}, styleKey)
+      : targetBlock.content?.[styleKey];
 
     return {
       ...DEFAULT_TEXT_STYLE,
@@ -4002,8 +4175,14 @@ const WebsiteEditorInner = () => {
   }, [blocks, selectedEditableElement]);
 
   const selectedStaticTextStyle = useMemo(() => {
+    const key = getStaticStyleDraftKey(selectedStaticElement);
+    const draft = key ? staticStyleDrafts[key] || {} : {};
+
     if (!selectedStaticElement?.computedStyle) {
-      return DEFAULT_TEXT_STYLE;
+      return {
+        ...DEFAULT_TEXT_STYLE,
+        ...draft,
+      };
     }
 
     return {
@@ -4022,12 +4201,70 @@ const WebsiteEditorInner = () => {
       textShadow:
         selectedStaticElement.computedStyle.textShadow ||
         DEFAULT_TEXT_STYLE.textShadow,
+      fontStyle:
+        selectedStaticElement.computedStyle.fontStyle ||
+        DEFAULT_TEXT_STYLE.fontStyle,
+      lineHeight:
+        selectedStaticElement.computedStyle.lineHeight ||
+        DEFAULT_TEXT_STYLE.lineHeight,
+      letterSpacing:
+        selectedStaticElement.computedStyle.letterSpacing ||
+        DEFAULT_TEXT_STYLE.letterSpacing,
+      wordSpacing:
+        selectedStaticElement.computedStyle.wordSpacing ||
+        DEFAULT_TEXT_STYLE.wordSpacing,
+      textTransform:
+        selectedStaticElement.computedStyle.textTransform ||
+        DEFAULT_TEXT_STYLE.textTransform,
+      textDecoration:
+        selectedStaticElement.computedStyle.textDecoration ||
+        DEFAULT_TEXT_STYLE.textDecoration,
+      paddingTop:
+        selectedStaticElement.computedStyle.paddingTop ||
+        DEFAULT_TEXT_STYLE.paddingTop,
+      paddingBottom:
+        selectedStaticElement.computedStyle.paddingBottom ||
+        DEFAULT_TEXT_STYLE.paddingBottom,
+      paddingLeft:
+        selectedStaticElement.computedStyle.paddingLeft ||
+        DEFAULT_TEXT_STYLE.paddingLeft,
+      paddingRight:
+        selectedStaticElement.computedStyle.paddingRight ||
+        DEFAULT_TEXT_STYLE.paddingRight,
+      marginTop:
+        selectedStaticElement.computedStyle.marginTop ||
+        DEFAULT_TEXT_STYLE.marginTop,
+      marginBottom:
+        selectedStaticElement.computedStyle.marginBottom ||
+        DEFAULT_TEXT_STYLE.marginBottom,
+      marginLeft:
+        selectedStaticElement.computedStyle.marginLeft ||
+        DEFAULT_TEXT_STYLE.marginLeft,
+      marginRight:
+        selectedStaticElement.computedStyle.marginRight ||
+        DEFAULT_TEXT_STYLE.marginRight,
+      borderRadius:
+        selectedStaticElement.computedStyle.borderRadius ||
+        DEFAULT_TEXT_STYLE.borderRadius,
+      borderWidth:
+        selectedStaticElement.computedStyle.borderWidth ||
+        DEFAULT_TEXT_STYLE.borderWidth,
+      borderColor:
+        selectedStaticElement.computedStyle.borderColor ||
+        DEFAULT_TEXT_STYLE.borderColor,
+      ...draft,
     };
-  }, [selectedStaticElement]);
+  }, [selectedStaticElement, staticStyleDrafts]);
 
   const selectedStaticContainerStyle = useMemo(() => {
+    const key = getStaticStyleDraftKey(selectedStaticElement);
+    const draft = key ? staticStyleDrafts[key] || {} : {};
+
     if (!selectedStaticElement?.computedStyle) {
-      return DEFAULT_SECTION_STYLE;
+      return {
+        ...DEFAULT_SECTION_STYLE,
+        ...draft,
+      };
     }
 
     return {
@@ -4038,8 +4275,9 @@ const WebsiteEditorInner = () => {
       contentAlign:
         selectedStaticElement.computedStyle.textAlign ||
         DEFAULT_SECTION_STYLE.contentAlign,
+      ...draft,
     };
-  }, [selectedStaticElement]);
+  }, [selectedStaticElement, staticStyleDrafts]);
 
   const selectedStaticMediaStyle = useMemo(() => {
     const key = getStaticStyleDraftKey(selectedStaticElement);
@@ -5054,21 +5292,46 @@ const WebsiteEditorInner = () => {
           }),
         );
       } else {
-        pendingHistoryDescriptionRef.current = "Cleared text";
-        setBlocks((prev) =>
-          prev.map((block) =>
-            String(block.id) === String(layer.editable.blockId)
-              ? withSyncedBlockContent(
-                  block,
-                  setValueAtPath(
-                    { ...(block.content || {}) },
-                    layer.editable.fieldPath,
-                    "",
-                  ),
-                )
-              : block,
-          ),
+        // If the field points into a repeated item (e.g. "items.1.title" — a
+        // feature card / process step), Delete should remove the WHOLE item from
+        // the layout, not just blank its text. Fall back to clearing the field
+        // only for standalone fields (like a hero heading) that can't be removed.
+        const targetBlock = blocksRef.current.find(
+          (entry) => String(entry.id) === String(layer.editable.blockId),
         );
+        const arrayContent = targetBlock
+          ? removeArrayItemAtFieldPath(
+              targetBlock.content || {},
+              layer.editable.fieldPath,
+            )
+          : null;
+
+        if (arrayContent != null) {
+          pendingHistoryDescriptionRef.current = "Deleted element";
+          setBlocks((prev) =>
+            prev.map((block) =>
+              String(block.id) === String(layer.editable.blockId)
+                ? withSyncedBlockContent(block, arrayContent)
+                : block,
+            ),
+          );
+        } else {
+          pendingHistoryDescriptionRef.current = "Cleared text";
+          setBlocks((prev) =>
+            prev.map((block) =>
+              String(block.id) === String(layer.editable.blockId)
+                ? withSyncedBlockContent(
+                    block,
+                    setValueAtPath(
+                      { ...(block.content || {}) },
+                      layer.editable.fieldPath,
+                      "",
+                    ),
+                  )
+                : block,
+            ),
+          );
+        }
       }
 
       setSelectedEditableElement(null);
@@ -5605,23 +5868,32 @@ const WebsiteEditorInner = () => {
             );
           }
 
-          const { styleKey } = getEditableStyleConfig(resolvedFieldName);
+          const styleKey =
+            selectedEditableElement.styleKey ||
+            getResolvedEditableStyleKey(block.content || {}, resolvedFieldName);
+          const resolvedExistingStyle = styleKey.includes(".")
+            ? getValueAtPath(block.content || {}, styleKey)
+            : block.content?.[styleKey];
           const existingStyle =
-            block.content?.[styleKey] &&
-            typeof block.content[styleKey] === "object"
-              ? block.content[styleKey]
+            resolvedExistingStyle && typeof resolvedExistingStyle === "object"
+              ? resolvedExistingStyle
               : {};
 
-          return {
-            ...block,
-            content: {
-              ...block.content,
-              [styleKey]: {
-                ...existingStyle,
-                ...patch,
-              },
-            },
-          };
+          return withSyncedBlockContent(
+            block,
+            styleKey.includes(".")
+              ? setValueAtPath(block.content || {}, styleKey, {
+                  ...existingStyle,
+                  ...patch,
+                })
+              : {
+                  ...block.content,
+                  [styleKey]: {
+                    ...existingStyle,
+                    ...patch,
+                  },
+                },
+          );
         }),
       );
     },
@@ -5633,6 +5905,7 @@ const WebsiteEditorInner = () => {
     if (!key || !patch) {
       return;
     }
+    pushStaticOverrideHistory();
 
     if (
       websiteId != null &&
@@ -5661,13 +5934,14 @@ const WebsiteEditorInner = () => {
         ...patch,
       },
     }));
-  }, [selectedPage?.id, selectedStaticElement, staticStyleDrafts, websiteId]);
+  }, [pushStaticOverrideHistory, selectedPage?.id, selectedStaticElement, staticStyleDrafts, websiteId]);
 
   const handleStaticMediaStyleChange = useCallback((patch) => {
     const key = getStaticStyleDraftKey(selectedStaticElement);
     if (!key || !patch) {
       return;
     }
+    pushStaticOverrideHistory();
 
     setStaticStyleDrafts((prev) => ({
       ...prev,
@@ -5676,7 +5950,7 @@ const WebsiteEditorInner = () => {
         ...patch,
       },
     }));
-  }, [selectedStaticElement]);
+  }, [pushStaticOverrideHistory, selectedStaticElement]);
 
   const applyStaticMediaOverrideToPreview = useCallback((selection, override) => {
     const iframeDoc = iframeRef.current?.contentDocument || null;
@@ -5829,6 +6103,7 @@ const WebsiteEditorInner = () => {
         if (!key) {
           return;
         }
+        pushStaticOverrideHistory();
 
         setStaticStyleDrafts((prev) => ({
           ...prev,
@@ -6054,7 +6329,7 @@ const WebsiteEditorInner = () => {
         }),
       );
     },
-    [selectedImageElement, selectedStaticElement, updateStaticMediaOverride],
+    [pushStaticOverrideHistory, selectedImageElement, selectedStaticElement, updateStaticMediaOverride],
   );
 
   const handleOpenLibraryImage = useCallback(
@@ -6422,25 +6697,10 @@ const WebsiteEditorInner = () => {
       flushSync(() => {
         const nextBlocks = blocksRef.current.map((block) => {
           if (String(block.id) !== String(blockId)) return block;
-          const updated = {
-            ...block,
-            content: {
-              ...(block.content || {}),
-            },
-          };
-          const parts = fieldPath.split(".");
-          let obj = updated.content;
-          for (let i = 0; i < parts.length - 1; i++) {
-            const current = obj[parts[i]];
-            obj[parts[i]] = Array.isArray(current)
-              ? [...current]
-              : {
-                  ...(current && typeof current === "object" ? current : {}),
-                };
-            obj = obj[parts[i]];
-          }
-          obj[parts[parts.length - 1]] = newValue;
-          return withSyncedBlockContent(block, updated.content);
+          return withSyncedBlockContent(
+            block,
+            setValueAtPath(block.content || {}, fieldPath, newValue),
+          );
         });
 
         blocksRef.current = nextBlocks;
@@ -7169,8 +7429,9 @@ const WebsiteEditorInner = () => {
 
   // Mobile action handlers for MobileActionBar (Phase 9 gap fix)
   const handleMobileSave = useCallback(() => {
+    if (!canTriggerSave) return;
     triggerManualSave();
-  }, [triggerManualSave]);
+  }, [canTriggerSave, triggerManualSave]);
 
   const handleMobilePublish = useCallback(async () => {
     // TODO: Wire to full publish flow when available
@@ -7223,6 +7484,15 @@ const WebsiteEditorInner = () => {
   );
 
   const handleUndoBlocks = useCallback(() => {
+    if (staticUndoStackRef.current.length > 0) {
+      const snapshot = staticUndoStackRef.current.pop();
+      staticRedoStackRef.current.push(cloneStaticOverrideSnapshot());
+      setStaticStyleDrafts(snapshot?.staticStyleDrafts || {});
+      setStaticMediaOverrides(snapshot?.staticMediaOverrides || {});
+      syncStaticHistoryState();
+      return;
+    }
+
     if (previewTransformHistoryTimerRef.current) {
       clearTimeout(previewTransformHistoryTimerRef.current);
       previewTransformHistoryTimerRef.current = null;
@@ -7230,9 +7500,18 @@ const WebsiteEditorInner = () => {
     previewTransformHistoryPrimedRef.current = false;
     const previous = undo();
     applyHistoryBlocksToActivePage(previous);
-  }, [applyHistoryBlocksToActivePage, undo]);
+  }, [applyHistoryBlocksToActivePage, cloneStaticOverrideSnapshot, syncStaticHistoryState, undo]);
 
   const handleRedoBlocks = useCallback(() => {
+    if (staticRedoStackRef.current.length > 0) {
+      const snapshot = staticRedoStackRef.current.pop();
+      staticUndoStackRef.current.push(cloneStaticOverrideSnapshot());
+      setStaticStyleDrafts(snapshot?.staticStyleDrafts || {});
+      setStaticMediaOverrides(snapshot?.staticMediaOverrides || {});
+      syncStaticHistoryState();
+      return;
+    }
+
     if (previewTransformHistoryTimerRef.current) {
       clearTimeout(previewTransformHistoryTimerRef.current);
       previewTransformHistoryTimerRef.current = null;
@@ -7240,7 +7519,10 @@ const WebsiteEditorInner = () => {
     previewTransformHistoryPrimedRef.current = false;
     const next = redo();
     applyHistoryBlocksToActivePage(next);
-  }, [applyHistoryBlocksToActivePage, redo]);
+  }, [applyHistoryBlocksToActivePage, cloneStaticOverrideSnapshot, redo, syncStaticHistoryState]);
+
+  const effectiveCanUndo = canUndo || canUndoStatic;
+  const effectiveCanRedo = canRedo || canRedoStatic;
 
   const liveSiteHref = website?.slug ? `/site/${website.slug}` : null;
   const headerMenuOpen = Boolean(headerMenuAnchorEl);
@@ -7500,16 +7782,16 @@ const WebsiteEditorInner = () => {
             >
               <Tooltip title="Undo last block change">
                 <span>
-                  <IconButton
+                    <IconButton
                     onClick={handleUndoBlocks}
-                    disabled={!canUndo}
+                    disabled={!effectiveCanUndo}
                     sx={{
                       minWidth: 28,
                       minHeight: 28,
                       border: `1px solid transparent`,
-                      color: canUndo ? colors.text : alpha(colors.text, 0.42),
+                      color: effectiveCanUndo ? colors.text : alpha(colors.text, 0.42),
                       backgroundColor: "transparent",
-                      "&:hover": canUndo
+                      "&:hover": effectiveCanUndo
                         ? {
                             backgroundColor: "rgba(15,23,42,0.05)",
                             color: colors.text,
@@ -7527,16 +7809,16 @@ const WebsiteEditorInner = () => {
               </Tooltip>
               <Tooltip title="Redo reverted block change">
                 <span>
-                  <IconButton
+                    <IconButton
                     onClick={handleRedoBlocks}
-                    disabled={!canRedo}
+                    disabled={!effectiveCanRedo}
                     sx={{
                       minWidth: 28,
                       minHeight: 28,
                       border: `1px solid transparent`,
-                      color: canRedo ? colors.text : alpha(colors.text, 0.42),
+                      color: effectiveCanRedo ? colors.text : alpha(colors.text, 0.42),
                       backgroundColor: "transparent",
-                      "&:hover": canRedo
+                      "&:hover": effectiveCanRedo
                         ? {
                             backgroundColor: "rgba(15,23,42,0.05)",
                             color: colors.text,
@@ -7603,7 +7885,7 @@ const WebsiteEditorInner = () => {
                 variant="contained"
                 startIcon={<Save size={16} />}
                 onClick={triggerManualSave}
-                disabled={saveStatus === "saving"}
+                disabled={!canTriggerSave}
                 sx={{
                   textTransform: "none",
                   borderRadius: 999,
@@ -10686,6 +10968,7 @@ const WebsiteEditorInner = () => {
             onPublish={handleMobilePublish}
             onPreview={handleMobilePreview}
             isSaving={saveStatus === "saving"}
+            canSave={canTriggerSave}
             isMac={
               typeof navigator !== "undefined" &&
               /Mac|iPad|iPhone/.test(navigator.userAgent)

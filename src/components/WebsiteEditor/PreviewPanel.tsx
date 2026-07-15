@@ -1063,8 +1063,25 @@ const FrontendTemplateIframePreview = React.memo(
                 backgroundColor: computedStyle.backgroundColor,
                 fontSize: computedStyle.fontSize,
                 fontWeight: computedStyle.fontWeight,
+                fontStyle: computedStyle.fontStyle,
                 textAlign: computedStyle.textAlign,
                 textShadow: computedStyle.textShadow,
+                lineHeight: computedStyle.lineHeight,
+                letterSpacing: computedStyle.letterSpacing,
+                wordSpacing: computedStyle.wordSpacing,
+                textTransform: computedStyle.textTransform,
+                textDecoration: computedStyle.textDecoration,
+                paddingTop: computedStyle.paddingTop,
+                paddingBottom: computedStyle.paddingBottom,
+                paddingLeft: computedStyle.paddingLeft,
+                paddingRight: computedStyle.paddingRight,
+                marginTop: computedStyle.marginTop,
+                marginBottom: computedStyle.marginBottom,
+                marginLeft: computedStyle.marginLeft,
+                marginRight: computedStyle.marginRight,
+                borderRadius: computedStyle.borderRadius,
+                borderWidth: computedStyle.borderWidth,
+                borderColor: computedStyle.borderColor,
               }
             : undefined,
           src:
@@ -1106,12 +1123,15 @@ const FrontendTemplateIframePreview = React.memo(
             | "single"
             | "multi"
             | null) || "single";
+        const styleKey =
+          editableEl.getAttribute("data-edit-style-key") || undefined;
         const rect = editableEl.getBoundingClientRect();
         const computedStyle = doc.defaultView?.getComputedStyle(editableEl);
 
         return {
           blockId,
           fieldPath,
+          styleKey,
           value: editableEl.textContent || "",
           editType,
           label: inferEditableLabel(editableEl, fieldPath),
@@ -3313,6 +3333,7 @@ export interface InlineEditStartData {
 export interface EditableElementSelectionData {
   blockId: string;
   fieldPath: string;
+  styleKey?: string;
   value: string;
   editType: "single" | "multi";
   label?: string;
@@ -3321,8 +3342,25 @@ export interface EditableElementSelectionData {
     backgroundColor?: string;
     fontSize?: string;
     fontWeight?: string;
+    fontStyle?: string;
     textAlign?: string;
     textShadow?: string;
+    lineHeight?: string;
+    letterSpacing?: string;
+    wordSpacing?: string;
+    textTransform?: string;
+    textDecoration?: string;
+    paddingTop?: string;
+    paddingBottom?: string;
+    paddingLeft?: string;
+    paddingRight?: string;
+    marginTop?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    marginRight?: string;
+    borderRadius?: string;
+    borderWidth?: string;
+    borderColor?: string;
   };
   rect?: { top: number; left: number; width: number; height: number };
 }
