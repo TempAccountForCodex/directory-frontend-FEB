@@ -383,6 +383,27 @@ const getVideoHeightPresetSx = (preset?: string) => {
 const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const templateContent =
     (data.templateContent as Record<string, any> | undefined) || {};
+  const editorStaticMediaOverrides =
+    (templateContent.__editorStaticMediaOverrides as
+      | Record<string, { src?: string }>
+      | undefined) || {};
+  const resolveEditorStaticMediaSrc = React.useCallback(
+    (
+      blockId: string | number | undefined,
+      staticId: string,
+      fallbackSrc: string,
+    ) => {
+      if (!blockId || !staticId) {
+        return fallbackSrc;
+      }
+      const override =
+        editorStaticMediaOverrides[`${String(blockId)}::${String(staticId)}`];
+      return typeof override?.src === "string" && override.src.trim()
+        ? override.src.trim()
+        : fallbackSrc;
+    },
+    [editorStaticMediaOverrides],
+  );
   const navbarContent = templateContent.navbar || {};
   const homeContent = templateContent.home || {};
   const featuresContent = templateContent.features || {};
@@ -1709,6 +1730,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   data-static-selectable="true"
                   data-static-style-only="true"
                   data-static-id="hero-social-proof"
+                  data-static-type="container"
                   data-preview-section="true"
                   data-preview-label="Social proof"
                   data-preview-block-id={overviewBlockId}
@@ -1728,16 +1750,33 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     data-static-selectable="true"
                     data-static-style-only="true"
                     data-static-id="hero-avatar-group"
+                    data-static-type="container"
                     data-preview-section="true"
                     data-preview-label="Avatar group"
                     data-preview-block-id={overviewBlockId}
                     data-preview-style-key="static.avatarGroupStyle"
                   >
                     {[
-                      visualSet.avatarOne,
-                      visualSet.avatarTwo,
-                      visualSet.avatarThree,
-                      visualSet.avatarOne,
+                      resolveEditorStaticMediaSrc(
+                        overviewBlockId,
+                        "hero-avatar-0",
+                        visualSet.avatarOne,
+                      ),
+                      resolveEditorStaticMediaSrc(
+                        overviewBlockId,
+                        "hero-avatar-1",
+                        visualSet.avatarTwo,
+                      ),
+                      resolveEditorStaticMediaSrc(
+                        overviewBlockId,
+                        "hero-avatar-2",
+                        visualSet.avatarThree,
+                      ),
+                      resolveEditorStaticMediaSrc(
+                        overviewBlockId,
+                        "hero-avatar-3",
+                        visualSet.avatarOne,
+                      ),
                     ].map((avatar, index) => (
                       <Box
                         key={`${avatar}-${index}`}
@@ -1745,6 +1784,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         data-static-selectable="true"
                         data-static-style-only="true"
                         data-static-id={`hero-avatar-${index}`}
+                        data-static-type="avatar"
                         data-preview-section="true"
                         data-preview-label={`Avatar ${index + 1}`}
                         data-preview-block-id={overviewBlockId}
@@ -1767,6 +1807,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     data-static-selectable="true"
                     data-static-style-only="true"
                     data-static-id="hero-review-text-group"
+                    data-static-type="container"
                     data-preview-section="true"
                     data-preview-label="Review text group"
                     data-preview-block-id={overviewBlockId}
@@ -1776,6 +1817,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       data-static-selectable="true"
                       data-static-style-only="true"
                       data-static-id="hero-star-row"
+                      data-static-type="icon"
                       data-preview-section="true"
                       data-preview-label="Star row"
                       data-preview-block-id={overviewBlockId}
@@ -1802,6 +1844,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         data-static-selectable="true"
                         data-static-style-only="true"
                         data-static-id="hero-customer-count"
+                        data-static-type="text"
                         data-preview-section="true"
                         data-preview-label="Customer count"
                         data-preview-block-id={overviewBlockId}
@@ -2052,6 +2095,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       data-static-selectable="true"
                       data-static-style-only="true"
                       data-static-id="about-badge"
+                      data-static-type="badge"
                       data-preview-section="true"
                       data-preview-label="About badge"
                       data-preview-block-id={aboutBlockId}
@@ -2351,37 +2395,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       bottom: 24,
                       pointerEvents: "none",
                     }}
-                  >
-                    <Typography
-                      data-editable="imageEyebrowText"
-                      data-edit-type="single"
-                      data-block-id={whyUsBlockId}
-                      sx={{
-                        color: "rgba(255,255,255,0.72)",
-                        mb: 0.8,
-                        pointerEvents: "auto",
-                      }}
-                    >
-                      {whyImageEyebrow}
-                    </Typography>
-                    <Typography
-                      data-editable="imageHeading"
-                      data-edit-type="multi"
-                      data-block-id={whyUsBlockId}
-                      sx={{
-                        fontFamily: headingFont,
-                        fontSize: { xs: "1.55rem", md: "2.15rem" },
-                        lineHeight: 1,
-                        letterSpacing: "-0.04em",
-                        fontWeight: 800,
-                        color: palette.white,
-                        maxWidth: 340,
-                        pointerEvents: "auto",
-                      }}
-                    >
-                      {whyImageHeading}
-                    </Typography>
-                  </Box>
+                  ></Box>
                 </Box>
               </Box>
               {renderSectionInnerBlocks(featuresContent, {

@@ -147,6 +147,120 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
     };
   }, [animationSignature]);
 
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) {
+      return;
+    }
+
+    const templateContent =
+      ((data as BusinessData & { templateContent?: Record<string, any> })
+        ?.templateContent as Record<string, any> | undefined) || {};
+    const mediaOverrides =
+      (templateContent.__editorStaticMediaOverrides as
+        | Record<string, Record<string, any>>
+        | undefined) || {};
+    const styleOverrides =
+      (templateContent.__editorStaticStyleOverrides as
+        | Record<string, Record<string, any>>
+        | undefined) || {};
+
+    const applyStylePatch = (element: HTMLElement, patch: Record<string, any>) => {
+      if (!patch) {
+        return;
+      }
+      const style = element.style;
+      const assign = (prop: keyof CSSStyleDeclaration, value: any) => {
+        if (value === undefined || value === null || value === "") {
+          return;
+        }
+        style[prop] = String(value);
+      };
+
+      assign("fontFamily", patch.fontFamily);
+      assign("fontSize", patch.fontSize);
+      assign("color", patch.color);
+      assign("backgroundColor", patch.backgroundColor);
+      assign("fontWeight", patch.fontWeight);
+      assign("fontStyle", patch.fontStyle);
+      assign("textAlign", patch.textAlign);
+      assign("textShadow", patch.textShadow);
+      assign("textTransform", patch.textTransform);
+      assign("lineHeight", patch.lineHeight);
+      assign("letterSpacing", patch.letterSpacing);
+      assign("wordSpacing", patch.wordSpacing);
+      assign("paddingTop", patch.paddingTop);
+      assign("paddingBottom", patch.paddingBottom);
+      assign("paddingLeft", patch.paddingLeft);
+      assign("paddingRight", patch.paddingRight);
+      assign("marginTop", patch.marginTop);
+      assign("marginBottom", patch.marginBottom);
+      assign("marginLeft", patch.marginLeft);
+      assign("marginRight", patch.marginRight);
+      assign("borderRadius", patch.borderRadius);
+      assign("borderWidth", patch.borderWidth);
+      assign("borderColor", patch.borderColor);
+      assign("borderStyle", patch.borderStyle || (patch.borderWidth ? "solid" : undefined));
+      assign("width", patch.width);
+      assign("height", patch.height);
+      assign("opacity", patch.opacity);
+    };
+
+    Object.entries(styleOverrides).forEach(([key, patch]) => {
+      const [blockId, styleKey, staticId] = key.split("::");
+      if (!blockId || !styleKey || !staticId) {
+        return;
+      }
+      const selector = `[data-preview-block-id="${blockId}"][data-static-id="${staticId}"][data-preview-style-key="${styleKey}"]`;
+      root.querySelectorAll<HTMLElement>(selector).forEach((element) => {
+        applyStylePatch(element, patch);
+      });
+    });
+
+    Object.entries(mediaOverrides).forEach(([key, patch]) => {
+      const [blockId, staticId] = key.split("::");
+      if (!blockId || !staticId) {
+        return;
+      }
+      const selector = `[data-preview-block-id="${blockId}"][data-static-id="${staticId}"]`;
+      root.querySelectorAll<HTMLElement>(selector).forEach((element) => {
+        const mediaTargets =
+          element instanceof HTMLImageElement || element instanceof HTMLVideoElement
+            ? [element]
+            : Array.from(element.querySelectorAll("img, video"));
+        if (typeof patch?.src === "string" && patch.src.trim()) {
+          const nextSrc = patch.src.trim();
+          if (mediaTargets.length > 0) {
+            mediaTargets.forEach((mediaEl) => {
+              if (mediaEl instanceof HTMLImageElement) {
+                mediaEl.src = nextSrc;
+                mediaEl.setAttribute("src", nextSrc);
+                mediaEl.removeAttribute("srcset");
+                mediaEl.removeAttribute("sizes");
+              }
+            });
+          } else {
+            element.style.backgroundImage = `url(${nextSrc})`;
+          }
+        }
+        mediaTargets.forEach((mediaEl) => {
+          if (!(mediaEl instanceof HTMLElement)) {
+            return;
+          }
+          if (patch?.objectFit) mediaEl.style.objectFit = String(patch.objectFit);
+          if (patch?.borderRadius) mediaEl.style.borderRadius = String(patch.borderRadius);
+          if (patch?.borderWidth) {
+            mediaEl.style.borderWidth = String(patch.borderWidth);
+            mediaEl.style.borderStyle = String(patch.borderStyle || "solid");
+          }
+          if (patch?.borderColor) mediaEl.style.borderColor = String(patch.borderColor);
+          if (patch?.width) mediaEl.style.width = String(patch.width);
+          if (patch?.height) mediaEl.style.height = String(patch.height);
+        });
+      });
+    });
+  }, [data]);
+
   if (!definition) {
     return <Box sx={{ p: 4, textAlign: "center" }}>Template not found.</Box>;
   }

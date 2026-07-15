@@ -181,6 +181,7 @@ interface StaticSelectableBoxProps extends BoxProps {
   staticId: string;
   blockId?: string | number;
   styleKey?: string;
+  staticType?: string;
 }
 
 export function StaticSelectableBox({
@@ -188,6 +189,7 @@ export function StaticSelectableBox({
   staticId,
   blockId,
   styleKey = "sectionStyle",
+  staticType = "unknown",
   children,
   ...rest
 }: StaticSelectableBoxProps) {
@@ -199,6 +201,7 @@ export function StaticSelectableBox({
         label,
         staticId,
         styleKey,
+        staticType,
       )}
       {...rest}
     >

@@ -39,11 +39,13 @@ export const getStaticSelectableProps = (
   label: string,
   staticId: string,
   styleKey = "sectionStyle",
+  staticType = "unknown",
 ) => ({
   "data-static-selectable": "true",
   "data-static-style-only": "true",
   "data-static-id": staticId,
   "data-static-label": label,
+  "data-static-type": staticType,
   "data-preview-target-kind": "static",
   "data-preview-section": "true",
   "data-preview-label": label,

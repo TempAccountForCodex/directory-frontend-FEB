@@ -114,6 +114,7 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
           data-static-selectable="true"
           data-static-style-only="true"
           data-static-id="hero-badge"
+          data-static-type="badge"
           data-preview-section="true"
           data-preview-label="Hero badge"
           data-preview-block-id={heroBlockId}
@@ -238,6 +239,7 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
             data-static-selectable="true"
             data-static-style-only="true"
             data-static-id="hero-social-proof-row"
+            data-static-type="container"
             data-preview-section="true"
             data-preview-label="Social proof row"
             data-preview-block-id={heroBlockId}
@@ -248,6 +250,7 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
               data-static-selectable="true"
               data-static-style-only="true"
               data-static-id="hero-star-row"
+              data-static-type="icon"
               data-preview-section="true"
               data-preview-label="Star row"
               data-preview-block-id={heroBlockId}
@@ -260,6 +263,7 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
                   data-static-selectable="true"
                   data-static-style-only="true"
                   data-static-id={`hero-star-${i}`}
+                  data-static-type="icon"
                   data-preview-section="true"
                   data-preview-label={`Star ${i + 1}`}
                   data-preview-block-id={heroBlockId}
@@ -275,6 +279,7 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
               data-static-selectable="true"
               data-static-style-only="true"
               data-static-id="hero-client-count"
+              data-static-type="text"
               data-preview-section="true"
               data-preview-label="Client count"
               data-preview-block-id={heroBlockId}

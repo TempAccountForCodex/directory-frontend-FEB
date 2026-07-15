@@ -77,6 +77,30 @@ const VIEWPORT_HEIGHTS: Record<Viewport, number> = {
 
 const TIMEOUT_MS = 10_000;
 
+const buildEditorStaticMediaOverrides = (
+  websiteId: string | number,
+  pageId: string | number,
+  overrides: Record<string, Record<string, any>>,
+) => {
+  const next: Record<string, Record<string, any>> = {};
+
+  Object.entries(overrides || {}).forEach(([key, value]) => {
+    const [overrideWebsiteId, overridePageId, overrideBlockId, overrideStaticId] =
+      key.split("::");
+    if (
+      String(overrideWebsiteId || "") !== String(websiteId ?? "") ||
+      String(overridePageId || "") !== String(pageId ?? "") ||
+      !overrideBlockId ||
+      !overrideStaticId
+    ) {
+      return;
+    }
+    next[`${overrideBlockId}::${overrideStaticId}`] = value;
+  });
+
+  return next;
+};
+
 const getNonce = (): string | undefined => {
   const value = document
     .querySelector('meta[name="csp-nonce"]')
@@ -138,6 +162,8 @@ interface FrontendTemplateIframeProps {
     target: PreviewSelectionTarget,
     patch: PreviewElementTransformPatch,
   ) => void;
+  staticStyleDrafts?: Record<string, Record<string, any>>;
+  staticMediaOverrides?: Record<string, Record<string, any>>;
   saveSignal?: number;
   iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
   selectedPreviewTarget?: PreviewSelectionTarget | null;
@@ -162,6 +188,8 @@ const FrontendTemplateIframePreview = React.memo(
     onPreviewContextMenu,
     onEditableTextSave,
     onElementTransform,
+    staticStyleDrafts = {},
+    staticMediaOverrides = {},
     saveSignal,
     iframeRefCallback,
     selectedPreviewTarget,
@@ -886,6 +914,92 @@ const FrontendTemplateIframePreview = React.memo(
         const tagName =
           element.getAttribute("data-fallback-tag") ||
           element.tagName.toLowerCase();
+        const explicitStaticType = element.getAttribute("data-static-type");
+        const inferStaticType = (): NonNullable<
+          SectionSelectionData["staticType"]
+        > => {
+          if (explicitStaticType) {
+            return explicitStaticType as NonNullable<
+              SectionSelectionData["staticType"]
+            >;
+          }
+          if (
+            tagName === "img" ||
+            tagName === "video" ||
+            element.getAttribute("data-fallback-media") === "true"
+          ) {
+            return tagName === "img" &&
+              /(avatar|profile)/i.test(
+                [
+                  element.getAttribute("data-preview-label"),
+                  element.getAttribute("aria-label"),
+                  element.getAttribute("alt"),
+                  element.getAttribute("class"),
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+              )
+              ? "avatar"
+              : "media";
+          }
+          if (
+            tagName === "svg" ||
+            tagName === "path" ||
+            tagName === "circle" ||
+            /MuiSvgIcon-root/i.test(element.className)
+          ) {
+            return "icon";
+          }
+          if (
+            /MuiChip-root/i.test(element.className) ||
+            /(avatar)/i.test(
+              [
+                element.getAttribute("data-preview-label"),
+                element.getAttribute("data-static-label"),
+              ]
+                .filter(Boolean)
+                .join(" "),
+            )
+          ) {
+            return "avatar";
+          }
+          if (
+            /(star|icon|rating)/i.test(
+              [
+                element.getAttribute("data-preview-label"),
+                element.getAttribute("data-static-label"),
+              ]
+                .filter(Boolean)
+                .join(" "),
+            )
+          ) {
+            return "icon";
+          }
+          if (
+            /(badge|chip|pill)/i.test(
+              [
+                element.getAttribute("data-preview-label"),
+                element.getAttribute("data-static-label"),
+                element.getAttribute("class"),
+              ]
+                .filter(Boolean)
+                .join(" "),
+            )
+          ) {
+            return "badge";
+          }
+          if (
+            tagName === "div" ||
+            tagName === "section" ||
+            tagName === "article" ||
+            tagName === "nav" ||
+            tagName === "footer" ||
+            tagName === "header"
+          ) {
+            return "container";
+          }
+          return "text";
+        };
         const label =
           element.getAttribute("data-static-label") ||
           element.getAttribute("data-preview-label") ||
@@ -896,6 +1010,7 @@ const FrontendTemplateIframePreview = React.memo(
           element.getAttribute("data-preview-style-key") ||
           `static.${staticId}`;
         const rect = element.getBoundingClientRect();
+        const computedStyle = doc.defaultView?.getComputedStyle(element);
 
         return {
           blockId,
@@ -904,6 +1019,22 @@ const FrontendTemplateIframePreview = React.memo(
           staticId,
           styleOnly: true,
           targetKind: "static",
+          staticType: inferStaticType(),
+          tagName,
+          computedStyle: computedStyle
+            ? {
+                color: computedStyle.color,
+                backgroundColor: computedStyle.backgroundColor,
+                fontSize: computedStyle.fontSize,
+                fontWeight: computedStyle.fontWeight,
+                textAlign: computedStyle.textAlign,
+                textShadow: computedStyle.textShadow,
+              }
+            : undefined,
+          src:
+            element.getAttribute("src") ||
+            element.getAttribute("data-image-src") ||
+            undefined,
           rect: {
             top: rect.top,
             left: rect.left,
@@ -2255,6 +2386,7 @@ const FrontendTemplateIframePreview = React.memo(
         "data-static-style-only",
         "data-static-id",
         "data-static-label",
+        "data-static-type",
         "data-fallback-section",
         "data-fallback-selectable",
         "data-fallback-id",
@@ -2434,6 +2566,16 @@ const FrontendTemplateIframePreview = React.memo(
           if (isMedia) {
             element.setAttribute("data-fallback-media", "true");
           }
+          element.setAttribute(
+            "data-static-type",
+            isMedia
+              ? "media"
+              : tagName === "svg"
+                ? "icon"
+                : textLikeTags.has(tagName)
+                  ? "text"
+                  : "container",
+          );
           element.setAttribute("data-preview-target-kind", "static");
           element.setAttribute("data-preview-section", "true");
           element.setAttribute("data-preview-block-id", context.blockId);
@@ -2759,6 +2901,266 @@ const FrontendTemplateIframePreview = React.memo(
       activeSectionRef.current = null;
     }, [selectedPreviewTarget]);
 
+    React.useEffect(() => {
+      const doc = iframeDocumentRef.current;
+      if (!doc) {
+        return;
+      }
+
+      const applyStaticStyles = (element: HTMLElement, patch: Record<string, any>) => {
+        if (!patch || typeof patch !== "object") {
+          return;
+        }
+
+        const style = element.style;
+        const assign = (prop: keyof CSSStyleDeclaration, value: any) => {
+          if (value === undefined || value === null || value === "") {
+            return;
+          }
+          style[prop] = String(value);
+        };
+
+        const imageTargets =
+          element instanceof HTMLImageElement
+            ? [element]
+            : Array.from(element.querySelectorAll<HTMLImageElement>("img"));
+        const videoTargets =
+          element instanceof HTMLVideoElement
+            ? [element]
+            : Array.from(element.querySelectorAll<HTMLVideoElement>("video"));
+
+        const resolvedHeight =
+          typeof patch.customHeight === "string" && patch.customHeight
+            ? patch.customHeight
+            : patch.heightPreset === "small"
+              ? "180px"
+              : patch.heightPreset === "medium"
+                ? "260px"
+                : patch.heightPreset === "large"
+                  ? "340px"
+                  : patch.heightPreset === "auto" || !patch.heightPreset
+                    ? undefined
+                    : undefined;
+
+        if (typeof patch.src === "string" && patch.src.trim()) {
+          const nextSrc = patch.src.trim();
+          if (imageTargets.length > 0) {
+            imageTargets.forEach((img) => {
+              img.setAttribute("src", nextSrc);
+              img.setAttribute("data-image-src", nextSrc);
+              img.removeAttribute("srcset");
+              img.removeAttribute("sizes");
+              img.src = nextSrc;
+              const pictureParent = img.parentElement;
+              if (pictureParent instanceof HTMLElement) {
+                const sourceChildren =
+                  pictureParent.querySelectorAll<HTMLSourceElement>("source");
+                sourceChildren.forEach((source) => {
+                  source.removeAttribute("srcset");
+                  source.removeAttribute("sizes");
+                  source.srcset = nextSrc;
+                });
+              }
+            });
+          } else {
+            element.style.backgroundImage = `url(${nextSrc})`;
+            element.setAttribute("data-image-src", nextSrc);
+          }
+        }
+
+        if (typeof patch.videoUrl === "string" && patch.videoUrl.trim()) {
+          const nextVideoUrl = patch.videoUrl.trim();
+          videoTargets.forEach((video) => {
+            video.src = nextVideoUrl;
+            if (typeof patch.videoPoster === "string") {
+              video.poster = patch.videoPoster;
+            }
+            if (typeof patch.videoAutoplay === "boolean") {
+              video.autoplay = patch.videoAutoplay;
+            }
+            if (typeof patch.videoMuted === "boolean") {
+              video.muted = patch.videoMuted;
+            }
+            if (typeof patch.videoLoop === "boolean") {
+              video.loop = patch.videoLoop;
+            }
+            if (typeof patch.videoControls === "boolean") {
+              video.controls = patch.videoControls;
+            }
+            if (typeof video.load === "function") {
+              video.load();
+            }
+          });
+        }
+
+        assign("fontFamily", patch.fontFamily);
+        assign("fontSize", patch.fontSize);
+        assign("color", patch.color);
+        assign("backgroundColor", patch.backgroundColor);
+        assign("fontWeight", patch.fontWeight);
+        assign("fontStyle", patch.fontStyle);
+        assign("textAlign", patch.textAlign);
+        assign("textShadow", patch.textShadow);
+        assign("textTransform", patch.textTransform);
+        assign("lineHeight", patch.lineHeight);
+        assign("letterSpacing", patch.letterSpacing);
+        assign("wordSpacing", patch.wordSpacing);
+        assign("paddingTop", patch.paddingTop);
+        assign("paddingBottom", patch.paddingBottom);
+        assign("paddingLeft", patch.paddingLeft);
+        assign("paddingRight", patch.paddingRight);
+        assign("marginTop", patch.marginTop);
+        assign("marginBottom", patch.marginBottom);
+        assign("marginLeft", patch.marginLeft);
+        assign("marginRight", patch.marginRight);
+        assign("borderRadius", patch.borderRadius);
+        assign("borderWidth", patch.borderWidth);
+        assign("borderColor", patch.borderColor);
+        assign("borderStyle", patch.borderStyle || (patch.borderWidth ? "solid" : undefined));
+        assign("objectFit", patch.objectFit);
+        assign("width", patch.width);
+        assign("height", patch.height);
+        if (patch.opacity !== undefined && patch.opacity !== null && patch.opacity !== "") {
+          style.opacity = String(patch.opacity);
+        }
+
+        [...imageTargets, ...videoTargets].forEach((mediaEl) => {
+          const mediaStyle = mediaEl.style;
+          const assignMedia = (prop: keyof CSSStyleDeclaration, value: any) => {
+            if (value === undefined || value === null || value === "") {
+              return;
+            }
+            mediaStyle[prop] = String(value);
+          };
+
+          assignMedia("borderRadius", patch.borderRadius);
+          assignMedia("borderWidth", patch.borderWidth);
+          assignMedia("borderColor", patch.borderColor);
+          assignMedia(
+            "borderStyle",
+            patch.borderStyle || (patch.borderWidth ? "solid" : undefined),
+          );
+          assignMedia("objectFit", patch.objectFit);
+          assignMedia("width", patch.width);
+          assignMedia("height", patch.height || resolvedHeight);
+        });
+      };
+
+      Array.from(
+        doc.querySelectorAll<HTMLElement>(
+          "[data-static-selectable='true'], [data-fallback-selectable='true'], [data-fallback-media='true']",
+        ),
+      ).forEach((element) => {
+        const key = `${element.getAttribute("data-preview-block-id") || ""}::${element.getAttribute("data-preview-style-key") || "sectionStyle"}::${element.getAttribute("data-static-id") || element.getAttribute("data-fallback-id") || ""}`;
+        const patch = staticStyleDrafts[key];
+        if (patch) {
+          applyStaticStyles(element, patch);
+        }
+      });
+    }, [staticStyleDrafts, selectedPreviewTarget]);
+
+    React.useEffect(() => {
+      const doc = iframeDocumentRef.current;
+      if (!doc) {
+        return;
+      }
+
+      const applyStaticMediaOverride = (
+        element: HTMLElement,
+        override: Record<string, any>,
+      ) => {
+        if (!override || typeof override !== "object") {
+          return;
+        }
+
+        const imageTargets =
+          element instanceof HTMLImageElement
+            ? [element]
+            : Array.from(element.querySelectorAll<HTMLImageElement>("img"));
+        const videoTargets =
+          element instanceof HTMLVideoElement
+            ? [element]
+            : Array.from(element.querySelectorAll<HTMLVideoElement>("video"));
+
+        const resolvedHeight =
+          typeof override.customHeight === "string" && override.customHeight
+            ? override.customHeight
+            : override.heightPreset === "small"
+              ? "180px"
+              : override.heightPreset === "medium"
+                ? "260px"
+                : override.heightPreset === "large"
+                  ? "340px"
+                  : override.heightPreset === "auto" || !override.heightPreset
+                    ? undefined
+                    : undefined;
+
+        if (typeof override.src === "string" && override.src.trim()) {
+          const nextSrc = override.src.trim();
+          if (imageTargets.length > 0) {
+            imageTargets.forEach((img) => {
+              img.setAttribute("src", nextSrc);
+              img.setAttribute("data-image-src", nextSrc);
+              img.removeAttribute("srcset");
+              img.removeAttribute("sizes");
+              img.src = nextSrc;
+            });
+          } else {
+            element.style.backgroundImage = `url(${nextSrc})`;
+            element.setAttribute("data-image-src", nextSrc);
+          }
+        }
+
+        const applyMediaStyle = (
+          mediaEl: HTMLElement,
+          patch: Record<string, any>,
+        ) => {
+          const style = mediaEl.style;
+          const assign = (prop: keyof CSSStyleDeclaration, value: any) => {
+            if (value === undefined || value === null || value === "") {
+              return;
+            }
+            style[prop] = String(value);
+          };
+          assign("objectFit", patch.objectFit);
+          assign("borderRadius", patch.borderRadius);
+          assign("borderWidth", patch.borderWidth);
+          assign("borderColor", patch.borderColor);
+          assign(
+            "borderStyle",
+            patch.borderStyle || (patch.borderWidth ? "solid" : undefined),
+          );
+          assign("height", patch.height || resolvedHeight);
+          assign("width", patch.width);
+        };
+
+        [...imageTargets, ...videoTargets].forEach((mediaEl) =>
+          applyMediaStyle(mediaEl, override),
+        );
+      };
+
+      Object.entries(staticMediaOverrides).forEach(([key, override]) => {
+        const [, overridePageId, overrideBlockId, overrideStaticId] =
+          key.split("::");
+        if (
+          String(overridePageId || "") !== String(pageId ?? "") ||
+          !overrideBlockId ||
+          !overrideStaticId
+        ) {
+          return;
+        }
+
+        const selector = [
+          `[data-preview-block-id="${CSS.escape(overrideBlockId)}"][data-static-id="${CSS.escape(overrideStaticId)}"]`,
+          `[data-preview-block-id="${CSS.escape(overrideBlockId)}"][data-fallback-id="${CSS.escape(overrideStaticId)}"]`,
+        ].join(", ");
+
+        doc.querySelectorAll<HTMLElement>(selector).forEach((element) => {
+          applyStaticMediaOverride(element, override);
+        });
+      });
+    }, [pageId, staticMediaOverrides]);
+
     const portal =
       mountNode && cacheRef.current
         ? createPortal(
@@ -2844,6 +3246,24 @@ export interface SectionSelectionData {
   staticId?: string;
   styleOnly?: boolean;
   targetKind?: "section" | "static";
+  staticType?:
+    | "text"
+    | "media"
+    | "icon"
+    | "container"
+    | "badge"
+    | "avatar"
+    | "unknown";
+  tagName?: string;
+  computedStyle?: {
+    color?: string;
+    backgroundColor?: string;
+    fontSize?: string;
+    fontWeight?: string;
+    textAlign?: string;
+    textShadow?: string;
+  };
+  src?: string;
   supportsInnerBlocks?: boolean;
   rect?: { top: number; left: number; width: number; height: number };
 }
@@ -2930,6 +3350,8 @@ interface PreviewPanelProps {
     target: PreviewSelectionTarget,
     patch: PreviewElementTransformPatch,
   ) => void;
+  staticStyleDrafts?: Record<string, Record<string, any>>;
+  staticMediaOverrides?: Record<string, Record<string, any>>;
   saveSignal?: number;
   /** Step 9.16.3: Exposes the iframe ref for InlineTextEditor positioning */
   iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
@@ -2968,6 +3390,8 @@ const PreviewPanel = React.memo(function PreviewPanel({
   onInlineEditStart,
   onEditableTextSave,
   onElementTransform,
+  staticStyleDrafts = {},
+  staticMediaOverrides = {},
   saveSignal,
   iframeRefCallback,
   selectedPreviewTarget,
@@ -3076,43 +3500,70 @@ const PreviewPanel = React.memo(function PreviewPanel({
     previewCtx.currentPageContent?.websiteMeta?.frontendTemplateId ||
     null;
   const frontendTemplateData = React.useMemo(() => {
+    let baseData: BusinessData | null = null;
+
     if (frontendTemplateDataOverride && frontendTemplateId) {
-      return frontendTemplateDataOverride;
-    }
-
-    const override =
+      baseData = frontendTemplateDataOverride;
+    } else {
+      const override =
       previewCtx.currentPageContent?.websiteMeta?.templateDataOverride;
-    if (override && frontendTemplateId) {
-      return override as unknown as BusinessData;
+      if (override && frontendTemplateId) {
+        baseData = override as unknown as BusinessData;
+      } else {
+        if (
+          !frontendTemplateId ||
+          !hasFrontendTemplateBaseData(frontendTemplateId)
+        ) {
+          return null;
+        }
+
+        const websiteMeta = previewCtx.currentPageContent?.websiteMeta;
+        if (!websiteMeta) {
+          return null;
+        }
+
+        baseData = buildFrontendTemplateBusinessData(frontendTemplateId, {
+          name: websiteMeta.name || "Preview Website",
+          businessName: websiteMeta.businessName,
+          primaryColor: websiteMeta.primaryColor,
+          secondaryColor: websiteMeta.secondaryColor,
+          metaDescription: websiteMeta.metaDescription,
+          shortDescription: websiteMeta.shortDescription,
+          logoUrl: websiteMeta.logoUrl,
+          fullAddress: websiteMeta.fullAddress,
+          tags: websiteMeta.tags,
+        });
+      }
     }
 
-    if (
-      !frontendTemplateId ||
-      !hasFrontendTemplateBaseData(frontendTemplateId)
-    ) {
+    if (!baseData) {
       return null;
     }
 
-    const websiteMeta = previewCtx.currentPageContent?.websiteMeta;
-    if (!websiteMeta) {
-      return null;
+    const editorStaticMediaOverrides = buildEditorStaticMediaOverrides(
+      websiteId,
+      pageId,
+      staticMediaOverrides,
+    );
+    if (!Object.keys(editorStaticMediaOverrides).length) {
+      return baseData;
     }
 
-    return buildFrontendTemplateBusinessData(frontendTemplateId, {
-      name: websiteMeta.name || "Preview Website",
-      businessName: websiteMeta.businessName,
-      primaryColor: websiteMeta.primaryColor,
-      secondaryColor: websiteMeta.secondaryColor,
-      metaDescription: websiteMeta.metaDescription,
-      shortDescription: websiteMeta.shortDescription,
-      logoUrl: websiteMeta.logoUrl,
-      fullAddress: websiteMeta.fullAddress,
-      tags: websiteMeta.tags,
-    });
+    return {
+      ...baseData,
+      templateContent: {
+        ...((baseData as BusinessData & { templateContent?: Record<string, any> })
+          .templateContent || {}),
+        __editorStaticMediaOverrides: editorStaticMediaOverrides,
+      },
+    } as BusinessData;
   }, [
     frontendTemplateDataOverride,
     frontendTemplateId,
+    pageId,
     previewCtx.currentPageContent,
+    staticMediaOverrides,
+    websiteId,
   ]);
 
   const isFrontendTemplatePreview =
@@ -4071,6 +4522,8 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 onPreviewContextMenu={onPreviewContextMenu}
                 onEditableTextSave={onEditableTextSave}
                 onElementTransform={onElementTransform}
+                staticStyleDrafts={staticStyleDrafts}
+                staticMediaOverrides={staticMediaOverrides}
                 saveSignal={saveSignal}
                 iframeRefCallback={iframeRefCallback}
                 selectedPreviewTarget={selectedPreviewTarget}

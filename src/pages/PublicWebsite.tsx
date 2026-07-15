@@ -42,6 +42,7 @@ import {
   hasFrontendTemplateBaseData,
 } from "../templates/frontendTemplateSiteData";
 import { getStoredWebsiteFrontendTemplateId } from "../templates/frontendTemplatePersistence";
+import { getStoredStaticOverridesForPage } from "../templates/frontendTemplateStaticOverrides";
 
 interface Page {
   id: number;
@@ -663,11 +664,16 @@ h1, h2, h3, h4, h5, h6 {
       return null;
     }
 
+    const storedStaticOverrides = getStoredStaticOverridesForPage(
+      website.id,
+      currentPage?.id,
+    );
+
     if (
       supportsFrontendTemplateEditor(resolvedFrontendTemplateId) &&
       persistedTemplatePages.length > 0
     ) {
-      return buildTemplatePreviewBusinessData(
+      const baseData = buildTemplatePreviewBusinessData(
         resolvedFrontendTemplateId,
         {
           id: website.id,
@@ -684,9 +690,19 @@ h1, h2, h3, h4, h5, h6 {
         },
         persistedTemplatePages,
       );
+      return baseData
+        ? {
+            ...baseData,
+            templateContent: {
+              ...((baseData.templateContent as Record<string, any>) || {}),
+              __editorStaticMediaOverrides: storedStaticOverrides.media,
+              __editorStaticStyleOverrides: storedStaticOverrides.style,
+            },
+          }
+        : null;
     }
 
-    return buildFrontendTemplateBusinessData(resolvedFrontendTemplateId, {
+    const baseData = buildFrontendTemplateBusinessData(resolvedFrontendTemplateId, {
       websiteId: website.id,
       name: website.name,
       businessName: website.businessName,
@@ -706,7 +722,17 @@ h1, h2, h3, h4, h5, h6 {
         isPublished: page.isPublished,
       })),
     });
-  }, [website, persistedTemplatePages, resolvedFrontendTemplateId]);
+    return baseData
+      ? {
+          ...baseData,
+          templateContent: {
+            ...((baseData.templateContent as Record<string, any>) || {}),
+            __editorStaticMediaOverrides: storedStaticOverrides.media,
+            __editorStaticStyleOverrides: storedStaticOverrides.style,
+          },
+        }
+      : null;
+  }, [website, persistedTemplatePages, resolvedFrontendTemplateId, currentPage?.id]);
 
   if (loading) {
     return (

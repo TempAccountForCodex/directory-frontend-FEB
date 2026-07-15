@@ -51,6 +51,7 @@ import {
   Select,
   Slider,
   Switch,
+  TextField,
   FormControlLabel,
   Paper,
   Tooltip,
@@ -142,6 +143,13 @@ import {
   supportsFrontendTemplateEditor,
 } from "../../templates/frontendTemplateEditorSupport";
 import { getStoredWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
+import {
+  buildStoredStaticMediaOverrideKey,
+  buildStoredStaticStyleOverrideKey,
+  getStoredStaticOverridesForPage,
+  storeStaticMediaOverride,
+  storeStaticStyleOverride,
+} from "../../templates/frontendTemplateStaticOverrides";
 import {
   getMediaLimitSummary,
   IMAGE_ACCEPT_ATTR,
@@ -608,6 +616,14 @@ const getSectionLibraryIcon = (item) => {
 };
 
 const getSectionStyleKey = (selection) => selection?.styleKey || "sectionStyle";
+const getStaticStyleDraftKey = (selection) =>
+  selection?.blockId && selection?.staticId
+    ? `${selection.blockId}::${selection.styleKey || "sectionStyle"}::${selection.staticId}`
+    : null;
+const getStaticMediaOverrideKey = (websiteId, pageId, selection) =>
+  websiteId != null && pageId != null && selection?.blockId && selection?.staticId
+    ? `${String(websiteId)}::${String(pageId)}::${String(selection.blockId)}::${String(selection.staticId)}`
+    : null;
 
 const getEditableStyleConfig = (fieldPath) =>
   EDITABLE_STYLE_FIELD_MAP[fieldPath] || {
@@ -2265,6 +2281,7 @@ const WebsiteEditorInner = () => {
   const [imageLibraryFieldRequest, setImageLibraryFieldRequest] =
     useState(null);
   const [selectedSectionElement, setSelectedSectionElement] = useState(null);
+  const [selectedStaticElement, setSelectedStaticElement] = useState(null);
   const [isSectionInnerBlockModalOpen, setIsSectionInnerBlockModalOpen] =
     useState(false);
   const [sectionInnerBlockSearch, setSectionInnerBlockSearch] = useState("");
@@ -2280,8 +2297,38 @@ const WebsiteEditorInner = () => {
   const [previewContextMenu, setPreviewContextMenu] = useState(null);
   const [previewClipboard, setPreviewClipboard] = useState(null);
   const [selectedPreviewTarget, setSelectedPreviewTarget] = useState(null);
+  const [staticStyleDrafts, setStaticStyleDrafts] = useState({});
+  const [staticMediaOverrides, setStaticMediaOverrides] = useState({});
   const [draggedLibraryBlock, setDraggedLibraryBlock] = useState(null);
   const [previewSaveSignal, setPreviewSaveSignal] = useState(0);
+
+  useEffect(() => {
+    if (websiteId == null || selectedPage?.id == null) {
+      return;
+    }
+
+    const stored = getStoredStaticOverridesForPage(websiteId, selectedPage.id);
+    setStaticMediaOverrides((prev) => {
+      const next = { ...prev };
+      Object.entries(stored.media).forEach(([pageKey, value]) => {
+        next[buildStoredStaticMediaOverrideKey(
+          websiteId,
+          selectedPage.id,
+          pageKey.split("::")[0],
+          pageKey.split("::")[1],
+        )] = value;
+      });
+      return next;
+    });
+    setStaticStyleDrafts((prev) => {
+      const next = { ...prev };
+      Object.entries(stored.style).forEach(([pageKey, value]) => {
+        const [blockId, styleKey, staticId] = pageKey.split("::");
+        next[`${blockId}::${styleKey}::${staticId}`] = value;
+      });
+      return next;
+    });
+  }, [selectedPage?.id, websiteId]);
 
   const getEditableCssUnitValue = useCallback((value) => {
     if (value === null || value === undefined) return "";
@@ -3238,6 +3285,11 @@ const WebsiteEditorInner = () => {
     );
     if (!baseTemplateDataOverride) return null;
 
+    const storedStaticOverrides = getStoredStaticOverridesForPage(
+      websiteId,
+      selectedPage?.id,
+    );
+
     const resolvedThemeSelection =
       templateThemeSelection && templateThemeSelectionDirty
       ? resolveTemplateThemeSelection(templateThemeSelection)
@@ -3245,6 +3297,11 @@ const WebsiteEditorInner = () => {
 
     return {
       ...baseTemplateDataOverride,
+      templateContent: {
+        ...(baseTemplateDataOverride.templateContent || {}),
+        __editorStaticMediaOverrides: storedStaticOverrides.media,
+        __editorStaticStyleOverrides: storedStaticOverrides.style,
+      },
       ...(resolvedThemeSelection && {
         primaryColor: resolvedThemeSelection.palette.primary,
         secondaryColor: resolvedThemeSelection.palette.secondary,
@@ -3953,6 +4010,61 @@ const WebsiteEditorInner = () => {
     };
   }, [blocks, selectedEditableElement]);
 
+  const selectedStaticTextStyle = useMemo(() => {
+    if (!selectedStaticElement?.computedStyle) {
+      return DEFAULT_TEXT_STYLE;
+    }
+
+    return {
+      ...DEFAULT_TEXT_STYLE,
+      color: selectedStaticElement.computedStyle.color || DEFAULT_TEXT_STYLE.color,
+      backgroundColor:
+        selectedStaticElement.computedStyle.backgroundColor ||
+        DEFAULT_TEXT_STYLE.backgroundColor,
+      fontSize:
+        selectedStaticElement.computedStyle.fontSize || DEFAULT_TEXT_STYLE.fontSize,
+      fontWeight:
+        selectedStaticElement.computedStyle.fontWeight ||
+        DEFAULT_TEXT_STYLE.fontWeight,
+      textAlign:
+        selectedStaticElement.computedStyle.textAlign || DEFAULT_TEXT_STYLE.textAlign,
+      textShadow:
+        selectedStaticElement.computedStyle.textShadow ||
+        DEFAULT_TEXT_STYLE.textShadow,
+    };
+  }, [selectedStaticElement]);
+
+  const selectedStaticContainerStyle = useMemo(() => {
+    if (!selectedStaticElement?.computedStyle) {
+      return DEFAULT_SECTION_STYLE;
+    }
+
+    return {
+      ...DEFAULT_SECTION_STYLE,
+      backgroundColor:
+        selectedStaticElement.computedStyle.backgroundColor ||
+        DEFAULT_SECTION_STYLE.backgroundColor,
+      contentAlign:
+        selectedStaticElement.computedStyle.textAlign ||
+        DEFAULT_SECTION_STYLE.contentAlign,
+    };
+  }, [selectedStaticElement]);
+
+  const selectedStaticMediaStyle = useMemo(() => {
+    const key = getStaticStyleDraftKey(selectedStaticElement);
+    const draft = key ? staticStyleDrafts[key] || {} : {};
+    const staticPreviewSrc =
+      selectedImageElement?.isStatic && typeof selectedImageElement.src === "string"
+        ? selectedImageElement.src
+        : selectedStaticElement?.src || "";
+
+    return {
+      ...DEFAULT_IMAGE_VALUE,
+      src: staticPreviewSrc,
+      ...draft,
+    };
+  }, [selectedStaticElement, selectedImageElement, staticStyleDrafts]);
+
   const selectedSectionStyle = useMemo(() => {
     if (!selectedSectionElement?.blockId) {
       return DEFAULT_SECTION_STYLE;
@@ -3996,6 +4108,18 @@ const WebsiteEditorInner = () => {
   }, [blocks, selectedSectionElement]);
 
   const selectedImageValue = useMemo(() => {
+    if (selectedImageElement?.isStatic) {
+      return {
+        ...DEFAULT_IMAGE_VALUE,
+        ...selectedStaticMediaStyle,
+        mediaType:
+          selectedStaticMediaStyle.mediaType === "video" ||
+          selectedStaticMediaStyle.videoUrl
+            ? "video"
+            : "image",
+      };
+    }
+
     if (!selectedImageElement?.blockId || !selectedImageElement?.fieldPath) {
       return DEFAULT_IMAGE_VALUE;
     }
@@ -4049,7 +4173,7 @@ const WebsiteEditorInner = () => {
           : selectedImageElement.src || "",
       ...blockStyle,
     };
-  }, [blocks, selectedImageElement]);
+  }, [blocks, selectedImageElement, selectedStaticMediaStyle]);
 
   const selectedImagePreviewHeight = useMemo(() => {
     switch (selectedImageValue.heightPreset) {
@@ -4332,6 +4456,7 @@ const WebsiteEditorInner = () => {
       if (innerMatch?.contentPath === "__card") {
         setPreviewContextMenu(null);
         setSelectedEditableElement(null);
+        setSelectedStaticElement(null);
         setSelectedImageElement(null);
         setIsImageDialogOpen(false);
         setSelectedSectionElement({
@@ -4352,6 +4477,7 @@ const WebsiteEditorInner = () => {
       }
 
       setPreviewContextMenu(null);
+      setSelectedStaticElement(null);
       setSelectedImageElement(null);
       setIsImageDialogOpen(false);
       setSelectedEditableElement(data);
@@ -4382,19 +4508,51 @@ const WebsiteEditorInner = () => {
       setPreviewContextMenu(null);
       if (data) {
         setSelectedEditableElement(null);
-        setSelectedImageElement(null);
-        setIsImageDialogOpen(false);
       }
-      setSelectedSectionElement(data);
       if (data) {
-        setActiveToolbarMode("section");
-        setIsInspectorOpen(true);
+        if (data.targetKind === "static") {
+          setSelectedStaticElement(data);
+          setSelectedSectionElement(null);
+          if (["media", "avatar"].includes(data.staticType || "")) {
+            setSelectedImageElement({
+              blockId: data.blockId,
+              fieldPath: null,
+              src: data.src || "",
+              label: data.label || "Static media",
+              staticId: data.staticId,
+              styleKey: data.styleKey || `static.${data.staticId || "media"}`,
+              staticType: data.staticType || "media",
+              isStatic: true,
+              mediaType: "image",
+            });
+            setActiveToolbarMode("image");
+            setIsInspectorOpen(false);
+            setIsImageDialogOpen(true);
+          } else {
+            setSelectedImageElement(null);
+            setIsImageDialogOpen(false);
+            setActiveToolbarMode(
+              data.staticType === "container" ? "section" : "text",
+            );
+            setIsInspectorOpen(true);
+          }
+        } else {
+          setSelectedStaticElement(null);
+          setSelectedSectionElement(data);
+          setSelectedImageElement(null);
+          setIsImageDialogOpen(false);
+          setActiveToolbarMode("section");
+          setIsInspectorOpen(true);
+        }
         syncPreviewSelection({
           kind: data.targetKind === "static" ? "static" : "section",
           blockId: data.blockId,
           styleKey: data.styleKey || "sectionStyle",
           staticId: data.staticId,
         });
+      } else {
+        setSelectedStaticElement(null);
+        setSelectedSectionElement(null);
       }
       setBlockDialogOpen(false);
       setEditingBlock(null);
@@ -4410,6 +4568,7 @@ const WebsiteEditorInner = () => {
 
       setPreviewContextMenu(null);
       setSelectedSectionElement(data);
+      setSelectedStaticElement(null);
       setSelectedEditableElement(null);
       setSelectedImageElement(null);
       setIsImageDialogOpen(false);
@@ -4429,6 +4588,7 @@ const WebsiteEditorInner = () => {
 
     setPreviewContextMenu(null);
     setSelectedSectionElement(data);
+    setSelectedStaticElement(null);
     setSelectedEditableElement(null);
     setSelectedImageElement(null);
     setIsImageDialogOpen(false);
@@ -4535,6 +4695,7 @@ const WebsiteEditorInner = () => {
 
       setPreviewContextMenu(null);
       setSelectedEditableElement(null);
+      setSelectedStaticElement(null);
       setSelectedImageElement(data);
       setSelectedSectionElement((prev) => prev || null);
       setIsInspectorOpen(false);
@@ -4554,6 +4715,7 @@ const WebsiteEditorInner = () => {
       return;
     }
 
+    setSelectedStaticElement(null);
     setSelectedImageElement(data);
     setIsImageDialogOpen(true);
   }, []);
@@ -5475,8 +5637,313 @@ const WebsiteEditorInner = () => {
     [selectedEditableElement],
   );
 
+  const handleStaticStyleChange = useCallback((patch) => {
+    const key = getStaticStyleDraftKey(selectedStaticElement);
+    if (!key || !patch) {
+      return;
+    }
+
+    if (
+      websiteId != null &&
+      selectedPage?.id != null &&
+      selectedStaticElement?.blockId &&
+      selectedStaticElement?.staticId
+    ) {
+      const storedKey = buildStoredStaticStyleOverrideKey(
+        websiteId,
+        selectedPage.id,
+        selectedStaticElement.blockId,
+        selectedStaticElement.styleKey || "sectionStyle",
+        selectedStaticElement.staticId,
+      );
+      const currentDraft = staticStyleDrafts[key] || {};
+      storeStaticStyleOverride(storedKey, {
+        ...currentDraft,
+        ...patch,
+      });
+    }
+
+    setStaticStyleDrafts((prev) => ({
+      ...prev,
+      [key]: {
+        ...(prev[key] || {}),
+        ...patch,
+      },
+    }));
+  }, [selectedPage?.id, selectedStaticElement, staticStyleDrafts, websiteId]);
+
+  const handleStaticMediaStyleChange = useCallback((patch) => {
+    const key = getStaticStyleDraftKey(selectedStaticElement);
+    if (!key || !patch) {
+      return;
+    }
+
+    setStaticStyleDrafts((prev) => ({
+      ...prev,
+      [key]: {
+        ...(prev[key] || {}),
+        ...patch,
+      },
+    }));
+  }, [selectedStaticElement]);
+
+  const applyStaticMediaOverrideToPreview = useCallback((selection, override) => {
+    const iframeDoc = iframeRef.current?.contentDocument || null;
+    if (!iframeDoc || !selection?.blockId || !selection?.staticId || !override) {
+      return;
+    }
+
+    const escapedBlockId =
+      typeof CSS !== "undefined" && typeof CSS.escape === "function"
+        ? CSS.escape(String(selection.blockId))
+        : String(selection.blockId);
+    const escapedStaticId =
+      typeof CSS !== "undefined" && typeof CSS.escape === "function"
+        ? CSS.escape(String(selection.staticId))
+        : String(selection.staticId);
+    const selector = [
+      `[data-static-selectable="true"][data-preview-block-id="${escapedBlockId}"][data-static-id="${escapedStaticId}"]`,
+      `[data-preview-block-id="${escapedBlockId}"][data-fallback-id="${escapedStaticId}"]`,
+      `[data-static-id="${escapedStaticId}"]`,
+      `[data-fallback-id="${escapedStaticId}"]`,
+    ].join(", ");
+    const elements = Array.from(
+      iframeDoc.querySelectorAll(selector),
+    );
+
+    const resolvedHeight =
+      typeof override.customHeight === "string" && override.customHeight
+        ? override.customHeight
+        : override.heightPreset === "small"
+          ? "180px"
+          : override.heightPreset === "medium"
+            ? "260px"
+            : override.heightPreset === "large"
+              ? "340px"
+              : override.heightPreset === "auto" || !override.heightPreset
+                ? undefined
+                : undefined;
+
+    elements.forEach((element) => {
+      const mediaTargets =
+        element instanceof HTMLImageElement || element instanceof HTMLVideoElement
+          ? [element]
+          : Array.from(element.querySelectorAll("img, video"));
+
+      if (typeof override.src === "string" && override.src.trim()) {
+        const nextSrc = override.src.trim();
+        if (mediaTargets.length > 0) {
+          mediaTargets.forEach((mediaEl) => {
+            if (mediaEl instanceof HTMLImageElement) {
+              mediaEl.setAttribute("src", nextSrc);
+              mediaEl.setAttribute("data-image-src", nextSrc);
+              mediaEl.removeAttribute("srcset");
+              mediaEl.removeAttribute("sizes");
+              mediaEl.src = nextSrc;
+            }
+          });
+        } else if (element instanceof HTMLElement) {
+          element.style.backgroundImage = `url(${nextSrc})`;
+          element.setAttribute("data-image-src", nextSrc);
+        }
+      }
+
+      if (element instanceof HTMLElement) {
+        if (override.borderRadius) element.style.borderRadius = String(override.borderRadius);
+        if (override.borderWidth) {
+          element.style.borderWidth = String(override.borderWidth);
+          element.style.borderStyle = String(override.borderStyle || "solid");
+        }
+        if (override.borderColor) element.style.borderColor = String(override.borderColor);
+        if (override.width) element.style.width = String(override.width);
+        if (override.height || resolvedHeight) {
+          element.style.height = String(override.height || resolvedHeight);
+        }
+      }
+
+      mediaTargets.forEach((mediaEl) => {
+        if (!(mediaEl instanceof HTMLElement)) {
+          return;
+        }
+        if (override.objectFit) mediaEl.style.objectFit = String(override.objectFit);
+        if (override.borderRadius) mediaEl.style.borderRadius = String(override.borderRadius);
+        if (override.borderWidth) {
+          mediaEl.style.borderWidth = String(override.borderWidth);
+          mediaEl.style.borderStyle = String(override.borderStyle || "solid");
+        }
+        if (override.borderColor) mediaEl.style.borderColor = String(override.borderColor);
+        if (override.width) mediaEl.style.width = String(override.width);
+        if (override.height || resolvedHeight) {
+          mediaEl.style.height = String(override.height || resolvedHeight);
+        }
+      });
+    });
+  }, []);
+
+  const updateStaticMediaOverride = useCallback(
+    (selection, patch) => {
+      const key = getStaticMediaOverrideKey(websiteId, selectedPage?.id, selection);
+      if (!key || !patch) {
+        return;
+      }
+
+      setStaticMediaOverrides((prev) => ({
+        ...prev,
+        [key]: {
+          ...(prev[key] || {}),
+          ...patch,
+        },
+      }));
+      storeStaticMediaOverride(key, {
+        ...(staticMediaOverrides[key] || {}),
+        ...patch,
+      });
+      applyStaticMediaOverrideToPreview(selection, patch);
+    },
+    [applyStaticMediaOverrideToPreview, selectedPage?.id, staticMediaOverrides, websiteId],
+  );
+
+  useEffect(() => {
+    if (!selectedImageElement?.isStatic) {
+      return;
+    }
+
+    const selection = selectedStaticElement || selectedImageElement;
+    const key = getStaticMediaOverrideKey(websiteId, selectedPage?.id, selection);
+    if (!key) {
+      return;
+    }
+
+    const override = staticMediaOverrides[key];
+    if (!override) {
+      return;
+    }
+
+    applyStaticMediaOverrideToPreview(selection, override);
+  }, [
+    applyStaticMediaOverrideToPreview,
+    selectedImageElement,
+    selectedPage?.id,
+    selectedStaticElement,
+    staticMediaOverrides,
+    websiteId,
+  ]);
+
   const handleImageChange = useCallback(
     (patch) => {
+      if (selectedImageElement?.isStatic) {
+        const key = getStaticStyleDraftKey(
+          selectedStaticElement || selectedImageElement,
+        );
+        if (!key) {
+          return;
+        }
+
+        setStaticStyleDrafts((prev) => ({
+          ...prev,
+          [key]: {
+            ...(prev[key] || {}),
+            ...(typeof patch.src === "string" ? { src: patch.src } : {}),
+            ...(typeof patch.objectFit === "string"
+              ? { objectFit: patch.objectFit }
+              : {}),
+            ...(typeof patch.borderRadius === "string"
+              ? { borderRadius: patch.borderRadius }
+              : {}),
+            ...(typeof patch.borderWidth === "string"
+              ? { borderWidth: patch.borderWidth, borderStyle: "solid" }
+              : {}),
+            ...(typeof patch.borderColor === "string"
+              ? { borderColor: patch.borderColor }
+              : {}),
+            ...(typeof patch.heightPreset === "string"
+              ? { heightPreset: patch.heightPreset }
+              : {}),
+            ...(typeof patch.customHeight === "string"
+              ? { customHeight: patch.customHeight }
+              : {}),
+            ...(typeof patch.mediaType === "string"
+              ? { mediaType: patch.mediaType }
+              : {}),
+            ...(typeof patch.videoUrl === "string"
+              ? { videoUrl: patch.videoUrl }
+              : {}),
+            ...(typeof patch.videoPoster === "string"
+              ? { videoPoster: patch.videoPoster }
+              : {}),
+            ...(typeof patch.videoAutoplay === "boolean"
+              ? { videoAutoplay: patch.videoAutoplay }
+              : {}),
+            ...(typeof patch.videoMuted === "boolean"
+              ? { videoMuted: patch.videoMuted }
+              : {}),
+            ...(typeof patch.videoLoop === "boolean"
+              ? { videoLoop: patch.videoLoop }
+              : {}),
+            ...(typeof patch.videoControls === "boolean"
+              ? { videoControls: patch.videoControls }
+              : {}),
+          },
+        }));
+        updateStaticMediaOverride(selectedStaticElement || selectedImageElement, {
+          ...(typeof patch.src === "string" ? { src: patch.src } : {}),
+          ...(typeof patch.objectFit === "string"
+            ? { objectFit: patch.objectFit }
+            : {}),
+          ...(typeof patch.borderRadius === "string"
+            ? { borderRadius: patch.borderRadius }
+            : {}),
+          ...(typeof patch.borderWidth === "string"
+            ? { borderWidth: patch.borderWidth, borderStyle: "solid" }
+            : {}),
+          ...(typeof patch.borderColor === "string"
+            ? { borderColor: patch.borderColor }
+            : {}),
+          ...(typeof patch.heightPreset === "string"
+            ? { heightPreset: patch.heightPreset }
+            : {}),
+          ...(typeof patch.customHeight === "string"
+            ? { customHeight: patch.customHeight }
+            : {}),
+          ...(typeof patch.mediaType === "string"
+            ? { mediaType: patch.mediaType }
+            : {}),
+          ...(typeof patch.videoUrl === "string"
+            ? { videoUrl: patch.videoUrl }
+            : {}),
+          ...(typeof patch.videoPoster === "string"
+            ? { videoPoster: patch.videoPoster }
+            : {}),
+        });
+
+        setSelectedImageElement((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...(typeof patch.src === "string" ? { src: patch.src } : {}),
+                ...(typeof patch.videoUrl === "string"
+                  ? { src: patch.videoUrl }
+                  : {}),
+                ...(typeof patch.mediaType === "string"
+                  ? { mediaType: patch.mediaType }
+                  : {}),
+              }
+            : prev,
+        );
+        setSelectedStaticElement((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...(typeof patch.src === "string" ? { src: patch.src } : {}),
+                ...(typeof patch.videoUrl === "string"
+                  ? { src: patch.videoUrl }
+                  : {}),
+              }
+            : prev,
+        );
+        return;
+      }
+
       if (!selectedImageElement?.blockId || !selectedImageElement?.fieldPath) {
         return;
       }
@@ -5596,7 +6063,7 @@ const WebsiteEditorInner = () => {
         }),
       );
     },
-    [selectedImageElement],
+    [selectedImageElement, selectedStaticElement, updateStaticMediaOverride],
   );
 
   const handleOpenLibraryImage = useCallback(
@@ -5658,6 +6125,14 @@ const WebsiteEditorInner = () => {
               }
             : prev,
         );
+        setSelectedStaticElement((prev) =>
+          prev
+            ? {
+                ...prev,
+                src: url,
+              }
+            : prev,
+        );
       }
       setImageLibraryFieldRequest(null);
       setIsImageLibraryPickerOpen(false);
@@ -5705,6 +6180,14 @@ const WebsiteEditorInner = () => {
       } else {
         handleImageChange({ src: item.src });
         setSelectedImageElement((prev) =>
+          prev
+            ? {
+                ...prev,
+                src: item.src,
+              }
+            : prev,
+        );
+        setSelectedStaticElement((prev) =>
           prev
             ? {
                 ...prev,
@@ -6772,13 +7255,32 @@ const WebsiteEditorInner = () => {
   const headerMenuOpen = Boolean(headerMenuAnchorEl);
   const pageCount = pages.length;
   const activeBlockCount = blocks.length;
+  const selectedStaticType = selectedStaticElement?.staticType || "unknown";
+  const staticUsesTextInspector = [
+    "text",
+    "badge",
+    "icon",
+    "unknown",
+  ].includes(selectedStaticType);
+  const staticUsesMediaInspector = ["media", "avatar"].includes(
+    selectedStaticType,
+  );
+  const staticUsesContainerInspector = selectedStaticType === "container";
   const inspectorTitle =
-    activeToolbarMode === "section"
+    selectedStaticElement?.label
+      ? selectedStaticElement.label
+      : activeToolbarMode === "section"
       ? selectedSectionElement?.label || "Section"
       : selectedEditableElement
         ? getEditableStyleConfig(selectedEditableElement.fieldPath).label
         : selectedImageElement?.label || "Inspector";
-  const inspectorCaption = selectedImageElement
+  const inspectorCaption = selectedStaticElement
+    ? staticUsesMediaInspector
+      ? "Static media is selectable for styling context only. Replace/edit persistence is unavailable without a mapped media field."
+      : staticUsesContainerInspector
+        ? "This static container is selectable independently from its parent section."
+        : "This static element is selectable independently from its parent section."
+    : selectedImageElement
     ? "Manage selected image from the media dialog."
     : activeToolbarMode === "section"
       ? "Adjust section background, padding, and spacing."
@@ -6806,7 +7308,9 @@ const WebsiteEditorInner = () => {
   const showDesktopInspector =
     !isMobile &&
     isInspectorOpen &&
-    (Boolean(selectedEditableElement) || Boolean(selectedSectionElement));
+    (Boolean(selectedEditableElement) ||
+      Boolean(selectedSectionElement) ||
+      Boolean(selectedStaticElement));
   // The right rail (style bar slot) is reserved when either the style bar or
   // the AI chat panel occupies it, so the preview keeps the same padding.
   const showDesktopRightRail = showDesktopInspector || (!isMobile && isAIChatOpen);
@@ -7168,7 +7672,83 @@ const WebsiteEditorInner = () => {
         </Box>
 
         {isMobile &&
-          (activeToolbarMode === "text" ? (
+          (selectedStaticElement ? (
+            staticUsesTextInspector ? (
+              <EditorStyleToolbar
+                selection={{
+                  blockId: selectedStaticElement.blockId,
+                  fieldPath: `__static.${selectedStaticElement.staticId || "element"}`,
+                  label: selectedStaticElement.label || "Static element",
+                  editType: "single",
+                }}
+                value={selectedStaticTextStyle}
+                disabled={false}
+                onStyleChange={handleStaticStyleChange}
+                containerSx={{ mb: 2.25 }}
+              />
+            ) : staticUsesContainerInspector ? (
+              <EditorSectionStyleToolbar
+                selection={{
+                  blockId: selectedStaticElement.blockId,
+                  label: selectedStaticElement.label || "Static container",
+                }}
+                value={selectedStaticContainerStyle}
+                disabled={false}
+                onStyleChange={handleStaticStyleChange}
+                containerSx={{ mb: 2.25 }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  mb: 2.25,
+                  p: 1.4,
+                  borderRadius: 3,
+                  border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                  backgroundColor: "rgba(255,255,255,0.84)",
+                }}
+              >
+                <Typography variant="body2" sx={{ color: colors.text, fontWeight: 600, mb: 1.2 }}>
+                  Static media selection is local-only in this pass.
+                </Typography>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Border radius"
+                  value={getEditableCssUnitValue(selectedStaticMediaStyle.borderRadius)}
+                  onChange={(event) =>
+                    handleStaticMediaStyleChange({
+                      borderRadius: toEditableCssUnit(event.target.value),
+                    })
+                  }
+                  sx={{ mb: 1.2 }}
+                />
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Border width"
+                  value={getEditableCssUnitValue(selectedStaticMediaStyle.borderWidth)}
+                  onChange={(event) =>
+                    handleStaticMediaStyleChange({
+                      borderWidth: toEditableCssUnit(event.target.value),
+                    })
+                  }
+                  sx={{ mb: 1.2 }}
+                />
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Border color"
+                  value={selectedStaticMediaStyle.borderColor || "#e5e7eb"}
+                  onChange={(event) =>
+                    handleStaticMediaStyleChange({
+                      borderColor: event.target.value,
+                    })
+                  }
+                  sx={{ mb: 1.2 }}
+                />
+              </Box>
+            )
+          ) : activeToolbarMode === "text" ? (
             <EditorStyleToolbar
               selection={
                 selectedEditableElement
@@ -7404,6 +7984,14 @@ const WebsiteEditorInner = () => {
                           String(layer.image?.blockId) &&
                         selectedImageElement.fieldPath ===
                           layer.image?.fieldPath
+                      : layer.kind === "static"
+                        ? selectedStaticElement &&
+                          String(selectedStaticElement.blockId) ===
+                            String(layer.section?.blockId) &&
+                          (selectedStaticElement.staticId || "") ===
+                            (layer.section?.staticId || "") &&
+                          getSectionStyleKey(selectedStaticElement) ===
+                            (layer.section?.styleKey || "sectionStyle")
                       : selectedSectionElement &&
                         String(selectedSectionElement.blockId) ===
                           String(layer.section?.blockId) &&
@@ -8642,6 +9230,8 @@ const WebsiteEditorInner = () => {
                             onEditableTextSave={handleInlineEditSave}
                             onElementTransform={handlePreviewElementTransform}
                             saveSignal={previewSaveSignal}
+                            staticStyleDrafts={staticStyleDrafts}
+                            staticMediaOverrides={staticMediaOverrides}
                             iframeRefCallback={(ref) => {
                               iframeRef.current = ref?.current ?? null;
                             }}
@@ -8718,7 +9308,13 @@ const WebsiteEditorInner = () => {
                               >
                                 <Box>
                                   <Typography sx={builderSectionLabelSx}>
-                                    {activeToolbarMode === "section"
+                                    {selectedStaticElement
+                                      ? staticUsesMediaInspector
+                                        ? "Media"
+                                        : staticUsesContainerInspector
+                                          ? "Container"
+                                          : "Typography"
+                                      : activeToolbarMode === "section"
                                       ? "Section"
                                       : selectedImageElement
                                         ? "Media"
@@ -8738,7 +9334,13 @@ const WebsiteEditorInner = () => {
                                 <Chip
                                   size="small"
                                   label={
-                                    activeToolbarMode === "section"
+                                    selectedStaticElement
+                                      ? staticUsesMediaInspector
+                                        ? "Static media"
+                                        : staticUsesContainerInspector
+                                          ? "Static container"
+                                          : "Static style"
+                                      : activeToolbarMode === "section"
                                       ? "Layout"
                                       : selectedImageElement
                                         ? "Image"
@@ -8799,7 +9401,143 @@ const WebsiteEditorInner = () => {
                                   {inspectorCaption}
                                 </Typography>
 
-                                {selectedImageElement ? (
+                                {selectedStaticElement ? (
+                                  staticUsesTextInspector ? (
+                                    <EditorStyleToolbar
+                                      selection={{
+                                        blockId: selectedStaticElement.blockId,
+                                        fieldPath: `__static.${selectedStaticElement.staticId || "element"}`,
+                                        label:
+                                          selectedStaticElement.label ||
+                                          "Static element",
+                                        editType: "single",
+                                      }}
+                                      value={selectedStaticTextStyle}
+                                      disabled={false}
+                                      onStyleChange={handleStaticStyleChange}
+                                      layout="panel"
+                                      containerSx={{
+                                        flexWrap: "wrap",
+                                        alignItems: "flex-start",
+                                        overflowX: "visible",
+                                        rowGap: 1.1,
+                                        p: 0,
+                                        background: "transparent",
+                                        boxShadow: "none",
+                                        border: "none",
+                                        "& .MuiDivider-root": { display: "none" },
+                                        "& .editor-toolbar-selection-label": {
+                                          display: "none",
+                                        },
+                                        "& .MuiFormControl-root": {
+                                          width: "100%",
+                                          minWidth: "100% !important",
+                                        },
+                                      }}
+                                    />
+                                  ) : staticUsesContainerInspector ? (
+                                    <EditorSectionStyleToolbar
+                                      selection={{
+                                        blockId: selectedStaticElement.blockId,
+                                        label:
+                                          selectedStaticElement.label ||
+                                          "Static container",
+                                      }}
+                                      value={selectedStaticContainerStyle}
+                                      disabled={false}
+                                      onStyleChange={handleStaticStyleChange}
+                                      layout="panel"
+                                      containerSx={{
+                                        flexWrap: "wrap",
+                                        alignItems: "flex-start",
+                                        overflowX: "visible",
+                                        rowGap: 1.1,
+                                        p: "0 !important",
+                                        background: "transparent",
+                                        boxShadow: "none",
+                                        border: "none",
+                                        "& .MuiDivider-root": { display: "none" },
+                                        "& .editor-toolbar-selection-label": {
+                                          display: "none",
+                                        },
+                                        "& .MuiFormControl-root": {
+                                          width: "100%",
+                                          minWidth: "100% !important",
+                                        },
+                                      }}
+                                    />
+                                  ) : (
+                                    <Box
+                                      sx={{
+                                        p: 1.4,
+                                        borderRadius: 3,
+                                        border: `1px solid ${alpha(colors.primary, 0.14)}`,
+                                        backgroundColor: "rgba(255,255,255,0.84)",
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          color: colors.text,
+                                          fontWeight: 600,
+                                        }}
+                                      >
+                                        Static media and avatar selections are
+                                        local-only in this pass. They are
+                                        intentionally separate from section
+                                        controls. Replace remains unavailable
+                                        without a mapped media field.
+                                      </Typography>
+                                      <TextField
+                                        size="small"
+                                        fullWidth
+                                        label="Border radius"
+                                        value={getEditableCssUnitValue(
+                                          selectedStaticMediaStyle.borderRadius,
+                                        )}
+                                        onChange={(event) =>
+                                          handleStaticMediaStyleChange({
+                                            borderRadius: toEditableCssUnit(
+                                              event.target.value,
+                                            ),
+                                          })
+                                        }
+                                        sx={{ mt: 1.2 }}
+                                      />
+                                      <TextField
+                                        size="small"
+                                        fullWidth
+                                        label="Border width"
+                                        value={getEditableCssUnitValue(
+                                          selectedStaticMediaStyle.borderWidth,
+                                        )}
+                                        onChange={(event) =>
+                                          handleStaticMediaStyleChange({
+                                            borderWidth: toEditableCssUnit(
+                                              event.target.value,
+                                            ),
+                                          })
+                                        }
+                                        sx={{ mt: 1.2 }}
+                                      />
+                                      <TextField
+                                        size="small"
+                                        fullWidth
+                                        label="Border color"
+                                        value={
+                                          selectedStaticMediaStyle.borderColor ||
+                                          "#e5e7eb"
+                                        }
+                                        onChange={(event) =>
+                                          handleStaticMediaStyleChange({
+                                            borderColor: event.target.value,
+                                          })
+                                        }
+                                        sx={{ mt: 1.2 }}
+                                      />
+                                    </Box>
+                                  )
+                                ) : selectedImageElement ? (
                                   <Box
                                     sx={{
                                       p: 1.4,
@@ -9218,7 +9956,11 @@ const WebsiteEditorInner = () => {
                   color: editorMutedText,
                 }}
               >
-                {selectedImageValue.mediaType === "video"
+                {selectedImageElement?.isStatic
+                  ? selectedImageValue.mediaType === "video"
+                    ? "Preview a static video locally in the editor and tune fit, border, and playback settings."
+                    : "Preview a static image locally in the editor and tune fit, border, and radius settings."
+                  : selectedImageValue.mediaType === "video"
                   ? "Replace with a video and tune fit, border, and playback for this block."
                   : "Replace the image or switch to a video, and tune fit, border, and radius for this block."}
               </Typography>
@@ -9650,8 +10392,9 @@ const WebsiteEditorInner = () => {
             }}
           >
             <Typography sx={{ fontSize: "0.82rem", color: editorMutedText }}>
-              Changes apply instantly to the canvas. Use Save Changes to persist
-              them.
+              {selectedImageElement?.isStatic
+                ? "Static media changes apply instantly to the canvas preview only and are not persisted without a mapped media field."
+                : "Changes apply instantly to the canvas. Use Save Changes to persist them."}
             </Typography>
             <Button
               onClick={() => {

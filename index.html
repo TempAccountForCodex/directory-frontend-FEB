@@ -19,6 +19,21 @@
       fetchpriority="high"
     />
 
+    <!--
+      Inter is the app/editor UI font (see the MUI theme in src/styles/theme.ts:
+      fontFamily "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif"). It was
+      never actually loaded, so it silently fell back per-OS: macOS has Helvetica
+      (looks close to Inter) but Windows dropped to Arial, which is why the editor
+      chrome looked wrong on Windows. Loading Inter makes it render consistently
+      on every platform.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    />
+
     <style>
       #startup-shell {
         position: fixed;
