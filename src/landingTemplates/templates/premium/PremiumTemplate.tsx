@@ -23,8 +23,12 @@ import {
   TrendingUp,
 } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
+import type { TemplateChromeProps } from "../../templateEngine/templateChromeRegistry";
 import { buildPremiumTheme } from "./premiumTheme";
-import ConsultingStudioTemplate from "./ConsultingStudioTemplate";
+import ConsultingStudioTemplate, {
+  ConsultingStudioTemplateFooter,
+  ConsultingStudioTemplateHeader,
+} from "./ConsultingStudioTemplate";
 import {
   HeroBlock,
   ServicesBlock,
@@ -876,6 +880,28 @@ function PremiumFooter({
     </Box>
   );
 }
+
+export const PremiumTemplateHeader: React.FC<TemplateChromeProps> = ({
+  data,
+  mode,
+}) => {
+  if (isConsultingTemplate(data)) {
+    return <ConsultingStudioTemplateHeader data={data} mode={mode} />;
+  }
+  const theme = buildPremiumTheme(data.primaryColor, data.secondaryColor);
+  return <PremiumHeader data={data} theme={theme} />;
+};
+
+export const PremiumTemplateFooter: React.FC<TemplateChromeProps> = ({
+  data,
+  mode,
+}) => {
+  if (isConsultingTemplate(data)) {
+    return <ConsultingStudioTemplateFooter data={data} mode={mode} />;
+  }
+  const theme = buildPremiumTheme(data.primaryColor, data.secondaryColor);
+  return <PremiumFooter data={data} theme={theme} />;
+};
 
 function ConsultingReferenceHeader({ data }: { data: TemplateProps["data"] }) {
   const navItems = [

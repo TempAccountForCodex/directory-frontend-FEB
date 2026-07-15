@@ -31,6 +31,7 @@ import ImageWithLoader from "../components/UI/ImageWithLoader";
 import { useGoogleAnalytics } from "../hooks/useGoogleAnalytics";
 import LanguageSelector from "../components/LanguageSelector";
 import TemplateEngine from "../landingTemplates/templateEngine/TemplateEngine";
+import TemplatePageShell from "../landingTemplates/components/TemplatePageShell";
 import {
   buildTemplatePreviewBusinessData,
   inferFrontendTemplateIdFromPages,
@@ -817,6 +818,130 @@ h1, h2, h3, h4, h5, h6 {
       b.blockType === "WEBSITE_HEADER" ||
       (b.blockType === "NAVBAR" && b.content?._subType === "website_header"),
   );
+  const shouldUseTemplatePageShell = Boolean(
+    resolvedFrontendTemplateId &&
+      hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
+      frontendTemplateData &&
+      !currentPage?.isHome &&
+      !hasWebsiteHeader,
+  );
+  const genericHeader = (
+    <AppBar
+      position="sticky"
+      elevation={1}
+      sx={{
+        bgcolor: "white",
+        color: "text.primary",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+      }}
+    >
+      <Toolbar>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexGrow: 1,
+            gap: 2,
+          }}
+        >
+          {website.logoUrl && (
+            <ImageWithLoader
+              src={website.logoUrl}
+              alt={`${website.name} logo`}
+              width={40}
+              height={40}
+              objectFit="contain"
+              borderRadius={4}
+              placeholder="pulse"
+            />
+          )}
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{
+              fontWeight: 700,
+              color: website.primaryColor || "#2563eb",
+            }}
+          >
+            {website.name}
+          </Typography>
+        </Box>
+        {website.pages.map((page) => (
+          <Button
+            key={page.id}
+            component={Link}
+            to={`/site/${website.slug}${page.path}`}
+            sx={{
+              color:
+                currentPage?.id === page.id
+                  ? website.primaryColor
+                  : "text.secondary",
+              fontWeight: currentPage?.id === page.id ? 600 : 400,
+              textDecoration: "none",
+            }}
+          >
+            {page.title}
+          </Button>
+        ))}
+        <Box sx={{ ml: 2 }}>
+          <LanguageSelector variant="standard" size="small" showIcon={false} />
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+  const pageBlocksContent = (
+    <Box>
+      {!currentPage?.blocks || currentPage.blocks.length === 0 ? (
+        <Container sx={{ py: 8 }}>
+          <Typography variant="h5" align="center" color="text.secondary">
+            This page has no content yet.
+          </Typography>
+        </Container>
+      ) : (
+        currentPage.blocks.map((block) => (
+          <BlockErrorBoundary
+            key={block.id}
+            blockType={block.blockType}
+            blockId={block.id}
+          >
+            <DynamicBlockRenderer
+              block={block}
+              primaryColor={website.primaryColor || "#378C92"}
+              secondaryColor={website.secondaryColor || "#D3EB63"}
+              headingColor={website.headingTextColor || "#252525"}
+              bodyColor={website.bodyTextColor || "#6A6F78"}
+              websiteId={website.id}
+              onCtaClick={(blockType, ctaText) =>
+                trackClick(`${blockType}_CTA`, { cta_text: ctaText })
+              }
+              onFormSubmit={trackFormSubmit}
+            />
+          </BlockErrorBoundary>
+        ))
+      )}
+    </Box>
+  );
+  const genericFooter = (
+    <Box
+      component="footer"
+      sx={{
+        py: 4,
+        px: 2,
+        mt: "auto",
+        bgcolor: "grey.900",
+        color: "white",
+        textAlign: "center",
+      }}
+    >
+      <Typography variant="body2">
+        © {currentYear} {website.name}. All rights reserved.
+      </Typography>
+      <Typography variant="caption" sx={{ mt: 1, opacity: 0.7 }}>
+        Powered by TechieTribe
+      </Typography>
+    </Box>
+  );
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -885,128 +1010,22 @@ h1, h2, h3, h4, h5, h6 {
             )}
           </Helmet>
 
-          {/* Navigation Bar — hidden when page has a WEBSITE_HEADER block */}
-          {!hasWebsiteHeader && (
-            <AppBar
-              position="sticky"
-              elevation={1}
-              sx={{
-                bgcolor: "white",
-                color: "text.primary",
-                borderBottom: "1px solid",
-                borderColor: "divider",
-              }}
+          {shouldUseTemplatePageShell ? (
+            <TemplatePageShell
+              templateId={resolvedFrontendTemplateId}
+              data={frontendTemplateData!}
+              fallbackHeader={genericHeader}
+              fallbackFooter={genericFooter}
             >
-              <Toolbar>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    flexGrow: 1,
-                    gap: 2,
-                  }}
-                >
-                  {website.logoUrl && (
-                    <ImageWithLoader
-                      src={website.logoUrl}
-                      alt={`${website.name} logo`}
-                      width={40}
-                      height={40}
-                      objectFit="contain"
-                      borderRadius={4}
-                      placeholder="pulse"
-                    />
-                  )}
-                  <Typography
-                    variant="h6"
-                    component="div"
-                    sx={{
-                      fontWeight: 700,
-                      color: website.primaryColor || "#2563eb",
-                    }}
-                  >
-                    {website.name}
-                  </Typography>
-                </Box>
-                {website.pages.map((page) => (
-                  <Button
-                    key={page.id}
-                    component={Link}
-                    to={`/site/${website.slug}${page.path}`}
-                    sx={{
-                      color:
-                        currentPage?.id === page.id
-                          ? website.primaryColor
-                          : "text.secondary",
-                      fontWeight: currentPage?.id === page.id ? 600 : 400,
-                      textDecoration: "none",
-                    }}
-                  >
-                    {page.title}
-                  </Button>
-                ))}
-                <Box sx={{ ml: 2 }}>
-                  <LanguageSelector
-                    variant="standard"
-                    size="small"
-                    showIcon={false}
-                  />
-                </Box>
-              </Toolbar>
-            </AppBar>
+              {pageBlocksContent}
+            </TemplatePageShell>
+          ) : (
+            <>
+              {!hasWebsiteHeader && genericHeader}
+              {pageBlocksContent}
+              {genericFooter}
+            </>
           )}
-
-          {/* Page Content - Render all blocks */}
-          <Box>
-            {!currentPage?.blocks || currentPage.blocks.length === 0 ? (
-              <Container sx={{ py: 8 }}>
-                <Typography variant="h5" align="center" color="text.secondary">
-                  This page has no content yet.
-                </Typography>
-              </Container>
-            ) : (
-              currentPage.blocks.map((block) => (
-                <BlockErrorBoundary
-                  key={block.id}
-                  blockType={block.blockType}
-                  blockId={block.id}
-                >
-                  <DynamicBlockRenderer
-                    block={block}
-                    primaryColor={website.primaryColor || "#378C92"} // Techietribe teal
-                    secondaryColor={website.secondaryColor || "#D3EB63"} // Techietribe lime accent
-                    headingColor={website.headingTextColor || "#252525"} // Techietribe dark text
-                    bodyColor={website.bodyTextColor || "#6A6F78"} // Techietribe gray text
-                    websiteId={website.id}
-                    onCtaClick={(blockType, ctaText) =>
-                      trackClick(`${blockType}_CTA`, { cta_text: ctaText })
-                    }
-                    onFormSubmit={trackFormSubmit}
-                  />
-                </BlockErrorBoundary>
-              ))
-            )}
-          </Box>
-
-          {/* Footer */}
-          <Box
-            component="footer"
-            sx={{
-              py: 4,
-              px: 2,
-              mt: "auto",
-              bgcolor: "grey.900",
-              color: "white",
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="body2">
-              © {currentYear} {website.name}. All rights reserved.
-            </Typography>
-            <Typography variant="caption" sx={{ mt: 1, opacity: 0.7 }}>
-              Powered by TechieTribe
-            </Typography>
-          </Box>
         </BlogArticleSeoContext.Provider>
       </DynamicBlockProvider>
     </Box>

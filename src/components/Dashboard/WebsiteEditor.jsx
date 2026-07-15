@@ -3262,16 +3262,10 @@ const WebsiteEditorInner = () => {
   // Bridges blocks, selected page, and website metadata so PreviewPanel
   // can render a live srcdoc preview without network requests.
   const previewTemplateDataOverride = useMemo(() => {
-    // Only the Home page is rendered through the single-page frontend template
-    // (its schema always falls back to the full default section layout). Non-home
-    // pages render their OWN blocks via the block canvas instead, so returning
-    // null here keeps the Home body/content from leaking into every other page.
-    if (
-      !selectedPage?.id ||
-      !websiteId ||
-      !supportsLocalTemplateEditor ||
-      !selectedPage?.isHome
-    ) {
+    // Home renders the full frontend template. Non-home pages use the same
+    // template data for shared chrome, but render their own page blocks inside
+    // the template page shell.
+    if (!selectedPage?.id || !websiteId || !supportsLocalTemplateEditor) {
       return null;
     }
 
@@ -3345,10 +3339,7 @@ const WebsiteEditorInner = () => {
       websiteMeta: {
         name: website?.name,
         slug: website?.slug,
-        // Only advertise the frontend template for the Home page so the preview
-        // renders non-home pages with their own blocks (blank body) instead of
-        // rebuilding the Home template layout from defaults.
-        frontendTemplateId: selectedPage?.isHome
+        frontendTemplateId: supportsLocalTemplateEditor
           ? resolvedFrontendTemplateId
           : null,
         businessName: website?.businessName,
@@ -9172,12 +9163,15 @@ const WebsiteEditorInner = () => {
                             pageId={selectedPage?.id}
                             pageTitle={selectedPage?.title}
                             frontendTemplateIdOverride={
-                              selectedPage?.isHome
+                              supportsLocalTemplateEditor
                                 ? resolvedFrontendTemplateId
                                 : null
                             }
                             frontendTemplateDataOverride={
                               previewTemplateDataOverride
+                            }
+                            frontendTemplateRenderMode={
+                              selectedPage?.isHome ? "full" : "page-shell"
                             }
                             pages={pages.map((page) => ({
                               id: page.id,

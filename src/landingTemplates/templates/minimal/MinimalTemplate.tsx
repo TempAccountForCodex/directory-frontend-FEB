@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Typography, Stack, IconButton } from "@mui/material";
 import { Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
+import type { TemplateChromeProps } from "../../templateEngine/templateChromeRegistry";
 import { buildMinimalTheme } from "./minimalTheme";
 import {
   HeroBlock,
@@ -134,6 +135,20 @@ function MinimalFooter({
     </Box>
   );
 }
+
+export const MinimalTemplateHeader: React.FC<TemplateChromeProps> = ({
+  data,
+}) => {
+  const theme = buildMinimalTheme(data.primaryColor, data.secondaryColor);
+  return <MinimalHeader data={data} theme={theme} />;
+};
+
+export const MinimalTemplateFooter: React.FC<TemplateChromeProps> = ({
+  data,
+}) => {
+  const theme = buildMinimalTheme(data.primaryColor, data.secondaryColor);
+  return <MinimalFooter data={data} theme={theme} />;
+};
 
 const MinimalTemplate: React.FC<TemplateProps> = ({ data }) => {
   const theme = buildMinimalTheme(data.primaryColor, data.secondaryColor);

@@ -44,15 +44,19 @@ import {
   PreviewImageError,
   PreviewNetworkError,
 } from "../Templates/PreviewSkeleton";
-import { usePreview } from "../../context/PreviewContext";
+import { usePreview, type PreviewBlock } from "../../context/PreviewContext";
 import { generateLivePreview } from "../../utils/previewInjector";
 import TemplateEngine from "../../landingTemplates/templateEngine/TemplateEngine";
+import TemplatePageShell from "../../landingTemplates/components/TemplatePageShell";
 import muiTheme from "../../styles/theme";
 import {
   buildFrontendTemplateBusinessData,
   hasFrontendTemplateBaseData,
 } from "../../templates/frontendTemplateSiteData";
 import type { BusinessData } from "../../landingTemplates/types/BusinessData";
+import DynamicBlockRenderer from "../PublicWebsite/DynamicBlockRenderer";
+import BlockErrorBoundary from "../PublicWebsite/BlockErrorBoundary";
+import { DynamicBlockProvider } from "../../context/DynamicBlockContext";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -62,6 +66,7 @@ type Viewport = "desktop" | "tablet" | "mobile";
 type PreviewMode = "live" | "static";
 type ZoomLevel = 0.5 | 0.75 | 1;
 type AskAIButtonStatus = "idle" | "open" | "loading" | "success" | "error";
+type FrontendTemplateRenderMode = "full" | "page-shell";
 
 const VIEWPORT_WIDTHS: Record<Viewport, number> = {
   desktop: 1920,
@@ -141,6 +146,9 @@ interface FrontendTemplateIframeProps {
   templateId: string;
   pageId: string | number;
   data: BusinessData;
+  renderMode?: FrontendTemplateRenderMode;
+  pageBlocks?: PreviewBlock[];
+  websiteId?: string | number;
   onReady?: () => void;
   onEditableElementSelected?: (data: EditableElementSelectionData) => void;
   onImageSelected?: (data: ImageSelectionData) => void;
@@ -178,6 +186,9 @@ const FrontendTemplateIframePreview = React.memo(
     templateId,
     pageId,
     data,
+    renderMode = "full",
+    pageBlocks = [],
+    websiteId,
     onReady,
     onEditableElementSelected,
     onImageSelected,
@@ -885,6 +896,31 @@ const FrontendTemplateIframePreview = React.memo(
         };
       };
 
+      const humanizeStaticTagName = (tagName: string) => {
+        switch (tagName) {
+          case "a":
+            return "Link";
+          case "button":
+            return "Button";
+          case "img":
+            return "Image";
+          case "video":
+            return "Video";
+          case "svg":
+            return "Icon";
+          case "nav":
+            return "Navigation";
+          case "footer":
+            return "Footer";
+          case "section":
+            return "Section";
+          case "article":
+            return "Card";
+          default:
+            return tagName.charAt(0).toUpperCase() + tagName.slice(1);
+        }
+      };
+
       const buildStaticSelection = (
         element: HTMLElement | null,
       ): SectionSelectionData | null => {
@@ -1005,7 +1041,7 @@ const FrontendTemplateIframePreview = React.memo(
           element.getAttribute("data-preview-label") ||
           element.getAttribute("aria-label") ||
           element.getAttribute("alt") ||
-          humanizeTagName(tagName);
+          humanizeStaticTagName(tagName);
         const styleKey =
           element.getAttribute("data-preview-style-key") ||
           `static.${staticId}`;
@@ -2444,7 +2480,7 @@ const FrontendTemplateIframePreview = React.memo(
         "MuiListItem-root",
       ];
 
-      const humanizeTagName = (tagName: string) => {
+      function humanizeTagName(tagName: string) {
         switch (tagName) {
           case "a":
             return "Link";
@@ -2469,7 +2505,7 @@ const FrontendTemplateIframePreview = React.memo(
           default:
             return tagName.charAt(0).toUpperCase() + tagName.slice(1);
         }
-      };
+      }
 
       const isMeaningfullyVisible = (element: HTMLElement) => {
         const computed = win.getComputedStyle(element);
@@ -2907,17 +2943,20 @@ const FrontendTemplateIframePreview = React.memo(
         return;
       }
 
-      const applyStaticStyles = (element: HTMLElement, patch: Record<string, any>) => {
+      const applyStaticStyles = (
+        element: HTMLElement,
+        patch: Record<string, any>,
+      ) => {
         if (!patch || typeof patch !== "object") {
           return;
         }
 
         const style = element.style;
-        const assign = (prop: keyof CSSStyleDeclaration, value: any) => {
+        const assign = (prop: string, value: any) => {
           if (value === undefined || value === null || value === "") {
             return;
           }
-          style[prop] = String(value);
+          (style as any)[prop] = String(value);
         };
 
         const imageTargets =
@@ -3016,21 +3055,28 @@ const FrontendTemplateIframePreview = React.memo(
         assign("borderRadius", patch.borderRadius);
         assign("borderWidth", patch.borderWidth);
         assign("borderColor", patch.borderColor);
-        assign("borderStyle", patch.borderStyle || (patch.borderWidth ? "solid" : undefined));
+        assign(
+          "borderStyle",
+          patch.borderStyle || (patch.borderWidth ? "solid" : undefined),
+        );
         assign("objectFit", patch.objectFit);
         assign("width", patch.width);
         assign("height", patch.height);
-        if (patch.opacity !== undefined && patch.opacity !== null && patch.opacity !== "") {
+        if (
+          patch.opacity !== undefined &&
+          patch.opacity !== null &&
+          patch.opacity !== ""
+        ) {
           style.opacity = String(patch.opacity);
         }
 
         [...imageTargets, ...videoTargets].forEach((mediaEl) => {
           const mediaStyle = mediaEl.style;
-          const assignMedia = (prop: keyof CSSStyleDeclaration, value: any) => {
+          const assignMedia = (prop: string, value: any) => {
             if (value === undefined || value === null || value === "") {
               return;
             }
-            mediaStyle[prop] = String(value);
+            (mediaStyle as any)[prop] = String(value);
           };
 
           assignMedia("borderRadius", patch.borderRadius);
@@ -3116,11 +3162,11 @@ const FrontendTemplateIframePreview = React.memo(
           patch: Record<string, any>,
         ) => {
           const style = mediaEl.style;
-          const assign = (prop: keyof CSSStyleDeclaration, value: any) => {
+          const assign = (prop: string, value: any) => {
             if (value === undefined || value === null || value === "") {
               return;
             }
-            style[prop] = String(value);
+            (style as any)[prop] = String(value);
           };
           assign("objectFit", patch.objectFit);
           assign("borderRadius", patch.borderRadius);
@@ -3161,6 +3207,46 @@ const FrontendTemplateIframePreview = React.memo(
       });
     }, [pageId, staticMediaOverrides]);
 
+    const renderPageShellBlocks = () => (
+      <DynamicBlockProvider>
+        {pageBlocks.length === 0 ? (
+          <Box sx={{ py: 8, textAlign: "center", color: "text.secondary" }}>
+            <Typography variant="h6">This page has no content yet.</Typography>
+          </Box>
+        ) : (
+          pageBlocks.map((previewBlock, index) => {
+            const numericId = Number(previewBlock.id);
+            const block = {
+              id: Number.isFinite(numericId)
+                ? numericId
+                : (previewBlock.id as unknown as number),
+              blockType: previewBlock.blockType,
+              content: previewBlock.content || {},
+              sortOrder: previewBlock.order ?? index,
+              designTokens: previewBlock.designTokens,
+            };
+
+            return (
+              <BlockErrorBoundary
+                key={previewBlock.id}
+                blockType={previewBlock.blockType}
+                blockId={block.id}
+              >
+                <DynamicBlockRenderer
+                  block={block}
+                  primaryColor={data.primaryColor || "#378C92"}
+                  secondaryColor={data.secondaryColor || "#D3EB63"}
+                  headingColor="#252525"
+                  bodyColor="#6A6F78"
+                  websiteId={websiteId || data.websiteId}
+                />
+              </BlockErrorBoundary>
+            );
+          })
+        )}
+      </DynamicBlockProvider>
+    );
+
     const portal =
       mountNode && cacheRef.current
         ? createPortal(
@@ -3170,7 +3256,17 @@ const FrontendTemplateIframePreview = React.memo(
                 <Box
                   sx={{ width: "100%", minHeight: "100vh", bgcolor: "#fff" }}
                 >
-                  <TemplateEngine templateId={templateId} data={data} />
+                  {renderMode === "page-shell" ? (
+                    <TemplatePageShell
+                      templateId={templateId}
+                      data={data}
+                      mode="editor"
+                    >
+                      {renderPageShellBlocks()}
+                    </TemplatePageShell>
+                  ) : (
+                    <TemplateEngine templateId={templateId} data={data} />
+                  )}
                 </Box>
               </MuiThemeProvider>
             </CacheProvider>,
@@ -3364,6 +3460,7 @@ interface PreviewPanelProps {
   onLibraryBlockDrop?: () => void;
   frontendTemplateIdOverride?: string | null;
   frontendTemplateDataOverride?: BusinessData | null;
+  frontendTemplateRenderMode?: FrontendTemplateRenderMode;
 }
 
 /* ------------------------------------------------------------------ */
@@ -3401,6 +3498,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
   onLibraryBlockDrop,
   frontendTemplateIdOverride,
   frontendTemplateDataOverride,
+  frontendTemplateRenderMode = "full",
 }: PreviewPanelProps) {
   const { actualTheme } = useCustomTheme();
   const colors = getDashboardColors(actualTheme);
@@ -4513,6 +4611,9 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 templateId={frontendTemplateId}
                 pageId={pageId}
                 data={frontendTemplateData}
+                renderMode={frontendTemplateRenderMode}
+                pageBlocks={previewCtx.currentPageContent?.blocks || []}
+                websiteId={previewCtx.currentPageContent?.websiteId}
                 onEditableElementSelected={onEditableElementSelected}
                 onImageSelected={onImageSelected}
                 onImageDoubleClick={onImageDoubleClick}

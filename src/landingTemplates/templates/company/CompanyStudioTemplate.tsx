@@ -24,6 +24,7 @@ import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import type { Variants } from "framer-motion";
 import type { TemplateProps } from "../../templateEngine/types";
+import type { TemplateChromeProps } from "../../templateEngine/templateChromeRegistry";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import TemplateNavbarHeader from "../../components/TemplateNavbarHeader";
@@ -379,6 +380,584 @@ const getVideoHeightPresetSx = (preset?: string) => {
   }
 };
 */
+
+export const CompanyStudioTemplateHeader: React.FC<TemplateChromeProps> = ({
+  data,
+}) => {
+  const templateContent =
+    (data.templateContent as Record<string, any> | undefined) || {};
+  const navbarContent = templateContent.navbar || {};
+  const homeContent = templateContent.home || {};
+  const themeColor =
+    data.themeSettings?.primaryColor || data.primaryColor || palette.accent;
+  const rawSecondaryColor =
+    data.themeSettings?.secondaryColor ||
+    data.secondaryColor ||
+    palette.surfaceAlt;
+  const themeSecondary = isLightColor(rawSecondaryColor)
+    ? rawSecondaryColor
+    : palette.surfaceAlt;
+  const headingFont = data.themeSettings?.headingFont || defaultHeadingFont;
+  const headerBackground = rgba(themeSecondary, 0.72);
+  const customSections = Array.isArray(templateContent.customSections)
+    ? templateContent.customSections
+    : [];
+  const customSectionMap = new Map(
+    customSections
+      .filter(
+        (section) =>
+          section &&
+          typeof section === "object" &&
+          typeof section.sectionKey === "string" &&
+          section.sectionKey.trim(),
+      )
+      .map((section) => [section.sectionKey, section]),
+  );
+
+  const navItems = defaultSectionOrder.map((key) => {
+    const defaultLabel = customSectionMap.has(key)
+      ? String(
+          customSectionMap.get(key)?.label ||
+            customSectionMap.get(key)?.heading ||
+            humanizeEditorBlockKey(key),
+        )
+      : key === "overview"
+        ? "Overview"
+        : key === "about"
+          ? "About"
+          : key === "why-us"
+            ? "Why Us"
+            : key === "process"
+              ? "Process"
+              : "Contact";
+
+    return {
+      label:
+        (navbarContent.navLabels as Record<string, string> | undefined)?.[
+          key
+        ] ||
+        homeContent.navLabels?.[key] ||
+        homeContent.navigationLabels?.[key] ||
+        defaultLabel,
+      id: customSectionMap.has(key) ? key : key === "process" ? "work" : key,
+      fieldPath: `navLabels.${key}`,
+    };
+  });
+  const pageNavItems = Array.isArray(data.pages)
+    ? data.pages
+        .filter((page) => {
+          const path = String(page.path || "").trim();
+          return (
+            path && path !== "/" && !page.isHome && page.isPublished !== false
+          );
+        })
+        .map((page) => ({
+          label: page.title || "Page",
+          id: `page-${String(page.id ?? page.path)}`,
+          target: page.path,
+        }))
+    : [];
+  const headerNavItems = [...navItems, ...pageNavItems];
+  const navbarBlockId = navbarContent.blockId ?? homeContent.blockId;
+
+  const scrollToSection = (sectionId: string) => {
+    const target = document.getElementById(sectionId);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <Box {...getEditableSectionProps(navbarBlockId, "Header")}>
+      <TemplateNavbarHeader
+        navbarContent={navbarContent}
+        fallbackName={data.name}
+        sectionNavItems={headerNavItems}
+        onScrollToSection={scrollToSection}
+        themeColor={themeColor}
+        headingFont={headingFont}
+        bgColor={headerBackground}
+        borderColor={rgba(themeColor, 0.14)}
+        websiteId={data.websiteId}
+      />
+    </Box>
+  );
+};
+
+export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
+  data,
+}) => {
+  const templateContent =
+    (data.templateContent as Record<string, any> | undefined) || {};
+  const contactContent = templateContent.contact || {};
+  const themeColor =
+    data.themeSettings?.primaryColor || data.primaryColor || palette.accent;
+  const rawSecondaryColor =
+    data.themeSettings?.secondaryColor ||
+    data.secondaryColor ||
+    palette.surfaceAlt;
+  const themeSecondary = isLightColor(rawSecondaryColor)
+    ? rawSecondaryColor
+    : palette.surfaceAlt;
+  const headingFont = data.themeSettings?.headingFont || defaultHeadingFont;
+  const bodyFont = data.themeSettings?.bodyFont || defaultBodyFont;
+  const themeDeep = blendHex(themeColor, "#071213", 0.58);
+  const themeDeepest = blendHex(themeColor, "#020606", 0.8);
+  const themeHighlight = blendHex(themeColor, "#ffffff", 0.32);
+  const pageBackground = `linear-gradient(180deg, ${rgba(themeSecondary, 0.22)} 0%, ${palette.bg} 20%, ${palette.bg} 100%)`;
+  const contactBlockId = contactContent.blockId;
+  const companyContactFields = React.useMemo(
+    () =>
+      normalizeContactFormFields(contactContent.formFields, contactContent).map(
+        (field, index) => ({
+          ...field,
+          key: field.key || `company-contact-${index}`,
+        }),
+      ),
+    [contactContent],
+  );
+  const {
+    status: contactStatus,
+    errorMessage: contactError,
+    getFieldProps: getContactFieldProps,
+    handleSubmit: handleContactSubmit,
+  } = useTemplateContactForm(
+    companyContactFields,
+    data.websiteId,
+    "company-executive-contact",
+    {
+      formId: contactBlockId,
+      formName:
+        (data.templateContent?.contact as any)?.heading || "Contact form",
+    },
+  );
+  const socialIcons = [
+    { key: "instagram", icon: Instagram },
+    { key: "linkedin", icon: Linkedin },
+    { key: "twitter", icon: Twitter },
+    { key: "facebook", icon: Facebook },
+  ].filter((item) =>
+    Boolean(data.socialLinks?.[item.key as keyof typeof data.socialLinks]),
+  );
+
+  const renderCompanyContactField = (
+    field: (typeof companyContactFields)[number],
+  ) => {
+    const commonTextFieldSx = {
+      "& .MuiInputBase-root": {
+        color: palette.white,
+        pb: 1,
+        borderBottom: "1px solid rgba(255,255,255,0.18)",
+      },
+    };
+    const fieldProps = getContactFieldProps(field.label);
+    const placeholder = field.placeholder || field.label;
+
+    if (field.fieldType === "select") {
+      return (
+        <TextField
+          key={field.key || field.label}
+          select
+          size="small"
+          fullWidth
+          variant="standard"
+          required={field.required}
+          SelectProps={{ displayEmpty: true }}
+          {...fieldProps}
+          InputProps={{ disableUnderline: true }}
+          sx={commonTextFieldSx}
+        >
+          <MenuItem value="">
+            <em>{placeholder}</em>
+          </MenuItem>
+          {(field.options || []).map((option) => (
+            <MenuItem key={`${field.label}-${option}`} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+      );
+    }
+
+    if (field.fieldType === "checkbox") {
+      return (
+        <FormControlLabel
+          key={field.key || field.label}
+          control={
+            <Checkbox
+              checked={Boolean(fieldProps.value)}
+              disabled={fieldProps.disabled}
+              onChange={(event) =>
+                fieldProps.onChange({
+                  target: { value: event.target.checked ? "Yes" : "" },
+                } as React.ChangeEvent<HTMLInputElement>)
+              }
+              sx={{
+                color: palette.white,
+                "&.Mui-checked": { color: themeColor },
+              }}
+            />
+          }
+          label={placeholder}
+          sx={{ color: palette.white, ml: 0 }}
+        />
+      );
+    }
+
+    if (field.fieldType === "radio") {
+      return (
+        <FormControl
+          key={field.key || field.label}
+          disabled={fieldProps.disabled}
+        >
+          <FormLabel sx={{ color: palette.white, mb: 1 }}>
+            {field.label}
+          </FormLabel>
+          <RadioGroup
+            value={fieldProps.value || ""}
+            onChange={(event) =>
+              fieldProps.onChange(
+                event as React.ChangeEvent<
+                  HTMLInputElement | HTMLTextAreaElement
+                >,
+              )
+            }
+          >
+            {(field.options || []).map((option) => (
+              <FormControlLabel
+                key={`${field.label}-${option}`}
+                value={option}
+                control={
+                  <Radio
+                    sx={{
+                      color: palette.white,
+                      "&.Mui-checked": { color: themeColor },
+                    }}
+                  />
+                }
+                label={option}
+                sx={{ color: palette.white }}
+              />
+            ))}
+          </RadioGroup>
+        </FormControl>
+      );
+    }
+
+    return (
+      <TextField
+        key={field.key || field.label}
+        placeholder={placeholder}
+        size="small"
+        fullWidth
+        multiline={field.fieldType === "textarea"}
+        minRows={field.fieldType === "textarea" ? 6 : undefined}
+        variant="standard"
+        type={
+          field.fieldType === "email" ||
+          field.fieldType === "tel" ||
+          field.fieldType === "number" ||
+          field.fieldType === "date"
+            ? field.fieldType
+            : "text"
+        }
+        required={field.required}
+        {...fieldProps}
+        InputProps={{ disableUnderline: true }}
+        sx={commonTextFieldSx}
+      />
+    );
+  };
+
+  return (
+    <Box
+      component="footer"
+      sx={{
+        background: pageBackground,
+        color: palette.ink,
+        fontFamily: bodyFont,
+      }}
+    >
+      <Container
+        maxWidth="xl"
+        data-preview-section="true"
+        data-preview-label="Contact Parent"
+        data-preview-block-id={contactBlockId}
+        data-preview-style-key="outerSectionStyle"
+        {...getSectionStyleDomProps(contactContent, "outerSectionStyle")}
+        sx={{
+          px: { xs: 2, md: 4 },
+          ...getSectionStyleSx(contactContent, "outerSectionStyle"),
+        }}
+      >
+        <Box
+          id="contact"
+          data-preview-style-key="sectionStyle"
+          data-preview-accepts-inner-blocks="true"
+          {...getEditableSectionProps(contactBlockId, "Contact")}
+          {...getSectionStyleDomProps(contactContent)}
+          sx={{
+            py: { xs: 5, md: 7 },
+            px: { xs: 2, md: 4 },
+            mx: { xs: -2, md: "calc(-50vw + 50%)" },
+            mt: { xs: 2, md: 3 },
+            background: `linear-gradient(180deg, ${themeDeep} 0%, ${themeDeepest} 100%)`,
+            color: palette.white,
+            overflow: "hidden",
+            position: "relative",
+            ...getSectionStyleSx(contactContent),
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0.18,
+              backgroundImage:
+                "linear-gradient(100deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 16px)",
+              backgroundSize: "18px 100%",
+              backgroundPosition: "left top",
+              pointerEvents: "none",
+            }}
+          />
+          <Box
+            sx={{
+              position: "relative",
+              zIndex: 1,
+              maxWidth: "1320px",
+              mx: "auto",
+            }}
+          >
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "1fr 0.9fr" },
+                gap: { xs: 2.5, md: 3 },
+                alignItems: "stretch",
+              }}
+            >
+              <Box
+                component={motion.div}
+                {...sectionReveal}
+                sx={{
+                  minHeight: { xs: 360, md: 720 },
+                  borderRadius: "36px",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    bgcolor: rgba(themeHighlight, 0.48),
+                    opacity: 0.42,
+                    backgroundImage:
+                      "url(https://themejunction.net/html/bexon/demo/assets/images/bg/map.svg)",
+                    maskImage:
+                      "url(https://themejunction.net/html/bexon/demo/assets/images/bg/map.svg)",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                    maskPosition: "center",
+                    WebkitMaskSize: "100% auto",
+                    maskSize: "100% auto",
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: { xs: "26%", md: "28%" },
+                    top: { xs: "42%", md: "38%" },
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    bgcolor: palette.white,
+                    boxShadow: "0 0 0 6px rgba(255,255,255,0.18)",
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: { xs: "56%", md: "58%" },
+                    top: { xs: "33%", md: "36%" },
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    bgcolor: palette.white,
+                    boxShadow: "0 0 0 6px rgba(255,255,255,0.18)",
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: { xs: "42%", md: "43%" },
+                    bottom: { xs: "24%", md: "18%" },
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    bgcolor: palette.white,
+                    boxShadow: "0 0 0 6px rgba(255,255,255,0.18)",
+                  }}
+                />
+              </Box>
+
+              <Box
+                component={motion.div}
+                {...sectionReveal}
+                sx={{
+                  p: { xs: 2.4, md: 3.2 },
+                  borderRadius: "26px",
+                  bgcolor: "rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  backdropFilter: "blur(16px)",
+                  alignSelf: { md: "center" },
+                }}
+              >
+                <Chip
+                  label="Get in touch"
+                  sx={{
+                    bgcolor: "rgba(255,255,255,0.08)",
+                    color: palette.white,
+                    borderRadius: "10px",
+                    fontWeight: 700,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    mb: 2.2,
+                  }}
+                />
+
+                <Typography
+                  {...getEditableTextProps(contactBlockId, "heading", "single")}
+                  sx={{
+                    fontFamily: headingFont,
+                    fontSize: { xs: "2.1rem", md: "3.5rem" },
+                    lineHeight: 0.96,
+                    letterSpacing: "-0.07em",
+                    fontWeight: 800,
+                    mb: 2.5,
+                    ...(contactContent.headingStyle || {}),
+                  }}
+                >
+                  {contactContent.heading || "Drop us a line."}
+                </Typography>
+
+                <Typography
+                  {...getEditableTextProps(
+                    contactBlockId,
+                    "description",
+                    "multi",
+                  )}
+                  sx={{
+                    mb: 2.5,
+                    color: "rgba(255,255,255,0.74)",
+                    lineHeight: 1.7,
+                    ...(contactContent.descriptionStyle || {}),
+                  }}
+                >
+                  {contactContent.description ||
+                    contactContent.subheading ||
+                    "Share your goals and we will follow up with the right next step."}
+                </Typography>
+
+                <Stack spacing={1.6}>
+                  {companyContactFields.map((field) => (
+                    <Box key={field.key || field.label}>
+                      {renderCompanyContactField(field)}
+                    </Box>
+                  ))}
+                  <Button
+                    variant="contained"
+                    type="button"
+                    disabled={contactStatus === "loading"}
+                    onClick={handleContactSubmit}
+                    endIcon={<EastIcon />}
+                    {...getEditableTextProps(
+                      contactBlockId,
+                      "buttonLabel",
+                      "single",
+                    )}
+                    sx={{
+                      alignSelf: "flex-start",
+                      bgcolor: themeColor,
+                      color: palette.white,
+                      borderRadius: 999,
+                      textTransform: "none",
+                      px: 2.6,
+                      py: 1.15,
+                      fontWeight: 800,
+                      boxShadow: "none",
+                      ...(contactContent.buttonTextStyle ||
+                        contactContent.ctaTextStyle ||
+                        {}),
+                      "&:hover": {
+                        bgcolor: themeColor,
+                        boxShadow: "none",
+                        opacity: 0.94,
+                      },
+                    }}
+                  >
+                    {contactStatus === "loading"
+                      ? "Sending..."
+                      : contactContent.buttonLabel ||
+                        contactContent.ctaText ||
+                        "Send message"}
+                  </Button>
+                  {contactStatus === "success" && (
+                    <Typography sx={{ color: "#8fe28f", fontWeight: 600 }}>
+                      Thanks! Your message has been sent.
+                    </Typography>
+                  )}
+                  {contactStatus === "error" && (
+                    <Typography sx={{ color: "#ffb4a2", fontWeight: 600 }}>
+                      {contactError}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                mt: 3,
+                pt: 2.2,
+                borderTop: "1px solid rgba(255,255,255,0.1)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: { xs: "flex-start", md: "center" },
+                flexDirection: { xs: "column", md: "row" },
+                gap: 1.5,
+              }}
+            >
+              <Typography sx={{ color: "rgba(255,255,255,0.68)" }}>
+                © 2026 {data.name}. Global business presence.
+              </Typography>
+              {socialIcons.length ? (
+                <Stack direction="row" spacing={1}>
+                  {socialIcons.map(({ key, icon: Icon }) => (
+                    <Box
+                      key={key}
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        display: "grid",
+                        placeItems: "center",
+                        borderRadius: "50%",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        color: palette.white,
+                      }}
+                    >
+                      <Icon size={16} />
+                    </Box>
+                  ))}
+                </Stack>
+              ) : null}
+            </Box>
+          </Box>
+        </Box>
+      </Container>
+    </Box>
+  );
+};
 
 const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const templateContent =

@@ -170,11 +170,11 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
         return;
       }
       const style = element.style;
-      const assign = (prop: keyof CSSStyleDeclaration, value: any) => {
+      const assign = (prop: string, value: any) => {
         if (value === undefined || value === null || value === "") {
           return;
         }
-        style[prop] = String(value);
+        (style as any)[prop] = String(value);
       };
 
       assign("fontFamily", patch.fontFamily);

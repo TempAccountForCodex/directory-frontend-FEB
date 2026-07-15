@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
+import type { TemplateChromeProps } from "../../templateEngine/templateChromeRegistry";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 
 const CONSULTING_CONTACT_FIELDS = [
@@ -1147,6 +1148,14 @@ function ConsultingStudioFooter({ data }: { data: TemplateProps["data"] }) {
     </Box>
   );
 }
+
+export const ConsultingStudioTemplateHeader: React.FC<TemplateChromeProps> = ({
+  data,
+}) => <ConsultingStudioHeader data={data} />;
+
+export const ConsultingStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
+  data,
+}) => <ConsultingStudioFooter data={data} />;
 
 const ConsultingStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   return (

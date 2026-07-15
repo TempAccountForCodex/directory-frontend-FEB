@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
+import type { TemplateChromeProps } from "../../templateEngine/templateChromeRegistry";
 import { buildModernTheme } from "./modernTheme";
 import {
   HeroBlock,
@@ -352,6 +353,20 @@ function ModernFooter({
     </Box>
   );
 }
+
+export const ModernTemplateHeader: React.FC<TemplateChromeProps> = ({
+  data,
+}) => {
+  const theme = buildModernTheme(data.primaryColor, data.secondaryColor);
+  return <ModernHeader data={data} theme={theme} />;
+};
+
+export const ModernTemplateFooter: React.FC<TemplateChromeProps> = ({
+  data,
+}) => {
+  const theme = buildModernTheme(data.primaryColor, data.secondaryColor);
+  return <ModernFooter data={data} theme={theme} />;
+};
 
 const ModernTemplate: React.FC<TemplateProps> = ({ data }) => {
   const theme = buildModernTheme(data.primaryColor, data.secondaryColor);
