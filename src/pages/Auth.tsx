@@ -1509,7 +1509,7 @@ const Auth = () => {
         Continue with Google
       </GoogleButton>
 
-      <Typography
+      {/* <Typography
         variant="caption"
         sx={{
           display: "block",
@@ -1521,7 +1521,7 @@ const Auth = () => {
         }}
       >
         We'll never post to your Google account
-      </Typography>
+      </Typography> */}
 
       {/* Divider */}
       <Divider sx={{ mb: 4, mt: 1 }}>
@@ -1843,7 +1843,7 @@ const Auth = () => {
             }}
           >
             Create stunning landing pages in minutes and get discovered in our
-            curated business directory�all for free.
+            curated business directory.
           </Typography>
 
           {/* Feature List */}
