@@ -1,17 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { ComponentProps, FormEvent } from "react";
 import {
   Box,
   Button,
-  Checkbox,
   CircularProgress,
   IconButton,
   Modal,
+  SvgIcon,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { keyframes } from "@mui/material/styles";
 import {
   Check as CheckIcon,
+  AutoAwesomeRounded as SparkleIcon,
+  CelebrationRounded as CelebrationIcon,
   CheckCircleOutlineRounded as CheckCircleIcon,
   CloseRounded as CloseIcon,
   EmailOutlined as EmailIcon,
@@ -48,6 +51,41 @@ const comingSoonViewEnter = keyframes`
   }
 `;
 
+const offerPillFloat = keyframes`
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+`;
+
+const offerPillGlow = keyframes`
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+`;
+
+const offerPillShimmer = keyframes`
+  0% {
+    transform: translateX(-165%) skewX(-20deg);
+  }
+
+  60%,
+  100% {
+    transform: translateX(260%) skewX(-20deg);
+  }
+`;
+
 const backdropAnimation = keyframes`
   from {
     opacity: 0;
@@ -70,11 +108,17 @@ const modalAnimation = keyframes`
   }
 `;
 
+const DiscordIcon = (props: ComponentProps<typeof SvgIcon>) => (
+  <SvgIcon {...props} viewBox="0 0 24 24">
+    <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.516c-.21.375-.444.88-.608 1.275a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.275A19.74 19.74 0 0 0 3.832 4.37C.534 9.046-.36 13.58.087 18.058a19.9 19.9 0 0 0 5.994 3.03c.48-.655.91-1.35 1.28-2.08a12.98 12.98 0 0 1-2.02-.97c.17-.124.336-.253.498-.385 3.9 1.804 8.13 1.804 11.982 0 .164.134.33.263.498.386-.64.38-1.317.705-2.02.97.37.73.798 1.425 1.28 2.08a19.88 19.88 0 0 0 5.994-3.03c.524-5.188-.894-9.68-3.256-13.69ZM8.02 15.33c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.333-.956 2.419-2.157 2.419Zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.333-.946 2.419-2.157 2.419Z" />
+  </SvgIcon>
+);
+
 const socialLinks = [
   {
-    label: "Email",
-    href: "mailto:info@thetechietribe.com",
-    Icon: EmailIcon,
+    label: "Discord",
+    href: "https://discord.gg/fNCrM6gA7F",
+    Icon: DiscordIcon,
   },
   {
     label: "Facebook",
@@ -99,14 +143,14 @@ const socialLinks = [
 ];
 
 const offerTerms = [
-  "You will choose from the available Techietribe AI templates.",
+  "You will choose from the available Premium Techietribe AI templates.",
   "Techietribe will customize the selected template using your content, logo, images, brand colors, and instructions.",
   "The offer includes only minor text, image, color, and section adjustments.",
   "Custom designs, major layout changes, advanced features, integrations, and additional pages are not included.",
   "You must provide complete and accurate content on time.",
   "You confirm that you have permission to use all submitted content and images.",
-  "The offer includes up to two reasonable revision rounds.",
-  "Domain registration, renewals, premium assets, and third-party services are not included.",
+  "The offer includes up to one reasonable revision rounds.",
+  "Domain registration, custom domains setup, renewals, premium assets, and third-party services are not included.",
   "You are responsible for maintaining the required subscription.",
   "Applying does not guarantee acceptance.",
   "Techietribe may reject requests that are incomplete, unsuitable, unlawful, technically impractical, or outside the offer's scope.",
@@ -259,7 +303,6 @@ const ComingSoon = () => {
   const [message, setMessage] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
-  const [termsDraft, setTermsDraft] = useState(false);
 
   const modalTitleRef = useRef<HTMLHeadingElement | null>(null);
 
@@ -291,34 +334,19 @@ const ComingSoon = () => {
   }, [isTermsOpen]);
 
   const openTerms = () => {
-    setTermsDraft(termsAccepted);
     setIsTermsOpen(true);
   };
 
   const handleTermsToggle = () => {
-    if (termsAccepted) {
-      setTermsAccepted(false);
-      setTermsDraft(false);
-      return;
-    }
-
-    openTerms();
-  };
-
-  const handleAgree = () => {
-    if (!termsDraft) {
-      return;
-    }
-
-    setTermsAccepted(true);
-    setIsTermsOpen(false);
+    setTermsAccepted((currentValue) => !currentValue);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!termsAccepted) {
-      openTerms();
+      setStatus("error");
+      setMessage("Please agree to the Terms & Conditions before joining.");
       return;
     }
 
@@ -425,6 +453,239 @@ const ComingSoon = () => {
 
         <ParticlesBackground />
 
+        <Tooltip
+          arrow
+          placement="bottom-end"
+          enterTouchDelay={0}
+          leaveTouchDelay={5000}
+          title={
+            <Box sx={{ maxWidth: "320px", padding: "0.25rem" }}>
+              <Typography
+                component="div"
+                sx={{
+                  mb: "0.35rem",
+                  color: "#fff",
+                  fontFamily: SYSTEM_FONT,
+                  fontSize: "0.9rem",
+                  fontWeight: 800,
+                  lineHeight: 1.3,
+                }}
+              >
+                Your landing page build is on us
+              </Typography>
+
+              <Typography
+                component="div"
+                sx={{
+                  color: "rgba(255, 255, 255, 0.76)",
+                  fontFamily: SYSTEM_FONT,
+                  fontSize: "0.8rem",
+                  lineHeight: 1.55,
+                }}
+              >
+                The first 100 approved users will receive one landing page built
+                at no development cost. An active Techietribe AI subscription is
+                still required for hosting, deployment, maintenance, and related
+                platform services.
+              </Typography>
+            </Box>
+          }
+          slotProps={{
+            tooltip: {
+              sx: {
+                maxWidth: "360px",
+                padding: "0.85rem 1rem",
+                border: "1px solid rgba(155, 214, 216, 0.24)",
+                borderRadius: "14px",
+                background: "rgba(7, 19, 18, 0.96)",
+                backdropFilter: "blur(18px)",
+                WebkitBackdropFilter: "blur(18px)",
+                boxShadow: "0 18px 48px rgba(0, 0, 0, 0.42)",
+              },
+            },
+            arrow: {
+              sx: {
+                color: "rgba(7, 19, 18, 0.96)",
+              },
+            },
+          }}
+        >
+          <Box
+            component="button"
+            type="button"
+            aria-label="First 100 users free landing page build offer. Hover or focus for details."
+            sx={{
+              position: "absolute",
+              top: "clamp(1rem, 2.4vw, 2rem)",
+              right: "clamp(1rem, 2.4vw, 2rem)",
+              zIndex: 4,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.72rem",
+              minHeight: "3rem",
+              boxSizing: "border-box",
+              overflow: "hidden",
+              padding: "0.5rem 1rem 0.5rem 0.55rem",
+              border: "1px solid rgba(255, 255, 255, 0.48)",
+              borderRadius: "999px",
+              background:
+                "linear-gradient(110deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1) 48%, rgba(255, 255, 255, 0.2))",
+              color: "#fff",
+              fontFamily: SYSTEM_FONT,
+              lineHeight: 1,
+              whiteSpace: "nowrap",
+              cursor: "help",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              scale: 0.9,
+              boxShadow:
+                "inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 14px 38px rgba(0, 0, 0, 0.28), 0 0 30px rgba(55, 140, 146, 0.12)",
+              animation: `${offerPillFloat} 3.8s ease-in-out infinite`,
+              transition:
+                "transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease",
+
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                top: "-40%",
+                left: 0,
+                width: "28%",
+                height: "180%",
+                pointerEvents: "none",
+                background:
+                  "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent)",
+                animation: `${offerPillShimmer} 4.6s ease-in-out infinite`,
+              },
+
+              "&:hover": {
+                transform: "translateY(-2px) scale(1.015)",
+                borderColor: "rgba(155, 214, 216, 0.8)",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 18px 44px rgba(0, 0, 0, 0.34), 0 0 34px rgba(55, 140, 146, 0.2)",
+              },
+
+              "&:focus-visible": {
+                outline: "3px solid rgba(155, 214, 216, 0.5)",
+                outlineOffset: "4px",
+              },
+
+              "@media (max-width: 900px)": {
+                top: "1rem",
+                left: "50%",
+                right: "auto",
+                translate: "-50% 0",
+              },
+
+              "@media (max-width: 600px)": {
+                top: "0.85rem",
+                left: "50%",
+                right: "auto",
+                translate: "-50% 0",
+                minHeight: "2.65rem",
+                gap: "0.55rem",
+                padding: "0.42rem 0.8rem 0.42rem 0.45rem",
+              },
+
+              "@media (prefers-reduced-motion: reduce)": {
+                animation: "none",
+
+                "&::after": {
+                  animation: "none",
+                  display: "none",
+                },
+              },
+            }}
+          >
+            <Box
+              aria-hidden="true"
+              sx={{
+                position: "relative",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "2rem",
+                height: "2rem",
+                flex: "0 0 auto",
+                border: "1px solid rgba(255, 255, 255, 0.24)",
+                borderRadius: "50%",
+                background:
+                  "linear-gradient(145deg, rgba(193, 193, 193, 0.96), rgba(177, 177, 177, 0.88))",
+                color: "#07110f",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 5px 16px rgba(255, 255, 255, 0.3)",
+
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: "-5px",
+                  zIndex: -1,
+                  borderRadius: "50%",
+                  background: "rgba(155, 214, 216, 0.18)",
+                  animation: `${offerPillGlow} 2.2s ease-in-out infinite`,
+                },
+
+                "@media (max-width: 600px)": {
+                  width: "1.8rem",
+                  height: "1.8rem",
+                },
+
+                "@media (prefers-reduced-motion: reduce)": {
+                  "&::before": {
+                    animation: "none",
+                  },
+                },
+              }}
+            >
+              <CelebrationIcon
+                sx={{
+                  fontSize: "1.12rem",
+
+                  "@media (max-width: 600px)": {
+                    fontSize: "1rem",
+                  },
+                }}
+              />
+            </Box>
+
+            <Box
+              component="span"
+              sx={{
+                position: "relative",
+                zIndex: 1,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.38rem",
+                fontSize: "clamp(0.76rem, 1vw, 0.88rem)",
+                fontWeight: 800,
+                letterSpacing: "0.01rem",
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  color: "#cecccc",
+                  fontWeight: 900,
+                }}
+              >
+                First 100:
+              </Box>
+
+              <Box component="span" sx={{ color: "#cecccc" }}>
+                Your Page Built Free!
+              </Box>
+
+              <SparkleIcon
+                aria-hidden="true"
+                sx={{
+                  ml: "0.05rem",
+                  color: "#cecccc",
+                  fontSize: "1rem",
+                }}
+              />
+            </Box>
+          </Box>
+        </Tooltip>
+
         <Box
           sx={{
             position: "relative",
@@ -448,7 +709,7 @@ const ComingSoon = () => {
               textDecoration: "none",
 
               "&:focus-visible": {
-                outline: "3px solid rgba(155, 214, 216, 0.5)",
+                outline: "3px solid rgba(194, 209, 210, 0.5)",
                 outlineOffset: "3px",
               },
 
@@ -473,7 +734,7 @@ const ComingSoon = () => {
               sx={{
                 borderLeft: "1px solid rgba(255, 255, 255, 0.3)",
                 paddingLeft: "0.75rem",
-                color: "#9bd6d8",
+                color: "#c4c4c4",
                 fontSize: "2rem",
                 fontWeight: 900,
                 lineHeight: "normal",
@@ -730,68 +991,48 @@ const ComingSoon = () => {
               flexWrap: "wrap",
               alignItems: "center",
               justifyContent: "center",
-              gap: "1rem 1.75rem",
-              marginTop: "2rem",
+              gap: "1rem 3rem",
+              marginTop: "1rem",
+
+              "@media (max-width: 600px)": {
+                marginTop: "0.85rem",
+              },
             }}
           >
             {status !== "success" && (
-              <Button
-                type="button"
-                disableRipple
-                aria-pressed={termsAccepted}
-                onClick={handleTermsToggle}
+              <Box
                 sx={{
                   display: "inline-flex",
-                  alignItems: "flex-start",
+                  alignItems: "center",
                   justifyContent: "center",
-                  gap: "0.6rem",
-                  minWidth: 0,
-                  padding: "0.35rem 0.5rem",
-                  border: 0,
-                  borderRadius: 0,
-                  background: "transparent",
+                  gap: "0.65rem",
                   color: "rgba(255, 255, 255, 0.82)",
-                  font: "inherit",
-                  fontSize: "0.92rem",
-                  lineHeight: "normal",
-                  textTransform: "none",
-                  cursor: "pointer",
-
-                  "&:hover": {
-                    background: "transparent",
-                  },
-
-                  "&:hover .terms-checkbox-box": {
-                    borderColor: "rgba(255, 255, 255, 0.8)",
-                  },
-
-                  "&:focus-visible": {
-                    outline: "3px solid rgba(155, 214, 216, 0.5)",
-                    outlineOffset: "3px",
-                    borderRadius: "8px",
-                  },
-
-                  "& strong": {
-                    color: "#fff",
-                    fontWeight: 700,
-                    textDecoration: "underline",
-                    textUnderlineOffset: "3px",
-                  },
+                  fontFamily: SYSTEM_FONT,
+                  fontSize: "0.9rem",
+                  lineHeight: 1.45,
                 }}
               >
                 <Box
-                  component="span"
-                  className="terms-checkbox-box"
-                  aria-hidden="true"
+                  component="button"
+                  type="button"
+                  role="checkbox"
+                  aria-checked={termsAccepted}
+                  aria-label={
+                    termsAccepted
+                      ? "Uncheck Terms & Conditions agreement"
+                      : "Agree to the Terms & Conditions"
+                  }
+                  onClick={handleTermsToggle}
                   sx={{
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
                     width: "1.25rem",
                     height: "1.25rem",
+                    minWidth: "1.25rem",
                     boxSizing: "border-box",
                     flex: "0 0 auto",
-                    marginTop: "0.14rem",
+                    padding: 0,
                     border: termsAccepted
                       ? "1px solid #9bd6d8"
                       : "1px solid rgba(255, 255, 255, 0.5)",
@@ -800,8 +1041,23 @@ const ComingSoon = () => {
                       ? "#9bd6d8"
                       : "rgba(255, 255, 255, 0.1)",
                     color: "#0e1512",
+                    cursor: "pointer",
                     transition:
-                      "background 160ms ease, border-color 160ms ease",
+                      "background 160ms ease, border-color 160ms ease, transform 160ms ease",
+
+                    "&:hover": {
+                      borderColor: "rgba(255, 255, 255, 0.85)",
+                      transform: "translateY(-1px)",
+                    },
+
+                    "&:focus-visible": {
+                      outline: "3px solid rgba(155, 214, 216, 0.5)",
+                      outlineOffset: "3px",
+                    },
+
+                    "@media (prefers-reduced-motion: reduce)": {
+                      transition: "none",
+                    },
                   }}
                 >
                   {termsAccepted && (
@@ -809,25 +1065,51 @@ const ComingSoon = () => {
                   )}
                 </Box>
 
-                <Box component="span">
-                  <Typography
-                    component="span"
+                <Typography
+                  component="span"
+                  sx={{
+                    color: "rgba(255, 255, 255, 0.82)",
+                    fontFamily: SYSTEM_FONT,
+                    fontSize: "0.9rem",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  I agree to the{" "}
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={openTerms}
                     sx={{
-                      display: "block",
-                      textAlign: "left",
-                      ml: 1,
-                      fontSize: "0.9rem",
-                      lineHeight: 1.45,
+                      display: "inline",
+                      minWidth: 0,
+                      margin: 0,
+                      padding: 0,
+                      border: 0,
+                      background: "transparent",
+                      color: "#fff",
+                      font: "inherit",
+                      fontWeight: 700,
+                      lineHeight: "inherit",
+                      textDecoration: "underline",
+                      textUnderlineOffset: "3px",
+                      cursor: "pointer",
+
+                      "&:hover": {
+                        color: "#b9f0f2",
+                      },
+
+                      "&:focus-visible": {
+                        outline: "3px solid rgba(155, 214, 216, 0.5)",
+                        outlineOffset: "3px",
+                        borderRadius: "4px",
+                      },
                     }}
                   >
-                    I agree to the{" "}
-                    <Box component="strong">Terms &amp; Conditions</Box> and
-                    understand
-                    <br />
-                    that early access is limited to 100 users.
-                  </Typography>
-                </Box>
-              </Button>
+                    Terms &amp; Conditions
+                  </Box>
+                  .
+                </Typography>
+              </Box>
             )}
 
             <Box
@@ -835,6 +1117,7 @@ const ComingSoon = () => {
               aria-label="Social media"
               sx={{
                 display: "flex",
+                flexWrap: "wrap",
                 justifyContent: "center",
                 gap: "0.65rem",
               }}
@@ -914,9 +1197,9 @@ const ComingSoon = () => {
               placeItems: "center",
               padding: "1rem",
               boxSizing: "border-box",
-              background: "rgba(3, 12, 10, 0.88)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
+              background: "rgba(3, 12, 10, 0.68)",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
               animation: `${backdropAnimation} 240ms ease both`,
               fontFamily: SYSTEM_FONT,
 
@@ -943,6 +1226,7 @@ const ComingSoon = () => {
                 padding: "clamp(1.5rem, 4vw, 2.6rem)",
                 backdropFilter: "blur(24px)",
                 WebkitBackdropFilter: "blur(24px)",
+                pb: 6,
                 boxShadow:
                   "inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 32px 90px rgba(0, 0, 0, 0.46)",
                 animation: `${modalAnimation} 340ms cubic-bezier(0.16, 1, 0.3, 1) both`,
@@ -1059,82 +1343,18 @@ const ComingSoon = () => {
                 ))}
               </Box>
 
-              <Box
-                component="label"
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr",
-                  gap: "0.75rem",
-                  alignItems: "start",
-                  marginTop: "1.15rem",
-                  color: "#fff",
-                  fontWeight: 700,
-                  lineHeight: 1.45,
-                  cursor: "pointer",
-                }}
-              >
-                <Checkbox
-                  checked={termsDraft}
-                  onChange={(event) => setTermsDraft(event.target.checked)}
-                  disableRipple
-                  sx={{
-                    width: "1.25rem",
-                    height: "1.25rem",
-                    marginTop: "0.1rem",
-                    padding: 0,
-                    color: "rgba(255, 255, 255, 0.5)",
-
-                    "&.Mui-checked": {
-                      color: "var(--soon-green)",
-                    },
-
-                    "& .MuiSvgIcon-root": {
-                      fontSize: "1.25rem",
-                    },
-                  }}
-                />
-
-                <Box component="span">
-                  I have read and agree to the Terms &amp; Conditions.
-                </Box>
-              </Box>
-
-              <Box
+              {/* <Box
                 sx={{
                   display: "flex",
                   justifyContent: "flex-end",
-                  gap: "0.75rem",
                   marginTop: "1.4rem",
-
-                  "@media (max-width: 600px)": {
-                    flexDirection: "column-reverse",
-                  },
                 }}
               >
-                <Button
-                  type="button"
-                  disableRipple
-                  onClick={() => setIsTermsOpen(false)}
-                  sx={{
-                    ...modalActionBaseSx,
-                    border: "1px solid rgba(255, 255, 255, 0.26)",
-                    background: "transparent",
-                    color: "#fff",
-
-                    "&:hover": {
-                      background: "rgba(255, 255, 255, 0.1)",
-                    },
-                  }}
-                >
-                  Cancel
-                </Button>
-
                 <Button
                   type="button"
                   disableRipple
                   disableElevation
-                  disabled={!termsDraft}
-                  onClick={handleAgree}
+                  onClick={() => setIsTermsOpen(false)}
                   sx={{
                     ...modalActionBaseSx,
                     border: 0,
@@ -1146,20 +1366,11 @@ const ComingSoon = () => {
                       background: "#f1f1f1",
                       boxShadow: "0 16px 36px rgba(0, 0, 0, 0.28)",
                     },
-
-                    "&.Mui-disabled": {
-                      pointerEvents: "auto",
-                      cursor: "not-allowed",
-                      opacity: 0.42,
-                      background: "#fff",
-                      color: "#101513",
-                      boxShadow: "none",
-                    },
                   }}
                 >
-                  I Agree
+                  Close
                 </Button>
-              </Box>
+              </Box> */}
             </Box>
           </Box>
         </Modal>

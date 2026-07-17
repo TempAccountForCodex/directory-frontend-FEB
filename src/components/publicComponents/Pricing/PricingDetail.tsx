@@ -91,22 +91,24 @@ type Plan = { label: string; price: number; sites: number };
 
 const pricingConfig = {
   lite: [
-    { label: "Pro Lite", price: 9, sites: 3 },
-    { label: "Pro Lite 10", price: 19, sites: 10 },
-    { label: "Pro Lite 25", price: 49, sites: 25 },
+    { label: "Pro Lite", price: 36, sites: 1 },
+    { label: "Pro Lite 5", price: 180, sites: 5 },
+    { label: "Pro Lite 10", price: 360, sites: 10 },
   ],
+
   standard: [
-    { label: "Pro Standard", price: 19, sites: 25 },
-    { label: "Pro Standard 50", price: 29, sites: 50 },
-    { label: "Pro Standard 100", price: 49, sites: 100 },
-    { label: "Pro Standard 150", price: 69, sites: 150 },
-    { label: "Pro Standard 250", price: 99, sites: 250 },
+    { label: "Pro Standard 25", price: 900, sites: 25 },
+    { label: "Pro Standard 50", price: 1800, sites: 50 },
+    { label: "Pro Standard 100", price: 3600, sites: 100 },
+    { label: "Pro Standard 150", price: 5400, sites: 150 },
+    { label: "Pro Standard 250", price: 9000, sites: 250 },
   ],
+
   plus: [
-    { label: "Pro Plus", price: 49, sites: 50 },
-    { label: "Pro Plus 100", price: 79, sites: 100 },
-    { label: "Pro Plus 150", price: 109, sites: 150 },
-    { label: "Pro Plus 200", price: 149, sites: 200 },
+    { label: "Pro Plus 50", price: 1800, sites: 50 },
+    { label: "Pro Plus 100", price: 3600, sites: 100 },
+    { label: "Pro Plus 150", price: 5400, sites: 150 },
+    { label: "Pro Plus 200", price: 7200, sites: 200 },
   ],
 };
 

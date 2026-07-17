@@ -249,7 +249,8 @@ function Navbar() {
   }
 
   const handleSignIn = () => {
-    navigate(auth.user ? "/dashboard" : "/auth");
+    // navigate(auth.user ? "/dashboard" : "/auth");
+    navigate(auth.user ? "/dashboard" : "/early-access");;
   };
 
   const onNavClick = (path: string) => {
@@ -863,7 +864,7 @@ function Navbar() {
                 cursor: "pointer",
               }}
             >
-              {auth.user ? "Dashboard" : "Get Started"}
+              {auth.user ? "Dashboard" : "Get Early Access"}
             </button>
           </div>
         </div>
