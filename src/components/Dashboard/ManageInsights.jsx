@@ -119,6 +119,7 @@ const ManageInsights = ({
     return parseInt(localStorage.getItem('manageInsightsPage')) || 1;
   });
   const [totalPages, setTotalPages] = useState(1);
+  const [totalInsightsCount, setTotalInsightsCount] = useState(null);
   const [rowsPerPage, setRowsPerPage] = useState(() => {
     return parseInt(localStorage.getItem('manageInsightsRowsPerPage')) || 10;
   });
@@ -269,6 +270,67 @@ const ManageInsights = ({
     return `${API_URL.replace('/api', '')}${imagePath}`;
   };
 
+  const getInsightRowsFromResponse = (payload) => {
+    if (!payload) return [];
+    if (Array.isArray(payload.insights)) return payload.insights;
+    if (Array.isArray(payload.blogs)) return payload.blogs;
+    if (Array.isArray(payload.data)) return payload.data;
+    if (Array.isArray(payload.data?.insights)) return payload.data.insights;
+    if (Array.isArray(payload.data?.blogs)) return payload.data.blogs;
+    return [];
+  };
+
+  const getInsightTotalFromResponse = (payload, fallbackCount = 0) => {
+    const pagination = payload?.pagination || payload?.data?.pagination || {};
+    return (
+      pagination.total ??
+      pagination.totalCount ??
+      payload?.total ??
+      payload?.totalCount ??
+      payload?.count ??
+      payload?.data?.total ??
+      payload?.data?.totalCount ??
+      fallbackCount
+    );
+  };
+
+  const getSelectedProject = () => {
+    return projects.find((project) => project.id === selectedProjectId) || null;
+  };
+
+  const isDirectoryProject = (project) => {
+    if (!project) return false;
+    return project.slug === 'techietribe-directory' || project.slug === 'directory';
+  };
+
+  // Display label for the project selector (backend names "Techietribe" /
+  // "Techietribe Directory" -> friendlier "Techietribe Official" / "Techietribe Directory").
+  const getProjectDisplayName = (project) => {
+    if (!project) return '';
+    if (project.slug === 'techietribe') return 'Techietribe Official';
+    if (project.slug === 'techietribe-directory' || project.slug === 'directory') {
+      return 'Techietribe Directory';
+    }
+    return project.name;
+  };
+
+  // Full public URL where a published insight is viewable. Directory-project
+  // insights live on the directory site at /blogdetail/<slug>; every other
+  // project (e.g. the official project) lives on the official site at
+  // /insight-details/<slug>. (The official route param is named :id but accepts
+  // the slug, matching how the official site links to insights internally.)
+  const getInsightViewUrl = (insight) => {
+    const selectedProject = getSelectedProject();
+    const directory = isDirectoryProject(selectedProject);
+    const base = (
+      directory
+        ? import.meta.env.VITE_DIRECTORY_FRONTEND_URL || 'http://localhost:5173'
+        : import.meta.env.VITE_OFFICIAL_FRONTEND_URL || 'http://localhost:5174'
+    ).replace(/\/$/, '');
+    const path = directory ? 'blogdetail' : 'insight-details';
+    return `${base}/${path}/${insight.slug}`;
+  };
+
   // Check if form has been modified
   const hasFormChanged = () => {
     if (!isEditing || !originalFormData) return true; // Allow submit for new insights
@@ -383,10 +445,10 @@ const ManageInsights = ({
           const defaultProj =
             projectList.find((p) => p.slug === 'techietribe-directory') || projectList[0];
           if (prev === null) {
-            // Initial load — pick the default project
+            // Initial load - pick the default project
             return defaultProj.id;
           }
-          // Refresh after add/delete — keep current selection if it still exists
+          // Refresh after add/delete - keep current selection if it still exists
           const stillExists = projectList.some((p) => p.id === prev);
           return stillExists ? prev : defaultProj.id;
         });
@@ -462,17 +524,31 @@ const ManageInsights = ({
 
   const fetchInsights = async () => {
     try {
-      const projectParam = selectedProjectId ? `&projectId=${selectedProjectId}` : '';
+      setLoading(true);
+      const selectedProject = getSelectedProject();
+      // Scope the list to the selected project. The directory project's insights
+      // are stored with projectId=null (only projectKey='directory'), so they
+      // can't be selected by projectId â€” filter those by projectKey instead.
+      // Every other project is scoped by its projectId.
+      const projectParam = isDirectoryProject(selectedProject)
+        ? `&projectKey=directory`
+        : selectedProjectId
+          ? `&projectId=${selectedProjectId}`
+          : '';
       const response = await axios.get(
         `${API_URL}/insights?page=${page}&limit=${rowsPerPage}${projectParam}`
       );
 
-      setInsights(response.data.insights || []);
-      setTotalPages(response.data.pagination?.totalPages || 1);
+      const insights = getInsightRowsFromResponse(response.data);
+      const pagination = response.data?.pagination || response.data?.data?.pagination || {};
+      setInsights(insights);
+      setTotalInsightsCount(getInsightTotalFromResponse(response.data, insights.length));
+      setTotalPages(pagination.totalPages || 1);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching insights:', error);
       setInsights([]);
+      setTotalInsightsCount(null);
       setSnackbar({
         open: true,
         message: 'Failed to fetch insights',
@@ -751,7 +827,7 @@ const ManageInsights = ({
         }
         break;
       case 'bullet':
-        insertTextAtCursor(sectionIndex, subsectionIndex, '\n• Bullet point');
+        insertTextAtCursor(sectionIndex, subsectionIndex, '\n* Bullet point');
         break;
       case 'numbered':
         const currentText = formData.headings[sectionIndex].subsections[subsectionIndex].content;
@@ -1000,27 +1076,27 @@ const ManageInsights = ({
   const getStatusChip = (status) => {
     const statusConfig = {
       DRAFT: {
-        label: 'Draft',
+        label: "Draft",
         background: `linear-gradient(135deg, ${alpha(
           colors.text,
-          0.2
+          0.2,
         )} 0%, ${alpha(colors.text, 0.1)} 100%)`,
         color: colors.textSecondary,
       },
       PENDING_APPROVAL: {
-        label: 'Pending Approval',
-        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-        color: '#F5F5F5',
+        label: "Pending Approval",
+        background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+        color: "#F5F5F5",
       },
       APPROVED: {
-        label: 'Approved',
-        background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-        color: '#F5F5F5',
+        label: "Approved",
+        background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+        color: "#F5F5F5",
       },
       REJECTED: {
-        label: 'Rejected',
-        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-        color: '#F5F5F5',
+        label: "Rejected",
+        background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+        color: "#F5F5F5",
       },
     };
 
@@ -1038,11 +1114,13 @@ const ManageInsights = ({
           background: config.background,
           color: config.color,
           fontWeight: 700,
-          border: 'none',
+          border: "none",
           boxShadow:
-            status === 'PENDING_APPROVAL' || status === 'APPROVED' || status === 'REJECTED'
-              ? `0 2px 6px ${alpha(config.color === '#F5F5F5' ? '#000' : config.color, 0.2)}`
-              : 'none',
+            status === "PENDING_APPROVAL" ||
+            status === "APPROVED" ||
+            status === "REJECTED"
+              ? `0 2px 6px ${alpha(config.color === "#F5F5F5" ? "#000" : config.color, 0.2)}`
+              : "none",
         }}
       />
     );
@@ -1192,7 +1270,7 @@ const ManageInsights = ({
             >
               {projects.map((proj) => (
                 <MenuItem key={proj.id} value={proj.id}>
-                  {proj.name}
+                  {getProjectDisplayName(proj)}
                 </MenuItem>
               ))}
             </DashboardSelect>
@@ -1392,8 +1470,7 @@ const ManageInsights = ({
                     label: 'View',
                     icon: <ViewIcon size={18} />,
                     onClick: (data) => {
-                      const baseUrl = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
-                      window.open(`${baseUrl}/insights/${data.slug}`, '_blank');
+                      window.open(getInsightViewUrl(data), '_blank', 'noopener,noreferrer');
                     },
                     color: colors.primary,
                     hoverBackground: alpha(colors.primary, 0.2),
@@ -1443,7 +1520,7 @@ const ManageInsights = ({
                 ],
               }}
               serverSidePagination={{
-                totalRows: stats.total,
+                totalRows: totalInsightsCount ?? stats.total,
                 currentPage: page,
                 onPageChange: (newPage) => setPage(newPage),
                 onPageSizeChange: (newSize) => setRowsPerPage(newSize),
@@ -1889,7 +1966,7 @@ const ManageInsights = ({
                                 inputRef={(el) => {
                                   contentRefs.current[`${sectionIndex}-${subsectionIndex}`] = el;
                                 }}
-                                placeholder="Write your content here. Use **text** for bold, *text* for italic, • for bullets"
+                                placeholder="Write your content here. Use **text** for bold, *text* for italic, * for bullets"
                                 helperText="Each new line creates a paragraph. Use formatting buttons to add style."
                                 sx={{
                                   '& textarea:-webkit-autofill': {
@@ -2269,7 +2346,7 @@ const ManageInsights = ({
         </Alert>
       </Snackbar>
 
-      {/* Manage Projects Dialog — Admin Only */}
+      {/* Manage Projects Dialog - Admin Only */}
       <Dialog
         open={openProjectsDialog}
         onClose={() => {
@@ -2444,4 +2521,3 @@ const ManageInsights = ({
 };
 
 export default ManageInsights;
-

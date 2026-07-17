@@ -48,6 +48,7 @@ const DocsArticle = lazy(() => import("../src/pages/publicPages/DocsArticle"));
 const About = lazy(() => import("../src/pages/publicPages/About"));
 const Pricing = lazy(() => import("../src/pages/publicPages/Pricing"));
 const Templates = lazy(() => import("../src/pages/publicPages/Templates"));
+const ComingSoon = lazy(() => import("./pages/ComingSoon"));
 
 const InsightsPage = lazy(() => import("./pages/publicPages/Blog.js"));
 const Footer = lazy(() => import("./components/Footer"));
@@ -347,6 +348,10 @@ const AppRoutes = () => {
 
   const router = createBrowserRouter([
     {
+      path: "/early-access",
+      element: suspense(<ComingSoon />),
+    },
+    {
       path: "/",
       element: <MainLayout />,
       children: [
@@ -509,7 +514,7 @@ const AppRoutes = () => {
         },
       ],
     },
-  ]);
+  ]);;
 
   return <RouterProvider router={router} />;
 };
