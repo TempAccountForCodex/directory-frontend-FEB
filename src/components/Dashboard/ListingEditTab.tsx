@@ -168,6 +168,7 @@ function deriveStatus(
 }
 
 const MAX_TAGS = 10;
+const MAX_SHORT_DESCRIPTION_LENGTH = 240;
 const MIN_DESCRIPTION_WORDS = 250;
 const MAX_DESCRIPTION_WORDS = 2000;
 const MAX_DESCRIPTION_MEDIA = 2;
@@ -504,8 +505,18 @@ const ListingEditTab = React.memo(function ListingEditTab({
     };
   }, [completeness, form.phone, form.email, form.city, form.country]);
 
+  const plainDescription = useMemo(
+    () => stripHtml(form.descriptionContent),
+    [form.descriptionContent],
+  );
+
   const descriptionWordCount = useMemo(
-    () => countWords(form.shortDescription),
+    () => countWords(plainDescription),
+    [plainDescription],
+  );
+
+  const shortDescriptionCharacterCount = useMemo(
+    () => form.shortDescription.trim().length,
     [form.shortDescription],
   );
 
@@ -533,11 +544,9 @@ const ListingEditTab = React.memo(function ListingEditTab({
     setForm((prev) => ({
       ...prev,
       descriptionContent: value,
-      shortDescription: stripHtml(value),
     }));
     setFormErrors((prev) => ({
       ...prev,
-      shortDescription: "",
       descriptionContent: mediaError,
     }));
   }, []);
@@ -729,11 +738,18 @@ const ListingEditTab = React.memo(function ListingEditTab({
     if (!form.businessName.trim()) {
       errors.businessName = "Business name is required";
     }
-    const descriptionWordCount = countWords(form.shortDescription);
+    const shortDescription = form.shortDescription.trim();
+    if (!shortDescription) {
+      errors.shortDescription = "Short description is required";
+    } else if (shortDescription.length > MAX_SHORT_DESCRIPTION_LENGTH) {
+      errors.shortDescription = `Short description must be ${MAX_SHORT_DESCRIPTION_LENGTH} characters or fewer. Current count: ${shortDescription.length}.`;
+    }
+
+    const descriptionWordCount = countWords(stripHtml(form.descriptionContent));
     if (descriptionWordCount < MIN_DESCRIPTION_WORDS) {
-      errors.shortDescription = `Description must be at least ${MIN_DESCRIPTION_WORDS} words. Current count: ${descriptionWordCount}.`;
+      errors.descriptionContent = `Description must be at least ${MIN_DESCRIPTION_WORDS} words. Current count: ${descriptionWordCount}.`;
     } else if (descriptionWordCount > MAX_DESCRIPTION_WORDS) {
-      errors.shortDescription = `Description must be ${MAX_DESCRIPTION_WORDS} words or fewer. Current count: ${descriptionWordCount}.`;
+      errors.descriptionContent = `Description must be ${MAX_DESCRIPTION_WORDS} words or fewer. Current count: ${descriptionWordCount}.`;
     }
     const mediaError = getDescriptionMediaLimitError(
       countDescriptionMedia(form.descriptionContent),
@@ -1212,6 +1228,36 @@ const ListingEditTab = React.memo(function ListingEditTab({
               placeholder="Enter your business name"
             />
 
+            <Box>
+              <DashboardInput
+                label="Short Description"
+                value={form.shortDescription}
+                onChange={handleFieldChange("shortDescription")}
+                error={Boolean(formErrors.shortDescription)}
+                helperText={formErrors.shortDescription}
+                placeholder="Brief summary shown on directory cards"
+                multiline
+                rows={3}
+                inputProps={{ maxLength: MAX_SHORT_DESCRIPTION_LENGTH }}
+              />
+              <Typography
+                variant="caption"
+                sx={{
+                  color:
+                    shortDescriptionCharacterCount > MAX_SHORT_DESCRIPTION_LENGTH
+                      ? inputPalette.danger
+                      : inputPalette.muted,
+                  mt: 0.75,
+                  display: "block",
+                  textAlign: "right",
+                  fontSize: "0.85rem",
+                }}
+                data-testid="short-description-counter"
+              >
+                {shortDescriptionCharacterCount}/{MAX_SHORT_DESCRIPTION_LENGTH}
+              </Typography>
+            </Box>
+
             <Box
               sx={{
                 "&:focus-within .dashboard-input-label": {
@@ -1223,8 +1269,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
                 className="dashboard-input-label"
                 variant="body2"
                 sx={{
-                  color: formErrors.shortDescription
-                    || formErrors.descriptionContent
+                  color: formErrors.descriptionContent
                     ? inputPalette.danger
                     : inputPalette.muted,
                   fontSize: "0.95rem",
@@ -1233,13 +1278,13 @@ const ListingEditTab = React.memo(function ListingEditTab({
                   transition: "color 0.2s ease",
                 }}
               >
-                Description
+                Business Description
               </Typography>
               <Box
                 data-testid="description-rich-editor"
                 sx={{
                   border: "1px solid",
-                  borderColor: formErrors.shortDescription || formErrors.descriptionContent
+                  borderColor: formErrors.descriptionContent
                     ? inputPalette.danger
                     : inputPalette.border,
                   borderRadius: "12px",
@@ -1255,16 +1300,15 @@ const ListingEditTab = React.memo(function ListingEditTab({
                     backgroundColor: `${inputPalette.fill} !important`,
                   },
                   "&:hover": {
-                    borderColor: formErrors.shortDescription
-                      || formErrors.descriptionContent
+                    borderColor: formErrors.descriptionContent
                       ? inputPalette.danger
                       : inputPalette.hoverBorder,
                   },
                   "&:focus-within": {
-                    borderColor: formErrors.shortDescription || formErrors.descriptionContent
+                    borderColor: formErrors.descriptionContent
                       ? inputPalette.danger
                       : inputPalette.accent,
-                    boxShadow: formErrors.shortDescription || formErrors.descriptionContent
+                    boxShadow: formErrors.descriptionContent
                       ? "none"
                       : `0 0 0 3px ${alpha(inputPalette.accent, isLight ? 0.14 : 0.22)}`,
                   },
@@ -1380,7 +1424,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
                   placeholder="Describe your business, services, audience, location, and value in detail. Add up to 2 images, or 1 image and 1 video."
                 />
               </Box>
-              {(formErrors.shortDescription || formErrors.descriptionContent || uploadingDescriptionMedia) && (
+              {(formErrors.descriptionContent || uploadingDescriptionMedia) && (
                 <Typography
                   variant="caption"
                   sx={{
@@ -1394,7 +1438,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
                 >
                   {uploadingDescriptionMedia
                     ? "Uploading description media..."
-                    : formErrors.shortDescription || formErrors.descriptionContent}
+                    : formErrors.descriptionContent}
                 </Typography>
               )}
               <Typography

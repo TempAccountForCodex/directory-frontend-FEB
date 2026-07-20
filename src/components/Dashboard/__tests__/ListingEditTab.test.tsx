@@ -7,7 +7,7 @@
  * 3. Tag add/remove works, max 10 enforced
  * 4. Publish blocked when completeness < 60%
  * 5. Archive shows confirmation dialog
- * 6. Word counter for shortDescription
+ * 6. Word counter for descriptionContent
  * 7. Empty state when not opted in
  * 8. AI enhance calls correct API
  */
@@ -261,15 +261,19 @@ function render(ui: React.ReactElement) {
 }
 
 describe("ListingEditTab", () => {
+  const validShortDescription =
+    "A concise technology services summary for directory listing cards.";
   const validLongDescription = Array.from(
     { length: 800 },
     (_, index) => `service${index + 1}`,
   ).join(" ");
+  const validDescriptionContent = `<p>${validLongDescription}</p>`;
 
   const baseWebsiteData = {
     name: "Test Business",
     businessName: "Test Business",
-    shortDescription: validLongDescription,
+    shortDescription: validShortDescription,
+    descriptionContent: validDescriptionContent,
     businessCategory: "Technology",
     priceLevel: "$$",
     phone: "+1 555 1234",
@@ -438,6 +442,7 @@ describe("ListingEditTab", () => {
         expect.stringContaining("/websites/1/listing"),
         expect.objectContaining({
           businessName: "Test Business",
+          shortDescription: validShortDescription,
           descriptionContent: expect.stringContaining("<p>"),
         }),
       );
@@ -465,7 +470,7 @@ describe("ListingEditTab", () => {
       expect(mockedAxios.patch).toHaveBeenCalledWith(
         expect.stringContaining("/websites/1/listing"),
         expect.objectContaining({
-          shortDescription: validLongDescription,
+          shortDescription: validShortDescription,
           descriptionContent: expect.stringContaining("<img"),
         }),
       );
@@ -493,7 +498,7 @@ describe("ListingEditTab", () => {
       expect(mockedAxios.patch).toHaveBeenCalledWith(
         expect.stringContaining("/websites/1/listing"),
         expect.objectContaining({
-          shortDescription: validLongDescription,
+          shortDescription: validShortDescription,
           descriptionContent: expect.stringContaining("<video"),
         }),
       );
@@ -800,7 +805,7 @@ describe("ListingEditTab", () => {
     });
   });
 
-  it("renders word counter for shortDescription", async () => {
+  it("renders word counter for descriptionContent", async () => {
     render(<ListingEditTab {...defaultProps} />);
 
     await waitFor(() => {
@@ -815,7 +820,7 @@ describe("ListingEditTab", () => {
         {...defaultProps}
         websiteData={{
           ...baseWebsiteData,
-          shortDescription: "Too short",
+          descriptionContent: "<p>Too short</p>",
         }}
       />,
     );
@@ -843,7 +848,7 @@ describe("ListingEditTab", () => {
         {...defaultProps}
         websiteData={{
           ...baseWebsiteData,
-          shortDescription: tooLongDescription,
+          descriptionContent: `<p>${tooLongDescription}</p>`,
         }}
       />,
     );
