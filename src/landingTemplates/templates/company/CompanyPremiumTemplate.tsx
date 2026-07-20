@@ -63,10 +63,9 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
   const primary = data.primaryColor || "#101010";
   const secondary = data.secondaryColor || "#f3ede3";
   const features =
-    ((featuresContent.items as typeof data.features) || data.features)?.slice(
-      0,
-      6,
-    ) || [];
+    ((featuresContent.features as typeof data.features) ||
+      (featuresContent.items as typeof data.features) ||
+      data.features)?.slice(0, 6) || [];
   const stats = data.stats?.slice(0, 3) || [];
   const reviews = data.reviews?.slice(0, 2) || [];
   const team = data.team?.slice(0, 3) || [];
@@ -90,6 +89,10 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
     galleryContent.heading ||
     "Direction for launches, events, and polished company moments.";
   const testimonialsHeading = testimonialsContent.heading || "What we do";
+  const testimonialsDescription =
+    testimonialsContent.description ||
+    featuresContent.description ||
+    "A premium multi-section template for company storytelling, services, and trust-building. It is structured around enquiries, not e-commerce actions.";
   const contactHeading =
     contactContent.heading ||
     contactContent.buttonLabel ||
@@ -111,33 +114,29 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
     Boolean(data.socialLinks?.[item.key as keyof typeof data.socialLinks]),
   );
 
-  const featuredCards = (
-    (aboutContent.featuredCards as
-      | Array<{ title?: string; description?: string; image?: string }>
-      | undefined) || [
-      {
-        title: features[0]?.title || "Signature consulting",
-        description:
-          features[0]?.description ||
-          "Direction for spaces, launches, and client-facing brand experiences.",
-        image: data.gallery?.[0]?.url || editorialImages.collectionOne,
-      },
-      {
-        title: features[1]?.title || "Occasion styling",
-        description:
-          features[1]?.description ||
-          "Seasonal edits, event presentation, and premium styling with a soft editorial finish.",
-        image: data.gallery?.[1]?.url || editorialImages.collectionTwo,
-      },
-      {
-        title: features[2]?.title || "Custom installs",
-        description:
-          features[2]?.description ||
-          "Bespoke compositions and on-site finishing for hospitality, retail, and brand activations.",
-        image: data.gallery?.[2]?.url || editorialImages.collectionThree,
-      },
-    ]
-  ).slice(0, 3);
+  const featuredCards = [
+    {
+      title: features[0]?.title || "Signature consulting",
+      description:
+        features[0]?.description ||
+        "Direction for spaces, launches, and client-facing brand experiences.",
+      image: data.gallery?.[0]?.url || editorialImages.collectionOne,
+    },
+    {
+      title: features[1]?.title || "Occasion styling",
+      description:
+        features[1]?.description ||
+        "Seasonal edits, event presentation, and premium styling with a soft editorial finish.",
+      image: data.gallery?.[1]?.url || editorialImages.collectionTwo,
+    },
+    {
+      title: features[2]?.title || "Custom installs",
+      description:
+        features[2]?.description ||
+        "Bespoke compositions and on-site finishing for hospitality, retail, and brand activations.",
+      image: data.gallery?.[2]?.url || editorialImages.collectionThree,
+    },
+  ];
 
   const serviceTiles = [
     {
@@ -342,9 +341,12 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <Box sx={{ maxWidth: 560 }}>
               <Typography
-                data-editable="eyebrowText"
-                data-edit-type="single"
-                data-block-id={homeBlockId}
+                {...getEditableTextProps(
+                  homeBlockId,
+                  "eyebrow",
+                  "single",
+                  "eyebrowStyle",
+                )}
                 sx={{
                   fontSize: "0.74rem",
                   letterSpacing: "0.24em",
@@ -353,7 +355,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   mb: 2,
                 }}
               >
-                {homeContent.eyebrowText || "Premium company presentation"}
+                {homeContent.eyebrow || "Premium company presentation"}
               </Typography>
               <Typography
                 data-editable="heading"
@@ -579,17 +581,23 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 />
                 <Typography
-                  data-editable={`featuredCards.${index}.title`}
-                  data-edit-type="single"
-                  data-block-id={aboutBlockId}
+                  {...getEditableTextProps(
+                    servicesBlockId,
+                    `features.${index}.title`,
+                    "single",
+                    "headingStyle",
+                  )}
                   sx={{ mt: 1.5, fontFamily: serifFont, fontSize: "1.35rem" }}
                 >
                   {card.title}
                 </Typography>
                 <Typography
-                  data-editable={`featuredCards.${index}.description`}
-                  data-edit-type="multi"
-                  data-block-id={aboutBlockId}
+                  {...getEditableTextProps(
+                    servicesBlockId,
+                    `features.${index}.description`,
+                    "multi",
+                    "descriptionStyle",
+                  )}
                   sx={{
                     mt: 0.75,
                     color: "rgba(20,20,20,0.7)",
@@ -638,9 +646,12 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
           <FadeIn delay={0.08}>
             <Box>
               <Typography
-                data-editable="eyebrowText"
-                data-edit-type="single"
-                data-block-id={galleryBlockId}
+                {...getEditableTextProps(
+                  galleryBlockId,
+                  "eyebrow",
+                  "single",
+                  "eyebrowStyle",
+                )}
                 sx={{
                   fontSize: "0.74rem",
                   letterSpacing: "0.22em",
@@ -648,7 +659,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   color: "rgba(20,20,20,0.58)",
                 }}
               >
-                {galleryContent.eyebrowText || "Brand occasions"}
+                {galleryContent.eyebrow || "Brand occasions"}
               </Typography>
               <Typography
                 data-editable="heading"
@@ -744,9 +755,7 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                 {}),
             }}
           >
-            A premium multi-section template for company storytelling, services,
-            and trust-building. It is structured around enquiries, not
-            e-commerce actions.
+            {testimonialsDescription}
           </Typography>
         </FadeIn>
 
@@ -773,11 +782,23 @@ const CompanyPremiumTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 />
                 <Typography
+                  {...getEditableTextProps(
+                    servicesBlockId,
+                    `features.${index + 3}.title`,
+                    "single",
+                    "headingStyle",
+                  )}
                   sx={{ mt: 1.6, fontFamily: serifFont, fontSize: "1.4rem" }}
                 >
                   {tile.title}
                 </Typography>
                 <Typography
+                  {...getEditableTextProps(
+                    servicesBlockId,
+                    `features.${index + 3}.description`,
+                    "multi",
+                    "descriptionStyle",
+                  )}
                   sx={{
                     mt: 0.75,
                     color: "rgba(20,20,20,0.72)",

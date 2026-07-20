@@ -6,6 +6,10 @@ import type {
 } from "../landingTemplates/types/BusinessData";
 import { normalizeContactFormFields } from "../api/formSubmissions";
 import { buildFrontendTemplateBusinessData } from "./frontendTemplateSiteData";
+import {
+  buildHiddenElementsMap,
+  buildHiddenContainersMap,
+} from "../landingTemplates/utils/hiddenElements";
 
 export type TemplateThemeSettings = {
   primaryColor?: string;
@@ -455,6 +459,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
             subheading: data.description || "",
             ctaText: "Explore our work",
             ctaLink: "#services",
+            eyebrow: "Premium company presentation",
           }),
         },
         {
@@ -473,6 +478,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           label: "Gallery",
           blockType: "TEXT",
           buildContent: () => ({
+            eyebrow: "Brand occasions",
             title:
               "Direction for launches, events, and polished company moments.",
             body: "Use this section for campaigns, seasonal messaging, private appointments, or company capabilities.",
@@ -536,6 +542,34 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
             subheading: data.description || "",
             ctaText: "Contact Us",
             ctaLink: "#contact",
+            eyebrow: "Trusted business partner",
+            socialProof: {
+              label: "Trusted business partner",
+              value: "100+ happy customers.",
+              rating: 5,
+              avatars: [
+                {
+                  image:
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+                  alt: "Client 1",
+                },
+                {
+                  image:
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+                  alt: "Client 2",
+                },
+                {
+                  image:
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+                  alt: "Client 3",
+                },
+                {
+                  image:
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+                  alt: "Client 4",
+                },
+              ],
+            },
           }),
         },
         {
@@ -543,9 +577,20 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           label: "About",
           blockType: "TEXT",
           buildContent: (data) => ({
+            eyebrow: "Get to know us",
             title:
               "Driving innovation and excellence for corporate success worldwide.",
             body: data.description || data.tagline || "",
+            detailGroups: [
+              {
+                title: "What we build",
+                items: ["Clear systems", "Premium visuals", "Business growth"],
+              },
+              {
+                title: "How we work",
+                items: ["Fast collaboration", "Focused delivery", "Global support"],
+              },
+            ],
           }),
         },
         {
@@ -553,6 +598,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           label: "Why Us",
           blockType: "FEATURES",
           buildContent: (data) => ({
+            eyebrow: "Why choose us",
             heading: "Built for business trust, clarity, and conversion.",
             description: data.description || data.tagline || "",
             features: resolveFeatureItems(data).length
@@ -565,6 +611,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           label: "Process",
           blockType: "FEATURES",
           buildContent: () => ({
+            eyebrow: "Our process",
             heading: "How it works.",
             subheading:
               "A simple executive flow built to move from strategy to launch with clarity.",
@@ -592,10 +639,37 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           }),
         },
         {
+          key: "process-details",
+          label: "Process Details",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            splitContentCards: {
+              eyebrow: "Team",
+              heading: "Strong visuals for trust and leadership.",
+              subItems: [{ label: "Leadership" }, { label: "Operations" }],
+              darkCard: {
+                heading: "Built to feel sharp, premium, and easy to scan.",
+                body: "",
+                footerLabel: "Executive team",
+              },
+              image:
+                "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+              imageStyle: {
+                fit: "cover",
+                height: "auto",
+                borderRadius: 34,
+                borderWidth: 0,
+                borderColor: "#000000",
+              },
+            },
+          }),
+        },
+        {
           key: "contact",
           label: "Contact",
           blockType: "CONTACT",
           buildContent: (data) => ({
+            eyebrow: "Get in touch",
             heading: "Drop us a line.",
             description:
               data.contact.address ||
@@ -605,6 +679,14 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
               "",
             buttonLabel: "Send message",
             primaryCtaText: "Contact Us",
+            innerBlocks: [
+              {
+                type: "FOOTER",
+                content: {
+                  copyright: `© 2026 ${data.name || "Your company"}. Global business presence.`,
+                },
+              },
+            ],
           }),
         },
       ],
@@ -1244,7 +1326,24 @@ const getOrderedBlocksForHomePage = (
 const getOrderedSectionKeysForHomePage = (
   templateId: string,
   pages: TemplateEditorPage[],
-): string[] => Array.from(getTemplateSectionMap(templateId, pages).keys());
+): string[] => {
+  const sectionKeys = Array.from(getTemplateSectionMap(templateId, pages).keys());
+
+  // Older Company Executive sites do not have a persisted Process Details
+  // block. The editor exposes that legacy section immediately after Process,
+  // so keep the public renderer order identical instead of appending the
+  // synthetic section after Contact.
+  if (
+    templateId === "company-executive" &&
+    sectionKeys.includes("process") &&
+    !sectionKeys.includes("process-details")
+  ) {
+    const processIndex = sectionKeys.indexOf("process");
+    sectionKeys.splice(processIndex + 1, 0, "process-details");
+  }
+
+  return sectionKeys;
+};
 
 const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
   getOrderedBlocksForHomePage(pages)
@@ -1504,6 +1603,42 @@ const hydrateSeededPages = (
   });
 };
 
+const migrateCompanyExecutiveSectionBoundaries = (
+  templateId: string,
+  pages: TemplateEditorPage[],
+): TemplateEditorPage[] => {
+  if (templateId !== "company-executive") {
+    return pages;
+  }
+
+  return pages.map((page) => {
+    const processBlock = page.blocks.find(
+      (block) => block.content?.editorSection === "process",
+    );
+    const detailsIndex = page.blocks.findIndex(
+      (block) => block.content?.editorSection === "process-details",
+    );
+    if (detailsIndex < 0 || !processBlock?.content?.splitContentCards) {
+      return page;
+    }
+
+    const detailsBlock = page.blocks[detailsIndex];
+    if (detailsBlock.localOnly === false) {
+      return page;
+    }
+
+    const blocks = [...page.blocks];
+    blocks[detailsIndex] = {
+      ...detailsBlock,
+      content: {
+        ...detailsBlock.content,
+        splitContentCards: processBlock.content.splitContentCards,
+      },
+    };
+    return { ...page, blocks };
+  });
+};
+
 const getThemeSettingsFromUnknown = (
   value: unknown,
 ): TemplateThemeSettings | null => {
@@ -1631,10 +1766,9 @@ export const buildFrontendTemplateEditorPages = (
     persistedPagesInput || website.templateSnapshot?.pages || null,
   );
 
-  const hydratedPages = hydrateSeededPages(
+  const hydratedPages = migrateCompanyExecutiveSectionBoundaries(
     templateId,
-    seededPages,
-    persistedPages,
+    hydrateSeededPages(templateId, seededPages, persistedPages),
   );
 
   // Append any persisted page that is NOT represented by a seeded template page
@@ -1761,6 +1895,30 @@ const overlayContactInnerBlocks = (
   ];
 };
 
+const ensureFooterInnerBlock = (
+  rawInnerBlocks: unknown[],
+  fallbackCopyright: string,
+): unknown[] => {
+  const innerBlocks = Array.isArray(rawInnerBlocks) ? rawInnerBlocks : [];
+  const hasFooter = innerBlocks.some(
+    (block) => String((block as { type?: string })?.type || "").toUpperCase() === "FOOTER",
+  );
+
+  if (hasFooter) {
+    return innerBlocks;
+  }
+
+  return [
+    ...innerBlocks,
+    {
+      type: "FOOTER",
+      content: {
+        copyright: fallbackCopyright,
+      },
+    },
+  ];
+};
+
 const readArray = <T>(source: Record<string, unknown>, keys: string[]): T[] => {
   for (const key of keys) {
     const value = source?.[key];
@@ -1769,6 +1927,82 @@ const readArray = <T>(source: Record<string, unknown>, keys: string[]): T[] => {
     }
   }
   return [];
+};
+
+const readObjectRecord = (
+  source: Record<string, unknown>,
+  keys: string[],
+): Record<string, unknown> | undefined => {
+  for (const key of keys) {
+    const value = source?.[key];
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+  }
+  return undefined;
+};
+
+const mapDetailGroups = (
+  groups: Array<Record<string, unknown>>,
+  fallback: Array<{ title: string; items: string[] }> = [],
+): Array<{ title: string; items: string[] }> =>
+  groups.length
+    ? groups.map((group, index) => ({
+        title: readString(
+          group,
+          ["title", "heading"],
+          fallback[index]?.title || `Group ${index + 1}`,
+        ),
+        items: readArray<string>(group, ["items"]).map((item) => String(item)),
+      }))
+    : fallback;
+
+const mapProgressStats = (
+  stats: Array<Record<string, unknown>>,
+  fallback: Array<{ label: string; value: string }> = [],
+): Array<{ label: string; value: string }> =>
+  stats.length
+    ? stats.map((stat, index) => ({
+        label: readString(
+          stat,
+          ["label", "title"],
+          fallback[index]?.label || `Stat ${index + 1}`,
+        ),
+        value: readString(stat, ["value"], fallback[index]?.value || ""),
+      }))
+    : fallback;
+
+const readSocialProof = (
+  source: Record<string, unknown>,
+  fallback: {
+    label: string;
+    value: string;
+    rating: number;
+    avatars: Array<{ image: string; alt: string }>;
+  },
+) => {
+  const socialProof = readObjectRecord(source, ["socialProof"]) || {};
+  const avatars = readArray<Record<string, unknown>>(socialProof, [
+    "avatars",
+  ]).map((avatar, index) => ({
+    image: readString(
+      avatar,
+      ["image", "src", "url"],
+      fallback.avatars[index]?.image || "",
+    ),
+    alt: readString(
+      avatar,
+      ["alt", "label", "name"],
+      fallback.avatars[index]?.alt || `Avatar ${index + 1}`,
+    ),
+  }));
+
+  return {
+    label: readString(socialProof, ["label"], fallback.label),
+    value: readString(socialProof, ["value"], fallback.value),
+    rating: Number(socialProof.rating || fallback.rating || 5),
+    avatars: avatars.length ? avatars : fallback.avatars,
+  };
 };
 
 const getSectionStyleValue = (
@@ -1927,17 +2161,23 @@ const buildTemplatePreviewBusinessDataImpl = (
     findSectionContent(templateId, pages, sectionKey);
 
   if (templateId === "company-executive") {
-    const navbarBlock = findSectionBlock(templateId, pages, "navbar");
-    const overviewBlock = findSectionBlock(templateId, pages, "overview");
-    const aboutBlock = findSectionBlock(templateId, pages, "about");
-    const whyUsBlock = findSectionBlock(templateId, pages, "why-us");
-    const processBlock = findSectionBlock(templateId, pages, "process");
-    const contactBlock = findSectionBlock(templateId, pages, "contact");
+    // Company Executive has multiple FEATURES blocks. Resolve them through the
+    // ordered section map so old sites without editorSection metadata do not
+    // collapse Why Us, Process, and Process Details onto the first FEATURES row.
+    const companySectionMap = getTemplateSectionMap(templateId, pages);
+    const navbarBlock = companySectionMap.get("navbar");
+    const overviewBlock = companySectionMap.get("overview");
+    const aboutBlock = companySectionMap.get("about");
+    const whyUsBlock = companySectionMap.get("why-us");
+    const processBlock = companySectionMap.get("process");
+    const processDetailsBlock = companySectionMap.get("process-details");
+    const contactBlock = companySectionMap.get("contact");
     const navbar = getSectionContent("navbar");
     const overview = getSectionContent("overview");
     const about = getSectionContent("about");
     const whyUs = getSectionContent("why-us");
     const process = getSectionContent("process");
+    const processDetails = getSectionContent("process-details");
     const contact = getSectionContent("contact");
     const customSections = getOrderedPlanSectionsForHomePage(pages);
 
@@ -1945,10 +2185,32 @@ const buildTemplatePreviewBusinessDataImpl = (
       "features",
       "items",
     ]);
-    const processItems = readArray<Record<string, unknown>>(process, [
+    const savedProcessItems = readArray<Record<string, unknown>>(process, [
       "features",
       "items",
     ]);
+    const processItems = savedProcessItems.length
+      ? savedProcessItems
+      : [
+          {
+            icon: "01",
+            title: "Discovery & planning",
+            description:
+              "We define the brand story, service positioning, and the sections that matter most for a professional company site.",
+          },
+          {
+            icon: "02",
+            title: "Structure & delivery",
+            description:
+              "The design system, imagery, and motion are shaped into a clear website flow built for trust and executive presence.",
+          },
+          {
+            icon: "03",
+            title: "Review & support",
+            description:
+              "The final experience is refined for readability, conversion, and easy reuse across different client brands.",
+          },
+        ];
     const contactHeading = readString(
       contact,
       ["heading", "title"],
@@ -1963,6 +2225,63 @@ const buildTemplatePreviewBusinessDataImpl = (
       contact,
       ["buttonLabel", "primaryCtaText", "ctaText"],
       "Contact Us",
+    );
+    const heroSocialProof = readSocialProof(overview, {
+      label: "Trusted business partner",
+      value: "100+ happy customers.",
+      rating: 5,
+      avatars: [
+        {
+          image:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+          alt: "Client 1",
+        },
+        {
+          image:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+          alt: "Client 2",
+        },
+        {
+          image:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+          alt: "Client 3",
+        },
+        {
+          image:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+          alt: "Client 4",
+        },
+      ],
+    });
+    const aboutDetailGroups = mapDetailGroups(
+      readArray<Record<string, unknown>>(about, ["detailGroups"]),
+      [
+        {
+          title: "What we build",
+          items: ["Clear systems", "Premium visuals", "Business growth"],
+        },
+        {
+          title: "How we work",
+          items: ["Fast collaboration", "Focused delivery", "Global support"],
+        },
+      ],
+    );
+    const aboutProgressStats = mapProgressStats(
+      readArray<Record<string, unknown>>(about, ["progressStats"]),
+      [
+        { label: "Revenue", value: "82%" },
+        { label: "Satisfaction", value: "90%" },
+      ],
+    );
+    const splitContentCards =
+      readObjectRecord(processDetails, ["splitContentCards"]) ||
+      readObjectRecord(process, ["splitContentCards"]) ||
+      {};
+    const splitContentCardDetails =
+      readObjectRecord(splitContentCards, ["darkCard"]) || {};
+    const splitContentCardSubItems = readArray<Record<string, unknown>>(
+      splitContentCards,
+      ["subItems"],
     );
 
     return {
@@ -1984,6 +2303,9 @@ const buildTemplatePreviewBusinessDataImpl = (
         navbar: buildNavbarContent(navbarBlock, navbar),
         home: {
           blockId: overviewBlock?.id,
+          eyebrow: readString(overview, ["eyebrow"], heroSocialProof.label),
+          eyebrowStyle: overview.eyebrowStyle,
+          socialProof: heroSocialProof,
           heading: readString(overview, ["heading", "heroHeading", "title"]),
           subheading: readString(overview, [
             "subheading",
@@ -2035,8 +2357,17 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         about: {
           blockId: aboutBlock?.id,
-          heading: readString(about, ["title", "heading"]),
+          eyebrow: readString(about, ["eyebrow"], "Get to know us"),
+          eyebrowStyle: about.eyebrowStyle,
+          heading: readString(about, ["heading", "title"]),
           body: readString(about, ["body", "description", "subheading"]),
+          detailGroups: aboutDetailGroups,
+          progressTitle: readString(
+            about,
+            ["progressTitle"],
+            "Business progress",
+          ),
+          progressStats: aboutProgressStats,
           image: readString(about, ["image", "imageUrl"]),
           imageStyle: about.imageStyle,
           headingStyle: about.headingStyle || about.titleStyle,
@@ -2049,6 +2380,9 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         features: {
           blockId: whyUsBlock?.id,
+          eyebrow: readString(whyUs, ["eyebrow"], "Why choose us"),
+          eyebrowStyle: whyUs.eyebrowStyle,
+          features: whyUsItems,
           heading: readString(whyUs, ["heading", "title"]),
           description: readString(whyUs, ["description", "body", "subheading"]),
           image: readString(whyUs, ["image", "imageUrl"]),
@@ -2064,6 +2398,8 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         process: {
           blockId: processBlock?.id,
+          eyebrow: readString(process, ["eyebrow"], "Our process"),
+          eyebrowStyle: process.eyebrowStyle,
           heading: readString(process, ["heading", "title"]),
           subheading: readString(process, [
             "subheading",
@@ -2077,13 +2413,11 @@ const buildTemplatePreviewBusinessDataImpl = (
             ["ctaText", "buttonLabel", "primaryCtaText"],
             contactButton,
           ),
+          features: processItems,
           items: processItems,
           headingStyle: process.headingStyle,
-          titleStyle: process.titleStyle || process.headingStyle,
-          bodyStyle:
-            process.bodyStyle ||
-            process.descriptionStyle ||
-            process.subheadingStyle,
+          titleStyle: process.titleStyle,
+          bodyStyle: process.bodyStyle,
           textStyle: process.textStyle,
           subheadingStyle:
             process.subheadingStyle ||
@@ -2097,6 +2431,55 @@ const buildTemplatePreviewBusinessDataImpl = (
           sectionStyle: getSectionStyleValue(process),
           outerSectionStyle: getSectionStyleValue(process, "outerSectionStyle"),
         },
+        processDetails: {
+          blockId: processDetailsBlock?.id || processBlock?.id,
+          splitContentCards: {
+            eyebrow: readString(splitContentCards, ["eyebrow"], "Team"),
+            heading: readString(
+              splitContentCards,
+              ["heading"],
+              "Strong visuals for trust and leadership.",
+            ),
+            subItems: splitContentCardSubItems.length
+              ? splitContentCardSubItems.map((item, index) => ({
+                  label: readString(
+                    item,
+                    ["label", "title"],
+                    index === 0 ? "Leadership" : "Operations",
+                  ),
+                }))
+              : [{ label: "Leadership" }, { label: "Operations" }],
+            darkCard: {
+              heading: readString(
+                splitContentCardDetails,
+                ["heading", "title"],
+                "Built to feel sharp, premium, and easy to scan.",
+              ),
+              body: readString(
+                splitContentCardDetails,
+                ["body", "description"],
+                "",
+              ),
+              footerLabel: readString(
+                splitContentCardDetails,
+                ["footerLabel", "label"],
+                "Executive team",
+              ),
+            },
+            image: readString(
+              splitContentCards,
+              ["image", "imageUrl"],
+              "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+            ),
+            imageStyle:
+              readObjectRecord(splitContentCards, ["imageStyle"]) || {},
+          },
+          sectionStyle: getSectionStyleValue(processDetails),
+          outerSectionStyle: getSectionStyleValue(
+            processDetails,
+            "outerSectionStyle",
+          ),
+        },
         testimonials: {
           heading: readString(process, ["heading", "title"]),
           items: processItems,
@@ -2104,6 +2487,8 @@ const buildTemplatePreviewBusinessDataImpl = (
         contact: {
           blockId: contactBlock?.id,
           ...buildContactFormConfig(contact),
+          eyebrow: readString(contact, ["eyebrow"], "Get in touch"),
+          eyebrowStyle: contact.eyebrowStyle,
           heading: contactHeading,
           subheading: contactDescription,
           description: contactDescription,
@@ -2116,9 +2501,12 @@ const buildTemplatePreviewBusinessDataImpl = (
             contact.bodyStyle ||
             contact.subheadingStyle,
           buttonTextStyle: contact.buttonTextStyle || contact.ctaTextStyle,
-          innerBlocks: overlayContactInnerBlocks(
-            contact,
-            Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
+          innerBlocks: ensureFooterInnerBlock(
+            overlayContactInnerBlocks(
+              contact,
+              Array.isArray(contact.innerBlocks) ? contact.innerBlocks : [],
+            ),
+            `© 2026 ${website.name || base.name || "Your company"}. Global business presence.`,
           ),
           sectionStyle: getSectionStyleValue(contact),
           outerSectionStyle: getSectionStyleValue(contact, "outerSectionStyle"),
@@ -2178,6 +2566,12 @@ const buildTemplatePreviewBusinessDataImpl = (
       templateContent: {
         home: {
           blockId: aboutBlock?.id,
+          eyebrow: readString(
+            about,
+            ["eyebrow"],
+            "Premium company presentation",
+          ),
+          eyebrowStyle: about.eyebrowStyle,
           heading: readString(about, ["heading", "heroHeading", "title"]),
           subheading: readString(about, [
             "subheading",
@@ -2215,6 +2609,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         features: {
           blockId: servicesBlock?.id,
+          features: serviceItems,
           items: serviceItems,
           heading: readString(services, ["heading", "title"]),
           description: readString(services, [
@@ -2231,6 +2626,8 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         gallery: {
           blockId: galleryBlock?.id,
+          eyebrow: readString(gallery, ["eyebrow"], "Brand occasions"),
+          eyebrowStyle: gallery.eyebrowStyle,
           heading: readString(gallery, ["title", "heading"]),
           description: readString(gallery, [
             "description",
@@ -2246,6 +2643,8 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         about: {
           blockId: workBlock?.id,
+          eyebrow: readString(work, ["eyebrow"], "Featured selections"),
+          eyebrowStyle: work.eyebrowStyle,
           heading: readString(work, ["title", "heading"]),
           body: readString(work, ["body", "description", "subheading"]),
           headingStyle: work.headingStyle || work.titleStyle,
@@ -2272,6 +2671,8 @@ const buildTemplatePreviewBusinessDataImpl = (
         contact: {
           blockId: contactBlock?.id,
           ...buildContactFormConfig(contact),
+          eyebrow: readString(contact, ["eyebrow"], "Contact"),
+          eyebrowStyle: contact.eyebrowStyle,
           heading: contactHeading,
           subheading: contactDescription,
           description: contactDescription,
@@ -2335,6 +2736,8 @@ const buildTemplatePreviewBusinessDataImpl = (
       templateContent: {
         home: {
           blockId: projectsBlock?.id,
+          eyebrow: readString(projects, ["eyebrow"], ""),
+          eyebrowStyle: projects.eyebrowStyle,
           heading: readString(projects, ["heading", "heroHeading", "title"]),
           subheading: readString(projects, [
             "subheading",
@@ -2378,6 +2781,9 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         features: {
           blockId: studioBlock?.id,
+          eyebrow: readString(studio, ["eyebrow"], ""),
+          eyebrowStyle: studio.eyebrowStyle,
+          features: studioItems,
           items: studioItems,
           heading: readString(studio, ["heading", "title"]),
           description: readString(studio, [
@@ -2394,6 +2800,8 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         about: {
           blockId: studioBlock?.id,
+          eyebrow: readString(studio, ["eyebrow"], ""),
+          eyebrowStyle: studio.eyebrowStyle,
           heading: readString(studio, ["heading", "title"]),
           body: readString(studio, ["body", "description", "subheading"]),
           headingStyle: studio.headingStyle || studio.titleStyle,
@@ -2406,6 +2814,8 @@ const buildTemplatePreviewBusinessDataImpl = (
         contact: {
           blockId: contactBlock?.id,
           ...buildContactFormConfig(contact),
+          eyebrow: readString(contact, ["eyebrow"], ""),
+          eyebrowStyle: contact.eyebrowStyle,
           heading: contactHeading,
           subheading: contactDescription,
           description: contactDescription,
@@ -2656,7 +3066,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         about: {
           blockId: aboutBlock?.id,
-          heading: readString(about, ["title", "heading"]),
+          heading: readString(about, ["heading", "title"]),
           body: readString(about, ["body", "description", "subheading"]),
           buttonLabel: readString(about, ["buttonLabel", "ctaText", "primaryCtaText"]),
           image: readString(about, ["image", "imageUrl"]),
@@ -2899,7 +3309,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         about: {
           blockId: aboutBlock?.id,
-          heading: readString(about, ["title", "heading"]),
+          heading: readString(about, ["heading", "title"]),
           body: readString(about, ["body", "description", "subheading"]),
           headingStyle: about.headingStyle || about.titleStyle,
           bodyStyle: about.bodyStyle || about.descriptionStyle,
@@ -2964,7 +3374,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         about: {
           blockId: aboutBlock?.id,
-          heading: readString(about, ["title", "heading"]),
+          heading: readString(about, ["heading", "title"]),
           body: readString(about, ["body", "description", "subheading"]),
           headingStyle: about.headingStyle || about.titleStyle,
           bodyStyle: about.bodyStyle || about.descriptionStyle,
@@ -3077,7 +3487,7 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         about: {
           blockId: aboutBlock?.id,
-          heading: readString(about, ["title", "heading"]),
+          heading: readString(about, ["heading", "title"]),
           body: readString(about, ["body", "description", "subheading"]),
           headingStyle: about.headingStyle || about.titleStyle,
           descriptionStyle:
@@ -3196,22 +3606,125 @@ export const buildTemplatePreviewBusinessData = (
   templateId: string,
   website: WebsiteLike,
   pages: TemplateEditorPage[],
+  activePageId?: string | number | null,
 ): BusinessData | null => {
   const result = buildTemplatePreviewBusinessDataImpl(templateId, website, pages);
   if (!result) return null;
 
-  const navbarBlock = findSectionBlock(templateId, pages, "navbar");
-  if (!navbarBlock) return result;
+  const activePage =
+    (activePageId !== undefined && activePageId !== null
+      ? pages.find((page) => String(page.id) === String(activePageId))
+      : undefined) ||
+    pages.find((page) => page.isHome) ||
+    pages.find((page) => page.path === "/") ||
+    pages[0];
+  const activeBlocks = Array.isArray(activePage?.blocks)
+    ? activePage.blocks
+    : [];
+  const schemaPage =
+    (TEMPLATE_PAGE_SCHEMAS[templateId] || []).find((page) =>
+      activePage?.isHome
+        ? page.isHome
+        : page.path === activePage?.path,
+    ) ||
+    (TEMPLATE_PAGE_SCHEMAS[templateId] || []).find((page) => page.isHome) ||
+    (TEMPLATE_PAGE_SCHEMAS[templateId] || [])[0];
+  const sectionVisibility: Record<string, boolean> = {};
+  const blockVisibility: Record<string, boolean> = {};
 
-  const existing = (result.templateContent as Record<string, unknown> | undefined)?.navbar;
-  if (existing) return result;
+  (schemaPage?.sections || []).forEach((section) => {
+    sectionVisibility[section.key] = false;
+  });
+
+  activeBlocks.forEach((block) => {
+    blockVisibility[String(block.id)] = block.isVisible !== false;
+  });
+
+  const activeSectionMap = activePage
+    ? getTemplateSectionMap(templateId, [activePage])
+    : new Map<string, TemplateEditorBlock>();
+  activeSectionMap.forEach((block, sectionKey) => {
+    sectionVisibility[sectionKey] = block.isVisible !== false;
+  });
+
+  // Older Company Executive sites predate the independent Process Details
+  // block. Render its schema-backed default beside the visible Process block;
+  // newly separated blocks still use their own visibility when present.
+  if (
+    templateId === "company-executive" &&
+    !activeSectionMap.has("process-details")
+  ) {
+    const legacyProcessBlock = activeSectionMap.get("process");
+    if (legacyProcessBlock) {
+      sectionVisibility["process-details"] =
+        legacyProcessBlock?.isVisible !== false;
+    }
+  }
+
+  const persistedContainerStyleOverrides: Record<
+    string,
+    Record<string, unknown>
+  > = {};
+  pages.forEach((page) => {
+    (page.blocks || []).forEach((block) => {
+      const containerStyles = block.content?.containerStyles;
+      if (
+        !containerStyles ||
+        typeof containerStyles !== "object" ||
+        Array.isArray(containerStyles)
+      ) {
+        return;
+      }
+      Object.entries(containerStyles).forEach(([containerId, style]) => {
+        if (style && typeof style === "object" && !Array.isArray(style)) {
+          persistedContainerStyleOverrides[
+            `${block.id}::containerStyles::${containerId}`
+          ] = style as Record<string, unknown>;
+        }
+      });
+    });
+  });
+
+  const resultWithContainerStyles = {
+    ...result,
+    templateContent: {
+      ...((result.templateContent as Record<string, unknown>) || {}),
+      __editorStaticStyleOverrides: persistedContainerStyleOverrides,
+      // blockId -> { fieldPath: true } for elements deleted via the editor.
+      // Renderers use isBlockElementHidden(data.templateContent.__hiddenElements,
+      // blockId, path) to drop deleted optional elements everywhere (editor
+      // canvas, Live Preview, and after refresh).
+      __hiddenElements: buildHiddenElementsMap(pages),
+      // blockId -> { containerId: true } for whole divs/containers deleted via
+      // the editor (keyed by the container's stable data-static-id).
+      __hiddenContainers: buildHiddenContainersMap(pages),
+      // The active page block list is authoritative. Template components may
+      // still render seeded fallback markup for a missing block; TemplateEngine
+      // uses this map to hide deleted/hidden section roots instead of allowing
+      // those defaults to reappear in the canvas or public renderer.
+      __editorSectionVisibility: sectionVisibility,
+      __editorBlockVisibility: blockVisibility,
+      __editorSectionVisibilityAuthoritative: Boolean(activePage),
+    },
+  } as BusinessData;
+
+  const navbarBlock = findSectionBlock(templateId, pages, "navbar");
+  if (!navbarBlock) return resultWithContainerStyles;
+
+  const existing = (resultWithContainerStyles.templateContent as Record<string, unknown> | undefined)?.navbar;
+  if (existing) return resultWithContainerStyles;
 
   const navbarRaw = findSectionContent(templateId, pages, "navbar");
   return {
-    ...result,
+    ...resultWithContainerStyles,
     templateContent: {
-      ...(result.templateContent as Record<string, unknown> || {}),
+      ...(resultWithContainerStyles.templateContent as Record<string, unknown> || {}),
       navbar: buildNavbarContent(navbarBlock, navbarRaw),
     },
   };
 };
+
+
+
+
+

@@ -2,17 +2,9 @@ import React from "react";
 import {
   Box,
   Button,
-  Checkbox,
   Chip,
   Container,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
   Stack,
-  Radio,
-  RadioGroup,
-  MenuItem,
-  TextField,
   Typography,
   Grid,
   Paper,
@@ -28,15 +20,20 @@ import type { TemplateChromeProps } from "../../templateEngine/templateChromeReg
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import TemplateNavbarHeader from "../../components/TemplateNavbarHeader";
+import { TemplateContactField } from "../../components/TemplateContactField";
+import {
+  sectionHasPersistentBackground,
+  TemplateInnerContainer,
+  TemplateSectionBoundary,
+  TemplateSectionContent,
+} from "../../components/TemplateSectionLayout";
 import {
   getEditableImageProps,
   getEditableSectionProps,
   getEditableTextProps,
+  getStaticSelectableProps,
 } from "../../utils/editableProps";
-import {
-  StaticSelectableBox,
-  renderEditableMedia,
-} from "../../utils/editableComponents";
+import { renderEditableMedia } from "../../utils/editableComponents";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
@@ -72,8 +69,12 @@ const defaultSectionOrder = [
   "about",
   "why-us",
   "process",
+  "process-details",
   "contact",
 ] as const;
+const navigationSectionOrder = defaultSectionOrder.filter(
+  (key) => key !== "process-details",
+);
 
 const visualSet = {
   heroPortrait:
@@ -417,7 +418,7 @@ export const CompanyStudioTemplateHeader: React.FC<TemplateChromeProps> = ({
       .map((section) => [section.sectionKey, section]),
   );
 
-  const navItems = defaultSectionOrder.map((key) => {
+  const navItems = navigationSectionOrder.map((key) => {
     const defaultLabel = customSectionMap.has(key)
       ? String(
           customSectionMap.get(key)?.label ||
@@ -486,6 +487,35 @@ export const CompanyStudioTemplateHeader: React.FC<TemplateChromeProps> = ({
   );
 };
 
+const resolveCompanyContactFooter = (
+  contactContent: Record<string, any>,
+  websiteName: string,
+) => {
+  const innerBlocks = Array.isArray(contactContent.innerBlocks)
+    ? contactContent.innerBlocks
+    : [];
+  const footerIndex = innerBlocks.findIndex(
+    (block: Record<string, any>) =>
+      String(block?.type || "").toUpperCase() === "FOOTER",
+  );
+  const footerContent =
+    footerIndex >= 0 ? innerBlocks[footerIndex]?.content || {} : {};
+
+  return {
+    fieldPath:
+      footerIndex >= 0
+        ? `innerBlocks.${footerIndex}.content.copyright`
+        : "innerBlocks.0.content.copyright",
+    text:
+      typeof footerContent.copyright === "string" &&
+      footerContent.copyright.trim()
+        ? footerContent.copyright
+        : `\u00A9 2026 ${websiteName}. Global business presence.`,
+    style:
+      (footerContent.copyrightStyle as Record<string, any> | undefined) || {},
+  };
+};
+
 export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
   data,
 }) => {
@@ -508,6 +538,11 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
   const themeHighlight = blendHex(themeColor, "#ffffff", 0.32);
   const pageBackground = `linear-gradient(180deg, ${rgba(themeSecondary, 0.22)} 0%, ${palette.bg} 20%, ${palette.bg} 100%)`;
   const contactBlockId = contactContent.blockId;
+  const {
+    fieldPath: contactFooterFieldPath,
+    text: contactFooterText,
+    style: contactFooterStyle,
+  } = resolveCompanyContactFooter(contactContent, data.name);
   const companyContactFields = React.useMemo(
     () =>
       normalizeContactFormFields(contactContent.formFields, contactContent).map(
@@ -541,135 +576,6 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
   ].filter((item) =>
     Boolean(data.socialLinks?.[item.key as keyof typeof data.socialLinks]),
   );
-
-  const renderCompanyContactField = (
-    field: (typeof companyContactFields)[number],
-  ) => {
-    const commonTextFieldSx = {
-      "& .MuiInputBase-root": {
-        color: palette.white,
-        pb: 1,
-        borderBottom: "1px solid rgba(255,255,255,0.18)",
-      },
-    };
-    const fieldProps = getContactFieldProps(field.label);
-    const placeholder = field.placeholder || field.label;
-
-    if (field.fieldType === "select") {
-      return (
-        <TextField
-          key={field.key || field.label}
-          select
-          size="small"
-          fullWidth
-          variant="standard"
-          required={field.required}
-          SelectProps={{ displayEmpty: true }}
-          {...fieldProps}
-          InputProps={{ disableUnderline: true }}
-          sx={commonTextFieldSx}
-        >
-          <MenuItem value="">
-            <em>{placeholder}</em>
-          </MenuItem>
-          {(field.options || []).map((option) => (
-            <MenuItem key={`${field.label}-${option}`} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-      );
-    }
-
-    if (field.fieldType === "checkbox") {
-      return (
-        <FormControlLabel
-          key={field.key || field.label}
-          control={
-            <Checkbox
-              checked={Boolean(fieldProps.value)}
-              disabled={fieldProps.disabled}
-              onChange={(event) =>
-                fieldProps.onChange({
-                  target: { value: event.target.checked ? "Yes" : "" },
-                } as React.ChangeEvent<HTMLInputElement>)
-              }
-              sx={{
-                color: palette.white,
-                "&.Mui-checked": { color: themeColor },
-              }}
-            />
-          }
-          label={placeholder}
-          sx={{ color: palette.white, ml: 0 }}
-        />
-      );
-    }
-
-    if (field.fieldType === "radio") {
-      return (
-        <FormControl
-          key={field.key || field.label}
-          disabled={fieldProps.disabled}
-        >
-          <FormLabel sx={{ color: palette.white, mb: 1 }}>
-            {field.label}
-          </FormLabel>
-          <RadioGroup
-            value={fieldProps.value || ""}
-            onChange={(event) =>
-              fieldProps.onChange(
-                event as React.ChangeEvent<
-                  HTMLInputElement | HTMLTextAreaElement
-                >,
-              )
-            }
-          >
-            {(field.options || []).map((option) => (
-              <FormControlLabel
-                key={`${field.label}-${option}`}
-                value={option}
-                control={
-                  <Radio
-                    sx={{
-                      color: palette.white,
-                      "&.Mui-checked": { color: themeColor },
-                    }}
-                  />
-                }
-                label={option}
-                sx={{ color: palette.white }}
-              />
-            ))}
-          </RadioGroup>
-        </FormControl>
-      );
-    }
-
-    return (
-      <TextField
-        key={field.key || field.label}
-        placeholder={placeholder}
-        size="small"
-        fullWidth
-        multiline={field.fieldType === "textarea"}
-        minRows={field.fieldType === "textarea" ? 6 : undefined}
-        variant="standard"
-        type={
-          field.fieldType === "email" ||
-          field.fieldType === "tel" ||
-          field.fieldType === "number" ||
-          field.fieldType === "date"
-            ? field.fieldType
-            : "text"
-        }
-        required={field.required}
-        {...fieldProps}
-        InputProps={{ disableUnderline: true }}
-        sx={commonTextFieldSx}
-      />
-    );
-  };
 
   return (
     <Box
@@ -711,6 +617,7 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
           }}
         >
           <Box
+            data-editor-layout-wrapper="true"
             sx={{
               position: "absolute",
               inset: 0,
@@ -723,6 +630,7 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
             }}
           />
           <Box
+            data-editor-layout-wrapper="true"
             sx={{
               position: "relative",
               zIndex: 1,
@@ -731,6 +639,7 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
             }}
           >
             <Box
+              data-editor-layout-wrapper="true"
               sx={{
                 display: "grid",
                 gridTemplateColumns: { xs: "1fr", md: "1fr 0.9fr" },
@@ -741,6 +650,7 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
               <Box
                 component={motion.div}
                 {...sectionReveal}
+                data-editor-layout-wrapper="true"
                 sx={{
                   minHeight: { xs: 360, md: 720 },
                   borderRadius: "36px",
@@ -817,7 +727,13 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
                 }}
               >
                 <Chip
-                  label="Get in touch"
+                  label={contactContent.eyebrow || "Get in touch"}
+                  {...getEditableTextProps(
+                    contactBlockId,
+                    "eyebrow",
+                    "single",
+                    "eyebrowStyle",
+                  )}
                   sx={{
                     bgcolor: "rgba(255,255,255,0.08)",
                     color: palette.white,
@@ -826,6 +742,7 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
                     letterSpacing: "0.05em",
                     textTransform: "uppercase",
                     mb: 2.2,
+                    ...(contactContent.eyebrowStyle || {}),
                   }}
                 />
 
@@ -865,7 +782,12 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
                 <Stack spacing={1.6}>
                   {companyContactFields.map((field) => (
                     <Box key={field.key || field.label}>
-                      {renderCompanyContactField(field)}
+                      <TemplateContactField
+                        field={field}
+                        fieldProps={getContactFieldProps(field.label)}
+                        accentColor={themeColor}
+                        textColor={palette.white}
+                      />
                     </Box>
                   ))}
                   <Button
@@ -931,8 +853,24 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
                 gap: 1.5,
               }}
             >
-              <Typography sx={{ color: "rgba(255,255,255,0.68)" }}>
+              <Typography
+                sx={{ display: "none", color: "rgba(255,255,255,0.68)" }}
+              >
                 © 2026 {data.name}. Global business presence.
+              </Typography>
+              <Typography
+                {...getEditableTextProps(
+                  contactBlockId,
+                  contactFooterFieldPath,
+                  "single",
+                  "copyrightStyle",
+                )}
+                sx={{
+                  color: "rgba(255,255,255,0.68)",
+                  ...(contactFooterStyle || {}),
+                }}
+              >
+                {contactFooterText}
               </Typography>
               {socialIcons.length ? (
                 <Stack direction="row" spacing={1}>
@@ -967,8 +905,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     (data.templateContent as Record<string, any> | undefined) || {};
   const editorStaticMediaOverrides =
     (templateContent.__editorStaticMediaOverrides as
-      | Record<string, { src?: string }>
-      | undefined) || {};
+      Record<string, { src?: string }> | undefined) || {};
   const resolveEditorStaticMediaSrc = React.useCallback(
     (
       blockId: string | number | undefined,
@@ -991,6 +928,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const featuresContent = templateContent.features || {};
   const aboutContent = templateContent.about || {};
   const processContent = templateContent.process || {};
+  const processDetailsContent = templateContent.processDetails || {};
   const testimonialsContent = templateContent.testimonials || {};
   const contactContent = templateContent.contact || {};
   const companyContactFields = React.useMemo(
@@ -1065,134 +1003,6 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     contactContent.buttonLabel ||
     contactContent.ctaText ||
     "Contact Us";
-  const renderCompanyContactField = (
-    field: (typeof companyContactFields)[number],
-  ) => {
-    const commonTextFieldSx = {
-      "& .MuiInputBase-root": {
-        color: palette.white,
-        pb: 1,
-        borderBottom: "1px solid rgba(255,255,255,0.18)",
-      },
-    };
-    const fieldProps = getContactFieldProps(field.label);
-    const placeholder = field.placeholder || field.label;
-
-    if (field.fieldType === "select") {
-      return (
-        <TextField
-          key={field.key || field.label}
-          select
-          size="small"
-          fullWidth
-          variant="standard"
-          required={field.required}
-          SelectProps={{ displayEmpty: true }}
-          {...fieldProps}
-          InputProps={{ disableUnderline: true }}
-          sx={commonTextFieldSx}
-        >
-          <MenuItem value="">
-            <em>{placeholder}</em>
-          </MenuItem>
-          {(field.options || []).map((option) => (
-            <MenuItem key={`${field.label}-${option}`} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-      );
-    }
-
-    if (field.fieldType === "checkbox") {
-      return (
-        <FormControlLabel
-          key={field.key || field.label}
-          control={
-            <Checkbox
-              checked={Boolean(fieldProps.value)}
-              disabled={fieldProps.disabled}
-              onChange={(event) =>
-                fieldProps.onChange({
-                  target: { value: event.target.checked ? "Yes" : "" },
-                } as React.ChangeEvent<HTMLInputElement>)
-              }
-              sx={{
-                color: palette.white,
-                "&.Mui-checked": { color: themeColor },
-              }}
-            />
-          }
-          label={placeholder}
-          sx={{ color: palette.white, ml: 0 }}
-        />
-      );
-    }
-
-    if (field.fieldType === "radio") {
-      return (
-        <FormControl
-          key={field.key || field.label}
-          disabled={fieldProps.disabled}
-        >
-          <FormLabel sx={{ color: palette.white, mb: 1 }}>
-            {field.label}
-          </FormLabel>
-          <RadioGroup
-            value={fieldProps.value || ""}
-            onChange={(event) =>
-              fieldProps.onChange(
-                event as React.ChangeEvent<
-                  HTMLInputElement | HTMLTextAreaElement
-                >,
-              )
-            }
-          >
-            {(field.options || []).map((option) => (
-              <FormControlLabel
-                key={`${field.label}-${option}`}
-                value={option}
-                control={
-                  <Radio
-                    sx={{
-                      color: palette.white,
-                      "&.Mui-checked": { color: themeColor },
-                    }}
-                  />
-                }
-                label={option}
-                sx={{ color: palette.white }}
-              />
-            ))}
-          </RadioGroup>
-        </FormControl>
-      );
-    }
-
-    return (
-      <TextField
-        key={field.key || field.label}
-        placeholder={placeholder}
-        size="small"
-        fullWidth
-        multiline={field.fieldType === "textarea"}
-        minRows={field.fieldType === "textarea" ? 6 : undefined}
-        variant="standard"
-        type={
-          field.fieldType === "email" ||
-          field.fieldType === "tel" ||
-          field.fieldType === "number" ||
-          field.fieldType === "date"
-            ? field.fieldType
-            : "text"
-        }
-        required={field.required}
-        {...fieldProps}
-        InputProps={{ disableUnderline: true }}
-        sx={commonTextFieldSx}
-      />
-    );
-  };
   const whyBody = featuresContent.description || aboutBody;
   const whyImageEyebrow =
     featuresContent.imageEyebrowText || "Business presentation";
@@ -1205,14 +1015,53 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     processContent.subheading ||
     "A simple executive flow built to move from strategy to launch with clarity.";
   const processCtaText = processContent.ctaText || contactPrimary;
-  const teamMembers =
-    (processContent.teamMembers as Array<{ name?: string }> | undefined) ||
-    team ||
-    [];
-  const processReviewText =
-    processContent.reviewText ||
-    reviews[0]?.text ||
-    "Built to feel sharp, premium, and easy to scan.";
+  const heroSocialProof = {
+    label: homeContent.socialProof?.label || "Trusted business partner",
+    value:
+      typeof homeContent.socialProof?.value === "string" &&
+      homeContent.socialProof.value.trim() &&
+      !/^\s*100\+?\s*$/i.test(homeContent.socialProof.value)
+        ? homeContent.socialProof.value
+        : "100+ happy customers.",
+    rating: Number(homeContent.socialProof?.rating || 5),
+    avatars: Array.isArray(homeContent.socialProof?.avatars)
+      ? homeContent.socialProof.avatars
+      : [],
+  };
+  const normalizedHeroSocialProofAvatars = (() => {
+    const fallbackAvatars = [
+      { image: visualSet.avatarOne, alt: "Client 1" },
+      { image: visualSet.avatarTwo, alt: "Client 2" },
+      { image: visualSet.avatarThree, alt: "Client 3" },
+      { image: visualSet.avatarFour, alt: "Client 4" },
+    ];
+    const rawAvatars = heroSocialProof.avatars
+      .map((avatar, index) => ({
+        image: typeof avatar?.image === "string" ? avatar.image.trim() : "",
+        alt:
+          typeof avatar?.alt === "string" && avatar.alt.trim()
+            ? avatar.alt.trim()
+            : `Client ${index + 1}`,
+      }))
+      .filter((avatar) => avatar.image);
+
+    if (!rawAvatars.length) {
+      return fallbackAvatars;
+    }
+
+    const uniqueImages = new Set(rawAvatars.map((avatar) => avatar.image));
+    const legacyDuplicateOnly =
+      uniqueImages.size === 1 && [...uniqueImages][0] === visualSet.avatarOne;
+
+    if (legacyDuplicateOnly) {
+      return fallbackAvatars;
+    }
+
+    return fallbackAvatars.map((fallbackAvatar, index) => ({
+      image: rawAvatars[index]?.image || fallbackAvatar.image,
+      alt: rawAvatars[index]?.alt || fallbackAvatar.alt,
+    }));
+  })();
   const heroImage =
     homeContent.heroImage || homeContent.image || visualSet.heroPortrait;
   const heroImageStyle =
@@ -1241,9 +1090,28 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     whyUsImageStyle.heightPreset,
     whyUsImageStyle.customHeight,
   );
+  const processSplitContentCards =
+    (processDetailsContent.splitContentCards as
+      | {
+          eyebrow?: string;
+          heading?: string;
+          subItems?: Array<{ label?: string }>;
+          darkCard?: {
+            heading?: string;
+            body?: string;
+            footerLabel?: string;
+          };
+          image?: string;
+          imageStyle?: Record<string, any>;
+        }
+      | undefined) || {};
   const processImage =
-    processContent.image || processContent.imageUrl || visualSet.team;
-  const processImageStyle = processContent.imageStyle || {};
+    processSplitContentCards.image ||
+    processContent.image ||
+    processContent.imageUrl ||
+    visualSet.team;
+  const processImageStyle =
+    processSplitContentCards.imageStyle || processContent.imageStyle || {};
   const processImageFit = processImageStyle.objectFit || "cover";
   const processImageHeightSx = getImageHeightPresetSx(
     processImageStyle.heightPreset,
@@ -1252,11 +1120,66 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const aboutBlockId = aboutContent.blockId;
   const whyUsBlockId = featuresContent.blockId;
   const processBlockId = processContent.blockId;
+  const processDetailsBlockId =
+    processDetailsContent.blockId || processContent.blockId;
   const contactBlockId = contactContent.blockId;
-  const processItems = (
+  const contactInnerBlocks = Array.isArray(contactContent.innerBlocks)
+    ? contactContent.innerBlocks
+    : [];
+  const contactFooterInnerIndex = contactInnerBlocks.findIndex(
+    (block) => String(block?.type || "").toUpperCase() === "FOOTER",
+  );
+  const contactFooterFieldPath =
+    contactFooterInnerIndex >= 0
+      ? `innerBlocks.${contactFooterInnerIndex}.content.copyright`
+      : "innerBlocks.0.content.copyright";
+  const contactFooterContent =
+    contactFooterInnerIndex >= 0
+      ? contactInnerBlocks[contactFooterInnerIndex]?.content || {}
+      : {};
+  const contactFooterText =
+    typeof contactFooterContent.copyright === "string" &&
+    contactFooterContent.copyright.trim()
+      ? contactFooterContent.copyright
+      : `© 2026 ${data.name}. Global business presence.`;
+  const contactFooterStyle =
+    (contactFooterContent.copyrightStyle as Record<string, any> | undefined) ||
+    {};
+  const contactInnerBlocksWithoutFooter = contactInnerBlocks.filter(
+    (block) => String(block?.type || "").toUpperCase() !== "FOOTER",
+  );
+  const processTeamLabel = processSplitContentCards.eyebrow || "Team";
+  const processTeamHeading =
+    processSplitContentCards.heading ||
+    "Strong visuals for trust and leadership.";
+  const savedProcessTeamMembers = (
+    Array.isArray(processSplitContentCards.subItems)
+      ? processSplitContentCards.subItems
+      : []
+  )
+    .map(
+      (item, index) =>
+        item?.label || (index === 0 ? "Leadership" : "Operations"),
+    )
+    .slice(0, 2);
+  const processTeamMembers = savedProcessTeamMembers.length
+    ? savedProcessTeamMembers
+    : ["Leadership", "Operations"];
+  const processDarkCard = processSplitContentCards.darkCard || {};
+  const processReviewText =
+    processDarkCard.heading ||
+    "Built to feel sharp, premium, and easy to scan.";
+  const processReviewBody = processDarkCard.body || "";
+  const processReviewAuthor = processDarkCard.footerLabel || "Executive team";
+  const savedProcessItems = (
+    (processContent.features as Array<Record<string, unknown>> | undefined) ||
     (processContent.items as Array<Record<string, unknown>> | undefined) ||
-    (testimonialsContent.items as
-      Array<Record<string, unknown>> | undefined) || [
+    (testimonialsContent.items as Array<Record<string, unknown>> | undefined) ||
+    []
+  ).slice(0, 3);
+  const processItems = savedProcessItems.length
+    ? savedProcessItems
+    : [
       {
         icon: "01",
         title: "Discovery & planning",
@@ -1275,8 +1198,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         description:
           "The final experience is refined for readability, conversion, and easy reuse across different client brands.",
       },
-    ]
-  ).slice(0, 3);
+    ];
   const getProcessEditableFieldStyle = (
     fieldPath: string,
     explicitStyleKey?: string,
@@ -1305,6 +1227,15 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       },
     ]
   ).slice(0, 2);
+  const aboutProgressTitle =
+    (aboutContent.progressTitle as string) || "Business progress";
+  const aboutProgressStats = (
+    (aboutContent.progressStats as
+      Array<{ label?: string; value?: string }> | undefined) || [
+      { label: "Revenue", value: "82%" },
+      { label: "Satisfaction", value: "90%" },
+    ]
+  ).slice(0, 4);
   const themeColor =
     data.themeSettings?.primaryColor || data.primaryColor || "#124d4e";
   const rawSecondaryColor =
@@ -1395,7 +1326,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const sectionPosition = Object.fromEntries(
     resolvedSectionOrder.map((key, index) => [key, index + 1]),
   ) as Record<string, number>;
-  const navItems = defaultSectionOrder.map((key) => {
+  const navItems = navigationSectionOrder.map((key) => {
     const defaultLabel = customSectionMap.has(key)
       ? String(
           customSectionMap.get(key)?.label ||
@@ -1615,12 +1546,23 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         getCanvasTransform,
         rgba,
       });
+    // When the PARENT section owns a background (either section-style key), the
+    // block's own surface must go transparent so the section background shows —
+    // otherwise the block surface's default fill hides the section colour and
+    // "apply background to the parent section" appears to do nothing.
+    const parentOwnsBackground =
+      sectionHasPersistentBackground(section, "outerSectionStyle") ||
+      sectionHasPersistentBackground(section, "sectionStyle");
+    const structuralCompoundCardSx = parentOwnsBackground
+      ? {
+          ...compoundCardSx,
+          backgroundColor: "transparent !important",
+          backgroundImage: "none !important",
+        }
+      : compoundCardSx;
     const compoundBlockSelectionProps = {
-      ...getEditableTextProps(section.blockId, `${blockPath}.__card`, "single"),
-      "data-preview-section": "true",
-      "data-preview-label": block.label || humanizeEditorBlockKey(blockType),
-      "data-preview-block-id": section.blockId,
-      "data-preview-style-key": `${blockPath}.cardStyle`,
+      "data-editor-layout-wrapper": "true",
+      "data-editor-block-surface": "true",
     };
     const compoundBlockLabel = block.label || humanizeEditorBlockKey(blockType);
 
@@ -1652,7 +1594,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       canvasBaseSx,
       compoundBlockSelectionProps,
       compoundBlockLabel,
-      compoundCardSx,
+      compoundCardSx: structuralCompoundCardSx,
       fallbackImageSrc: visualSet.office,
       accentSoftColor: palette.accentSoft,
       whiteColor: palette.white,
@@ -1666,6 +1608,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
       return compoundVisualShellSx ? (
         <Box
           key={`shell-${String(block.id || `${blockType}-${index}`)}`}
+          data-editor-layout-wrapper="true"
           sx={compoundVisualShellSx}
         >
           {sharedEditorBlock}
@@ -1811,6 +1754,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
     return (
       <Box
+        data-editor-layout-wrapper="true"
         sx={{
           width: "100%",
           mt: options?.mt ?? (isFooterOnlySection ? 0 : { xs: 2.5, md: 3 }),
@@ -1870,52 +1814,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     const useDesktopCanvas =
       innerBlocks.length > 0 && !isCompactFlowSection && !isAutoHeightSection;
     const sectionLayoutWidth = section.sectionStyle?.layoutWidth || "full";
-    const rawSectionSx = getSectionStyleSx(section) as Record<string, unknown>;
-    const sectionContentSx: Record<string, unknown> = { ...rawSectionSx };
-    const sectionShellSx: Record<string, unknown> = {};
-
-    if (sectionLayoutWidth === "page") {
-      if (sectionContentSx.backgroundColor !== undefined) {
-        sectionShellSx.backgroundColor = sectionContentSx.backgroundColor;
-        delete sectionContentSx.backgroundColor;
-      }
-      if (sectionContentSx.backgroundImage !== undefined) {
-        sectionShellSx.backgroundImage = sectionContentSx.backgroundImage;
-        delete sectionContentSx.backgroundImage;
-      }
-      if (sectionContentSx.backgroundSize !== undefined) {
-        sectionShellSx.backgroundSize = sectionContentSx.backgroundSize;
-        delete sectionContentSx.backgroundSize;
-      }
-      if (sectionContentSx.backgroundPosition !== undefined) {
-        sectionShellSx.backgroundPosition = sectionContentSx.backgroundPosition;
-        delete sectionContentSx.backgroundPosition;
-      }
-      if (sectionContentSx.backgroundRepeat !== undefined) {
-        sectionShellSx.backgroundRepeat = sectionContentSx.backgroundRepeat;
-        delete sectionContentSx.backgroundRepeat;
-      }
-      if (sectionContentSx.backgroundAttachment !== undefined) {
-        sectionShellSx.backgroundAttachment =
-          sectionContentSx.backgroundAttachment;
-        delete sectionContentSx.backgroundAttachment;
-      }
-      if (sectionContentSx.backgroundPositionY !== undefined) {
-        sectionShellSx.backgroundPositionY =
-          sectionContentSx.backgroundPositionY;
-        delete sectionContentSx.backgroundPositionY;
-      }
-    }
+    const sectionShellSx = getSectionStyleSx(section) as Record<
+      string,
+      unknown
+    >;
 
     const sectionContentNode = (
       <Box
         id={sectionKey}
-        data-preview-section="true"
-        data-preview-label={section.label || "Plan Section"}
-        data-preview-block-id={blockId}
-        data-preview-style-key="sectionStyle"
-        data-preview-accepts-inner-blocks="true"
-        {...getSectionStyleDomProps(section)}
+        data-editor-layout-wrapper="true"
+        data-editor-section-content="true"
         sx={{
           width: "100%",
           minHeight: isAutoHeightSection
@@ -1936,10 +1844,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             md: isAutoHeightSection ? "flex-start" : "center",
           },
           overflow: isAutoHeightSection ? "visible" : "hidden",
-          ...sectionContentSx,
         }}
       >
         <Box
+          data-editor-layout-wrapper="true"
           sx={{
             width: "100%",
             minHeight: {
@@ -1961,6 +1869,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           {innerBlocks.length > 0 ? (
             <>
               <Box
+                data-editor-layout-wrapper="true"
                 sx={{
                   display: {
                     xs: "flex",
@@ -1977,6 +1886,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 })}
               </Box>
               <Box
+                data-editor-layout-wrapper="true"
                 sx={{
                   display: {
                     xs: "none",
@@ -2050,29 +1960,23 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     );
 
     return (
-      <Box
+      <TemplateSectionBoundary
         key={sectionKey}
-        data-preview-section="true"
-        data-preview-label={section.label || "Plan Section"}
-        data-preview-block-id={blockId}
-        data-preview-style-key="outerSectionStyle"
-        {...getSectionStyleDomProps(section, "outerSectionStyle")}
-        sx={{
-          order:
-            sectionPosition[sectionKey] ??
-            defaultSectionOrder.length + index + 1,
-          ...getSectionStyleSx(section, "outerSectionStyle"),
-          ...sectionShellSx,
-        }}
+        blockId={blockId}
+        label={section.label || "Plan Section"}
+        sectionKey={sectionKey}
+        content={section}
+        order={
+          sectionPosition[sectionKey] ?? defaultSectionOrder.length + index + 1
+        }
+        sx={sectionShellSx}
       >
         {sectionLayoutWidth === "page" ? (
-          <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
-            {sectionContentNode}
-          </Container>
+          <TemplateInnerContainer>{sectionContentNode}</TemplateInnerContainer>
         ) : (
           sectionContentNode
         )}
-      </Box>
+      </TemplateSectionBoundary>
     );
   });
   const customSectionNodeMap = new Map(
@@ -2141,7 +2045,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         flexDirection: "column",
       }}
     >
-      <Box {...getEditableSectionProps(navbarBlockId, "Header")}>
+      <Box
+        {...getEditableSectionProps(navbarBlockId, "Header")}
+        data-template-section-boundary="true"
+        data-editor-section-root="true"
+        data-editor-section-key="navbar"
+      >
         <TemplateNavbarHeader
           navbarContent={navbarContent}
           fallbackName={data.name}
@@ -2160,6 +2069,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         <Box
           id="overview"
           {...getEditableSectionProps(overviewBlockId, "Overview")}
+          data-template-section-boundary="true"
+          data-editor-section-root="true"
+          data-editor-section-key="overview"
           data-preview-accepts-inner-blocks="true"
           {...getSectionStyleDomProps(homeContent)}
           sx={{
@@ -2199,6 +2111,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
           <Container
             maxWidth="xl"
+            {...getStaticSelectableProps(
+              overviewBlockId,
+              "Hero layout",
+              "hero-layout",
+              "containerStyles",
+              "container",
+            )}
             sx={{
               position: "relative",
               zIndex: 2,
@@ -2214,6 +2133,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             {/* Left content */}
             <Box
               component={motion.div}
+              {...getStaticSelectableProps(
+                overviewBlockId,
+                "Hero content",
+                "hero-content-column",
+                "containerStyles",
+                "container",
+              )}
               variants={heroStagger}
               initial="hidden"
               animate="show"
@@ -2226,26 +2152,42 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Stack
                 spacing={1.2}
+                {...getStaticSelectableProps(
+                  overviewBlockId,
+                  "Hero content group",
+                  "hero-content-group",
+                  "containerStyles",
+                  "container",
+                )}
                 sx={{
                   maxWidth: { xs: "100%", md: 760 },
                 }}
               >
                 <Box component={motion.div} variants={fadeUp}>
-                  <Chip
-                    label={
-                      homeContent.eyebrowText || "Trusted business partner"
-                    }
-                    data-editable="eyebrowText"
-                    data-edit-type="single"
-                    data-block-id={overviewBlockId}
+                  <Typography
+                    {...getEditableTextProps(
+                      overviewBlockId,
+                      "eyebrow",
+                      "single",
+                      "eyebrowStyle",
+                    )}
+                    component="span"
                     sx={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      px: 1.5,
+                      py: 0.75,
                       bgcolor: "rgba(255,255,255,0.14)",
                       color: palette.white,
                       backdropFilter: "blur(10px)",
                       border: "1px solid rgba(255,255,255,0.22)",
                       fontWeight: 700,
+                      borderRadius: "16px",
                     }}
-                  />
+                  >
+                    {homeContent.eyebrow || "Trusted business partner"}
+                  </Typography>
                 </Box>
 
                 <Typography
@@ -2324,14 +2266,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
 
                 <Box
                   component={motion.div}
-                  data-static-selectable="true"
-                  data-static-style-only="true"
-                  data-static-id="hero-social-proof"
-                  data-static-type="container"
-                  data-preview-section="true"
-                  data-preview-label="Social proof"
-                  data-preview-block-id={overviewBlockId}
-                  data-preview-style-key="static.socialProofStyle"
+                  {...getStaticSelectableProps(
+                    overviewBlockId,
+                    "Social proof",
+                    "hero-social-proof",
+                    "containerStyles",
+                    "container",
+                  )}
                   variants={fadeUp}
                   sx={{
                     mt: { xs: 4, md: 7 },
@@ -2344,71 +2285,57 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Stack
                     direction="row"
                     spacing={-1.2}
-                    data-static-selectable="true"
-                    data-static-style-only="true"
-                    data-static-id="hero-avatar-group"
-                    data-static-type="container"
-                    data-preview-section="true"
-                    data-preview-label="Avatar group"
-                    data-preview-block-id={overviewBlockId}
-                    data-preview-style-key="static.avatarGroupStyle"
+                    {...getStaticSelectableProps(
+                      overviewBlockId,
+                      "Avatar group",
+                      "hero-avatar-group",
+                      "containerStyles",
+                      "container",
+                    )}
                   >
-                    {[
-                      resolveEditorStaticMediaSrc(
-                        overviewBlockId,
-                        "hero-avatar-0",
-                        visualSet.avatarOne,
-                      ),
-                      resolveEditorStaticMediaSrc(
-                        overviewBlockId,
-                        "hero-avatar-1",
-                        visualSet.avatarTwo,
-                      ),
-                      resolveEditorStaticMediaSrc(
-                        overviewBlockId,
-                        "hero-avatar-2",
-                        visualSet.avatarThree,
-                      ),
-                      resolveEditorStaticMediaSrc(
-                        overviewBlockId,
-                        "hero-avatar-3",
-                        visualSet.avatarOne,
-                      ),
-                    ].map((avatar, index) => (
-                      <Box
-                        key={`${avatar}-${index}`}
-                        component="img"
-                        data-static-selectable="true"
-                        data-static-style-only="true"
-                        data-static-id={`hero-avatar-${index}`}
-                        data-static-type="avatar"
-                        data-preview-section="true"
-                        data-preview-label={`Avatar ${index + 1}`}
-                        data-preview-block-id={overviewBlockId}
-                        data-preview-style-key={`static.avatar.${index}`}
-                        src={avatar}
-                        alt={`Client ${index + 1}`}
-                        sx={{
-                          width: 54,
-                          height: 54,
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          border: "2px solid rgba(255,255,255,0.92)",
-                          boxShadow: "0 12px 24px rgba(0,0,0,0.24)",
-                        }}
-                      />
-                    ))}
+                    {normalizedHeroSocialProofAvatars.map(
+                      (fallbackAvatar, index) => {
+                        const avatar = resolveEditorStaticMediaSrc(
+                          overviewBlockId,
+                          `hero-avatar-${index}`,
+                          fallbackAvatar.image,
+                        );
+                        const avatarAlt =
+                          fallbackAvatar.alt || `Client ${index + 1}`;
+
+                        return (
+                          <Box
+                            key={`${avatar}-${index}`}
+                            component="img"
+                            {...getEditableImageProps(
+                              overviewBlockId,
+                              `socialProof.avatars.${index}.image`,
+                              `Avatar ${index + 1}`,
+                            )}
+                            src={avatar}
+                            alt={avatarAlt}
+                            sx={{
+                              width: 54,
+                              height: 54,
+                              borderRadius: "50%",
+                              objectFit: "cover",
+                              border: "2px solid rgba(255,255,255,0.92)",
+                              boxShadow: "0 12px 24px rgba(0,0,0,0.24)",
+                            }}
+                          />
+                        );
+                      },
+                    )}
                   </Stack>
 
                   <Box
-                    data-static-selectable="true"
-                    data-static-style-only="true"
-                    data-static-id="hero-review-text-group"
-                    data-static-type="container"
-                    data-preview-section="true"
-                    data-preview-label="Review text group"
-                    data-preview-block-id={overviewBlockId}
-                    data-preview-style-key="static.reviewTextGroupStyle"
+                    {...getStaticSelectableProps(
+                      overviewBlockId,
+                      "Review text group",
+                      "hero-review-text-group",
+                      "containerStyles",
+                      "container",
+                    )}
                   >
                     <Typography
                       data-static-selectable="true"
@@ -2430,25 +2357,18 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     </Typography>
 
                     <Typography
+                      {...getEditableTextProps(
+                        overviewBlockId,
+                        "socialProof.value",
+                        "single",
+                      )}
                       sx={{
                         color: "rgba(255,255,255,0.92)",
                         fontSize: { xs: "1rem", md: "1.1rem" },
                         fontWeight: 700,
                       }}
                     >
-                      <Box
-                        component="span"
-                        data-static-selectable="true"
-                        data-static-style-only="true"
-                        data-static-id="hero-customer-count"
-                        data-static-type="text"
-                        data-preview-section="true"
-                        data-preview-label="Customer count"
-                        data-preview-block-id={overviewBlockId}
-                        data-preview-style-key="static.customerCountStyle"
-                      >
-                        100+ happy customers.
-                      </Box>
+                      {heroSocialProof.value || "100+ happy customers."}
                     </Typography>
                   </Box>
                 </Box>
@@ -2543,29 +2463,29 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
 
         {renderCustomSectionsBefore("about")}
-        <Box
-          data-preview-section="true"
-          data-preview-label="About Parent"
-          data-preview-block-id={aboutBlockId}
-          data-preview-style-key="outerSectionStyle"
-          {...getSectionStyleDomProps(aboutContent, "outerSectionStyle")}
-          sx={{
-            order: sectionPosition["about"] ?? 2,
-            ...getSectionStyleSx(aboutContent, "outerSectionStyle"),
-          }}
+        <TemplateSectionBoundary
+          blockId={aboutBlockId}
+          label="About Parent"
+          sectionKey="about"
+          content={aboutContent}
+          order={sectionPosition["about"] ?? 2}
         >
-          <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
-            <Box
+          <TemplateInnerContainer>
+            <TemplateSectionContent
               id="about"
-              data-preview-section="true"
-              data-preview-label="About"
-              data-preview-block-id={aboutBlockId}
-              data-preview-style-key="sectionStyle"
-              data-preview-accepts-inner-blocks="true"
-              {...getSectionStyleDomProps(aboutContent)}
-              sx={{ py: { xs: 4, md: 6 }, ...getSectionStyleSx(aboutContent) }}
+              blockId={aboutBlockId}
+              label="About"
+              content={aboutContent}
+              sx={{ py: { xs: 4, md: 6 } }}
             >
               <Box
+                {...getStaticSelectableProps(
+                  aboutBlockId,
+                  "About layout",
+                  "about-layout",
+                  "containerStyles",
+                  "container",
+                )}
                 sx={{
                   display: "grid",
                   gridTemplateColumns: { xs: "1fr", md: "0.95fr 1.05fr" },
@@ -2576,6 +2496,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Box
                   component={motion.div}
                   {...sectionReveal}
+                  {...getStaticSelectableProps(
+                    aboutBlockId,
+                    "About media",
+                    "about-media-column",
+                    "containerStyles",
+                    "container",
+                  )}
                   sx={{
                     position: "relative",
                     overflow: "hidden",
@@ -2607,6 +2534,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Box
                     component={motion.div}
                     {...sectionReveal}
+                    {...getStaticSelectableProps(
+                      aboutBlockId,
+                      "Business progress card",
+                      "about-progress-card",
+                      "containerStyles",
+                      "card",
+                    )}
                     sx={{
                       position: "absolute",
                       left: 20,
@@ -2621,6 +2555,11 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     }}
                   >
                     <Typography
+                      {...getEditableTextProps(
+                        aboutBlockId,
+                        "progressTitle",
+                        "single",
+                      )}
                       sx={{
                         fontFamily: headingFont,
                         fontSize: { xs: "1.35rem", md: "1.7rem" },
@@ -2629,23 +2568,34 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         mb: 1.5,
                       }}
                     >
-                      Business progress
+                      {aboutProgressTitle}
                     </Typography>
 
-                    {[
-                      { label: "Revenue", value: "82%" },
-                      { label: "Satisfaction", value: "90%" },
-                    ].map((item) => (
-                      <Box key={item.label} sx={{ mb: 1.5 }}>
+                    {aboutProgressStats.map((item, index) => (
+                      <Box key={index} sx={{ mb: 1.5 }}>
                         <Stack
                           direction="row"
                           justifyContent="space-between"
                           sx={{ mb: 0.5 }}
                         >
-                          <Typography sx={{ color: "rgba(255,255,255,0.84)" }}>
+                          <Typography
+                            {...getEditableTextProps(
+                              aboutBlockId,
+                              `progressStats.${index}.label`,
+                              "single",
+                            )}
+                            sx={{ color: "rgba(255,255,255,0.84)" }}
+                          >
                             {item.label}
                           </Typography>
-                          <Typography sx={{ fontWeight: 700 }}>
+                          <Typography
+                            {...getEditableTextProps(
+                              aboutBlockId,
+                              `progressStats.${index}.value`,
+                              "single",
+                            )}
+                            sx={{ fontWeight: 700 }}
+                          >
                             {item.value}
                           </Typography>
                         </Stack>
@@ -2664,7 +2614,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                             viewport={{ once: true, amount: 0.8 }}
                             transition={{
                               duration: 1,
-                              delay: item.label === "Revenue" ? 0.15 : 0.3,
+                              delay: index === 0 ? 0.15 : 0.3,
                               ease: smoothEase,
                             }}
                             sx={{
@@ -2680,6 +2630,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Box>
 
                 <Box
+                  {...getStaticSelectableProps(
+                    aboutBlockId,
+                    "About content",
+                    "about-content-column",
+                    "containerStyles",
+                    "container",
+                  )}
                   sx={{
                     display: "flex",
                     flexDirection: "column",
@@ -2689,15 +2646,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   <Box component={motion.div} {...sectionReveal}>
                     <Chip
-                      data-static-selectable="true"
-                      data-static-style-only="true"
-                      data-static-id="about-badge"
-                      data-static-type="badge"
-                      data-preview-section="true"
-                      data-preview-label="About badge"
-                      data-preview-block-id={aboutBlockId}
-                      data-preview-style-key="static.aboutBadgeStyle"
-                      label="Get to know us"
+                      label={aboutContent.eyebrow || "Get to know us"}
+                      {...getEditableTextProps(
+                        aboutBlockId,
+                        "eyebrow",
+                        "single",
+                        "eyebrowStyle",
+                      )}
                       sx={{
                         bgcolor: themeColor,
                         color: palette.white,
@@ -2727,6 +2682,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     </Typography>
 
                     <Box
+                      {...getStaticSelectableProps(
+                        aboutBlockId,
+                        "About detail cards",
+                        "about-detail-grid",
+                        "containerStyles",
+                        "container",
+                      )}
                       sx={{
                         mt: 2.5,
                         display: "grid",
@@ -2739,6 +2701,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                           key={group.title}
                           component={motion.div}
                           {...sectionReveal}
+                          {...getStaticSelectableProps(
+                            aboutBlockId,
+                            `About detail card ${index + 1}`,
+                            `about-detail-card-${index}`,
+                            "containerStyles",
+                            "card",
+                          )}
                           transition={{
                             ...sectionReveal.transition,
                             delay: index * 0.08,
@@ -2750,13 +2719,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                             border: `1px solid ${themeLine}`,
                           }}
                         >
-                          <StaticSelectableBox
-                            component={Typography}
-                            label={`About detail group ${index + 1} title`}
-                            staticId={`about-detail-group-${index}-title`}
-                            blockId={aboutBlockId}
-                            styleKey={`static.detailGroups.${index}.title`}
-                            staticType="text"
+                          <Typography
+                            {...getEditableTextProps(
+                              aboutBlockId,
+                              `detailGroups.${index}.title`,
+                              "single",
+                            )}
                             sx={{
                               fontFamily: headingFont,
                               fontSize: { xs: "1.3rem", md: "1.6rem" },
@@ -2765,7 +2733,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                             }}
                           >
                             {group.title}
-                          </StaticSelectableBox>
+                          </Typography>
 
                           <Stack spacing={0.9} sx={{ mt: 1.7 }}>
                             {(group.items || []).map((item, itemIndex) => (
@@ -2784,17 +2752,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                                     flexShrink: 0,
                                   }}
                                 />
-                                <StaticSelectableBox
-                                  component={Typography}
-                                  label={`About detail group ${index + 1} item ${itemIndex + 1}`}
-                                  staticId={`about-detail-group-${index}-item-${itemIndex}`}
-                                  blockId={aboutBlockId}
-                                  styleKey={`static.detailGroups.${index}.items.${itemIndex}`}
-                                  staticType="text"
+                                <Typography
+                                  {...getEditableTextProps(
+                                    aboutBlockId,
+                                    `detailGroups.${index}.items.${itemIndex}`,
+                                    "single",
+                                  )}
                                   sx={{ color: palette.muted }}
                                 >
                                   {item}
-                                </StaticSelectableBox>
+                                </Typography>
                               </Stack>
                             ))}
                           </Stack>
@@ -2834,31 +2801,24 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Box>
               </Box>
               {renderSectionInnerBlocks(aboutContent)}
-            </Box>
-          </Container>
-        </Box>
+            </TemplateSectionContent>
+          </TemplateInnerContainer>
+        </TemplateSectionBoundary>
 
         {renderCustomSectionsBefore("why-us")}
-        <Box
-          data-preview-section="true"
-          data-preview-label="Why Choose Us Parent"
-          data-preview-block-id={whyUsBlockId}
-          data-preview-style-key="outerSectionStyle"
-          {...getSectionStyleDomProps(featuresContent, "outerSectionStyle")}
-          sx={{
-            order: sectionPosition["why-us"] ?? 3,
-            ...getSectionStyleSx(featuresContent, "outerSectionStyle"),
-          }}
+        <TemplateSectionBoundary
+          blockId={whyUsBlockId}
+          label="Why Choose Us Parent"
+          sectionKey="why-us"
+          content={featuresContent}
+          order={sectionPosition["why-us"] ?? 3}
         >
-          <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
-            <Box
+          <TemplateInnerContainer>
+            <TemplateSectionContent
               id="why-us"
-              data-preview-section="true"
-              data-preview-label="Why Choose Us"
-              data-preview-block-id={whyUsBlockId}
-              data-preview-style-key="sectionStyle"
-              data-preview-accepts-inner-blocks="true"
-              {...getSectionStyleDomProps(featuresContent)}
+              blockId={whyUsBlockId}
+              label="Why Choose Us"
+              content={featuresContent}
               sx={{
                 py: { xs: 2, md: 3 },
                 px: { xs: 2, md: 3 },
@@ -2868,7 +2828,6 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 bgcolor: themeColor,
                 color: palette.white,
                 overflow: "hidden",
-                ...getSectionStyleSx(featuresContent),
               }}
             >
               <Box
@@ -2897,12 +2856,15 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   <Box>
                     <Typography
-                      data-editable="eyebrowText"
-                      data-edit-type="single"
-                      data-block-id={whyUsBlockId}
+                      {...getEditableTextProps(
+                        whyUsBlockId,
+                        "eyebrow",
+                        "single",
+                        "eyebrowStyle",
+                      )}
                       sx={{ color: "rgba(255,255,255,0.66)", mb: 1 }}
                     >
-                      {featuresContent.eyebrowText || "Why choose us"}
+                      {featuresContent.eyebrow || "Why choose us"}
                     </Typography>
                     <Typography
                       data-editable="heading"
@@ -3005,41 +2967,32 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 tone: "light",
                 maxWidth: 680,
               })}
-            </Box>
-          </Container>
-        </Box>
+            </TemplateSectionContent>
+          </TemplateInnerContainer>
+        </TemplateSectionBoundary>
 
         {renderCustomSectionsBefore("process")}
-        <Box
-          sx={{
-            order: sectionPosition["process"] ?? 4,
-            ...getSectionStyleSx(processContent, "outerSectionStyle"),
-          }}
-          data-preview-section="true"
-          data-preview-label="Work Parent"
-          data-preview-block-id={processBlockId}
-          data-preview-style-key="outerSectionStyle"
-          {...getSectionStyleDomProps(processContent, "outerSectionStyle")}
+        <TemplateSectionBoundary
+          blockId={processBlockId}
+          label="Work Parent"
+          sectionKey="process"
+          content={processContent}
+          order={sectionPosition["process"] ?? 4}
         >
-          <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
-            <Box
+          <TemplateInnerContainer>
+            <TemplateSectionContent
               id="work"
-              data-preview-section="true"
-              data-preview-label="Work"
-              data-preview-block-id={processBlockId}
-              data-preview-style-key="sectionStyle"
-              data-preview-accepts-inner-blocks="true"
-              {...getSectionStyleDomProps(processContent)}
+              blockId={processBlockId}
+              label="Work"
+              content={processContent}
               sx={{
                 py: { xs: 5, md: 15 },
                 px: { xs: 2, md: 4 },
                 mx: { xs: -2, md: "calc(-50vw + 50%)" },
-                mt: { xs: 2, md: 3 },
                 background: `linear-gradient(180deg, ${themeDeep} 0%, ${themeDeepest} 100%)`,
                 color: palette.white,
                 overflow: "hidden",
                 position: "relative",
-                ...getSectionStyleSx(processContent),
               }}
             >
               <Box
@@ -3071,7 +3024,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   <Box component={motion.div} {...sectionReveal}>
                     <Chip
-                      label="Our process"
+                      label={processContent.eyebrow || "Our process"}
+                      {...getEditableTextProps(
+                        processBlockId,
+                        "eyebrow",
+                        "single",
+                        "eyebrowStyle",
+                      )}
                       sx={{
                         bgcolor: rgba(themeColor, 0.18),
                         color: palette.white,
@@ -3163,6 +3122,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Stack>
 
                 <Box
+                  {...getStaticSelectableProps(
+                    processBlockId,
+                    "Process cards",
+                    "process-cards-grid",
+                    "containerStyles",
+                    "container",
+                  )}
                   sx={{
                     display: "grid",
                     gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
@@ -3175,6 +3141,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Box
                       key={`${String(item.icon || index)}-${String(item.title || "")}`}
                       component={motion.div}
+                      {...getStaticSelectableProps(
+                        processBlockId,
+                        `Process card ${index + 1}`,
+                        `process-card-${index}`,
+                        "containerStyles",
+                        "container",
+                      )}
                       {...sectionReveal}
                       transition={{
                         ...sectionReveal.transition,
@@ -3193,7 +3166,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       <Typography
                         {...getEditableTextProps(
                           processBlockId,
-                          `items.${index}.icon`,
+                          `features.${index}.icon`,
                           "single",
                           "textStyle",
                         )}
@@ -3206,7 +3179,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                           color: rgba(themeColor, 0.38),
                           mb: 2.2,
                           ...getProcessEditableFieldStyle(
-                            `items.${index}.icon`,
+                            `features.${index}.icon`,
                             "textStyle",
                             processContent.textStyle || {},
                           ),
@@ -3217,7 +3190,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       <Typography
                         {...getEditableTextProps(
                           processBlockId,
-                          `items.${index}.title`,
+                          `features.${index}.title`,
                           "single",
                           "titleStyle",
                         )}
@@ -3229,11 +3202,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                           fontWeight: 800,
                           maxWidth: 280,
                           ...getProcessEditableFieldStyle(
-                            `items.${index}.title`,
+                            `features.${index}.title`,
                             "titleStyle",
-                            processContent.titleStyle ||
-                              processContent.headingStyle ||
-                              {},
+                            processContent.titleStyle || {},
                           ),
                         }}
                       >
@@ -3242,7 +3213,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       <Typography
                         {...getEditableTextProps(
                           processBlockId,
-                          `items.${index}.description`,
+                          `features.${index}.description`,
                           "multi",
                           "bodyStyle",
                         )}
@@ -3252,12 +3223,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                           lineHeight: 1.65,
                           maxWidth: 320,
                           ...getProcessEditableFieldStyle(
-                            `items.${index}.description`,
+                            `features.${index}.description`,
                             "bodyStyle",
-                            processContent.bodyStyle ||
-                              processContent.descriptionStyle ||
-                              processContent.subheadingStyle ||
-                              {},
+                            processContent.bodyStyle || {},
                           ),
                         }}
                       >
@@ -3271,10 +3239,35 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 tone: "light",
                 maxWidth: 760,
               })}
-            </Box>
+            </TemplateSectionContent>
+          </TemplateInnerContainer>
+        </TemplateSectionBoundary>
 
-            <Box sx={{ py: { xs: 4, md: 12 } }}>
+        {renderCustomSectionsBefore("process-details")}
+        <TemplateSectionBoundary
+          blockId={processDetailsBlockId}
+          label="Process Details Parent"
+          sectionKey="process-details"
+          content={processDetailsContent}
+          order={sectionPosition["process-details"] ?? 5}
+        >
+          <TemplateInnerContainer>
+            <TemplateSectionContent
+              id="process-details"
+              blockId={processDetailsBlockId}
+              label="Process Details"
+              content={processDetailsContent}
+              acceptsInnerBlocks={false}
+              sx={{ py: { xs: 4, md: 12 } }}
+            >
               <Box
+                {...getStaticSelectableProps(
+                  processDetailsBlockId,
+                  "Process details layout",
+                  "process-details-layout",
+                  "containerStyles",
+                  "container",
+                )}
                 sx={{
                   display: "grid",
                   gridTemplateColumns: { xs: "1fr", md: "1.05fr 0.95fr" },
@@ -3283,6 +3276,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               >
                 <Box
                   component={motion.div}
+                  {...getStaticSelectableProps(
+                    processDetailsBlockId,
+                    "Process details image",
+                    "process-details-image-shell",
+                    "containerStyles",
+                    "container",
+                  )}
                   {...sectionReveal}
                   sx={{
                     overflow: "hidden",
@@ -3291,8 +3291,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 >
                   {renderEditableMedia({
-                    blockId: processBlockId,
-                    field: "image",
+                    blockId: processDetailsBlockId,
+                    field: "splitContentCards.image",
                     label: "Process Image",
                     src: processImage,
                     alt: "Company team",
@@ -3314,6 +3314,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 </Box>
 
                 <Box
+                  {...getStaticSelectableProps(
+                    processDetailsBlockId,
+                    "Process details cards",
+                    "process-details-cards",
+                    "containerStyles",
+                    "container",
+                  )}
                   sx={{
                     display: "grid",
                     gridTemplateRows: { xs: "auto auto", md: "1fr 1fr" },
@@ -3322,6 +3329,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   <Box
                     component={motion.div}
+                    {...getStaticSelectableProps(
+                      processDetailsBlockId,
+                      "Process details light card",
+                      "process-details-light-card",
+                      "containerStyles",
+                      "container",
+                    )}
                     {...sectionReveal}
                     sx={{
                       p: { xs: 2.4, md: 3.2 },
@@ -3330,24 +3344,22 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       border: `1px solid ${themeLine}`,
                     }}
                   >
-                    <StaticSelectableBox
-                      component={Typography}
-                      label="Process team label"
-                      staticId="process-team-label"
-                      blockId={processBlockId}
-                      styleKey="static.teamLabelStyle"
-                      staticType="text"
+                    <Typography
+                      {...getEditableTextProps(
+                        processDetailsBlockId,
+                        "splitContentCards.eyebrow",
+                        "single",
+                      )}
                       sx={{ color: palette.muted, mb: 1 }}
                     >
-                      {processContent.teamLabel || "Team"}
-                    </StaticSelectableBox>
-                    <StaticSelectableBox
-                      component={Typography}
-                      label="Process team heading"
-                      staticId="process-team-heading"
-                      blockId={processBlockId}
-                      styleKey="static.teamHeadingStyle"
-                      staticType="text"
+                      {processTeamLabel}
+                    </Typography>
+                    <Typography
+                      {...getEditableTextProps(
+                        processDetailsBlockId,
+                        "splitContentCards.heading",
+                        "multi",
+                      )}
                       sx={{
                         fontFamily: headingFont,
                         fontSize: { xs: "2rem", md: "3.4rem" },
@@ -3357,32 +3369,34 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         maxWidth: 420,
                       }}
                     >
-                      {processContent.teamHeading ||
-                        "Strong visuals for trust and leadership."}
-                    </StaticSelectableBox>
+                      {processTeamHeading}
+                    </Typography>
                     <Stack spacing={1} sx={{ mt: 2.4 }}>
-                      {(teamMembers.length
-                        ? teamMembers
-                        : [{ name: "Leadership" }, { name: "Operations" }]
-                      ).map((member, index) => (
-                        <StaticSelectableBox
-                          key={member.name}
-                          component={Typography}
-                          label={`Process team member ${index + 1}`}
-                          staticId={`process-team-member-${index}`}
-                          blockId={processBlockId}
-                          styleKey={`static.teamMembers.${index}.name`}
-                          staticType="text"
+                      {processTeamMembers.map((member, index) => (
+                        <Typography
+                          key={member}
+                          {...getEditableTextProps(
+                            processDetailsBlockId,
+                            `splitContentCards.subItems.${index}.label`,
+                            "single",
+                          )}
                           sx={{ color: palette.muted }}
                         >
-                          {member.name}
-                        </StaticSelectableBox>
+                          {member}
+                        </Typography>
                       ))}
                     </Stack>
                   </Box>
 
                   <Box
                     component={motion.div}
+                    {...getStaticSelectableProps(
+                      processDetailsBlockId,
+                      "Process details dark card",
+                      "process-details-dark-card",
+                      "containerStyles",
+                      "container",
+                    )}
                     {...sectionReveal}
                     sx={{
                       p: { xs: 2.4, md: 3.2 },
@@ -3394,13 +3408,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       justifyContent: "space-between",
                     }}
                   >
-                    <StaticSelectableBox
-                      component={Typography}
-                      label="Process review text"
-                      staticId="process-review-text"
-                      blockId={processBlockId}
-                      styleKey="static.reviewTextStyle"
-                      staticType="text"
+                    <Typography
+                      {...getEditableTextProps(
+                        processDetailsBlockId,
+                        "splitContentCards.darkCard.heading",
+                        "multi",
+                      )}
                       sx={{
                         fontFamily: headingFont,
                         fontSize: { xs: "1.5rem", md: "2.25rem" },
@@ -3411,38 +3424,56 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       }}
                     >
                       {processReviewText}
-                    </StaticSelectableBox>
-                    <StaticSelectableBox
-                      component={Typography}
-                      label="Process review author"
-                      staticId="process-review-author"
-                      blockId={processBlockId}
-                      styleKey="static.reviewAuthorStyle"
-                      staticType="text"
-                      sx={{ mt: 2, color: "rgba(255,255,255,0.68)" }}
-                    >
-                      {processContent.reviewAuthor ||
-                        reviews[0]?.author ||
-                        "Executive team"}
-                    </StaticSelectableBox>
+                    </Typography>
+                    <Box sx={{ mt: 2 }}>
+                      <Typography
+                        {...getEditableTextProps(
+                          processDetailsBlockId,
+                          "splitContentCards.darkCard.body",
+                          "multi",
+                        )}
+                        sx={{
+                          color: "rgba(255,255,255,0.82)",
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {processReviewBody}
+                      </Typography>
+                      <Typography
+                        {...getEditableTextProps(
+                          processDetailsBlockId,
+                          "splitContentCards.darkCard.footerLabel",
+                          "single",
+                        )}
+                        sx={{
+                          mt: 2,
+                          color: "rgba(255,255,255,0.68)",
+                        }}
+                      >
+                        {processReviewAuthor}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
               </Box>
-            </Box>
-          </Container>
-        </Box>
+            </TemplateSectionContent>
+          </TemplateInnerContainer>
+        </TemplateSectionBoundary>
 
         {renderCustomSectionsBefore("contact")}
         <Container
           maxWidth="xl"
           data-preview-section="true"
           data-preview-label="Contact Parent"
+          data-template-section-boundary="true"
+          data-editor-section-root="true"
+          data-editor-section-key="contact"
           data-preview-block-id={contactBlockId}
           data-preview-style-key="outerSectionStyle"
           {...getSectionStyleDomProps(contactContent, "outerSectionStyle")}
           sx={{
             px: { xs: 2, md: 4 },
-            order: sectionPosition["contact"] ?? 5,
+            order: sectionPosition["contact"] ?? 6,
             ...getSectionStyleSx(contactContent, "outerSectionStyle"),
           }}
         >
@@ -3458,7 +3489,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               py: { xs: 5, md: 7 },
               px: { xs: 2, md: 4 },
               mx: { xs: -2, md: "calc(-50vw + 50%)" },
-              mt: { xs: 2, md: 3 },
+              // mt: { xs: 2, md: 3 },
               background: `linear-gradient(180deg, ${themeDeep} 0%, ${themeDeepest} 100%)`,
               color: palette.white,
               overflow: "hidden",
@@ -3467,6 +3498,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <Box
+              data-editor-layout-wrapper="true"
               sx={{
                 position: "absolute",
                 inset: 0,
@@ -3479,6 +3511,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               }}
             />
             <Box
+              data-editor-layout-wrapper="true"
               sx={{
                 position: "relative",
                 zIndex: 1,
@@ -3487,6 +3520,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               }}
             >
               <Box
+                data-editor-layout-wrapper="true"
                 sx={{
                   display: "grid",
                   gridTemplateColumns: { xs: "1fr", md: "1fr 0.9fr" },
@@ -3497,6 +3531,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 <Box
                   component={motion.div}
                   {...sectionReveal}
+                  data-editor-layout-wrapper="true"
                   sx={{
                     minHeight: { xs: 360, md: 720 },
                     borderRadius: "36px",
@@ -3574,7 +3609,13 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 >
                   <Chip
-                    label="Get in touch"
+                    label={contactContent.eyebrow || "Get in touch"}
+                    {...getEditableTextProps(
+                      contactBlockId,
+                      "eyebrow",
+                      "single",
+                      "eyebrowStyle",
+                    )}
                     sx={{
                       bgcolor: "rgba(255,255,255,0.08)",
                       color: palette.white,
@@ -3583,6 +3624,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       letterSpacing: "0.05em",
                       textTransform: "uppercase",
                       mb: 2.2,
+                      ...(contactContent.eyebrowStyle || {}),
                     }}
                   />
 
@@ -3622,7 +3664,12 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   <Stack spacing={1.6}>
                     {companyContactFields.map((field) => (
                       <Box key={field.key || field.label}>
-                        {renderCompanyContactField(field)}
+                        <TemplateContactField
+                          field={field}
+                          fieldProps={getContactFieldProps(field.label)}
+                          accentColor={themeColor}
+                          textColor={palette.white}
+                        />
                       </Box>
                     ))}
                     <Button
@@ -3688,8 +3735,24 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   gap: 1.5,
                 }}
               >
-                <Typography sx={{ color: "rgba(255,255,255,0.68)" }}>
+                <Typography
+                  sx={{ display: "none", color: "rgba(255,255,255,0.68)" }}
+                >
                   © 2026 {data.name}. Global business presence.
+                </Typography>
+                <Typography
+                  {...getEditableTextProps(
+                    contactBlockId,
+                    contactFooterFieldPath,
+                    "single",
+                    "copyrightStyle",
+                  )}
+                  sx={{
+                    color: "rgba(255,255,255,0.68)",
+                    ...(contactFooterStyle || {}),
+                  }}
+                >
+                  {contactFooterText}
                 </Typography>
                 {socialIcons.length ? (
                   <Stack direction="row" spacing={1}>
@@ -3712,10 +3775,16 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   </Stack>
                 ) : null}
               </Box>
-              {renderSectionInnerBlocks(contactContent, {
-                tone: "light",
-                maxWidth: 760,
-              })}
+              {renderSectionInnerBlocks(
+                {
+                  ...contactContent,
+                  innerBlocks: contactInnerBlocksWithoutFooter,
+                },
+                {
+                  tone: "light",
+                  maxWidth: 760,
+                },
+              )}
             </Box>
           </Box>
         </Container>

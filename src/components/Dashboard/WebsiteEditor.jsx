@@ -151,6 +151,10 @@ import {
   storeStaticStyleOverride,
 } from "../../templates/frontendTemplateStaticOverrides";
 import {
+  markElementHidden,
+  markContainerHidden,
+} from "../../landingTemplates/utils/hiddenElements";
+import {
   getMediaLimitSummary,
   IMAGE_ACCEPT_ATTR,
   validateWebsiteMediaUpload,
@@ -528,6 +532,44 @@ const DEFAULT_IMAGE_VALUE = {
   videoControls: true,
 };
 
+const SHARED_HEADER_BLOCK_TYPES = new Set(["NAVBAR", "WEBSITE_HEADER"]);
+const SHARED_FOOTER_BLOCK_TYPES = new Set(["FOOTER"]);
+
+const isSharedHeaderBlock = (block) =>
+  SHARED_HEADER_BLOCK_TYPES.has(
+    String(block?.blockType || block?.type || "").trim().toUpperCase(),
+  );
+
+const isSharedFooterBlock = (block) =>
+  SHARED_FOOTER_BLOCK_TYPES.has(
+    String(block?.blockType || block?.type || "").trim().toUpperCase(),
+  );
+
+const getSharedChromeBlocksFromPages = (pagesInput) => {
+  const pages = Array.isArray(pagesInput) ? pagesInput : [];
+  const homePage =
+    pages.find((page) => page?.isHome) ||
+    pages.find((page) => page?.path === "/") ||
+    pages[0] ||
+    null;
+  const homeBlocks = Array.isArray(homePage?.blocks) ? homePage.blocks : [];
+
+  return {
+    header:
+      homeBlocks.find(
+        (block) =>
+          block?.isVisible !== false && isSharedHeaderBlock(block),
+      ) || null,
+    footer:
+      [...homeBlocks]
+        .reverse()
+        .find(
+          (block) =>
+            block?.isVisible !== false && isSharedFooterBlock(block),
+        ) || null,
+  };
+};
+
 const SECTION_INNER_BLOCK_LIBRARY = [
   {
     key: "heading",
@@ -689,10 +731,10 @@ const syncAliasedBlockContent = (blockType, content) => {
       ? nextContent.features
       : null;
 
-    if (items) {
-      nextContent.features = items.map((item) => ({ ...item }));
-    } else if (features) {
+    if (features) {
       nextContent.items = features.map((item) => ({ ...item }));
+    } else if (items) {
+      nextContent.features = items.map((item) => ({ ...item }));
     }
   }
 
@@ -2003,11 +2045,51 @@ const omitInnerBlocksMirror = (value) => {
   return rest;
 };
 
+const normalizeContainerBackgroundType = (style = {}) => {
+  const rawType = String(style.backgroundType || "").trim().toLowerCase();
+  if (["color", "image", "video", "animated", "none"].includes(rawType)) {
+    return rawType;
+  }
+  if (["solid", "gradient", "pattern"].includes(rawType)) return "color";
+  if (style.backgroundVideoUrl || style.backgroundVideo) return "video";
+  if (style.backgroundImageUrl || style.backgroundImage) return "image";
+  if (style.backgroundAnimatedPreset || style.animatedBackground) return "animated";
+  if (style.backgroundColor) return "color";
+  return "none";
+};
+
+const normalizeContainerStylesForSave = (containerStyles) => {
+  if (!containerStyles || typeof containerStyles !== "object" || Array.isArray(containerStyles)) {
+    return containerStyles;
+  }
+  return Object.fromEntries(
+    Object.entries(containerStyles).map(([containerId, style]) => {
+      if (!style || typeof style !== "object" || Array.isArray(style)) {
+        return [containerId, style];
+      }
+      const stableId = String(containerId).replace(/^(?:fallback-)+/, "fallback-");
+      return [
+        stableId,
+        {
+          ...style,
+          backgroundType: normalizeContainerBackgroundType(style),
+        },
+      ];
+    }),
+  );
+};
+
 const sanitizeBlockContentForSave = (blockType, content) => {
   const rawBlockType = String(blockType || "").toUpperCase();
   const sanitizedContent = syncAliasedBlockContent(rawBlockType, {
     ...omitInnerBlocksMirror(content || {}),
   });
+
+  if (sanitizedContent.containerStyles) {
+    sanitizedContent.containerStyles = normalizeContainerStylesForSave(
+      sanitizedContent.containerStyles,
+    );
+  }
 
   if (rawBlockType === "CONTACT") {
     Object.assign(
@@ -2483,6 +2565,24 @@ const WebsiteEditorInner = () => {
     });
   }, [selectedPage?.id, websiteId]);
 
+  useEffect(() => {
+    setStaticStyleDrafts((previous) => {
+      const next = { ...previous };
+      blocks.forEach((block) => {
+        const containerStyles = block?.content?.containerStyles;
+        if (!containerStyles || typeof containerStyles !== "object" || Array.isArray(containerStyles)) {
+          return;
+        }
+        Object.entries(containerStyles).forEach(([containerId, style]) => {
+          if (style && typeof style === "object" && !Array.isArray(style)) {
+            next[`${block.id}::containerStyles::${containerId}`] = style;
+          }
+        });
+      });
+      return next;
+    });
+  }, [blocks]);
+
   const syncStaticHistoryState = useCallback(() => {
     setCanUndoStatic(staticUndoStackRef.current.length > 0);
     setCanRedoStatic(staticRedoStackRef.current.length > 0);
@@ -2602,6 +2702,126 @@ const WebsiteEditorInner = () => {
   useEffect(() => {
     pagesStateRef.current = { pages, persistedPages };
   }, [pages, persistedPages]);
+
+  const findBlockOwnerPage = useCallback(
+    (blockId) => {
+      if (blockId == null) {
+        return null;
+      }
+
+      if (
+        selectedPage?.id != null &&
+        blocksRef.current.some((block) => String(block.id) === String(blockId))
+      ) {
+        return {
+          pageId: String(selectedPage.id),
+          page: selectedPage,
+          isSelectedPage: true,
+        };
+      }
+
+      const candidates = [
+        ...(Array.isArray(pagesStateRef.current.pages)
+          ? pagesStateRef.current.pages
+          : []),
+        ...(Array.isArray(pagesStateRef.current.persistedPages)
+          ? pagesStateRef.current.persistedPages
+          : []),
+      ];
+
+      for (const page of candidates) {
+        const pageBlocks = Array.isArray(page?.blocks) ? page.blocks : [];
+        if (pageBlocks.some((block) => String(block.id) === String(blockId))) {
+          return {
+            pageId: String(page.id),
+            page,
+            isSelectedPage:
+              selectedPage?.id != null &&
+              String(page.id) === String(selectedPage.id),
+          };
+        }
+      }
+
+      return null;
+    },
+    [selectedPage],
+  );
+
+  const findBlockInEditorPages = useCallback(
+    (blockId) => {
+      if (blockId == null) {
+        return null;
+      }
+
+      if (blocksRef.current.some((block) => String(block.id) === String(blockId))) {
+        return blocksRef.current.find(
+          (block) => String(block.id) === String(blockId),
+        );
+      }
+
+      const owner = findBlockOwnerPage(blockId);
+      if (!owner?.page) {
+        return null;
+      }
+
+      return (owner.page.blocks || []).find(
+        (block) => String(block.id) === String(blockId),
+      );
+    },
+    [findBlockOwnerPage],
+  );
+
+  const updateBlockInEditorState = useCallback(
+    (blockId, updater, options = {}) => {
+      const owner = findBlockOwnerPage(blockId);
+      if (!owner?.pageId || typeof updater !== "function") {
+        return null;
+      }
+
+      const ownerPageId = String(owner.pageId);
+      const updatePageCollection = (prevPages) =>
+        prevPages.map((page) => {
+          if (String(page.id) !== ownerPageId) {
+            return page;
+          }
+
+          let didChange = false;
+          const nextBlocks = (page.blocks || []).map((block) => {
+            if (String(block.id) !== String(blockId)) {
+              return block;
+            }
+            const nextBlock = updater(block, page);
+            if (nextBlock !== block) {
+              didChange = true;
+            }
+            return nextBlock;
+          });
+
+          return didChange ? { ...page, blocks: nextBlocks } : page;
+        });
+
+      if (owner.isSelectedPage) {
+        const nextBlocks = blocksRef.current.map((block) =>
+          String(block.id) === String(blockId) ? updater(block, owner.page) : block,
+        );
+        blocksRef.current = nextBlocks;
+        setBlocks(nextBlocks);
+        setSelectedPage((prevSelectedPage) =>
+          prevSelectedPage
+            ? { ...prevSelectedPage, blocks: nextBlocks }
+            : prevSelectedPage,
+        );
+      } else if (options.markDirty !== false) {
+        draftedOtherPageIdsRef.current.add(ownerPageId);
+      }
+
+      setPages(updatePageCollection);
+      setPersistedPages(updatePageCollection);
+
+      return owner;
+    },
+    [findBlockOwnerPage],
+  );
 
   useEffect(() => {
     if (editingBlock) {
@@ -3133,9 +3353,60 @@ const WebsiteEditorInner = () => {
       const page =
         curPages.find((p) => String(p.id) === String(pageId)) ||
         curPersisted.find((p) => String(p.id) === String(pageId));
-      if (!page || page.localOnly) {
-        remaining.delete(pageId);
+      if (!page) {
         continue;
+      }
+      let effectivePageId = page.localOnly ? null : page.id;
+      if (!effectivePageId) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const createdPageResponse = await apiClient.post(
+            `/websites/${websiteId}/pages`,
+            {
+              title: page.title,
+              path: page.path,
+              isHome: page.isHome,
+              isPublished: page.isPublished ?? true,
+            },
+          );
+          const createdPage =
+            createdPageResponse.data?.data || createdPageResponse.data;
+          effectivePageId = createdPage?.id;
+          if (!effectivePageId) {
+            continue;
+          }
+          setPages((prevPages) =>
+            prevPages.map((entry) =>
+              String(entry.id) === String(pageId)
+                ? {
+                    ...entry,
+                    ...createdPage,
+                    id: effectivePageId,
+                    localOnly: false,
+                  }
+                : entry,
+            ),
+          );
+          setPersistedPages((prevPages) => {
+            const nextPages = prevPages.filter(
+              (entry) => String(entry.id) !== String(pageId),
+            );
+            return [
+              ...nextPages,
+              {
+                ...page,
+                ...createdPage,
+                id: effectivePageId,
+                localOnly: false,
+              },
+            ];
+          });
+          remaining.delete(pageId);
+          remaining.add(String(effectivePageId));
+        } catch (err) {
+          console.error(`Failed to create shared page ${pageId}:`, err);
+          continue;
+        }
       }
       const blocksToSave = (page.blocks || [])
         .map(sanitizeBlockForSave)
@@ -3150,10 +3421,14 @@ const WebsiteEditorInner = () => {
         }));
       try {
         // eslint-disable-next-line no-await-in-loop
-        await apiClient.put(`/websites/${websiteId}/pages/${pageId}/blocks`, {
+        await apiClient.put(
+          `/websites/${websiteId}/pages/${effectivePageId}/blocks`,
+          {
           blocks: blocksToSave,
-        });
+          },
+        );
         remaining.delete(pageId);
+        remaining.delete(String(effectivePageId));
       } catch (err) {
         console.error(`Failed to save AI draft for page ${pageId}:`, err);
       }
@@ -3164,40 +3439,111 @@ const WebsiteEditorInner = () => {
   const triggerManualSave = useCallback(async () => {
     localConflictRetryRef.current = false;
     const iframeDoc = iframeRef.current?.contentDocument || null;
-    const activeIframeElement =
-      iframeDoc?.querySelector('[data-inline-editing="true"]') ||
-      (iframeDoc?.activeElement instanceof HTMLElement
-        ? iframeDoc.activeElement
-        : null);
     let nextBlocks = blocksRef.current;
 
-    if (
-      activeIframeElement &&
-      activeIframeElement instanceof HTMLElement &&
-      (activeIframeElement.getAttribute("data-inline-editing") === "true" ||
-        activeIframeElement.isContentEditable)
-    ) {
-      const blockId = activeIframeElement.getAttribute("data-block-id");
-      const fieldPath = activeIframeElement.getAttribute("data-editable");
-      const nextValue = activeIframeElement.textContent || "";
+    if (iframeDoc) {
+      const editableElements = Array.from(
+        iframeDoc.querySelectorAll("[data-editable]"),
+      ).filter((node) => node instanceof HTMLElement);
 
-      if (blockId && fieldPath) {
-        flushSync(() => {
-          pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
-          nextBlocks = blocksRef.current.map((block) => {
-            if (String(block.id) !== String(blockId)) return block;
+      let hasDomEditableChanges = false;
 
-            return withSyncedBlockContent(
-              block,
-              setValueAtPath(block.content || {}, fieldPath, nextValue),
+      flushSync(() => {
+        let workingBlocks = blocksRef.current;
+
+        editableElements.forEach((editableNode) => {
+          const editableEl = editableNode;
+          const blockId = editableEl.getAttribute("data-block-id");
+          const fieldPath = editableEl.getAttribute("data-editable");
+
+          if (!blockId || !fieldPath || fieldPath.startsWith("__fallback.")) {
+            return;
+          }
+
+          const nextValue = editableEl.textContent || "";
+          const targetBlock = workingBlocks.find(
+            (block) => String(block.id) === String(blockId),
+          );
+
+          if (!targetBlock) {
+            const ownerBlock = findBlockInEditorPages(blockId);
+            if (!ownerBlock) {
+              return;
+            }
+            const currentValue = getValueAtPath(
+              ownerBlock.content || {},
+              fieldPath,
             );
-          });
-          blocksRef.current = nextBlocks;
-          setBlocks(nextBlocks);
-        });
-      }
+            if (String(currentValue ?? "") === nextValue) {
+              return;
+            }
+            hasDomEditableChanges = true;
+            pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
+            updateBlockInEditorState(blockId, (block) =>
+              withSyncedBlockContent(
+                block,
+                setValueAtPath(block.content || {}, fieldPath, nextValue),
+              ),
+            );
+            return;
+          }
 
-      activeIframeElement.blur();
+          const currentValue = getValueAtPath(
+            targetBlock.content || {},
+            fieldPath,
+          );
+
+          if (String(currentValue ?? "") === nextValue) {
+            return;
+          }
+
+          hasDomEditableChanges = true;
+          pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
+          workingBlocks = workingBlocks.map((block) =>
+            String(block.id) !== String(blockId)
+              ? block
+              : withSyncedBlockContent(
+                  block,
+                  setValueAtPath(block.content || {}, fieldPath, nextValue),
+                ),
+          );
+        });
+
+        if (hasDomEditableChanges) {
+          nextBlocks = workingBlocks;
+          blocksRef.current = workingBlocks;
+          setBlocks(workingBlocks);
+          setSelectedPage((prevSelectedPage) =>
+            prevSelectedPage
+              ? { ...prevSelectedPage, blocks: workingBlocks }
+              : prevSelectedPage,
+          );
+          setPages((prevPages) =>
+            prevPages.map((page) =>
+              String(page.id) === String(selectedPage?.id)
+                ? { ...page, blocks: workingBlocks }
+                : page,
+            ),
+          );
+          setPersistedPages((prevPages) =>
+            prevPages.map((page) =>
+              String(page.id) === String(selectedPage?.id)
+                ? { ...page, blocks: workingBlocks }
+                : page,
+            ),
+          );
+        }
+      });
+
+      editableElements.forEach((editableNode) => {
+        const editableEl = editableNode;
+        if (
+          editableEl.getAttribute("data-inline-editing") === "true" ||
+          editableEl.isContentEditable
+        ) {
+          editableEl.blur();
+        }
+      });
     }
 
     setPreviewSaveSignal((prev) => prev + 1);
@@ -3206,7 +3552,13 @@ const WebsiteEditorInner = () => {
     // page through the normal (conflict-aware) save.
     await saveDraftedOtherPages();
     await triggerSave({ blocks: nextBlocks.map(sanitizeBlockForSave) });
-  }, [saveDraftedOtherPages, triggerSave]);
+  }, [
+    findBlockInEditorPages,
+    saveDraftedOtherPages,
+    selectedPage?.id,
+    triggerSave,
+    updateBlockInEditorState,
+  ]);
 
   const handleAIBlocksPatched = useCallback(async () => {
     await triggerSave({
@@ -3439,12 +3791,13 @@ const WebsiteEditorInner = () => {
     }
 
     const previewPages = pages.map((page) =>
-      page.id === selectedPage.id ? { ...page, blocks } : page,
+      String(page.id) === String(selectedPage.id) ? { ...page, blocks } : page,
     );
     const baseTemplateDataOverride = buildTemplatePreviewBusinessData(
       resolvedFrontendTemplateId,
       website || {},
       previewPages,
+      selectedPage.id,
     );
     if (!baseTemplateDataOverride) return null;
 
@@ -3452,6 +3805,8 @@ const WebsiteEditorInner = () => {
       websiteId,
       selectedPage?.id,
     );
+    const persistedStaticStyleOverrides =
+      baseTemplateDataOverride.templateContent?.__editorStaticStyleOverrides || {};
 
     const resolvedThemeSelection =
       templateThemeSelection && templateThemeSelectionDirty
@@ -3463,7 +3818,12 @@ const WebsiteEditorInner = () => {
       templateContent: {
         ...(baseTemplateDataOverride.templateContent || {}),
         __editorStaticMediaOverrides: storedStaticOverrides.media,
-        __editorStaticStyleOverrides: storedStaticOverrides.style,
+        // Block-backed container styles are authoritative. Browser-local values
+        // only fill legacy preview keys that have not been persisted yet.
+        __editorStaticStyleOverrides: {
+          ...storedStaticOverrides.style,
+          ...persistedStaticStyleOverrides,
+        },
       },
       ...(resolvedThemeSelection && {
         primaryColor: resolvedThemeSelection.palette.primary,
@@ -3492,8 +3852,9 @@ const WebsiteEditorInner = () => {
   useEffect(() => {
     if (!selectedPage?.id || !websiteId) return;
     const previewPages = pages.map((page) =>
-      page.id === selectedPage.id ? { ...page, blocks } : page,
+      String(page.id) === String(selectedPage.id) ? { ...page, blocks } : page,
     );
+    const sharedChromeBlocks = getSharedChromeBlocksFromPages(previewPages);
 
     updatePreviewContent({
       websiteId: String(websiteId),
@@ -3503,6 +3864,7 @@ const WebsiteEditorInner = () => {
         blockType: b.blockType,
         content: b.content || {},
         order: b.sortOrder ?? idx,
+        isVisible: b.isVisible !== false,
         designTokens: b.designTokens,
       })),
       websiteMeta: {
@@ -3519,6 +3881,23 @@ const WebsiteEditorInner = () => {
         logoUrl: website?.logoUrl,
         fullAddress: website?.fullAddress,
         tags: Array.isArray(website?.tags) ? website.tags : null,
+        isHomePage: !!selectedPage?.isHome,
+        sharedBlocks: {
+          header: sharedChromeBlocks.header
+            ? {
+                id: String(sharedChromeBlocks.header.id),
+                blockType: sharedChromeBlocks.header.blockType,
+                content: sharedChromeBlocks.header.content || {},
+              }
+            : null,
+          footer: sharedChromeBlocks.footer
+            ? {
+                id: String(sharedChromeBlocks.footer.id),
+                blockType: sharedChromeBlocks.footer.blockType,
+                content: sharedChromeBlocks.footer.content || {},
+              }
+            : null,
+        },
         templateDataOverride: previewTemplateDataOverride,
         colors: website?.colors,
         fonts: website?.fonts,
@@ -3540,7 +3919,7 @@ const WebsiteEditorInner = () => {
     if (!selectedPage?.id) return;
     setPages((prevPages) =>
       prevPages.map((page) =>
-        page.id === selectedPage.id ? { ...page, blocks } : page,
+        String(page.id) === String(selectedPage.id) ? { ...page, blocks } : page,
       ),
     );
     setSelectedPage((prevSelectedPage) =>
@@ -4051,8 +4430,10 @@ const WebsiteEditorInner = () => {
 
     try {
       pendingHistoryDescriptionRef.current = "Deleted block";
-      setBlocks(blocks.filter((b) => b.id !== blockId));
-      if (editingBlock?.id === blockId) {
+      setBlocks((currentBlocks) =>
+        currentBlocks.filter((b) => String(b.id) !== String(blockId)),
+      );
+      if (String(editingBlock?.id) === String(blockId)) {
         setEditingBlock(null);
         setBlockForm({ blockType: "", content: {} });
       }
@@ -4064,11 +4445,12 @@ const WebsiteEditorInner = () => {
 
   const handleToggleBlockVisibility = async (block) => {
     try {
-      pendingHistoryDescriptionRef.current = `${block.isVisible ? "Hid" : "Showed"} block`;
-      setBlocks(
-        blocks.map((b) =>
-          b.id === block.id
-            ? { ...b, isVisible: !b.isVisible, localOnly: true }
+      const isCurrentlyVisible = block.isVisible !== false;
+      pendingHistoryDescriptionRef.current = `${isCurrentlyVisible ? "Hid" : "Showed"} block`;
+      setBlocks((currentBlocks) =>
+        currentBlocks.map((b) =>
+          String(b.id) === String(block.id)
+            ? { ...b, isVisible: !isCurrentlyVisible, localOnly: true }
             : b,
         ),
       );
@@ -4128,9 +4510,7 @@ const WebsiteEditorInner = () => {
       return DEFAULT_TEXT_STYLE;
     }
 
-    const targetBlock = blocks.find(
-      (block) => String(block.id) === String(selectedEditableElement.blockId),
-    );
+    const targetBlock = findBlockInEditorPages(selectedEditableElement.blockId);
     if (!targetBlock?.content) {
       return DEFAULT_TEXT_STYLE;
     }
@@ -4172,7 +4552,37 @@ const WebsiteEditorInner = () => {
       ...DEFAULT_TEXT_STYLE,
       ...(blockStyle && typeof blockStyle === "object" ? blockStyle : {}),
     };
-  }, [blocks, selectedEditableElement]);
+  }, [findBlockInEditorPages, selectedEditableElement]);
+
+  const selectedEditableTextValue = useMemo(() => {
+    if (
+      !selectedEditableElement?.blockId ||
+      !selectedEditableElement?.fieldPath
+    ) {
+      return "";
+    }
+
+    const targetBlock = findBlockInEditorPages(selectedEditableElement.blockId);
+    if (!targetBlock?.content) {
+      return selectedEditableElement.value || "";
+    }
+
+    const resolvedValue = getValueAtPath(
+      targetBlock.content || {},
+      selectedEditableElement.fieldPath,
+    );
+
+    return typeof resolvedValue === "string"
+      ? resolvedValue
+      : resolvedValue == null
+        ? ""
+        : String(resolvedValue);
+  }, [findBlockInEditorPages, selectedEditableElement]);
+
+  const selectedStaticTextValue = useMemo(
+    () => selectedStaticElement?.textValue || "",
+    [selectedStaticElement],
+  );
 
   const selectedStaticTextStyle = useMemo(() => {
     const key = getStaticStyleDraftKey(selectedStaticElement);
@@ -4299,9 +4709,7 @@ const WebsiteEditorInner = () => {
       return DEFAULT_SECTION_STYLE;
     }
 
-    const targetBlock = blocks.find(
-      (block) => String(block.id) === String(selectedSectionElement.blockId),
-    );
+    const targetBlock = findBlockInEditorPages(selectedSectionElement.blockId);
     const styleKey = getSectionStyleKey(selectedSectionElement);
     const resolvedStyle = styleKey.includes(".")
       ? getValueAtPath(targetBlock?.content || {}, styleKey)
@@ -4334,7 +4742,7 @@ const WebsiteEditorInner = () => {
       ...(footerDefaultStyle || {}),
       ...resolvedStyle,
     };
-  }, [blocks, selectedSectionElement]);
+  }, [findBlockInEditorPages, selectedSectionElement]);
 
   const selectedImageValue = useMemo(() => {
     if (selectedImageElement?.isStatic) {
@@ -4353,9 +4761,7 @@ const WebsiteEditorInner = () => {
       return DEFAULT_IMAGE_VALUE;
     }
 
-    const targetBlock = blocks.find(
-      (block) => String(block.id) === String(selectedImageElement.blockId),
-    );
+    const targetBlock = findBlockInEditorPages(selectedImageElement.blockId);
     if (!targetBlock?.content) {
       return DEFAULT_IMAGE_VALUE;
     }
@@ -4402,7 +4808,7 @@ const WebsiteEditorInner = () => {
           : selectedImageElement.src || "",
       ...blockStyle,
     };
-  }, [blocks, selectedImageElement, selectedStaticMediaStyle]);
+  }, [findBlockInEditorPages, selectedImageElement, selectedStaticMediaStyle]);
 
   const selectedImagePreviewHeight = useMemo(() => {
     switch (selectedImageValue.heightPreset) {
@@ -4514,6 +4920,10 @@ const WebsiteEditorInner = () => {
   }, [blocks, uploadedLibraryVideos]);
 
   const syncPreviewSelection = useCallback((target) => {
+    if (!target) {
+      setSelectedPreviewTarget(null);
+      return;
+    }
     previewSelectionNonceRef.current += 1;
     setSelectedPreviewTarget({
       ...target,
@@ -4727,6 +5137,7 @@ const WebsiteEditorInner = () => {
         kind: "editable",
         blockId: data.blockId,
         fieldPath: data.fieldPath,
+        styleKey: data.styleKey,
       });
     },
     [syncPreviewSelection],
@@ -4776,12 +5187,19 @@ const WebsiteEditorInner = () => {
         syncPreviewSelection({
           kind: data.targetKind === "static" ? "static" : "section",
           blockId: data.blockId,
+          contentPath: data.contentPath,
           styleKey: data.styleKey || "sectionStyle",
           staticId: data.staticId,
+          containerId: data.containerId,
+          containerStyleId: data.containerStyleId,
+          hiddenKey: data.hiddenKey,
+          parentSectionId: data.parentSectionId,
+          staticType: data.staticType,
         });
       } else {
         setSelectedStaticElement(null);
         setSelectedSectionElement(null);
+        syncPreviewSelection(null);
       }
       setBlockDialogOpen(false);
       setEditingBlock(null);
@@ -4928,6 +5346,7 @@ const WebsiteEditorInner = () => {
       setSelectedImageElement(data);
       setSelectedSectionElement((prev) => prev || null);
       setIsInspectorOpen(false);
+      setIsImageDialogOpen(true);
       setBlockDialogOpen(false);
       setEditingBlock(null);
       syncPreviewSelection({
@@ -5156,7 +5575,15 @@ const WebsiteEditorInner = () => {
         handlePreviewSectionSelection(layer.section);
       }
 
-      setPreviewContextMenu(null);
+      setPreviewContextMenu((prev) =>
+        prev
+          ? {
+              ...prev,
+              target: layer,
+              targetLayer: layer,
+            }
+          : prev,
+      );
     },
     [
       handlePreviewEditableSelection,
@@ -5252,36 +5679,31 @@ const WebsiteEditorInner = () => {
     return null;
   }, []);
 
-  const handleDeletePreviewLayer = useCallback((layer) => {
-    if (!layer) {
-      return;
-    }
+  // Persistently delete a single field-path target from a block. Shared by the
+  // editable / image / static delete branches so context menu and layers menu
+  // behave identically. Resolution order:
+  //   1. inner block  -> drop the innerBlock entry
+  //   2. array item   -> remove the whole array element (features[1],
+  //                      detailGroups.0.items.2, socialProof.avatars.0, ...)
+  //   3. single field -> record it in block.content.hiddenElements so the
+  //                      element disappears and does NOT revert to its template
+  //                      default (the old behaviour blanked the value to "",
+  //                      which templates fell back over via `value || "Default"`).
+  const deleteFieldPathFromBlock = useCallback(
+    (blockId, fieldPath, options = {}) => {
+      if (!blockId || !fieldPath) {
+        return false;
+      }
+      const { hideOnly = false } = options;
 
-    if (layer.kind === "section" && layer.section?.blockId) {
-      pendingHistoryDescriptionRef.current = "Deleted section";
-      setBlocks((prev) =>
-        prev.filter(
-          (block) => String(block.id) !== String(layer.section.blockId),
-        ),
-      );
-      setSelectedSectionElement(null);
-      setSelectedEditableElement(null);
-      setSelectedImageElement(null);
-      setIsImageDialogOpen(false);
-      setPreviewContextMenu(null);
-      return;
-    }
-
-    if (layer.kind === "editable" && layer.editable?.blockId) {
-      const innerMatch = parseInnerBlockFieldPath(layer.editable.fieldPath);
+      const innerMatch = parseInnerBlockFieldPath(fieldPath);
       if (innerMatch) {
         pendingHistoryDescriptionRef.current = "Deleted block";
         setBlocks((prev) =>
           prev.map((block) => {
-            if (String(block.id) !== String(layer.editable.blockId)) {
+            if (String(block.id) !== String(blockId)) {
               return block;
             }
-
             const innerBlocks = Array.isArray(block.content?.innerBlocks)
               ? block.content.innerBlocks
               : [];
@@ -5291,96 +5713,167 @@ const WebsiteEditorInner = () => {
             );
           }),
         );
-      } else {
-        // If the field points into a repeated item (e.g. "items.1.title" — a
-        // feature card / process step), Delete should remove the WHOLE item from
-        // the layout, not just blank its text. Fall back to clearing the field
-        // only for standalone fields (like a hero heading) that can't be removed.
-        const targetBlock = blocksRef.current.find(
-          (entry) => String(entry.id) === String(layer.editable.blockId),
-        );
-        const arrayContent = targetBlock
-          ? removeArrayItemAtFieldPath(
-              targetBlock.content || {},
-              layer.editable.fieldPath,
-            )
+        return true;
+      }
+
+      // `hideOnly` (used for images/media): deleting an image removes just the
+      // image, never the array item/card it lives in — that is the job of the
+      // card/container delete. It also avoids unmounting a deep array-item
+      // subtree, which is what triggered a React commit-phase removeChild crash.
+      const targetBlock = blocksRef.current.find(
+        (entry) => String(entry.id) === String(blockId),
+      );
+      const arrayContent =
+        !hideOnly && targetBlock
+          ? removeArrayItemAtFieldPath(targetBlock.content || {}, fieldPath)
           : null;
 
-        if (arrayContent != null) {
+      if (arrayContent != null) {
+        pendingHistoryDescriptionRef.current = "Deleted element";
+        setBlocks((prev) =>
+          prev.map((block) =>
+            String(block.id) === String(blockId)
+              ? withSyncedBlockContent(block, arrayContent)
+              : block,
+          ),
+        );
+        return true;
+      }
+
+      pendingHistoryDescriptionRef.current = "Deleted element";
+      setBlocks((prev) =>
+        prev.map((block) =>
+          String(block.id) === String(blockId)
+            ? withSyncedBlockContent(
+                block,
+                markElementHidden(block.content || {}, fieldPath),
+              )
+            : block,
+        ),
+      );
+      return true;
+    },
+    [],
+  );
+
+  const handleDeletePreviewLayer = useCallback(
+    (layer) => {
+      if (!layer) {
+        return;
+      }
+
+      if (layer.kind === "section" && layer.section?.blockId) {
+        pendingHistoryDescriptionRef.current = "Deleted section";
+        setBlocks((prev) =>
+          prev.filter(
+            (block) => String(block.id) !== String(layer.section.blockId),
+          ),
+        );
+        setSelectedSectionElement(null);
+        setSelectedEditableElement(null);
+        setSelectedImageElement(null);
+        setSelectedStaticElement(null);
+        setSelectedPreviewTarget(null);
+        setIsImageDialogOpen(false);
+        setPreviewContextMenu(null);
+        return;
+      }
+
+      if (layer.kind === "editable" && layer.editable?.blockId) {
+        deleteFieldPathFromBlock(
+          layer.editable.blockId,
+          layer.editable.fieldPath,
+        );
+        setSelectedEditableElement(null);
+        setSelectedPreviewTarget(null);
+        setPreviewContextMenu(null);
+        return;
+      }
+
+      if (layer.kind === "image" && layer.image?.blockId) {
+        deleteFieldPathFromBlock(layer.image.blockId, layer.image.fieldPath, {
+          hideOnly: true,
+        });
+        setSelectedImageElement(null);
+        setSelectedPreviewTarget(null);
+        setIsImageDialogOpen(false);
+        setPreviewContextMenu(null);
+        return;
+      }
+
+      // Static / container target (div, wrapper, card, decorative container).
+      // Resolution order:
+      //   1. mapped media/text field (fieldPath/contentPath) -> hide field / remove item
+      //   2. array-item container/card (staticId "features.0.__card") -> remove features[0]
+      //   3. any other container (fixed EditableContainer OR auto-detected
+      //      "fallback-*" wrapper) -> persistently hide the WHOLE container and
+      //      its children/styles by its stable container id (data-static-id),
+      //      recorded in block.content.hiddenContainers.
+      if (layer.kind === "static" && layer.section?.blockId) {
+        const blockId = layer.section.blockId;
+        const rawStaticId = String(layer.section.staticId || "");
+        const directFieldPath =
+          layer.section.fieldPath || layer.section.contentPath || null;
+        const hiddenContainerId =
+          layer.section.containerStyleId ||
+          layer.section.containerId ||
+          rawStaticId;
+        const derivedFromStaticId = rawStaticId
+          .replace(/\.__container$/, "")
+          .replace(/\.__card$/, "");
+        const isDerivedContentPath =
+          derivedFromStaticId && derivedFromStaticId !== rawStaticId;
+
+        const targetBlock = blocksRef.current.find(
+          (entry) => String(entry.id) === String(blockId),
+        );
+        const arrayContent =
+          !directFieldPath && isDerivedContentPath && targetBlock
+            ? removeArrayItemAtFieldPath(
+                targetBlock.content || {},
+                derivedFromStaticId,
+              )
+            : null;
+
+        if (directFieldPath) {
+          deleteFieldPathFromBlock(blockId, directFieldPath);
+        } else if (arrayContent != null) {
           pendingHistoryDescriptionRef.current = "Deleted element";
           setBlocks((prev) =>
             prev.map((block) =>
-              String(block.id) === String(layer.editable.blockId)
+              String(block.id) === String(blockId)
                 ? withSyncedBlockContent(block, arrayContent)
                 : block,
             ),
           );
-        } else {
-          pendingHistoryDescriptionRef.current = "Cleared text";
+        } else if (hiddenContainerId) {
+          pendingHistoryDescriptionRef.current = "Deleted container";
           setBlocks((prev) =>
             prev.map((block) =>
-              String(block.id) === String(layer.editable.blockId)
+              String(block.id) === String(blockId)
                 ? withSyncedBlockContent(
-                    block,
-                    setValueAtPath(
-                      { ...(block.content || {}) },
-                      layer.editable.fieldPath,
-                      "",
+                  block,
+                    markContainerHidden(
+                      block.content || {},
+                      hiddenContainerId,
                     ),
                   )
                 : block,
             ),
           );
         }
+
+        setSelectedSectionElement(null);
+        setSelectedStaticElement(null);
+        setSelectedImageElement(null);
+        setSelectedPreviewTarget(null);
+        setIsImageDialogOpen(false);
+        setPreviewContextMenu(null);
+        return;
       }
-
-      setSelectedEditableElement(null);
-      setPreviewContextMenu(null);
-      return;
-    }
-
-    if (layer.kind === "image" && layer.image?.blockId) {
-      const innerMatch = parseInnerBlockFieldPath(layer.image.fieldPath);
-      if (innerMatch) {
-        pendingHistoryDescriptionRef.current = "Deleted block";
-        setBlocks((prev) =>
-          prev.map((block) => {
-            if (String(block.id) !== String(layer.image.blockId)) {
-              return block;
-            }
-
-            const innerBlocks = Array.isArray(block.content?.innerBlocks)
-              ? block.content.innerBlocks
-              : [];
-            return withSyncedInnerBlocks(
-              block,
-              innerBlocks.filter((_, index) => index !== innerMatch.index),
-            );
-          }),
-        );
-      } else {
-        pendingHistoryDescriptionRef.current = "Removed image";
-        setBlocks((prev) =>
-          prev.map((block) =>
-            String(block.id) === String(layer.image.blockId)
-              ? withSyncedBlockContent(
-                  block,
-                  setValueAtPath(
-                    { ...(block.content || {}) },
-                    layer.image.fieldPath,
-                    "",
-                  ),
-                )
-              : block,
-          ),
-        );
-      }
-
-      setSelectedImageElement(null);
-      setIsImageDialogOpen(false);
-      setPreviewContextMenu(null);
-    }
-  }, []);
+    },
+    [deleteFieldPathFromBlock],
+  );
 
   const handleDuplicatePreviewLayer = useCallback((layer) => {
     if (!layer) {
@@ -5824,80 +6317,71 @@ const WebsiteEditorInner = () => {
       const resolvedFieldName = innerMatch?.contentPath || fieldPath;
 
       pendingHistoryDescriptionRef.current = `Styled ${fieldPath}`;
-      setBlocks((prev) =>
-        prev.map((block) => {
-          if (String(block.id) !== String(blockId)) {
-            return block;
-          }
-
-          if (innerMatch) {
-            const existingInnerBlocks = Array.isArray(
-              block.content?.innerBlocks,
-            )
-              ? block.content.innerBlocks
-              : [];
-            const existingInnerBlock =
-              existingInnerBlocks[innerMatch.index] || {};
-            const styleKey = getInnerBlockStyleKey(
-              existingInnerBlock,
-              resolvedFieldName,
-            );
-            const existingInnerContent =
-              existingInnerBlock.content &&
-              typeof existingInnerBlock.content === "object"
-                ? existingInnerBlock.content
-                : {};
-            const resolvedExistingStyle = styleKey.includes(".")
-              ? getValueAtPath(existingInnerContent, styleKey)
-              : existingInnerContent[styleKey];
-            const existingStyle =
-              resolvedExistingStyle && typeof resolvedExistingStyle === "object"
-                ? resolvedExistingStyle
-                : {};
-
-            return withSyncedInnerBlocks(
-              block,
-              setValueAtPath(
-                existingInnerBlocks,
-                `${innerMatch.index}.content.${styleKey}`,
-                {
-                  ...existingStyle,
-                  ...patch,
-                },
-              ),
-            );
-          }
-
-          const styleKey =
-            selectedEditableElement.styleKey ||
-            getResolvedEditableStyleKey(block.content || {}, resolvedFieldName);
+      updateBlockInEditorState(blockId, (block) => {
+        if (innerMatch) {
+          const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+            ? block.content.innerBlocks
+            : [];
+          const existingInnerBlock = existingInnerBlocks[innerMatch.index] || {};
+          const styleKey = getInnerBlockStyleKey(
+            existingInnerBlock,
+            resolvedFieldName,
+          );
+          const existingInnerContent =
+            existingInnerBlock.content &&
+            typeof existingInnerBlock.content === "object"
+              ? existingInnerBlock.content
+              : {};
           const resolvedExistingStyle = styleKey.includes(".")
-            ? getValueAtPath(block.content || {}, styleKey)
-            : block.content?.[styleKey];
+            ? getValueAtPath(existingInnerContent, styleKey)
+            : existingInnerContent[styleKey];
           const existingStyle =
             resolvedExistingStyle && typeof resolvedExistingStyle === "object"
               ? resolvedExistingStyle
               : {};
 
-          return withSyncedBlockContent(
+          return withSyncedInnerBlocks(
             block,
-            styleKey.includes(".")
-              ? setValueAtPath(block.content || {}, styleKey, {
+            setValueAtPath(
+              existingInnerBlocks,
+              `${innerMatch.index}.content.${styleKey}`,
+              {
+                ...existingStyle,
+                ...patch,
+              },
+            ),
+          );
+        }
+
+        const styleKey =
+          selectedEditableElement.styleKey ||
+          getResolvedEditableStyleKey(block.content || {}, resolvedFieldName);
+        const resolvedExistingStyle = styleKey.includes(".")
+          ? getValueAtPath(block.content || {}, styleKey)
+          : block.content?.[styleKey];
+        const existingStyle =
+          resolvedExistingStyle && typeof resolvedExistingStyle === "object"
+            ? resolvedExistingStyle
+            : {};
+
+        return withSyncedBlockContent(
+          block,
+          styleKey.includes(".")
+            ? setValueAtPath(block.content || {}, styleKey, {
+                ...existingStyle,
+                ...patch,
+              })
+            : {
+                ...block.content,
+                [styleKey]: {
                   ...existingStyle,
                   ...patch,
-                })
-              : {
-                  ...block.content,
-                  [styleKey]: {
-                    ...existingStyle,
-                    ...patch,
-                  },
                 },
-          );
-        }),
-      );
+              },
+        );
+      });
     },
-    [selectedEditableElement],
+    [selectedEditableElement, updateBlockInEditorState],
   );
 
   const handleStaticStyleChange = useCallback((patch) => {
@@ -5905,9 +6389,59 @@ const WebsiteEditorInner = () => {
     if (!key || !patch) {
       return;
     }
-    pushStaticOverrideHistory();
+    const isPersistentContainer =
+      selectedStaticElement?.staticType === "container" ||
+      selectedStaticElement?.staticType === "card" ||
+      selectedStaticElement?.styleKey === "containerStyles";
+    const resolvedPatch = isPersistentContainer
+      ? {
+          ...patch,
+          ...(Object.prototype.hasOwnProperty.call(patch, "backgroundType")
+            ? { backgroundType: normalizeContainerBackgroundType(patch) }
+            : {}),
+        }
+      : patch;
+
+    if (!isPersistentContainer) {
+      pushStaticOverrideHistory();
+    }
+
+    if (isPersistentContainer && selectedStaticElement?.blockId && selectedStaticElement?.staticId) {
+      pendingHistoryDescriptionRef.current =
+        `Styled container ${selectedStaticElement.label || ""}`.trim();
+      setBlocks((previousBlocks) =>
+        previousBlocks.map((block) => {
+          if (String(block.id) !== String(selectedStaticElement.blockId)) {
+            return block;
+          }
+          const existingContainerStyles =
+            block.content?.containerStyles &&
+            typeof block.content.containerStyles === "object" &&
+            !Array.isArray(block.content.containerStyles)
+              ? block.content.containerStyles
+              : {};
+          const existingStyle =
+            existingContainerStyles[selectedStaticElement.staticId] &&
+            typeof existingContainerStyles[selectedStaticElement.staticId] === "object"
+              ? existingContainerStyles[selectedStaticElement.staticId]
+              : {};
+
+          return withSyncedBlockContent(block, {
+            ...(block.content || {}),
+            containerStyles: {
+              ...existingContainerStyles,
+              [selectedStaticElement.staticId]: {
+                ...existingStyle,
+                ...resolvedPatch,
+              },
+            },
+          });
+        }),
+      );
+    }
 
     if (
+      !isPersistentContainer &&
       websiteId != null &&
       selectedPage?.id != null &&
       selectedStaticElement?.blockId &&
@@ -5923,7 +6457,7 @@ const WebsiteEditorInner = () => {
       const currentDraft = staticStyleDrafts[key] || {};
       storeStaticStyleOverride(storedKey, {
         ...currentDraft,
-        ...patch,
+        ...resolvedPatch,
       });
     }
 
@@ -5931,7 +6465,7 @@ const WebsiteEditorInner = () => {
       ...prev,
       [key]: {
         ...(prev[key] || {}),
-        ...patch,
+        ...resolvedPatch,
       },
     }));
   }, [pushStaticOverrideHistory, selectedPage?.id, selectedStaticElement, staticStyleDrafts, websiteId]);
@@ -6265,71 +6799,66 @@ const WebsiteEditorInner = () => {
       });
 
       pendingHistoryDescriptionRef.current = `Updated ${fieldPath} image`;
-      setBlocks((prev) =>
-        prev.map((block) => {
-          if (String(block.id) !== String(blockId)) {
-            return block;
-          }
-
-          if (innerMatch) {
-            const existingInnerBlocks = Array.isArray(
-              block.content?.innerBlocks,
-            )
-              ? block.content.innerBlocks
-              : [];
-            const existingInnerBlock =
-              existingInnerBlocks[innerMatch.index] || {};
-            const existingInnerContent =
-              existingInnerBlock.content &&
-              typeof existingInnerBlock.content === "object"
-                ? existingInnerBlock.content
-                : {};
-            const existingStyle =
-              existingInnerContent.imageStyle &&
-              typeof existingInnerContent.imageStyle === "object"
-                ? existingInnerContent.imageStyle
-                : {};
-
-            const nextInnerBlocks =
-              typeof patch.src === "string"
-                ? setValueAtPath(
-                    existingInnerBlocks,
-                    `${innerMatch.index}.content.${innerMatch.contentPath || "src"}`,
-                    patch.src,
-                  )
-                : existingInnerBlocks;
-
-            return withSyncedInnerBlocks(
-              block,
-              setValueAtPath(
-                nextInnerBlocks,
-                `${innerMatch.index}.content.imageStyle`,
-                buildImageStylePatch(existingStyle),
-              ),
-            );
-          }
-
+      updateBlockInEditorState(blockId, (block) => {
+        if (innerMatch) {
+          const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
+            ? block.content.innerBlocks
+            : [];
+          const existingInnerBlock = existingInnerBlocks[innerMatch.index] || {};
+          const existingInnerContent =
+            existingInnerBlock.content &&
+            typeof existingInnerBlock.content === "object"
+              ? existingInnerBlock.content
+              : {};
           const existingStyle =
-            block.content?.[imageStyleKey] &&
-            typeof block.content[imageStyleKey] === "object"
-              ? block.content[imageStyleKey]
+            existingInnerContent.imageStyle &&
+            typeof existingInnerContent.imageStyle === "object"
+              ? existingInnerContent.imageStyle
               : {};
 
-          const nextContent = {
+          const nextInnerBlocks =
+            typeof patch.src === "string"
+              ? setValueAtPath(
+                  existingInnerBlocks,
+                  `${innerMatch.index}.content.${innerMatch.contentPath || "src"}`,
+                  patch.src,
+                )
+              : existingInnerBlocks;
+
+          return withSyncedInnerBlocks(
+            block,
+            setValueAtPath(
+              nextInnerBlocks,
+              `${innerMatch.index}.content.imageStyle`,
+              buildImageStylePatch(existingStyle),
+            ),
+          );
+        }
+
+        const existingStyle =
+          block.content?.[imageStyleKey] &&
+          typeof block.content[imageStyleKey] === "object"
+            ? block.content[imageStyleKey]
+            : {};
+
+        return {
+          ...block,
+          content: {
             ...(typeof patch.src === "string"
               ? setValueAtPath(block.content || {}, fieldPath, patch.src)
               : { ...(block.content || {}) }),
             [imageStyleKey]: buildImageStylePatch(existingStyle),
-          };
-
-          return {
-            ...block,
-            content: nextContent,
-          };
-        }),
-      );
+          },
+        };
+      });
     },
-    [pushStaticOverrideHistory, selectedImageElement, selectedStaticElement, updateStaticMediaOverride],
+    [
+      pushStaticOverrideHistory,
+      selectedImageElement,
+      selectedStaticElement,
+      updateBlockInEditorState,
+      updateStaticMediaOverride,
+    ],
   );
 
   const handleOpenLibraryImage = useCallback(
@@ -6629,44 +7158,38 @@ const WebsiteEditorInner = () => {
       }
       pendingHistoryDescriptionRef.current =
         `Styled section ${selectedSectionElement.label || ""}`.trim();
-      setBlocks((prev) =>
-        prev.map((block) => {
-          if (String(block.id) !== String(selectedSectionElement.blockId)) {
-            return block;
-          }
+      updateBlockInEditorState(selectedSectionElement.blockId, (block) => {
+        const existingStyle = styleKey.includes(".")
+          ? getValueAtPath(block.content || {}, styleKey)
+          : block.content?.[styleKey];
+        const safeExistingStyle =
+          existingStyle && typeof existingStyle === "object"
+            ? existingStyle
+            : {};
 
-          const existingStyle = styleKey.includes(".")
-            ? getValueAtPath(block.content || {}, styleKey)
-            : block.content?.[styleKey];
-          const safeExistingStyle =
-            existingStyle && typeof existingStyle === "object"
-              ? existingStyle
-              : {};
+        if (styleKey.includes(".")) {
+          return withSyncedBlockContent(
+            block,
+            setValueAtPath(block.content || {}, styleKey, {
+              ...safeExistingStyle,
+              ...patch,
+            }),
+          );
+        }
 
-          if (styleKey.includes(".")) {
-            return withSyncedBlockContent(
-              block,
-              setValueAtPath(block.content || {}, styleKey, {
-                ...safeExistingStyle,
-                ...patch,
-              }),
-            );
-          }
-
-          return {
-            ...block,
-            content: {
-              ...block.content,
-              [styleKey]: {
-                ...safeExistingStyle,
-                ...patch,
-              },
+        return {
+          ...block,
+          content: {
+            ...block.content,
+            [styleKey]: {
+              ...safeExistingStyle,
+              ...patch,
             },
-          };
-        }),
-      );
+          },
+        };
+      });
     },
-    [selectedSectionElement],
+    [selectedSectionElement, updateBlockInEditorState],
   );
 
   // Inline edit save handler — Step 9.24: nested path update for content fields
@@ -6695,38 +7218,30 @@ const WebsiteEditorInner = () => {
 
       pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
       flushSync(() => {
-        const nextBlocks = blocksRef.current.map((block) => {
-          if (String(block.id) !== String(blockId)) return block;
-          return withSyncedBlockContent(
+        updateBlockInEditorState(blockId, (block) =>
+          withSyncedBlockContent(
             block,
             setValueAtPath(block.content || {}, fieldPath, newValue),
-          );
-        });
-
-        blocksRef.current = nextBlocks;
-        setBlocks(nextBlocks);
-        setSelectedPage((prevSelectedPage) =>
-          prevSelectedPage
-            ? { ...prevSelectedPage, blocks: nextBlocks }
-            : prevSelectedPage,
-        );
-        setPages((prevPages) =>
-          prevPages.map((page) =>
-            String(page.id) === String(selectedPage?.id)
-              ? { ...page, blocks: nextBlocks }
-              : page,
           ),
         );
-        setPersistedPages((prevPages) =>
-          prevPages.map((page) =>
-            String(page.id) === String(selectedPage?.id)
-              ? { ...page, blocks: nextBlocks }
-              : page,
-          ),
+        setSelectedEditableElement((prevSelected) =>
+          prevSelected &&
+          String(prevSelected.blockId) === String(blockId) &&
+          prevSelected.fieldPath === fieldPath
+            ? {
+                ...prevSelected,
+                value:
+                  typeof newValue === "string"
+                    ? newValue
+                    : newValue == null
+                      ? ""
+                      : String(newValue),
+              }
+            : prevSelected,
         );
       });
     },
-    [selectedPage?.id],
+    [updateBlockInEditorState],
   );
 
   // ---- AI website draft (creation questionnaire preview) ----
@@ -7538,7 +8053,9 @@ const WebsiteEditorInner = () => {
   const staticUsesMediaInspector = ["media", "avatar"].includes(
     selectedStaticType,
   );
-  const staticUsesContainerInspector = selectedStaticType === "container";
+  const staticUsesContainerInspector = ["container", "card"].includes(
+    selectedStaticType,
+  );
   const inspectorTitle =
     selectedStaticElement?.label
       ? selectedStaticElement.label
@@ -7551,7 +8068,7 @@ const WebsiteEditorInner = () => {
     ? staticUsesMediaInspector
       ? "Static media is selectable for styling context only. Replace/edit persistence is unavailable without a mapped media field."
       : staticUsesContainerInspector
-        ? "This static container is selectable independently from its parent section."
+        ? "This container has independent styles that are saved with its block."
         : "This static element is selectable independently from its parent section."
     : selectedImageElement
     ? "Manage selected image from the media dialog."
@@ -9614,7 +10131,7 @@ const WebsiteEditorInner = () => {
                                       ? staticUsesMediaInspector
                                         ? "Static media"
                                         : staticUsesContainerInspector
-                                          ? "Static container"
+                                          ? "Saved container"
                                           : "Static style"
                                       : activeToolbarMode === "section"
                                       ? "Layout"
@@ -9679,38 +10196,56 @@ const WebsiteEditorInner = () => {
 
                                 {selectedStaticElement ? (
                                   staticUsesTextInspector ? (
-                                    <EditorStyleToolbar
-                                      selection={{
-                                        blockId: selectedStaticElement.blockId,
-                                        fieldPath: `__static.${selectedStaticElement.staticId || "element"}`,
-                                        label:
-                                          selectedStaticElement.label ||
-                                          "Static element",
-                                        editType: "single",
-                                      }}
-                                      value={selectedStaticTextStyle}
-                                      disabled={false}
-                                      onStyleChange={handleStaticStyleChange}
-                                      layout="panel"
-                                      containerSx={{
-                                        flexWrap: "wrap",
-                                        alignItems: "flex-start",
-                                        overflowX: "visible",
-                                        rowGap: 1.1,
-                                        p: 0,
-                                        background: "transparent",
-                                        boxShadow: "none",
-                                        border: "none",
-                                        "& .MuiDivider-root": { display: "none" },
-                                        "& .editor-toolbar-selection-label": {
-                                          display: "none",
-                                        },
-                                        "& .MuiFormControl-root": {
-                                          width: "100%",
-                                          minWidth: "100% !important",
-                                        },
-                                      }}
-                                    />
+                                    <Box>
+                                      <TextField
+                                        fullWidth
+                                        multiline
+                                        minRows={2}
+                                        label="Text"
+                                        value={selectedStaticTextValue}
+                                        disabled
+                                        helperText="Style-only / not saved"
+                                        sx={{
+                                          mb: 1.6,
+                                          "& .MuiOutlinedInput-root": {
+                                            borderRadius: 2.5,
+                                            backgroundColor: "#ffffff",
+                                          },
+                                        }}
+                                      />
+                                      <EditorStyleToolbar
+                                        selection={{
+                                          blockId: selectedStaticElement.blockId,
+                                          fieldPath: `__static.${selectedStaticElement.staticId || "element"}`,
+                                          label:
+                                            selectedStaticElement.label ||
+                                            "Static element",
+                                          editType: "single",
+                                        }}
+                                        value={selectedStaticTextStyle}
+                                        disabled={false}
+                                        onStyleChange={handleStaticStyleChange}
+                                        layout="panel"
+                                        containerSx={{
+                                          flexWrap: "wrap",
+                                          alignItems: "flex-start",
+                                          overflowX: "visible",
+                                          rowGap: 1.1,
+                                          p: 0,
+                                          background: "transparent",
+                                          boxShadow: "none",
+                                          border: "none",
+                                          "& .MuiDivider-root": { display: "none" },
+                                          "& .editor-toolbar-selection-label": {
+                                            display: "none",
+                                          },
+                                          "& .MuiFormControl-root": {
+                                            width: "100%",
+                                            minWidth: "100% !important",
+                                          },
+                                        }}
+                                      />
+                                    </Box>
                                   ) : staticUsesContainerInspector ? (
                                     <EditorSectionStyleToolbar
                                       selection={{
@@ -9868,45 +10403,76 @@ const WebsiteEditorInner = () => {
                                     }}
                                   />
                                 ) : (
-                                  <EditorStyleToolbar
-                                    selection={
-                                      selectedEditableElement
-                                        ? {
-                                            blockId:
-                                              selectedEditableElement.blockId,
-                                            fieldPath:
-                                              selectedEditableElement.fieldPath,
-                                            label: getEditableStyleConfig(
-                                              selectedEditableElement.fieldPath,
-                                            ).label,
-                                            editType:
-                                              selectedEditableElement.editType,
-                                          }
-                                        : null
-                                    }
-                                    value={selectedEditableStyle}
-                                    disabled={!selectedEditableElement}
-                                    onStyleChange={handleEditableStyleChange}
-                                    layout="panel"
-                                    containerSx={{
-                                      flexWrap: "wrap",
-                                      alignItems: "flex-start",
-                                      overflowX: "visible",
-                                      rowGap: 1.1,
-                                      p: 0,
-                                      background: "transparent",
-                                      boxShadow: "none",
-                                      border: "none",
-                                      "& .MuiDivider-root": { display: "none" },
-                                      "& .editor-toolbar-selection-label": {
-                                        display: "none",
-                                      },
-                                      "& .MuiFormControl-root": {
-                                        width: "100%",
-                                        minWidth: "100% !important",
-                                      },
-                                    }}
-                                  />
+                                  <Box>
+                                    <TextField
+                                      fullWidth
+                                      multiline
+                                      minRows={
+                                        selectedEditableElement?.editType === "multi"
+                                          ? 3
+                                          : 2
+                                      }
+                                      label="Text"
+                                      value={selectedEditableTextValue}
+                                      onChange={(event) => {
+                                        if (!selectedEditableElement) {
+                                          return;
+                                        }
+                                        handleInlineEditSave(
+                                          selectedEditableElement.blockId,
+                                          selectedEditableElement.fieldPath,
+                                          event.target.value,
+                                        );
+                                      }}
+                                      disabled={!selectedEditableElement}
+                                      sx={{
+                                        mb: 1.6,
+                                        "& .MuiOutlinedInput-root": {
+                                          borderRadius: 2.5,
+                                          backgroundColor: "#ffffff",
+                                        },
+                                      }}
+                                    />
+                                    <EditorStyleToolbar
+                                      selection={
+                                        selectedEditableElement
+                                          ? {
+                                              blockId:
+                                                selectedEditableElement.blockId,
+                                              fieldPath:
+                                                selectedEditableElement.fieldPath,
+                                              label: getEditableStyleConfig(
+                                                selectedEditableElement.fieldPath,
+                                              ).label,
+                                              editType:
+                                                selectedEditableElement.editType,
+                                            }
+                                          : null
+                                      }
+                                      value={selectedEditableStyle}
+                                      disabled={!selectedEditableElement}
+                                      onStyleChange={handleEditableStyleChange}
+                                      layout="panel"
+                                      containerSx={{
+                                        flexWrap: "wrap",
+                                        alignItems: "flex-start",
+                                        overflowX: "visible",
+                                        rowGap: 1.1,
+                                        p: 0,
+                                        background: "transparent",
+                                        boxShadow: "none",
+                                        border: "none",
+                                        "& .MuiDivider-root": { display: "none" },
+                                        "& .editor-toolbar-selection-label": {
+                                          display: "none",
+                                        },
+                                        "& .MuiFormControl-root": {
+                                          width: "100%",
+                                          minWidth: "100% !important",
+                                        },
+                                      }}
+                                    />
+                                  </Box>
                                 )}
                               </Box>
                             </Paper>

@@ -26,6 +26,7 @@ export interface PreviewBlock {
   blockType: string;
   content: Record<string, unknown>;
   order: number;
+  isVisible?: boolean;
   designTokens?: Record<string, unknown>;
 }
 
@@ -49,6 +50,19 @@ export interface PageContent {
     logoUrl?: string | null;
     fullAddress?: string | null;
     tags?: string[] | null;
+    isHomePage?: boolean;
+    sharedBlocks?: {
+      header?: {
+        id: string;
+        blockType: string;
+        content: Record<string, unknown>;
+      } | null;
+      footer?: {
+        id: string;
+        blockType: string;
+        content: Record<string, unknown>;
+      } | null;
+    } | null;
     templateDataOverride?: Record<string, unknown> | null;
   };
 }

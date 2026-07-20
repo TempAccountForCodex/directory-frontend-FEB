@@ -331,7 +331,9 @@ export const EDITOR_CARD_STYLE_BLOCK_TYPES = new Set([
 ]);
 
 export const getEditorBlockTransform = (block: Record<string, any>) => {
-  const blockType = String(block?.type || block?.blockType || "text").toLowerCase();
+  const blockType = String(
+    block?.type || block?.blockType || "text",
+  ).toLowerCase();
 
   if (blockType === "heading") return block?.content?.headingStyle?.transform;
   if (blockType === "button") return block?.content?.buttonTextStyle?.transform;
@@ -1167,7 +1169,10 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
       nextErrors[emailField.key] = "Enter a valid email address.";
     }
 
-    if (Object.keys(nextErrors).length > 0 || built.every((field) => !field.value)) {
+    if (
+      Object.keys(nextErrors).length > 0 ||
+      built.every((field) => !field.value)
+    ) {
       setFieldErrors(nextErrors);
       setErrorMessage("Please fill in all required fields.");
       setStatus("error");
@@ -1275,7 +1280,9 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
             <Checkbox
               checked={Boolean(value)}
               disabled={disabled}
-              onChange={(e) => setValue(field.key, e.target.checked ? "Yes" : "")}
+              onChange={(e) =>
+                setValue(field.key, e.target.checked ? "Yes" : "")
+              }
               sx={{ color: textColor, "&.Mui-checked": { color: themeColor } }}
             />
           }
@@ -1372,9 +1379,7 @@ const SharedContactForm: React.FC<SharedContactFormProps> = ({
       </Typography>
 
       {status === "success" && (
-        <Alert severity="success">
-          Thank you! Your message has been sent.
-        </Alert>
+        <Alert severity="success">Thank you! Your message has been sent.</Alert>
       )}
       {status === "error" && <Alert severity="error">{errorMessage}</Alert>}
 
@@ -2494,13 +2499,6 @@ export const renderEditorSharedBlock = ({
               }
             : {}),
 
-          ...(!hasCustomBackground
-            ? {
-                backgroundColor:
-                  tone === "light" ? "rgba(255,255,255,0.96)" : "#f8fafc",
-              }
-            : {}),
-
           borderRadius:
             rawCardStyle.borderRadius === undefined &&
             resolvedCardStyle.borderRadius === undefined
@@ -2641,9 +2639,7 @@ export const renderEditorSharedBlock = ({
             websiteId={websiteId}
             blockId={section.blockId}
             blockPath={blockPath}
-            formName={
-              block.content?.heading || block.label || "Contact form"
-            }
+            formName={block.content?.heading || block.label || "Contact form"}
             formTitle={block.content?.formTitle || "Send a message"}
             buttonText={block.content?.buttonText || "Contact us"}
             formFields={formFields}

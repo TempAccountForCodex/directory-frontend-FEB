@@ -5,6 +5,7 @@ import type { BusinessData } from "../types/BusinessData";
 import type { TemplateTheme } from "../templateEngine/types";
 import PhoneIcon from "@mui/icons-material/Phone";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { getStaticSelectableProps } from "../utils/editableProps";
 
 export interface HeroBlockProps {
   data: BusinessData;
@@ -236,14 +237,13 @@ function PhotoHero({ data, theme }: Omit<HeroBlockProps, "variant">) {
           }}
         >
           <Box
-            data-static-selectable="true"
-            data-static-style-only="true"
-            data-static-id="hero-social-proof-row"
-            data-static-type="container"
-            data-preview-section="true"
-            data-preview-label="Social proof row"
-            data-preview-block-id={heroBlockId}
-            data-preview-style-key="static.socialProofRowStyle"
+            {...getStaticSelectableProps(
+              heroBlockId,
+              "Social proof row",
+              "hero-social-proof-row",
+              "containerStyles",
+              "container",
+            )}
             sx={{ display: "flex", alignItems: "center", gap: 1 }}
           >
             <Box

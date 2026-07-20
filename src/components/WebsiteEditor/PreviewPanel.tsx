@@ -48,6 +48,7 @@ import { usePreview, type PreviewBlock } from "../../context/PreviewContext";
 import { generateLivePreview } from "../../utils/previewInjector";
 import TemplateEngine from "../../landingTemplates/templateEngine/TemplateEngine";
 import TemplatePageShell from "../../landingTemplates/components/TemplatePageShell";
+import PreviewErrorBoundary from "./PreviewErrorBoundary";
 import muiTheme from "../../styles/theme";
 import {
   buildFrontendTemplateBusinessData,
@@ -57,6 +58,11 @@ import type { BusinessData } from "../../landingTemplates/types/BusinessData";
 import DynamicBlockRenderer from "../PublicWebsite/DynamicBlockRenderer";
 import BlockErrorBoundary from "../PublicWebsite/BlockErrorBoundary";
 import { DynamicBlockProvider } from "../../context/DynamicBlockContext";
+import { isPersistentContainerType } from "../../landingTemplates/utils/editableProps";
+import {
+  applyContainerStyleToElement,
+  getStableContainerId,
+} from "../../landingTemplates/utils/containerStyle";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -67,6 +73,19 @@ type PreviewMode = "live" | "static";
 type ZoomLevel = 0.5 | 0.75 | 1;
 type AskAIButtonStatus = "idle" | "open" | "loading" | "success" | "error";
 type FrontendTemplateRenderMode = "full" | "page-shell";
+
+const SHARED_HEADER_BLOCK_TYPES = new Set(["NAVBAR", "WEBSITE_HEADER"]);
+const SHARED_FOOTER_BLOCK_TYPES = new Set(["FOOTER"]);
+
+const isSharedHeaderBlock = (block?: { blockType?: string | null }) =>
+  SHARED_HEADER_BLOCK_TYPES.has(
+    String(block?.blockType || "").trim().toUpperCase(),
+  );
+
+const isSharedFooterBlock = (block?: { blockType?: string | null }) =>
+  SHARED_FOOTER_BLOCK_TYPES.has(
+    String(block?.blockType || "").trim().toUpperCase(),
+  );
 
 const VIEWPORT_WIDTHS: Record<Viewport, number> = {
   desktop: 1920,
@@ -516,17 +535,35 @@ const FrontendTemplateIframePreview = React.memo(
             .querySelectorAll(".tt-section-add-button")
             .forEach((button) => {
               (button as HTMLButtonElement).style.display =
-              overlayKind === "section" ? "inline-flex" : "none";
+              overlayKind === "section" &&
+              overlayTarget?.getAttribute(
+                "data-template-section-boundary",
+              ) === "true"
+                ? "inline-flex"
+                : "none";
             });
           const innerAddButton = overlayEl.querySelector(
             ".tt-section-inner-add-button",
           ) as HTMLButtonElement | null;
           if (innerAddButton) {
-            innerAddButton.style.display =
-              overlayKind === "section" &&
+            const selectedBlockId = overlayTarget.getAttribute(
+              "data-preview-block-id",
+            );
+            const acceptsInnerBlocks =
               overlayTarget.getAttribute(
                 "data-preview-accepts-inner-blocks",
-              ) === "true"
+              ) === "true" ||
+              Array.from(
+                overlayTarget.querySelectorAll<HTMLElement>(
+                  '[data-preview-accepts-inner-blocks="true"]',
+                ),
+              ).some(
+                (node) =>
+                  node.getAttribute("data-preview-block-id") ===
+                  selectedBlockId,
+              );
+            innerAddButton.style.display =
+              overlayKind === "section" && acceptsInnerBlocks
                 ? "inline-flex"
                 : "none";
           }
@@ -854,6 +891,61 @@ const FrontendTemplateIframePreview = React.memo(
         return chain;
       };
 
+      const getSectionRoot = (element: HTMLElement | null) =>
+        (element?.closest?.(
+          '[data-editor-section-root="true"], [data-template-section-boundary="true"]',
+        ) as HTMLElement | null) || null;
+
+      const getExplicitNestedContainer = (
+        element: HTMLElement | null,
+        sectionRoot: HTMLElement | null,
+      ) => {
+        const container = element?.closest?.(
+          '[data-editor-container="true"]',
+        ) as HTMLElement | null;
+        if (
+          !container ||
+          container === sectionRoot ||
+          container.getAttribute("data-editor-layout-wrapper") === "true"
+        ) {
+          return null;
+        }
+
+        let selectionSurface = container.parentElement?.closest?.(
+          '[data-preview-section="true"]',
+        ) as HTMLElement | null;
+        while (
+          selectionSurface &&
+          selectionSurface !== sectionRoot &&
+          selectionSurface.getAttribute("data-editor-container") === "true"
+        ) {
+          selectionSurface = selectionSurface.parentElement?.closest?.(
+            '[data-preview-section="true"]',
+          ) as HTMLElement | null;
+        }
+        selectionSurface = selectionSurface || sectionRoot;
+
+        if (selectionSurface) {
+          const containerRect = container.getBoundingClientRect();
+          const sectionRect = selectionSurface.getBoundingClientRect();
+          const sectionArea = Math.max(
+            1,
+            sectionRect.width * sectionRect.height,
+          );
+          const containerArea = Math.max(
+            1,
+            containerRect.width * containerRect.height,
+          );
+          if (containerArea / sectionArea >= 0.88) {
+            return null;
+          }
+        }
+
+        return !sectionRoot || sectionRoot.contains(container)
+          ? container
+          : null;
+      };
+
       const buildSectionSelection = (
         sectionEl: HTMLElement | null,
       ): SectionSelectionData | null => {
@@ -878,15 +970,24 @@ const FrontendTemplateIframePreview = React.memo(
         const styleKey =
           sectionEl.getAttribute("data-preview-style-key") || "sectionStyle";
         const rect = sectionEl.getBoundingClientRect();
+        const supportsInnerBlocks =
+          sectionEl.getAttribute("data-preview-accepts-inner-blocks") ===
+            "true" ||
+          Array.from(
+            sectionEl.querySelectorAll<HTMLElement>(
+              '[data-preview-accepts-inner-blocks="true"]',
+            ),
+          ).some(
+            (node) =>
+              node.getAttribute("data-preview-block-id") === blockId,
+          );
 
         return {
           blockId,
           label,
           styleKey,
           targetKind: "section",
-          supportsInnerBlocks:
-            sectionEl.getAttribute("data-preview-accepts-inner-blocks") ===
-            "true",
+          supportsInnerBlocks,
           rect: {
             top: rect.top,
             left: rect.left,
@@ -1042,9 +1143,40 @@ const FrontendTemplateIframePreview = React.memo(
           element.getAttribute("aria-label") ||
           element.getAttribute("alt") ||
           humanizeStaticTagName(tagName);
-        const styleKey =
+        const staticType = inferStaticType();
+        const persistentContainer = isPersistentContainerType(staticType);
+        const containerStyleId =
+          element.getAttribute("data-container-style-id") ||
+          (persistentContainer ? staticId : undefined);
+        const containerId =
+          element.getAttribute("data-container-id") ||
+          containerStyleId ||
+          (persistentContainer ? staticId : undefined);
+        const directContentPath = element.getAttribute("data-content-path");
+        const derivedContentPath = persistentContainer
+          ? staticId.replace(/\.__container$/, "").replace(/\.__card$/, "")
+          : staticId;
+        const contentPath =
+          directContentPath ||
+          (derivedContentPath && derivedContentPath !== staticId
+            ? derivedContentPath
+            : undefined);
+        const hiddenKey =
+          element.getAttribute("data-hidden-key") ||
+          (containerId ? `container:${containerId}` : `element:${staticId}`);
+        const rawStyleKey =
           element.getAttribute("data-preview-style-key") ||
           `static.${staticId}`;
+        const styleKey =
+          persistentContainer &&
+          (rawStyleKey === "sectionStyle" || rawStyleKey.startsWith("static."))
+            ? "containerStyles"
+            : rawStyleKey;
+        if (persistentContainer) {
+          element.setAttribute("data-container-style-id", staticId);
+          element.setAttribute("data-preview-style-key", styleKey);
+          element.setAttribute("data-static-style-only", "false");
+        }
         const rect = element.getBoundingClientRect();
         const computedStyle = doc.defaultView?.getComputedStyle(element);
 
@@ -1053,9 +1185,15 @@ const FrontendTemplateIframePreview = React.memo(
           label,
           styleKey,
           staticId,
-          styleOnly: true,
+          contentPath,
+          containerId,
+          containerStyleId,
+          hiddenKey,
+          parentSectionId:
+            element.getAttribute("data-parent-section") || blockId,
+          styleOnly: !persistentContainer,
           targetKind: "static",
-          staticType: inferStaticType(),
+          staticType,
           tagName,
           computedStyle: computedStyle
             ? {
@@ -1088,6 +1226,7 @@ const FrontendTemplateIframePreview = React.memo(
             element.getAttribute("src") ||
             element.getAttribute("data-image-src") ||
             undefined,
+          textValue: (element.textContent || "").trim() || undefined,
           rect: {
             top: rect.top,
             left: rect.left,
@@ -1225,8 +1364,14 @@ const FrontendTemplateIframePreview = React.memo(
         activeSelectionTargetRef.current = {
           kind: "static",
           blockId: selection.blockId,
+          contentPath: selection.contentPath,
           styleKey: selection.styleKey || "sectionStyle",
           staticId: selection.staticId,
+          containerId: selection.containerId,
+          containerStyleId: selection.containerStyleId,
+          hiddenKey: selection.hiddenKey,
+          parentSectionId: selection.parentSectionId,
+          staticType: selection.staticType,
           nonce: Date.now(),
         };
         onSectionSelectedRef.current?.(selection);
@@ -1250,6 +1395,7 @@ const FrontendTemplateIframePreview = React.memo(
           kind: "editable",
           blockId: selection.blockId,
           fieldPath: selection.fieldPath,
+          styleKey: selection.styleKey,
           nonce: Date.now(),
         };
         onEditableElementSelectedRef.current?.(selection);
@@ -1876,10 +2022,33 @@ const FrontendTemplateIframePreview = React.memo(
         const fallbackSelectableEl = target?.closest?.(
           "[data-fallback-selectable='true']",
         ) as HTMLElement | null;
-        const sectionEl = target?.closest?.(
+        const nearestSectionEl = target?.closest?.(
           '[data-preview-section="true"]',
         ) as HTMLElement | null;
-        const shouldPreferImageSelection = !!imageEl;
+        const sectionRootEl = getSectionRoot(target);
+        const nestedContainerEl = getExplicitNestedContainer(
+          target,
+          sectionRootEl,
+        );
+        const staticType = String(
+          staticSelectableEl?.getAttribute("data-static-type") || "",
+        ).toLowerCase();
+        const staticIsContainer = [
+          "container",
+          "card",
+          "section",
+          "div",
+        ].includes(staticType);
+        const fallbackType = String(
+          fallbackSelectableEl?.getAttribute("data-static-type") || "",
+        ).toLowerCase();
+        const fallbackIsContainer = [
+          "container",
+          "card",
+          "section",
+          "div",
+        ].includes(fallbackType);
+        const parentSectionEl = sectionRootEl || nearestSectionEl;
 
         if (
           !editableEl &&
@@ -1887,7 +2056,7 @@ const FrontendTemplateIframePreview = React.memo(
           !staticSelectableEl &&
           !fallbackMediaEl &&
           !fallbackSelectableEl &&
-          !sectionEl
+          !parentSectionEl
         ) {
           finishEditing(true);
           clearVisualSelections();
@@ -1897,7 +2066,7 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
 
-        if (shouldPreferImageSelection) {
+        if (imageEl) {
           event.preventDefault();
           event.stopPropagation();
           applyImageSelection(imageEl);
@@ -1905,7 +2074,15 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
 
-        if (!editableEl && !imageEl && staticSelectableEl) {
+        if (editableEl && editableEl !== cardEditableEl) {
+          event.preventDefault();
+          event.stopPropagation();
+          applyEditableSelection(editableEl, { startEditing: false });
+          onPreviewContextMenuRef.current?.(null);
+          return;
+        }
+
+        if (staticSelectableEl && !staticIsContainer) {
           event.preventDefault();
           event.stopPropagation();
           applyStaticSelection(staticSelectableEl);
@@ -1913,7 +2090,7 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
 
-        if (!editableEl && !imageEl && fallbackMediaEl) {
+        if (fallbackMediaEl) {
           event.preventDefault();
           event.stopPropagation();
           applyStaticSelection(fallbackMediaEl);
@@ -1921,7 +2098,7 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
 
-        if (!editableEl && !imageEl && fallbackSelectableEl) {
+        if (fallbackSelectableEl && !fallbackIsContainer) {
           event.preventDefault();
           event.stopPropagation();
           applyStaticSelection(fallbackSelectableEl);
@@ -1929,28 +2106,10 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
 
-        if (!editableEl && !imageEl && sectionEl) {
-          let resolvedSectionEl = sectionEl;
-          if (activeSectionRef.current === sectionEl) {
-            const sectionChain = getSectionChain(sectionEl);
-            if (sectionChain.length > 1) {
-              resolvedSectionEl = sectionChain[1];
-            }
-          }
-          applySectionSelection(resolvedSectionEl);
-          onPreviewContextMenuRef.current?.(null);
-          return;
-        }
-
-        if (
-          cardEditableEl &&
-          editableEl === cardEditableEl &&
-          sectionEl &&
-          sectionEl === cardEditableEl
-        ) {
+        if (nestedContainerEl) {
           event.preventDefault();
           event.stopPropagation();
-          applySectionSelection(sectionEl);
+          applyStaticSelection(nestedContainerEl);
           onPreviewContextMenuRef.current?.(null);
           return;
         }
@@ -1963,10 +2122,12 @@ const FrontendTemplateIframePreview = React.memo(
           return;
         }
 
-        event.preventDefault();
-        event.stopPropagation();
-        applyEditableSelection(editableEl, { startEditing: false });
-        onPreviewContextMenuRef.current?.(null);
+        if (parentSectionEl) {
+          event.preventDefault();
+          event.stopPropagation();
+          applySectionSelection(parentSectionEl);
+          onPreviewContextMenuRef.current?.(null);
+        }
       };
 
       const handleDoubleClick = (event: MouseEvent) => {
@@ -1990,7 +2151,7 @@ const FrontendTemplateIframePreview = React.memo(
         const editableEl = target?.closest?.(
           "[data-editable]",
         ) as HTMLElement | null;
-        const shouldPreferImageSelection = !!imageEl;
+        const shouldPreferImageSelection = !!imageEl && !editableEl;
         if (
           !editableEl &&
           !imageEl &&
@@ -2104,7 +2265,12 @@ const FrontendTemplateIframePreview = React.memo(
                 '[data-preview-section="true"]',
               ) as HTMLElement | null)
             : directSectionEl || activeSectionRef.current;
-        const shouldPreferImageSelection = !!imageEl;
+        const shouldPreferImageSelection =
+          !!imageEl &&
+          !editableEl &&
+          !staticSelectableEl &&
+          !fallbackMediaEl &&
+          !fallbackSelectableEl;
 
         if (
           !editableEl &&
@@ -2438,11 +2604,6 @@ const FrontendTemplateIframePreview = React.memo(
       }
 
       const fallbackSectionAttributes = [
-        "data-static-selectable",
-        "data-static-style-only",
-        "data-static-id",
-        "data-static-label",
-        "data-static-type",
         "data-fallback-section",
         "data-fallback-selectable",
         "data-fallback-id",
@@ -2450,6 +2611,12 @@ const FrontendTemplateIframePreview = React.memo(
         "data-fallback-tag",
         "data-fallback-context-block-id",
         "data-fallback-media",
+        "data-static-id",
+        "data-static-label",
+        "data-static-type",
+        "data-container-style-id",
+        "data-editor-container",
+        "data-parent-section",
         "data-preview-target-kind",
         "data-preview-section",
         "data-preview-block-id",
@@ -2592,6 +2759,30 @@ const FrontendTemplateIframePreview = React.memo(
       const annotateFallbackMetadata = () => {
         clearFallbackMetadata();
 
+        Array.from(
+          root.querySelectorAll<HTMLElement>(
+            '[data-preview-section="true"]',
+          ),
+        ).forEach((section) => {
+          if (
+            section.getAttribute("data-static-selectable") === "true" ||
+            section.getAttribute("data-fallback-selectable") === "true"
+          ) {
+            return;
+          }
+          const blockId = section.getAttribute("data-preview-block-id");
+          const parentSection = section.parentElement?.closest?.(
+            '[data-preview-section="true"]',
+          ) as HTMLElement | null;
+          const parentBlockId = parentSection?.getAttribute(
+            "data-preview-block-id",
+          );
+          if (!parentSection || !blockId || parentBlockId !== blockId) {
+            section.setAttribute("data-editor-section-root", "true");
+            section.setAttribute("data-template-section-boundary", "true");
+          }
+        });
+
         let lastContext: {
           blockId: string;
           styleKey: string;
@@ -2609,15 +2800,24 @@ const FrontendTemplateIframePreview = React.memo(
           tagName: string,
           label: string,
           isMedia = false,
+          isExplicitContainer = false,
         ) => {
           fallbackCounter += 1;
+          const fallbackId = `fallback-${getStableContainerId(element)}`;
+          const isContainer =
+            !isMedia &&
+            !textLikeTags.has(tagName) &&
+            tagName !== "svg";
           element.setAttribute("data-fallback-section", "true");
           element.setAttribute("data-fallback-selectable", "true");
-          element.setAttribute("data-fallback-style-only", "true");
+          element.setAttribute(
+            "data-fallback-style-only",
+            isContainer ? "false" : "true",
+          );
           element.setAttribute("data-fallback-tag", tagName);
-          element.setAttribute("data-fallback-id", `fallback-${fallbackCounter}`);
+          element.setAttribute("data-fallback-id", fallbackId);
           element.setAttribute("data-fallback-context-block-id", context.blockId);
-          element.setAttribute("data-static-id", `fallback-${fallbackCounter}`);
+          element.setAttribute("data-static-id", fallbackId);
           element.setAttribute("data-static-label", label);
           if (isMedia) {
             element.setAttribute("data-fallback-media", "true");
@@ -2632,12 +2832,19 @@ const FrontendTemplateIframePreview = React.memo(
                   ? "text"
                   : "container",
           );
+          if (isContainer) {
+            element.setAttribute("data-container-style-id", fallbackId);
+            if (isExplicitContainer) {
+              element.setAttribute("data-editor-container", "true");
+              element.setAttribute("data-parent-section", context.blockId);
+            }
+          }
           element.setAttribute("data-preview-target-kind", "static");
           element.setAttribute("data-preview-section", "true");
           element.setAttribute("data-preview-block-id", context.blockId);
           element.setAttribute(
             "data-preview-style-key",
-            `static.__fallback.${fallbackCounter}`,
+            isContainer ? "containerStyles" : `static.__fallback.${fallbackCounter}`,
           );
           element.setAttribute("data-preview-label", label);
         };
@@ -2647,7 +2854,8 @@ const FrontendTemplateIframePreview = React.memo(
             if (
               element.id === "preview-root" ||
               element.classList.contains("tt-selection-overlay") ||
-              element.closest(".tt-selection-overlay")
+              element.closest(".tt-selection-overlay") ||
+              element.getAttribute("data-editor-layout-wrapper") === "true"
             ) {
               return;
             }
@@ -2684,6 +2892,9 @@ const FrontendTemplateIframePreview = React.memo(
 
             const hasExplicitEditable = element.hasAttribute("data-editable");
             const hasExplicitImage = element.hasAttribute("data-edit-image");
+            const hasExplicitStaticTarget =
+              element.getAttribute("data-static-selectable") === "true" ||
+              element.hasAttribute("data-container-style-id");
             const hasExplicitSection = element.getAttribute(
               "data-preview-section",
             ) === "true";
@@ -2691,6 +2902,16 @@ const FrontendTemplateIframePreview = React.memo(
               "[data-editable], [data-edit-image]",
             );
             if (explicitEditableAncestor) {
+              return;
+            }
+
+            // Explicit content, media, and persistent container metadata owns
+            // the node identity. Fallback annotation must never replace it.
+            if (
+              hasExplicitEditable ||
+              hasExplicitImage ||
+              hasExplicitStaticTarget
+            ) {
               return;
             }
 
@@ -2706,6 +2927,58 @@ const FrontendTemplateIframePreview = React.memo(
             const hasMeaningfulClass = meaningfulContainerClasses.some((name) =>
               element.classList.contains(name),
             );
+            const isExplicitFallbackContainer =
+              tagName === "article" ||
+              element.classList.contains("MuiCard-root") ||
+              element.classList.contains("MuiPaper-root") ||
+              element.classList.contains("MuiListItem-root");
+            const sectionRoot = element.closest(
+              '[data-editor-section-root="true"], [data-template-section-boundary="true"]',
+            ) as HTMLElement | null;
+            const elementRect = element.getBoundingClientRect();
+            const sectionRect = sectionRoot?.getBoundingClientRect();
+            const computedStyle = win.getComputedStyle(element);
+            const backgroundColor = computedStyle.backgroundColor
+              .replace(/\s+/g, "")
+              .toLowerCase();
+            const hasVisibleSurface =
+              (backgroundColor !== "transparent" &&
+                backgroundColor !== "rgba(0,0,0,0)") ||
+              computedStyle.backgroundImage !== "none" ||
+              parseFloat(computedStyle.borderTopWidth || "0") > 0 ||
+              parseFloat(computedStyle.borderRadius || "0") > 0;
+            const isLayoutGroup =
+              (computedStyle.display === "grid" ||
+                computedStyle.display === "flex" ||
+                computedStyle.display === "inline-flex") &&
+              element.children.length > 0;
+            const sectionArea = sectionRect
+              ? Math.max(1, sectionRect.width * sectionRect.height)
+              : 0;
+            const elementArea = Math.max(
+              1,
+              elementRect.width * elementRect.height,
+            );
+            const isScopedInsideSection =
+              !!sectionRoot &&
+              sectionRoot !== element &&
+              (!sectionArea || elementArea / sectionArea < 0.94);
+            const isNestedSelectableContainer =
+              isExplicitFallbackContainer ||
+              (isScopedInsideSection &&
+                (hasVisibleSurface || isLayoutGroup || hasMeaningfulClass));
+            const nestedContainerLabel = isExplicitFallbackContainer
+              ? "Card"
+              : computedStyle.display === "grid"
+                ? "Grid"
+                : computedStyle.display === "flex" ||
+                    computedStyle.display === "inline-flex"
+                  ? computedStyle.flexDirection === "column"
+                    ? "Column"
+                    : "Row"
+                  : hasVisibleSurface
+                    ? "Container"
+                    : humanizeTagName(tagName);
             const hasVisualChildren = Array.from(element.children).some(
               (child) => {
                 const childTag = child.tagName.toLowerCase();
@@ -2723,7 +2996,26 @@ const FrontendTemplateIframePreview = React.memo(
               element.getAttribute("role") === "button" ||
               hasVisualChildren;
 
-            if (!hasExplicitSection && isContainerLike) {
+            // Block-library blocks (rendered from the shared block renderer)
+            // own their editable primitives and a single section root. Neither
+            // their internal grid/flex/spacing wrappers NOR the structural
+            // wrappers that surround them (section content flow, layout shells)
+            // may become selectable fallback containers — otherwise a click
+            // targets an inner/outer div instead of the parent section, and
+            // background/padding is applied there. Real cards (article /
+            // MuiCard / MuiPaper / MuiListItem) inside a block remain
+            // selectable so per-card styling still works.
+            const blockSurfaceSelector = '[data-editor-block-surface="true"]';
+            const isBlockLibraryStructuralWrapper = Boolean(
+              element.closest(blockSurfaceSelector) ||
+                element.querySelector?.(blockSurfaceSelector),
+            );
+
+            if (
+              !hasExplicitSection &&
+              isContainerLike &&
+              (!isBlockLibraryStructuralWrapper || isExplicitFallbackContainer)
+            ) {
               const rect = element.getBoundingClientRect();
               if (
                 rect.width > 32 &&
@@ -2737,13 +3029,11 @@ const FrontendTemplateIframePreview = React.memo(
                   context,
                   tagName,
                   element.getAttribute("aria-label") ||
-                    humanizeTagName(tagName),
+                    nestedContainerLabel,
+                  false,
+                  isNestedSelectableContainer,
                 );
               }
-            }
-
-            if (hasExplicitEditable || hasExplicitImage) {
-              return;
             }
 
             if (
@@ -2853,6 +3143,12 @@ const FrontendTemplateIframePreview = React.memo(
             blockId: selectedPreviewTarget.blockId,
             styleKey: selectedPreviewTarget.styleKey || "sectionStyle",
             staticId: selectedPreviewTarget.staticId,
+            contentPath: selectedPreviewTarget.contentPath,
+            containerId: selectedPreviewTarget.containerId,
+            containerStyleId: selectedPreviewTarget.containerStyleId,
+            hiddenKey: selectedPreviewTarget.hiddenKey,
+            parentSectionId: selectedPreviewTarget.parentSectionId,
+            staticType: selectedPreviewTarget.staticType,
             nonce: selectedPreviewTarget.nonce,
           };
         }
@@ -2889,8 +3185,14 @@ const FrontendTemplateIframePreview = React.memo(
           activeSelectionTargetRef.current = {
             kind: "static",
             blockId: selectedPreviewTarget.blockId,
+            contentPath: selectedPreviewTarget.contentPath,
             styleKey: selectedPreviewTarget.styleKey || "sectionStyle",
             staticId: selectedPreviewTarget.staticId,
+            containerId: selectedPreviewTarget.containerId,
+            containerStyleId: selectedPreviewTarget.containerStyleId,
+            hiddenKey: selectedPreviewTarget.hiddenKey,
+            parentSectionId: selectedPreviewTarget.parentSectionId,
+            staticType: selectedPreviewTarget.staticType,
             nonce: selectedPreviewTarget.nonce,
           };
         }
@@ -2970,6 +3272,8 @@ const FrontendTemplateIframePreview = React.memo(
         if (!patch || typeof patch !== "object") {
           return;
         }
+
+        applyContainerStyleToElement(element, patch);
 
         const style = element.style;
         const assign = (prop: string, value: any) => {
@@ -3276,17 +3580,19 @@ const FrontendTemplateIframePreview = React.memo(
                 <Box
                   sx={{ width: "100%", minHeight: "100vh", bgcolor: "#fff" }}
                 >
-                  {renderMode === "page-shell" ? (
-                    <TemplatePageShell
-                      templateId={templateId}
-                      data={data}
-                      mode="editor"
-                    >
-                      {renderPageShellBlocks()}
-                    </TemplatePageShell>
-                  ) : (
-                    <TemplateEngine templateId={templateId} data={data} />
-                  )}
+                  <PreviewErrorBoundary resetKey={data}>
+                    {renderMode === "page-shell" ? (
+                      <TemplatePageShell
+                        templateId={templateId}
+                        data={data}
+                        mode="editor"
+                      >
+                        {renderPageShellBlocks()}
+                      </TemplatePageShell>
+                    ) : (
+                      <TemplateEngine templateId={templateId} data={data} />
+                    )}
+                  </PreviewErrorBoundary>
                 </Box>
               </MuiThemeProvider>
             </CacheProvider>,
@@ -3380,6 +3686,12 @@ export interface SectionSelectionData {
   label: string;
   styleKey?: string;
   staticId?: string;
+  fieldPath?: string;
+  contentPath?: string;
+  containerId?: string;
+  containerStyleId?: string;
+  hiddenKey?: string;
+  parentSectionId?: string;
   styleOnly?: boolean;
   targetKind?: "section" | "static";
   staticType?:
@@ -3393,6 +3705,7 @@ export interface SectionSelectionData {
   tagName?: string;
   computedStyle?: PreviewComputedStyleData;
   src?: string;
+  textValue?: string;
   supportsInnerBlocks?: boolean;
   rect?: { top: number; left: number; width: number; height: number };
 }
@@ -3422,8 +3735,14 @@ export interface PreviewSelectionTarget {
   kind: "section" | "static" | "editable" | "image";
   blockId: string;
   fieldPath?: string;
+  contentPath?: string;
   styleKey?: string;
   staticId?: string;
+  containerId?: string;
+  containerStyleId?: string;
+  hiddenKey?: string;
+  parentSectionId?: string;
+  staticType?: SectionSelectionData["staticType"];
   nonce: number;
 }
 
@@ -3612,6 +3931,22 @@ const PreviewPanel = React.memo(function PreviewPanel({
     }
 
     const { blocks, websiteMeta } = previewCtx.currentPageContent;
+    const sharedHeaderBlock = websiteMeta?.sharedBlocks?.header || null;
+    const sharedFooterBlock = websiteMeta?.sharedBlocks?.footer || null;
+    const shouldInjectSharedChrome =
+      !websiteMeta?.isHomePage && (sharedHeaderBlock || sharedFooterBlock);
+    const visibleBlocks = blocks.filter((block) => block.isVisible !== false);
+    const pageBlocks = shouldInjectSharedChrome
+      ? visibleBlocks.filter((block) => {
+          if (sharedHeaderBlock && isSharedHeaderBlock(block)) {
+            return false;
+          }
+          if (sharedFooterBlock && isSharedFooterBlock(block)) {
+            return false;
+          }
+          return true;
+        })
+      : visibleBlocks;
     const website = {
       id: previewCtx.currentPageContent.websiteId,
       name: websiteMeta?.name || "Preview",
@@ -3623,7 +3958,26 @@ const PreviewPanel = React.memo(function PreviewPanel({
       title: websiteMeta?.name || "Preview",
     };
 
-    return generateLivePreview(website, page, blocks, window.location.origin);
+    return generateLivePreview(
+      website,
+      page,
+      pageBlocks,
+      window.location.origin,
+      shouldInjectSharedChrome
+        ? {
+            navbar:
+              sharedHeaderBlock?.content &&
+              isSharedHeaderBlock(sharedHeaderBlock)
+                ? sharedHeaderBlock.content
+                : undefined,
+            footer:
+              sharedFooterBlock?.content &&
+              isSharedFooterBlock(sharedFooterBlock)
+                ? sharedFooterBlock.content
+                : undefined,
+          }
+        : undefined,
+    );
   }, [effectiveMode, previewCtx.currentPageContent, previewCtx.revision]);
 
   const frontendTemplateId =

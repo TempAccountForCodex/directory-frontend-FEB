@@ -64,6 +64,19 @@ interface Block {
   isVisible?: boolean;
 }
 
+const SHARED_HEADER_BLOCK_TYPES = new Set(["NAVBAR", "WEBSITE_HEADER"]);
+const SHARED_FOOTER_BLOCK_TYPES = new Set(["FOOTER"]);
+
+const isSharedHeaderBlock = (block?: Block | null) =>
+  SHARED_HEADER_BLOCK_TYPES.has(
+    String(block?.blockType || block?.type || "").trim().toUpperCase(),
+  );
+
+const isSharedFooterBlock = (block?: Block | null) =>
+  SHARED_FOOTER_BLOCK_TYPES.has(
+    String(block?.blockType || block?.type || "").trim().toUpperCase(),
+  );
+
 // ---------------------------------------------------------------------------
 // Font preset definitions (Step 12.1) — mirrors backend/constants/fontPresets.js
 // ---------------------------------------------------------------------------
@@ -690,14 +703,24 @@ h1, h2, h3, h4, h5, h6 {
           tags: website.tags as string[] | null | undefined,
         },
         persistedTemplatePages,
+        currentPage?.id,
       );
+      const persistedStaticStyleOverrides =
+        ((baseData?.templateContent as Record<string, any> | undefined)
+          ?.__editorStaticStyleOverrides as Record<string, any> | undefined) ||
+        {};
       return baseData
         ? {
             ...baseData,
             templateContent: {
               ...((baseData.templateContent as Record<string, any>) || {}),
               __editorStaticMediaOverrides: storedStaticOverrides.media,
-              __editorStaticStyleOverrides: storedStaticOverrides.style,
+              // Saved block content is the source of truth on the public site.
+              // Never replace it with an empty or stale browser-local map.
+              __editorStaticStyleOverrides: {
+                ...storedStaticOverrides.style,
+                ...persistedStaticStyleOverrides,
+              },
             },
           }
         : null;
@@ -734,6 +757,43 @@ h1, h2, h3, h4, h5, h6 {
         }
       : null;
   }, [website, persistedTemplatePages, resolvedFrontendTemplateId, currentPage?.id]);
+
+  const sharedHomeChrome = useMemo(() => {
+    if (!website?.pages?.length) {
+      return { header: null, footer: null };
+    }
+
+    const homePage =
+      website.pages.find((page) => page.isHome) ||
+      website.pages.find((page) => page.path === "/") ||
+      website.pages[0] ||
+      null;
+    const homeBlocks = Array.isArray(homePage?.blocks) ? homePage.blocks : [];
+
+    return {
+      header:
+        homeBlocks.find(
+          (block) => block?.isVisible !== false && isSharedHeaderBlock(block),
+        ) || null,
+      footer:
+        [...homeBlocks]
+          .reverse()
+          .find(
+            (block) => block?.isVisible !== false && isSharedFooterBlock(block),
+          ) || null,
+    };
+  }, [website?.pages]);
+
+  const pageBodyBlocks = useMemo(() => {
+    const currentBlocks = Array.isArray(currentPage?.blocks) ? currentPage.blocks : [];
+    if (currentPage?.isHome) {
+      return currentBlocks;
+    }
+
+    return currentBlocks.filter(
+      (block) => !isSharedHeaderBlock(block) && !isSharedFooterBlock(block),
+    );
+  }, [currentPage]);
 
   if (loading) {
     return (
@@ -813,7 +873,7 @@ h1, h2, h3, h4, h5, h6 {
     );
   }
 
-  const hasWebsiteHeader = currentPage?.blocks?.some(
+  const hasWebsiteHeader = pageBodyBlocks.some(
     (b: any) =>
       b.blockType === "WEBSITE_HEADER" ||
       (b.blockType === "NAVBAR" && b.content?._subType === "website_header"),
@@ -822,8 +882,7 @@ h1, h2, h3, h4, h5, h6 {
     resolvedFrontendTemplateId &&
       hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
       frontendTemplateData &&
-      !currentPage?.isHome &&
-      !hasWebsiteHeader,
+      !currentPage?.isHome,
   );
   const genericHeader = (
     <AppBar
@@ -892,14 +951,14 @@ h1, h2, h3, h4, h5, h6 {
   );
   const pageBlocksContent = (
     <Box>
-      {!currentPage?.blocks || currentPage.blocks.length === 0 ? (
+      {!pageBodyBlocks.length ? (
         <Container sx={{ py: 8 }}>
           <Typography variant="h5" align="center" color="text.secondary">
             This page has no content yet.
           </Typography>
         </Container>
       ) : (
-        currentPage.blocks.map((block) => (
+        pageBodyBlocks.map((block) => (
           <BlockErrorBoundary
             key={block.id}
             blockType={block.blockType}
@@ -922,6 +981,46 @@ h1, h2, h3, h4, h5, h6 {
       )}
     </Box>
   );
+  const sharedHeader = sharedHomeChrome.header ? (
+    <BlockErrorBoundary
+      key={`shared-header-${sharedHomeChrome.header.id}`}
+      blockType={sharedHomeChrome.header.blockType}
+      blockId={sharedHomeChrome.header.id}
+    >
+      <DynamicBlockRenderer
+        block={sharedHomeChrome.header}
+        primaryColor={website.primaryColor || "#378C92"}
+        secondaryColor={website.secondaryColor || "#D3EB63"}
+        headingColor={website.headingTextColor || "#252525"}
+        bodyColor={website.bodyTextColor || "#6A6F78"}
+        websiteId={website.id}
+        onCtaClick={(blockType, ctaText) =>
+          trackClick(`${blockType}_CTA`, { cta_text: ctaText })
+        }
+        onFormSubmit={trackFormSubmit}
+      />
+    </BlockErrorBoundary>
+  ) : null;
+  const sharedFooter = sharedHomeChrome.footer ? (
+    <BlockErrorBoundary
+      key={`shared-footer-${sharedHomeChrome.footer.id}`}
+      blockType={sharedHomeChrome.footer.blockType}
+      blockId={sharedHomeChrome.footer.id}
+    >
+      <DynamicBlockRenderer
+        block={sharedHomeChrome.footer}
+        primaryColor={website.primaryColor || "#378C92"}
+        secondaryColor={website.secondaryColor || "#D3EB63"}
+        headingColor={website.headingTextColor || "#252525"}
+        bodyColor={website.bodyTextColor || "#6A6F78"}
+        websiteId={website.id}
+        onCtaClick={(blockType, ctaText) =>
+          trackClick(`${blockType}_CTA`, { cta_text: ctaText })
+        }
+        onFormSubmit={trackFormSubmit}
+      />
+    </BlockErrorBoundary>
+  ) : null;
   const genericFooter = (
     <Box
       component="footer"
@@ -1014,16 +1113,16 @@ h1, h2, h3, h4, h5, h6 {
             <TemplatePageShell
               templateId={resolvedFrontendTemplateId}
               data={frontendTemplateData!}
-              fallbackHeader={genericHeader}
-              fallbackFooter={genericFooter}
+              fallbackHeader={sharedHeader || genericHeader}
+              fallbackFooter={sharedFooter || genericFooter}
             >
               {pageBlocksContent}
             </TemplatePageShell>
           ) : (
             <>
-              {!hasWebsiteHeader && genericHeader}
+              {!hasWebsiteHeader && (sharedHeader || genericHeader)}
               {pageBlocksContent}
-              {genericFooter}
+              {sharedFooter || genericFooter}
             </>
           )}
         </BlogArticleSeoContext.Provider>

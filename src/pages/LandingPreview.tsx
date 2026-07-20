@@ -1503,7 +1503,7 @@ const PreviewBar: React.FC<{
   return (
     <Box
       sx={{
-        position: "fixed",
+        position: { xs: "unset", md: "fixed" },
         top: 0,
         left: 0,
         right: 0,
@@ -1574,11 +1574,38 @@ const PreviewBar: React.FC<{
         </IconButton>
       </Stack>
 
-      <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        useFlexGap
+        sx={{
+          // On small screens the chip groups don't fit — scroll horizontally
+          // instead of wrapping and getting clipped. Desktop keeps wrapping.
+          flexWrap: { xs: "nowrap", md: "wrap" },
+          overflowX: { xs: "auto", md: "visible" },
+          flexGrow: 1,
+          flexBasis: { xs: "100%", md: "auto" },
+          minWidth: 0,
+          alignItems: "center",
+          pb: { xs: 0.5, md: 0 },
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "thin",
+          "&::-webkit-scrollbar": { height: 4 },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "rgba(255,255,255,0.2)",
+            borderRadius: 4,
+          },
+        }}
+      >
         {TEMPLATE_GROUPS.map((group) => (
           <Box
             key={group.label}
-            sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              flexShrink: 0,
+            }}
           >
             <Typography
               variant="caption"
@@ -1588,6 +1615,8 @@ const PreviewBar: React.FC<{
                 letterSpacing: 1,
                 fontSize: "0.6rem",
                 textTransform: "uppercase",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               {group.label}
@@ -1626,6 +1655,7 @@ const PreviewBar: React.FC<{
                     color: s === slug ? "#fff" : "rgba(255,255,255,0.55)",
                     fontWeight: s === slug ? 700 : 400,
                     cursor: "pointer",
+                    flexShrink: 0,
                     "&:hover": {
                       bgcolor:
                         s === slug ? "#378C92" : "rgba(255,255,255,0.15)",

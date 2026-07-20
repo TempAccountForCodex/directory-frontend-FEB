@@ -15,6 +15,29 @@ interface TemplatePageShellProps {
   fallbackFooter?: React.ReactNode;
 }
 
+interface TemplateChromeWrapperProps {
+  children: React.ReactNode;
+}
+
+export const TemplateHeaderWrapper: React.FC<TemplateChromeWrapperProps> = ({
+  children,
+}) => (
+  <Box
+    data-template-shared-header="true"
+    sx={{ flex: "0 0 auto", position: "relative", zIndex: 20 }}
+  >
+    {children}
+  </Box>
+);
+
+export const TemplateFooterWrapper: React.FC<TemplateChromeWrapperProps> = ({
+  children,
+}) => (
+  <Box data-template-shared-footer="true" sx={{ flex: "0 0 auto" }}>
+    {children}
+  </Box>
+);
+
 const ShellLoader = () => (
   <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
     <CircularProgress size={24} />
@@ -35,15 +58,19 @@ const TemplatePageShell: React.FC<TemplatePageShellProps> = ({
 
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Suspense fallback={<ShellLoader />}>
-        {Header ? <Header data={data} mode={mode} /> : fallbackHeader}
-      </Suspense>
+      <TemplateHeaderWrapper>
+        <Suspense fallback={<ShellLoader />}>
+          {Header ? <Header data={data} mode={mode} /> : fallbackHeader}
+        </Suspense>
+      </TemplateHeaderWrapper>
       <Box component="main" sx={{ flex: "1 0 auto" }}>
         {children}
       </Box>
-      <Suspense fallback={null}>
-        {Footer ? <Footer data={data} mode={mode} /> : fallbackFooter}
-      </Suspense>
+      <TemplateFooterWrapper>
+        <Suspense fallback={null}>
+          {Footer ? <Footer data={data} mode={mode} /> : fallbackFooter}
+        </Suspense>
+      </TemplateFooterWrapper>
     </Box>
   );
 };

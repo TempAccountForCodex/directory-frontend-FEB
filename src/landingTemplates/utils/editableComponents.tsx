@@ -27,6 +27,10 @@ import {
   getStaticSelectableProps,
   type EditableTextKind,
 } from "./editableProps";
+import {
+  isBlockElementHidden,
+  type HiddenElementsMap,
+} from "./hiddenElements";
 import { renderEditorSharedBlock } from "../blocks/EditorSharedBlockRenderer";
 
 /* ── Context ──────────────────────────────────────────────────────────────── */
@@ -44,12 +48,50 @@ export function useEditableBlockId(): string | number | undefined {
   return React.useContext(EditableBlockContext).blockId;
 }
 
+/* ── Hidden elements (persistent delete) ─────────────────────────────────── */
+
+const HiddenElementsContext = React.createContext<
+  Record<string, HiddenElementsMap> | undefined
+>(undefined);
+
+/**
+ * Provide the `blockId -> hiddenElements` map (from
+ * `data.templateContent.__hiddenElements`) so shared editable components can
+ * drop elements the user deleted in the editor. Wrap the rendered template with
+ * this once — see TemplateEngine.
+ */
+export function HiddenElementsProvider({
+  value,
+  children,
+}: {
+  value: Record<string, HiddenElementsMap> | undefined;
+  children: React.ReactNode;
+}) {
+  return (
+    <HiddenElementsContext.Provider value={value}>
+      {children}
+    </HiddenElementsContext.Provider>
+  );
+}
+
+/**
+ * True when `field` on the current EditableSection's block was deleted via the
+ * editor. Shared editable components use this to render nothing (so the deleted
+ * element disappears instead of reverting to its template default).
+ */
+export function useIsFieldHidden(field: string | undefined): boolean {
+  const blockId = useEditableBlockId();
+  const hiddenMap = React.useContext(HiddenElementsContext);
+  return isBlockElementHidden(hiddenMap, blockId, field);
+}
+
 /* ── EditableSection ──────────────────────────────────────────────────────── */
 
 interface EditableSectionProps extends Omit<BoxProps, "id"> {
   blockId: string | number | undefined;
   label: string;
   styleKey?: "sectionStyle" | "outerSectionStyle";
+  sectionKey?: string;
   id?: string;
 }
 
@@ -66,6 +108,7 @@ export function EditableSection({
   blockId,
   label,
   styleKey,
+  sectionKey,
   children,
   ...rest
 }: EditableSectionProps) {
@@ -73,6 +116,9 @@ export function EditableSection({
     <EditableBlockContext.Provider value={{ blockId }}>
       <Box
         {...getEditableSectionProps(blockId, label, styleKey)}
+        data-template-section-boundary="true"
+        data-editor-section-root="true"
+        data-editor-section-key={sectionKey}
         {...rest}
       >
         {children}
@@ -101,6 +147,7 @@ export function EditableText({
   ...rest
 }: EditableTextProps) {
   const blockId = useEditableBlockId();
+  if (useIsFieldHidden(field)) return null;
   return (
     <Typography {...getEditableTextProps(blockId, field, kind)} {...rest}>
       {children}
@@ -125,6 +172,7 @@ export function EditableBox({
   ...rest
 }: EditableBoxProps) {
   const blockId = useEditableBlockId();
+  if (useIsFieldHidden(field)) return null;
   return (
     <Box {...getEditableTextProps(blockId, field, kind)} {...rest}>
       {children}
@@ -150,6 +198,7 @@ export function EditableButton({
   ...rest
 }: EditableButtonProps) {
   const blockId = useEditableBlockId();
+  if (useIsFieldHidden(field)) return null;
   return (
     <Button {...getEditableTextProps(blockId, field, kind)} {...rest}>
       {children}
@@ -225,6 +274,7 @@ interface EditableImageProps extends Omit<BoxProps, "component"> {
  */
 export function EditableImage({ field, label, src, alt, ...rest }: EditableImageProps) {
   const blockId = useEditableBlockId();
+  if (useIsFieldHidden(field)) return null;
   return (
     <Box
       component="img"
@@ -366,14 +416,20 @@ export function EditableContainer({
   const containerPath = field.endsWith(`.${selectionSuffix}`)
     ? field
     : `${field}.${selectionSuffix}`;
+  const resolvedStyleKey =
+    styleKey === "cardStyle" ? "containerStyles" : styleKey;
+  const staticType = selectionSuffix === "__card" ? "card" : "container";
 
   return (
     <Box
-      {...getEditableTextProps(blockId, containerPath, "single")}
-      data-preview-section="true"
-      data-preview-label={label}
-      data-preview-block-id={blockId}
-      data-preview-style-key={styleKey}
+      {...getStaticSelectableProps(
+        blockId,
+        label,
+        containerPath,
+        resolvedStyleKey,
+        staticType,
+      )}
+      data-content-path={field}
       {...rest}
     >
       {children}

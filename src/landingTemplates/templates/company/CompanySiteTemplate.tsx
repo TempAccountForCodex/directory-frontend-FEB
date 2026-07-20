@@ -7,7 +7,6 @@ import {
   getEditableSectionProps,
   getEditableTextProps,
 } from "../../utils/editableProps";
-import { StaticSelectableBox } from "../../utils/editableComponents";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
@@ -41,11 +40,6 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
   const featuresContent = templateContent.features || {};
   const aboutContent = templateContent.about || {};
   const contactContent = templateContent.contact || {};
-  const services =
-    ((featuresContent.items as typeof data.features) || data.features)?.slice(
-      0,
-      4,
-    ) || [];
   const heroImage = data.gallery?.[0]?.url || editorialImages.hero;
   const heroHeading =
     homeContent.heading || homeContent.heroHeading || data.name;
@@ -94,6 +88,10 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
   const homeBlockId = homeContent.blockId;
   const aboutBlockId = aboutContent.blockId || featuresContent.blockId;
   const contactBlockId = contactContent.blockId;
+  const studioItems =
+    ((featuresContent.features as typeof data.features) ||
+      (featuresContent.items as typeof data.features) ||
+      data.features)?.slice(0, 4) || [];
 
   const socialIcons = [
     { key: "twitter", icon: Twitter },
@@ -428,16 +426,16 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Typography>
 
               <Stack spacing={2} sx={{ mt: 4 }}>
-                {services.map((service, index) => (
+                {studioItems.map((service, index) => (
                   <FadeIn key={service.title} delay={index * 0.08}>
                     <Box>
-                      <StaticSelectableBox
-                        component={Typography}
-                        label={`Studio service ${index + 1} title`}
-                        staticId={`studio-service-${index}-title`}
-                        blockId={aboutBlockId}
-                        styleKey={`static.items.${index}.title`}
-                        staticType="text"
+                      <Typography
+                        {...getEditableTextProps(
+                          aboutBlockId,
+                          `features.${index}.title`,
+                          "single",
+                          "headingStyle",
+                        )}
                         sx={{
                           fontSize: "1.1rem",
                           fontWeight: 800,
@@ -446,14 +444,14 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                         }}
                       >
                         {service.title}
-                      </StaticSelectableBox>
-                      <StaticSelectableBox
-                        component={Typography}
-                        label={`Studio service ${index + 1} description`}
-                        staticId={`studio-service-${index}-description`}
-                        blockId={aboutBlockId}
-                        styleKey={`static.items.${index}.description`}
-                        staticType="text"
+                      </Typography>
+                      <Typography
+                        {...getEditableTextProps(
+                          aboutBlockId,
+                          `features.${index}.description`,
+                          "multi",
+                          "descriptionStyle",
+                        )}
                         sx={{
                           mt: 0.5,
                           color: "#5f5f5f",
@@ -464,7 +462,7 @@ const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {
                         }}
                       >
                         {service.description}
-                      </StaticSelectableBox>
+                      </Typography>
                     </Box>
                   </FadeIn>
                 ))}
