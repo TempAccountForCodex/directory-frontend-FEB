@@ -3330,6 +3330,32 @@ export interface InlineEditStartData {
   editType: "single" | "multi";
 }
 
+interface PreviewComputedStyleData {
+  color?: string;
+  backgroundColor?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  textAlign?: string;
+  textShadow?: string;
+  lineHeight?: string;
+  letterSpacing?: string;
+  wordSpacing?: string;
+  textTransform?: string;
+  textDecoration?: string;
+  paddingTop?: string;
+  paddingBottom?: string;
+  paddingLeft?: string;
+  paddingRight?: string;
+  marginTop?: string;
+  marginBottom?: string;
+  marginLeft?: string;
+  marginRight?: string;
+  borderRadius?: string;
+  borderWidth?: string;
+  borderColor?: string;
+}
+
 export interface EditableElementSelectionData {
   blockId: string;
   fieldPath: string;
@@ -3337,31 +3363,7 @@ export interface EditableElementSelectionData {
   value: string;
   editType: "single" | "multi";
   label?: string;
-  computedStyle?: {
-    color?: string;
-    backgroundColor?: string;
-    fontSize?: string;
-    fontWeight?: string;
-    fontStyle?: string;
-    textAlign?: string;
-    textShadow?: string;
-    lineHeight?: string;
-    letterSpacing?: string;
-    wordSpacing?: string;
-    textTransform?: string;
-    textDecoration?: string;
-    paddingTop?: string;
-    paddingBottom?: string;
-    paddingLeft?: string;
-    paddingRight?: string;
-    marginTop?: string;
-    marginBottom?: string;
-    marginLeft?: string;
-    marginRight?: string;
-    borderRadius?: string;
-    borderWidth?: string;
-    borderColor?: string;
-  };
+  computedStyle?: PreviewComputedStyleData;
   rect?: { top: number; left: number; width: number; height: number };
 }
 
@@ -3389,14 +3391,7 @@ export interface SectionSelectionData {
     | "avatar"
     | "unknown";
   tagName?: string;
-  computedStyle?: {
-    color?: string;
-    backgroundColor?: string;
-    fontSize?: string;
-    fontWeight?: string;
-    textAlign?: string;
-    textShadow?: string;
-  };
+  computedStyle?: PreviewComputedStyleData;
   src?: string;
   supportsInnerBlocks?: boolean;
   rect?: { top: number; left: number; width: number; height: number };

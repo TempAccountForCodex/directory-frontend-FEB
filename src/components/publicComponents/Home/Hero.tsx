@@ -10,35 +10,35 @@ const SLIDES = [
     id: 1,
     title: "Education",
     image: "/assets/publicAssets/images/home/Education.webp",
-    video: "/assets/publicAssets/videos/Home/Education.mp4",
+    video: "/assets/publicAssets/videos/Home/Education.webm",
     frame: "/assets/publicAssets/images/home/heroFrames/Education.webp",
   },
   {
     id: 2,
     title: "Gardening",
     image: "/assets/publicAssets/images/home/Gardening.webp",
-    video: "/assets/publicAssets/videos/Home/Gardening.mp4",
+    video: "/assets/publicAssets/videos/Home/Gardening.webm",
     frame: "/assets/publicAssets/images/home/heroFrames/Gardening.webp",
   },
   {
     id: 3,
     title: "Consulting",
     image: "/assets/publicAssets/images/home/Consulting.webp",
-    video: "/assets/publicAssets/videos/Home/Consulting.mp4",
+    video: "/assets/publicAssets/videos/Home/Consulting.webm",
     frame: "/assets/publicAssets/images/home/heroFrames/Consulting.webp",
   },
   {
     id: 4,
     title: "Restaurant",
     image: "/assets/publicAssets/images/home/Restaurant.webp",
-    video: "/assets/publicAssets/videos/Home/Restaurant.mp4",
+    video: "/assets/publicAssets/videos/Home/Restaurant.webm",
     frame: "/assets/publicAssets/images/home/heroFrames/Restaurant.webp",
   },
   {
     id: 5,
     title: "Plumbing",
     image: "/assets/publicAssets/images/home/Plumbing.webp",
-    video: "/assets/publicAssets/videos/Home/Plumbing.mp4",
+    video: "/assets/publicAssets/videos/Home/Plumbing.webm",
     frame: "/assets/publicAssets/images/home/heroFrames/Plumbing.webp",
   },
 ];
@@ -58,8 +58,8 @@ function styleFor(offset: number, isMobile: boolean): React.CSSProperties {
 
   const side = Math.sign(offset);
   const depth = clamp(Math.abs(offset), 1, 2);
-  const tx = (isMobile ? 38 : 48) * side * depth;
-  const ry = (isMobile ? 14 : 18) * side * depth;
+  const tx = (isMobile ? 44 : 48) * side * depth;
+  const ry = (isMobile ? 12 : 18) * side * depth;
   const tz = -160 * depth;
   const sc = 0.9 - (depth - 1) * 0.08;
 
@@ -391,7 +391,7 @@ export default function HeroDepthCarousel() {
             let off = i - index;
             if (off > SLIDES.length / 2) off -= SLIDES.length;
             if (off < -SLIDES.length / 2) off += SLIDES.length;
-            const shouldLoadImage = isMobile ? off === 0 : Math.abs(off) <= 1;
+            const shouldLoadImage = Math.abs(off) <= 1;
             const isCenter = off === 0;
 
             return (
