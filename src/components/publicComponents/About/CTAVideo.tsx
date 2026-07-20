@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useEffect, useRef, useState } from "react";
-const CTAVideo = "/assets/publicAssets/videos/About/aboutCTA.mp4";
+const CTAVideo = "/assets/publicAssets/videos/About/aboutCTA.webm";
 const CTAPoster = "/assets/publicAssets/images/about/aboutUsCta.webp";
 const uniqueLinesbg = "/assets/publicAssets/images/common/uniqueLinesbg.webp";
 

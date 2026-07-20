@@ -8,9 +8,10 @@ import SidebarDropdownItem from "./SidebarDropdownItem";
 
 // Logo imports
 import WhiteLogo from "/assets/images/header/WhiteLogo.png";
-import BlackLogo from "../../../assets/images/BlackLogo.webp";
-import LogoBlackSmall from "../../../assets/images/LogoBlackSmall.webp";
-import LogoWhiteSmall from "../../../assets/images/LogoWhiteSmall.webp";
+
+const BlackLogo = "/assets/images/BlackLogo.webp";
+const LogoBlackSmall = "/assets/images/LogoBlackSmall.webp";
+const LogoWhiteSmall = "/assets/images/LogoWhiteSmall.webp";
 
 /**
  * CollapsibleSidebar - Main sidebar with collapse toggle

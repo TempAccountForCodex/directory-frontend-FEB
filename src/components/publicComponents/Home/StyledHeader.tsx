@@ -35,7 +35,7 @@ import { SparklesCore } from "../../UI/shadcn-io/sparkles";
 
 const HeroVideo1 = "/assets/publicAssets/videos/Home/hero7.mp4";
 
-const HeroImage1 = "/assets/publicAssets/images/home/3d(1).png";
+const HeroImage1 = "/assets/publicAssets/images/home/3d(1).webp";
 
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";

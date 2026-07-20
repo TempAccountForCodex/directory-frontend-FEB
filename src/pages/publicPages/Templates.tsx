@@ -42,7 +42,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/blog.png",
+    previewImage: "/assets/templateAssets/images/dummy/blog.webp",
   },
   {
     id: "static-blog-premium",
@@ -53,7 +53,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/blog-premium.png",
+    previewImage: "/assets/templateAssets/images/dummy/blog-premium.webp",
   },
   {
     id: "static-portfolio-creative",
@@ -64,7 +64,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "portfolio",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/portfolioCreative.png",
+    previewImage: "/assets/templateAssets/images/dummy/portfolioCreative.webp",
   },
   {
     id: "static-portfolio-agency",
@@ -74,7 +74,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "agency",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/portfolioAgency.png",
+    previewImage: "/assets/templateAssets/images/dummy/portfolioAgency.webp",
   },
   {
     id: "static-portfolio-photo-studio",
@@ -86,7 +86,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     category: "portfolio",
     version: "1.0.0",
     previewImage:
-      "/assets/templateAssets/images/dummy/portfolio-photo-studio.png",
+      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
   },
   {
     id: "static-store-basic",
@@ -97,7 +97,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storeBasic.png",
+    previewImage: "/assets/templateAssets/images/dummy/storeBasic.webp",
   },
   {
     id: "static-store-premium",
@@ -108,7 +108,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storePremium.png",
+    previewImage: "/assets/templateAssets/images/dummy/storePremium.webp",
   },
   {
     id: "static-store-performance",
@@ -119,7 +119,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storePerformance.png",
+    previewImage: "/assets/templateAssets/images/dummy/storePerformance.webp",
   },
   {
     id: "static-store-fit",
@@ -130,7 +130,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storefit.png",
+    previewImage: "/assets/templateAssets/images/dummy/storefit.webp",
   },
   {
     id: "static-store-paws",
@@ -141,7 +141,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storePaws.png",
+    previewImage: "/assets/templateAssets/images/dummy/storePaws.webp",
   },
   {
     id: "static-company",
@@ -152,7 +152,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/company.png",
+    previewImage: "/assets/templateAssets/images/dummy/company.webp",
   },
   {
     id: "static-company-premium",
@@ -163,7 +163,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/company-premium.png",
+    previewImage: "/assets/templateAssets/images/dummy/company-premium.webp",
   },
   {
     id: "static-company-executive",
@@ -174,7 +174,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/companyExecutive.png",
+    previewImage: "/assets/templateAssets/images/dummy/companyExecutive.webp",
   },
   {
     id: "static-gardening",
@@ -185,7 +185,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "business",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/gardening.png",
+    previewImage: "/assets/templateAssets/images/dummy/gardening.webp",
   },
   {
     id: "static-education",
@@ -196,7 +196,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "education",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/education.png",
+    previewImage: "/assets/templateAssets/images/dummy/education.webp",
   },
   {
     id: "static-consulting",
@@ -207,7 +207,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "agency",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/consulting.png",
+    previewImage: "/assets/templateAssets/images/dummy/consulting.webp",
   },
   {
     id: "static-restaurant",
@@ -218,7 +218,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "restaurant",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/restaurant.png",
+    previewImage: "/assets/templateAssets/images/dummy/restaurant.webp",
   },
   {
     id: "static-plumbing",
@@ -229,7 +229,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "business",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/plumbing.png",
+    previewImage: "/assets/templateAssets/images/dummy/plumbing.webp",
   },
 ];
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography, useTheme, keyframes } from "@mui/material";
 
-const NotFoundSVG = "/assets/publicAssets/images/notFound/bg.png";
+const NotFoundSVG = "/assets/publicAssets/images/notFound/bg.webp";
 
 const breathing = keyframes`
   0% { transform: scale(1); }

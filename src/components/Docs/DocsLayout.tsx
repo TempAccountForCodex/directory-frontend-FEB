@@ -28,8 +28,9 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import DocSearch from "./DocSearch";
 import { getSeedSections, SEED_ARTICLES } from "../../data/docs";
-import LightDocsLogo from "../../assets/images/BlackLogo.webp";
-import CompactDocsLogo from "../../assets/images/navbar/collapsedLogo.png";
+
+const LightDocsLogo = "/assets/images/BlackLogo.webp";
+const CompactDocsLogo = "/assets/images/navbar/collapsedLogo.webp";
 import {
   DOCS,
   DOCS_THEME_CSS,

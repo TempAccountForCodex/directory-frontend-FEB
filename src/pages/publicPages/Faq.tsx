@@ -15,7 +15,7 @@ import HeroBannerSection from "../../utils/commons/HeroImageSectionV2";
 import FAQCardLayout from "../../components/publicComponents/faq/FAQAccordion";
 
 const FAQ_BG = "/assets/publicAssets/images/blog/hero.jpg";
-const LeftCard = "/assets/publicAssets/images/blog/form-bg-first.jpg";
+const LeftCard = "/assets/publicAssets/images/blog/form-bg-first.webp";
 
 const Faq = () => {
   const [formData, setFormData] = useState({

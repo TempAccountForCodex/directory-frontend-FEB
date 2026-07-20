@@ -3617,8 +3617,8 @@ const WebsiteEditorInner = () => {
   const pendingWebsitesReloadRef = useRef(false);
 
   const reloadWebsitesDashboard = useCallback(() => {
-    window.location.assign("/dashboard/websites");
-  }, []);
+    window.location.assign(`/dashboard/websites/${websiteId}/manage`);
+  }, [websiteId]);
 
   const handleBackToWebsites = useCallback(() => {
     pendingWebsitesReloadRef.current = true;
@@ -3630,7 +3630,7 @@ const WebsiteEditorInner = () => {
       flushSync(() => {
         setNavigationUnsavedChanges(true);
       });
-      navigate("/dashboard/websites/");
+      navigate(`/dashboard/websites/${websiteId}/manage`);
       return;
     }
 

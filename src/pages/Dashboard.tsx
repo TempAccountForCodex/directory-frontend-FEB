@@ -5,9 +5,10 @@ import { useTheme as useCustomTheme } from "../context/ThemeContext";
 import { getDashboardColors } from "../styles/dashboardTheme";
 import DashboardLayout from "../components/Dashboard/Dashboard";
 import { Box, Typography } from "@mui/material";
-import dashboardStars from "../assets/common/star.svg";
-import dashboardDarkHole from "../assets/common/darkhole.svg";
-import brandIcon from "../assets/images/navbar/collapsedLogo.png";
+
+const dashboardStars = "/assets/common/star.svg";
+const dashboardDarkHole = "/assets/common/darkhole.svg";
+const brandIcon = "/assets/images/navbar/collapsedLogo.webp";
 
 const Dashboard = () => {
   const navigate = useNavigate();

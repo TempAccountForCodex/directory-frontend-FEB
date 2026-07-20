@@ -3,7 +3,8 @@ import { Box, Typography, Button, Container, Stack, Grid } from "@mui/material";
 import { styled } from "@mui/system";
 import { motion } from "framer-motion";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import videobg from "../../assets/video/hero8.mp4";
+
+const videobg = "/assets/video/hero8.mp4";
 
 const containerVariants = {
   hidden: { opacity: 0 },

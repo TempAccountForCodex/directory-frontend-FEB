@@ -1,4 +1,4 @@
-// import realStateLogo from "../../assets/images/agreement.png";
+// import realStateLogo from "../../assets/images/agreement.webp";
 // import shoppingLogo from "../../assets/images/online-shopping.png";
 import { type PropertyItem } from "../Listing/PropertyCardItem";
 

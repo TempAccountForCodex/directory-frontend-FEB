@@ -5,10 +5,10 @@ const DARK_THEME = {
   subText: "#555555",
 };
 
-const template = "/assets/publicAssets/images/home/templatesAi.jpg";
-const aiImage = "/assets/publicAssets/images/home/aiImage.jpg";
-const businessListing = "/assets/publicAssets/images/home/businessListing.jpg";
-const copyWrite = "/assets/publicAssets/images/home/copyWrite.jpg";
+const template = "/assets/publicAssets/images/home/templatesAi.webp";
+const aiImage = "/assets/publicAssets/images/home/aiImage.webp";
+const businessListing = "/assets/publicAssets/images/home/businessListing.webp";
+const copyWrite = "/assets/publicAssets/images/home/copyWrite.webp";
 
 const WebsiteWorksSection = () => {
   const cards = [

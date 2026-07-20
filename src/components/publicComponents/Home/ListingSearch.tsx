@@ -36,9 +36,9 @@ const TRENDING_CATEGORIES = [
 ];
 
 const avatars = [
-  "/assets/publicAssets/images/home/avatar1-sm.jpg",
-  "/assets/publicAssets/images/home/avatar2-sm.jpg",
-  "/assets/publicAssets/images/home/avatar3-sm.jpg",
+  "/assets/publicAssets/images/home/avatar1-sm.webp",
+  "/assets/publicAssets/images/home/avatar2-sm.webp",
+  "/assets/publicAssets/images/home/avatar3-sm.webp",
 ];
 
 const SearchDiscoverSection: React.FC = () => {

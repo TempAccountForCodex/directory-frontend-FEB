@@ -6,7 +6,7 @@ import SectionHeader from "../../UI/SectionHeader";
 const videoSrc: string =
   "/assets/publicAssets/videos/About/bg_test2_compressed.mp4";
 const bgVideoSrc: string =
-  "/assets/publicAssets/videos/About/why-choose-us-bg.mp4";
+  "/assets/publicAssets/videos/About/why-choose-us-bg.webm";
 
 const Wrapper = styled(Box)(({ theme }) => ({
   position: "relative",

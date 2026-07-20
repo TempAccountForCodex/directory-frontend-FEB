@@ -1,8 +1,9 @@
 import { createTheme } from '@mui/material';
 import mainTheme from './theme';
-import dashboardStars from '../assets/common/star.svg';
-import dashboardDarkHole from '../assets/common/darkhole.svg';
-import lightModeBg from '../assets/dashboard/bg.jpeg';
+
+const dashboardStars = '/assets/common/star.svg';
+const dashboardDarkHole = '/assets/common/darkhole.svg';
+const lightModeBg = '/assets/dashboard/bg.jpeg';
 
 const dashboardFontFamily =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"';

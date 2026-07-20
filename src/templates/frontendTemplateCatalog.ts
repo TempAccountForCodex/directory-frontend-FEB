@@ -26,7 +26,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/blog.png",
+    previewImage: "/assets/templateAssets/images/dummy/blog.webp",
     pageCount: 3,
   },
   {
@@ -38,7 +38,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/blog-premium.png",
+    previewImage: "/assets/templateAssets/images/dummy/blog-premium.webp",
     pageCount: 3,
   },
   {
@@ -50,7 +50,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "portfolio",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/portfolioCreative.png",
+    previewImage: "/assets/templateAssets/images/dummy/portfolioCreative.webp",
     pageCount: 3,
   },
   {
@@ -61,7 +61,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "agency",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/portfolioAgency.png",
+    previewImage: "/assets/templateAssets/images/dummy/portfolioAgency.webp",
     pageCount: 3,
   },
   {
@@ -74,7 +74,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     category: "portfolio",
     version: "1.0.0",
     previewImage:
-      "/assets/templateAssets/images/dummy/portfolio-photo-studio.png",
+      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
     pageCount: 4,
   },
   {
@@ -86,7 +86,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storeBasic.png",
+    previewImage: "/assets/templateAssets/images/dummy/storeBasic.webp",
     pageCount: 3,
   },
   {
@@ -98,7 +98,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storePremium.png",
+    previewImage: "/assets/templateAssets/images/dummy/storePremium.webp",
     pageCount: 3,
   },
   {
@@ -110,7 +110,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storePerformance.png",
+    previewImage: "/assets/templateAssets/images/dummy/storePerformance.webp",
     pageCount: 3,
   },
   {
@@ -122,7 +122,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storefit.png",
+    previewImage: "/assets/templateAssets/images/dummy/storefit.webp",
     pageCount: 3,
   },
   {
@@ -134,7 +134,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "store",
     category: "ecommerce",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/storePaws.png",
+    previewImage: "/assets/templateAssets/images/dummy/storePaws.webp",
     pageCount: 3,
   },
   {
@@ -146,7 +146,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/company.png",
+    previewImage: "/assets/templateAssets/images/dummy/company.webp",
     pageCount: 3,
   },
   {
@@ -158,7 +158,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/company-premium.png",
+    previewImage: "/assets/templateAssets/images/dummy/company-premium.webp",
     pageCount: 3,
   },
   {
@@ -170,7 +170,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "saas",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/companyExecutive.png",
+    previewImage: "/assets/templateAssets/images/dummy/companyExecutive.webp",
     pageCount: 3,
   },
   {
@@ -182,7 +182,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "business",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/gardening.png",
+    previewImage: "/assets/templateAssets/images/dummy/gardening.webp",
     pageCount: 3,
   },
   {
@@ -194,7 +194,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "education",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/education.png",
+    previewImage: "/assets/templateAssets/images/dummy/education.webp",
     pageCount: 3,
   },
   {
@@ -206,7 +206,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "restaurant",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/restaurant.png",
+    previewImage: "/assets/templateAssets/images/dummy/restaurant.webp",
     pageCount: 3,
   },
   {
@@ -218,7 +218,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "business",
     version: "1.0.0",
-    previewImage: "/assets/templateAssets/images/dummy/plumbing.png",
+    previewImage: "/assets/templateAssets/images/dummy/plumbing.webp",
     pageCount: 3,
   },
 ];

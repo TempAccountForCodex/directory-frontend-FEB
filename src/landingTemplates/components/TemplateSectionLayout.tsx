@@ -3,17 +3,18 @@ import Box, { type BoxProps } from "@mui/material/Box";
 import Container, {
   type ContainerProps,
 } from "@mui/material/Container";
+import type { SxProps, Theme } from "@mui/material/styles";
 import {
   getSectionStyleDomProps,
   getSectionStyleSx,
 } from "../utils/sectionStyle";
 
 type ContentLike = Record<string, any> | null | undefined;
-type StyleObject = Record<string, any>;
+type SectionStyleKey = "sectionStyle" | "outerSectionStyle" | "cardStyle";
 
 export function sectionHasPersistentBackground(
   content: ContentLike,
-  styleKey = "outerSectionStyle",
+  styleKey: SectionStyleKey = "outerSectionStyle",
 ) {
   const style = content?.[styleKey];
   if (!style || typeof style !== "object") return false;
@@ -30,14 +31,15 @@ export function sectionHasPersistentBackground(
   );
 }
 
-interface TemplateSectionBoundaryProps extends Omit<BoxProps, "sx"> {
+interface TemplateSectionBoundaryProps
+  extends Omit<BoxProps, "sx" | "content" | "order"> {
   blockId: string | number | undefined;
   label: string;
   sectionKey: string;
   content: ContentLike;
-  styleKey?: string;
+  styleKey?: SectionStyleKey;
   order?: number;
-  sx?: StyleObject;
+  sx?: SxProps<Theme>;
 }
 
 /** Persistent top-level section boundary shared by template renderers. */
@@ -47,7 +49,7 @@ export function TemplateSectionBoundary({
   sectionKey,
   content,
   styleKey = "outerSectionStyle",
-  order,
+  order: sectionOrder,
   sx,
   children,
   ...rest
@@ -59,6 +61,8 @@ export function TemplateSectionBoundary({
     styleKey === "outerSectionStyle"
       ? getSectionStyleSx(content, "sectionStyle")
       : {};
+  const resolvedOrder =
+    typeof sectionOrder === "number" ? sectionOrder : undefined;
 
   return (
     <Box
@@ -75,12 +79,14 @@ export function TemplateSectionBoundary({
         ? getSectionStyleDomProps(content, "sectionStyle")
         : {})}
       {...getSectionStyleDomProps(content, styleKey)}
-      sx={{
-        order,
-        ...legacySectionStyle,
-        ...getSectionStyleSx(content, styleKey),
-        ...(sx || {}),
-      }}
+      sx={[
+        {
+          ...(resolvedOrder !== undefined ? { order: resolvedOrder } : {}),
+          ...legacySectionStyle,
+          ...getSectionStyleSx(content, styleKey),
+        },
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     >
       {children}
     </Box>
@@ -90,7 +96,7 @@ export function TemplateSectionBoundary({
 interface TemplateInnerContainerProps
   extends Omit<ContainerProps, "maxWidth" | "sx"> {
   maxWidth?: ContainerProps["maxWidth"];
-  sx?: StyleObject;
+  sx?: SxProps<Theme>;
 }
 
 /** Standard page-width container used inside template section boundaries. */
@@ -112,13 +118,13 @@ export function TemplateInnerContainer({
   );
 }
 
-interface TemplateSectionContentProps extends Omit<BoxProps, "sx"> {
+interface TemplateSectionContentProps extends Omit<BoxProps, "sx" | "content"> {
   blockId: string | number | undefined;
   label: string;
   content: ContentLike;
-  styleKey?: string;
+  styleKey?: SectionStyleKey;
   acceptsInnerBlocks?: boolean;
-  sx?: StyleObject;
+  sx?: SxProps<Theme>;
 }
 
 /** Structural content surface; the parent boundary owns section styling. */

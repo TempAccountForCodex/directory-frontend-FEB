@@ -27,7 +27,8 @@ import {
 } from "@mui/icons-material";
 
 import ParticlesBackground from "@/components/UI/ParticlesBackground";
-import comingSoonHeading from "@/assets/images/coming-soon-1.png";
+
+const comingSoonHeading = "/assets/images/Coming-soon-1.webp";
 
 const SYSTEM_FONT =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
@@ -296,7 +297,6 @@ const modalActionBaseSx = {
 const ComingSoon = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
@@ -350,12 +350,6 @@ const ComingSoon = () => {
       return;
     }
 
-    if (honeypot) {
-      setStatus("success");
-      setMessage("Your early-access request has been submitted.");
-      return;
-    }
-
     if (!GOOGLE_SHEETS_WEB_APP_URL) {
       setStatus("error");
       setMessage(
@@ -378,7 +372,7 @@ const ComingSoon = () => {
           name: name.trim(),
           email: email.trim(),
           termsAccepted,
-          website: honeypot,
+          website: "",
           source: "early-access",
         }),
       });
@@ -924,22 +918,6 @@ const ComingSoon = () => {
                   )}
                 </Button>
               </Box>
-
-              <Box
-                component="input"
-                name="website"
-                value={honeypot}
-                onChange={(event) => setHoneypot(event.target.value)}
-                tabIndex={-1}
-                autoComplete="off"
-                aria-hidden="true"
-                sx={{
-                  position: "absolute !important",
-                  left: "-9999px",
-                  width: "1px !important",
-                  height: "1px",
-                }}
-              />
 
               {status === "error" && (
                 <Box

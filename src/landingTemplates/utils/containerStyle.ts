@@ -10,7 +10,9 @@ export const getStructuralContainerId = (element: Element): string => {
   while (current && current !== boundary) {
     const parent = current.parentElement;
     if (!parent) break;
-    const stableSiblings = Array.from(parent.children).filter(
+    const stableSiblings = Array.from<Element>(
+      parent.children as HTMLCollectionOf<Element>,
+    ).filter(
       (child) =>
         child.getAttribute("data-editor-container-background-video") !==
           "true" && child.getAttribute("data-editor-runtime-node") !== "true",

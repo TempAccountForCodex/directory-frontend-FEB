@@ -88,11 +88,12 @@ import PerformanceMonitoring from "../../pages/PerformanceMonitoring";
 import { DashboardActionButton, DashboardDateField, PageHeader, DealBanner } from "./shared";
 import { getDashboardTheme, getDashboardColors } from "../../styles/dashboardTheme";
 import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-import dashboardStars from "../../assets/common/star.svg";
-import dashboardDarkHole from "../../assets/common/darkhole.svg";
-import brandIcon from "../../assets/images/navbar/collapsedLogo.png";
 import { isAdmin, isSuperAdmin, hasRole, isContentManager, ROLES } from "../../constants/roles";
 import { API_URL } from '@/config/api';
+
+const dashboardStars = "/assets/common/star.svg";
+const dashboardDarkHole = "/assets/common/darkhole.svg";
+const brandIcon = "/assets/images/navbar/collapsedLogo.webp";
 
 // Collapsible sidebar dimensions
 const SIDEBAR_COLLAPSED_WIDTH = 70;
@@ -2380,4 +2381,3 @@ const Dashboard = ({ user }) => {
 };
 
 export default Dashboard;
-
