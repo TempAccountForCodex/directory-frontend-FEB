@@ -3,18 +3,15 @@ import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { Facebook, Instagram, Mail, Twitter } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
 import FadeIn from "../../blocks/FadeIn";
+import { storeAssets } from "../../assets/store/store-basic";
 
 const visualAssets = {
-  hero: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
-  band: "https://img.freepik.com/free-photo/modern-living-room-with-elegant-decor-comfortable-sofa-generative-ai_188544-8691.jpg?t=st=1773352993~exp=1773356593~hmac=6c2af845b69e04b537df7e61d453248bcb1c81e6b25d95d99d467cec089160f5&w=2000",
-  about:
-    "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80",
-  cookOne:
-    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
-  cookTwo:
-    "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80",
-  cookThree:
-    "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80",
+  hero: storeAssets.basicHero,
+  band: storeAssets.basicLivingRoom,
+  about: storeAssets.basicInterior,
+  cookOne: storeAssets.basicHero,
+  cookTwo: storeAssets.basicHome,
+  cookThree: storeAssets.basicInterior,
 };
 
 const headingFont =
@@ -41,8 +38,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         category: "3-Seater",
         description:
           "Soft sculpted silhouette with deep seating, tailored upholstery, and a calm contemporary profile.",
-        image:
-          "https://img.freepik.com/free-photo/interior-lifestyle-decoration-room-white_1203-4467.jpg?uid=R205766258&ga=GA1.1.355267885.1764683677&semt=ais_rp_progressive&w=740&q=80",
+        image: storeAssets.basicDecor,
       },
       {
         id: "basic-2",
@@ -51,8 +47,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         category: "Sectional",
         description:
           "Flexible modular seating system designed for open-plan living rooms and refined everyday comfort.",
-        image:
-          "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=700&q=80",
+        image: storeAssets.basicHome,
       },
       {
         id: "basic-3",
@@ -61,8 +56,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
         category: "Compact",
         description:
           "Compact urban sofa with linen texture, relaxed proportions, and warm minimalist detailing.",
-        image:
-          "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=700&q=80",
+        image: storeAssets.basicInterior,
       },
     ],
     [],
@@ -114,8 +108,7 @@ const StoreBasicTemplate: React.FC<TemplateProps> = ({ data }) => {
     { label: "About", id: "about" },
     { label: "Contact", id: "contact" },
   ];
-  const logoSrc =
-    data.logoUrl || "https://cdn-icons-png.freepik.com/128/1198/1198419.png";
+  const logoSrc = data.logoUrl || storeAssets.basicLogo;
   const tickerText = makeTicker([
     "Modern sofas for calm interiors",
     "Built for any furniture brand story",

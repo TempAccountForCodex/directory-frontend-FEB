@@ -177,6 +177,17 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     previewImage: "/assets/templateAssets/images/dummy/companyExecutive.webp",
   },
   {
+    id: "static-company-pro",
+    slug: "company-pro",
+    name: "Company Pro",
+    description:
+      "Editorial company template with sculptural portraiture, serif-led storytelling, structured services, and a high-impact call to action.",
+    type: "website",
+    category: "business",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/companyProEditorial.png",
+  },
+  {
     id: "static-gardening",
     slug: "gardening",
     name: "Gardening",

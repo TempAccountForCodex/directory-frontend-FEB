@@ -20,6 +20,7 @@ import FadeIn from "../../blocks/FadeIn";
 import type { TemplateProps } from "../../templateEngine/types";
 import type { TemplateChromeProps } from "../../templateEngine/templateChromeRegistry";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+import { premiumAssets } from "../../assets/premium/premium";
 
 const CONSULTING_CONTACT_FIELDS = [
   { label: "Your Name" },
@@ -141,8 +142,7 @@ function ConsultingStudioHeader({ data }: { data: TemplateProps["data"] }) {
 }
 
 function ConsultingStudioHero({ data }: { data: TemplateProps["data"] }) {
-  const heroImage =
-    "https://static.wixstatic.com/media/c837a6_66240e362627410599bbeee77e0bac94~mv2.jpg/v1/fill/w_1318,h_718,fp_0.50_0.50,q_85,usm_0.66_1.00_0.01,enc_auto/c837a6_66240e362627410599bbeee77e0bac94~mv2.jpg";
+  const heroImage = premiumAssets.consultingTeam;
 
   return (
     <Box

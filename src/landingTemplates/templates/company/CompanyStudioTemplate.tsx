@@ -48,6 +48,7 @@ import {
   humanizeEditorBlockKey,
   renderEditorSharedBlock,
 } from "../../blocks";
+import { companyStudioAssets } from "../../assets/company/company-executive";
 
 const palette = {
   bg: "#f4efe7",
@@ -77,23 +78,15 @@ const navigationSectionOrder = defaultSectionOrder.filter(
 );
 
 const visualSet = {
-  heroPortrait:
-    "https://themejunction.net/html/bexon/demo/assets/images/hero/h7-hero-banner.webp",
-  strategy:
-    "https://themejunction.net/html/bexon/demo/assets/images/about/about-5.webp",
-  team: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80",
-  office:
-    "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1400&q=80",
-  boardroom:
-    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80",
-  avatarOne:
-    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
-  avatarTwo:
-    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80",
-  avatarThree:
-    "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?auto=format&fit=crop&w=240&q=80",
-  avatarFour:
-    "https://images.unsplash.com/photo-1494790108755-2616b612b786?auto=format&fit=crop&w=240&q=80",
+  heroPortrait: companyStudioAssets.heroPortrait,
+  strategy: companyStudioAssets.strategy,
+  team: companyStudioAssets.team,
+  office: companyStudioAssets.office,
+  boardroom: companyStudioAssets.boardroom,
+  avatarOne: companyStudioAssets.avatars[0],
+  avatarTwo: companyStudioAssets.avatars[1],
+  avatarThree: companyStudioAssets.avatars[2],
+  avatarFour: companyStudioAssets.avatars[3],
 };
 
 const heroStagger = {
@@ -665,9 +658,9 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
                     bgcolor: rgba(themeHighlight, 0.48),
                     opacity: 0.42,
                     backgroundImage:
-                      "url(https://themejunction.net/html/bexon/demo/assets/images/bg/map.svg)",
+                      `url(${companyStudioAssets.worldMap})`,
                     maskImage:
-                      "url(https://themejunction.net/html/bexon/demo/assets/images/bg/map.svg)",
+                      `url(${companyStudioAssets.worldMap})`,
                     WebkitMaskRepeat: "no-repeat",
                     maskRepeat: "no-repeat",
                     WebkitMaskPosition: "center",
@@ -3546,9 +3539,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       bgcolor: rgba(themeHighlight, 0.48),
                       opacity: 0.42,
                       backgroundImage:
-                        "url(https://themejunction.net/html/bexon/demo/assets/images/bg/map.svg)",
+                        `url(${companyStudioAssets.worldMap})`,
                       maskImage:
-                        "url(https://themejunction.net/html/bexon/demo/assets/images/bg/map.svg)",
+                        `url(${companyStudioAssets.worldMap})`,
                       WebkitMaskRepeat: "no-repeat",
                       maskRepeat: "no-repeat",
                       WebkitMaskPosition: "center",
@@ -3788,8 +3781,8 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             </Box>
           </Box>
         </Container>
+        {renderCustomSectionsAfterLastDefault()}
       </Box>
-      {renderCustomSectionsAfterLastDefault()}
     </Box>
   );
 };

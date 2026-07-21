@@ -1,4 +1,10 @@
 import { BusinessData } from "../../../../landingTemplates/types/BusinessData";
+import { companyStudioAssets } from "../../../../landingTemplates/assets/company/company-executive";
+import { educationAssets } from "../../../../landingTemplates/assets/education/education";
+import { gardeningAssets } from "../../../../landingTemplates/assets/gardening/gardening";
+import { plumbingAssets } from "../../../../landingTemplates/assets/plumbing/plumbing";
+import { portfolioAssets } from "../../../../landingTemplates/assets/portfolio/portfolio-agency";
+import { restaurantAssets } from "../../../../landingTemplates/assets/restaurant/restaurant";
 
 export const educationData: BusinessData = {
   name: "Bright Minds Academy",
@@ -7,10 +13,8 @@ export const educationData: BusinessData = {
     "A premier education center offering expert tutoring, enrichment programs, and skill development for students K-12 and beyond.",
   primaryColor: "#2563eb",
   secondaryColor: "#60a5fa",
-  heroBannerUrl:
-    "https://img.freepik.com/free-photo/entrepreneurs-meeting-office_23-2148898688.jpg?t=st=1774906209~exp=1774909809~hmac=f5e98a3859cfd04f6ffd4a2221e316ec55909dd4a8c0f73fa3c9a7c0bc083bea&w=1480",
-  logoUrl:
-    "https://img.freepik.com/free-vector/vector-education-logo_779267-2059.jpg",
+  heroBannerUrl: educationAssets.classroomLearning,
+  logoUrl: educationAssets.educationLogo,
   services: [
     {
       name: "Math & Science Tutoring",
@@ -45,27 +49,27 @@ export const educationData: BusinessData = {
   ],
   gallery: [
     {
-      url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800",
+      url: educationAssets.classroomLearning,
       caption: "Classroom learning",
     },
     {
-      url: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800",
+      url: educationAssets.groupStudy,
       caption: "Group study",
     },
     {
-      url: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800",
+      url: educationAssets.studentTutoring,
       caption: "One-on-one tutoring",
     },
     {
-      url: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=800",
+      url: educationAssets.scienceLab,
       caption: "Science lab",
     },
     {
-      url: "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?w=800",
+      url: educationAssets.graduationDay,
       caption: "Graduation day",
     },
     {
-      url: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800",
+      url: educationAssets.onlineClass,
       caption: "Online session",
     },
   ],
@@ -114,8 +118,7 @@ export const gardeningData: BusinessData = {
     "Professional landscaping, garden design, and lawn care services for residential and commercial properties across the region.",
   primaryColor: "#3f8f2f",
   secondaryColor: "#7fd453",
-  logoUrl:
-    "https://img.freepik.com/free-vector/home-leaf-logo-design-template_474888-4559.jpg",
+  logoUrl: gardeningAssets.plantCare,
   services: [
     {
       name: "Garden Design",
@@ -155,27 +158,27 @@ export const gardeningData: BusinessData = {
   ],
   gallery: [
     {
-      url: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800",
+      url: gardeningAssets.gardenLandscape,
       caption: "English garden",
     },
     {
-      url: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800",
+      url: gardeningAssets.greenhouse,
       caption: "Patio design",
     },
     {
-      url: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800",
+      url: gardeningAssets.plantCare,
       caption: "Plant selection",
     },
     {
-      url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+      url: gardeningAssets.gardenerTeam,
       caption: "Lawn care",
     },
     {
-      url: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800",
+      url: gardeningAssets.gardenSoil,
       caption: "Flower beds",
     },
     {
-      url: "https://images.unsplash.com/photo-1505471768190-275e2ad7b3f9?w=800",
+      url: gardeningAssets.gardenLandscape,
       caption: "Irrigation",
     },
   ],
@@ -261,27 +264,27 @@ export const consultingData: BusinessData = {
   ],
   gallery: [
     {
-      url: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1400&q=80",
+      url: companyStudioAssets.strategy,
       caption: "Financial planning review",
     },
     {
-      url: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&w=1200&q=80",
+      url: companyStudioAssets.boardroom,
       caption: "Capital and cash analysis",
     },
     {
-      url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+      url: portfolioAssets.agencyWorkspace,
       caption: "Performance dashboard strategy",
     },
     {
-      url: "https://images.unsplash.com/photo-1559526324-593bc073d938?auto=format&fit=crop&w=1200&q=80",
+      url: companyStudioAssets.office,
       caption: "Board-level finance discussion",
     },
     {
-      url: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=80",
+      url: companyStudioAssets.team,
       caption: "Advisory meeting",
     },
     {
-      url: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80",
+      url: companyStudioAssets.strategy,
       caption: "Financial model review",
     },
   ],
@@ -327,10 +330,8 @@ export const restaurantData: BusinessData = {
     "A family-owned Italian restaurant bringing the flavors of Rome and Tuscany to your table. Fresh pasta made daily, wood-fired pizzas, and an award-winning wine list.",
   primaryColor: "#c0392b",
   secondaryColor: "#e74c3c",
-  logoUrl:
-    "https://img.freepik.com/free-vector/restaurant-logo-template_23-2149493636.jpg",
-  heroBannerUrl:
-    "https://img.freepik.com/free-photo/side-view-woman-eating-beef-meat-salad-with-vegetables-corns_141793-3020.jpg?t=st=1774473113~exp=1774476713~hmac=37093ae62703d58a25d07df73dd4c4df407ca49838c0eeb4de8623e07e38fe3d&w=1480",
+  logoUrl: restaurantAssets.restaurantInterior,
+  heroBannerUrl: restaurantAssets.luxuryDining,
 
   services: [
     {
@@ -370,27 +371,27 @@ export const restaurantData: BusinessData = {
   ],
   gallery: [
     {
-      url: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",
+      url: restaurantAssets.grilledSteak,
       caption: "Signature pasta",
     },
     {
-      url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800",
+      url: restaurantAssets.gourmetBurger,
       caption: "Wood-fired pizza",
     },
     {
-      url: "https://images.unsplash.com/photo-1551183053-bf91798d047e?w=800",
+      url: restaurantAssets.restaurantTable,
       caption: "Dining atmosphere",
     },
     {
-      url: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800",
+      url: restaurantAssets.restaurantInterior,
       caption: "Wine selection",
     },
     {
-      url: "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=800",
+      url: restaurantAssets.classicBurger,
       caption: "Seasonal menu",
     },
     {
-      url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800",
+      url: restaurantAssets.luxuryDining,
       caption: "Chef's special",
     },
   ],
@@ -436,10 +437,8 @@ export const plumbingData: BusinessData = {
     "Licensed and insured plumbing professionals serving the greater metro area. From emergency repairs to full bathroom remodels, we handle every job with skill and integrity.",
   primaryColor: "#1f4f9d",
   secondaryColor: "#4fa0ff",
-  heroBannerUrl:
-    "https://cdn.prod.website-files.com/68ce363cc9e814fa40d285fd/68ceeb8c65230295abdded06_hero-images.jpg",
-  logoUrl:
-    "https://cdn.prod.website-files.com/6547936d846495322411f845/6639f018ff54046206362fdb_Plumco.svg",
+  heroBannerUrl: plumbingAssets.plumbingHero,
+  logoUrl: plumbingAssets.serviceThumbnail,
 
   services: [
     {
@@ -478,27 +477,27 @@ export const plumbingData: BusinessData = {
   ],
   gallery: [
     {
-      url: "https://cdn.prod.website-files.com/68ce363cc9e814fa40d285fd/68d0b4823eb502d9b0fda318_about-image.jpg",
+      url: plumbingAssets.plumberService,
       caption: "Pipe installation",
     },
     {
-      url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+      url: plumbingAssets.bathroomRenovation,
       caption: "Bathroom remodel",
     },
     {
-      url: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800",
+      url: plumbingAssets.pipeRepair,
       caption: "Water heater",
     },
     {
-      url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800",
+      url: plumbingAssets.constructionWorker,
       caption: "Drain service",
     },
     {
-      url: "https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=800",
+      url: plumbingAssets.serviceTeam,
       caption: "Inspection",
     },
     {
-      url: "https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?w=800",
+      url: plumbingAssets.serviceThumbnail,
       caption: "Fixture install",
     },
   ],

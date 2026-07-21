@@ -20,30 +20,22 @@ import {
 } from "../../utils/editableProps";
 import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
 import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
+import { portfolioAssets } from "../../assets/portfolio/portfolio-photo-studio";
 
 const headingFont = '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Inter", "Segoe UI", sans-serif';
 
 const fallbackImages = {
-  hero: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1400&q=80",
-  introOne:
-    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
-  introTwo:
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
-  service:
-    "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80",
-  story:
-    "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80",
-  collageOne:
-    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-  collageTwo:
-    "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80",
-  collageThree:
-    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
-  collageFour:
-    "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80",
-  footer:
-    "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=1200&q=80",
+  hero: portfolioAssets.photoStudioHero,
+  introOne: portfolioAssets.portraitNatural,
+  introTwo: portfolioAssets.portraitProfessional,
+  service: portfolioAssets.weddingMoment,
+  story: portfolioAssets.portraitLifestyle,
+  collageOne: portfolioAssets.travelLandscape,
+  collageTwo: portfolioAssets.weddingEvening,
+  collageThree: portfolioAssets.photoStudioHero,
+  collageFour: portfolioAssets.fashionEditorial,
+  footer: portfolioAssets.malePortrait,
 };
 
 const fallbackFaq = [
@@ -73,10 +65,8 @@ const brandMarks = [
 ];
 
 const showcaseImages = {
-  primary:
-    "https://www.wordpress-dev.codeinsolution.com/snapify/wp-content/uploads/sites/51/2024/04/model-with-art-make-up-posing-on-dark-background-e1713864875767.jpg",
-  secondary:
-    "https://www.wordpress-dev.codeinsolution.com/snapify/wp-content/uploads/sites/51/2024/04/beauty-portrait-woman-with-pink-hair-creative-vivid-coloring-bright-colored-highlights-and-shadows-e1713864894495.jpg",
+  primary: portfolioAssets.creativeMakeup,
+  secondary: portfolioAssets.pinkHairPortrait,
 };
 
 const driftUp = keyframes`

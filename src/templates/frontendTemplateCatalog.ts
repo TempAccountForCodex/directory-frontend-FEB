@@ -174,6 +174,18 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     pageCount: 3,
   },
   {
+    id: "company-pro",
+    slug: "company-pro",
+    name: "Company Pro",
+    description:
+      "Editorial company template with sculptural portraiture, serif-led storytelling, structured services, and a high-impact call to action.",
+    type: "website",
+    category: "business",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/companyProEditorial.png",
+    pageCount: 1,
+  },
+  {
     id: "gardening",
     slug: "gardening",
     name: "Gardening",

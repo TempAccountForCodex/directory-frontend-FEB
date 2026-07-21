@@ -34,6 +34,7 @@ import {
 } from "../../utils/editableProps";
 import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
 import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
+import { portfolioAssets } from "../../assets/portfolio/portfolio-agency";
 
 const MotionBox = motion(Box);
 const MotionTypography = motion(Typography);
@@ -46,8 +47,7 @@ const SURFACE2 = "#161616";
 const TEXT_DIM = "rgba(255,255,255,0.45)";
 const TEXT_DIMMER = "rgba(255,255,255,0.2)";
 const BORDER = "rgba(255,255,255,0.07)";
-const HERO_BG =
-  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1800&q=80";
+const HERO_BG = portfolioAssets.agencyWorkspace;
 
 /* ─── Marquee ─────────────────────────────────────────────────── */
 function Marquee({ items, speed = 30 }: { items: string[]; speed?: number }) {

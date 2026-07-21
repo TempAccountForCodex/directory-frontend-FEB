@@ -256,6 +256,9 @@ const CompanyPremiumTemplate = lazy(
 const CompanyStudioTemplate = lazy(
   () => import("../templates/company/CompanyStudioTemplate"),
 );
+const CompanyProTemplate = lazy(
+  () => import("../templates/company/CompanyProTemplate"),
+);
 
 const templateRegistry: Record<string, TemplateDefinition> = {
   // --- Service business ---
@@ -424,6 +427,14 @@ const templateRegistry: Record<string, TemplateDefinition> = {
       "Top-tier editorial company template with premium service framing, trust-building sections, and a strong contact-driven finish.",
     tags: ["company", "executive", "editorial", "premium"],
     component: CompanyStudioTemplate,
+  },
+  "company-pro": {
+    id: "company-pro",
+    name: "Company Pro",
+    description:
+      "An editorial company template with sculptural portraiture, serif-led storytelling, and a high-impact call to action.",
+    tags: ["company", "editorial", "professional", "strategy"],
+    component: CompanyProTemplate,
   },
 };
 

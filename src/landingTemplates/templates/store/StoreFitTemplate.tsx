@@ -13,20 +13,22 @@ import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import { getEditableTextProps } from "../../utils/editableProps";
 
-import heroImage from "./storeFitAssets/hero-clean.png";
-import yogaImage from "./storeFitAssets/yoga-clean.png";
-import productOne from "./storeFitAssets/product-1.png";
-import productTwo from "./storeFitAssets/product-2.png";
-import productThree from "./storeFitAssets/product-3.png";
-import productFour from "./storeFitAssets/product-4.png";
-import collageOne from "./storeFitAssets/collage-1.png";
-import collageTwo from "./storeFitAssets/collage-2.png";
-import collageThree from "./storeFitAssets/collage-3.png";
-import collageFour from "./storeFitAssets/collage-4.png";
-import personOne from "./storeFitAssets/person-1.png";
-import personTwo from "./storeFitAssets/person-2.png";
-import personThree from "./storeFitAssets/person-3.png";
-import footerPhoto from "./storeFitAssets/footer-photo.png";
+import {
+  collageFour,
+  collageOne,
+  collageThree,
+  collageTwo,
+  footerPhoto,
+  heroImage,
+  personOne,
+  personThree,
+  personTwo,
+  productFour,
+  productOne,
+  productThree,
+  productTwo,
+  yogaImage,
+} from "../../assets/store/store-fit";
 
 const palette = {
   blue: "#2435b8",

@@ -27,6 +27,7 @@ import type { TemplateProps } from "../../templateEngine/types";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import { getEditableTextProps } from "../../utils/editableProps";
+import { storeAssets } from "../../assets/store/store-performance";
 
 const neon = "#46ff16";
 
@@ -35,12 +36,9 @@ const panel = "#0a0a0a";
 const gridLine = "rgba(70,255,22,0.28)";
 const muted = "rgba(179, 255, 162, 0.68)";
 
-const fallbackHero =
-  "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1800&q=80";
-const fallbackPromo =
-  "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=1600&q=80";
-const fallbackAbout =
-  "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=1200&q=80";
+const fallbackHero = storeAssets.performanceHero;
+const fallbackPromo = storeAssets.performanceTraining;
+const fallbackAbout = storeAssets.performanceWeights;
 
 const fallbackProducts = [
   {
@@ -48,8 +46,7 @@ const fallbackProducts = [
     name: "Loop Resistance Bands",
     category: "Accessories",
     price: "$25.00",
-    image:
-      "https://images.unsplash.com/photo-1598289431512-b97b0917affc?auto=format&fit=crop&w=800&q=80",
+    image: storeAssets.performanceTop,
     description:
       "Portable loop bands for mobility, warmups, and strength sessions.",
   },
@@ -58,8 +55,7 @@ const fallbackProducts = [
     name: "Cast Iron Kettlebell",
     category: "Equipment",
     price: "$70.00",
-    image:
-      "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
+    image: storeAssets.performanceShorts,
     description:
       "Powder-coated competition-style kettlebell for powerful full-body work.",
   },
@@ -68,8 +64,7 @@ const fallbackProducts = [
     name: "Handle Resistance Bands",
     category: "Conditioning",
     price: "$40.00",
-    image:
-      "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80",
+    image: storeAssets.performanceLeggings,
     description:
       "Heavy training rope built for HIIT circuits and high-output sessions.",
   },
@@ -78,8 +73,7 @@ const fallbackProducts = [
     name: "Adjustable Dumbbells Set",
     category: "Accessories",
     price: "$150.00",
-    image:
-      "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=800&q=80",
+    image: storeAssets.performanceTrainingShirt,
     description:
       "Adjustable speed rope for cardio, agility, and endurance training.",
   },
@@ -88,8 +82,7 @@ const fallbackProducts = [
     name: "Olympic Weight Plate",
     category: "Strength",
     price: "$95.00",
-    image:
-      "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=800&q=80",
+    image: storeAssets.performanceTank,
     description:
       "Durable plate for barbell work, deadlifts, and progressive overload sessions.",
   },
@@ -98,8 +91,7 @@ const fallbackProducts = [
     name: "Pull-Up Assist Bands",
     category: "Accessories",
     price: "$35.00",
-    image:
-      "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80",
+    image: storeAssets.performanceHero,
     description:
       "Supportive resistance bands for pull-up progressions, mobility, and recovery.",
   },
@@ -108,8 +100,7 @@ const fallbackProducts = [
     name: "Training Bench",
     category: "Equipment",
     price: "$210.00",
-    image:
-      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
+    image: storeAssets.performanceGym,
     description:
       "Stable flat bench built for dumbbell presses, rows, and core-focused sessions.",
   },
@@ -118,8 +109,7 @@ const fallbackProducts = [
     name: "Foam Roller Pro",
     category: "Recovery",
     price: "$28.00",
-    image:
-      "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80",
+    image: storeAssets.performanceLeggings,
     description:
       "High-density recovery roller for warm-ups, cooldowns, and muscle release.",
   },

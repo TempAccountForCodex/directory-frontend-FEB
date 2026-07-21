@@ -165,32 +165,29 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
         ?.templateContent as Record<string, any> | undefined) || {};
     const mediaOverrides =
       (templateContent.__editorStaticMediaOverrides as
-        | Record<string, Record<string, any>>
-        | undefined) || {};
+        Record<string, Record<string, any>> | undefined) || {};
     const styleOverrides =
       (templateContent.__editorStaticStyleOverrides as
-        | Record<string, Record<string, any>>
-        | undefined) || {};
+        Record<string, Record<string, any>> | undefined) || {};
     const hiddenElements =
       (templateContent.__hiddenElements as
-        | Record<string, Record<string, boolean>>
-        | undefined) || {};
+        Record<string, Record<string, boolean>> | undefined) || {};
     const hiddenContainers =
       (templateContent.__hiddenContainers as
-        | Record<string, Record<string, boolean>>
-        | undefined) || {};
+        Record<string, Record<string, boolean>> | undefined) || {};
     const sectionVisibility =
       (templateContent.__editorSectionVisibility as
-        | Record<string, boolean>
-        | undefined) || {};
+        Record<string, boolean> | undefined) || {};
     const blockVisibility =
       (templateContent.__editorBlockVisibility as
-        | Record<string, boolean>
-        | undefined) || {};
+        Record<string, boolean> | undefined) || {};
     const sectionVisibilityIsAuthoritative =
       templateContent.__editorSectionVisibilityAuthoritative === true;
 
-    const applyStylePatch = (element: HTMLElement, patch: Record<string, any>) => {
+    const applyStylePatch = (
+      element: HTMLElement,
+      patch: Record<string, any>,
+    ) => {
       if (!patch) {
         return;
       }
@@ -226,7 +223,10 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
       assign("borderRadius", patch.borderRadius);
       assign("borderWidth", patch.borderWidth);
       assign("borderColor", patch.borderColor);
-      assign("borderStyle", patch.borderStyle || (patch.borderWidth ? "solid" : undefined));
+      assign(
+        "borderStyle",
+        patch.borderStyle || (patch.borderWidth ? "solid" : undefined),
+      );
       assign("width", patch.width);
       assign("height", patch.height);
       assign("opacity", patch.opacity);
@@ -264,10 +264,12 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
       root
         .querySelectorAll<HTMLElement>("[data-editor-section-root='true']")
         .forEach((section) => {
-          const sectionKey = section.getAttribute("data-editor-section-key") || "";
+          const sectionKey =
+            section.getAttribute("data-editor-section-key") || "";
           const blockId = section.getAttribute("data-preview-block-id") || "";
           const hasBlockVisibility =
-            blockId && Object.prototype.hasOwnProperty.call(blockVisibility, blockId);
+            blockId &&
+            Object.prototype.hasOwnProperty.call(blockVisibility, blockId);
           const hasSectionVisibility =
             sectionKey &&
             Object.prototype.hasOwnProperty.call(sectionVisibility, sectionKey);
@@ -375,9 +377,7 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
           return;
         }
         const selector = `[data-preview-block-id="${blockId}"][data-static-id="${staticId}"][data-preview-style-key="${styleKey}"]`;
-        let targets = Array.from(
-          root.querySelectorAll<HTMLElement>(selector),
-        );
+        let targets = Array.from(root.querySelectorAll<HTMLElement>(selector));
         // Existing websites may contain a structural fallback id saved before
         // the template gained an explicit semantic id. Resolve that legacy id
         // against the same DOM structure so the style remains effective.
@@ -404,7 +404,8 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
         const selector = `[data-preview-block-id="${blockId}"][data-static-id="${staticId}"]`;
         root.querySelectorAll<HTMLElement>(selector).forEach((element) => {
           const mediaTargets =
-            element instanceof HTMLImageElement || element instanceof HTMLVideoElement
+            element instanceof HTMLImageElement ||
+            element instanceof HTMLVideoElement
               ? [element]
               : Array.from(element.querySelectorAll("img, video"));
           if (typeof patch?.src === "string" && patch.src.trim()) {
@@ -426,13 +427,16 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
             if (!(mediaEl instanceof HTMLElement)) {
               return;
             }
-            if (patch?.objectFit) mediaEl.style.objectFit = String(patch.objectFit);
-            if (patch?.borderRadius) mediaEl.style.borderRadius = String(patch.borderRadius);
+            if (patch?.objectFit)
+              mediaEl.style.objectFit = String(patch.objectFit);
+            if (patch?.borderRadius)
+              mediaEl.style.borderRadius = String(patch.borderRadius);
             if (patch?.borderWidth) {
               mediaEl.style.borderWidth = String(patch.borderWidth);
               mediaEl.style.borderStyle = String(patch.borderStyle || "solid");
             }
-            if (patch?.borderColor) mediaEl.style.borderColor = String(patch.borderColor);
+            if (patch?.borderColor)
+              mediaEl.style.borderColor = String(patch.borderColor);
             if (patch?.width) mediaEl.style.width = String(patch.width);
             if (patch?.height) mediaEl.style.height = String(patch.height);
           });
@@ -539,8 +543,7 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
   const hiddenElementsMap =
     ((data as BusinessData & { templateContent?: Record<string, any> })
       ?.templateContent?.__hiddenElements as
-      | Record<string, HiddenElementsMap>
-      | undefined) || undefined;
+      Record<string, HiddenElementsMap> | undefined) || undefined;
 
   return (
     <Suspense
@@ -600,7 +603,7 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
             [style*="ttText"] { animation: none !important; }
           }
           [data-tt-deleted="true"] { display: none !important; }
-          [data-tt-section-hidden="true"] { display: none !important; }
+   
         `}
       </style>
       <Box ref={rootRef}>

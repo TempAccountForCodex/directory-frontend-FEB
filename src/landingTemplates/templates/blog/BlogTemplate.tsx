@@ -28,6 +28,7 @@ import {
 } from "../../utils/sectionStyle";
 import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
 import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
+import { blogAssets } from "../../assets/blog/blog";
 
 const LOCAL_DEMO_POSTS: BlogPost[] = [
   {
@@ -37,8 +38,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "A practical breakdown of registrations, thresholds, and reporting habits that keep growing companies compliant.",
     content:
       "VAT becomes much easier to manage when registration timing, invoice structure, filing cadence, and internal ownership are clearly defined. This guide outlines the operating model finance teams use to reduce risk while keeping reporting fast and accurate.",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80",
+    image: blogAssets.technologyWork,
     category: "Business",
     publishedAt: "2026-03-05T09:00:00.000Z",
     author: "Indise. Editorial",
@@ -51,8 +51,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "The first 12 months set the tone for every filing, payroll, and bookkeeping decision that follows.",
     content:
       "New companies need clarity on filings, tax reserves, payroll setup, and entity-specific deadlines. Early structure prevents frantic catch-up work later and makes compliance far less expensive.",
-    image:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.authorWoman,
     category: "Founders",
     publishedAt: "2026-03-03T09:00:00.000Z",
     author: "Rhea Morgan",
@@ -65,8 +64,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "A tighter framework for founders who need to manage compliance without a large finance team.",
     content:
       "Small teams usually need a lean process: clean invoicing, recurring filing reminders, and one visible owner for tax operations. This article covers the minimum viable system that actually works.",
-    image:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.authorPortrait,
     category: "Finance",
     publishedAt: "2026-02-28T09:00:00.000Z",
     author: "Sana Patel",
@@ -80,8 +78,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "Cash controls, payroll planning, and tax hygiene before operating complexity compounds.",
     content:
       "The move from solo founder to employer changes how finance needs to run. Hiring adds payroll, benefits, approvals, expense policies, and more frequent reporting cycles.",
-    image:
-      "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.teamCollaboration,
     category: "Operations",
     publishedAt: "2026-02-23T09:00:00.000Z",
     author: "Indise. Editorial",
@@ -94,8 +91,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "A straightforward review rhythm for revenue, expenses, liabilities, and documentation quality.",
     content:
       "Teams that close cleanly each quarter spend less time fixing historical errors. This article covers reconciliations, missing receipts, cash visibility, and practical owner review rituals.",
-    image:
-      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.financePlanning,
     category: "Accounting",
     publishedAt: "2026-02-18T09:00:00.000Z",
     author: "Milo Chen",
@@ -108,8 +104,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "The metrics, narrative structure, and supporting detail that make updates useful instead of noisy.",
     content:
       "Investor reporting is mostly about discipline: consistent metrics, concise explanations, and a repeatable pack that can be updated without a scramble every month.",
-    image:
-      "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.workshopTeam,
     category: "Reports",
     publishedAt: "2026-02-14T09:00:00.000Z",
     author: "Nina Roberts",

@@ -19,11 +19,11 @@ import { buildStoreTheme, rgba } from "./theme";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import { getEditableTextProps } from "../../utils/editableProps";
+import { storeAssets } from "../../assets/store/store-paws";
 
 const defaultHeadingFont = '"Questrial", "Inter", sans-serif';
 const defaultBodyFont = '"Inter", "Segoe UI", sans-serif';
-const heroVideo =
-  "https://videocdn.cdnpk.net/videos/76f0be3a-af58-4fc9-b0f0-6252b6b58f8f/horizontal/previews/clear/large.mp4?token=exp=1776093435~hmac=277fdf765864244a45431c287f25daf253a52c82f4e190d4698b2436f7aeb75b";
+const heroVideo = storeAssets.pawsHeroVideo;
 
 const fallbackProducts = [
   {
@@ -34,8 +34,7 @@ const fallbackProducts = [
     badge: "Best Seller",
     description:
       "Soft-touch harness, leash, and tag-ready clip in warm walnut tones.",
-    image:
-      "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1200&q=80",
+    image: storeAssets.pawsDogPortrait,
   },
   {
     id: "paw-2",
@@ -45,8 +44,7 @@ const fallbackProducts = [
     badge: "New",
     description:
       "Supportive memory-foam bed built for calmer evenings and better naps.",
-    image:
-      "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&q=80",
+    image: storeAssets.pawsDogsRunning,
   },
   {
     id: "paw-3",
@@ -56,8 +54,7 @@ const fallbackProducts = [
     badge: "Gift Pick",
     description:
       "Kitchen-friendly ceramic jar for treats, toppers, and training snacks.",
-    image:
-      "https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?auto=format&fit=crop&w=1200&q=80",
+    image: storeAssets.pawsPuppy,
   },
   {
     id: "paw-4",
@@ -67,8 +64,7 @@ const fallbackProducts = [
     badge: "Seasonal",
     description:
       "Lightweight outdoor coat with reflective trim and easy-fit chest closure.",
-    image:
-      "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80",
+    image: storeAssets.pawsDogField,
   },
   {
     id: "paw-5",
@@ -78,8 +74,7 @@ const fallbackProducts = [
     badge: "Everyday",
     description:
       "Fold-flat silicone bowl for road trips, park walks, and cafe stops.",
-    image:
-      "https://images.unsplash.com/photo-1537151625747-768eb6cf92b2?auto=format&fit=crop&w=1200&q=80",
+    image: storeAssets.pawsDogCloseup,
   },
   {
     id: "paw-6",
@@ -89,8 +84,7 @@ const fallbackProducts = [
     badge: "Core",
     description:
       "Premium leather collar with brushed metal hardware and soft lining.",
-    image:
-      "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1200&q=80",
+    image: storeAssets.pawsGoldenRetriever,
   },
 ];
 

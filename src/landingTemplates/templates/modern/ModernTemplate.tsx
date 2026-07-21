@@ -21,9 +21,9 @@ import {
   LocationBlock,
   CTASection,
 } from "../../blocks";
+import { modernAssets } from "../../assets/modern/modern";
 
-const fallbackLogo =
-  "https://img.freepik.com/free-vector/vector-education-logo_779267-2059.jpg";
+const fallbackLogo = modernAssets.educationLogo;
 
 type ModernThemeType = ReturnType<typeof buildModernTheme>;
 

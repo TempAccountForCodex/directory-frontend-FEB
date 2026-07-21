@@ -1172,6 +1172,61 @@ const COMPANY_DATA: BusinessData = {
   ],
 };
 
+const COMPANY_PRO_DATA: BusinessData = {
+  ...COMPANY_DATA,
+  name: "Alder & Co.",
+  tagline: "Clarity for companies in motion.",
+  description:
+    "Strategy, identity, and delivery systems for leadership teams building their next chapter.",
+  primaryColor: "#12100f",
+  secondaryColor: "#bd5d3f",
+  contact: {
+    email: "hello@alderandco.com",
+    phone: "(555) 280-1440",
+    address: "120 Market Street, New York, NY",
+  },
+  stats: [
+    { label: "Years of focused delivery", value: "12+" },
+    { label: "Long-term client retention", value: "94%" },
+    { label: "Programs launched", value: "160+" },
+  ],
+  features: [
+    {
+      title: "Strategy systems",
+      description: "Clear priorities, operating models, and measurable roadmaps.",
+      icon: "01",
+    },
+    {
+      title: "Experience design",
+      description:
+        "Useful digital experiences that feel coherent at every touchpoint.",
+      icon: "02",
+    },
+    {
+      title: "Delivery partnership",
+      description:
+        "Senior guidance and practical execution from direction to launch.",
+      icon: "03",
+    },
+  ],
+  reviews: [
+    {
+      author: "Maya Chen",
+      role: "Chief Operating Officer",
+      text: "Alder turned a difficult transformation into a system we can keep using.",
+      rating: 5,
+      date: "April 2026",
+    },
+    {
+      author: "Owen Brooks",
+      role: "VP, Commercial Growth",
+      text: "Strategic and practical in equal measure. The result feels premium without being performative.",
+      rating: 5,
+      date: "March 2026",
+    },
+  ],
+};
+
 // ─── Template slug → data mapping ─────────────────────────────────────────────
 
 const TEMPLATE_DATA_MAP: Record<
@@ -1206,6 +1261,7 @@ const TEMPLATE_DATA_MAP: Record<
   company: { templateId: "company", data: COMPANY_DATA },
   "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
   "company-executive": { templateId: "company-executive", data: COMPANY_DATA },
+  "company-pro": { templateId: "company-pro", data: COMPANY_PRO_DATA },
 };
 
 const ALL_TEMPLATE_SLUGS = Object.keys(TEMPLATE_DATA_MAP);
@@ -1233,7 +1289,7 @@ const TEMPLATE_GROUPS = [
   },
   {
     label: "Company",
-    slugs: ["company", "company-premium", "company-executive"],
+    slugs: ["company", "company-premium", "company-executive", "company-pro"],
   },
 ];
 
@@ -1637,6 +1693,8 @@ const PreviewBar: React.FC<{
                         ? "Premium"
                         : s === "company-executive"
                           ? "Executive"
+                          : s === "company-pro"
+                            ? "Pro"
                           : s === "store-performance"
                             ? "Performance"
                             : shortLabel.charAt(0).toUpperCase() +
@@ -1691,6 +1749,7 @@ const COMPANY_TEMPLATE_SLUGS = [
   "company",
   "company-premium",
   "company-executive",
+  "company-pro",
 ] as const;
 
 const STORE_TEMPLATE_SLUGS = [
@@ -1869,6 +1928,8 @@ const LandingPreview: React.FC = () => {
       ? "Company Premium"
       : slug === "company-executive"
         ? "Company Executive"
+        : slug === "company-pro"
+          ? "Company Pro"
         : "Company";
   const storeCustomizerLabel =
     slug === "store-premium"

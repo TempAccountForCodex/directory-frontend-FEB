@@ -11,25 +11,18 @@ import {
   getSectionStyleDomProps,
   getSectionStyleSx,
 } from "../../utils/sectionStyle";
+import { companySiteAssets } from "../../assets/company/company";
 
 const editorialImages = {
-  hero: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
-  projectOne:
-    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
-  projectTwo:
-    "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80",
-  fullWidth:
-    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
-  detail:
-    "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=1200&q=80",
-  socialOne:
-    "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=600&q=80",
-  socialTwo:
-    "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80",
-  socialThree:
-    "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=600&q=80",
-  socialFour:
-    "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=600&q=80",
+  hero: companySiteAssets.hero,
+  projectOne: companySiteAssets.bedroom,
+  projectTwo: companySiteAssets.livingRoom,
+  fullWidth: companySiteAssets.bedroom,
+  detail: companySiteAssets.interior,
+  socialOne: companySiteAssets.hero,
+  socialTwo: companySiteAssets.livingRoom,
+  socialThree: companySiteAssets.kitchen,
+  socialFour: companySiteAssets.interior,
 };
 
 const CompanySiteTemplate: React.FC<TemplateProps> = ({ data }) => {

@@ -23,27 +23,19 @@ import {
   getSectionStyleDomProps,
   getSectionStyleSx,
 } from "../../utils/sectionStyle";
+import { companyPremiumAssets } from "../../assets/company/company-premium";
 
 const editorialImages = {
-  hero: "https://images.unsplash.com/photo-1525258946800-98cfd641d0de?auto=format&fit=crop&w=1600&q=80",
-  heroAccent:
-    "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80",
-  collectionOne:
-    "https://images.unsplash.com/photo-1519378058457-4c29a0a2efac?auto=format&fit=crop&w=900&q=80",
-  collectionTwo:
-    "https://images.unsplash.com/photo-1468327768560-75b778cbb551?auto=format&fit=crop&w=900&q=80",
-  collectionThree:
-    "https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?auto=format&fit=crop&w=900&q=80",
-  occasion:
-    "https://img.freepik.com/free-photo/wedding-photography-southern-cross-guest-ranch-madison-ga_181624-9113.jpg",
-  servicesLeft:
-    "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=1100&q=80",
-  servicesRight:
-    "https://images.unsplash.com/photo-1460036521480-ff49c08c2781?auto=format&fit=crop&w=1100&q=80",
-  detailLeft:
-    "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1000&q=80",
-  detailRight:
-    "https://images.unsplash.com/photo-1459666644539-a9755287d6b0?auto=format&fit=crop&w=1000&q=80",
+  hero: companyPremiumAssets.hero,
+  heroAccent: companyPremiumAssets.ceremony,
+  collectionOne: companyPremiumAssets.bouquet,
+  collectionTwo: companyPremiumAssets.meadow,
+  collectionThree: companyPremiumAssets.flower,
+  occasion: companyPremiumAssets.wedding,
+  servicesLeft: companyPremiumAssets.garden,
+  servicesRight: companyPremiumAssets.greenhouse,
+  detailLeft: companyPremiumAssets.landscape,
+  detailRight: companyPremiumAssets.field,
 };
 
 const serifFont = '"Bodoni Moda", "Didot", "Times New Roman", serif';

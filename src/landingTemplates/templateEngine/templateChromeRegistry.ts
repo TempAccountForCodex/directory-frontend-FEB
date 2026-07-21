@@ -56,6 +56,16 @@ const CompanyStudioFooter = lazy(() =>
     default: module.CompanyStudioTemplateFooter,
   })),
 );
+const CompanyProHeader = lazy(() =>
+  import("../templates/company/CompanyProTemplate").then((module) => ({
+    default: module.CompanyProTemplateHeader,
+  })),
+);
+const CompanyProFooter = lazy(() =>
+  import("../templates/company/CompanyProTemplate").then((module) => ({
+    default: module.CompanyProTemplateFooter,
+  })),
+);
 
 const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   minimal: {
@@ -73,6 +83,10 @@ const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   "company-executive": {
     Header: CompanyStudioHeader,
     Footer: CompanyStudioFooter,
+  },
+  "company-pro": {
+    Header: CompanyProHeader,
+    Footer: CompanyProFooter,
   },
 };
 

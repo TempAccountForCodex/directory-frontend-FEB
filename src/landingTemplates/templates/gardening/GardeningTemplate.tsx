@@ -39,6 +39,7 @@ import {
 } from "../../utils/editableComponents";
 import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
 import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
+import { gardeningAssets } from "../../assets/gardening/gardening";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
@@ -142,11 +143,11 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
 
   const heroImage =
     data.heroBannerUrl ||
-    "https://img.freepik.com/free-photo/portrait-young-male-female-gardener-couple-working-garden_23-2148165278.jpg?t=st=1774468898~exp=1774472498~hmac=60c21f6a33e6297a520419e4534e1cea0a128e100ab8846e22760e6b18376a3d&w=2000";
+    gardeningAssets.gardenerTeam;
 
   const aboutImage =
     gallery[1]?.url ||
-    "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=1200&q=80";
+    gardeningAssets.greenhouse;
 
   const portfolioImages = [
     gallery[0]?.url || heroImage,
@@ -157,9 +158,9 @@ const GardeningTemplate: React.FC<TemplateProps> = ({ data }) => {
   ];
 
   const serviceImages = [
-    "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1492496913980-501348b61469?auto=format&fit=crop&w=1200&q=80",
+    gardeningAssets.gardenLandscape,
+    gardeningAssets.plantCare,
+    gardeningAssets.gardenSoil,
   ];
   const content = (data.templateContent ?? {}) as Record<
     string,

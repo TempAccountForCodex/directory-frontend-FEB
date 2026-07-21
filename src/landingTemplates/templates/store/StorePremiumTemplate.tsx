@@ -19,6 +19,7 @@ import type { TemplateProps } from "../../templateEngine/types";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import { getEditableTextProps } from "../../utils/editableProps";
+import { storeAssets } from "../../assets/store/store-premium";
 
 const headingFont = '"Poppins", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Manrope", "Avenir Next", "Segoe UI", sans-serif';
@@ -35,7 +36,7 @@ const palette = {
   fieldLabel: "#8d7f68",
 };
 
-const fallbackLogo = "https://cdn-icons-png.freepik.com/128/3081/3081559.png";
+const fallbackLogo = storeAssets.premiumLogo;
 
 const fallbackProducts = [
   {
@@ -44,8 +45,7 @@ const fallbackProducts = [
     price: "$189",
     category: "Signature Tote",
     badge: "Popular",
-    image:
-      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=80",
+    image: storeAssets.premiumHandbagBlack,
     description:
       "A refined everyday tote with structured lines, premium texture, and enough room for daily essentials.",
     url: undefined,
@@ -56,8 +56,7 @@ const fallbackProducts = [
     price: "$164",
     category: "Shoulder Bag",
     badge: "New",
-    image:
-      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=80",
+    image: storeAssets.premiumHandbagBrown,
     description:
       "Softly curved silhouette designed for polished day-to-night styling across seasons.",
     url: undefined,
@@ -68,8 +67,7 @@ const fallbackProducts = [
     price: "$142",
     category: "Crossbody",
     badge: "Top Pick",
-    image:
-      "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80",
+    image: storeAssets.premiumHandbagTan,
     description:
       "Compact premium bag for curated edits, statement drops, and elevated seasonal merchandising.",
     url: undefined,
@@ -80,8 +78,7 @@ const fallbackProducts = [
     price: "$171",
     category: "Bucket Bag",
     badge: "Edit",
-    image:
-      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=80",
+    image: storeAssets.premiumHandbagRed,
     description:
       "Ideal for premium assortments, capsule collections, and editorial storefronts.",
     url: undefined,
@@ -92,22 +89,17 @@ const fallbackProducts = [
     price: "$128",
     category: "Clutch",
     badge: "Sale",
-    image:
-      "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?auto=format&fit=crop&w=900&q=80",
+    image: storeAssets.premiumFashion,
     description:
       "A clean, visual-first product card with room for luxury materials and occasion-led storytelling.",
     url: undefined,
   },
 ];
 
-const fallbackHero =
-  "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=2000&q=80";
-const fallbackAbout =
-  "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1400&q=80";
-const fallbackBand =
-  "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=2000&q=80";
-const fallbackTouch =
-  "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80";
+const fallbackHero = storeAssets.premiumHandbagRed;
+const fallbackAbout = storeAssets.premiumHandbagBlack;
+const fallbackBand = storeAssets.premiumHandbagBrown;
+const fallbackTouch = storeAssets.premiumHandbagTan;
 
 const benefitItems = [
   {

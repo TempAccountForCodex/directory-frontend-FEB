@@ -29,6 +29,7 @@ import {
 } from "../../utils/editableComponents";
 import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
 import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
+import { restaurantAssets } from "../../assets/restaurant/restaurant";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
@@ -63,20 +64,13 @@ const RestaurantTemplate: React.FC<TemplateProps> = ({ data }) => {
   ];
   const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
 
-  const storyTopImage =
-    "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=1200&q=80";
-  const grillImage =
-    "https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=1400&q=80";
-  const burgerImage =
-    "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=80";
-  const promoImage =
-    "https://images.unsplash.com/photo-1550317138-10000687a72b?auto=format&fit=crop&w=1400&q=80";
-  const whyTopImage =
-    "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=900&q=80";
-  const whyBottomImage =
-    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80";
-  const contactImage =
-    "https://img.freepik.com/free-photo/luxury-dinner-table-hotel_1150-11071.jpg";
+  const storyTopImage = restaurantAssets.frenchFries;
+  const grillImage = restaurantAssets.grilledSteak;
+  const burgerImage = restaurantAssets.gourmetBurger;
+  const promoImage = restaurantAssets.classicBurger;
+  const whyTopImage = restaurantAssets.restaurantTable;
+  const whyBottomImage = restaurantAssets.restaurantInterior;
+  const contactImage = restaurantAssets.luxuryDining;
   const heroBannerImage =
     data.heroBannerUrl || data.gallery?.[2]?.url || data.gallery?.[0]?.url;
   const content = (data.templateContent ?? {}) as Record<

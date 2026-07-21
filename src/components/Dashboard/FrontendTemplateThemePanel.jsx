@@ -5,6 +5,7 @@ const COMPANY_TEMPLATE_IDS = new Set([
   "company",
   "company-premium",
   "company-executive",
+  "company-pro",
 ]);
 const THEME_EDITOR_FONT = '"Poppins", "Inter", sans-serif';
 

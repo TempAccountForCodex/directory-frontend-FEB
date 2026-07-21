@@ -36,6 +36,7 @@ import {
 } from "../../utils/sectionStyle";
 import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
 import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
+import { blogAssets } from "../../assets/blog/blog-premium";
 
 const LOCAL_DEMO_POSTS: BlogPost[] = [
   {
@@ -45,8 +46,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "A practical framework for improving crop consistency through better planning, monitoring, and regenerative field decisions.",
     content:
       "Healthy soil strategy is one of the strongest predictors of consistent agricultural output. This article explores monitoring, crop rotation support, nutrient discipline, and how seasonal planning decisions affect long-term resilience.",
-    image:
-      "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1600&q=80",
+    image: blogAssets.farmField,
     category: "Soil Health",
     publishedAt: "2026-02-24T09:00:00.000Z",
     author: "Agro Insight Team",
@@ -59,8 +59,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "A cleaner operating model for scheduling field work, equipment availability, and supplier coordination.",
     content:
       "Operational predictability improves when delivery schedules and field tasks are treated as one system. This guide explains the checkpoints teams should use to reduce missed windows and unnecessary idle time.",
-    image:
-      "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.farmerCrops,
     category: "Operations",
     publishedAt: "2026-02-17T09:00:00.000Z",
     author: "Mariam Yusuf",
@@ -73,8 +72,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "What experienced growers check before expanding planting volume across multiple zones.",
     content:
       "Seedling readiness affects later yield far more than most teams account for. This article covers staging, inspection, handling, and the early signals that help teams intervene before losses compound.",
-    image:
-      "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.gardenField,
     category: "Crop Planning",
     publishedAt: "2026-02-09T09:00:00.000Z",
     author: "Ayaan Rehman",
@@ -87,8 +85,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "From product presentation to educational content, trust now begins before the first inquiry.",
     content:
       "Modern agriculture brands need visibility that feels credible and easy to understand. This piece explains how content, imagery, and clear storytelling improve market trust and buying confidence.",
-    image:
-      "https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.agricultureHarvest,
     category: "Brand Growth",
     publishedAt: "2026-02-03T09:00:00.000Z",
     author: "Agro Insight Team",
@@ -101,8 +98,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "A compact maintenance checklist that helps field teams reduce preventable downtime.",
     content:
       "Small readiness gaps often become expensive interruptions during peak weeks. This article outlines inspection routines, scheduling practices, and simple reporting habits that improve reliability.",
-    image:
-      "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.farmWorker,
     category: "Equipment",
     publishedAt: "2026-01-28T09:00:00.000Z",
     author: "Hassan Noor",
@@ -115,8 +111,7 @@ const LOCAL_DEMO_POSTS: BlogPost[] = [
       "An overview of irrigation discipline, seasonal forecasting, and practical monitoring systems.",
     content:
       "Water planning works best when operational discipline and environmental forecasting are connected. This article explores the routines teams use to improve consistency while reducing waste.",
-    image:
-      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80",
+    image: blogAssets.countryField,
     category: "Irrigation",
     publishedAt: "2026-01-19T09:00:00.000Z",
     author: "Agro Insight Team",
@@ -192,8 +187,7 @@ const BlogTemplate: React.FC<TemplateProps> = ({ data }) => {
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const activeHeroPost = heroPosts[activeHeroIndex] || featuredPost;
-  const logoUrl =
-    data.logoUrl || "https://cdn-icons-png.flaticon.com/512/2909/2909762.png";
+  const logoUrl = data.logoUrl || blogAssets.premiumBlogLogo;
   const aboutHeading =
     aboutContent.heading ||
     aboutContent.title ||

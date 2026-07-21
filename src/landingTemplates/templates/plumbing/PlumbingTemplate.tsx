@@ -44,26 +44,25 @@ import {
 } from "../../utils/editableComponents";
 import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
 import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
+import { plumbingAssets } from "../../assets/plumbing/plumbing";
 
 type TemplateSectionContent = Record<string, unknown> & {
   blockId?: string | number;
   sectionStyle?: SectionStyleValue;
 };
 
-const plumbingHeroImage =
-  "https://cdn.prod.website-files.com/68ce363cc9e814fa40d285fd/68ceeb8c65230295abdded06_hero-images.jpg";
+const plumbingHeroImage = plumbingAssets.plumbingHero;
 const plumbingAboutImages = [
-  "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=800&q=80",
-  "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80",
+  plumbingAssets.plumberService,
+  plumbingAssets.bathroomRenovation,
+  plumbingAssets.constructionWorker,
 ];
-const plumbingWhyChooseImage =
-  "https://cdn.prod.website-files.com/68d2042c46587205de9090c3/68d4a87ba83780e42c705cac_service-thumbnail%20(1).webp";
+const plumbingWhyChooseImage = plumbingAssets.serviceThumbnail;
 const plumbingScrollStackImages = [
-  "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80",
+  plumbingAssets.pipeRepair,
+  plumbingAssets.plumberService,
+  plumbingAssets.constructionWorker,
+  plumbingAssets.serviceTeam,
 ];
 
 const navItems = [

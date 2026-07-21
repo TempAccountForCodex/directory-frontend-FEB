@@ -50,6 +50,7 @@ import CategorySelect from "./CategorySelect";
 import { storeWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
 import {
   buildFrontendTemplateEditorPages,
+  supportsFrontendTemplateEditor,
   type TemplateEditorBlock,
   type TemplateEditorPage,
 } from "../../templates/frontendTemplateEditorSupport";
@@ -176,6 +177,72 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const HERO_SUBHEADING_MAX_LENGTH = 160;
 
+const resolveFrontendTemplateId = (templateId: string): string => {
+  if (supportsFrontendTemplateEditor(templateId)) return templateId;
+
+  const catalogId = templateId.startsWith("static-")
+    ? templateId.slice("static-".length)
+    : templateId;
+
+  return supportsFrontendTemplateEditor(catalogId) ? catalogId : templateId;
+};
+
+const TEMPLATE_MEDIA_FIELD_NAMES = new Set([
+  "backgroundImage",
+  "backgroundImageUrl",
+  "backgroundVideo",
+  "backgroundVideoUrl",
+  "contactImage",
+  "heroImage",
+  "heroImageSecondary",
+  "image",
+  "imageUrl",
+  "logo",
+  "photo",
+  "poster",
+  "videoPoster",
+  "videoUrl",
+]);
+
+const normalizeTemplateMediaUrl = (value: unknown): unknown => {
+  if (typeof value !== "string") return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+  if (
+    !/^(?:\/|\.\/|\.\.\/)/.test(trimmed) ||
+    typeof window === "undefined"
+  ) return undefined;
+
+  return new URL(trimmed, window.location.origin).href;
+};
+
+const normalizeTemplateMediaUrls = (
+  value: unknown,
+  fieldName = "",
+): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeTemplateMediaUrls(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .map(([key, nested]) => [
+          key,
+          normalizeTemplateMediaUrls(nested, key),
+        ] as const)
+        .filter(([, nested]) => nested !== undefined),
+    );
+  }
+
+  return TEMPLATE_MEDIA_FIELD_NAMES.has(fieldName)
+    ? normalizeTemplateMediaUrl(value)
+    : value;
+};
+
 const clampText = (value: unknown, maxLength: number) => {
   if (typeof value !== "string") return value;
   const trimmed = value.trim();
@@ -189,14 +256,18 @@ const normalizeCreationBlockContent = (
   blockType: string,
   content: Record<string, unknown>,
 ) => {
+  const normalizedContent = normalizeTemplateMediaUrls(
+    content,
+  ) as Record<string, unknown>;
+
   if (blockType !== "HERO") {
-    return content;
+    return normalizedContent;
   }
 
   return {
-    ...content,
+    ...normalizedContent,
     subheading: clampText(
-      content.subheading,
+      normalizedContent.subheading,
       HERO_SUBHEADING_MAX_LENGTH,
     ),
   };
@@ -649,6 +720,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
 
       try {
         const isDbTemplateId = UUID_REGEX.test(template.id);
+        const frontendTemplateId = resolveFrontendTemplateId(template.id);
         let res;
 
         if (isDbTemplateId) {
@@ -658,6 +730,38 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
             subdomain: subdomain.trim(),
             customization: {
               primaryColor,
+            },
+          });
+        } else if (supportsFrontendTemplateEditor(frontendTemplateId)) {
+          const creationPages = buildFrontendTemplateCreationPages(
+            frontendTemplateId,
+            websiteName.trim(),
+            primaryColor,
+          );
+
+          if (creationPages.length === 0) {
+            setError(
+              "Selected template is missing frontend setup. Please choose another template.",
+            );
+            return;
+          }
+
+          const customPages = serializeTemplatePagesForCreation(creationPages);
+
+          res = await apiClient.post(`/websites`, {
+            name: websiteName.trim(),
+            slug: subdomain.trim(),
+            primaryColor,
+            isPublic: true,
+            frontendTemplateId,
+            customPages,
+            templateSnapshot: {
+              templateId: frontendTemplateId,
+              version: 1,
+              themeSettings: {
+                primaryColor,
+              },
+              pages: customPages,
             },
           });
         } else {
@@ -681,7 +785,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
             }
 
             const creationPages = buildFrontendTemplateCreationPages(
-              template.id,
+              frontendTemplateId,
               websiteName.trim(),
               primaryColor,
             );
@@ -701,10 +805,10 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
               slug: subdomain.trim(),
               primaryColor,
               isPublic: true,
-              frontendTemplateId: template.id,
+              frontendTemplateId,
               customPages,
               templateSnapshot: {
-                templateId: template.id,
+                templateId: frontendTemplateId,
                 version: 1,
                 themeSettings: {
                   primaryColor,
@@ -720,7 +824,10 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
 
         if (res?.data?.success !== false && createdWebsiteId) {
           if (!isDbTemplateId) {
-            storeWebsiteFrontendTemplateId(createdWebsiteId, template.id);
+            storeWebsiteFrontendTemplateId(
+              createdWebsiteId,
+              frontendTemplateId,
+            );
           }
           setCreatedWebsiteId(createdWebsiteId);
         setActiveStep(2);

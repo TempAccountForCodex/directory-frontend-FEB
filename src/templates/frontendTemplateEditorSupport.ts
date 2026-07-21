@@ -10,6 +10,8 @@ import {
   buildHiddenElementsMap,
   buildHiddenContainersMap,
 } from "../landingTemplates/utils/hiddenElements";
+import { companyStudioAssets } from "../landingTemplates/assets/company/company-executive";
+import { companyProAssets } from "../landingTemplates/assets/company/company-pro";
 
 export type TemplateThemeSettings = {
   primaryColor?: string;
@@ -101,6 +103,7 @@ const LOCAL_TEMPLATE_EDITOR_IDS = new Set([
   "company",
   "company-premium",
   "company-executive",
+  "company-pro",
   "education",
   "gardening",
   "plumbing",
@@ -258,14 +261,86 @@ const companyStatsToItems = (stats: BusinessData["stats"] = []) =>
     icon: `metric-${index + 1}`,
   }));
 
+const TEMPLATE_MEDIA_URL_FIELDS = new Set([
+  "avatarUrl",
+  "backgroundImage",
+  "backgroundImageUrl",
+  "backgroundVideo",
+  "backgroundVideoUrl",
+  "contactImage",
+  "heroImage",
+  "heroImageSecondary",
+  "image",
+  "imageUrl",
+  "logo",
+  "photo",
+  "poster",
+  "videoPoster",
+  "videoUrl",
+]);
+
+const isExternalOrInlineUrl = (value: string) =>
+  /^(https?:)?\/\//i.test(value) ||
+  /^(data|blob):/i.test(value);
+
+const isCssBackgroundValue = (value: string) =>
+  /^(linear-gradient|radial-gradient|conic-gradient|url\()/i.test(value.trim());
+
+const isLocalTemplateAssetUrl = (value: string) =>
+  value.startsWith("/") ||
+  value.startsWith("./") ||
+  value.startsWith("../") ||
+  /^src\//i.test(value) ||
+  /\.(avif|gif|jpe?g|mov|mp4|png|svg|webm|webp)(\?.*)?$/i.test(value);
+
+const toBackendMediaUrl = (value: unknown): unknown => {
+  if (typeof value !== "string") return value;
+
+  const trimmed = value.trim();
+  if (
+    !trimmed ||
+    isExternalOrInlineUrl(trimmed) ||
+    isCssBackgroundValue(trimmed) ||
+    !isLocalTemplateAssetUrl(trimmed)
+  ) {
+    return value;
+  }
+
+  if (typeof window === "undefined" || !window.location?.origin) {
+    return value;
+  }
+
+  return new URL(trimmed, window.location.origin).toString();
+};
+
+const normalizeTemplateMediaUrls = (value: unknown, key?: string): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeTemplateMediaUrls(item));
+  }
+
+  if (!value || typeof value !== "object") {
+    return TEMPLATE_MEDIA_URL_FIELDS.has(key || "") ? toBackendMediaUrl(value) : value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([entryKey, entryValue]) => [
+      entryKey,
+      TEMPLATE_MEDIA_URL_FIELDS.has(entryKey)
+        ? toBackendMediaUrl(entryValue)
+        : normalizeTemplateMediaUrls(entryValue, entryKey),
+    ]),
+  );
+};
+
 const buildTemplateBlockContent = (
   section: TemplateSectionSeed,
   data: BusinessData,
-): Record<string, unknown> => ({
-  editorLabel: section.label,
-  editorSection: section.key,
-  ...section.buildContent(data),
-});
+): Record<string, unknown> =>
+  normalizeTemplateMediaUrls({
+    editorLabel: section.label,
+    editorSection: section.key,
+    ...section.buildContent(data),
+  }) as Record<string, unknown>;
 
 const seedPagesFromSchema = (
   templateId: string,
@@ -549,23 +624,19 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
               rating: 5,
               avatars: [
                 {
-                  image:
-                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+                  image: companyStudioAssets.avatars[0],
                   alt: "Client 1",
                 },
                 {
-                  image:
-                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+                  image: companyStudioAssets.avatars[1],
                   alt: "Client 2",
                 },
                 {
-                  image:
-                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+                  image: companyStudioAssets.avatars[2],
                   alt: "Client 3",
                 },
                 {
-                  image:
-                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+                  image: companyStudioAssets.avatars[3],
                   alt: "Client 4",
                 },
               ],
@@ -652,8 +723,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
                 body: "",
                 footerLabel: "Executive team",
               },
-              image:
-                "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+              image: companyStudioAssets.team,
               imageStyle: {
                 fit: "cover",
                 height: "auto",
@@ -686,6 +756,188 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
                   copyright: `© 2026 ${data.name || "Your company"}. Global business presence.`,
                 },
               },
+            ],
+          }),
+        },
+      ],
+    },
+  ],
+  "company-pro": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: (data) => ({
+            brandName: data.name || "Alder & Co.",
+            navigationItems: [
+              { label: "About", link: "#about" },
+              { label: "Services", link: "#services" },
+              { label: "Process", link: "#process" },
+              { label: "Contact", link: "#contact" },
+            ],
+            ctaText: "Start a project",
+            ctaLink: "#contact",
+          }),
+        },
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            eyebrow: "Independent strategy and design practice",
+            heading: data.tagline || "Clarity for companies in motion.",
+            subheading:
+              data.description ||
+              "Strategy, identity, and delivery systems for leadership teams building their next chapter.",
+            ctaText: "Book a working session",
+            ctaLink: "#contact",
+            heroImage: companyProAssets.hero,
+            heroImageStyle: {
+              fit: "cover",
+              height: "auto",
+              borderRadius: 0,
+              borderWidth: 0,
+              borderColor: "#102a2a",
+            },
+            socialProof: {
+              label: "Client partnership",
+              value: "Trusted by ambitious teams worldwide.",
+              rating: 5,
+              avatars: companyProAssets.avatars.map((image, index) => ({
+                image,
+                alt: `Client ${index + 1}`,
+              })),
+            },
+          }),
+        },
+        {
+          key: "stats",
+          label: "Trust and statistics",
+          blockType: "STATS",
+          buildContent: () => ({
+            heading: "Proof in the progress",
+            stats: [
+              { number: "12", suffix: "+", label: "Years of focused delivery" },
+              { number: "94", suffix: "%", label: "Long-term client retention" },
+              { number: "160", suffix: "+", label: "Programs launched" },
+            ],
+          }),
+        },
+        {
+          key: "about",
+          label: "About",
+          blockType: "TEXT",
+          buildContent: (data) => ({
+            eyebrow: "A better operating partner",
+            heading: "Capability that turns into momentum.",
+            body:
+              data.description ||
+              "We work beside leadership teams to turn complex ambitions into clear systems, useful experiences, and measurable progress.",
+            detailGroups: [
+              {
+                title: "Senior partnership",
+                items: ["Direct access", "Clear ownership", "Fast decisions"],
+              },
+              {
+                title: "Built to last",
+                items: ["Reusable systems", "Measured outcomes", "Knowledge transfer"],
+              },
+            ],
+          }),
+        },
+        {
+          key: "showcase",
+          label: "Leadership portrait",
+          blockType: "IMAGE",
+          buildContent: () => ({
+            image: companyProAssets.about,
+            alt: "Company Pro leadership team collaborating",
+            caption: "Senior operators, designers, and strategists working as one accountable team.",
+            imageStyle: {
+              mediaType: "image",
+              fit: "cover",
+              height: "auto",
+              borderRadius: 0,
+              borderWidth: 0,
+              borderColor: "#12100f",
+            },
+          }),
+        },
+        {
+          key: "services",
+          label: "Services",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "What we do",
+            heading: "Expertise for meaningful change.",
+            features: [
+              { icon: "01", title: "Strategy systems", description: "Clear priorities, operating models, and measurable roadmaps." },
+              { icon: "02", title: "Experience design", description: "Useful digital experiences that feel coherent at every touchpoint." },
+              { icon: "03", title: "Delivery partnership", description: "Senior guidance and practical execution from direction to launch." },
+            ],
+          }),
+        },
+        {
+          key: "process",
+          label: "Process",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "How we work",
+            heading: "A clear path from ambition to action.",
+            features: [
+              { icon: "01", title: "Frame the opportunity", description: "Align the team around the decision, outcome, and evidence that matter." },
+              { icon: "02", title: "Build the system", description: "Turn direction into a focused operating and experience model." },
+              { icon: "03", title: "Launch and learn", description: "Deliver, measure, and improve with clear ownership after launch." },
+            ],
+          }),
+        },
+        {
+          key: "testimonials",
+          label: "Testimonials",
+          blockType: "TESTIMONIALS",
+          buildContent: () => ({
+            heading: "Trusted when the work matters.",
+            testimonials: [
+              { quote: "Alder turned a difficult transformation into a system we can keep using.", author: "Maya Chen", position: "Chief Operating Officer", photo: companyProAssets.avatars[0], rating: 5 },
+              { quote: "Strategic and practical in equal measure. The result feels premium without being performative.", author: "Owen Brooks", position: "VP, Commercial Growth", photo: companyProAssets.avatars[1], rating: 5 },
+            ],
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            eyebrow: "Let's build what is next",
+            heading: "Ready to move with clarity?",
+            description:
+              data.contact.email ||
+              "Tell us what you are building and where you need momentum.",
+            email: data.contact.email || "hello@alderandco.com",
+            phone: data.contact.phone || "(555) 280-1440",
+            address: data.contact.address || "120 Market Street, New York, NY",
+            buttonLabel: "Start a project",
+            showForm: true,
+          }),
+        },
+        {
+          key: "footer",
+          label: "Footer",
+          blockType: "FOOTER",
+          optional: true,
+          buildContent: (data) => ({
+            logo: companyProAssets.logo,
+            copyright: `(c) 2026 ${data.name || "Alder & Co."}. All rights reserved.`,
+            columns: [
+              { title: "Company", links: [{ label: "About", url: "#about" }, { label: "Services", url: "#services" }] },
+              { title: "Connect", links: [{ label: "Contact", url: "#contact" }, { label: "LinkedIn", url: "#" }] },
             ],
           }),
         },
@@ -1327,7 +1579,30 @@ const getOrderedSectionKeysForHomePage = (
   templateId: string,
   pages: TemplateEditorPage[],
 ): string[] => {
-  const sectionKeys = Array.from(getTemplateSectionMap(templateId, pages).keys());
+  const sectionMap = getTemplateSectionMap(templateId, pages);
+  const sectionKeyByBlockId = new Map(
+    Array.from(sectionMap.entries()).map(([sectionKey, block]) => [
+      String(block.id),
+      sectionKey,
+    ] as const),
+  );
+  const usedSectionKeys = new Set<string>();
+  const sectionKeys = getOrderedBlocksForHomePage(pages).map((block, index) => {
+    const mappedSectionKey = sectionKeyByBlockId.get(String(block.id)) || "";
+    const explicitSectionKey =
+      typeof block.content?.editorSection === "string"
+        ? block.content.editorSection.trim()
+        : "";
+    const fallbackSectionKey = `block-${String(block.id ?? index + 1)}`;
+    const preferredSectionKey =
+      mappedSectionKey || explicitSectionKey || fallbackSectionKey;
+    const sectionKey = usedSectionKeys.has(preferredSectionKey)
+      ? fallbackSectionKey
+      : preferredSectionKey;
+
+    usedSectionKeys.add(sectionKey);
+    return sectionKey;
+  });
 
   // Older Company Executive sites do not have a persisted Process Details
   // block. The editor exposes that legacy section immediately after Process,
@@ -1345,8 +1620,25 @@ const getOrderedSectionKeysForHomePage = (
   return sectionKeys;
 };
 
-const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
-  getOrderedBlocksForHomePage(pages)
+const getOrderedCustomSectionsForHomePage = (
+  templateId: string,
+  pages: TemplateEditorPage[],
+) => {
+  const schemaHomePage =
+    (TEMPLATE_PAGE_SCHEMAS[templateId] || []).find((page) => page.isHome) ||
+    (TEMPLATE_PAGE_SCHEMAS[templateId] || [])[0];
+  const seededSectionKeys = new Set(
+    (schemaHomePage?.sections || []).map((section) => section.key),
+  );
+  const sectionMap = getTemplateSectionMap(templateId, pages);
+  const seededBlockIds = new Set(
+    Array.from(seededSectionKeys)
+      .map((sectionKey) => sectionMap.get(sectionKey)?.id)
+      .filter((blockId) => blockId !== undefined)
+      .map(String),
+  );
+
+  return getOrderedBlocksForHomePage(pages)
     .filter((block) => {
       const sectionKey =
         typeof block.content?.editorSection === "string"
@@ -1354,18 +1646,23 @@ const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
           : "";
       const blockType = getBlockTypeKey(block);
       return (
+        !seededBlockIds.has(String(block.id)) ||
         blockType === "PLAN" ||
         blockType === "SECTION" ||
-        sectionKey.startsWith("plan-")
+        (sectionKey.startsWith("plan-") && !seededSectionKeys.has(sectionKey))
       );
     })
     .map((block, index) => {
       const content = block.content || {};
-      const sectionKey =
-        typeof content.editorSection === "string" &&
-        content.editorSection.trim()
+      const blockType = getBlockTypeKey(block);
+      const explicitSectionKey =
+        typeof content.editorSection === "string"
           ? content.editorSection.trim()
-          : `plan-${index + 1}`;
+          : "";
+      const sectionKey =
+        explicitSectionKey && !seededSectionKeys.has(explicitSectionKey)
+          ? explicitSectionKey
+          : `block-${String(block.id ?? index + 1)}`;
 
       const rawInnerBlocks = Array.isArray(content.innerBlocks)
         ? content.innerBlocks
@@ -1373,12 +1670,26 @@ const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
       // Overlay live-edited outer Contact fields onto the first inner block so
       // the canvas never renders a stale inner mirror. See
       // overlayContactInnerBlocks — outer always wins for contact widgets.
-      const innerBlocks = overlayContactInnerBlocks(content, rawInnerBlocks);
+      const innerBlocks = rawInnerBlocks.length
+        ? overlayContactInnerBlocks(content, rawInnerBlocks)
+        : [
+            {
+              id: block.id,
+              type: blockType,
+              content,
+            },
+          ];
 
       return {
+        ...content,
         blockId: block.id,
         sectionKey,
-        label: readString(content, ["editorLabel", "heading"], "Plan Section"),
+        editorBlockType: blockType,
+        label: readString(
+          content,
+          ["editorLabel", "heading"],
+          blockType || "Plan Section",
+        ),
         heading: readString(content, ["heading", "title"], "Plan your section"),
         subheading: readString(
           content,
@@ -1406,6 +1717,7 @@ const getOrderedPlanSectionsForHomePage = (pages: TemplateEditorPage[]) =>
         outerSectionStyle: getSectionStyleValue(content, "outerSectionStyle"),
       };
     });
+};
 
 const getOrderedSectionContentMap = (
   templateId: string,
@@ -2160,6 +2472,114 @@ const buildTemplatePreviewBusinessDataImpl = (
     orderedSectionContentMap.get(sectionKey) ||
     findSectionContent(templateId, pages, sectionKey);
 
+  if (templateId === "company-pro") {
+    const sectionMap = getTemplateSectionMap(templateId, pages);
+    const navbar = getSectionContent("navbar");
+    const hero = getSectionContent("hero");
+    const stats = getSectionContent("stats");
+    const about = getSectionContent("about");
+    const showcase = getSectionContent("showcase");
+    const services = getSectionContent("services");
+    const process = getSectionContent("process");
+    const testimonials = getSectionContent("testimonials");
+    const contact = getSectionContent("contact");
+    const footer = getSectionContent("footer");
+    const serviceItems = readArray<Record<string, unknown>>(services, [
+      "features",
+    ]);
+    const processItems = readArray<Record<string, unknown>>(process, [
+      "features",
+    ]);
+    const statItems = readArray<Record<string, unknown>>(stats, ["stats"]);
+    const testimonialItems = readArray<Record<string, unknown>>(
+      testimonials,
+      ["testimonials"],
+    );
+    const aboutDetailGroups = mapDetailGroups(
+      readArray<Record<string, unknown>>(about, ["detailGroups"]),
+      [
+        {
+          title: "Senior partnership",
+          items: ["Direct access", "Clear ownership", "Fast decisions"],
+        },
+        {
+          title: "Built to last",
+          items: ["Reusable systems", "Measured outcomes", "Knowledge transfer"],
+        },
+      ],
+    );
+    const heroSocialProof = readSocialProof(hero, {
+      label: "Trusted worldwide",
+      value: "Trusted by ambitious teams worldwide.",
+      rating: 5,
+      avatars: companyProAssets.avatars.map((image, index) => ({
+        image,
+        alt: `Client ${index + 1}`,
+      })),
+    });
+    const withBlock = (
+      sectionKey: string,
+      rawContent: Record<string, unknown>,
+      additions: Record<string, unknown> = {},
+    ): Record<string, unknown> => ({
+      ...rawContent,
+      ...additions,
+      blockId: sectionMap.get(sectionKey)?.id,
+      sectionStyle: getSectionStyleValue(rawContent),
+      outerSectionStyle: getSectionStyleValue(
+        rawContent,
+        "outerSectionStyle",
+      ),
+    });
+
+    return {
+      ...themedBase,
+      tagline: readString(
+        hero,
+        ["heading"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        about,
+        ["body", "description"],
+        String(themedBase.description),
+      ),
+      features: serviceItems.length
+        ? mapFeatureItems(serviceItems)
+        : themedBase.features,
+      stats: statItems.map((item) => ({
+        label: readString(item, ["label"]),
+        value: `${readString(item, ["prefix"])}${readString(item, ["number"])}${readString(item, ["suffix"])}`,
+      })),
+      reviews: testimonialItems.length
+        ? mapTestimonials(testimonialItems)
+        : themedBase.reviews,
+      templateContent: {
+        navbar: buildNavbarContent(sectionMap.get("navbar"), navbar),
+        hero: withBlock("hero", hero, { socialProof: heroSocialProof }),
+        stats: withBlock("stats", stats, { stats: statItems }),
+        about: withBlock("about", about, {
+          detailGroups: aboutDetailGroups,
+        }),
+        showcase: withBlock("showcase", showcase),
+        services: withBlock("services", services, {
+          features: serviceItems,
+        }),
+        process: withBlock("process", process, {
+          features: processItems,
+        }),
+        testimonials: withBlock("testimonials", testimonials, {
+          testimonials: testimonialItems,
+        }),
+        contact: withBlock("contact", contact, {
+          ...buildContactFormConfig(contact),
+        }),
+        footer: withBlock("footer", footer),
+        sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
+      },
+    };
+  }
+
   if (templateId === "company-executive") {
     // Company Executive has multiple FEATURES blocks. Resolve them through the
     // ordered section map so old sites without editorSection metadata do not
@@ -2179,7 +2599,10 @@ const buildTemplatePreviewBusinessDataImpl = (
     const process = getSectionContent("process");
     const processDetails = getSectionContent("process-details");
     const contact = getSectionContent("contact");
-    const customSections = getOrderedPlanSectionsForHomePage(pages);
+    const customSections = getOrderedCustomSectionsForHomePage(
+      templateId,
+      pages,
+    );
 
     const whyUsItems = readArray<Record<string, unknown>>(whyUs, [
       "features",
@@ -2232,23 +2655,19 @@ const buildTemplatePreviewBusinessDataImpl = (
       rating: 5,
       avatars: [
         {
-          image:
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+          image: companyStudioAssets.avatars[0],
           alt: "Client 1",
         },
         {
-          image:
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+          image: companyStudioAssets.avatars[1],
           alt: "Client 2",
         },
         {
-          image:
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+          image: companyStudioAssets.avatars[2],
           alt: "Client 3",
         },
         {
-          image:
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+          image: companyStudioAssets.avatars[3],
           alt: "Client 4",
         },
       ],
@@ -2469,7 +2888,7 @@ const buildTemplatePreviewBusinessDataImpl = (
             image: readString(
               splitContentCards,
               ["image", "imageUrl"],
-              "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+              companyStudioAssets.team,
             ),
             imageStyle:
               readObjectRecord(splitContentCards, ["imageStyle"]) || {},

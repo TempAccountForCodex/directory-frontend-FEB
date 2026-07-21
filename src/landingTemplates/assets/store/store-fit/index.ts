@@ -1,0 +1,14 @@
+export { default as heroImage } from "./images/hero-clean.png";
+export { default as yogaImage } from "./images/yoga-clean.png";
+export { default as collageOne } from "./images/collage-1.png";
+export { default as collageTwo } from "./images/collage-2.png";
+export { default as collageThree } from "./images/collage-3.png";
+export { default as collageFour } from "./images/collage-4.png";
+export { default as personOne } from "./images/person-1.png";
+export { default as personTwo } from "./images/person-2.png";
+export { default as personThree } from "./images/person-3.png";
+export { default as footerPhoto } from "./images/footer-photo.png";
+export { default as productOne } from "./products/product-1.png";
+export { default as productTwo } from "./products/product-2.png";
+export { default as productThree } from "./products/product-3.png";
+export { default as productFour } from "./products/product-4.png";

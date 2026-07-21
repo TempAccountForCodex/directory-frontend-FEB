@@ -44,7 +44,8 @@ import {
   getEditableImageProps,
   getEditableTextProps,
 } from "../utils/editableProps";
-import { galleryFallbackImages } from "./assets/gallery/fallbackImages";
+import { galleryFallbackImages } from "../assets/shared/gallery/fallbackImages";
+import { sharedBlockAssets } from "../assets/shared";
 import BlogFeedBlock from "../../components/PublicWebsite/dynamic/BlogFeedBlock";
 
 const hexToRgb = (hex: string) => {
@@ -828,15 +829,14 @@ const BeforeAfterEditorPreview: React.FC<{
     isDragging.current = false;
   };
 
-  const fallback =
-    "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=1200&q=80";
+  const fallback = sharedBlockAssets.defaultProfile;
 
   const beforeImage =
     section?.beforeImage || block.content?.beforeImage || fallback;
   const afterImage =
     section?.afterImage ||
     block.content?.afterImage ||
-    "https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=1200&q=80";
+    sharedBlockAssets.defaultOffice;
   const beforeLabel =
     section?.beforeLabel || block.content?.beforeLabel || "Before";
   const afterLabel =
@@ -4996,8 +4996,7 @@ export const renderEditorSharedBlock = ({
       },
       {
         name: "OpenAI",
-        image:
-          "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/3840px-OpenAI_Logo.svg.png",
+        image: sharedBlockAssets.openAiLogo,
       },
       {
         name: "Shopify",

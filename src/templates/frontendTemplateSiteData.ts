@@ -5,6 +5,9 @@ import {
   plumbingData,
   restaurantData,
 } from "../components/publicComponents/Home/industryPreview/industryDummyData";
+import { companyStudioAssets } from "../landingTemplates/assets/company/company-executive";
+import { companyProAssets } from "../landingTemplates/assets/company/company-pro";
+import { portfolioAssets } from "../landingTemplates/assets/portfolio/portfolio-agency";
 
 type FrontendTemplateWebsite = {
   websiteId?: string | number;
@@ -41,8 +44,7 @@ const baseBlogData: BusinessData = {
       title: "How operational clarity compounds over time",
       description:
         "A practical look at systems, communication, and decision quality.",
-      image:
-        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200",
+      image: companyStudioAssets.office,
       category: "Operations",
       author: "Editorial Team",
       slug: "operational-clarity",
@@ -109,6 +111,37 @@ const baseCompanyExecutiveData: BusinessData = {
   secondaryColor: "#91b8f4",
 };
 
+const baseCompanyProData: BusinessData = {
+  ...baseCompanyData,
+  name: "Alder & Co.",
+  tagline: "Clarity for companies in motion.",
+  description:
+    "Strategy, identity, and delivery systems for leadership teams building their next chapter.",
+  primaryColor: "#12100f",
+  secondaryColor: "#bd5d3f",
+  contact: {
+    email: "hello@alderandco.com",
+    phone: "(555) 280-1440",
+    address: "120 Market Street, New York, NY",
+  },
+  reviews: [
+    {
+      author: "Maya Chen",
+      role: "Chief Operating Officer",
+      text: "Alder turned a difficult transformation into a system we can keep using.",
+      rating: 5,
+      avatarUrl: companyProAssets.avatars[0],
+    },
+    {
+      author: "Owen Brooks",
+      role: "VP, Commercial Growth",
+      text: "Strategic and practical in equal measure. The result feels premium without being performative.",
+      rating: 5,
+      avatarUrl: companyProAssets.avatars[1],
+    },
+  ],
+};
+
 const basePortfolioData: BusinessData = {
   name: "Studio Volta",
   tagline: "Design at the intersection of craft and technology.",
@@ -120,7 +153,7 @@ const basePortfolioData: BusinessData = {
   portfolioItems: [
     {
       title: "Nova Brand Identity",
-      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800",
+      image: portfolioAssets.agencyWorkspace,
       description: "Identity system and campaign direction for a modern brand.",
       category: "Branding",
     },
@@ -264,6 +297,7 @@ const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
   company: baseCompanyData,
   "company-premium": baseCompanyPremiumData,
   "company-executive": baseCompanyExecutiveData,
+  "company-pro": baseCompanyProData,
   education: educationData,
   gardening: gardeningData,
   minimal: baseMinimalData,

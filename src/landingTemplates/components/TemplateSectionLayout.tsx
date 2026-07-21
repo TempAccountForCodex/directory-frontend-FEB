@@ -1,8 +1,6 @@
 import React from "react";
 import Box, { type BoxProps } from "@mui/material/Box";
-import Container, {
-  type ContainerProps,
-} from "@mui/material/Container";
+import Container, { type ContainerProps } from "@mui/material/Container";
 import type { SxProps, Theme } from "@mui/material/styles";
 import {
   getSectionStyleDomProps,
@@ -21,18 +19,20 @@ export function sectionHasPersistentBackground(
 
   return Boolean(
     (style.backgroundType && style.backgroundType !== "none") ||
-      style.backgroundColor ||
-      style.backgroundImage ||
-      style.backgroundImageUrl ||
-      style.backgroundVideo ||
-      style.backgroundVideoUrl ||
-      style.animatedBackground ||
-      style.backgroundAnimatedPreset,
+    style.backgroundColor ||
+    style.backgroundImage ||
+    style.backgroundImageUrl ||
+    style.backgroundVideo ||
+    style.backgroundVideoUrl ||
+    style.animatedBackground ||
+    style.backgroundAnimatedPreset,
   );
 }
 
-interface TemplateSectionBoundaryProps
-  extends Omit<BoxProps, "sx" | "content" | "order"> {
+interface TemplateSectionBoundaryProps extends Omit<
+  BoxProps,
+  "sx" | "content" | "order"
+> {
   blockId: string | number | undefined;
   label: string;
   sectionKey: string;
@@ -93,8 +93,10 @@ export function TemplateSectionBoundary({
   );
 }
 
-interface TemplateInnerContainerProps
-  extends Omit<ContainerProps, "maxWidth" | "sx"> {
+interface TemplateInnerContainerProps extends Omit<
+  ContainerProps,
+  "maxWidth" | "sx"
+> {
   maxWidth?: ContainerProps["maxWidth"];
   sx?: SxProps<Theme>;
 }
