@@ -29,6 +29,11 @@ const BlogFeedStaticRenderer = lazy(
 // Lazy-load BlogArticleBlock for code splitting (Step 2.24)
 const BlogArticleBlock = lazy(() => import("./dynamic/BlogArticleBlock"));
 
+// Split blog-page section blocks (BLOG_HERO / BLOG_FEATURED / BLOG_GRID)
+const BlogHeroBlock = lazy(() => import("./dynamic/BlogHeroBlock"));
+const BlogFeaturedBlock = lazy(() => import("./dynamic/BlogFeaturedBlock"));
+const BlogGridBlock = lazy(() => import("./dynamic/BlogGridBlock"));
+
 // Lazy-load ProductShowcaseBlock for code splitting (Step 2.26)
 const ProductShowcaseBlock = lazy(
   () => import("./dynamic/ProductShowcaseBlock"),
@@ -422,6 +427,23 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
     primaryColor.length === 9 ? primaryColor.slice(0, 7) : primaryColor;
 
   /**
+   * The backend block-type enum doesn't include the split blog-page sections
+   * (BLOG_HERO / BLOG_FEATURED / BLOG_GRID), so they are persisted as BLOG_FEED
+   * with a `_subType` discriminator (mirrors the WEBSITE_HEADER → NAVBAR remap).
+   * Resolve back to the real type for rendering. In-editor blocks already carry
+   * the real type and pass through unchanged.
+   */
+  const BLOG_FEED_SUBTYPES: Record<string, string> = {
+    blog_hero: "BLOG_HERO",
+    blog_featured: "BLOG_FEATURED",
+    blog_grid: "BLOG_GRID",
+  };
+  const renderBlockType =
+    blockType === "BLOG_FEED" && content?._subType
+      ? BLOG_FEED_SUBTYPES[String(content._subType).toLowerCase()] || blockType
+      : blockType;
+
+  /**
    * Check if a URL is internal (relative or same domain)
    */
   const isInternalLink = (url: string): boolean => {
@@ -454,7 +476,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
     }
   };
 
-  switch (blockType) {
+  switch (renderBlockType) {
     case "HERO":
       return (
         <HeroBlock
@@ -939,6 +961,63 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         </BlockWrapper>
       );
     }
+
+    case "BLOG_HERO":
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense fallback={<Box sx={{ minHeight: 480, bgcolor: "#020303" }} />}>
+            <BlogHeroBlock block={block} primaryColor={primaryColor} />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case "BLOG_FEATURED":
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8, bgcolor: "#f7f5f3" }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading featured article…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <BlogFeaturedBlock
+              block={block}
+              websiteId={websiteId}
+              primaryColor={primaryColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case "BLOG_GRID":
+      return (
+        <BlockWrapper fields={content}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8, bgcolor: "#f7f5f3" }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading articles…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <BlogGridBlock
+              block={block}
+              websiteId={websiteId}
+              primaryColor={primaryColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
 
     case "BLOG_ARTICLE":
       return (

@@ -439,17 +439,29 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
       const blogPage = pageRes.data?.data || pageRes.data?.page || pageRes.data;
 
       await apiClient.put(`/websites/${websiteId}/pages/${blogPage.id}/blocks`, {
+        // The backend block-type enum has no BLOG_HERO/BLOG_FEATURED/BLOG_GRID,
+        // so the split blog sections persist as BLOG_FEED + a `_subType`
+        // discriminator (remapped back to the real type on load / render).
         blocks: [
           {
-            blockType: 'HERO',
-            content: { ...getBlockDefaultContent('HERO'), heading: 'Our Blog' },
+            blockType: 'BLOG_FEED',
+            content: { ...getBlockDefaultContent('BLOG_HERO'), _subType: 'blog_hero' },
             sortOrder: 0,
             isVisible: true,
           },
           {
             blockType: 'BLOG_FEED',
-            content: getBlockDefaultContent('BLOG_FEED'),
+            content: {
+              ...getBlockDefaultContent('BLOG_FEATURED'),
+              _subType: 'blog_featured',
+            },
             sortOrder: 1,
+            isVisible: true,
+          },
+          {
+            blockType: 'BLOG_FEED',
+            content: { ...getBlockDefaultContent('BLOG_GRID'), _subType: 'blog_grid' },
+            sortOrder: 2,
             isVisible: true,
           },
         ],

@@ -2079,6 +2079,20 @@ const normalizeContainerStylesForSave = (containerStyles) => {
   );
 };
 
+// The backend block-type enum has no BLOG_HERO/BLOG_FEATURED/BLOG_GRID, so the
+// split blog-page sections round-trip as BLOG_FEED + a `_subType` discriminator
+// (same pattern as WEBSITE_HEADER ↔ NAVBAR).
+const BLOG_SECTION_TYPE_TO_SUBTYPE = {
+  BLOG_HERO: "blog_hero",
+  BLOG_FEATURED: "blog_featured",
+  BLOG_GRID: "blog_grid",
+};
+const BLOG_SECTION_SUBTYPE_TO_TYPE = {
+  blog_hero: "BLOG_HERO",
+  blog_featured: "BLOG_FEATURED",
+  blog_grid: "BLOG_GRID",
+};
+
 const sanitizeBlockContentForSave = (blockType, content) => {
   const rawBlockType = String(blockType || "").toUpperCase();
   const sanitizedContent = syncAliasedBlockContent(rawBlockType, {
@@ -2197,6 +2211,19 @@ const sanitizeBlockForSave = (block) => {
     };
   }
 
+  // The split blog-page sections aren't in the backend block-type enum, so
+  // persist them as BLOG_FEED + a `_subType` discriminator (remapped on load).
+  if (BLOG_SECTION_TYPE_TO_SUBTYPE[rawBlockType]) {
+    return {
+      ...block,
+      blockType: "BLOG_FEED",
+      content: {
+        ...sanitizedContent,
+        _subType: BLOG_SECTION_TYPE_TO_SUBTYPE[rawBlockType],
+      },
+    };
+  }
+
   if (rawBlockType === "GALLERY") {
     sanitizedContent.images = Array.isArray(sanitizedContent.images)
       ? sanitizedContent.images.map((item) => ({
@@ -2268,6 +2295,15 @@ const normalizeLoadedBlock = (block) => {
 
   if (rawBlockType === "NAVBAR" && block?.content?._subType === "website_header") {
     return { ...block, blockType: "WEBSITE_HEADER" };
+  }
+  if (rawBlockType === "BLOG_FEED" && block?.content?._subType) {
+    const mappedType =
+      BLOG_SECTION_SUBTYPE_TO_TYPE[
+        String(block.content._subType).toLowerCase()
+      ];
+    if (mappedType) {
+      return { ...block, blockType: mappedType };
+    }
   }
   if (block?.content && !Array.isArray(block.content)) {
     return {
@@ -3068,12 +3104,18 @@ const WebsiteEditorInner = () => {
           templateThemeSelection && templateThemeSelectionDirty
           ? getTemplateThemeSettings(templateThemeSelection)
           : persistedTemplateThemeSettings;
-        blocksToSave = selectedPage?.localOnly
-          ? injectTemplateThemeSettingsIntoBlocks(
-              normalizedBlocks,
-              resolvedThemeSettings,
-            )
-          : normalizedBlocks;
+        // Bake the theme settings into the page blocks whenever the palette was
+        // changed (not just for not-yet-saved template pages). The public
+        // template site reads its colors from the theme settings persisted in
+        // the blocks (readTemplateThemeSettingsFromPages), so without this a
+        // saved palette change never reaches the live site.
+        blocksToSave =
+          selectedPage?.localOnly || templateThemeSelectionDirty
+            ? injectTemplateThemeSettingsIntoBlocks(
+                normalizedBlocks,
+                resolvedThemeSettings,
+              )
+            : normalizedBlocks;
         const blocksToDisplay = blocksToSave.map(normalizeLoadedBlock);
         if (JSON.stringify(blocksToDisplay) !== JSON.stringify(blocks)) {
           setBlocks(blocksToDisplay);
@@ -3153,7 +3195,14 @@ const WebsiteEditorInner = () => {
           setWebsiteAISchemaRefreshKey((key) => key + 1);
         }
 
-        if (selectedPage?.localOnly && resolvedThemeSettings?.primaryColor) {
+        // Persist the theme colors to the website record whenever the user
+        // changed the palette (templateThemeSelectionDirty) — not just for
+        // not-yet-saved template pages. Without this, the color updates in the
+        // editor/preview but the published site keeps the old website.primaryColor.
+        if (
+          resolvedThemeSettings?.primaryColor &&
+          (selectedPage?.localOnly || templateThemeSelectionDirty)
+        ) {
           try {
             const websiteResponse = await apiClient.put(
               `/websites/${websiteId}`,
@@ -3856,6 +3905,18 @@ const WebsiteEditorInner = () => {
     );
     const sharedChromeBlocks = getSharedChromeBlocksFromPages(previewPages);
 
+    // Reflect the live (unsaved) theme-color selection so block-based pages that
+    // read primaryColor via the page-shell preview (e.g. blog sections) update
+    // immediately — mirrors the theme override applied to the template memo.
+    const liveThemeSelection =
+      templateThemeSelection && templateThemeSelectionDirty
+        ? resolveTemplateThemeSelection(templateThemeSelection)
+        : null;
+    const livePrimaryColor =
+      liveThemeSelection?.palette?.primary || website?.primaryColor;
+    const liveSecondaryColor =
+      liveThemeSelection?.palette?.secondary || website?.secondaryColor;
+
     updatePreviewContent({
       websiteId: String(websiteId),
       pageId: String(selectedPage.id),
@@ -3874,8 +3935,8 @@ const WebsiteEditorInner = () => {
           ? resolvedFrontendTemplateId
           : null,
         businessName: website?.businessName,
-        primaryColor: website?.primaryColor,
-        secondaryColor: website?.secondaryColor,
+        primaryColor: livePrimaryColor,
+        secondaryColor: liveSecondaryColor,
         metaDescription: website?.metaDescription,
         shortDescription: website?.shortDescription,
         logoUrl: website?.logoUrl,
@@ -3913,6 +3974,8 @@ const WebsiteEditorInner = () => {
     pages,
     previewTemplateDataOverride,
     resolvedFrontendTemplateId,
+    templateThemeSelection,
+    templateThemeSelectionDirty,
   ]);
 
   useEffect(() => {

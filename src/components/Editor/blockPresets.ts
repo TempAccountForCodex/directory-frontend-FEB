@@ -193,6 +193,37 @@ export const getBlockDefaultContent = (
         readMoreText: "Read More",
         readMoreLink: "/blog/{slug}",
       };
+    case "BLOG_HERO":
+      return {
+        eyebrow: "THE FUTURE OF AI KNOWLEDGE",
+        heading: "Blogs, Insights &",
+        headingAccent: "Articles",
+        description:
+          "Exploring the frontiers of artificial intelligence, cloud computing, cybersecurity, and the future of digital transformation.",
+        accentColor: "",
+      };
+    case "BLOG_FEATURED":
+      return {
+        heading: "",
+        postSlug: "",
+        authorLabel: "Editorial",
+        readMoreLink: "/blog/{slug}",
+        emptyMessage: "No featured article yet.",
+      };
+    case "BLOG_GRID":
+      return {
+        heading: "",
+        columns: 3,
+        postsPerPage: 9,
+        showSearch: true,
+        showCategories: true,
+        showPagination: true,
+        authorLabel: "Editorial",
+        sortBy: "publishedAt",
+        sortOrder: "desc",
+        emptyMessage: "No articles found in this category yet.",
+        readMoreLink: "/blog/{slug}",
+      };
     case "CONTACT":
     case "FORM_BUILDER":
       return {
@@ -637,6 +668,68 @@ export const getLocalFieldMetadata = (
           type: "IMAGE",
           order: 5,
         },
+      ]);
+    case "BLOG_HERO":
+      return contentGroup([
+        makeTextField("eyebrow", "Eyebrow", 1),
+        makeTextField("heading", "Heading", 2, true),
+        makeTextField("headingAccent", "Accent Word", 3),
+        makeTextField("description", "Description", 4, true),
+        { name: "accentColor", label: "Accent Color", type: "COLOR", order: 5 },
+      ]);
+    case "BLOG_FEATURED":
+      return contentGroup([
+        makeTextField("heading", "Section Heading (optional)", 1),
+        {
+          name: "postSlug",
+          label: "Featured Post Slug (blank = latest)",
+          type: "TEXT",
+          order: 2,
+          ui: { placeholder: "my-post-slug" },
+        },
+        makeTextField("authorLabel", "Author Label", 3),
+        makeTextField("emptyMessage", "Empty Message", 4),
+      ]);
+    case "BLOG_GRID":
+      return contentGroup([
+        makeTextField("heading", "Section Heading (optional)", 1),
+        {
+          name: "columns",
+          label: "Columns",
+          type: "SELECT",
+          order: 2,
+          ui: {
+            props: {
+              options: [
+                { label: "2 Columns", value: 2 },
+                { label: "3 Columns", value: 3 },
+                { label: "4 Columns", value: 4 },
+              ],
+            },
+          },
+        },
+        {
+          name: "postsPerPage",
+          label: "Posts Per Page",
+          type: "NUMBER",
+          order: 3,
+          validation: { min: 1, max: 24 },
+        },
+        { name: "showSearch", label: "Show Search", type: "TOGGLE", order: 4 },
+        {
+          name: "showCategories",
+          label: "Show Category Filters",
+          type: "TOGGLE",
+          order: 5,
+        },
+        {
+          name: "showPagination",
+          label: "Show Pagination",
+          type: "TOGGLE",
+          order: 6,
+        },
+        makeTextField("authorLabel", "Author Label", 7),
+        makeTextField("emptyMessage", "Empty Message", 8),
       ]);
     case "IMAGE":
       return contentGroup([
