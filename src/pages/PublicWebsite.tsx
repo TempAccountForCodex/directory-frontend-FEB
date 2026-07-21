@@ -33,6 +33,7 @@ import LanguageSelector from "../components/LanguageSelector";
 import TemplateEngine from "../landingTemplates/templateEngine/TemplateEngine";
 import TemplatePageShell from "../landingTemplates/components/TemplatePageShell";
 import {
+  buildFrontendTemplateEditorPages,
   buildTemplatePreviewBusinessData,
   inferFrontendTemplateIdFromPages,
   supportsFrontendTemplateEditor,
@@ -69,12 +70,16 @@ const SHARED_FOOTER_BLOCK_TYPES = new Set(["FOOTER"]);
 
 const isSharedHeaderBlock = (block?: Block | null) =>
   SHARED_HEADER_BLOCK_TYPES.has(
-    String(block?.blockType || block?.type || "").trim().toUpperCase(),
+    String(block?.blockType || block?.type || "")
+      .trim()
+      .toUpperCase(),
   );
 
 const isSharedFooterBlock = (block?: Block | null) =>
   SHARED_FOOTER_BLOCK_TYPES.has(
-    String(block?.blockType || block?.type || "").trim().toUpperCase(),
+    String(block?.blockType || block?.type || "")
+      .trim()
+      .toUpperCase(),
   );
 
 // ---------------------------------------------------------------------------
@@ -191,7 +196,10 @@ const PublicWebsite: React.FC = () => {
   );
 
   const activeIntegrations = useMemo(
-    () => (website?.integrations || []).filter((integration) => integration?.isActive),
+    () =>
+      (website?.integrations || []).filter(
+        (integration) => integration?.isActive,
+      ),
     [website?.integrations],
   );
   const hasActiveGaIntegration = useMemo(
@@ -355,11 +363,16 @@ const PublicWebsite: React.FC = () => {
             const integrationsRes = await apiClient.get(
               `/websites/${websiteData.id}/integrations`,
             );
-            const fetchedIntegrations = Array.isArray(integrationsRes.data?.data)
+            const fetchedIntegrations = Array.isArray(
+              integrationsRes.data?.data,
+            )
               ? integrationsRes.data.data
               : [];
 
-            if (fetchedIntegrations.length > 0 || scopedIntegrations.length === 0) {
+            if (
+              fetchedIntegrations.length > 0 ||
+              scopedIntegrations.length === 0
+            ) {
               scopedIntegrations = fetchedIntegrations;
             }
           } catch {
@@ -424,8 +437,13 @@ const PublicWebsite: React.FC = () => {
             const prefix = indexPath.endsWith("/")
               ? indexPath
               : `${indexPath}/`;
-            if (pagePath.startsWith(prefix) && pagePath.length > prefix.length) {
-              const postSlug = pagePath.slice(prefix.length).replace(/\/+$/, "");
+            if (
+              pagePath.startsWith(prefix) &&
+              pagePath.length > prefix.length
+            ) {
+              const postSlug = pagePath
+                .slice(prefix.length)
+                .replace(/\/+$/, "");
               if (postSlug) {
                 // Synthetic page — BlogArticleBlock resolves the post by postIdentifier
                 // (not the website slug in the URL) and shows its own not-found state.
@@ -652,25 +670,11 @@ h1, h2, h3, h4, h5, h6 {
       ? website.pages
       : website.templateSnapshot?.pages || [];
 
-    return sourcePages.map((page: any, pageIndex: number) => ({
-      id: String(page.id ?? `page-${pageIndex}`),
-      title: page.title || `Page ${pageIndex + 1}`,
-      path: page.path || "/",
-      isHome: !!page.isHome,
-      sortOrder: page.sortOrder ?? pageIndex,
-      isPublished: page.isPublished ?? true,
-      blocks: Array.isArray(page.blocks)
-        ? page.blocks.map((block: any, blockIndex: number) => ({
-            id: String(
-              block.id ?? `${page.id ?? pageIndex}-block-${blockIndex}`,
-            ),
-            blockType: block.blockType || block.type || "",
-            content: block.content || {},
-            sortOrder: block.sortOrder ?? blockIndex,
-            isVisible: block.isVisible ?? true,
-          }))
-        : [],
-    }));
+    return buildFrontendTemplateEditorPages(
+      resolvedFrontendTemplateId,
+      website,
+      sourcePages,
+    );
   }, [website, resolvedFrontendTemplateId]);
 
   const frontendTemplateData = useMemo(() => {
@@ -726,26 +730,29 @@ h1, h2, h3, h4, h5, h6 {
         : null;
     }
 
-    const baseData = buildFrontendTemplateBusinessData(resolvedFrontendTemplateId, {
-      websiteId: website.id,
-      name: website.name,
-      businessName: website.businessName,
-      primaryColor: website.primaryColor,
-      secondaryColor: website.secondaryColor,
-      themeSettings: website.templateSnapshot?.themeSettings,
-      metaDescription: website.metaDescription,
-      shortDescription: website.shortDescription,
-      logoUrl: website.logoUrl,
-      fullAddress: website.fullAddress,
-      tags: website.tags as string[] | null | undefined,
-      pages: website.pages?.map((page) => ({
-        id: page.id,
-        title: page.title,
-        path: page.path,
-        isHome: page.isHome,
-        isPublished: page.isPublished,
-      })),
-    });
+    const baseData = buildFrontendTemplateBusinessData(
+      resolvedFrontendTemplateId,
+      {
+        websiteId: website.id,
+        name: website.name,
+        businessName: website.businessName,
+        primaryColor: website.primaryColor,
+        secondaryColor: website.secondaryColor,
+        themeSettings: website.templateSnapshot?.themeSettings,
+        metaDescription: website.metaDescription,
+        shortDescription: website.shortDescription,
+        logoUrl: website.logoUrl,
+        fullAddress: website.fullAddress,
+        tags: website.tags as string[] | null | undefined,
+        pages: website.pages?.map((page) => ({
+          id: page.id,
+          title: page.title,
+          path: page.path,
+          isHome: page.isHome,
+          isPublished: page.isPublished,
+        })),
+      },
+    );
     return baseData
       ? {
           ...baseData,
@@ -756,7 +763,12 @@ h1, h2, h3, h4, h5, h6 {
           },
         }
       : null;
-  }, [website, persistedTemplatePages, resolvedFrontendTemplateId, currentPage?.id]);
+  }, [
+    website,
+    persistedTemplatePages,
+    resolvedFrontendTemplateId,
+    currentPage?.id,
+  ]);
 
   const sharedHomeChrome = useMemo(() => {
     if (!website?.pages?.length) {
@@ -785,7 +797,9 @@ h1, h2, h3, h4, h5, h6 {
   }, [website?.pages]);
 
   const pageBodyBlocks = useMemo(() => {
-    const currentBlocks = Array.isArray(currentPage?.blocks) ? currentPage.blocks : [];
+    const currentBlocks = Array.isArray(currentPage?.blocks)
+      ? currentPage.blocks
+      : [];
     if (currentPage?.isHome) {
       return currentBlocks;
     }
@@ -880,9 +894,9 @@ h1, h2, h3, h4, h5, h6 {
   );
   const shouldUseTemplatePageShell = Boolean(
     resolvedFrontendTemplateId &&
-      hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
-      frontendTemplateData &&
-      !currentPage?.isHome,
+    hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
+    frontendTemplateData &&
+    !currentPage?.isHome,
   );
   const genericHeader = (
     <AppBar

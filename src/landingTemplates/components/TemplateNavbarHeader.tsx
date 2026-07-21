@@ -11,6 +11,10 @@ import {
 } from "@mui/material";
 import { Menu as MenuIcon, X as CloseIcon } from "lucide-react";
 import { apiClient } from "../../api/client";
+import {
+  getEditableImageProps,
+  getEditableTextProps,
+} from "../utils/editableProps";
 
 // Resolve relative nav targets to the current site's base path (/site/:slug)
 const siteBase = (() => {
@@ -28,6 +32,8 @@ const resolveTarget = (target: string): string => {
 
 export interface NavbarContentFields {
   blockId?: string | number;
+  brandName?: string;
+  logo?: string;
   logoType?: string;
   logoText?: string;
   logoImage?: string;
@@ -134,9 +140,16 @@ const TemplateNavbarHeader: React.FC<Props> = ({
   const ctaColor = navbarContent.ctaColor || themeColor;
   const ctaText = navbarContent.ctaText || "";
   const ctaUrl = navbarContent.ctaUrl || "#contact";
-  const logoText = navbarContent.logoText || fallbackName;
-  const logoType = navbarContent.logoType || "text";
-  const logoImage = navbarContent.logoImage || "";
+  const logoText =
+    navbarContent.brandName || navbarContent.logoText || fallbackName;
+  const logoImage = navbarContent.logoImage || navbarContent.logo || "";
+  const logoTextField =
+    typeof navbarContent.brandName === "string" ? "brandName" : "logoText";
+  const logoImageField =
+    typeof navbarContent.logoImage === "string" ? "logoImage" : "logo";
+  const hasLogoImage =
+    typeof logoImage === "string" &&
+    /^(?:https?:\/\/|\/)/i.test(logoImage.trim());
 
   // Determine which nav items to show
   const configuredNavItems = Array.isArray(navbarContent.navigationItems)
@@ -206,15 +219,25 @@ const TemplateNavbarHeader: React.FC<Props> = ({
       href="/"
       sx={{ textDecoration: "none", display: "flex", alignItems: "center", flexShrink: 0 }}
     >
-      {logoType === "image" && logoImage ? (
+      {hasLogoImage ? (
         <Box
           component="img"
+          {...getEditableImageProps(
+            navbarContent.blockId,
+            logoImageField,
+            "Header logo",
+          )}
           src={logoImage}
           alt={logoText}
           sx={{ height: 36, width: "auto", maxWidth: 140, objectFit: "contain" }}
         />
       ) : (
         <Typography
+          {...getEditableTextProps(
+            navbarContent.blockId,
+            logoTextField,
+            "single",
+          )}
           sx={{
             fontFamily: headingFont,
             fontSize: { xs: "1.3rem", md: "1.7rem" },

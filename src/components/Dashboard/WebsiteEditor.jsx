@@ -537,12 +537,16 @@ const SHARED_FOOTER_BLOCK_TYPES = new Set(["FOOTER"]);
 
 const isSharedHeaderBlock = (block) =>
   SHARED_HEADER_BLOCK_TYPES.has(
-    String(block?.blockType || block?.type || "").trim().toUpperCase(),
+    String(block?.blockType || block?.type || "")
+      .trim()
+      .toUpperCase(),
   );
 
 const isSharedFooterBlock = (block) =>
   SHARED_FOOTER_BLOCK_TYPES.has(
-    String(block?.blockType || block?.type || "").trim().toUpperCase(),
+    String(block?.blockType || block?.type || "")
+      .trim()
+      .toUpperCase(),
   );
 
 const getSharedChromeBlocksFromPages = (pagesInput) => {
@@ -557,15 +561,13 @@ const getSharedChromeBlocksFromPages = (pagesInput) => {
   return {
     header:
       homeBlocks.find(
-        (block) =>
-          block?.isVisible !== false && isSharedHeaderBlock(block),
+        (block) => block?.isVisible !== false && isSharedHeaderBlock(block),
       ) || null,
     footer:
       [...homeBlocks]
         .reverse()
         .find(
-          (block) =>
-            block?.isVisible !== false && isSharedFooterBlock(block),
+          (block) => block?.isVisible !== false && isSharedFooterBlock(block),
         ) || null,
   };
 };
@@ -663,7 +665,10 @@ const getStaticStyleDraftKey = (selection) =>
     ? `${selection.blockId}::${selection.styleKey || "sectionStyle"}::${selection.staticId}`
     : null;
 const getStaticMediaOverrideKey = (websiteId, pageId, selection) =>
-  websiteId != null && pageId != null && selection?.blockId && selection?.staticId
+  websiteId != null &&
+  pageId != null &&
+  selection?.blockId &&
+  selection?.staticId
     ? `${String(websiteId)}::${String(pageId)}::${String(selection.blockId)}::${String(selection.staticId)}`
     : null;
 
@@ -722,7 +727,9 @@ const syncAliasedBlockContent = (blockType, content) => {
     return content;
   }
 
-  const normalizedBlockType = String(blockType || "").trim().toUpperCase();
+  const normalizedBlockType = String(blockType || "")
+    .trim()
+    .toUpperCase();
   const nextContent = { ...content };
 
   if (normalizedBlockType === "FEATURES") {
@@ -740,7 +747,9 @@ const syncAliasedBlockContent = (blockType, content) => {
 
   if (normalizedBlockType === "GALLERY") {
     const items = Array.isArray(nextContent.items) ? nextContent.items : null;
-    const images = Array.isArray(nextContent.images) ? nextContent.images : null;
+    const images = Array.isArray(nextContent.images)
+      ? nextContent.images
+      : null;
 
     if (items) {
       nextContent.images = items.map((item) => ({
@@ -766,19 +775,37 @@ const syncAliasedBlockContent = (blockType, content) => {
       ? nextContent.testimonials
       : null;
 
-    if (items) {
+    // TESTIMONIALS owns `testimonials[]` (the Company Pro schema). Once the
+    // legacy `items[]` mirror exists, treating it as authoritative overwrites
+    // each textarea change on the next state update. REVIEWS keeps the inverse
+    // ownership for its legacy schema.
+    if (normalizedBlockType === "TESTIMONIALS" && testimonials) {
+      nextContent.items = testimonials.map((item) => ({
+        ...item,
+        text: item?.text ?? item?.quote ?? item?.comment ?? "",
+        author: item?.author ?? item?.name ?? "",
+        role: item?.role ?? item?.position ?? "",
+      }));
+    } else if (normalizedBlockType === "REVIEWS" && items) {
       nextContent.testimonials = items.map((item) => ({
         ...item,
-        quote: item?.quote || item?.text || item?.comment || "",
-        author: item?.author || item?.name || "",
-        position: item?.position || item?.role || "",
+        quote: item?.quote ?? item?.text ?? item?.comment ?? "",
+        author: item?.author ?? item?.name ?? "",
+        position: item?.position ?? item?.role ?? "",
       }));
     } else if (testimonials) {
       nextContent.items = testimonials.map((item) => ({
         ...item,
-        text: item?.text || item?.quote || item?.comment || "",
-        author: item?.author || item?.name || "",
-        role: item?.role || item?.position || "",
+        text: item?.text ?? item?.quote ?? item?.comment ?? "",
+        author: item?.author ?? item?.name ?? "",
+        role: item?.role ?? item?.position ?? "",
+      }));
+    } else if (items) {
+      nextContent.testimonials = items.map((item) => ({
+        ...item,
+        quote: item?.quote ?? item?.text ?? item?.comment ?? "",
+        author: item?.author ?? item?.name ?? "",
+        position: item?.position ?? item?.role ?? "",
       }));
     }
   }
@@ -1931,7 +1958,10 @@ const SAVE_ENUM_FIELDS = {
     imagePosition: { values: ["left", "right"], fallback: "left" },
   },
   TABS: {
-    variant: { values: ["standard", "outlined", "pills"], fallback: "standard" },
+    variant: {
+      values: ["standard", "outlined", "pills"],
+      fallback: "standard",
+    },
   },
   NAVBAR: {
     logoType: { values: ["text", "image"], fallback: "text" },
@@ -2046,20 +2076,27 @@ const omitInnerBlocksMirror = (value) => {
 };
 
 const normalizeContainerBackgroundType = (style = {}) => {
-  const rawType = String(style.backgroundType || "").trim().toLowerCase();
+  const rawType = String(style.backgroundType || "")
+    .trim()
+    .toLowerCase();
   if (["color", "image", "video", "animated", "none"].includes(rawType)) {
     return rawType;
   }
   if (["solid", "gradient", "pattern"].includes(rawType)) return "color";
   if (style.backgroundVideoUrl || style.backgroundVideo) return "video";
   if (style.backgroundImageUrl || style.backgroundImage) return "image";
-  if (style.backgroundAnimatedPreset || style.animatedBackground) return "animated";
+  if (style.backgroundAnimatedPreset || style.animatedBackground)
+    return "animated";
   if (style.backgroundColor) return "color";
   return "none";
 };
 
 const normalizeContainerStylesForSave = (containerStyles) => {
-  if (!containerStyles || typeof containerStyles !== "object" || Array.isArray(containerStyles)) {
+  if (
+    !containerStyles ||
+    typeof containerStyles !== "object" ||
+    Array.isArray(containerStyles)
+  ) {
     return containerStyles;
   }
   return Object.fromEntries(
@@ -2067,7 +2104,10 @@ const normalizeContainerStylesForSave = (containerStyles) => {
       if (!style || typeof style !== "object" || Array.isArray(style)) {
         return [containerId, style];
       }
-      const stableId = String(containerId).replace(/^(?:fallback-)+/, "fallback-");
+      const stableId = String(containerId).replace(
+        /^(?:fallback-)+/,
+        "fallback-",
+      );
       return [
         stableId,
         {
@@ -2293,7 +2333,10 @@ const normalizeLoadedBlock = (block) => {
     };
   }
 
-  if (rawBlockType === "NAVBAR" && block?.content?._subType === "website_header") {
+  if (
+    rawBlockType === "NAVBAR" &&
+    block?.content?._subType === "website_header"
+  ) {
     return { ...block, blockType: "WEBSITE_HEADER" };
   }
   if (rawBlockType === "BLOG_FEED" && block?.content?._subType) {
@@ -2582,12 +2625,14 @@ const WebsiteEditorInner = () => {
     setStaticMediaOverrides((prev) => {
       const next = { ...prev };
       Object.entries(stored.media).forEach(([pageKey, value]) => {
-        next[buildStoredStaticMediaOverrideKey(
-          websiteId,
-          selectedPage.id,
-          pageKey.split("::")[0],
-          pageKey.split("::")[1],
-        )] = value;
+        next[
+          buildStoredStaticMediaOverrideKey(
+            websiteId,
+            selectedPage.id,
+            pageKey.split("::")[0],
+            pageKey.split("::")[1],
+          )
+        ] = value;
       });
       return next;
     });
@@ -2606,7 +2651,11 @@ const WebsiteEditorInner = () => {
       const next = { ...previous };
       blocks.forEach((block) => {
         const containerStyles = block?.content?.containerStyles;
-        if (!containerStyles || typeof containerStyles !== "object" || Array.isArray(containerStyles)) {
+        if (
+          !containerStyles ||
+          typeof containerStyles !== "object" ||
+          Array.isArray(containerStyles)
+        ) {
           return;
         }
         Object.entries(containerStyles).forEach(([containerId, style]) => {
@@ -2627,7 +2676,9 @@ const WebsiteEditorInner = () => {
   const cloneStaticOverrideSnapshot = useCallback(
     () => ({
       staticStyleDrafts: JSON.parse(JSON.stringify(staticStyleDrafts || {})),
-      staticMediaOverrides: JSON.parse(JSON.stringify(staticMediaOverrides || {})),
+      staticMediaOverrides: JSON.parse(
+        JSON.stringify(staticMediaOverrides || {}),
+      ),
     }),
     [staticMediaOverrides, staticStyleDrafts],
   );
@@ -2789,7 +2840,9 @@ const WebsiteEditorInner = () => {
         return null;
       }
 
-      if (blocksRef.current.some((block) => String(block.id) === String(blockId))) {
+      if (
+        blocksRef.current.some((block) => String(block.id) === String(blockId))
+      ) {
         return blocksRef.current.find(
           (block) => String(block.id) === String(blockId),
         );
@@ -2838,7 +2891,9 @@ const WebsiteEditorInner = () => {
 
       if (owner.isSelectedPage) {
         const nextBlocks = blocksRef.current.map((block) =>
-          String(block.id) === String(blockId) ? updater(block, owner.page) : block,
+          String(block.id) === String(blockId)
+            ? updater(block, owner.page)
+            : block,
         );
         blocksRef.current = nextBlocks;
         setBlocks(nextBlocks);
@@ -3102,8 +3157,8 @@ const WebsiteEditorInner = () => {
         const normalizedBlocks = data.blocks.map(sanitizeBlockForSave);
         const resolvedThemeSettings =
           templateThemeSelection && templateThemeSelectionDirty
-          ? getTemplateThemeSettings(templateThemeSelection)
-          : persistedTemplateThemeSettings;
+            ? getTemplateThemeSettings(templateThemeSelection)
+            : persistedTemplateThemeSettings;
         // Bake the theme settings into the page blocks whenever the palette was
         // changed (not just for not-yet-saved template pages). The public
         // template site reads its colors from the theme settings persisted in
@@ -3125,23 +3180,53 @@ const WebsiteEditorInner = () => {
           ? templatePersistencePage?.id
           : selectedPage.id;
         if (!effectivePageId && selectedPage?.localOnly) {
-          const createdPageResponse = await apiClient.post(
+          // A locally hydrated template page can temporarily lose its persisted
+          // counterpart from state. Resolve it from the API before creating
+          // anything, otherwise saving Home attempts to create "/" again.
+          const pagesResponse = await apiClient.get(
             `/websites/${websiteId}/pages`,
-            {
-              title: selectedPage.title,
-              path: selectedPage.path,
-              isHome: selectedPage.isHome,
-              isPublished: true,
-            },
           );
-          const createdPage =
-            createdPageResponse.data?.data || createdPageResponse.data;
-          effectivePageId = createdPage?.id;
-          if (effectivePageId) {
-            setPersistedPages((prevPages) => [
-              ...prevPages,
-              { ...createdPage, blocks: [] },
-            ]);
+          const existingPages = Array.isArray(pagesResponse.data?.data)
+            ? pagesResponse.data.data
+            : Array.isArray(pagesResponse.data)
+              ? pagesResponse.data
+              : [];
+          const existingPage =
+            existingPages.find(
+              (page) =>
+                page.path === selectedPage.path ||
+                (page.isHome && selectedPage.isHome),
+            ) || null;
+
+          if (existingPage?.id) {
+            effectivePageId = existingPage.id;
+            setPersistedPages((prevPages) => {
+              const hasPage = prevPages.some(
+                (page) => String(page.id) === String(existingPage.id),
+              );
+              return hasPage
+                ? prevPages
+                : [...prevPages, { ...existingPage, blocks: [] }];
+            });
+          } else {
+            const createdPageResponse = await apiClient.post(
+              `/websites/${websiteId}/pages`,
+              {
+                title: selectedPage.title,
+                path: selectedPage.path,
+                isHome: selectedPage.isHome,
+                isPublished: true,
+              },
+            );
+            const createdPage =
+              createdPageResponse.data?.data || createdPageResponse.data;
+            effectivePageId = createdPage?.id;
+            if (effectivePageId) {
+              setPersistedPages((prevPages) => [
+                ...prevPages,
+                { ...createdPage, blocks: [] },
+              ]);
+            }
           }
         }
         if (!effectivePageId) {
@@ -3473,7 +3558,7 @@ const WebsiteEditorInner = () => {
         await apiClient.put(
           `/websites/${websiteId}/pages/${effectivePageId}/blocks`,
           {
-          blocks: blocksToSave,
+            blocks: blocksToSave,
           },
         );
         remaining.delete(pageId);
@@ -3855,12 +3940,13 @@ const WebsiteEditorInner = () => {
       selectedPage?.id,
     );
     const persistedStaticStyleOverrides =
-      baseTemplateDataOverride.templateContent?.__editorStaticStyleOverrides || {};
+      baseTemplateDataOverride.templateContent?.__editorStaticStyleOverrides ||
+      {};
 
     const resolvedThemeSelection =
       templateThemeSelection && templateThemeSelectionDirty
-      ? resolveTemplateThemeSelection(templateThemeSelection)
-      : null;
+        ? resolveTemplateThemeSelection(templateThemeSelection)
+        : null;
 
     return {
       ...baseTemplateDataOverride,
@@ -3982,7 +4068,9 @@ const WebsiteEditorInner = () => {
     if (!selectedPage?.id) return;
     setPages((prevPages) =>
       prevPages.map((page) =>
-        String(page.id) === String(selectedPage.id) ? { ...page, blocks } : page,
+        String(page.id) === String(selectedPage.id)
+          ? { ...page, blocks }
+          : page,
       ),
     );
     setSelectedPage((prevSelectedPage) =>
@@ -4660,17 +4748,20 @@ const WebsiteEditorInner = () => {
 
     return {
       ...DEFAULT_TEXT_STYLE,
-      color: selectedStaticElement.computedStyle.color || DEFAULT_TEXT_STYLE.color,
+      color:
+        selectedStaticElement.computedStyle.color || DEFAULT_TEXT_STYLE.color,
       backgroundColor:
         selectedStaticElement.computedStyle.backgroundColor ||
         DEFAULT_TEXT_STYLE.backgroundColor,
       fontSize:
-        selectedStaticElement.computedStyle.fontSize || DEFAULT_TEXT_STYLE.fontSize,
+        selectedStaticElement.computedStyle.fontSize ||
+        DEFAULT_TEXT_STYLE.fontSize,
       fontWeight:
         selectedStaticElement.computedStyle.fontWeight ||
         DEFAULT_TEXT_STYLE.fontWeight,
       textAlign:
-        selectedStaticElement.computedStyle.textAlign || DEFAULT_TEXT_STYLE.textAlign,
+        selectedStaticElement.computedStyle.textAlign ||
+        DEFAULT_TEXT_STYLE.textAlign,
       textShadow:
         selectedStaticElement.computedStyle.textShadow ||
         DEFAULT_TEXT_STYLE.textShadow,
@@ -4756,7 +4847,8 @@ const WebsiteEditorInner = () => {
     const key = getStaticStyleDraftKey(selectedStaticElement);
     const draft = key ? staticStyleDrafts[key] || {} : {};
     const staticPreviewSrc =
-      selectedImageElement?.isStatic && typeof selectedImageElement.src === "string"
+      selectedImageElement?.isStatic &&
+      typeof selectedImageElement.src === "string"
         ? selectedImageElement.src
         : selectedStaticElement?.src || "";
 
@@ -5312,90 +5404,96 @@ const WebsiteEditorInner = () => {
     setPreviewContextMenu(data);
   }, []);
 
-  const uploadImageAsset = useCallback(async (file) => {
-    if (!file) {
-      return null;
-    }
+  const uploadImageAsset = useCallback(
+    async (file) => {
+      if (!file) {
+        return null;
+      }
 
-    const validation = await validateWebsiteMediaUpload({
-      file,
-      websiteId,
-      allowedMediaType: "image",
-    });
-    if (!validation.ok) {
-      setSaveToast({
-        open: true,
-        message: validation.message,
-        severity: "error",
+      const validation = await validateWebsiteMediaUpload({
+        file,
+        websiteId,
+        allowedMediaType: "image",
       });
-      return null;
-    }
+      if (!validation.ok) {
+        setSaveToast({
+          open: true,
+          message: validation.message,
+          severity: "error",
+        });
+        return null;
+      }
 
-    const formData = new FormData();
-    formData.append("image", file);
-    if (websiteId) {
-      formData.append("websiteId", String(websiteId));
-    }
+      const formData = new FormData();
+      formData.append("image", file);
+      if (websiteId) {
+        formData.append("websiteId", String(websiteId));
+      }
 
-    try {
-      const response = await apiClient.post("/upload/image", formData);
-      return normalizeUploadedImageUrl(
-        response?.data?.url ||
+      try {
+        const response = await apiClient.post("/upload/image", formData);
+        return normalizeUploadedImageUrl(
+          response?.data?.url ||
+            response?.data?.fileUrl ||
+            response?.data?.data?.url ||
+            response?.data?.data?.fileUrl ||
+            null,
+        );
+      } catch (error) {
+        setSaveToast({
+          open: true,
+          message: getRequestErrorMessage(error, "Failed to upload image."),
+          severity: "error",
+        });
+        return null;
+      }
+    },
+    [websiteId],
+  );
+
+  const uploadVideoAsset = useCallback(
+    async (file) => {
+      if (!file) return null;
+
+      const validation = await validateWebsiteMediaUpload({
+        file,
+        websiteId,
+        allowedMediaType: "video",
+      });
+      if (!validation.ok) {
+        setSaveToast({
+          open: true,
+          message: validation.message,
+          severity: "error",
+        });
+        return null;
+      }
+
+      const formData = new FormData();
+      formData.append("video", file);
+      if (websiteId) {
+        formData.append("websiteId", String(websiteId));
+      }
+
+      try {
+        const response = await apiClient.post("/upload/video", formData);
+        const url =
+          response?.data?.url ||
           response?.data?.fileUrl ||
           response?.data?.data?.url ||
-          response?.data?.data?.fileUrl ||
-          null,
-      );
-    } catch (error) {
-      setSaveToast({
-        open: true,
-        message: getRequestErrorMessage(error, "Failed to upload image."),
-        severity: "error",
-      });
-      return null;
-    }
-  }, [websiteId]);
-
-  const uploadVideoAsset = useCallback(async (file) => {
-    if (!file) return null;
-
-    const validation = await validateWebsiteMediaUpload({
-      file,
-      websiteId,
-      allowedMediaType: "video",
-    });
-    if (!validation.ok) {
-      setSaveToast({
-        open: true,
-        message: validation.message,
-        severity: "error",
-      });
-      return null;
-    }
-
-    const formData = new FormData();
-    formData.append("video", file);
-    if (websiteId) {
-      formData.append("websiteId", String(websiteId));
-    }
-
-    try {
-      const response = await apiClient.post("/upload/video", formData);
-      const url =
-        response?.data?.url ||
-        response?.data?.fileUrl ||
-        response?.data?.data?.url ||
-        null;
-      return typeof url === "string" && url.trim() ? url.trim() : null;
-    } catch (error) {
-      setSaveToast({
-        open: true,
-        message: getRequestErrorMessage(error, "Failed to upload video."),
-        severity: "error",
-      });
-      return null;
-    }
-  }, [websiteId]);
+          null;
+        return typeof url === "string" && url.trim() ? url.trim() : null;
+      } catch (error) {
+        setSaveToast({
+          open: true,
+          message: getRequestErrorMessage(error, "Failed to upload video."),
+          severity: "error",
+        });
+        return null;
+      }
+    },
+    [websiteId],
+  );
 
   const handlePreviewImageSelection = useCallback(
     (data) => {
@@ -5454,9 +5552,9 @@ const WebsiteEditorInner = () => {
           ? "Moved or resized section"
           : target.kind === "static"
             ? "Moved or resized static element"
-          : target.kind === "image"
-            ? "Moved or resized image"
-            : "Moved or resized text";
+            : target.kind === "image"
+              ? "Moved or resized image"
+              : "Moved or resized text";
 
       suppressHistoryRef.current = true;
       const nextBlocks = blocksRef.current.map((block) => {
@@ -5915,11 +6013,8 @@ const WebsiteEditorInner = () => {
             prev.map((block) =>
               String(block.id) === String(blockId)
                 ? withSyncedBlockContent(
-                  block,
-                    markContainerHidden(
-                      block.content || {},
-                      hiddenContainerId,
-                    ),
+                    block,
+                    markContainerHidden(block.content || {}, hiddenContainerId),
                   )
                 : block,
             ),
@@ -6385,7 +6480,8 @@ const WebsiteEditorInner = () => {
           const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
             ? block.content.innerBlocks
             : [];
-          const existingInnerBlock = existingInnerBlocks[innerMatch.index] || {};
+          const existingInnerBlock =
+            existingInnerBlocks[innerMatch.index] || {};
           const styleKey = getInnerBlockStyleKey(
             existingInnerBlock,
             resolvedFieldName,
@@ -6447,204 +6543,237 @@ const WebsiteEditorInner = () => {
     [selectedEditableElement, updateBlockInEditorState],
   );
 
-  const handleStaticStyleChange = useCallback((patch) => {
-    const key = getStaticStyleDraftKey(selectedStaticElement);
-    if (!key || !patch) {
-      return;
-    }
-    const isPersistentContainer =
-      selectedStaticElement?.staticType === "container" ||
-      selectedStaticElement?.staticType === "card" ||
-      selectedStaticElement?.styleKey === "containerStyles";
-    const resolvedPatch = isPersistentContainer
-      ? {
-          ...patch,
-          ...(Object.prototype.hasOwnProperty.call(patch, "backgroundType")
-            ? { backgroundType: normalizeContainerBackgroundType(patch) }
-            : {}),
-        }
-      : patch;
-
-    if (!isPersistentContainer) {
-      pushStaticOverrideHistory();
-    }
-
-    if (isPersistentContainer && selectedStaticElement?.blockId && selectedStaticElement?.staticId) {
-      pendingHistoryDescriptionRef.current =
-        `Styled container ${selectedStaticElement.label || ""}`.trim();
-      setBlocks((previousBlocks) =>
-        previousBlocks.map((block) => {
-          if (String(block.id) !== String(selectedStaticElement.blockId)) {
-            return block;
+  const handleStaticStyleChange = useCallback(
+    (patch) => {
+      const key = getStaticStyleDraftKey(selectedStaticElement);
+      if (!key || !patch) {
+        return;
+      }
+      const isPersistentContainer =
+        selectedStaticElement?.staticType === "container" ||
+        selectedStaticElement?.staticType === "card" ||
+        selectedStaticElement?.styleKey === "containerStyles";
+      const resolvedPatch = isPersistentContainer
+        ? {
+            ...patch,
+            ...(Object.prototype.hasOwnProperty.call(patch, "backgroundType")
+              ? { backgroundType: normalizeContainerBackgroundType(patch) }
+              : {}),
           }
-          const existingContainerStyles =
-            block.content?.containerStyles &&
-            typeof block.content.containerStyles === "object" &&
-            !Array.isArray(block.content.containerStyles)
-              ? block.content.containerStyles
-              : {};
-          const existingStyle =
-            existingContainerStyles[selectedStaticElement.staticId] &&
-            typeof existingContainerStyles[selectedStaticElement.staticId] === "object"
-              ? existingContainerStyles[selectedStaticElement.staticId]
-              : {};
+        : patch;
 
-          return withSyncedBlockContent(block, {
-            ...(block.content || {}),
-            containerStyles: {
-              ...existingContainerStyles,
-              [selectedStaticElement.staticId]: {
-                ...existingStyle,
-                ...resolvedPatch,
-              },
-            },
-          });
-        }),
-      );
-    }
+      if (!isPersistentContainer) {
+        pushStaticOverrideHistory();
+      }
 
-    if (
-      !isPersistentContainer &&
-      websiteId != null &&
-      selectedPage?.id != null &&
-      selectedStaticElement?.blockId &&
-      selectedStaticElement?.staticId
-    ) {
-      const storedKey = buildStoredStaticStyleOverrideKey(
-        websiteId,
-        selectedPage.id,
-        selectedStaticElement.blockId,
-        selectedStaticElement.styleKey || "sectionStyle",
-        selectedStaticElement.staticId,
-      );
-      const currentDraft = staticStyleDrafts[key] || {};
-      storeStaticStyleOverride(storedKey, {
-        ...currentDraft,
-        ...resolvedPatch,
-      });
-    }
-
-    setStaticStyleDrafts((prev) => ({
-      ...prev,
-      [key]: {
-        ...(prev[key] || {}),
-        ...resolvedPatch,
-      },
-    }));
-  }, [pushStaticOverrideHistory, selectedPage?.id, selectedStaticElement, staticStyleDrafts, websiteId]);
-
-  const handleStaticMediaStyleChange = useCallback((patch) => {
-    const key = getStaticStyleDraftKey(selectedStaticElement);
-    if (!key || !patch) {
-      return;
-    }
-    pushStaticOverrideHistory();
-
-    setStaticStyleDrafts((prev) => ({
-      ...prev,
-      [key]: {
-        ...(prev[key] || {}),
-        ...patch,
-      },
-    }));
-  }, [pushStaticOverrideHistory, selectedStaticElement]);
-
-  const applyStaticMediaOverrideToPreview = useCallback((selection, override) => {
-    const iframeDoc = iframeRef.current?.contentDocument || null;
-    if (!iframeDoc || !selection?.blockId || !selection?.staticId || !override) {
-      return;
-    }
-
-    const escapedBlockId =
-      typeof CSS !== "undefined" && typeof CSS.escape === "function"
-        ? CSS.escape(String(selection.blockId))
-        : String(selection.blockId);
-    const escapedStaticId =
-      typeof CSS !== "undefined" && typeof CSS.escape === "function"
-        ? CSS.escape(String(selection.staticId))
-        : String(selection.staticId);
-    const selector = [
-      `[data-static-selectable="true"][data-preview-block-id="${escapedBlockId}"][data-static-id="${escapedStaticId}"]`,
-      `[data-preview-block-id="${escapedBlockId}"][data-fallback-id="${escapedStaticId}"]`,
-      `[data-static-id="${escapedStaticId}"]`,
-      `[data-fallback-id="${escapedStaticId}"]`,
-    ].join(", ");
-    const elements = Array.from(
-      iframeDoc.querySelectorAll(selector),
-    );
-
-    const resolvedHeight =
-      typeof override.customHeight === "string" && override.customHeight
-        ? override.customHeight
-        : override.heightPreset === "small"
-          ? "180px"
-          : override.heightPreset === "medium"
-            ? "260px"
-            : override.heightPreset === "large"
-              ? "340px"
-              : override.heightPreset === "auto" || !override.heightPreset
-                ? undefined
-                : undefined;
-
-    elements.forEach((element) => {
-      const mediaTargets =
-        element instanceof HTMLImageElement || element instanceof HTMLVideoElement
-          ? [element]
-          : Array.from(element.querySelectorAll("img, video"));
-
-      if (typeof override.src === "string" && override.src.trim()) {
-        const nextSrc = override.src.trim();
-        if (mediaTargets.length > 0) {
-          mediaTargets.forEach((mediaEl) => {
-            if (mediaEl instanceof HTMLImageElement) {
-              mediaEl.setAttribute("src", nextSrc);
-              mediaEl.setAttribute("data-image-src", nextSrc);
-              mediaEl.removeAttribute("srcset");
-              mediaEl.removeAttribute("sizes");
-              mediaEl.src = nextSrc;
+      if (
+        isPersistentContainer &&
+        selectedStaticElement?.blockId &&
+        selectedStaticElement?.staticId
+      ) {
+        pendingHistoryDescriptionRef.current =
+          `Styled container ${selectedStaticElement.label || ""}`.trim();
+        setBlocks((previousBlocks) =>
+          previousBlocks.map((block) => {
+            if (String(block.id) !== String(selectedStaticElement.blockId)) {
+              return block;
             }
-          });
-        } else if (element instanceof HTMLElement) {
-          element.style.backgroundImage = `url(${nextSrc})`;
-          element.setAttribute("data-image-src", nextSrc);
-        }
+            const existingContainerStyles =
+              block.content?.containerStyles &&
+              typeof block.content.containerStyles === "object" &&
+              !Array.isArray(block.content.containerStyles)
+                ? block.content.containerStyles
+                : {};
+            const existingStyle =
+              existingContainerStyles[selectedStaticElement.staticId] &&
+              typeof existingContainerStyles[selectedStaticElement.staticId] ===
+                "object"
+                ? existingContainerStyles[selectedStaticElement.staticId]
+                : {};
+
+            return withSyncedBlockContent(block, {
+              ...(block.content || {}),
+              containerStyles: {
+                ...existingContainerStyles,
+                [selectedStaticElement.staticId]: {
+                  ...existingStyle,
+                  ...resolvedPatch,
+                },
+              },
+            });
+          }),
+        );
       }
 
-      if (element instanceof HTMLElement) {
-        if (override.borderRadius) element.style.borderRadius = String(override.borderRadius);
-        if (override.borderWidth) {
-          element.style.borderWidth = String(override.borderWidth);
-          element.style.borderStyle = String(override.borderStyle || "solid");
-        }
-        if (override.borderColor) element.style.borderColor = String(override.borderColor);
-        if (override.width) element.style.width = String(override.width);
-        if (override.height || resolvedHeight) {
-          element.style.height = String(override.height || resolvedHeight);
-        }
+      if (
+        !isPersistentContainer &&
+        websiteId != null &&
+        selectedPage?.id != null &&
+        selectedStaticElement?.blockId &&
+        selectedStaticElement?.staticId
+      ) {
+        const storedKey = buildStoredStaticStyleOverrideKey(
+          websiteId,
+          selectedPage.id,
+          selectedStaticElement.blockId,
+          selectedStaticElement.styleKey || "sectionStyle",
+          selectedStaticElement.staticId,
+        );
+        const currentDraft = staticStyleDrafts[key] || {};
+        storeStaticStyleOverride(storedKey, {
+          ...currentDraft,
+          ...resolvedPatch,
+        });
       }
 
-      mediaTargets.forEach((mediaEl) => {
-        if (!(mediaEl instanceof HTMLElement)) {
-          return;
+      setStaticStyleDrafts((prev) => ({
+        ...prev,
+        [key]: {
+          ...(prev[key] || {}),
+          ...resolvedPatch,
+        },
+      }));
+    },
+    [
+      pushStaticOverrideHistory,
+      selectedPage?.id,
+      selectedStaticElement,
+      staticStyleDrafts,
+      websiteId,
+    ],
+  );
+
+  const handleStaticMediaStyleChange = useCallback(
+    (patch) => {
+      const key = getStaticStyleDraftKey(selectedStaticElement);
+      if (!key || !patch) {
+        return;
+      }
+      pushStaticOverrideHistory();
+
+      setStaticStyleDrafts((prev) => ({
+        ...prev,
+        [key]: {
+          ...(prev[key] || {}),
+          ...patch,
+        },
+      }));
+    },
+    [pushStaticOverrideHistory, selectedStaticElement],
+  );
+
+  const applyStaticMediaOverrideToPreview = useCallback(
+    (selection, override) => {
+      const iframeDoc = iframeRef.current?.contentDocument || null;
+      if (
+        !iframeDoc ||
+        !selection?.blockId ||
+        !selection?.staticId ||
+        !override
+      ) {
+        return;
+      }
+
+      const escapedBlockId =
+        typeof CSS !== "undefined" && typeof CSS.escape === "function"
+          ? CSS.escape(String(selection.blockId))
+          : String(selection.blockId);
+      const escapedStaticId =
+        typeof CSS !== "undefined" && typeof CSS.escape === "function"
+          ? CSS.escape(String(selection.staticId))
+          : String(selection.staticId);
+      const selector = [
+        `[data-static-selectable="true"][data-preview-block-id="${escapedBlockId}"][data-static-id="${escapedStaticId}"]`,
+        `[data-preview-block-id="${escapedBlockId}"][data-fallback-id="${escapedStaticId}"]`,
+        `[data-static-id="${escapedStaticId}"]`,
+        `[data-fallback-id="${escapedStaticId}"]`,
+      ].join(", ");
+      const elements = Array.from(iframeDoc.querySelectorAll(selector));
+
+      const resolvedHeight =
+        typeof override.customHeight === "string" && override.customHeight
+          ? override.customHeight
+          : override.heightPreset === "small"
+            ? "180px"
+            : override.heightPreset === "medium"
+              ? "260px"
+              : override.heightPreset === "large"
+                ? "340px"
+                : override.heightPreset === "auto" || !override.heightPreset
+                  ? undefined
+                  : undefined;
+
+      elements.forEach((element) => {
+        const mediaTargets =
+          element instanceof HTMLImageElement ||
+          element instanceof HTMLVideoElement
+            ? [element]
+            : Array.from(element.querySelectorAll("img, video"));
+
+        if (typeof override.src === "string" && override.src.trim()) {
+          const nextSrc = override.src.trim();
+          if (mediaTargets.length > 0) {
+            mediaTargets.forEach((mediaEl) => {
+              if (mediaEl instanceof HTMLImageElement) {
+                mediaEl.setAttribute("src", nextSrc);
+                mediaEl.setAttribute("data-image-src", nextSrc);
+                mediaEl.removeAttribute("srcset");
+                mediaEl.removeAttribute("sizes");
+                mediaEl.src = nextSrc;
+              }
+            });
+          } else if (element instanceof HTMLElement) {
+            element.style.backgroundImage = `url(${nextSrc})`;
+            element.setAttribute("data-image-src", nextSrc);
+          }
         }
-        if (override.objectFit) mediaEl.style.objectFit = String(override.objectFit);
-        if (override.borderRadius) mediaEl.style.borderRadius = String(override.borderRadius);
-        if (override.borderWidth) {
-          mediaEl.style.borderWidth = String(override.borderWidth);
-          mediaEl.style.borderStyle = String(override.borderStyle || "solid");
+
+        if (element instanceof HTMLElement) {
+          if (override.borderRadius)
+            element.style.borderRadius = String(override.borderRadius);
+          if (override.borderWidth) {
+            element.style.borderWidth = String(override.borderWidth);
+            element.style.borderStyle = String(override.borderStyle || "solid");
+          }
+          if (override.borderColor)
+            element.style.borderColor = String(override.borderColor);
+          if (override.width) element.style.width = String(override.width);
+          if (override.height || resolvedHeight) {
+            element.style.height = String(override.height || resolvedHeight);
+          }
         }
-        if (override.borderColor) mediaEl.style.borderColor = String(override.borderColor);
-        if (override.width) mediaEl.style.width = String(override.width);
-        if (override.height || resolvedHeight) {
-          mediaEl.style.height = String(override.height || resolvedHeight);
-        }
+
+        mediaTargets.forEach((mediaEl) => {
+          if (!(mediaEl instanceof HTMLElement)) {
+            return;
+          }
+          if (override.objectFit)
+            mediaEl.style.objectFit = String(override.objectFit);
+          if (override.borderRadius)
+            mediaEl.style.borderRadius = String(override.borderRadius);
+          if (override.borderWidth) {
+            mediaEl.style.borderWidth = String(override.borderWidth);
+            mediaEl.style.borderStyle = String(override.borderStyle || "solid");
+          }
+          if (override.borderColor)
+            mediaEl.style.borderColor = String(override.borderColor);
+          if (override.width) mediaEl.style.width = String(override.width);
+          if (override.height || resolvedHeight) {
+            mediaEl.style.height = String(override.height || resolvedHeight);
+          }
+        });
       });
-    });
-  }, []);
+    },
+    [],
+  );
 
   const updateStaticMediaOverride = useCallback(
     (selection, patch) => {
-      const key = getStaticMediaOverrideKey(websiteId, selectedPage?.id, selection);
+      const key = getStaticMediaOverrideKey(
+        websiteId,
+        selectedPage?.id,
+        selection,
+      );
       if (!key || !patch) {
         return;
       }
@@ -6662,7 +6791,12 @@ const WebsiteEditorInner = () => {
       });
       applyStaticMediaOverrideToPreview(selection, patch);
     },
-    [applyStaticMediaOverrideToPreview, selectedPage?.id, staticMediaOverrides, websiteId],
+    [
+      applyStaticMediaOverrideToPreview,
+      selectedPage?.id,
+      staticMediaOverrides,
+      websiteId,
+    ],
   );
 
   useEffect(() => {
@@ -6671,7 +6805,11 @@ const WebsiteEditorInner = () => {
     }
 
     const selection = selectedStaticElement || selectedImageElement;
-    const key = getStaticMediaOverrideKey(websiteId, selectedPage?.id, selection);
+    const key = getStaticMediaOverrideKey(
+      websiteId,
+      selectedPage?.id,
+      selection,
+    );
     if (!key) {
       return;
     }
@@ -6748,36 +6886,39 @@ const WebsiteEditorInner = () => {
               : {}),
           },
         }));
-        updateStaticMediaOverride(selectedStaticElement || selectedImageElement, {
-          ...(typeof patch.src === "string" ? { src: patch.src } : {}),
-          ...(typeof patch.objectFit === "string"
-            ? { objectFit: patch.objectFit }
-            : {}),
-          ...(typeof patch.borderRadius === "string"
-            ? { borderRadius: patch.borderRadius }
-            : {}),
-          ...(typeof patch.borderWidth === "string"
-            ? { borderWidth: patch.borderWidth, borderStyle: "solid" }
-            : {}),
-          ...(typeof patch.borderColor === "string"
-            ? { borderColor: patch.borderColor }
-            : {}),
-          ...(typeof patch.heightPreset === "string"
-            ? { heightPreset: patch.heightPreset }
-            : {}),
-          ...(typeof patch.customHeight === "string"
-            ? { customHeight: patch.customHeight }
-            : {}),
-          ...(typeof patch.mediaType === "string"
-            ? { mediaType: patch.mediaType }
-            : {}),
-          ...(typeof patch.videoUrl === "string"
-            ? { videoUrl: patch.videoUrl }
-            : {}),
-          ...(typeof patch.videoPoster === "string"
-            ? { videoPoster: patch.videoPoster }
-            : {}),
-        });
+        updateStaticMediaOverride(
+          selectedStaticElement || selectedImageElement,
+          {
+            ...(typeof patch.src === "string" ? { src: patch.src } : {}),
+            ...(typeof patch.objectFit === "string"
+              ? { objectFit: patch.objectFit }
+              : {}),
+            ...(typeof patch.borderRadius === "string"
+              ? { borderRadius: patch.borderRadius }
+              : {}),
+            ...(typeof patch.borderWidth === "string"
+              ? { borderWidth: patch.borderWidth, borderStyle: "solid" }
+              : {}),
+            ...(typeof patch.borderColor === "string"
+              ? { borderColor: patch.borderColor }
+              : {}),
+            ...(typeof patch.heightPreset === "string"
+              ? { heightPreset: patch.heightPreset }
+              : {}),
+            ...(typeof patch.customHeight === "string"
+              ? { customHeight: patch.customHeight }
+              : {}),
+            ...(typeof patch.mediaType === "string"
+              ? { mediaType: patch.mediaType }
+              : {}),
+            ...(typeof patch.videoUrl === "string"
+              ? { videoUrl: patch.videoUrl }
+              : {}),
+            ...(typeof patch.videoPoster === "string"
+              ? { videoPoster: patch.videoPoster }
+              : {}),
+          },
+        );
 
         setSelectedImageElement((prev) =>
           prev
@@ -6867,7 +7008,8 @@ const WebsiteEditorInner = () => {
           const existingInnerBlocks = Array.isArray(block.content?.innerBlocks)
             ? block.content.innerBlocks
             : [];
-          const existingInnerBlock = existingInnerBlocks[innerMatch.index] || {};
+          const existingInnerBlock =
+            existingInnerBlocks[innerMatch.index] || {};
           const existingInnerContent =
             existingInnerBlock.content &&
             typeof existingInnerBlock.content === "object"
@@ -7364,10 +7506,7 @@ const WebsiteEditorInner = () => {
         /* ignore storage errors */
       }
     }
-    if (
-      searchParams.get("aiDraft") ||
-      location.state?.aiDraftQuestionnaire
-    ) {
+    if (searchParams.get("aiDraft") || location.state?.aiDraftQuestionnaire) {
       navigate(`/dashboard/websites/${websiteId}/editor`, {
         replace: true,
         state: {},
@@ -7385,9 +7524,9 @@ const WebsiteEditorInner = () => {
       const { pages: curPages, persistedPages: curPersisted } =
         pagesStateRef.current;
       const pageHasBlock = (list) =>
-        (
-          list.find((p) => String(p.id) === String(pageId))?.blocks || []
-        ).some((b) => String(b.id) === String(blockId));
+        (list.find((p) => String(p.id) === String(pageId))?.blocks || []).some(
+          (b) => String(b.id) === String(blockId),
+        );
       if (!pageHasBlock(curPages) && !pageHasBlock(curPersisted)) {
         return false;
       }
@@ -7449,9 +7588,7 @@ const WebsiteEditorInner = () => {
         const onSelectedPage =
           selectedId != null &&
           (targetPageId == null || targetPageId === selectedId) &&
-          blocksRef.current.some(
-            (b) => String(b.id) === String(patch.blockId),
-          );
+          blocksRef.current.some((b) => String(b.id) === String(patch.blockId));
 
         if (onSelectedPage) {
           handleInlineEditSave(patch.blockId, editorPath, patch.value);
@@ -8078,7 +8215,12 @@ const WebsiteEditorInner = () => {
     previewTransformHistoryPrimedRef.current = false;
     const previous = undo();
     applyHistoryBlocksToActivePage(previous);
-  }, [applyHistoryBlocksToActivePage, cloneStaticOverrideSnapshot, syncStaticHistoryState, undo]);
+  }, [
+    applyHistoryBlocksToActivePage,
+    cloneStaticOverrideSnapshot,
+    syncStaticHistoryState,
+    undo,
+  ]);
 
   const handleRedoBlocks = useCallback(() => {
     if (staticRedoStackRef.current.length > 0) {
@@ -8097,7 +8239,12 @@ const WebsiteEditorInner = () => {
     previewTransformHistoryPrimedRef.current = false;
     const next = redo();
     applyHistoryBlocksToActivePage(next);
-  }, [applyHistoryBlocksToActivePage, cloneStaticOverrideSnapshot, redo, syncStaticHistoryState]);
+  }, [
+    applyHistoryBlocksToActivePage,
+    cloneStaticOverrideSnapshot,
+    redo,
+    syncStaticHistoryState,
+  ]);
 
   const effectiveCanUndo = canUndo || canUndoStatic;
   const effectiveCanRedo = canRedo || canRedoStatic;
@@ -8107,22 +8254,18 @@ const WebsiteEditorInner = () => {
   const pageCount = pages.length;
   const activeBlockCount = blocks.length;
   const selectedStaticType = selectedStaticElement?.staticType || "unknown";
-  const staticUsesTextInspector = [
-    "text",
-    "badge",
-    "icon",
-    "unknown",
-  ].includes(selectedStaticType);
+  const staticUsesTextInspector = ["text", "badge", "icon", "unknown"].includes(
+    selectedStaticType,
+  );
   const staticUsesMediaInspector = ["media", "avatar"].includes(
     selectedStaticType,
   );
   const staticUsesContainerInspector = ["container", "card"].includes(
     selectedStaticType,
   );
-  const inspectorTitle =
-    selectedStaticElement?.label
-      ? selectedStaticElement.label
-      : activeToolbarMode === "section"
+  const inspectorTitle = selectedStaticElement?.label
+    ? selectedStaticElement.label
+    : activeToolbarMode === "section"
       ? selectedSectionElement?.label || "Section"
       : selectedEditableElement
         ? getEditableStyleConfig(selectedEditableElement.fieldPath).label
@@ -8134,12 +8277,12 @@ const WebsiteEditorInner = () => {
         ? "This container has independent styles that are saved with its block."
         : "This static element is selectable independently from its parent section."
     : selectedImageElement
-    ? "Manage selected image from the media dialog."
-    : activeToolbarMode === "section"
-      ? "Adjust section background, padding, and spacing."
-      : selectedEditableElement
-        ? "Edit typography and alignment for the selected text."
-        : "Select text or a section on the canvas to edit its settings.";
+      ? "Manage selected image from the media dialog."
+      : activeToolbarMode === "section"
+        ? "Adjust section background, padding, and spacing."
+        : selectedEditableElement
+          ? "Edit typography and alignment for the selected text."
+          : "Select text or a section on the canvas to edit its settings.";
   const sidebarModeMeta =
     sidebarMode === "theme"
       ? {
@@ -8166,7 +8309,8 @@ const WebsiteEditorInner = () => {
       Boolean(selectedStaticElement));
   // The right rail (style bar slot) is reserved when either the style bar or
   // the AI chat panel occupies it, so the preview keeps the same padding.
-  const showDesktopRightRail = showDesktopInspector || (!isMobile && isAIChatOpen);
+  const showDesktopRightRail =
+    showDesktopInspector || (!isMobile && isAIChatOpen);
   const showDesktopSidebar = !showDesktopInspector;
 
   const builderPanelSx = {
@@ -8362,14 +8506,16 @@ const WebsiteEditorInner = () => {
             >
               <Tooltip title="Undo last block change">
                 <span>
-                    <IconButton
+                  <IconButton
                     onClick={handleUndoBlocks}
                     disabled={!effectiveCanUndo}
                     sx={{
                       minWidth: 28,
                       minHeight: 28,
                       border: `1px solid transparent`,
-                      color: effectiveCanUndo ? colors.text : alpha(colors.text, 0.42),
+                      color: effectiveCanUndo
+                        ? colors.text
+                        : alpha(colors.text, 0.42),
                       backgroundColor: "transparent",
                       "&:hover": effectiveCanUndo
                         ? {
@@ -8389,14 +8535,16 @@ const WebsiteEditorInner = () => {
               </Tooltip>
               <Tooltip title="Redo reverted block change">
                 <span>
-                    <IconButton
+                  <IconButton
                     onClick={handleRedoBlocks}
                     disabled={!effectiveCanRedo}
                     sx={{
                       minWidth: 28,
                       minHeight: 28,
                       border: `1px solid transparent`,
-                      color: effectiveCanRedo ? colors.text : alpha(colors.text, 0.42),
+                      color: effectiveCanRedo
+                        ? colors.text
+                        : alpha(colors.text, 0.42),
                       backgroundColor: "transparent",
                       "&:hover": effectiveCanRedo
                         ? {
@@ -8560,14 +8708,19 @@ const WebsiteEditorInner = () => {
                   backgroundColor: "rgba(255,255,255,0.84)",
                 }}
               >
-                <Typography variant="body2" sx={{ color: colors.text, fontWeight: 600, mb: 1.2 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.text, fontWeight: 600, mb: 1.2 }}
+                >
                   Static media selection is local-only in this pass.
                 </Typography>
                 <TextField
                   size="small"
                   fullWidth
                   label="Border radius"
-                  value={getEditableCssUnitValue(selectedStaticMediaStyle.borderRadius)}
+                  value={getEditableCssUnitValue(
+                    selectedStaticMediaStyle.borderRadius,
+                  )}
                   onChange={(event) =>
                     handleStaticMediaStyleChange({
                       borderRadius: toEditableCssUnit(event.target.value),
@@ -8579,7 +8732,9 @@ const WebsiteEditorInner = () => {
                   size="small"
                   fullWidth
                   label="Border width"
-                  value={getEditableCssUnitValue(selectedStaticMediaStyle.borderWidth)}
+                  value={getEditableCssUnitValue(
+                    selectedStaticMediaStyle.borderWidth,
+                  )}
                   onChange={(event) =>
                     handleStaticMediaStyleChange({
                       borderWidth: toEditableCssUnit(event.target.value),
@@ -8845,13 +9000,13 @@ const WebsiteEditorInner = () => {
                             (layer.section?.staticId || "") &&
                           getSectionStyleKey(selectedStaticElement) ===
                             (layer.section?.styleKey || "sectionStyle")
-                      : selectedSectionElement &&
-                        String(selectedSectionElement.blockId) ===
-                          String(layer.section?.blockId) &&
-                        (selectedSectionElement.staticId || "") ===
-                          (layer.section?.staticId || "") &&
-                        getSectionStyleKey(selectedSectionElement) ===
-                          (layer.section?.styleKey || "sectionStyle");
+                        : selectedSectionElement &&
+                          String(selectedSectionElement.blockId) ===
+                            String(layer.section?.blockId) &&
+                          (selectedSectionElement.staticId || "") ===
+                            (layer.section?.staticId || "") &&
+                          getSectionStyleKey(selectedSectionElement) ===
+                            (layer.section?.styleKey || "sectionStyle");
 
                 return (
                   <MenuItem
@@ -8911,9 +9066,9 @@ const WebsiteEditorInner = () => {
                           ? "Section"
                           : layer.kind === "static"
                             ? "Static element"
-                          : layer.kind === "image"
-                            ? "Image"
-                            : "Typography"}
+                            : layer.kind === "image"
+                              ? "Image"
+                              : "Typography"}
                       </Typography>
                     </Box>
                   </MenuItem>
@@ -10171,10 +10326,10 @@ const WebsiteEditorInner = () => {
                                           ? "Container"
                                           : "Typography"
                                       : activeToolbarMode === "section"
-                                      ? "Section"
-                                      : selectedImageElement
-                                        ? "Media"
-                                        : "Typography"}
+                                        ? "Section"
+                                        : selectedImageElement
+                                          ? "Media"
+                                          : "Typography"}
                                   </Typography>
                                   <Typography
                                     variant="subtitle1"
@@ -10197,10 +10352,10 @@ const WebsiteEditorInner = () => {
                                           ? "Saved container"
                                           : "Static style"
                                       : activeToolbarMode === "section"
-                                      ? "Layout"
-                                      : selectedImageElement
-                                        ? "Image"
-                                        : "Style"
+                                        ? "Layout"
+                                        : selectedImageElement
+                                          ? "Image"
+                                          : "Style"
                                   }
                                   sx={{
                                     borderRadius: 999,
@@ -10278,7 +10433,8 @@ const WebsiteEditorInner = () => {
                                       />
                                       <EditorStyleToolbar
                                         selection={{
-                                          blockId: selectedStaticElement.blockId,
+                                          blockId:
+                                            selectedStaticElement.blockId,
                                           fieldPath: `__static.${selectedStaticElement.staticId || "element"}`,
                                           label:
                                             selectedStaticElement.label ||
@@ -10298,7 +10454,9 @@ const WebsiteEditorInner = () => {
                                           background: "transparent",
                                           boxShadow: "none",
                                           border: "none",
-                                          "& .MuiDivider-root": { display: "none" },
+                                          "& .MuiDivider-root": {
+                                            display: "none",
+                                          },
                                           "& .editor-toolbar-selection-label": {
                                             display: "none",
                                           },
@@ -10330,7 +10488,9 @@ const WebsiteEditorInner = () => {
                                         background: "transparent",
                                         boxShadow: "none",
                                         border: "none",
-                                        "& .MuiDivider-root": { display: "none" },
+                                        "& .MuiDivider-root": {
+                                          display: "none",
+                                        },
                                         "& .editor-toolbar-selection-label": {
                                           display: "none",
                                         },
@@ -10346,7 +10506,8 @@ const WebsiteEditorInner = () => {
                                         p: 1.4,
                                         borderRadius: 3,
                                         border: `1px solid ${alpha(colors.primary, 0.14)}`,
-                                        backgroundColor: "rgba(255,255,255,0.84)",
+                                        backgroundColor:
+                                          "rgba(255,255,255,0.84)",
                                       }}
                                     >
                                       <Typography
@@ -10471,7 +10632,8 @@ const WebsiteEditorInner = () => {
                                       fullWidth
                                       multiline
                                       minRows={
-                                        selectedEditableElement?.editType === "multi"
+                                        selectedEditableElement?.editType ===
+                                        "multi"
                                           ? 3
                                           : 2
                                       }
@@ -10525,7 +10687,9 @@ const WebsiteEditorInner = () => {
                                         background: "transparent",
                                         boxShadow: "none",
                                         border: "none",
-                                        "& .MuiDivider-root": { display: "none" },
+                                        "& .MuiDivider-root": {
+                                          display: "none",
+                                        },
                                         "& .editor-toolbar-selection-label": {
                                           display: "none",
                                         },
@@ -10866,8 +11030,8 @@ const WebsiteEditorInner = () => {
                     ? "Preview a static video locally in the editor and tune fit, border, and playback settings."
                     : "Preview a static image locally in the editor and tune fit, border, and radius settings."
                   : selectedImageValue.mediaType === "video"
-                  ? "Replace with a video and tune fit, border, and playback for this block."
-                  : "Replace the image or switch to a video, and tune fit, border, and radius for this block."}
+                    ? "Replace with a video and tune fit, border, and playback for this block."
+                    : "Replace the image or switch to a video, and tune fit, border, and radius for this block."}
               </Typography>
               <Typography
                 sx={{
@@ -10982,7 +11146,8 @@ const WebsiteEditorInner = () => {
                     backgroundColor: alpha("#0f172a", 0.02),
                   }}
                 >
-                  No video selected yet. Use Replace to upload or choose a video.
+                  No video selected yet. Use Replace to upload or choose a
+                  video.
                 </Box>
               )
             ) : (
@@ -11188,7 +11353,9 @@ const WebsiteEditorInner = () => {
                   type="number"
                   label="Custom Height (px)"
                   labelPlacement="floating"
-                  value={getEditableCssUnitValue(selectedImageValue.customHeight)}
+                  value={getEditableCssUnitValue(
+                    selectedImageValue.customHeight,
+                  )}
                   onChange={(event) =>
                     handleImageChange({
                       customHeight: toEditableCssUnit(event.target.value),

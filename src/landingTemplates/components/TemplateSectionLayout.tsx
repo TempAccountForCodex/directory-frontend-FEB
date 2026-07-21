@@ -80,12 +80,12 @@ export function TemplateSectionBoundary({
         : {})}
       {...getSectionStyleDomProps(content, styleKey)}
       sx={[
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
         {
           ...(resolvedOrder !== undefined ? { order: resolvedOrder } : {}),
           ...legacySectionStyle,
           ...getSectionStyleSx(content, styleKey),
         },
-        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     >
       {children}

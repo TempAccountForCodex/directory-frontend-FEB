@@ -933,7 +933,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           blockType: "FOOTER",
           optional: true,
           buildContent: (data) => ({
-            logo: companyProAssets.logo,
+            logoText: data.name || "Alder & Co.",
             copyright: `(c) 2026 ${data.name || "Alder & Co."}. All rights reserved.`,
             columns: [
               { title: "Company", links: [{ label: "About", url: "#about" }, { label: "Services", url: "#services" }] },
@@ -2433,15 +2433,19 @@ const buildTemplatePreviewBusinessDataImpl = (
 
   if (!base) return null;
 
+  // The saved template block is the authoritative source for a frontend
+  // template's palette and font pack. Website-level colors can lag behind the
+  // block mutation (or be served from a cached website payload), so they must
+  // not overwrite a theme that was just saved with the page.
   const themeSettings = {
     ...(getThemeSettingsFromUnknown(website.templateSnapshot?.themeSettings) ||
       {}),
-    ...(readTemplateThemeSettingsFromPages(pages) || {}),
     ...(getThemeSettingsFromUnknown(website.themeSettings) || {}),
     ...(website.primaryColor ? { primaryColor: website.primaryColor } : {}),
     ...(website.secondaryColor
       ? { secondaryColor: website.secondaryColor }
       : {}),
+    ...(readTemplateThemeSettingsFromPages(pages) || {}),
   };
   const hasThemeSettings = Object.keys(themeSettings).length > 0;
 

@@ -132,6 +132,9 @@ Rules:
 4. Every duplicated block type must retain stable block and `editorSection` identity.
 5. If a new visual structure cannot fit an existing schema without collision or semantic misuse, add a backend follow-up before implementation.
 6. Decorative-only elements may use explicit static selection, but real user-facing content must be schema-backed.
+7. Repeated content must render from the complete persisted array. Do not
+   hardcode a visual slice that silently hides items added through the editor;
+   use responsive pagination, a carousel, or another accessible overflow pattern.
 
 ## 7. Section and Container Identity
 
@@ -160,6 +163,26 @@ Every new template must support:
 
 Controls must not claim persistence when they only patch the DOM. If a control is displayed, it must update a backend-safe path included in the save payload.
 
+### 8.1 Theme and font customization contract
+
+Every new template must support the existing theme palette and font-pack
+customization system in landing preview, editor canvas, saved Live Preview, and
+public rendering.
+
+- Resolve primary/secondary colors, backgrounds, surfaces, text, borders,
+  accents, buttons, and section theme styles from shared theme helpers/tokens.
+- Resolve heading and body typography from `themeSettings.headingFont` and
+  `themeSettings.bodyFont`, with template defaults only as fallbacks.
+- Do not hardcode non-token colors or font families for customizable UI.
+- A palette or font selection must update the rendered template immediately;
+  it must not require an editor refresh, save, or template-specific override.
+- Resolve visual styles in this order: saved `sectionStyle`/`containerStyles`,
+  then theme tokens, then template defaults. A saved manual editor style must
+  never be overwritten by a theme or template `sx` default.
+- Acceptance requires changing a section background in the right editor and
+  confirming it persists in the editor, Live Preview/public output, and after
+  refresh.
+
 ## 9. Header and Footer
 
 - Header and Footer are global website components, not page-local duplicated sections.
@@ -167,6 +190,15 @@ Controls must not claim persistence when they only patch the DOM. If a control i
 - Header/Footer content and styles must use their canonical global component state.
 - Page body ordering, hiding, deletion, or replacement must not remove global chrome.
 - Template-specific Header/Footer visuals should be implemented as variants of shared wrappers, not copied page JSX.
+- Header and Footer brand text must use persisted editable fields (for example,
+  `brandName` and `logoText`), with the website/business name only as the
+  initial fallback; real brand text must never be static/style-only.
+- Header/Footer image logos must use their schema-supported URL media field
+  (for example, `logo` or `logoImage`) and editable image metadata. URL-only
+  logo fields must not contain text, while text brand fields must not contain
+  media.
+- Brand edits through shared Header/Footer chrome must persist and render across
+  every page, editor refresh, Live Preview, and public output.
 
 ## 10. Assets
 
@@ -242,6 +274,14 @@ publicly rendered under the same stable identifier.
 - A template is not creation-ready if `POST /websites/from-template` returns
   `Frontend template not found` or if a local asset fails backend `url`
   validation. These are registration/serialization defects, not user errors.
+- Schema fields with length limits must never receive base64 media or long asset
+  URLs. A URL-constrained field such as `FOOTER.content.logo` must receive a
+  short, valid browser-loadable asset URL; text fields must remain text-only.
+- Image assets must use their supported image/media field only. For Footer
+  blocks whose schema defines `logo` as a URL, use that canonical logo-media
+  field and keep the brand text in website or explicit text fields.
+- New templates must validate their generated creation payload against the
+  backend schema before registration.
 - Development URLs may be origin-qualified during creation; production builds
   must resolve to the deployed frontend asset origin.
 
@@ -285,11 +325,12 @@ template card can render correctly while website creation still fails:
 - Imported local assets must be recursively origin-qualified before they enter
   URL-validated API fields. A `heroImage must match format "url"` response means
   creation serialization is incomplete.
-- Media-named schema fields must contain media, not display copy. In particular,
-  `logo`, `heroImage`, `image`, `photo`, poster, and video fields are URL-only;
-  company/brand text belongs in fields such as `brandName`, headings, column
-  titles, or website settings. Optional invalid media values must be omitted
-  from creation payloads rather than sent as arbitrary text.
+- Media fields must contain media, not display copy, and text fields must never
+  contain media. In particular, use `heroImage`, `image`, `photo`, poster,
+  video, or the schema-supported `FOOTER.content.logo` URL field for media;
+  company/brand text belongs in website or explicit text fields. Optional
+  invalid media values must be omitted from creation payloads rather than sent
+  as arbitrary text.
 - Every non-decorative element must use an exact schema-backed field path. An
   element is not complete merely because it is selectable or changes in the
   canvas.
@@ -339,6 +380,10 @@ A new template is complete only when:
 - all URL-validated media fields receive absolute browser-loadable URLs in the creation payload
 - the visual system is demonstrably distinct from existing variants, not only recolored
 - every non-decorative element uses a persisted field that survives save, refresh, and Live Preview
+- changing the theme palette visibly updates the template in landing preview,
+  editor canvas, saved Live Preview, and public rendering
+- changing the heading or body font pack visibly updates the template in landing
+  preview, editor canvas, saved Live Preview, and public rendering
 
 ## 14. Definition of Done Documentation
 
