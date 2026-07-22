@@ -13,6 +13,7 @@ import React, {
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BlockWrapper } from "./BlockWrapper";
+import BlogStaticStyleApplier from "./dynamic/BlogStaticStyleApplier";
 import { useCountUp } from "./hooks/useCountUp";
 
 // Lazy-load FormBuilderBlock for code splitting (Step 2.29.2)
@@ -138,6 +139,7 @@ interface BlockRendererProps {
   headingColor?: string;
   bodyColor?: string;
   websiteId?: string | number;
+  staticStyleOverrides?: Record<string, Record<string, any>>;
   onCtaClick?: (blockType: string, ctaText: string) => void;
   onFormSubmit?: (formName: string, success: boolean) => void;
 }
@@ -418,6 +420,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
   headingColor = "#1e293b",
   bodyColor = "#475569",
   websiteId,
+  staticStyleOverrides,
   onCtaClick,
   onFormSubmit,
 }) => {
@@ -442,6 +445,22 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
     blockType === "BLOG_FEED" && content?._subType
       ? BLOG_FEED_SUBTYPES[String(content._subType).toLowerCase()] || blockType
       : blockType;
+  const withBlogStaticStyles = (node: React.ReactNode) => (
+    <BlogStaticStyleApplier
+      blockId={block.id}
+      blockType={renderBlockType}
+      staticStyleOverrides={staticStyleOverrides}
+    >
+      {node}
+    </BlogStaticStyleApplier>
+  );
+  const blogFlushWrapperFields = {
+    ...content,
+    paddingTop: "none",
+    paddingBottom: "none",
+    spacingPaddingTop: "none",
+    spacingPaddingBottom: "none",
+  };
 
   /**
    * Check if a URL is internal (relative or same domain)
@@ -963,8 +982,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
     }
 
     case "BLOG_HERO":
-      return (
-        <BlockWrapper fields={content}>
+      return withBlogStaticStyles(
+        <BlockWrapper fields={blogFlushWrapperFields}>
           <Suspense fallback={<Box sx={{ minHeight: 480, bgcolor: "#020303" }} />}>
             <BlogHeroBlock block={block} primaryColor={primaryColor} />
           </Suspense>
@@ -972,8 +991,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       );
 
     case "BLOG_FEATURED":
-      return (
-        <BlockWrapper fields={content}>
+      return withBlogStaticStyles(
+        <BlockWrapper fields={blogFlushWrapperFields}>
           <Suspense
             fallback={
               <Box sx={{ py: 8, bgcolor: "#f7f5f3" }}>
@@ -996,8 +1015,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       );
 
     case "BLOG_GRID":
-      return (
-        <BlockWrapper fields={content}>
+      return withBlogStaticStyles(
+        <BlockWrapper fields={blogFlushWrapperFields}>
           <Suspense
             fallback={
               <Box sx={{ py: 8, bgcolor: "#f7f5f3" }}>
@@ -1020,8 +1039,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       );
 
     case "BLOG_ARTICLE":
-      return (
-        <BlockWrapper fields={content}>
+      return withBlogStaticStyles(
+        <BlockWrapper fields={blogFlushWrapperFields}>
           <Suspense
             fallback={
               <Box sx={{ py: 8 }}>

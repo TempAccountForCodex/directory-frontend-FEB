@@ -34,6 +34,7 @@ import {
   BlogInsightCard,
   BlogCardSkeleton,
   blogHeroFont,
+  blogStaticProps,
   resolveAccent,
   hexToRgba,
 } from "./blogSectionShared";
@@ -244,6 +245,7 @@ const BlogGridBlockBase: React.FC<BlogGridBlockProps> = ({
       <Box sx={{ position: "relative", zIndex: 1 }}>
         {heading && (
           <Typography
+            {...blogStaticProps(block.id, "blog-grid-heading", "Blog grid heading")}
             variant="h4"
             sx={{
               fontWeight: 700,
@@ -259,7 +261,10 @@ const BlogGridBlockBase: React.FC<BlogGridBlockProps> = ({
 
         {/* Search */}
         {showSearch && (
-          <Box sx={{ mb: "20px", maxWidth: 520 }}>
+          <Box
+            {...blogStaticProps(block.id, "blog-grid-search", "Blog search field", "container")}
+            sx={{ mb: "20px", maxWidth: 520 }}
+          >
             <TextField
               fullWidth
               size="small"
@@ -290,6 +295,7 @@ const BlogGridBlockBase: React.FC<BlogGridBlockProps> = ({
         {/* Category filter pills */}
         {showCategories && categories.length > 0 && (
           <Box
+            {...blogStaticProps(block.id, "blog-grid-categories", "Blog category filters", "container")}
             sx={{ display: "flex", flexWrap: "wrap", gap: "8px", mb: "28px" }}
             role="group"
             aria-label="Category filter"
@@ -354,13 +360,15 @@ const BlogGridBlockBase: React.FC<BlogGridBlockProps> = ({
           </Box>
         ) : (
           <Grid container spacing={{ xs: 2, md: 3, lg: 4 }}>
-            {posts.map((post) => (
+            {posts.map((post, index) => (
               <Grid item xs={12} sm={6} lg={lgCols} key={post.id}>
                 <BlogInsightCard
                   post={post}
                   authorLabel={authorLabel}
                   accent={accent}
                   onOpen={handleOpen}
+                  blockId={block.id}
+                  staticPrefix={`blog-card-${index + 1}`}
                 />
               </Grid>
             ))}
@@ -369,7 +377,10 @@ const BlogGridBlockBase: React.FC<BlogGridBlockProps> = ({
 
         {/* Pagination */}
         {showPagination && pagination && pagination.totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: "40px" }}>
+          <Box
+            {...blogStaticProps(block.id, "blog-grid-pagination", "Blog pagination", "container")}
+            sx={{ display: "flex", justifyContent: "center", mt: "40px" }}
+          >
             <Pagination
               count={pagination.totalPages}
               page={currentPage}

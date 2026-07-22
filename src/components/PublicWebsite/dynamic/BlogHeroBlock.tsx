@@ -9,7 +9,11 @@
 
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import { blogHeroFont } from "./blogSectionShared";
+import {
+  blogHeroFont,
+  blogStaticProps,
+  resolveBlogHeroGlow,
+} from "./blogSectionShared";
 
 const star = "/assets/publicAssets/images/common/star.svg";
 
@@ -45,14 +49,25 @@ const BlogHeroBlockBase: React.FC<BlogHeroBlockProps> = ({
     accentColor,
   } = block.content || {};
 
-  // Follow the website's primary color unless the block sets a custom accent.
-  const resolvedAccent =
-    typeof accentColor === "string" && accentColor.trim()
-      ? accentColor
-      : primaryColor;
+  // Follow the website's primary color unless the block sets a *custom* accent.
+  // "#398c91" was an old baked-in default (it used to be seeded into content and
+  // is the legacy fallback), so treat it — and blanks — as "unset" so existing
+  // blog heroes track the website's primary color instead of the fixed teal.
+  const LEGACY_HERO_ACCENT = "#398c91";
+  const trimmedAccent =
+    typeof accentColor === "string" ? accentColor.trim() : "";
+  const customAccent =
+    trimmedAccent && trimmedAccent.toLowerCase() !== LEGACY_HERO_ACCENT
+      ? trimmedAccent
+      : "";
+  const resolvedAccent = customAccent || primaryColor;
+
+  // Lift/differentiate the glows so dark brand colors still read on black.
+  const heroGlow = resolveBlogHeroGlow(resolvedAccent);
 
   return (
     <Box
+      {...blogStaticProps(block.id, "blog-hero-section", "Blog hero section", "container")}
       component="section"
       sx={{
         position: "relative",
@@ -61,8 +76,8 @@ const BlogHeroBlockBase: React.FC<BlogHeroBlockProps> = ({
         bgcolor: "#020303",
         fontFamily: blogHeroFont,
         backgroundImage: `
-          radial-gradient(circle at 20% 30%, rgba(55,140,146,0.35) 0%, rgba(2,3,3,0) 45%),
-          radial-gradient(circle at 80% 70%, rgba(45,212,191,0.24) 0%, rgba(2,3,3,0) 42%),
+          radial-gradient(circle at 20% 30%, ${heroGlow.primary} 0%, rgba(2,3,3,0) 45%),
+          radial-gradient(circle at 80% 70%, ${heroGlow.highlight} 0%, rgba(2,3,3,0) 42%),
           url(${star})
         `,
         backgroundSize: "cover",
@@ -82,6 +97,7 @@ const BlogHeroBlockBase: React.FC<BlogHeroBlockProps> = ({
       }}
     >
       <Box
+        {...blogStaticProps(block.id, "blog-hero-content", "Blog hero content", "container")}
         sx={{
           position: "relative",
           zIndex: 10,
@@ -95,6 +111,14 @@ const BlogHeroBlockBase: React.FC<BlogHeroBlockProps> = ({
       >
         {eyebrow && (
           <Typography
+            {...blogStaticProps(
+              block.id,
+              "blog-hero-eyebrow",
+              "Blog hero eyebrow",
+              "text",
+              "static.blog-hero-eyebrow",
+              "eyebrow",
+            )}
             sx={{
               color: "#dff7fb",
               fontSize: "12px",
@@ -108,6 +132,14 @@ const BlogHeroBlockBase: React.FC<BlogHeroBlockProps> = ({
           </Typography>
         )}
         <Typography
+          {...blogStaticProps(
+            block.id,
+            "blog-hero-heading",
+            "Blog hero heading",
+            "text",
+            "static.blog-hero-heading",
+            "heading",
+          )}
           variant="h1"
           sx={{
             fontSize: {
@@ -127,6 +159,14 @@ const BlogHeroBlockBase: React.FC<BlogHeroBlockProps> = ({
             <>
               {" "}
               <Box
+                {...blogStaticProps(
+                  block.id,
+                  "blog-hero-heading-accent",
+                  "Blog hero accent word",
+                  "text",
+                  "static.blog-hero-heading-accent",
+                  "headingAccent",
+                )}
                 component="span"
                 sx={{ color: resolvedAccent, WebkitTextStroke: "1px #ffffff74" }}
               >
@@ -137,6 +177,14 @@ const BlogHeroBlockBase: React.FC<BlogHeroBlockProps> = ({
         </Typography>
         {description && (
           <Typography
+            {...blogStaticProps(
+              block.id,
+              "blog-hero-description",
+              "Blog hero description",
+              "text",
+              "static.blog-hero-description",
+              "description",
+            )}
             variant="body1"
             sx={{
               color: "rgba(232,242,247,0.82)",

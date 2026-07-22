@@ -9,8 +9,9 @@ const ensureApiPath = (value?: string) => {
 };
 
 const rawApiUrl = import.meta.env.VITE_API_URL?.trim();
-const hasProxyTarget = Boolean(import.meta.env.VITE_API_PROXY_TARGET?.trim());
-const directApiUrl = ensureApiPath(rawApiUrl || LOCAL_API_URL);
+const rawProxyTarget = import.meta.env.VITE_API_PROXY_TARGET?.trim();
+const hasProxyTarget = Boolean(rawProxyTarget);
+const directApiUrl = ensureApiPath(rawApiUrl || rawProxyTarget || LOCAL_API_URL);
 
 const shouldUseDevProxy = import.meta.env.DEV && hasProxyTarget && !rawApiUrl;
 

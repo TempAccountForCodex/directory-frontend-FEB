@@ -50,6 +50,7 @@ interface DynamicBlockRendererProps {
   headingColor?: string;
   bodyColor?: string;
   websiteId?: string | number;
+  staticStyleOverrides?: Record<string, Record<string, any>>;
   onCtaClick?: (blockType: string, ctaText: string) => void;
   onFormSubmit?: (formName: string, success: boolean) => void;
 }
@@ -62,6 +63,7 @@ const DynamicBlockInner: React.FC<DynamicBlockRendererProps> = ({
   headingColor,
   bodyColor,
   websiteId,
+  staticStyleOverrides,
   onCtaClick,
   onFormSubmit,
 }) => {
@@ -120,6 +122,7 @@ const DynamicBlockInner: React.FC<DynamicBlockRendererProps> = ({
       headingColor={headingColor}
       bodyColor={bodyColor}
       websiteId={websiteId}
+      staticStyleOverrides={staticStyleOverrides}
       onCtaClick={onCtaClick}
       onFormSubmit={onFormSubmit}
     />
@@ -148,6 +151,7 @@ const DynamicBlockRendererBase: React.FC<DynamicBlockRendererProps> = (
         headingColor={props.headingColor}
         bodyColor={props.bodyColor}
         websiteId={props.websiteId}
+        staticStyleOverrides={props.staticStyleOverrides}
         onCtaClick={props.onCtaClick}
         onFormSubmit={props.onFormSubmit}
       />
@@ -170,7 +174,8 @@ const arePropsEqual = (
     prev.primaryColor !== next.primaryColor ||
     prev.secondaryColor !== next.secondaryColor ||
     prev.headingColor !== next.headingColor ||
-    prev.bodyColor !== next.bodyColor
+    prev.bodyColor !== next.bodyColor ||
+    prev.staticStyleOverrides !== next.staticStyleOverrides
   ) {
     return false;
   }

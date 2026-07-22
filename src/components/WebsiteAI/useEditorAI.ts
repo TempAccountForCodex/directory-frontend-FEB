@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   editElement,
+  type EditableSchemaTarget,
   editorChat,
   recordAppliedEdit,
   recreateWebsiteWithAI,
@@ -39,6 +40,7 @@ import {
 
 export const MAX_ATTEMPTS = 3;
 export const MAX_REVERT_DEPTH = 2;
+const LOCAL_STATIC_STYLE_FIELD_PREFIX = "__staticStyle|";
 
 /**
  * edit-element errors that are worth retrying through the editor-chat endpoint
@@ -57,11 +59,31 @@ const CHAT_RETRYABLE_CODES = new Set<WebsiteAIError["code"]>([
 const isWebsiteFieldPath = (path?: string | null) =>
   String(path || "").startsWith("website.");
 
+const isLocalStaticStyleFieldPath = (path?: string | null) =>
+  String(path || "").startsWith(LOCAL_STATIC_STYLE_FIELD_PREFIX);
+
+const normalizeBackendStaticStyleFieldPath = (
+  path?: string | null,
+): string | null => {
+  const fieldPath = toFieldPath(path);
+  const match = fieldPath.match(/^staticStyles\.([^:]+)::([^.]+)\.([^.]+)$/);
+  if (!match) return null;
+
+  const [, styleKey, staticId, property] = match;
+  if (!styleKey || !staticId || !property) return null;
+
+  return `${LOCAL_STATIC_STYLE_FIELD_PREFIX}${encodeURIComponent(
+    styleKey,
+  )}|${encodeURIComponent(staticId)}|${encodeURIComponent(property)}`;
+};
+
 const isLocallyApplicablePatch = (patch: {
   blockId?: number | string;
   fieldPath?: string;
   persistedFieldPath?: string;
 }) =>
+  (patch.blockId != null &&
+    isLocalStaticStyleFieldPath(patch.persistedFieldPath || patch.fieldPath)) ||
   (patch.blockId != null &&
     patch.persistedFieldPath &&
     isBlockContentPath(patch.persistedFieldPath)) ||
@@ -137,6 +159,7 @@ export const formatAIChatMessageText = (
 
 export interface AITargetRef {
   blockId?: number | string;
+  blockType?: string;
   fieldPath: string;
   persistedFieldPath?: string;
   label?: string;
@@ -149,6 +172,27 @@ export interface AITargetRef {
     fontWeight?: string;
     textAlign?: string;
     textShadow?: string;
+    fontStyle?: string;
+    textDecoration?: string;
+    lineHeight?: string;
+    letterSpacing?: string;
+    wordSpacing?: string;
+    textTransform?: string;
+    paddingTop?: string;
+    paddingBottom?: string;
+    paddingLeft?: string;
+    paddingRight?: string;
+    marginTop?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    marginRight?: string;
+    borderRadius?: string;
+    borderWidth?: string;
+    borderColor?: string;
+    width?: string;
+    height?: string;
+    opacity?: string;
+    objectFit?: string;
   };
   styleTarget?: {
     blockId?: number | string;
@@ -160,14 +204,23 @@ export interface AITargetRef {
   };
   styleTargets?: Array<{
     blockId?: number | string;
+    blockType?: string;
     fieldPath: string;
     persistedFieldPath?: string;
     aiEditKey?: string;
     label?: string;
     category?: string;
+    staticId?: string;
+    staticType?: string;
+    styleKey?: string;
     computedStyle?: AITargetRef["computedStyle"];
   }>;
 }
+
+type StaticStyleTargetRef = NonNullable<AITargetRef["styleTargets"]>[number];
+type LocalStaticStyleValues = {
+  primaryColor?: string;
+};
 
 export interface AIProposalPatch {
   aiEditKey?: string;
@@ -264,6 +317,8 @@ export interface UseEditorAIDeps {
    * old<->new while its state mirrors rehydrate.
    */
   onRefreshAIContext?: () => void | Promise<void>;
+  localStaticStyleTargets?: StaticStyleTargetRef[];
+  localStaticStyleValues?: LocalStaticStyleValues;
 }
 
 function buildEditSessionId(websiteId: number, target: AITargetRef): string {
@@ -339,6 +394,46 @@ function scoreStyleTargetForInstruction(
       prompt,
     )
   ) {
+    if (/\b(weight|bold|bolder|lighter)\b/.test(prompt)) {
+      if (path.includes("fontweight") || path.includes("font-weight")) {
+        score += 160;
+      } else if (path.includes("weight")) {
+        score += 120;
+      }
+    }
+    if (/\bitalic|italics\b/.test(prompt)) {
+      if (path.includes("fontstyle") || path.includes("font-style")) {
+        score += 150;
+      } else if (path.includes("italic")) {
+        score += 110;
+      }
+    }
+    if (/\b(underline|strikethrough|strike-through|line-through|decoration)\b/.test(prompt)) {
+      if (
+        path.includes("textdecoration") ||
+        path.includes("text-decoration")
+      ) {
+        score += 150;
+      } else if (path.includes("decoration")) {
+        score += 110;
+      }
+    }
+    if (/\b(align|alignment|left|center|right|justify)\b/.test(prompt)) {
+      if (path.includes("textalign") || path.includes("text-align")) {
+        score += 150;
+      } else if (path.includes("align")) {
+        score += 110;
+      }
+    }
+    if (/\b(opacity|transparent|transparency)\b/.test(prompt)) {
+      if (path.includes("opacity")) score += 150;
+    }
+    if (/\b(width|wide|wider|narrow|narrower)\b/.test(prompt)) {
+      if (path.includes("width")) score += 150;
+    }
+    if (/\b(height|tall|taller|short|shorter)\b/.test(prompt)) {
+      if (path.includes("height")) score += 150;
+    }
     if (/\b(size|bigger|larger|smaller|increase|decrease)\b/.test(prompt)) {
       if (path.includes("fontsize") || path.includes("font-size")) {
         score += 130;
@@ -392,6 +487,7 @@ function resolveInstructionTarget(
     aiEditKey: bestStyleTarget.aiEditKey,
     label: bestStyleTarget.label || target.label,
     computedStyle: bestStyleTarget.computedStyle || target.computedStyle,
+    styleTargets: target.styleTargets,
   };
 }
 
@@ -412,6 +508,11 @@ function normalizePreviewPatches(
     // inline-save handler writes at this path inside block.content.
     const fieldPath = getPatchEditorPath(patch);
     const blockId = patch.blockId ?? target.blockId;
+    const targetBaseline =
+      fieldPath === target.fieldPath &&
+      String(blockId ?? "") === String(target.blockId ?? "")
+        ? resolveTargetBaselineValue(target, getCurrentValue)
+        : getCurrentValue(blockId, fieldPath);
     return {
       aiEditKey: patch.aiEditKey,
       blockId,
@@ -419,7 +520,11 @@ function normalizePreviewPatches(
       fieldPath,
       persistedFieldPath,
       value: patch.value ?? patch.after,
-      baselineValue: patch.before ?? getCurrentValue(blockId, fieldPath),
+      baselineValue: resolveStaticStylePatchBaseline(
+        patch,
+        fieldPath,
+        targetBaseline,
+      ),
     };
   });
 }
@@ -448,6 +553,7 @@ const NAMED_COLOR_VALUES: Record<string, string> = {
   brightred: "#ff0000",
   yellow: "#ffff00",
   brightyellow: "#ffff00",
+  brightgreen: "#00ff00",
   green: "#16a34a",
   blue: "#2563eb",
   teal: "#14b8a6",
@@ -460,7 +566,14 @@ const NAMED_COLOR_VALUES: Record<string, string> = {
   grey: "#6b7280",
 };
 
-function extractColorValue(instruction: string): string | null {
+function extractColorValue(
+  instruction: string,
+  values?: LocalStaticStyleValues,
+): string | null {
+  if (/\b(?:site|website|brand|theme)(?:'s)?\s+primary\s+colou?r\b/i.test(instruction)) {
+    return values?.primaryColor || null;
+  }
+
   const hex = instruction.match(/#[0-9a-f]{3,8}\b/i)?.[0];
   if (hex) return hex;
 
@@ -469,6 +582,19 @@ function extractColorValue(instruction: string): string | null {
     if (compact.includes(name)) return value;
   }
 
+  return null;
+}
+
+function extractFontWeightValue(instruction: string): string | null {
+  if (/\b(extra[-\s]?bold|heavy|black|font[-\s]?weight\s*800)\b/i.test(instruction)) {
+    return "800";
+  }
+  if (/\b(bold|font[-\s]?weight\s*700)\b/i.test(instruction)) {
+    return "700";
+  }
+  if (/\b(normal|regular|font[-\s]?weight\s*400)\b/i.test(instruction)) {
+    return "400";
+  }
   return null;
 }
 
@@ -556,6 +682,23 @@ function buildDeterministicStylePatch(
   }
 
   if (
+    leaf.includes("fontweight") ||
+    /\b(extra[-\s]?bold|heavy|black|bold|font[-\s]?weight)\b/i.test(instruction)
+  ) {
+    const fontWeight = extractFontWeightValue(instruction);
+    if (fontWeight) {
+      return {
+        aiEditKey: target.aiEditKey,
+        blockId: target.blockId,
+        fieldPath,
+        persistedFieldPath,
+        value: fontWeight,
+        baselineValue,
+      };
+    }
+  }
+
+  if (
     leaf.includes("fontsize") ||
     /\b(font|text).*\bsize\b|\bsize\b|\b(bigger|larger|smaller|increase|decrease)\b/i.test(
       instruction,
@@ -576,6 +719,168 @@ function buildDeterministicStylePatch(
   }
 
   return null;
+}
+
+function parseLocalStaticStyleFieldPath(path?: string | null):
+  | {
+      styleKey: string;
+      staticId: string;
+      property: string;
+    }
+  | null {
+  if (!isLocalStaticStyleFieldPath(path)) return null;
+  const raw = String(path).slice(LOCAL_STATIC_STYLE_FIELD_PREFIX.length);
+  const [styleKey, staticId, property] = raw.split("|");
+  if (!styleKey || !staticId || !property) return null;
+
+  try {
+    return {
+      styleKey: decodeURIComponent(styleKey),
+      staticId: decodeURIComponent(staticId),
+      property: decodeURIComponent(property),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function buildEditorChatEditableTargets(
+  targets: StaticStyleTargetRef[] | undefined,
+  getCurrentValue: UseEditorAIDeps["getCurrentValue"],
+  pageId?: number | string | null,
+): EditableSchemaTarget[] {
+  if (!targets?.length) return [];
+
+  return targets
+    .map((target): EditableSchemaTarget | null => {
+      const persistedFieldPath = target.persistedFieldPath || target.fieldPath;
+      const localStyle = parseLocalStaticStyleFieldPath(persistedFieldPath);
+      if (!localStyle || target.blockId == null) return null;
+      const savedValue = getCurrentValue(target.blockId, persistedFieldPath);
+      const computedValue =
+        target.computedStyle?.[
+          localStyle.property as keyof NonNullable<AITargetRef["computedStyle"]>
+        ];
+
+      return {
+        aiEditKey:
+          target.aiEditKey ||
+          `blog-static:${String(target.blockId)}:${localStyle.staticId}:${localStyle.property}`,
+        kind: "style",
+        label: target.label,
+        category: target.category,
+        pageId: pageId ?? undefined,
+        blockId: target.blockId,
+        blockType: target.blockType || "BLOG_ARTICLE",
+        elementId: localStyle.staticId,
+        elementType: localStyle.staticId,
+        fieldPath: persistedFieldPath,
+        editorPath: persistedFieldPath,
+        stylePath: `${localStyle.styleKey}.${localStyle.property}`,
+        valueType: "style",
+        currentValue: savedValue ?? computedValue,
+        metadata: {
+          group: "style",
+          cssProp: localStyle.property,
+          staticId: localStyle.staticId,
+          staticType: target.staticType,
+          styleKey: localStyle.styleKey,
+          blockType: target.blockType || "BLOG_ARTICLE",
+          editorPath: persistedFieldPath,
+          patchContract:
+            "Return patches using this target's fieldPath/editorPath. The frontend will apply it to block.content.staticStyles.",
+        },
+      };
+    })
+    .filter((target): target is EditableSchemaTarget => Boolean(target));
+}
+
+function resolveStaticStylePatchBaseline(
+  patch: { before?: unknown },
+  fieldPath: string,
+  fallbackValue: unknown,
+) {
+  if (!isLocalStaticStyleFieldPath(fieldPath)) {
+    return patch.before ?? fallbackValue;
+  }
+
+  // For request-level dynamic blog style targets, the backend often has no
+  // persisted `before` yet. Treat null/empty backend baselines as "not known"
+  // and keep the frontend's captured visual/saved value as the conflict guard.
+  return patch.before === undefined ||
+    patch.before === null ||
+    patch.before === ""
+    ? fallbackValue
+    : patch.before;
+}
+
+function resolveTargetBaselineValue(
+  target: Pick<AITargetRef, "blockId" | "fieldPath" | "computedStyle">,
+  getCurrentValue: UseEditorAIDeps["getCurrentValue"],
+) {
+  const currentValue = getCurrentValue(target.blockId, target.fieldPath);
+  if (
+    currentValue !== undefined &&
+    currentValue !== null &&
+    currentValue !== ""
+  ) {
+    return currentValue;
+  }
+
+  const localStyle = parseLocalStaticStyleFieldPath(target.fieldPath);
+  if (!localStyle) {
+    return currentValue;
+  }
+
+  return (
+    target.computedStyle?.[
+      localStyle.property as keyof NonNullable<AITargetRef["computedStyle"]>
+    ] ?? currentValue
+  );
+}
+
+function getRequestSchemaBaseline(
+  targets: EditableSchemaTarget[],
+  blockId: number | string | undefined,
+  fieldPath: string,
+) {
+  const target = targets.find(
+    (item) =>
+      item.fieldPath === fieldPath &&
+      String(item.blockId ?? "") === String(blockId ?? ""),
+  );
+  return (target as { currentValue?: unknown } | undefined)?.currentValue;
+}
+
+function getConflictComparableCurrentValue(
+  patch: AIProposalPatch,
+  getCurrentValue: UseEditorAIDeps["getCurrentValue"],
+) {
+  const currentValue = getCurrentValue(patch.blockId, patch.fieldPath);
+  if (!isLocalStaticStyleFieldPath(patch.fieldPath)) {
+    return currentValue;
+  }
+
+  // Empty means "no saved static override". If the baseline was the rendered
+  // computed style, this is still unchanged unless a real override exists.
+  if (
+    currentValue === undefined ||
+    currentValue === null ||
+    currentValue === ""
+  ) {
+    return patch.baselineValue;
+  }
+  return currentValue;
+}
+
+function shouldSkipServerRevert(turn: RevertEntry) {
+  return turn.patches.some((patch) =>
+    isLocalStaticStyleFieldPath(patch.fieldPath),
+  );
+}
+
+function revertPatchKey(patch: Pick<AIProposalPatch, "blockId" | "fieldPath">) {
+  return `${String(patch.blockId ?? "")}::${patch.fieldPath}`;
 }
 
 function legacyPatchMapToPatches(
@@ -606,6 +911,8 @@ export function useEditorAI({
   onLocalPatchesApplied,
   onRefresh,
   onRefreshAIContext,
+  localStaticStyleTargets,
+  localStaticStyleValues,
 }: UseEditorAIDeps) {
   const [activeRequest, setActiveRequest] = useState(false);
   const [proposal, setProposal] = useState<AIProposal | null>(null);
@@ -674,6 +981,17 @@ export function useEditorAI({
       .slice(0, MAX_REVERT_DEPTH);
   }, [consumedServerTurnIds, localRevertStack, revertibleTurns]);
 
+  const consumeServerTurnIds = useCallback((turnIds: Array<string | null>) => {
+    const ids = turnIds.filter((id): id is string => Boolean(id));
+    if (!ids.length) return;
+
+    setConsumedServerTurnIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }, []);
+
   const attemptKey = (target: AITargetRef, instruction: string) =>
     `${target.blockId ?? "page"}::${target.fieldPath}::${target.aiEditKey ?? ""}::${instruction
       .trim()
@@ -693,6 +1011,7 @@ export function useEditorAI({
         summary?: string;
         turnId?: string;
         aiEditKey?: string;
+        waitForLocalPatches?: boolean;
         /** Skip the conflict guard (used when resolving a conflict). */
         force?: boolean;
       },
@@ -705,18 +1024,19 @@ export function useEditorAI({
         const conflicting = patches.find(
           (patch) =>
             !valuesEqual(
-              getCurrentValue(patch.blockId, patch.fieldPath),
+              getConflictComparableCurrentValue(patch, getCurrentValue),
               patch.baselineValue,
             ),
         );
         if (conflicting) {
+          const userValue = getConflictComparableCurrentValue(
+            conflicting,
+            getCurrentValue,
+          );
           setConflict({
             blockId: conflicting.blockId,
             fieldPath: conflicting.fieldPath,
-            userValue: getCurrentValue(
-              conflicting.blockId,
-              conflicting.fieldPath,
-            ),
+            userValue,
             aiValue: conflicting.value,
             turnId: meta?.turnId ?? "",
             summary: meta?.summary ?? "",
@@ -733,13 +1053,27 @@ export function useEditorAI({
       // (a full refresh races with lock/approval polling and briefly rehydrates
       // stale template data, making the selection flip old<->new).
       const applied = patches.filter(isLocallyApplicablePatch);
+      const appliedBeforeValues = new Map<string, unknown>();
       applied.forEach((patch) => {
+        appliedBeforeValues.set(
+          revertPatchKey(patch),
+          getCurrentValue(patch.blockId, patch.fieldPath),
+        );
         applyPatch(patch.blockId, patch.fieldPath, patch.value);
       });
 
       // Let the editor flush the local change into all of its state mirrors
       // (blocks/blocksRef/pages/selectedPage/persistedPages) and mark dirty.
-      await onLocalPatchesApplied?.(applied.length ? applied : patches);
+      const localPatchFlush = onLocalPatchesApplied?.(
+        applied.length ? applied : patches,
+      );
+      if (meta?.waitForLocalPatches !== false) {
+        await localPatchFlush;
+      } else {
+        void Promise.resolve(localPatchFlush).catch(() => {
+          /* local save bookkeeping only — ignore failures */
+        });
+      }
 
       const localTurnId = applied.length
         ? meta?.turnId ||
@@ -757,7 +1091,9 @@ export function useEditorAI({
                 blockId: patch.blockId,
                 fieldPath: patch.fieldPath,
                 persistedFieldPath: patch.persistedFieldPath,
-                beforeValue: patch.baselineValue,
+                beforeValue: isLocalStaticStyleFieldPath(patch.fieldPath)
+                  ? appliedBeforeValues.get(revertPatchKey(patch))
+                  : patch.baselineValue,
                 afterValue: patch.value,
               })),
             },
@@ -883,36 +1219,130 @@ export function useEditorAI({
       setProposal(null);
       setConflict(null);
       setActiveRequest(true);
-      const baselineValue = getCurrentValue(
-        requestTarget.blockId,
-        requestTarget.fieldPath,
-      );
-      const editSessionId =
-        editSessionRef.current.get(key) ||
-        buildEditSessionId(websiteId, requestTarget);
-      editSessionRef.current.set(key, editSessionId);
-
-      const deterministicPatch = buildDeterministicStylePatch(
-        requestTarget,
-        instruction,
-        baselineValue,
-      );
-
-      const apiTarget: EditElementTarget = {
-        kind: requestTarget.kind,
-        fieldPath:
-          requestTarget.persistedFieldPath ??
-          (requestTarget.kind === "editable" || requestTarget.kind === "section"
-            ? toPersistedBlockContentPath(
-                requestTarget.fieldPath,
-                pageId,
-                requestTarget.blockId,
-              )
-            : requestTarget.fieldPath),
-        aiEditKey: requestTarget.aiEditKey,
-      };
 
       try {
+        const baselineValue = resolveTargetBaselineValue(
+          requestTarget,
+          getCurrentValue,
+        );
+        const editSessionId =
+          editSessionRef.current.get(key) ||
+          buildEditSessionId(websiteId, requestTarget);
+        editSessionRef.current.set(key, editSessionId);
+
+        const deterministicPatch = buildDeterministicStylePatch(
+          requestTarget,
+          instruction,
+          baselineValue,
+        );
+
+        const apiTarget: EditElementTarget = {
+          kind: requestTarget.kind,
+          fieldPath:
+            requestTarget.persistedFieldPath ??
+            (requestTarget.kind === "editable" ||
+            requestTarget.kind === "section"
+              ? toPersistedBlockContentPath(
+                  requestTarget.fieldPath,
+                  pageId,
+                  requestTarget.blockId,
+                )
+              : requestTarget.fieldPath),
+          aiEditKey: requestTarget.aiEditKey,
+        };
+
+        if (isLocalStaticStyleFieldPath(requestTarget.fieldPath)) {
+          const localTargetSchema = buildEditorChatEditableTargets(
+            requestTarget.styleTargets?.length
+              ? requestTarget.styleTargets
+              : [
+                  {
+                    blockId: requestTarget.blockId,
+                    fieldPath: requestTarget.fieldPath,
+                    persistedFieldPath:
+                      requestTarget.persistedFieldPath || requestTarget.fieldPath,
+                    aiEditKey: requestTarget.aiEditKey,
+                    label: requestTarget.label,
+                    computedStyle: requestTarget.computedStyle,
+                  },
+                ],
+            getCurrentValue,
+            pageId,
+          );
+          const chatResult = await editorChat({
+            websiteId,
+            scope: "target",
+            pageId: pageId ?? undefined,
+            blockId: requestTarget.blockId,
+            target: {
+              kind: "target",
+              fieldPath: apiTarget.fieldPath,
+              aiEditKey: apiTarget.aiEditKey,
+            },
+            message: instruction,
+            editableTargets: localTargetSchema.length
+              ? localTargetSchema
+              : undefined,
+            context: {
+              primaryColor: localStaticStyleValues?.primaryColor,
+              localStaticStyleFieldPrefix: LOCAL_STATIC_STYLE_FIELD_PREFIX,
+              schemaNote:
+                "Use editableTargets as the allowed patch schema for this selected dynamic blog page style. Return patches against fieldPath/editorPath from those targets.",
+            },
+          });
+          const chatPatches = normalizeChatPatches(chatResult.patches || [])
+            .filter((patch) => patch.value != null)
+            .map((patch) => {
+              const blockId = patch.blockId ?? requestTarget.blockId;
+              const normalizedStaticStylePath =
+                normalizeBackendStaticStyleFieldPath(
+                  patch.persistedFieldPath || patch.fieldPath,
+                );
+              const fieldPath = normalizedStaticStylePath || patch.fieldPath;
+              const persistedFieldPath =
+                normalizedStaticStylePath || patch.persistedFieldPath;
+              const fallbackBaseline =
+                getRequestSchemaBaseline(
+                  localTargetSchema,
+                  blockId,
+                  fieldPath,
+                ) ?? getCurrentValue(blockId, fieldPath);
+              return {
+                aiEditKey: patch.aiEditKey,
+                blockId,
+                pageId: patch.pageId,
+                fieldPath,
+                persistedFieldPath,
+                value: patch.value,
+                baselineValue: resolveStaticStylePatchBaseline(
+                  patch,
+                  fieldPath,
+                  fallbackBaseline,
+                ),
+              };
+            });
+          if (chatPatches.length) {
+            attemptsRef.current.set(key, priorAttempts + 1);
+            const chatTurnId = (chatResult as { turnId?: string }).turnId;
+            return await applyBackendPatches(chatPatches, {
+              instruction,
+              summary: chatResult.reply,
+              turnId:
+                typeof chatTurnId === "string"
+                  ? chatTurnId
+                  : chatResult.sessionId,
+              aiEditKey: chatPatches[0]?.aiEditKey ?? requestTarget.aiEditKey,
+            });
+          }
+          setError({
+            code: "INVALID_EDIT_RESULT",
+            message:
+              chatResult.reply ||
+              "The AI service did not return an editable patch for this blog element.",
+          });
+          return false;
+        }
+
         const requestPayload = {
           websiteId,
           pageId: pageId ?? undefined,
@@ -1044,6 +1474,11 @@ export function useEditorAI({
               ? instruction
               : `${instruction.replace(/[.\s]+$/, "")}. Keep the new text directly relevant to this business and its category, and roughly the same length as the current text.`;
             let chatResult: Awaited<ReturnType<typeof editorChat>>;
+            const retryEditableTargets = buildEditorChatEditableTargets(
+              requestTarget.styleTargets,
+              getCurrentValue,
+              pageId,
+            );
             for (let chatAttempt = 1; ; chatAttempt += 1) {
               try {
                 chatResult = await editorChat({
@@ -1057,6 +1492,13 @@ export function useEditorAI({
                     aiEditKey: apiTarget.aiEditKey,
                   },
                   message: chatMessage,
+                  editableTargets: retryEditableTargets.length
+                    ? retryEditableTargets
+                    : undefined,
+                  context: {
+                    primaryColor: localStaticStyleValues?.primaryColor,
+                    localStaticStyleFieldPrefix: LOCAL_STATIC_STYLE_FIELD_PREFIX,
+                  },
                 });
                 break;
               } catch (chatCallErr) {
@@ -1077,20 +1519,36 @@ export function useEditorAI({
               .filter((patch) => patch.value != null)
               .map((patch) => {
                 const blockId = patch.blockId ?? requestTarget.blockId;
+                const normalizedStaticStylePath =
+                  normalizeBackendStaticStyleFieldPath(
+                    patch.persistedFieldPath || patch.fieldPath,
+                  );
+                const fieldPath = normalizedStaticStylePath || patch.fieldPath;
+                const persistedFieldPath =
+                  normalizedStaticStylePath || patch.persistedFieldPath;
                 const isRequestedField =
-                  patch.fieldPath === requestTarget.fieldPath &&
+                  fieldPath === requestTarget.fieldPath &&
                   String(blockId ?? "") === String(requestTarget.blockId ?? "");
+                const fallbackBaseline =
+                  getRequestSchemaBaseline(
+                    retryEditableTargets,
+                    blockId,
+                    fieldPath,
+                  ) ?? getCurrentValue(blockId, fieldPath);
                 return {
                   aiEditKey: patch.aiEditKey,
                   blockId,
                   pageId: patch.pageId,
-                  fieldPath: patch.fieldPath,
-                  persistedFieldPath: patch.persistedFieldPath,
+                  fieldPath,
+                  persistedFieldPath,
                   value: patch.value,
                   baselineValue: isRequestedField
                     ? baselineValue
-                    : (patch.before ??
-                      getCurrentValue(blockId, patch.fieldPath)),
+                    : resolveStaticStylePatchBaseline(
+                        patch,
+                        fieldPath,
+                        fallbackBaseline,
+                      ),
                 };
               });
             if (chatPatches.length) {
@@ -1134,6 +1592,7 @@ export function useEditorAI({
       applyBackendPatches,
       chatLoading,
       getCurrentValue,
+      localStaticStyleValues,
       pageId,
       websiteId,
     ],
@@ -1231,16 +1690,14 @@ export function useEditorAI({
       if (localTurn) {
         await applyLocalTurn(localTurn, "undo");
         if (localTurn.serverTurnId) {
-          setConsumedServerTurnIds((prev) => {
-            const next = new Set(prev);
-            next.add(localTurn.serverTurnId as string);
-            return next;
-          });
-          revertAITurn({ websiteId, turnId: localTurn.serverTurnId }).catch(
-            () => {
-              /* backend bookkeeping only */
-            },
-          );
+          consumeServerTurnIds([localTurn.serverTurnId]);
+          if (!shouldSkipServerRevert(localTurn)) {
+            revertAITurn({ websiteId, turnId: localTurn.serverTurnId }).catch(
+              () => {
+                /* backend bookkeeping only */
+              },
+            );
+          }
         }
         return;
       }
@@ -1257,11 +1714,7 @@ export function useEditorAI({
         }
       });
       if (turnId) {
-        setConsumedServerTurnIds((prev) => {
-          const next = new Set(prev);
-          next.add(turnId);
-          return next;
-        });
+        consumeServerTurnIds([turnId]);
       }
       await onRefreshAIContext?.();
     } catch (err) {
@@ -1273,12 +1726,16 @@ export function useEditorAI({
         await applyLocalTurn(localTurn, "undo");
         return;
       }
+      if (turnId && aiErr.code === "TURN_NOT_REVERTIBLE") {
+        consumeServerTurnIds([
+          turnId,
+          ...latestRevertibleTurns.map((turn) => turnIdFromHistory(turn)),
+        ]);
+        await onRefreshAIContext?.();
+        return;
+      }
       if (turnId && aiErr.code === "TARGETS_GONE") {
-        setConsumedServerTurnIds((prev) => {
-          const next = new Set(prev);
-          next.add(turnId);
-          return next;
-        });
+        consumeServerTurnIds([turnId]);
       }
       setError(aiErr);
       await onRefreshAIContext?.();
@@ -1288,6 +1745,7 @@ export function useEditorAI({
   }, [
     applyPatch,
     applyLocalTurn,
+    consumeServerTurnIds,
     latestRevertibleTurns,
     localRevertStack,
     onRefreshAIContext,
@@ -1344,6 +1802,11 @@ export function useEditorAI({
       setError(null);
 
       try {
+        const chatEditableTargets = buildEditorChatEditableTargets(
+          localStaticStyleTargets,
+          getCurrentValue,
+          pageId,
+        );
         const scopedTarget =
           scope === "target" || scope === "section"
             ? {
@@ -1359,20 +1822,47 @@ export function useEditorAI({
           blockId: opts?.blockId,
           target: scopedTarget,
           message: text,
+          editableTargets: chatEditableTargets.length
+            ? chatEditableTargets
+            : undefined,
+          context: {
+            primaryColor: localStaticStyleValues?.primaryColor,
+            localStaticStyleFieldPrefix: LOCAL_STATIC_STYLE_FIELD_PREFIX,
+            schemaNote:
+              "Use editableTargets as the allowed patch schema for dynamic blog page styles. Return patches against fieldPath/editorPath from those targets.",
+          },
         });
         const normalizedPatches = normalizeChatPatches(result.patches || []);
         const patches = normalizedPatches
           .filter((patch) => patch.value != null)
-          .map((patch) => ({
-            aiEditKey: patch.aiEditKey,
-            blockId: patch.blockId,
-            pageId: patch.pageId,
-            fieldPath: patch.fieldPath,
-            persistedFieldPath: patch.persistedFieldPath,
-            value: patch.value,
-            baselineValue:
-              patch.before ?? getCurrentValue(patch.blockId, patch.fieldPath),
-          }));
+          .map((patch) => {
+            const normalizedStaticStylePath =
+              normalizeBackendStaticStyleFieldPath(
+                patch.persistedFieldPath || patch.fieldPath,
+              );
+            const fieldPath = normalizedStaticStylePath || patch.fieldPath;
+            const persistedFieldPath =
+              normalizedStaticStylePath || patch.persistedFieldPath;
+            const fallbackBaseline =
+              getRequestSchemaBaseline(
+                chatEditableTargets,
+                patch.blockId,
+                fieldPath,
+              ) ?? getCurrentValue(patch.blockId, fieldPath);
+            return {
+              aiEditKey: patch.aiEditKey,
+              blockId: patch.blockId,
+              pageId: patch.pageId,
+              fieldPath,
+              persistedFieldPath,
+              value: patch.value,
+              baselineValue: resolveStaticStylePatchBaseline(
+                patch,
+                fieldPath,
+                fallbackBaseline,
+              ),
+            };
+          });
         const resultWithTurn = result as unknown as { turnId?: string };
         const applied = patches.length
           ? await applyBackendPatches(patches, {
@@ -1429,6 +1919,8 @@ export function useEditorAI({
       applyBackendPatches,
       chatLoading,
       getCurrentValue,
+      localStaticStyleTargets,
+      localStaticStyleValues,
       pageId,
       websiteId,
     ],

@@ -7,10 +7,99 @@
  * `blog` datasource) so each tenant site shows its own posts.
  */
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, Typography, Skeleton } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import type { BlogPost } from "./BlogCard";
+
+type StaticTargetType = "container" | "text" | "media" | "icon";
+
+export function blogStaticProps(
+  blockId: string | number,
+  staticId: string,
+  label: string,
+  type: StaticTargetType = "text",
+  styleKey = `static.${staticId}`,
+  contentPath?: string,
+) {
+  return {
+    "data-static-selectable": "true",
+    "data-static-id": staticId,
+    "data-static-label": label,
+    "data-static-type": type,
+    "data-preview-target-kind": "static",
+    "data-preview-section": "true",
+    "data-preview-block-id": String(blockId),
+    "data-preview-style-key": styleKey,
+    "data-preview-label": label,
+    ...(contentPath ? { "data-content-path": contentPath } : {}),
+    ...(type === "container"
+      ? {
+          "data-container-style-id": staticId,
+          "data-editor-container": "true",
+          "data-parent-section": String(blockId),
+        }
+      : {}),
+    ...(type === "media" ? { "data-fallback-media": "true" } : {}),
+  };
+}
+
+/* ===================== FadeInImage ===================== */
+
+/**
+ * Blur-up image that fades/scales in on load — mirrors the FadeInImage from the
+ * public /blog page so the cards reveal identically on any tenant site.
+ */
+export const FadeInImage: React.FC<{
+  src: string;
+  alt: string;
+  eager?: boolean;
+  sizes?: string;
+  onLoadedChange?: (loaded: boolean) => void;
+}> = ({ src, alt, eager = false, sizes, onLoadedChange }) => {
+  const [loaded, setLoaded] = useState(false);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    setLoaded(false);
+  }, [src]);
+
+  useEffect(() => {
+    const node = imageRef.current;
+    if (node?.complete && node.naturalWidth > 0) setLoaded(true);
+  }, [src]);
+
+  useEffect(() => {
+    onLoadedChange?.(loaded);
+  }, [loaded, onLoadedChange]);
+
+  return (
+    <Box
+      component="img"
+      ref={imageRef}
+      src={src}
+      alt={alt}
+      sizes={sizes || "(max-width: 780px) 100vw, (max-width: 1024px) 50vw, 33vw"}
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
+      width="1200"
+      height="760"
+      onLoad={() => setLoaded(true)}
+      onError={() => setLoaded(true)}
+      sx={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        display: "block",
+        opacity: loaded ? 1 : 0,
+        transform: loaded ? "scale(1)" : "scale(1.035)",
+        filter: loaded ? "blur(0) saturate(1)" : "blur(6px) saturate(0.92)",
+        transition:
+          "opacity 820ms cubic-bezier(0.22, 1, 0.36, 1), transform 1100ms cubic-bezier(0.22, 1, 0.36, 1), filter 900ms cubic-bezier(0.22, 1, 0.36, 1)",
+      }}
+    />
+  );
+};
 
 /* ===================== Shared theme tokens ===================== */
 
@@ -39,6 +128,121 @@ export function hexToRgba(color: string | undefined, alpha: number): string {
   const g = parseInt(c.slice(2, 4), 16);
   const b = parseInt(c.slice(4, 6), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+type RgbColor = { r: number; g: number; b: number };
+
+function hexToRgb(color?: string | null): RgbColor | null {
+  const c = normalizeHex(color).replace("#", "");
+  if (c.length !== 6 || /[^0-9a-fA-F]/.test(c)) return null;
+  return {
+    r: parseInt(c.slice(0, 2), 16),
+    g: parseInt(c.slice(2, 4), 16),
+    b: parseInt(c.slice(4, 6), 16),
+  };
+}
+
+function rgbToHex({ r, g, b }: RgbColor): string {
+  const toHex = (value: number) =>
+    Math.max(0, Math.min(255, Math.round(value)))
+      .toString(16)
+      .padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function rgbToHsl({ r, g, b }: RgbColor) {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case rn:
+        h = (gn - bn) / d + (gn < bn ? 6 : 0);
+        break;
+      case gn:
+        h = (bn - rn) / d + 2;
+        break;
+      default:
+        h = (rn - gn) / d + 4;
+        break;
+    }
+    h /= 6;
+  }
+
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function hslToRgb(h: number, s: number, l: number): RgbColor {
+  const hn = (((h % 360) + 360) % 360) / 360;
+  const sn = Math.max(0, Math.min(100, s)) / 100;
+  const ln = Math.max(0, Math.min(100, l)) / 100;
+
+  if (sn === 0) {
+    const value = ln * 255;
+    return { r: value, g: value, b: value };
+  }
+
+  const hueToRgb = (p: number, q: number, tValue: number) => {
+    let t = tValue;
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+
+  const q = ln < 0.5 ? ln * (1 + sn) : ln + sn - ln * sn;
+  const p = 2 * ln - q;
+  return {
+    r: hueToRgb(p, q, hn + 1 / 3) * 255,
+    g: hueToRgb(p, q, hn) * 255,
+    b: hueToRgb(p, q, hn - 1 / 3) * 255,
+  };
+}
+
+function tuneHeroGlowColor(
+  color: string,
+  options: { minLightness: number; maxLightness: number; saturationBoost: number; hueShift?: number },
+) {
+  const rgb = hexToRgb(color);
+  if (!rgb) return color;
+  const hsl = rgbToHsl(rgb);
+  return rgbToHex(
+    hslToRgb(
+      hsl.h + (options.hueShift || 0),
+      Math.min(92, Math.max(34, hsl.s * options.saturationBoost)),
+      Math.min(options.maxLightness, Math.max(options.minLightness, hsl.l)),
+    ),
+  );
+}
+
+export function resolveBlogHeroGlow(primaryColor?: string | null) {
+  const accent = resolveAccent(primaryColor);
+  const primaryGlowColor = tuneHeroGlowColor(accent, {
+    minLightness: 40,
+    maxLightness: 62,
+    saturationBoost: 1.08,
+  });
+  const highlightGlowColor = tuneHeroGlowColor(accent, {
+    minLightness: 58,
+    maxLightness: 70,
+    saturationBoost: 1.25,
+    hueShift: 8,
+  });
+
+  return {
+    primary: hexToRgba(primaryGlowColor, 0.4),
+    highlight: hexToRgba(highlightGlowColor, 0.28),
+  };
 }
 
 /** Resolve a usable accent, defaulting to the blog teal when none is provided. */
@@ -101,6 +305,8 @@ export interface BlogInsightCardProps {
   /** Accent color (website primary). Defaults to the blog teal. */
   accent?: string;
   onOpen?: (post: BlogPost) => void;
+  blockId?: string | number;
+  staticPrefix?: string;
 }
 
 /**
@@ -113,6 +319,8 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
   authorLabel,
   accent,
   onOpen,
+  blockId,
+  staticPrefix = featured ? "featured-card" : `blog-card-${post.id}`,
 }) => {
   const author = authorLabel || resolveAuthorName(post);
   const image = resolveBlogImage(post.image);
@@ -125,6 +333,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
   if (featured) {
     return (
       <Box
+        {...(blockId
+          ? blogStaticProps(blockId, staticPrefix, "Featured article card", "container")
+          : {})}
         onClick={handleOpen}
         sx={{
           display: "flex",
@@ -149,6 +360,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
         }}
       >
         <Box
+          {...(blockId
+            ? blogStaticProps(blockId, `${staticPrefix}-image`, "Featured article image", "media")
+            : {})}
           sx={{
             flex: { xs: "none", md: "0 0 45%" },
             height: { xs: "clamp(200px, 38vw, 280px)", md: "100%" },
@@ -157,15 +371,18 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
           }}
         >
           {image && (
-            <Box
-              component="img"
+            <FadeInImage
               src={image}
               alt={post.title}
-              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+              eager
+              sizes="(max-width: 1024px) 100vw, 45vw"
             />
           )}
           {post.category && (
             <Box
+              {...(blockId
+                ? blogStaticProps(blockId, `${staticPrefix}-category`, "Featured article category")
+                : {})}
               sx={{
                 position: "absolute",
                 bottom: "16px",
@@ -198,6 +415,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
         >
           <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
             <Box
+              {...(blockId
+                ? blogStaticProps(blockId, `${staticPrefix}-meta`, "Featured article meta")
+                : {})}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -216,6 +436,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
               </Typography>
             </Box>
             <Typography
+              {...(blockId
+                ? blogStaticProps(blockId, `${staticPrefix}-title`, "Featured article title")
+                : {})}
               variant="h4"
               sx={{
                 color: "#0f172a",
@@ -233,6 +456,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
               {post.title}
             </Typography>
             <Typography
+              {...(blockId
+                ? blogStaticProps(blockId, `${staticPrefix}-excerpt`, "Featured article excerpt")
+                : {})}
               variant="body1"
               sx={{
                 color: "#475569",
@@ -261,6 +487,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
             >
               <Typography variant="body2">{author}</Typography>
               <Box
+                {...(blockId
+                  ? blogStaticProps(blockId, `${staticPrefix}-read-link`, "Featured article link")
+                  : {})}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -281,6 +510,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
 
   return (
     <Box
+      {...(blockId
+        ? blogStaticProps(blockId, staticPrefix, "Article card", "container")
+        : {})}
       onClick={handleOpen}
       sx={{
         border: "1px solid #d7e2ec",
@@ -303,17 +535,18 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
         },
       }}
     >
-      <Box sx={{ height: "220px", position: "relative", background: "#0a1825" }}>
-        {image && (
-          <Box
-            component="img"
-            src={image}
-            alt={post.title}
-            sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        )}
+      <Box
+        {...(blockId
+          ? blogStaticProps(blockId, `${staticPrefix}-image`, "Article card image", "media")
+          : {})}
+        sx={{ height: "220px", position: "relative", background: "#0a1825" }}
+      >
+        {image && <FadeInImage src={image} alt={post.title} />}
         {post.category && (
           <Box
+            {...(blockId
+              ? blogStaticProps(blockId, `${staticPrefix}-category`, "Article card category")
+              : {})}
             sx={{
               position: "absolute",
               bottom: "12px",
@@ -362,6 +595,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
           </Typography>
         </Box>
         <Typography
+          {...(blockId
+            ? blogStaticProps(blockId, `${staticPrefix}-title`, "Article card title")
+            : {})}
           variant="h6"
           sx={{
             color: "#1e293b",
@@ -375,6 +611,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
           {post.title}
         </Typography>
         <Typography
+          {...(blockId
+            ? blogStaticProps(blockId, `${staticPrefix}-excerpt`, "Article card excerpt")
+            : {})}
           variant="body2"
           sx={{
             color: "#475569",
@@ -399,6 +638,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
         >
           <Typography variant="body2">{author}</Typography>
           <Box
+            {...(blockId
+              ? blogStaticProps(blockId, `${staticPrefix}-read-link`, "Article card link")
+              : {})}
             sx={{
               display: "flex",
               alignItems: "center",

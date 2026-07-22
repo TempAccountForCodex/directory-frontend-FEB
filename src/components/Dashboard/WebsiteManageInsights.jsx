@@ -78,6 +78,11 @@ import {
   FileEdit as DraftStatIcon,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
+import InsightBlockEditor from './InsightBlockEditor';
+import {
+  deriveBlocksFromHeadings,
+  deriveHeadingsFromBlocks,
+} from '../../utils/insightsNormalizer';
 import { getDashboardColors } from '../../styles/dashboardTheme';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import {
@@ -143,7 +148,6 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const fileInputRef = useRef(null);
-  const contentRefs = useRef({});
 
   // Stats for this website's blog posts (from /websites/:id/blogs/stats)
   const [stats, setStats] = useState({
@@ -180,12 +184,7 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
     category: '',
     content: '',
     description: '',
-    headings: [
-      {
-        heading: '',
-        subsections: [{ subheading: '', content: '' }],
-      },
-    ],
+    blocks: [],
     metaTitle: '',
     metaDescription: '',
     keywords: '',
@@ -200,7 +199,7 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
     category: '',
     content: '',
     description: '',
-    headings: [],
+    blocks: '',
     metaTitle: '',
     metaDescription: '',
     keywords: '',
@@ -253,7 +252,7 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
       formData.metaDescription !== originalFormData.metaDescription ||
       formData.keywords !== originalFormData.keywords ||
       formData.publishDate !== originalFormData.publishDate ||
-      JSON.stringify(formData.headings) !== JSON.stringify(originalFormData.headings)
+      JSON.stringify(formData.blocks) !== JSON.stringify(originalFormData.blocks)
     );
   }, [isEditing, originalFormData, imageFile, formData]);
 
@@ -402,57 +401,25 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
   }, [page, rowsPerPage, websiteId]);
 
   // -------------------------------------------------------------------------
-  // Format helpers
-  // -------------------------------------------------------------------------
-  const convertToNewFormat = useCallback((headings) => {
-    if (!headings || !Array.isArray(headings)) {
-      return [{ heading: '', subsections: [{ subheading: '', content: '' }] }];
-    }
-
-    return headings.map((section) => {
-      if (section.subsections && Array.isArray(section.subsections)) {
-        return section;
-      }
-
-      const subsections = [];
-      if (section.description && Array.isArray(section.description)) {
-        if (section.subheading) {
-          subsections.push({
-            subheading: section.subheading,
-            content: section.description.join('\n'),
-          });
-        } else {
-          subsections.push({
-            subheading: '',
-            content: section.description.join('\n'),
-          });
-        }
-      } else {
-        subsections.push({ subheading: '', content: '' });
-      }
-
-      return {
-        heading: section.heading || '',
-        subsections,
-      };
-    });
-  }, []);
-
-  // -------------------------------------------------------------------------
   // Dialog handlers
   // -------------------------------------------------------------------------
   const handleOpenDialog = useCallback((blog = null) => {
     if (blog) {
       setIsEditing(true);
       setCurrentInsight(blog);
-      const convertedHeadings = convertToNewFormat(blog.headings);
+      // Prefer authored blocks[]; fall back to deriving them from legacy
+      // headings[] for posts created before this project adopted blocks.
+      const blocks =
+        Array.isArray(blog.blocks) && blog.blocks.length > 0
+          ? blog.blocks
+          : deriveBlocksFromHeadings(blog.headings);
 
       setFormData({
         title: blog.title,
         category: blog.category,
         content: blog.content,
         description: blog.description,
-        headings: convertedHeadings,
+        blocks,
         metaTitle: blog.metaTitle || '',
         metaDescription: blog.metaDescription || '',
         keywords: blog.keywords || '',
@@ -470,9 +437,7 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
         category: blog.category || '',
         content: blog.content || '',
         description: blog.description || '',
-        headings: blog.headings || [
-          { heading: '', subsections: [{ subheading: '', content: '' }] },
-        ],
+        blocks,
         metaTitle: blog.metaTitle || '',
         metaDescription: blog.metaDescription || '',
         keywords: blog.keywords || '',
@@ -490,7 +455,7 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
         category: '',
         content: '',
         description: '',
-        headings: [{ heading: '', subsections: [{ subheading: '', content: '' }] }],
+        blocks: [],
         metaTitle: '',
         metaDescription: '',
         keywords: '',
@@ -503,7 +468,7 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
     setOpenDialog(true);
     setShowQuickCreateCategory(false);
     setQuickCategoryName('');
-  }, [convertToNewFormat, getImageUrl]);
+  }, [getImageUrl]);
 
   const handleCloseDialog = useCallback(() => {
     setOpenDialog(false);
@@ -519,7 +484,7 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
       category: '',
       content: '',
       description: '',
-      headings: [],
+      blocks: '',
       metaTitle: '',
       metaDescription: '',
       keywords: '',
@@ -560,137 +525,13 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
     }
   }, []);
 
-  // Section management
-  const handleSectionChange = useCallback((sectionIndex, field, value) => {
-    setFormData((prev) => {
-      const newHeadings = [...prev.headings];
-      newHeadings[sectionIndex][field] = value;
-      return { ...prev, headings: newHeadings };
-    });
-  }, []);
-
-  const addSection = useCallback(() => {
-    setFormData((prev) => ({
-      ...prev,
-      headings: [...prev.headings, { heading: '', subsections: [{ subheading: '', content: '' }] }],
-    }));
-  }, []);
-
-  const removeSection = useCallback((index) => {
-    setFormData((prev) => ({
-      ...prev,
-      headings: prev.headings.filter((_, i) => i !== index),
-    }));
-  }, []);
-
-  // Subsection management
-  const handleSubsectionChange = useCallback((sectionIndex, subsectionIndex, field, value) => {
-    setFormData((prev) => {
-      const newHeadings = [...prev.headings];
-      newHeadings[sectionIndex].subsections[subsectionIndex][field] = value;
-      return { ...prev, headings: newHeadings };
-    });
-  }, []);
-
-  const addSubsection = useCallback((sectionIndex) => {
-    setFormData((prev) => {
-      const newHeadings = [...prev.headings];
-      newHeadings[sectionIndex].subsections.push({ subheading: '', content: '' });
-      return { ...prev, headings: newHeadings };
-    });
-  }, []);
-
-  const removeSubsection = useCallback((sectionIndex, subsectionIndex) => {
-    setFormData((prev) => {
-      const newHeadings = [...prev.headings];
-      newHeadings[sectionIndex].subsections = newHeadings[sectionIndex].subsections.filter(
-        (_, i) => i !== subsectionIndex
-      );
-      return { ...prev, headings: newHeadings };
-    });
-  }, []);
-
-  // Text formatting helpers
-  const insertTextAtCursor = useCallback((sectionIndex, subsectionIndex, textToInsert, wrapText = false) => {
-    const refKey = `${sectionIndex}-${subsectionIndex}`;
-    const textarea = contentRefs.current[refKey];
-
-    if (!textarea) {
-      const currentContent = formData.headings[sectionIndex].subsections[subsectionIndex].content;
-      handleSubsectionChange(sectionIndex, subsectionIndex, 'content', currentContent + textToInsert);
-      return;
-    }
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const currentContent = formData.headings[sectionIndex].subsections[subsectionIndex].content;
-    const selectedText = currentContent.substring(start, end);
-
-    let newText;
-    if (wrapText && selectedText) {
-      const [prefix, suffix] = textToInsert.split('|');
-      newText =
-        currentContent.substring(0, start) +
-        prefix +
-        selectedText +
-        suffix +
-        currentContent.substring(end);
-    } else {
-      newText = currentContent.substring(0, start) + textToInsert + currentContent.substring(end);
-    }
-
-    handleSubsectionChange(sectionIndex, subsectionIndex, 'content', newText);
-
-    setTimeout(() => {
-      const newPosition = start + textToInsert.length;
-      textarea.setSelectionRange(newPosition, newPosition);
-      textarea.focus();
-    }, 0);
-  }, [formData.headings, handleSubsectionChange]);
-
-  const insertFormatting = useCallback((sectionIndex, subsectionIndex, format) => {
-    const refKey = `${sectionIndex}-${subsectionIndex}`;
-    const textarea = contentRefs.current[refKey];
-    const selectedText =
-      textarea?.value.substring(textarea.selectionStart, textarea.selectionEnd) || '';
-
-    switch (format) {
-      case 'bold':
-        if (selectedText) {
-          insertTextAtCursor(sectionIndex, subsectionIndex, `**|**`, true);
-        } else {
-          insertTextAtCursor(sectionIndex, subsectionIndex, '**bold text**');
-        }
-        break;
-      case 'italic':
-        if (selectedText) {
-          insertTextAtCursor(sectionIndex, subsectionIndex, `*|*`, true);
-        } else {
-          insertTextAtCursor(sectionIndex, subsectionIndex, '*italic text*');
-        }
-        break;
-      case 'bullet':
-        insertTextAtCursor(sectionIndex, subsectionIndex, '\n• Bullet point');
-        break;
-      case 'numbered': {
-        const currentText = formData.headings[sectionIndex].subsections[subsectionIndex].content;
-        const lines = currentText.split('\n');
-        const nextNum = lines.filter((l) => /^\d+\./.test(l.trim())).length + 1;
-        insertTextAtCursor(sectionIndex, subsectionIndex, `\n${nextNum}. Numbered item`);
-        break;
-      }
-      default:
-        return;
-    }
-  }, [formData.headings, insertTextAtCursor]);
-
   const validateForm = useCallback(() => {
     const errors = {
       title: '',
       category: '',
       content: '',
       description: '',
-      headings: [],
+      blocks: '',
       metaTitle: '',
       metaDescription: '',
       keywords: '',
@@ -733,14 +574,23 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
       isValid = false;
     }
 
-    const headingErrors = formData.headings.map((section, index) => {
-      if (!section.heading.trim()) {
+    // Blocks validation (authored block model). Mirrors backend rules client-side
+    // for UX; the server remains the source of truth.
+    if (!formData.blocks || formData.blocks.length === 0) {
+      errors.blocks = 'At least one content block is required';
+      isValid = false;
+    } else {
+      const keyTakeawayCount = formData.blocks.filter((b) => b.type === 'keyTakeaway').length;
+      const conclusionCount = formData.blocks.filter((b) => b.type === 'conclusion').length;
+      if (keyTakeawayCount > 1) {
+        errors.blocks = 'Only one Key Takeaway block is allowed';
         isValid = false;
-        return `Section ${index + 1}: Main heading is required`;
       }
-      return '';
-    });
-    errors.headings = headingErrors;
+      if (conclusionCount > 1) {
+        errors.blocks = 'Only one Conclusion block is allowed';
+        isValid = false;
+      }
+    }
 
     if (formData.metaTitle && formData.metaTitle.length > 255) {
       errors.metaTitle = 'Meta title must not exceed 255 characters';
@@ -779,17 +629,14 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
       formDataToSend.append('content', formData.content);
       formDataToSend.append('description', formData.description);
 
-      const headingsForAPI = formData.headings.map((section) => ({
-        heading: section.heading,
-        subsections: section.subsections.map((sub) => ({
-          subheading: sub.subheading || '',
-          content: Array.isArray(sub.content)
-            ? sub.content
-            : sub.content.split('\n').filter((p) => p.trim()),
-        })),
-      }));
-
-      formDataToSend.append('headings', JSON.stringify(headingsForAPI));
+      // Authored block model is the source of truth. Send blocks[] (the backend
+      // recomputes anchorId/format and pins conclusion last); also send a derived
+      // headings[] so a backend that hasn't adopted blocks yet still round-trips.
+      formDataToSend.append('blocks', JSON.stringify(formData.blocks));
+      formDataToSend.append(
+        'headings',
+        JSON.stringify(deriveHeadingsFromBlocks(formData.blocks))
+      );
       formDataToSend.append('metaTitle', formData.metaTitle || formData.title);
       formDataToSend.append('metaDescription', formData.metaDescription || formData.content);
       formDataToSend.append('keywords', formData.keywords || formData.category);
@@ -2197,339 +2044,15 @@ const WebsiteManageInsights = ({ websiteId: websiteIdProp, websiteRole, website 
               />
             </Grid>
 
-            {/* Content Sections with Subsections */}
+            {/* Content Blocks Editor (authored block model) */}
             <Grid item xs={12}>
-              <Divider sx={{ my: 2, borderColor: colors.border }}>
-                <Typography sx={{ color: colors.textSecondary }}>
-                  Content Sections
-                </Typography>
-              </Divider>
-
-              {formData.headings.map((section, sectionIndex) => (
-                <Card
-                  key={sectionIndex}
-                  sx={{
-                    mb: 3,
-                    p: 2,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 2,
-                  }}
-                >
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    mb={2}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{ color: colors.primary, fontWeight: 700 }}
-                    >
-                      Section {sectionIndex + 1}
-                    </Typography>
-                    {formData.headings.length > 1 && (
-                      <Button
-                        size="small"
-                        startIcon={<DeleteIcon size={18} />}
-                        onClick={() => removeSection(sectionIndex)}
-                        sx={{
-                          color: "#ef4444",
-                          "&:hover": { background: alpha("#ef4444", 0.1) },
-                        }}
-                      >
-                        Remove Section
-                      </Button>
-                    )}
-                  </Box>
-
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <DashboardInput
-                        fullWidth
-                        label="Main Section Heading"
-                        labelPlacement="floating"
-                        value={section.heading}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            sectionIndex,
-                            "heading",
-                            e.target.value,
-                          )
-                        }
-                        required
-                        error={!!validationErrors.headings[sectionIndex]}
-                        helperText={
-                          validationErrors.headings[sectionIndex] ||
-                          "e.g., Key Benefits, Implementation Steps"
-                        }
-                        placeholder="e.g., Key Benefits, Implementation Steps"
-                        sx={{
-                          "& input:-webkit-autofill": {
-                            WebkitBoxShadow: `0 0 0 100px ${colors.cardBgLight} inset`,
-                            WebkitTextFillColor: colors.text,
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    {/* Subsections */}
-                    <Grid item xs={12}>
-                      <Divider
-                        sx={{ my: 1, borderColor: alpha(colors.border, 0.5) }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{ color: colors.textTertiary }}
-                        >
-                          Subsections
-                        </Typography>
-                      </Divider>
-
-                      {section.subsections.map(
-                        (subsection, subsectionIndex) => (
-                          <Card
-                            key={subsectionIndex}
-                            sx={{
-                              mb: 2,
-                              p: 2,
-                              border: `0.2px solid ${alpha(colors.border, 0.2)}`,
-                              borderRadius: 2,
-                            }}
-                          >
-                            <Box
-                              display="flex"
-                              justifyContent="space-between"
-                              alignItems="center"
-                              mb={1}
-                            >
-                              <Typography
-                                variant="subtitle2"
-                                sx={{ color: colors.primary, fontWeight: 600 }}
-                              >
-                                Subsection {subsectionIndex + 1}
-                              </Typography>
-                              {section.subsections.length > 1 && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() =>
-                                    removeSubsection(
-                                      sectionIndex,
-                                      subsectionIndex,
-                                    )
-                                  }
-                                  sx={{
-                                    color: "#ef4444",
-                                    "&:hover": {
-                                      background: alpha("#ef4444", 0.1),
-                                    },
-                                  }}
-                                >
-                                  <DeleteIcon size={16} />
-                                </IconButton>
-                              )}
-                            </Box>
-
-                            <Grid container spacing={2}>
-                              <Grid item xs={12}>
-                                <DashboardInput
-                                  fullWidth
-                                  label="Subheading (Optional)"
-                                  labelPlacement="floating"
-                                  value={subsection.subheading}
-                                  onChange={(e) =>
-                                    handleSubsectionChange(
-                                      sectionIndex,
-                                      subsectionIndex,
-                                      "subheading",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="e.g., Cost Efficiency, Scalability"
-                                  size="small"
-                                  sx={{
-                                    "& input:-webkit-autofill": {
-                                      WebkitBoxShadow: `0 0 0 100px ${colors.dark} inset`,
-                                      WebkitTextFillColor: colors.text,
-                                    },
-                                  }}
-                                />
-                              </Grid>
-
-                              <Grid item xs={12}>
-                                <Box mb={1}>
-                                  <ButtonGroup size="small" variant="outlined">
-                                    <Tooltip title="Bold: Select text or insert **text**">
-                                      <Button
-                                        onClick={() =>
-                                          insertFormatting(
-                                            sectionIndex,
-                                            subsectionIndex,
-                                            "bold",
-                                          )
-                                        }
-                                        sx={{
-                                          color: colors.text,
-                                          borderColor: colors.border,
-                                          "&:hover": {
-                                            borderColor: colors.primary,
-                                            background: alpha(
-                                              colors.primary,
-                                              0.1,
-                                            ),
-                                          },
-                                        }}
-                                      >
-                                        <BoldIcon size={16} />
-                                      </Button>
-                                    </Tooltip>
-                                    <Tooltip title="Italic: Select text or insert *text*">
-                                      <Button
-                                        onClick={() =>
-                                          insertFormatting(
-                                            sectionIndex,
-                                            subsectionIndex,
-                                            "italic",
-                                          )
-                                        }
-                                        sx={{
-                                          color: colors.text,
-                                          borderColor: colors.border,
-                                          "&:hover": {
-                                            borderColor: colors.primary,
-                                            background: alpha(
-                                              colors.primary,
-                                              0.1,
-                                            ),
-                                          },
-                                        }}
-                                      >
-                                        <ItalicIcon size={16} />
-                                      </Button>
-                                    </Tooltip>
-                                    <Tooltip title="Bullet Point">
-                                      <Button
-                                        onClick={() =>
-                                          insertFormatting(
-                                            sectionIndex,
-                                            subsectionIndex,
-                                            "bullet",
-                                          )
-                                        }
-                                        sx={{
-                                          color: colors.text,
-                                          borderColor: colors.border,
-                                          "&:hover": {
-                                            borderColor: colors.primary,
-                                            background: alpha(
-                                              colors.primary,
-                                              0.1,
-                                            ),
-                                          },
-                                        }}
-                                      >
-                                        <BulletIcon size={16} />
-                                      </Button>
-                                    </Tooltip>
-                                    <Tooltip title="Numbered List">
-                                      <Button
-                                        onClick={() =>
-                                          insertFormatting(
-                                            sectionIndex,
-                                            subsectionIndex,
-                                            "numbered",
-                                          )
-                                        }
-                                        sx={{
-                                          color: colors.text,
-                                          borderColor: colors.border,
-                                          "&:hover": {
-                                            borderColor: colors.primary,
-                                            background: alpha(
-                                              colors.primary,
-                                              0.1,
-                                            ),
-                                          },
-                                        }}
-                                      >
-                                        <NumberedIcon size={16} />
-                                      </Button>
-                                    </Tooltip>
-                                  </ButtonGroup>
-                                </Box>
-
-                                <DashboardInput
-                                  fullWidth
-                                  label="Content"
-                                  labelPlacement="floating"
-                                  value={subsection.content}
-                                  onChange={(e) =>
-                                    handleSubsectionChange(
-                                      sectionIndex,
-                                      subsectionIndex,
-                                      "content",
-                                      e.target.value,
-                                    )
-                                  }
-                                  multiline
-                                  rows={6}
-                                  required
-                                  inputRef={(el) => {
-                                    contentRefs.current[
-                                      `${sectionIndex}-${subsectionIndex}`
-                                    ] = el;
-                                  }}
-                                  placeholder="Write your content here. Use **text** for bold, *text* for italic, • for bullets"
-                                  helperText="Each new line creates a paragraph. Use formatting buttons to add style."
-                                  sx={{
-                                    "& textarea:-webkit-autofill": {
-                                      WebkitBoxShadow: `0 0 0 100px ${colors.dark} inset`,
-                                      WebkitTextFillColor: colors.text,
-                                    },
-                                  }}
-                                />
-                              </Grid>
-                            </Grid>
-                          </Card>
-                        ),
-                      )}
-
-                      <Button
-                        variant="text"
-                        startIcon={<AddSubsectionIcon size={18} />}
-                        onClick={() => addSubsection(sectionIndex)}
-                        size="small"
-                        sx={{
-                          color: colors.primary,
-                          "&:hover": {
-                            backgroundColor: alpha(colors.primary, 0.1),
-                          },
-                        }}
-                      >
-                        Add Subsection
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Card>
-              ))}
-
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon size={18} />}
-                onClick={addSection}
-                fullWidth
-                sx={{
-                  mt: 1,
-                  color: colors.primary,
-                  borderColor: colors.primary,
-                  fontWeight: 600,
-                  "&:hover": {
-                    borderColor: colors.primaryDark,
-                    backgroundColor: alpha(colors.primary, 0.1),
-                  },
-                }}
-              >
-                Add Another Section
-              </Button>
+              <InsightBlockEditor
+                blocks={formData.blocks}
+                onChange={(newBlocks) =>
+                  setFormData((prev) => ({ ...prev, blocks: newBlocks }))
+                }
+                error={validationErrors.blocks}
+              />
             </Grid>
 
             {/* SEO Fields */}

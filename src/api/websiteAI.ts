@@ -192,6 +192,13 @@ export interface EditorChatRequest {
     aiEditKey?: string;
   };
   message: string;
+  /**
+   * Extra editor-discovered targets that are not part of the persisted backend
+   * editable schema yet, such as dynamic blog article static-style targets.
+   * The backend AI can use these as the allowed patch schema for this request.
+   */
+  editableTargets?: EditableSchemaTarget[];
+  context?: Record<string, unknown>;
 }
 
 function normalizeNumericId(value: number | string | undefined) {
@@ -900,6 +907,8 @@ export async function editorChat(
       ...payload,
       pageId: normalizeNumericId(payload.pageId),
       blockId: normalizeNumericId(payload.blockId),
+      editableTargets: payload.editableTargets,
+      context: payload.context,
     });
     return unwrap<EditorChatResult>(res.data);
   } catch (err) {

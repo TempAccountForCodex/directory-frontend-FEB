@@ -1,6 +1,7 @@
 import { apiClient } from "./client";
 import { DIRECT_API_URL } from "../config/api";
 import InsightData from "../utils/data/Insights";
+import { normalizeInsight, normalizeInsights } from "../utils/insightsNormalizer";
 
 const DIRECTORY_PROJECT_KEY = "directory";
 
@@ -21,6 +22,24 @@ export type InsightPost = {
     description?: string[];
     subsections?: Array<{ subheading: string; content?: string[] }>;
   }>;
+  blocks?: Array<{
+    id: string;
+    type: "section" | "quote" | "keyTakeaway" | "conclusion" | "code";
+    anchorId?: string;
+    heading?: string;
+    paragraphs?: string[];
+    text?: string;
+    attribution?: string | null;
+    title?: string;
+    language?: string;
+    code?: string;
+  }>;
+  format?: {
+    version: number;
+    readTimeMinutes: number;
+    excerpt: string;
+    tags: string[];
+  };
   author?: {
     id?: string | number;
     name?: string;
@@ -32,24 +51,7 @@ export type InsightPost = {
   [key: string]: unknown;
 };
 
-const normalizeInsight = (item: any): InsightPost => ({
-  ...item,
-  id: item.id,
-  legacyId: item.legacyId,
-  title: item.title || item.heading || "Untitled Article",
-  heading: item.heading || item.title,
-  slug: item.slug || item.legacyId || item.id,
-  category: item.category || "Technology",
-  image: item.image || "",
-  content: item.content || "",
-  description: item.description || item.content || "",
-  publishedAt: item.publishedAt || item.publishDate,
-  publishDate: item.publishDate || item.publishedAt,
-  headings: item.headings || [],
-  author: item.author || { name: "Techietribe Editorial Team" },
-});
-
-export const fallbackInsights = InsightData.map(normalizeInsight);
+export const fallbackInsights = normalizeInsights(InsightData);
 
 export const getInsightImageUrl = (imagePath?: string) => {
   if (!imagePath) return "";
@@ -60,23 +62,32 @@ export const getInsightImageUrl = (imagePath?: string) => {
   return `${appBase.replace(/\/+$/, "")}/${imagePath.replace(/^\/+/, "")}`;
 };
 
-export async function fetchPublicInsights() {
+export async function fetchPublicInsights(params: {
+  page?: number;
+  limit?: number;
+  category?: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+} = {}) {
   try {
-    const response = await apiClient.get("/blogs/public", {
+    const response = await apiClient.get("/insights/public", {
       params: {
         projectKey: DIRECTORY_PROJECT_KEY,
-        page: 1,
-        limit: 100,
-        sortBy: "publishedAt",
-        sortOrder: "desc",
+        page: params.page || 1,
+        limit: params.limit || 100,
+        sortBy: params.sortBy || "publishedAt",
+        sortOrder: params.sortOrder || "desc",
+        ...(params.category && { category: params.category }),
+        ...(params.search && { search: params.search }),
       },
     });
-    const rows = Array.isArray(response.data?.blogs)
-      ? response.data.blogs
-      : Array.isArray(response.data?.insights)
-        ? response.data.insights
+    const rows = Array.isArray(response.data?.insights)
+      ? response.data.insights
+      : Array.isArray(response.data?.blogs)
+        ? response.data.blogs
         : [];
-    return rows.length ? rows.map(normalizeInsight) : fallbackInsights;
+    return rows.length ? normalizeInsights(rows) : fallbackInsights;
   } catch {
     return fallbackInsights;
   }
@@ -85,13 +96,14 @@ export async function fetchPublicInsights() {
 export async function fetchPublicInsight(identifier: string) {
   try {
     const response = await apiClient.get(
-      `/blogs/public/${encodeURIComponent(identifier)}`,
+      `/insights/public/${encodeURIComponent(identifier)}`,
       {
         params: {
           projectKey: DIRECTORY_PROJECT_KEY,
         },
       },
     );
+    if (response.data?.insight) return normalizeInsight(response.data.insight);
     if (response.data?.blog) return normalizeInsight(response.data.blog);
   } catch {
     // fall through to local fallback

@@ -38,6 +38,7 @@ import { Fade } from "@mui/material";
 export interface EditorAISelection {
   editable?: {
     blockId: string | number;
+    blockType?: string;
     fieldPath: string;
     persistedFieldPath?: string;
     label?: string;
@@ -53,11 +54,15 @@ export interface EditorAISelection {
     };
     styleTargets?: Array<{
       blockId?: string | number;
+      blockType?: string;
       fieldPath: string;
       persistedFieldPath?: string;
       aiEditKey?: string;
       label?: string;
       category?: string;
+      staticId?: string;
+      staticType?: string;
+      styleKey?: string;
       computedStyle?: AITargetRef["computedStyle"];
     }>;
   } | null;
@@ -67,10 +72,38 @@ export interface EditorAISelection {
     fieldPath?: string;
     persistedFieldPath?: string;
     aiEditKey?: string;
+    computedStyle?: AITargetRef["computedStyle"];
+    styleTargets?: Array<{
+      blockId?: string | number;
+      blockType?: string;
+      fieldPath: string;
+      persistedFieldPath?: string;
+      aiEditKey?: string;
+      label?: string;
+      category?: string;
+      staticId?: string;
+      staticType?: string;
+      styleKey?: string;
+      computedStyle?: AITargetRef["computedStyle"];
+    }>;
   } | null;
   page?: {
     id: string | number;
     title?: string;
+    primaryColor?: string;
+    styleTargets?: Array<{
+      blockId?: string | number;
+      blockType?: string;
+      fieldPath: string;
+      persistedFieldPath?: string;
+      aiEditKey?: string;
+      label?: string;
+      category?: string;
+      staticId?: string;
+      staticType?: string;
+      styleKey?: string;
+      computedStyle?: AITargetRef["computedStyle"];
+    }>;
   } | null;
 }
 
@@ -172,6 +205,10 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
     applyPatch,
     onLocalPatchesApplied,
     onRefresh,
+    localStaticStyleTargets: selection.page?.styleTargets,
+    localStaticStyleValues: {
+      primaryColor: selection.page?.primaryColor,
+    },
   });
 
   // Resolve the current Ask AI target by selection priority.
@@ -179,6 +216,7 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
     if (selection.editable) {
       return {
         blockId: selection.editable.blockId,
+        blockType: selection.editable.blockType,
         fieldPath: selection.editable.fieldPath,
         persistedFieldPath: selection.editable.persistedFieldPath,
         label: selection.editable.label,
@@ -197,6 +235,8 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
         label: selection.section.label || "Section",
         kind: "section",
         aiEditKey: selection.section.aiEditKey,
+        computedStyle: selection.section.computedStyle,
+        styleTargets: selection.section.styleTargets,
       };
     }
     if (selection.page || pageId) {
@@ -204,6 +244,7 @@ const EditorAILayer: React.FC<EditorAILayerProps> = ({
         fieldPath: `pages.${selection.page?.id ?? pageId}.title`,
         label: selection.page?.title || "Page",
         kind: "page",
+        styleTargets: selection.page?.styleTargets,
       };
     }
     return null;

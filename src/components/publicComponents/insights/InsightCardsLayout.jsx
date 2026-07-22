@@ -4,6 +4,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import {
   Box,
   Typography,
@@ -25,6 +26,7 @@ import {
   getFallbackCategories,
   getFallbackRecentInsights,
 } from "../../../utils/data/Insights";
+import { normalizeInsight, normalizeInsights } from "../../../utils/insightsNormalizer";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5001";
 
@@ -46,16 +48,10 @@ const getImageUrl = (imagePath) => {
   return `${BASE_URL}${imagePath}`;
 };
 
-const normalizeInsight = (item) => ({
-  ...item,
-  title: item.title || item.heading || "",
-  content: item.content || item.description || "",
-  publishedAt: item.publishedAt || item.publishDate || new Date().toISOString(),
-});
-
 const getFallbackInsights = ({ page, limit, category, search }) => {
   const searchTerm = (search || "").trim().toLowerCase();
-  const filtered = InsightData.map(normalizeInsight)
+  const normalized = normalizeInsights(InsightData);
+  const filtered = normalized
     .filter((item) => {
       const categoryMatch = category ? item.category === category : true;
       const searchMatch = searchTerm
@@ -477,7 +473,8 @@ const InsightCards = () => {
 
       // Support both 'insights' and 'blogs' keys for backward compatibility
       const insights = response.data.insights || response.data.blogs || [];
-      setBlogsData(insights);
+      const normalizedInsights = normalizeInsights(insights);
+      setBlogsData(normalizedInsights);
       setTotalPages(response.data.pagination?.totalPages || 1);
       setIsUsingFallbackData(false);
       setLoading(false);
@@ -507,10 +504,10 @@ const InsightCards = () => {
         params: { page: 1, limit: 5, sortBy: "publishedAt", sortOrder: "desc" },
       });
       const insights = response.data.insights || response.data.blogs || [];
-      setRecentPosts(insights);
+      setRecentPosts(normalizeInsights(insights));
     } catch (error) {
       console.error("Error fetching recent posts:", error);
-      setRecentPosts(getFallbackRecentInsights(5).map(normalizeInsight));
+      setRecentPosts(normalizeInsights(getFallbackRecentInsights(5)));
     }
   };
 
@@ -812,6 +809,10 @@ const InsightCards = () => {
                         <CalendarTodayIcon sx={{ fontSize: "1rem" }} />
                         {formatDate(card.publishedAt)}
                       </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "#888", fontFamily: "Poppins, sans-serif", fontSize: "0.85rem" }}>
+                        <AccessTimeIcon sx={{ fontSize: "0.9rem" }} />
+                        <span>{card.format?.readTimeMinutes || 4} min read</span>
+                      </Box>
                       {card.category && (
                         <Typography sx={styles.cardCategory}>
                           {card.category}
@@ -822,7 +823,7 @@ const InsightCards = () => {
                       {card.title}
                     </Typography>
                     <Typography sx={styles.blogContent}>
-                      {card.content}
+                      {card.format?.excerpt || card.content}
                     </Typography>
                     <Box
                       sx={styles.readMoreButton}

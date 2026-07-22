@@ -82,6 +82,28 @@ const isSharedFooterBlock = (block?: Block | null) =>
       .toUpperCase(),
   );
 
+const isBlogDetailPage = (page?: Page | null) => {
+  const title = String(page?.title || "")
+    .trim()
+    .toLowerCase();
+  const path = String(page?.path || "")
+    .trim()
+    .toLowerCase();
+  const pageType = String(page?.pageType || "")
+    .trim()
+    .toUpperCase();
+
+  return (
+    pageType === "BLOG_DETAIL" ||
+    title === "blog detail" ||
+    title === "blog details" ||
+    path === "/blog-detail" ||
+    path === "/blogdetail" ||
+    path.startsWith("/blog-detail/") ||
+    path.startsWith("/blogdetail/")
+  );
+};
+
 // ---------------------------------------------------------------------------
 // Font preset definitions (Step 12.1) — mirrors backend/constants/fontPresets.js
 // ---------------------------------------------------------------------------
@@ -445,25 +467,65 @@ const PublicWebsite: React.FC = () => {
                 .slice(prefix.length)
                 .replace(/\/+$/, "");
               if (postSlug) {
-                // Synthetic page — BlogArticleBlock resolves the post by postIdentifier
-                // (not the website slug in the URL) and shows its own not-found state.
-                page = {
-                  id: -2,
-                  title: "Blog",
-                  path: pagePath,
-                  isHome: false,
-                  blocks: [
-                    {
-                      id: -1,
-                      blockType: "BLOG_ARTICLE",
-                      sortOrder: 0,
-                      content: {
-                        postIdentifier: decodeURIComponent(postSlug),
-                        backButtonLink: indexPath,
+                const identifier = decodeURIComponent(postSlug);
+                // Prefer the saved "Blog Detail" template page: render its authored
+                // BLOG_ARTICLE block (container styles + per-element style overrides
+                // travel with its real page/block ids) but swap in the visited slug,
+                // so the owner's editor styling applies to every article. Falls back
+                // to a default-styled synthetic block for legacy blogs with no
+                // detail page.
+                const detailPage = sortedPages.find(
+                  (p) =>
+                    p.pageType === "BLOG_DETAIL" ||
+                    (Array.isArray(p.blocks) &&
+                      p.blocks.some(
+                        (b: any) => b.blockType === "BLOG_ARTICLE",
+                      )),
+                );
+                const detailBlock =
+                  detailPage &&
+                  Array.isArray(detailPage.blocks)
+                    ? detailPage.blocks.find(
+                        (b: any) => b.blockType === "BLOG_ARTICLE",
+                      )
+                    : null;
+
+                if (detailPage && detailBlock) {
+                  page = {
+                    ...detailPage,
+                    path: pagePath,
+                    blocks: detailPage.blocks.map((b: any) =>
+                      b === detailBlock
+                        ? {
+                            ...b,
+                            content: {
+                              ...(b.content || {}),
+                              postIdentifier: identifier,
+                              backButtonLink: indexPath,
+                            },
+                          }
+                        : b,
+                    ),
+                  };
+                } else {
+                  page = {
+                    id: -2,
+                    title: "Blog",
+                    path: pagePath,
+                    isHome: false,
+                    blocks: [
+                      {
+                        id: -1,
+                        blockType: "BLOG_ARTICLE",
+                        sortOrder: 0,
+                        content: {
+                          postIdentifier: identifier,
+                          backButtonLink: indexPath,
+                        },
                       },
-                    },
-                  ],
-                };
+                    ],
+                  };
+                }
               }
             }
           }
@@ -947,7 +1009,7 @@ h1, h2, h3, h4, h5, h6 {
             {website.name}
           </Typography>
         </Box>
-        {website.pages.map((page) => (
+        {website.pages.filter((page) => !isBlogDetailPage(page)).map((page) => (
           <Button
             key={page.id}
             component={Link}
@@ -970,6 +1032,20 @@ h1, h2, h3, h4, h5, h6 {
       </Toolbar>
     </AppBar>
   );
+  // Block-based pages (e.g. the blog) must render with the SAME resolved theme
+  // color as the template pages. On the published site the slug endpoint serves
+  // fresh block content but a stale `website.primaryColor` scalar, so reading
+  // that scalar makes block pages lag the theme (home updates, blog does not).
+  // `frontendTemplateData.primaryColor` resolves from the theme baked into the
+  // pages (via readTemplateThemeSettingsFromPages), which is fresh and matches
+  // what the template chrome renders. Falls back to the scalar for non-template
+  // sites where frontendTemplateData is null.
+  const effectivePrimaryColor =
+    frontendTemplateData?.primaryColor || website.primaryColor || "#378C92";
+  const publicStaticStyleOverrides =
+    ((frontendTemplateData?.templateContent as Record<string, any> | undefined)
+      ?.__editorStaticStyleOverrides as Record<string, Record<string, any>> | undefined) ||
+    {};
   const pageBlocksContent = (
     <Box>
       {!pageBodyBlocks.length ? (
@@ -987,11 +1063,12 @@ h1, h2, h3, h4, h5, h6 {
           >
             <DynamicBlockRenderer
               block={block}
-              primaryColor={website.primaryColor || "#378C92"}
+              primaryColor={effectivePrimaryColor}
               secondaryColor={website.secondaryColor || "#D3EB63"}
               headingColor={website.headingTextColor || "#252525"}
               bodyColor={website.bodyTextColor || "#6A6F78"}
               websiteId={website.id}
+              staticStyleOverrides={publicStaticStyleOverrides}
               onCtaClick={(blockType, ctaText) =>
                 trackClick(`${blockType}_CTA`, { cta_text: ctaText })
               }
@@ -1010,7 +1087,7 @@ h1, h2, h3, h4, h5, h6 {
     >
       <DynamicBlockRenderer
         block={sharedHomeChrome.header}
-        primaryColor={website.primaryColor || "#378C92"}
+        primaryColor={effectivePrimaryColor}
         secondaryColor={website.secondaryColor || "#D3EB63"}
         headingColor={website.headingTextColor || "#252525"}
         bodyColor={website.bodyTextColor || "#6A6F78"}
@@ -1030,7 +1107,7 @@ h1, h2, h3, h4, h5, h6 {
     >
       <DynamicBlockRenderer
         block={sharedHomeChrome.footer}
-        primaryColor={website.primaryColor || "#378C92"}
+        primaryColor={effectivePrimaryColor}
         secondaryColor={website.secondaryColor || "#D3EB63"}
         headingColor={website.headingTextColor || "#252525"}
         bodyColor={website.bodyTextColor || "#6A6F78"}

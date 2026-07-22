@@ -50,6 +50,24 @@ interface NavbarBlockProps {
   };
 }
 
+const isBlogDetailNavItem = (item: NavItem): boolean => {
+  const label = String(item.label || "")
+    .trim()
+    .toLowerCase();
+  const link = String(item.link || "")
+    .trim()
+    .toLowerCase();
+
+  return (
+    label === "blog detail" ||
+    label === "blog details" ||
+    link === "/blog-detail" ||
+    link === "/blogdetail" ||
+    link.startsWith("/blog-detail/") ||
+    link.startsWith("/blogdetail/")
+  );
+};
+
 const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({
   content: c,
 }) => {
@@ -65,7 +83,9 @@ const NavbarBlockInner: React.FC<{ content: NavbarContent }> = ({
         })
       : [];
 
-  const navItems = rawItems.slice(0, 8);
+  const navItems = rawItems
+    .filter((item) => !isBlogDetailNavItem(item))
+    .slice(0, 8);
 
   const ctaText = c.ctaText ? String(c.ctaText) : "";
   const ctaLink = c.ctaLink ? sanitizeUrl(String(c.ctaLink)) : "#";

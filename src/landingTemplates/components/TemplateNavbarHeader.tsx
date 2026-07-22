@@ -73,6 +73,24 @@ type TemplateNavItem = SectionNavItem & {
   type?: string;
 };
 
+const isBlogDetailNavItem = (item: TemplateNavItem): boolean => {
+  const label = String(item.label || "")
+    .trim()
+    .toLowerCase();
+  const target = String(item.target || item.link || item.url || "")
+    .trim()
+    .toLowerCase();
+
+  return (
+    label === "blog detail" ||
+    label === "blog details" ||
+    target === "/blog-detail" ||
+    target === "/blogdetail" ||
+    target.startsWith("/blog-detail/") ||
+    target.startsWith("/blogdetail/")
+  );
+};
+
 interface Props {
   navbarContent: NavbarContentFields;
   fallbackName?: string;
@@ -239,9 +257,10 @@ const TemplateNavbarHeader: React.FC<Props> = ({
   const supplementalItems = pageOnlyItems(
     configuredNavItems.length ? configuredNavItems : !menuId ? fetchedItems : [],
   );
-  const displayNavItems = hasExplicitMenu
+  const displayNavItems = (hasExplicitMenu
     ? dedupeNavItems([...fetchedItems, ...sectionPageItems])
-    : dedupeNavItems([...sectionNavItems, ...supplementalItems]);
+    : dedupeNavItems([...sectionNavItems, ...supplementalItems])
+  ).filter((item) => !isBlogDetailNavItem(item));
 
   const handleNavClick = (
     event: React.MouseEvent,

@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Box, Container, Divider, Typography } from "@mui/material";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Box, Container, Divider, Skeleton, Typography } from "@mui/material";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import ChevronRightOutlinedIcon from "@mui/icons-material/ChevronRightOutlined";
@@ -22,6 +22,8 @@ import {
   getInsightImageUrl,
   type InsightPost,
 } from "../../api/insights";
+import { normalizeInsight } from "../../utils/insightsNormalizer";
+import TestimonialsBlock from "@/components/BlockRenderer/blocks/TestimonialsBlock";
 
 const FADE_IN_CLASS = "fade-in-on-view";
 const INSIGHT_HELPFUL_STORAGE_KEY = "insight-helpful-votes";
@@ -36,6 +38,18 @@ const slugify = (text = "") =>
     .trim()
     .replace(/\s+/g, "-");
 
+const stripHeadingNumber = (text = "") =>
+  String(text).replace(/^\s*\d+\.\s+/, "");
+
+const formatAuthorRole = (role, category) => {
+  const rawRole = String(role || "").trim();
+  if (!rawRole || /^[A-Z_]+$/.test(rawRole)) {
+    return `${category || "Techietribe"} Editorial`;
+  }
+
+  return rawRole;
+};
+
 const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -45,27 +59,6 @@ const formatDate = (dateString) => {
     month: "long",
     day: "numeric",
   });
-};
-
-const getReadTimeMinutes = (post) => {
-  const textParts = [post.title, post.description, post.content];
-  (post.headings || []).forEach((section) => {
-    textParts.push(section.heading || "");
-    (section.description || []).forEach((p) => textParts.push(p || ""));
-  });
-  const words = textParts.join(" ").trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(4, Math.round(words / 190));
-};
-
-const getTags = (post) => {
-  const safeCategory = (post.category || "").replace(/\s+/g, "");
-  const words = (post.title || "")
-    .replace(/[^a-zA-Z0-9\s]/g, "")
-    .split(/\s+/)
-    .filter((w) => w.length > 3)
-    .slice(0, 3);
-  const titleTags = words.map((w) => `#${w}`);
-  return [`#${safeCategory}`, ...titleTags].filter((tag) => tag !== "#").slice(0, 4);
 };
 
 const styles = {
@@ -118,8 +111,9 @@ const InsightsDetailsNew = () => {
   const navigate = useNavigate();
   const muiTheme = useMuiTheme();
   const stateInsight = location.state?.insight;
-  const [insights, setInsights] = useState<InsightPost[]>(fallbackInsights);
+  const [insights, setInsights] = useState<InsightPost[]>([]);
   const [apiInsight, setApiInsight] = useState<InsightPost | null>(null);
+  const [isLoadingInsight, setIsLoadingInsight] = useState(true);
 
   useEffect(() => {
     let ignore = false;
@@ -132,11 +126,22 @@ const InsightsDetailsNew = () => {
   }, []);
 
   useEffect(() => {
-    if (!id) return undefined;
+    if (!id) {
+      setIsLoadingInsight(false);
+      return undefined;
+    }
     let ignore = false;
-    fetchPublicInsight(id).then((item) => {
-      if (!ignore) setApiInsight(item);
-    });
+    setIsLoadingInsight(true);
+    setApiInsight(null);
+    fetchPublicInsight(id)
+      .then((item) => {
+        if (!ignore) {
+          setApiInsight(item ? normalizeInsight(item) : null);
+        }
+      })
+      .finally(() => {
+        if (!ignore) setIsLoadingInsight(false);
+      });
     return () => {
       ignore = true;
     };
@@ -202,7 +207,7 @@ const InsightsDetailsNew = () => {
       ) ||
       fallbackInsights[0];
 
-    if (stateInsight) {
+    if (stateInsight && !apiInsight) {
       const mergedFromState = {
         id: stateInsight.id || stateInsight.slug,
         slug: stateInsight.slug || stateInsight.id,
@@ -217,28 +222,38 @@ const InsightsDetailsNew = () => {
         ...localMatch,
         ...mergedFromState,
         headings: localMatch.headings || stateInsight.headings || [],
+        blocks: localMatch.blocks || stateInsight.blocks || [],
+        format: localMatch.format || stateInsight.format,
       };
     }
     return localMatch;
   }, [apiInsight, id, insights, stateInsight]);
 
-  const sections = useMemo(
-    () =>
-      (selectedInsight.headings || []).map((section) => ({
-        id: slugify(section.heading),
-        heading: section.heading,
-        paragraphs: section.description || [],
-      })),
-    [selectedInsight.headings]
+  const blocks = useMemo(
+    () => selectedInsight.blocks || [],
+    [selectedInsight.blocks]
   );
 
-  const [activeSection, setActiveSection] = useState(sections[0]?.id || "");
+  // TOC sections: only heading-bearing blocks (section + conclusion)
+  const tocSections = useMemo(
+    () =>
+      blocks
+        .filter((block) => block.type === "section" || block.type === "conclusion")
+        .map((block) => ({
+          id: block.anchorId || slugify(block.heading || ""),
+          heading: stripHeadingNumber(block.heading || ""),
+        })),
+    [blocks]
+  );
+
+  const [activeSection, setActiveSection] = useState(tocSections[0]?.id || "");
   const [copiedLink, setCopiedLink] = useState(false);
   const [helpfulVote, setHelpfulVote] = useState("");
+  const tocScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setActiveSection(sections[0]?.id || "");
-  }, [sections]);
+    setActiveSection(tocSections[0]?.id || "");
+  }, [tocSections]);
 
   useEffect(() => {
     if (!copiedLink) return undefined;
@@ -258,28 +273,71 @@ const InsightsDetailsNew = () => {
   }, [selectedInsight.id]);
 
   useEffect(() => {
-    if (!sections.length || typeof window === "undefined") return undefined;
+    if (!tocSections.length || typeof window === "undefined") return undefined;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+    let frame = 0;
 
-        if (visible[0]?.target?.id) {
-          setActiveSection(visible[0].target.id);
+    const update = () => {
+      frame = 0;
+      const activeLine = Math.max(140, window.innerHeight * 0.5);
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const nearPageBottom =
+        scrollBottom >= document.documentElement.scrollHeight - 4;
+
+      let current = tocSections[0]?.id || "";
+      for (const section of tocSections) {
+        const el = document.getElementById(section.id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top - activeLine <= 0) {
+          current = section.id;
+        } else {
+          break;
         }
-      },
-      { rootMargin: "-22% 0px -58% 0px", threshold: [0.2, 0.4, 0.7] }
+      }
+
+      if (nearPageBottom) {
+        current = tocSections[tocSections.length - 1].id;
+      }
+
+      setActiveSection(current);
+    };
+
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [tocSections]);
+
+  useEffect(() => {
+    const container = tocScrollRef.current;
+    if (!activeSection || !container) return;
+
+    const activeTocItem = container.querySelector<HTMLElement>(
+      `[data-toc-section="${activeSection}"]`,
     );
+    if (!activeTocItem) return;
 
-    sections.forEach((section) => {
-      const el = document.getElementById(section.id);
-      if (el) observer.observe(el);
+    const targetScrollTop =
+      activeTocItem.offsetTop -
+      container.clientHeight / 2 +
+      activeTocItem.clientHeight / 2;
+    const maxScrollTop = container.scrollHeight - container.clientHeight;
+
+    container.scrollTo({
+      top: Math.max(0, Math.min(targetScrollTop, maxScrollTop)),
+      behavior: "smooth",
     });
-
-    return () => observer.disconnect();
-  }, [sections]);
+  }, [activeSection]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -306,7 +364,7 @@ const InsightsDetailsNew = () => {
     });
 
     return () => observer.disconnect();
-  }, [sections, selectedInsight.id]);
+  }, [blocks, selectedInsight.id]);
 
   const relatedArticles = useMemo(
     () => insights.filter((item) => item.id !== selectedInsight.id).slice(0, 6),
@@ -315,29 +373,16 @@ const InsightsDetailsNew = () => {
 
   const sidebarArticles = relatedArticles.slice(0, 3);
   const recommendationArticles = relatedArticles.slice(3, 6);
-  const readTime = getReadTimeMinutes(selectedInsight);
-  const tags = getTags(selectedInsight);
+  const readTime = selectedInsight.format?.readTimeMinutes || 4;
+  const tags = selectedInsight.format?.tags || [];
   const leadText = useMemo(() => {
-    const text = selectedInsight.description || selectedInsight.content || "";
+    const text = selectedInsight.format?.excerpt || selectedInsight.description || selectedInsight.content || "";
     return text.length > 350 ? `${text.slice(0, 350).trim()}...` : text;
-  }, [selectedInsight.description, selectedInsight.content]);
+  }, [selectedInsight.format?.excerpt, selectedInsight.description, selectedInsight.content]);
   const captionText = useMemo(
     () => selectedInsight.content || leadText,
     [leadText, selectedInsight.content]
   );
-  const quoteText = useMemo(
-    () => sections[1]?.paragraphs?.[0] || sections[0]?.paragraphs?.[0] || "",
-    [sections]
-  );
-  const codeSnippet = useMemo(
-    () => selectedInsight.codeSnippet || stateInsight?.codeSnippet || "",
-    [selectedInsight.codeSnippet, stateInsight?.codeSnippet]
-  );
-  const keyTakeawayText = useMemo(() => {
-    const lastSection = sections[sections.length - 1];
-    if (!lastSection?.paragraphs?.length) return "";
-    return lastSection.paragraphs[lastSection.paragraphs.length - 1];
-  }, [sections]);
   const authorName = useMemo(
     () =>
       selectedInsight.author?.name ||
@@ -347,9 +392,10 @@ const InsightsDetailsNew = () => {
   );
   const authorRole = useMemo(
     () =>
-      selectedInsight.author?.role ||
-      selectedInsight.authorRole ||
-      `${selectedInsight.category} Writers`,
+      formatAuthorRole(
+        selectedInsight.authorRole || selectedInsight.author?.role,
+        selectedInsight.category,
+      ),
     [selectedInsight.author?.role, selectedInsight.authorRole, selectedInsight.category]
   );
   const authorBio = useMemo(
@@ -548,18 +594,30 @@ const InsightsDetailsNew = () => {
             >
               <span style={{ cursor: "pointer" }} onClick={() => navigate("/blog")}>Insights</span>
               <ChevronRightOutlinedIcon sx={{ fontSize: "1rem" }} />
-              <span>{selectedInsight.category}</span>
+              {isLoadingInsight ? (
+                <Skeleton variant="text" width={96} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+              ) : (
+                <span>{selectedInsight.category}</span>
+              )}
               <ChevronRightOutlinedIcon sx={{ fontSize: "1rem" }} />
-              <span style={{ color: "#ffffff" }}>{selectedInsight.title}</span>
             </Box>
 
             {/* Header Meta */}
             <Box sx={{ mt: 2.6, display: "flex", alignItems: "center", gap: 1.2, position: "relative", zIndex: 1 }}>
-              <Typography sx={badgeSx}>{selectedInsight.category}</Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(232,242,247,0.82)", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                <AccessTimeOutlinedIcon sx={{ fontSize: "1rem" }} />
-                <span>{readTime} min read</span>
-              </Box>
+              {isLoadingInsight ? (
+                <>
+                  <Skeleton variant="rounded" width={110} height={28} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                  <Skeleton variant="text" width={92} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                </>
+              ) : (
+                <>
+                  <Typography sx={badgeSx}>{selectedInsight.category}</Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(232,242,247,0.82)", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                    <AccessTimeOutlinedIcon sx={{ fontSize: "1rem" }} />
+                    <span>{readTime} min read</span>
+                  </Box>
+                </>
+              )}
             </Box>
 
             {/* Title */}
@@ -577,12 +635,20 @@ const InsightsDetailsNew = () => {
                 zIndex: 1,
               }}
             >
-              {selectedInsight.title}
+              {isLoadingInsight ? (
+                <>
+                  <Skeleton variant="text" width="82%" sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                  <Skeleton variant="text" width="58%" sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                </>
+              ) : (
+                selectedInsight.title
+              )}
             </Typography>
 
             {/* Description */}
             <Typography
               sx={{
+                display: "none",
                 mt: 2.2,
                 maxWidth: "920px",
                 fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -593,7 +659,14 @@ const InsightsDetailsNew = () => {
                 zIndex: 1,
               }}
             >
-              {leadText}
+              {isLoadingInsight ? (
+                <>
+                  <Skeleton variant="text" width="100%" sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                  <Skeleton variant="text" width="78%" sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                </>
+              ) : (
+                leadText
+              )}
             </Typography>
 
             <Divider sx={{ my: { xs: 2.6, md: 3.2 }, borderColor: "rgba(255,255,255,0.14)", position: "relative", zIndex: 1 }} />
@@ -616,11 +689,19 @@ const InsightsDetailsNew = () => {
               </Box>
               <Box>
                 <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, fontSize: "1.05rem", color: "#ffffff" }}>
-                  {authorName}
+                  {isLoadingInsight ? (
+                    <Skeleton variant="text" width={160} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                  ) : (
+                    authorName
+                  )}
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(232,242,247,0.82)", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   <CalendarTodayOutlinedIcon sx={{ fontSize: "0.9rem" }} />
-                  <span>{formatDate(selectedInsight.publishedAt)}</span>
+                  {isLoadingInsight ? (
+                    <Skeleton variant="text" width={132} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                  ) : (
+                    <span>{formatDate(selectedInsight.publishedAt)}</span>
+                  )}
                 </Box>
               </Box>
             </Box>
@@ -639,11 +720,18 @@ const InsightsDetailsNew = () => {
                 zIndex: 1,
               }}
             >
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.1 }}>
-                {tags.map((tag) => (
-                  <Box key={tag} sx={{ ...chipSx, border: "1px solid rgba(0,197,184,0.35)", color: "#9fd3cf" }}>{tag}</Box>
-                ))}
-              </Box>
+              {isLoadingInsight ? (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.1 }}>
+                  <Skeleton variant="rounded" width={72} height={28} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                  <Skeleton variant="rounded" width={96} height={28} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                </Box>
+              ) : (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.1 }}>
+                  {tags.map((tag) => (
+                    <Box key={tag} sx={{ ...chipSx, border: "1px solid rgba(0,197,184,0.35)", color: "#9fd3cf" }}>{tag}</Box>
+                  ))}
+                </Box>
+              )}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                 <Typography sx={{ color: "rgba(232,242,247,0.82)", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   Share:
@@ -775,113 +863,265 @@ const InsightsDetailsNew = () => {
               },
             }}
           >
-            {/* Hero Image */}
-            <Box
-              className={FADE_IN_CLASS}
-              component="img"
-              src={getInsightImageUrl(selectedInsight.image)}
-              alt={selectedInsight.title}
-              width="1400"
-              height="760"
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-              sizes="(max-width: 1200px) 100vw, 1200px"
-              sx={{
-                width: "100%",
-                borderRadius: "16px",
-                objectFit: "cover",
-                maxHeight: { xs: 230, sm: 310, md: 420, lg: 520 },
-                display: "block",
-              }}
-            />
-
-            {/* Image Caption */}
-            <Typography
-              className={FADE_IN_CLASS}
-              sx={{
-                mt: 1.5,
-                textAlign: "center",
-                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                color: ui.caption,
-                fontStyle: "italic",
-              }}
-            >
-              {captionText}
-            </Typography>
-
             {/* Content Grid */}
             <Box
               className={FADE_IN_CLASS}
               sx={{
                 mt: { xs: 4, md: 5.5 },
+                maxWidth: "1300px",
+                mx: "auto",
                 display: "grid",
                 gap: { xs: 2.4, sm: 2.8, md: 3.4, lg: 4 },
                 gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 330px" },
                 alignItems: "start",
               }}
             >
+              {isLoadingInsight ? (
+                <>
+                  <Box>
+                    <Skeleton
+                      className={FADE_IN_CLASS}
+                      variant="rectangular"
+                      sx={{
+                        width: "100%",
+                        height: { xs: 230, sm: 310, md: 420, lg: 520 },
+                        borderRadius: "16px",
+                        mb: 1.5,
+                      }}
+                    />
+                    <Skeleton
+                      className={FADE_IN_CLASS}
+                      variant="text"
+                      width="64%"
+                      sx={{ mx: "auto", mb: { xs: 4, md: 5.8 } }}
+                    />
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <Box key={`detail-skeleton-section-${index}`} sx={{ mb: 5.8 }}>
+                        <Skeleton variant="text" width={index % 2 === 0 ? "72%" : "58%"} height={56} />
+                        <Skeleton variant="text" width="100%" height={24} />
+                        <Skeleton variant="text" width="96%" height={24} />
+                        <Skeleton variant="text" width="88%" height={24} />
+                        <Skeleton variant="text" width="72%" height={24} />
+                      </Box>
+                    ))}
+                  </Box>
+                  <Box sx={{ position: { lg: "sticky" }, top: { lg: 105 }, alignSelf: "start", display: "grid", gap: 2.2 }}>
+                    <Box sx={{ ...panelSx, p: { xs: 2, sm: 2.4, md: 3 } }}>
+                      <Skeleton variant="text" width="70%" height={36} />
+                      <Skeleton variant="text" width="100%" height={24} />
+                      <Skeleton variant="text" width="86%" height={24} />
+                      <Skeleton variant="text" width="78%" height={24} />
+                    </Box>
+                    <Box sx={{ ...panelSx, p: { xs: 2, sm: 2.4, md: 3 } }}>
+                      <Skeleton variant="text" width="68%" height={36} />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, mt: 1.2 }}>
+                        <Skeleton variant="circular" width={40} height={40} />
+                        <Box sx={{ flex: 1 }}>
+                          <Skeleton variant="text" width="70%" height={22} />
+                          <Skeleton variant="text" width="52%" height={18} />
+                        </Box>
+                      </Box>
+                      <Skeleton variant="text" width="100%" height={20} sx={{ mt: 2 }} />
+                      <Skeleton variant="text" width="86%" height={20} />
+                    </Box>
+                  </Box>
+                </>
+              ) : (
+                <>
               {/* Main Article Content */}
               <Box>
-                {sections.map((section, index) => (
-                  <Box
-                    key={section.id}
-                    id={section.id}
-                    className={FADE_IN_CLASS}
-                    sx={{ scrollMarginTop: "120px", mb: 5.8 }}
-                  >
-                    <Typography
-                      sx={{
-                        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontWeight: 700,
-                        fontSize: { xs: "1.55rem", sm: "1.9rem", md: "2.2rem", lg: "2.6rem" },
-                        lineHeight: 1.2,
-                        borderLeft: `3px solid ${ui.accent}`,
-                        color: ui.headingText,
-                        pl: 1.5,
-                        mb: 2.3,
-                      }}
-                    >
-                      {section.heading}
-                    </Typography>
+                <Box
+                  className={FADE_IN_CLASS}
+                  component="img"
+                  src={getInsightImageUrl(selectedInsight.image)}
+                  alt={selectedInsight.title}
+                  width="1400"
+                  height="760"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  sizes="(max-width: 1200px) 100vw, 870px"
+                  sx={{
+                    width: "100%",
+                    borderRadius: "16px",
+                    objectFit: "cover",
+                    maxHeight: { xs: 230, sm: 310, md: 420, lg: 750 },
+                    display: "block",
+                  }}
+                />
 
-                    {(section.paragraphs || []).map((paragraph, pIdx) => (
-                      <Typography
-                        key={`${section.id}-${pIdx}`}
-                        sx={{
-                          mb: 2.15,
-                          color: ui.bodyText,
-                          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          fontSize: { xs: "0.96rem", md: "0.95rem", lg: "0.96rem" },
-                          lineHeight: { xs: 1.82, md: 1.88, lg: 1.9 },
-                        }}
-                      >
-                        {paragraph}
-                      </Typography>
-                    ))}
+                <Typography
+                  className={FADE_IN_CLASS}
+                  sx={{
+                    mt: 1.5,
+                    mb: { xs: 4, md: 5.8 },
+                    mx: "auto",
+                    maxWidth: "95%",
+                    textAlign: "center",
+                    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    color: ui.caption,
+                    fontStyle: "italic",
+                  }}
+                >
+                  {captionText}
+                </Typography>
 
-                    {index === 1 && quoteText && (
+                {blocks.map((block, index) => {
+                  // Render section blocks
+                  if (block.type === "section") {
+                    return (
                       <Box
+                        key={block.id}
+                        id={block.anchorId}
+                        className={FADE_IN_CLASS}
+                        sx={{ scrollMarginTop: "120px", mb: { xs: 5.2, md: 6.8 } }}
+                      >
+                        <Typography
+                          sx={{
+                            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontWeight: 700,
+                            fontSize: { xs: "1.35rem", sm: "1.6rem", md: "1.85rem", lg: "2.05rem" },
+                            lineHeight: 1.18,
+                            borderLeft: `3px solid ${ui.accent}`,
+                            color: ui.headingText,
+                            pl: 1.5,
+                            mb: 2.1,
+                          }}
+                        >
+                          {stripHeadingNumber(block.heading)}
+                        </Typography>
+
+                        {(block.paragraphs || []).map((paragraph, pIdx) => (
+                          <Typography
+                            key={`${block.id}-${pIdx}`}
+                            sx={{
+                              mb: 2,
+                              color: ui.bodyText,
+                              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              fontSize: { xs: "0.92rem", md: "0.9rem", lg: "0.9rem" },
+                              lineHeight: { xs: 1.78, md: 1.82, lg: 1.84 },
+                            }}
+                          >
+                            {paragraph}
+                          </Typography>
+                        ))}
+                      </Box>
+                    );
+                  }
+
+                  // Render conclusion blocks
+                  if (block.type === "conclusion") {
+                    return (
+                      <Box
+                        key={block.id}
+                        id={block.anchorId}
+                        className={FADE_IN_CLASS}
+                        sx={{ scrollMarginTop: "120px", mb: { xs: 5.2, md: 6.8 } }}
+                      >
+                        <Typography
+                          sx={{
+                            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontWeight: 700,
+                            fontSize: { xs: "1.35rem", sm: "1.6rem", md: "1.85rem", lg: "2.05rem" },
+                            lineHeight: 1.18,
+                            borderLeft: `3px solid ${ui.accent}`,
+                            color: ui.headingText,
+                            pl: 1.5,
+                            mb: 2.1,
+                          }}
+                        >
+                          {stripHeadingNumber(block.heading)}
+                        </Typography>
+
+                        {(block.paragraphs || []).map((paragraph, pIdx) => (
+                          <Typography
+                            key={`${block.id}-${pIdx}`}
+                            sx={{
+                              mb: 2,
+                              color: ui.bodyText,
+                              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              fontSize: { xs: "0.92rem", md: "0.9rem", lg: "0.9rem" },
+                              lineHeight: { xs: 1.78, md: 1.82, lg: 1.84 },
+                            }}
+                          >
+                            {paragraph}
+                          </Typography>
+                        ))}
+                      </Box>
+                    );
+                  }
+
+                  // Render quote blocks
+                  if (block.type === "quote") {
+                    return (
+                      <Box
+                        key={block.id}
+                        className={FADE_IN_CLASS}
                         sx={{
-                          mt: 2.9,
+                          mt: 0,
+                          mb: { xs: 5.2, md: 6.8 },
                           ...panelSx,
                           borderLeft: `3px solid ${ui.accent}`,
                           px: 2.5,
                           py: 2.25,
                           fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          fontSize: { xs: "1.02rem", md: "1.05rem" },
+                          fontSize: { xs: "0.96rem", md: "0.98rem" },
                           color: ui.quoteText,
                           fontStyle: "italic",
                         }}
                       >
-                        &quot;{quoteText}&quot;
+                        &quot;{block.text}&quot;
+                        {block.attribution && (
+                          <Typography
+                            sx={{
+                              mt: 1.5,
+                              fontSize: { xs: "0.9rem", md: "0.95rem" },
+                              color: ui.mutedText,
+                              fontStyle: "normal",
+                            }}
+                          >
+                            — {block.attribution}
+                          </Typography>
+                        )}
                       </Box>
-                    )}
+                    );
+                  }
 
-                    {index === 2 && (
+                  // Render key takeaway blocks
+                  if (block.type === "keyTakeaway") {
+                    return (
                       <Box
+                        key={block.id}
+                        className={FADE_IN_CLASS}
                         sx={{
-                          mt: 2.9,
+                          mt: 0,
+                          mb: { xs: 5.2, md: 6.8 },
+                          border: `1px solid ${ui.keyTakeawayBorder}`,
+                          background: ui.keyTakeawayBg,
+                          borderRadius: "12px",
+                          px: 2.3,
+                          py: 2.1,
+                        }}
+                      >
+                        <Typography sx={{ color: ui.accent, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700 }}>
+                          {block.title || "Key Takeaway"}
+                        </Typography>
+                        <Typography sx={{ mt: 0.6, color: ui.bodyText, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", lineHeight: 1.68, fontSize: { xs: "0.92rem", md: "0.9rem" } }}>
+                          {block.text}
+                        </Typography>
+                      </Box>
+                    );
+                  }
+
+                  // Render code blocks
+                  if (block.type === "code") {
+                    return (
+                      <Box
+                        key={block.id}
+                        className={FADE_IN_CLASS}
+                        sx={{
+                          mt: 0,
+                          mb: { xs: 5.2, md: 6.8 },
                           ...panelSx,
                           px: 2.5,
                           py: 2.4,
@@ -892,31 +1132,14 @@ const InsightsDetailsNew = () => {
                           whiteSpace: "pre-wrap",
                         }}
                       >
-                        {/* Code snippet placeholder */}
+                        {block.code}
                       </Box>
-                    )}
+                    );
+                  }
 
-                    {index === 3 && keyTakeawayText && (
-                      <Box
-                        sx={{
-                          mt: 2.9,
-                          border: `1px solid ${ui.keyTakeawayBorder}`,
-                          background: ui.keyTakeawayBg,
-                          borderRadius: "12px",
-                          px: 2.3,
-                          py: 2.1,
-                        }}
-                      >
-                        <Typography sx={{ color: ui.accent, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700 }}>
-                          Key Takeaway
-                        </Typography>
-                        <Typography sx={{ mt: 0.6, color: ui.bodyText, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", lineHeight: 1.7, fontSize: { xs: "0.98rem", md: "1rem" } }}>
-                          {keyTakeawayText}
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                ))}
+                  // Default: render nothing for unknown block types
+                  return null;
+                })}
 
                 <Divider className={FADE_IN_CLASS} sx={{ my: 3.2, borderColor: ui.divider }} />
 
@@ -1119,25 +1342,43 @@ const InsightsDetailsNew = () => {
                   <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, mb: 1.1, fontSize: "1.45rem" }}>
                     Table of Contents
                   </Typography>
-                  {sections.slice(0, 5).map((section, index) => (
-                    <Box
-                      key={`toc-${section.id}`}
-                      onClick={() => onTocClick(section.id)}
-                      sx={{
-                        display: "flex",
-                        gap: 1,
-                        py: 0.8,
-                        cursor: "pointer",
-                        color: activeSection === section.id ? ui.accent : ui.stickyInactive,
-                        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontWeight: activeSection === section.id ? 700 : 400,
-                        fontSize: { xs: "0.92rem", md: "0.98rem" },
-                      }}
-                    >
-                      <span style={{ opacity: 0.9 }}>{`0${index + 1}`}</span>
-                      <span>{section.heading}</span>
-                    </Box>
-                  ))}
+                  <Box
+                    ref={tocScrollRef}
+                    sx={{
+                      maxHeight: { xs: 260, lg: 330 },
+                      overflowY: "auto",
+                      pr: 0.8,
+                      mr: -0.8,
+                      scrollBehavior: "smooth",
+                      overscrollBehavior: "contain",
+                      scrollbarWidth: "none",
+                      msOverflowStyle: "none",
+                      "&::-webkit-scrollbar": {
+                        display: "none",
+                      },
+                    }}
+                  >
+                    {tocSections.map((section, index) => (
+                      <Box
+                        key={`toc-${section.id}`}
+                        data-toc-section={section.id}
+                        onClick={() => onTocClick(section.id)}
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          py: 0.8,
+                          cursor: "pointer",
+                          color: activeSection === section.id ? ui.accent : ui.stickyInactive,
+                          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontWeight: activeSection === section.id ? 700 : 400,
+                          fontSize: { xs: "0.92rem", md: "0.98rem" },
+                        }}
+                      >
+                        <span style={{ opacity: 0.9 }}>{String(index + 1).padStart(2, "0")}</span>
+                        <span>{section.heading}</span>
+                      </Box>
+                    ))}
+                  </Box>
                 </Box>
 
                 {/* Author Bio Panel */}
@@ -1249,13 +1490,22 @@ const InsightsDetailsNew = () => {
                   ))}
                 </Box>
               </Box>
+                </>
+              )}
             </Box>
 
-            <Divider className={FADE_IN_CLASS} sx={{ my: { xs: 3.2, md: 4.4 }, borderColor: ui.divider }} />
+            <Divider
+              className={FADE_IN_CLASS}
+              sx={{
+                display: isLoadingInsight ? "none" : "block",
+                my: { xs: 3.2, md: 4.4 },
+                borderColor: ui.divider,
+              }}
+            />
 
             {/* You Might Also Like Section */}
-            <Box className={FADE_IN_CLASS} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1.4, mb: 2.2 }}>
-              <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, fontSize: { xs: "1.8rem", sm: "2.1rem", md: "2.6rem" } }}>
+            <Box className={FADE_IN_CLASS} sx={{ display: isLoadingInsight ? "none" : "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1.4, mb: 2.2 }}>
+              <Typography sx={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, fontSize: { xs: "1.6rem", sm: "1.9rem", md: "2.2rem" } }}>
                 You might also <span style={{ color: ui.accent }}>like</span>
               </Typography>
               <Box
@@ -1268,7 +1518,7 @@ const InsightsDetailsNew = () => {
             </Box>
 
             {/* Recommendation Articles Grid */}
-            <Box className={FADE_IN_CLASS} sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" } }}>
+            <Box className={FADE_IN_CLASS} sx={{ display: isLoadingInsight ? "none" : "grid", gap: 3, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" } }}>
               {recommendationArticles.map((article) => (
                 <Box
                   key={`you-like-${article.id}`}
@@ -1298,7 +1548,7 @@ const InsightsDetailsNew = () => {
                   />
                   <Box sx={{ mt: 1.2, px: 0.2, pb: 0.4 }}>
                     <Typography sx={badgeSx}>{article.category}</Typography>
-                    <Typography sx={{ mt: 0.8, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, fontSize: { xs: "1.12rem", sm: "1.2rem", md: "1.6rem" }, lineHeight: 1.22 }}>
+                    <Typography sx={{ mt: 0.8, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 700, fontSize: { xs: "1.05rem", sm: "1.12rem", md: "1.24rem" }, lineHeight: 1.24 }}>
                       {article.title}
                     </Typography>
                     <Box sx={{ mt: 1.1, display: "flex", alignItems: "center", gap: 1 }}>

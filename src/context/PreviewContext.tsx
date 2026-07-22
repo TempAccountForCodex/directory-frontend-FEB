@@ -80,7 +80,7 @@ export interface PreviewState {
 
 /** Actions exposed by the context */
 export interface PreviewActions {
-  updatePreviewContent: (content: PageContent) => void;
+  updatePreviewContent: (content: PageContent, immediate?: boolean) => void;
   setViewport: (viewport: Viewport) => void;
   refreshPreview: () => void;
   setPreviewError: (error: string | null) => void;
@@ -127,17 +127,29 @@ export const PreviewProvider: React.FC<PreviewProviderProps> = ({
     };
   }, []);
 
-  const updatePreviewContent = useCallback((content: PageContent) => {
-    // Clear existing timer to reset debounce
-    if (debounceTimerRef.current !== null) {
-      clearTimeout(debounceTimerRef.current);
-    }
+  const updatePreviewContent = useCallback(
+    (content: PageContent, immediate = false) => {
+      // Clear existing timer to reset debounce
+      if (debounceTimerRef.current !== null) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
 
-    debounceTimerRef.current = setTimeout(() => {
-      setCurrentPageContent(content);
-      debounceTimerRef.current = null;
-    }, DEBOUNCE_MS);
-  }, []);
+      // Discrete changes (e.g. a theme/palette selection) flush immediately so
+      // the preview updates with no perceptible lag; rapid changes such as
+      // typing in a block field stay debounced to avoid excessive re-renders.
+      if (immediate) {
+        setCurrentPageContent(content);
+        return;
+      }
+
+      debounceTimerRef.current = setTimeout(() => {
+        setCurrentPageContent(content);
+        debounceTimerRef.current = null;
+      }, DEBOUNCE_MS);
+    },
+    [],
+  );
 
   const setViewport = useCallback((vp: Viewport) => {
     setViewportState(vp);

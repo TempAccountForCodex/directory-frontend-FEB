@@ -17,6 +17,7 @@ import {
   BlogInsightCard,
   BlogCardSkeleton,
   blogHeroFont,
+  blogStaticProps,
 } from "./blogSectionShared";
 
 interface BlogFeaturedContent {
@@ -153,6 +154,7 @@ const BlogFeaturedBlockBase: React.FC<BlogFeaturedBlockProps> = ({
     <SectionShell>
       {heading && (
         <Typography
+          {...blogStaticProps(block.id, "featured-section-heading", "Featured section heading")}
           variant="h4"
           sx={{
             fontWeight: 700,
@@ -171,6 +173,8 @@ const BlogFeaturedBlockBase: React.FC<BlogFeaturedBlockProps> = ({
         authorLabel={authorLabel}
         accent={primaryColor}
         onOpen={handleOpen}
+        blockId={block.id}
+        staticPrefix="featured-card"
       />
     </SectionShell>
   );

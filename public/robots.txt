@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://techietribe.com/sitemap.xml
+Sitemap: https://www.techietribe.ai/sitemap.xml

@@ -41,10 +41,22 @@ const env = {
 
 const normalizeSiteUrl = (url) => {
   if (!url) {
-    return "https://techietribe.com";
+    return "https://www.techietribe.ai";
   }
 
-  return url.endsWith("/") ? url.slice(0, -1) : url;
+  const trimmedUrl = url.endsWith("/") ? url.slice(0, -1) : url;
+
+  try {
+    const parsedUrl = new URL(trimmedUrl);
+    if (parsedUrl.hostname === "techietribe.ai") {
+      parsedUrl.hostname = "www.techietribe.ai";
+      return parsedUrl.toString().replace(/\/$/, "");
+    }
+  } catch {
+    return trimmedUrl;
+  }
+
+  return trimmedUrl;
 };
 
 const SITE_URL = normalizeSiteUrl(
@@ -251,6 +263,14 @@ const buildSitemap = async () => {
     "",
   ].join("\n");
 
+  const robotsTxt = [
+    "User-agent: *",
+    "Allow: /",
+    "",
+    `Sitemap: ${SITE_URL}/sitemap.xml`,
+    "",
+  ].join("\n");
+
   const outputPaths = [
     path.join(projectRoot, "public", "sitemap.xml"),
     path.join(projectRoot, "dist", "sitemap.xml"),
@@ -261,8 +281,18 @@ const buildSitemap = async () => {
     fs.writeFileSync(outputPath, sitemapXml, "utf8");
   }
 
+  const robotsOutputPaths = [
+    path.join(projectRoot, "public", "robots.txt"),
+    path.join(projectRoot, "dist", "robots.txt"),
+  ];
+
+  for (const outputPath of robotsOutputPaths) {
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    fs.writeFileSync(outputPath, robotsTxt, "utf8");
+  }
+
   console.log(
-    `Sitemap generated with ${allRoutes.length} URLs -> ${outputPaths.join(", ")}`,
+    `Sitemap generated with ${allRoutes.length} URLs for ${SITE_URL} -> ${outputPaths.join(", ")}`,
   );
 };
 

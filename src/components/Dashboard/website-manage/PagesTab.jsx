@@ -627,7 +627,46 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
         ],
       });
 
-      setPages((prev) => [...prev, blogPage]);
+      // Also create the connected "Blog Detail" template page — the styling
+      // template used for every article. It is intentionally NOT added to the
+      // navbar/menu; it only appears in the Pages tab and is bound to the Blog
+      // page's lifecycle (created with it, deleted with it).
+      let detailPage = null;
+      try {
+        const detailRes = await apiClient.post(`/websites/${websiteId}/pages`, {
+          title: 'Blog Detail',
+          path: '/blog-detail',
+          isHome: false,
+          isPublished: true,
+          pageType: 'BLOG_DETAIL',
+        });
+        detailPage =
+          detailRes.data?.data || detailRes.data?.page || detailRes.data;
+        if (detailPage?.id) {
+          await apiClient.put(
+            `/websites/${websiteId}/pages/${detailPage.id}/blocks`,
+            {
+              blocks: [
+                {
+                  blockType: 'BLOG_ARTICLE',
+                  content: { showTableOfContents: true, showRelated: true },
+                  sortOrder: 0,
+                  isVisible: true,
+                },
+              ],
+            }
+          );
+        }
+      } catch {
+        // Non-fatal: the public article falls back to default styling.
+        detailPage = null;
+      }
+
+      setPages((prev) => [
+        ...prev,
+        blogPage,
+        ...(detailPage ? [detailPage] : []),
+      ]);
       const [menuAdded, navbarAdded] = await Promise.all([
         addBlogMenuEntry('/blog'),
         addBlogNavbarEntry('/blog'),
@@ -677,7 +716,32 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
           removeNavbarEntry(deletedPath),
         ]);
       }
-      setPages((prev) => prev.filter((p) => p.id !== pageToDelete.id));
+
+      // Cascade: deleting the Blog index page also removes its connected
+      // "Blog Detail" template page — they share a lifecycle.
+      const isBlogIndex =
+        pageToDelete.pageType === 'BLOG_INDEX' || deletedPath === '/blog';
+      let detailIdToRemove = null;
+      if (isBlogIndex) {
+        const detailPage = pages.find(
+          (p) =>
+            p.pageType === 'BLOG_DETAIL' || getPagePath(p) === '/blog-detail',
+        );
+        if (detailPage?.id) {
+          detailIdToRemove = detailPage.id;
+          try {
+            await apiClient.delete(`/pages/${detailPage.id}`);
+          } catch {
+            // best-effort; leaving an orphan detail page is harmless
+          }
+        }
+      }
+
+      setPages((prev) =>
+        prev.filter(
+          (p) => p.id !== pageToDelete.id && p.id !== detailIdToRemove,
+        )
+      );
       setDeleteDialogOpen(false);
       setPageToDelete(null);
       onSaved?.();
@@ -791,6 +855,10 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
                       checked={page.isPublished !== false}
                       onChange={() => handleToggleVisibility(page)}
                       size="small"
+                      disabled={
+                        page.pageType === 'BLOG_DETAIL' ||
+                        getPagePath(page) === '/blog-detail'
+                      }
                       inputProps={{ 'aria-label': `Toggle visibility for ${page.title}` }}
                     />
                   </TableCell>
@@ -808,15 +876,23 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
                         Edit
                       </DashboardActionButton>
 
-                      {page.isHome ? (
-                        <DashboardTooltip title="Cannot delete the home page">
+                      {page.isHome ||
+                      page.pageType === 'BLOG_DETAIL' ||
+                      getPagePath(page) === '/blog-detail' ? (
+                        <DashboardTooltip
+                          title={
+                            page.isHome
+                              ? 'Cannot delete the home page'
+                              : 'The Blog Detail page is managed with the Blog page — delete the Blog page to remove it'
+                          }
+                        >
                           <span>
                             <DashboardActionButton
                               size="small"
                               startIcon={<Trash2 size={14} />}
                               disabled
                               variant="text"
-                              aria-label="Cannot delete home page"
+                              aria-label={`Cannot delete ${page.title}`}
                             >
                               Delete
                             </DashboardActionButton>

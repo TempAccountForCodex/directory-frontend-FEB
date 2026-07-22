@@ -4820,19 +4820,38 @@ export const buildTemplatePreviewBusinessData = (
     (page.blocks || []).forEach((block) => {
       const containerStyles = block.content?.containerStyles;
       if (
-        !containerStyles ||
-        typeof containerStyles !== "object" ||
-        Array.isArray(containerStyles)
+        containerStyles &&
+        (typeof containerStyles !== "object" || Array.isArray(containerStyles))
       ) {
-        return;
+        // Ignore malformed container style maps; static styles below are still valid.
+      } else if (containerStyles) {
+        Object.entries(containerStyles).forEach(([containerId, style]) => {
+          if (style && typeof style === "object" && !Array.isArray(style)) {
+            persistedContainerStyleOverrides[
+              `${block.id}::containerStyles::${containerId}`
+            ] = style as Record<string, unknown>;
+          }
+        });
       }
-      Object.entries(containerStyles).forEach(([containerId, style]) => {
-        if (style && typeof style === "object" && !Array.isArray(style)) {
-          persistedContainerStyleOverrides[
-            `${block.id}::containerStyles::${containerId}`
-          ] = style as Record<string, unknown>;
-        }
-      });
+      const staticStyles = block.content?.staticStyles;
+      if (
+        staticStyles &&
+        typeof staticStyles === "object" &&
+        !Array.isArray(staticStyles)
+      ) {
+        Object.entries(staticStyles).forEach(([targetKey, style]) => {
+          if (
+            style &&
+            typeof style === "object" &&
+            !Array.isArray(style) &&
+            String(targetKey).includes("::")
+          ) {
+            persistedContainerStyleOverrides[
+              `${block.id}::${String(targetKey)}`
+            ] = style as Record<string, unknown>;
+          }
+        });
+      }
     });
   });
 
@@ -4878,8 +4897,5 @@ export const buildTemplatePreviewBusinessData = (
     },
   };
 };
-
-
-
 
 

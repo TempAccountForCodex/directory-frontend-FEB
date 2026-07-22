@@ -664,6 +664,104 @@ const getStaticStyleDraftKey = (selection) =>
   selection?.blockId && selection?.staticId
     ? `${selection.blockId}::${selection.styleKey || "sectionStyle"}::${selection.staticId}`
     : null;
+const AI_STATIC_STYLE_FIELD_PREFIX = "__staticStyle|";
+const buildAIStaticStyleFieldPath = (selection, property) => {
+  if (!selection?.styleKey || !selection?.staticId || !property) return "";
+  return `${AI_STATIC_STYLE_FIELD_PREFIX}${encodeURIComponent(
+    selection.styleKey,
+  )}|${encodeURIComponent(selection.staticId)}|${encodeURIComponent(property)}`;
+};
+const parseAIStaticStyleFieldPath = (fieldPath = "") => {
+  const value = String(fieldPath || "");
+  if (!value.startsWith(AI_STATIC_STYLE_FIELD_PREFIX)) return null;
+  const [, styleKey, staticId, property] = value.split("|");
+  if (!styleKey || !staticId || !property) return null;
+  try {
+    return {
+      styleKey: decodeURIComponent(styleKey),
+      staticId: decodeURIComponent(staticId),
+      property: decodeURIComponent(property),
+    };
+  } catch {
+    return null;
+  }
+};
+const isAIStaticStyleRevertFieldPath = (fieldPath = "") => {
+  const value = String(fieldPath || "");
+  return (
+    value.startsWith(AI_STATIC_STYLE_FIELD_PREFIX) ||
+    value.startsWith("staticStyles.") ||
+    value.includes(".content.staticStyles.")
+  );
+};
+const aiTurnHasStaticStylePatch = (turn) => {
+  const entries = [
+    ...(Array.isArray(turn?.before) ? turn.before : []),
+    ...(Array.isArray(turn?.after) ? turn.after : []),
+  ];
+  return (
+    String(turn?.aiEditKey || "").startsWith("blog-static:") ||
+    entries.some((entry) =>
+      [
+        entry?.fieldPath,
+        entry?.editorPath,
+        entry?.path,
+        entry?.aiEditKey,
+      ].some((value) => isAIStaticStyleRevertFieldPath(value)),
+    )
+  );
+};
+const buildStaticStyleAITargets = (selection) => {
+  if (!selection?.blockId || !selection?.styleKey || !selection?.staticId) {
+    return [];
+  }
+
+  const styleProperties = [
+    ["color", "Text color", "color"],
+    ["backgroundColor", "Background color", "background"],
+    ["fontSize", "Font size", "font"],
+    ["fontWeight", "Font weight", "font"],
+    ["textAlign", "Text alignment", "alignment"],
+    ["textShadow", "Text shadow", "shadow"],
+    ["fontStyle", "Font style", "font"],
+    ["textDecoration", "Text decoration", "font"],
+    ["lineHeight", "Line height", "font"],
+    ["letterSpacing", "Letter spacing", "font"],
+    ["wordSpacing", "Word spacing", "font"],
+    ["textTransform", "Text transform", "font"],
+    ["paddingTop", "Top padding", "spacing"],
+    ["paddingBottom", "Bottom padding", "spacing"],
+    ["paddingLeft", "Left padding", "spacing"],
+    ["paddingRight", "Right padding", "spacing"],
+    ["marginTop", "Top margin", "spacing"],
+    ["marginBottom", "Bottom margin", "spacing"],
+    ["marginLeft", "Left margin", "spacing"],
+    ["marginRight", "Right margin", "spacing"],
+    ["borderColor", "Border color", "border"],
+    ["borderRadius", "Border radius", "border"],
+    ["borderWidth", "Border width", "border"],
+    ["width", "Width", "size"],
+    ["height", "Height", "size"],
+    ["opacity", "Opacity", "style"],
+    ["objectFit", "Object fit", "media"],
+  ];
+
+  return styleProperties.map(([property, label, category]) => {
+    const fieldPath = buildAIStaticStyleFieldPath(selection, property);
+    return {
+      blockId: selection.blockId,
+      blockType: selection.blockType,
+      fieldPath,
+      persistedFieldPath: fieldPath,
+      label: `${selection.label || "Selected element"} ${label}`,
+      category,
+      computedStyle: selection.computedStyle,
+      staticId: selection.staticId,
+      styleKey: selection.styleKey,
+      staticType: selection.staticType,
+    };
+  });
+};
 const getStaticMediaOverrideKey = (websiteId, pageId, selection) =>
   websiteId != null &&
   pageId != null &&
@@ -2132,6 +2230,55 @@ const BLOG_SECTION_SUBTYPE_TO_TYPE = {
   blog_featured: "BLOG_FEATURED",
   blog_grid: "BLOG_GRID",
 };
+const BLOG_STATIC_STYLE_BLOCK_TYPES = new Set([
+  "BLOG_HERO",
+  "BLOG_FEATURED",
+  "BLOG_GRID",
+  "BLOG_ARTICLE",
+]);
+const BLOG_HERO_EDITABLE_CONTENT_PATHS = new Set([
+  "eyebrow",
+  "heading",
+  "headingAccent",
+  "description",
+]);
+const BLOG_HERO_STATIC_ID_TO_CONTENT_PATH = {
+  "blog-hero-eyebrow": "eyebrow",
+  "blog-hero-heading": "heading",
+  "blog-hero-heading-accent": "headingAccent",
+  "blog-hero-description": "description",
+};
+
+const getBlogRenderBlockType = (block) => {
+  const blockType = String(block?.blockType || "").toUpperCase();
+  if (blockType === "BLOG_FEED" && block?.content?._subType) {
+    return (
+      BLOG_SECTION_SUBTYPE_TO_TYPE[
+        String(block.content._subType).toLowerCase()
+      ] || blockType
+    );
+  }
+  return blockType;
+};
+
+const isBlogStaticStyleBlock = (block) =>
+  BLOG_STATIC_STYLE_BLOCK_TYPES.has(getBlogRenderBlockType(block));
+const getBlogHeroStaticContentPath = (selection) =>
+  selection?.contentPath ||
+  BLOG_HERO_STATIC_ID_TO_CONTENT_PATH[String(selection?.staticId || "")];
+const isBlogHeroContentStaticElement = (selection) => {
+  const isBlogHeroBlock =
+    getBlogRenderBlockType({
+      blockType: selection?.blockType,
+      content: { _subType: selection?._subType },
+    }) === "BLOG_HERO" ||
+    String(selection?.staticId || "").startsWith("blog-hero-");
+  return (
+    isBlogHeroBlock &&
+    selection?.staticType === "text" &&
+    BLOG_HERO_EDITABLE_CONTENT_PATHS.has(getBlogHeroStaticContentPath(selection))
+  );
+};
 
 const sanitizeBlockContentForSave = (blockType, content) => {
   const rawBlockType = String(blockType || "").toUpperCase();
@@ -2142,6 +2289,11 @@ const sanitizeBlockContentForSave = (blockType, content) => {
   if (sanitizedContent.containerStyles) {
     sanitizedContent.containerStyles = normalizeContainerStylesForSave(
       sanitizedContent.containerStyles,
+    );
+  }
+  if (sanitizedContent.staticStyles) {
+    sanitizedContent.staticStyles = normalizeContainerStylesForSave(
+      sanitizedContent.staticStyles,
     );
   }
 
@@ -2592,6 +2744,7 @@ const WebsiteEditorInner = () => {
     useState(null);
   const [selectedSectionElement, setSelectedSectionElement] = useState(null);
   const [selectedStaticElement, setSelectedStaticElement] = useState(null);
+  const [dynamicBlogStyleTargets, setDynamicBlogStyleTargets] = useState([]);
   const [isSectionInnerBlockModalOpen, setIsSectionInnerBlockModalOpen] =
     useState(false);
   const [sectionInnerBlockSearch, setSectionInnerBlockSearch] = useState("");
@@ -2652,17 +2805,32 @@ const WebsiteEditorInner = () => {
       blocks.forEach((block) => {
         const containerStyles = block?.content?.containerStyles;
         if (
-          !containerStyles ||
-          typeof containerStyles !== "object" ||
-          Array.isArray(containerStyles)
+          containerStyles &&
+          typeof containerStyles === "object" &&
+          !Array.isArray(containerStyles)
         ) {
-          return;
+          Object.entries(containerStyles).forEach(([containerId, style]) => {
+            if (style && typeof style === "object" && !Array.isArray(style)) {
+              next[`${block.id}::containerStyles::${containerId}`] = style;
+            }
+          });
         }
-        Object.entries(containerStyles).forEach(([containerId, style]) => {
-          if (style && typeof style === "object" && !Array.isArray(style)) {
-            next[`${block.id}::containerStyles::${containerId}`] = style;
-          }
-        });
+        const staticStyles = block?.content?.staticStyles;
+        if (
+          isBlogStaticStyleBlock(block) &&
+          staticStyles &&
+          typeof staticStyles === "object" &&
+          !Array.isArray(staticStyles)
+        ) {
+          Object.entries(staticStyles).forEach(([targetKey, style]) => {
+            if (style && typeof style === "object" && !Array.isArray(style)) {
+              const parts = String(targetKey).split("::");
+              if (parts.length >= 2) {
+                next[`${block.id}::${targetKey}`] = style;
+              }
+            }
+          });
+        }
       });
       return next;
     });
@@ -4282,8 +4450,28 @@ const WebsiteEditorInner = () => {
       const requestedPage = requestedPageId
         ? pagesList.find((p) => String(p.id) === String(requestedPageId))
         : null;
+      const blogDetailPageWithArticle = pagesList.find(
+        (p) =>
+          (p.pageType === "BLOG_DETAIL" || p.path === "/blog-detail") &&
+          Array.isArray(p.blocks) &&
+          p.blocks.some((b) => b.blockType === "BLOG_ARTICLE"),
+      );
+      const requestedPageIsEmptyBlogDetail =
+        requestedPage &&
+        (requestedPage.pageType === "BLOG_DETAIL" ||
+          requestedPage.path === "/blog-detail" ||
+          requestedPage.title === "Blog Detail") &&
+        (!Array.isArray(requestedPage.blocks) ||
+          !requestedPage.blocks.some((b) => b.blockType === "BLOG_ARTICLE"));
+      const resolvedRequestedPage =
+        requestedPageIsEmptyBlogDetail && blogDetailPageWithArticle
+          ? blogDetailPageWithArticle
+          : requestedPage ||
+            (requestedPageId && blogDetailPageWithArticle
+              ? blogDetailPageWithArticle
+              : null);
       const homePage =
-        requestedPage || pagesList.find((p) => p.isHome) || pagesList[0];
+        resolvedRequestedPage || pagesList.find((p) => p.isHome) || pagesList[0];
       if (homePage) {
         if (
           supportsFrontendTemplateEditor(
@@ -4305,6 +4493,15 @@ const WebsiteEditorInner = () => {
           setBlockError(null);
         }
         setSelectedPage(homePage);
+        if (
+          requestedPageId &&
+          homePage.id != null &&
+          String(homePage.id) !== String(requestedPageId)
+        ) {
+          const nextSearchParams = new URLSearchParams(searchParams);
+          nextSearchParams.set("page", String(homePage.id));
+          setSearchParams(nextSearchParams, { replace: true });
+        }
       }
 
       // Check for AI sessions (detect _aiGenerated metadata in any block)
@@ -4730,10 +4927,30 @@ const WebsiteEditorInner = () => {
         : String(resolvedValue);
   }, [findBlockInEditorPages, selectedEditableElement]);
 
-  const selectedStaticTextValue = useMemo(
-    () => selectedStaticElement?.textValue || "",
+  const selectedStaticTextCanEdit = useMemo(
+    () => isBlogHeroContentStaticElement(selectedStaticElement),
     [selectedStaticElement],
   );
+
+  const selectedStaticTextValue = useMemo(() => {
+    if (selectedStaticTextCanEdit && selectedStaticElement?.blockId) {
+      const contentPath = getBlogHeroStaticContentPath(selectedStaticElement);
+      const targetBlock = findBlockInEditorPages(selectedStaticElement.blockId);
+      const value = targetBlock
+        ? getValueAtPath(targetBlock.content || {}, contentPath)
+        : undefined;
+      return typeof value === "string"
+        ? value
+        : value == null
+          ? ""
+          : String(value);
+    }
+    return selectedStaticElement?.textValue || "";
+  }, [
+    findBlockInEditorPages,
+    selectedStaticElement,
+    selectedStaticTextCanEdit,
+  ]);
 
   const selectedStaticTextStyle = useMemo(() => {
     const key = getStaticStyleDraftKey(selectedStaticElement);
@@ -5311,6 +5528,7 @@ const WebsiteEditorInner = () => {
           if (["media", "avatar"].includes(data.staticType || "")) {
             setSelectedImageElement({
               blockId: data.blockId,
+              blockType: data.blockType,
               fieldPath: null,
               src: data.src || "",
               label: data.label || "Static media",
@@ -5342,6 +5560,7 @@ const WebsiteEditorInner = () => {
         syncPreviewSelection({
           kind: data.targetKind === "static" ? "static" : "section",
           blockId: data.blockId,
+          blockType: data.blockType,
           contentPath: data.contentPath,
           styleKey: data.styleKey || "sectionStyle",
           staticId: data.staticId,
@@ -6626,6 +6845,47 @@ const WebsiteEditorInner = () => {
         });
       }
 
+      if (
+        !isPersistentContainer &&
+        selectedStaticElement?.blockId &&
+        selectedStaticElement?.staticId
+      ) {
+        const styleKey = selectedStaticElement.styleKey || "sectionStyle";
+        const staticStyleKey = `${styleKey}::${selectedStaticElement.staticId}`;
+        setBlocks((previousBlocks) =>
+          previousBlocks.map((block) => {
+            if (
+              String(block.id) !== String(selectedStaticElement.blockId) ||
+              !isBlogStaticStyleBlock(block)
+            ) {
+              return block;
+            }
+            const existingStaticStyles =
+              block.content?.staticStyles &&
+              typeof block.content.staticStyles === "object" &&
+              !Array.isArray(block.content.staticStyles)
+                ? block.content.staticStyles
+                : {};
+            const existingStyle =
+              existingStaticStyles[staticStyleKey] &&
+              typeof existingStaticStyles[staticStyleKey] === "object"
+                ? existingStaticStyles[staticStyleKey]
+                : {};
+
+            return withSyncedBlockContent(block, {
+              ...(block.content || {}),
+              staticStyles: {
+                ...existingStaticStyles,
+                [staticStyleKey]: {
+                  ...existingStyle,
+                  ...resolvedPatch,
+                },
+              },
+            });
+          }),
+        );
+      }
+
       setStaticStyleDrafts((prev) => ({
         ...prev,
         [key]: {
@@ -7400,6 +7660,82 @@ const WebsiteEditorInner = () => {
   // Inline edit save handler — Step 9.24: nested path update for content fields
   const handleInlineEditSave = useCallback(
     (blockId, fieldPath, newValue) => {
+      const staticStyleTarget = parseAIStaticStyleFieldPath(fieldPath);
+      if (staticStyleTarget && blockId) {
+        const { styleKey, staticId, property } = staticStyleTarget;
+        const staticStyleKey = `${styleKey}::${staticId}`;
+        const draftKey = `${blockId}::${styleKey}::${staticId}`;
+        const shouldRemoveProperty =
+          newValue === undefined || newValue === null || newValue === "";
+        const patch = shouldRemoveProperty ? {} : { [property]: newValue };
+
+        pendingHistoryDescriptionRef.current = `Styled static element ${property}`;
+        flushSync(() => {
+          updateBlockInEditorState(blockId, (block) => {
+            const existingStaticStyles =
+              block.content?.staticStyles &&
+              typeof block.content.staticStyles === "object" &&
+              !Array.isArray(block.content.staticStyles)
+                ? block.content.staticStyles
+                : {};
+            const existingStyle =
+              existingStaticStyles[staticStyleKey] &&
+              typeof existingStaticStyles[staticStyleKey] === "object"
+                ? existingStaticStyles[staticStyleKey]
+                : {};
+            const nextStyle = {
+              ...existingStyle,
+              ...patch,
+            };
+            if (shouldRemoveProperty) {
+              delete nextStyle[property];
+            }
+
+            return withSyncedBlockContent(block, {
+              ...(block.content || {}),
+              staticStyles: {
+                ...existingStaticStyles,
+                [staticStyleKey]: nextStyle,
+              },
+            });
+          });
+
+          setStaticStyleDrafts((prev) => {
+            const nextDraft = {
+              ...(prev[draftKey] || {}),
+              ...patch,
+            };
+            if (shouldRemoveProperty) {
+              delete nextDraft[property];
+            }
+            return {
+              ...prev,
+              [draftKey]: nextDraft,
+            };
+          });
+        });
+
+        if (websiteId != null && selectedPage?.id != null) {
+          const storedKey = buildStoredStaticStyleOverrideKey(
+            websiteId,
+            selectedPage.id,
+            blockId,
+            styleKey,
+            staticId,
+          );
+          const currentDraft = staticStyleDrafts[draftKey] || {};
+          const nextStoredStyle = {
+            ...currentDraft,
+            ...patch,
+          };
+          if (shouldRemoveProperty) {
+            delete nextStoredStyle[property];
+          }
+          storeStaticStyleOverride(storedKey, nextStoredStyle);
+        }
+        return;
+      }
+
       if (String(fieldPath || "").startsWith("website.")) {
         const websitePath = String(fieldPath).replace(/^website\./, "");
         pendingHistoryDescriptionRef.current = `Edited ${fieldPath}`;
@@ -7446,7 +7782,7 @@ const WebsiteEditorInner = () => {
         );
       });
     },
-    [updateBlockInEditorState],
+    [selectedPage?.id, staticStyleDrafts, updateBlockInEditorState, websiteId],
   );
 
   // ---- AI website draft (creation questionnaire preview) ----
@@ -7870,7 +8206,13 @@ const WebsiteEditorInner = () => {
       ? websiteAIContext.aiHistory
       : [];
     return history
-      .filter((turn) => turn?.revertible && turn?.applied && turn?.turnId)
+      .filter(
+        (turn) =>
+          turn?.revertible &&
+          turn?.applied &&
+          turn?.turnId &&
+          !aiTurnHasStaticStylePatch(turn),
+      )
       .slice(-2)
       .reverse();
   }, [websiteAIContext]);
@@ -8016,21 +8358,73 @@ const WebsiteEditorInner = () => {
     selectedEditableElement?.blockId,
     selectedEditableElement?.fieldPath,
   ]);
+  const aiStaticStyleTargets = useMemo(
+    () => buildStaticStyleAITargets(selectedStaticElement),
+    [selectedStaticElement],
+  );
+  const isSelectedBlogStylePage = useMemo(
+    () => (Array.isArray(blocks) ? blocks : []).some(isBlogStaticStyleBlock),
+    [blocks],
+  );
+  const handleDynamicStyleTargetsChange = useCallback((targets = []) => {
+    setDynamicBlogStyleTargets(Array.isArray(targets) ? targets : []);
+  }, []);
+  useEffect(() => {
+    setDynamicBlogStyleTargets([]);
+  }, [selectedPage?.id]);
+  useEffect(() => {
+    if (!isSelectedBlogStylePage) {
+      setDynamicBlogStyleTargets([]);
+    }
+  }, [isSelectedBlogStylePage, selectedPage?.id]);
+  const aiPageStaticStyleTargets = useMemo(
+    () =>
+      isSelectedBlogStylePage
+        ? dynamicBlogStyleTargets.flatMap((target) =>
+            buildStaticStyleAITargets(target),
+          )
+        : [],
+    [dynamicBlogStyleTargets, isSelectedBlogStylePage],
+  );
+  const aiPagePrimaryColor = useMemo(() => {
+    const liveThemeSelection =
+      templateThemeSelection && templateThemeSelectionDirty
+        ? resolveTemplateThemeSelection(templateThemeSelection)
+        : null;
+    return (
+      liveThemeSelection?.palette?.primary ||
+      website?.primaryColor ||
+      website?.colors?.primary ||
+      "#378C92"
+    );
+  }, [templateThemeSelection, templateThemeSelectionDirty, website]);
   const aiSectionBlockId =
-    selectedSectionElement?.blockId ?? selectedEditableElement?.blockId ?? null;
-  const aiSectionStyleKey = selectedSectionElement?.styleKey || "sectionStyle";
-  const aiSectionLabel = selectedSectionElement?.label || "Section";
+    selectedSectionElement?.blockId ??
+    selectedStaticElement?.blockId ??
+    selectedEditableElement?.blockId ??
+    null;
+  const aiSectionStyleKey =
+    selectedStaticElement?.blockId && aiStaticStyleTargets[0]?.fieldPath
+      ? aiStaticStyleTargets[0].fieldPath
+      : selectedSectionElement?.styleKey || "sectionStyle";
+  const aiSectionLabel =
+    selectedStaticElement?.label || selectedSectionElement?.label || "Section";
 
   const selectedSectionAITarget = useMemo(
-    () =>
-      findEditableSchemaTarget(websiteAIEditableTargets, {
+    () => {
+      if (selectedStaticElement?.blockId) {
+        return undefined;
+      }
+      return findEditableSchemaTarget(websiteAIEditableTargets, {
         pageId: selectedPage?.id,
         blockId: aiSectionBlockId,
         fieldPath: aiSectionStyleKey,
-      }),
+      });
+    },
     [
       websiteAIEditableTargets,
       selectedPage?.id,
+      selectedStaticElement?.blockId,
       aiSectionBlockId,
       aiSectionStyleKey,
     ],
@@ -8039,6 +8433,24 @@ const WebsiteEditorInner = () => {
   // Read the current value of a block content field (for AI conflict/revert).
   const getAIFieldValue = useCallback(
     (blockId, fieldPath) => {
+      const staticStyleTarget = parseAIStaticStyleFieldPath(fieldPath);
+      if (staticStyleTarget && blockId) {
+        const draftKey = `${blockId}::${staticStyleTarget.styleKey}::${staticStyleTarget.staticId}`;
+        const draftValue =
+          staticStyleDrafts[draftKey]?.[staticStyleTarget.property];
+        if (draftValue !== undefined) {
+          return draftValue;
+        }
+
+        const block = blocksRef.current.find(
+          (b) => String(b.id) === String(blockId),
+        );
+        const staticStyleKey = `${staticStyleTarget.styleKey}::${staticStyleTarget.staticId}`;
+        return block?.content?.staticStyles?.[staticStyleKey]?.[
+          staticStyleTarget.property
+        ];
+      }
+
       const persistedPath = String(fieldPath || "");
       if (persistedPath.startsWith("website.")) {
         return getValueAtPath(
@@ -8067,7 +8479,7 @@ const WebsiteEditorInner = () => {
       if (!block) return undefined;
       return getValueAtPath(block.content || {}, persistedPath);
     },
-    [website],
+    [staticStyleDrafts, website],
   );
 
   // BlockLibrary insert handler — creates a block via API (Phase 9 gap fix)
@@ -10251,6 +10663,9 @@ const WebsiteEditorInner = () => {
                             }}
                             onEditableTextSave={handleInlineEditSave}
                             onElementTransform={handlePreviewElementTransform}
+                            onDynamicStyleTargetsChange={
+                              handleDynamicStyleTargetsChange
+                            }
                             saveSignal={previewSaveSignal}
                             staticStyleDrafts={staticStyleDrafts}
                             staticMediaOverrides={staticMediaOverrides}
@@ -10432,8 +10847,29 @@ const WebsiteEditorInner = () => {
                                         minRows={2}
                                         label="Text"
                                         value={selectedStaticTextValue}
-                                        disabled
-                                        helperText="Style-only / not saved"
+                                        onChange={(event) => {
+                                          const contentPath =
+                                            getBlogHeroStaticContentPath(
+                                              selectedStaticElement,
+                                            );
+                                          if (
+                                            !selectedStaticTextCanEdit ||
+                                            !contentPath
+                                          ) {
+                                            return;
+                                          }
+                                          handleInlineEditSave(
+                                            selectedStaticElement.blockId,
+                                            contentPath,
+                                            event.target.value,
+                                          );
+                                        }}
+                                        disabled={!selectedStaticTextCanEdit}
+                                        helperText={
+                                          selectedStaticTextCanEdit
+                                            ? "Saved with blog hero content"
+                                            : "Style-only / not saved"
+                                        }
                                         sx={{
                                           mb: 1.6,
                                           "& .MuiOutlinedInput-root": {
@@ -12611,7 +13047,18 @@ const WebsiteEditorInner = () => {
                     }),
                   ),
                 }
-              : null,
+              : selectedStaticTextCanEdit
+                ? {
+                    blockId: selectedStaticElement.blockId,
+                    blockType: selectedStaticElement.blockType,
+                    fieldPath: getBlogHeroStaticContentPath(
+                      selectedStaticElement,
+                    ),
+                    label: selectedStaticElement.label || "Blog hero text",
+                    computedStyle: selectedStaticElement.computedStyle,
+                    styleTargets: aiStaticStyleTargets,
+                  }
+                : null,
             section: aiSectionBlockId
               ? {
                   blockId: aiSectionBlockId,
@@ -12619,10 +13066,17 @@ const WebsiteEditorInner = () => {
                   fieldPath: aiSectionStyleKey,
                   persistedFieldPath: selectedSectionAITarget?.fieldPath,
                   aiEditKey: selectedSectionAITarget?.aiEditKey,
+                  computedStyle: selectedStaticElement?.computedStyle,
+                  styleTargets: aiStaticStyleTargets,
                 }
               : null,
             page: selectedPage?.id
-              ? { id: selectedPage.id, title: selectedPage.title }
+              ? {
+                  id: selectedPage.id,
+                  title: selectedPage.title,
+                  primaryColor: aiPagePrimaryColor,
+                  styleTargets: aiPageStaticStyleTargets,
+                }
               : null,
           }}
           revertibleTurns={websiteAIRevertibleTurns}

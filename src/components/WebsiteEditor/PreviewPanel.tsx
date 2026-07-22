@@ -76,6 +76,17 @@ type FrontendTemplateRenderMode = "full" | "page-shell";
 
 const SHARED_HEADER_BLOCK_TYPES = new Set(["NAVBAR", "WEBSITE_HEADER"]);
 const SHARED_FOOTER_BLOCK_TYPES = new Set(["FOOTER"]);
+const BLOG_SECTION_SUBTYPE_TO_TYPE: Record<string, string> = {
+  blog_hero: "BLOG_HERO",
+  blog_featured: "BLOG_FEATURED",
+  blog_grid: "BLOG_GRID",
+};
+const BLOG_STATIC_STYLE_BLOCK_TYPES = new Set([
+  "BLOG_HERO",
+  "BLOG_FEATURED",
+  "BLOG_GRID",
+  "BLOG_ARTICLE",
+]);
 
 const isSharedHeaderBlock = (block?: { blockType?: string | null }) =>
   SHARED_HEADER_BLOCK_TYPES.has(
@@ -90,6 +101,17 @@ const isSharedFooterBlock = (block?: { blockType?: string | null }) =>
       .trim()
       .toUpperCase(),
   );
+
+const getBlogRenderBlockType = (block?: PreviewBlock | null) => {
+  const blockType = String(block?.blockType || "").trim().toUpperCase();
+  const subType = String((block as any)?.content?._subType || "")
+    .trim()
+    .toLowerCase();
+  if (blockType === "BLOG_FEED" && subType) {
+    return BLOG_SECTION_SUBTYPE_TO_TYPE[subType] || blockType;
+  }
+  return blockType;
+};
 
 const VIEWPORT_WIDTHS: Record<Viewport, number> = {
   desktop: 1920,
@@ -197,12 +219,23 @@ interface FrontendTemplateIframeProps {
     target: PreviewSelectionTarget,
     patch: PreviewElementTransformPatch,
   ) => void;
+  onDynamicStyleTargetsChange?: (targets: DynamicStyleTargetData[]) => void;
   staticStyleDrafts?: Record<string, Record<string, any>>;
   staticMediaOverrides?: Record<string, Record<string, any>>;
   saveSignal?: number;
   iframeRefCallback?: (ref: React.RefObject<HTMLIFrameElement | null>) => void;
   selectedPreviewTarget?: PreviewSelectionTarget | null;
   askAIButtonStatus?: AskAIButtonStatus;
+}
+
+export interface DynamicStyleTargetData {
+  blockId: string;
+  blockType: string;
+  staticId: string;
+  styleKey: string;
+  label: string;
+  staticType?: SectionSelectionData["staticType"];
+  computedStyle?: PreviewComputedStyleData;
 }
 
 const FrontendTemplateIframePreview = React.memo(
@@ -226,6 +259,7 @@ const FrontendTemplateIframePreview = React.memo(
     onPreviewContextMenu,
     onEditableTextSave,
     onElementTransform,
+    onDynamicStyleTargetsChange,
     staticStyleDrafts = {},
     staticMediaOverrides = {},
     saveSignal,
@@ -242,6 +276,10 @@ const FrontendTemplateIframePreview = React.memo(
     );
     const onImageSelectedRef = React.useRef(onImageSelected);
     const onImageDoubleClickRef = React.useRef(onImageDoubleClick);
+    const onDynamicStyleTargetsChangeRef = React.useRef(
+      onDynamicStyleTargetsChange,
+    );
+    const dynamicStyleTargetsSignatureRef = React.useRef("");
     const onSectionSelectedRef = React.useRef(onSectionSelected);
     const onSectionAddRequestRef = React.useRef(onSectionAddRequest);
     const onSectionInnerAddRequestRef = React.useRef(onSectionInnerAddRequest);
@@ -275,6 +313,28 @@ const FrontendTemplateIframePreview = React.memo(
     const inferEditableLabelRef = React.useRef<
       (editableEl: HTMLElement, fieldPath: string) => string
     >(() => "Text");
+    const blogBlockTypeById = React.useMemo(() => {
+      const entries = new Map<string, string>();
+      (Array.isArray(pageBlocks) ? pageBlocks : []).forEach((block) => {
+        const blockId = String(block?.id || "");
+        const blockType = getBlogRenderBlockType(block);
+        if (blockId && BLOG_STATIC_STYLE_BLOCK_TYPES.has(blockType)) {
+          entries.set(blockId, blockType);
+        }
+      });
+      return entries;
+    }, [pageBlocks]);
+
+    React.useEffect(() => {
+      if (blogBlockTypeById.size > 0) {
+        return;
+      }
+      if (!dynamicStyleTargetsSignatureRef.current) {
+        return;
+      }
+      dynamicStyleTargetsSignatureRef.current = "";
+      onDynamicStyleTargetsChangeRef.current?.([]);
+    }, [blogBlockTypeById]);
 
     React.useEffect(() => {
       onReadyRef.current = onReady;
@@ -291,6 +351,10 @@ const FrontendTemplateIframePreview = React.memo(
     React.useEffect(() => {
       onImageDoubleClickRef.current = onImageDoubleClick;
     }, [onImageDoubleClick]);
+
+    React.useEffect(() => {
+      onDynamicStyleTargetsChangeRef.current = onDynamicStyleTargetsChange;
+    }, [onDynamicStyleTargetsChange]);
 
     React.useEffect(() => {
       onSectionSelectedRef.current = onSectionSelected;
@@ -994,6 +1058,7 @@ const FrontendTemplateIframePreview = React.memo(
 
         return {
           blockId,
+          blockType: blogBlockTypeById.get(String(blockId)),
           label,
           styleKey,
           targetKind: "section",
@@ -1192,6 +1257,7 @@ const FrontendTemplateIframePreview = React.memo(
 
         return {
           blockId,
+          blockType: blogBlockTypeById.get(String(blockId)),
           label,
           styleKey,
           staticId,
@@ -1229,8 +1295,12 @@ const FrontendTemplateIframePreview = React.memo(
                 marginRight: computedStyle.marginRight,
                 borderRadius: computedStyle.borderRadius,
                 borderWidth: computedStyle.borderWidth,
-                borderColor: computedStyle.borderColor,
-              }
+              borderColor: computedStyle.borderColor,
+              objectFit: computedStyle.objectFit,
+              width: computedStyle.width,
+              height: computedStyle.height,
+              opacity: computedStyle.opacity,
+            }
             : undefined,
           src:
             element.getAttribute("src") ||
@@ -1349,6 +1419,7 @@ const FrontendTemplateIframePreview = React.memo(
         activeSelectionTargetRef.current = {
           kind: "section",
           blockId: selection.blockId,
+          blockType: selection.blockType,
           styleKey: selection.styleKey || "sectionStyle",
           staticId: selection.staticId,
           nonce: Date.now(),
@@ -1372,6 +1443,7 @@ const FrontendTemplateIframePreview = React.memo(
         activeSelectionTargetRef.current = {
           kind: "static",
           blockId: selection.blockId,
+          blockType: selection.blockType,
           contentPath: selection.contentPath,
           styleKey: selection.styleKey || "sectionStyle",
           staticId: selection.staticId,
@@ -3074,14 +3146,134 @@ const FrontendTemplateIframePreview = React.memo(
         }
       };
 
+      const emitDynamicBlogStyleTargets = (
+        targets: DynamicStyleTargetData[],
+      ) => {
+        const signature = JSON.stringify(
+          targets.map((target) => ({
+            blockId: target.blockId,
+            blockType: target.blockType,
+            staticId: target.staticId,
+            styleKey: target.styleKey,
+            label: target.label,
+            staticType: target.staticType,
+            computedStyle: target.computedStyle,
+          })),
+        );
+        if (dynamicStyleTargetsSignatureRef.current === signature) {
+          return;
+        }
+        dynamicStyleTargetsSignatureRef.current = signature;
+        onDynamicStyleTargetsChangeRef.current?.(targets);
+      };
+
+      const collectDynamicBlogStyleTargets = () => {
+        if (!blogBlockTypeById.size) {
+          emitDynamicBlogStyleTargets([]);
+          return;
+        }
+
+        const seen = new Set<string>();
+        const targets: DynamicStyleTargetData[] = [];
+        Array.from(
+          root.querySelectorAll<HTMLElement>(
+            "[data-static-selectable='true'], [data-fallback-selectable='true'], [data-fallback-media='true']",
+          ),
+        ).forEach((element) => {
+          const blockId =
+            element.getAttribute("data-preview-block-id") ||
+            element.getAttribute("data-fallback-context-block-id") ||
+            element.getAttribute("data-block-id");
+          if (!blockId) {
+            return;
+          }
+
+          const blockType = blogBlockTypeById.get(String(blockId));
+          if (!blockType) {
+            return;
+          }
+
+          const staticId =
+            element.getAttribute("data-static-id") ||
+            element.getAttribute("data-fallback-id");
+          if (!staticId) {
+            return;
+          }
+
+          const staticType =
+            (element.getAttribute(
+              "data-static-type",
+            ) as SectionSelectionData["staticType"] | null) || "unknown";
+          const styleKey =
+            element.getAttribute("data-preview-style-key") ||
+            `static.${staticId}`;
+          const key = `${blockId}::${styleKey}::${staticId}`;
+          if (seen.has(key)) {
+            return;
+          }
+          seen.add(key);
+
+          const computedStyle = win.getComputedStyle(element);
+          targets.push({
+            blockId: String(blockId),
+            blockType,
+            staticId,
+            styleKey,
+            label:
+              element.getAttribute("data-static-label") ||
+              element.getAttribute("data-preview-label") ||
+              element.getAttribute("aria-label") ||
+              element.getAttribute("alt") ||
+              "Blog element",
+            staticType,
+            computedStyle: {
+              color: computedStyle.color,
+              backgroundColor: computedStyle.backgroundColor,
+              fontSize: computedStyle.fontSize,
+              fontWeight: computedStyle.fontWeight,
+              fontStyle: computedStyle.fontStyle,
+              textAlign: computedStyle.textAlign,
+              textShadow: computedStyle.textShadow,
+              lineHeight: computedStyle.lineHeight,
+              letterSpacing: computedStyle.letterSpacing,
+              wordSpacing: computedStyle.wordSpacing,
+              textTransform: computedStyle.textTransform,
+              textDecoration: computedStyle.textDecoration,
+              paddingTop: computedStyle.paddingTop,
+              paddingBottom: computedStyle.paddingBottom,
+              paddingLeft: computedStyle.paddingLeft,
+              paddingRight: computedStyle.paddingRight,
+              marginTop: computedStyle.marginTop,
+              marginBottom: computedStyle.marginBottom,
+              marginLeft: computedStyle.marginLeft,
+              marginRight: computedStyle.marginRight,
+              borderRadius: computedStyle.borderRadius,
+              borderWidth: computedStyle.borderWidth,
+              borderColor: computedStyle.borderColor,
+              objectFit: computedStyle.objectFit,
+              width: computedStyle.width,
+              height: computedStyle.height,
+              opacity: computedStyle.opacity,
+            },
+          });
+        });
+
+        emitDynamicBlogStyleTargets(targets);
+      };
+
+      const refreshBlogStyleTargets = () => {
+        annotateFallbackMetadata();
+        collectDynamicBlogStyleTargets();
+      };
+
       let frame: number | null = win.requestAnimationFrame(
-        annotateFallbackMetadata,
+        refreshBlogStyleTargets,
       );
       const observer = new MutationObserver(() => {
         if (frame !== null) {
           win.cancelAnimationFrame(frame);
         }
-        frame = win.requestAnimationFrame(annotateFallbackMetadata);
+        frame = win.requestAnimationFrame(refreshBlogStyleTargets);
       });
 
       observer.observe(root, {
@@ -3096,7 +3288,7 @@ const FrontendTemplateIframePreview = React.memo(
         }
         observer.disconnect();
       };
-    }, [mountNode, data, templateId]);
+    }, [mountNode, data, templateId, blogBlockTypeById]);
 
     React.useEffect(() => {
       const doc = iframeDocumentRef.current;
@@ -3149,6 +3341,7 @@ const FrontendTemplateIframePreview = React.memo(
           activeSelectionTargetRef.current = {
             kind: "section",
             blockId: selectedPreviewTarget.blockId,
+            blockType: selectedPreviewTarget.blockType,
             styleKey: selectedPreviewTarget.styleKey || "sectionStyle",
             staticId: selectedPreviewTarget.staticId,
             contentPath: selectedPreviewTarget.contentPath,
@@ -3193,6 +3386,7 @@ const FrontendTemplateIframePreview = React.memo(
           activeSelectionTargetRef.current = {
             kind: "static",
             blockId: selectedPreviewTarget.blockId,
+            blockType: selectedPreviewTarget.blockType,
             contentPath: selectedPreviewTarget.contentPath,
             styleKey: selectedPreviewTarget.styleKey || "sectionStyle",
             staticId: selectedPreviewTarget.staticId,
@@ -3424,17 +3618,43 @@ const FrontendTemplateIframePreview = React.memo(
         });
       };
 
-      Array.from(
-        doc.querySelectorAll<HTMLElement>(
-          "[data-static-selectable='true'], [data-fallback-selectable='true'], [data-fallback-media='true']",
-        ),
-      ).forEach((element) => {
-        const key = `${element.getAttribute("data-preview-block-id") || ""}::${element.getAttribute("data-preview-style-key") || "sectionStyle"}::${element.getAttribute("data-static-id") || element.getAttribute("data-fallback-id") || ""}`;
-        const patch = staticStyleDrafts[key];
-        if (patch) {
-          applyStaticStyles(element, patch);
+      const applyAllStaticStyleDrafts = () => {
+        Array.from(
+          doc.querySelectorAll<HTMLElement>(
+            "[data-static-selectable='true'], [data-fallback-selectable='true'], [data-fallback-media='true']",
+          ),
+        ).forEach((element) => {
+          const key = `${element.getAttribute("data-preview-block-id") || ""}::${element.getAttribute("data-preview-style-key") || "sectionStyle"}::${element.getAttribute("data-static-id") || element.getAttribute("data-fallback-id") || ""}`;
+          const patch = staticStyleDrafts[key];
+          if (patch) {
+            applyStaticStyles(element, patch);
+          }
+        });
+      };
+
+      let frame = 0;
+      const scheduleApply = () => {
+        if (frame) {
+          doc.defaultView?.cancelAnimationFrame(frame);
         }
-      });
+        frame = doc.defaultView?.requestAnimationFrame(() => {
+          frame = 0;
+          applyAllStaticStyleDrafts();
+        }) ?? 0;
+      };
+
+      scheduleApply();
+      const observer = new MutationObserver(scheduleApply);
+      if (doc.body && Object.keys(staticStyleDrafts).length > 0) {
+        observer.observe(doc.body, { childList: true, subtree: true });
+      }
+
+      return () => {
+        if (frame) {
+          doc.defaultView?.cancelAnimationFrame(frame);
+        }
+        observer.disconnect();
+      };
     }, [staticStyleDrafts, selectedPreviewTarget]);
 
     React.useEffect(() => {
@@ -3668,6 +3888,10 @@ interface PreviewComputedStyleData {
   borderRadius?: string;
   borderWidth?: string;
   borderColor?: string;
+  objectFit?: string;
+  width?: string;
+  height?: string;
+  opacity?: string;
 }
 
 export interface EditableElementSelectionData {
@@ -3691,6 +3915,7 @@ export interface ImageSelectionData {
 
 export interface SectionSelectionData {
   blockId: string;
+  blockType?: string;
   label: string;
   styleKey?: string;
   staticId?: string;
@@ -3736,6 +3961,7 @@ export interface PreviewContextMenuData {
 export interface PreviewSelectionTarget {
   kind: "section" | "static" | "editable" | "image";
   blockId: string;
+  blockType?: string;
   fieldPath?: string;
   contentPath?: string;
   styleKey?: string;
@@ -3800,6 +4026,7 @@ interface PreviewPanelProps {
     target: PreviewSelectionTarget,
     patch: PreviewElementTransformPatch,
   ) => void;
+  onDynamicStyleTargetsChange?: (targets: DynamicStyleTargetData[]) => void;
   staticStyleDrafts?: Record<string, Record<string, any>>;
   staticMediaOverrides?: Record<string, Record<string, any>>;
   saveSignal?: number;
@@ -3841,6 +4068,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
   onInlineEditStart,
   onEditableTextSave,
   onElementTransform,
+  onDynamicStyleTargetsChange,
   staticStyleDrafts = {},
   staticMediaOverrides = {},
   saveSignal,
@@ -3867,7 +4095,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
 
   // Local state
   const [viewport, setViewport] = React.useState<Viewport>("desktop");
-  const [scaleToFit, setScaleToFit] = React.useState(true);
+  const [scaleToFit, setScaleToFit] = React.useState(false);
   const [mode, setMode] = React.useState<PreviewMode>("live");
   const [zoom, setZoom] = React.useState<ZoomLevel>(1);
   const [rotated, setRotated] = React.useState(false);
@@ -5020,6 +5248,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
                 onPreviewContextMenu={onPreviewContextMenu}
                 onEditableTextSave={onEditableTextSave}
                 onElementTransform={onElementTransform}
+                onDynamicStyleTargetsChange={onDynamicStyleTargetsChange}
                 staticStyleDrafts={staticStyleDrafts}
                 staticMediaOverrides={staticMediaOverrides}
                 saveSignal={saveSignal}

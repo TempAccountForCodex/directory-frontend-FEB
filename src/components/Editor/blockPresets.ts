@@ -224,6 +224,12 @@ export const getBlockDefaultContent = (
         emptyMessage: "No articles found in this category yet.",
         readMoreLink: "/blog/{slug}",
       };
+    case "BLOG_ARTICLE":
+      return {
+        showTableOfContents: true,
+        showRelated: true,
+        backButtonLink: "/blog",
+      };
     case "CONTACT":
     case "FORM_BUILDER":
       return {
@@ -730,6 +736,23 @@ export const getLocalFieldMetadata = (
         },
         makeTextField("authorLabel", "Author Label", 7),
         makeTextField("emptyMessage", "Empty Message", 8),
+      ]);
+    case "BLOG_ARTICLE":
+      // Article body content comes from the blog post (not editable here); only
+      // layout toggles are exposed. Styling is done by selecting elements.
+      return contentGroup([
+        {
+          name: "showTableOfContents",
+          label: "Show Table of Contents",
+          type: "TOGGLE",
+          order: 1,
+        },
+        {
+          name: "showRelated",
+          label: "Show Related Articles",
+          type: "TOGGLE",
+          order: 2,
+        },
       ]);
     case "IMAGE":
       return contentGroup([

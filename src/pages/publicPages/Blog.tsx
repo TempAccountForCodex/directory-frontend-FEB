@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -58,6 +58,66 @@ const estimateReadTime = (content, description) => {
   return `${mins} min read`;
 };
 
+const FadeInImage = ({
+  src,
+  alt,
+  eager = false,
+  sizes,
+  onLoadedChange,
+}: {
+  src: string;
+  alt: string;
+  eager?: boolean;
+  sizes?: string;
+  onLoadedChange?: (loaded: boolean) => void;
+}) => {
+  const [loaded, setLoaded] = useState(false);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    setLoaded(false);
+  }, [src]);
+
+  useEffect(() => {
+    const imageNode = imageRef.current;
+    if (imageNode?.complete && imageNode.naturalWidth > 0) {
+      setLoaded(true);
+    }
+  }, [src]);
+
+  useEffect(() => {
+    onLoadedChange?.(loaded);
+  }, [loaded, onLoadedChange]);
+
+  return (
+    <Box
+      component="img"
+      ref={imageRef}
+      src={src}
+      alt={alt}
+      sizes={sizes || "(max-width: 780px) 100vw, (max-width: 1024px) 50vw, 33vw"}
+      loading={eager ? "eager" : "lazy"}
+      fetchpriority={eager ? "high" : "auto"}
+      decoding="async"
+      width="1200"
+      height="760"
+      onLoad={() => setLoaded(true)}
+      onError={() => setLoaded(true)}
+      sx={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        display: "block",
+        opacity: loaded ? 1 : 0,
+        transform: loaded ? "scale(1)" : "scale(1.035)",
+        filter: loaded ? "blur(0) saturate(1)" : "blur(6px) saturate(0.92)",
+        transition:
+          "opacity 820ms cubic-bezier(0.22, 1, 0.36, 1), transform 1100ms cubic-bezier(0.22, 1, 0.36, 1), filter 900ms cubic-bezier(0.22, 1, 0.36, 1)",
+      }}
+    />
+  );
+};
+
 const InsightsPage = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -65,13 +125,19 @@ const InsightsPage = () => {
   const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
 
   const [activeCategory, setActiveCategory] = useState("All");
-  const [insights, setInsights] = useState<InsightPost[]>(fallbackInsights);
+  const [insights, setInsights] = useState<InsightPost[]>([]);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(true);
 
   useEffect(() => {
     let ignore = false;
-    fetchPublicInsights().then((items) => {
-      if (!ignore) setInsights(items);
-    });
+    setIsLoadingInsights(true);
+    fetchPublicInsights()
+      .then((items) => {
+        if (!ignore) setInsights(items);
+      })
+      .finally(() => {
+        if (!ignore) setIsLoadingInsights(false);
+      });
     return () => {
       ignore = true;
     };
@@ -91,9 +157,8 @@ const InsightsPage = () => {
 
   const featured = useMemo(() => {
     if (!filtered.length) return undefined;
-    const randomIndex = Math.floor(Math.random() * filtered.length);
-    return filtered[randomIndex];
-  }, [filtered, activeCategory]);
+    return filtered[0];
+  }, [filtered]);
 
   const smallCards = useMemo(
     () => filtered.filter((article) => article.id !== featured?.id),
@@ -114,7 +179,41 @@ const InsightsPage = () => {
     article: any;
     featured?: boolean;
   }) => {
-    const showContent = true;
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [showContent, setShowContent] = useState(false);
+
+    useEffect(() => {
+      setImageLoaded(false);
+      setShowContent(false);
+    }, [article.id, isFeatured]);
+
+    useEffect(() => {
+      const fallbackId = window.setTimeout(() => setShowContent(true), 2000);
+      return () => window.clearTimeout(fallbackId);
+    }, [article.id, isFeatured]);
+
+    useEffect(() => {
+      if (!imageLoaded) return undefined;
+      const baseDelay = isFeatured ? 220 : 140;
+      const sequenceSeed = String(article.id || "")
+        .split("")
+        .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      const timerId = window.setTimeout(
+        () => setShowContent(true),
+        baseDelay + (sequenceSeed % 4) * 45,
+      );
+      return () => window.clearTimeout(timerId);
+    }, [article.id, isFeatured, imageLoaded]);
+
+    const imageSkeletonSx = {
+      position: "absolute",
+      inset: 0,
+      background:
+        "linear-gradient(90deg, #eef3f8 0%, #f8fbff 45%, #e3ebf2 75%, #eef3f8 100%)",
+      backgroundSize: "200% 100%",
+      animation: "insight-skeleton-shimmer 1.25s linear infinite",
+      zIndex: 1,
+    };
 
     if (isFeatured) {
       return (
@@ -148,17 +247,16 @@ const InsightsPage = () => {
               height: { xs: "clamp(200px, 38vw, 280px)", md: "100%" },
               position: "relative",
               background: "#0a1825",
+              transition: "filter 0.32s ease",
             }}
           >
-            <Box
-              component="img"
+            {!showContent && <Box sx={imageSkeletonSx} />}
+            <FadeInImage
               src={getImageUrl(article.image)}
               alt={article.title}
-              sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
+              eager
+              sizes="(max-width: 1024px) 100vw, 45vw"
+              onLoadedChange={setImageLoaded}
             />
             <Box
               sx={{
@@ -277,17 +375,14 @@ const InsightsPage = () => {
             height: "220px",
             position: "relative",
             background: "#0a1825",
+            transition: "filter 0.32s ease",
           }}
         >
-          <Box
-            component="img"
+          {!showContent && <Box sx={imageSkeletonSx} />}
+          <FadeInImage
             src={getImageUrl(article.image)}
             alt={article.title}
-            sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
+            onLoadedChange={setImageLoaded}
           />
           <Box
             sx={{
@@ -395,6 +490,64 @@ const InsightsPage = () => {
     );
   };
 
+  const ArticleGridSkeleton = () => (
+    <Grid container spacing={{ xs: 2, md: 3, lg: 4 }}>
+      <Grid item xs={12}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            minHeight: { xs: "auto", md: "280px" },
+            border: "1px solid #d7e2ec",
+            borderRadius: "16px",
+            overflow: "hidden",
+            background: "#ffffff",
+            boxShadow: "0 8px 18px rgba(12, 28, 45, 0.08)",
+          }}
+        >
+          <Skeleton
+            variant="rectangular"
+            sx={{
+              flex: { xs: "none", md: "0 0 45%" },
+              height: { xs: "clamp(200px, 38vw, 280px)", md: "auto" },
+            }}
+          />
+          <Box sx={{ flex: 1, p: { xs: 3, md: 5 } }}>
+            <Skeleton variant="text" width="36%" height={18} />
+            <Skeleton variant="text" width="82%" height={44} />
+            <Skeleton variant="text" width="62%" height={34} />
+            <Skeleton variant="text" width="100%" height={20} sx={{ mt: 2 }} />
+            <Skeleton variant="text" width="88%" height={20} />
+            <Skeleton variant="text" width="44%" height={18} sx={{ mt: 4 }} />
+          </Box>
+        </Box>
+      </Grid>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <Grid item xs={12} sm={6} lg={4} key={`blog-skeleton-${index}`}>
+          <Box
+            sx={{
+              border: "1px solid #d7e2ec",
+              borderRadius: "14px",
+              overflow: "hidden",
+              background: "#ffffff",
+              boxShadow: "0 6px 14px rgba(12, 28, 45, 0.07)",
+            }}
+          >
+            <Skeleton variant="rectangular" height={220} />
+            <Box sx={{ p: "22px" }}>
+              <Skeleton variant="text" width="52%" height={18} />
+              <Skeleton variant="text" width="100%" height={30} />
+              <Skeleton variant="text" width="72%" height={28} />
+              <Skeleton variant="text" width="100%" height={18} sx={{ mt: 1.5 }} />
+              <Skeleton variant="text" width="82%" height={18} />
+              <Skeleton variant="text" width="48%" height={18} sx={{ mt: 3 }} />
+            </Box>
+          </Box>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
   return (
     <Box
       sx={{
@@ -402,6 +555,14 @@ const InsightsPage = () => {
         background: "#020c15",
         overflowX: "hidden",
         fontFamily: homeHeroFont,
+        "@keyframes insight-skeleton-shimmer": {
+          "0%": {
+            backgroundPosition: "200% 0",
+          },
+          "100%": {
+            backgroundPosition: "-200% 0",
+          },
+        },
         "& .MuiTypography-root, & .MuiButton-root": {
           fontFamily: homeHeroFont,
         },
@@ -572,7 +733,9 @@ const InsightsPage = () => {
             containIntrinsicSize: "1200px",
           }}
         >
-          {filtered.length === 0 ? (
+          {isLoadingInsights ? (
+            <ArticleGridSkeleton />
+          ) : filtered.length === 0 ? (
             <Box
               sx={{ textAlign: "center", padding: "80px 0", color: "#64748b" }}
             >
