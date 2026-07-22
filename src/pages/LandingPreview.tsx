@@ -14,6 +14,10 @@ import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
 import TemplateEngine from "../landingTemplates/templateEngine/TemplateEngine";
 import type { BusinessData } from "../landingTemplates/types/BusinessData";
 import {
+  buildFrontendTemplateEditorPages,
+  buildTemplatePreviewBusinessData,
+} from "../templates/frontendTemplateEditorSupport";
+import {
   getIndustryEntry,
   getIndustryKeys,
 } from "../components/publicComponents/Home/industryPreview/industryRegistry";
@@ -1228,6 +1232,42 @@ const COMPANY_PRO_DATA: BusinessData = {
   ],
 };
 
+// Derive the Education Pro preview from the exact same schema seeds used during
+// website creation, so the landing preview and the created website render
+// identical default content instead of drifting into two hardcoded copies.
+// The editor-only section-visibility authority flag is stripped so every
+// non-Home page section still renders in the gallery preview.
+const buildEducationProPreviewData = (): BusinessData => {
+  const website = {
+    name: "EdCare",
+    slug: "education-pro",
+    primaryColor: "#0f9c8f",
+    secondaryColor: "#eaf7f4",
+  };
+  const seededPages = buildFrontendTemplateEditorPages("education-pro", website);
+  const previewData = buildTemplatePreviewBusinessData(
+    "education-pro",
+    website,
+    seededPages,
+  );
+  if (!previewData) {
+    return { ...COMPANY_DATA, name: "EdCare" };
+  }
+  const templateContent = {
+    ...((previewData.templateContent as Record<string, unknown>) || {}),
+  };
+  // Landing preview switches pages by URL; it must never hide non-Home
+  // sections based on the Home-scoped authoritative visibility map.
+  delete templateContent.__editorSectionVisibility;
+  templateContent.__editorSectionVisibilityAuthoritative = false;
+  return {
+    ...previewData,
+    templateContent,
+  } as BusinessData;
+};
+
+const EDUCATION_PRO_DATA: BusinessData = buildEducationProPreviewData();
+
 // ─── Template slug → data mapping ─────────────────────────────────────────────
 
 const TEMPLATE_DATA_MAP: Record<
@@ -1263,6 +1303,7 @@ const TEMPLATE_DATA_MAP: Record<
   "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
   "company-executive": { templateId: "company-executive", data: COMPANY_DATA },
   "company-pro": { templateId: "company-pro", data: COMPANY_PRO_DATA },
+  "education-pro": { templateId: "education-pro", data: EDUCATION_PRO_DATA },
 };
 
 const ALL_TEMPLATE_SLUGS = Object.keys(TEMPLATE_DATA_MAP);
@@ -1291,6 +1332,10 @@ const TEMPLATE_GROUPS = [
   {
     label: "Company",
     slugs: ["company", "company-premium", "company-executive", "company-pro"],
+  },
+  {
+    label: "Education",
+    slugs: ["education-pro"],
   },
 ];
 
@@ -1753,6 +1798,8 @@ const COMPANY_TEMPLATE_SLUGS = [
   "company-pro",
 ] as const;
 
+const EDUCATION_TEMPLATE_SLUGS = ["education-pro"] as const;
+
 const STORE_TEMPLATE_SLUGS = [
   "store-basic",
   "store-premium",
@@ -1913,7 +1960,11 @@ const LandingPreview: React.FC = () => {
   const isStoreCategory = STORE_TEMPLATE_SLUGS.includes(
     slug as (typeof STORE_TEMPLATE_SLUGS)[number],
   );
-  const isTemplateCustomizerCategory = isCompanyCategory || isStoreCategory;
+  const isEducationCategory = EDUCATION_TEMPLATE_SLUGS.includes(
+    slug as (typeof EDUCATION_TEMPLATE_SLUGS)[number],
+  );
+  const isTemplateCustomizerCategory =
+    isCompanyCategory || isStoreCategory || isEducationCategory;
   const previewMode = searchParams.get("mode");
   const selectedPalette =
     COMPANY_EXECUTIVE_PALETTES.find(
@@ -1944,7 +1995,9 @@ const LandingPreview: React.FC = () => {
             : "Store";
   const customizerLabel = isCompanyCategory
     ? companyCustomizerLabel
-    : storeCustomizerLabel;
+    : isEducationCategory
+      ? "Education Pro"
+      : storeCustomizerLabel;
   const data = React.useMemo<BusinessData>(() => {
     if (!isTemplateCustomizerCategory) return resolvedData;
 

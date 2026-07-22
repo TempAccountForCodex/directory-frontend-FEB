@@ -259,6 +259,9 @@ const CompanyStudioTemplate = lazy(
 const CompanyProTemplate = lazy(
   () => import("../templates/company/CompanyProTemplate"),
 );
+const EducationProTemplate = lazy(
+  () => import("../templates/education/EducationProTemplate"),
+);
 
 const templateRegistry: Record<string, TemplateDefinition> = {
   // --- Service business ---
@@ -269,6 +272,14 @@ const templateRegistry: Record<string, TemplateDefinition> = {
       "Academic-focused design with admissions hero, program highlights, parent trust blocks, and a school-specific contact flow.",
     tags: ["service", "education", "academic"],
     component: EducationTemplate,
+  },
+  "education-pro": {
+    id: "education-pro",
+    name: "Education Pro",
+    description:
+      "Multi-page learning academy template with course showcases, instructor profiles, testimonials, and a dedicated contact page.",
+    tags: ["education", "academic", "courses", "multi-page"],
+    component: EducationProTemplate,
   },
   gardening: {
     id: "gardening",

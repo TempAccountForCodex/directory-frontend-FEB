@@ -32,6 +32,7 @@ import {
 import { renderEditableMedia } from "../../utils/editableComponents";
 import { companyProAssets } from "../../assets/company/company-pro";
 import { buildCompanyTheme, rgba } from "./theme";
+import { buildSharedHeaderTheme } from "../../utils/headerTheme";
 
 const buildCompanyProTheme = (data: TemplateProps["data"]) => {
   const theme = buildCompanyTheme({
@@ -77,7 +78,7 @@ const sectionEyebrowSx = (bodyFont: string) => ({
 export const CompanyProTemplateHeader: React.FC<TemplateChromeProps> = ({
   data,
 }) => {
-  const { ink, paper, headingFont } = buildCompanyProTheme(data);
+  const { headingFont } = buildCompanyProTheme(data);
   const content = asRecord(data.templateContent);
   const navbar = asRecord(content.navbar);
   const blockId = navbar.blockId;
@@ -94,6 +95,12 @@ export const CompanyProTemplateHeader: React.FC<TemplateChromeProps> = ({
       ? navbar.brandName.trim()
       : data.name || "Alder & Co.";
 
+  // Shared, theme-aware Header colors: background follows the active palette
+  // primary (manual editor override wins), text flips for readability.
+  const headerTheme = buildSharedHeaderTheme(data, navbar, {
+    defaultPrimary: "#12100f",
+  });
+
   return (
     <Box {...getEditableSectionProps(blockId, "Header", "sectionStyle")}>
       <TemplateNavbarHeader
@@ -103,6 +110,8 @@ export const CompanyProTemplateHeader: React.FC<TemplateChromeProps> = ({
           ctaText: navbar.ctaText || "Book a session",
           ctaUrl: navbar.ctaLink || "#contact",
           navigationItems: navItems,
+          navLinkColor: navbar.navLinkColor || headerTheme.navLinkColor,
+          ctaColor: navbar.ctaColor || headerTheme.ctaColor,
         }}
         fallbackName={data.name}
         sectionNavItems={navItems.map((item: Record<string, any>) => ({
@@ -113,11 +122,14 @@ export const CompanyProTemplateHeader: React.FC<TemplateChromeProps> = ({
         onScrollToSection={(id) =>
           document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
         }
-        themeColor={ink}
+        themeColor={headerTheme.themeColor}
         headingFont={headingFont}
-        bgColor={rgba(paper, 0.96)}
-        borderColor={rgba(ink, 0.18)}
+        bgColor={headerTheme.bgColor}
+        borderColor={headerTheme.borderColor}
         websiteId={data.websiteId}
+        ctaHoverTextColor={headerTheme.ctaHoverTextColor}
+        mobileCtaColor={headerTheme.mobileCtaColor}
+        mobileCtaHoverTextColor={headerTheme.mobileCtaHoverTextColor}
       />
     </Box>
   );

@@ -49,6 +49,7 @@ import {
   renderEditorSharedBlock,
 } from "../../blocks";
 import { companyStudioAssets } from "../../assets/company/company-executive";
+import { buildSharedHeaderTheme } from "../../utils/headerTheme";
 
 const palette = {
   bg: "#f4efe7",
@@ -385,17 +386,7 @@ export const CompanyStudioTemplateHeader: React.FC<TemplateChromeProps> = ({
     (data.templateContent as Record<string, any> | undefined) || {};
   const navbarContent = templateContent.navbar || {};
   const homeContent = templateContent.home || {};
-  const themeColor =
-    data.themeSettings?.primaryColor || data.primaryColor || palette.accent;
-  const rawSecondaryColor =
-    data.themeSettings?.secondaryColor ||
-    data.secondaryColor ||
-    palette.surfaceAlt;
-  const themeSecondary = isLightColor(rawSecondaryColor)
-    ? rawSecondaryColor
-    : palette.surfaceAlt;
   const headingFont = data.themeSettings?.headingFont || defaultHeadingFont;
-  const headerBackground = rgba(themeSecondary, 0.72);
   const customSections = Array.isArray(templateContent.customSections)
     ? templateContent.customSections
     : [];
@@ -463,18 +454,31 @@ export const CompanyStudioTemplateHeader: React.FC<TemplateChromeProps> = ({
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // Shared, theme-aware Header colors: background follows the active palette
+  // primary (manual editor override wins), text flips for readability.
+  const headerTheme = buildSharedHeaderTheme(data, navbarContent, {
+    defaultPrimary: palette.accent,
+  });
+
   return (
     <Box {...getEditableSectionProps(navbarBlockId, "Header")}>
       <TemplateNavbarHeader
-        navbarContent={navbarContent}
+        navbarContent={{
+          ...navbarContent,
+          navLinkColor: navbarContent.navLinkColor || headerTheme.navLinkColor,
+          ctaColor: navbarContent.ctaColor || headerTheme.ctaColor,
+        }}
         fallbackName={data.name}
         sectionNavItems={headerNavItems}
         onScrollToSection={scrollToSection}
-        themeColor={themeColor}
+        themeColor={headerTheme.themeColor}
         headingFont={headingFont}
-        bgColor={headerBackground}
-        borderColor={rgba(themeColor, 0.14)}
+        bgColor={headerTheme.bgColor}
+        borderColor={headerTheme.borderColor}
         websiteId={data.websiteId}
+        ctaHoverTextColor={headerTheme.ctaHoverTextColor}
+        mobileCtaColor={headerTheme.mobileCtaColor}
+        mobileCtaHoverTextColor={headerTheme.mobileCtaHoverTextColor}
       />
     </Box>
   );
@@ -1231,6 +1235,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   ).slice(0, 4);
   const themeColor =
     data.themeSettings?.primaryColor || data.primaryColor || "#124d4e";
+  // Shared, theme-aware Header colors for the full-template render path.
+  const bodyHeaderTheme = buildSharedHeaderTheme(data, navbarContent, {
+    defaultPrimary: "#124d4e",
+  });
   const rawSecondaryColor =
     data.themeSettings?.secondaryColor ||
     data.secondaryColor ||
@@ -1253,7 +1261,6 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const themeSurfaceStrong = blendHex(themeSecondary, "#ffffff", 0.34);
   const themeLine = rgba(themeColor, 0.12);
   const pageBackground = `linear-gradient(180deg, ${rgba(themeSecondary, 0.22)} 0%, ${palette.bg} 20%, ${palette.bg} 100%)`;
-  const headerBackground = rgba(themeSecondary, 0.72);
   const customSections = Array.isArray(templateContent.customSections)
     ? templateContent.customSections
     : [];
@@ -2045,15 +2052,23 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         data-editor-section-key="navbar"
       >
         <TemplateNavbarHeader
-          navbarContent={navbarContent}
+          navbarContent={{
+            ...navbarContent,
+            navLinkColor:
+              navbarContent.navLinkColor || bodyHeaderTheme.navLinkColor,
+            ctaColor: navbarContent.ctaColor || bodyHeaderTheme.ctaColor,
+          }}
           fallbackName={data.name}
           sectionNavItems={headerNavItems}
           onScrollToSection={scrollToSection}
-          themeColor={themeColor}
+          themeColor={bodyHeaderTheme.themeColor}
           headingFont={headingFont}
-          bgColor={headerBackground}
-          borderColor={rgba(themeColor, 0.14)}
+          bgColor={bodyHeaderTheme.bgColor}
+          borderColor={bodyHeaderTheme.borderColor}
           websiteId={data.websiteId}
+          ctaHoverTextColor={bodyHeaderTheme.ctaHoverTextColor}
+          mobileCtaColor={bodyHeaderTheme.mobileCtaColor}
+          mobileCtaHoverTextColor={bodyHeaderTheme.mobileCtaHoverTextColor}
         />
       </Box>
 

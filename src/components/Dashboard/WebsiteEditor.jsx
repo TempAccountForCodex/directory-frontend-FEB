@@ -8162,11 +8162,20 @@ const WebsiteEditorInner = () => {
     }
   }, [websiteId]);
 
+  const selectedPagePath = String(selectedPage?.path || "").trim();
+  const liveSiteHref = website?.slug
+    ? `/site/${website.slug}${
+        selectedPage?.isHome || selectedPagePath === "/"
+          ? ""
+          : `/${selectedPagePath.replace(/^\/+/, "")}`
+      }`
+    : null;
+
   const handleMobilePreview = useCallback(() => {
-    if (website?.slug) {
-      window.open(`/site/${website.slug}`, "_blank");
+    if (liveSiteHref) {
+      window.open(liveSiteHref, "_blank");
     }
-  }, [website?.slug]);
+  }, [liveSiteHref]);
 
   const applyHistoryBlocksToActivePage = useCallback(
     (historyBlocks) => {
@@ -8249,7 +8258,6 @@ const WebsiteEditorInner = () => {
   const effectiveCanUndo = canUndo || canUndoStatic;
   const effectiveCanRedo = canRedo || canRedoStatic;
 
-  const liveSiteHref = website?.slug ? `/site/${website.slug}` : null;
   const headerMenuOpen = Boolean(headerMenuAnchorEl);
   const pageCount = pages.length;
   const activeBlockCount = blocks.length;
@@ -10188,7 +10196,10 @@ const WebsiteEditorInner = () => {
                               previewTemplateDataOverride
                             }
                             frontendTemplateRenderMode={
-                              selectedPage?.isHome ? "full" : "page-shell"
+                              selectedPage?.isHome ||
+                              resolvedFrontendTemplateId === "education-pro"
+                                ? "full"
+                                : "page-shell"
                             }
                             pages={pages.map((page) => ({
                               id: page.id,

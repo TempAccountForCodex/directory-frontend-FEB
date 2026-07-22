@@ -12,7 +12,7 @@ import {
 } from "../landingTemplates/utils/hiddenElements";
 import { companyStudioAssets } from "../landingTemplates/assets/company/company-executive";
 import { companyProAssets } from "../landingTemplates/assets/company/company-pro";
-import { educationProAssets } from "../landingTemplates/assets/education/education-pro";
+import { educationProAssets } from "../landingTemplates/assets/education/education-pro/index";
 
 export type TemplateThemeSettings = {
   primaryColor?: string;
@@ -984,16 +984,14 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           blockType: "NAVBAR",
           optional: true,
           buildContent: (data) => ({
-            brandName: data.name || "Aster Academy",
+            brandName: data.name || "EdCare",
             navigationItems: [
               { label: "Home", link: "/" },
               { label: "About", link: "/about" },
               { label: "Courses", link: "/courses" },
               { label: "Contact", link: "/contact" },
             ],
-            description: "Learn with expert teachers, wherever you are.",
-            utilityText: "Monday – Saturday · 09:00 – 18:00",
-            ctaText: "Start learning",
+            ctaText: "Start Free Trial",
             ctaLink: "/courses",
           }),
         },
@@ -1002,42 +1000,196 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           label: "Hero",
           blockType: "HERO",
           buildContent: (data) => ({
-            eyebrow: "A learning community for tomorrow",
-            heading: data.tagline || "Find the confidence to shape what is next.",
-            subheading: data.description || "A modern education experience built around curiosity, practical skills, and a supportive community.",
-            ctaText: "Explore courses",
+            eyebrow: "#1 Platform for online learning",
+            heading:
+              data.tagline || "Start learning from the world's best sites.",
+            subheading:
+              data.description ||
+              "A modern learning experience built around expert instructors, flexible courses, and a supportive student community.",
+            ctaText: "Get Started Now",
             ctaLink: "/courses",
             image: educationProAssets.studentLearning,
-            items: [
-              { image: educationProAssets.groupStudy, heading: "Live classes" },
-              { image: educationProAssets.onlineClass, heading: "Learn anywhere" },
-            ],
             imageStyle: { fit: "cover", height: "auto" },
+            items: [
+              { value: "9.5K+", heading: "Enrolled Students" },
+              { value: "15.5K+", heading: "Classes Completed" },
+              { value: "7.6K+", heading: "Certified Members" },
+            ],
+          }),
+        },
+        {
+          key: "categories",
+          label: "Explore top categories",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "Popular categories",
+            heading: "Explore Top Categories",
+            features: [
+              {
+                icon: "01",
+                title: "Language Learning",
+                description: "Live-taught fluency courses with native mentors.",
+              },
+              {
+                icon: "02",
+                title: "IT & Software",
+                description: "Hands-on tracks covering modern dev tooling.",
+              },
+              {
+                icon: "03",
+                title: "Web Development",
+                description: "Ship real projects across the full stack.",
+              },
+              {
+                icon: "04",
+                title: "Business Management",
+                description: "Lead teams with practical strategy frameworks.",
+              },
+              {
+                icon: "05",
+                title: "Photography",
+                description: "Master composition, light, and storytelling.",
+              },
+              {
+                icon: "06",
+                title: "Digital Marketing",
+                description: "Grow audiences with data-driven campaigns.",
+              },
+            ],
           }),
         },
         {
           key: "intro",
-          label: "Introduction",
+          label: "About our academy",
           blockType: "TEXT",
-          buildContent: () => ({
-            eyebrow: "Why Aster",
-            heading: "An education designed for the world students will enter.",
-            body: "We combine ambitious teaching, real-world projects, and close mentorship so every learner can build lasting momentum.",
+          buildContent: (data) => ({
+            eyebrow: "Why choose us",
+            heading: "We Care About Your Life For Better Future",
+            body:
+              data.description ||
+              "We combine expert instruction, practical projects, and close mentorship so every student can build lasting confidence and real skills.",
+            image: educationProAssets.groupStudy,
+            alt: "Students learning together",
+            items: [
+              { heading: "Instructor-led online classes" },
+              { heading: "Flexible, self-paced access" },
+              { heading: "Personalized learning progress" },
+            ],
+            ctaText: "Learn More",
+            ctaLink: "/about",
           }),
         },
         {
-          key: "features",
-          label: "Learning pillars",
+          key: "courses",
+          label: "Featured courses",
           blockType: "FEATURES",
           buildContent: () => ({
-            heading: "A clearer path to meaningful progress.",
+            eyebrow: "Top courses",
+            heading: "Explore Featured Courses",
             features: [
-              { icon: "01", title: "Expert-led learning", description: "Guidance from educators and practitioners who make complex subjects feel possible." },
-              { icon: "02", title: "Built for belonging", description: "Small-group learning, dedicated support, and a community that knows your name." },
-              { icon: "03", title: "Future-ready skills", description: "Applied projects that turn knowledge into confidence and practical capability." },
-              { icon: "04", title: "Business", description: "Build practical confidence for work that matters." },
-              { icon: "05", title: "Technology", description: "Learn tools and thinking for a digital world." },
-              { icon: "06", title: "Creative arts", description: "Develop your voice through guided practice." },
+              {
+                icon: "Culinary",
+                title: "The Complete Beginner's Guide to Cooking",
+                description: "12 lessons · 5 students",
+                image: educationProAssets.scienceLab,
+              },
+              {
+                icon: "Programming",
+                title: "Getting Started With PHP And MySQL",
+                description: "18 lessons · 8 students",
+                image: educationProAssets.onlineClass,
+              },
+              {
+                icon: "Programming",
+                title: "Advanced Java Programming With Eclipse",
+                description: "12 lessons · 3 students",
+                image: educationProAssets.groupStudy,
+              },
+            ],
+          }),
+        },
+        {
+          key: "promo",
+          label: "Enrollment offer",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Limited seats available",
+            heading: "50% Off For Very First 50 Students & Members",
+            body: "Join now with a focused learning program, dedicated mentor support, and a community that keeps you moving forward.",
+            image: educationProAssets.studentTutoring,
+            ctaText: "Enroll Now",
+            ctaLink: "/courses",
+          }),
+        },
+        {
+          key: "instructors",
+          label: "Expert instructors",
+          blockType: "TEAM",
+          buildContent: () => ({
+            eyebrow: "Our mentors",
+            heading: "Meet Our Expert Instructor",
+            members: [
+              {
+                name: "Noah C. Logan",
+                role: "Programming",
+                photo: educationProAssets.instructorNora,
+              },
+              {
+                name: "Scarlett Foster",
+                role: "Marketing",
+                photo: educationProAssets.instructorScarlet,
+              },
+              {
+                name: "Chloe Smith",
+                role: "Design",
+                photo: educationProAssets.instructorChloe,
+              },
+              {
+                name: "Madison Chloe",
+                role: "Business",
+                photo: educationProAssets.instructorMelanie,
+              },
+            ],
+          }),
+        },
+        {
+          key: "courseRequest",
+          label: "Find your best course",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Get started today",
+            heading: "Find Your Best Course With Us",
+            body:
+              "Talk with an academic advisor to build a learning path suited to your goals and schedule.",
+            image: educationProAssets.onlineClass,
+            ctaText: "Get Started Now",
+            ctaLink: "/courses",
+          }),
+        },
+        {
+          key: "testimonials",
+          label: "Student feedback",
+          blockType: "TESTIMONIALS",
+          buildContent: () => ({
+            eyebrow: "Testimonials",
+            heading: "Feedback From Our Students",
+            testimonials: [
+              {
+                quote:
+                  "The instructors made every lesson feel practical. I finished the program with skills I actually use every day.",
+                author: "Michael Thomas",
+                role: "Web Development student",
+                photo: educationProAssets.instructorNora,
+                rating: 5,
+              },
+              {
+                quote:
+                  "Flexible scheduling and genuinely caring mentors. This is the most supportive learning community I've found.",
+                author: "Mathew White",
+                role: "Business Management student",
+                photo: educationProAssets.instructorChloe,
+                rating: 5,
+              },
             ],
           }),
         },
@@ -1047,9 +1199,10 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           blockType: "STATS",
           buildContent: () => ({
             stats: [
-              { value: "94%", label: "Students feel supported" },
-              { value: "18:1", label: "Student-to-mentor ratio" },
-              { value: "42", label: "Project-based learning labs" },
+              { number: "5,192", suffix: "+", label: "Registered Students" },
+              { number: "15,485", suffix: "+", label: "Classes Completed" },
+              { number: "97.55", suffix: "%", label: "Satisfaction Rate" },
+              { number: "97.55", suffix: "%", label: "Course Completion" },
             ],
           }),
         },
@@ -1059,17 +1212,31 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           blockType: "FOOTER",
           optional: true,
           buildContent: (data) => ({
-            logoText: data.name || "Aster Academy",
-            description: "A learning community for thoughtful, capable, and curious people.",
-            copyright: `© 2026 ${data.name || "Aster Academy"}. All rights reserved.`,
-            columns: [
-              { title: "Explore", links: [{ label: "Courses", url: "/courses" }, { label: "About", url: "/about" }] },
-              { title: "Visit", links: [{ label: "About", url: "/about" }, { label: "Contact", url: "/contact" }] },
-            ],
-            heading: "Subscribe for learning updates.",
-            subheading: "Courses, events, and useful ideas in your inbox.",
-            ctaText: "Subscribe now",
+            logoText: data.name || "EdCare",
+            heading: "Subscribe Our Newsletter For Latest Updates",
+            ctaText: "Subscribe Now",
             ctaLink: "/contact",
+            description:
+              "Fusce varius, dolor tempor interdum tristique bibendum.",
+            columns: [
+              {
+                title: "Company Info",
+                links: [
+                  { label: "About Us", url: "/about" },
+                  { label: "All Courses", url: "/courses" },
+                  { label: "Contact", url: "/contact" },
+                ],
+              },
+              {
+                title: "Useful Links",
+                links: [
+                  { label: "All Courses", url: "/courses" },
+                  { label: "About Us", url: "/about" },
+                  { label: "Contact", url: "/contact" },
+                ],
+              },
+            ],
+            copyright: `© 2026 ${data.name || "EdCare"}. All Rights Reserved.`,
           }),
         },
       ],
@@ -1078,33 +1245,62 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       key: "about",
       title: "About",
       path: "/about",
+      isHome: false,
       sections: [
+        {
+          key: "banner",
+          label: "Page banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Get to know EdCare",
+            heading: "About Us",
+            image: educationProAssets.studentTutoring,
+            alt: "Students learning at EdCare",
+          }),
+        },
         {
           key: "intro",
           label: "Our story",
           blockType: "TEXT",
-          buildContent: () => ({
-            eyebrow: "Our story",
-            heading: "Learning is more powerful when it feels personal.",
-            body: "Aster Academy brings together exceptional teaching, a culture of care, and creative spaces for people who want to grow with purpose.",
+          buildContent: (data) => ({
+            eyebrow: "Our Speciality",
+            heading: "Over 10 Years in Distant Learning for Skill Development",
+            body:
+              data.description ||
+              "EdCare brings together exceptional teaching, a culture of care, and creative learning spaces for people who want to grow with purpose.",
             image: educationProAssets.groupStudy,
-            alt: "Students learning together at Aster Academy",
+            alt: "Students learning together at EdCare",
             items: [
-              { image: educationProAssets.studentTutoring, heading: "Personal support" },
-              { image: educationProAssets.onlineClass, heading: "Flexible learning" },
+              { value: "9.5K+", heading: "Students Enrolled" },
+              { value: "6.7K+", heading: "Certified Members" },
             ],
+            ctaText: "Start Free Trial",
+            ctaLink: "/courses",
           }),
         },
         {
           key: "features",
-          label: "Our values",
+          label: "Why choose us",
           blockType: "FEATURES",
           buildContent: () => ({
-            heading: "What guides our community.",
+            eyebrow: "Our Features",
+            heading: "Online Education That Improves You",
             features: [
-              { icon: "01", title: "Curiosity first", description: "Questions lead the way, and every perspective is welcome." },
-              { icon: "02", title: "High expectations", description: "We pair rigorous learning with the support to meet each challenge." },
-              { icon: "03", title: "Shared success", description: "Students, families, and educators make progress together." },
+              {
+                icon: "01",
+                title: "Instructor-led online classes",
+                description: "Guided lessons taught live by subject experts.",
+              },
+              {
+                icon: "02",
+                title: "Every worthwhile access",
+                description: "Learn on your schedule, from any device, anywhere.",
+              },
+              {
+                icon: "03",
+                title: "Personalized learning profile",
+                description: "Progress tracking built around your own pace.",
+              },
             ],
           }),
         },
@@ -1114,10 +1310,10 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           blockType: "STATS",
           buildContent: () => ({
             stats: [
-              { value: "3,192+", label: "Active learners" },
-              { value: "15,485+", label: "Courses completed" },
-              { value: "97.55%", label: "Learner satisfaction" },
-              { value: "97.55%", label: "Career confidence" },
+              { number: "3,192", suffix: "+", label: "Registered Students" },
+              { number: "15,485", suffix: "+", label: "Classes Completed" },
+              { number: "97.55", suffix: "%", label: "Satisfaction Rate" },
+              { number: "97.55", suffix: "%", label: "Course Completion" },
             ],
           }),
         },
@@ -1126,12 +1322,52 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           label: "Expert instructors",
           blockType: "TEAM",
           buildContent: () => ({
-            heading: "Meet our expert instructors.",
+            eyebrow: "Our Mentors",
+            heading: "Meet Our Expert Instructor",
             members: [
-              { name: "Nora Logan", role: "Course mentor", photo: educationProAssets.studentTutoring },
-              { name: "Scarlet Foster", role: "Learning designer", photo: educationProAssets.groupStudy },
-              { name: "Chloe Smith", role: "Program lead", photo: educationProAssets.onlineClass },
-              { name: "Melanie Chan", role: "Student coach", photo: educationProAssets.scienceLab },
+              {
+                name: "Noah C. Logan",
+                role: "Programming",
+                photo: educationProAssets.instructorNora,
+              },
+              {
+                name: "Scarlett Foster",
+                role: "Marketing",
+                photo: educationProAssets.instructorScarlet,
+              },
+              {
+                name: "Chloe Smith",
+                role: "Design",
+                photo: educationProAssets.instructorChloe,
+              },
+              {
+                name: "Madison Chloe",
+                role: "Business",
+                photo: educationProAssets.instructorMelanie,
+              },
+            ],
+          }),
+        },
+        {
+          key: "showcase",
+          label: "Leadership",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "Our Journey",
+            heading: "Founded by Industry Leaders With Large Scale Business",
+            features: [
+              {
+                title: "Career Opportunities in EdCare",
+                description:
+                  "Join a collaborative education team shaping meaningful learning experiences.",
+                image: educationProAssets.onlineClass,
+              },
+              {
+                title: "Career Opportunities in EdCare",
+                description:
+                  "Build your career alongside mentors who put student outcomes first.",
+                image: educationProAssets.studentTutoring,
+              },
             ],
           }),
         },
@@ -1141,23 +1377,62 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       key: "courses",
       title: "Courses",
       path: "/courses",
+      isHome: false,
       sections: [
         {
-          key: "intro",
-          label: "Courses introduction",
+          key: "banner",
+          label: "Page banner",
           blockType: "TEXT",
-          buildContent: () => ({ eyebrow: "Courses", heading: "Choose a course of study that meets your ambition.", body: "Flexible learning pathways pair essential knowledge with hands-on experience, so students can make progress that matters." }),
+          buildContent: () => ({
+            eyebrow: "Browse our catalog",
+            heading: "All Courses",
+            image: educationProAssets.studentLearning,
+            alt: "Browse EdCare courses",
+          }),
         },
         {
           key: "features",
           label: "Featured courses",
           blockType: "FEATURES",
           buildContent: () => ({
-            heading: "Explore our learning pathways.",
+            heading: "Explore Our Learning Pathways",
             features: [
-              { icon: "01", title: "Digital marketing essentials", description: "Build practical, in-demand skills with guided projects.", image: educationProAssets.onlineClass },
-              { icon: "02", title: "Design systems for teams", description: "Learn the tools and thinking behind useful digital products.", image: educationProAssets.groupStudy },
-              { icon: "03", title: "Professional communication", description: "Present ideas clearly and lead conversations with confidence.", image: educationProAssets.scienceLab },
+              {
+                icon: "Culinary",
+                title: "The Complete Beginner's Guide to Cooking",
+                description: "15 lessons · 4 students",
+                image: educationProAssets.scienceLab,
+              },
+              {
+                icon: "Programming",
+                title: "Getting Started With PHP And MySQL",
+                description: "18 lessons · 11 students",
+                image: educationProAssets.onlineClass,
+              },
+              {
+                icon: "Programming",
+                title: "Advanced Java Programming With Eclipse",
+                description: "12 lessons · 3 students",
+                image: educationProAssets.groupStudy,
+              },
+              {
+                icon: "Programming",
+                title: "The Complete Python Bootcamp From Zero",
+                description: "16 lessons · 2 students",
+                image: educationProAssets.studentTutoring,
+              },
+              {
+                icon: "Culinary",
+                title: "Practical Cooking Course for Students",
+                description: "11 lessons · 2 students",
+                image: educationProAssets.studentLearning,
+              },
+              {
+                icon: "Culinary",
+                title: "A Step-by-Step Course for Busy People",
+                description: "12 lessons · 1 student",
+                image: educationProAssets.scienceLab,
+              },
             ],
           }),
         },
@@ -1167,37 +1442,56 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       key: "contact",
       title: "Contact",
       path: "/contact",
+      isHome: false,
       sections: [
+        {
+          key: "banner",
+          label: "Page banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "We'd love to hear from you",
+            heading: "Contact",
+            image: educationProAssets.groupStudy,
+            alt: "Contact EdCare",
+          }),
+        },
         {
           key: "contact",
           label: "Contact",
           blockType: "CONTACT",
           buildContent: (data) => ({
-            eyebrow: "Contact us",
-            heading: "Let’s talk about what comes next.",
-            description: "Tell us about your learning goals and our team will help you find the right path.",
-            email: data.contact.email || "hello@asteracademy.edu",
-            phone: data.contact.phone || "(555) 014-2026",
-            items: [
-              { heading: "Your name" },
-              { heading: "Your email" },
-              { heading: "Subject" },
-              { heading: "Tell us how we can help" },
-            ],
+            eyebrow: "Contact",
+            heading: "Leave A Reply",
+            description:
+              "Fill up the form and message us about your amazing question.",
+            email: data.contact.email || "hello@edcare.com",
+            phone: data.contact.phone || "(165) 48596-5789",
             detailGroups: [
-              { title: "Phone & email", items: [data.contact.phone || "(555) 014-2026", data.contact.email || "hello@asteracademy.edu"] },
-              { title: "Our office", items: [data.contact.address || "48 Garden Way, Cambridge, MA"] },
-              { title: "Office hours", items: ["Monday – Friday · 09:00 – 18:00"] },
+              {
+                title: "Phone Number & Email",
+                items: [
+                  data.contact.phone || "(165) 48596-5789",
+                  data.contact.email || "hello@edcare.com",
+                ],
+              },
+              {
+                title: "Our Office Address",
+                items: [
+                  data.contact.address ||
+                    "2690 Hilton Street Victoria Road, New York, Canada",
+                ],
+              },
+              {
+                title: "Official Work Time",
+                items: [
+                  "Monday - Friday: 09:00 - 20:00",
+                  "Sunday & Saturday: 10:30 - 22:00",
+                ],
+              },
             ],
-            buttonLabel: "Talk to admissions",
-            buttonLink: `mailto:${data.contact.email || "hello@asteracademy.edu"}`,
+            buttonLabel: "Submit Message",
+            buttonLink: `mailto:${data.contact.email || "hello@edcare.com"}`,
           }),
-        },
-        {
-          key: "image",
-          label: "Contact image",
-          blockType: "IMAGE",
-          buildContent: () => ({ image: educationProAssets.studentTutoring, alt: "Aster Academy learning community", imageStyle: { fit: "cover", height: "auto" } }),
         },
       ],
     },
@@ -2077,6 +2371,76 @@ const mergeTemplateBlockContent = (
   };
 };
 
+// Build a section map (sectionKey -> persisted block) scoped to a SINGLE page.
+// Multi-page templates reuse section keys across pages (e.g. About, Courses, and
+// Contact each own a `banner`; Home and About both own `intro`/`stats`). A
+// global/home-only section map therefore bleeds one page's saved content onto
+// another page or drops it entirely, so hydration must always be page-scoped.
+const buildPersistedSectionMapForPage = (
+  templateId: string,
+  persistedPage: TemplateEditorPage | undefined,
+  schemaPage: TemplatePageSeed | undefined,
+): Map<string, TemplateEditorBlock> => {
+  const map = new Map<string, TemplateEditorBlock>();
+  if (!persistedPage) {
+    return map;
+  }
+
+  const orderedBlocks = [...(persistedPage.blocks || [])]
+    .filter((block) => block?.isVisible !== false)
+    .sort((left, right) => {
+      const leftOrder =
+        typeof left?.sortOrder === "number"
+          ? left.sortOrder
+          : Number.MAX_SAFE_INTEGER;
+      const rightOrder =
+        typeof right?.sortOrder === "number"
+          ? right.sortOrder
+          : Number.MAX_SAFE_INTEGER;
+      return leftOrder - rightOrder;
+    });
+  const usedBlockIndexes = new Set<number>();
+
+  orderedBlocks.forEach((block, index) => {
+    const sectionKey =
+      typeof block.content?.editorSection === "string"
+        ? block.content.editorSection.trim()
+        : getCompatibleSectionKey(templateId, block);
+    if (sectionKey && !map.has(sectionKey)) {
+      map.set(sectionKey, block);
+      usedBlockIndexes.add(index);
+    }
+  });
+
+  // Legacy blocks that predate editorSection markers are matched by block type
+  // against this page's own schema sections (never another page's).
+  const seededSections = Array.isArray(schemaPage?.sections)
+    ? schemaPage.sections
+    : [];
+  seededSections.forEach((section) => {
+    if (map.has(section.key)) {
+      return;
+    }
+    const fallbackIndex = orderedBlocks.findIndex((block, index) => {
+      if (usedBlockIndexes.has(index)) {
+        return false;
+      }
+      const persistedBlockType = String(
+        block?.content?.editorBlockType || block?.blockType || "",
+      )
+        .trim()
+        .toUpperCase();
+      return persistedBlockType === String(section.blockType || "").toUpperCase();
+    });
+    if (fallbackIndex >= 0) {
+      map.set(section.key, orderedBlocks[fallbackIndex]);
+      usedBlockIndexes.add(fallbackIndex);
+    }
+  });
+
+  return map;
+};
+
 const hydrateSeededPages = (
   templateId: string,
   seededPages: TemplateEditorPage[],
@@ -2089,17 +2453,29 @@ const hydrateSeededPages = (
   const persistedPageMap = new Map(
     persistedPages.map((page) => [getPageStorageKey(page), page]),
   );
-  const persistedSections = getTemplateSectionMap(templateId, persistedPages);
-  if (!persistedSections.size) {
-    return seededPages;
-  }
   const templateSectionKeys = new Set(getTemplateSectionKeys(templateId));
-
-  const usedPersistedBlocks = new Set(Array.from(persistedSections.values()));
+  const schemaPages = TEMPLATE_PAGE_SCHEMAS[templateId] || [];
 
   return seededPages.map((page) => {
     const pageKey = getPageStorageKey(page);
     const persistedPage = persistedPageMap.get(pageKey);
+    const schemaPage =
+      schemaPages.find((candidate) =>
+        page.isHome ? candidate.isHome : candidate.path === page.path,
+      ) || (page.isHome ? schemaPages.find((c) => c.isHome) : undefined);
+
+    // Section map scoped to THIS page's persisted blocks only. This prevents
+    // cross-page content bleed and guarantees each page hydrates from its own
+    // saved blocks instead of Home's.
+    const persistedSections = buildPersistedSectionMapForPage(
+      templateId,
+      persistedPage,
+      schemaPage,
+    );
+    const usedPersistedBlocks = new Set(
+      Array.from(persistedSections.values()),
+    );
+
     const customPersistedBlocks = (persistedPage?.blocks || []).filter(
       (block) => {
         if (usedPersistedBlocks.has(block)) {
@@ -2776,25 +3152,30 @@ const buildTemplatePreviewBusinessDataImpl = (
     const pageBodies = {
       home: {
         hero: withBlock(getPageSection("/", "hero")),
+        categories: withBlock(getPageSection("/", "categories")),
         intro: withBlock(getPageSection("/", "intro")),
-        features: withBlock(getPageSection("/", "features")),
-        stats: withBlock(getPageSection("/", "stats")),
         courses: withBlock(getPageSection("/", "courses")),
-        offer: withBlock(getPageSection("/", "offer")),
+        promo: withBlock(getPageSection("/", "promo")),
+        instructors: withBlock(getPageSection("/", "instructors")),
+        courseRequest: withBlock(getPageSection("/", "courseRequest")),
+        testimonials: withBlock(getPageSection("/", "testimonials")),
+        stats: withBlock(getPageSection("/", "stats")),
       },
       about: {
+        banner: withBlock(getPageSection("/about", "banner")),
         intro: withBlock(getPageSection("/about", "intro")),
         features: withBlock(getPageSection("/about", "features")),
         stats: withBlock(getPageSection("/about", "stats")),
         members: withBlock(getPageSection("/about", "members")),
+        showcase: withBlock(getPageSection("/about", "showcase")),
       },
       courses: {
-        intro: withBlock(getPageSection("/courses", "intro")),
+        banner: withBlock(getPageSection("/courses", "banner")),
         features: withBlock(getPageSection("/courses", "features")),
       },
       contact: {
+        banner: withBlock(getPageSection("/contact", "banner")),
         contact: withBlock(getPageSection("/contact", "contact")),
-        image: withBlock(getPageSection("/contact", "image")),
       },
     };
 
@@ -4475,6 +4856,10 @@ export const buildTemplatePreviewBusinessData = (
       __editorSectionVisibility: sectionVisibility,
       __editorBlockVisibility: blockVisibility,
       __editorSectionVisibilityAuthoritative: Boolean(activePage),
+      // Multi-page template components use this editor-only route hint to
+      // render the selected persisted page's dedicated composition instead of
+      // inferring Home from the dashboard URL.
+      __activePagePath: activePage?.path || "/",
     },
   } as BusinessData;
 

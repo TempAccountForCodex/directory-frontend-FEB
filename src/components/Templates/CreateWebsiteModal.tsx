@@ -323,6 +323,65 @@ const serializeTemplatePagesForCreation = (pages: TemplateEditorPage[]) =>
       })),
   }));
 
+/**
+ * `/websites` creates the website record but older API deployments do not
+ * reliably materialize every `customPages` entry. Persist each seeded page
+ * through the canonical page/block APIs as an idempotent post-create step, so
+ * a multi-page frontend template always owns real page records rather than
+ * preview-only snapshot data.
+ */
+const ensureTemplatePagesPersisted = async (
+  websiteId: string | number,
+  pages: ReturnType<typeof serializeTemplatePagesForCreation>,
+) => {
+  const pagesResponse = await apiClient.get(`/websites/${websiteId}/pages`);
+  const existingPages = Array.isArray(pagesResponse.data?.data)
+    ? pagesResponse.data.data
+    : Array.isArray(pagesResponse.data)
+      ? pagesResponse.data
+      : [];
+
+  for (const page of pages) {
+    let persistedPage =
+      existingPages.find(
+        (candidate: any) =>
+          candidate.path === page.path ||
+          (page.isHome && candidate.isHome),
+      ) || null;
+
+    if (!persistedPage) {
+      const createdPageResponse = await apiClient.post(
+        `/websites/${websiteId}/pages`,
+        {
+          title: page.title,
+          path: page.path,
+          isHome: page.isHome,
+          isPublished: page.isPublished,
+          sortOrder: page.sortOrder,
+        },
+      );
+      persistedPage =
+        createdPageResponse.data?.data ||
+        createdPageResponse.data?.page ||
+        createdPageResponse.data;
+      existingPages.push(persistedPage);
+    }
+
+    if (!persistedPage?.id) {
+      throw new Error(`Failed to persist the "${page.title}" page`);
+    }
+
+    await apiClient.put(`/websites/${websiteId}/pages/${persistedPage.id}/blocks`, {
+      blocks: page.blocks.map((block, blockIndex) => ({
+        blockType: block.blockType,
+        content: block.content,
+        sortOrder: block.sortOrder ?? blockIndex,
+        isVisible: block.isVisible ?? true,
+      })),
+    });
+  }
+};
+
 const buildFallbackFrontendTemplatePages = (
   templateId: string,
   websiteName: string,
@@ -722,6 +781,9 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
         const isDbTemplateId = UUID_REGEX.test(template.id);
         const frontendTemplateId = resolveFrontendTemplateId(template.id);
         let res;
+        let frontendCreationPages: ReturnType<
+          typeof serializeTemplatePagesForCreation
+        > = [];
 
         if (isDbTemplateId) {
           res = await apiClient.post(`/websites/from-template`, {
@@ -747,6 +809,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
           }
 
           const customPages = serializeTemplatePagesForCreation(creationPages);
+          frontendCreationPages = customPages;
 
           res = await apiClient.post(`/websites`, {
             name: websiteName.trim(),
@@ -799,6 +862,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
 
             const customPages =
               serializeTemplatePagesForCreation(creationPages);
+            frontendCreationPages = customPages;
 
             res = await apiClient.post(`/websites`, {
               name: websiteName.trim(),
@@ -824,6 +888,12 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
 
         if (res?.data?.success !== false && createdWebsiteId) {
           if (!isDbTemplateId) {
+            if (frontendCreationPages.length > 0) {
+              await ensureTemplatePagesPersisted(
+                createdWebsiteId,
+                frontendCreationPages,
+              );
+            }
             storeWebsiteFrontendTemplateId(
               createdWebsiteId,
               frontendTemplateId,

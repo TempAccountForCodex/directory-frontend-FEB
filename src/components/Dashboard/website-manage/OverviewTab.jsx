@@ -46,6 +46,7 @@ const OverviewTab = memo(
     const [publishLoading, setPublishLoading] = useState(false);
     const [publishError, setPublishError] = useState(null);
     const [publishedUrl, setPublishedUrl] = useState(null);
+    const [pageCount, setPageCount] = useState(website?.pages?.length ?? 0);
 
     const getViewUrl = useCallback(() => {
       const subdomain = website?.subdomain || website?.slug || "";
@@ -92,6 +93,27 @@ const OverviewTab = memo(
     useEffect(() => {
       fetchActivity();
     }, [fetchActivity]);
+
+    useEffect(() => {
+      if (!websiteId) return;
+      let active = true;
+      apiClient
+        .get(`/websites/${websiteId}/pages`)
+        .then((res) => {
+          const pages = Array.isArray(res.data?.data)
+            ? res.data.data
+            : Array.isArray(res.data?.pages)
+              ? res.data.pages
+              : [];
+          if (active) setPageCount(pages.length);
+        })
+        .catch(() => {
+          if (active) setPageCount(website?.pages?.length ?? 0);
+        });
+      return () => {
+        active = false;
+      };
+    }, [websiteId, website?.pages?.length]);
 
     const handleTogglePublish = useCallback(async () => {
       if (!website || publishLoading) return;
@@ -187,7 +209,7 @@ const OverviewTab = memo(
           <Grid item xs={12} sm={6} md={3}>
             <DashboardMetricCard
               title="Pages"
-              value={website.pages?.length ?? 0}
+              value={pageCount}
               icon={FileText}
               iconColor={colors.primary}
             />

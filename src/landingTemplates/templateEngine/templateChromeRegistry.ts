@@ -66,6 +66,16 @@ const CompanyProFooter = lazy(() =>
     default: module.CompanyProTemplateFooter,
   })),
 );
+const EducationProHeader = lazy(() =>
+  import("../templates/education/EducationProTemplate").then((module) => ({
+    default: module.EducationProTemplateHeader,
+  })),
+);
+const EducationProFooter = lazy(() =>
+  import("../templates/education/EducationProTemplate").then((module) => ({
+    default: module.EducationProTemplateFooter,
+  })),
+);
 
 const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   minimal: {
@@ -87,6 +97,10 @@ const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   "company-pro": {
     Header: CompanyProHeader,
     Footer: CompanyProFooter,
+  },
+  "education-pro": {
+    Header: EducationProHeader,
+    Footer: EducationProFooter,
   },
 };
 

@@ -12,6 +12,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import BoltIcon from "@mui/icons-material/Bolt";
 import VerifiedIcon from "@mui/icons-material/Verified";
+import InsightsIcon from "@mui/icons-material/Insights";
 import { useTheme } from "@mui/material/styles";
 const star = "/assets/publicAssets/images/common/star.svg";
 
@@ -339,7 +340,7 @@ const PricingSection = () => {
                         {[
                           { text: "Unlimited Listings", icon: <CheckIcon /> },
                           { text: "AI Copywriter", icon: <AutoAwesomeIcon /> },
-                          { text: "AI Image Gen", icon: <AutoAwesomeIcon /> },
+                          { text: "Analytics Dashboard", icon: <InsightsIcon /> },
                           { text: "Custom Domains", icon: <BoltIcon /> },
                           { text: "Priority Approval", icon: <BoltIcon /> },
                         ].map((item, i) => (

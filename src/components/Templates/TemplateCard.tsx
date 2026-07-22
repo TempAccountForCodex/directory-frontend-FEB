@@ -174,6 +174,7 @@ const TemplateCard = React.memo(function TemplateCard({
               objectFit: "cover",
               borderRadius: "16px 16px 0 0",
               display: "block",
+              objectPosition: "top",
             }}
           />
         ) : (

@@ -7,6 +7,7 @@ import {
 } from "../components/publicComponents/Home/industryPreview/industryDummyData";
 import { companyStudioAssets } from "../landingTemplates/assets/company/company-executive";
 import { companyProAssets } from "../landingTemplates/assets/company/company-pro";
+import { educationProAssets } from "../landingTemplates/assets/education/education-pro";
 import { portfolioAssets } from "../landingTemplates/assets/portfolio/portfolio-agency";
 
 type FrontendTemplateWebsite = {
@@ -291,6 +292,57 @@ const baseStorePawsData: BusinessData = {
   secondaryColor: "#fbbf24",
 };
 
+const baseEducationProData: BusinessData = {
+  name: "EdCare",
+  tagline: "Start learning from the world's best sites.",
+  description:
+    "A modern learning experience built around expert instructors, flexible courses, and a supportive student community.",
+  primaryColor: "#0f9c8f",
+  secondaryColor: "#eaf7f4",
+  contact: {
+    email: "hello@edcare.com",
+    phone: "(165) 48596-5789",
+    address: "2690 Hilton Street Victoria Road, New York, Canada",
+  },
+  heroBannerUrl: educationProAssets.studentLearning,
+  stats: [
+    { label: "Registered Students", value: "5,192+" },
+    { label: "Classes Completed", value: "15,485+" },
+    { label: "Satisfaction Rate", value: "97.55%" },
+  ],
+  features: [
+    {
+      title: "Instructor-led online classes",
+      description: "Guided lessons taught live by subject experts.",
+      icon: "01",
+    },
+    {
+      title: "Every worthwhile access",
+      description: "Learn on your schedule, from any device, anywhere.",
+      icon: "02",
+    },
+    {
+      title: "Personalized learning profile",
+      description: "Progress tracking built around your own pace.",
+      icon: "03",
+    },
+  ],
+  reviews: [
+    {
+      author: "Michael Thomas",
+      role: "Web Development student",
+      text: "The instructors made every lesson feel practical. I finished the program with skills I actually use every day.",
+      rating: 5,
+    },
+    {
+      author: "Mathew White",
+      role: "Business Management student",
+      text: "Flexible scheduling and genuinely caring mentors. This is the most supportive learning community I've found.",
+      rating: 5,
+    },
+  ],
+};
+
 const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
   blog: baseBlogData,
   "blog-premium": baseBlogPremiumData,
@@ -299,6 +351,7 @@ const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
   "company-executive": baseCompanyExecutiveData,
   "company-pro": baseCompanyProData,
   education: educationData,
+  "education-pro": baseEducationProData,
   gardening: gardeningData,
   minimal: baseMinimalData,
   modern: baseModernData,

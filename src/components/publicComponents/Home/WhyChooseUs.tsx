@@ -37,8 +37,8 @@ const WhyChooseUsSection = () => {
   }, []);
 
   const stats = [
-    { value: "92%", label: "Client retention rate over the past 3 years" },
-    { value: "1M+", label: "Users reached through our platforms" },
+    { value: "24/7", label: "Update and redesign your page whenever you want" },
+    { value: "100%", label: "Mobile-ready across phone, tablet & desktop" },
   ];
 
   const comparisonData = [
@@ -50,7 +50,7 @@ const WhyChooseUsSection = () => {
     {
       feature: "Discovery",
       traditional: "Hidden on web",
-      ours: "Built-in traffic",
+      ours: "Search-friendly",
     },
     { feature: "Mobile", traditional: "Responsive hacks", ours: "Native-feel" },
   ];

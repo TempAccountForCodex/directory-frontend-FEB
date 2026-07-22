@@ -6,7 +6,7 @@ const DARK_THEME = {
 };
 
 const template = "/assets/publicAssets/images/home/templatesAi.webp";
-const aiImage = "/assets/publicAssets/images/home/aiImage.webp";
+const aiImage = "/assets/publicAssets/images/home/aiImage.png";
 const businessListing = "/assets/publicAssets/images/home/businessListing.webp";
 const copyWrite = "/assets/publicAssets/images/home/copyWrite.webp";
 
@@ -19,9 +19,9 @@ const WebsiteWorksSection = () => {
       image: template,
     },
     {
-      title: "Visuals created for you",
+      title: "Built with ready-made blocks",
       description:
-        "Create logos, social posts, posters, and more. No design skills needed.",
+        "Drag in pre-designed sections and customize them in seconds no design skills needed.",
       image: aiImage,
     },
     {
@@ -127,7 +127,7 @@ const WebsiteWorksSection = () => {
                       color: DARK_THEME.cardText,
                       fontWeight: 500,
                       mb: 1.5,
-                      fontSize: "1.3rem",
+                      fontSize: "1.2rem",
                     }}
                   >
                     {card.title}

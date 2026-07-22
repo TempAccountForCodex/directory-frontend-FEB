@@ -34,7 +34,7 @@ export const blendHex = (base: string, target: string, amount: number) => {
   return `#${mix(from.r, to.r)}${mix(from.g, to.g)}${mix(from.b, to.b)}`;
 };
 
-const isLightColor = (hex: string) => {
+export const isLightColor = (hex: string) => {
   const { r, g, b } = hexToRgb(hex);
   const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
   return luminance > 0.72;

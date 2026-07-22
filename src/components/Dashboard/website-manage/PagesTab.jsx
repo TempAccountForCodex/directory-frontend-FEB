@@ -40,6 +40,8 @@ import DashboardCancelButton from '../shared/DashboardCancelButton';
 import DashboardConfirmButton from '../shared/DashboardConfirmButton';
 import DashboardTooltip from '../shared/DashboardTooltip';
 import { getBlockDefaultContent } from '../../Editor/blockPresets';
+import { getStoredWebsiteFrontendTemplateId } from '../../../templates/frontendTemplatePersistence';
+import { buildFrontendTemplateEditorPages } from '../../../templates/frontendTemplateEditorSupport';
 
 
 
@@ -53,6 +55,51 @@ const generateSlug = (title) =>
     .replace(/-+/g, '-');
 
 const getPagePath = (page) => page?.path || page?.slug || '';
+
+const getResponsePageList = (response) => {
+  const data = response?.data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.pages)) return data.pages;
+  return Array.isArray(data) ? data : [];
+};
+
+const TEMPLATE_MEDIA_FIELDS = new Set([
+  'image',
+  'logo',
+  'logoImage',
+  'photo',
+  'avatar',
+  'heroImage',
+  'backgroundImage',
+  'video',
+  'backgroundVideo',
+  'poster',
+]);
+
+const normalizeTemplateMediaForPageApi = (value, fieldName = '') => {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeTemplateMediaForPageApi(item));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([key, nestedValue]) => [
+          key,
+          normalizeTemplateMediaForPageApi(nestedValue, key),
+        ])
+        .filter(([, nestedValue]) => nestedValue !== undefined)
+    );
+  }
+  if (
+    TEMPLATE_MEDIA_FIELDS.has(fieldName) &&
+    typeof value === 'string' &&
+    value.startsWith('/') &&
+    typeof window !== 'undefined'
+  ) {
+    return `${window.location.origin}${value}`;
+  }
+  return value;
+};
 
 // Normalize a nav/menu target so page paths compare reliably regardless of how
 // they were stored (leading slash, trailing slash). Anchors ("#...") and
@@ -171,6 +218,113 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     [websiteId]
   );
 
+  // Backfill older Education Pro websites that were created while `/websites`
+  // persisted only the generic Home page and kept the remaining template pages
+  // in a snapshot. This uses the exact page/block APIs used by Add Page and
+  // WebsiteEditor, creating each missing path once and then saving its blocks.
+  const provisionEducationProPages = useCallback(
+    async (existingPages) => {
+      const rawFrontendTemplateId =
+        website?.frontendTemplateId ||
+        website?.templateSnapshot?.templateId ||
+        website?.templateId ||
+        website?.template?.id ||
+        getStoredWebsiteFrontendTemplateId(website?.id || websiteId);
+      const frontendTemplateId =
+        rawFrontendTemplateId === 'static-education-pro'
+          ? 'education-pro'
+          : rawFrontendTemplateId;
+      const snapshotPages = website?.templateSnapshot?.pages;
+      const defaultPages =
+        Array.isArray(snapshotPages) && snapshotPages.length > 0
+          ? snapshotPages
+          : frontendTemplateId === 'education-pro'
+            ? buildFrontendTemplateEditorPages('education-pro', {
+                name: website?.name || '',
+                businessName: website?.businessName,
+                primaryColor: website?.primaryColor,
+                secondaryColor: website?.secondaryColor,
+                themeSettings: website?.themeSettings,
+              }).map((page, pageIndex) => ({
+                title: page.title,
+                path: page.path,
+                isHome: page.isHome,
+                isPublished: page.isPublished !== false,
+                sortOrder: page.sortOrder ?? pageIndex,
+                blocks: (page.blocks || []).map((block, blockIndex) => ({
+                  blockType: block.blockType,
+                  content: normalizeTemplateMediaForPageApi(block.content || {}),
+                  sortOrder: block.sortOrder ?? blockIndex,
+                  isVisible: block.isVisible !== false,
+                })),
+              }))
+            : [];
+
+      if (
+        frontendTemplateId !== 'education-pro' ||
+        !Array.isArray(defaultPages) ||
+        defaultPages.length === 0
+      ) {
+        return false;
+      }
+
+      const hasMissingPage = defaultPages.some(
+        (defaultPage) =>
+          !existingPages.some(
+            (page) =>
+              normalizePath(getPagePath(page)) ===
+              normalizePath(defaultPage.path)
+          )
+      );
+      if (!hasMissingPage) return false;
+
+      const persistedPages = [...existingPages];
+      for (const defaultPage of defaultPages) {
+        let persistedPage = persistedPages.find(
+          (page) =>
+            normalizePath(getPagePath(page)) ===
+            normalizePath(defaultPage.path)
+        );
+
+        if (!persistedPage) {
+          const pageResponse = await apiClient.post(
+            `/websites/${websiteId}/pages`,
+            {
+              title: defaultPage.title,
+              path: defaultPage.path,
+              isHome: Boolean(defaultPage.isHome),
+              isPublished: defaultPage.isPublished !== false,
+              sortOrder: defaultPage.sortOrder,
+            }
+          );
+          persistedPage =
+            pageResponse.data?.data ||
+            pageResponse.data?.page ||
+            pageResponse.data;
+          if (!persistedPage?.id) {
+            throw new Error(`Failed to create the "${defaultPage.title}" page.`);
+          }
+          persistedPages.push(persistedPage);
+        }
+
+        await apiClient.put(
+          `/websites/${websiteId}/pages/${persistedPage.id}/blocks`,
+          {
+            blocks: (defaultPage.blocks || []).map((block, index) => ({
+              blockType: block.blockType || block.type,
+              content: block.content || {},
+              sortOrder: block.sortOrder ?? index,
+              isVisible: block.isVisible !== false,
+            })),
+          }
+        );
+      }
+
+      return true;
+    },
+    [website, websiteId]
+  );
+
   const fetchPages = useCallback(async () => {
     if (!websiteId) return;
     try {
@@ -178,7 +332,13 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
       setError(null);
       const res = await apiClient.get(`/websites/${websiteId}/pages`);
       // Backend returns { success, data: [...pages] }
-      const list = res.data?.data || res.data?.pages || [];
+      let list = getResponsePageList(res);
+      const didProvision = await provisionEducationProPages(list);
+      if (didProvision) {
+        const refreshed = await apiClient.get(`/websites/${websiteId}/pages`);
+        list = getResponsePageList(refreshed);
+        onSaved?.();
+      }
       setPages(list);
       // Self-heal the navigation against the real page list.
       void reconcileNavigationWithPages(list);
@@ -187,7 +347,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     } finally {
       setLoading(false);
     }
-  }, [websiteId, reconcileNavigationWithPages]);
+  }, [websiteId, reconcileNavigationWithPages, provisionEducationProPages, onSaved]);
 
   useEffect(() => {
     fetchPages();

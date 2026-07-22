@@ -59,7 +59,9 @@ A new template must explicitly declare one of these page models:
 - **Multi-page template:** defines Home plus one or more default pages such as
   About, Services, Blog, or Contact. Each page owns its own body sections and
   unique title, slug/path, and sort order. Page bodies are never shared unless
-  the block is explicitly a global component.
+  the block is explicitly a global component. Live Preview from the editor
+  must open the currently selected page at its resolved public path (for
+  example, `/site/:siteSlug/about`), not always Home.
 
 For both models, Header and Footer are shared/global components rendered on
 every page. Editing shared chrome from any page updates every page; do not
@@ -164,6 +166,128 @@ their blocks must be updated by page ID; Save Changes must never recreate a
 path that already exists. New-page creation must validate path uniqueness
 before creation.
 
+**Multi-page creation and routing gate (required):** A multi-page template is
+not complete until every declared default page is persisted as a real page
+record with its own blocks during website creation—not merely stored in a
+template snapshot or rendered as a frontend fallback. The dashboard page count
+and Manage Pages list must reflect those persisted records. Each Header
+navigation path must match an existing persisted page path, and public routing
+must resolve that path to the matching page body; changing the URL while
+continuing to render Home is a release blocker. Save Changes must identify and
+update pages by `pageId`, never recreate an existing path.
+
+**Backfill and canonical-page API rule:** Templates introduced after websites
+already exist must provide an idempotent backfill for missing declared default
+pages. The backfill and initial template creation must use the same canonical
+page creation and block replacement APIs as Dashboard Add Page/Add Blog Page;
+never maintain a separate preview-only page list. The editor page dropdown
+must load these persisted records and render the selected page's own blocks.
+
+**Page-specific renderer rule:** Every declared page in a multi-page template
+must have real page-specific default blocks and an explicit renderer/design
+mapping in both the editor and public site. A Home-only template renderer is
+insufficient: editor selection must identify the active persisted page and
+render that page's own design. Generic block fallback is allowed only when it
+is intentionally part of the page design, never as an accidental substitute
+for a declared template page.
+
+**Non-Home editability rule:** About, Courses, Contact, and every other
+declared non-Home page have the same editability and persistence contract as
+Home. A page-specific renderer must bind every user-facing heading, body,
+eyebrow, image, button/link, card/repeater item, statistic, team member, and
+form label to a real backend-safe `block.content` path. Static JSX is allowed
+only for decorative, non-user-facing visuals. Acceptance requires editing a
+non-Home text, image, and button; saving; then verifying the change in Live
+Preview/public rendering and after editor refresh.
+
+**Content-mapping / unique-field-path gate (required):** Before a new template
+is considered complete it must pass a content-mapping audit:
+
+- **Preview must equal creation defaults.** The landing-preview content and the
+  content created when a website is generated from the template must come from
+  the same single source of truth (the schema seeds in
+  `frontendTemplateEditorSupport.ts`). Do not maintain a separate hardcoded
+  preview object with different copy. If a preview screen needs its own data
+  object, build it from the same schema/seed pipeline (e.g.
+  `buildFrontendTemplateEditorPages` + `buildTemplatePreviewBusinessData`) so
+  the two can never drift.
+- **Every visible element needs a unique persisted field path.** Two different
+  visible elements must never bind to the same `(blockId, field)`. A page banner
+  heading and a body-section heading are different elements and must live in
+  different blocks/fields — never both on `heading` of the same block. The same
+  applies to `eyebrow`, `image`, `description`, `ctaText`, `buttonLabel`, etc.
+- **Repeated visual items must use array indexes**, e.g. `features[0].title`,
+  `items[1].heading`, `stats[2].number`, `testimonials[0].quote`,
+  `members[1].role`, `detailGroups[0].items.0` — never a single reused
+  top-level field for multiple cards.
+- **Multiple headings in one section** must use structured/array fields, not a
+  second element pointing at the same `heading`.
+- **Pages must not share body content.** Home/About/Courses/Contact bodies must
+  each resolve from their own page's persisted blocks. Only Header/Footer (and
+  other explicitly global components) may be shared across pages.
+- **A dedicated hero/banner must own its own block.** A non-Home page banner
+  must not reuse the first body section's block; give it its own `banner` (or
+  equivalent) block so editing the banner never mutates the body section and
+  vice-versa.
+- **Acceptance:** editing one text, one image, or one button/pill must update
+  only that element — never an unrelated element on the same page or another
+  page. Save, Live Preview, and editor refresh must all preserve the change on
+  the correct field only.
+
+**Persistence round-trip gate (required):** Every editable element on every
+page must round-trip through save → reload → public rendering. A correct save
+response is NOT sufficient proof — the next GET/reload must return and render
+that same value.
+
+- **Reload/public hydration must read saved blocks, never template defaults.**
+  Template seed/default content may only fill fields that were never saved. It
+  must never overwrite a persisted value (including an intentionally emptied
+  value).
+- **Per-page hydration for multi-page templates.** When merging persisted
+  blocks over schema seeds, each page must be hydrated from *its own* persisted
+  page's blocks. A global or Home-scoped section map must never be used to
+  hydrate non-Home pages, because multi-page templates reuse section keys
+  (`banner`, `intro`, `features`, `stats`, `contact`) across pages. A
+  Home-scoped map drops non-Home saved content or bleeds Home content onto
+  About/Courses/Contact. (Shared logic lives in
+  `hydrateSeededPages`/`buildFrontendTemplateEditorPages` and is used by both
+  the editor reload and `PublicWebsite`.)
+- **Save updates the selected page by `pageId`.** Non-Home saves must target
+  that page's record and blocks, never Home's.
+- **No real content may be static/style-only.** Multi-page templates must
+  render saved page-specific blocks, not hardcoded fallback content.
+- **Mandatory verification before a template is considered complete:** edit a
+  non-Home page element (text, image, button), Save, hard-reload the editor,
+  and open the public page — the edited value must appear in all three places.
+
+**Editable background image/video gate (required):** Any visible background
+image or video on a section, banner/hero, card, or container must be wired to
+persistent, editable `sectionStyle` / `outerSectionStyle` / `containerStyles`
+(or a content image field) — never a hardcoded, non-replaceable asset.
+
+- **Never render a full-bleed background as an absolutely positioned `<img>`
+  that covers the section.** The editor's "Replace Background → Image" persists
+  to `sectionStyle`/`outerSectionStyle.backgroundImageUrl`, which
+  `TemplateSectionBoundary` applies as a CSS `backgroundImage`. An `<img>`
+  overlay with `object-fit: cover` hides that CSS background, so the
+  replacement saves but never shows. Render the background as a CSS
+  `backgroundImage` on the section boundary instead, and layer any
+  gradient/overlay as a separate absolutely positioned element above it.
+- **Background resolution priority (highest → lowest):**
+  1. saved `sectionStyle`/`outerSectionStyle`/`containerStyles`
+     `backgroundImageUrl` (or `backgroundVideoUrl`)
+  2. saved `block.content` image field (when the section intentionally uses a
+     content image)
+  3. theme/template default asset
+- **Manual editor replacement must override the template default.** A default
+  asset passed via the component `sx` must be applied *before*
+  `getSectionStyleSx`, so a saved background wins. The default must never
+  overwrite a saved background.
+- **Acceptance:** select a section/card/container with a background image on
+  Home AND a non-Home page, Replace Background → Image, confirm the canvas
+  updates, Save, reload the editor, and open the public page — the new
+  background must appear in all of them.
+
 ## 7. Section and Container Identity
 
 - Section roots require stable block ID, section key, label, style key, and section-root metadata.
@@ -227,6 +351,72 @@ public rendering.
   media.
 - Brand edits through shared Header/Footer chrome must persist and render across
   every page, editor refresh, Live Preview, and public output.
+
+### 9.0 Header/Footer colors must be theme-token driven (shared helper)
+
+- All templates must use **shared, theme-aware Header/Footer color logic** — do
+  not hardcode Header/Footer background/text colors inside individual templates
+  when they should follow the palette.
+- Header background and Header/Footer text/CTA colors must derive from the
+  active theme palette so that changing the palette in landing-preview or the
+  editor updates the Header consistently across **every** template, not just one.
+- Use the shared resolver `buildSharedHeaderTheme(data, navbar, { defaultPrimary })`
+  in `src/landingTemplates/utils/headerTheme.ts` for any template rendering the
+  shared `TemplateNavbarHeader`. It centralizes the working Education Pro logic:
+  the header background follows the palette's primary color, and nav/CTA text
+  flips light-on-dark or dark-on-light for readability.
+- **Style priority (highest → lowest):**
+  1. saved manual header style — `sectionStyle`/`outerSectionStyle`/
+     `containerStyles` `backgroundColor` persisted from the editor
+  2. saved `themeSettings` palette color (`themeSettings.primaryColor` /
+     `primaryColor`)
+  3. template default primary color
+- A manual editor background override on the Header must always win over the
+  theme default and must persist across Save, editor refresh, Live Preview, and
+  public output.
+- **Acceptance:** change the palette on any template in landing-preview and in
+  the editor — the Header background must update immediately; then set a manual
+  Header background from the right editor and confirm it overrides the palette
+  color and persists after reload/public render.
+
+### 9.1 Forms must be real, backend-connected inputs — never static-only
+
+Every visual "form" in a template — footer newsletter/subscribe rows, contact
+sections, request-a-quote CTAs, booking/enquiry blocks, etc. — must be a real
+functioning input wired to the existing dashboard Forms submission pipeline,
+not a static styled `<Box>`/`<Typography>` that only looks like an input.
+
+Rules:
+
+- Use `src/landingTemplates/utils/useTemplateContactForm.ts` for every
+  form's state, validation, and submit handling. Do not hand-roll a separate
+  submit path per template.
+- Every field must be a real controlled input/textarea using
+  `getFieldProps(label)` from the hook (`name`, `value`, `onChange`,
+  `disabled` wired through) — never a decorative `Box` styled to look like an
+  input with no `onChange`/`value`.
+- The form element itself must call `handleSubmit` (via `onSubmit` on a
+  `component="form"` wrapper, or `onClick` on the submit button) so
+  submissions POST to `submitWebsiteFormSubmission` /
+  `POST /forms/websites/:websiteId/submissions` — the same pipeline the
+  dashboard Forms tab reads from.
+- Pass `formIdentity` (`formId` = the source block's id, `formName` = the
+  section heading) so dashboard submissions are attributable to the correct
+  block/section.
+- Render `status`/`errorMessage` feedback (loading / success / error) next to
+  the field(s) so the user gets real confirmation, and disable the submit
+  control while `status === "loading"`.
+- This applies regardless of how few fields the form has — a single
+  newsletter email field still requires the full real-input + real-submit
+  pattern, not a shortcut static version.
+- Editor preview must remain non-persisting (the hook already no-ops writes
+  while `isEditorPreviewEnvironment()` is true) — do not add a second,
+  template-local submit path that bypasses this guard.
+- Regression check before shipping any template: every input-looking element
+  must have `data-*`/`name`/`value`/`onChange` wired to real state, and
+  submitting must produce a row in that website's dashboard Forms
+  submissions — a static/style-only input is a shipping blocker, not a
+  cosmetic issue.
 
 ## 10. Assets
 
@@ -312,6 +502,17 @@ publicly rendered under the same stable identifier.
   field and keep the brand text in website or explicit text fields.
 - New templates must validate their generated creation payload against the
   backend schema before registration.
+- **Creation-schema gate (required):** Before a new template is exposed in the
+  gallery, audit every default page and every default block against its exact
+  backend block schema. Required nested fields must be present for every array
+  item—for example, `STATS.content.stats[].number`,
+  `FEATURES.content.features[].title` and `.description`, and all required
+  testimonial, member, and contact fields. A template is not complete while
+  any default creation payload can produce a backend validation error.
+- When a creation API response identifies a missing schema field, correct the
+  frontend page seed/source immediately and add that field to every equivalent
+  default block in the template. Do not present the validation failure as a
+  user-entry issue or require users to manually repair template defaults.
 - Development URLs may be origin-qualified during creation; production builds
   must resolve to the deployed frontend asset origin.
 

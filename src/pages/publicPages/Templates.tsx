@@ -199,6 +199,17 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     previewImage: "/assets/templateAssets/images/dummy/gardening.webp",
   },
   {
+    id: "static-education-pro",
+    slug: "education-pro",
+    name: "Education Pro",
+    description:
+      "Multi-page learning academy template with course showcases, instructor profiles, testimonials, and a dedicated contact page.",
+    type: "website",
+    category: "education",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/educationPro.webp",
+  },
+  {
     id: "static-education",
     slug: "education",
     name: "Education",

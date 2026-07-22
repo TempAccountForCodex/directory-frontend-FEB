@@ -848,15 +848,22 @@ h1, h2, h3, h4, h5, h6 {
     );
   }
 
+  // Education Pro owns distinct page compositions inside its template component
+  // and derives the active page from the real public URL. Rendering it only for
+  // Home would make /about, /courses, and /contact fall through to a generic
+  // block view despite their persisted page records being available.
+  const templateOwnsPublicPageBodies =
+    resolvedFrontendTemplateId === "education-pro";
+
   if (
     resolvedFrontendTemplateId &&
     hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
     frontendTemplateData &&
-    currentPage?.isHome
+    (currentPage?.isHome || templateOwnsPublicPageBodies)
   ) {
-    // Only the Home page renders the single-page frontend template. Additional
-    // pages fall through to the shared block layout below (shared nav header +
-    // their own blocks + footer) so they never inherit the Home page body.
+    // Most single-page templates render their component only for Home.
+    // Multi-page Education Pro renders its dedicated page composition for each
+    // persisted path while retaining shared Header/Footer through its shell.
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
         <Helmet>

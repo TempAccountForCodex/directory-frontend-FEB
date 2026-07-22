@@ -21,6 +21,7 @@ import SlideshowIcon from "@mui/icons-material/Slideshow";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import InsightsIcon from "@mui/icons-material/Insights";
 
 const star = "/assets/publicAssets/images/common/star.svg";
 
@@ -71,7 +72,7 @@ const BASE_FEATURES = [
   "Forms",
 ];
 const STANDARD_EXTRAS = ["Priority Support", "Verified Badge"];
-const PLUS_EXTRAS = ["AI Copywriter", "AI Image Gen"];
+const PLUS_EXTRAS = ["AI Copywriter", "Analytics Dashboard"];
 
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
   "Custom Domain URLs": <LinkIcon />,
@@ -83,7 +84,7 @@ const FEATURE_ICONS: Record<string, React.ReactNode> = {
   "Priority Support": <SupportAgentIcon />,
   "Verified Badge": <VerifiedUserIcon />,
   "AI Copywriter": <AutoAwesomeIcon />,
-  "AI Image Gen": <AutoAwesomeIcon />,
+  "Analytics Dashboard": <InsightsIcon />,
 };
 
 type BillingCycle = "annual" | "monthly";
