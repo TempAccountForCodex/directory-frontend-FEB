@@ -12,6 +12,7 @@ import {
 } from "../landingTemplates/utils/hiddenElements";
 import { companyStudioAssets } from "../landingTemplates/assets/company/company-executive";
 import { companyProAssets } from "../landingTemplates/assets/company/company-pro";
+import { educationProAssets } from "../landingTemplates/assets/education/education-pro";
 
 export type TemplateThemeSettings = {
   primaryColor?: string;
@@ -24,6 +25,7 @@ export type TemplateThemeSettings = {
 
 type WebsiteLike = {
   id?: string | number;
+  slug?: string | null;
   name?: string | null;
   businessName?: string | null;
   primaryColor?: string | null;
@@ -104,6 +106,7 @@ const LOCAL_TEMPLATE_EDITOR_IDS = new Set([
   "company-premium",
   "company-executive",
   "company-pro",
+  "education-pro",
   "education",
   "gardening",
   "plumbing",
@@ -831,6 +834,30 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           }),
         },
         {
+          key: "courses",
+          label: "Featured courses",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            heading: "Explore featured courses.",
+            features: [
+              { icon: "Digital skills", title: "The complete beginner’s guide to content", description: "12 lessons · 5 students", image: educationProAssets.onlineClass },
+              { icon: "Programming", title: "Getting started with PHP and WordPress", description: "18 lessons · 8 students", image: educationProAssets.groupStudy },
+              { icon: "Creative learning", title: "Advanced Java programming with Eclipse", description: "12 lessons · 3 students", image: educationProAssets.scienceLab },
+            ],
+          }),
+        },
+        {
+          key: "offer",
+          label: "Course offer",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Limited places available",
+            heading: "50% off for your first course.",
+            body: "Start learning with a focused program, expert support, and a community that keeps you moving.",
+            image: educationProAssets.studentTutoring,
+          }),
+        },
+        {
           key: "about",
           label: "About",
           blockType: "TEXT",
@@ -940,6 +967,237 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
               { title: "Connect", links: [{ label: "Contact", url: "#contact" }, { label: "LinkedIn", url: "#" }] },
             ],
           }),
+        },
+      ],
+    },
+  ],
+  "education-pro": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: (data) => ({
+            brandName: data.name || "Aster Academy",
+            navigationItems: [
+              { label: "Home", link: "/" },
+              { label: "About", link: "/about" },
+              { label: "Courses", link: "/courses" },
+              { label: "Contact", link: "/contact" },
+            ],
+            description: "Learn with expert teachers, wherever you are.",
+            utilityText: "Monday – Saturday · 09:00 – 18:00",
+            ctaText: "Start learning",
+            ctaLink: "/courses",
+          }),
+        },
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            eyebrow: "A learning community for tomorrow",
+            heading: data.tagline || "Find the confidence to shape what is next.",
+            subheading: data.description || "A modern education experience built around curiosity, practical skills, and a supportive community.",
+            ctaText: "Explore courses",
+            ctaLink: "/courses",
+            image: educationProAssets.studentLearning,
+            items: [
+              { image: educationProAssets.groupStudy, heading: "Live classes" },
+              { image: educationProAssets.onlineClass, heading: "Learn anywhere" },
+            ],
+            imageStyle: { fit: "cover", height: "auto" },
+          }),
+        },
+        {
+          key: "intro",
+          label: "Introduction",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Why Aster",
+            heading: "An education designed for the world students will enter.",
+            body: "We combine ambitious teaching, real-world projects, and close mentorship so every learner can build lasting momentum.",
+          }),
+        },
+        {
+          key: "features",
+          label: "Learning pillars",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            heading: "A clearer path to meaningful progress.",
+            features: [
+              { icon: "01", title: "Expert-led learning", description: "Guidance from educators and practitioners who make complex subjects feel possible." },
+              { icon: "02", title: "Built for belonging", description: "Small-group learning, dedicated support, and a community that knows your name." },
+              { icon: "03", title: "Future-ready skills", description: "Applied projects that turn knowledge into confidence and practical capability." },
+              { icon: "04", title: "Business", description: "Build practical confidence for work that matters." },
+              { icon: "05", title: "Technology", description: "Learn tools and thinking for a digital world." },
+              { icon: "06", title: "Creative arts", description: "Develop your voice through guided practice." },
+            ],
+          }),
+        },
+        {
+          key: "stats",
+          label: "Outcomes",
+          blockType: "STATS",
+          buildContent: () => ({
+            stats: [
+              { value: "94%", label: "Students feel supported" },
+              { value: "18:1", label: "Student-to-mentor ratio" },
+              { value: "42", label: "Project-based learning labs" },
+            ],
+          }),
+        },
+        {
+          key: "footer",
+          label: "Footer",
+          blockType: "FOOTER",
+          optional: true,
+          buildContent: (data) => ({
+            logoText: data.name || "Aster Academy",
+            description: "A learning community for thoughtful, capable, and curious people.",
+            copyright: `© 2026 ${data.name || "Aster Academy"}. All rights reserved.`,
+            columns: [
+              { title: "Explore", links: [{ label: "Courses", url: "/courses" }, { label: "About", url: "/about" }] },
+              { title: "Visit", links: [{ label: "About", url: "/about" }, { label: "Contact", url: "/contact" }] },
+            ],
+            heading: "Subscribe for learning updates.",
+            subheading: "Courses, events, and useful ideas in your inbox.",
+            ctaText: "Subscribe now",
+            ctaLink: "/contact",
+          }),
+        },
+      ],
+    },
+    {
+      key: "about",
+      title: "About",
+      path: "/about",
+      sections: [
+        {
+          key: "intro",
+          label: "Our story",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Our story",
+            heading: "Learning is more powerful when it feels personal.",
+            body: "Aster Academy brings together exceptional teaching, a culture of care, and creative spaces for people who want to grow with purpose.",
+            image: educationProAssets.groupStudy,
+            alt: "Students learning together at Aster Academy",
+            items: [
+              { image: educationProAssets.studentTutoring, heading: "Personal support" },
+              { image: educationProAssets.onlineClass, heading: "Flexible learning" },
+            ],
+          }),
+        },
+        {
+          key: "features",
+          label: "Our values",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            heading: "What guides our community.",
+            features: [
+              { icon: "01", title: "Curiosity first", description: "Questions lead the way, and every perspective is welcome." },
+              { icon: "02", title: "High expectations", description: "We pair rigorous learning with the support to meet each challenge." },
+              { icon: "03", title: "Shared success", description: "Students, families, and educators make progress together." },
+            ],
+          }),
+        },
+        {
+          key: "stats",
+          label: "Community outcomes",
+          blockType: "STATS",
+          buildContent: () => ({
+            stats: [
+              { value: "3,192+", label: "Active learners" },
+              { value: "15,485+", label: "Courses completed" },
+              { value: "97.55%", label: "Learner satisfaction" },
+              { value: "97.55%", label: "Career confidence" },
+            ],
+          }),
+        },
+        {
+          key: "members",
+          label: "Expert instructors",
+          blockType: "TEAM",
+          buildContent: () => ({
+            heading: "Meet our expert instructors.",
+            members: [
+              { name: "Nora Logan", role: "Course mentor", photo: educationProAssets.studentTutoring },
+              { name: "Scarlet Foster", role: "Learning designer", photo: educationProAssets.groupStudy },
+              { name: "Chloe Smith", role: "Program lead", photo: educationProAssets.onlineClass },
+              { name: "Melanie Chan", role: "Student coach", photo: educationProAssets.scienceLab },
+            ],
+          }),
+        },
+      ],
+    },
+    {
+      key: "courses",
+      title: "Courses",
+      path: "/courses",
+      sections: [
+        {
+          key: "intro",
+          label: "Courses introduction",
+          blockType: "TEXT",
+          buildContent: () => ({ eyebrow: "Courses", heading: "Choose a course of study that meets your ambition.", body: "Flexible learning pathways pair essential knowledge with hands-on experience, so students can make progress that matters." }),
+        },
+        {
+          key: "features",
+          label: "Featured courses",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            heading: "Explore our learning pathways.",
+            features: [
+              { icon: "01", title: "Digital marketing essentials", description: "Build practical, in-demand skills with guided projects.", image: educationProAssets.onlineClass },
+              { icon: "02", title: "Design systems for teams", description: "Learn the tools and thinking behind useful digital products.", image: educationProAssets.groupStudy },
+              { icon: "03", title: "Professional communication", description: "Present ideas clearly and lead conversations with confidence.", image: educationProAssets.scienceLab },
+            ],
+          }),
+        },
+      ],
+    },
+    {
+      key: "contact",
+      title: "Contact",
+      path: "/contact",
+      sections: [
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            eyebrow: "Contact us",
+            heading: "Let’s talk about what comes next.",
+            description: "Tell us about your learning goals and our team will help you find the right path.",
+            email: data.contact.email || "hello@asteracademy.edu",
+            phone: data.contact.phone || "(555) 014-2026",
+            items: [
+              { heading: "Your name" },
+              { heading: "Your email" },
+              { heading: "Subject" },
+              { heading: "Tell us how we can help" },
+            ],
+            detailGroups: [
+              { title: "Phone & email", items: [data.contact.phone || "(555) 014-2026", data.contact.email || "hello@asteracademy.edu"] },
+              { title: "Our office", items: [data.contact.address || "48 Garden Way, Cambridge, MA"] },
+              { title: "Office hours", items: ["Monday – Friday · 09:00 – 18:00"] },
+            ],
+            buttonLabel: "Talk to admissions",
+            buttonLink: `mailto:${data.contact.email || "hello@asteracademy.edu"}`,
+          }),
+        },
+        {
+          key: "image",
+          label: "Contact image",
+          blockType: "IMAGE",
+          buildContent: () => ({ image: educationProAssets.studentTutoring, alt: "Aster Academy learning community", imageStyle: { fit: "cover", height: "auto" } }),
         },
       ],
     },
@@ -2416,6 +2674,7 @@ const buildTemplatePreviewBusinessDataImpl = (
 ): BusinessData | null => {
   const base = buildFrontendTemplateBusinessData(templateId, {
     websiteId: website.id,
+    slug: website.slug,
     name: website.name || "",
     businessName: website.businessName || undefined,
     primaryColor: website.primaryColor || undefined,
@@ -2475,6 +2734,94 @@ const buildTemplatePreviewBusinessDataImpl = (
   const getSectionContent = (sectionKey: string): Record<string, unknown> =>
     orderedSectionContentMap.get(sectionKey) ||
     findSectionContent(templateId, pages, sectionKey);
+
+  if (templateId === "education-pro") {
+    const getPageSection = (
+      path: string,
+      sectionKey: string,
+    ): { id?: string | number; content: Record<string, unknown> } => {
+      const page = pages.find((candidate) => candidate.path === path);
+      const block = page?.blocks.find(
+        (candidate) =>
+          candidate.content &&
+          typeof candidate.content === "object" &&
+          !Array.isArray(candidate.content) &&
+          (candidate.content as Record<string, unknown>).editorSection ===
+            sectionKey,
+      );
+
+      return {
+        id: block?.id,
+        content:
+          block?.content &&
+          typeof block.content === "object" &&
+          !Array.isArray(block.content)
+            ? (block.content as Record<string, unknown>)
+            : {},
+      };
+    };
+    const withBlock = (
+      section: { id?: string | number; content: Record<string, unknown> },
+    ): Record<string, unknown> => ({
+      ...section.content,
+      blockId: section.id,
+      sectionStyle: getSectionStyleValue(section.content),
+      outerSectionStyle: getSectionStyleValue(
+        section.content,
+        "outerSectionStyle",
+      ),
+    });
+    const homeNavbar = getPageSection("/", "navbar");
+    const homeFooter = getPageSection("/", "footer");
+    const pageBodies = {
+      home: {
+        hero: withBlock(getPageSection("/", "hero")),
+        intro: withBlock(getPageSection("/", "intro")),
+        features: withBlock(getPageSection("/", "features")),
+        stats: withBlock(getPageSection("/", "stats")),
+        courses: withBlock(getPageSection("/", "courses")),
+        offer: withBlock(getPageSection("/", "offer")),
+      },
+      about: {
+        intro: withBlock(getPageSection("/about", "intro")),
+        features: withBlock(getPageSection("/about", "features")),
+        stats: withBlock(getPageSection("/about", "stats")),
+        members: withBlock(getPageSection("/about", "members")),
+      },
+      courses: {
+        intro: withBlock(getPageSection("/courses", "intro")),
+        features: withBlock(getPageSection("/courses", "features")),
+      },
+      contact: {
+        contact: withBlock(getPageSection("/contact", "contact")),
+        image: withBlock(getPageSection("/contact", "image")),
+      },
+    };
+
+    return {
+      ...themedBase,
+      tagline: readString(
+        pageBodies.home.hero,
+        ["heading"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        pageBodies.home.intro,
+        ["body", "description"],
+        String(themedBase.description),
+      ),
+      templateContent: {
+        __siteSlug: website.slug || undefined,
+        navbar: {
+          ...homeNavbar.content,
+          blockId: homeNavbar.id,
+          ctaText: readString(homeNavbar.content, ["ctaText"], ""),
+        },
+        footer: withBlock(homeFooter),
+        pageBodies,
+      },
+    };
+  }
 
   if (templateId === "company-pro") {
     const sectionMap = getTemplateSectionMap(templateId, pages);

@@ -48,7 +48,24 @@ Every page must use this hierarchy:
 - A section must never be nested inside another section wrapper.
 - Cards, grids, columns, and inner wrappers remain children of their owning section.
 
-### 4.2 Shared layout responsibilities
+### 4.2 Template page types
+
+A new template must explicitly declare one of these page models:
+
+- **Single-page template:** defines one Home page containing all default
+  page-specific sections. If a user creates another page later, it begins with
+  shared Header/Footer and an empty or explicitly selected default body; it
+  must not copy Home body sections.
+- **Multi-page template:** defines Home plus one or more default pages such as
+  About, Services, Blog, or Contact. Each page owns its own body sections and
+  unique title, slug/path, and sort order. Page bodies are never shared unless
+  the block is explicitly a global component.
+
+For both models, Header and Footer are shared/global components rendered on
+every page. Editing shared chrome from any page updates every page; do not
+duplicate Header/Footer inside page bodies.
+
+### 4.3 Shared layout responsibilities
 
 New templates must use shared components/helpers for:
 
@@ -135,6 +152,17 @@ Rules:
 7. Repeated content must render from the complete persisted array. Do not
    hardcode a visual slice that silently hides items added through the editor;
    use responsive pagination, a carousel, or another accessible overflow pattern.
+
+### 6.1 Page and global component model
+
+Each persisted page must contain a page ID, title, unique slug/path, sort
+order, and page-specific blocks. The global website owns shared Header, shared
+Footer, `themeSettings`, and `globalComponents` when available.
+
+Website creation creates declared default pages once only. Existing pages and
+their blocks must be updated by page ID; Save Changes must never recreate a
+path that already exists. New-page creation must validate path uniqueness
+before creation.
 
 ## 7. Section and Container Identity
 
@@ -240,7 +268,9 @@ Rules:
 7. Apply hidden-state helpers to every deletable element/container.
 8. Use template-specific JSX only for unique arrangement or decoration.
 9. Record unsupported reusable structures in the backend follow-up document; never invent fake persisted fields.
-10. Complete the acceptance checklist before adding the template to the library.
+10. For multi-page templates, define each default page's unique path and
+    page-specific body blocks; for single-page templates, define Home only.
+11. Complete the acceptance checklist before adding the template to the library.
 
 ### 11.1 Registration and integration contract
 
@@ -384,6 +414,14 @@ A new template is complete only when:
   editor canvas, saved Live Preview, and public rendering
 - changing the heading or body font pack visibly updates the template in landing
   preview, editor canvas, saved Live Preview, and public rendering
+- the website can be created with every declared default page exactly once
+- editor page switching, Live Preview, and public rendering show the correct
+  page-specific body content
+- shared Header/Footer render on every page and edits sync globally
+- page-specific sections remain independent across pages
+- Save Changes updates existing page IDs and never creates duplicate paths
+- users can add a page to both single-page and multi-page templates without
+  copying the Home body or creating a duplicate path
 
 ## 14. Definition of Done Documentation
 

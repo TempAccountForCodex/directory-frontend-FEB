@@ -1193,7 +1193,8 @@ const COMPANY_PRO_DATA: BusinessData = {
   features: [
     {
       title: "Strategy systems",
-      description: "Clear priorities, operating models, and measurable roadmaps.",
+      description:
+        "Clear priorities, operating models, and measurable roadmaps.",
       icon: "01",
     },
     {
@@ -1695,10 +1696,10 @@ const PreviewBar: React.FC<{
                           ? "Executive"
                           : s === "company-pro"
                             ? "Pro"
-                          : s === "store-performance"
-                            ? "Performance"
-                            : shortLabel.charAt(0).toUpperCase() +
-                              shortLabel.slice(1));
+                            : s === "store-performance"
+                              ? "Performance"
+                              : shortLabel.charAt(0).toUpperCase() +
+                                shortLabel.slice(1));
 
               return (
                 <Chip
@@ -1930,7 +1931,7 @@ const LandingPreview: React.FC = () => {
         ? "Company Executive"
         : slug === "company-pro"
           ? "Company Pro"
-        : "Company";
+          : "Company";
   const storeCustomizerLabel =
     slug === "store-premium"
       ? "Store Premium"

@@ -79,12 +79,16 @@ const SHARED_FOOTER_BLOCK_TYPES = new Set(["FOOTER"]);
 
 const isSharedHeaderBlock = (block?: { blockType?: string | null }) =>
   SHARED_HEADER_BLOCK_TYPES.has(
-    String(block?.blockType || "").trim().toUpperCase(),
+    String(block?.blockType || "")
+      .trim()
+      .toUpperCase(),
   );
 
 const isSharedFooterBlock = (block?: { blockType?: string | null }) =>
   SHARED_FOOTER_BLOCK_TYPES.has(
-    String(block?.blockType || "").trim().toUpperCase(),
+    String(block?.blockType || "")
+      .trim()
+      .toUpperCase(),
   );
 
 const VIEWPORT_WIDTHS: Record<Viewport, number> = {
@@ -109,8 +113,12 @@ const buildEditorStaticMediaOverrides = (
   const next: Record<string, Record<string, any>> = {};
 
   Object.entries(overrides || {}).forEach(([key, value]) => {
-    const [overrideWebsiteId, overridePageId, overrideBlockId, overrideStaticId] =
-      key.split("::");
+    const [
+      overrideWebsiteId,
+      overridePageId,
+      overrideBlockId,
+      overrideStaticId,
+    ] = key.split("::");
     if (
       String(overrideWebsiteId || "") !== String(websiteId ?? "") ||
       String(overridePageId || "") !== String(pageId ?? "") ||
@@ -535,12 +543,12 @@ const FrontendTemplateIframePreview = React.memo(
             .querySelectorAll(".tt-section-add-button")
             .forEach((button) => {
               (button as HTMLButtonElement).style.display =
-              overlayKind === "section" &&
-              overlayTarget?.getAttribute(
-                "data-template-section-boundary",
-              ) === "true"
-                ? "inline-flex"
-                : "none";
+                overlayKind === "section" &&
+                overlayTarget?.getAttribute(
+                  "data-template-section-boundary",
+                ) === "true"
+                  ? "inline-flex"
+                  : "none";
             });
           const innerAddButton = overlayEl.querySelector(
             ".tt-section-inner-add-button",
@@ -860,7 +868,10 @@ const FrontendTemplateIframePreview = React.memo(
           [];
 
         const resolvedUnderlying = elementsFromPoint.find((element) => {
-          if (!(element instanceof HTMLElement) && !(element instanceof SVGElement)) {
+          if (
+            !(element instanceof HTMLElement) &&
+            !(element instanceof SVGElement)
+          ) {
             return false;
           }
 
@@ -978,8 +989,7 @@ const FrontendTemplateIframePreview = React.memo(
               '[data-preview-accepts-inner-blocks="true"]',
             ),
           ).some(
-            (node) =>
-              node.getAttribute("data-preview-block-id") === blockId,
+            (node) => node.getAttribute("data-preview-block-id") === blockId,
           );
 
         return {
@@ -1259,9 +1269,7 @@ const FrontendTemplateIframePreview = React.memo(
 
         const editType =
           (editableEl.getAttribute("data-edit-type") as
-            | "single"
-            | "multi"
-            | null) || "single";
+            "single" | "multi" | null) || "single";
         const styleKey =
           editableEl.getAttribute("data-edit-style-key") || undefined;
         const rect = editableEl.getBoundingClientRect();
@@ -1401,7 +1409,8 @@ const FrontendTemplateIframePreview = React.memo(
         onEditableElementSelectedRef.current?.(selection);
         onSectionSelectedRef.current?.(null);
 
-        const isFallbackEditable = selection.fieldPath.startsWith("__fallback.");
+        const isFallbackEditable =
+          selection.fieldPath.startsWith("__fallback.");
 
         if (options?.startEditing === false || isFallbackEditable) {
           activeEditableRef.current = null;
@@ -2257,13 +2266,13 @@ const FrontendTemplateIframePreview = React.memo(
           staticSelectableEl ||
           fallbackMediaEl ||
           fallbackSelectableEl
-            ? ((editableEl ||
+            ? ((
+                editableEl ||
                 imageEl ||
                 staticSelectableEl ||
                 fallbackMediaEl ||
-                fallbackSelectableEl)?.closest(
-                '[data-preview-section="true"]',
-              ) as HTMLElement | null)
+                fallbackSelectableEl
+              )?.closest('[data-preview-section="true"]') as HTMLElement | null)
             : directSectionEl || activeSectionRef.current;
         const shouldPreferImageSelection =
           !!imageEl &&
@@ -2760,9 +2769,7 @@ const FrontendTemplateIframePreview = React.memo(
         clearFallbackMetadata();
 
         Array.from(
-          root.querySelectorAll<HTMLElement>(
-            '[data-preview-section="true"]',
-          ),
+          root.querySelectorAll<HTMLElement>('[data-preview-section="true"]'),
         ).forEach((section) => {
           if (
             section.getAttribute("data-static-selectable") === "true" ||
@@ -2805,9 +2812,7 @@ const FrontendTemplateIframePreview = React.memo(
           fallbackCounter += 1;
           const fallbackId = `fallback-${getStableContainerId(element)}`;
           const isContainer =
-            !isMedia &&
-            !textLikeTags.has(tagName) &&
-            tagName !== "svg";
+            !isMedia && !textLikeTags.has(tagName) && tagName !== "svg";
           element.setAttribute("data-fallback-section", "true");
           element.setAttribute("data-fallback-selectable", "true");
           element.setAttribute(
@@ -2816,7 +2821,10 @@ const FrontendTemplateIframePreview = React.memo(
           );
           element.setAttribute("data-fallback-tag", tagName);
           element.setAttribute("data-fallback-id", fallbackId);
-          element.setAttribute("data-fallback-context-block-id", context.blockId);
+          element.setAttribute(
+            "data-fallback-context-block-id",
+            context.blockId,
+          );
           element.setAttribute("data-static-id", fallbackId);
           element.setAttribute("data-static-label", label);
           if (isMedia) {
@@ -2844,7 +2852,9 @@ const FrontendTemplateIframePreview = React.memo(
           element.setAttribute("data-preview-block-id", context.blockId);
           element.setAttribute(
             "data-preview-style-key",
-            isContainer ? "containerStyles" : `static.__fallback.${fallbackCounter}`,
+            isContainer
+              ? "containerStyles"
+              : `static.__fallback.${fallbackCounter}`,
           );
           element.setAttribute("data-preview-label", label);
         };
@@ -2895,9 +2905,8 @@ const FrontendTemplateIframePreview = React.memo(
             const hasExplicitStaticTarget =
               element.getAttribute("data-static-selectable") === "true" ||
               element.hasAttribute("data-container-style-id");
-            const hasExplicitSection = element.getAttribute(
-              "data-preview-section",
-            ) === "true";
+            const hasExplicitSection =
+              element.getAttribute("data-preview-section") === "true";
             const explicitEditableAncestor = element.parentElement?.closest?.(
               "[data-editable], [data-edit-image]",
             );
@@ -3008,7 +3017,7 @@ const FrontendTemplateIframePreview = React.memo(
             const blockSurfaceSelector = '[data-editor-block-surface="true"]';
             const isBlockLibraryStructuralWrapper = Boolean(
               element.closest(blockSurfaceSelector) ||
-                element.querySelector?.(blockSurfaceSelector),
+              element.querySelector?.(blockSurfaceSelector),
             );
 
             if (
@@ -3028,8 +3037,7 @@ const FrontendTemplateIframePreview = React.memo(
                   element,
                   context,
                   tagName,
-                  element.getAttribute("aria-label") ||
-                    nestedContainerLabel,
+                  element.getAttribute("aria-label") || nestedContainerLabel,
                   false,
                   isNestedSelectableContainer,
                 );
@@ -3695,13 +3703,7 @@ export interface SectionSelectionData {
   styleOnly?: boolean;
   targetKind?: "section" | "static";
   staticType?:
-    | "text"
-    | "media"
-    | "icon"
-    | "container"
-    | "badge"
-    | "avatar"
-    | "unknown";
+    "text" | "media" | "icon" | "container" | "badge" | "avatar" | "unknown";
   tagName?: string;
   computedStyle?: PreviewComputedStyleData;
   src?: string;
@@ -3991,7 +3993,7 @@ const PreviewPanel = React.memo(function PreviewPanel({
       baseData = frontendTemplateDataOverride;
     } else {
       const override =
-      previewCtx.currentPageContent?.websiteMeta?.templateDataOverride;
+        previewCtx.currentPageContent?.websiteMeta?.templateDataOverride;
       if (override && frontendTemplateId) {
         baseData = override as unknown as BusinessData;
       } else {
@@ -4037,8 +4039,9 @@ const PreviewPanel = React.memo(function PreviewPanel({
     return {
       ...baseData,
       templateContent: {
-        ...((baseData as BusinessData & { templateContent?: Record<string, any> })
-          .templateContent || {}),
+        ...((
+          baseData as BusinessData & { templateContent?: Record<string, any> }
+        ).templateContent || {}),
         __editorStaticMediaOverrides: editorStaticMediaOverrides,
       },
     } as BusinessData;
@@ -4585,8 +4588,12 @@ const PreviewPanel = React.memo(function PreviewPanel({
               },
             }}
           >
-            <ToggleButton value="live" aria-label="Live mode">Live mode</ToggleButton>
-            <ToggleButton value="static" aria-label="Static mode">Static mode</ToggleButton>
+            <ToggleButton value="live" aria-label="Live mode">
+              Live mode
+            </ToggleButton>
+            <ToggleButton value="static" aria-label="Static mode">
+              Static mode
+            </ToggleButton>
           </ToggleButtonGroup>
 
           {/* Viewport toggle */}
@@ -4641,7 +4648,10 @@ const PreviewPanel = React.memo(function PreviewPanel({
         {/* Right: Zoom + Rotation + Scale-to-fit + Refresh */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {/* Viewport dimensions */}
-          <Typography variant="caption" sx={{ color: colors.textSecondary, mr: 0.5 }}>
+          <Typography
+            variant="caption"
+            sx={{ color: colors.textSecondary, mr: 0.5 }}
+          >
             {`${displayWidth} × ${displayHeight}`}
           </Typography>
 
