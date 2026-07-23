@@ -13,6 +13,7 @@ import {
 import { companyStudioAssets } from "../landingTemplates/assets/company/company-executive";
 import { companyProAssets } from "../landingTemplates/assets/company/company-pro";
 import { educationProAssets } from "../landingTemplates/assets/education/education-pro/index";
+import { gardeningProAssets } from "../landingTemplates/assets/gardening/gardening-pro/index";
 
 export type TemplateThemeSettings = {
   primaryColor?: string;
@@ -107,6 +108,7 @@ const LOCAL_TEMPLATE_EDITOR_IDS = new Set([
   "company-executive",
   "company-pro",
   "education-pro",
+  "gardening-pro",
   "education",
   "gardening",
   "plumbing",
@@ -962,9 +964,13 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           buildContent: (data) => ({
             logoText: data.name || "Alder & Co.",
             copyright: `(c) 2026 ${data.name || "Alder & Co."}. All rights reserved.`,
-            columns: [
-              { title: "Company", links: [{ label: "About", url: "#about" }, { label: "Services", url: "#services" }] },
-              { title: "Connect", links: [{ label: "Contact", url: "#contact" }, { label: "LinkedIn", url: "#" }] },
+            // Canonical, editable footer nav links (the Footer block editor's
+            // "Footer Navigation Links" repeater). See PRD §9.5.
+            links: [
+              { label: "About", url: "#about" },
+              { label: "Services", url: "#services" },
+              { label: "Contact", url: "#contact" },
+              { label: "LinkedIn", url: "#" },
             ],
           }),
         },
@@ -1218,23 +1224,12 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
             ctaLink: "/contact",
             description:
               "Fusce varius, dolor tempor interdum tristique bibendum.",
-            columns: [
-              {
-                title: "Company Info",
-                links: [
-                  { label: "About Us", url: "/about" },
-                  { label: "All Courses", url: "/courses" },
-                  { label: "Contact", url: "/contact" },
-                ],
-              },
-              {
-                title: "Useful Links",
-                links: [
-                  { label: "All Courses", url: "/courses" },
-                  { label: "About Us", url: "/about" },
-                  { label: "Contact", url: "/contact" },
-                ],
-              },
+            // Canonical, editable footer nav links (the Footer block editor's
+            // "Footer Navigation Links" repeater). See PRD §9.5.
+            links: [
+              { label: "About Us", url: "/about" },
+              { label: "All Courses", url: "/courses" },
+              { label: "Contact", url: "/contact" },
             ],
             copyright: `© 2026 ${data.name || "EdCare"}. All Rights Reserved.`,
           }),
@@ -1491,6 +1486,513 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
             ],
             buttonLabel: "Submit Message",
             buttonLink: `mailto:${data.contact.email || "hello@edcare.com"}`,
+            // Persisted, editable contact fields — the canvas renders these
+            // dynamically (see PRD §9.1.1), so editor and canvas stay in sync.
+            formFields: [
+              { _id: "full-name", label: "Your Name", placeholder: "Your Name", fieldType: "text", required: true, options: "" },
+              { _id: "email", label: "Your Email", placeholder: "Your Email", fieldType: "email", required: true, options: "" },
+              { _id: "subject", label: "Subject", placeholder: "Subject", fieldType: "text", required: false, options: "" },
+              { _id: "message", label: "Message", placeholder: "Message", fieldType: "textarea", required: true, options: "" },
+            ],
+          }),
+        },
+      ],
+    },
+  ],
+  "gardening-pro": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: (data) => ({
+            brandName: data.name || "Greenth",
+            navigationItems: [
+              { label: "Home", link: "/" },
+              { label: "About", link: "/about" },
+              { label: "Services", link: "/services" },
+              { label: "Contact", link: "/contact" },
+            ],
+            ctaText: "Request a Quote",
+            ctaLink: "/contact",
+          }),
+        },
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            eyebrow: "Landscape studio · Est. 2012",
+            heading: "Designing",
+            headingAccent: "Landscapes",
+            subheading:
+              data.description ||
+              "We design and care for outdoor spaces that feel settled from day one — layered planting, honest materials, and seasons that unfold beautifully.",
+            ctaText: "Get Started",
+            ctaLink: "/contact",
+            image: gardeningProAssets.heroEstate,
+            headingStyle: {
+              fontSize: { xs: "2.8rem", sm: "3.6rem", md: "4.6rem" },
+            },
+            items: [
+              { value: "850+", heading: "Gardens Designed" },
+              { value: "12yr", heading: "Craft Experience" },
+              { value: "98%", heading: "Client Retention" },
+            ],
+          }),
+        },
+        {
+          key: "trust",
+          label: "Trusted by",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "Trusted by estates & studios",
+            features: [
+              { title: "Garden & Co", description: "Estate partner" },
+              { title: "Verdant Homes", description: "Residential partner" },
+              { title: "Estate Living", description: "Property partner" },
+              { title: "Bloom Studio", description: "Design partner" },
+              { title: "Root & Branch", description: "Horticulture partner" },
+            ],
+            image: gardeningProAssets.trustAvatar,
+          }),
+        },
+        {
+          key: "intro",
+          label: "About us",
+          blockType: "TEXT",
+          buildContent: (data) => ({
+            eyebrow: "About Us",
+            heading: "A studio rooted in",
+            headingAccent: "living landscapes",
+            body:
+              data.description ||
+              "Greenth designs gardens that feel inevitable on site — quiet structure, seasonal colour, and outdoor rooms meant for everyday living.",
+            ctaText: "Read More",
+            ctaLink: "/about",
+            image: gardeningProAssets.aboutMower,
+            items: [
+              {
+                heading: "Hands in the soil",
+                image: gardeningProAssets.plantingHands,
+              },
+            ],
+          }),
+        },
+        {
+          key: "stats",
+          label: "Growing together",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Growing Together",
+            heading: "Growing",
+            headingAccent: "Together",
+            items: [
+              { value: "850+", heading: "Gardens Designed" },
+              { value: "12yr", heading: "Craft Experience" },
+              { value: "98%", heading: "Client Retention" },
+              { value: "40+", heading: "Landscape Artists" },
+            ],
+          }),
+        },
+        {
+          key: "servicesList",
+          label: "Services list",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "What we offer",
+            heading: "Craft for every",
+            headingAccent: "season",
+            body: "From first sketch to seasonal pruning, every service is delivered by the same hands that designed your garden.",
+            features: [
+              {
+                title: "Garden Design",
+                description:
+                  "Bespoke outdoor compositions shaped around light, soil, and the way you live.",
+                image: gardeningProAssets.serviceList1,
+              },
+              {
+                title: "Seasonal Care",
+                description:
+                  "Year-round maintenance that keeps every bed, lawn, and border quietly thriving.",
+                image: gardeningProAssets.serviceList2,
+              },
+              {
+                title: "Hardscape Build",
+                description:
+                  "Stone paths, terraces, and outdoor rooms built to feel inevitable and lasting.",
+                image: gardeningProAssets.serviceList3,
+              },
+              {
+                title: "Tree & Planting",
+                description:
+                  "Specimen trees and layered planting plans that grow more beautiful each season.",
+                image: gardeningProAssets.serviceList4,
+              },
+            ],
+            ctaText: "View All Services",
+            ctaLink: "/services",
+          }),
+        },
+        {
+          key: "projects",
+          label: "Featured projects",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            heading: "Featured",
+            headingAccent: "Projects",
+            features: [
+              {
+                title: "Hedgerow Estate",
+                description: "Formal hedges · Private residence",
+                image: gardeningProAssets.projectHedge,
+              },
+              {
+                title: "Courtyard House",
+                description: "Stone & softscape · Urban retreat",
+                image: gardeningProAssets.projectHouse,
+              },
+              {
+                title: "Sunset Terrace",
+                description: "Evening garden · Entertaining",
+                image: gardeningProAssets.projectSunset,
+              },
+            ],
+          }),
+        },
+        {
+          key: "success",
+          label: "Success banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Plant once.",
+            headingAccent: "Thrive for years.",
+            body: "Our clients return season after season — not because gardens need fixing, but because great landscapes keep evolving with care.",
+            image: gardeningProAssets.promoShears,
+            ctaText: "Start a Conversation",
+            ctaLink: "/contact",
+          }),
+        },
+        {
+          key: "features",
+          label: "Features",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "The Greenth way",
+            heading: "What sets our",
+            headingAccent: "gardens apart",
+            body: "Every project begins with the land, then grows through careful craft and seasonal attention.",
+            image: gardeningProAssets.featuresPortrait,
+            features: [
+              {
+                title: "Site-first planting plans rooted in soil science",
+                description: "Planting plans shaped by soil, light, and climate.",
+              },
+              {
+                title: "Quiet craftsmanship with lasting hardscape detail",
+                description: "Stone and timber work built to age gracefully.",
+              },
+              {
+                title: "Seasonal care programs that protect your investment",
+                description: "Ongoing care that keeps every garden thriving.",
+              },
+              {
+                title: "Transparent timelines from concept to first bloom",
+                description: "Clear milestones from sketch to settled garden.",
+              },
+            ],
+          }),
+        },
+        {
+          key: "cta",
+          label: "CTA banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Ready to begin",
+            headingAccent: "your garden?",
+            body: "Tell us about your site, your seasons, and how you want to live outdoors. We'll take it from there.",
+            ctaText: "Request a Quote",
+            ctaLink: "/contact",
+            image: gardeningProAssets.ctaMower,
+          }),
+        },
+        {
+          key: "footer",
+          label: "Footer",
+          blockType: "FOOTER",
+          optional: true,
+          buildContent: (data) => ({
+            logoText: data.name || "Greenth",
+            heading: "Seasonal notes from the studio",
+            headingAccent: "Subscribe",
+            ctaText: "Subscribe",
+            ctaLink: "/contact",
+            description:
+              "Quiet updates on planting seasons, studio projects, and care tips for living landscapes.",
+            image: gardeningProAssets.footerPortrait,
+            // Canonical, editable footer nav links (the Footer block editor's
+            // "Footer Navigation Links" repeater). See PRD §9.5.
+            links: [
+              { label: "Home", url: "/" },
+              { label: "About Us", url: "/about" },
+              { label: "Services", url: "/services" },
+              { label: "Contact", url: "/contact" },
+              { label: "Book a Visit", url: "/contact" },
+            ],
+            copyright: `© 2026 ${data.name || "Greenth"}. All Rights Reserved.`,
+          }),
+        },
+      ],
+    },
+    {
+      key: "about",
+      title: "About",
+      path: "/about",
+      isHome: false,
+      sections: [
+        {
+          key: "banner",
+          label: "About banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "About Greenth",
+            heading: "A studio rooted in",
+            headingAccent: "the land",
+            image: gardeningProAssets.aboutHero,
+          }),
+        },
+        {
+          key: "vision",
+          label: "Our vision",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Our vision",
+            heading: "Gardens that belong to",
+            headingAccent: "their place",
+            body: "We believe a great garden never shouts. It settles into the soil, frames the light, and becomes the quiet backdrop for every season of living outdoors.",
+            items: [
+              {
+                image: gardeningProAssets.vision1,
+                title: "Quiet structure",
+              },
+              {
+                image: gardeningProAssets.vision2,
+                title: "Seasonal colour",
+              },
+              {
+                image: gardeningProAssets.vision3,
+                title: "Lived-in outdoor rooms",
+              },
+            ],
+          }),
+        },
+        {
+          key: "stats",
+          label: "About stats",
+          blockType: "TEXT",
+          buildContent: () => ({
+            items: [
+              { value: "850+", heading: "Projects completed" },
+              { value: "40+", heading: "Team members" },
+              { value: "12", heading: "Years of craft" },
+              { value: "6", heading: "Regions served" },
+            ],
+          }),
+        },
+        {
+          key: "founder",
+          label: "Founder letter",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "A letter from our founder",
+            heading: "We still start with",
+            headingAccent: "a walk",
+            body: "Every Greenth garden begins the same way — boots on soil, notebook in hand. We listen to the wind, the slope, the way morning light finds a wall. Design is what follows when the land has already spoken.",
+            name: "Margaret Hale",
+            role: "Founder & Creative Director",
+            image: gardeningProAssets.founder,
+          }),
+        },
+        {
+          key: "values",
+          label: "Values banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Craft. Patience.",
+            headingAccent: "Belonging.",
+            body: "These are the values we plant into every project — quiet enough to notice, strong enough to last.",
+            image: gardeningProAssets.valuesGate,
+          }),
+        },
+        {
+          key: "members",
+          label: "Team members",
+          blockType: "TEAM",
+          buildContent: () => ({
+            eyebrow: "The people behind the planting",
+            heading: "Meet the",
+            headingAccent: "studio",
+            members: [
+              {
+                name: "Elena Marsh",
+                role: "Lead Landscape Designer",
+                photo: gardeningProAssets.member1,
+              },
+              {
+                name: "James Whitfield",
+                role: "Horticulture Director",
+                photo: gardeningProAssets.member2,
+              },
+              {
+                name: "Sofia Reyes",
+                role: "Hardscape Specialist",
+                photo: gardeningProAssets.member3,
+              },
+            ],
+          }),
+        },
+      ],
+    },
+    {
+      key: "services",
+      title: "Services",
+      path: "/services",
+      isHome: false,
+      sections: [
+        {
+          key: "intro",
+          label: "Services intro",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "What we cultivate",
+            heading: "Services shaped for",
+            headingAccent: "living landscapes",
+            body: "From concept sketches to seasonal care, every Greenth service is delivered by the same studio that designs your garden.",
+          }),
+        },
+        {
+          key: "features",
+          label: "Service cards",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            features: [
+              {
+                icon: "01",
+                title: "Garden Design",
+                description:
+                  "Concept-to-planting plans that balance structure, bloom, and the way you move through the space.",
+                image: gardeningProAssets.serviceSoil,
+              },
+              {
+                icon: "02",
+                title: "Landscape Lighting",
+                description:
+                  "Subtle evening light that reveals form, path, and canopy without overpowering the night.",
+                image: gardeningProAssets.serviceLighting,
+              },
+              {
+                icon: "03",
+                title: "Ongoing Maintenance",
+                description:
+                  "Seasonal care programs — pruning, soil health, and lawn work that protect your investment.",
+                image: gardeningProAssets.serviceMaintenance,
+              },
+              {
+                icon: "04",
+                title: "Hardscape Construction",
+                description:
+                  "Terraces, paths, and outdoor rooms built in stone and timber to feel inevitable on site.",
+                image: gardeningProAssets.serviceHardscape,
+              },
+              {
+                icon: "05",
+                title: "Tree Care",
+                description:
+                  "Specimen selection, planting, and long-term canopy care for shade and structure.",
+                image: gardeningProAssets.serviceTree,
+              },
+              {
+                icon: "06",
+                title: "Planting & Borders",
+                description:
+                  "Layered perennial and shrub compositions that evolve gracefully through every season.",
+                image: gardeningProAssets.servicePlanting,
+              },
+            ],
+          }),
+        },
+        {
+          key: "cta",
+          label: "Services CTA",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Let's plan your",
+            headingAccent: "next season",
+            body: "Share a few details about your site and we'll outline a thoughtful path from first visit to first bloom.",
+            ctaText: "Request a Quote",
+            ctaLink: "/contact",
+            image: gardeningProAssets.servicesCta,
+          }),
+        },
+      ],
+    },
+    {
+      key: "contact",
+      title: "Contact",
+      path: "/contact",
+      isHome: false,
+      sections: [
+        {
+          key: "intro",
+          label: "Contact intro",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Get in touch",
+            heading: "Let's talk about your",
+            headingAccent: "garden",
+            body: "Tell us about your property, your favourite seasons, and how you hope to live outdoors. We'll reply with thoughtful next steps.",
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Send a message",
+            description:
+              "Share a few details about your garden and we'll get back to you shortly.",
+            email: data.contact.email || "hello@greenth.studio",
+            phone: data.contact.phone || "+1 (555) 214-0890",
+            address: data.contact.address || "184 Orchard Lane, Greenfield",
+            items: [
+              {
+                heading: "Monday – Friday",
+                description: "8:00 AM – 6:00 PM",
+              },
+              {
+                heading: "Saturday",
+                description: "9:00 AM – 2:00 PM",
+              },
+              {
+                heading: "Sunday",
+                description: "Closed",
+              },
+            ],
+            buttonLabel: "Send Message",
+            // Persisted, editable contact fields — the canvas renders these
+            // dynamically (see PRD §9.1.1), so editor and canvas stay in sync.
+            formFields: [
+              { _id: "full-name", label: "Your Name", placeholder: "Your Name", fieldType: "text", required: true, options: "" },
+              { _id: "email", label: "Your Email", placeholder: "Your Email", fieldType: "email", required: true, options: "" },
+              { _id: "subject", label: "Subject", placeholder: "Subject", fieldType: "text", required: false, options: "" },
+              { _id: "message", label: "Message", placeholder: "Message", fieldType: "textarea", required: true, options: "" },
+            ],
           }),
         },
       ],
@@ -2673,6 +3175,35 @@ export const supportsFrontendTemplateEditor = (
   templateId?: string | null,
 ): boolean => !!templateId && LOCAL_TEMPLATE_EDITOR_IDS.has(templateId);
 
+/**
+ * True when `path` is one of the template's declared default pages (from
+ * TEMPLATE_PAGE_SCHEMAS). Dynamic pages like Blog (`/blog`) or user-added
+ * pages are NOT owned — those must render via page-shell + persisted blocks,
+ * not the template's Home body fallback.
+ */
+export const isFrontendTemplateOwnedPagePath = (
+  templateId?: string | null,
+  path?: string | null,
+): boolean => {
+  if (!templateId) return false;
+  const schemaPages = TEMPLATE_PAGE_SCHEMAS[templateId] || [];
+  if (!schemaPages.length) return false;
+
+  const normalized = String(path || "/")
+    .trim()
+    .replace(/^\/+|\/+$/g, "");
+
+  return schemaPages.some((page) => {
+    const pagePath = String(page.path || "/")
+      .trim()
+      .replace(/^\/+|\/+$/g, "");
+    if (page.isHome) {
+      return normalized === "" || normalized === "home" || pagePath === normalized;
+    }
+    return pagePath === normalized;
+  });
+};
+
 export const isSyntheticTemplatePageId = (pageId: unknown): boolean =>
   typeof pageId === "string" && /^page-\d+$/.test(pageId);
 
@@ -3092,6 +3623,11 @@ const buildTemplatePreviewBusinessDataImpl = (
       path: page.path,
       isHome: page.isHome,
       isPublished: page.isPublished,
+      pageType: (page as { pageType?: string | null }).pageType ?? null,
+      isNavigationPage:
+        (page as { isNavigationPage?: boolean | null }).isNavigationPage ??
+        null,
+      type: (page as { type?: string | null }).type ?? null,
     })),
     primaryColor: themeSettings.primaryColor || base.primaryColor,
     secondaryColor: themeSettings.secondaryColor || base.secondaryColor,
@@ -3175,6 +3711,100 @@ const buildTemplatePreviewBusinessDataImpl = (
       },
       contact: {
         banner: withBlock(getPageSection("/contact", "banner")),
+        contact: withBlock(getPageSection("/contact", "contact")),
+      },
+    };
+
+    return {
+      ...themedBase,
+      tagline: readString(
+        pageBodies.home.hero,
+        ["heading"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        pageBodies.home.intro,
+        ["body", "description"],
+        String(themedBase.description),
+      ),
+      templateContent: {
+        __siteSlug: website.slug || undefined,
+        navbar: {
+          ...homeNavbar.content,
+          blockId: homeNavbar.id,
+          ctaText: readString(homeNavbar.content, ["ctaText"], ""),
+        },
+        footer: withBlock(homeFooter),
+        pageBodies,
+      },
+    };
+  }
+
+  if (templateId === "gardening-pro") {
+    const getPageSection = (
+      path: string,
+      sectionKey: string,
+    ): { id?: string | number; content: Record<string, unknown> } => {
+      const page = pages.find((candidate) => candidate.path === path);
+      const block = page?.blocks.find(
+        (candidate) =>
+          candidate.content &&
+          typeof candidate.content === "object" &&
+          !Array.isArray(candidate.content) &&
+          (candidate.content as Record<string, unknown>).editorSection ===
+            sectionKey,
+      );
+
+      return {
+        id: block?.id,
+        content:
+          block?.content &&
+          typeof block.content === "object" &&
+          !Array.isArray(block.content)
+            ? (block.content as Record<string, unknown>)
+            : {},
+      };
+    };
+    const withBlock = (
+      section: { id?: string | number; content: Record<string, unknown> },
+    ): Record<string, unknown> => ({
+      ...section.content,
+      blockId: section.id,
+      sectionStyle: getSectionStyleValue(section.content),
+      outerSectionStyle: getSectionStyleValue(
+        section.content,
+        "outerSectionStyle",
+      ),
+    });
+    const homeNavbar = getPageSection("/", "navbar");
+    const homeFooter = getPageSection("/", "footer");
+    const pageBodies = {
+      home: {
+        hero: withBlock(getPageSection("/", "hero")),
+        trust: withBlock(getPageSection("/", "trust")),
+        intro: withBlock(getPageSection("/", "intro")),
+        stats: withBlock(getPageSection("/", "stats")),
+        servicesList: withBlock(getPageSection("/", "servicesList")),
+        projects: withBlock(getPageSection("/", "projects")),
+        success: withBlock(getPageSection("/", "success")),
+        features: withBlock(getPageSection("/", "features")),
+        cta: withBlock(getPageSection("/", "cta")),
+      },
+      about: {
+        banner: withBlock(getPageSection("/about", "banner")),
+        vision: withBlock(getPageSection("/about", "vision")),
+        stats: withBlock(getPageSection("/about", "stats")),
+        founder: withBlock(getPageSection("/about", "founder")),
+        values: withBlock(getPageSection("/about", "values")),
+        members: withBlock(getPageSection("/about", "members")),
+      },
+      services: {
+        intro: withBlock(getPageSection("/services", "intro")),
+        features: withBlock(getPageSection("/services", "features")),
+        cta: withBlock(getPageSection("/services", "cta")),
+      },
+      contact: {
+        intro: withBlock(getPageSection("/contact", "intro")),
         contact: withBlock(getPageSection("/contact", "contact")),
       },
     };

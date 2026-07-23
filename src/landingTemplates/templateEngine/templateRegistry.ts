@@ -262,6 +262,9 @@ const CompanyProTemplate = lazy(
 const EducationProTemplate = lazy(
   () => import("../templates/education/EducationProTemplate"),
 );
+const GardeningProTemplate = lazy(
+  () => import("../templates/gardening/GardeningProTemplate"),
+);
 
 const templateRegistry: Record<string, TemplateDefinition> = {
   // --- Service business ---
@@ -280,6 +283,14 @@ const templateRegistry: Record<string, TemplateDefinition> = {
       "Multi-page learning academy template with course showcases, instructor profiles, testimonials, and a dedicated contact page.",
     tags: ["education", "academic", "courses", "multi-page"],
     component: EducationProTemplate,
+  },
+  "gardening-pro": {
+    id: "gardening-pro",
+    name: "Gardening Pro",
+    description:
+      "Multi-page landscape studio template with project showcases, team profiles, services, and a dedicated contact page.",
+    tags: ["service", "gardening", "editorial", "nature", "multi-page"],
+    component: GardeningProTemplate,
   },
   gardening: {
     id: "gardening",

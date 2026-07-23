@@ -137,6 +137,9 @@ export interface BusinessData {
     path: string;
     isHome?: boolean;
     isPublished?: boolean;
+    pageType?: string | null;
+    isNavigationPage?: boolean | null;
+    type?: string | null;
   }>;
   themeSettings?: {
     primaryColor?: string;

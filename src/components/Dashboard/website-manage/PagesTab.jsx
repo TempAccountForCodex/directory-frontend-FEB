@@ -218,11 +218,12 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     [websiteId]
   );
 
-  // Backfill older Education Pro websites that were created while `/websites`
-  // persisted only the generic Home page and kept the remaining template pages
-  // in a snapshot. This uses the exact page/block APIs used by Add Page and
-  // WebsiteEditor, creating each missing path once and then saving its blocks.
-  const provisionEducationProPages = useCallback(
+  // Backfill older multi-page frontend templates that were created while
+  // `/websites` persisted only the generic Home page and kept the remaining
+  // template pages in a snapshot. This uses the exact page/block APIs used by
+  // Add Page and WebsiteEditor, creating each missing path once and then saving
+  // its blocks.
+  const provisionMultiPageTemplatePages = useCallback(
     async (existingPages) => {
       const rawFrontendTemplateId =
         website?.frontendTemplateId ||
@@ -233,13 +234,18 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
       const frontendTemplateId =
         rawFrontendTemplateId === 'static-education-pro'
           ? 'education-pro'
-          : rawFrontendTemplateId;
+          : rawFrontendTemplateId === 'static-gardening-pro'
+            ? 'gardening-pro'
+            : rawFrontendTemplateId;
+      const isMultiPageTemplate =
+        frontendTemplateId === 'education-pro' ||
+        frontendTemplateId === 'gardening-pro';
       const snapshotPages = website?.templateSnapshot?.pages;
       const defaultPages =
         Array.isArray(snapshotPages) && snapshotPages.length > 0
           ? snapshotPages
-          : frontendTemplateId === 'education-pro'
-            ? buildFrontendTemplateEditorPages('education-pro', {
+          : isMultiPageTemplate
+            ? buildFrontendTemplateEditorPages(frontendTemplateId, {
                 name: website?.name || '',
                 businessName: website?.businessName,
                 primaryColor: website?.primaryColor,
@@ -261,7 +267,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
             : [];
 
       if (
-        frontendTemplateId !== 'education-pro' ||
+        !isMultiPageTemplate ||
         !Array.isArray(defaultPages) ||
         defaultPages.length === 0
       ) {
@@ -333,7 +339,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
       const res = await apiClient.get(`/websites/${websiteId}/pages`);
       // Backend returns { success, data: [...pages] }
       let list = getResponsePageList(res);
-      const didProvision = await provisionEducationProPages(list);
+      const didProvision = await provisionMultiPageTemplatePages(list);
       if (didProvision) {
         const refreshed = await apiClient.get(`/websites/${websiteId}/pages`);
         list = getResponsePageList(refreshed);
@@ -347,7 +353,7 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
     } finally {
       setLoading(false);
     }
-  }, [websiteId, reconcileNavigationWithPages, provisionEducationProPages, onSaved]);
+  }, [websiteId, reconcileNavigationWithPages, provisionMultiPageTemplatePages, onSaved]);
 
   useEffect(() => {
     fetchPages();

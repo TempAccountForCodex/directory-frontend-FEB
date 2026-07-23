@@ -76,6 +76,16 @@ const EducationProFooter = lazy(() =>
     default: module.EducationProTemplateFooter,
   })),
 );
+const GardeningProHeader = lazy(() =>
+  import("../templates/gardening/GardeningProTemplate").then((module) => ({
+    default: module.GardeningProTemplateHeader,
+  })),
+);
+const GardeningProFooter = lazy(() =>
+  import("../templates/gardening/GardeningProTemplate").then((module) => ({
+    default: module.GardeningProTemplateFooter,
+  })),
+);
 
 const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   minimal: {
@@ -101,6 +111,10 @@ const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   "education-pro": {
     Header: EducationProHeader,
     Footer: EducationProFooter,
+  },
+  "gardening-pro": {
+    Header: GardeningProHeader,
+    Footer: GardeningProFooter,
   },
 };
 

@@ -80,6 +80,10 @@ export function TemplateSectionBoundary({
         : {})}
       {...getSectionStyleDomProps(content, styleKey)}
       sx={[
+        // Template defaults (hardcoded backgroundImage, colors, etc.) must come
+        // first. Saved sectionStyle/outerSectionStyle from the editor must come
+        // last so "Replace Background → Image" overrides template assets.
+        // Priority: saved style > content defaults in sx > bare template defaults.
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
         {
           ...(resolvedOrder !== undefined ? { order: resolvedOrder } : {}),

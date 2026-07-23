@@ -244,7 +244,7 @@ that same value.
   must never overwrite a persisted value (including an intentionally emptied
   value).
 - **Per-page hydration for multi-page templates.** When merging persisted
-  blocks over schema seeds, each page must be hydrated from *its own* persisted
+  blocks over schema seeds, each page must be hydrated from _its own_ persisted
   page's blocks. A global or Home-scoped section map must never be used to
   hydrate non-Home pages, because multi-page templates reuse section keys
   (`banner`, `intro`, `features`, `stats`, `contact`) across pages. A
@@ -280,9 +280,17 @@ persistent, editable `sectionStyle` / `outerSectionStyle` / `containerStyles`
      content image)
   3. theme/template default asset
 - **Manual editor replacement must override the template default.** A default
-  asset passed via the component `sx` must be applied *before*
+  asset passed via the component `sx` must be applied _before_
   `getSectionStyleSx`, so a saved background wins. The default must never
   overwrite a saved background.
+- **`TemplateSectionBoundary` merge order (required):** The shared boundary must
+  apply `sx` template defaults first, then saved `sectionStyle` /
+  `outerSectionStyle` via `getSectionStyleSx` last. If defaults are merged
+  after saved styles, hardcoded `backgroundImage: url(defaultAsset)` in page
+  JSX will visually win and "Replace Background → Image" will appear to save
+  in the right panel while the canvas never updates. New templates must not
+  reverse this order and must not cover the CSS background with an absolute
+  `<img>`.
 - **Acceptance:** select a section/card/container with a background image on
   Home AND a non-Home page, Replace Background → Image, confirm the canvas
   updates, Save, reload the editor, and open the public page — the new
@@ -379,6 +387,95 @@ public rendering.
   Header background from the right editor and confirm it overrides the palette
   color and persists after reload/public render.
 
+### 9.2 Template internal links must stay inside the website
+
+Template Header nav, Footer links, and in-section CTA buttons must resolve to
+the **current website / landing-preview** page routes — never the main platform
+root (e.g. `localhost:5173/about`).
+
+Rules:
+
+- Store relative paths in content (`/about`, `/contact`, `/services`, `/courses`).
+- At render time, resolve every internal `href` with
+  `resolveTemplateInternalLink` from
+  `src/landingTemplates/utils/resolveTemplateLink.ts` (or an equivalent shared
+  helper that wraps it). Do not put bare `/about`-style paths on buttons.
+- Resolution bases (in order):
+  1. Public site: `/site/:slug` + path
+  2. Landing preview: `/landing-preview/:templateId` + path
+  3. Optional `__siteSlug` from `templateContent` when not on those routes
+- Absolute URLs, `#` anchors, `mailto:`, and `tel:` pass through unchanged.
+- Shared Header (`TemplateNavbarHeader`) and every section CTA / Footer column
+  link must use the same resolver. Header-only fixes are not enough — body
+  buttons like “Read More”, “Get Started”, and “Request a Quote” must also
+  resolve.
+- Multi-page templates must link to real persisted page paths that exist for
+  that template.
+- **Acceptance:** on a created Gardening Pro / Education Pro site, hover Header
+  nav and body CTAs — status URLs must show `/site/:slug/...` (or the
+  landing-preview equivalent), never bare `/about` or `/contact` on the
+  platform root. Verify landing-preview, editor Live Preview, and public site.
+
+### 9.3 Header menu must sync with real website pages
+
+Multi-page templates must keep Header navigation synced with the website’s
+real persisted pages (same behavior as Company Executive).
+
+Rules:
+
+- Do not hardcode the only Header nav list when `data.pages` is available.
+  Build Header links from published website pages (`data.pages` filtered by
+  `isPublished !== false`), with schema/default links as fallback only.
+- **Only navigation-eligible pages** may appear in Header. Use page metadata
+  (`pageType`, `isNavigationPage`, path) via `isHeaderNavigationPage` /
+  `filterHeaderNavigationPages`. Dynamic/detail/system/internal pages must
+  **not** auto-appear in Header navigation — including **Blog Detail**,
+  article detail routes (`/blog/:slug`), and pages with types such as
+  `blog-detail`, `detail`, `system`, `dynamic`, or `isNavigationPage=false`.
+- Blog listing (`BLOG_INDEX` / `/blog`, title **Blog**) **may** appear in
+  Header; Blog Detail must not.
+- Adding a page (including **Add Blog Page**) must make that page appear in
+  Header nav after create/refresh without manually editing the menu — unless
+  the page is detail/system/non-navigation (above).
+- Deleting a page must remove it from Header nav (Manage Pages already strips
+  menu/navbar entries; Header must also stop rendering it from `data.pages`).
+- Toggling page visibility off must hide the page from Header nav; toggling
+  on must show it again.
+- Prefer the Company Executive pattern: merge live `data.pages` into
+  `sectionNavItems` passed to `TemplateNavbarHeader` (or shared equivalent).
+- Menu/API links remain a supplement — when the template supplies an
+  authoritative page list, unpublished/deleted pages must not reappear from
+  stale menu items. Detail pages must still be filtered out of menu/API
+  supplements.
+- Links must still resolve through `resolveTemplateInternalLink` / Header
+  `resolveTarget` to `/site/:slug/...` routes.
+- **Acceptance:** on Education Pro / Gardening Pro / Company Executive, Add
+  Blog Page → Blog appears in Header; Blog Detail (if present) does **not**;
+  Delete Blog → Blog disappears; visibility off → hidden; visibility on →
+  shown again. Verify editor, Live Preview, public site, and refresh.
+
+### 9.4 Dynamic pages must render their own blocks (never Home fallback)
+
+Dynamic pages (Blog index, user-added pages, or any path not declared in the
+template’s default page schema) must render **that page’s own persisted
+blocks** in editor, Live Preview, and public site.
+
+Rules:
+
+- URL slug change alone is not enough. The editor and public renderer must
+  resolve the matching page record by pageId/path and load its blocks.
+- Declared multi-page template bodies (Home/About/Services/Contact/etc.) may
+  use the template’s full page composers. Dynamic pages must use
+  `page-shell` (shared Header/Footer + page blocks), not the Home composer.
+- Use `isFrontendTemplateOwnedPagePath(templateId, path)` (or equivalent)
+  to decide full-template vs page-shell. Do not force `full` mode for every
+  page of a multi-page template.
+- If a dynamic page has 0 blocks, show an empty/default editor state for that
+  page — never reuse Home sections/blocks.
+- Save Changes must update the selected page by pageId.
+- **Acceptance:** open Blog from Header or editor page dropdown — canvas and
+  `/site/:slug/blog` show Blog blocks (or empty Blog), not Home hero/content.
+
 ### 9.1 Forms must be real, backend-connected inputs — never static-only
 
 Every visual "form" in a template — footer newsletter/subscribe rows, contact
@@ -417,6 +514,70 @@ Rules:
   submitting must produce a row in that website's dashboard Forms
   submissions — a static/style-only input is a shipping blocker, not a
   cosmetic issue.
+
+#### 9.1.1 Contact form fields must be dynamic (never hardcoded inputs)
+
+New templates **must not hardcode contact form inputs in JSX**. Contact/enquiry
+forms must render dynamically from the CONTACT block's persisted `formFields[]`
+— the same array the editor's "Form Fields" repeater writes — so the left Block
+Editor panel and the canvas always show the same fields.
+
+Rules:
+
+- Derive fields with `normalizeContactFormFields(block.content.formFields,
+  block.content)` from `src/api/formSubmissions.ts` (the single canonical
+  source; it also supplies backend-safe defaults and legacy fallbacks). Do not
+  keep a separate hardcoded label list.
+- Render each field by **mapping over** the normalized array, using the shared
+  `renderTemplateContactField(...)` helper
+  (`src/landingTemplates/utils/renderTemplateContactField.tsx`). Pass the same
+  normalized array into `useTemplateContactForm(fields, ...)` so `getFieldProps`,
+  validation, and the submit payload stay in sync with what is rendered.
+- Preserve the template's custom visual layout: pass the template's own
+  `inputSx`, and place fields into the existing grid — full-width types
+  (`textarea`, `select`, `radio`, `checkbox`) span all columns via
+  `isFullWidthContactField(field)`.
+- Support the backend-safe field types only: `text`, `email`, `tel`, `textarea`,
+  `number`, `select`, `checkbox`, `radio`, `date`. Never invent frontend-only
+  fields; the `required` flag must reflect in rendering/validation.
+- The editor and canvas **must use the same field source**, and the public
+  site/Live Preview must use the saved `formFields[]`, never template defaults.
+- Regression check: adding/removing/editing a field in the Contact block editor
+  must update the canvas immediately, persist on Save Changes, appear in Live
+  Preview, and survive an editor refresh.
+
+### 9.5 Footers must be fully content-driven (no hardcoded links/social icons)
+
+All template footers must be driven entirely by the Footer block's persisted
+content. **No hardcoded footer links or social icons are allowed** unless they
+are backed by editable, persisted fields the Footer block editor manages. The
+Footer block editor panel must match the visible footer, and add/edit/remove
+must persist to the editor, canvas, Live Preview, and refresh.
+
+Rules:
+
+- Render footer navigation links from the **canonical `links` repeater**
+  (`{ label, url }[]`) — the exact field the Footer block editor edits — via the
+  shared `normalizeFooterLinks(footer)` helper
+  (`src/landingTemplates/utils/footerLinks.ts`). Do not invent a footer-only
+  `columns`/link-group structure that the editor panel does not expose.
+- Seed footer links in `frontendTemplateEditorSupport.ts` as `links: [...]` (not
+  `columns`), so a new site's editor panel and canvas match out of the box.
+- Wire inline editing to `getEditableTextProps(blockId, "links.<i>.label", ...)`
+  only when rendering the canonical `links` field (use `footerHasCanonicalLinks`)
+  — never bind editing to a legacy path the panel cannot manage.
+- URL-only data (link `url`) must stay in URL fields and label text in text
+  fields; never mix them. Footer links must resolve through the website internal
+  route resolver (`resolveTemplateInternalLink` / the template's `resolveLink`),
+  never bare platform-root routes.
+- **Social icons:** do not render hardcoded/static social icons. Until the
+  editor provides full social-link editing for a template, social icons must be
+  omitted from that footer rather than shown as static placeholders.
+- Header/Footer remain shared/global across pages: editing the Footer from any
+  page updates every page.
+- Regression check: existing footer links appear in the Footer Navigation Links
+  editor; editing a label/url updates the canvas; add/remove reflects on canvas;
+  Save persists; Live Preview and a refresh keep the changes.
 
 ## 10. Assets
 
@@ -552,7 +713,7 @@ template card can render correctly while website creation still fails:
   renderer registry, and persisted `frontendTemplateId`.
 - Frontend-owned templates must be created from their frontend page schema and
   must not be sent to a backend template lookup that returns `Frontend template
-  not found`.
+not found`.
 - Imported local assets must be recursively origin-qualified before they enter
   URL-validated API fields. A `heroImage must match format "url"` response means
   creation serialization is incomplete.

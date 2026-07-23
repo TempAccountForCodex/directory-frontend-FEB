@@ -15,31 +15,11 @@ import {
   getEditableImageProps,
   getEditableTextProps,
 } from "../utils/editableProps";
+import { resolveTemplateInternalLink } from "../utils/resolveTemplateLink";
+import { isExcludedFromHeaderNavigation } from "../utils/headerNavigationPages";
 
-// Resolve relative nav targets to the current site's base path (/site/:slug)
-// or, when browsing the template gallery, to the landing-preview base path
-// (/landing-preview/:templateId) so internal page links don't 404 to a bare
-// "/about" style route.
-const siteBase = (() => {
-  if (typeof window === "undefined") return "";
-  const m = window.location.pathname.match(/^(\/site\/[^/]+)/);
-  return m ? m[1] : "";
-})();
-const previewBase = (() => {
-  if (typeof window === "undefined") return "";
-  const m = window.location.pathname.match(/^(\/landing-preview\/[^/]+)/);
-  return m ? m[1] : "";
-})();
-const previewSearch =
-  typeof window !== "undefined" && previewBase ? window.location.search : "";
-const resolveTarget = (target: string): string => {
-  if (!target || target.startsWith("#") || target.startsWith("http") || target.startsWith("//"))
-    return target;
-  const suffix = target.startsWith("/") ? target : `/${target}`;
-  if (siteBase) return `${siteBase}${suffix}`;
-  if (previewBase) return `${previewBase}${suffix}${previewSearch}`;
-  return target;
-};
+const resolveTarget = (target: string): string =>
+  resolveTemplateInternalLink(target);
 
 export interface NavbarContentFields {
   blockId?: string | number;
@@ -71,24 +51,6 @@ type TemplateNavItem = SectionNavItem & {
   link?: string;
   url?: string;
   type?: string;
-};
-
-const isBlogDetailNavItem = (item: TemplateNavItem): boolean => {
-  const label = String(item.label || "")
-    .trim()
-    .toLowerCase();
-  const target = String(item.target || item.link || item.url || "")
-    .trim()
-    .toLowerCase();
-
-  return (
-    label === "blog detail" ||
-    label === "blog details" ||
-    target === "/blog-detail" ||
-    target === "/blogdetail" ||
-    target.startsWith("/blog-detail/") ||
-    target.startsWith("/blogdetail/")
-  );
 };
 
 interface Props {
@@ -254,13 +216,31 @@ const TemplateNavbarHeader: React.FC<Props> = ({
       const label = item.label?.toLowerCase();
       return !sectionKeys.has(label) && !sectionKeys.has(target.replace(/^\//, ""));
     });
+  // When the template already supplies a live page list (Company Executive /
+  // Education Pro / Gardening Pro via data.pages), that list is authoritative
+  // for visibility. Do not re-add menu orphans that were unpublished/deleted
+  // from pages but still linger in the menu until reconcile runs.
+  const sectionOwnsPageNav = sectionPageItems.some((item) => {
+    const target = getNavTarget(item);
+    return Boolean(target && target.startsWith("/"));
+  });
   const supplementalItems = pageOnlyItems(
-    configuredNavItems.length ? configuredNavItems : !menuId ? fetchedItems : [],
+    sectionOwnsPageNav
+      ? configuredNavItems
+      : [...configuredNavItems, ...fetchedItems],
   );
-  const displayNavItems = (hasExplicitMenu
-    ? dedupeNavItems([...fetchedItems, ...sectionPageItems])
-    : dedupeNavItems([...sectionNavItems, ...supplementalItems])
-  ).filter((item) => !isBlogDetailNavItem(item));
+  const displayNavItems = (
+    hasExplicitMenu
+      ? dedupeNavItems([...fetchedItems, ...sectionPageItems])
+      : dedupeNavItems([...sectionNavItems, ...supplementalItems])
+  ).filter(
+    (item) =>
+      !isExcludedFromHeaderNavigation({
+        title: item.label,
+        path: getNavTarget(item),
+        type: item.type,
+      }),
+  );
 
   const handleNavClick = (
     event: React.MouseEvent,

@@ -8,6 +8,7 @@ import {
 import { companyStudioAssets } from "../landingTemplates/assets/company/company-executive";
 import { companyProAssets } from "../landingTemplates/assets/company/company-pro";
 import { educationProAssets } from "../landingTemplates/assets/education/education-pro";
+import { gardeningProAssets } from "../landingTemplates/assets/gardening/gardening-pro";
 import { portfolioAssets } from "../landingTemplates/assets/portfolio/portfolio-agency";
 
 type FrontendTemplateWebsite = {
@@ -343,6 +344,43 @@ const baseEducationProData: BusinessData = {
   ],
 };
 
+const baseGardeningProData: BusinessData = {
+  name: "Greenth",
+  tagline: "Designing Landscapes",
+  description:
+    "We design and care for outdoor spaces that feel settled from day one — layered planting, honest materials, and seasons that unfold beautifully.",
+  primaryColor: "#2D3E2F",
+  secondaryColor: "#C8E06A",
+  contact: {
+    email: "hello@greenth.studio",
+    phone: "+1 (555) 214-0890",
+    address: "184 Orchard Lane, Greenfield",
+  },
+  heroBannerUrl: gardeningProAssets.heroEstate,
+  stats: [
+    { label: "Gardens Designed", value: "850+" },
+    { label: "Craft Experience", value: "12yr" },
+    { label: "Client Retention", value: "98%" },
+  ],
+  features: [
+    {
+      title: "Garden Design",
+      description:
+        "Bespoke outdoor compositions shaped around light, soil, and the way you live.",
+    },
+    {
+      title: "Seasonal Care",
+      description:
+        "Year-round maintenance that keeps every bed, lawn, and border quietly thriving.",
+    },
+    {
+      title: "Hardscape Build",
+      description:
+        "Stone paths, terraces, and outdoor rooms built to feel inevitable and lasting.",
+    },
+  ],
+};
+
 const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
   blog: baseBlogData,
   "blog-premium": baseBlogPremiumData,
@@ -353,6 +391,7 @@ const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
   education: educationData,
   "education-pro": baseEducationProData,
   gardening: gardeningData,
+  "gardening-pro": baseGardeningProData,
   minimal: baseMinimalData,
   modern: baseModernData,
   plumbing: plumbingData,

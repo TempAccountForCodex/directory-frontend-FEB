@@ -138,6 +138,7 @@ import {
   buildTemplatePreviewBusinessData,
   inferFrontendTemplateIdFromPages,
   injectTemplateThemeSettingsIntoBlocks,
+  isFrontendTemplateOwnedPagePath,
   isSyntheticTemplatePageId,
   readTemplateThemeSettingsFromPages,
   supportsFrontendTemplateEditor,
@@ -3623,6 +3624,10 @@ const WebsiteEditorInner = () => {
     onSave: handleAutosave,
     isLoading: isLoadingRef.current,
     autoSaveEnabled: false,
+    // Theme edits are tracked separately from block changes; clear that dirty
+    // flag only once the save actually succeeds so the button re-disables (and
+    // stays enabled for retry on failure).
+    onSaveSuccess: () => setTemplateThemeSelectionDirty(false),
   });
 
   const showSaveToast = useCallback((message, severity = "error") => {
@@ -3912,8 +3917,19 @@ const WebsiteEditorInner = () => {
   const canTriggerSave = useMemo(
     () =>
       saveStatus !== "saving" &&
-      (hasUnsavedChanges || getHasUnsavedChanges?.() || saveStatus === "error"),
-    [getHasUnsavedChanges, hasUnsavedChanges, saveStatus],
+      // Theme palette/font edits are a separate dirty axis (they don't mutate
+      // `blocks`), so they must be considered independently of the block-based
+      // unsaved-changes tracking.
+      (hasUnsavedChanges ||
+        getHasUnsavedChanges?.() ||
+        templateThemeSelectionDirty ||
+        saveStatus === "error"),
+    [
+      getHasUnsavedChanges,
+      hasUnsavedChanges,
+      templateThemeSelectionDirty,
+      saveStatus,
+    ],
   );
 
   const pendingWebsitesReloadRef = useRef(false);
@@ -9050,6 +9066,13 @@ const WebsiteEditorInner = () => {
                       "linear-gradient(135deg, #0f172a 0%, #000000 100%)",
                     boxShadow: "none",
                   },
+                  "&.Mui-disabled": {
+                    background: "#e5e7eb",
+                    color: "rgba(15,23,42,0.38) !important",
+                    boxShadow: "none",
+                    cursor: "not-allowed",
+                    pointerEvents: "auto",
+                  },
                 }}
               >
                 {saveStatus === "saving" ? "Saving..." : "Save Changes"}
@@ -10609,7 +10632,10 @@ const WebsiteEditorInner = () => {
                             }
                             frontendTemplateRenderMode={
                               selectedPage?.isHome ||
-                              resolvedFrontendTemplateId === "education-pro"
+                              isFrontendTemplateOwnedPagePath(
+                                resolvedFrontendTemplateId,
+                                selectedPage?.path,
+                              )
                                 ? "full"
                                 : "page-shell"
                             }
@@ -11085,6 +11111,14 @@ const WebsiteEditorInner = () => {
                                           : 2
                                       }
                                       label="Text"
+                                      InputLabelProps={{
+                                        shrink: true,
+                                        sx: {
+                                          color: `${editorMutedText} !important`,
+                                          backgroundColor: "#ffffff",
+                                          px: 0.4,
+                                        },
+                                      }}
                                       value={selectedEditableTextValue}
                                       onChange={(event) => {
                                         if (!selectedEditableElement) {

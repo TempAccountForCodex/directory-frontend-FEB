@@ -127,6 +127,57 @@ export function useAutosave({
   }, [data]);
 
   // ---------------------------------------------------------------------------
+  // Baseline management — keep the "last saved" snapshot in sync with data that
+  // arrives asynchronously (initial load) or gets swapped in when the tracked
+  // entity changes (e.g. switching pages).
+  //
+  // Without this, the snapshot captured at mount (before the page's blocks have
+  // loaded) never matches the loaded data, so `getHasUnsavedChanges()` reports
+  // a diff with zero user edits and Save Changes stays permanently enabled.
+  //
+  // These effects are declared BEFORE the dirty-detection debounce effect so
+  // the snapshot updates first and the debounce then sees "no change".
+  // ---------------------------------------------------------------------------
+  const pendingBaselineRef = useRef(false);
+  const prevEntityIdRef = useRef(entityId);
+
+  // Switching entity (e.g. page switch) means the next settled data is a fresh
+  // clean baseline, not an edit.
+  useEffect(() => {
+    if (prevEntityIdRef.current !== entityId) {
+      prevEntityIdRef.current = entityId;
+      pendingBaselineRef.current = true;
+    }
+  }, [entityId]);
+
+  // While loading, defer baselining. Once data has settled (load finished or a
+  // new entity's data arrived), adopt it as the clean snapshot and clear dirty.
+  useEffect(() => {
+    if (isLoading) {
+      pendingBaselineRef.current = true;
+      return;
+    }
+    if (pendingBaselineRef.current) {
+      pendingBaselineRef.current = false;
+      lastDataStringRef.current = JSON.stringify(data);
+      setHasUnsavedChanges(false);
+    }
+  }, [data, isLoading]);
+
+  // After a successful save, re-baseline the snapshot to the data as it stands
+  // once the save settles. `performSave` seeds the snapshot from the payload it
+  // sent, but the save handler may transform the data afterwards (e.g. baking
+  // theme settings into blocks), which would otherwise leave the editor looking
+  // dirty immediately after a successful save. Declared before the debounce
+  // effect so the snapshot updates before dirty detection runs.
+  useEffect(() => {
+    if (saveStatus === "saved") {
+      lastDataStringRef.current = JSON.stringify(dataRef.current);
+      setHasUnsavedChanges(false);
+    }
+  }, [saveStatus]);
+
+  // ---------------------------------------------------------------------------
   // Core save function
   // ---------------------------------------------------------------------------
 

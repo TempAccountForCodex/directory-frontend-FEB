@@ -33,6 +33,11 @@ import { renderEditableMedia } from "../../utils/editableComponents";
 import { companyProAssets } from "../../assets/company/company-pro";
 import { buildCompanyTheme, rgba } from "./theme";
 import { buildSharedHeaderTheme } from "../../utils/headerTheme";
+import {
+  footerHasCanonicalLinks,
+  normalizeFooterLinks,
+} from "../../utils/footerLinks";
+import { resolveTemplateInternalLink } from "../../utils/resolveTemplateLink";
 
 const buildCompanyProTheme = (data: TemplateProps["data"]) => {
   const theme = buildCompanyTheme({
@@ -143,6 +148,8 @@ export const CompanyProTemplateFooter: React.FC<TemplateChromeProps> = ({
   const content = asRecord(data.templateContent);
   const footer = asRecord(content.footer);
   const blockId = footer.blockId;
+  const siteSlug =
+    typeof content.__siteSlug === "string" ? content.__siteSlug : undefined;
   const footerLogo =
     typeof footer.logo === "string" &&
     footer.logo.trim() &&
@@ -153,22 +160,11 @@ export const CompanyProTemplateFooter: React.FC<TemplateChromeProps> = ({
     typeof footer.logoText === "string" && footer.logoText.trim()
       ? footer.logoText.trim()
       : data.name || "Alder & Co.";
-  const columns = asArray(footer.columns, [
-    {
-      title: "Company",
-      links: [
-        { label: "About", url: "#about" },
-        { label: "Services", url: "#services" },
-      ],
-    },
-    {
-      title: "Connect",
-      links: [
-        { label: "Contact", url: "#contact" },
-        { label: "LinkedIn", url: "#" },
-      ],
-    },
-  ]);
+  // Footer nav links are driven entirely by the Footer block's persisted
+  // `links` repeater (with a legacy `columns` fallback), so the editor panel
+  // and canvas stay in sync and add/edit/remove persists.
+  const footerLinks = normalizeFooterLinks(footer);
+  const canonicalLinks = footerHasCanonicalLinks(footer);
 
   return (
     <Box
@@ -211,42 +207,30 @@ export const CompanyProTemplateFooter: React.FC<TemplateChromeProps> = ({
             </Typography>
           )}
           <Box
+            {...containerProps(blockId, "footer.links", "Footer links", "card")}
             sx={{
               display: "grid",
               gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-              gap: 3,
+              gap: 1.2,
+              alignContent: "start",
             }}
           >
-            {columns.map((column: Record<string, any>, columnIndex: number) => (
-              <Stack key={`${column.title}-${columnIndex}`} spacing={1.2}>
-                <Typography
-                  {...getEditableTextProps(
-                    blockId,
-                    `columns.${columnIndex}.title`,
-                    "single",
-                  )}
-                  sx={{ ...sectionEyebrowSx(bodyFont), color: yellow }}
-                >
-                  {column.title}
-                </Typography>
-                {asArray<Record<string, any>>(column.links, []).map(
-                  (link, linkIndex) => (
-                    <Box
-                      key={`${link.label}-${linkIndex}`}
-                      component="a"
-                      href={link.url || link.link || "#"}
-                      {...getEditableTextProps(
-                        blockId,
-                        `columns.${columnIndex}.links.${linkIndex}.label`,
-                        "single",
-                      )}
-                      sx={{ color: rgba(paper, 0.72), textDecoration: "none" }}
-                    >
-                      {link.label}
-                    </Box>
-                  ),
-                )}
-              </Stack>
+            {footerLinks.map((link, linkIndex) => (
+              <Box
+                key={`${link.label}-${linkIndex}`}
+                component="a"
+                href={resolveTemplateInternalLink(link.url, { siteSlug })}
+                {...(canonicalLinks
+                  ? getEditableTextProps(
+                      blockId,
+                      `links.${linkIndex}.label`,
+                      "single",
+                    )
+                  : {})}
+                sx={{ color: rgba(paper, 0.72), textDecoration: "none" }}
+              >
+                {link.label}
+              </Box>
             ))}
           </Box>
         </Box>

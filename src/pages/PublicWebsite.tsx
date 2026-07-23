@@ -36,6 +36,7 @@ import {
   buildFrontendTemplateEditorPages,
   buildTemplatePreviewBusinessData,
   inferFrontendTemplateIdFromPages,
+  isFrontendTemplateOwnedPagePath,
   supportsFrontendTemplateEditor,
   type TemplateEditorPage,
 } from "../templates/frontendTemplateEditorSupport";
@@ -757,6 +758,7 @@ h1, h2, h3, h4, h5, h6 {
         resolvedFrontendTemplateId,
         {
           id: website.id,
+          slug: website.slug,
           name: website.name,
           businessName: website.businessName,
           primaryColor: website.primaryColor,
@@ -812,6 +814,9 @@ h1, h2, h3, h4, h5, h6 {
           path: page.path,
           isHome: page.isHome,
           isPublished: page.isPublished,
+          pageType: page.pageType ?? null,
+          isNavigationPage: (page as any).isNavigationPage ?? null,
+          type: (page as any).type ?? null,
         })),
       },
     );
@@ -910,18 +915,24 @@ h1, h2, h3, h4, h5, h6 {
     );
   }
 
-  // Education Pro owns distinct page compositions inside its template component
-  // and derives the active page from the real public URL. Rendering it only for
-  // Home would make /about, /courses, and /contact fall through to a generic
-  // block view despite their persisted page records being available.
+  // Multi-page templates own distinct compositions for their *declared* default
+  // pages only. Dynamic pages (Blog, user-added) must use page-shell + their
+  // own persisted blocks — never fall through to the template Home body.
   const templateOwnsPublicPageBodies =
-    resolvedFrontendTemplateId === "education-pro";
+    resolvedFrontendTemplateId === "education-pro" ||
+    resolvedFrontendTemplateId === "gardening-pro";
+  const templateOwnsCurrentPage =
+    templateOwnsPublicPageBodies &&
+    isFrontendTemplateOwnedPagePath(
+      resolvedFrontendTemplateId,
+      currentPage?.path,
+    );
 
   if (
     resolvedFrontendTemplateId &&
     hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
     frontendTemplateData &&
-    (currentPage?.isHome || templateOwnsPublicPageBodies)
+    (currentPage?.isHome || templateOwnsCurrentPage)
   ) {
     // Most single-page templates render their component only for Home.
     // Multi-page Education Pro renders its dedicated page composition for each

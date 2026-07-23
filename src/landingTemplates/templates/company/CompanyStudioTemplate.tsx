@@ -21,6 +21,7 @@ import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
 import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import TemplateNavbarHeader from "../../components/TemplateNavbarHeader";
 import { TemplateContactField } from "../../components/TemplateContactField";
+import { isHeaderNavigationPage } from "../../utils/headerNavigationPages";
 import {
   sectionHasPersistentBackground,
   TemplateInnerContainer,
@@ -436,7 +437,10 @@ export const CompanyStudioTemplateHeader: React.FC<TemplateChromeProps> = ({
         .filter((page) => {
           const path = String(page.path || "").trim();
           return (
-            path && path !== "/" && !page.isHome && page.isPublished !== false
+            path &&
+            path !== "/" &&
+            !page.isHome &&
+            isHeaderNavigationPage(page)
           );
         })
         .map((page) => ({
@@ -1360,7 +1364,10 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         .filter((page) => {
           const path = String(page.path || "").trim();
           return (
-            path && path !== "/" && !page.isHome && page.isPublished !== false
+            path &&
+            path !== "/" &&
+            !page.isHome &&
+            isHeaderNavigationPage(page)
           );
         })
         .map((page) => ({

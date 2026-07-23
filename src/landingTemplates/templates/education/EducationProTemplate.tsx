@@ -19,15 +19,12 @@ import {
   Briefcase,
   Camera,
   Megaphone,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
 } from "lucide-react";
 import type { TemplateProps } from "../../templateEngine/types";
 import type { TemplateChromeProps } from "../../templateEngine/templateChromeRegistry";
 import TemplatePageShell from "../../components/TemplatePageShell";
 import TemplateNavbarHeader from "../../components/TemplateNavbarHeader";
+import { filterHeaderNavigationPages } from "../../utils/headerNavigationPages";
 import {
   TemplateInnerContainer,
   TemplateSectionBoundary,
@@ -42,6 +39,16 @@ import { educationProAssets } from "../../assets/education/education-pro";
 import { buildCompanyTheme, rgba } from "../company/theme";
 import { buildSharedHeaderTheme } from "../../utils/headerTheme";
 import { useTemplateContactForm } from "../../utils/useTemplateContactForm";
+import {
+  isFullWidthContactField,
+  renderTemplateContactField,
+} from "../../utils/renderTemplateContactField";
+import { normalizeContactFormFields } from "../../../api/formSubmissions";
+import {
+  footerHasCanonicalLinks,
+  normalizeFooterLinks,
+} from "../../utils/footerLinks";
+import { resolveTemplateInternalLink } from "../../utils/resolveTemplateLink";
 
 const buildEducationProTheme = (data: TemplateProps["data"]) => {
   const theme = buildCompanyTheme({
@@ -107,7 +114,6 @@ const pillEyebrowSx = (bg: string, color: string, bodyFont: string) => ({
 });
 
 const CATEGORY_ICONS = [Languages, Cpu, Code2, Briefcase, Camera, Megaphone];
-const SOCIAL_ICONS = [Facebook, Twitter, Instagram, Linkedin];
 
 // Lightweight scroll-reveal + hover-lift animation helpers shared across
 // every section/card in this template. Purely presentational: they never
@@ -131,12 +137,29 @@ export const EducationProTemplateHeader: React.FC<TemplateChromeProps> = ({
   const content = asRecord(data.templateContent);
   const navbar = asRecord(content.navbar);
   const blockId = navbar.blockId;
-  const navItems = asArray(navbar.navigationItems, [
+  const fallbackNavItems = [
     { label: "Home", link: "/" },
     { label: "About", link: "/about" },
     { label: "Courses", link: "/courses" },
     { label: "Contact", link: "/contact" },
-  ]);
+  ];
+  // Prefer real website pages (Company Executive pattern) so Manage Pages
+  // add/delete/visibility stays synced with Header nav. Fall back to schema
+  // defaults only when no page list is available (e.g. bare landing seed).
+  const pageNavItems = filterHeaderNavigationPages(data.pages).map((page) => {
+    const path = String(page.path || "/").trim() || "/";
+    const isHome = Boolean(page.isHome) || path === "/";
+    return {
+      label: isHome ? "Home" : page.title || "Page",
+      link: path,
+      target: path,
+      id: `page-${String(page.id ?? path)}`,
+    };
+  });
+  const navItems =
+    pageNavItems.length > 0
+      ? pageNavItems
+      : asArray(navbar.navigationItems, fallbackNavItems);
   const brandName =
     typeof navbar.brandName === "string" &&
     navbar.brandName.trim() &&
@@ -159,6 +182,8 @@ export const EducationProTemplateHeader: React.FC<TemplateChromeProps> = ({
           brandName,
           ctaText: navbar.ctaText || "Start Free Trial",
           ctaUrl: navbar.ctaLink || "/courses",
+          // Keep content navigationItems for editor edits, but Header display
+          // is driven by sectionNavItems (live pages) below.
           navigationItems: navItems,
           navLinkColor: navbar.navLinkColor || headerTheme.navLinkColor,
           ctaColor: navbar.ctaColor || headerTheme.ctaColor,
@@ -190,6 +215,8 @@ export const EducationProTemplateFooter: React.FC<TemplateChromeProps> = ({
   const content = asRecord(data.templateContent);
   const footer = asRecord(content.footer);
   const blockId = footer.blockId;
+  const siteSlug =
+    typeof content.__siteSlug === "string" ? content.__siteSlug : undefined;
   const {
     status: newsletterStatus,
     errorMessage: newsletterError,
@@ -211,22 +238,11 @@ export const EducationProTemplateFooter: React.FC<TemplateChromeProps> = ({
     typeof footer.logoText === "string" && footer.logoText.trim()
       ? footer.logoText.trim()
       : data.name || "EdCare";
-  const columns = asArray(footer.columns, [
-    {
-      title: "Company Info",
-      links: [
-        { label: "About Us", url: "/about" },
-        { label: "All Courses", url: "/courses" },
-      ],
-    },
-    {
-      title: "Useful Links",
-      links: [
-        { label: "Contact", url: "/contact" },
-        { label: "All Courses", url: "/courses" },
-      ],
-    },
-  ]);
+  // Footer nav links are driven entirely by the Footer block's persisted
+  // `links` repeater (with a legacy `columns` fallback), so the editor panel
+  // and canvas stay in sync and add/edit/remove persists.
+  const footerLinks = normalizeFooterLinks(footer);
+  const canonicalLinks = footerHasCanonicalLinks(footer);
 
   return (
     <Box
@@ -369,47 +385,39 @@ export const EducationProTemplateFooter: React.FC<TemplateChromeProps> = ({
                 "A modern learning community built around expert instructors and flexible courses."}
             </Typography>
           </Box>
-          {columns.map((column: Record<string, any>, columnIndex: number) => (
-            <Stack key={`${column.title}-${columnIndex}`} spacing={1.3}>
-              <Typography
-                {...getEditableTextProps(
-                  blockId,
-                  `columns.${columnIndex}.title`,
-                  "single",
-                )}
+          <Box
+            {...containerProps(blockId, "footer.links", "Footer links", "card")}
+            sx={{
+              gridColumn: { md: "span 2" },
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+              gap: 1.3,
+              alignContent: "start",
+            }}
+          >
+            {footerLinks.map((link, linkIndex) => (
+              <Box
+                key={`${link.label}-${linkIndex}`}
+                component="a"
+                href={resolveTemplateInternalLink(link.url, { siteSlug })}
+                {...(canonicalLinks
+                  ? getEditableTextProps(
+                      blockId,
+                      `links.${linkIndex}.label`,
+                      "single",
+                    )
+                  : {})}
                 sx={{
-                  fontFamily: headingFont,
-                  fontWeight: 700,
-                  fontSize: "0.95rem",
-                  color: "#fff",
+                  color: rgba("#ffffff", 0.6),
+                  textDecoration: "none",
+                  fontSize: "0.9rem",
+                  "&:hover": { color: teal },
                 }}
               >
-                {column.title}
-              </Typography>
-              {asArray<Record<string, any>>(column.links, []).map(
-                (link, linkIndex) => (
-                  <Box
-                    key={`${link.label}-${linkIndex}`}
-                    component="a"
-                    href={link.url || link.link || "#"}
-                    {...getEditableTextProps(
-                      blockId,
-                      `columns.${columnIndex}.links.${linkIndex}.label`,
-                      "single",
-                    )}
-                    sx={{
-                      color: rgba("#ffffff", 0.6),
-                      textDecoration: "none",
-                      fontSize: "0.9rem",
-                      "&:hover": { color: teal },
-                    }}
-                  >
-                    {link.label}
-                  </Box>
-                ),
-              )}
-            </Stack>
-          ))}
+                {link.label}
+              </Box>
+            ))}
+          </Box>
         </Box>
 
         <Typography
@@ -459,22 +467,29 @@ const EducationProTemplate: React.FC<TemplateProps> = ({ data }) => {
   const contactBody = asRecord(pageBodies.contact);
   const contactBanner = asRecord(contactBody.banner);
   const contactPage = asRecord(contactBody.contact || content.contact);
+  const siteSlug =
+    typeof content.__siteSlug === "string" ? content.__siteSlug : undefined;
+  const resolveLink = (target: string) =>
+    resolveTemplateInternalLink(target, { siteSlug });
 
   // Real, backend-connected contact form (Contact page "Leave A Reply" card).
   // Must stay wired through useTemplateContactForm — a static styled Box is
   // not an acceptable substitute (see PRD §9.1).
+  // Contact form fields are fully dynamic — sourced from the CONTACT block's
+  // persisted `formFields` (the editor's "Form Fields" repeater) so the canvas,
+  // Save, Live Preview, and public site always match what the editor shows.
+  const contactPageFields = React.useMemo(
+    () => normalizeContactFormFields(contactPage.formFields, contactPage),
+    [contactPage],
+  );
+
   const {
     status: contactPageStatus,
     errorMessage: contactPageError,
     getFieldProps: getContactPageFieldProps,
     handleSubmit: handleContactPageSubmit,
   } = useTemplateContactForm(
-    [
-      { label: "Your Name" },
-      { label: "Your Email" },
-      { label: "Subject", required: false },
-      { label: "Message" },
-    ],
+    contactPageFields,
     data.websiteId,
     "contact-page-form",
     {
@@ -597,9 +612,10 @@ const EducationProTemplate: React.FC<TemplateProps> = ({ data }) => {
   const activePage = (
     ["about", "courses", "contact"].includes(requestedPage)
       ? requestedPage
-      : "home"
-  ) as
-    "home" | "about" | "courses" | "contact";
+      : requestedPage === "home" || !requestedPage
+        ? "home"
+        : "dynamic"
+  ) as "home" | "about" | "courses" | "contact" | "dynamic";
 
   const breadcrumbHero = (
     pageKey: string,
@@ -618,13 +634,11 @@ const EducationProTemplate: React.FC<TemplateProps> = ({ data }) => {
         py: { xs: 8, md: 11 },
         overflow: "hidden",
         color: "#fff",
-        // Default banner background. The editor's "Replace Background → Image"
-        // persists to sectionStyle/outerSectionStyle.backgroundImageUrl, which
-        // TemplateSectionBoundary applies via getSectionStyleSx AFTER this sx
-        // and therefore overrides it. Priority: saved section background image
-        // > content.image > template default asset. Rendering the image as a
-        // CSS background (instead of an absolutely positioned <img>) is what
-        // lets the editor replacement actually show in canvas/public.
+        // Default banner background (content.image → template asset).
+        // TemplateSectionBoundary applies this sx FIRST, then overlays saved
+        // sectionStyle/outerSectionStyle.backgroundImageUrl via getSectionStyleSx
+        // so editor "Replace Background → Image" wins. Priority: saved section
+        // background > content.image > template default asset.
         backgroundImage: `url(${heroContent.image || fallbackImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -1388,72 +1402,38 @@ const EducationProTemplate: React.FC<TemplateProps> = ({ data }) => {
                   gap: 2,
                 }}
               >
-                {(["Your Name", "Your Email"] as const).map((label) => (
+                {contactPageFields.map((field) => (
                   <Box
-                    key={label}
-                    component="input"
-                    type={label === "Your Email" ? "email" : "text"}
-                    placeholder={label}
-                    {...getContactPageFieldProps(label)}
+                    key={field.key || field.label}
                     sx={{
-                      bgcolor: "#fff",
-                      border: `1px solid ${rgba(navy, 0.1)}`,
-                      borderRadius: "10px",
-                      px: 2,
-                      py: 1.4,
-                      color: ink,
-                      fontSize: "0.9rem",
-                      fontFamily: bodyFont,
-                      outline: "none",
-                      "&::placeholder": { color: inkSoft },
-                      "&:focus": { borderColor: rgba(teal, 0.5) },
+                      gridColumn: isFullWidthContactField(field)
+                        ? "1 / -1"
+                        : undefined,
                     }}
-                  />
+                  >
+                    {renderTemplateContactField({
+                      field,
+                      fieldProps: getContactPageFieldProps(field.label),
+                      inputSx: {
+                        width: "100%",
+                        bgcolor: "#fff",
+                        border: `1px solid ${rgba(navy, 0.1)}`,
+                        borderRadius: "10px",
+                        px: 2,
+                        py: 1.4,
+                        color: ink,
+                        fontSize: "0.9rem",
+                        fontFamily: bodyFont,
+                        outline: "none",
+                        "&::placeholder": { color: inkSoft },
+                        "&:focus": { borderColor: rgba(teal, 0.5) },
+                      },
+                      textColor: ink,
+                      mutedColor: inkSoft,
+                    })}
+                  </Box>
                 ))}
               </Box>
-              <Box
-                component="input"
-                type="text"
-                placeholder="Subject"
-                {...getContactPageFieldProps("Subject")}
-                sx={{
-                  mt: 2,
-                  width: "100%",
-                  bgcolor: "#fff",
-                  border: `1px solid ${rgba(navy, 0.1)}`,
-                  borderRadius: "10px",
-                  px: 2,
-                  py: 1.4,
-                  color: ink,
-                  fontSize: "0.9rem",
-                  fontFamily: bodyFont,
-                  outline: "none",
-                  "&::placeholder": { color: inkSoft },
-                  "&:focus": { borderColor: rgba(teal, 0.5) },
-                }}
-              />
-              <Box
-                component="textarea"
-                placeholder="Message"
-                {...getContactPageFieldProps("Message")}
-                sx={{
-                  mt: 2,
-                  width: "100%",
-                  bgcolor: "#fff",
-                  border: `1px solid ${rgba(navy, 0.1)}`,
-                  borderRadius: "10px",
-                  px: 2,
-                  py: 1.4,
-                  color: ink,
-                  fontSize: "0.9rem",
-                  fontFamily: bodyFont,
-                  minHeight: 96,
-                  outline: "none",
-                  resize: "vertical",
-                  "&::placeholder": { color: inkSoft },
-                  "&:focus": { borderColor: rgba(teal, 0.5) },
-                }}
-              />
               {contactPageStatus === "success" && (
                 <Typography sx={{ mt: 1.5, color: teal, fontSize: "0.85rem", fontWeight: 600 }}>
                   Thanks! Your message has been sent.
@@ -1642,7 +1622,7 @@ const EducationProTemplate: React.FC<TemplateProps> = ({ data }) => {
                   "A modern learning experience built around expert instructors, flexible courses, and a supportive student community."}
               </Typography>
               <Button
-                href={hero.ctaLink || "/courses"}
+                href={resolveLink(hero.ctaLink || "/courses")}
                 {...getEditableTextProps(
                   hero.blockId,
                   "ctaText",
@@ -2161,7 +2141,7 @@ const EducationProTemplate: React.FC<TemplateProps> = ({ data }) => {
                 ))}
               </Box>
               <Button
-                href={intro.ctaLink || "/about"}
+                href={resolveLink(intro.ctaLink || "/about")}
                 {...getEditableTextProps(
                   intro.blockId,
                   "ctaText",
@@ -2472,7 +2452,7 @@ const EducationProTemplate: React.FC<TemplateProps> = ({ data }) => {
                   "Join now with a focused learning program, dedicated mentor support, and a community that keeps you moving forward."}
               </Typography>
               <Button
-                href={promo.ctaLink || "/courses"}
+                href={resolveLink(promo.ctaLink || "/courses")}
                 {...getEditableTextProps(
                   promo.blockId,
                   "ctaText",
@@ -2839,7 +2819,7 @@ const EducationProTemplate: React.FC<TemplateProps> = ({ data }) => {
                   "Talk with an academic advisor to build a learning path suited to your goals and schedule."}
               </Typography>
               <Button
-                href={courseRequest.ctaLink || "/courses"}
+                href={resolveLink(courseRequest.ctaLink || "/courses")}
                 {...getEditableTextProps(
                   courseRequest.blockId,
                   "ctaText",
@@ -3122,7 +3102,9 @@ const EducationProTemplate: React.FC<TemplateProps> = ({ data }) => {
         ? renderCoursesPage()
         : activePage === "contact"
           ? renderContactPage()
-          : order.map((key) => sectionMap[key]);
+          : activePage === "dynamic"
+            ? null
+            : order.map((key) => sectionMap[key]);
 
   return (
     <TemplatePageShell templateId="education-pro" data={data}>

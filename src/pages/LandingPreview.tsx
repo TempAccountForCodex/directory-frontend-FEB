@@ -1268,6 +1268,35 @@ const buildEducationProPreviewData = (): BusinessData => {
 
 const EDUCATION_PRO_DATA: BusinessData = buildEducationProPreviewData();
 
+const buildGardeningProPreviewData = (): BusinessData => {
+  const website = {
+    name: "Greenth",
+    slug: "gardening-pro",
+    primaryColor: "#2D3E2F",
+    secondaryColor: "#C8E06A",
+  };
+  const seededPages = buildFrontendTemplateEditorPages("gardening-pro", website);
+  const previewData = buildTemplatePreviewBusinessData(
+    "gardening-pro",
+    website,
+    seededPages,
+  );
+  if (!previewData) {
+    return { ...COMPANY_DATA, name: "Greenth" };
+  }
+  const templateContent = {
+    ...((previewData.templateContent as Record<string, unknown>) || {}),
+  };
+  delete templateContent.__editorSectionVisibility;
+  templateContent.__editorSectionVisibilityAuthoritative = false;
+  return {
+    ...previewData,
+    templateContent,
+  } as BusinessData;
+};
+
+const GARDENING_PRO_DATA: BusinessData = buildGardeningProPreviewData();
+
 // ─── Template slug → data mapping ─────────────────────────────────────────────
 
 const TEMPLATE_DATA_MAP: Record<
@@ -1304,6 +1333,7 @@ const TEMPLATE_DATA_MAP: Record<
   "company-executive": { templateId: "company-executive", data: COMPANY_DATA },
   "company-pro": { templateId: "company-pro", data: COMPANY_PRO_DATA },
   "education-pro": { templateId: "education-pro", data: EDUCATION_PRO_DATA },
+  "gardening-pro": { templateId: "gardening-pro", data: GARDENING_PRO_DATA },
 };
 
 const ALL_TEMPLATE_SLUGS = Object.keys(TEMPLATE_DATA_MAP);
@@ -1336,6 +1366,10 @@ const TEMPLATE_GROUPS = [
   {
     label: "Education",
     slugs: ["education-pro"],
+  },
+  {
+    label: "Gardening",
+    slugs: ["gardening-pro"],
   },
 ];
 
@@ -1799,6 +1833,7 @@ const COMPANY_TEMPLATE_SLUGS = [
 ] as const;
 
 const EDUCATION_TEMPLATE_SLUGS = ["education-pro"] as const;
+const GARDENING_TEMPLATE_SLUGS = ["gardening-pro"] as const;
 
 const STORE_TEMPLATE_SLUGS = [
   "store-basic",
@@ -1963,8 +1998,14 @@ const LandingPreview: React.FC = () => {
   const isEducationCategory = EDUCATION_TEMPLATE_SLUGS.includes(
     slug as (typeof EDUCATION_TEMPLATE_SLUGS)[number],
   );
+  const isGardeningCategory = GARDENING_TEMPLATE_SLUGS.includes(
+    slug as (typeof GARDENING_TEMPLATE_SLUGS)[number],
+  );
   const isTemplateCustomizerCategory =
-    isCompanyCategory || isStoreCategory || isEducationCategory;
+    isCompanyCategory ||
+    isStoreCategory ||
+    isEducationCategory ||
+    isGardeningCategory;
   const previewMode = searchParams.get("mode");
   const selectedPalette =
     COMPANY_EXECUTIVE_PALETTES.find(
@@ -1997,7 +2038,9 @@ const LandingPreview: React.FC = () => {
     ? companyCustomizerLabel
     : isEducationCategory
       ? "Education Pro"
-      : storeCustomizerLabel;
+      : isGardeningCategory
+        ? "Gardening Pro"
+        : storeCustomizerLabel;
   const data = React.useMemo<BusinessData>(() => {
     if (!isTemplateCustomizerCategory) return resolvedData;
 

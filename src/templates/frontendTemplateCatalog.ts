@@ -198,6 +198,18 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     pageCount: 3,
   },
   {
+    id: "gardening-pro",
+    slug: "gardening-pro",
+    name: "Gardening Pro",
+    description:
+      "Multi-page landscape studio template with project showcases, team profiles, services, and a dedicated contact page.",
+    type: "website",
+    category: "business",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/gardening.webp",
+    pageCount: 4,
+  },
+  {
     id: "education",
     slug: "education",
     name: "Education",
