@@ -512,10 +512,10 @@ const PhotoStudioProTemplate: React.FC<TemplateProps> = ({ data }) => {
       },
     );
   const gallery = data.gallery?.length ? data.gallery : [];
-  const worksFeatures = asArray(worksContent.features, []);
-  const introFeatures = asArray(introContent.features, []);
-  const aboutFeatures = asArray(aboutContent.features, []);
-  const lensFeatures = asArray(lensContent.features, []);
+  const worksFeatures = asArray<Record<string, any>>(worksContent.features, []);
+  const introFeatures = asArray<Record<string, any>>(introContent.features, []);
+  const aboutFeatures = asArray<Record<string, any>>(aboutContent.features, []);
+  const lensFeatures = asArray<Record<string, any>>(lensContent.features, []);
   const portfolioItems = useMemo(() => {
     const fromWorks = worksFeatures
       .slice(0, 8)

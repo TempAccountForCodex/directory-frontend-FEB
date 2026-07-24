@@ -11,15 +11,19 @@ import { apiClient } from "../api/client";
 export type TemplateType = "website" | "store";
 
 export type TemplateCategory =
+  | "blog"
   | "business"
+  | "creative"
   | "portfolio"
   | "agency"
   | "restaurant"
+  | "plumbing"
   | "real-estate"
   | "fitness"
   | "education"
   | "saas"
-  | "ecommerce";
+  | "ecommerce"
+  | "landing-page";
 
 export interface TemplateBlock {
   type: string;
@@ -58,15 +62,19 @@ export interface Template extends TemplateSummary {
 }
 
 export const CATEGORY_LABELS: Record<TemplateCategory, string> = {
+  blog: "Blog",
   business: "Business",
+  creative: "Creative",
   portfolio: "Portfolio",
   agency: "Agency",
   restaurant: "Restaurant",
+  plumbing: "Plumbing",
   "real-estate": "Real Estate",
   fitness: "Fitness",
   education: "Education",
   saas: "SaaS",
   ecommerce: "E-commerce",
+  "landing-page": "Landing Page",
 };
 
 const fetchTemplates = async (): Promise<TemplateSummary[]> => {

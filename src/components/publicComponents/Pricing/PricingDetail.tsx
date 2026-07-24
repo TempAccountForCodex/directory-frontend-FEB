@@ -7,8 +7,11 @@ import {
   Button,
   Stack,
   Chip,
+  IconButton,
 } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { motion } from "framer-motion";
 
@@ -40,11 +43,12 @@ const COLORS = {
    Plans
 
    NOTE: Prices are PLACEHOLDERS pending final numbers.
-   Edit PLAN_PRICES to change pricing for every billing cycle.
+   Edit PLAN_BASE_PRICES to change the 5-site base pricing.
 ============================ */
 
 type BillingCycle = "monthly" | "annual";
 type PlanId = "free" | "pro" | "business";
+type SiteCount = 5 | 10 | 15;
 
 type Feature = string | { label: string; sub: string[] };
 
@@ -55,24 +59,36 @@ type Plan = {
   positioning: string;
   free?: boolean;
   recommended?: boolean;
+  comingSoon?: boolean;
   cta: string;
   features: Feature[];
 };
 
-const PLAN_PRICES: Record<PlanId, Record<BillingCycle, number>> = {
+const SITE_COUNT_OPTIONS: SiteCount[] = [5, 10, 15, ];
+const PLAN_BASE_SITE_COUNT: SiteCount = 5;
+
+const PLAN_BASE_PRICES: Record<PlanId, Record<BillingCycle, number>> = {
   free: {
     monthly: 0,
     annual: 0,
   },
   pro: {
-    monthly: 15,
-    annual: 180,
+    monthly: 9,
+    annual: 108,
   },
   business: {
-    monthly: 40,
-    annual: 480,
+    monthly: 19,
+    annual: 228,
   },
 };
+
+const getPlanPrice = (
+  planId: PlanId,
+  billing: BillingCycle,
+  siteCount: SiteCount,
+) =>
+  PLAN_BASE_PRICES[planId][billing] *
+  (planId === "free" ? 1 : siteCount / PLAN_BASE_SITE_COUNT);
 
 const PLANS: Plan[] = [
   {
@@ -84,11 +100,10 @@ const PLANS: Plan[] = [
     cta: "Get Started",
     features: [
       "1 single-page landing site",
-      "1 standard directory listing",
       "1 form · 50 submissions/mo",
       "5 blog posts",
       "50 MB storage",
-      "10 AI actions/mo",
+      "10 AI actions/day",
       "Free techietribe.app subdomain",
     ],
   },
@@ -110,12 +125,13 @@ const PLANS: Plan[] = [
         ],
       },
       "500 form submissions/mo",
-      "50 blog posts/site",
-      "upto 500 MB storage",
+      "Unlimited posts/site",
+      "upto 150 MB storage/site",
       "100 AI actions/mo",
+      "Custom code & embeds",
+      "SEO optimization",
       "Premium templates · custom CSS",
-      "SEO optimization for your website",
-      "Detailed analytics · CSV exports",
+      "Detailed analytics",
       "2 collaborators per website",
     ],
   },
@@ -124,7 +140,8 @@ const PLANS: Plan[] = [
     label: "Business",
     tagline: "Grow and scale",
     positioning: "Scale a portfolio with maximum directory visibility.",
-    cta: "Get Started",
+    comingSoon: true,
+    cta: "Coming Soon",
     features: [
       "Everything in Pro, plus:",
       "Unlimited websites & directory listings*",
@@ -136,10 +153,11 @@ const PLANS: Plan[] = [
       "SEO optimization for websites & blogs",
       "Blog comments & moderation controls",
       "Conversion, funnel & real-time analytics",
-      "Advanced integrations (GTM, Meta Pixel…)",
+      "Advanced integrations",
       "10 collaborators per website",
-      "1 featured directory listing",
+      "Priority based directory listing",
       "Priority support",
+      "Custom Integrated Shops"
     ],
   },
 ];
@@ -175,7 +193,7 @@ const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
   {
     category: "AI tools",
     rows: [
-      { feature: "AI actions", free: "10/month", pro: "100/month", business: "500/month" },
+      { feature: "AI actions", free: "10/daily", pro: "100/daily", business: "500/daily" },
       { feature: "AI listing enhancement", free: false, pro: true, business: true },
     ],
   },
@@ -184,7 +202,6 @@ const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
     rows: [
       { feature: "Techietribe subdomain", free: true, pro: true, business: true },
       { feature: "Custom domains", free: false, pro: "1 per website", business: "1 per website" },
-      { feature: "Techietribe branding", free: "Displayed", pro: "Removed", business: "Removed" },
     ],
   },
   {
@@ -208,7 +225,7 @@ const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
     category: "Directory & reputation",
     rows: [
       { feature: "Directory ranking boost", free: "Standard", pro: "Enhanced", business: "Highest" },
-      { feature: "Featured directory listing", free: false, pro: false, business: "1 active" },
+      { feature: "Featured directory listing", free: false, pro: "Standard", business: "Enhanced" },
       { feature: "Owner review replies", free: false, pro: true, business: true },
     ],
   },
@@ -339,11 +356,19 @@ const BillingToggle = ({
 const PlanHeader = ({
   plan,
   billing,
+  siteCount,
+  onSiteCountChange,
 }: {
   plan: Plan;
   billing: BillingCycle;
+  siteCount: SiteCount;
+  onSiteCountChange: (direction: -1 | 1) => void;
 }) => {
-  const displayPrice = PLAN_PRICES[plan.id][billing];
+  const displayPrice = getPlanPrice(plan.id, billing, siteCount);
+  const paidPlan = !plan.free;
+  const siteCountIndex = SITE_COUNT_OPTIONS.indexOf(siteCount);
+  const canDecrease = paidPlan && siteCountIndex > 0;
+  const canIncrease = paidPlan && siteCountIndex < SITE_COUNT_OPTIONS.length - 1;
   return (
     <Box sx={{ textAlign: "center" }}>
       <Typography sx={{ fontWeight: 800, fontSize: "1.15rem" }}>
@@ -363,17 +388,60 @@ const PlanHeader = ({
       <Box
         sx={{
           mt: 2,
+          position: "relative",
           display: "flex",
           alignItems: "baseline",
           justifyContent: "center",
           gap: 0.5,
+          minHeight: 56,
         }}
       >
+        {paidPlan && (
+          <IconButton
+            aria-label={`Decrease ${plan.label} website count`}
+            disabled={!canDecrease}
+            onClick={() => onSiteCountChange(-1)}
+            sx={{
+              position: "absolute",
+              left: { xs: 0, sm: 8 },
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 40,
+              height: 40,
+              color: canDecrease ? COLORS.teal : "rgba(255,255,255,0.18)",
+              border: `1px solid ${
+                canDecrease ? COLORS.tealSoft : "rgba(255,255,255,0.08)"
+              }`,
+              background: "rgba(255,255,255,0.04)",
+              transition:
+                "color 0.2s ease, border-color 0.2s ease, transform 0.2s ease",
+              "&:hover": {
+                background: canDecrease
+                  ? "rgba(47,184,179,0.14)"
+                  : "rgba(255,255,255,0.04)",
+                transform: canDecrease
+                  ? "translate(-2px, -50%)"
+                  : "translateY(-50%)",
+              },
+            }}
+          >
+            <ChevronLeftIcon sx={{ fontSize: 22 }} />
+          </IconButton>
+        )}
         <Typography
           component="span"
           sx={{ fontSize: "2.6rem", fontWeight: 900, lineHeight: 1 }}
         >
-          {plan.free ? "$0" : `$${displayPrice}`}
+          <Box
+            component={motion.span}
+            key={`${plan.id}-${billing}-${siteCount}`}
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            sx={{ display: "inline-block" }}
+          >
+            {plan.free ? "$0" : `$${displayPrice}`}
+          </Box>
         </Typography>
         <Typography
           component="span"
@@ -383,7 +451,60 @@ const PlanHeader = ({
             ? "/forever"
             : `/${billing === "annual" ? "year" : "month"}`}
         </Typography>
+        {paidPlan && (
+          <IconButton
+            aria-label={`Increase ${plan.label} website count`}
+            disabled={!canIncrease}
+            onClick={() => onSiteCountChange(1)}
+            sx={{
+              position: "absolute",
+              right: { xs: 0, sm: 8 },
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 40,
+              height: 40,
+              color: canIncrease ? COLORS.teal : "rgba(255,255,255,0.18)",
+              border: `1px solid ${
+                canIncrease ? COLORS.tealSoft : "rgba(255,255,255,0.08)"
+              }`,
+              background: "rgba(255,255,255,0.04)",
+              transition:
+                "color 0.2s ease, border-color 0.2s ease, transform 0.2s ease",
+              "&:hover": {
+                background: canIncrease
+                  ? "rgba(47,184,179,0.14)"
+                  : "rgba(255,255,255,0.04)",
+                transform: canIncrease
+                  ? "translate(2px, -50%)"
+                  : "translateY(-50%)",
+              },
+            }}
+          >
+            <ChevronRightIcon sx={{ fontSize: 22 }} />
+          </IconButton>
+        )}
       </Box>
+
+      {paidPlan && (
+        <Typography
+          component={motion.p}
+          key={`${plan.id}-sites-${siteCount}`}
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          sx={{
+            mt: 1,
+            mb: 0,
+            color: COLORS.teal,
+            fontSize: "0.78rem",
+            fontWeight: 800,
+            letterSpacing: 0.5,
+            textTransform: "uppercase",
+          }}
+        >
+          {siteCount} sites
+        </Typography>
+      )}
 
       <Typography
         sx={{
@@ -413,7 +534,20 @@ const PricingCard = ({
   billing: BillingCycle;
 }) => {
   const recommended = !!plan.recommended;
-  const displayPrice = PLAN_PRICES[plan.id][billing];
+  const comingSoon = !!plan.comingSoon;
+  const [siteCount, setSiteCount] = React.useState<SiteCount>(5);
+  const displayPrice = getPlanPrice(plan.id, billing, siteCount);
+  const updateSiteCount = (direction: -1 | 1) => {
+    setSiteCount((current) => {
+      const currentIndex = SITE_COUNT_OPTIONS.indexOf(current);
+      const nextIndex = Math.max(
+        0,
+        Math.min(SITE_COUNT_OPTIONS.length - 1, currentIndex + direction),
+      );
+
+      return SITE_COUNT_OPTIONS[nextIndex];
+    });
+  };
 
   const firstIsHeading =
     typeof plan.features[0] === "string" &&
@@ -442,16 +576,16 @@ const PricingCard = ({
           flexDirection: "column",
         }}
       >
-        {recommended && (
+        {(recommended || comingSoon) && (
           <Chip
-            label="MOST POPULAR"
+            label={comingSoon ? "COMING SOON" : "MOST POPULAR"}
             sx={{
               height: 26,
               fontSize: "0.65rem",
               fontWeight: 800,
               letterSpacing: 1,
-              background: COLORS.teal,
-              color: "white",
+              background: comingSoon ? "rgba(255,255,255,0.9)" : COLORS.teal,
+              color: comingSoon ? "#041e18" : "white",
               position: "absolute",
               top: -13,
               left: "50%",
@@ -502,7 +636,12 @@ const PricingCard = ({
               height: "100%",
             }}
           >
-            <PlanHeader plan={plan} billing={billing} />
+            <PlanHeader
+              plan={plan}
+              billing={billing}
+              siteCount={siteCount}
+              onSiteCountChange={updateSiteCount}
+            />
 
             {/* Section divider label */}
             <Box
@@ -556,7 +695,9 @@ const PricingCard = ({
                             lineHeight: 1.4,
                           }}
                         >
-                          {item.label}
+                          {plan.id === "pro"
+                            ? `Up to ${siteCount} websites`
+                            : item.label}
                         </Typography>
                       </Stack>
                       <Stack
@@ -621,7 +762,10 @@ const PricingCard = ({
                         lineHeight: 1.4,
                       }}
                     >
-                      {item}
+                      {plan.id === "business" &&
+                      item === "Unlimited websites & directory listings*"
+                        ? `${siteCount} websites & directory listings*`
+                        : item}
                     </Typography>
                   </Stack>
                 );
@@ -631,15 +775,33 @@ const PricingCard = ({
             <Button
               fullWidth
               variant="outlined"
+              disabled={comingSoon}
               sx={{
                 mt: "auto",
                 py: 1.6,
                 borderRadius: "12px",
                 fontWeight: 900,
                 textTransform: "none",
-                background: recommended ? "white" : "transparent",
-                color: recommended ? "#000" : "white",
-                borderColor: recommended ? "white" : "rgba(255,255,255,0.2)",
+                background: comingSoon
+                  ? "rgba(255,255,255,0.08)"
+                  : recommended
+                    ? "white"
+                    : "transparent",
+                color: comingSoon
+                  ? "rgba(255,255,255,0.55)"
+                  : recommended
+                    ? "#000"
+                    : "white",
+                borderColor: comingSoon
+                  ? "rgba(255,255,255,0.12)"
+                  : recommended
+                    ? "white"
+                    : "rgba(255,255,255,0.2)",
+                "&.Mui-disabled": {
+                  color: "rgba(255,255,255,0.55)",
+                  borderColor: "rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.08)",
+                },
                 "&:hover": {
                   background: recommended
                     ? COLORS.teal

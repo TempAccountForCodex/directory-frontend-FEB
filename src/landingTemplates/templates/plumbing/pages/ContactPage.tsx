@@ -232,7 +232,7 @@ const ContactPage: React.FC<ContactPageProps> = ({
                 const fullWidth = isFullWidthContactField(field);
                 return (
                   <Box
-                    key={field._id || field.label}
+                    key={field.key || field.label}
                     sx={{ gridColumn: fullWidth ? "1 / -1" : "auto" }}
                   >
                     {renderTemplateContactField({

@@ -23,6 +23,7 @@ import {
   FileText,
   Palette,
   Rocket,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import { getDashboardColors } from "../../styles/dashboardTheme";
@@ -54,6 +55,7 @@ const CATEGORY_PLACEHOLDER_COLORS: Record<
     accent: "#EF4444",
     Icon: UtensilsCrossed,
   },
+  plumbing: { bg: "rgba(14,165,233,0.1)", accent: "#0EA5E9", Icon: Wrench },
   portfolio: { bg: "rgba(139,92,246,0.1)", accent: "#8B5CF6", Icon: User },
   agency: { bg: "rgba(245,158,11,0.1)", accent: "#F59E0B", Icon: Briefcase },
   "real-estate": { bg: "rgba(16,185,129,0.1)", accent: "#10B981", Icon: Home },
